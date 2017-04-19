@@ -62,7 +62,7 @@ Foam::tmp<Foam::Field<Type>> filterFarPoints
 )
 {
     tmp<Field<Type>> tNewField(new Field<Type>(field.size()));
-    Field<Type>& newField = tNewField();
+    Field<Type>& newField = tNewField.ref();
 
     label added = 0;
     label count = 0;
