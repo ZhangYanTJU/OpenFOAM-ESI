@@ -22,7 +22,7 @@ if (!fieldsToUse.found(fieldName))
             ).typeHeaderOk<volScalarField>(false)
         );
 
-        if (variableGood)
+        if (!variableGood)
         {
             break;
         }
