@@ -642,7 +642,7 @@ Foam::discreteSurface::discreteSurface
             surfaceName,
             mesh.time().constant(), // instance
             "triSurface",           // local
-            mesh,                   // registry
+            mesh.time(),            // registry
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             false
@@ -680,7 +680,7 @@ Foam::discreteSurface::discreteSurface
             dict.lookup("surface"),
             mesh.time().constant(), // instance
             "triSurface",           // local
-            mesh,                   // registry
+            mesh.time(),            // registry
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             false
@@ -716,7 +716,7 @@ Foam::discreteSurface::discreteSurface
             name,
             mesh.time().constant(), // instance
             "triSurface",           // local
-            mesh,                   // registry
+            mesh.time(),            // registry
             IOobject::NO_READ,
             IOobject::NO_WRITE,
             false

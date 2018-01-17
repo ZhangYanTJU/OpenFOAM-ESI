@@ -647,7 +647,7 @@ Foam::sampledTriSurfaceMesh::sampledTriSurfaceMesh
             surfaceName,
             mesh.time().constant(), // instance
             "triSurface",           // local
-            mesh,                   // registry
+            mesh.time(),            // registry
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             false
@@ -679,7 +679,7 @@ Foam::sampledTriSurfaceMesh::sampledTriSurfaceMesh
             dict.lookup("surface"),
             mesh.time().constant(), // instance
             "triSurface",           // local
-            mesh,                   // registry
+            mesh.time(),            // registry
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             false
@@ -712,7 +712,7 @@ Foam::sampledTriSurfaceMesh::sampledTriSurfaceMesh
             name,
             mesh.time().constant(), // instance
             "triSurface",           // local
-            mesh,                   // registry
+            mesh.time(),            // registry
             IOobject::NO_READ,
             IOobject::NO_WRITE,
             false
