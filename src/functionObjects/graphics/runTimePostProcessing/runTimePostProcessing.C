@@ -153,7 +153,11 @@ bool Foam::functionObjects::runTimePostProcessing::write()
     auto renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
     renderWindow->OffScreenRenderingOn();
     renderWindow->SetSize(output_.width_, output_.height_);
+    // Legacy rendering - was deprecated for 8.1.0
+    #if (VTK_MAJOR_VERSION < 8) || \
+        ((VTK_MAJOR_VERSION == 8) && (VTK_MINOR_VERSION < 2))
     renderWindow->SetAAFrames(10);
+    #endif
     renderWindow->SetAlphaBitPlanes(true);
     renderWindow->SetMultiSamples(0);
 //    renderWindow->PolygonSmoothingOn();
