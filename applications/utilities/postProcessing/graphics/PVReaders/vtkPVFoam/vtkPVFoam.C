@@ -318,6 +318,9 @@ Foam::vtkPVFoam::vtkPVFoam
         fullCasePath = cwd();
     }
 
+    // OPENFOAM API
+    setEnv("FOAM_API", std::to_string(OPENFOAM), true);
+
     // The name of the executable, unless already present in the environment
     setEnv("FOAM_EXECUTABLE", "paraview", false);
 

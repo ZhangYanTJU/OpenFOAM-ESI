@@ -660,6 +660,9 @@ void Foam::argList::getRootCase()
     // The name of the executable, unless already present in the environment
     setEnv("FOAM_EXECUTABLE", executable_, false);
 
+    // OPENFOAM API
+    setEnv("FOAM_API", std::to_string(OPENFOAM), true);
+
     // Set the case and case-name as an environment variable
     if (rootPath_.isAbsolute())
     {
