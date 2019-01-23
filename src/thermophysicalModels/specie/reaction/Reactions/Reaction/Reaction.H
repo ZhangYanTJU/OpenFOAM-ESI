@@ -251,7 +251,6 @@ public:
 
         // Access
 
-            inline word& name();
             inline const word& name() const;
 
             // - Access to basic components of the reaction

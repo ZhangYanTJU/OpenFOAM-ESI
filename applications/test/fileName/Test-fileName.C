@@ -601,9 +601,27 @@ int main(int argc, char *argv[])
         << " controlDict => " << findEtcFile("controlDict") << nl
         << " badName => " << findEtcFile("badName") << endl;
 
-    Info<< "This should emit a fatal error:" << endl;
-    Info<< " badName(die) => " << findEtcFile("badName", true) << nl
-        << endl;
+    {
+
+        Info<< nl << "Expect a FatalError for findEtcFile() with a bad name:"
+            << nl;
+
+        const bool throwingError = FatalError.throwExceptions();
+
+        try
+        {
+            Info<< " badName(die) => " << flush
+                << findEtcFile("<very-badName>", true) << nl
+                << endl;
+        }
+        catch (const Foam::error& err)
+        {
+            Info<< nl << "findEtcFile() Caught FatalError "
+                << err << nl << endl;
+        }
+        FatalError.throwExceptions(throwingError);
+    }
+
 
     Info<< "\nEnd\n" << endl;
     return 0;

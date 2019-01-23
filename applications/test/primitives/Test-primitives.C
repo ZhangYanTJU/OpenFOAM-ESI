@@ -75,7 +75,7 @@ unsigned testParsing
         {
             val = function (str);
         }
-        catch (Foam::error& err)
+        catch (const Foam::error& err)
         {
             parsed = false;
             errMsg = err.message();
