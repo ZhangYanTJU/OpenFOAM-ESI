@@ -867,7 +867,7 @@ int main(int argc, char *argv[])
                 {
                     aMeshPtr.reset(new faMesh(meshRef.baseMesh()));
                 }
-                catch (Foam::error& err)
+                catch (const Foam::error& err)
                 {
                     aMeshPtr.clear();
                 }

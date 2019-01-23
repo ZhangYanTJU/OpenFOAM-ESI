@@ -57,11 +57,23 @@ int main(int argc, char *argv[])
             << exit(FatalError);
     }
 
-    word utilityName = argv[1];
-    Foam::autoPtr<Foam::helpType> utility
-    (
-        helpType::New(utilityName)
-    );
+    word utilityName(argv[1]);
+    autoPtr<helpType> utility;
+
+    const bool throwing = FatalError.throwExceptions();
+    try
+    {
+        utility.reset(helpType::New(utilityName));
+    }
+    catch (const Foam::error& err)
+    {
+        utility.clear();
+
+        FatalError
+            << err.message().c_str() << nl
+            << exit(FatalError);
+    }
+    FatalError.throwExceptions(throwing);
 
     utility().init();
 
