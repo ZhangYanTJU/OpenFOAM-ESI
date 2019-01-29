@@ -1,0 +1,190 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "jouleHeatingSource.H"
+#include "faMatrices.H"
+#include "famLaplacian.H"
+#include "facGrad.H"
+#include "addToRunTimeSelectionTable.H"
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace fa
+{
+    defineTypeNameAndDebug(jouleHeatingSource, 0);
+
+    addToRunTimeSelectionTable
+    (
+        option,
+        jouleHeatingSource,
+        dictionary
+    );
+}
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::fa::jouleHeatingSource::jouleHeatingSource
+(
+    const word& sourceName,
+    const word& modelType,
+    const dictionary& dict,
+    const fvMesh& mesh
+)
+:
+    faceSetOption(sourceName, modelType, dict, mesh),
+    TName_(dict.get<word>("T")),
+    V_
+    (
+        IOobject
+        (
+            typeName + ":V_" + regionName_,
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        regionMesh()
+    ),
+    anisotropicElectricalConductivity_(false),
+    scalarSigmaVsTPtr_(nullptr),
+    tensorSigmaVsTPtr_(nullptr),
+    curTimeIndex_(-1)
+{
+    // Set the field name to that of the energy field from which the temperature
+    // is obtained
+    fieldNames_.setSize(1, TName_);
+
+    applied_.setSize(fieldNames_.size(), false);
+
+    read(dict);
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::fa::jouleHeatingSource::~jouleHeatingSource()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::fa::jouleHeatingSource::addSup
+(
+    const areaScalarField& h,
+    const areaScalarField& rho,
+    faMatrix<scalar>& eqn,
+    const label fieldi
+)
+{
+    if (isActive())
+    {
+        DebugInfo<< name() << ": applying source to " << eqn.psi().name() << endl;
+
+        if (curTimeIndex_ != mesh().time().timeIndex())
+        {
+            if (anisotropicElectricalConductivity_)
+            {
+                // Update sigma as a function of T if required
+                const areaTensorField& sigma = updateSigma(tensorSigmaVsTPtr_);
+
+                // Solve the electrical potential equation
+                faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
+                VEqn.relax();
+                VEqn.solve();
+            }
+            else
+            {
+                // Update sigma as a function of T if required
+                const areaScalarField& sigma = updateSigma(scalarSigmaVsTPtr_);
+
+                // Solve the electrical potential equation
+                faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
+                VEqn.relax();
+                VEqn.solve();
+            }
+
+            curTimeIndex_ = mesh().time().timeIndex();
+        }
+
+        // Add the Joule heating contribution
+        const areaVectorField gradV(fac::grad(V_));
+
+        if (anisotropicElectricalConductivity_)
+        {
+            const areaTensorField& sigma =
+                mesh_.lookupObject<areaTensorField>
+                (
+                    typeName + ":sigma_" + regionName_
+                );
+
+            eqn += (h*sigma & gradV) & gradV;
+        }
+        else
+        {
+            const areaScalarField& sigma =
+                mesh_.lookupObject<areaScalarField>
+                (
+                    typeName + ":sigma_" + regionName_
+                );
+
+            eqn += (h*sigma*gradV) & gradV;
+        }
+    }
+}
+
+
+bool Foam::fa::jouleHeatingSource::read(const dictionary& dict)
+{
+    if (option::read(dict))
+    {
+        coeffs_.readIfPresent("T", TName_);
+
+        anisotropicElectricalConductivity_ =
+            coeffs_.get<bool>("anisotropicElectricalConductivity");
+
+        if (anisotropicElectricalConductivity_)
+        {
+            Info<< "    Using tensor electrical conductivity" << endl;
+
+            initialiseSigma(coeffs_, tensorSigmaVsTPtr_);
+        }
+        else
+        {
+            Info<< "    Using scalar electrical conductivity" << endl;
+
+            initialiseSigma(coeffs_, scalarSigmaVsTPtr_);
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+// ************************************************************************* //

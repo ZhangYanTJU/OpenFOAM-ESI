@@ -1,0 +1,169 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "thermalShellModel.H"
+#include "faMesh.H"
+#include "fvMesh.H"
+#include "fvPatchFields.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace regionModels
+{
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+defineTypeNameAndDebug(thermalShellModel, 0);
+
+defineRunTimeSelectionTable(thermalShellModel, dictionary);
+
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+
+bool thermalShellModel::read(const dictionary& dict)
+{
+    regionFaModel::read(dict);
+    return true;
+}
+
+
+void thermalShellModel::init()
+{
+
+    faOptions_.reset
+    (
+        &Foam::fa::options::New(primaryMesh())
+    );
+
+    if (!faOptions_->optionList::size())
+    {
+        Info << "No finite area options present" << endl;
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+
+thermalShellModel::thermalShellModel
+(
+    const word& modelType,
+    const fvMesh& mesh,
+    const fvPatch& p,
+    const dictionary& dict
+
+)
+:
+    regionFaModel(mesh, p, "thermalShell", modelType, dict, true),
+    temperatureCoupledBase(p, dict),
+    TName_(dict.get<word>("T")),
+    Tp_(mesh.lookupObject<volScalarField>(TName_)),
+    T_
+    (
+        IOobject
+        (
+            "Ts_" + regionName_,
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        regionMesh()
+    ),
+    faOptions_()
+{
+    init();
+}
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+thermalShellModel::~thermalShellModel()
+{}
+
+
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+void thermalShellModel::preEvolveRegion()
+{}
+
+
+tmp<areaScalarField> thermalShellModel::htc() const
+{
+    tmp<areaScalarField> thtc
+    (
+        new areaScalarField
+        (
+            IOobject
+            (
+                "thtc",
+                primaryMesh().time().timeName(),
+                primaryMesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            regionMesh(),
+            dimensionedScalar(dimPower/dimArea/dimTemperature, Zero)
+        )
+    );
+
+    areaScalarField& htc = thtc.ref();
+
+    const volScalarField::Boundary& vfb = Tp_.boundaryField();
+
+    htc.primitiveFieldRef() =
+        temperatureCoupledBase::kappa
+        (
+            vsmPtr_->mapInternalToSurface<scalar>(vfb)()
+        )*regionFaModel::patch_.deltaCoeffs();
+
+    return thtc;
+}
+
+
+const Foam::volScalarField& thermalShellModel::Tp() const
+{
+    return Tp_;
+}
+
+const Foam::areaScalarField& thermalShellModel::T() const
+{
+    return T_;
+}
+
+Foam::fa::options& thermalShellModel::faOptions()
+{
+    return faOptions_.ref();
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace regionModels
+} // End namespace Foam
+
+// ************************************************************************* //

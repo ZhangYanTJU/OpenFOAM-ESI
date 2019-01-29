@@ -1,0 +1,233 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "faceSetOption.H"
+#include "areaFields.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    namespace fa
+    {
+        defineTypeNameAndDebug(faceSetOption, 0);
+    }
+}
+
+
+const Foam::Enum
+<
+    Foam::fa::faceSetOption::selectionModeType
+>
+Foam::fa::faceSetOption::selectionModeTypeNames_
+({
+   // { selectionModeType::smFaceSet, "faceSet" },
+    //{ selectionModeType::smFaceZone, "faceZone" },
+    { selectionModeType::smAll, "all" },
+});
+
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::fa::faceSetOption::setSelection(const dictionary& dict)
+{
+    switch (selectionMode_)
+    {
+//         case smFaceSet:
+//         {
+//             dict.readEntry("faceSet", faceSetName_);
+//             break;
+//         }
+//         case smFaceZone:
+//         {
+//             dict.readEntry("faceZone", faceSetName_);
+//             break;
+//         }
+        case smAll:
+        {
+            break;
+        }
+        default:
+        {
+            FatalErrorInFunction
+                << "Unknown selectionMode "
+                << selectionModeTypeNames_[selectionMode_]
+                << ". Valid selectionMode types : "
+                << selectionModeTypeNames_
+                << exit(FatalError);
+        }
+    }
+}
+
+
+void Foam::fa::faceSetOption::setArea()
+{
+    // Set volume information
+
+    scalar sumArea = 0.0;
+    for (const label facei : faces_)
+    {
+        sumArea += regionMesh().S()[facei];
+    }
+    reduce(sumArea, sumOp<scalar>());
+
+    const scalar AOld = A_;
+    A_ = sumArea;
+
+    // Convert both volumes to representation using current writeprecision
+    word AOldName(Time::timeName(AOld, IOstream::defaultPrecision()));
+    word AName(Time::timeName(A_, IOstream::defaultPrecision()));
+
+    if (AName != AOldName)
+    {
+        Info<< indent
+            << "- selected " << returnReduce(faces_.size(), sumOp<label>())
+            << " face(s) with area " << A_ << endl;
+    }
+}
+
+
+void Foam::fa::faceSetOption::setFaceSet()
+{
+    switch (selectionMode_)
+    {
+//         case smFaceSet:
+//         {
+//             Info<< indent
+//                 << "- selecting cells using cellSet " << cellSetName_ << endl;
+//
+//             faces_ = faceSet(mesh_, faceSetName_).sortedToc();
+//             break;
+//         }
+//         case smFaceZone:
+//         {
+//             Info<< indent
+//                 << "- selecting cells using cellZone " << faceSetName_ << endl;
+//
+//             label zoneID = mesh_.faceZones().findZoneID(faceSetName_);
+//             if (zoneID == -1)
+//             {
+//                 FatalErrorInFunction
+//                     << "Cannot find cellZone " << faceSetName_ << endl
+//                     << "Valid cellZones are " << mesh_.faceZones().names()
+//                     << exit(FatalError);
+//             }
+//
+//             faces_ = mesh_.faceZones()[zoneID];
+//             break;
+//         }
+        case smAll:
+        {
+            Info<< indent << "- selecting all faces" << endl;
+    //DebugVar(regionMeshPtr_->nFaces());
+            faces_ = identity(regionMesh().nFaces());
+
+            break;
+        }
+        default:
+        {
+            FatalErrorInFunction
+                << "Unknown selectionMode "
+                << selectionModeTypeNames_[selectionMode_]
+                << ". Valid selectionMode types are "
+                << selectionModeTypeNames_
+                << exit(FatalError);
+        }
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::fa::faceSetOption::faceSetOption
+(
+    const word& name,
+    const word& modelType,
+    const dictionary& dict,
+    const fvMesh& mesh
+)
+:
+    option(name, modelType, dict, mesh),
+    timeStart_(-1.0),
+    duration_(0.0),
+    selectionMode_(selectionModeTypeNames_.get("selectionMode", coeffs_)),
+    faceSetName_("none"),
+    A_(0.0)
+{
+
+    if (isActive())
+    {
+        Info<< incrIndent;
+        read(dict);
+        setSelection(coeffs_);
+        setFaceSet();
+        setArea();
+        Info<< decrIndent;
+    }
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::fa::faceSetOption::isActive()
+{
+    if (option::isActive() && inTimeLimits(mesh_.time().value()))
+    {
+        // Update the cell set if the mesh is changing
+        if (mesh_.changing())
+        {
+            if (mesh_.topoChanging())
+            {
+                setArea();
+                // Force printing of new set volume
+                A_ = -GREAT;
+            }
+
+            // Report new volume (if changed)
+            setArea();
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+
+bool Foam::fa::faceSetOption::read(const dictionary& dict)
+{
+    if (option::read(dict))
+    {
+        if (coeffs_.readIfPresent("timeStart", timeStart_))
+        {
+            coeffs_.readEntry("duration", duration_);
+        }
+    }
+
+    return true;
+}
+
+
+// ************************************************************************* //

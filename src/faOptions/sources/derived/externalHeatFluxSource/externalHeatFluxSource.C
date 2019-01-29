@@ -1,0 +1,241 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "externalHeatFluxSource.H"
+#include "addToRunTimeSelectionTable.H"
+#include "physicoChemicalConstants.H"
+#include "zeroGradientFaPatchFields.H"
+#include "addToRunTimeSelectionTable.H"
+
+using Foam::constant::physicoChemical::sigma;
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace fa
+{
+    defineTypeNameAndDebug(externalHeatFluxSource, 0);
+
+    addToRunTimeSelectionTable
+    (
+        option,
+        externalHeatFluxSource,
+        dictionary
+    );
+}
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+const Foam::Enum
+<
+    Foam::fa::externalHeatFluxSource::operationMode
+>
+Foam::fa::externalHeatFluxSource::operationModeNames
+({
+    { operationMode::fixedPower, "power" },
+    { operationMode::fixedHeatFlux, "flux" },
+    { operationMode::fixedHeatTransferCoeff, "coefficient" },
+});
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+
+Foam::fa::externalHeatFluxSource::externalHeatFluxSource
+(
+    const word& sourceName,
+    const word& modelType,
+    const dictionary& dict,
+    const fvMesh& mesh
+)
+:
+    faceSetOption(sourceName, modelType, dict, mesh),
+    mode_(operationModeNames.get("mode", dict)),
+    TName_(dict.get<word>("T")),
+    Q_(0),
+    q_(0),
+    h_(0),
+    Ta_(),
+    emissivity_(dict.lookupOrDefault<scalar>("emissivity", 0))
+{
+     // is obtained
+    fieldNames_.setSize(1, TName_);
+
+    applied_.setSize(fieldNames_.size(), false);
+
+    switch (mode_)
+    {
+        case fixedPower:
+        {
+            dict.readEntry("Q", Q_);
+            break;
+        }
+        case fixedHeatFlux:
+        {
+            dict.readEntry("q", q_);
+            break;
+        }
+        case fixedHeatTransferCoeff:
+        {
+            dict.readEntry("h", h_);
+            Ta_ = Function1<scalar>::New("Ta", dict);
+            break;
+        }
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::fa::externalHeatFluxSource::~externalHeatFluxSource()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::fa::externalHeatFluxSource::addSup
+(
+    const areaScalarField& h,
+    const areaScalarField& rho,
+    faMatrix<scalar>& eqn,
+    const label fieldi
+)
+{
+    if (isActive())
+    {
+        DebugInfo<< name() << ": applying source to "
+            << eqn.psi().name() << endl;
+
+        IOobject io
+        (
+            "Q",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        );
+
+        auto tQ = new areaScalarField
+        (
+            io,
+            regionMesh(),
+            dimensionedScalar("q", dimPower/sqr(dimLength), 0),
+            zeroGradientFaPatchScalarField::typeName
+        );
+        areaScalarField& Q = *tQ;
+
+        switch (mode_)
+        {
+            case fixedPower:
+            {
+                Q.primitiveFieldRef() = Q_/regionMesh().S().field();
+                eqn += Q;
+
+                break;
+            }
+            case fixedHeatFlux:
+            {
+                Q.primitiveFieldRef() = q_;
+                eqn += Q;
+                break;
+            }
+            case fixedHeatTransferCoeff:
+            {
+                const dimensionedScalar Ta
+                (
+                    "Ta",
+                    dimTemperature,
+                    Ta_->value(mesh_.time().timeOutputValue())
+                );
+
+                areaScalarField hp
+                (
+                    io,
+                    regionMesh(),
+                    dimensionedScalar
+                    (
+                        "h",
+                        dimPower/sqr(dimLength)/dimTemperature,
+                        h_
+                    )
+                );
+
+                const areaScalarField hpTa(hp*Ta);
+
+                if (emissivity_ > 0)
+                {
+                    hp -= emissivity_*sigma.value()*pow3(eqn.psi());
+                }
+
+                eqn -= fam::SuSp(hp, eqn.psi()) - hpTa;
+
+            }
+        }
+
+        if (debug)
+        {
+
+        }
+    }
+}
+
+
+bool Foam::fa::externalHeatFluxSource::read(const dictionary& dict)
+{
+    if (option::read(dict))
+    {
+        coeffs_.readIfPresent("T", TName_);
+
+        mode_ = operationModeNames.get("mode", dict);
+
+        switch (mode_)
+        {
+            case fixedPower:
+            {
+                dict.readEntry("Q", Q_);
+                break;
+            }
+            case fixedHeatFlux:
+            {
+                dict.readEntry("q", q_);
+                break;
+            }
+            case fixedHeatTransferCoeff:
+            {
+                dict.readEntry("h", h_);
+                Ta_ = Function1<scalar>::New("Ta", dict);
+                break;
+            }
+        }
+    }
+
+     return false;
+}
+
+
+// ************************************************************************* //

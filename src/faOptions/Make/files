@@ -1,0 +1,14 @@
+faOption/faOption.C
+faOption/faOptionIO.C
+faOption/faOptionList.C
+faOption/faOptions.C
+
+faceSetOption/faceSetOption.C
+
+/* Sources */
+derivedSources=sources/derived
+
+$(derivedSources)/externalHeatFluxSource/externalHeatFluxSource.C
+$(derivedSources)/jouleHeatingSource/jouleHeatingSource.C
+
+LIB = $(FOAM_LIBBIN)/libfaOptions
