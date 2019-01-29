@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | www.openfoam.com
+    \\  /    A nd           |
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+                            | Copyright (C) 2016-2017 Wikki Ltd
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,29 +25,14 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef uniformFixedValueFaPatchFieldsFwd_H
-#define uniformFixedValueFaPatchFieldsFwd_H
-
-#include "faPatchField.H"
-#include "fieldTypes.H"
+#include "faMesh.H"
+#include "skewCorrectedEdgeInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-template<class Type> class uniformFixedValueFaPatchField;
-
-makeFaPatchTypeFieldTypedefs(uniformFixedValue);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
+    makeEdgeInterpolationScheme(skewCorrectedEdgeInterpolation)
+}
 
 // ************************************************************************* //

@@ -1,0 +1,13 @@
+/* Region models */
+regionFaModel/regionFaModel.C
+thermalShellModel/thermalShellModel.C
+thermalShellModel/thermalShellModelNew.C
+thermalShell/thermalShell.C
+derivedFvPatchFields/thermalShell/thermalShellFvPatchScalarField.C
+
+vibrationShellModel/vibrationShellModel.C
+vibrationShellModel/vibrationShellModelNew.C
+KirchhoffShell/KirchhoffShell.C
+derivedFvPatchFields/vibrationShell/vibrationShellFvPatchScalarField.C
+
+LIB = $(FOAM_LIBBIN)/libregionFaModels

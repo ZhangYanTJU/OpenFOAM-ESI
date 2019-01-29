@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2017 Wikki Ltd
+    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,42 +25,43 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::uniformFixedValueFaPatchField
+    Foam::timeVaryingUniformFixedValueFaPatchField
 
 Description
-    This finiteArea boundary condition
-    provides a uniform fixed value condition, which can also be time-varying.
-
-Usage
-    \table
-        Property     | Description                  | Required | Default
-        uniformValue | uniform value                | yes |
-    \endtable
+    A time-varying form of a uniform fixed value finite area
+    boundary condition.
 
     Example of the boundary condition specification:
     \verbatim
-    <patchName>
+    inlet
     {
-        type            uniformFixedValue;
-        uniformValue    constant 0.2;
+        type            timeVaryingUniformFixedValue;
+        fileName        "<case>/time-series";
+        outOfBounds     clamp;           // (error|warn|clamp|repeat)
     }
     \endverbatim
 
-See also
-    Foam::Function1Types
-    Foam::fixedValueFvPatchField
-    Foam::uniformFixedValueFvPatchField.C
+Author
+    Zeljko Tukovic, FMENA
+    Hrvoje Jasak, Wikki Ltd.
+
+Note
+    This class is derived directly from a fixedValue patch rather than from
+    a uniformFixedValue patch.
+
+See Also
+    Foam::interpolationTable and Foam::fixedValueFaPatchField
 
 SourceFiles
-    uniformFixedValueFaPatchField.C
+    timeVaryingUniformFixedValueFaPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef uniformFixedValueFaPatchField_H
-#define uniformFixedValueFaPatchField_H
+#ifndef timeVaryingUniformFixedValueFaPatchField_H
+#define timeVaryingUniformFixedValueFaPatchField_H
 
 #include "fixedValueFaPatchField.H"
-#include "Function1.H"
+#include "interpolationTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -67,56 +69,56 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                  Class uniformFixedValueFaPatch Declaration
+             Class timeVaryingUniformFixedValueFaPatch Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class uniformFixedValueFaPatchField
+class timeVaryingUniformFixedValueFaPatchField
 :
     public fixedValueFaPatchField<Type>
 {
-    // Private Data
+    // Private data
 
-        //- Value
-        autoPtr<Function1<Type>> uniformValue_;
+        //- The time series being used, including the bounding treatment
+        interpolationTable<Type> timeSeries_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("uniformFixedValue");
+    TypeName("timeVaryingUniformFixedValue");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        uniformFixedValueFaPatchField
+        timeVaryingUniformFixedValueFaPatchField
         (
             const faPatch&,
             const DimensionedField<Type, areaMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        uniformFixedValueFaPatchField
+        timeVaryingUniformFixedValueFaPatchField
         (
             const faPatch&,
             const DimensionedField<Type, areaMesh>&,
             const dictionary&
         );
 
-        //- Construct by mapping onto a new patch
-        uniformFixedValueFaPatchField
+        //- Construct by mapping given patch field onto a new patch
+        timeVaryingUniformFixedValueFaPatchField
         (
-            const uniformFixedValueFaPatchField<Type>&,
+            const timeVaryingUniformFixedValueFaPatchField<Type>&,
             const faPatch&,
             const DimensionedField<Type, areaMesh>&,
             const faPatchFieldMapper&
         );
 
-        //- Copy construct
-        uniformFixedValueFaPatchField
+        //- Construct as copy
+        timeVaryingUniformFixedValueFaPatchField
         (
-            const uniformFixedValueFaPatchField<Type>&
+            const timeVaryingUniformFixedValueFaPatchField<Type>&
         );
 
         //- Construct and return a clone
@@ -124,14 +126,14 @@ public:
         {
             return tmp<faPatchField<Type>>
             (
-                new uniformFixedValueFaPatchField<Type>(*this)
+                new timeVaryingUniformFixedValueFaPatchField<Type>(*this)
             );
         }
 
         //- Construct as copy setting internal field reference
-        uniformFixedValueFaPatchField
+        timeVaryingUniformFixedValueFaPatchField
         (
-            const uniformFixedValueFaPatchField<Type>&,
+            const timeVaryingUniformFixedValueFaPatchField<Type>&,
             const DimensionedField<Type, areaMesh>&
         );
 
@@ -143,22 +145,34 @@ public:
         {
             return tmp<faPatchField<Type>>
             (
-                new uniformFixedValueFaPatchField<Type>(*this, iF)
+                new timeVaryingUniformFixedValueFaPatchField<Type>(*this, iF)
             );
         }
 
 
     //- Destructor
-    virtual ~uniformFixedValueFaPatchField() = default;
+    virtual ~timeVaryingUniformFixedValueFaPatchField() = default;
 
 
-    // Member Functions
+    // Member functions
 
-        //- Update the coefficients associated with the patch field
-        virtual void updateCoeffs();
+        // Access
+
+            //- Return the time series used
+            const interpolationTable<Type>& timeSeries() const
+            {
+                return timeSeries_;
+            }
+
+
+        // Evaluation functions
+
+            //- Update the coefficients associated with the patch field
+            virtual void updateCoeffs();
+
 
         //- Write
-        virtual void write(Ostream& os) const;
+        virtual void write(Ostream&) const;
 };
 
 
@@ -169,7 +183,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "uniformFixedValueFaPatchField.C"
+    #include "timeVaryingUniformFixedValueFaPatchField.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

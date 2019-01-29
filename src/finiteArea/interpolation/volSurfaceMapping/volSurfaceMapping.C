@@ -68,6 +68,44 @@ Foam::tmp<Foam::Field<Type>> Foam::volSurfaceMapping::mapToSurface
 
 
 template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::volSurfaceMapping::mapInternalToSurface
+(
+    const typename GeometricField<Type, fvPatchField, volMesh>::Boundary& df
+) const
+{
+    // Grab labels for all faces in faMesh
+    const labelList& faceLabels = mesh_.faceLabels();
+
+    tmp<Field<Type>> tresult
+    (
+        new Field<Type>(faceLabels.size(), Zero)
+    );
+    Field<Type>& result = tresult.ref();
+
+    // Get reference to volume mesh
+    const polyMesh& pMesh = mesh_();
+    const polyBoundaryMesh& bm = pMesh.boundaryMesh();
+
+    label patchID, faceID;
+
+    // Grab droplet cloud source by identifying patch and face
+    forAll(faceLabels, i)
+    {
+        // Escape if face is beyond active faces, eg belongs to a face zone
+        if (faceLabels[i] < pMesh.nFaces())
+        {
+            patchID = bm.whichPatch(faceLabels[i]);
+            faceID = bm[patchID].whichFace(faceLabels[i]);
+
+            result[i] = df[patchID].patchInternalField()()[faceID];
+        }
+    }
+
+    return tresult;
+}
+
+
+template<class Type>
 void Foam::volSurfaceMapping::mapToVolume
 (
     const GeometricField<Type, faPatchField, areaMesh>& af,
@@ -103,12 +141,39 @@ template<class Type>
 void Foam::volSurfaceMapping::mapToVolume
 (
     const tmp<GeometricField<Type, faPatchField, areaMesh>>& taf,
-     typename GeometricField<Type, fvPatchField, volMesh>::Boundary& bf
+    typename GeometricField<Type, fvPatchField, volMesh>::Boundary& bf
 ) const
 {
     mapToVolume(taf(), bf);
 
     taf.clear();
+}
+
+
+template<class Type>
+void Foam::volSurfaceMapping::mapToField
+(
+    const GeometricField<Type, faPatchField, areaMesh>& af,
+    Field<Type>& f
+) const
+{
+    const labelList& faceLabels = mesh_.faceLabels();
+
+    const polyMesh& pMesh = mesh_();
+    const polyBoundaryMesh& bm = pMesh.boundaryMesh();
+    label patchID, faceID;
+
+    const Field<Type>& afi = af.internalField();
+
+    forAll(faceLabels, i)
+    {
+        if (faceLabels[i] < pMesh.nFaces())
+        {
+            patchID = bm.whichPatch(faceLabels[i]);
+            faceID = bm[patchID].whichFace(faceLabels[i]);
+            f[faceID] = afi[i];
+        }
+    }
 }
 
 

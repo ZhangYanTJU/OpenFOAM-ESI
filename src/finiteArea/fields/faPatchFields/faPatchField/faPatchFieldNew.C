@@ -37,7 +37,12 @@ Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
     const DimensionedField<Type, areaMesh>& iF
 )
 {
-    DebugInFunction << "Constructing faPatchField<Type>" << endl;
+    DebugInFunction
+        << "Constructing faPatchField<Type> "
+        << "patchFieldType:" << patchFieldType
+        << "actualPatchType:" << actualPatchType
+        << "p.Type():" << p.type()
+        << endl;
 
     auto cstrIter = patchConstructorTablePtr_->cfind(patchFieldType);
 
@@ -139,6 +144,61 @@ Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
     return cstrIter()(p, iF, dict);
 }
 
+/*
+template<class Type>
+Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
+(
+    const word& patchFieldType,
+    const word& actualPatchType,
+    const faPatch& p,
+    const DimensionedField<Type, areaMesh>& iF
+)
+{
+    DebugInFunction
+        << "patchFieldType = " << patchFieldType
+        << " : " << p.type()
+        << endl;
+
+    auto cstrIter = patchConstructorTablePtr_->cfind(patchFieldType);
+
+    if (!cstrIter.found())
+    {
+        FatalErrorInFunction
+            << "Unknown patchField type "
+            << patchFieldType << nl << nl
+            << "Valid patchField types :" << endl
+            << patchConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    auto patchTypeCstrIter = patchConstructorTablePtr_->cfind(p.type());
+
+    if
+    (
+        actualPatchType == word::null
+     || actualPatchType != p.type()
+    )
+    {
+        if (patchTypeCstrIter.found())
+        {
+            return patchTypeCstrIter()(p, iF);
+        }
+        else
+        {
+            return cstrIter()(p, iF);
+        }
+    }
+
+    tmp<faPatchField<Type>> tfvp = cstrIter()(p, iF);
+
+    // Check if constraint type override and store patchType if so
+    //if (patchTypeCstrIter.found())
+    //{
+    //    tfvp.ref().patchType() = actualPatchType;
+    //}
+    return tfvp;
+}
+*/
 
 template<class Type>
 Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
