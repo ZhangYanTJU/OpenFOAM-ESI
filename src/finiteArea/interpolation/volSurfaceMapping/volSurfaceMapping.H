@@ -96,6 +96,15 @@ public:
             GeometricField<Type, fvPatchField, volMesh>::Boundary& df
         ) const;
 
+
+        //- Map patch internal field to surface
+        template<class Type>
+        tmp<Field<Type>> mapInternalToSurface
+        (
+            const typename
+            GeometricField<Type, fvPatchField, volMesh>::Boundary& df
+        ) const;
+
         //- Map surface field to volume boundary field
         template<class Type>
         void mapToVolume
