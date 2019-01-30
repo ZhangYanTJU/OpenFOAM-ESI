@@ -127,7 +127,8 @@ thermalShell::thermalShell
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 void thermalShell::init()
-{}
+{
+}
 
 
 void thermalShell::preEvolveRegion()
