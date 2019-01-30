@@ -84,14 +84,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     typedef regionModels::thermalShellModel baffle;
 
     {
-       // const word regionName = dict_.get<word>("region");
-
-        if
-        (
-       //     !thisMesh.time().foundObject<faMesh>(regionName)
-       //  && regionName != "none"
-          baffle_.empty()
-        )
+        if (baffle_.empty())
         {
             baffle_.reset(baffle::New(thisMesh, p, dict).ptr());
         }

@@ -82,7 +82,9 @@ regionModels/Allwmake $targetType $*
 lagrangian/Allwmake $targetType $*
 
 wmake $targetType fvOptions
+wmake $targetType faOptions
 wmake $targetType fvMotionSolver
+wmake $targetType regionFaModels
 
 # Ensure we have block.H accessible before building overset
 wmake $targetType mesh/blockMesh

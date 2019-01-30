@@ -52,21 +52,6 @@ bool thermalShellModel::read(const dictionary& dict)
 }
 
 
-void thermalShellModel::init()
-{
-
-    faOptions_.reset
-    (
-        &Foam::fa::options::New(primaryMesh())
-    );
-
-    if (!faOptions_->optionList::size())
-    {
-        Info << "No finite area options present" << endl;
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 
@@ -95,9 +80,12 @@ thermalShellModel::thermalShellModel
         ),
         regionMesh()
     ),
-    faOptions_()
+    faOptions_(Foam::fa::options::New(primaryMesh()))
 {
-    init();
+    if (!faOptions_.optionList::size())
+    {
+        Info << "No finite area options present" << endl;
+    }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -150,14 +138,16 @@ const Foam::volScalarField& thermalShellModel::Tp() const
     return Tp_;
 }
 
+
 const Foam::areaScalarField& thermalShellModel::T() const
 {
     return T_;
 }
 
+
 Foam::fa::options& thermalShellModel::faOptions()
 {
-    return faOptions_.ref();
+     return faOptions_;
 }
 
 

@@ -88,7 +88,7 @@ protected:
         areaScalarField T_;
 
         //- Pointer to faOptions
-        autoPtr<Foam::fa::options> faOptions_;
+        Foam::fa::options& faOptions_;
 
 
     // Protected Member Functions
