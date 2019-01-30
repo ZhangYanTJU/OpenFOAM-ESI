@@ -114,7 +114,7 @@ thermalShell::thermalShell
 )
 :
     thermalShellModel(modelType, mesh, patch, dict),
-    nNonOrthCorr_(1),//solution().get<label>("nNonOrthCorr")),
+    nNonOrthCorr_(1),
     thermo_(dict.subDict("thermo")),
     qs_
     (
@@ -168,7 +168,8 @@ thermalShell::~thermalShell()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 void thermalShell::init()
-{}
+{
+}
 
 
 void thermalShell::preEvolveRegion()
@@ -177,6 +178,8 @@ void thermalShell::preEvolveRegion()
 
 void thermalShell::evolveRegion()
 {
+    nNonOrthCorr_ = solution().get<label>("nNonOrthCorr");
+
     for (int nonOrth=0; nonOrth<=nNonOrthCorr_; nonOrth++)
     {
         solveEnergy();
