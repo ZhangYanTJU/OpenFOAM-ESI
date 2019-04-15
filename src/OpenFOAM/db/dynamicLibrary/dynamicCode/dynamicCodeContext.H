@@ -2,8 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2011, 2019 OpenCFD Ltd.
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+                            | Copyright (C) 2011-2016 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -78,7 +80,7 @@ public:
     // Constructors
 
         //- Construct from a dictionary
-        dynamicCodeContext(const dictionary&);
+        dynamicCodeContext(const dictionary& dict);
 
 
     // Member functions
@@ -126,10 +128,11 @@ public:
         }
 
         //- Helper: add \#line directive
+        //  The lineNum is 0-based. No-op if the lineNum is negative.
         static void addLineDirective
         (
-            string&,
-            const label lineNum,
+            string& code,
+            label lineNum,
             const fileName& name
         );
 };
