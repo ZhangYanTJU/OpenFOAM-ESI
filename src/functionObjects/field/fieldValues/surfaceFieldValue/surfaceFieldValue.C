@@ -465,8 +465,6 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::usesSf() const
         case opSum:
         case opSumMag:
         case opAverage:
-        case opSumDirection:
-        case opSumDirectionBalance:
         {
             return false;
         }
