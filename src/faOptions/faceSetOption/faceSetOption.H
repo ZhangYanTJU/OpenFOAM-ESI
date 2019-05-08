@@ -27,6 +27,7 @@ Class
     Foam::fa::faceSetOption
 
 Description
+
     Intermediate abstract class for handling
     face-set options for the derived faOptions.
 
@@ -52,6 +53,7 @@ Usage
             // when selectionMode=volFaceZone
             faceZone          <faceZoneName>;
     }
+
     \endverbatim
 
     where the entries mean:
