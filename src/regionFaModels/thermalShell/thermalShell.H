@@ -126,7 +126,14 @@ protected:
             areaScalarField h_;
 
 
+
     // Protected Member Functions
+
+        // Sub models
+
+            //- Pointer to radiation model
+            //autoPtr<radiation::radiationModel> radiation_;
+
 
         //- Read control parameters from dictionary
         virtual bool read(const dictionary& dict);

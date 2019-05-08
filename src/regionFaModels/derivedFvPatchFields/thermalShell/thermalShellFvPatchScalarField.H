@@ -55,6 +55,7 @@ Usage
       type     | Type name: compressible::thermalShell | word  | yes  | -
     \endtable
 
+
     The inherited entries are elaborated in:
       - \link fixedValueFvPatchField.H \endlink
       - \link thermalShellModel.H \endlink
@@ -62,6 +63,7 @@ Usage
 Note
   - The two-dimensional area mesh needs to be
     generated in the pre-processing steps.
+
 
 SourceFiles
     thermalShellFvPatchScalarField.C

@@ -82,6 +82,7 @@ SourceFiles
 #include "volSurfaceMapping.H"
 #include "runTimeSelectionTables.H"
 
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -151,6 +152,9 @@ private:
 
         //- Source active flag
         bool active_;
+
+        //-Volume-to surface mapping
+        autoPtr<volSurfaceMapping> vsmPtr_;
 
 
 public:
@@ -259,6 +263,9 @@ public:
 
             //- Return const access to fvPatch
             inline const fvPatch& patch() const noexcept;
+
+            //- Return const access to fvPatch
+            inline const fvPatch& patch() const;
 
             //- Return dictionary
             inline const dictionary& coeffs() const noexcept;
