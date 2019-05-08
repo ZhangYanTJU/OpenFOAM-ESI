@@ -78,9 +78,6 @@ void thermalShell::solveEnergy()
 
     Tw1_.primitiveFieldRef() = vsmPtr_->mapInternalToSurface<scalar>(vfb);
 
-    // Heat transfer coefficient
-    tmp<areaScalarField> htcw = this->htc();
-
     const areaScalarField rhoCph(Cp()*rho()*h_);
 
     faScalarMatrix TEqn
