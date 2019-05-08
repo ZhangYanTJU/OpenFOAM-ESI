@@ -46,6 +46,7 @@ Foam::fa::faceSetOption::selectionModeTypeNames_
    // { selectionModeType::smFaceSet, "faceSet" },
     //{ selectionModeType::smFaceZone, "faceZone" },
     { selectionModeType::smAll, "all" },
+    { selectionModeType::smVolFaceZone, "volFaceZone" }
 });
 
 
@@ -67,6 +68,11 @@ void Foam::fa::faceSetOption::setSelection(const dictionary& dict)
 //         }
         case smAll:
         {
+            break;
+        }
+        case smVolFaceZone:
+        {
+            dict.readEntry("faceZone", faceSetName_);
             break;
         }
         default:
@@ -116,28 +122,54 @@ void Foam::fa::faceSetOption::setFaceSet()
 //         case smFaceSet:
 //         {
 //             Info<< indent
-//                 << "- selecting cells using cellSet " << cellSetName_ << endl;
+//                 << "- selecting cells using cellSet " << cellSetName_
+//                 << endl;
 //
 //             faces_ = faceSet(mesh_, faceSetName_).sortedToc();
 //             break;
 //         }
-//         case smFaceZone:
-//         {
-//             Info<< indent
-//                 << "- selecting cells using cellZone " << faceSetName_ << endl;
-//
-//             label zoneID = mesh_.faceZones().findZoneID(faceSetName_);
-//             if (zoneID == -1)
-//             {
-//                 FatalErrorInFunction
-//                     << "Cannot find cellZone " << faceSetName_ << endl
-//                     << "Valid cellZones are " << mesh_.faceZones().names()
-//                     << exit(FatalError);
-//             }
-//
-//             faces_ = mesh_.faceZones()[zoneID];
-//             break;
-//         }
+        case smVolFaceZone:
+        {
+            Info<< indent
+                << "- selecting faces using volume-mesh faceZone "
+                << faceSetName_ << endl;
+
+            label zoneID = mesh_.faceZones().findZoneID(faceSetName_);
+            if (zoneID == -1)
+            {
+                FatalErrorInFunction
+                    << "Cannot find faceZone " << faceSetName_ << endl
+                    << "Valid faceZones are " << mesh_.faceZones().names()
+                    << exit(FatalError);
+            }
+
+            const faceZone& addr = mesh_.faceZones()[zoneID];
+
+            const bitSet isZoneFace(mesh_.nFaces(), addr);
+
+            // Do we loop over faMesh faces or over faceZone faces?
+            const labelUList& faceLabels = regionMesh().faceLabels();
+
+            label n = 0;
+            for (const label facei : faceLabels)
+            {
+                if (isZoneFace[facei])
+                {
+                    n++;
+                }
+            }
+            faces_.setSize(n);
+            n = 0;
+            for (const label facei : faceLabels)
+            {
+                if (isZoneFace[facei])
+                {
+                    faces_[n++] = facei;
+                }
+            }
+            break;
+        }
+
         case smAll:
         {
             Info<< indent << "- selecting all faces" << endl;

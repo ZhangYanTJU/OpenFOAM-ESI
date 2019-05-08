@@ -25,7 +25,7 @@ Class
     Foam::fa::faceSetOption
 
 Description
-    face-set options abtract base class.  Provides a base set of controls,
+    Face-set options abtract base class.  Provides a base set of controls,
     e.g.:
     \verbatim
         type            scalarExplicitSource    // Source type
@@ -33,7 +33,7 @@ Description
 
         timeStart       0.0;        // Start time
         duration        1000.0;     // Duration
-        selectionMode   faceSet;    //
+        selectionMode   all;        // Which faces to select
         .
         .
         .
@@ -80,7 +80,8 @@ public:
         {
             //smFaceSet,
             //smFaceZone,
-            smAll
+            smAll,
+            smVolFaceZone
         };
 
         //- List of selection mode type names
