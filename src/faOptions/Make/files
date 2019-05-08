@@ -10,5 +10,6 @@ derivedSources=sources/derived
 
 $(derivedSources)/externalHeatFluxSource/externalHeatFluxSource.C
 $(derivedSources)/jouleHeatingSource/jouleHeatingSource.C
+$(derivedSources)/contactHeatFluxSource/contactHeatFluxSource.C
 
 LIB = $(FOAM_LIBBIN)/libfaOptions

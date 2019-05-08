@@ -40,7 +40,6 @@ SourceFiles
 #include "areaFieldsFwd.H"
 #include "volFieldsFwd.H"
 #include "regionFaModel.H"
-#include "temperatureCoupledBase.H"
 #include "faOptions.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -57,8 +56,7 @@ namespace regionModels
 
 class thermalShellModel
 :
-    public regionFaModel,
-    public temperatureCoupledBase
+    public regionFaModel
 {
 private:
 
@@ -150,10 +148,6 @@ public:
 
     // Member Functions
 
-        // Help functions
-
-            //- Return heat transfer coefficient to primary region
-            tmp<areaScalarField> htc() const;
 
         // Access functions
 

@@ -46,6 +46,7 @@ SourceFiles
 #include "Switch.H"
 #include "runTimeSelectionTables.H"
 #include "fvMesh.H"
+#include "volSurfaceMapping.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -81,6 +82,9 @@ protected:
         //- Reference to the mesh database
         const fvMesh& mesh_;
 
+        //- Reference to the patch
+        const fvPatch& patch_;
+
         //- Top level source dictionary
         dictionary dict_;
 
@@ -102,6 +106,9 @@ protected:
         //- Pointer to the region mesh database
         autoPtr<faMesh> regionMeshPtr_;
 
+        //-Volume-to surface mapping
+        autoPtr<volSurfaceMapping> vsmPtr_;
+
 
 public:
 
@@ -120,9 +127,10 @@ public:
                 const word& name,
                 const word& modelType,
                 const dictionary& dict,
-                const fvMesh& mesh
+                const fvMesh& mesh,
+                const fvPatch& patch
             ),
-            (name, modelType, dict, mesh)
+            (name, modelType, dict, mesh, patch)
         );
 
 
@@ -134,7 +142,8 @@ public:
             const word& name,
             const word& modelType,
             const dictionary& dict,
-            const fvMesh& mesh
+            const fvMesh& mesh,
+            const fvPatch& patch
         );
 
         //- Return clone
@@ -151,6 +160,10 @@ public:
             //- Reference to the mesh
             const fvMesh& mesh_;
 
+            //- Reference to the patch
+            const fvPatch& patch_;
+
+            //- Name
             const word& name_;
 
         public:
@@ -158,10 +171,12 @@ public:
             iNew
             (
                 const fvMesh& mesh,
+                const fvPatch& patch,
                 const word& name
             )
             :
                 mesh_(mesh),
+                patch_(patch),
                 name_(name)
             {}
 
@@ -172,7 +187,7 @@ public:
 
                 return autoPtr<option>
                 (
-                    option::New(name_, dict, mesh_)
+                    option::New(name_, dict, mesh_, patch_)
                 );
             }
         };
@@ -185,7 +200,8 @@ public:
         (
             const word& name,
             const dictionary& dict,
-            const fvMesh& mesh
+            const fvMesh& mesh,
+            const fvPatch& patch
         );
 
 
@@ -203,6 +219,9 @@ public:
             //- Return const access to the mesh database
             inline const fvMesh& mesh() const;
 
+            //- Return const access to fvPatch
+            inline const fvPatch& patch() const;
+
             //- Return dictionary
             inline const dictionary& coeffs() const;
 
@@ -214,6 +233,9 @@ public:
 
             //- Return the region mesh database
             inline const faMesh& regionMesh() const;
+
+             //- Return volSurfaceMapping
+            inline const volSurfaceMapping& vsm() const;
 
             //- Region name
             inline const word& regionName() const;

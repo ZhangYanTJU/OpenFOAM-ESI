@@ -50,33 +50,12 @@ bool thermalShell::read(const dictionary& dict)
 }
 
 
-tmp<faScalarMatrix> thermalShell::q(areaScalarField& T)
-{
-    const volScalarField::Boundary& vfb = Tp_.boundaryField();
-
-    Tw1_.primitiveFieldRef() = vsmPtr_->mapInternalToSurface<scalar>(vfb);
-
-    // Heat transfer coefficient
-    tmp<areaScalarField> htcw = this->htc();
-
-    return
-    (
-         // Heat-transfer to the primary region
-       - fam::Sp(htcw(), T) + htcw()*Tw1_
-    );
-
-}
-
 void thermalShell::solveEnergy()
 {
     if (debug)
     {
         InfoInFunction << endl;
     }
-
-    const volScalarField::Boundary& vfb = Tp_.boundaryField();
-
-    Tw1_.primitiveFieldRef() = vsmPtr_->mapInternalToSurface<scalar>(vfb);
 
     const areaScalarField rhoCph(Cp()*rho()*h_);
 
@@ -86,7 +65,7 @@ void thermalShell::solveEnergy()
       - fam::laplacian(kappa()*h_, T_)
      ==
         qs_
-      + q(T_)
+      //+ q(T_) handled by faOption contactHeatFlux
       + faOptions()(h_, rhoCph, T_)
     );
 
@@ -125,20 +104,6 @@ thermalShell::thermalShell
         ),
         regionMesh(),
         dimensionedScalar(dimPower/dimArea, Zero)
-    ),
-    Tw1_
-    (
-        IOobject
-        (
-            "Tw1_" + regionName_,
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        regionMesh(),
-        dimensionedScalar(dimTemperature, Zero),
-        zeroGradientFaPatchScalarField::typeName
     ),
     h_
     (

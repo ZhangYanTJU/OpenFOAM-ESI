@@ -73,6 +73,9 @@ protected:
         //- Reference to the mesh database
         const fvMesh& mesh_;
 
+        //- Reference to the patch
+        const fvPatch& patch_;
+
         //- Time index to check that all defined sources have been applied
         label checkTimeIndex_;
 
@@ -114,10 +117,10 @@ public:
     // Constructors
 
         //- Construct null
-        optionList(const fvMesh& mesh);
+        optionList(const fvMesh& mesh, const fvPatch& p);
 
         //- Construct from mesh and dictionary
-        optionList(const fvMesh& mesh, const dictionary& dict);
+        optionList(const fvMesh&, const fvPatch&, const dictionary& );
 
 
     //- Destructor

@@ -90,15 +90,16 @@ Foam::IOobject Foam::fa::options::createIOobject
 
 Foam::fa::options::options
 (
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const fvPatch& p
 )
 :
     IOdictionary(createIOobject(mesh)),
-    optionList(mesh, *this)
+    optionList(mesh, p,*this)
 {}
 
 
-Foam::fa::options& Foam::fa::options::New(const fvMesh& mesh)
+Foam::fa::options& Foam::fa::options::New(const fvMesh& mesh, const fvPatch& p)
 {
     if (mesh.thisDb().foundObject<options>(typeName))
     {
@@ -116,7 +117,7 @@ Foam::fa::options& Foam::fa::options::New(const fvMesh& mesh)
                 << " for region " << mesh.name() << endl;
         }
 
-        options* objectPtr = new options(mesh);
+        options* objectPtr = new options(mesh, p);
         regIOobject::store(objectPtr);
         return *objectPtr;
     }

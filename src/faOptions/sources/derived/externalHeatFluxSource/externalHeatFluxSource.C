@@ -70,10 +70,11 @@ Foam::fa::externalHeatFluxSource::externalHeatFluxSource
     const word& sourceName,
     const word& modelType,
     const dictionary& dict,
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const fvPatch& patch
 )
 :
-    faceSetOption(sourceName, modelType, dict, mesh),
+    faceSetOption(sourceName, modelType, dict, mesh, patch),
     mode_(operationModeNames.get("mode", dict)),
     TName_(dict.get<word>("T")),
     Q_(0),
@@ -195,11 +196,6 @@ void Foam::fa::externalHeatFluxSource::addSup
                 eqn -= fam::SuSp(hp, eqn.psi()) - hpTa;
 
             }
-        }
-
-        if (debug)
-        {
-
         }
     }
 }

@@ -41,10 +41,9 @@ namespace Foam
 
 void Foam::fa::option::constructMeshObjects()
 {
-    regionMeshPtr_.reset
-    (
-        new faMesh(mesh_)
-    );
+    regionMeshPtr_.reset(new faMesh(mesh_));
+
+    vsmPtr_.reset(new volSurfaceMapping(regionMeshPtr_()));
 
     //const_cast<word&>(regionMeshPtr_->name()) = regionName_;
 }
@@ -58,19 +57,22 @@ Foam::fa::option::option
     const word& name,
     const word& modelType,
     const dictionary& dict,
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const fvPatch& patch
 )
 :
     name_(name),
     modelType_(modelType),
     mesh_(mesh),
+    patch_(patch),
     dict_(dict),
     coeffs_(dict.optionalSubDict(modelType + "Coeffs")),
     active_(dict_.lookupOrDefault<Switch>("active", true)),
     fieldNames_(),
     applied_(),
     regionName_(dict.lookup("region")),
-    regionMeshPtr_(nullptr)
+    regionMeshPtr_(nullptr),
+    vsmPtr_(nullptr)
 {
     constructMeshObjects();
 
@@ -84,7 +86,8 @@ Foam::autoPtr<Foam::fa::option> Foam::fa::option::New
 (
     const word& name,
     const dictionary& coeffs,
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const fvPatch& patch
 )
 {
     const word modelType(coeffs.get<word>("type"));
@@ -111,7 +114,7 @@ Foam::autoPtr<Foam::fa::option> Foam::fa::option::New
             << exit(FatalError);
     }
 
-    return autoPtr<option>(cstrIter()(name, modelType, coeffs, mesh));
+    return autoPtr<option>(cstrIter()(name, modelType, coeffs, mesh, patch));
 }
 
 

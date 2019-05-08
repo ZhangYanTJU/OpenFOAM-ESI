@@ -96,8 +96,6 @@ protected:
             //- External surface energy source  / [J/m2/s]
             areaScalarField qs_;
 
-            //- Temperature - wall [K]
-            areaScalarField Tw1_;
 
             //- Thickness
             areaScalarField h_;
@@ -111,8 +109,6 @@ protected:
 
     // Protected member functions
 
-        //- Heat transfe to primary region
-        tmp<faScalarMatrix> q(areaScalarField& T);
 
         //- Read control parameters from dictionary
         virtual bool read(const dictionary& dict);

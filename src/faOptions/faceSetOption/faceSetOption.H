@@ -137,7 +137,8 @@ public:
             const word& name,
             const word& modelType,
             const dictionary& dict,
-            const fvMesh& mesh
+            const fvMesh& mesh,
+            const fvPatch& patch
         );
 
 

@@ -36,6 +36,11 @@ inline const Foam::fvMesh& Foam::fa::option::mesh() const
     return mesh_;
 }
 
+inline const Foam::fvPatch& Foam::fa::option::patch() const
+{
+    return patch_;
+}
+
 
 inline const Foam::dictionary& Foam::fa::option::coeffs() const
 {
@@ -77,6 +82,21 @@ inline const Foam::faMesh& Foam::fa::option::regionMesh() const
             << "Region mesh not available" << abort(FatalError);
     }
     return *(new faMesh(mesh_));
+}
+
+
+inline const Foam::volSurfaceMapping& Foam::fa::option::vsm() const
+{
+    if (vsmPtr_.valid())
+    {
+        return vsmPtr_();
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "vsmPtr not available" << abort(FatalError);
+    }
+    return *(new volSurfaceMapping(regionMeshPtr_()));
 }
 
 

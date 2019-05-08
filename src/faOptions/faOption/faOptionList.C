@@ -84,20 +84,27 @@ void Foam::fa::optionList::checkApplied() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fa::optionList::optionList(const fvMesh& mesh, const dictionary& dict)
+Foam::fa::optionList::optionList
+(
+    const fvMesh& mesh,
+    const fvPatch& p,
+    const dictionary& dict
+)
 :
     PtrList<option>(),
     mesh_(mesh),
+    patch_(p),
     checkTimeIndex_(mesh_.time().startTimeIndex() + 2)
 {
     reset(optionsDict(dict));
 }
 
 
-Foam::fa::optionList::optionList(const fvMesh& mesh)
+Foam::fa::optionList::optionList(const fvMesh& mesh, const fvPatch& p)
 :
     PtrList<option>(),
     mesh_(mesh),
+    patch_(p),
     checkTimeIndex_(mesh_.time().startTimeIndex() + 2)
 {}
 
@@ -129,7 +136,7 @@ void Foam::fa::optionList::reset(const dictionary& dict)
             this->set
             (
                 count++,
-                option::New(name, sourceDict, mesh_)
+                option::New(name, sourceDict, mesh_, patch_)
             );
         }
     }

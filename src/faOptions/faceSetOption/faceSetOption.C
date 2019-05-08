@@ -198,10 +198,11 @@ Foam::fa::faceSetOption::faceSetOption
     const word& name,
     const word& modelType,
     const dictionary& dict,
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const fvPatch& patch
 )
 :
-    option(name, modelType, dict, mesh),
+    option(name, modelType, dict, mesh, patch),
     timeStart_(-1.0),
     duration_(0.0),
     selectionMode_(selectionModeTypeNames_.get("selectionMode", coeffs_)),

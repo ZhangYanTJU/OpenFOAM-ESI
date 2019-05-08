@@ -78,11 +78,6 @@ Usage
     \endverbatim
 
 
-
-See also
-    Foam::compressible::turbulentTemperatureCoupledBaffleMixedFvPatchScalarField
-    Foam::regionModels::thermalBaffleModels::thermalBaffleModel
-
 SourceFiles
     thermalShellFvPatchScalarField.C
 

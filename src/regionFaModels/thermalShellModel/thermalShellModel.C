@@ -65,7 +65,6 @@ thermalShellModel::thermalShellModel
 )
 :
     regionFaModel(mesh, p, "thermalShell", modelType, dict, true),
-    temperatureCoupledBase(p, dict),
     TName_(dict.get<word>("T")),
     Tp_(mesh.lookupObject<volScalarField>(TName_)),
     T_
@@ -80,7 +79,7 @@ thermalShellModel::thermalShellModel
         ),
         regionMesh()
     ),
-    faOptions_(Foam::fa::options::New(primaryMesh()))
+    faOptions_(Foam::fa::options::New(primaryMesh(), p))
 {
     if (!faOptions_.optionList::size())
     {
@@ -98,40 +97,6 @@ thermalShellModel::~thermalShellModel()
 
 void thermalShellModel::preEvolveRegion()
 {}
-
-
-tmp<areaScalarField> thermalShellModel::htc() const
-{
-    tmp<areaScalarField> thtc
-    (
-        new areaScalarField
-        (
-            IOobject
-            (
-                "thtc",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            regionMesh(),
-            dimensionedScalar(dimPower/dimArea/dimTemperature, Zero)
-        )
-    );
-
-    areaScalarField& htc = thtc.ref();
-
-    const volScalarField::Boundary& vfb = Tp_.boundaryField();
-
-    htc.primitiveFieldRef() =
-        temperatureCoupledBase::kappa
-        (
-            vsmPtr_->mapInternalToSurface<scalar>(vfb)()
-        )*regionFaModel::patch_.deltaCoeffs();
-
-    return thtc;
-}
-
 
 const Foam::volScalarField& thermalShellModel::Tp() const
 {
