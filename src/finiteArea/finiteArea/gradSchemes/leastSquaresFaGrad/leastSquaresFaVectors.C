@@ -109,7 +109,8 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
 
 
     // Set up temporary storage for the dd tensor (before inversion)
-    symmTensorField dd(mesh().nFaces(), Zero);
+    symmTensor small(ROOTSMALL);
+    symmTensorField dd(mesh().nFaces(), Zero + small);
 
     forAll(owner, facei)
     {
