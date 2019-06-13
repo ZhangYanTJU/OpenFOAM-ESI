@@ -84,12 +84,11 @@ void thermalShell::solveEnergy()
 thermalShell::thermalShell
 (
     const word& modelType,
-    const fvMesh& mesh,
     const fvPatch& patch,
     const dictionary& dict
 )
 :
-    thermalShellModel(modelType, mesh, patch, dict),
+    thermalShellModel(modelType, patch, dict),
     nNonOrthCorr_(1),
     thermo_(dict.subDict("thermo")),
     qs_
@@ -97,8 +96,8 @@ thermalShell::thermalShell
         IOobject
         (
             "qs_" + regionName_,
-            mesh.time().timeName(),
-            mesh,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
@@ -110,8 +109,8 @@ thermalShell::thermalShell
         IOobject
         (
             "h_" + regionName_,
-            mesh.time().timeName(),
-            mesh,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),

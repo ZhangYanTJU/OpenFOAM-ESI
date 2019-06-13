@@ -527,12 +527,23 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
           - deltaCoeffs[edgeI]*unitDelta;
     }
 
+
     edgeVectorField::Boundary& CorrVecsbf = CorrVecs.boundaryFieldRef();
+
+    forAll(CorrVecs.boundaryField(), patchI)
+    {
+        mesh().boundary()[patchI].makeCorrectionVectors
+        (
+            CorrVecs.boundaryFieldRef()[patchI]
+        );
+    }
+/*
+
     for (faePatchVectorField& patchCorrVecs : CorrVecsbf)
     {
         patchCorrVecs = vector::zero;
     }
-
+*/
     scalar NonOrthogCoeff = 0.0;
 
     if (owner.size() > 0)

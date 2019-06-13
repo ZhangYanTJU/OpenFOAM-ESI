@@ -81,6 +81,7 @@ $(schemes)/upwind/upwindEdgeInterpolationMake.C
 $(schemes)/linearUpwind/linearUpwindEdgeInterpolationMake.C
 $(schemes)/Gamma/GammaEdgeInterpolationMake.C
 $(schemes)/blended/blendedEdgeInterpolationMake.C
+$(schemes)/skewCorrected/skewCorrectedEdgeInterpolationMake.C
 
 finiteArea/fa/fa.C
 finiteArea/faSchemes/faSchemes.C

@@ -25,8 +25,10 @@ License
 
 #include "jouleHeatingSource.H"
 #include "faMatrices.H"
-#include "famLaplacian.H"
-#include "facGrad.H"
+//#include "famLaplacian.H"
+#include "faCFD.H"
+//#include "facGrad.H"
+//#include "facLnGrad.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
@@ -54,19 +56,18 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
     const word& sourceName,
     const word& modelType,
     const dictionary& dict,
-    const fvMesh& mesh,
     const fvPatch& patch
 )
 :
-    faceSetOption(sourceName, modelType, dict, mesh, patch),
+    faceSetOption(sourceName, modelType, dict, patch),
     TName_(dict.get<word>("T")),
     V_
     (
         IOobject
         (
             typeName + ":V_" + regionName_,
-            mesh.time().timeName(),
-            mesh,
+            mesh().time().timeName(),
+            mesh(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -82,6 +83,19 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
     fieldNames_.setSize(1, TName_);
 
     applied_.setSize(fieldNames_.size(), false);
+
+    if (anisotropicElectricalConductivity_)
+    {
+        Info<< "    Using tensor electrical conductivity" << endl;
+
+        initialiseSigma(coeffs_, tensorSigmaVsTPtr_);
+    }
+    else
+    {
+        Info<< "    Using scalar electrical conductivity" << endl;
+
+        initialiseSigma(coeffs_, scalarSigmaVsTPtr_);
+    }
 
     read(dict);
 }
@@ -109,32 +123,35 @@ void Foam::fa::jouleHeatingSource::addSup
 
         if (curTimeIndex_ != mesh().time().timeIndex())
         {
-            if (anisotropicElectricalConductivity_)
+            for (label i=0; i < nIter_; i++)
             {
-                // Update sigma as a function of T if required
-                const areaTensorField& sigma = updateSigma(tensorSigmaVsTPtr_);
+                if (anisotropicElectricalConductivity_)
+                {
+                    // Update sigma as a function of T if required
+                    const areaTensorField& sigma = updateSigma(tensorSigmaVsTPtr_);
 
-                // Solve the electrical potential equation
-                faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
-                VEqn.relax();
-                VEqn.solve();
-            }
-            else
-            {
-                // Update sigma as a function of T if required
-                const areaScalarField& sigma = updateSigma(scalarSigmaVsTPtr_);
+                    // Solve the electrical potential equation
+                    faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
+                    VEqn.relax();
+                    VEqn.solve();
+                }
+                else
+                {
+                    // Update sigma as a function of T if required
+                    const areaScalarField& sigma = updateSigma(scalarSigmaVsTPtr_);
 
-                // Solve the electrical potential equation
-                faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
-                VEqn.relax();
-                VEqn.solve();
+                    // Solve the electrical potential equation
+                    faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
+                    VEqn.relax();
+                    VEqn.solve();
+                }
             }
 
             curTimeIndex_ = mesh().time().timeIndex();
         }
 
         // Add the Joule heating contribution
-        const areaVectorField gradV(fac::grad(V_));
+        areaVectorField gradV("gradV", fac::grad(V_));
 
         if (anisotropicElectricalConductivity_)
         {
@@ -155,6 +172,12 @@ void Foam::fa::jouleHeatingSource::addSup
                 );
 
             eqn += (h*sigma*gradV) & gradV;
+
+            if (mesh().time().outputTime() && debug)
+            {
+                areaScalarField qgradV("gradVSource", (gradV & gradV));
+                qgradV.write();
+            }
         }
     }
 }
@@ -166,21 +189,11 @@ bool Foam::fa::jouleHeatingSource::read(const dictionary& dict)
     {
         coeffs_.readIfPresent("T", TName_);
 
+        coeffs_.readIfPresent("nIter", nIter_);
+
         anisotropicElectricalConductivity_ =
             coeffs_.get<bool>("anisotropicElectricalConductivity");
 
-        if (anisotropicElectricalConductivity_)
-        {
-            Info<< "    Using tensor electrical conductivity" << endl;
-
-            initialiseSigma(coeffs_, tensorSigmaVsTPtr_);
-        }
-        else
-        {
-            Info<< "    Using scalar electrical conductivity" << endl;
-
-            initialiseSigma(coeffs_, scalarSigmaVsTPtr_);
-        }
 
         return true;
     }
@@ -189,3 +202,4 @@ bool Foam::fa::jouleHeatingSource::read(const dictionary& dict)
 }
 
 // ************************************************************************* //
+

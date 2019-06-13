@@ -127,10 +127,9 @@ public:
                 const word& name,
                 const word& modelType,
                 const dictionary& dict,
-                const fvMesh& mesh,
                 const fvPatch& patch
             ),
-            (name, modelType, dict, mesh, patch)
+            (name, modelType, dict, patch)
         );
 
 
@@ -142,7 +141,6 @@ public:
             const word& name,
             const word& modelType,
             const dictionary& dict,
-            const fvMesh& mesh,
             const fvPatch& patch
         );
 
@@ -157,8 +155,6 @@ public:
         //  on the freestore from an Istream
         class iNew
         {
-            //- Reference to the mesh
-            const fvMesh& mesh_;
 
             //- Reference to the patch
             const fvPatch& patch_;
@@ -170,12 +166,10 @@ public:
 
             iNew
             (
-                const fvMesh& mesh,
                 const fvPatch& patch,
                 const word& name
             )
             :
-                mesh_(mesh),
                 patch_(patch),
                 name_(name)
             {}
@@ -187,7 +181,7 @@ public:
 
                 return autoPtr<option>
                 (
-                    option::New(name_, dict, mesh_, patch_)
+                    option::New(name_, dict, patch_)
                 );
             }
         };
@@ -200,7 +194,6 @@ public:
         (
             const word& name,
             const dictionary& dict,
-            const fvMesh& mesh,
             const fvPatch& patch
         );
 

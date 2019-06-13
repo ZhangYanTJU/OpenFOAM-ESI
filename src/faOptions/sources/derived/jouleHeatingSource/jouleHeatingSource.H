@@ -153,6 +153,9 @@ class jouleHeatingSource
         //- Current time index (used for updating)
         label curTimeIndex_;
 
+        //- nIter
+        label nIter_;
+
 
     // Private Member Functions
 
@@ -190,7 +193,6 @@ public:
             const word& sourceName,
             const word& modelType,
             const dictionary& dict,
-            const fvMesh& mesh,
             const fvPatch& patch
         );
 

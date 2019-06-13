@@ -173,7 +173,6 @@ void Foam::fa::faceSetOption::setFaceSet()
         case smAll:
         {
             Info<< indent << "- selecting all faces" << endl;
-    //DebugVar(regionMeshPtr_->nFaces());
             faces_ = identity(regionMesh().nFaces());
 
             break;
@@ -198,11 +197,10 @@ Foam::fa::faceSetOption::faceSetOption
     const word& name,
     const word& modelType,
     const dictionary& dict,
-    const fvMesh& mesh,
     const fvPatch& patch
 )
 :
-    option(name, modelType, dict, mesh, patch),
+    option(name, modelType, dict, patch),
     timeStart_(-1.0),
     duration_(0.0),
     selectionMode_(selectionModeTypeNames_.get("selectionMode", coeffs_)),

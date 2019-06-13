@@ -76,11 +76,11 @@ public:
     // Constructors
 
         //- Construct from components with list of field names
-        options(const fvMesh& mesh, const fvPatch& p);
+        options(const fvPatch& p);
 
         //- Construct faOptions and register to database if not present
         //  otherwise lookup and return
-        static options& New(const fvMesh& mesh, const fvPatch& p);
+        static options& New(const fvPatch& p);
 
 
     //- Destructor

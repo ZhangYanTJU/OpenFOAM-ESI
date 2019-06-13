@@ -110,11 +110,10 @@ public:
              dictionary,
              (
                 const word& modelType,
-                const fvMesh& mesh,
                 const fvPatch& patch,
                 const dictionary& dict
              ),
-             (modelType, mesh, patch, dict)
+             (modelType, patch, dict)
          );
 
 
@@ -125,7 +124,6 @@ public:
         thermalShellModel
         (
             const word& modelType,
-            const fvMesh& mesh,
             const fvPatch& patch,
             const dictionary& dict
         );
@@ -136,7 +134,6 @@ public:
         //- Return a reference to the selected model using dictionary
         static autoPtr<thermalShellModel> New
         (
-            const fvMesh& mesh,
             const fvPatch& patch,
             const dictionary& dict
         );

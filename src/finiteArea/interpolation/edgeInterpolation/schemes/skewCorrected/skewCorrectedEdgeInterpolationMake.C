@@ -2,8 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           |
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+                            | Copyright (C) 2016-2017 Wikki Ltd
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,45 +25,14 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "thermalShellModel.H"
+#include "faMesh.H"
+#include "skewCorrectedEdgeInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace regionModels
-{
-
-// * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
-
-autoPtr<thermalShellModel> thermalShellModel::New
-(
-    const fvPatch& p,
-    const dictionary& dict
-)
-{
-    word modelType =
-        dict.lookupOrDefault<word>("thermalShellModel", "thermalShell");
-
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
-
-    if (!cstrIter.found())
-    {
-        FatalErrorInFunction
-            << "Unknown thermalShellModel type "
-            << modelType << nl << nl
-            << "Valid thermalShellModel types :" << nl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    return autoPtr<thermalShellModel>(cstrIter()(modelType, p, dict));
+    makeEdgeInterpolationScheme(skewCorrectedEdgeInterpolation)
 }
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace regionModels
-} // End namespace Foam
 
 // ************************************************************************* //

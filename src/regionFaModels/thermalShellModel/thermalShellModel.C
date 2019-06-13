@@ -58,28 +58,27 @@ bool thermalShellModel::read(const dictionary& dict)
 thermalShellModel::thermalShellModel
 (
     const word& modelType,
-    const fvMesh& mesh,
     const fvPatch& p,
     const dictionary& dict
 
 )
 :
-    regionFaModel(mesh, p, "thermalShell", modelType, dict, true),
+    regionFaModel(p, "thermalShell", modelType, dict, true),
     TName_(dict.get<word>("T")),
-    Tp_(mesh.lookupObject<volScalarField>(TName_)),
+    Tp_(p.boundaryMesh().mesh().lookupObject<volScalarField>(TName_)),
     T_
     (
         IOobject
         (
             "Ts_" + regionName_,
-            mesh.time().timeName(),
-            mesh,
+            p.boundaryMesh().mesh().time().timeName(),
+            p.boundaryMesh().mesh(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
         regionMesh()
     ),
-    faOptions_(Foam::fa::options::New(primaryMesh(), p))
+    faOptions_(Foam::fa::options::New(p))
 {
     if (!faOptions_.optionList::size())
     {

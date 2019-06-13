@@ -57,13 +57,12 @@ Foam::fa::option::option
     const word& name,
     const word& modelType,
     const dictionary& dict,
-    const fvMesh& mesh,
     const fvPatch& patch
 )
 :
     name_(name),
     modelType_(modelType),
-    mesh_(mesh),
+    mesh_(patch.boundaryMesh().mesh()),
     patch_(patch),
     dict_(dict),
     coeffs_(dict.optionalSubDict(modelType + "Coeffs")),
@@ -86,7 +85,6 @@ Foam::autoPtr<Foam::fa::option> Foam::fa::option::New
 (
     const word& name,
     const dictionary& coeffs,
-    const fvMesh& mesh,
     const fvPatch& patch
 )
 {
@@ -95,7 +93,7 @@ Foam::autoPtr<Foam::fa::option> Foam::fa::option::New
     Info<< indent
         << "Selecting finite area options type " << modelType << endl;
 
-    const_cast<Time&>(mesh.time()).libs().open
+    const_cast<Time&>(patch.boundaryMesh().mesh().time()).libs().open
     (
         coeffs,
         "libs",
@@ -114,7 +112,7 @@ Foam::autoPtr<Foam::fa::option> Foam::fa::option::New
             << exit(FatalError);
     }
 
-    return autoPtr<option>(cstrIter()(name, modelType, coeffs, mesh, patch));
+    return autoPtr<option>(cstrIter()(name, modelType, coeffs, patch));
 }
 
 

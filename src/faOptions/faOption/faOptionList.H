@@ -117,10 +117,10 @@ public:
     // Constructors
 
         //- Construct null
-        optionList(const fvMesh& mesh, const fvPatch& p);
+        optionList(const fvPatch& p);
 
         //- Construct from mesh and dictionary
-        optionList(const fvMesh&, const fvPatch&, const dictionary& );
+        optionList(const fvPatch&, const dictionary& );
 
 
     //- Destructor

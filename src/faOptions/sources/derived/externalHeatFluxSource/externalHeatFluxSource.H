@@ -160,7 +160,6 @@ public:
             const word& sourceName,
             const word& modelType,
             const dictionary& dict,
-            const fvMesh& mesh,
             const fvPatch& patch
         );
 

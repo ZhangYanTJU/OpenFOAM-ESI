@@ -30,7 +30,6 @@ inline const Foam::word& Foam::fa::option::name() const
     return name_;
 }
 
-
 inline const Foam::fvMesh& Foam::fa::option::mesh() const
 {
     return mesh_;
@@ -41,24 +40,20 @@ inline const Foam::fvPatch& Foam::fa::option::patch() const
     return patch_;
 }
 
-
 inline const Foam::dictionary& Foam::fa::option::coeffs() const
 {
     return coeffs_;
 }
-
 
 inline bool Foam::fa::option::active() const
 {
     return active_;
 }
 
-
 inline void Foam::fa::option::setApplied(const label fieldi)
 {
     applied_[fieldi] = true;
 }
-
 
 inline Foam::Switch& Foam::fa::option::active()
 {

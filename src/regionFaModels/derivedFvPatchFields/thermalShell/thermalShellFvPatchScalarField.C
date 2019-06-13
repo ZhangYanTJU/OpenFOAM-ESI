@@ -79,14 +79,12 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     dict_(dict)
 {
 
-    const fvMesh& thisMesh = patch().boundaryMesh().mesh();
-
     typedef regionModels::thermalShellModel baffle;
 
     {
         if (baffle_.empty())
         {
-            baffle_.reset(baffle::New(thisMesh, p, dict).ptr());
+            baffle_.reset(baffle::New(p, dict).ptr());
         }
     }
 }
@@ -106,25 +104,6 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-/*
-void thermalShellFvPatchScalarField::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    mixedFvPatchScalarField::autoMap(m);
-}
-
-
-void thermalShellFvPatchScalarField::rmap
-(
-    const fvPatchScalarField& ptf,
-    const labelList& addr
-)
-{
-    mixedFvPatchScalarField::rmap(ptf, addr);
-}
-*/
 
 void thermalShellFvPatchScalarField::updateCoeffs()
 {

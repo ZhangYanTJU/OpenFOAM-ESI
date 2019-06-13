@@ -136,7 +136,6 @@ public:
         //- Construct from mesh and name and dict
         regionFaModel
         (
-            const fvMesh& mesh,
             const fvPatch& patch,
             const word& regionType,
             const word& modelName,

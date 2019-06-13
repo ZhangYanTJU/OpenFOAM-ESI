@@ -55,22 +55,21 @@ Foam::fa::contactHeatFluxSource::contactHeatFluxSource
     const word& sourceName,
     const word& modelType,
     const dictionary& dict,
-    const fvMesh& mesh,
     const fvPatch& patch
 )
 :
-    faceSetOption(sourceName, modelType, dict, mesh, patch),
+    faceSetOption(sourceName, modelType, dict, patch),
     temperatureCoupledBase(patch, dict),
     TName_(dict.get<word>("T")),
     TprimaryName_(dict.get<word>("Tprimary")),
-    Tp_(mesh.lookupObject<volScalarField>(TprimaryName_)),
+    Tp_(mesh().lookupObject<volScalarField>(TprimaryName_)),
     Tw1_
     (
         IOobject
         (
             "Tw1_" + sourceName,
-            mesh.time().timeName(),
-            mesh,
+            mesh().time().timeName(),
+            mesh(),
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),

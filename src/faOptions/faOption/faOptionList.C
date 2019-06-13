@@ -86,13 +86,12 @@ void Foam::fa::optionList::checkApplied() const
 
 Foam::fa::optionList::optionList
 (
-    const fvMesh& mesh,
     const fvPatch& p,
     const dictionary& dict
 )
 :
     PtrList<option>(),
-    mesh_(mesh),
+    mesh_(p.boundaryMesh().mesh()),
     patch_(p),
     checkTimeIndex_(mesh_.time().startTimeIndex() + 2)
 {
@@ -100,10 +99,10 @@ Foam::fa::optionList::optionList
 }
 
 
-Foam::fa::optionList::optionList(const fvMesh& mesh, const fvPatch& p)
+Foam::fa::optionList::optionList(const fvPatch& p)
 :
     PtrList<option>(),
-    mesh_(mesh),
+    mesh_(p.boundaryMesh().mesh()),
     patch_(p),
     checkTimeIndex_(mesh_.time().startTimeIndex() + 2)
 {}
@@ -136,7 +135,7 @@ void Foam::fa::optionList::reset(const dictionary& dict)
             this->set
             (
                 count++,
-                option::New(name, sourceDict, mesh_, patch_)
+                option::New(name, sourceDict, patch_)
             );
         }
     }

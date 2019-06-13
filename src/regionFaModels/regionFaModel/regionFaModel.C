@@ -47,8 +47,6 @@ void Foam::regionModels::regionFaModel::constructMeshObjects()
     (
         new faMesh(primaryMesh_)
     );
-
-    //const_cast<word&>(regionMeshPtr_->name()) = regionName_;
 }
 
 
@@ -93,7 +91,6 @@ const Foam::volSurfaceMapping& Foam::regionModels::regionFaModel::vsm() const
 
 Foam::regionModels::regionFaModel::regionFaModel
 (
-    const fvMesh& mesh,
     const fvPatch& patch,
     const word& regionType,
     const word& modelName,
@@ -101,9 +98,9 @@ Foam::regionModels::regionFaModel::regionFaModel
     bool readFields
 )
 :
-    primaryMesh_(mesh),
+    primaryMesh_(patch.boundaryMesh().mesh()),
     patch_(patch),
-    time_(mesh.time()),
+    time_(patch.boundaryMesh().mesh().time()),
     active_(dict.get<Switch>("active")),
     infoOutput_(false),
     modelName_(modelName),
