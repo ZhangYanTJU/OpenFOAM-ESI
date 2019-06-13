@@ -336,6 +336,7 @@ public:
             //- Make patch edge - neighbour face distances
             virtual void makeDeltaCoeffs(scalarField&) const;
 
+            //- Create corrector vectors
             void makeCorrectionVectors(vectorField&) const;
 
             //- Return patch edge - neighbour face distances

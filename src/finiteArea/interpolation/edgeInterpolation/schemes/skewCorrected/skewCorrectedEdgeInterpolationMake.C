@@ -2,11 +2,18 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
+<<<<<<< HEAD
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
     Copyright (C) 2020 OpenCFD Ltd.
+=======
+    \\  /    A nd           |
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+                            | Copyright (C) 2016-2017 Wikki Ltd
+>>>>>>> ENH: Adding features to thermalShell:
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.

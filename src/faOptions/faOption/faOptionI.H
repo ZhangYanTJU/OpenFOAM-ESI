@@ -38,6 +38,7 @@ inline const Foam::fvMesh& Foam::fa::option::mesh() const noexcept
     return mesh_;
 }
 
+
 inline const Foam::fvPatch& Foam::fa::option::patch() const
 {
     return patch_;

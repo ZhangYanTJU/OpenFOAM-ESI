@@ -163,7 +163,12 @@ public:
         }
 
 
+<<<<<<< HEAD
     // Member Functions
+=======
+    // Member functions
+
+>>>>>>> ENH: Adding features to thermalShell:
 
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();

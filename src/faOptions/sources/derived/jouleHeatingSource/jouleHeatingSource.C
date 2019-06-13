@@ -129,6 +129,7 @@ void Foam::fa::jouleHeatingSource::addSup
                     const areaScalarField& sigma =
                         updateSigma(scalarSigmaVsTPtr_);
 
+
                     // Solve the electrical potential equation
                     faScalarMatrix VEqn(fam::laplacian(h*sigma, V_));
                     VEqn.relax();
@@ -191,3 +192,4 @@ bool Foam::fa::jouleHeatingSource::read(const dictionary& dict)
 
 
 // ************************************************************************* //
+

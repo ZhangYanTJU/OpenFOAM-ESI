@@ -94,11 +94,22 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
         )
     )
 {
+<<<<<<< HEAD
+=======
+
+>>>>>>> ENH: Adding features to thermalShell:
     typedef regionModels::thermalShellModel baffle;
 
     if (!baffle_)
     {
+<<<<<<< HEAD
         baffle_.reset(baffle::New(p, dict).ptr());
+=======
+        if (baffle_.empty())
+        {
+            baffle_.reset(baffle::New(p, dict).ptr());
+        }
+>>>>>>> ENH: Adding features to thermalShell:
     }
 }
 
@@ -117,6 +128,10 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ENH: Adding features to thermalShell:
 void thermalShellFvPatchScalarField::updateCoeffs()
 {
     if (this->updated())
