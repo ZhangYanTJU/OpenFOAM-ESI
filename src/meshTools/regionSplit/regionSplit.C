@@ -532,6 +532,8 @@ Foam::autoPtr<Foam::globalIndex> Foam::regionSplit::reduceRegions
     // Buffer for swapping boundary information
     labelList nbrRegion(mesh().nFaces()-mesh().nInternalFaces());
 
+    bool emitWarning = true;
+
     do
     {
         if (debug)
@@ -597,9 +599,22 @@ Foam::autoPtr<Foam::globalIndex> Foam::regionSplit::reduceRegions
                         const label sent = localToGlobal[orig];
                         const label recv = patchNbrRegion[patchFacei];
 
-                        // Record the minimum value seen
-                        if (recv < sent)
+                        if (recv == UNASSIGNED)
                         {
+                            if (emitWarning)
+                            {
+                                Pout<<"Warning in regionSplit:"
+                                    " received unassigned on "
+                                    << pp.name() << " at patchFace "
+                                    << patchFacei
+                                    << ". Check synchronisation in caller"
+                                    << nl;
+                            }
+                        }
+                        else if (recv < sent)
+                        {
+                            // Record the minimum value seen
+
                             auto fnd = updateLookup.find(sent);
                             if (!fnd.found())
                             {
@@ -644,6 +659,7 @@ Foam::autoPtr<Foam::globalIndex> Foam::regionSplit::reduceRegions
                 << " local regions" << endl;
         }
 
+        emitWarning = false;
         // Continue until there are no further changes
     }
     while (returnReduce(!updateLookup.empty(), orOp<bool>()));
