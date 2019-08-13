@@ -1188,6 +1188,12 @@ void Foam::globalMeshData::calcGlobalEdgeOrientation() const
 
         forAll(coupledPatch().edges(), edgeI)
         {
+            if (masterEdgeVerts[edgeI] == labelPair(labelMax, labelMax))
+            {
+                // Skip single edge on cyclic baffle
+                continue;
+            }
+
             const edge& e = coupledPatch().edges()[edgeI];
             const labelPair masterE
             (
@@ -1195,7 +1201,7 @@ void Foam::globalMeshData::calcGlobalEdgeOrientation() const
                 masterPoint[e[1]]
             );
 
-            label stat = labelPair::compare
+            const int stat = labelPair::compare
             (
                 masterE,
                 masterEdgeVerts[edgeI]
