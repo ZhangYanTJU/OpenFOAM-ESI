@@ -114,6 +114,16 @@ primitives/functions/Function1/quarterCosineRamp/quarterCosineRamp.C
 primitives/functions/Function1/halfCosineRamp/halfCosineRamp.C
 primitives/functions/Polynomial/polynomialFunction.C
 
+/* Run-time selectable implicitFunctions */
+primitives/functions/implicitFunctions/implicitFunction.C
+primitives/functions/implicitFunctions/sphere/sphereImplicitFunction.C
+primitives/functions/implicitFunctions/sin/sinImplicitFunction.C
+primitives/functions/implicitFunctions/ellipsoid/ellipsoidImplicitFunction.C
+primitives/functions/implicitFunctions/paraboloid/paraboloidImplicitFunction.C
+primitives/functions/implicitFunctions/plane/planeImplicitFunction.C
+primitives/functions/implicitFunctions/cylinder/cylinderImplicitFunction.C
+primitives/functions/implicitFunctions/composedFunction/composedFunctionImplicitFunction.C
+
 primitives/subModelBase/subModelBase.C
 
 strings = primitives/strings

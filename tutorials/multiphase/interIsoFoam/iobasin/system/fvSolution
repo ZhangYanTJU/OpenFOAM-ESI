@@ -21,6 +21,12 @@ solvers
     {
         nAlphaSubCycles 1;
         cAlpha          1;
+        reconstructionScheme isoAlpha; // plicRDF
+        isoFaceTol      1e-8;
+        surfCellTol     1e-6;
+        nAlphaBounds    3;
+        snapTol         0;
+        clip            false;
     }
 
     "pcorr.*"

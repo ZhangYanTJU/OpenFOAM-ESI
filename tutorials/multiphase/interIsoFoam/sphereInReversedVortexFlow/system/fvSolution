@@ -22,10 +22,11 @@ solvers
         isoFaceTol      1e-8;
         surfCellTol     1e-8;
         snapTol         0;
-        nAlphaBounds    4;
+        nAlphaBounds    8;
         clip            false;
         nAlphaSubCycles 1;
         cAlpha          1;
+        reconstructionScheme isoAlpha;
     }
 }
 

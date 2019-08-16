@@ -27,6 +27,7 @@ solvers
         writeSurfCells  false;
         writeBoundedCells false;
         writeIsoFaces   false;
+        reconstructionScheme plicRDF; // isoAlpha
 
         nAlphaCorr      1;
         nAlphaSubCycles 1;

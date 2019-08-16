@@ -26,6 +26,8 @@ solvers
         clip            false;
         nAlphaSubCycles 1;
         cAlpha          1;
+        reconstructionScheme isoAlpha; // plicRDF
+        
     }
 }
 

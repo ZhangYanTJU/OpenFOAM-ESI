@@ -28,6 +28,7 @@ solvers
 
         nAlphaSubCycles 1;
         cAlpha          1;
+        reconstructionScheme isoAlpha; // plicRDF
     }
 
     "pcorr.*"

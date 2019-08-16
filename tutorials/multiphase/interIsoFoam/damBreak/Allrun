@@ -9,5 +9,5 @@ runApplication blockMesh
 runApplication setFields
 
 runApplication $(getApplication)
-
+foamSequenceVTKFiles -vtp
 #------------------------------------------------------------------------------
