@@ -56,7 +56,7 @@ class lduPrimitiveProcessorInterface
     public lduInterface,
     public processorLduInterface
 {
-    // Private data
+    // Private Data
 
         const labelList faceCells_;
 
@@ -126,10 +126,18 @@ public:
         // Interface transfer functions
 
             //- Return the values of the given internal data adjacent to
-            //  the interface as a field
+            //- the interface as a field
             virtual tmp<labelField> interfaceInternalField
             (
                 const labelUList& internalData
+            ) const;
+
+            //- Return the values of the given internal data adjacent to
+            //- the interface as a field using faceCells mapping
+            virtual tmp<labelField> interfaceInternalField
+            (
+                const labelUList& internalData,
+                const labelUList& faceCells
             ) const;
 
             //- Initialise neighbour field transfer
@@ -139,11 +147,28 @@ public:
                 const labelUList& iF
             ) const;
 
+            //- Initialise neighbour field transfer using faceCells
+            virtual void initInternalFieldTransfer
+            (
+                const Pstream::commsTypes commsType,
+                const labelUList& iF,
+                const labelUList& faceCells
+            ) const;
+
             //- Transfer and return internal field adjacent to the interface
             virtual tmp<labelField> internalFieldTransfer
             (
                 const Pstream::commsTypes commsType,
                 const labelUList& iF
+            ) const;
+
+            //- Transfer and return internal field adjacent to the interface
+            //- using faceCells mapping
+            virtual tmp<labelField> internalFieldTransfer
+            (
+                const Pstream::commsTypes commsType,
+                const labelUList& iF,
+                const labelUList& faceCells
             ) const;
 
 

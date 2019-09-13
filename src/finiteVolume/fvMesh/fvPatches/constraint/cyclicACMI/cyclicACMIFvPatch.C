@@ -227,6 +227,16 @@ Foam::tmp<Foam::labelField> Foam::cyclicACMIFvPatch::interfaceInternalField
 }
 
 
+Foam::tmp<Foam::labelField> Foam::cyclicACMIFvPatch::interfaceInternalField
+(
+    const labelUList& internalData,
+    const labelUList& faceCells
+) const
+{
+    return patchInternalField(internalData, faceCells);
+}
+
+
 Foam::tmp<Foam::labelField> Foam::cyclicACMIFvPatch::internalFieldTransfer
 (
     const Pstream::commsTypes commsType,

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
+    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,6 +109,16 @@ public:
             (
                 const Pstream::commsTypes commsType,
                 const labelUList& iF
+            ) const;
+
+
+            //- Transfer and return internal field adjacent to the interface
+            //- using nbrFaceCells mapping
+            virtual tmp<labelField> internalFieldTransfer
+            (
+                const Pstream::commsTypes commsType,
+                const labelUList& iF,
+                const labelUList& nbrFaceCells
             ) const;
 
 
