@@ -1,0 +1,88 @@
+// -*- C++ -*-
+
+_volFieldValue
+{
+    type            volFieldValue;
+    libs            (fieldFunctionObjects);
+    enabled         true;
+    writeControl    timeStep;
+    writeInterval   1;
+    log             true;
+    valueOutput     false;
+    writeFields     false;
+}
+
+_surfaceFieldValue
+{
+    type            surfaceFieldValue;
+    libs            (fieldFunctionObjects);
+    enabled         true;
+    writeControl    timeStep;
+    writeInterval   1;
+    surfaceFormat   null;
+    log             true;
+    valueOutput     false;
+    writeFields     false;
+}
+
+Volume1_v_CPU
+{
+    ${_volFieldValue}
+
+    regionType      cellZone;
+    name            v_CPU;
+    region          v_CPU;
+    operation       volAverage;
+    fields          ( T );
+}
+
+Volume2_v_CPU
+{
+    ${_volFieldValue}
+
+    regionType      cellZone;
+    name            v_CPU;
+    region          v_CPU;
+    operation       min;
+    fields          ( T );
+}
+
+Volume3_v_fins
+{
+    ${_volFieldValue}
+
+    regionType      cellZone;
+    name            v_fins;
+    region          v_fins;
+    operation       volAverage;
+    fields          ( T );
+}
+
+Volume4_v_fins
+{
+    ${_volFieldValue}
+
+    regionType      cellZone;
+    name            v_fins;
+    region          v_fins;
+    operation       min;
+    fields          ( T );
+}
+
+MonitorPart_1
+{
+    ${_surfaceFieldValue}
+    valueOutput     true;
+
+    regionType      patch;
+    region          domain0;
+    name            OUTLET_01;
+    source          patch;
+    operation       areaAverage;
+    fields          ( U T );
+}
+
+#remove (_volFieldValue _surfaceFieldValue)
+
+
+// ************************************************************************* //

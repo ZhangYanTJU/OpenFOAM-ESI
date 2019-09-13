@@ -1,0 +1,25 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+./Allrun.pre
+
+# Decompose
+runApplication decomposePar -region domain0
+rm log.decomposePar
+runApplication decomposePar -region v_CPU
+rm log.decomposePar
+runApplication decomposePar -region v_fins
+
+# Run
+runParallel $(getApplication)
+
+# Reconstruct
+runApplication reconstructPar -allRegions
+
+echo
+echo "Use paraFoam -touch-all to create files for paraview post-processing"
+echo
+
+#------------------------------------------------------------------------------

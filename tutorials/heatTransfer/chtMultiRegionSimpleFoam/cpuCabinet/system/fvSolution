@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1912                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+coupledEnergyField     true;
+
+solver
+{
+    he
+    {
+        solver           GAMG;
+        smoother         symGaussSeidel;
+        tolerance        1e-7;
+        relTol           0.05;
+
+        cacheAgglomeration  true;
+        agglomerator        assembledFaceAreaPair;
+        nPreSweeps      2;
+        nCellsInCoarsestLevel 10;
+        mergeLevels      1;
+        //maxIter          30;
+    }
+}
+
+// ************************************************************************* //
