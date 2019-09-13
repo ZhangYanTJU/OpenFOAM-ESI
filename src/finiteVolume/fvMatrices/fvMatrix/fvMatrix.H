@@ -147,6 +147,8 @@ protected:
 
     //- Declare friendship with the fvSolver class
     friend class fvSolver;
+    friend class fvMatrixAssembly;
+
 
     // Protected Member Functions
 

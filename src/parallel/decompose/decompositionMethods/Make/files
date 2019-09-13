@@ -8,6 +8,7 @@ metisLikeDecomp/metisLikeDecomp.C
 structuredDecomp/structuredDecomp.C
 randomDecomp/randomDecomp.C
 noDecomp/noDecomp.C
+assemblyDecomp/assemblyDecomp.C
 
 
 constraints = decompositionConstraints

@@ -361,6 +361,18 @@ void Foam::fvPatchField<Type>::manipulateMatrix
 
 
 template<class Type>
+void Foam::fvPatchField<Type>::manipulateMatrix
+(
+    fvMatrixAssembly& matrix,
+    const labelList& faceMap,
+    const label cellOffset
+)
+{
+    manipulatedMatrix_ = true;
+}
+
+
+template<class Type>
 void Foam::fvPatchField<Type>::write(Ostream& os) const
 {
     os.writeEntry("type", type());
@@ -585,6 +597,6 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const fvPatchField<Type>& ptf)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    #include "fvPatchFieldNew.C"
+#include "fvPatchFieldNew.C"
 
 // ************************************************************************* //
