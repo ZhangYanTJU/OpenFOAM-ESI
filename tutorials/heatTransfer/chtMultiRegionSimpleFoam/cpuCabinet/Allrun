@@ -1,0 +1,14 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+./Allrun.pre
+
+runApplication $(getApplication)
+
+echo
+echo "Use paraFoam -touch-all to create files for paraview post-processing"
+echo
+
+#------------------------------------------------------------------------------
