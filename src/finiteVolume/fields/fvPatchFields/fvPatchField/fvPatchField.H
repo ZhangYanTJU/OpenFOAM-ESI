@@ -57,24 +57,17 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 
 class objectRegistry;
 class dictionary;
 class fvPatchFieldMapper;
 class volMesh;
 
-
-// Forward declaration of friend functions and operators
-
-template<class Type>
-class fvPatchField;
-
-template<class Type>
-class calculatedFvPatchField;
-
-template<class Type>
-class fvMatrix;
+template<class Type> class fvPatchField;
+template<class Type> class calculatedFvPatchField;
+template<class Type> class fvMatrix;
+class fvMatrixAssembly;
 
 template<class Type>
 Ostream& operator<<(Ostream&, const fvPatchField<Type>&);
@@ -306,7 +299,7 @@ public:
     virtual ~fvPatchField<Type>() = default;
 
 
-    // Member functions
+    // Member Functions
 
         // Attributes
 
@@ -525,6 +518,14 @@ public:
             (
                 fvMatrix<Type>& matrix,
                 const scalarField& weights
+            );
+
+            //- Manipulate fvMatrixAssembly
+            virtual void manipulateMatrix
+            (
+                fvMatrixAssembly& matrix,
+                const labelList& faceMap,
+                const label cellOffset
             );
 
 

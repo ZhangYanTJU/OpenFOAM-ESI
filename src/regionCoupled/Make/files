@@ -1,0 +1,6 @@
+fvMatrixAssembly/fvMatrixAssembly.C
+lduPrimitiveMeshAssembly/lduPrimitiveMeshAssembly.C
+assemblyFaceAreaPairGAMGAgglomeration/assemblyFaceAreaPairGAMGAgglomeration.C
+patches/cyclicAssemblyFvPatch/cyclicAssemblyFvPatch.C
+
+LIB = $(FOAM_LIBBIN)/libregionCoupled
