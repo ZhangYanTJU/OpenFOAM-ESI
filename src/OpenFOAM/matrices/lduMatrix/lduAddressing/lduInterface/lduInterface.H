@@ -87,6 +87,14 @@ public:
                 const labelUList& internalData
             ) const = 0;
 
+            //- Return the values of the given internal data adjacent to
+            //- the interface as a field using faceCell mapping
+            virtual tmp<labelField> interfaceInternalField
+            (
+                const labelUList& internalData,
+                const labelUList& faceCells
+            ) const = 0;
+
             //- Initialise transfer of internal field adjacent to the interface
             virtual void initInternalFieldTransfer
             (
@@ -95,11 +103,30 @@ public:
             ) const
             {}
 
+            //- Initialise transfer of internal field adjacent to the interface
+            //- using faceCells mapping
+            virtual void initInternalFieldTransfer
+            (
+                const Pstream::commsTypes commsType,
+                const labelUList& iF,
+                const labelUList& faceCells
+            ) const
+            {}
+
             //- Transfer and return internal field adjacent to the interface
             virtual tmp<labelField> internalFieldTransfer
             (
                 const Pstream::commsTypes commsType,
                 const labelUList& iF
+            ) const = 0;
+
+            //- Transfer and return internal field adjacent to the interface
+            //- using faceCells mapping
+            virtual tmp<labelField> internalFieldTransfer
+            (
+                const Pstream::commsTypes commsType,
+                const labelUList& iF,
+                const labelUList& faceCells
             ) const = 0;
 };
 

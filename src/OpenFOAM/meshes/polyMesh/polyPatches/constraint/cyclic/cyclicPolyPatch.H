@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -234,11 +235,19 @@ public:
             const word& patchType
         );
 
-        //- Construct as copy, resetting the boundary mesh
+        //- Copy construct, resetting the boundary mesh
         cyclicPolyPatch(const cyclicPolyPatch&, const polyBoundaryMesh&);
 
+        //- Copy construct, resetting nbrPatchID and faceCells
+        cyclicPolyPatch
+        (
+            const cyclicPolyPatch&,
+            label nbrPatchID,
+            const labelList& faceCells
+        );
+
         //- Construct given the original patch and resetting the
-        //  face list and boundary mesh information
+        //- face list and boundary mesh information
         cyclicPolyPatch
         (
             const cyclicPolyPatch& pp,

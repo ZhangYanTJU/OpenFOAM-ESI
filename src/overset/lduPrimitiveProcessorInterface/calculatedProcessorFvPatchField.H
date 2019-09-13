@@ -30,7 +30,7 @@ Group
     grpGenericBoundaryConditions
 
 Description
-    processorFvPatchField type bypassing fvPatch
+    A processorFvPatchField type bypassing fvPatch
 
     Used to temporarily add updateInterfaceMatrix capabilities to a matrix
     during overset solving. Supplies:
@@ -68,7 +68,7 @@ class calculatedProcessorFvPatchField
 {
 protected:
 
-    // Private data
+    // Protected data
 
          //- Local reference cast into the interface
          const lduPrimitiveProcessorInterface& procInterface_;
@@ -94,8 +94,7 @@ protected:
             mutable label outstandingRecvRequest_;
 
 
-
-    // Private Member Functions
+    // Protected Member Functions
 
         void addToInternalField
         (
@@ -234,6 +233,8 @@ public:
             (
                 solveScalarField& result,
                 const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
                 const solveScalarField& psiInternal,
                 const scalarField& coeffs,
                 const direction cmpt,
@@ -245,6 +246,8 @@ public:
             (
                 solveScalarField& result,
                 const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
                 const solveScalarField& psiInternal,
                 const scalarField& coeffs,
                 const direction cmpt,
@@ -256,6 +259,8 @@ public:
             (
                 Field<Type>& result,
                 const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
                 const Field<Type>& psiInternal,
                 const scalarField& coeffs,
                 const Pstream::commsTypes commsType
@@ -269,6 +274,8 @@ public:
             (
                 Field<Type>& result,
                 const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
                 const Field<Type>& psiInternal,
                 const scalarField& coeffs,
                 const Pstream::commsTypes commsType
@@ -278,7 +285,7 @@ public:
             }
 
         //- Write
-        //virtual void write(Ostream&) const;
+        // virtual void write(Ostream& os) const;
 };
 
 

@@ -37,15 +37,31 @@ namespace Foam
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-defineNamedTemplateTypeNameAndDebug(calculatedProcessorFvPatchScalarField, 0);
-defineNamedTemplateTypeNameAndDebug(calculatedProcessorFvPatchVectorField, 0);
+defineNamedTemplateTypeNameAndDebug
+(
+    calculatedProcessorFvPatchScalarField,
+    0
+);
+defineNamedTemplateTypeNameAndDebug
+(
+    calculatedProcessorFvPatchVectorField,
+    0
+);
 defineNamedTemplateTypeNameAndDebug
 (
     calculatedProcessorFvPatchSphericalTensorField,
     0
 );
-defineNamedTemplateTypeNameAndDebug(calculatedProcessorFvPatchSymmTensorField, 0);
-defineNamedTemplateTypeNameAndDebug(calculatedProcessorFvPatchTensorField, 0);
+defineNamedTemplateTypeNameAndDebug
+(
+    calculatedProcessorFvPatchSymmTensorField,
+    0
+);
+defineNamedTemplateTypeNameAndDebug
+(
+    calculatedProcessorFvPatchTensorField,
+    0
+);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
