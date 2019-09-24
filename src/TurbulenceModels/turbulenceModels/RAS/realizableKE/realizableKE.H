@@ -97,6 +97,9 @@ protected:
             dimensionedScalar sigmak_;
             dimensionedScalar sigmaEps_;
 
+            //- Use implicit k-Epilon source
+            Switch implicitKEpsilonSource_;
+
 
         // Fields
 

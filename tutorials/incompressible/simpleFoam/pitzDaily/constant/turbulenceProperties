@@ -26,6 +26,8 @@ RAS
     turbulence      on;
 
     printCoeffs     on;
+
+    implicitKEpsilonSource  true;
 }
 
 
