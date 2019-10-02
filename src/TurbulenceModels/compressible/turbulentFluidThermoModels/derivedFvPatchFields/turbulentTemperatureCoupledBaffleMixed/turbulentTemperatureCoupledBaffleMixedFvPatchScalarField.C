@@ -118,6 +118,23 @@ turbulentTemperatureCoupledBaffleMixedFvPatchScalarField
     kappaLayers_(0),
     contactRes_(0.0)
 {
+    if (!isA<mappedPatchBase>(this->patch().patch()))
+    {
+        FatalErrorInFunction
+            << "' not type '" << mappedPatchBase::typeName << "'"
+            << "\n    for patch " << p.name()
+            << " of field " << internalField().name()
+            << " in file " << internalField().objectPath()
+            << exit(FatalError);
+    }
+
+    WarningInFunction
+        << "This BC has been superseded by "
+        << "compressible::turbulentTemperatureRadCoupledMixed "
+        << "which has more functionalities and it can handle "
+        << "the assemble coupled option for energy. "
+        << endl;
+
     if (dict.readIfPresent("thicknessLayers", thicknessLayers_))
     {
         dict.readEntry("kappaLayers", kappaLayers_);
@@ -346,6 +363,22 @@ void turbulentTemperatureCoupledBaffleMixedFvPatchScalarField::updateCoeffs()
 
     // Restore tag
     UPstream::msgType() = oldTag;
+}
+
+
+void turbulentTemperatureCoupledBaffleMixedFvPatchScalarField::manipulateMatrix
+(
+    fvMatrixAssembly& matrix,
+    const labelList& faceMap,
+    const label cellOffset
+)
+{
+    FatalErrorInFunction
+        << "This BC does not support energy coupling "
+        << "Use compressible::turbulentTemperatureRadCoupledMixed "
+        << "which has more functionalities and it can handle "
+        << "the assemble coupled option for energy. "
+        << abort(FatalError);
 }
 
 
