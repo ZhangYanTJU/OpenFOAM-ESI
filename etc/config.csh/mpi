@@ -71,8 +71,15 @@ case OPENMPI:
     _foamAddMan     $MPI_ARCH_PATH/share/man
     breaksw
 
+case USERMPI:
+    # Use an arbitrary, user-specified mpi implementation
+    setenv FOAM_MPI mpi-user
+    _foamSource `$WM_PROJECT_DIR/bin/foamEtcFile config.csh/mpi-user`
+    breaksw
+
 case SYSTEMMPI:
     setenv FOAM_MPI mpi-system
+    _foamSource `$WM_PROJECT_DIR/bin/foamEtcFile config.csh/mpi-system`
 
     if ( ! ($?MPI_ROOT) ) then
         echo

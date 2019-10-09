@@ -42,7 +42,8 @@ export WM_PROJECT_VERSION=plus
 #
 # Please set to the appropriate path if the default is not correct.
 #
-[ $BASH_SOURCE ] && FOAM_INST_DIR=$(\cd ${BASH_SOURCE%/*/*/*} && \pwd -P) || \
+rc="${BASH_SOURCE:-${ZSH_NAME:+$0}}"
+[ -n "$rc" ] && FOAM_INST_DIR=$(\cd $(dirname $rc)/../.. && \pwd -L) || \
 FOAM_INST_DIR=$HOME/$WM_PROJECT
 # FOAM_INST_DIR=~$WM_PROJECT
 # FOAM_INST_DIR=/opt/$WM_PROJECT
@@ -135,8 +136,10 @@ export WM_PROJECT_USER_DIR=$HOME/$WM_PROJECT/$USER-$WM_PROJECT_VERSION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 . $WM_PROJECT_DIR/etc/config.sh/functions
 
-# Add in preset user or site preferences:
-_foamSource `$WM_PROJECT_DIR/bin/foamEtcFile prefs.sh`
+# Override definitions via prefs, with 'other' first so the sys-admin
+# can provide base values independent of WM_PROJECT_SITE
+_foamSource `$WM_PROJECT_DIR/bin/foamEtcFile -mode o  prefs.sh`
+_foamSource `$WM_PROJECT_DIR/bin/foamEtcFile -mode ug prefs.sh`
 
 # Evaluate command-line parameters and record settings for later
 # these can be used to set/unset values, or specify alternative pref files

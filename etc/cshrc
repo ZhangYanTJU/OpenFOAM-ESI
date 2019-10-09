@@ -148,8 +148,10 @@ setenv WM_PROJECT_USER_DIR $HOME/$WM_PROJECT/$LOGNAME-$WM_PROJECT_VERSION
 # Source files, possibly with some verbosity
 alias _foamSource 'if ($?FOAM_VERBOSE && $?prompt) echo "Sourcing: \!*"; if (\!* != "") source \!*'
 
-# Add in preset user or site preferences:
-_foamSource `$WM_PROJECT_DIR/bin/foamEtcFile prefs.csh`
+# Override definitions via prefs, with 'other' first so the sys-admin
+# can provide base values independent of WM_PROJECT_SITE
+_foamSource `$WM_PROJECT_DIR/bin/foamEtcFile -mode o  prefs.csh`
+_foamSource `$WM_PROJECT_DIR/bin/foamEtcFile -mode ug prefs.csh`
 
 # Evaluate command-line parameters and record settings for later
 # these can be used to set/unset values, or specify alternative pref files

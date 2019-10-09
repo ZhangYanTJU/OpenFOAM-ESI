@@ -75,8 +75,15 @@ OPENMPI)
     _foamAddMan     $MPI_ARCH_PATH/share/man
     ;;
 
+USERMPI)
+    # Use an arbitrary, user-specified mpi implementation
+    export FOAM_MPI=mpi-user
+    _foamSource `$WM_PROJECT_DIR/bin/foamEtcFile config.sh/mpi-user`
+    ;;
+
 SYSTEMMPI)
     export FOAM_MPI=mpi-system
+    _foamSource `$WM_PROJECT_DIR/bin/foamEtcFile config.sh/mpi-system`
 
     if [ -z "$MPI_ROOT" ]
     then

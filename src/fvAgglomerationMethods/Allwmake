@@ -4,9 +4,13 @@ cd ${0%/*} || exit 1    # Run from this directory
 # Parse arguments for library compilation
 . $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
 
-export ParMGridGen=$WM_THIRD_PARTY_DIR/ParMGridGen-1.0
+unset MGRIDGEN_ARCH_PATH
+if settings=$($WM_PROJECT_DIR/bin/foamEtcFile config.sh/mgridgen)
+then
+    . $settings
+fi
 
-if [ -e "$FOAM_LIBBIN/libMGridGen.so" ]
+if [ -e "$MGRIDGEN_ARCH_PATH/include/mgridgen.h" ]
 then
     wmake $targetType MGridGenGamgAgglomeration
 fi
