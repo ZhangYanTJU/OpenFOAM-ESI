@@ -60,7 +60,10 @@ void Foam::List<T>::doResize(const label newSize)
                 #ifdef USEMEMCPY
                 if (contiguous<T>())
                 {
-                    memcpy(nv, this->v_, overlap*sizeof(T));
+                    std::memcpy
+                    (
+                        static_cast<void*>(nv), this->v_, overlap*sizeof(T)
+                    );
                 }
                 else
                 #endif
@@ -186,21 +189,26 @@ Foam::List<T>::List(const UList<T>& a)
 :
     UList<T>(nullptr, a.size_)
 {
-    if (this->size_)
+    const label len = this->size_;
+
+    if (len)
     {
         doAlloc();
 
         #ifdef USEMEMCPY
         if (contiguous<T>())
         {
-            memcpy(this->v_, a.v_, this->byteSize());
+            std::memcpy
+            (
+                static_cast<void*>(this->v_), a.v_, this->byteSize()
+            );
         }
         else
         #endif
         {
             List_ACCESS(T, (*this), vp);
             List_CONST_ACCESS(T, a, ap);
-            List_FOR_ALL((*this), i)
+            for (label i = 0; i < len; ++i)
             {
                 vp[i] = ap[i];
             }
@@ -214,21 +222,26 @@ Foam::List<T>::List(const List<T>& a)
 :
     UList<T>(nullptr, a.size_)
 {
-    if (this->size_)
+    const label len = this->size_;
+
+    if (len)
     {
         doAlloc();
 
         #ifdef USEMEMCPY
         if (contiguous<T>())
         {
-            memcpy(this->v_, a.v_, this->byteSize());
+            std::memcpy
+            (
+                static_cast<void*>(this->v_), a.v_, this->byteSize()
+            );
         }
         else
         #endif
         {
             List_ACCESS(T, (*this), vp);
             List_CONST_ACCESS(T, a, ap);
-            List_FOR_ALL((*this), i)
+            for (label i = 0; i < len; ++i)
             {
                 vp[i] = ap[i];
             }
@@ -248,22 +261,29 @@ Foam::List<T>::List(List<T>& a, bool reuse)
         this->v_ = a.v_;
         a.v_ = nullptr;
         a.size_ = 0;
+        return;
     }
-    else if (this->size_)
+
+    const label len = this->size_;
+
+    if (len)
     {
         doAlloc();
 
         #ifdef USEMEMCPY
         if (contiguous<T>())
         {
-            memcpy(this->v_, a.v_, this->byteSize());
+            std::memcpy
+            (
+                static_cast<void*>(this->v_), a.v_, this->byteSize()
+            );
         }
         else
         #endif
         {
             List_ACCESS(T, (*this), vp);
             List_CONST_ACCESS(T, a, ap);
-            List_FOR_ALL((*this), i)
+            for (label i = 0; i < len; ++i)
             {
                 vp[i] = ap[i];
             }
@@ -464,19 +484,24 @@ void Foam::List<T>::operator=(const UList<T>& a)
 {
     reAlloc(a.size_);
 
-    if (this->size_)
+    const label len = this->size_;
+
+    if (len)
     {
         #ifdef USEMEMCPY
         if (contiguous<T>())
         {
-            memcpy(this->v_, a.v_, this->byteSize());
+            std::memcpy
+            (
+                static_cast<void*>(this->v_), a.v_, this->byteSize()
+            );
         }
         else
         #endif
         {
             List_ACCESS(T, (*this), vp);
             List_CONST_ACCESS(T, a, ap);
-            List_FOR_ALL((*this), i)
+            for (label i = 0; i < len; ++i)
             {
                 vp[i] = ap[i];
             }
@@ -550,7 +575,7 @@ void Foam::List<T>::operator=(const BiIndirectList<T>& list)
     {
         List_ACCESS(T, (*this), vp);
 
-        for (label i=0; i<len; ++i)
+        for (label i=0; i < len; ++i)
         {
             vp[i] = list[i];
         }
