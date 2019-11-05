@@ -91,7 +91,6 @@ class KirchhoffShell
         dimensionedScalar f1_;
         dimensionedScalar f2_;
 
-
     // Private Member Functions
 
         //- Initialize KirchhoffShell
@@ -106,6 +105,7 @@ protected:
 
             //- Number of non orthogonal correctors
             label nNonOrthCorr_;
+
 
             //- Sub cycles
             label nSubCycles_;
@@ -158,6 +158,7 @@ public:
 
     // Constructors
 
+
         //- Construct from components and dict
         KirchhoffShell
         (
@@ -165,6 +166,7 @@ public:
             const fvPatch& patch,
             const dictionary& dict
         );
+
 
         //- No copy construct
         KirchhoffShell(const KirchhoffShell&) = delete;
@@ -177,7 +179,9 @@ public:
     virtual ~KirchhoffShell() = default;
 
 
+
     // Member Functions
+
 
         // Fields
 

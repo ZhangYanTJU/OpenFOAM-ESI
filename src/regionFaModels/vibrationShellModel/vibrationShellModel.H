@@ -27,6 +27,7 @@ Class
     Foam::regionModels::thermalShellModels::vibrationShellModel
 
 Description
+
     Intermediate class for vibration-shell finite-area models.
 
 Usage
@@ -62,6 +63,7 @@ Usage
 
     The inherited entries are elaborated in:
       - \link regionFaModel.H \endlink
+
 
 SourceFiles
     vibrationShellModel.C
@@ -156,6 +158,7 @@ public:
 
     // Constructors
 
+
         //- Construct from type name and mesh and dict
         vibrationShellModel
         (
@@ -179,9 +182,11 @@ public:
     virtual ~vibrationShellModel() = default;
 
 
+
     // Member Functions
 
         // Access
+
 
             //- Return primary region pa
             const volScalarField& pa() const;

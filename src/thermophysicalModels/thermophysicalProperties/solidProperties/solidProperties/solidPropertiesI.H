@@ -82,6 +82,4 @@ inline Foam::scalar Foam::solidProperties::E() const
 {
     return E_;
 }
-
-
 // ************************************************************************* //

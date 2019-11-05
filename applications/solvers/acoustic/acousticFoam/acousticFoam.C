@@ -14,7 +14,6 @@ License
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -37,6 +36,7 @@ Description
     \f]
 
     where
+
     \vartable
         c       | Sound speed
         pa      | Acoustic pressure
@@ -49,7 +49,6 @@ SourceFiles
 
 #include "fvCFD.H"
 #include "fvOptions.H"
-#include "pimpleControl.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -66,8 +65,6 @@ int main(int argc, char *argv[])
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMesh.H"
-    #include "createControl.H"
-    #include "createRegionControls.H"
 
     #include "readTransportProperties.H"
     #include "createFields.H"

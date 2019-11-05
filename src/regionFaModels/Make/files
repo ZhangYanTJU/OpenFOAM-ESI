@@ -13,4 +13,9 @@ KirchhoffShell/KirchhoffShell.C
 derivedFvPatchFields/thermalShell/thermalShellFvPatchScalarField.C
 derivedFvPatchFields/vibrationShell/vibrationShellFvPatchScalarField.C
 
+vibrationShellModel/vibrationShellModel.C
+vibrationShellModel/vibrationShellModelNew.C
+KirchhoffShell/KirchhoffShell.C
+derivedFvPatchFields/vibrationShell/vibrationShellFvPatchScalarField.C
+
 LIB = $(FOAM_LIBBIN)/libregionFaModels

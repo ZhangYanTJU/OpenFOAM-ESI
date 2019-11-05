@@ -126,5 +126,5 @@ bool Foam::fa::externalFileSource::read(const dictionary& dict)
     return false;
 }
 
-
 // ************************************************************************* //
+

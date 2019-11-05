@@ -119,6 +119,7 @@ void clampedPlateFaPatchField<scalar>::evaluate(const Pstream::commsTypes)
     forAll(edgeFaces, edgeID)
     {
         label faceID = edgeFaces[edgeID];
+
         const_cast<Field<scalar>&>(this->primitiveField())[faceID] =
             pTraits<scalar>::zero;
     }
