@@ -152,6 +152,49 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
     return tmtx;
 }
 
+template<class Type>
+Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
+(
+    const areaScalarField& rho,
+    GeometricField<Type, faPatchField, areaMesh>& field,
+    const dimensionSet& ds
+)
+{
+    checkApplied();
+
+    const dimensionSet dsMat(ds*dimArea);
+    
+    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, dsMat));
+    faMatrix<Type>& mtx = tmtx.ref();
+
+    forAll(*this, i)
+    {
+        option& source = this->operator[](i);
+
+        label fieldi = source.applyToField(field.name());
+
+        if (fieldi != -1)
+        {
+            addProfiling(faopt, "faOption()." + source.name());
+
+            source.setApplied(fieldi);
+
+            if (source.isActive())
+            {
+                if (debug)
+                {
+                    Info<< "Applying source " << source.name() << " to field "
+                        << field.name() << endl;
+                }
+
+                source.addSup(rho, mtx, fieldi);
+            }
+        }
+    }
+
+    return tmtx;
+}
+
 
 template<class Type>
 Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::d2dt2

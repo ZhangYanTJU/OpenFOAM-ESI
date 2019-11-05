@@ -47,7 +47,9 @@ Foam::solidProperties::solidProperties
     scalar kappa,
     scalar Hf,
     scalar emissivity,
-    scalar W
+    scalar W.
+    scalar nu,
+    scalar E
 )
 :
     rho_(rho),
@@ -56,6 +58,8 @@ Foam::solidProperties::solidProperties
     Hf_(Hf),
     emissivity_(emissivity),
     W_(W)
+    nu_(nu),
+    E_(E)
 {}
 
 
@@ -67,6 +71,8 @@ Foam::solidProperties::solidProperties(const dictionary& dict)
     Hf_(dict.get<scalar>("Hf")),
     emissivity_(dict.get<scalar>("emissivity")),
     W_(dict.get<scalar>("W"))
+    nu_(dict.lookupOrDefault<scalar>("nu", 0.0)),
+    E_(dict.lookupOrDefault<scalar>("E", 0.0))
 {}
 
 
@@ -80,6 +86,8 @@ void Foam::solidProperties::readIfPresent(const dictionary& dict)
     dict.readIfPresent("Hf_", Hf_);
     dict.readIfPresent("emissivity", emissivity_);
     dict.readIfPresent("W", W_);
+    dict.readIfPresent("nu", nu_);
+    dict.readIfPresent("E", E_);
 }
 
 
@@ -90,7 +98,9 @@ void Foam::solidProperties::writeData(Ostream& os) const
         << kappa_ << token::SPACE
         << Hf_ << token::SPACE
         << emissivity_ << token::SPACE
-        << W_;
+        << W_ << token::SPACE
+        << nu_ << token::SPACE
+        << E_;
 }
 
 

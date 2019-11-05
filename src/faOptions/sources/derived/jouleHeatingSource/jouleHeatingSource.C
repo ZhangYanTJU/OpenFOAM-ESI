@@ -25,10 +25,7 @@ License
 
 #include "jouleHeatingSource.H"
 #include "faMatrices.H"
-//#include "famLaplacian.H"
 #include "faCFD.H"
-//#include "facGrad.H"
-//#include "facLnGrad.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
@@ -76,7 +73,8 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
     anisotropicElectricalConductivity_(false),
     scalarSigmaVsTPtr_(nullptr),
     tensorSigmaVsTPtr_(nullptr),
-    curTimeIndex_(-1)
+    curTimeIndex_(-1),
+    nIter_(1)
 {
     // Set the field name to that of the energy field from which the temperature
     // is obtained

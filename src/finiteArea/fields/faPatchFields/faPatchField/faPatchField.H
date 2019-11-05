@@ -257,6 +257,18 @@ public:
             const DimensionedField<Type, areaMesh>&,
             const dictionary&
         );
+        
+        //- Return a pointer to a new patchField created on freestore given
+        //  patch and internal field
+        //  (does not set the patch field values).
+        //  Allows override of constraint type
+        static tmp<faPatchField<Type>> New
+        (
+            const word&,
+            const word& actualPatchType,
+            const faPatch&,
+            const DimensionedField<Type, areaMesh>&
+        );
 
         //- Return a pointer to a new calculatedFaPatchField created on
         //  freestore without setting patchField values

@@ -141,12 +141,39 @@ template<class Type>
 void Foam::volSurfaceMapping::mapToVolume
 (
     const tmp<GeometricField<Type, faPatchField, areaMesh>>& taf,
-     typename GeometricField<Type, fvPatchField, volMesh>::Boundary& bf
+    typename GeometricField<Type, fvPatchField, volMesh>::Boundary& bf
 ) const
 {
     mapToVolume(taf(), bf);
 
     taf.clear();
+}
+
+
+template<class Type>
+void Foam::volSurfaceMapping::mapToField
+(
+    const GeometricField<Type, faPatchField, areaMesh>& af,
+    Field<Type>& f
+) const
+{
+    const labelList& faceLabels = mesh_.faceLabels();
+
+    const polyMesh& pMesh = mesh_();
+    const polyBoundaryMesh& bm = pMesh.boundaryMesh();
+    label patchID, faceID;
+
+    const Field<Type>& afi = af.internalField();
+
+    forAll(faceLabels, i)
+    {
+        if (faceLabels[i] < pMesh.nFaces())
+        {
+            patchID = bm.whichPatch(faceLabels[i]);
+            faceID = bm[patchID].whichFace(faceLabels[i]);
+            f[faceID] = afi[i];
+        }
+    }
 }
 
 

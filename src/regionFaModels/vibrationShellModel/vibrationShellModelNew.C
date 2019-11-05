@@ -2,11 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | www.openfoam.com
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
--------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,60 +23,44 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "specie.H"
+#include "vibrationShellModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-inline Foam::scalar Foam::solidProperties::rho() const
+namespace Foam
 {
-    return rho_;
+namespace regionModels
+{
+
+// * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
+
+autoPtr<vibrationShellModel> vibrationShellModel::New
+(
+    const fvPatch& p,
+    const dictionary& dict
+)
+{
+    word modelType = dict.get<word>("vibrationShellModel");
+
+    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+
+    if (!cstrIter.found())
+    {
+        FatalErrorInFunction
+            << "Unknown vibrationShellModel type "
+            << modelType << nl << nl
+            << "Valid vibrationShellModel types :" << nl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return autoPtr<vibrationShellModel>(cstrIter()(modelType, p, dict));
 }
 
 
-inline Foam::scalar Foam::solidProperties::Cp() const
-{
-    return Cp_;
-}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
-inline Foam::scalar Foam::solidProperties::kappa() const
-{
-    return kappa_;
-}
-
-
-inline Foam::scalar Foam::solidProperties::Hf() const
-{
-    return Hf_;
-}
-
-
-inline Foam::scalar Foam::solidProperties::Hs(const scalar T) const
-{
-    return Cp_*(T - Tstd);
-}
-
-
-inline Foam::scalar Foam::solidProperties::emissivity() const
-{
-    return emissivity_;
-}
-
-
-inline Foam::scalar Foam::solidProperties::W() const
-{
-    return W_;
-}
-
-
-inline Foam::scalar Foam::solidProperties::nu() const
-{
-    return nu_;
-}
-
-inline Foam::scalar Foam::solidProperties::E() const
-{
-    return E_;
-}
+} // End namespace regionModels
+} // End namespace Foam
 
 // ************************************************************************* //

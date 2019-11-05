@@ -171,6 +171,16 @@ public:
                 GeometricField<Type, faPatchField, areaMesh>& field,
                 const word& fieldName
             );
+            
+            
+            //- Return source for equation with specified name and dimensios
+            template<class Type>
+            tmp<faMatrix<Type>> operator()
+            (
+                const areaScalarField& rho,
+                GeometricField<Type, faPatchField, areaMesh>& field,
+                const dimensionSet& ds
+            );
 
 
             //- Return source for equation with second time derivative
