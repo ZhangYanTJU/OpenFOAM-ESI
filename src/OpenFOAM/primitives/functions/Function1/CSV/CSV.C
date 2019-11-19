@@ -213,7 +213,7 @@ Foam::Function1Types::CSV<Type>::CSV
     nHeaderLine_(dict.get<label>("nHeaderLine")),
     refColumn_(dict.get<label>("refColumn")),
     componentColumns_(),
-    separator_(dict.getOrDefault<string>("separator", ",")[0]),
+    separator_(dict.lookupOrDefault<string>("separator", ",")[0]),
     mergeSeparators_(dict.get<bool>("mergeSeparators")),
     fName_(fName.empty() ? dict.get<fileName>("file") : fName)
 {
