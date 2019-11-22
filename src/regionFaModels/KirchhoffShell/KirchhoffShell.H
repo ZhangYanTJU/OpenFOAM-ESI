@@ -105,6 +105,9 @@ protected:
 
             //- Number of non orthogonal correctors
             label nNonOrthCorr_;
+            
+            //- Sub cycles
+            label nSubCycles_;
 
 
             //- Sub cycles

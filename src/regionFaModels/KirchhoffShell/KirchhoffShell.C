@@ -67,6 +67,13 @@ void KirchhoffShell::solveDisplacement()
     areaScalarField solidD(D()/solidMass);
 
     // Save old times
+    areaScalarField w0 = w_.oldTime();
+    areaScalarField w00 = w_.oldTime().oldTime();
+
+    areaScalarField lap0(laplaceW_.oldTime());
+    areaScalarField lapLap0(laplace2W_.oldTime());
+
+    // Save old times
     areaScalarField w0(w_.oldTime());
     areaScalarField w00(w_.oldTime().oldTime());
 
@@ -127,7 +134,21 @@ void KirchhoffShell::solveDisplacement()
     w_.oldTime() = w0;
     w_.oldTime().oldTime() = w00;
 
+    // Reset the old-time field value
+    w_.oldTime() = w0;
+    w_.oldTime().timeIndex() = time.timeIndex();
+    w_.oldTime().oldTime() = w00;
+    w_.oldTime().oldTime().timeIndex() = time.timeIndex();
+
+    laplaceW_.oldTime() = lap0;
+    laplaceW_.oldTime().timeIndex() = time.timeIndex();
+
+    laplace2W_.oldTime() = lapLap0;
+    laplace2W_.oldTime().timeIndex() = time.timeIndex();
+
     faOptions().correct(w_);
+
+    Info<< "w min/max   = " << min(w_) << ", " << max(w_) << endl;
 }
 
 
@@ -179,7 +200,7 @@ KirchhoffShell::KirchhoffShell
             primaryMesh().time().timeName(),
             primaryMesh(),
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         regionMesh(),
         dimensionedScalar(inv(dimLength), Zero)

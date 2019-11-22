@@ -1,0 +1,66 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM Extend Project: Open source CFD        |
+|  \\    /   O peration     | Version:  1.6-ext                               |
+|   \\  /    A nd           | Web:      www.extend-project.de                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      binary;
+    class       volScalarField;
+    location    "0";
+    object      pAcoustic;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [1 -1 -2 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
+{
+    box 
+    {
+        type            acousticWaveTransmissive;
+	advectiveSpeed	340;
+        value           uniform 0;
+    }
+    window 
+    {
+        type                vibrationShell;
+        active              true;
+        p                   pa;
+
+        solid
+        {
+            rho                 2500;
+
+            kappa               200;
+            Cp                  600;
+            Hf                  0;
+            emissivity          0;
+            
+            E                   7e10;
+            nu                  0.22;
+        }
+
+        region                vibrationShell;
+        vibrationShellModel   KirchhoffShell;
+        
+        f0             0.04;
+        f1             0;
+        f2             0;
+
+        value           uniform 0;
+   }
+   wall
+   {
+       type     zeroGradient;
+       value    0.0;
+   }
+}
+
+
+// ************************************************************************* //

@@ -175,10 +175,6 @@ makePatchTypeField
     vibrationShellFvPatchScalarField
 );
 
-<<<<<<< HEAD
-=======
-
->>>>>>> ENH: Adding acousticFoam plus correcponding BC's and sources
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

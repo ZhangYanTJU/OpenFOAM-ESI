@@ -2,17 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-<<<<<<< HEAD
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
-=======
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
->>>>>>> ENH: Adding acousticFoam plus correcponding BC's and sources
 License
     This file is part of OpenFOAM.
 
