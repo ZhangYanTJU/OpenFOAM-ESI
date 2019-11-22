@@ -12,7 +12,9 @@ IOdictionary transportProperties
     )
 );
 
-dimensionedScalar c0(transportProperties.lookup("c0"));
+dimensionedScalar c0("c0", dimVelocity, transportProperties);
+
+dimensionedScalar rho("rho", dimDensity, transportProperties);
 
 scalar MaxCo =  
     max(mesh.surfaceInterpolation::deltaCoeffs()*c0).value()

@@ -48,7 +48,7 @@ Usage
         active              true;
         p                   pa;
 
-        thermo
+        solid
         {
             rho                 1000;
             kappa               200;

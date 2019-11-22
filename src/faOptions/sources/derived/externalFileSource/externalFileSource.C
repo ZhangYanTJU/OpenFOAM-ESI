@@ -96,11 +96,11 @@ void Foam::fa::externalFileSource::addSup
     const label fieldi
 )
 {
-    if (isActive())
+    const scalar t = mesh().time().timeOutputValue();
+    
+    if (isActive() && t > timeStart() && t < (timeStart() + duration()))
     {
         DebugInfo<< name() << ": applying source to " << eqn.psi().name()<<endl;
-        
-        const scalar t = mesh().time().timeOutputValue();
         
         if (curTimeIndex_ != mesh().time().timeIndex())
         {

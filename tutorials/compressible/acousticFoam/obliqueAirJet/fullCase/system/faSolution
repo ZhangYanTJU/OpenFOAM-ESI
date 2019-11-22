@@ -1,0 +1,36 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  17.06                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      faSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    ws_vibrationShell
+    {
+        solver          diagonal; 
+        preconditioner  DILU; 
+        tolerance       1e-08;  
+        relTol          0;
+    }
+}
+
+nNonOrthCorr        0;
+nSubCycles          5;
+
+relaxationFactors
+{
+    w_vibrationShell           1;
+}
+
+// ************************************************************************* //

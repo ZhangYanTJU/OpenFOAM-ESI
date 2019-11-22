@@ -86,6 +86,9 @@ protected:
 
             //- Number of non orthogonal correctors
             label nNonOrthCorr_;
+            
+            //- Sub cycles
+            label nSubCycles_;
 
 
         // Source term fields

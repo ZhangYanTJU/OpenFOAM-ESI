@@ -64,6 +64,19 @@ clampedPlateFaPatchField<Type>::clampedPlateFaPatchField
 template<class Type>
 clampedPlateFaPatchField<Type>::clampedPlateFaPatchField
 (
+    const clampedPlateFaPatchField<Type>& ptf,
+    const faPatch& p,
+    const DimensionedField<Type, areaMesh>& iF,
+    const faPatchFieldMapper& mapper
+)
+:
+    faPatchField<Type>(ptf, p, iF, mapper)
+{}
+
+
+template<class Type>
+clampedPlateFaPatchField<Type>::clampedPlateFaPatchField
+(
     const clampedPlateFaPatchField<Type>& ptf
 )
 :

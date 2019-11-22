@@ -127,18 +127,13 @@ void vibrationShellFvPatchScalarField::updateCoeffs()
     }
 
     baffle_->evolve();
-
-    /*
-    volScalarField::Boundary& vfb =
-        db().lookupObjectRef<volScalarField>
-        (
-            this->internalField().name()
-        ).boundaryFieldRef();
-
-    baffle_->vsm().mapToVolume(baffle_->T(), vfb);
-    */
     
-    const areaScalarField aRho(-baffle_->solid().rho()*baffle_->a());
+    const IOdictionary& transportProperties =
+        db().lookupObject<IOdictionary>("transportProperties");
+        
+    dimensionedScalar rho("rho", dimDensity, transportProperties);
+
+    const areaScalarField aRho(rho*baffle_->a());
 
     baffle_->vsm().mapToField(aRho, this->refGrad());
 
@@ -153,9 +148,6 @@ void vibrationShellFvPatchScalarField::write(Ostream& os) const
 {
     mixedFvPatchField<scalar>::write(os);
 
-    // Remove value and type already written by fixedValueFvPatchField
-    //dict_.remove("value");
-    //dict_.remove("type");
     dict_.write(os, false);
 }
 

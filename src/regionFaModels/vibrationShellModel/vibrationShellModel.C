@@ -64,7 +64,7 @@ vibrationShellModel::vibrationShellModel
 )
 :
     regionFaModel(p, "vibratingShell", modelType, dict, true),
-    pName_(dict.get<word>("pa")),
+    pName_(dict.get<word>("p")),
     pa_(p.boundaryMesh().mesh().lookupObject<volScalarField>(pName_)),
     w_
     (
@@ -86,7 +86,7 @@ vibrationShellModel::vibrationShellModel
             p.boundaryMesh().mesh().time().timeName(),
             p.boundaryMesh().mesh(),
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         regionMesh(),
         dimensionedScalar(dimAcceleration, Zero)

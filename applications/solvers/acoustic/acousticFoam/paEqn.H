@@ -6,5 +6,3 @@ fvScalarMatrix paEqn
 
 paEqn.relax();
 paEqn.solve();
-
-//pAcoustic.boundaryFieldRef().updateCoeffs();

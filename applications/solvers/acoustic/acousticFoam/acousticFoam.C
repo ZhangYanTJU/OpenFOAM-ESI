@@ -77,12 +77,15 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
 
     while (runTime.run())
-    {   
+    {
         ++runTime;
         
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        #include "paEqn.H"
+        while (pimple.correct())
+        {
+            #include "paEqn.H"
+        }
 
         runTime.write();
         

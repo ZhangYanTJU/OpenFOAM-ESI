@@ -91,9 +91,9 @@ public:
         );
 
         //- Construct and return a clone
-        virtual tmp<faPatchField<Type> > clone() const
+        virtual tmp<faPatchField<Type>> clone() const
         {
-            return tmp<faPatchField<Type> >
+            return tmp<faPatchField<Type>>
             (
                 new clampedPlateFaPatchField<Type>(*this)
             );
@@ -120,7 +120,7 @@ public:
         
         
      //- Destructor
-    virtual ~clampedPlateFaPatchField<Type>()
+    virtual ~clampedPlateFaPatchField()
     {}
 
 
