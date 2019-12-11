@@ -49,6 +49,7 @@ SourceFiles
 
 #include "fvCFD.H"
 #include "fvOptions.H"
+#include "pimpleControl.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,6 +66,7 @@ int main(int argc, char *argv[])
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMesh.H"
+    #include "createControl.H"
 
     #include "readTransportProperties.H"
     #include "createFields.H"
