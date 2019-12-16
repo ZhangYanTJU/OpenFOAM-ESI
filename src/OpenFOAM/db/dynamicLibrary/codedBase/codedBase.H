@@ -75,13 +75,6 @@ class codedBase
         mutable fileName oldLibPath_;
 
 
-    // Data Types
-
-        //- Global loader/unloader function type
-        //  Called with true on load, false on unload.
-        typedef void (*loaderType)(bool);
-
-
     // Private Member Functions
 
         //- Load specified library and execute funcName(true)

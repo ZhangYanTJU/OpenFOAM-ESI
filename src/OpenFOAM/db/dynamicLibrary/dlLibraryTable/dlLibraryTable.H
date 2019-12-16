@@ -45,6 +45,9 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
+class codedBase;
+
 /*---------------------------------------------------------------------------*\
                        Class dlLibraryTable Declaration
 \*---------------------------------------------------------------------------*/
@@ -58,7 +61,65 @@ class dlLibraryTable
         DynamicList<fileName> libNames_;
 
 
-    // Private Member Functions
+protected:
+
+    // Data Types
+
+        //- Global loader/unloader function type
+        //  Called with true on load, false on unload.
+        typedef void (*loaderType)(bool);
+
+
+    // Friends
+
+        //- Allow codedBase as a friend for the low-level hooks
+        friend class codedBase;
+
+
+    // Protected Member Functions
+
+        //- Load/unload hook.
+        //  \return true if the function was found and executed
+        static bool functionHook
+        (
+            const bool load,    //!< true = on-load, false = on-unload
+            void* handle,
+            const std::string& funcName,
+            const bool verbose,
+            const std::string& context
+        );
+
+
+    // Static Member Functions
+
+        //- Execute global funcName(true) on the library (low-level interface).
+        //  Usually done as the first step after opening a library.
+        //  \return true if the function was found and executed
+        static bool loadHook
+        (
+            void* handle,
+            const std::string& funcName,
+            const bool verbose = false,
+            const std::string& context = ""
+        )
+        {
+            return functionHook(true, handle, funcName, verbose, context);
+        }
+
+        //- Execute global funcName(false) on the library (low-level interface).
+        //  Usually done as the last step before closing a library.
+        //  \return true if the function was found and executed
+        static bool unloadHook
+        (
+            void* handle,
+            const std::string& funcName,
+            const bool verbose = false,
+            const std::string& context = ""
+        )
+        {
+            return functionHook(false, handle, funcName, verbose, context);
+        }
+
 
         //- Open specified library name and return pointer.
         //  Warning messages, but no additional side-effects.

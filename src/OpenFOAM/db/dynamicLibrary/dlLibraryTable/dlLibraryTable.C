@@ -27,9 +27,14 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "dlLibraryTable.H"
+#include "dynamicCode.H"
 #include "OSspecific.H"
 #include "IOstreams.H"
 #include "int.H"
+
+// #undef  Foam_exptl_dlLibraryLoaderHooks
+#define Foam_exptl_dlLibraryLoaderHooks
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -40,6 +45,58 @@ namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::dlLibraryTable::functionHook
+(
+    const bool load,
+    void* handle,
+    const std::string& funcName,
+    const bool verbose,
+    const std::string& context
+)
+{
+    if (!handle || funcName.empty())
+    {
+        return false;
+    }
+
+    bool ok = false;
+
+    // Manual execution of loader/unloader code
+    void* rawSymbol = dlSymFind(handle, funcName);
+
+    if (rawSymbol)
+    {
+        try
+        {
+            loaderType fun = reinterpret_cast<loaderType>(rawSymbol);
+
+            if (fun)
+            {
+                (*fun)(load);
+                ok = true;
+            }
+        }
+        catch (...)
+        {}
+    }
+
+    if (verbose && !ok)
+    {
+        auto& err = WarningInFunction
+            << "Failed symbol lookup " << funcName.c_str() << nl;
+
+        if (!context.empty())
+        {
+            err << "from " << context.c_str() << nl;
+        }
+    }
+
+    return ok;
+}
+
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 void* Foam::dlLibraryTable::openLibrary
 (
@@ -146,6 +203,16 @@ void Foam::dlLibraryTable::clear(bool verbose)
             continue;
         }
 
+#ifdef Foam_exptl_dlLibraryLoaderHooks
+        // Attempt unload prior to close
+        unloadHook
+        (
+            libPtrs_[i],
+            dynamicCode::libraryBaseName(libNames_[i]),
+            debug // verbosity according to debug
+        );
+#endif
+
         if (Foam::dlClose(ptr))
         {
             DebugInFunction
@@ -242,6 +309,16 @@ bool Foam::dlLibraryTable::open(bool verbose)
             {
                 ++nOpen;
                 libPtrs_[i] = ptr;
+
+#ifdef Foam_exptl_dlLibraryLoaderHooks
+                // Attempt load immediately after open
+                loadHook
+                (
+                    libPtrs_[i],
+                    dynamicCode::libraryBaseName(libNames_[i]),
+                    debug // verbosity according to debug
+                );
+#endif
             }
             else
             {
@@ -315,6 +392,16 @@ bool Foam::dlLibraryTable::close
     DebugInFunction
         << "Closing " << libName
         << " with handle " << Foam::name(libPtrs_[index]) << nl;
+
+#ifdef Foam_exptl_dlLibraryLoaderHooks
+    // Attempt unload prior to close
+    unloadHook
+    (
+        libPtrs_[index],
+        dynamicCode::libraryBaseName(libNames_[index]),
+        debug // verbosity according to debug
+    );
+#endif
 
     const bool ok = Foam::dlClose(libPtrs_[index]);
 
