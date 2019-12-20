@@ -41,6 +41,8 @@ foam
 ```
 ./Allwmake -s -l
 ```
+- The `-s` option provides a less verbose output and `-l` logs the build output
+  to file.  For a full list of options, use `./Allwmake -help`
 - In case you need to stop the compilation, continue later by running
 `./Allwmake` again.
 
