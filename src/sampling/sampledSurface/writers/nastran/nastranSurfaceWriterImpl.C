@@ -190,7 +190,7 @@ Foam::fileName Foam::nastranSurfaceWriter::writeTemplate
         << "$" << nl
         << "BEGIN BULK" << nl;
 
-    List<DynamicList<face>> decomposedFaces;
+    List<faceList> decomposedFaces;
     writeGeometry(os, surf, decomposedFaces);
 
     os  << "$" << nl
@@ -201,7 +201,7 @@ Foam::fileName Foam::nastranSurfaceWriter::writeTemplate
 
     if (isNodeValues)
     {
-        for (const DynamicList<face>& dFaces : decomposedFaces)
+        for (const faceList& dFaces : decomposedFaces)
         {
             for (const face& f : dFaces)
             {
@@ -219,12 +219,16 @@ Foam::fileName Foam::nastranSurfaceWriter::writeTemplate
     }
     else
     {
-        for (const DynamicList<face>& dFaces : decomposedFaces)
+        auto valIter = values.cbegin();
+
+        for (const faceList& dFaces : decomposedFaces)
         {
             forAll(dFaces, facei)
             {
-                writeFaceValue(os, format, values[facei], ++elemId);
+                writeFaceValue(os, format, *valIter, ++elemId);
             }
+
+            ++valIter;
         }
     }
 

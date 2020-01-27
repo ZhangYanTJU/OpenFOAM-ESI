@@ -206,7 +206,7 @@ void Foam::nastranSurfaceWriter::writeGeometry
 (
     Ostream& os,
     const meshedSurf& surf,
-    List<DynamicList<face>>& decomposedFaces
+    List<faceList>& decomposedFaces
 ) const
 {
     const pointField& points = surf.points();
@@ -224,9 +224,9 @@ void Foam::nastranSurfaceWriter::writeGeometry
         writeCoord(os, points[pointi], pointi);
     }
 
-    // Write faces
+    // Write faces, with on-the-fly decomposition (triangulation)
     decomposedFaces.clear();
-    decomposedFaces.setSize(faces.size());
+    decomposedFaces.resize(faces.size());
 
     os  << "$" << nl
         << "$ Faces" << nl
@@ -236,30 +236,34 @@ void Foam::nastranSurfaceWriter::writeGeometry
     forAll(faces, facei)
     {
         const face& f = faces[facei];
+        faceList& decomp = decomposedFaces[facei];
+
         // 1-offset for PID
         const label PID = 1 + (facei < zones.size() ? zones[facei] : 0);
 
         if (f.size() == 3)
         {
             writeFace(os, "CTRIA3", f, ++nFace, PID);
-            decomposedFaces[facei].append(f);
+            decomp.resize(1);
+            decomp[0] = f;
         }
         else if (f.size() == 4)
         {
             writeFace(os, "CQUAD4", f, ++nFace, PID);
-            decomposedFaces[facei].append(f);
+            decomp.resize(1);
+            decomp[0] = f;
         }
         else
         {
             // Decompose poly face into tris
-            label nTri = 0;
-            faceList triFaces;
-            f.triangles(points, nTri, triFaces);
+            decomp.resize(f.nTriangles());
 
-            forAll(triFaces, trii)
+            label nTri = 0;
+            f.triangles(points, nTri, decomp);
+
+            for (const face& f2 : decomp)
             {
-                writeFace(os, "CTRIA3", triFaces[trii], ++nFace, PID);
-                decomposedFaces[facei].append(triFaces[trii]);
+                writeFace(os, "CTRIA3", f2, ++nFace, PID);
             }
         }
     }
@@ -392,7 +396,7 @@ Foam::fileName Foam::nastranSurfaceWriter::write
         << "$" << nl
         << "BEGIN BULK" << nl;
 
-    List<DynamicList<face>> decomposedFaces;
+    List<faceList> decomposedFaces;
     writeGeometry(os, surf, decomposedFaces);
 
     writeFooter(os, surf)

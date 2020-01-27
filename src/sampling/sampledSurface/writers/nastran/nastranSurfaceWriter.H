@@ -80,7 +80,7 @@ Description
 
 SourceFiles
     nastranSurfaceWriter.C
-    nastranSurfaceWriterTemplates.C
+    nastranSurfaceWriterImpl.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -161,7 +161,7 @@ private:
         (
             Ostream& os,
             const meshedSurf& surf,
-            List<DynamicList<face>>& decomposedFaces
+            List<faceList>& decomposedFaces
         ) const;
 
         //- Write the formatted keyword to the output stream
