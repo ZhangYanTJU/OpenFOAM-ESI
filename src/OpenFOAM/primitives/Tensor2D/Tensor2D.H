@@ -83,10 +83,19 @@ public:
     enum components { XX, XY, YX, YY };
 
 
-    // Constructors
+    // Generated Methods
 
-        //- Construct null
-        inline Tensor2D();
+        //- Default construct
+        Tensor2D() = default;
+
+        //- Copy construct
+        Tensor2D(const Tensor2D&) = default;
+
+        //- Copy assignment
+        Tensor2D& operator=(const Tensor2D&) = default;
+
+
+    // Constructors
 
         //- Construct initialized to zero
         inline Tensor2D(const Foam::zero);

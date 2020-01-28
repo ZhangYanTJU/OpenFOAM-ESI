@@ -65,6 +65,12 @@ public:
     TypeName("value");
 
 
+    // Generated Methods
+
+        //- Copy construct
+        valuePointPatchField(const valuePointPatchField&) = default;
+
+
     // Constructors
 
         //- Construct from patch and internal field

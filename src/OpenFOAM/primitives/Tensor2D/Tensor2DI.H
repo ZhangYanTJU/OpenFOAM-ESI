@@ -29,11 +29,6 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Cmpt>
-inline Foam::Tensor2D<Cmpt>::Tensor2D()
-{}
-
-
-template<class Cmpt>
 inline Foam::Tensor2D<Cmpt>::Tensor2D(const Foam::zero)
 :
     Tensor2D::msType(Zero)

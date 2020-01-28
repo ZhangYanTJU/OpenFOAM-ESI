@@ -90,9 +90,6 @@ public:
             const DataType& data
         );
 
-        //- Construct as copy
-        inline PointData(const PointData&);
-
 
     // Member Functions
 

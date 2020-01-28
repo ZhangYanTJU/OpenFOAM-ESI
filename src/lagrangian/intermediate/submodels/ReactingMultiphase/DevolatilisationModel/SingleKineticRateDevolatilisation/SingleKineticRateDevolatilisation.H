@@ -111,18 +111,6 @@ class SingleKineticRateDevolatilisation
                 E_(readScalar(is))
             {}
 
-            //- Construct as copy
-            volatileData(const volatileData& vd)
-            :
-                name_(vd.name_),
-                A1_(vd.A1_),
-                E_(vd.E_)
-            {}
-
-
-        //- Destructor
-        ~volatileData()
-        {}
 
 
         // Public Member Functions
@@ -208,12 +196,6 @@ public:
             CloudType& owner
         );
 
-        //- Construct copy
-        SingleKineticRateDevolatilisation
-        (
-            const SingleKineticRateDevolatilisation<CloudType>& dm
-        );
-
         //- Construct and return a clone
         virtual autoPtr<DevolatilisationModel<CloudType>> clone() const
         {
@@ -225,7 +207,7 @@ public:
 
 
     //- Destructor
-    virtual ~SingleKineticRateDevolatilisation();
+    virtual ~SingleKineticRateDevolatilisation() = default;
 
 
     // Member Functions

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,7 +56,7 @@ void Foam::interpolation2DTable<Type>::readTable()
 template<class Type>
 Foam::interpolation2DTable<Type>::interpolation2DTable()
 :
-    List<Tuple2<scalar, List<Tuple2<scalar, Type>>>>(),
+    List<value_type>(),
     bounding_(bounds::normalBounding::WARN),
     fileName_("fileNameIsUndefined"),
     reader_(nullptr)
@@ -71,7 +71,7 @@ Foam::interpolation2DTable<Type>::interpolation2DTable
     const fileName& fName
 )
 :
-    List<Tuple2<scalar, List<Tuple2<scalar, Type>>>>(values),
+    List<value_type>(values),
     bounding_(bounding),
     fileName_(fName),
     reader_(nullptr)
@@ -81,7 +81,7 @@ Foam::interpolation2DTable<Type>::interpolation2DTable
 template<class Type>
 Foam::interpolation2DTable<Type>::interpolation2DTable(const fileName& fName)
 :
-    List<Tuple2<scalar, List<Tuple2<scalar, Type>>>>(),
+    List<value_type>(),
     bounding_(bounds::normalBounding::WARN),
     fileName_(fName),
     reader_(new openFoamTableReader<Type>(dictionary()))
@@ -93,7 +93,7 @@ Foam::interpolation2DTable<Type>::interpolation2DTable(const fileName& fName)
 template<class Type>
 Foam::interpolation2DTable<Type>::interpolation2DTable(const dictionary& dict)
 :
-    List<Tuple2<scalar, List<Tuple2<scalar, Type>>>>(),
+    List<value_type>(),
     bounding_
     (
         bounds::normalBoundingNames.lookupOrDefault
@@ -114,13 +114,13 @@ Foam::interpolation2DTable<Type>::interpolation2DTable(const dictionary& dict)
 template<class Type>
 Foam::interpolation2DTable<Type>::interpolation2DTable
 (
-     const interpolation2DTable& interpTable
+     const interpolation2DTable& tbl
 )
 :
-    List<Tuple2<scalar, List<Tuple2<scalar, Type>>>>(interpTable),
-    bounding_(interpTable.bounding_),
-    fileName_(interpTable.fileName_),
-    reader_(interpTable.reader_)    // note: steals reader. Used in write().
+    List<value_type>(tbl),
+    bounding_(tbl.bounding_),
+    fileName_(tbl.fileName_),
+    reader_(tbl.reader_.clone())
 {}
 
 
@@ -311,6 +311,24 @@ Foam::label Foam::interpolation2DTable<Type>::Xi
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::interpolation2DTable<Type>::operator=
+(
+    const interpolation2DTable<Type>& rhs
+)
+{
+    if (this == &rhs)
+    {
+        return;
+    }
+
+    static_cast<List<value_type>&>(*this) = rhs;
+    bounding_ = rhs.bounding_;
+    fileName_ = rhs.fileName_;
+    reader_.reset(rhs.reader_.clone());
+}
+
 
 template<class Type>
 Type Foam::interpolation2DTable<Type>::operator()

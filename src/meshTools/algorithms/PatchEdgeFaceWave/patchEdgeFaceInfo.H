@@ -113,9 +113,6 @@ public:
         //- Construct from origin, distance
         inline patchEdgeFaceInfo(const point&, const scalar);
 
-        //- Construct as copy
-        inline patchEdgeFaceInfo(const patchEdgeFaceInfo&);
-
 
     // Member Functions
 
