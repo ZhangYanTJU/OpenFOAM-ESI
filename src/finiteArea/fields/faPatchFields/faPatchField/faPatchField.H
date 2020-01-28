@@ -256,6 +256,7 @@ public:
             const dictionary&
         );
         
+/*
         //- Return a pointer to a new patchField created on freestore given
         //  patch and internal field
         //  (does not set the patch field values).
@@ -267,7 +268,7 @@ public:
             const faPatch&,
             const DimensionedField<Type, areaMesh>&
         );
-
+*/
         //- Return a pointer to a new calculatedFaPatchField created on
         //- freestore without setting patchField values
         template<class Type2>

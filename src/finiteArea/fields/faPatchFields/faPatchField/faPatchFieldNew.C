@@ -144,7 +144,7 @@ Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
     return cstrIter()(p, iF, dict);
 }
 
-
+/*
 template<class Type>
 Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
 (
@@ -198,7 +198,7 @@ Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
     //}
     return tfvp;
 }
-
+*/
 
 template<class Type>
 Foam::tmp<Foam::faPatchField<Type>> Foam::faPatchField<Type>::New
