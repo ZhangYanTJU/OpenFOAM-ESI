@@ -47,7 +47,7 @@ Foam::solidProperties::solidProperties
     scalar kappa,
     scalar Hf,
     scalar emissivity,
-    scalar W.
+    scalar W,
     scalar nu,
     scalar E
 )
@@ -57,7 +57,7 @@ Foam::solidProperties::solidProperties
     kappa_(kappa),
     Hf_(Hf),
     emissivity_(emissivity),
-    W_(W)
+    W_(W),
     nu_(nu),
     E_(E)
 {}
@@ -70,7 +70,7 @@ Foam::solidProperties::solidProperties(const dictionary& dict)
     kappa_(dict.getCompat<scalar>("kappa", {{"K", 1612}})),
     Hf_(dict.get<scalar>("Hf")),
     emissivity_(dict.get<scalar>("emissivity")),
-    W_(dict.get<scalar>("W"))
+    W_(dict.get<scalar>("W")),
     nu_(dict.lookupOrDefault<scalar>("nu", 0.0)),
     E_(dict.lookupOrDefault<scalar>("E", 0.0))
 {}

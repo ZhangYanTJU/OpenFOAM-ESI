@@ -532,10 +532,7 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
 
     forAll(CorrVecs.boundaryField(), patchI)
     {
-        mesh().boundary()[patchI].makeCorrectionVectors
-        (
-            CorrVecs.boundaryFieldRef()[patchI]
-        );
+        mesh().boundary()[patchI].makeCorrectionVectors(CorrVecsbf[patchI]);
     }
 /*
 
