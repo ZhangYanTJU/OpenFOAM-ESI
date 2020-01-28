@@ -48,14 +48,6 @@ inline Foam::PointData<DataType>::PointData
 {}
 
 
-template<class DataType>
-inline Foam::PointData<DataType>::PointData(const PointData<DataType>& wpt)
-:
-    pointEdgePoint(wpt),
-    data_(wpt.data())
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class DataType>

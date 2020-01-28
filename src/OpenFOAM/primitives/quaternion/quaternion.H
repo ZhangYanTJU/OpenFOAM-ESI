@@ -119,10 +119,22 @@ public:
         static const quaternion I;
 
 
+    // Generated Methods
+
+        //- Default construct
+        quaternion() = default;
+
+        //- Copy construct
+        quaternion(const quaternion&) = default;
+
+        //- Copy assignment
+        quaternion& operator=(const quaternion&) = default;
+
+
     // Constructors
 
-        //- Construct null
-        inline quaternion();
+        //- Construct zero initialized
+        inline quaternion(const Foam::zero);
 
         //- Construct given scalar and vector parts
         inline quaternion(const scalar w, const vector& v);
@@ -213,7 +225,6 @@ public:
 
     // Member operators
 
-        inline void operator=(const quaternion&);
         inline void operator+=(const quaternion&);
         inline void operator-=(const quaternion&);
         inline void operator*=(const quaternion&);

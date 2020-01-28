@@ -2,8 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,17 +58,7 @@ class interpolation2DTable
 :
     public List<Tuple2<scalar, List<Tuple2<scalar, Type>>>>
 {
-public:
-
-    // Public data types
-
-        //- Convenience typedef
-        typedef List<Tuple2<scalar, List<Tuple2<scalar, Type>>>> table;
-
-
-private:
-
-    // Private data
+    // Private Data
 
         //- Handling for out-of-bound values
         bounds::normalBounding bounding_;
@@ -101,6 +94,15 @@ private:
 
 public:
 
+    // Public Data Types
+
+        //- The element data type
+        typedef Tuple2<scalar, List<Tuple2<scalar, Type>>> value_type;
+
+        //- Convenience typedef
+        typedef List<Tuple2<scalar, List<Tuple2<scalar, Type>>>> table;
+
+
     // Constructors
 
         //- Construct null
@@ -120,8 +122,8 @@ public:
         //- Construct by reading file name and outOfBounds from dictionary
         interpolation2DTable(const dictionary& dict);
 
-        //- Construct copy
-        interpolation2DTable(const interpolation2DTable& interpTable);
+        //- Copy construct
+        interpolation2DTable(const interpolation2DTable& tbl);
 
 
     // Member Functions
@@ -138,6 +140,9 @@ public:
 
         //- Return an element of constant List<Tuple2<scalar, Type>>
         const List<Tuple2<scalar, Type>>& operator[](const label) const;
+
+        //- Copy assignment
+        void operator=(const interpolation2DTable<Type>& rhs);
 
         //- Return an interpolated value
         Type operator()(const scalar valueX, const scalar valueY) const;

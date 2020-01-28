@@ -81,6 +81,15 @@ private:
 public:
 
 
+    // Generated Methods
+
+        //- Copy construct
+        smoothData(const smoothData&) = default;
+
+        //- Copy assignment
+        smoothData& operator=(const smoothData&) = default;
+
+
     // Constructors
 
         //- Construct null

@@ -270,10 +270,22 @@ public:
             }
 
 
-        // Print
+    // Output
 
-            //- Print description of stream to Ostream
-            void print(Ostream& os) const;
+        //- Print stream description to Ostream
+        void print(Ostream& os) const;
+
+
+    // Member Operators
+
+        //- Copy assignment, with rewind()
+        void operator=(const ITstream& is);
+
+        //- Copy assignment of tokens, with rewind()
+        void operator=(const tokenList& toks);
+
+        //- Move assignment of tokens, with rewind()
+        void operator=(tokenList&& toks);
 };
 
 

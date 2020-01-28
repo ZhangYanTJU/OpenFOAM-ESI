@@ -64,6 +64,12 @@ public:
         inline static const SubList<T>& null();
 
 
+    // Generated Methods
+
+        //- Copy construct
+        SubList(const SubList&) = default;
+
+
     // Constructors
 
         //- Construct from UList and sub-list size

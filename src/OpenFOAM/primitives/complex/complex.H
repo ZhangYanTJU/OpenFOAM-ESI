@@ -95,6 +95,15 @@ public:
         static const complex one;
 
 
+    // Generated Methods
+
+        //- Copy construct
+        complex(const complex&) = default;
+
+        //- Copy assignment
+        complex& operator=(const complex&) = default;
+
+
     // Constructors
 
         //- Construct null
@@ -126,7 +135,6 @@ public:
 
     // Member operators
 
-        inline void operator=(const complex&);
         inline void operator+=(const complex&);
         inline void operator-=(const complex&);
         inline void operator*=(const complex&);

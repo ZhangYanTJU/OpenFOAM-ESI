@@ -25,7 +25,10 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-inline Foam::quaternion::quaternion()
+inline Foam::quaternion::quaternion(const Foam::zero)
+:
+    w_(Zero),
+    v_(Zero)
 {}
 
 
@@ -522,12 +525,6 @@ inline Foam::vector Foam::quaternion::eulerAngles
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
-
-inline void Foam::quaternion::operator=(const quaternion& q)
-{
-    w_ = q.w_;
-    v_ = q.v_;
-}
 
 inline void Foam::quaternion::operator+=(const quaternion& q)
 {
