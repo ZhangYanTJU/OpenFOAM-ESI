@@ -2,8 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2017 OpenFOAM Foundation
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,7 +60,7 @@ void Foam::interpolationTable<Type>::readTable()
 template<class Type>
 Foam::interpolationTable<Type>::interpolationTable()
 :
-    List<Tuple2<scalar, Type>>(),
+    List<value_type>(),
     bounding_(bounds::repeatableBounding::WARN),
     fileName_("fileNameIsUndefined"),
     reader_(nullptr)
@@ -72,7 +75,7 @@ Foam::interpolationTable<Type>::interpolationTable
     const fileName& fName
 )
 :
-    List<Tuple2<scalar, Type>>(values),
+    List<value_type>(values),
     bounding_(bounding),
     fileName_(fName),
     reader_(nullptr)
@@ -82,7 +85,7 @@ Foam::interpolationTable<Type>::interpolationTable
 template<class Type>
 Foam::interpolationTable<Type>::interpolationTable(const fileName& fName)
 :
-    List<Tuple2<scalar, Type>>(),
+    List<value_type>(),
     bounding_(bounds::repeatableBounding::WARN),
     fileName_(fName),
     reader_(new openFoamTableReader<Type>(dictionary()))
@@ -94,7 +97,7 @@ Foam::interpolationTable<Type>::interpolationTable(const fileName& fName)
 template<class Type>
 Foam::interpolationTable<Type>::interpolationTable(const dictionary& dict)
 :
-    List<Tuple2<scalar, Type>>(),
+    List<value_type>(),
     bounding_
     (
         bounds::repeatableBoundingNames.lookupOrFailsafe
@@ -114,15 +117,14 @@ Foam::interpolationTable<Type>::interpolationTable(const dictionary& dict)
 template<class Type>
 Foam::interpolationTable<Type>::interpolationTable
 (
-     const interpolationTable& interpTable
+     const interpolationTable& tbl
 )
 :
-    List<Tuple2<scalar, Type>>(interpTable),
-    bounding_(interpTable.bounding_),
-    fileName_(interpTable.fileName_),
-    reader_(interpTable.reader_)    // note: steals reader. Used in write().
+    List<value_type>(tbl),
+    bounding_(tbl.bounding_),
+    fileName_(tbl.fileName_),
+    reader_(tbl.reader_, false) // clone
 {}
-
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -314,6 +316,29 @@ Type Foam::interpolationTable<Type>::rateOfChange(const scalar value) const
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::interpolationTable<Type>::operator=
+(
+    const interpolationTable<Type>& rhs
+)
+{
+    if (this == &rhs)
+    {
+        return;
+    }
+
+    static_cast<List<value_type>&>(*this) = rhs;
+    bounding_ = rhs.bounding_;
+    fileName_ = rhs.fileName_;
+    // reader_.reset(rhs.reader_.clone());
+    reader_.reset();
+    if (rhs.reader_.valid())
+    {
+        reader_.reset(rhs.reader_().clone().ptr()); // clone
+    }
+}
+
 
 template<class Type>
 const Foam::Tuple2<Foam::scalar, Type>&

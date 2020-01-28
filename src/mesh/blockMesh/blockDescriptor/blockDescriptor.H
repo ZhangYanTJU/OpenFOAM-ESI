@@ -126,14 +126,16 @@ class blockDescriptor
 
         void findCurvedFaces();
 
+public:
 
-    // Private Member Functions
+    // Generated Methods
+
+        //- Copy construct
+        blockDescriptor(const blockDescriptor&) = default;
 
         //- Disallow default bitwise assignment
         void operator=(const blockDescriptor&);
 
-
-public:
 
     // Constructors
 

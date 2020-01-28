@@ -263,6 +263,15 @@ protected:
 
 public:
 
+    // Generated Methods
+
+        //- Copy construct
+        IOstream(const IOstream&) = default;
+
+        //- Destructor
+        virtual ~IOstream() = default;
+
+
     // Constructors
 
         //- Construct setting format and version
@@ -282,11 +291,6 @@ public:
         {
             setBad();
         }
-
-
-    //- Destructor
-    virtual ~IOstream()
-    {}
 
 
     // Member functions

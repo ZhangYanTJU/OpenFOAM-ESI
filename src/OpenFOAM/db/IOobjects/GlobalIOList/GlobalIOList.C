@@ -87,13 +87,6 @@ Foam::GlobalIOList<Type>::GlobalIOList
 }
 
 
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::GlobalIOList<Type>::~GlobalIOList()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

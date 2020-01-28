@@ -200,6 +200,9 @@ public:
 
         public:
 
+            //- Copy construct
+            iterator(const iterator&) = default;
+
             //- Construct for a given DLListBase and link
             inline iterator(DLListBase&, link*);
 
@@ -240,6 +243,9 @@ public:
             //- Construct from a non-const iterator
             inline const_iterator(const DLListBase::iterator& iter);
 
+            //- Copy construct
+            const_iterator(const const_iterator&) = default;
+
             //- Currently pointing at a valid entry
             inline bool found() const;
 
@@ -276,6 +282,9 @@ public:
 
             //- Construct for a given DLListBase and link
             inline const_reverse_iterator(const DLListBase& lst, const link*);
+
+            //- Copy construct
+            const_reverse_iterator(const const_reverse_iterator&) = default;
 
             //- Currently pointing at a valid entry
             inline bool found() const;

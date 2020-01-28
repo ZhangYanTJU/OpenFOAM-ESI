@@ -166,12 +166,6 @@ Foam::IOField<Type>::IOField(const IOobject& io, const Xfer<Field<Type>>& f)
 }
 
 
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::IOField<Type>::~IOField()
-{}
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

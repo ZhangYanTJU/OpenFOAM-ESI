@@ -182,6 +182,9 @@ public:
 
         public:
 
+            //- Copy construct
+            iterator(const iterator&) = default;
+
             //- Construct for a given SLListBase and link
             inline iterator(SLListBase&, link*);
 
@@ -221,6 +224,9 @@ public:
 
             //- Construct from a non-const iterator
             inline const_iterator(const SLListBase::iterator& iter);
+
+            //- Copy construct
+            const_iterator(const const_iterator&) = default;
 
             //- Currently pointing at a valid entry
             inline bool found() const;

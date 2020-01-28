@@ -59,13 +59,16 @@ class OSstream
         std::ostream& os_;
 
 
-    // Private Member Functions
+public:
+
+    // Generated Methods
+
+        //- Copy construct
+        OSstream(const OSstream&) = default;
 
         //- Disallow default bitwise assignment
         void operator=(const OSstream&) = delete;
 
-
-public:
 
     // Constructors
 

@@ -784,8 +784,8 @@ public:
 
           // Constructors
 
-            //- Construct null (end iterator)
-            inline iterator() {}
+            //- Default construct (end iterator)
+            iterator() = default;
 
             //- Copy construct from similar access type
             inline explicit iterator(const Iterator<false>& iter)
@@ -828,8 +828,11 @@ public:
 
           // Constructors
 
-            //- Construct null (end iterator)
-            inline const_iterator() {}
+            //- Default construct (end iterator)
+            const_iterator() = default;
+
+            //- Copy construct
+            const_iterator(const const_iterator&) = default;
 
             //- Copy construct from similar access type
             inline explicit const_iterator(const Iterator<true>& iter)

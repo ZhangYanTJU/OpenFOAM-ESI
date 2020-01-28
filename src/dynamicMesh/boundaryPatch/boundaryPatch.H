@@ -86,18 +86,15 @@ public:
             const label index
         );
 
-        //- Construct as copy
-        boundaryPatch(const boundaryPatch&);
+        //- Copy construct, resetting the index
+        boundaryPatch(const boundaryPatch& p, const label index);
 
-        //- Construct as copy, resetting the index
-        boundaryPatch(const boundaryPatch&, const label index);
 
         //- Clone
-        autoPtr<boundaryPatch> clone() const;
-
-
-    //- Destructor
-    ~boundaryPatch();
+        autoPtr<boundaryPatch> clone() const
+        {
+            return autoPtr<boundaryPatch>(new boundaryPatch(*this));
+        }
 
 
     // Member Functions

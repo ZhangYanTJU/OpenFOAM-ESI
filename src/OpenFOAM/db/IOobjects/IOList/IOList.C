@@ -129,13 +129,6 @@ Foam::IOList<T>::IOList(const IOobject& io, const Xfer<List<T>>& list)
 }
 
 
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-template<class T>
-Foam::IOList<T>::~IOList()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>

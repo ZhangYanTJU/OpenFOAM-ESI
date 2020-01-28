@@ -174,6 +174,12 @@ public:
         };
 
 
+    // Generated Methods
+
+        //- Copy construct
+        UList(const UList<T>&) = default;
+
+
     // Constructors
 
         //- Null constructor

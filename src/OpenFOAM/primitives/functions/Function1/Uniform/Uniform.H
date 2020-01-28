@@ -61,16 +61,19 @@ class Uniform
 :
     public Constant<Type>
 {
-    // Private Member Functions
-
-        //- Disallow default bitwise assignment
-        void operator=(const Uniform<Type>&);
-
-
 public:
 
-    // Runtime type information
+    //- Declare type-name, virtual type (with debug switch)
     TypeName("uniform");
+
+
+    // Generated Methods
+
+        //- Copy construct
+        Uniform<Type>(const Uniform&) = default;
+
+        //- No copy assignment
+        void operator=(const Uniform<Type>&) = delete;
 
 
     // Constructors

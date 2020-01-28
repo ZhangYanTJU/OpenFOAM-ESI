@@ -80,6 +80,12 @@ public:
             const labelUList& addr
         );
 
+        //- Copy construct (shallow copy of values and addressing arrays)
+        UIndirectList(const UIndirectList<T>& list)
+        :
+            UIndirectList<T>(list.completeList_, list.addressing_)
+        {}
+
 
     // Member Functions
 

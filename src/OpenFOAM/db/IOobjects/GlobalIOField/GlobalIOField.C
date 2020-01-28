@@ -91,13 +91,6 @@ Foam::GlobalIOField<Type>::GlobalIOField
 }
 
 
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::GlobalIOField<Type>::~GlobalIOField()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

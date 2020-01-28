@@ -128,13 +128,6 @@ Foam::IOMap<T>::IOMap(const IOobject& io, const Xfer<Map<T>>& map)
 }
 
 
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-template<class T>
-Foam::IOMap<T>::~IOMap()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>

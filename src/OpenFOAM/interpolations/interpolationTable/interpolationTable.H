@@ -2,8 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2011-2016 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,6 +104,15 @@ class interpolationTable
 
 public:
 
+    // Public Data Types
+
+        //- The element data type
+        typedef Tuple2<scalar, Type> value_type;
+
+        //- The mapped data type
+        typedef Type mapped_type;
+
+
     // Constructors
 
         //- Construct null
@@ -123,8 +134,8 @@ public:
         //  This is a specialised constructor used by patchFields
         interpolationTable(const dictionary& dict);
 
-        //- Construct copy
-        interpolationTable(const interpolationTable& interpTable);
+        //- Copy construct
+        interpolationTable(const interpolationTable& tbl);
 
 
     // Member Functions
@@ -142,6 +153,9 @@ public:
 
 
     // Member Operators
+
+        //- Copy assignment
+        void operator=(const interpolationTable<Type>& rhs);
 
         //- Return an element of constant Tuple2<scalar, Type>
         const Tuple2<scalar, Type>& operator[](const label) const;

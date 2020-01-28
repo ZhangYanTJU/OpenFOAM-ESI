@@ -49,12 +49,9 @@ Foam::Random::Random(const label seed)
 }
 
 
-Foam::Random::Random(const Random& r, const bool reset)
+Foam::Random::Random(const Random& rnd, const bool reset)
 :
-    buffer_(r.buffer_),
-    seed_(r.seed_),
-    hasGaussSample_(r.hasGaussSample_),
-    gaussSample_(r.gaussSample_)
+    Random(rnd)
 {
     if (reset)
     {
@@ -65,12 +62,6 @@ Foam::Random::Random(const Random& r, const bool reset)
         osRandomSeed(seed_, buffer_);
     }
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::Random::~Random()
-{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

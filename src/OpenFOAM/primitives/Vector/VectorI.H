@@ -26,11 +26,6 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Cmpt>
-inline Foam::Vector<Cmpt>::Vector()
-{}
-
-
-template<class Cmpt>
 inline Foam::Vector<Cmpt>::Vector(const Foam::zero)
 :
     Vector::vsType(Zero)

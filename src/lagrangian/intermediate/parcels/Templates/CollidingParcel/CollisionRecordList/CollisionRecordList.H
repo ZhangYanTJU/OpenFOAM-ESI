@@ -88,10 +88,13 @@ class CollisionRecordList
 
 public:
 
-    // Constructors
+    // Generated Methods
 
-        //- Construct null
-        CollisionRecordList();
+        //- Default construct
+        CollisionRecordList() = default;
+
+
+    // Constructors
 
         //- Construct from Istream
         CollisionRecordList(Istream&);
@@ -107,9 +110,6 @@ public:
             const vectorField& wallPRel,
             const Field<WallType>& wallData
         );
-
-    //- Destructor
-    ~CollisionRecordList();
 
 
     // Member Functions
@@ -192,11 +192,6 @@ public:
         //  marked as having been accessed, then mark all records as
         //  not accessed ready for the next evaluation
         void update();
-
-
-        // Member Operators
-
-            void operator=(const CollisionRecordList&);
 
 
         // Friend Operators

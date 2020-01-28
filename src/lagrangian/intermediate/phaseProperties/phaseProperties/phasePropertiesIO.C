@@ -30,36 +30,9 @@ License
 
 Foam::phaseProperties::phaseProperties(Istream& is)
 :
-    phase_(UNKNOWN),
-    stateLabel_("(unknown)"),
-    names_(0),
-    Y_(0),
-    carrierIds_(0)
+    phaseProperties()
 {
-    is.check(FUNCTION_NAME);
-
-    dictionaryEntry phaseInfo(dictionary::null, is);
-
-    phase_ = phaseTypeNames[phaseInfo.keyword()];
-    stateLabel_ = phaseToStateLabel(phase_);
-
-    const label nComponents = phaseInfo.size();
-    if (nComponents)
-    {
-        names_.setSize(nComponents, "unknownSpecie");
-        Y_.setSize(nComponents, 0.0);
-        carrierIds_.setSize(nComponents, -1);
-
-        label cmptI = 0;
-        forAllConstIter(IDLList<entry>, phaseInfo, iter)
-        {
-            names_[cmptI] = iter().keyword();
-            Y_[cmptI] = readScalar(phaseInfo.lookup(names_[cmptI]));
-            cmptI++;
-        }
-
-        checkTotalMassFraction();
-    }
+    is >> *this;
 }
 
 

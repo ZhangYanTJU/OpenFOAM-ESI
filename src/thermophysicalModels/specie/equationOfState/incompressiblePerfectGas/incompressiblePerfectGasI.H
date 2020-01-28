@@ -158,17 +158,6 @@ inline Foam::scalar Foam::incompressiblePerfectGas<Specie>::CpMCv
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Specie>
-inline void Foam::incompressiblePerfectGas<Specie>::operator=
-(
-    const incompressiblePerfectGas<Specie>& ipg
-)
-{
-    Specie::operator=(ipg);
-    pRef_ = ipg.pRef_;
-}
-
-
-template<class Specie>
 inline void Foam::incompressiblePerfectGas<Specie>::operator+=
 (
     const incompressiblePerfectGas<Specie>& ipg

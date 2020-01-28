@@ -63,6 +63,9 @@ public:
 
     // Constructors
 
+        //- Default copy construct
+        IOMap(const IOMap&) = default;
+
         //- Construct from IOobject
         IOMap(const IOobject&);
 
@@ -77,7 +80,7 @@ public:
 
 
     //- Destructor
-    virtual ~IOMap();
+    virtual ~IOMap() = default;
 
 
     // Member functions

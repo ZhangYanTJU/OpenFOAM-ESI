@@ -29,14 +29,6 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class PairType, class WallType>
-Foam::CollisionRecordList<PairType, WallType>::CollisionRecordList()
-:
-    pairRecords_(),
-    wallRecords_()
-{}
-
-
-template<class PairType, class WallType>
 Foam::CollisionRecordList<PairType, WallType>::CollisionRecordList(Istream& is)
 :
     pairRecords_(is),
@@ -118,13 +110,6 @@ Foam::CollisionRecordList<PairType, WallType>::CollisionRecordList
         );
     }
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * /
-
-template<class PairType, class WallType>
-Foam::CollisionRecordList<PairType, WallType>::~CollisionRecordList()
-{}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
@@ -380,27 +365,6 @@ void Foam::CollisionRecordList<PairType, WallType>::update()
 
         wallRecords_ = updatedRecords;
     }
-}
-
-
-// * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * * //
-
-template<class PairType, class WallType>
-void Foam::CollisionRecordList<PairType, WallType>::operator=
-(
-    const CollisionRecordList<PairType, WallType>& rhs
-)
-{
-    // Check for assignment to self
-    if (this == &rhs)
-    {
-        FatalErrorInFunction
-            << "Attempted assignment to self"
-            << abort(FatalError);
-    }
-
-    pairRecords_ = rhs.pairRecords_;
-    wallRecords_ = rhs.wallRecords_;
 }
 
 

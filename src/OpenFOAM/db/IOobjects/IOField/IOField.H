@@ -61,6 +61,9 @@ public:
 
     // Constructors
 
+        //- Default copy construct
+        IOField(const IOField&) = default;
+
         //- Construct from IOobject
         IOField(const IOobject&);
 
@@ -78,7 +81,7 @@ public:
 
 
     //- Destructor
-    virtual ~IOField();
+    virtual ~IOField() = default;
 
 
     // Member functions

@@ -82,15 +82,11 @@ public:
         //- Construct given seed and sample count
         Random(const label seed = 123456);
 
-        //- Copy constructor with optional reset of sampleI
-        Random(const Random& r, const bool reset = false);
+        //- Copy construct with possible reset of seed
+        Random(const Random& rnd, const bool reset);
 
 
-    // Destructor
-    ~Random();
-
-
-    // Member functions
+    // Member Functions
 
         // Access
 

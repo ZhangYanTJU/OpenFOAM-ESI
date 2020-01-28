@@ -85,6 +85,9 @@ public:
 
     // Constructors
 
+        //- Default copy construct
+        CompactIOField(const CompactIOField&) = default;
+
         //- Construct from IOobject
         CompactIOField(const IOobject&);
 
@@ -103,7 +106,7 @@ public:
 
     // Destructor
 
-        virtual ~CompactIOField();
+        virtual ~CompactIOField() = default;
 
 
     // Member functions

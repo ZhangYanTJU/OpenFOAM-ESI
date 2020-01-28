@@ -220,6 +220,15 @@ public:
         static inline word groupName(StringType name, const word& group);
 
 
+    // Generated Methods
+
+        //- Copy construct
+        IOobject(const IOobject&) = default;
+
+        //- Destructor
+        virtual ~IOobject() = default;
+
+
     // Constructors
 
         //- Construct from name, instance, registry, io options
@@ -287,10 +296,6 @@ public:
         {
             return autoPtr<IOobject>(new IOobject(*this, registry));
         }
-
-
-    //- Destructor
-    virtual ~IOobject();
 
 
     // Member Functions

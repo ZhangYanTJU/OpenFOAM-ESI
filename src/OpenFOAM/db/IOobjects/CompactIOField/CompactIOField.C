@@ -169,14 +169,6 @@ Foam::CompactIOField<T, BaseType>::CompactIOField
 }
 
 
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-template<class T, class BaseType>
-Foam::CompactIOField<T, BaseType>::~CompactIOField()
-{}
-
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T, class BaseType>

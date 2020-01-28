@@ -340,12 +340,6 @@ Foam::IOobject::IOobject
 {}
 
 
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-Foam::IOobject::~IOobject()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::objectRegistry& Foam::IOobject::db() const

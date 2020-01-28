@@ -62,6 +62,9 @@ public:
 
     // Constructors
 
+        //- Default copy construct
+        IOPtrList(const IOPtrList&) = default;
+
         //- Construct from IOobject using given Istream constructor class
         template<class INew>
         IOPtrList(const IOobject&, const INew&);
@@ -80,7 +83,7 @@ public:
 
 
     //- Destructor
-    virtual ~IOPtrList();
+    virtual ~IOPtrList() = default;
 
 
     // Member functions

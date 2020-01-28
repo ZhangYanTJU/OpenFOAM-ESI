@@ -61,6 +61,9 @@ public:
 
     // Constructors
 
+        //- Default copy construct
+        GlobalIOList(const GlobalIOList&) = default;
+
         //- Construct from IOobject
         GlobalIOList(const IOobject&);
 
@@ -75,7 +78,7 @@ public:
 
 
     //- Destructor
-    virtual ~GlobalIOList();
+    virtual ~GlobalIOList() = default;
 
 
     // Member functions

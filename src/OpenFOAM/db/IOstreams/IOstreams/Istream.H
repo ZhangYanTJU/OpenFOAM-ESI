@@ -70,6 +70,15 @@ class Istream
 
 public:
 
+    // Generated Methods
+
+        //- Copy construct
+        Istream(const Istream&) = default;
+
+        //- Destructor
+        virtual ~Istream() = default;
+
+
     // Constructors
 
         //- Construct and set stream status
@@ -85,12 +94,7 @@ public:
         {}
 
 
-    //- Destructor
-    virtual ~Istream()
-    {}
-
-
-    // Member functions
+    // Member Functions
 
         // Read functions
 
