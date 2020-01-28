@@ -242,6 +242,15 @@ public:
         );
 
 
+    // Generated Methods
+
+        //- Copy construct
+        IOobject(const IOobject&) = default;
+
+        //- Destructor
+        virtual ~IOobject() = default;
+
+
     // Constructors
 
         //- Construct from name, instance, registry, io options
@@ -309,10 +318,6 @@ public:
         {
             return autoPtr<IOobject>::New(*this, registry);
         }
-
-
-    //- Destructor
-    virtual ~IOobject() = default;
 
 
     // Member Functions

@@ -462,6 +462,12 @@ public:
 
         public:
 
+            //- Copy construct
+            reference(const reference&) = default;
+
+            //- Move construct
+            reference(reference&&) = default;
+
             //- Value assignment
             inline void operator=(const reference& other);
 

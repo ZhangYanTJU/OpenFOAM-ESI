@@ -114,6 +114,12 @@ public:
         //- Copy construct from the values list and the addressing array
         inline UIndirectList(const UList<T>& values, const labelUList& addr);
 
+        //- Copy construct (shallow copy of values and addressing arrays)
+        UIndirectList(const UIndirectList<T>& list)
+        :
+            UIndirectList<T>(list.values_, list.addressing_)
+        {}
+
 
     // Member Functions
 

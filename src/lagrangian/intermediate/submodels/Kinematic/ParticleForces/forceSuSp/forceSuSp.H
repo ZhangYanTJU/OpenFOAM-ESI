@@ -41,6 +41,7 @@ SourceFiles
 #define forceSuSp_H
 
 #include "Tuple2.H"
+#include "vector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -63,13 +64,15 @@ class forceSuSp
 :
     public Tuple2<vector, scalar>
 {
-
 public:
 
     // Constructors
 
-        //- Construct null
-        inline forceSuSp();
+        //- Default construct
+        forceSuSp() = default;
+
+        //- Construct zero-initialized content
+        inline forceSuSp(const zero);
 
         //- Construct given Tuple2
         inline forceSuSp(const Tuple2<vector, scalar>& susp);
@@ -102,9 +105,6 @@ public:
 
 
         // Operators
-
-            //- Assignment
-            inline void operator=(const forceSuSp& susp);
 
             //- Addition
             inline void operator+=(const forceSuSp& susp);

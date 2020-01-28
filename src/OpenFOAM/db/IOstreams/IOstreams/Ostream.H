@@ -72,6 +72,15 @@ protected:
 
 public:
 
+    // Generated Methods
+
+        //- Copy construct
+        Ostream(const Ostream&) = default;
+
+        //- Destructor
+        virtual ~Ostream() = default;
+
+
     // Constructors
 
         //- Construct and set stream status
@@ -87,11 +96,7 @@ public:
         {}
 
 
-    //- Destructor
-    virtual ~Ostream() = default;
-
-
-    // Member functions
+    // Member Functions
 
         // Write functions
 

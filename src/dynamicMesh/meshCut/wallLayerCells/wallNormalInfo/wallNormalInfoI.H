@@ -72,13 +72,6 @@ inline Foam::wallNormalInfo::wallNormalInfo(const vector& normal)
 {}
 
 
-// Construct as copy
-inline Foam::wallNormalInfo::wallNormalInfo(const wallNormalInfo& wpt)
-:
-    normal_(wpt.normal())
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 inline const Foam::vector& Foam::wallNormalInfo::normal() const

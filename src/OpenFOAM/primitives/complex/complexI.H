@@ -31,6 +31,9 @@ namespace Foam
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 inline complex::complex()
+:
+    re(0),
+    im(0)
 {}
 
 
@@ -74,13 +77,6 @@ inline complex complex::conjugate() const
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
-
-inline void complex::operator=(const complex& c)
-{
-    re = c.re;
-    im = c.im;
-}
-
 
 inline void complex::operator+=(const complex& c)
 {

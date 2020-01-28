@@ -30,11 +30,7 @@ License
 
 Foam::phaseProperties::phaseProperties(Istream& is)
 :
-    phase_(UNKNOWN),
-    stateLabel_("(unknown)"),
-    names_(),
-    Y_(),
-    carrierIds_()
+    phaseProperties()
 {
     is >> *this;
 }

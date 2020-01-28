@@ -184,9 +184,7 @@ public:
         void write(Ostream& os) const;
 
 
-    // Member operators
-
-        inline void operator=(const polynomialTransport&);
+    // Member Operators
 
         inline void operator+=(const polynomialTransport&);
 

@@ -129,22 +129,6 @@ inline Foam::scalar Foam::hPolynomialThermo<EquationOfState, PolySize>::S
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class EquationOfState, int PolySize>
-inline void Foam::hPolynomialThermo<EquationOfState, PolySize>::operator=
-(
-    const hPolynomialThermo<EquationOfState, PolySize>& pt
-)
-{
-    EquationOfState::operator=(pt);
-
-    Hf_ = pt.Hf_;
-    Sf_ = pt.Sf_;
-    CpCoeffs_ = pt.CpCoeffs_;
-    hCoeffs_ = pt.hCoeffs_;
-    sCoeffs_ = pt.sCoeffs_;
-}
-
-
-template<class EquationOfState, int PolySize>
 inline void Foam::hPolynomialThermo<EquationOfState, PolySize>::operator+=
 (
     const hPolynomialThermo<EquationOfState, PolySize>& pt

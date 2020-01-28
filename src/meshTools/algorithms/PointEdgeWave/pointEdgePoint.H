@@ -112,9 +112,6 @@ public:
         //- Construct from origin, distance
         inline pointEdgePoint(const point&, const scalar);
 
-        //- Construct as copy
-        inline pointEdgePoint(const pointEdgePoint&);
-
 
     // Member Functions
 

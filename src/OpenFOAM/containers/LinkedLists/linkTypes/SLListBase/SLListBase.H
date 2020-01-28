@@ -206,6 +206,9 @@ public:
 
         public:
 
+            //- Copy construct
+            iterator(const iterator&) = default;
+
             //- Construct for a node on the list
             inline iterator(SLListBase* list, link* item);
 
