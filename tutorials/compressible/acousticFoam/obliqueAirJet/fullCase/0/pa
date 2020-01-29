@@ -35,6 +35,7 @@ boundaryField
 
         solid
         {
+            W                   20; //Not used
             rho                 2500;
 
             kappa               200;

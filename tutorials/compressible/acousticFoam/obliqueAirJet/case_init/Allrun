@@ -9,8 +9,10 @@ runApplication extrudeMesh
 runApplication changeDictionary -constant 
 runApplication topoSet
 runApplication createPatch -overwrite
-runApplication $(getApplication)
+runApplication decomposePar
+runParallel $(getApplication)
 
+mkdir $vibroAcousticCase/constant/boundaryData/window
 cp -r $dataDir/* $vibroAcousticCase/constant/boundaryData/window
 
 # -----------------------------------------------------------------------------
