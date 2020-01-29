@@ -7,4 +7,3 @@ runApplication blockMesh
 runApplication snappyHexMesh -overwrite
 runApplication makeFaMesh
 
-mkdir constant/boundaryData/window
