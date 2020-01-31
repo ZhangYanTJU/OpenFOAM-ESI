@@ -163,12 +163,15 @@ Foam::Ostream& Foam::ensightFile::write
 
 Foam::Ostream& Foam::ensightFile::write(const char* value)
 {
-    char buf[80];
+    // Output 80 chars, but allocate for trailing nul character
+    // to avoid -Wstringop-truncation warnings/errors.
+
+    char buf[80+1];
     strncpy(buf, value, 80); // max 80 chars or padded with nul if smaller
 
     if (format() == IOstream::BINARY)
     {
-        write(buf, sizeof(buf));
+        write(buf, 80);
     }
     else
     {
