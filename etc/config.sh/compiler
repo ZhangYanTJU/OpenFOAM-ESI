@@ -2,12 +2,14 @@
 # =========                 |
 # \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
 #  \\    /   O peration     |
-#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
-#    \\/     M anipulation  | Copyright (C) 2016-2018 OpenCFD Ltd.
+#   \\  /    A nd           | www.openfoam.com
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+#     Copyright (C) 2011-2016 OpenFOAM Foundation
+#     Copyright (C) 2016-2020 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
-#     This file is part of OpenFOAM, licensed under GNU General Public License
-#     <http://www.gnu.org/licenses/>.
+#     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 #
 # File
 #     etc/config.sh/compiler
@@ -21,102 +23,56 @@
 
 case "$WM_COMPILER_TYPE" in
 ThirdParty)
-    # Default versions of GMP, MPFR, MPC - override as necessary
-    gmp_version=gmp-system
-    mpfr_version=mpfr-system
-    mpc_version=mpc-system
+    # Default versions (CLANG, GCC, GMP, MPFR, MPC) - override as necessary
+
+    default_clang_version=llvm-3.7.1
+    default_gcc_version=gcc-4.8.5
+
+    default_gmp_version=gmp-system
+    default_mpfr_version=mpfr-system
+    default_mpc_version=mpc-system
+
+    gmp_version="$default_gmp_version"
+    mpfr_version="$default_mpfr_version"
+    mpc_version="$default_mpc_version"
 
     case "$WM_COMPILER" in
-    Gcc | Gcc48*)
-        gcc_version=gcc-4.8.5
-        ;;
-    Gcc49*)
-        gcc_version=gcc-4.9.4
-        ;;
-    Gcc51*)
-        gcc_version=gcc-5.1.0
-        ;;
-    Gcc52*)
-        gcc_version=gcc-5.2.0
-        ;;
-    Gcc53*)
-        gcc_version=gcc-5.3.0
-        ;;
-    Gcc54*)
-        gcc_version=gcc-5.4.0
-        ;;
-    Gcc55*)
-        gcc_version=gcc-5.5.0
-        ;;
-    Gcc61*)
-        gcc_version=gcc-6.1.0
-        ;;
-    Gcc62*)
-        gcc_version=gcc-6.2.0
-        ;;
-    Gcc63*)
-        gcc_version=gcc-6.3.0
-        ;;
-    Gcc64*)
-        gcc_version=gcc-6.4.0
-        ;;
-    Gcc65*)
-        gcc_version=gcc-6.5.0
-        ;;
-    Gcc71*)
-        gcc_version=gcc-7.1.0
-        ;;
-    Gcc72*)
-        gcc_version=gcc-7.2.0
-        ;;
-    Gcc73*)
-        gcc_version=gcc-7.3.0
-        ;;
-    Gcc74*)
-        gcc_version=gcc-7.4.0
-        ;;
-    Gcc81*)
-        gcc_version=gcc-8.1.0
-        ;;
-    Gcc82*)
-        gcc_version=gcc-8.2.0
-        ;;
-    Gcc83*)
-        gcc_version=gcc-8.3.0
-        ;;
-    Gcc91*)
-        gcc_version=gcc-9.1.0
-        ;;
-    Gcc92*)
-        gcc_version=gcc-9.2.0
-        ;;
-    Clang | Clang37*)
-        clang_version=llvm-3.7.1
-        ;;
-    Clang38*)
-        clang_version=llvm-3.8.1
-        ;;
-    Clang39*)
-        clang_version=llvm-3.9.1
-        ;;
-    Clang40*)
-        clang_version=llvm-4.0.1
-        ;;
-    Clang50*)
-        clang_version=llvm-5.0.2
-        ;;
-    Clang60*)
-        clang_version=llvm-6.0.1
-        ;;
-    Clang70*)
-        clang_version=llvm-7.0.1
-        ;;
-    Clang80*)
-        clang_version=llvm-8.0.1
-        ;;
-    Clang90*)
-        clang_version=llvm-9.0.0
-        ;;
+    Gcc)    gcc_version="$default_gcc_version" ;;
+    Gcc48*) gcc_version=gcc-4.8.5 ;;
+    Gcc49*) gcc_version=gcc-4.9.4 ;;
+    Gcc51*) gcc_version=gcc-5.1.0 ;;
+    Gcc52*) gcc_version=gcc-5.2.0 ;;
+    Gcc53*) gcc_version=gcc-5.3.0 ;;
+    Gcc54*) gcc_version=gcc-5.4.0 ;;
+    Gcc55*) gcc_version=gcc-5.5.0 ;;
+    Gcc61*) gcc_version=gcc-6.1.0 ;;
+    Gcc62*) gcc_version=gcc-6.2.0 ;;
+    Gcc63*) gcc_version=gcc-6.3.0 ;;
+    Gcc64*) gcc_version=gcc-6.4.0 ;;
+    Gcc65*) gcc_version=gcc-6.5.0 ;;
+    Gcc71*) gcc_version=gcc-7.1.0 ;;
+    Gcc72*) gcc_version=gcc-7.2.0 ;;
+    Gcc73*) gcc_version=gcc-7.3.0 ;;
+    Gcc74*) gcc_version=gcc-7.4.0 ;;
+    Gcc75*) gcc_version=gcc-7.5.0 ;;
+    Gcc81*) gcc_version=gcc-8.1.0 ;;
+    Gcc82*) gcc_version=gcc-8.2.0 ;;
+    Gcc83*) gcc_version=gcc-8.3.0 ;;
+    Gcc91*) gcc_version=gcc-9.1.0 ;;
+    Gcc92*) gcc_version=gcc-9.2.0 ;;
+
+    Clang)    clang_version="$default_clang_version" ;;
+    Clang37*) clang_version=llvm-3.7.1 ;;
+    Clang38*) clang_version=llvm-3.8.1 ;;
+    Clang39*) clang_version=llvm-3.9.1 ;;
+    Clang40*) clang_version=llvm-4.0.1 ;;
+    Clang50*) clang_version=llvm-5.0.2 ;;
+    Clang60*) clang_version=llvm-6.0.1 ;;
+    Clang70*) clang_version=llvm-7.0.1 ;;
+    Clang71*) clang_version=llvm-7.1.0 ;;
+    Clang80*) clang_version=llvm-8.0.1 ;;
+    Clang90*) clang_version=llvm-9.0.0 ;;
+
     *)
         /bin/cat << UNKNOWN_COMPILER 1>&2
 ===============================================================================
@@ -133,5 +89,8 @@ UNKNOWN_COMPILER
     _foamEtc -config "compiler-$WM_COMPILER"
     ;;
 esac
+
+unset default_gcc_version default_clang_version
+unset default_gmp_version default_mpfr_version default_mpc_version
 
 #------------------------------------------------------------------------------
