@@ -4,7 +4,7 @@
 # \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
 #  \\    /   O peration     |
 #   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
-#    \\/     M anipulation  | Copyright (C) 2016-2017 OpenCFD Ltd.
+#    \\/     M anipulation  | Copyright (C) 2016-2018 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, licensed under GNU General Public License
@@ -36,7 +36,8 @@ usage: ${0##*/}
   -boost-path DIR         specify 'BOOST_ARCH_PATH'
   -cgal ver               specify 'cgal_version'
   -cgal-path DIR          specify 'CGAL_ARCH_PATH'
-  -clang VER              specify 'clang_version' for ThirdParty Clang
+  -clang VER              specify 'default_clang_version' for ThirdParty Clang
+  -gcc VER                specify 'default_gcc_version' for ThirdParty Gcc
   -cmake VER              specify 'cmake_version'
   -fftw VER               specify 'fffw_version'
   -fftw-path DIR          specify 'FFTW_ARCH_PATH'
@@ -325,9 +326,17 @@ do
         ;;
 
     -clang)
-        # Replace clang_version=...
+        # Replace default_clang_version=...
         [ "$#" -ge 2 ] || die "'$1' option requires an argument"
-        replace etc/config.sh/compiler  clang_version "$2"
+        replace etc/config.sh/compiler  default_clang_version "$2"
+        adjusted=true
+        shift
+        ;;
+
+    -gcc)
+        # Replace default_gcc_version=...
+        [ "$#" -ge 2 ] || die "'$1' option requires an argument"
+        replace etc/config.sh/compiler  default_gcc_version "$2"
         adjusted=true
         shift
         ;;
@@ -466,19 +475,19 @@ do
 
     gmp-[4-9]* | gmp-system)
         # gcc-related package
-        replace etc/config.sh/compiler  gmp_version "$1"
+        replace etc/config.sh/compiler  default_gmp_version "$1"
         adjusted=true
         ;;
 
     mpfr-[2-9]* | mpfr-system)
         # gcc-related package
-        replace etc/config.sh/compiler  mpfr_version "$1"
+        replace etc/config.sh/compiler  default_mpfr_version "$1"
         adjusted=true
         ;;
 
     mpc-[0-9]* | mpc-system)
         # gcc-related package
-        replace etc/config.sh/compiler  mpc_version "$1"
+        replace etc/config.sh/compiler  default_mpc_version "$1"
         adjusted=true
         ;;
 

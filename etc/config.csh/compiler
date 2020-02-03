@@ -2,12 +2,14 @@
 # =========                 |
 # \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
 #  \\    /   O peration     |
-#   \\  /    A nd           | Copyright (C) 2016 OpenFOAM Foundation
-#    \\/     M anipulation  | Copyright (C) 2016-2017 OpenCFD Ltd.
+#   \\  /    A nd           | www.openfoam.com
+#    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+#     Copyright (C) 2016 OpenFOAM Foundation
+#     Copyright (C) 2016-2020 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
-#     This file is part of OpenFOAM, licensed under GNU General Public License
-#     <http://www.gnu.org/licenses/>.
+#     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 #
 # File
 #     etc/config.csh/compiler
@@ -20,13 +22,19 @@
 
 switch ("$WM_COMPILER_TYPE")
 case ThirdParty:
-    # Default versions of GMP, MPFR, MPC - override as necessary
-    set gmp_version=gmp-system
-    set mpfr_version=mpfr-system
-    set mpc_version=mpc-system
+    # Default versions (CLANG, GCC, GMP, MPFR, MPC) - override as necessary
+
+    set default_clang_version=llvm-3.7.1
+    set default_gcc_version=gcc-4.8.5
+
+    set default_gmp_version=gmp-system
+    set default_mpfr_version=mpfr-system
+    set default_mpc_version=mpc-system
 
     switch ("$WM_COMPILER")
     case Gcc:
+        set gcc_version="$default_gcc_version"
+        breaksw
     case Gcc48*:
         set gcc_version=gcc-4.8.5
         breaksw
@@ -92,6 +100,8 @@ case ThirdParty:
         breaksw
 
     case Clang:
+        set clang_version="$default_clang_version"
+        breaksw
     case Clang37*:
         set clang_version=llvm-3.7.1
         breaksw
@@ -113,6 +123,9 @@ case ThirdParty:
     case Clang70*:
         set clang_version=llvm-7.0.1
         breaksw
+    case Clang71*:
+        set clang_version=llvm-7.1.0
+        breaksw
     case Clang80*:
         set clang_version=llvm-8.0.1
         breaksw
@@ -131,7 +144,11 @@ Please check your settings
 UNKNOWN_COMPILER
         breaksw
     endsw
+
     breaksw
 endsw
+
+unset default_gcc_version default_clang_version
+unset default_gmp_version default_mpfr_version default_mpc_version
 
 #------------------------------------------------------------------------------
