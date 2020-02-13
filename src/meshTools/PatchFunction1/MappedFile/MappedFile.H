@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,6 +102,9 @@ class MappedFile
 
         //- Time varying offset values to interpolated data
         autoPtr<Function1<Type>> offset_;
+        
+        //- Read option for data (default: IOstream::ASCII)
+        IOstream::streamFormat readFormat_;
 
 
     // Private Member Functions

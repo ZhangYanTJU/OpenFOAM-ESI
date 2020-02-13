@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2019 OpenCFD Ltd.
+    Copyright (C) 2015-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,15 @@ Description
     {
         type            surfaces;
         surfaceFormat   boundaryData;
+        format          binary;
         fields          ( p );
+        formatOptions
+        {
+            boundaryData
+            {
+                format          binary;
+            }
+        }
         surfaces
         (
             outlet
@@ -114,6 +122,9 @@ class boundaryDataWriter
     public surfaceWriter
 {
     // Private Member Functions
+    
+        //- Write option (default: IOstream::ASCII)
+        IOstream::streamFormat writeFormat_;
 
         //- Templated write field operation
         template<class Type>

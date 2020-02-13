@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2015-2019 OpenCFD Ltd.
+    Copyright (C) 2015-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,6 +45,7 @@ namespace surfaceWriters
 {
     defineTypeName(boundaryDataWriter);
     addToRunTimeSelectionTable(surfaceWriter, boundaryDataWriter, word);
+    addToRunTimeSelectionTable(surfaceWriter, boundaryDataWriter, wordDict);
 }
 }
 
@@ -53,7 +54,8 @@ namespace surfaceWriters
 
 Foam::surfaceWriters::boundaryDataWriter::boundaryDataWriter()
 :
-    surfaceWriter()
+    surfaceWriter(),
+    writeFormat_(IOstream::ASCII)
 {}
 
 
@@ -62,7 +64,17 @@ Foam::surfaceWriters::boundaryDataWriter::boundaryDataWriter
     const dictionary& options
 )
 :
-    surfaceWriter(options)
+    surfaceWriter(options),
+    writeFormat_
+    (
+        IOstreamOption::formatNames.getOrDefault
+        (
+            "format",
+            options,
+            IOstreamOption::ASCII,
+            true  // Failsafe behaviour
+        )
+    )
 {}
 
 
@@ -243,7 +255,7 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::writeTemplate
 
 
         // Write field
-        OFstream(outputFile)() << tfield();
+        OFstream(outputFile, writeFormat_)() << tfield();
     }
 
     wroteGeom_ = true;
