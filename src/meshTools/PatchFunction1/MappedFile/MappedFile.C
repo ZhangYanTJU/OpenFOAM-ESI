@@ -393,6 +393,7 @@ void Foam::PatchFunction1Types::MappedFile<Type>::checkTable
             if (setAverage_)
             {
                 startAverage_ = vals.average();
+
             }
 
             if (vals.size() != mapperPtr_().sourceSize())

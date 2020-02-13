@@ -129,6 +129,9 @@ class MappedFile
 
         //- Time varying offset values to interpolated data
         autoPtr<Function1<Type>> offset_;
+        
+        //- Read option for data (default: IOstream::ASCII)
+        IOstream::streamFormat readFormat_;
 
 
     // Private Member Functions

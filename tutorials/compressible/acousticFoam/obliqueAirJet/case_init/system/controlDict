@@ -64,15 +64,22 @@ functions
         (
             p
         );
+        formatOptions
+        {
+            boundaryData
+            {
+                format          binary;
+            }
+        }
         surfaces
-        (
+        {
             window
             {
                 type            patch;
                 patches         (window);
                 interpolate     false;
             }
-        );
+        }
     }
 }
 

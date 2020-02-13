@@ -24,6 +24,7 @@ pressure
     duration        0.03;
     region          vibrationShell;
     selectionMode   all;
+    format          binary;
 }
 
 //************************************************************************** //
