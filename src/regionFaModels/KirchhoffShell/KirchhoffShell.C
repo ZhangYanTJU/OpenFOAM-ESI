@@ -62,7 +62,6 @@ void KirchhoffShell::solveDisplacement()
 
     const Time& time = primaryMesh().time();
 
-
     areaScalarField solidMass(rho()*h_);
     areaScalarField solidD(D()/solidMass);
 
@@ -96,8 +95,8 @@ void KirchhoffShell::solveDisplacement()
        !(++wSubCycle).end();
     )
     {
-
         laplaceW_ = fac::laplacian(w_);
+
         laplace2W_ = fac::laplacian(laplaceW_);
 
         faScalarMatrix wEqn
@@ -301,6 +300,8 @@ const tmp<areaScalarField> KirchhoffShell::D() const
 {
     const dimensionedScalar E("E", dimForce/dimArea , solid().E());
     const dimensionedScalar nu("nu", dimless, solid().nu());
+
+    return tmp<areaScalarField>(E*pow3(h_)/(12*(1 - sqr(nu))));
 }
 
 

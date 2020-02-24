@@ -91,6 +91,7 @@ class KirchhoffShell
         dimensionedScalar f1_;
         dimensionedScalar f2_;
 
+
     // Private Member Functions
 
         //- Initialize KirchhoffShell
@@ -105,7 +106,7 @@ protected:
 
             //- Number of non orthogonal correctors
             label nNonOrthCorr_;
-            
+
             //- Sub cycles
             label nSubCycles_;
 
