@@ -57,16 +57,16 @@ void KirchhoffShell::solveDisplacement()
     {
         InfoInFunction << endl;
     }
-    
+
     const Time& time = primaryMesh().time();
-    
+
     areaScalarField solidMass(rho()*h_);
     areaScalarField solidD(D()/solidMass);
-    
+
     // Save old times
     areaScalarField w0 = w_.oldTime();
     areaScalarField w00 = w_.oldTime().oldTime();
-    
+
     areaScalarField lap0(laplaceW_.oldTime());
     areaScalarField lapLap0(laplace2W_.oldTime());
 
@@ -74,35 +74,35 @@ void KirchhoffShell::solveDisplacement()
     (
         subCycleTime wSubCycle
         (
-            const_cast<Time&>(time), 
+            const_cast<Time&>(time),
             nSubCycles_
         );
         !(++wSubCycle).end();
     )
-    {    
+    {
         laplaceW_ = fac::laplacian(w_);
         laplaceW_.correctBoundaryConditions();
 
-        laplace2W_ = fac::laplacian(laplaceW_); 
+        laplace2W_ = fac::laplacian(laplaceW_);
 
         faScalarMatrix wEqn
         (
-            fam::d2dt2(w_) 
-          + f1_*fam::ddt(w_) 
+            fam::d2dt2(w_)
+          + f1_*fam::ddt(w_)
           - f0_*sqrt(solidD)*fac::ddt(laplaceW_)
           + solidD*(laplace2W_ + f2_*fac::ddt(laplace2W_))
         ==
             ps_/solidMass
           + faOptions()(solidMass, w_, dimLength/sqr(dimTime))
         );
-        
+
         faOptions().constrain(wEqn);
 
         wEqn.solve();
         w_.correctBoundaryConditions();
         w_.relax();
     }
-    
+
     //wSubCycle.endSubCycle();
 
 
@@ -114,15 +114,15 @@ void KirchhoffShell::solveDisplacement()
     w_.oldTime().timeIndex() = time.timeIndex();
     w_.oldTime().oldTime() = w00;
     w_.oldTime().oldTime().timeIndex() = time.timeIndex();
-    
+
     laplaceW_.oldTime() = lap0;
     laplaceW_.oldTime().timeIndex() = time.timeIndex();
-    
+
     laplace2W_.oldTime() = lapLap0;
     laplace2W_.oldTime().timeIndex() = time.timeIndex();
-    
+
     faOptions().correct(w_);
-    
+
     Info<< "w min/max   = " << min(w_) << ", " << max(w_) << endl;
 }
 
@@ -224,11 +224,9 @@ void KirchhoffShell::evolveRegion()
     {
         solveDisplacement();
     }
-    
+
     // Update shell acceleration
     a_ = fac::d2dt2(w_);
-
-   
 }
 
 
@@ -236,7 +234,7 @@ const tmp<areaScalarField> KirchhoffShell::D() const
 {
     const dimensionedScalar E("E", dimForce/dimArea , solid().E());
     const dimensionedScalar nu("nu", dimless, solid().nu());
-    
+
     return tmp<areaScalarField>(E*pow3(h_)/(12*(1 - sqr(nu))));
 }
 

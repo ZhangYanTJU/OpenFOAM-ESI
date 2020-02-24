@@ -76,7 +76,7 @@ Foam::fa::externalFileSource::externalFileSource
     fieldNames_.setSize(1, fieldName_);
 
     applied_.setSize(fieldNames_.size(), false);
-  
+
     read(dict);
 }
 
@@ -96,21 +96,21 @@ void Foam::fa::externalFileSource::addSup
     const label fieldi
 )
 {
-    const scalar t = mesh().time().timeOutputValue();
-    
+    const scalar t = mesh().time().value();
+
     if (isActive() && t > timeStart() && t < (timeStart() + duration()))
     {
         DebugInfo<< name() << ": applying source to " << eqn.psi().name()<<endl;
-        
+
         if (curTimeIndex_ != mesh().time().timeIndex())
         {
             IOobject io
             (
-                "Q",
+                "pExt",
                 mesh_.time().timeName(),
                 mesh_,
                 IOobject::NO_READ,
-                IOobject::NO_WRITE,
+                IOobject::AUTO_WRITE,
                 false
             );
 
@@ -121,7 +121,7 @@ void Foam::fa::externalFileSource::addSup
                 dimensionedScalar("p", dimPressure, Zero),
                 zeroGradientFaPatchScalarField::typeName
             );
-            
+
             p.field() = value_->value(t);
             eqn += p/solidMass;
             curTimeIndex_ = mesh().time().timeIndex();

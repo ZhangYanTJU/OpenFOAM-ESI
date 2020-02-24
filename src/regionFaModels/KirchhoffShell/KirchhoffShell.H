@@ -59,13 +59,13 @@ class KirchhoffShell
 private:
 
     // Private data
-    
+
         //- Damping coefficients [1/s]
         dimensionedScalar f0_;
         dimensionedScalar f1_;
         dimensionedScalar f2_;
-        
-        
+
+
     // Private member functions
 
         //- No copy construct
@@ -86,7 +86,7 @@ protected:
 
             //- Number of non orthogonal correctors
             label nNonOrthCorr_;
-            
+
             //- Sub cycles
             label nSubCycles_;
 
@@ -98,10 +98,10 @@ protected:
 
             //- Thickness [m]
             areaScalarField h_;
-            
+
             //- Cached Laplacian of w for dumping model
             areaScalarField laplaceW_;
-            
+
             //- Cached Laplacian of  laplacian w for dumping model
             areaScalarField laplace2W_;
 
