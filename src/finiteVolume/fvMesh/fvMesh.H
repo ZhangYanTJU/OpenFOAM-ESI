@@ -76,7 +76,7 @@ class fvMeshLduAddressing;
 class volMesh;
 template<class Type>
 class fvMatrix;
-
+class fvGeometryScheme;
 
 /*---------------------------------------------------------------------------*\
                            Class fvMesh Declaration
@@ -86,8 +86,8 @@ class fvMesh
 :
     public polyMesh,
     public lduMesh,
-    public surfaceInterpolation,
     public fvSchemes,
+    public surfaceInterpolation,    // needs input from fvSchemes
     public fvSolution,
     public data
 {
@@ -96,8 +96,10 @@ class fvMesh
         //- Boundary mesh
         fvBoundaryMesh boundary_;
 
-
     // Demand-driven data
+
+        //- Geometry calculation
+        mutable tmp<fvGeometryScheme> geometryPtr_;
 
         mutable fvMeshLduAddressing* lduPtr_;
 
@@ -184,7 +186,7 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        explicit fvMesh(const IOobject& io);
+        explicit fvMesh(const IOobject& io, const bool doInit=true);
 
         //- Construct from IOobject or as zero-sized mesh
         //  Boundary is added using addFvPatches() member function
@@ -221,6 +223,9 @@ public:
     // Member Functions
 
         // Helpers
+
+            //- Initialise all non-demand-driven data
+            virtual bool init(const bool doInit);
 
             //- Add boundary patches. Constructor helper
             void addFvPatches
@@ -271,6 +276,9 @@ public:
 
             //- Return reference to boundary mesh
             const fvBoundaryMesh& boundary() const;
+
+            //- Geometry calculation method
+            virtual const fvGeometryScheme& geometry() const;
 
             //- Return ldu addressing
             virtual const lduAddressing& lduAddr() const;

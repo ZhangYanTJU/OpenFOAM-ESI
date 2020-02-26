@@ -281,6 +281,48 @@ void Foam::primitiveMesh::reset
 }
 
 
+void Foam::primitiveMesh::resetGeometry
+(
+    pointField&& faceCentres,
+    pointField&& faceAreas,
+    pointField&& cellCentres,
+    scalarField&& cellVolumes
+)
+{
+    if
+    (
+        faceCentres.size() != nFaces_
+     || faceAreas.size() != nFaces_
+     || cellCentres.size() != nCells_
+     || cellVolumes.size() != nCells_
+    )
+    {
+        FatalErrorInFunction
+            << "Wrong sizes of passed in face/cell data"
+            << abort(FatalError);
+    }
+
+//if (faceCentresPtr_ || faceAreasPtr_ || cellCentresPtr_ || cellVolumesPtr_)
+//{
+//    FatalErrorInFunction
+//        << "Geometry (centres, areas and volumes) already calculated"
+//        << abort(FatalError);
+//}
+//
+    faceCentresPtr_ = new pointField(std::move(faceCentres));
+    faceAreasPtr_ = new pointField(std::move(faceAreas));
+    cellCentresPtr_ = new pointField(std::move(cellCentres));
+    cellVolumesPtr_ = new scalarField(std::move(cellVolumes));
+
+    if (debug)
+    {
+        Pout<< "primitiveMesh::resetGeometry : geometry reset for"
+            << " nFaces:" << faceCentresPtr_->size()
+            << " nCells:" << cellCentresPtr_->size() << endl;
+    }
+}
+
+
 Foam::tmp<Foam::scalarField> Foam::primitiveMesh::movePoints
 (
     const pointField& newPoints,

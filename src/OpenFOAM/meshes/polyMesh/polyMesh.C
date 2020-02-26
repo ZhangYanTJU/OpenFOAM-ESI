@@ -161,7 +161,7 @@ Foam::autoPtr<Foam::labelIOList> Foam::polyMesh::readTetBasePtIs() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::polyMesh::polyMesh(const IOobject& io)
+Foam::polyMesh::polyMesh(const IOobject& io, const bool doInit)
 :
     objectRegistry(io),
     primitiveMesh(),
@@ -328,12 +328,6 @@ Foam::polyMesh::polyMesh(const IOobject& io)
         neighbour_.write();
     }
 
-    // Calculate topology for the patches (processor-processor comms etc.)
-    boundary_.updateMesh();
-
-    // Calculate the geometry for the patches (transformation tensors etc.)
-    boundary_.calcGeometry();
-
     // Warn if global empty mesh
     if (returnReduce(boundary_.empty(), orOp<bool>()))
     {
@@ -352,8 +346,30 @@ Foam::polyMesh::polyMesh(const IOobject& io)
         }
     }
 
+    if (doInit)
+    {
+        polyMesh::init(false);  // do not init lower levels
+    }
+}
+
+
+bool Foam::polyMesh::init(const bool doInit)
+{
+    if (doInit)
+    {
+        primitiveMesh::init(doInit);
+    }
+
+    // Calculate topology for the patches (processor-processor comms etc.)
+    boundary_.updateMesh();
+
+    // Calculate the geometry for the patches (transformation tensors etc.)
+    boundary_.calcGeometry();
+
     // Initialise demand-driven data
     calcDirections();
+
+    return false;
 }
 
 

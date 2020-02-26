@@ -40,6 +40,7 @@ License
 #include "mapClouds.H"
 #include "MeshObject.H"
 #include "fvMatrix.H"
+#include "basicFvGeometryScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -247,11 +248,11 @@ void Foam::fvMesh::clearOut()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fvMesh::fvMesh(const IOobject& io)
+Foam::fvMesh::fvMesh(const IOobject& io, const bool doInit)
 :
-    polyMesh(io),
-    surfaceInterpolation(*this),
+    polyMesh(io, doInit),
     fvSchemes(static_cast<const objectRegistry&>(*this)),
+    surfaceInterpolation(*this),
     fvSolution(static_cast<const objectRegistry&>(*this)),
     data(static_cast<const objectRegistry&>(*this)),
     boundary_(*this, boundaryMesh()),
@@ -269,6 +270,25 @@ Foam::fvMesh::fvMesh(const IOobject& io)
     if (debug)
     {
         InfoInFunction << "Constructing fvMesh from IOobject" << endl;
+    }
+
+    if (doInit)
+    {
+        fvMesh::init(false);    // do not initialise lower levels
+    }
+}
+
+
+bool Foam::fvMesh::init(const bool doInit)
+{
+    if (doInit)
+    {
+        // Construct basic geometry calculation engine. Note: do before
+        // doing anything with primitiveMesh::cellCentres etc.
+        (void)geometry();
+
+        // Intialise my data
+        polyMesh::init(doInit);
     }
 
     // Check the existence of the cell volumes and read if present
@@ -332,6 +352,7 @@ Foam::fvMesh::fvMesh(const IOobject& io)
 
         moving(true);
     }
+    return false;
 }
 
 
@@ -354,8 +375,8 @@ Foam::fvMesh::fvMesh
         std::move(allNeighbour),
         syncPar
     ),
-    surfaceInterpolation(*this),
     fvSchemes(static_cast<const objectRegistry&>(*this)),
+    surfaceInterpolation(*this),
     fvSolution(static_cast<const objectRegistry&>(*this)),
     data(static_cast<const objectRegistry&>(*this)),
     boundary_(*this, boundaryMesh()),
@@ -394,8 +415,8 @@ Foam::fvMesh::fvMesh
         std::move(cells),
         syncPar
     ),
-    surfaceInterpolation(*this),
     fvSchemes(static_cast<const objectRegistry&>(*this)),
+    surfaceInterpolation(*this),
     fvSolution(static_cast<const objectRegistry&>(*this)),
     data(static_cast<const objectRegistry&>(*this)),
     boundary_(*this),
@@ -589,6 +610,22 @@ Foam::polyMesh::readUpdateState Foam::fvMesh::readUpdate()
 const Foam::fvBoundaryMesh& Foam::fvMesh::boundary() const
 {
     return boundary_;
+}
+
+
+const Foam::fvGeometryScheme& Foam::fvMesh::geometry() const
+{
+    if (!geometryPtr_.valid())
+    {
+        geometryPtr_ = fvGeometryScheme::New
+        (
+            *this,
+            schemesDict().subOrEmptyDict("geometry"),
+            basicFvGeometryScheme::typeName
+        );
+    }
+
+    return geometryPtr_();
 }
 
 
@@ -827,6 +864,9 @@ Foam::tmp<Foam::scalarField> Foam::fvMesh::movePoints(const pointField& p)
         phibf[patchi] = patches[patchi].patchSlice(sweptVols);
         phibf[patchi] *= rDeltaT;
     }
+
+    // Make sure basic geometry is up to date with polyMesh points
+    const_cast<fvGeometryScheme&>(geometry()).movePoints();
 
     // Update or delete the local geometric properties as early as possible so
     // they can be used if necessary. These get recreated here instead of

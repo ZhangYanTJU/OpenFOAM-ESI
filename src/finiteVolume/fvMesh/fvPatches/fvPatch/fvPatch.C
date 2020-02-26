@@ -149,6 +149,18 @@ void Foam::fvPatch::makeWeights(scalarField& w) const
 }
 
 
+void Foam::fvPatch::makeDeltaCoeffs(scalarField& w) const
+{}
+
+
+void Foam::fvPatch::makeNonOrthoDeltaCoeffs(scalarField& w) const
+{}
+
+
+void Foam::fvPatch::makeNonOrthoCorrVectors(vectorField& w) const
+{}
+
+
 void Foam::fvPatch::initMovePoints()
 {}
 

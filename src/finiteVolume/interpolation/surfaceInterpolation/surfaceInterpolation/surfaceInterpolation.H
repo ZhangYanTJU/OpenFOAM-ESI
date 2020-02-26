@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,6 +49,8 @@ SourceFiles
 namespace Foam
 {
 
+class fvMesh;
+
 /*---------------------------------------------------------------------------*\
                      Class surfaceInterpolation Declaration
 \*---------------------------------------------------------------------------*/
@@ -59,34 +62,20 @@ class surfaceInterpolation
         // Reference to fvMesh
         const fvMesh& mesh_;
 
+
         // Demand-driven data
 
             //- Linear difference weighting factors
-            mutable surfaceScalarField* weights_;
+            mutable autoPtr<surfaceScalarField> weights_;
 
             //- Cell-centre difference coefficients
-            mutable surfaceScalarField* deltaCoeffs_;
+            mutable autoPtr<surfaceScalarField> deltaCoeffs_;
 
             //- Non-orthogonal cell-centre difference coefficients
-            mutable surfaceScalarField* nonOrthDeltaCoeffs_;
+            mutable autoPtr<surfaceScalarField> nonOrthDeltaCoeffs_;
 
             //- Non-orthogonality correction vectors
-            mutable surfaceVectorField* nonOrthCorrectionVectors_;
-
-
-    // Private Member Functions
-
-        //- Construct central-differencing weighting factors
-        void makeWeights() const;
-
-        //- Construct face-gradient difference factors
-        void makeDeltaCoeffs() const;
-
-        //- Construct face-gradient difference factors
-        void makeNonOrthDeltaCoeffs() const;
-
-        //- Construct non-orthogonality correction vectors
-        void makeNonOrthCorrectionVectors() const;
+            mutable autoPtr<surfaceVectorField> nonOrthCorrectionVectors_;
 
 
 protected:
@@ -112,26 +101,26 @@ public:
 
 
     //- Destructor
-    ~surfaceInterpolation();
+    virtual ~surfaceInterpolation();
 
 
     // Member functions
 
         //- Return reference to linear difference weighting factors
-        const surfaceScalarField& weights() const;
+        virtual const surfaceScalarField& weights() const;
 
         //- Return reference to cell-centre difference coefficients
-        const surfaceScalarField& deltaCoeffs() const;
+        virtual const surfaceScalarField& deltaCoeffs() const;
 
         //- Return reference to non-orthogonal cell-centre difference
         //  coefficients
-        const surfaceScalarField& nonOrthDeltaCoeffs() const;
+        virtual const surfaceScalarField& nonOrthDeltaCoeffs() const;
 
         //- Return reference to non-orthogonality correction vectors
-        const surfaceVectorField& nonOrthCorrectionVectors() const;
+        virtual const surfaceVectorField& nonOrthCorrectionVectors() const;
 
         //- Do what is necessary if the mesh has moved
-        bool movePoints();
+        virtual bool movePoints();
 };
 
 

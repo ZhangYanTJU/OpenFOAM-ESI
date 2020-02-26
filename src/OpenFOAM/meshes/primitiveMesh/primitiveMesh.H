@@ -476,6 +476,21 @@ public:
             cellList& cells
         );
 
+        //- Reset the local geometry
+        void resetGeometry
+        (
+            pointField&& faceCentres,
+            pointField&& faceAreas,
+            pointField&& cellCentres,
+            scalarField&& cellVolumes
+        );
+
+        //- Initialise all non-demand-driven data
+        virtual bool init(const bool doInit)
+        {
+            return false;
+        }
+
 
         // Access
 
