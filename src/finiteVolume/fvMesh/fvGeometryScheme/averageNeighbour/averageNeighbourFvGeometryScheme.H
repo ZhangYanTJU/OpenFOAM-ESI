@@ -24,21 +24,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::highAspectRatioFvGeometryScheme
+    Foam::averageNeighbourFvGeometryScheme
 
 Description
-    Geometry calculation scheme with automatic stabilisation for high-aspect
-    ratio cells.
+    Default geometry calculation scheme. Slight stabilisation for bad meshes.
 
 SourceFiles
-    highAspectRatioFvGeometryScheme.C
+    averageNeighbourFvGeometryScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef highAspectRatioFvGeometryScheme_H
-#define highAspectRatioFvGeometryScheme_H
+#ifndef averageNeighbourFvGeometryScheme_H
+#define averageNeighbourFvGeometryScheme_H
 
-#include "basicFvGeometryScheme.H"
+#include "highAspectRatioFvGeometryScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,44 +47,46 @@ namespace Foam
 class primitiveMesh;
 
 /*---------------------------------------------------------------------------*\
-               Class highAspectRatioFvGeometryScheme Declaration
+               Class averageNeighbourFvGeometryScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class highAspectRatioFvGeometryScheme
+class averageNeighbourFvGeometryScheme
 :
-    public basicFvGeometryScheme
+    public highAspectRatioFvGeometryScheme
 {
-protected:
-
-        const scalar minAspect_;
-
-        const scalar maxAspect_;
-
-
 private:
 
-    // Private Member Functions
-
         //- No copy construct
-        highAspectRatioFvGeometryScheme
+        averageNeighbourFvGeometryScheme
         (
-            const highAspectRatioFvGeometryScheme&
+            const averageNeighbourFvGeometryScheme&
         ) = delete;
 
         //- No copy assignment
-        void operator=(const highAspectRatioFvGeometryScheme&) = delete;
+        void operator=(const averageNeighbourFvGeometryScheme&) = delete;
+
+
+protected:
+
+        //- Average neighbouring cell centres to minimise non-ortho
+        tmp<pointField> averageNeighbourCentres
+        (
+            const pointField& cellCentres,
+            const vectorField& faceNormals,
+            const scalarField& faceWeights
+        ) const;
 
 
 public:
 
     //- Runtime type information
-    TypeName("highAspectRatio");
+    TypeName("averageNeighbour");
 
 
     // Constructors
 
         //- Construct from mesh
-        highAspectRatioFvGeometryScheme
+        averageNeighbourFvGeometryScheme
         (
             const fvMesh& mesh,
             const dictionary& dict
@@ -93,24 +94,13 @@ public:
 
 
     //- Destructor
-    virtual ~highAspectRatioFvGeometryScheme() = default;
+    virtual ~averageNeighbourFvGeometryScheme() = default;
 
 
     // Member Functions
 
         //- Do what is necessary if the mesh has moved
         virtual void movePoints();
-
-        //- Helper : calculate (weighted) average face and cell centres
-        static void makeAverageCentres
-        (
-            const primitiveMesh& mesh,
-            const pointField& points,
-            const pointField& faceAreas,
-            const scalarField& magFaceAreas,
-            pointField& faceCentres,
-            pointField& cellCentres
-        );
 };
 
 

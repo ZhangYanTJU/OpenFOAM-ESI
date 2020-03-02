@@ -176,7 +176,8 @@ const Foam::vectorField& Foam::primitiveMesh::cellCentres() const
 {
     if (!cellCentresPtr_)
     {
-        calcCellCentresAndVols();
+        //calcCellCentresAndVols();
+        const_cast<primitiveMesh&>(*this).updateGeom();
     }
 
     return *cellCentresPtr_;
@@ -187,7 +188,8 @@ const Foam::scalarField& Foam::primitiveMesh::cellVolumes() const
 {
     if (!cellVolumesPtr_)
     {
-        calcCellCentresAndVols();
+        //calcCellCentresAndVols();
+        const_cast<primitiveMesh&>(*this).updateGeom();
     }
 
     return *cellVolumesPtr_;

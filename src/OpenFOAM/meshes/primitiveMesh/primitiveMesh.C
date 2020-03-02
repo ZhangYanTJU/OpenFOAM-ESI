@@ -366,4 +366,26 @@ const Foam::cellShapeList& Foam::primitiveMesh::cellShapes() const
 }
 
 
+
+void Foam::primitiveMesh::updateGeom()
+{
+    if (!faceCentresPtr_)
+    {
+        calcFaceCentresAndAreas();
+    }
+    if (!faceAreasPtr_)
+    {
+        calcFaceCentresAndAreas();
+    }
+    if (!cellCentresPtr_)
+    {
+        calcCellCentresAndVols();
+    }
+    if (!cellVolumesPtr_)
+    {
+        calcCellCentresAndVols();
+    }
+}
+
+
 // ************************************************************************* //

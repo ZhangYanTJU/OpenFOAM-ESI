@@ -146,7 +146,8 @@ const Foam::vectorField& Foam::primitiveMesh::faceCentres() const
 {
     if (!faceCentresPtr_)
     {
-        calcFaceCentresAndAreas();
+        //calcFaceCentresAndAreas();
+        const_cast<primitiveMesh&>(*this).updateGeom();
     }
 
     return *faceCentresPtr_;
@@ -157,7 +158,8 @@ const Foam::vectorField& Foam::primitiveMesh::faceAreas() const
 {
     if (!faceAreasPtr_)
     {
-        calcFaceCentresAndAreas();
+        //calcFaceCentresAndAreas();
+        const_cast<primitiveMesh&>(*this).updateGeom();
     }
 
     return *faceAreasPtr_;

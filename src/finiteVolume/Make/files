@@ -5,6 +5,8 @@ fvGeometryScheme = fvMesh/fvGeometryScheme
 $(fvGeometryScheme)/fvGeometryScheme/fvGeometryScheme.C
 $(fvGeometryScheme)/basic/basicFvGeometryScheme.C
 $(fvGeometryScheme)/highAspectRatio/highAspectRatioFvGeometryScheme.C
+$(fvGeometryScheme)/highAspectRatio/cellAspectRatio.C
+$(fvGeometryScheme)/averageNeighbour/averageNeighbourFvGeometryScheme.C
 
 surfaceInterpolation = interpolation/surfaceInterpolation
 $(surfaceInterpolation)/surfaceInterpolation/surfaceInterpolation.C

@@ -28,13 +28,8 @@ License
 #include "highAspectRatioFvGeometryScheme.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvMesh.H"
-
-#include "momentOfInertia.H"
-#include "polyMeshTetDecomposition.H"
-#include "triFaceList.H"
-#include "volFields.H"
-#include "polyMeshTools.H"
-#include "hexMatcher.H"
+#include "syncTools.H"
+#include "cellAspectRatio.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -52,115 +47,115 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::highAspectRatioFvGeometryScheme::cellClosedness
-(
-    const vectorField& areas,
-    const scalarField& vols,
-    const tensorField& cellCoords,
-
-    scalarField& aratio
-) const
-{
-    // From primitiveMeshTools::cellClosedness:
-    //  calculate aspect ratio in given direction
-    const labelList& own = mesh_.faceOwner();
-    const labelList& nei = mesh_.faceNeighbour();
-
-    // Loop through cell faces and sum up the face area vectors for each cell.
-    // This should be zero in all vector components
-
-    vectorField sumMagClosed(mesh_.nCells(), Zero);
-
-    forAll(own, facei)
-    {
-        // Add to owner
-        vector& v = sumMagClosed[own[facei]];
-        v += cmptMag(cellCoords[own[facei]] & areas[facei]);
-    }
-
-    forAll(nei, facei)
-    {
-        // Subtract from neighbour
-        vector& v = sumMagClosed[nei[facei]];
-        v += cmptMag(cellCoords[nei[facei]] & areas[facei]);
-    }
-
-    // Check the sums
-    aratio.setSize(mesh_.nCells());
-
-    forAll(sumMagClosed, celli)
-    {
-        // Calculate the aspect ration as the maximum of Cartesian component
-        // aspect ratio to the total area hydraulic area aspect ratio
-        scalar minCmpt = VGREAT;
-        scalar maxCmpt = -VGREAT;
-        for (direction dir = 0; dir < vector::nComponents; dir++)
-        {
-            minCmpt = min(minCmpt, sumMagClosed[celli][dir]);
-            maxCmpt = max(maxCmpt, sumMagClosed[celli][dir]);
-        }
-
-        scalar aspectRatio = maxCmpt/(minCmpt + ROOTVSMALL);
-        const scalar v = max(ROOTVSMALL, vols[celli]);
-
-        aspectRatio = max
-        (
-            aspectRatio,
-            1.0/6.0*cmptSum(sumMagClosed[celli])/Foam::pow(v, 2.0/3.0)
-        );
-
-        aratio[celli] = aspectRatio;
-    }
-}
-
-
-void Foam::highAspectRatioFvGeometryScheme::cellDirections
-(
-    tensorField& T,
-    vectorField& lambda
-) const
-{
-    // Calculate principal directions in increasing order
-
-    T.setSize(mesh_.nCells());
-    lambda.setSize(mesh_.nCells());
-
-    forAll(T, celli)
-    {
-        tensor J = Zero;
-        {
-            const List<tetIndices> cellTets
-            (
-                polyMeshTetDecomposition::cellTetIndices
-                (
-                    mesh_,
-                    celli
-                )
-            );
-            triFaceList faces(cellTets.size());
-            forAll(cellTets, cTI)
-            {
-                faces[cTI] = cellTets[cTI].faceTriIs(mesh_);
-            }
-
-            scalar m = 0.0;
-            vector cM = Zero;
-            J = Zero;
-            momentOfInertia::massPropertiesShell
-            (
-                mesh_.points(),
-                faces,
-                1.0,
-                m,
-                cM,
-                J
-            );
-        }
-
-        lambda[celli] = Foam::eigenValues(J);
-        T[celli] = Foam::eigenVectors(J, lambda[celli]);
-    }
-}
+//void Foam::highAspectRatioFvGeometryScheme::cellClosedness
+//(
+//    const vectorField& areas,
+//    const scalarField& vols,
+//    const tensorField& cellCoords,
+//
+//    scalarField& aratio
+//) const
+//{
+//    // From primitiveMeshTools::cellClosedness:
+//    //  calculate aspect ratio in given direction
+//    const labelList& own = mesh_.faceOwner();
+//    const labelList& nei = mesh_.faceNeighbour();
+//
+//    // Loop through cell faces and sum up the face area vectors for each cell.
+//    // This should be zero in all vector components
+//
+//    vectorField sumMagClosed(mesh_.nCells(), Zero);
+//
+//    forAll(own, facei)
+//    {
+//        // Add to owner
+//        vector& v = sumMagClosed[own[facei]];
+//        v += cmptMag(cellCoords[own[facei]] & areas[facei]);
+//    }
+//
+//    forAll(nei, facei)
+//    {
+//        // Subtract from neighbour
+//        vector& v = sumMagClosed[nei[facei]];
+//        v += cmptMag(cellCoords[nei[facei]] & areas[facei]);
+//    }
+//
+//    // Check the sums
+//    aratio.setSize(mesh_.nCells());
+//
+//    forAll(sumMagClosed, celli)
+//    {
+//        // Calculate the aspect ration as the maximum of Cartesian component
+//        // aspect ratio to the total area hydraulic area aspect ratio
+//        scalar minCmpt = VGREAT;
+//        scalar maxCmpt = -VGREAT;
+//        for (direction dir = 0; dir < vector::nComponents; dir++)
+//        {
+//            minCmpt = min(minCmpt, sumMagClosed[celli][dir]);
+//            maxCmpt = max(maxCmpt, sumMagClosed[celli][dir]);
+//        }
+//
+//        scalar aspectRatio = maxCmpt/(minCmpt + ROOTVSMALL);
+//        const scalar v = max(ROOTVSMALL, vols[celli]);
+//
+//        aspectRatio = max
+//        (
+//            aspectRatio,
+//            1.0/6.0*cmptSum(sumMagClosed[celli])/Foam::pow(v, 2.0/3.0)
+//        );
+//
+//        aratio[celli] = aspectRatio;
+//    }
+//}
+//
+//
+//void Foam::highAspectRatioFvGeometryScheme::cellDirections
+//(
+//    tensorField& T,
+//    vectorField& lambda
+//) const
+//{
+//    // Calculate principal directions in increasing order
+//
+//    T.setSize(mesh_.nCells());
+//    lambda.setSize(mesh_.nCells());
+//
+//    forAll(T, celli)
+//    {
+//        tensor J = Zero;
+//        {
+//            const List<tetIndices> cellTets
+//            (
+//                polyMeshTetDecomposition::cellTetIndices
+//                (
+//                    mesh_,
+//                    celli
+//                )
+//            );
+//            triFaceList faces(cellTets.size());
+//            forAll(cellTets, cTI)
+//            {
+//                faces[cTI] = cellTets[cTI].faceTriIs(mesh_);
+//            }
+//
+//            scalar m = 0.0;
+//            vector cM = Zero;
+//            J = Zero;
+//            momentOfInertia::massPropertiesShell
+//            (
+//                mesh_.points(),
+//                faces,
+//                1.0,
+//                m,
+//                cM,
+//                J
+//            );
+//        }
+//
+//        lambda[celli] = Foam::eigenValues(J);
+//        T[celli] = Foam::eigenVectors(J, lambda[celli]);
+//    }
+//}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -171,11 +166,22 @@ Foam::highAspectRatioFvGeometryScheme::highAspectRatioFvGeometryScheme
     const dictionary& dict
 )
 :
-    basicFvGeometryScheme(mesh, dict)
+    basicFvGeometryScheme(mesh, dict),
+    minAspect_(dict.get<scalar>("minAspect")),
+    maxAspect_(dict.get<scalar>("maxAspect"))
 {
+    if (maxAspect_ <= minAspect_+VSMALL)
+    {
+        FatalIOErrorInFunction(dict)
+            << "minAspect " << minAspect_
+            << " has to be less then maxAspect " << maxAspect_
+            << exit(FatalIOError);
+    }
+
     // Force local calculation
     movePoints();
 }
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -184,6 +190,7 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
     const primitiveMesh& mesh,
     const pointField& p,
     const pointField& faceAreas,
+    const scalarField& magFaceAreas,
     pointField& faceCentres,
     pointField& cellCentres
 )
@@ -191,7 +198,7 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
     if (debug)
     {
         Pout<< "highAspectRatioFvGeometryScheme::makeAverageCentres() : "
-            << "Calculating weighted average face centre" << endl;
+            << "calculating weighted average face/cell centre" << endl;
     }
 
     typedef Vector<solveScalar> solveVector;
@@ -257,7 +264,7 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
         forAll(own, facei)
         {
             const solveVector fc(faceCentres[facei]);
-            const solveScalar magfA(Foam::mag(faceAreas[facei]));
+            const solveScalar magfA(magFaceAreas[facei]);
 
             // Accumulate area-weighted face-centre
             cellCentres[own[facei]] += magfA*fc;
@@ -269,7 +276,7 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
         forAll(nei, facei)
         {
             const solveVector fc(faceCentres[facei]);
-            const solveScalar magfA(Foam::mag(faceAreas[facei]));
+            const solveScalar magfA(magFaceAreas[facei]);
 
             // Accumulate area-weighted face-centre
             cellCentres[nei[facei]] += magfA*fc;
@@ -312,38 +319,38 @@ void Foam::highAspectRatioFvGeometryScheme::movePoints()
             mesh_,
             mesh_.points(),
             mesh_.faceAreas(),
+            mag(mesh_.faceAreas()),
             avgFaceCentres,
             avgCellCentres
         );
 
 
-        scalarField aratio;
-        {
-            tensorField principalDirections;
-            vectorField lambdas;
-            cellDirections(principalDirections, lambdas);
-
-            cellClosedness
-            (
-                mesh_.faceAreas(),
-                mesh_.cellVolumes(),
-                principalDirections,
-                aratio
-            );
-        }
+        //scalarField aratio;
+        //{
+        //    tensorField principalDirections;
+        //    vectorField lambdas;
+        //    cellDirections(principalDirections, lambdas);
+        //
+        //    cellClosedness
+        //    (
+        //        mesh_.faceAreas(),
+        //        mesh_.cellVolumes(),
+        //        principalDirections,
+        //        aratio
+        //    );
+        //}
+        const cellAspectRatio aratio(mesh_);
 
         // Weighting for correction
-        // - 0 if aratio < minCorrect
-        // - 1 if aratio >= maxCorrect
-        const scalar minCorrect = 2.0;
-        const scalar maxCorrect = 10.0;
+        // - 0 if aratio < minAspect_
+        // - 1 if aratio >= maxAspect_
         const scalarField cellWeight
         (
             max
             (
                 min
                 (
-                    (aratio-minCorrect)/(maxCorrect-minCorrect),
+                    (aratio-minAspect_)/(maxAspect_-minAspect_),
                     1.0
                 ),
                 0.0
@@ -391,6 +398,15 @@ void Foam::highAspectRatioFvGeometryScheme::movePoints()
             (1.0-cellWeight)*mesh_.cellCentres()
           + cellWeight*avgCellCentres
         );
+
+
+        if (debug)
+        {
+            Pout<< "highAspectRatioFvGeometryScheme::movePoints() :"
+                << " highAspectRatio weight"
+                << " max:" << gMax(cellWeight) << " min:" << gMin(cellWeight)
+                << " average:" << gAverage(cellWeight) << endl;
+        }
 
         vectorField faceAreas(mesh_.faceAreas());
         scalarField cellVolumes(mesh_.cellVolumes());

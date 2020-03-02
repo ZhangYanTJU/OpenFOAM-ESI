@@ -76,7 +76,7 @@ class fvMeshLduAddressing;
 class volMesh;
 template<class Type>
 class fvMatrix;
-class fvGeometryScheme;
+//class fvGeometryScheme;
 
 /*---------------------------------------------------------------------------*\
                            Class fvMesh Declaration
@@ -98,8 +98,8 @@ class fvMesh
 
     // Demand-driven data
 
-        //- Geometry calculation
-        mutable tmp<fvGeometryScheme> geometryPtr_;
+//        //- Geometry calculation
+//        mutable tmp<fvGeometryScheme> geometryPtr_;
 
         mutable fvMeshLduAddressing* lduPtr_;
 
@@ -277,9 +277,9 @@ public:
             //- Return reference to boundary mesh
             const fvBoundaryMesh& boundary() const;
 
-            //- Geometry calculation method
-            virtual const fvGeometryScheme& geometry() const;
-
+//            //- Geometry calculation method
+//            virtual const fvGeometryScheme& geometry() const;
+//
             //- Return ldu addressing
             virtual const lduAddressing& lduAddr() const;
 

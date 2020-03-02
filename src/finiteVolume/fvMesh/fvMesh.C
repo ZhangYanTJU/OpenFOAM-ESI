@@ -40,7 +40,7 @@ License
 #include "mapClouds.H"
 #include "MeshObject.H"
 #include "fvMatrix.H"
-#include "basicFvGeometryScheme.H"
+//#include "basicFvGeometryScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -613,20 +613,20 @@ const Foam::fvBoundaryMesh& Foam::fvMesh::boundary() const
 }
 
 
-const Foam::fvGeometryScheme& Foam::fvMesh::geometry() const
-{
-    if (!geometryPtr_.valid())
-    {
-        geometryPtr_ = fvGeometryScheme::New
-        (
-            *this,
-            schemesDict().subOrEmptyDict("geometry"),
-            basicFvGeometryScheme::typeName
-        );
-    }
-
-    return geometryPtr_();
-}
+//const Foam::fvGeometryScheme& Foam::fvMesh::geometry() const
+//{
+//    if (!geometryPtr_.valid())
+//    {
+//        geometryPtr_ = fvGeometryScheme::New
+//        (
+//            *this,
+//            schemesDict().subOrEmptyDict("geometry"),
+//            basicFvGeometryScheme::typeName
+//        );
+//    }
+//
+//    return geometryPtr_();
+//}
 
 
 const Foam::lduAddressing& Foam::fvMesh::lduAddr() const
@@ -865,8 +865,8 @@ Foam::tmp<Foam::scalarField> Foam::fvMesh::movePoints(const pointField& p)
         phibf[patchi] *= rDeltaT;
     }
 
-    // Make sure basic geometry is up to date with polyMesh points
-    const_cast<fvGeometryScheme&>(geometry()).movePoints();
+//    // Make sure basic geometry is up to date with polyMesh points
+//    const_cast<fvGeometryScheme&>(geometry()).movePoints();
 
     // Update or delete the local geometric properties as early as possible so
     // they can be used if necessary. These get recreated here instead of

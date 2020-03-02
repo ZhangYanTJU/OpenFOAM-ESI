@@ -906,6 +906,8 @@ public:
 
             const labelList& cellEdges(const label celli) const;
 
+            //- Update all geometric data
+            virtual void updateGeom();
 
             //- Clear geometry
             void clearGeom();

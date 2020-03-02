@@ -34,7 +34,7 @@ Description
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "coupledFvPatch.H"
-#include "fvGeometryScheme.H"
+#include "basicFvGeometryScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -76,6 +76,22 @@ Foam::surfaceInterpolation::~surfaceInterpolation()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+const Foam::fvGeometryScheme& Foam::surfaceInterpolation::geometry() const
+{
+    if (!geometryPtr_.valid())
+    {
+        geometryPtr_ = fvGeometryScheme::New
+        (
+            mesh_,
+            mesh_.schemesDict().subOrEmptyDict("geometry"),
+            basicFvGeometryScheme::typeName
+        );
+    }
+
+    return geometryPtr_();
+}
+
 
 const Foam::surfaceScalarField& Foam::surfaceInterpolation::weights() const
 {
@@ -128,12 +144,21 @@ Foam::surfaceInterpolation::nonOrthCorrectionVectors() const
 
 bool Foam::surfaceInterpolation::movePoints()
 {
+    // Do any primitive geometry calculation
+    const_cast<fvGeometryScheme&>(geometry()).movePoints();
+
     weights_.clear();
     deltaCoeffs_.clear();
     nonOrthDeltaCoeffs_.clear();
     nonOrthCorrectionVectors_.clear();
 
     return true;
+}
+
+
+void Foam::surfaceInterpolation::updateGeom()
+{
+    movePoints();
 }
 
 

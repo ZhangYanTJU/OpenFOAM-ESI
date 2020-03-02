@@ -50,9 +50,10 @@ namespace Foam
 {
 
 class fvMesh;
+class fvGeometryScheme;
 
 /*---------------------------------------------------------------------------*\
-                     Class surfaceInterpolation Declaration
+                    Class surfaceInterpolation Declaration
 \*---------------------------------------------------------------------------*/
 
 class surfaceInterpolation
@@ -64,6 +65,9 @@ class surfaceInterpolation
 
 
         // Demand-driven data
+
+            //- Geometry calculation
+            mutable tmp<fvGeometryScheme> geometryPtr_;
 
             //- Linear difference weighting factors
             mutable autoPtr<surfaceScalarField> weights_;
@@ -106,6 +110,9 @@ public:
 
     // Member functions
 
+        //- Return reference to geometry calculation scheme
+        virtual const fvGeometryScheme& geometry() const;
+
         //- Return reference to linear difference weighting factors
         virtual const surfaceScalarField& weights() const;
 
@@ -121,6 +128,10 @@ public:
 
         //- Do what is necessary if the mesh has moved
         virtual bool movePoints();
+
+        //- Update all geometric data. This gets redirected up from
+        //  primitiveMesh level
+        virtual void updateGeom();
 };
 
 
