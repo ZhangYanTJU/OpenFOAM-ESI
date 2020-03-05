@@ -129,8 +129,7 @@ public:
         //- Do what is necessary if the mesh has moved
         virtual bool movePoints();
 
-        //- Update all geometric data. This gets redirected up from
-        //  primitiveMesh level
+        //- Update all geometric data
         virtual void updateGeom();
 };
 

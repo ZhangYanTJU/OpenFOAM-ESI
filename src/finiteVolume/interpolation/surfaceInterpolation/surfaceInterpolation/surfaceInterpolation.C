@@ -97,7 +97,7 @@ const Foam::surfaceScalarField& Foam::surfaceInterpolation::weights() const
 {
     if (!weights_.valid())
     {
-        weights_.reset(mesh_.geometry().weights().ptr());
+        weights_.reset(geometry().weights().ptr());
     }
 
     return weights_();
@@ -108,7 +108,7 @@ const Foam::surfaceScalarField& Foam::surfaceInterpolation::deltaCoeffs() const
 {
     if (!deltaCoeffs_.valid())
     {
-        deltaCoeffs_.reset(mesh_.geometry().deltaCoeffs().ptr());
+        deltaCoeffs_.reset(geometry().deltaCoeffs().ptr());
     }
 
     return deltaCoeffs_();
@@ -120,7 +120,7 @@ Foam::surfaceInterpolation::nonOrthDeltaCoeffs() const
 {
     if (!nonOrthDeltaCoeffs_.valid())
     {
-        nonOrthDeltaCoeffs_.reset(mesh_.geometry().nonOrthDeltaCoeffs().ptr());
+        nonOrthDeltaCoeffs_.reset(geometry().nonOrthDeltaCoeffs().ptr());
     }
 
     return nonOrthDeltaCoeffs_();
@@ -134,7 +134,7 @@ Foam::surfaceInterpolation::nonOrthCorrectionVectors() const
     {
         nonOrthCorrectionVectors_.reset
         (
-            mesh_.geometry().nonOrthCorrectionVectors().ptr()
+            geometry().nonOrthCorrectionVectors().ptr()
         );
     }
 
@@ -144,6 +144,13 @@ Foam::surfaceInterpolation::nonOrthCorrectionVectors() const
 
 bool Foam::surfaceInterpolation::movePoints()
 {
+    if (debug)
+    {
+        Pout<< "surfaceInterpolation::movePoints() : "
+            << "Updating geometric properties using the fvGeometryScheme"
+            << endl;
+    }
+
     // Do any primitive geometry calculation
     const_cast<fvGeometryScheme&>(geometry()).movePoints();
 
@@ -158,7 +165,13 @@ bool Foam::surfaceInterpolation::movePoints()
 
 void Foam::surfaceInterpolation::updateGeom()
 {
-    movePoints();
+    if (debug)
+    {
+        Pout<< "surfaceInterpolation::updateGeom() : "
+            << "Updating geometric properties" << endl;
+    }
+
+    const_cast<fvGeometryScheme&>(geometry()).movePoints();
 }
 
 

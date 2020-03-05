@@ -76,6 +76,13 @@ protected:
             const scalarField& faceWeights
         ) const;
 
+        tmp<pointField> averageCentres
+        (
+            const pointField& cellCentres,
+            const pointField& faceCentres,
+            const vectorField& faceNormals
+        ) const;
+
 
 public:
 

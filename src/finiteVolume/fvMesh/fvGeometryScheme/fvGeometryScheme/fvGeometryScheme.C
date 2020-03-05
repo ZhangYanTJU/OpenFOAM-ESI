@@ -47,7 +47,13 @@ Foam::fvGeometryScheme::New
     const word& defaultScheme
 )
 {
-    const word schemeName(dict.getOrDefault<word>("type", defaultScheme));
+    const entry* ePtr = dict.findEntry("method");
+    const word schemeName
+    (
+        ePtr
+      ? word(ePtr->stream())
+      : dict.getOrDefault<word>("type", defaultScheme)
+    );
 
     if (debug)
     {

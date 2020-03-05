@@ -30,6 +30,7 @@ License
 #include "fvMesh.H"
 #include "cellAspectRatio.H"
 #include "syncTools.H"
+#include "OBJstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -141,8 +142,113 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
     }
 
     cc /= cellWeights;
+
+forAll(cc, celli)
+{
+    Pout<< "For cell:" << celli
+        << " at:" << cellCentres[celli]
+        << " have correction:" << cc[celli]
+        << endl;
+}
+
     cc += cellCentres;
     return tcc;
+}
+
+
+Foam::tmp<Foam::pointField>
+Foam::averageNeighbourFvGeometryScheme::averageCentres
+(
+    const pointField& cellCentres,
+    const pointField& faceCentres,
+    const vectorField& faceNormals
+) const
+{
+    //TBD. integrate with above
+
+    if (debug)
+    {
+        Pout<< "highAspectRatioFvGeometryScheme::averageCentres() : "
+            << "calculating face centre from neighbouring cell centres" << endl;
+    }
+
+    typedef Vector<solveScalar> solveVector;
+
+    const labelList& own = mesh_.faceOwner();
+    const labelList& nei = mesh_.faceNeighbour();
+
+
+    tmp<pointField> tnewFc(new pointField(faceCentres));
+    pointField& newFc = tnewFc.ref();
+
+    // Internal faces
+    for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+    {
+        const vector& n = faceNormals[facei];
+
+        const solveVector myCc(cellCentres[own[facei]]);
+        const solveVector nbrCc(cellCentres[nei[facei]]);
+
+        solveVector d(nbrCc-myCc);
+
+        // 1. Normalise contribution. This increases actual non-ortho
+        // since it does not 'see' the tangential offset of neighbours
+        //nbrCc = myCc + (d&n)*n;
+
+        // 2. Remove normal contribution, i.e. get tangential vector
+        //    (= non-ortho correction vector?)
+        d -= (d&n)*n;
+
+        newFc[facei] = faceCentres[facei]+d;
+    }
+
+
+    // Boundary faces. Bypass stored cell centres
+    pointField nbrCellCentres;
+    syncTools::swapBoundaryCellPositions(mesh_, cellCentres, nbrCellCentres);
+
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+    forAll(pbm, patchi)
+    {
+        const polyPatch& pp = pbm[patchi];
+        if (pp.coupled())
+        {
+            const labelUList& fc = pp.faceCells();
+
+            forAll(fc, i)
+            {
+                const label facei = pp.start()-mesh_.nInternalFaces()+i;
+                const label bFacei = facei-mesh_.nInternalFaces();
+
+                const vector& n = faceNormals[facei];
+
+                const solveVector myCc(cellCentres[fc[i]]);
+                const solveVector nbrCc(nbrCellCentres[bFacei]);
+
+                solveVector d(nbrCc-myCc);
+
+                // 1. Normalise contribution. This increases actual non-ortho
+                // since it does not 'see' the tangential offset of neighbours
+                //nbrCc = myCc + (d&n)*n;
+
+                // 2. Remove normal contribution, i.e. get tangential vector
+                //    (= non-ortho correction vector?)
+                d -= (d&n)*n;
+
+                newFc[facei] = faceCentres[facei]+d;
+            }
+        }
+    }
+
+    forAll(newFc, facei)
+    {
+        Pout<< "For face:" << facei
+            << " old:" << faceCentres[facei]
+            << " have new:" << newFc[facei]
+            << endl;
+    }
+
+    return tnewFc;
 }
 
 
@@ -171,103 +277,63 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
             << "recalculating primitiveMesh centres" << endl;
     }
 
-    if
-    (
-       !mesh_.hasCellCentres()
-    && !mesh_.hasFaceCentres()
-    && !mesh_.hasCellVolumes()
-    && !mesh_.hasFaceAreas()
-    )
+//    if
+//    (
+//       !mesh_.hasCellCentres()
+//    && !mesh_.hasFaceCentres()
+//    && !mesh_.hasCellVolumes()
+//    && !mesh_.hasFaceAreas()
+//    )
     {
-        vectorField faceAreas(mesh_.faceAreas());
-        scalarField cellVolumes(mesh_.cellVolumes());
-        const scalarField magFaceAreas(mag(faceAreas));
+        highAspectRatioFvGeometryScheme::movePoints();
 
-        // Calculate weighted average centroids
-        pointField avgFaceCentres;
-        pointField avgCellCentres;
-        makeAverageCentres
-        (
-            mesh_,
-            mesh_.points(),
-            faceAreas,
-            magFaceAreas,
-            avgFaceCentres,
-            avgCellCentres
-        );
+        // Note: at this point the highAspectRatioFvGeometryScheme constructor
+        //       will have already reset the primitive geometry!
+
+        vectorField faceAreas(mesh_.faceAreas());
+        const scalarField magFaceAreas(mag(faceAreas));
+        const vectorField faceNormals(faceAreas/magFaceAreas);
 
         // Modify cell centres to be more in-line with the face normals
         tmp<pointField> tcc
         (
             averageNeighbourCentres
             (
-                avgCellCentres,
-                faceAreas/magFaceAreas,
+                mesh_.cellCentres(),
+                faceNormals,
                 magFaceAreas
             )
         );
 
-
-        const cellAspectRatio aratio(mesh_);
-
-        // Weighting for correction
-        // - 0 if aratio < minAspect_
-        // - 1 if aratio >= maxAspect_
-        const scalarField cellWeight
+        tmp<pointField> tfc
         (
-            max
+            averageCentres
             (
-                min
-                (
-                    (aratio-minAspect_)/(maxAspect_-minAspect_),
-                    1.0
-                ),
-                0.0
+                mesh_.cellCentres(),
+                mesh_.faceCentres(),
+                faceNormals
             )
         );
 
-        scalarField faceWeight(mesh_.nFaces());
-        {
-            for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
-            {
-                const label own = mesh_.faceOwner()[facei];
-                const label nei = mesh_.faceNeighbour()[facei];
-                faceWeight[facei] = max(cellWeight[own], cellWeight[nei]);
-            }
-            scalarField nbrCellWeight;
-            syncTools::swapBoundaryCellList
-            (
-                mesh_,
-                cellWeight,
-                nbrCellWeight
-            );
-            for
-            (
-                label facei = mesh_.nInternalFaces();
-                facei < mesh_.nFaces();
-                facei++
-            )
-            {
-                const label own = mesh_.faceOwner()[facei];
-                const label bFacei = facei-mesh_.nInternalFaces();
-                faceWeight[facei] = max(cellWeight[own], nbrCellWeight[bFacei]);
-            }
-        }
+
+        // Calculate aspectratio weights
+        // - 0 if aratio < minAspect_
+        // - 1 if aratio >= maxAspect_
+        scalarField cellWeight, faceWeight;
+        calcAspectRatioWeights(cellWeight, faceWeight);
 
 
         // Weight with average ones
-
-        vectorField faceCentres
-        (
-            (1.0-faceWeight)*mesh_.faceCentres()
-          + faceWeight*avgFaceCentres
-        );
         vectorField cellCentres
         (
             (1.0-cellWeight)*mesh_.cellCentres()
           + cellWeight*tcc
         );
-
+        vectorField faceCentres
+        (
+            (1.0-faceWeight)*mesh_.faceCentres()
+          + faceWeight*tfc
+        );
 
         if (debug)
         {
@@ -275,7 +341,36 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
                 << " averageNeighbour weight"
                 << " max:" << gMax(cellWeight) << " min:" << gMin(cellWeight)
                 << " average:" << gAverage(cellWeight) << endl;
+
+            // Dump lines from old to new location
+            const fileName tp(mesh_.time().timePath());
+            mkDir(tp);
+            OBJstream str(tp/"averageNeighbourCellCentres.obj");
+            Pout<< "Writing lines from old to new cell centre to " << str.name()
+                << endl;
+            forAll(mesh_.cellCentres(), celli)
+            {
+                const point& oldCc = mesh_.cellCentres()[celli];
+                const point& newCc = cellCentres[celli];
+                str.write(linePointRef(oldCc, newCc));
+            }
         }
+        if (debug)
+        {
+            // Dump lines from old to new location
+            const fileName tp(mesh_.time().timePath());
+            OBJstream str(tp/"averageFaceCentres.obj");
+            Pout<< "Writing lines from old to new face centre to " << str.name()
+                << endl;
+            forAll(mesh_.faceCentres(), facei)
+            {
+                const point& oldFc = mesh_.faceCentres()[facei];
+                const point& newFc = faceCentres[facei];
+                str.write(linePointRef(oldFc, newFc));
+            }
+        }
+
+        scalarField cellVolumes(mesh_.cellVolumes());
 
         // Store on primitiveMesh
         //const_cast<fvMesh&>(mesh_).clearGeom();

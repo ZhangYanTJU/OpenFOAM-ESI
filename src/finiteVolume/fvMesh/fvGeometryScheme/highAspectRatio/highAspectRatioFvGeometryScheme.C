@@ -157,6 +157,77 @@ namespace Foam
 //    }
 //}
 
+void Foam::highAspectRatioFvGeometryScheme::calcAspectRatioWeights
+(
+    scalarField& cellWeight,
+    scalarField& faceWeight
+) const
+{
+    //scalarField aratio;
+    //{
+    //    tensorField principalDirections;
+    //    vectorField lambdas;
+    //    cellDirections(principalDirections, lambdas);
+    //
+    //    cellClosedness
+    //    (
+    //        mesh_.faceAreas(),
+    //        mesh_.cellVolumes(),
+    //        principalDirections,
+    //        aratio
+    //    );
+    //}
+    const cellAspectRatio aratio(mesh_);
+
+    // Weighting for correction
+    // - 0 if aratio < minAspect_
+    // - 1 if aratio >= maxAspect_
+
+    scalar delta(maxAspect_-minAspect_);
+    if (delta < ROOTVSMALL)
+    {
+        delta = SMALL;
+    }
+
+    cellWeight =
+    max
+    (
+        min
+        (
+            (aratio-minAspect_)/delta,
+            1.0
+        ),
+        0.0
+    );
+
+    faceWeight.setSize(mesh_.nFaces());
+
+    for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+    {
+        const label own = mesh_.faceOwner()[facei];
+        const label nei = mesh_.faceNeighbour()[facei];
+        faceWeight[facei] = max(cellWeight[own], cellWeight[nei]);
+    }
+    scalarField nbrCellWeight;
+    syncTools::swapBoundaryCellList
+    (
+        mesh_,
+        cellWeight,
+        nbrCellWeight
+    );
+    for
+    (
+        label facei = mesh_.nInternalFaces();
+        facei < mesh_.nFaces();
+        facei++
+    )
+    {
+        const label own = mesh_.faceOwner()[facei];
+        const label bFacei = facei-mesh_.nInternalFaces();
+        faceWeight[facei] = max(cellWeight[own], nbrCellWeight[bFacei]);
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -170,11 +241,18 @@ Foam::highAspectRatioFvGeometryScheme::highAspectRatioFvGeometryScheme
     minAspect_(dict.get<scalar>("minAspect")),
     maxAspect_(dict.get<scalar>("maxAspect"))
 {
-    if (maxAspect_ <= minAspect_+VSMALL)
+    if (maxAspect_ < minAspect_)
     {
         FatalIOErrorInFunction(dict)
             << "minAspect " << minAspect_
-            << " has to be less then maxAspect " << maxAspect_
+            << " has to be less than maxAspect " << maxAspect_
+            << exit(FatalIOError);
+    }
+    if (minAspect_ < 0 || maxAspect_ < 0)
+    {
+        FatalIOErrorInFunction(dict)
+            << "Illegal aspect ratio : minAspect:" << minAspect_
+            << " maxAspect:" << maxAspect_
             << exit(FatalIOError);
     }
 
@@ -312,6 +390,9 @@ void Foam::highAspectRatioFvGeometryScheme::movePoints()
     && !mesh_.hasFaceAreas()
     )
     {
+        // Use lower level to calculate the geometry
+        const_cast<fvMesh&>(mesh_).primitiveMesh::updateGeom();
+
         pointField avgFaceCentres;
         pointField avgCellCentres;
         makeAverageCentres
@@ -325,69 +406,14 @@ void Foam::highAspectRatioFvGeometryScheme::movePoints()
         );
 
 
-        //scalarField aratio;
-        //{
-        //    tensorField principalDirections;
-        //    vectorField lambdas;
-        //    cellDirections(principalDirections, lambdas);
-        //
-        //    cellClosedness
-        //    (
-        //        mesh_.faceAreas(),
-        //        mesh_.cellVolumes(),
-        //        principalDirections,
-        //        aratio
-        //    );
-        //}
-        const cellAspectRatio aratio(mesh_);
-
-        // Weighting for correction
+        // Calculate aspectratio weights
         // - 0 if aratio < minAspect_
         // - 1 if aratio >= maxAspect_
-        const scalarField cellWeight
-        (
-            max
-            (
-                min
-                (
-                    (aratio-minAspect_)/(maxAspect_-minAspect_),
-                    1.0
-                ),
-                0.0
-            )
-        );
-
-        scalarField faceWeight(mesh_.nFaces());
-        {
-            for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
-            {
-                const label own = mesh_.faceOwner()[facei];
-                const label nei = mesh_.faceNeighbour()[facei];
-                faceWeight[facei] = max(cellWeight[own], cellWeight[nei]);
-            }
-            scalarField nbrCellWeight;
-            syncTools::swapBoundaryCellList
-            (
-                mesh_,
-                cellWeight,
-                nbrCellWeight
-            );
-            for
-            (
-                label facei = mesh_.nInternalFaces();
-                facei < mesh_.nFaces();
-                facei++
-            )
-            {
-                const label own = mesh_.faceOwner()[facei];
-                const label bFacei = facei-mesh_.nInternalFaces();
-                faceWeight[facei] = max(cellWeight[own], nbrCellWeight[bFacei]);
-            }
-        }
+        scalarField cellWeight, faceWeight;
+        calcAspectRatioWeights(cellWeight, faceWeight);
 
 
         // Weight with average ones
-
         vectorField faceCentres
         (
             (1.0-faceWeight)*mesh_.faceCentres()

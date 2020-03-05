@@ -62,6 +62,17 @@ protected:
         const scalar maxAspect_;
 
 
+    // Protected Member Functions
+
+        //- Calculate cell and face weight. Is 0 for cell < minAspect, 1 for
+        //  cell > maxAspect
+        void calcAspectRatioWeights
+        (
+            scalarField& cellWeight,
+            scalarField& faceWeight
+        ) const;
+
+
 private:
 
     // Private Member Functions

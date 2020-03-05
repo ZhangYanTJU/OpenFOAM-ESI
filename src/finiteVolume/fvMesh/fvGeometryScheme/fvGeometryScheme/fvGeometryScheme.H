@@ -141,6 +141,15 @@ public:
 
         //- Return non-orthogonality correction vectors
         virtual tmp<surfaceVectorField> nonOrthCorrectionVectors() const = 0;
+
+        ////- Selector for wall distance method. WIP. Ideally return wall
+        ////  distance or meshObject?
+        //virtual autoPtr<patchDistMethod> newPatchDistMethod
+        //(
+        //    const dictionary& dict,
+        //    const labelHashSet& patchIDs,
+        //    const word& defaultPatchDistMethod
+        //) const = 0;
 };
 
 

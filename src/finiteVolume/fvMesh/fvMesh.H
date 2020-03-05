@@ -76,7 +76,6 @@ class fvMeshLduAddressing;
 class volMesh;
 template<class Type>
 class fvMatrix;
-//class fvGeometryScheme;
 
 /*---------------------------------------------------------------------------*\
                            Class fvMesh Declaration
@@ -97,9 +96,6 @@ class fvMesh
         fvBoundaryMesh boundary_;
 
     // Demand-driven data
-
-//        //- Geometry calculation
-//        mutable tmp<fvGeometryScheme> geometryPtr_;
 
         mutable fvMeshLduAddressing* lduPtr_;
 
@@ -277,9 +273,6 @@ public:
             //- Return reference to boundary mesh
             const fvBoundaryMesh& boundary() const;
 
-//            //- Geometry calculation method
-//            virtual const fvGeometryScheme& geometry() const;
-//
             //- Return ldu addressing
             virtual const lduAddressing& lduAddr() const;
 
@@ -443,6 +436,10 @@ public:
 
             //- Move points, returns volumes swept by faces in motion
             virtual tmp<scalarField> movePoints(const pointField&);
+
+            //- Update all geometric data. This gets redirected up from
+            //  primitiveMesh level
+            virtual void updateGeom();
 
             //- Map all fields in time using given map.
             virtual void mapFields(const mapPolyMesh& mpm);
