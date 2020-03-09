@@ -45,15 +45,40 @@ void Foam::fvMatrixAssembly::addBoundaryDiag
     scalarField& diag
 ) const
 {
+/*
     forAll(internalCoeffs_, patchi)
     {
-        // Using any of the fvMatrix to addToInternal
-        matrices_[0].addToInternalField
-        (
-            primitiveMesh_.lduAddr().patchAddr(patchi),
-            internalCoeffs_[patchi],
-            diag
-        );
+        if (internalCoeffs_.set(patchi))
+        {
+            matrices_[0].addToInternalField
+            (
+                primitiveMesh_.lduAddr().patchAddr(patchi),
+                internalCoeffs_[patchi],
+                diag
+            );
+        }
+    }
+*/
+
+    forAll(psis_, i)
+    {
+        const volScalarField& psi = psis_[i];
+
+        forAll(psi.boundaryField(), patchi)
+        {
+            label globalPatchi = primitiveMesh_.patchMap()[i][patchi];
+
+            if (globalPatchi != -1)
+            {
+                // Using any of the fvMatrix to addToInternal
+                matrices_[0].addToInternalField
+                (
+                    primitiveMesh_.lduAddr().patchAddr(globalPatchi),
+                    internalCoeffs_[globalPatchi],
+                    diag
+                );
+            }
+        }
     }
 }
 
@@ -125,8 +150,8 @@ Foam::fvMatrixAssembly::fvMatrixAssembly
     psiName_(psiName),
     dimensions_(ds),
     source_(primitiveMesh_.lduAddr().size(), Zero),
-    internalCoeffs_(primitiveMesh_.patchAddr().size()),
-    boundaryCoeffs_(internalCoeffs_.size()),
+    //internalCoeffs_(primitiveMesh_.patchAddr().size()),
+    //boundaryCoeffs_(internalCoeffs_.size()),
     interfaces_(),
     faceAreasPtr_(nullptr),
     cellVolumesPtr_(nullptr)
@@ -134,10 +159,151 @@ Foam::fvMatrixAssembly::fvMatrixAssembly
     lower().setSize(primitiveMesh_.lduAddr().upperAddr().size(), Zero);
     upper().setSize(primitiveMesh_.lduAddr().upperAddr().size(), Zero);
     diag().setSize(primitiveMesh_.lduAddr().size(), Zero);
+
+    label nPatches = primitiveMesh_.meshes()[0].boundary().size();
+    for (label i=1; i < nMatrix_; ++i)
+    {
+        nPatches += primitiveMesh_.meshes()[i].boundary().size();
+    }
+
+    internalCoeffs_.setSize(nPatches);
+    boundaryCoeffs_.setSize(nPatches);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::fvMatrixAssembly::calculateFlux()
+{
+
+    for (label i=0; i < nMatrix_; ++i)
+    {
+        // Use local flux() from the matrices and then modify the boundaries
+        // flux
+        tmp<surfaceScalarField> tflux = matrices_[i].flux();
+
+        surfaceScalarField& flux = tflux.ref();
+
+        forAll(matrices_[i].internalCoeffs(), patchi)
+        {
+            label globalPatchId = primitiveMesh_.patchMap()[i][patchi];
+            scalarField& internal = matrices_[i].internalCoeffs()[patchi];
+
+            if (globalPatchId == -1)
+            {
+                internal = Zero;
+
+                const polyPatch& pp = psis_[i].mesh().boundaryMesh()[patchi];
+
+                if (isA<cyclicAMIPolyPatch>(pp))
+                {
+                    const cyclicAMIPolyPatch& mpp =
+                        refCast<const cyclicAMIPolyPatch>(pp);
+
+                    label virtualPatch =
+                        primitiveMesh_.patchLocalToGlobalMap()[i][patchi];
+
+                    const scalarField& internalAssembled =
+                        internalCoeffs_[virtualPatch];
+
+                    const label nbrPatchId = mpp.neighbPatchID();
+
+                    const labelList& cellIds =
+                        primitiveMesh_.cellBoundMap()[i][nbrPatchId];
+
+                    forAll(internalAssembled, subFaceI)
+                    {
+                        const label faceId =
+                            primitiveMesh_.magSfFaceBoundMap()[i][patchi][subFaceI];
+
+                        const label cellId = cellIds[subFaceI];
+                        internal[faceId] +=
+                            cmptMultiply
+                            (
+                                internalAssembled[subFaceI],
+                                psis_[i][cellId]
+                            );
+                    }
+                }
+            }
+            else
+            {
+                internal =
+                    cmptMultiply
+                    (
+                        internal,
+                        psis_[i].boundaryField()[patchi].patchInternalField()
+                    );
+            }
+        }
+
+        //DebugVar(matrices_[i].internalCoeffs())
+
+
+        forAll(matrices_[i].boundaryCoeffs(), patchi)
+        {
+            label globalPatchId = primitiveMesh_.patchMap()[i][patchi];
+            scalarField& boundary = matrices_[i].boundaryCoeffs()[patchi];
+
+            if (globalPatchId == -1)
+            {
+                boundary = Zero;
+                const polyPatch& pp = psis_[i].mesh().boundaryMesh()[patchi];
+
+                if (isA<cyclicAMIPolyPatch>(pp))
+                {
+                    //const cyclicAMIPolyPatch& mpp =
+                    //    refCast<const cyclicAMIPolyPatch>(pp);
+
+                    label virtualPatch =
+                        primitiveMesh_.patchLocalToGlobalMap()[i][patchi];
+DebugVar(patchi)
+DebugVar(virtualPatch)
+                    const scalarField& boundaryAssembled =
+                        boundaryCoeffs_[virtualPatch];
+
+                    //const label patchId = mpp.patch().index();
+
+                    // nrb cells
+                    const labelList& nbrCellIds =
+                        primitiveMesh_.cellBoundMap()[i][patchi];
+//DebugVar(nbrCellIds)
+                    forAll(boundaryAssembled, subFaceI)
+                    {
+                        const label faceId =
+                            primitiveMesh_.magSfFaceBoundMap()[i][patchi][subFaceI];
+
+                        const label nbrCellId = nbrCellIds[subFaceI];
+
+                        boundary[faceId] +=
+                            cmptMultiply
+                            (
+                                boundaryAssembled[subFaceI],
+                                psis_[i][nbrCellId]
+                            );
+                    }
+                }
+            }
+        }
+
+        surfaceScalarField::Boundary& ffbf = flux.boundaryFieldRef();
+
+       // DebugVar(matrices_[i].boundaryCoeffs())
+
+        forAll(ffbf, patchi)
+        {
+            ffbf[patchi] =
+                matrices_[i].internalCoeffs()[patchi]
+              - matrices_[i].boundaryCoeffs()[patchi];
+
+              DebugVar(gSum(ffbf[patchi]))
+        }
+
+        matrices_[i].faceFluxPtr() = tflux.ptr();
+    }
+
+}
+
 
 void Foam::fvMatrixAssembly::transferFieldsAndClean()
 {
@@ -171,10 +337,10 @@ void Foam::fvMatrixAssembly::transferFieldsAndClean()
             source_[globalCelli] = sourceSub[celli];
         }
 
-        lowerSub.clear();
-        upperSub.clear();
-        diagSub.clear();
-        sourceSub.clear();
+        //lowerSub.clear();
+        //upperSub.clear();
+        //diagSub.clear();
+        //sourceSub.clear();
     }
 }
 
@@ -209,8 +375,12 @@ void Foam::fvMatrixAssembly::calcFaceAreasCellVolumes()
             {
                 if (primitiveMesh_.faceBoundMap()[i][patchI].size() > 0)
                 {
-                    const mappedPatchBase& mpp =
-                        refCast<const mappedPatchBase>(patches[patchI]);
+                    //const mappedPatchBase& mpp =
+                    //    refCast<const mappedPatchBase>(patches[patchI]);
+
+                    const cyclicAMIPolyPatch& mpp =
+                        refCast<const cyclicAMIPolyPatch>(patches[patchI]);
+
 
                     const label globalFaceI =
                         primitiveMesh_.faceBoundMap()[i][patchI][faceI];
@@ -236,7 +406,7 @@ void Foam::fvMatrixAssembly::calcFaceAreasCellVolumes()
 }
 
 
-void Foam::fvMatrixAssembly::update()
+void Foam::fvMatrixAssembly::setInterfaces()
 {
     if (interfaces_.empty())
     {
@@ -253,47 +423,53 @@ void Foam::fvMatrixAssembly::update()
                     {
                         label globalPatchID =
                             primitiveMesh_.patchMap()[i][patchI];
-                        if (isA<cyclicLduInterfaceField>(bpsi[patchI]))
+
+                        if (globalPatchID != -1)
                         {
-                            interfaces_.set
+                            if
                             (
-                                globalPatchID,
-                                new cyclicFvPatchField<scalar>
+                                isA<cyclicLduInterfaceField>(bpsi[patchI])
+                             && primitiveMesh_.resetCyclics()
+                            )
+                            {
+                                interfaces_.set
                                 (
-                                    refCast<const fvPatch>
+                                    globalPatchID,
+                                    new cyclicFvPatchField<scalar>
                                     (
-                                        primitiveMesh_.interfaces()
-                                        [
-                                            globalPatchID
-                                        ]
-                                    ),
-                                    bpsi[patchI].internalField()
-                                )
-                            );
-                        }
-                        else
-                        {
-                            interfaces_.set
-                            (
-                                globalPatchID,
-                                &refCast<const lduInterfaceField>(bpsi[patchI])
-                            );
+                                        refCast<const fvPatch>
+                                        (
+                                            primitiveMesh_.interfaces()
+                                            [
+                                                globalPatchID
+                                            ]
+                                        ),
+                                        bpsi[patchI].internalField()
+                                    )
+                                );
+                            }
+                            else
+                            {
+                                interfaces_.set
+                                (
+                                    globalPatchID,
+                                    &refCast<const lduInterfaceField>(bpsi[patchI])
+                                );
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
 
-    // Transfer fields from matrices to local assembly
-    // lower, upper, diag, source
-    transferFieldsAndClean();
-
+void Foam::fvMatrixAssembly::setBounAndInterCoeffs()
+{
     for (label i=0; i < nMatrix_; ++i)
     {
         forAll(psis_[i].mesh().boundaryMesh(), patchI)
         {
-            const polyPatch& pp = psis_[i].mesh().boundaryMesh()[patchI];
             label globalPatchId = primitiveMesh_.patchMap()[i][patchI];
 
             if (globalPatchId != -1)
@@ -305,7 +481,10 @@ void Foam::fvMatrixAssembly::update()
                         globalPatchId,
                         matrices_[i].internalCoeffs()[patchI]
                     );
+                }
 
+                if (matrices_[i].boundaryCoeffs().set(patchI))
+                {
                     boundaryCoeffs_.set
                     (
                         globalPatchId,
@@ -314,7 +493,24 @@ void Foam::fvMatrixAssembly::update()
 
                 }
             }
-            else
+        }
+
+        //DebugVar(internalCoeffs_)
+        //DebugVar(boundaryCoeffs_)
+    }
+}
+
+
+void Foam::fvMatrixAssembly::manipulateMatrix()
+{
+    for (label i=0; i < nMatrix_; ++i)
+    {
+        forAll(psis_[i].mesh().boundaryMesh(), patchI)
+        {
+            const polyPatch& pp = psis_[i].mesh().boundaryMesh()[patchI];
+            label globalPatchId = primitiveMesh_.patchMap()[i][patchI];
+
+            if (globalPatchId == -1)
             {
                 if (isA<mappedWallPolyPatch>(pp))
                 {
@@ -333,6 +529,15 @@ void Foam::fvMatrixAssembly::update()
 
                     //updateCoeffs(i, patchI);
                 }
+                else if (isA<cyclicAMIPolyPatch>(pp))
+                {
+                    psis_[i].boundaryFieldRef()[patchI].manipulateMatrix
+                    (
+                        *this,
+                        primitiveMesh_.faceBoundMap()[i][patchI],
+                        primitiveMesh_.cellOffsets()[i]
+                    );
+                }
                 else
                 {
                     FatalErrorInFunction
@@ -347,9 +552,20 @@ void Foam::fvMatrixAssembly::update()
 }
 
 
-void Foam::fvMatrixAssembly::addFvMatrix(const fvMatrix<scalar>& matrix)
+void Foam::fvMatrixAssembly::update()
 {
-    matrices_.append(matrix);
+    setInterfaces();
+    // Transfer fields from matrices to local assembly
+    // lower, upper, diag, source
+    transferFieldsAndClean();
+    setBounAndInterCoeffs();
+    manipulateMatrix();
+}
+
+
+void Foam::fvMatrixAssembly::addFvMatrix(fvMatrix<scalar>& matrix)
+{
+    matrices_.append(&const_cast<fvMatrix<scalar>&>(matrix));
     psis_.append(&const_cast<volScalarField&>(matrix.psi()));
     ++nMatrix_;
 }
@@ -362,7 +578,7 @@ Foam::SolverPerformance<Foam::scalar> Foam::fvMatrixAssembly::solve
 {
     const word solverType
     (
-        solverControls.subDict(psiName_).get<word>("solver")
+        solverControls.get<word>("solver")
     );
 
     if (solverType == GAMGSolver::typeName)
@@ -402,16 +618,16 @@ Foam::SolverPerformance<Foam::scalar> Foam::fvMatrixAssembly::solve
         boundaryCoeffs_,
         internalCoeffs_,
         interfaces_,
-        solverControls.subDict(psiName_)
+        solverControls
     )->solve(psi, source_);
 
-    forAll(psis_, meshi)
+    forAll(psis_, i)
     {
-        const label cellOffset = primitiveMesh_.cellOffsets()[meshi];
+        const label cellOffset = primitiveMesh_.cellOffsets()[i];
 
-        forAll(psis_[meshi], localCellI)
+        forAll(psis_[i], localCellI)
         {
-            psis_[meshi][localCellI] = psi[localCellI + cellOffset];
+            psis_[i][localCellI] = psi[localCellI + cellOffset];
         }
     }
 
@@ -428,6 +644,9 @@ Foam::SolverPerformance<Foam::scalar> Foam::fvMatrixAssembly::solve
         localPsi.correctBoundaryConditions();
         localPsi.mesh().setSolverPerformance(psiName_, solverPerf);
     }
+
+    // Calculated locally the matrix flux
+    calculateFlux();
 
     clear();
 

@@ -67,6 +67,8 @@ SourceFiles
 #include "className.H"
 #include "SolverPerformance.H"
 
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -100,6 +102,8 @@ protected:
     // Demand-driven data
 
         mutable fvMeshLduAddressing* lduPtr_;
+
+        //mutable lduPrimitiveMeshAssembly* lduPrimPtr_;
 
         //- Current time index for cell volumes
         //  Note.  The whole mechanism will be replaced once the
@@ -281,6 +285,16 @@ public:
                 return polyMesh::time();
             }
 
+//             const lduPrimitiveMeshAssembly* lduPrimitive() const
+//             {
+//                 if (lduPrimPtr_)
+//                 {
+//                     return lduPrimPtr_;
+//                 }
+//
+//                 return lduPrimPtr_;
+//             }
+
             //- Return true if thisDb() is a valid DB
             virtual bool hasDb() const
             {
@@ -309,10 +323,7 @@ public:
 
             //- Return a list of pointers for each patch
             //  with only those pointing to interfaces being set
-            virtual lduInterfacePtrsList interfaces() const
-            {
-                return boundary().interfaces();
-            }
+            virtual lduInterfacePtrsList interfaces() const;
 
             //- Return communicator used for parallel communication
             virtual label comm() const

@@ -276,11 +276,20 @@ Foam::fvMatrix<Type>::fvMatrix
     source_(psi.size(), Zero),
     internalCoeffs_(psi.mesh().boundary().size()),
     boundaryCoeffs_(psi.mesh().boundary().size()),
-    faceFluxCorrectionPtr_(nullptr)
+    faceFluxCorrectionPtr_(nullptr),
+    faceFluxPtr_(nullptr)
 {
     DebugInFunction
         << "Constructing fvMatrix<Type> for field " << psi_.name() << endl;
 
+//     forAll (psi.boundaryField(), patchI)
+//     {
+//         if (psi.boundaryField()[patchI].useImplicit() && !lduPrimPtr_)
+//         {
+//             useImplicit_ = true;
+//             lduPrimPtr_ =  new lduPrimitiveMeshAssembly(psi.mesh());
+//         }
+//     }
     // Initialise coupling coefficients
     forAll(psi.mesh().boundary(), patchi)
     {
@@ -325,8 +334,10 @@ Foam::fvMatrix<Type>::fvMatrix(const fvMatrix<Type>& fvm)
     source_(fvm.source_),
     internalCoeffs_(fvm.internalCoeffs_),
     boundaryCoeffs_(fvm.boundaryCoeffs_),
-    faceFluxCorrectionPtr_(nullptr)
+    faceFluxCorrectionPtr_(nullptr),
+    faceFluxPtr_(nullptr)
 {
+
     DebugInFunction
         << "Copying fvMatrix<Type> for field " << psi_.name() << endl;
 
@@ -366,8 +377,10 @@ Foam::fvMatrix<Type>::fvMatrix(const tmp<fvMatrix<Type>>& tfvm)
         const_cast<fvMatrix<Type>&>(tfvm()).boundaryCoeffs_,
         tfvm.isTmp()
     ),
-    faceFluxCorrectionPtr_(nullptr)
+    faceFluxCorrectionPtr_(nullptr),
+    faceFluxPtr_(nullptr)
 {
+
     DebugInFunction
         << "Copying fvMatrix<Type> for field " << psi_.name() << endl;
 
@@ -405,10 +418,13 @@ Foam::fvMatrix<Type>::fvMatrix
     source_(is),
     internalCoeffs_(psi.mesh().boundary().size()),
     boundaryCoeffs_(psi.mesh().boundary().size()),
-    faceFluxCorrectionPtr_(nullptr)
+    faceFluxCorrectionPtr_(nullptr),
+    faceFluxPtr_(nullptr)
 {
+
     DebugInFunction
         << "Constructing fvMatrix<Type> for field " << psi_.name() << endl;
+
 
     // Initialise coupling coefficients
     forAll(psi.mesh().boundary(), patchi)
@@ -917,6 +933,11 @@ flux() const
             << abort(FatalError);
     }
 
+    if (faceFluxPtr_)
+    {
+        return *faceFluxPtr_;
+    }
+
     // construct GeometricField<Type, fvsPatchField, surfaceMesh>
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tfieldFlux
     (
@@ -977,6 +998,7 @@ flux() const
 
     typename GeometricField<Type, fvsPatchField, surfaceMesh>::
         Boundary& ffbf = fieldFlux.boundaryFieldRef();
+
 
     forAll(ffbf, patchi)
     {

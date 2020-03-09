@@ -90,6 +90,9 @@ class cyclicFvPatchField
             const Field<Type2>&
         ) const;
 
+        //- Return local gammaSfDelta
+        tmp<scalarField> gammaSfDelta() const;
+
 
 public:
 
@@ -202,6 +205,16 @@ public:
                 const scalarField& coeffs,
                 const Pstream::commsTypes commsType
             ) const;
+
+
+            //- Manipulate matrix
+            virtual void manipulateMatrix
+            (
+                fvMatrixAssembly& m,
+                const labelList& faceMap,
+                const label cellOffset
+            );
+
 
 
         // Cyclic coupled interface functions

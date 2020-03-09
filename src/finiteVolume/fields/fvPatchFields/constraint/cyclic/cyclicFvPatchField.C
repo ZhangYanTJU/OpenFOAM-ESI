@@ -28,6 +28,8 @@ License
 
 #include "cyclicFvPatchField.H"
 #include "transformField.H"
+#include "fvMatrixAssembly.H"
+#include "volFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -174,6 +176,7 @@ Foam::cyclicFvPatchField<Type>::neighbourPatchField() const
 }
 
 
+
 template<class Type>
 void Foam::cyclicFvPatchField<Type>::updateInterfaceMatrix
 (
@@ -184,7 +187,7 @@ void Foam::cyclicFvPatchField<Type>::updateInterfaceMatrix
     const solveScalarField& psiInternal,
     const scalarField& coeffs,
     const direction cmpt,
-    const Pstream::commsTypes
+    const Pstream::commsTypes commsType
 ) const
 {
     const labelUList& nbrFaceCells =
@@ -197,6 +200,7 @@ void Foam::cyclicFvPatchField<Type>::updateInterfaceMatrix
 
     // Transform according to the transformation tensors
     transformCoupleField(pnf, cmpt);
+
 
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
@@ -240,6 +244,88 @@ void Foam::cyclicFvPatchField<Type>::write(Ostream& os) const
 {
     fvPatchField<Type>::write(os);
 }
+
+
+template<class Type>
+void Foam::cyclicFvPatchField<Type>::manipulateMatrix
+(
+    fvMatrixAssembly& matrix,
+    const labelList& faceMap,
+    const label cellOffset
+)
+{
+    const scalarField pAlphaSfDelta(gammaSfDelta());
+
+    const labelUList& u = matrix.lduAddr().upperAddr();
+    const labelUList& l = matrix.lduAddr().lowerAddr();
+
+    DebugVar("manipulateMatrix")
+    forAll (*this, faceI)
+    {
+        if (faceMap.size() > 0)
+        {
+            label globalFaceI = faceMap[faceI];
+            if (globalFaceI != -1)
+            {
+                const scalar corr(pAlphaSfDelta[faceI]);
+                if (cyclicPatch_.owner())
+                {
+                    matrix.lower()[globalFaceI] += corr;
+                    matrix.upper()[globalFaceI] += corr;
+                    matrix.diag()[u[globalFaceI]] -= corr;
+                    matrix.diag()[l[globalFaceI]] -= corr;
+                }
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "Can not find faceId : " <<  globalFaceI
+                    << exit(FatalError);
+            }
+        }
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::scalarField>
+Foam::cyclicFvPatchField<Type>::gammaSfDelta() const
+{
+    const volScalarField& gamma =
+        this->db().objectRegistry::template lookupObject
+        <volScalarField>("(1|A(U))");
+
+    const cyclicFvPatch& nbrPatch = cyclicPatch_.neighbPatch();
+
+    scalarField gammab
+    (
+        gamma,
+        cyclicPatch_.faceCells()
+    );
+
+    scalarField gammaNbr
+    (
+        gamma,
+        nbrPatch.faceCells()
+    );
+
+    scalarField deltaf(1/cyclicPatch_.deltaCoeffs() + 1/nbrPatch.deltaCoeffs());
+
+    scalarField gammaf
+    (
+        (
+            gammab*(1/cyclicPatch_.deltaCoeffs())
+          + gammaNbr*(1/nbrPatch.deltaCoeffs())
+        )
+        / deltaf
+    );
+
+    return
+    (
+         gammaf*this->patch().magSf()/deltaf
+    );
+}
+
 
 
 // ************************************************************************* //
