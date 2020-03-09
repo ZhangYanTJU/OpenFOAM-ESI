@@ -30,6 +30,8 @@ License
 #include "diagTensorField.H"
 #include "profiling.H"
 #include "PrecisionAdaptor.H"
+#include "coupledFvPatchField.H"
+#include "lduPrimitiveMeshAssembly.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -97,6 +99,10 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregatedOrCoupled
     else if (type == "coupled")
     {
         return solveCoupled(solverControls);
+    }
+    else if (type == "implicitCyclic")
+    {
+        return solveImplicitCyclic(solverControls);
     }
     else
     {
@@ -170,7 +176,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         );
 
         lduInterfaceFieldPtrsList interfaces =
-            psi.boundaryField().scalarInterfaces();
+                psi.boundaryField().scalarInterfaces();
 
         // Use the initMatrixInterfaces and updateMatrixInterfaces to correct
         // bouCoeffsCmpt for the explicit part of the coupled boundary
@@ -293,6 +299,36 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveCoupled
     psi.mesh().setSolverPerformance(psi.name(), solverPerf);
 
     return solverPerf;
+}
+
+
+template<class Type>
+Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveImplicitCyclic
+(
+    const dictionary& solverControls
+)
+{
+    if (debug)
+    {
+        Info.masterStream(this->mesh().comm())
+            << "fvMatrix<Type>::solveImplicitCyclic"
+               "(const dictionary& solverControls) : "
+               "solving fvMatrix<Type>"
+            << endl;
+    }
+    
+    NotImplemented;
+
+    GeometricField<Type, fvPatchField, volMesh>& psi =
+       const_cast<GeometricField<Type, fvPatchField, volMesh>&>(psi_);
+
+    SolverPerformance<Type> solverPerfVec
+    (
+        "fvMatrix<Type>::solveImplicitCyclic",
+        psi.name()
+    );
+
+    return solverPerfVec;
 }
 
 

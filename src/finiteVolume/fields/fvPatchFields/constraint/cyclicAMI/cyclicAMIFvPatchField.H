@@ -95,6 +95,10 @@ class cyclicAMIFvPatchField
         ) const;
 
 
+        //- Return local gammaSfDelta
+        tmp<scalarField> gammaSfDelta(fvMatrixAssembly& matrix) const;
+
+
 public:
 
     //- Runtime type information
@@ -179,6 +183,7 @@ public:
             //- Return neighbour coupled internal cell data
             virtual tmp<Field<Type>> patchNeighbourField() const;
 
+
             //- Return reference to neighbour patchField
             const cyclicAMIFvPatchField<Type>& neighbourPatchField() const;
 
@@ -206,6 +211,15 @@ public:
                 const scalarField&,
                 const Pstream::commsTypes commsType
             ) const;
+
+
+            //- Manipulate matrix
+            virtual void manipulateMatrix
+            (
+                fvMatrixAssembly& m,
+                const labelList& faceMap,
+                const label cellOffset
+            );
 
 
         // Cyclic AMI coupled interface functions

@@ -30,6 +30,10 @@ License
 #include "extrapolatedCalculatedFvPatchFields.H"
 #include "profiling.H"
 #include "PrecisionAdaptor.H"
+#include "fvMatrixAssembly.H"
+#include "jumpCyclicFvPatchField.H"
+#include "cyclicPolyPatch.H"
+#include "cyclicAMIPolyPatch.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -81,6 +85,10 @@ Foam::fvMatrix<Foam::scalar>::solver
 
     scalarField saveDiag(diag());
     addBoundaryDiag(diag(), 0);
+    
+    lduInterfaceFieldPtrsList interfaces =
+        psi_.boundaryField().scalarInterfaces();
+
 
     autoPtr<fvMatrix<scalar>::fvSolver> solverPtr
     (
@@ -93,7 +101,7 @@ Foam::fvMatrix<Foam::scalar>::solver
                 *this,
                 boundaryCoeffs_,
                 internalCoeffs_,
-                psi_.boundaryField().scalarInterfaces(),
+                interfaces,
                 solverControls
             )
         )
@@ -168,7 +176,10 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
     scalarField totalSource(source_);
     addBoundarySource(totalSource, false);
-
+    
+    lduInterfaceFieldPtrsList interfaces =
+                psi.boundaryField().scalarInterfaces();
+                
     // Solver call
     solverPerformance solverPerf = lduMatrix::solver::New
     (
@@ -176,7 +187,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
         *this,
         boundaryCoeffs_,
         internalCoeffs_,
-        psi_.boundaryField().scalarInterfaces(),
+        interfaces,
         solverControls
     )->solve(psi.primitiveFieldRef(), totalSource);
 
@@ -190,6 +201,34 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
     psi.correctBoundaryConditions();
 
     psi.mesh().setSolverPerformance(psi.name(), solverPerf);
+
+    return solverPerf;
+}
+
+
+template<>
+Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveImplicitCyclic
+(
+    const dictionary& solverControls
+)
+{
+    UPtrList<fvMesh> uMesh(1);
+    uMesh.set(0, const_cast<fvMesh*>(&psi_.mesh()));
+    lduPrimitiveMeshAssembly lduPri(uMesh, psi_.mesh().time(), false);
+    lduPri.assemble<cyclicAMIPolyPatch>();
+    fvMatrixAssembly m(lduPri, dimensions_, psi_.name());
+    m.addFvMatrix(*this);
+    solverPerformance solverPerf(m.solve(solverControls));
+
+    
+    if (debug)
+    {
+        Info.masterStream(this->mesh().comm())
+            << "fvMatrix<scalar>::solveImplicitCyclic"
+               "(const dictionary& solverControls) : "
+               "solving fvMatrix<scalar>"
+            << endl;
+    }
 
     return solverPerf;
 }

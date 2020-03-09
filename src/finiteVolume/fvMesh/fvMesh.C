@@ -40,6 +40,7 @@ License
 #include "mapClouds.H"
 #include "MeshObject.H"
 #include "fvMatrix.H"
+//#include "lduPrimitiveMeshAssembly.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -690,6 +691,16 @@ const Foam::fvBoundaryMesh& Foam::fvMesh::boundary() const
 
 const Foam::lduAddressing& Foam::fvMesh::lduAddr() const
 {
+//     bool useImplicitCyclic(false);
+//     forAll(boundary_, patchI)
+//     {
+//         const polyPatch& pp = boundaryMesh()[patchI];
+//         if (isA<cyclicPolyPatch>(pp))
+//         {
+//             useImplicitCyclic = refCast<const cyclicPolyPatch>(pp).implicitCyclic();
+//         }
+//     }
+    
     if (!lduPtr_)
     {
         DebugInFunction
@@ -697,9 +708,36 @@ const Foam::lduAddressing& Foam::fvMesh::lduAddr() const
             << nFaces() << endl;
 
         lduPtr_ = new fvMeshLduAddressing(*this);
+        
+        return *lduPtr_;
     }
+    
+//     if (!lduPrimPtr_ && useImplicitCyclic)
+//     {
+//         DebugVar("lduPrimitiveMeshAssembly")
+//         lduPrimPtr_ = new lduPrimitiveMeshAssembly(*this);
+//         DebugVar("lduPrimitiveMeshAssembly2")
+//         
+//         return *lduPrimPtr_;
+//     }
 
     return *lduPtr_;
+}
+
+
+Foam::lduInterfacePtrsList Foam::fvMesh::interfaces() const
+{
+//     if (lduPtr_)
+//     {
+//         return boundary().interfaces();
+//     }
+//     
+//     if (lduPrimPtr_)
+//     {
+//         return lduPrimPtr_->interfaces();
+//     }
+    
+    return boundary().interfaces();
 }
 
 

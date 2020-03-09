@@ -48,7 +48,6 @@ namespace Foam
 /*---------------------------------------------------------------------------*\
                   Class lduPrimitiveMeshAssembly Declaration
 \*---------------------------------------------------------------------------*/
-
 class lduPrimitiveMeshAssembly
 :
     public objectRegistry,
@@ -56,19 +55,35 @@ class lduPrimitiveMeshAssembly
 {
     // Private Data
 
+        //- UPtrList for fvMesh
+        const UPtrList<fvMesh>& meshes_;
+
+        //- Overwrite patchAddr from lduPrimitiveMesh for assembly ldu address
         List<labelList> patchAddr_;
 
-        //- Map patches from local to global
+        //- Map patches from local (-1 for non-existing)
         labelListList patchMap_;
+
+        //- Map patches from local to global
+        labelListList patchLocalToGlobalMap_;
 
         //- Map faces from local to global
         labelListList faceMap_;
 
-        //- Map path face from local to global
+        //- Map patch face from local to global
         labelListListList faceBoundMap_;
+
+        //- Map patch local face to nbrCellId
+        labelListListList cellBoundMap_;
+
+        //- Map minimum face weights
+        labelListListList magSfFaceBoundMap_;
 
         //- Offset cells
         labelList cellOffsets_;
+
+        //- Reset cyclics patch ID's
+        bool resetCyclics_;
 
 
     // Private Member Functions
@@ -105,8 +120,16 @@ public:
         lduPrimitiveMeshAssembly
         (
             const UPtrList<fvMesh>& meshes,
-            const IOobject& io
+            const IOobject& io,
+            bool resetCyclics = true
         );
+
+
+    // Public functions
+
+        //- Assemble matrix
+        template<class type>
+        void assemble();
 
 
     //- Destructor
@@ -135,10 +158,28 @@ public:
             return patchMap_;
         }
 
+        //- Return patchLocalToGlobalMap
+        const labelListList& patchLocalToGlobalMap() const
+        {
+            return patchLocalToGlobalMap_;
+        }
+
         //- Return boundary face map
         const labelListListList& faceBoundMap() const
         {
             return faceBoundMap_;
+        }
+
+        //- Return boundary face cell
+        const labelListListList& cellBoundMap() const
+        {
+            return cellBoundMap_;
+        }
+
+
+        const labelListListList& magSfFaceBoundMap() const
+        {
+            return magSfFaceBoundMap_;
         }
 
         //- Return cellOffsets [1+nMeshes]
@@ -158,12 +199,30 @@ public:
         {
             return patchAddr_;
         }
+
+        //- Return fvMeshes
+        const UPtrList<fvMesh>& meshes() const
+        {
+            return meshes_;
+        }
+
+        //- Return resetCyclics
+        bool resetCyclics() const
+        {
+            return resetCyclics_;
+        }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "lduPrimitiveMeshAssemblyTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

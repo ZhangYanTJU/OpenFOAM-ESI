@@ -26,6 +26,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "fvMatrixAssembly.H"
+#include "volFields.H"
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -265,6 +268,154 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 
 
 template<class Type>
+void Foam::cyclicAMIFvPatchField<Type>::manipulateMatrix
+(
+    fvMatrixAssembly& matrix,
+    const labelList& faceMap,
+    const label cellOffset
+)
+{
+
+    if (cyclicAMIPatch_.owner())
+    {
+        //const label index(this->patch().index());
+
+        const scalarListList& srcWeight =
+            cyclicAMIPatch_.cyclicAMIPatch().AMI().srcWeights();
+
+        const scalarField pAlphaSfDelta(gammaSfDelta(matrix));
+
+        const labelUList& u = matrix.lduAddr().upperAddr();
+        const labelUList& l = matrix.lduAddr().lowerAddr();
+
+        label subFaceI(0);
+        forAll (*this, faceI)
+        {
+            if (faceMap.size() > 0)
+            {
+                const scalarList& w = srcWeight[faceI];
+
+                for(label i=0; i<w.size(); i++)
+                {
+                    //const label faceIdMap =
+                    //    matrix.mesh().magSfFaceBoundMap()[0][index][subFaceI];
+
+                    label globalFaceI = faceMap[subFaceI];
+
+                    if (globalFaceI != -1)
+                    {
+                        const scalar corr(pAlphaSfDelta[subFaceI]);
+
+                        matrix.upper()[globalFaceI] += corr;
+                        matrix.diag()[u[globalFaceI]] -= corr;
+                        matrix.lower()[globalFaceI] += corr;
+                        matrix.diag()[l[globalFaceI]] -= corr;
+                    }
+                    else
+                    {
+                        FatalErrorInFunction
+                            << "Can not find faceId : " <<  globalFaceI
+                            << exit(FatalError);
+                    }
+
+                    subFaceI++;
+                }
+            }
+        }
+    }
+}
+
+template<class Type>
+Foam::tmp<Foam::scalarField>
+Foam::cyclicAMIFvPatchField<Type>::gammaSfDelta(fvMatrixAssembly& matrix) const
+{
+    const label index(this->patch().index());
+
+    const volScalarField& gamma =
+        this->db().objectRegistry::template lookupObject
+        <volScalarField>("rAU");
+
+    label nbrPathID = cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID();
+
+    const labelList& cellIds = matrix.mesh().cellBoundMap()[0][index];
+    const labelList& nbrCellIds = matrix.mesh().cellBoundMap()[0][nbrPathID];
+
+    const label nSubFaces = cellIds.size();
+
+    scalarField gammaf(nSubFaces, Zero);
+    scalarField deltaf(nSubFaces, Zero);
+    vectorField deltafV(nSubFaces, Zero);
+    //vectorField corrVecs(nSubFaces, Zero);
+    scalarField Sf(nSubFaces, Zero);
+
+    forAll (cellIds, subFaceI)
+    {
+        label cellI = cellIds[subFaceI];
+        label nbrCellI = nbrCellIds[subFaceI];
+
+        gammaf[subFaceI] = 0.5*(gamma[cellI] + gamma[nbrCellI]);
+
+        tmp<vectorField> C(matrix.mesh().meshes()[0].C());
+
+        deltafV[subFaceI] = C()[cellI] - C()[nbrCellI];
+    }
+
+    const scalarListList& srcWeight =
+        cyclicAMIPatch_.cyclicAMIPatch().AMI().srcWeights();
+
+    const vectorField& patchSf = this->patch().Sf();
+    const scalarField& magSf = this->patch().magSf();
+
+    label subFaceI(0);
+    forAll(*this, faceI)
+    {
+        const scalarList& w =  srcWeight[faceI];
+
+        for(label i=0; i<w.size(); i++)
+        {
+            const label faceIdMap =
+                matrix.mesh().magSfFaceBoundMap()[0][index][subFaceI];
+
+            Sf[subFaceI] = w[i]*this->patch().magSf()[faceIdMap];
+
+            vector unitArea = patchSf[faceIdMap]/magSf[faceIdMap];
+
+            //nonOrthDeltaCoeffs from corrected SnGrad
+            deltaf[subFaceI] =
+                max(unitArea & deltafV[subFaceI], 0.05*mag(deltafV[subFaceI]));
+
+            //NonOrthCorrectionVectors
+            //corrVecs[subFaceI] =
+            //    unitArea - deltafV[subFaceI]/deltaf[subFaceI];
+
+            subFaceI++;
+        }
+    }
+
+//    DebugVar(gammaf*Sf/deltaf)
+
+    // Modify the original internalCoeffs and boundaryCoeffs to be consistent
+    // with the new gammaf and deltaf. This is used in matrix.flux()
+
+    const label globalPatchID = matrix.mesh().patchLocalToGlobalMap()[0][index];
+
+    DebugVar(globalPatchID)
+
+    matrix.internalCoeffs().set(globalPatchID, -gammaf*Sf/deltaf);
+    matrix.boundaryCoeffs().set(globalPatchID, -gammaf*Sf/deltaf);
+
+    const label nbrGlobalPatchID =
+        matrix.mesh().patchLocalToGlobalMap()[0][nbrPathID];
+
+    DebugVar(nbrGlobalPatchID)
+
+    matrix.internalCoeffs().set(nbrGlobalPatchID, -gammaf*Sf/deltaf);
+    matrix.boundaryCoeffs().set(nbrGlobalPatchID, -gammaf*Sf/deltaf);
+
+    return(gammaf*Sf/deltaf);
+}
+
+template<class Type>
 void Foam::cyclicAMIFvPatchField<Type>::write(Ostream& os) const
 {
     fvPatchField<Type>::write(os);
@@ -273,3 +424,4 @@ void Foam::cyclicAMIFvPatchField<Type>::write(Ostream& os) const
 
 
 // ************************************************************************* //
+

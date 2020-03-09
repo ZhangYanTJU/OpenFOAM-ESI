@@ -40,6 +40,8 @@ if (coupled)
         new lduPrimitiveMeshAssembly(meshes, io)
     );
 
+    meshPtr->assemble<mappedPatchBase>();
+
     Info<< "Creating coupled matrix." << nl << endl;
 
     fvMatrixAssemblyPtr.reset
@@ -51,6 +53,8 @@ if (coupled)
             "he"
         )
     );
+
+
 
     Info<< "Created coupled matrix." << nl << endl;
 }

@@ -127,6 +127,15 @@ class porousBafflePressureFvPatchField
         bool uniformJump_;
 
 
+    // Private memeber functions
+
+        //- Return gammaDelta fraction for laplacian coeffs
+        tmp<scalarField> gammaDeltaVf() const;
+
+        //- Return local gammaSfDelta
+        tmp<scalarField> gammaSfDelta() const;
+
+
 public:
 
     //- Runtime type information
@@ -202,6 +211,14 @@ public:
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();
+
+            //- Manipulate matrix
+            virtual void manipulateMatrix
+            (
+                fvMatrixAssembly& m,
+                const labelList& faceMap,
+                const label cellOffset
+            );
 
 
         //- Write

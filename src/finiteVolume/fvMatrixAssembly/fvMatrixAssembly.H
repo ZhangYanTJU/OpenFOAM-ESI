@@ -68,7 +68,7 @@ private:
         const lduPrimitiveMeshAssembly& primitiveMesh_;
 
         //- Pointer list to fvMatrix
-        PtrList<fvMatrix<scalar>> matrices_;
+        UPtrList<fvMatrix<scalar>> matrices_;
 
         //- Pointer list to fields
         UPtrList<volScalarField> psis_;
@@ -115,9 +115,20 @@ private:
         //- components
         void transferFieldsAndClean();
 
+        void calculateFlux();
+
         //- Update assembled source, internalCoeffs and boundaryCoeffs
         //- once all the fvMatrix have added appended
         void update();
+
+        //- Set interfaces. Renumber cyclic new patch ID's
+        void setInterfaces();
+
+        //- Set boundary and internal coefficients
+        void setBounAndInterCoeffs();
+
+        //- Manipulate lower, upper, diag and source term in this matrix
+        void manipulateMatrix();
 
         //- Calculate face areas and cell volumes for the assembled matrix
         //- to be used by the GAMG solver
@@ -157,7 +168,7 @@ public:
     // Editing
 
         //- Adding fvMatrix
-        void addFvMatrix(const fvMatrix<scalar>& matrix);
+        void addFvMatrix(fvMatrix<scalar>& matrix);
 
         //- Clear
         void clear();
@@ -172,7 +183,7 @@ public:
     // Access
 
         //- Return the LDU mesh from which the addressing is obtained
-        const lduMesh& mesh() const
+        const lduPrimitiveMeshAssembly& mesh() const
         {
             return primitiveMesh_;
         }
@@ -193,6 +204,21 @@ public:
         Field<scalar>& source()
         {
             return source_;
+        }
+
+        fvMatrix<scalar>& matrix(const label i)
+        {
+            return matrices_[i];
+        }
+
+        FieldField<Field, scalar>& internalCoeffs()
+        {
+            return internalCoeffs_;
+        }
+
+        FieldField<Field, scalar>& boundaryCoeffs()
+        {
+            return boundaryCoeffs_;
         }
 };
 
