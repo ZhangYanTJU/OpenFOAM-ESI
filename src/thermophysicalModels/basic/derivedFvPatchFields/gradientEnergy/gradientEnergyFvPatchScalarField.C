@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,6 +117,13 @@ void Foam::gradientEnergyFvPatchScalarField::updateCoeffs()
         );
 
     fixedGradientFvPatchScalarField::updateCoeffs();
+}
+
+
+void Foam::gradientEnergyFvPatchScalarField::write(Ostream& os) const
+{
+    fixedGradientFvPatchScalarField::write(os);
+    this->writeEntry("value", os);
 }
 
 
