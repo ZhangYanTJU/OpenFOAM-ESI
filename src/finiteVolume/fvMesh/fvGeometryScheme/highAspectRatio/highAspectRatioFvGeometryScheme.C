@@ -229,40 +229,6 @@ void Foam::highAspectRatioFvGeometryScheme::calcAspectRatioWeights
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::highAspectRatioFvGeometryScheme::highAspectRatioFvGeometryScheme
-(
-    const fvMesh& mesh,
-    const dictionary& dict
-)
-:
-    basicFvGeometryScheme(mesh, dict),
-    minAspect_(dict.get<scalar>("minAspect")),
-    maxAspect_(dict.get<scalar>("maxAspect"))
-{
-    if (maxAspect_ < minAspect_)
-    {
-        FatalIOErrorInFunction(dict)
-            << "minAspect " << minAspect_
-            << " has to be less than maxAspect " << maxAspect_
-            << exit(FatalIOError);
-    }
-    if (minAspect_ < 0 || maxAspect_ < 0)
-    {
-        FatalIOErrorInFunction(dict)
-            << "Illegal aspect ratio : minAspect:" << minAspect_
-            << " maxAspect:" << maxAspect_
-            << exit(FatalIOError);
-    }
-
-    // Force local calculation
-    movePoints();
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
 void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
 (
     const primitiveMesh& mesh,
@@ -373,6 +339,40 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
     }
 }
 
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::highAspectRatioFvGeometryScheme::highAspectRatioFvGeometryScheme
+(
+    const fvMesh& mesh,
+    const dictionary& dict
+)
+:
+    basicFvGeometryScheme(mesh, dict),
+    minAspect_(dict.get<scalar>("minAspect")),
+    maxAspect_(dict.get<scalar>("maxAspect"))
+{
+    if (maxAspect_ < minAspect_)
+    {
+        FatalIOErrorInFunction(dict)
+            << "minAspect " << minAspect_
+            << " has to be less than maxAspect " << maxAspect_
+            << exit(FatalIOError);
+    }
+    if (minAspect_ < 0 || maxAspect_ < 0)
+    {
+        FatalIOErrorInFunction(dict)
+            << "Illegal aspect ratio : minAspect:" << minAspect_
+            << " maxAspect:" << maxAspect_
+            << exit(FatalIOError);
+    }
+
+    // Force local calculation
+    movePoints();
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::highAspectRatioFvGeometryScheme::movePoints()
 {

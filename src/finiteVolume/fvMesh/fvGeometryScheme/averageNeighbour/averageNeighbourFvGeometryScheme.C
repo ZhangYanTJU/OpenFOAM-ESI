@@ -30,6 +30,7 @@ License
 #include "fvMesh.H"
 #include "cellAspectRatio.H"
 #include "syncTools.H"
+#include "polyMeshTools.H"
 #include "OBJstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -48,6 +49,128 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+void Foam::averageNeighbourFvGeometryScheme::makePyrHeights
+(
+    const pointField& cellCentres,
+    const vectorField& faceCentres,
+    const vectorField& faceNormals,
+
+    scalarField& ownHeight,
+    scalarField& neiHeight
+) const
+{
+    ownHeight.setSize(mesh_.nFaces());
+    neiHeight.setSize(mesh_.nInternalFaces());
+
+    typedef Vector<solveScalar> solveVector;
+
+    const labelList& own = mesh_.faceOwner();
+    const labelList& nei = mesh_.faceNeighbour();
+
+    for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+    {
+        const solveVector n = faceNormals[facei];
+        const solveVector fc = faceCentres[facei];
+        ownHeight[facei] = ((fc-cellCentres[own[facei]])&n);
+        neiHeight[facei] = ((cellCentres[nei[facei]]-fc)&n);
+    }
+
+    for (label facei = mesh_.nInternalFaces(); facei < mesh_.nFaces(); facei++)
+    {
+        const solveVector n = faceNormals[facei];
+        const solveVector fc = faceCentres[facei];
+        ownHeight[facei] = ((fc-cellCentres[own[facei]])&n);
+    }
+}
+
+
+Foam::label Foam::averageNeighbourFvGeometryScheme::clipPyramids
+(
+    const pointField& cellCentres,
+    const vectorField& faceCentres,
+    const vectorField& faceNormals,
+
+    const scalarField& minOwnHeight,
+    const scalarField& minNeiHeight,
+
+    vectorField& correction
+) const
+{
+    // Clip correction vector if any pyramid becomes too small. Return number of
+    // cells clipped
+
+    typedef Vector<solveScalar> solveVector;
+
+    const labelList& own = mesh_.faceOwner();
+    const labelList& nei = mesh_.faceNeighbour();
+
+    label nClipped = 0;
+    for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
+    {
+        const vector& n = faceNormals[facei];
+        const point& fc = faceCentres[facei];
+
+        const label ownCelli = own[facei];
+        if (correction[ownCelli] != vector::zero)
+        {
+            const solveVector ownCc(cellCentres[ownCelli]+correction[ownCelli]);
+            const scalar ownHeight = ((fc-ownCc)&n);
+            if (ownHeight < minOwnHeight[facei])
+            {
+                //Pout<< "    internalface:" << fc
+                //    << " own:" << ownCc
+                //    << " pyrHeight:" << ownHeight
+                //    << " minHeight:" << minOwnHeight[facei]
+                //    << endl;
+                correction[ownCelli] = vector::zero;
+                nClipped++;
+            }
+        }
+
+        const label neiCelli = nei[facei];
+        if (correction[neiCelli] != vector::zero)
+        {
+            const solveVector neiCc(cellCentres[neiCelli]+correction[neiCelli]);
+            const scalar neiHeight = ((neiCc-fc)&n);
+            if (neiHeight < minNeiHeight[facei])
+            {
+                //Pout<< "    internalface:" << fc
+                //    << " nei:" << neiCc
+                //    << " pyrHeight:" << neiHeight
+                //    << " minHeight:" << minNeiHeight[facei]
+                //    << endl;
+                correction[neiCelli] = vector::zero;
+                nClipped++;
+            }
+        }
+    }
+
+    for (label facei = mesh_.nInternalFaces(); facei < mesh_.nFaces(); facei++)
+    {
+        const vector& n = faceNormals[facei];
+        const point& fc = faceCentres[facei];
+
+        const label ownCelli = own[facei];
+        if (correction[ownCelli] != vector::zero)
+        {
+            const solveVector ownCc(cellCentres[ownCelli]+correction[ownCelli]);
+            const scalar ownHeight = ((fc-ownCc)&n);
+            if (ownHeight < minOwnHeight[facei])
+            {
+                //Pout<< "    boundaryface:" << fc
+                //    << " own:" << ownCc
+                //    << " pyrHeight:" << ownHeight
+                //    << " minHeight:" << minOwnHeight[facei]
+                //    << endl;
+                correction[ownCelli] = vector::zero;
+                nClipped++;
+            }
+        }
+    }
+    return returnReduce(nClipped, sumOp<label>());
+}
+
+
 Foam::tmp<Foam::pointField>
 Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
 (
@@ -56,12 +179,6 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
     const scalarField& faceWeights
 ) const
 {
-    if (debug)
-    {
-        Pout<< "highAspectRatioFvGeometryScheme::averageNeighbourCentres() : "
-            << "calculating weighted neighbouring cell centre" << endl;
-    }
-
     typedef Vector<solveScalar> solveVector;
 
     const labelList& own = mesh_.faceOwner();
@@ -77,21 +194,21 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
     for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
     {
         const vector& n = faceNormals[facei];
+        const point& ownCc = cellCentres[own[facei]];
+        const point& neiCc = cellCentres[nei[facei]];
 
-        const solveVector myCc(cellCentres[own[facei]]);
-        const solveVector nbrCc(cellCentres[nei[facei]]);
-
-        solveVector d(nbrCc-myCc);
+        solveVector d(neiCc-ownCc);
 
         // 1. Normalise contribution. This increases actual non-ortho
         // since it does not 'see' the tangential offset of neighbours
-        //nbrCc = myCc + (d&n)*n;
+        //neiCc = ownCc + (d&n)*n;
 
         // 2. Remove normal contribution, i.e. get tangential vector
         //    (= non-ortho correction vector?)
         d -= (d&n)*n;
 
         // Apply half to both sides (as a correction)
+        // Note: should this be linear weights instead of 0.5?
         const scalar w = 0.5*faceWeights[facei];
         cc[own[facei]] += w*d;
         cellWeights[own[facei]] += w;
@@ -102,8 +219,8 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
 
 
     // Boundary faces. Bypass stored cell centres
-    pointField nbrCellCentres;
-    syncTools::swapBoundaryCellPositions(mesh_, cellCentres, nbrCellCentres);
+    pointField neiCellCentres;
+    syncTools::swapBoundaryCellPositions(mesh_, cellCentres, neiCellCentres);
 
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
     forAll(pbm, patchi)
@@ -120,14 +237,14 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
 
                 const vector& n = faceNormals[meshFacei];
 
-                const solveVector myCc(cellCentres[fc[i]]);
-                const solveVector nbrCc(nbrCellCentres[bFacei]);
+                const point& ownCc = cellCentres[fc[i]];
+                const point& neiCc = neiCellCentres[bFacei];
 
-                solveVector d(nbrCc-myCc);
+                solveVector d(neiCc-ownCc);
 
                 // 1. Normalise contribution. This increases actual non-ortho
                 // since it does not 'see' the tangential offset of neighbours
-                //nbrCc = myCc + (d&n)*n;
+                //neiCc = ownCc + (d&n)*n;
 
                 // 2. Remove normal contribution, i.e. get tangential vector
                 //    (= non-ortho correction vector?)
@@ -141,17 +258,12 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
         }
     }
 
+    // Now cc is still the correction vector
     cc /= cellWeights;
 
-forAll(cc, celli)
-{
-    Pout<< "For cell:" << celli
-        << " at:" << cellCentres[celli]
-        << " have correction:" << cc[celli]
-        << endl;
-}
-
+    // Add correction vector to the input cell centres
     cc += cellCentres;
+
     return tcc;
 }
 
@@ -164,14 +276,6 @@ Foam::averageNeighbourFvGeometryScheme::averageCentres
     const vectorField& faceNormals
 ) const
 {
-    //TBD. integrate with above
-
-    if (debug)
-    {
-        Pout<< "highAspectRatioFvGeometryScheme::averageCentres() : "
-            << "calculating face centre from neighbouring cell centres" << endl;
-    }
-
     typedef Vector<solveScalar> solveVector;
 
     const labelList& own = mesh_.faceOwner();
@@ -185,67 +289,95 @@ Foam::averageNeighbourFvGeometryScheme::averageCentres
     for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)
     {
         const vector& n = faceNormals[facei];
+        const point& oldFc = faceCentres[facei];
 
-        const solveVector myCc(cellCentres[own[facei]]);
-        const solveVector nbrCc(cellCentres[nei[facei]]);
+        const solveVector ownCc(cellCentres[own[facei]]);
+        const solveVector neiCc(cellCentres[nei[facei]]);
 
-        solveVector d(nbrCc-myCc);
+        solveVector deltaCc(neiCc-ownCc);
+        solveVector deltaFc(oldFc-ownCc);
 
-        // 1. Normalise contribution. This increases actual non-ortho
-        // since it does not 'see' the tangential offset of neighbours
-        //nbrCc = myCc + (d&n)*n;
+        //solveVector d(neiCc-ownCc);
+        //// 1. Normalise contribution. This increases actual non-ortho
+        //// since it does not 'see' the tangential offset of neighbours
+        ////neiCc = ownCc + s*n;
+        //
+        //// 2. Remove normal contribution, i.e. get tangential vector
+        ////    (= non-ortho correction vector?)
+        //d -= s*n;
+        //newFc[facei] = faceCentres[facei]+d;
 
-        // 2. Remove normal contribution, i.e. get tangential vector
+        // Get linear weight (normal distance to face)
+        const solveScalar f = (deltaFc&n)/(deltaCc&n);
+        const solveVector avgCc((1.0-f)*ownCc + f*neiCc);
+
+        solveVector d(avgCc-oldFc);
+        // Remove normal contribution, i.e. get tangential vector
         //    (= non-ortho correction vector?)
         d -= (d&n)*n;
 
-        newFc[facei] = faceCentres[facei]+d;
+        newFc[facei] = oldFc + d;
     }
 
 
     // Boundary faces. Bypass stored cell centres
-    pointField nbrCellCentres;
-    syncTools::swapBoundaryCellPositions(mesh_, cellCentres, nbrCellCentres);
+    pointField neiCellCentres;
+    syncTools::swapBoundaryCellPositions(mesh_, cellCentres, neiCellCentres);
 
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
     forAll(pbm, patchi)
     {
         const polyPatch& pp = pbm[patchi];
+        const labelUList& fc = pp.faceCells();
+
         if (pp.coupled())
         {
-            const labelUList& fc = pp.faceCells();
-
             forAll(fc, i)
             {
-                const label facei = pp.start()-mesh_.nInternalFaces()+i;
+                // Same as internal faces
+                const label facei = pp.start()+i;
                 const label bFacei = facei-mesh_.nInternalFaces();
 
                 const vector& n = faceNormals[facei];
+                const point& oldFc = faceCentres[facei];
 
-                const solveVector myCc(cellCentres[fc[i]]);
-                const solveVector nbrCc(nbrCellCentres[bFacei]);
+                const solveVector ownCc(cellCentres[fc[i]]);
+                const solveVector neiCc(neiCellCentres[bFacei]);
 
-                solveVector d(nbrCc-myCc);
+                solveVector deltaCc(neiCc-ownCc);
+                solveVector deltaFc(oldFc-ownCc);
 
-                // 1. Normalise contribution. This increases actual non-ortho
-                // since it does not 'see' the tangential offset of neighbours
-                //nbrCc = myCc + (d&n)*n;
+                // Get linear weight (normal distance to face)
+                const solveScalar f = (deltaFc&n)/(deltaCc&n);
+                const solveVector avgCc((1.0-f)*ownCc + f*neiCc);
 
-                // 2. Remove normal contribution, i.e. get tangential vector
+                solveVector d(avgCc-oldFc);
+                // Remove normal contribution, i.e. get tangential vector
                 //    (= non-ortho correction vector?)
                 d -= (d&n)*n;
 
-                newFc[facei] = faceCentres[facei]+d;
+                newFc[facei] = oldFc + d;
             }
         }
-    }
+        else
+        {
+            // Zero-grad?
+            forAll(fc, i)
+            {
+                const label facei = pp.start()+i;
 
-    forAll(newFc, facei)
-    {
-        Pout<< "For face:" << facei
-            << " old:" << faceCentres[facei]
-            << " have new:" << newFc[facei]
-            << endl;
+                const vector& n = faceNormals[facei];
+                const point& oldFc = faceCentres[facei];
+                const solveVector ownCc(cellCentres[fc[i]]);
+
+                solveVector d(ownCc-oldFc);
+                // Remove normal contribution, i.e. get tangential vector
+                //    (= non-ortho correction vector?)
+                d -= (d&n)*n;
+
+                newFc[facei] = oldFc+d;
+            }
+        }
     }
 
     return tnewFc;
@@ -260,7 +392,9 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourFvGeometryScheme
     const dictionary& dict
 )
 :
-    highAspectRatioFvGeometryScheme(mesh, dict)
+    highAspectRatioFvGeometryScheme(mesh, dict),
+    nIters_(dict.getOrDefault<label>("nIters", 1)),
+    relax_(dict.get<scalar>("relax"))
 {
     // Force local calculation
     movePoints();
@@ -277,13 +411,13 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
             << "recalculating primitiveMesh centres" << endl;
     }
 
-//    if
-//    (
-//       !mesh_.hasCellCentres()
-//    && !mesh_.hasFaceCentres()
-//    && !mesh_.hasCellVolumes()
-//    && !mesh_.hasFaceAreas()
-//    )
+    //if
+    //(
+    //   !mesh_.hasCellCentres()
+    //&& !mesh_.hasFaceCentres()
+    //&& !mesh_.hasCellVolumes()
+    //&& !mesh_.hasFaceAreas()
+    //)
     {
         highAspectRatioFvGeometryScheme::movePoints();
 
@@ -294,27 +428,6 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
         const scalarField magFaceAreas(mag(faceAreas));
         const vectorField faceNormals(faceAreas/magFaceAreas);
 
-        // Modify cell centres to be more in-line with the face normals
-        tmp<pointField> tcc
-        (
-            averageNeighbourCentres
-            (
-                mesh_.cellCentres(),
-                faceNormals,
-                magFaceAreas
-            )
-        );
-
-        tmp<pointField> tfc
-        (
-            averageCentres
-            (
-                mesh_.cellCentres(),
-                mesh_.faceCentres(),
-                faceNormals
-            )
-        );
-
 
         // Calculate aspectratio weights
         // - 0 if aratio < minAspect_
@@ -322,12 +435,100 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
         scalarField cellWeight, faceWeight;
         calcAspectRatioWeights(cellWeight, faceWeight);
 
+        // Relaxation
+        cellWeight *= relax_;
+        //faceWeight *= relax_;
 
-        // Weight with average ones
-        vectorField cellCentres
+        // Calculate current pyramid heights
+        scalarField minOwnHeight;
+        scalarField minNeiHeight;
+        makePyrHeights
         (
-            (1.0-cellWeight)*mesh_.cellCentres()
-          + cellWeight*tcc
+            mesh_.cellCentres(),
+            mesh_.faceCentres(),
+            faceNormals,
+
+            minOwnHeight,
+            minNeiHeight
+        );
+
+        // How much is the cell centre to vary inside the cell.
+        minOwnHeight *= 0.5;
+        minNeiHeight *= 0.5;
+
+        pointField cellCentres(mesh_.cellCentres());
+
+        // Modify cell centres to be more in-line with the face normals
+        pointField newCellCentres(mesh_.cellCentres());
+        for (label iter = 0; iter < nIters_; iter++)
+        {
+            // Get neighbour average. Clip to limit change in pyramid height
+            // (minOwnWeight, minNeiWeight)
+            tmp<pointField> tcc
+            (
+                averageNeighbourCentres
+                (
+                    cellCentres,
+                    faceNormals,
+                    magFaceAreas
+                )
+            );
+
+            // Calculate correction for cell centres. Leave low-aspect
+            // ratio cells unaffected (i.e. correction = 0)
+            vectorField correction(cellWeight*(tcc-cellCentres));
+
+            // Clip correction vector if pyramid becomes too small
+            const label nClipped = clipPyramids
+            (
+                cellCentres,
+                mesh_.faceCentres(),
+                faceNormals,
+
+                minOwnHeight, // minimum owner pyramid height. Usually fraction
+                minNeiHeight, // of starting mesh
+
+                correction
+            );
+            //DebugVar(nClipped);
+
+            cellCentres += correction;
+
+            if (debug)
+            {
+                const scalarField magCorrection(mag(correction));
+                const scalarField faceOrthogonality
+                (
+                    polyMeshTools::faceOrthogonality
+                    (
+                        mesh_,
+                        faceAreas,
+                        cellCentres
+                    )
+                );
+                const scalarField nonOrthoAngle
+                (
+                    radToDeg
+                    (
+                        Foam::acos(min(scalar(1), faceOrthogonality))
+                    )
+                );
+                Pout<< "    iter:" << iter
+                    << " nClipped:" << nClipped
+                    << " average displacement:" << gAverage(magCorrection)
+                    << " non-ortho angle : average:" << gAverage(nonOrthoAngle)
+                    << " max:" << gMax(nonOrthoAngle) << endl;
+            }
+        }
+
+        tmp<pointField> tfc
+        (
+            averageCentres
+            (
+                cellCentres,
+                mesh_.faceCentres(),
+                faceNormals
+            )
         );
         vectorField faceCentres
         (

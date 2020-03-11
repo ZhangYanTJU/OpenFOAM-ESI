@@ -79,6 +79,9 @@ public:
 
     // Member Functions
 
+        //- Do what is necessary if the mesh has moved
+        virtual void movePoints();
+
         //- Return linear difference weighting factors
         virtual tmp<surfaceScalarField> weights() const;
 

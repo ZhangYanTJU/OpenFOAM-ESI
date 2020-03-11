@@ -27,7 +27,7 @@ Class
     Foam::averageNeighbourFvGeometryScheme
 
 Description
-    Default geometry calculation scheme. Slight stabilisation for bad meshes.
+    Geometry calculation scheme to minimise non-orthogonality/
 
 SourceFiles
     averageNeighbourFvGeometryScheme.C
@@ -67,6 +67,37 @@ private:
 
 
 protected:
+
+        //- Number of averaging iterations
+        const label nIters_;
+
+        //- Blending between old-iteration cell centres and current average
+        const scalar relax_;
+
+        //- Calculate pyramid heights
+        void makePyrHeights
+        (
+            const pointField& cellCentres,
+            const vectorField& faceCentres,
+            const vectorField& faceNormals,
+
+            scalarField& ownHeight,
+            scalarField& neiHeight
+        ) const;
+
+        //- Clip correction vector if new pyramid height would get below min.
+        //- Return number of clipped cells.
+        label clipPyramids
+        (
+            const pointField& cellCentres,
+            const vectorField& faceCentres,
+            const vectorField& faceNormals,
+
+            const scalarField& minOwnHeight,
+            const scalarField& minNeiHeight,
+
+            vectorField& correction
+        ) const;
 
         //- Average neighbouring cell centres to minimise non-ortho
         tmp<pointField> averageNeighbourCentres

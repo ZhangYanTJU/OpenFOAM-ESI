@@ -53,6 +53,18 @@ Foam::basicFvGeometryScheme::basicFvGeometryScheme
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::basicFvGeometryScheme::movePoints()
+{
+    if (debug)
+    {
+        Pout<< "basicFvGeometryScheme::movePoints() : "
+            << "recalculating primitiveMesh centres" << endl;
+    }
+    // Use lower level to calculate the geometry
+    const_cast<fvMesh&>(mesh_).primitiveMesh::updateGeom();
+}
+
+
 Foam::tmp<Foam::surfaceScalarField> Foam::basicFvGeometryScheme::weights() const
 {
     if (debug)

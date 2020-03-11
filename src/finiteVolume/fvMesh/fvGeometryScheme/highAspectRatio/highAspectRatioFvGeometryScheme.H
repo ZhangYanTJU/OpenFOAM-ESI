@@ -72,6 +72,17 @@ protected:
             scalarField& faceWeight
         ) const;
 
+        //- Helper : calculate (weighted) average face and cell centres
+        static void makeAverageCentres
+        (
+            const primitiveMesh& mesh,
+            const pointField& points,
+            const pointField& faceAreas,
+            const scalarField& magFaceAreas,
+            pointField& faceCentres,
+            pointField& cellCentres
+        );
+
 
 private:
 
@@ -111,17 +122,6 @@ public:
 
         //- Do what is necessary if the mesh has moved
         virtual void movePoints();
-
-        //- Helper : calculate (weighted) average face and cell centres
-        static void makeAverageCentres
-        (
-            const primitiveMesh& mesh,
-            const pointField& points,
-            const pointField& faceAreas,
-            const scalarField& magFaceAreas,
-            pointField& faceCentres,
-            pointField& cellCentres
-        );
 };
 
 
