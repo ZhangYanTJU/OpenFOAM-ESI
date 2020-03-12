@@ -74,7 +74,7 @@ bool Foam::ensightCloud::writeCloudField
             IPstream fromSlave(comm, slave);
             Field<Type> recv(fromSlave);
 
-            for (Type val : field)      // <-- working on a copy
+            for (Type val : recv)       // <-- working on a copy
             {
                 if (mag(val) < 1e-90)   // approximately root(ROOTVSMALL)
                 {
