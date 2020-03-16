@@ -2,8 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2015-2017 OpenFOAM Foundation
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2015-2017 OpenFOAM Foundation
+    Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,7 +105,8 @@ bool Foam::functionEntries::includeEtcEntry::execute
     {
         if (Foam::functionEntries::includeEtcEntry::log)
         {
-            DetailInfo << fName << endl;
+            // Report to stdout which file is included
+            Info<< fName << nl;
         }
         parentDict.read(ifs);
         return true;
@@ -135,7 +139,8 @@ bool Foam::functionEntries::includeEtcEntry::execute
     {
         if (Foam::functionEntries::includeEtcEntry::log)
         {
-            DetailInfo << fName << endl;
+            // Report to stdout which file is included
+            Info<< fName << nl;
         }
         entry.read(parentDict, ifs);
         return true;
