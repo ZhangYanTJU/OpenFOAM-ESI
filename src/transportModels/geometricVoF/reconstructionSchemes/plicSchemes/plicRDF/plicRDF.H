@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -62,7 +61,6 @@ SourceFiles
 #include "reconstructedDistanceFunction.H"
 #include "zoneDistribute.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -78,9 +76,6 @@ class plicRDF
 :
     public reconstructionSchemes
 {
-
-private:
-
     // Private Data
 
         //- Reference to mesh
@@ -121,18 +116,16 @@ private:
         surfaceIteratorPLIC sIterPLIC_;
 
 
-private:
-
     // Private Member Functions
 
         //- No copy construct
         plicRDF(const plicRDF&) = delete;
 
-        //- No bitwise assignment
+        //- No copy assignment
         void operator=(const plicRDF&) = delete;
 
-        //- set initial normals by interpolation from the previous
-        //  timestep or with the Young method
+        //- Set initial normals by interpolation from the previous
+        //- timestep or with the Young method
         void setInitNormals(bool interpolate);
 
         //- compute gradient at the surfaces
@@ -154,6 +147,7 @@ public:
     //- Runtime type information
     TypeName("plicRDF");
 
+
     //- Construct from components
     plicRDF
     (
@@ -170,7 +164,7 @@ public:
 
     // Member Functions
 
-        //- Reconstruct  interface
+        //- Reconstruct interface
         virtual void reconstruct();
 
         //- Map VoF Field in case of refinement

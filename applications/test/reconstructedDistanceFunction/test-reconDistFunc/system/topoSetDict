@@ -12,7 +12,6 @@ FoamFile
     class       dictionary;
     object      topoSetDict;
 }
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 actions
@@ -22,10 +21,7 @@ actions
         type    cellSet;
         action  new;
         source  boxToCell;
-        sourceInfo
-        {
-            box (-1e10 -1e10 -1e10) (1e10 0 1e10);
-        }
+        box     (-1e10 -1e10 -1e10) (1e10 0 1e10);
     }
 
     {

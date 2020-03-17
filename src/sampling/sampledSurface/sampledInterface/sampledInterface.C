@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -53,8 +52,6 @@ bool Foam::sampledInterface::updateGeometry() const
 {
     const fvMesh& fvm = static_cast<const fvMesh&>(mesh());
 
-
-
     // No update needed
     if (fvm.time().timeIndex() == prevTimeIndex_)
     {
@@ -64,6 +61,8 @@ bool Foam::sampledInterface::updateGeometry() const
     // Get any subMesh
     if (zoneID_.index() != -1 && !subMeshPtr_.valid())
     {
+        const cellZone& cz = mesh().cellZones()[zoneID_.index()];
+
         const polyBoundaryMesh& patches = mesh().boundaryMesh();
 
         // Patch to put exposed internal faces into
@@ -71,21 +70,12 @@ bool Foam::sampledInterface::updateGeometry() const
 
         if (debug)
         {
-            Info<< "Allocating subset of size "
-                << mesh().cellZones()[zoneID_.index()].size()
+            Info<< "Allocating subset of size " << cz.size()
                 << " with exposed faces into patch "
                 << patches[exposedPatchi].name() << endl;
         }
 
-        subMeshPtr_.reset
-        (
-            new fvMeshSubset(fvm)
-        );
-        subMeshPtr_().setLargeCellSubset
-        (
-            labelHashSet(mesh().cellZones()[zoneID_.index()]),
-            exposedPatchi
-        );
+        subMeshPtr_.reset(new fvMeshSubset(fvm, cz, exposedPatchi));
     }
 
 
@@ -98,13 +88,7 @@ bool Foam::sampledInterface::updateGeometry() const
     // Clear derived data
     clearGeom();
 
-    surfPtr_.reset
-    (
-        new interface
-        (
-            fvm
-        )
-    );
+    surfPtr_.reset(new interface(fvm));
 
     return true;
 }
@@ -128,10 +112,9 @@ Foam::sampledInterface::sampledInterface
     volFieldPtr_(nullptr),
     pointFieldPtr_(nullptr)
 {
-
     if (zoneID_.index() != -1)
     {
-        dict.lookup("exposedPatchName") >> exposedPatchName_;
+        dict.readEntry("exposedPatchName", exposedPatchName_);
 
         if (mesh.boundaryMesh().findPatchID(exposedPatchName_) == -1)
         {
@@ -152,12 +135,6 @@ Foam::sampledInterface::sampledInterface
         }
     }
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::sampledInterface::~sampledInterface()
-{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -194,6 +171,7 @@ bool Foam::sampledInterface::update()
 {
     return updateGeometry();
 }
+
 
 Foam::tmp<Foam::scalarField> Foam::sampledInterface::sample
 (
@@ -284,10 +262,9 @@ Foam::tmp<Foam::tensorField> Foam::sampledInterface::interpolate
 }
 
 
-
 void Foam::sampledInterface::print(Ostream& os) const
 {
-    os  << "sampledInterface: " << name() ;
+    os  << "sampledInterface: " << name();
 }
 
 

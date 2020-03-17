@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -43,8 +42,8 @@ Foam::interface::interpolate
     const Field<Type>& pCoords
 ) const
 {
-
     return Field<Type>(this->points().size()); //,Type::zero);
 }
+
 
 // ************************************************************************* //

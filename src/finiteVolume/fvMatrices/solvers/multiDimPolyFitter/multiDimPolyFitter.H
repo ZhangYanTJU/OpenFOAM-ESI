@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -43,7 +42,6 @@ SourceFiles
 #include "simpleMatrix.H"
 #include "multiDimPolyFunctions.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -56,10 +54,8 @@ namespace Foam
 template<class T>
 class multiDimPolyFitter
 {
-    // Private data
+    // Private Data
 
-        //- Mesh whose cells and faces to cut at their intersection with an
-        //-  isosurface.
         autoPtr<multiDimPolyFunctions> polyFunc_;
 
         simpleMatrix<T> A_;
@@ -67,12 +63,13 @@ class multiDimPolyFitter
 
 public:
 
-    //- Construct from number of terms
+    //- Construct from compoents
     multiDimPolyFitter
     (
-        const word polyFunctionName,
-        const Vector<label> geomDirs
+        const word& polyFunctionName,
+        const labelVector& geomDirs
     );
+
 
     void resetMatrix();
 

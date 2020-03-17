@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -22,15 +21,13 @@ License
     for more details.
 
     You should have received a copy of the GNU General Public License
-    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>..
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
-
 
 #include "isoAlpha.H"
 #include "addToRunTimeSelectionTable.H"
 #include "cutCellPLIC.H"
-
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -42,6 +39,7 @@ namespace reconstruction
     addToRunTimeSelectionTable(reconstructionSchemes,isoAlpha, components);
 }
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -81,7 +79,7 @@ void Foam::reconstruction::isoAlpha::reconstruct()
 {
     bool uptodate = alreadyReconstructed();
 
-    if(uptodate)
+    if (uptodate)
     {
         return;
     }
@@ -102,7 +100,7 @@ void Foam::reconstruction::isoAlpha::reconstruct()
     }
     ap_ = vpi_.interpolate(alpha1_);
 
-    DynamicList< List<point> > facePts;
+    DynamicList<List<point>> facePts;
 
     interfaceLabels_.clear();
 
@@ -124,27 +122,30 @@ void Foam::reconstruction::isoAlpha::reconstruct()
             {
                 normal_[cellI] = sIterIso_.surfaceArea();
                 centre_[cellI] = sIterIso_.surfaceCentre();
-                if(mag(normal_[cellI]) != 0)
+                if (mag(normal_[cellI]) != 0)
                 {
-                    interfaceCell_[cellI]=true;
+                    interfaceCell_[cellI] = true;
                 }
                 else
                 {
-                    interfaceCell_[cellI]=false;
+                    interfaceCell_[cellI] = false;
                 }
             }
             else
             {
                 normal_[cellI] = vector::zero;
                 centre_[cellI] = vector::zero;
-                interfaceCell_[cellI]=false;
+                interfaceCell_[cellI] = false;
             }
          }
          else
          {
             normal_[cellI] = vector::zero;
             centre_[cellI] = vector::zero;
-            interfaceCell_[cellI]=false;
+            interfaceCell_[cellI] = false;
          }
     }
 }
+
+
+// ************************************************************************* //

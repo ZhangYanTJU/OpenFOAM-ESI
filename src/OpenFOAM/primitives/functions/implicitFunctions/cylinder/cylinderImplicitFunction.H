@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -61,7 +61,7 @@ class cylinderImplicitFunction
 {
 private:
 
-    // Private Member Data
+    // Private Data
 
         //- Origin point
         const point origin_;
@@ -71,18 +71,9 @@ private:
 
         const scalar scale_;
 
-        vector direction_;
+        const vector direction_;
 
-        tensor project_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        cylinderImplicitFunction(const cylinderImplicitFunction&) = delete;
-
-        //- No bitwise assignment
-        void operator=(const cylinderImplicitFunction&) = delete;
+        const tensor project_;
 
 
 public:
@@ -103,11 +94,14 @@ public:
         );
 
         //- Construct from dictionary
-        cylinderImplicitFunction(const dictionary& dict);
+        explicit cylinderImplicitFunction(const dictionary& dict);
 
 
     //- Destructor
     virtual ~cylinderImplicitFunction() = default;
+
+
+    // Member Functions
 
     virtual scalar value(const vector& p) const
     {

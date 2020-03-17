@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -63,21 +63,11 @@ private:
 
     // Private Member Data
 
-        //- ax^2 + bx*y + cy^2
         //- Reference point
-        vector origin_;
+        const vector origin_;
 
-        //- Normal vector
-        vector normal_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        planeImplicitFunction(const planeImplicitFunction&);
-
-        //- No assignment
-        void operator=(const planeImplicitFunction&);
+        //- Unit-normal vector
+        const vector normal_;
 
 
 public:
@@ -92,12 +82,14 @@ public:
         planeImplicitFunction(const vector& origin, const vector& normal);
 
         //- Construct from dictionary (used by implicitFunctions)
-        planeImplicitFunction(const dictionary& dict);
+        explicit planeImplicitFunction(const dictionary& dict);
 
 
     //- Destructor
     virtual ~planeImplicitFunction() = default;
 
+
+    // Member Functions
 
     virtual scalar value(const vector& p) const
     {

@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -30,16 +29,16 @@ License
 #include "DynamicField.H"
 #include "syncTools.H"
 
-// ************************************************************************* //
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-template <typename Type>
+template<typename Type>
 Type Foam::zoneDistribute::getLocalValue
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    const label& localIdx
+    const label localIdx
 ) const
 {
-    if(localIdx < mesh_.nCells()) // internal: cellI
+    if (localIdx < mesh_.nCells()) // internal: cellI
     {
         return phi[localIdx];
     }
@@ -50,14 +49,14 @@ Type Foam::zoneDistribute::getLocalValue
 
 }
 
-template <typename Type>
+template<typename Type>
 Type Foam::zoneDistribute::faceValue
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    const label& localIdx
+    const label localIdx
 ) const
 {
-    const label faceI =  localIdx + mesh_.nInternalFaces() - mesh_.nCells();
+    const label faceI = localIdx + mesh_.nInternalFaces() - mesh_.nCells();
 
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
@@ -66,9 +65,11 @@ Type Foam::zoneDistribute::faceValue
 
     if (patchI < 0 || patchI >= pbm.size())
     {
-       FatalErrorInFunction << "Cannot find patch for face " << faceI
-                            << abort(FatalError);
+       FatalErrorInFunction
+            << "Cannot find patch for face " << faceI
+            << abort(FatalError);
     }
+
     const polyPatch& pp = pbm[patchI];
 
     const label patchFaceI = pp.whichFace(faceI);
@@ -76,7 +77,8 @@ Type Foam::zoneDistribute::faceValue
     return phi.boundaryField()[patchI][patchFaceI];
 }
 
-template <typename Type>
+
+template<typename Type>
 Type Foam::zoneDistribute::getValue
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
@@ -84,7 +86,7 @@ Type Foam::zoneDistribute::getValue
     const label& gblIdx
 ) const
 {
-    if(globalNumbering().isLocal(gblIdx))
+    if (globalNumbering().isLocal(gblIdx))
     {
         const label idx = globalNumbering().toLocal(gblIdx);
         return getLocalValue(phi,idx);
@@ -96,23 +98,24 @@ Type Foam::zoneDistribute::getValue
 }
 
 
-
-template <typename Type>
-Foam::Map<Foam::Field <Type> > Foam::zoneDistribute::getFields
+template<typename Type>
+Foam::Map<Foam::Field<Type>> Foam::zoneDistribute::getFields
 (
     const boolList& zone,
     const GeometricField<Type, fvPatchField, volMesh>& phi
 )
 {
-    if(zone.size() != phi.size())
+    if (zone.size() != phi.size())
     {
         FatalErrorInFunction
-        << "size of zone: " << zone.size()
-        << "size of phi:" <<  phi.size()
-        << "do not match. Did the mesh change?"
-        << exit(FatalError);
-        return Map<Field <Type> >(0);
+            << "size of zone: " << zone.size()
+            << "size of phi:" <<  phi.size()
+            << "do not match. Did the mesh change?"
+            << exit(FatalError);
+
+        return Map<Field<Type>>(0);
     }
+
 
     // get values from other proc
     Map<Type> neiValues = getDatafromOtherProc
@@ -121,65 +124,64 @@ Foam::Map<Foam::Field <Type> > Foam::zoneDistribute::getFields
         phi
     );
 
-    Map< Field <Type> > stencilWithValues;
 
-    DynamicField< Type > tmpField(100);
+    Map<Field<Type>> stencilWithValues;
+
+    DynamicField<Type> tmpField(100);
 
     forAll(zone,celli)
     {
-        if(zone[celli])
+        if (zone[celli])
         {
             tmpField.clearStorage();
 
-            forAll(stencil_[celli],i)
+            for (const label gblIdx : stencil_[celli])
             {
-                const label& gblIdx = stencil_[celli][i];
                 tmpField.append(getValue(phi,neiValues,gblIdx));
             }
+
             stencilWithValues.insert(celli,tmpField);
         }
-
     }
 
     return stencilWithValues;
-
 }
 
-template <typename Type>
-Foam::Map <Type>  Foam::zoneDistribute::getDatafromOtherProc
+
+template<typename Type>
+Foam::Map<Type> Foam::zoneDistribute::getDatafromOtherProc
 (
     const boolList& zone,
     const GeometricField<Type, fvPatchField, volMesh>& phi
 )
 {
-    if(zone.size() != phi.size())
+    if (zone.size() != phi.size())
     {
         FatalErrorInFunction
-        << "size of zone: " << zone.size()
-        << "size of phi:" <<  phi.size()
-        << "do not match. Did the mesh change?"
-        << exit(FatalError);
-        return Map<Type> (0);
+            << "size of zone: " << zone.size()
+            << "size of phi:" <<  phi.size()
+            << "do not match. Did the mesh change?"
+            << exit(FatalError);
+
+        return Map<Type>(0);
     }
+
 
     // get values from other proc
     Map<Type> neiValues;
-    List < Map < Type > > sendValues(Pstream::nProcs());
+    List<Map<Type>> sendValues(Pstream::nProcs());
 
     if (Pstream::parRun())
     {
         forAll(send_,domaini)
         {
-            const labelHashSet& toNei = send_[domaini];
-
-            forAllConstIters(toNei,iter)
+            for (const label sendIdx : send_[domaini])
             {
                 sendValues[domaini].insert
                 (
-                    iter.key(),
-                    getLocalValue(phi,globalNumbering().toLocal(iter.key()))
+                    sendIdx,
+                    getLocalValue(phi,globalNumbering().toLocal(sendIdx))
                 );
-
             }
         }
 
@@ -188,7 +190,6 @@ Foam::Map <Type>  Foam::zoneDistribute::getDatafromOtherProc
         // Stream data into buffer
         for (label domain = 0; domain < Pstream::nProcs(); domain++)
         {
-
             if (domain != Pstream::myProcNo())
             {
                 // Put data into send buffer
@@ -205,8 +206,6 @@ Foam::Map <Type>  Foam::zoneDistribute::getDatafromOtherProc
 
         for (label domain = 0; domain < Pstream::nProcs(); domain++)
         {
-            tmpValue.clear();
-
             if (domain != Pstream::myProcNo())
             {
                 // get data from send buffer
@@ -214,18 +213,13 @@ Foam::Map <Type>  Foam::zoneDistribute::getDatafromOtherProc
 
                 fromDomain >> tmpValue;
 
-                forAllConstIters(tmpValue, iter)
-                {
-                    neiValues.insert(iter.key(), iter());
-                }
+                neiValues += tmpValue;
             }
         }
     }
 
     return neiValues;
-
 }
-
 
 
 // ************************************************************************* //

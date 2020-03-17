@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -35,12 +34,15 @@ License
 
 #include "globalPoints.H"
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(zoneDistribute, 0);
 }
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneDistribute::coupledFacesPatch() const
@@ -83,6 +85,7 @@ Foam::zoneDistribute::coupledFacesPatch() const
     );
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::zoneDistribute::zoneDistribute(const fvMesh& mesh)
@@ -93,32 +96,26 @@ Foam::zoneDistribute::zoneDistribute(const fvMesh& mesh)
     coupledBoundaryPoints_(coupledFacesPatch()().meshPoints()),
     send_(Pstream::nProcs())
 {
-
 }
+
+
 // * * * * * * * * * * * * * * * * Selectors  * * * * * * * * * * * * * * //
+
 Foam::zoneDistribute& Foam::zoneDistribute::New(const fvMesh& mesh)
 {
-    bool found = mesh.thisDb().foundObject<zoneDistribute>
+    zoneDistribute* ptr = mesh.thisDb().getObjectPtr<zoneDistribute>
     (
         zoneDistribute::typeName
     );
-    zoneDistribute* ptr = nullptr;
 
-    if(found)
+    if (!ptr)
     {
-        ptr = mesh.thisDb().getObjectPtr<zoneDistribute>
-        (
-            zoneDistribute::typeName
-        );
+        ptr = new zoneDistribute(mesh);
 
-        return *ptr;
+        regIOobject::store(ptr);
     }
 
-    zoneDistribute* objectPtr = new zoneDistribute(mesh);
-
-    regIOobject::store(static_cast<zoneDistribute*>(objectPtr));
-
-    return *objectPtr;
+    return *ptr;
 }
 
 
@@ -130,31 +127,33 @@ void Foam::zoneDistribute::updateStencil(const boolList& zone)
 }
 
 
-void Foam::zoneDistribute::setUpCommforZone(const boolList& zone,bool updateStencil)
+void Foam::zoneDistribute::setUpCommforZone
+(
+    const boolList& zone,
+    bool updateStencil
+)
 {
-    if(updateStencil)
+    if (updateStencil)
     {
         stencil_.updateStencil(zone);
     }
 
     const labelHashSet comms = stencil_.needsComm();
 
-    List< labelHashSet > needed_(Pstream::nProcs());
+    List<labelHashSet> needed_(Pstream::nProcs());
 
     if (Pstream::parRun())
     {
-
-        forAllConstIters(comms, iter)
+        for (const label celli : comms)
         {
-            if(zone[iter.key()]) // iter.key is the cell number, celli
+            if (zone[celli])
             {
-                forAll(stencil_[iter.key()],i)
+                for (const label gblIdx : stencil_[celli])
                 {
-                    const label& gblIdx = stencil_[iter.key()][i];
-
-                    if(!globalNumbering().isLocal(gblIdx))
+                    if (!globalNumbering().isLocal(gblIdx))
                     {
-                        const label procID = globalNumbering().whichProcID (gblIdx);
+                        const label procID =
+                            globalNumbering().whichProcID(gblIdx);
                         needed_[procID].insert(gblIdx);
                     }
                 }
@@ -166,7 +165,6 @@ void Foam::zoneDistribute::setUpCommforZone(const boolList& zone,bool updateSten
         // Stream data into buffer
         for (label domain = 0; domain < Pstream::nProcs(); domain++)
         {
-
             if (domain != Pstream::myProcNo())
             {
                 // Put data into send buffer
@@ -179,10 +177,8 @@ void Foam::zoneDistribute::setUpCommforZone(const boolList& zone,bool updateSten
         // wait until everything is written.
         pBufs.finishedSends();
 
-
         for (label domain = 0; domain < Pstream::nProcs(); domain++)
         {
-
             send_[domain].clear();
 
             if (domain != Pstream::myProcNo())
@@ -191,22 +187,19 @@ void Foam::zoneDistribute::setUpCommforZone(const boolList& zone,bool updateSten
                 UIPstream fromDomain(domain, pBufs);
 
                 fromDomain >> send_[domain];
-
             }
         }
-
     }
-
-
 }
+
 
 void Foam::zoneDistribute::updateMesh(const mapPolyMesh& mpm)
 {
-    if(mesh_.topoChanging())
+    if (mesh_.topoChanging())
     {
         coupledBoundaryPoints_ = coupledFacesPatch()().meshPoints();
     }
-
 }
+
 
 // ************************************************************************* //

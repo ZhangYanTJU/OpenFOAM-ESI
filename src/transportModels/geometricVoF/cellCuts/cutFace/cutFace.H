@@ -9,7 +9,6 @@
     Copyright (C) 2018-2019 Johan Roenby
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -26,7 +25,6 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-
 Class
     Foam::cutFace
 
@@ -37,8 +35,6 @@ Description
     Original code supplied by
         Johan Roenby, DHI (2016)
         Henning Scheufler, DLR (2019)
-
-
 
 SourceFiles
     cutFace.C

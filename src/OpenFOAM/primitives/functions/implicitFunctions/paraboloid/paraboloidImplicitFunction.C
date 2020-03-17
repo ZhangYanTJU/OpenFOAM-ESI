@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -63,7 +63,10 @@ Foam::implicitFunctions::paraboloidImplicitFunction::paraboloidImplicitFunction
     const dictionary& dict
 )
 :
-    coeffs_(dict.get<vector>("coeffs"))
+    paraboloidImplicitFunction
+    (
+        dict.get<vector>("coeffs")
+    )
 {}
 
 

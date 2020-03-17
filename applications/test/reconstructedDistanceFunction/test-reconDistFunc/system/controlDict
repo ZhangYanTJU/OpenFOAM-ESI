@@ -1,23 +1,22 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.0.1                                 |
-|   \\  /    A nd           | Web:      http://www.openfoam.org               |
+|  \\    /   O peration     | Version:  v1912                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
-
 FoamFile
 {
     version         2.0;
     format          ascii;
     class           dictionary;
-	location		"system";
+    location        "system";
     object          controlDict;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     test-reconstructedDistanceFunction;
+application     Test-reconstructedDistanceFunction;
 
 startFrom       startTime;
 
@@ -29,7 +28,7 @@ endTime         4;
 
 writeControl    adjustableRunTime;
 
-writeInterval   .1;
+writeInterval   0.1;
 
 deltaT          1e-3;
 
@@ -52,6 +51,7 @@ runTimeModifiable no;
 adjustTimeStep  yes;
 
 maxCo           1e6;
+
 maxAlphaCo      0.5;
 
 maxDeltaT       1e6;

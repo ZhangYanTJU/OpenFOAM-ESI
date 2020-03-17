@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -45,6 +45,7 @@ namespace Foam
     }
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::implicitFunctions::sphereImplicitFunction::sphereImplicitFunction
@@ -65,9 +66,12 @@ Foam::implicitFunctions::sphereImplicitFunction::sphereImplicitFunction
     const dictionary& dict
 )
 :
-    origin_(dict.get<point>("origin")),
-    radius_(dict.get<scalar>("radius")),
-    scale_(dict.lookupOrDefault<scalar>("scale" ,1))
+    sphereImplicitFunction
+    (
+        dict.get<point>("origin"),
+        dict.get<scalar>("radius"),
+        dict.getOrDefault<scalar>("scale", 1)
+    )
 {}
 
 

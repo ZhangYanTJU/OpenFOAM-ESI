@@ -29,7 +29,7 @@ License
 #include "interfaceHeatResistance.H"
 #include "addToRunTimeSelectionTable.H"
 #include "twoPhaseMixtureEThermo.H"
-#include "isoCutCell.H"
+#include "cutCellIso.H"
 #include "volPointInterpolation.H"
 #include "calculatedFvPatchFields.H"
 #include "wallPolyPatch.H"
@@ -281,7 +281,7 @@ updateInterface()
         volPointInterpolation::New(mesh_).interpolate(mixture_.alpha1())
     );
 
-    isoCutCell cutCell(mesh_, ap);
+    cutCellIso cutCell(mesh_, ap);
 
     forAll(interfaceArea_, celli)
     {
@@ -290,7 +290,7 @@ updateInterface()
         if (status == 0) // cell is cut
         {
             interfaceArea_[celli] =
-                mag(cutCell.isoFaceArea())/mesh_.V()[celli];
+                mag(cutCell.faceArea())/mesh_.V()[celli];
         }
     }
 

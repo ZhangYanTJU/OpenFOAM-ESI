@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -40,12 +39,12 @@ SourceFiles
 #ifndef multiDimPolyFunctions_H
 #define multiDimPolyFunctions_H
 
-
-#include "FixedList.H"
 #include "vector.H"
 #include "vector2D.H"
+#include "labelVector.H"
 #include "scalarField.H"
 #include "runTimeSelectionTables.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -57,21 +56,20 @@ namespace Foam
 
 class multiDimPolyFunctions
 {
-
 protected:
-    // Private data
 
-    // number of polynominal term
+    // Protected Data
+
+    // Number of polynomial term
     label nTerms_;
 
     scalarField coeffs_;
 
-    const Vector<label> geomDir_;
+    const labelVector geomDir_;
 
     vector geomCorrection_;
 
     scalarField termValues_;
-
 
 
 public:
@@ -96,34 +94,39 @@ public:
 
     // Constructors
 
-    multiDimPolyFunctions(const Vector<label> dirs);
+    //- Default construct with geomDir
+    explicit multiDimPolyFunctions(const labelVector& dirs);
 
-     // Selectors
-    //- Return a reference to the selected multiDimPolyFunctions
-    static autoPtr<multiDimPolyFunctions> New
-    (
-        const word& multiDimPolyFunctionsType,
-        const Vector<label> dirs
-    );
+
+    // Selectors
+
+        //- Select a multiDimPolyFunctions
+        static autoPtr<multiDimPolyFunctions> New
+        (
+            const word& multiDimPolyFunctionsType,
+            const labelVector& dirs
+        );
 
 
     //- Destructor
-    virtual ~multiDimPolyFunctions();
+    virtual ~multiDimPolyFunctions() = default;
 
-    virtual scalar value(const vector& vec) = 0;
 
-    virtual const scalarField& termValues(const vector& vec) = 0;
+    // Member Functions
 
-    label& nTerms()
-    {
-        return nTerms_;
-    }
+        virtual scalar value(const vector& vec) = 0;
 
-    scalarField& coeffs()
-    {
-        return coeffs_;
-    }
+        virtual const scalarField& termValues(const vector& vec) = 0;
 
+        label& nTerms()
+        {
+            return nTerms_;
+        }
+
+        scalarField& coeffs()
+        {
+            return coeffs_;
+        }
 };
 
 

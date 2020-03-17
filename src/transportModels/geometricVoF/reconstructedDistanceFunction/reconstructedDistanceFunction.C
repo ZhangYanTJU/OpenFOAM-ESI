@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019-2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -30,6 +29,7 @@ License
 #include "reconstructedDistanceFunction.H"
 #include "processorPolyPatch.H"
 #include "syncTools.H"
+#include "unitConversion.H"
 #include "wedgePolyPatch.H"
 #include "alphaContactAngleTwoPhaseFvPatchScalarField.H"
 
@@ -104,7 +104,7 @@ void Foam::reconstructedDistanceFunction::markCellsNearSurf
     // do coupled face first
     Map<bool> syncMap;
 
-    for(int level=0;level<=neiRingLevel;level++)
+    for (int level=0;level<=neiRingLevel;level++)
     {
         // parallel
         if (level > 0)
@@ -126,7 +126,7 @@ void Foam::reconstructedDistanceFunction::markCellsNearSurf
             syncTools::syncPointMap(mesh_, syncMap, orEqOp<bool>());
 
             // mark parallel points first
-            forAllConstIter(Map<bool>, syncMap, iter)
+            forAllConstIters(syncMap, iter)
             {
                 const label pi = iter.key();
 
@@ -383,6 +383,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
     return reconDistFunc;
 }
 
+
 void Foam::reconstructedDistanceFunction::updateContactAngle
 (
     const volScalarField& alpha,
@@ -390,8 +391,6 @@ void Foam::reconstructedDistanceFunction::updateContactAngle
     surfaceVectorField::Boundary& nHatb
 )
 {
-    scalar convertToRad = Foam::constant::mathematical::pi/180.0;
-
     const fvMesh& mesh = alpha.mesh();
     const volScalarField::Boundary& abf = alpha.boundaryField();
     volScalarField::Boundary& RDFbf = this->boundaryFieldRef();
@@ -414,7 +413,7 @@ void Foam::reconstructedDistanceFunction::updateContactAngle
             fvsPatchVectorField& nHatp = nHatb[patchi];
             const scalarField theta
             (
-                convertToRad*acap.theta(U.boundaryField()[patchi], nHatp)
+                degToRad()*acap.theta(U.boundaryField()[patchi], nHatp)
             );
 
             RDFbf[patchi] =

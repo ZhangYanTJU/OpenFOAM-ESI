@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -30,7 +29,9 @@ Class
 Description
     first degree polynominal function
 
+    \verbatim
     c0 + c1*x + c2*y + c3*z
+    \endverbatim
 
     Original code supplied by Henning Scheufler, DLR (2019)
 
@@ -42,13 +43,11 @@ SourceFiles
 #ifndef polyDegree1_H
 #define polyDegree1_H
 
-
-#include "FixedList.H"
 #include "vector.H"
 #include "vector2D.H"
 #include "scalarField.H"
-
 #include "multiDimPolyFunctions.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -62,29 +61,24 @@ class polyDegree1
 :
     public multiDimPolyFunctions
 {
-
-
-
-private:
-    // Private data
-
-
 public:
-
 
     //- Runtime type information
     TypeName("polyDegree1");
+
+
     // Constructors
 
-    //- Construct from nTerms
-    polyDegree1(const Vector<label> dirs);
+        //- Construct from nTerms
+        polyDegree1(const labelVector& dirs);
 
-    //virtual ~polyDegree1();
+
+    // Constructors
+    virtual ~polyDegree1() = default;
 
     virtual scalar value(const vector& vec);
 
     virtual const scalarField& termValues(const vector& vec);
-
 };
 
 

@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -64,37 +63,15 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class zoneDistribute
-:   public MeshObject
+:
+    public MeshObject
     <
         fvMesh,
         UpdateableMeshObject,
         zoneDistribute
     >
 {
-
-  private:
-
-    // Private data
-
-    //- Combine operator for Lists
-    template <class type> class appendOp
-    {
-      public:
-        void operator()(List<type>& x, const List<type>& y) const
-        {
-            if (y.size())
-            {
-                if (x.empty())
-                {
-                    x = y;
-                }
-                else
-                {
-                    x.append(y);
-                }
-            }
-        }
-    };
+    // Private Data
 
         //- Reference to mesh
         const fvMesh& mesh_;
@@ -106,43 +83,50 @@ class zoneDistribute
         labelList coupledBoundaryPoints_;
 
         //- storage of the addressing for processor-to-processor comms
-        List< labelHashSet > send_;
+        List<labelHashSet> send_;
 
         //- Return patch of all coupled faces.
         autoPtr<indirectPrimitivePatch> coupledFacesPatch() const;
 
 
-        //- gives patchNumber and patchFaceNumber for a given Geometric volume field
-        template <typename Type>
+        //- Gives patchNumber and patchFaceNumber for a given
+        //- Geometric volume field
+        template<typename Type>
         Type getLocalValue
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            const label& localIdx
+            const label localIdx
         ) const;
 
 
-        //- gives patchNumber and patchFaceNumber for a given Geometric volume field
-        template <typename Type>
+        //- Gives patchNumber and patchFaceNumber for a given
+        //- Geometric volume field
+        template<typename Type>
         Type faceValue
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            const label& localIdx
+            const label localIdx
         ) const;
 
 
+public:
 
-  public:
+    //- Runtime information
+    TypeName("zoneDistribute");
+
+
     // Constructors
-        // Declare name of the class and its debug switch
-        TypeName("zoneDistribute");
 
         //- Construct from fvMesh
         zoneDistribute(const fvMesh&);
 
+
     // Selectors
+
         static zoneDistribute& New(const fvMesh&);
 
-        // Member functions
+
+    // Member Functions
 
         //- updates the stencil with boolList the size has to match
         //- mesh.nCells()
@@ -164,8 +148,9 @@ class zoneDistribute
             return stencil_.globalNumbering();
         }
 
-        //- gives patchNumber and patchFaceNumber for a given Geometric volume field
-        template <typename Type>
+        //- Gives patchNumber and patchFaceNumber for a given
+        //- Geometric volume field
+        template<typename Type>
         Type getValue
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
@@ -174,16 +159,16 @@ class zoneDistribute
         ) const;
 
         //- Returns stencil and provides a Map with globalNumbering
-        template <typename Type>
-        Map<Field <Type> > getFields
+        template<typename Type>
+        Map<Field<Type>> getFields
         (
             const boolList& zone,
             const GeometricField<Type, fvPatchField, volMesh>& phi
         );
 
         //- Returns stencil and provides a Map with globalNumbering
-        template <typename Type>
-        Map< Type > getDatafromOtherProc
+        template<typename Type>
+        Map<Type> getDatafromOtherProc
         (
             const boolList& zone,
             const GeometricField<Type, fvPatchField, volMesh>& phi
@@ -196,8 +181,8 @@ class zoneDistribute
             // do nothing;
             return false;
         }
-
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

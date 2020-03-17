@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -40,7 +39,6 @@ SourceFiles
 #ifndef zoneCellStencils_H
 #define zoneCellStencils_H
 
-
 #include "boolList.H"
 #include "HashSet.H"
 #include "Map.H"
@@ -68,7 +66,8 @@ class zoneCellStencils
     >,
     public labelListList
 {
-    protected:
+protected:
+
     // Protected Members
 
         const fvMesh& mesh_;
@@ -125,19 +124,24 @@ class zoneCellStencils
 
         globalIndex globalNumbering_;
 
+
 public:
 
-    // Constructors
         // Declare name of the class and its debug switch
         TypeName("zoneCellStencils");
+
+
+    // Constructors
 
         //- Construct from all cells and boundary faces
         explicit zoneCellStencils(const fvMesh&);
 
+
+    // Member Functions
+
         //- Calculates per cell the neighbour data
         //  (= cell or boundary in global numbering).
         //  First element is always cell itself!
-
         void updateStencil
         (
             const boolList& zone
@@ -156,7 +160,7 @@ public:
             return mesh_;
         }
 
-         //- Global numbering for cells and boundary faces
+        //- Global numbering for cells and boundary faces
         const globalIndex& globalNumbering() const
         {
              return globalNumbering_;

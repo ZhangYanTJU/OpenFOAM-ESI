@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -23,10 +22,13 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
 \*---------------------------------------------------------------------------*/
 
 #include "multiDimPolyFunctions.H"
+#include "error.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
@@ -40,41 +42,32 @@ namespace Foam
 Foam::autoPtr<Foam::multiDimPolyFunctions> Foam::multiDimPolyFunctions::New
 (
     const word& multiDimPolyFunctionsType,
-    const Vector<label> dirs
+    const labelVector& dirs
 )
 {
-    wordConstructorTable::iterator cstrIter =
-        wordConstructorTablePtr_->find(multiDimPolyFunctionsType);
+    auto cstrIter = wordConstructorTablePtr_->cfind(multiDimPolyFunctionsType);
 
-    if (!cstrIter.found())
-    {
-        FatalErrorInFunction
-            << "Unknown multiDimPolyFunctions type " << multiDimPolyFunctionsType
-            << endl << endl
-            << "Valid multiDimPolyFunctions types : " << endl
-            << wordConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
+    FatalErrorInLookup
+    (
+        "multiDimPolyFunction",
+        multiDimPolyFunctionsType,
+        *wordConstructorTablePtr_
+    ) << exit(FatalError);
 
-    return autoPtr<multiDimPolyFunctions>(cstrIter()( dirs));
+    return autoPtr<multiDimPolyFunctions>(cstrIter()(dirs));
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::multiDimPolyFunctions::multiDimPolyFunctions(const Vector<label> dirs)
+Foam::multiDimPolyFunctions::multiDimPolyFunctions(const labelVector& dirs)
 :
-nTerms_(-1),
-coeffs_(scalarField(0)),
-geomDir_(dirs),
-geomCorrection_(pos0(dirs.x()),pos0(dirs.y()),pos0(dirs.z())),
-termValues_(0)
-{
-
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::multiDimPolyFunctions::~multiDimPolyFunctions()
+    nTerms_(-1),
+    coeffs_(),
+    geomDir_(dirs),
+    geomCorrection_(pos0(dirs.x()),pos0(dirs.y()),pos0(dirs.z())),
+    termValues_()
 {}
+
+
+// ************************************************************************* //

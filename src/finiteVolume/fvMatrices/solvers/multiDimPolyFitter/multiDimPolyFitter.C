@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -33,12 +32,12 @@ License
 template<class T>
 Foam::multiDimPolyFitter<T>::multiDimPolyFitter
 (
-    const word polyFunctionName,
-    const Vector<label> geomDirs
+    const word& polyFunctionName,
+        const labelVector& geomDirs
 )
 :
     polyFunc_(multiDimPolyFunctions::New(polyFunctionName,geomDirs)),
-    A_(polyFunc_->nTerms(), 0.0, Zero)
+    A_(polyFunc_->nTerms(), scalar(0), Zero)
 {}
 
 
@@ -62,17 +61,17 @@ void Foam::multiDimPolyFitter<T>::fillMatrix
     const T& value
 )
 {
-    label size = A_.n();
+    const label size = A_.n();
 
     //simple matrix is a square
-    scalar tmpValue = 0;
-    for(label i=0; i<size; ++i) // col
+
+    for (label i=0; i<size; ++i) // col
     {
         A_.source()[i] += polyTerms[i]*value;
         scalar* luMatrixi = A_[i];
-        tmpValue = polyTerms[i];
+        const scalar tmpValue = polyTerms[i];
 
-        for(label j=0; j<size; ++j) // row
+        for (label j=0; j<size; ++j) // row
         {
             luMatrixi[j] += tmpValue*polyTerms[j];
         }
@@ -88,15 +87,15 @@ void Foam::multiDimPolyFitter<T>::fillMatrix
     const scalar weight
 )
 {
-    label size = A_.n();
+    const label size = A_.n();
 
     //simple matrix is a square
-    scalar tmpValue = 0;
+
     for (label i=0; i<size; ++i) // col
     {
         A_.source()[i] += polyTerms[i]*value*weight;
         scalar* __restrict luMatrixi = A_[i];
-        tmpValue = polyTerms[i];
+        const scalar tmpValue = polyTerms[i];
 
         for (label j=0; j<size; j++) // row
         {
@@ -113,10 +112,10 @@ void Foam::multiDimPolyFitter<T>::fillMatrix
     scalarSymmetricSquareMatrix& A
 )
 {
-    label size = A.n();
+    const label size = A.n();
 
     // simple matrix is a square
-    for(label i=0; i<size; ++i)
+    for (label i=0; i<size; ++i)
     {
         for(label j=0; j<size; ++j)
         {
@@ -192,7 +191,8 @@ Foam::Field<T> Foam::multiDimPolyFitter<T>::fitData
             << "size of listValues is:" <<  listValue.size()
             << "they have to match"
             << exit(FatalError);
-        return Field<T>(0);
+
+        return Field<T>();
     }
 }
 
@@ -204,7 +204,7 @@ Foam::scalarSymmetricSquareMatrix Foam::multiDimPolyFitter<T>::computeInverse
 )
 {
     // operator= does not work
-    scalarSymmetricSquareMatrix symMatrix(A_.n(), 0);
+    scalarSymmetricSquareMatrix symMatrix(A_.n(), Zero);
     forAll(listPolyTerms,i)
     {
         fillMatrix
@@ -278,7 +278,6 @@ Foam::Field<T> Foam::multiDimPolyFitter<T>::fitData
 
     // Solve the matrix using Gaussian elimination with pivoting
     return A_.LUsolve();
-
 }
 
 
@@ -324,7 +323,7 @@ Foam::scalarSymmetricSquareMatrix Foam::multiDimPolyFitter<T>::computeInverse
 )
 {
     // operator= does not work
-    scalarSymmetricSquareMatrix symMatrix(A_.n(), 0);
+    scalarSymmetricSquareMatrix symMatrix(A_.n(), Zero);
     forAll(positions, i)
     {
         fillMatrix
@@ -371,5 +370,6 @@ Foam::Field<T> Foam::multiDimPolyFitter<T>::computeMatrixSource
 
 template class Foam::multiDimPolyFitter<Foam::scalar>;
 template class Foam::multiDimPolyFitter<Foam::vector>;
+
 
 // ************************************************************************* //

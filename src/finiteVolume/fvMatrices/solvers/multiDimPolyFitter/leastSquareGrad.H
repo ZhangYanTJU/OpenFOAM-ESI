@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -44,9 +43,6 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "OFstream.H"
-
-
-
 #include "multiDimPolyFitter.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -60,12 +56,11 @@ namespace Foam
 template<class T>
 class leastSquareGrad
 {
+    // Private Data
 
-private:
-    // Private data
     multiDimPolyFitter<T> polyFitter_;
 
-    Vector<label> geomDir_;
+    labelVector geomDir_;
 
     label nDims_;
 
@@ -74,25 +69,24 @@ public:
 
     // Constructors
 
-        //- Construct from fvMesh and globalIndex
-        leastSquareGrad(word functionName,const Vector<label> geomDir);
+        //- Construct from components
+        leastSquareGrad(const word& functionName, const labelVector& geomDir);
 
 
-    // Member functions
+    // Member Functions
 
-        //- returns the gradient of the cell
+        //- Return the gradient of the cell
         typename outerProduct<vector, T>::type grad
         (
             const List<vector>& positions,
             const List<T>& listValue
         );
 
-        Map<typename outerProduct<vector, T>::type > grad
+        Map<typename outerProduct<vector, T>::type> grad
         (
-            const Map <List<vector> >& positions,
-            const Map <List<T> >& listValue
+            const Map<List<vector>>& positions,
+            const Map<List<T>>& listValue
         );
-
 };
 
 

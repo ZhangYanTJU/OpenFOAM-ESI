@@ -9,7 +9,6 @@
     Copyright (C) 2018-2019 Johan Roenby
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -79,7 +78,8 @@ class cutFaceAdvect
         typedef DynamicList<vector> DynamicVectorList;
         typedef DynamicList<point> DynamicPointList;
 
-        //- Mesh whose cells and faces to cut at their intersection with an isoface
+        //- Mesh whose cells and faces to cut at their intersection
+        //- with an isoface
         const fvMesh& mesh_;
 
         //- Reference to VoF field
@@ -130,10 +130,11 @@ class cutFaceAdvect
         //  Length of scalarField should equal number of mesh points
         cutFaceAdvect(const fvMesh& mesh, const volScalarField& alpha1);
 
-    // Member functions
 
-        //- Calculates cut centre and cut area (plicReconstruction) and return
-        //  face status
+    // Member Functions
+
+        //- Calculates cut centre and cut area (plicReconstruction)
+        //  \return face status
         label calcSubFace
         (
             const label& faceI,
@@ -141,8 +142,8 @@ class cutFaceAdvect
             const vector& base
         );
 
-        //- Calculates cut centre and cut area (iso reconstruction) and return
-        //  face status
+        //- Calculates cut centre and cut area (iso reconstruction)
+        //  \return face status
         label calcSubFace
         (
             const face& f,
@@ -151,8 +152,8 @@ class cutFaceAdvect
             const scalar& cutValue
         );
 
-        //- Calculates cut centre and cut area (iso reconstruction) and return
-        //  face status
+        //- Calculates cut centre and cut area (iso reconstruction)
+        //  \return face status
         label calcSubFace
         (
             const label& faceI,

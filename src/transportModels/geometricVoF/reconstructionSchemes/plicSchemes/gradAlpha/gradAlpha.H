@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -51,7 +50,6 @@ SourceFiles
 #include "surfaceIteratorPLIC.H"
 #include "zoneDistribute.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -67,7 +65,7 @@ class gradAlpha
 :
     public reconstructionSchemes
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const fvMesh& mesh_;
@@ -100,7 +98,7 @@ class gradAlpha
         //- No copy construct
         gradAlpha(const gradAlpha&) = delete;
 
-        //- No bitwise assignment
+        //- No copy assignment
         void operator=(const gradAlpha&) = delete;
 
 

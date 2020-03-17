@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "implicitFunction.H"
+#include "error.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -41,30 +42,22 @@ namespace Foam
 
 Foam::autoPtr<Foam::implicitFunction> Foam::implicitFunction::New
 (
-    const word& functionType,
+    const word& implicitFunctionType,
     const dictionary& dict
 )
 {
-    const auto& cstrIter = dictConstructorTablePtr_->find(functionType);
+    auto cstrIter = dictConstructorTablePtr_->cfind(implicitFunctionType);
 
-    if (!cstrIter.found())
-    {
-        FatalErrorInFunction
-            << "Unknown implicitFunction type " << functionType
-            << nl << nl
-            << "Valid implicitFunction types : " << nl
-            << dictConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
+    FatalIOErrorInLookup
+    (
+        dict,
+        "implicitFunction",
+        implicitFunctionType,
+        *dictConstructorTablePtr_
+    ) << exit(FatalIOError);
 
     return autoPtr<implicitFunction>(cstrIter()(dict));
 }
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::implicitFunction::implicitFunction()
-{}
 
 
 // ************************************************************************* //

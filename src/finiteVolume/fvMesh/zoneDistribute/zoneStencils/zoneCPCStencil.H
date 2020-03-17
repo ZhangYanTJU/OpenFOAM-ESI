@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -61,7 +60,7 @@ class zoneCPCStencil
 :
     public zoneCellStencils
 {
-    // Private Member Functions
+    // Private Data
 
         labelList nonEmptyBoundaryPoints_;
 
@@ -72,8 +71,11 @@ class zoneCPCStencil
         //- cell is already uptodate
         boolList uptodate_;
 
-        //- sync boundary points
-        Map<bool> syncCouledBoundaryPoints
+
+    // Private Member Functions
+
+        //- Sync boundary points
+        Map<bool> syncCoupledBoundaryPoints
         (
             const boolList& zone,
             const labelList& boundaryPoints
@@ -88,7 +90,7 @@ class zoneCPCStencil
             Map<labelList>& neiGlobal
         ) const;
 
-        //- calculate stencil
+        //- Calculate stencil
         void calculateStencil
         (
             const boolList& zone,
@@ -96,21 +98,24 @@ class zoneCPCStencil
         );
 
 
-
 public:
 
+    //- Runtime information
+    TypeName("zoneCPCStencil");
+
+
     // Constructors
-        // Declare name of the class and its debug switch
-        TypeName("zoneCPCStencil");
 
         //- Construct from all cells and boundary faces
         explicit zoneCPCStencil(const fvMesh&);
+
+
+    // Member Functions
 
         //- Calculates per cell the neighbour data
         //-  (= cell or boundary in global numbering).
         //-  First element is always cell itself!
         virtual void updateMesh(const mapPolyMesh& mpm);
-
 };
 
 

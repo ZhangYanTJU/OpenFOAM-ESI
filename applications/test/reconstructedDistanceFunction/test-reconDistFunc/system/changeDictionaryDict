@@ -16,16 +16,15 @@ FoamFile
 
 boundary
 {
+    front
+    {
+        type            empty;
+    }
 
-        front
-        {
-            type            empty;
-        }
-
-        back
-        {
-            type            empty;
-        }
+    back
+    {
+        type            empty;
+    }
 
 }
 

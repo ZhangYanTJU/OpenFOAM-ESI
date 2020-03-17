@@ -10,7 +10,6 @@
     Copyright (C) 2018 Johan Roenby
     Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 

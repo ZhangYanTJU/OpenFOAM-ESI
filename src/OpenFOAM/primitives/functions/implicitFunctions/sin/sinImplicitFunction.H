@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -59,9 +59,9 @@ class sinImplicitFunction
 {
 private:
 
-    // Private Member Data
+    // Private Data
 
-        //- origin point
+        //- Origin point
         const scalar period_;
 
         //- Radius
@@ -69,20 +69,11 @@ private:
 
         const scalar amplitude_;
 
-        vector up_;
+        const vector up_;
 
-        vector direction_;
+        const vector direction_;
 
-        vector origin_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        sinImplicitFunction(const sinImplicitFunction&) = delete;
-
-        //- No bitwise assignment
-        void operator=(const sinImplicitFunction&) = delete;
+        const vector origin_;
 
 
 public:
@@ -105,11 +96,14 @@ public:
         );
 
         //- Construct from dictionary (used by implicitFunctions)
-        sinImplicitFunction(const dictionary& dict);
+        explicit sinImplicitFunction(const dictionary& dict);
 
 
     //- Destructor
     virtual ~sinImplicitFunction() = default;
+
+
+    // Member Functions
 
     virtual scalar value(const vector& p) const
     {

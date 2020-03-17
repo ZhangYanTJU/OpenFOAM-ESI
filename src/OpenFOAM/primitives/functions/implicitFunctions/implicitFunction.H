@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -56,15 +56,6 @@ namespace Foam
 
 class implicitFunction
 {
-    // Private Member Functions
-
-        //- No copy construct
-        implicitFunction(const implicitFunction&) = delete;
-
-        //- No copy assignment
-        void operator=(const implicitFunction&) = delete;
-
-
 public:
 
     //- Runtime type information
@@ -82,15 +73,20 @@ public:
         (dict)
     );
 
-    //- Constructor
-    implicitFunction();
 
-    //- Return a reference to the selected implicitFunction
-    static autoPtr<implicitFunction> New
-    (
-        const word& implicitFunctionType,
-        const dictionary& dict
-    );
+    // Constructors
+
+        //- Default construct
+        implicitFunction() = default;
+
+
+        //- Return a reference to the selected implicitFunction
+        static autoPtr<implicitFunction> New
+        (
+            const word& implicitFunctionType,
+            const dictionary& dict
+        );
+
 
     //- Destructor
     virtual ~implicitFunction() = default;

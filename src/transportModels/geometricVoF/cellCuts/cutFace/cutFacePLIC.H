@@ -9,7 +9,6 @@
     Copyright (C) 2018-2019 Johan Roenby
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -77,7 +76,8 @@ class cutFacePLIC
 {
     // Private data
 
-        //- Mesh whose cells and faces to cut at their intersection with an isoface
+        //- Mesh whose cells and faces to cut at their intersection
+        //- with an isoface
         const fvMesh& mesh_;
 
         //- Storage for centre of subface

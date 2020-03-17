@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -42,6 +41,8 @@ namespace reconstruction
 }
 }
 
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::reconstruction::gradAlpha::gradSurf(const volScalarField& phi)
 {
@@ -123,7 +124,7 @@ void Foam::reconstruction::gradAlpha::reconstruct()
 {
     bool uptodate = alreadyReconstructed();
 
-    if(uptodate)
+    if (uptodate)
     {
         return;
     }
@@ -131,7 +132,7 @@ void Foam::reconstruction::gradAlpha::reconstruct()
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes
-        if(interfaceCell_.size() != mesh_.nCells())
+        if (interfaceCell_.size() != mesh_.nCells())
         {
             interfaceCell_.resize(mesh_.nCells());
         }
@@ -142,7 +143,7 @@ void Foam::reconstruction::gradAlpha::reconstruct()
 
     forAll(alpha1_,celli)
     {
-        if(sIterPLIC_.isASurfaceCell(alpha1_[celli]))
+        if (sIterPLIC_.isASurfaceCell(alpha1_[celli]))
         {
             interfaceCell_[celli] = true; // is set to false earlier
             interfaceLabels_.append(celli);
@@ -190,6 +191,7 @@ void Foam::reconstruction::gradAlpha::reconstruct()
     }
 }
 
+
 void Foam::reconstruction::gradAlpha::mapAlphaField() const
 {
     // without it, we seem to get a race condition
@@ -216,7 +218,6 @@ void Foam::reconstruction::gradAlpha::mapAlphaField() const
     alpha1_.correctBoundaryConditions();
     alpha1_.oldTime () = alpha1_;
     alpha1_.oldTime().correctBoundaryConditions();
-
 }
 
 

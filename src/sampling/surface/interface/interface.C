@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -35,11 +34,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(interface, 0);
-
 }
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -52,8 +47,8 @@ Foam::interface::interface
     MeshStorage(),
     mesh_(mesh)
 {
-
-    reconstructionSchemes& surf = mesh_.lookupObjectRef<reconstructionSchemes>("reconstructionScheme");
+    reconstructionSchemes& surf =
+        mesh_.lookupObjectRef<reconstructionSchemes>("reconstructionScheme");
 
     surf.reconstruct();
 
@@ -64,14 +59,14 @@ Foam::interface::interface
 
     const boolList& interfaceCells = surf.interfaceCell();
 
-    DynamicList< List<point> > facePts;
-    DynamicList< label > interfaceCellAdressing(0.1*mesh_.nCells());
+    DynamicList<List<point>> facePts;
+    DynamicList<label> interfaceCellAdressing(0.1*mesh_.nCells());
 
     forAll(interfaceCells,cellI)
     {
-        if(interfaceCells[cellI])
+        if (interfaceCells[cellI])
         {
-            if(mag(normal[cellI]) != 0)
+            if (mag(normal[cellI]) != 0)
             {
                 interfaceCellAdressing.append(cellI);
                 vector n = -normal[cellI]/mag(normal[cellI]);
@@ -82,7 +77,6 @@ Foam::interface::interface
                 facePts.append(cellCut.facePoints());
             }
         }
-
     }
 
     meshCells_.setSize(interfaceCellAdressing.size());
@@ -96,7 +90,6 @@ Foam::interface::interface
     {
         faceList faces(facePts.size());
 
-
         label nPoints = 0;
         forAll(facePts,i)
         {
@@ -109,23 +102,19 @@ Foam::interface::interface
 
             nPoints += facePts[i].size();
         }
-        pointField points(nPoints);
+        pointField pts(nPoints);
 
         nPoints = 0; // reuse
         forAll(facePts,i)
         {
             forAll(facePts[i],fi)
             {
-                points[nPoints] = facePts[i][fi];
-                nPoints++;
+                pts[nPoints] = facePts[i][fi];
+                ++nPoints;
             }
-
         }
 
-        // interface has no zones
-        surfZoneList zones(0);
-
-        MeshStorage updated(std::move(points), std::move(faces), surfZoneList());
+        MeshStorage updated(std::move(pts), std::move(faces), surfZoneList());
 
         this->MeshStorage::transfer(updated);
     }

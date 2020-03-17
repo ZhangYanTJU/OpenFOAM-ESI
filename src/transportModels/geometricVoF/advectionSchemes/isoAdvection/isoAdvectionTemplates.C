@@ -31,7 +31,6 @@ License
 #include "fvcSurfaceIntegrate.H"
 #include "upwind.H"
 
-
 // ************************************************************************* //
 
 template<typename Type>
@@ -111,7 +110,8 @@ void Foam::isoAdvection::setFaceValue
     }
 }
 
-template < class SpType, class SuType >
+
+template<class SpType, class SuType>
 void Foam::isoAdvection::limitFluxes
 (
     const SpType& Sp,
@@ -208,7 +208,7 @@ void Foam::isoAdvection::limitFluxes
 }
 
 
-template < class SpType, class SuType >
+template<class SpType, class SuType>
 void Foam::isoAdvection::boundFlux
 (
     const scalarField& alpha1,
@@ -361,7 +361,7 @@ void Foam::isoAdvection::boundFlux
 }
 
 
-template < class SpType, class SuType >
+template<class SpType, class SuType>
 void Foam::isoAdvection::advect(const SpType& Sp, const SuType& Su)
 {
     DebugInFunction << endl;
@@ -424,4 +424,6 @@ void Foam::isoAdvection::advect(const SpType& Sp, const SuType& Su)
 
     alphaPhi_ = dVf_/mesh_.time().deltaT();
 }
+
+
 // ************************************************************************* //

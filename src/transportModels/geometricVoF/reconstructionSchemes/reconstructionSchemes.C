@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -29,7 +28,6 @@ License
 #include "reconstructionSchemes.H"
 #include "OFstream.H"
 
-
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
@@ -37,6 +35,9 @@ namespace Foam
     defineTypeNameAndDebug(reconstructionSchemes, 0);
     defineRunTimeSelectionTable(reconstructionSchemes, components);
 }
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 bool Foam::reconstructionSchemes::alreadyReconstructed()
 {
@@ -126,7 +127,7 @@ Foam::reconstructionSchemes::reconstructionSchemes
 {}
 
 
-// * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::dictionary& Foam::reconstructionSchemes::modelDict() const
 {

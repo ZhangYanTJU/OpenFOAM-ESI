@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -59,12 +59,9 @@ Foam::implicitFunctions::cylinderImplicitFunction::cylinderImplicitFunction
     origin_(origin),
     radius_(radius),
     scale_(scale),
-    direction_(direction),
-    project_(tensor::I)
-{
-   direction_.normalise();
-   project_ = tensor::I - direction_*direction_; // outer product
-}
+    direction_(normalised(direction)),
+    project_(tensor::I - direction_*direction_) // outer product
+{}
 
 
 Foam::implicitFunctions::cylinderImplicitFunction::cylinderImplicitFunction
@@ -72,15 +69,14 @@ Foam::implicitFunctions::cylinderImplicitFunction::cylinderImplicitFunction
     const dictionary& dict
 )
 :
-    origin_(dict.get<point>("origin")),
-    radius_(dict.get<scalar>("radius")),
-    scale_(dict.lookupOrDefault<scalar>("scale", 1)),
-    direction_(dict.get<vector>("direction")),
-    project_(tensor::I)
-{
-    direction_.normalise();
-    project_ = tensor::I - (direction_ * direction_); // outer product
-}
+    cylinderImplicitFunction
+    (
+        dict.get<point>("origin"),
+        dict.get<scalar>("radius"),
+        dict.getOrDefault<scalar>("scale", 1),
+        dict.get<vector>("direction")
+    )
+{}
 
 
 // ************************************************************************* //

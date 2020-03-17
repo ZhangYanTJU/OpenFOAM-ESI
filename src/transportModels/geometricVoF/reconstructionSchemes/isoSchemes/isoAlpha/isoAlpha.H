@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -107,7 +106,7 @@ class isoAlpha
             //- No copy construct
             isoAlpha(const isoAlpha&) = delete;
 
-            //- No bitwise assignment
+            //- No copy assignment
             void operator=(const isoAlpha&) = delete;
 
 
@@ -125,8 +124,10 @@ public:
         const dictionary& dict
     );
 
+
     //- Destructor
     virtual ~isoAlpha() = default;
+
 
     // Member Functions
 

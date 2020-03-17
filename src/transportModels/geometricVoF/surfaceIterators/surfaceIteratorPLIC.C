@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -61,7 +60,6 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
             << endl;
 
         return sign(alpha1-0.5);
-
     }
 
     normal.normalise();

@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -59,6 +59,7 @@ Foam::implicitFunctions::composedFunctionImplicitFunction::modeTypeNames
     { modeType::MINDIST, "minDist" },
     { modeType::INTERSECT, "intersect" },
 });
+
 
 Foam::label
 Foam::implicitFunctions::composedFunctionImplicitFunction::selectFunction
@@ -117,38 +118,37 @@ composedFunctionImplicitFunction
     const dictionary& dict
 )
 :
-    functions_(dict.subDict("composedFunction").size()),
+    functions_(),
     mode_(modeTypeNames.get("mode", dict)),
-    values_(dict.subDict("composedFunction").size())
+    values_()
 {
     const dictionary& funcDict = dict.subDict("composedFunction");
-    label funcI = 0;
 
-    forAllConstIters(funcDict, iter)
+    functions_.resize(funcDict.size());
+    values_.resize(funcDict.size(), Zero);
+
+    label funci = 0;
+
+    for (const entry& dEntry : funcDict)
     {
-        const word& key = iter().keyword();
+        const word& key = dEntry.keyword();
 
-        if (!funcDict.isDict(key))
+        if (!dEntry.isDict())
         {
-            FatalErrorInFunction
-                << "Found non-dictionary entry " << iter()
-                << " in top-level dictionary " << funcDict
+            FatalIOErrorInFunction(funcDict)
+                << "Entry " << key << " is not a dictionary" << endl
                 << exit(FatalError);
         }
 
-        const dictionary& compFuncDict = funcDict.subDict(key);
+        const dictionary& subdict = dEntry.dict();
 
         functions_.set
         (
-            funcI,
-            implicitFunction::New
-            (
-                word(compFuncDict.lookup("type")),
-                compFuncDict
-            )
+            funci,
+            implicitFunction::New(subdict.get<word>("type"), subdict)
         );
 
-        ++funcI;
+        ++funci;
     }
 }
 

@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -45,6 +45,7 @@ namespace Foam
     }
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::implicitFunctions::sinImplicitFunction::sinImplicitFunction
@@ -71,16 +72,16 @@ Foam::implicitFunctions::sinImplicitFunction::sinImplicitFunction
     const dictionary& dict
 )
 :
-    period_(dict.get<scalar>("period")),
-    phase_(dict.lookupOrDefault<scalar>("phase",0.0)),
-    amplitude_(dict.get<scalar>("amplitude")),
-    up_(dict.get<vector>("up")),
-    direction_(dict.get<vector>("direction")),
-    origin_(dict.get<vector>("origin"))
-{
-    direction_.normalise();
-    up_.normalise();
-}
+    sinImplicitFunction
+    (
+        dict.get<scalar>("period"),
+        dict.getOrDefault<scalar>("phase", 0),
+        dict.get<scalar>("amplitude"),
+        normalised(dict.get<vector>("up")),
+        normalised(dict.get<vector>("direction")),
+        dict.get<vector>("origin")
+    )
+{}
 
 
 // ************************************************************************* //

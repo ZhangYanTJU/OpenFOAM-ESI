@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019-2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -25,11 +25,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    test-zoneDistribute
+    Test-zoneDistribute
 
 Description
-    test of zoneDistribute validated with mapDistribute
-    
+    Test of zoneDistribute validated with mapDistribute
+
     Original code supplied by Henning Scheufler, DLR (2019)
 
 \*---------------------------------------------------------------------------*/
@@ -40,7 +40,6 @@ Description
 
 #include "SortableList.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
@@ -49,11 +48,12 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createMesh.H"
 
-    const extendedCentredCellToCellStencil& stencil = centredCPCCellToCellStencilObject::New(mesh);
+    const extendedCentredCellToCellStencil& stencil =
+        centredCPCCellToCellStencilObject::New(mesh);
 
-    const List<List<label> >& stencilAddr = stencil.stencil();
+    const List<List<label>>& stencilAddr = stencil.stencil();
 
-    List<List<vector> > stencilCentre(mesh.nCells());
+    List<List<vector>> stencilCentre(mesh.nCells());
 
     stencil.collectData
     (
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 
     boolList interfaceCell(mesh.nCells(),true);
     exchangeFields.setUpCommforZone(interfaceCell);
-    
+
 
     const labelListList& stencil_zoneDist = exchangeFields.getStencil();
     const globalIndex& gblNumbering = exchangeFields.globalNumbering();
@@ -74,43 +74,45 @@ int main(int argc, char *argv[])
     Map<vectorField> mapCC(exchangeFields.getFields(interfaceCell,mesh.C()));
 
     // compare stencils
-    Pout << "size of the stencil match " << (stencilAddr.size() == stencil_zoneDist.size()) << endl;
+    Pout<< "size of the stencil match "
+        << (stencilAddr.size() == stencil_zoneDist.size()) << endl;
+
     label stencilMatch = 0;
 
     forAll(stencilAddr,celli)
     {
         const vectorField& neiCC = mapCC[celli];
-        bool foundAllLabel = true;
-        if(neiCC.size() != stencilCentre[celli].size())
+        if (neiCC.size() != stencilCentre[celli].size())
         {
             continue;
         }
 
-        forAll(neiCC,i)
+        bool foundAllLabel = true;
+        for (const vector& cc : neiCC)
         {
-            vector cc = neiCC[i];
-            if(!stencilCentre[celli].found(cc))
+            if (!stencilCentre[celli].found(cc))
             {
-                foundAllLabel=false;
+                foundAllLabel = false;
+                break;
             }
         }
-        if(foundAllLabel)
+
+        if (foundAllLabel)
         {
-            stencilMatch++;
+            ++stencilMatch;
         }
 
     }
-    
-    if(stencilMatch == mesh.nCells())
+
+    if (stencilMatch == mesh.nCells())
     {
         Pout << "all Values are identical "  << endl;
     }
     else
     {
-        Pout << "values didnot match in : " << stencilMatch << " of "
+        Pout << "values did not match in : " << stencilMatch << " of "
              << mesh.nCells() << " cases" << endl;
     }
-
 
     return 0;
 }

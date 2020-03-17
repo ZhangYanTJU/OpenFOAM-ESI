@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -42,7 +41,7 @@ SourceFiles
 #ifndef interface_H
 #define interface_H
 
-#include "PackedBoolList.H"
+#include "bitSet.H"
 #include "volFields.H"
 #include "slicedVolFields.H"
 #include "MeshedSurface.H"
@@ -53,6 +52,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class fvMesh;
 class plane;
 class treeBoundBox;
@@ -70,8 +70,7 @@ class interface
     typedef meshedSurface MeshStorage;
 
 
-    // Private data
-
+    // Private Data
 
         //- Reference to mesh
         const fvMesh& mesh_;
@@ -81,7 +80,6 @@ class interface
 
 
 public:
-
 
     //- Runtime type information
     TypeName("interface");
@@ -104,12 +102,11 @@ public:
         //- Interpolates cCoords,pCoords. Uses the references to the original
         //  fields used to create the iso surface.
         template<class Type>
-        tmp<Field<Type> > interpolate
+        tmp<Field<Type>> interpolate
         (
             const GeometricField<Type, fvPatchField, volMesh>& cCoords,
             const Field<Type>& pCoords
         ) const;
-
 };
 
 

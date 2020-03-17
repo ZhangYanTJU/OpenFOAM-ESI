@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019-2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -58,24 +58,13 @@ class ellipsoidImplicitFunction
 :
     public implicitFunction
 {
-private:
-
     // Private Member Data
 
         //- Axis
-        vector semiAxis_;
+        const vector semiAxis_;
 
         //- Origin point
-        vector origin_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        ellipsoidImplicitFunction(const ellipsoidImplicitFunction&) = delete;
-
-        //- No bitwise assignment
-        void operator=(const ellipsoidImplicitFunction&) = delete;
+        const vector origin_;
 
 
 public:
@@ -87,18 +76,21 @@ public:
     // Constructors
 
         //- Construct from components
-        ellipsoidImplicitFunction(const vector& semiAxis);
+        explicit ellipsoidImplicitFunction(const vector& semiAxis);
 
         //- Construct from dictionary
-        ellipsoidImplicitFunction(const dictionary& dict);
+        explicit ellipsoidImplicitFunction(const dictionary& dict);
 
 
     //- Destructor
     virtual ~ellipsoidImplicitFunction() = default;
 
+
+    // Member Functions
+
     virtual scalar value(const vector& p) const
     {
-          return
+        return
            -sqrt
             (
                 sqr((p.x() - origin_.x())/semiAxis_.x())
@@ -106,6 +98,7 @@ public:
               + sqr((p.z() - origin_.z())/semiAxis_.z())
             ) + 1;
     }
+
 
     virtual vector grad(const vector& p) const
     {

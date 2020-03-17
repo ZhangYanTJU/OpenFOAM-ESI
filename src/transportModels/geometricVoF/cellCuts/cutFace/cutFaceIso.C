@@ -9,7 +9,6 @@
     Copyright (C) 2018-2019 Johan Roenby
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 

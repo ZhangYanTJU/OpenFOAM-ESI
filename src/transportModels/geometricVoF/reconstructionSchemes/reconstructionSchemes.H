@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -48,7 +47,6 @@ SourceFiles
 #include "DynamicField.H"
 
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -62,10 +60,7 @@ class reconstructionSchemes
 :
     public IOdictionary
 {
-
-private:
-
-    // Private data
+    // Private Data
 
         //- Coefficients dictionary
         dictionary reconstructionSchemesCoeffs_;
@@ -73,7 +68,7 @@ private:
 
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Reference to the VoF Field
         volScalarField& alpha1_;
@@ -108,7 +103,7 @@ protected:
         //- No copy construct
         reconstructionSchemes(const reconstructionSchemes&) = delete;
 
-        //- No bitwise assignment
+        //- No copy assignment
         void operator=(const reconstructionSchemes&) = delete;
 
 

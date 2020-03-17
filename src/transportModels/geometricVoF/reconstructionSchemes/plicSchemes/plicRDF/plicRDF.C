@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -26,24 +25,25 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-
 #include "plicRDF.H"
 #include "interpolationCellPoint.H"
 #include "fvc.H"
 #include "leastSquareGrad.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace reconstruction
-    {
-        defineTypeNameAndDebug(plicRDF, 0);
-        addToRunTimeSelectionTable(reconstructionSchemes,plicRDF, components);
-    }
+namespace reconstruction
+{
+    defineTypeNameAndDebug(plicRDF, 0);
+    addToRunTimeSelectionTable(reconstructionSchemes,plicRDF, components);
 }
+}
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::reconstruction::plicRDF::interpolateNormal()
 {
@@ -251,7 +251,7 @@ void Foam::reconstruction::plicRDF::calcResidual
     forAll(interfaceLabels_, i)
     {
         const label celli = interfaceLabels_[i];
-        if (mag(normal_[celli]) == 0 || mag(interfaceNormal_[i]) == 0 )
+        if (mag(normal_[celli]) == 0 || mag(interfaceNormal_[i]) == 0)
         {
             continue;
         }
@@ -272,7 +272,7 @@ void Foam::reconstruction::plicRDF::calcResidual
                 scalar cosAngle = max(min((cellNormal & n), 1), -1);
                 avgDiffNormal += acos(cosAngle) * mag(normal);
                 weight += mag(normal);
-                if(cosAngle < maxDiffNormal)
+                if (cosAngle < maxDiffNormal)
                 {
                     maxDiffNormal = cosAngle;
                 }
@@ -288,8 +288,8 @@ void Foam::reconstruction::plicRDF::calcResidual
             avgDiffNormal = 0;
         }
 
-        vector newCellNormal = interfaceNormal_[i];
-        newCellNormal /= mag(newCellNormal);
+        vector newCellNormal = normalised(interfaceNormal_[i]);
+
         scalar normalRes = (1 - (cellNormal & newCellNormal));
         avgAngle.insert(celli, avgDiffNormal);
         normalResidual.insert(celli, normalRes);
@@ -366,7 +366,6 @@ Foam::reconstruction::plicRDF::plicRDF
             centre_[celli] = vector::zero;
         }
     }
-
 }
 
 
@@ -384,7 +383,7 @@ void Foam::reconstruction::plicRDF::reconstruct()
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes
-        if(interfaceCell_.size() != mesh_.nCells())
+        if (interfaceCell_.size() != mesh_.nCells())
         {
             interfaceCell_.resize(mesh_.nCells());
         }
@@ -420,12 +419,12 @@ void Foam::reconstruction::plicRDF::reconstruct()
                 interfaceNormal_[i]
             );
 
-            if(sIterPLIC_.cellStatus() == 0)
+            if (sIterPLIC_.cellStatus() == 0)
             {
 
                 normal_[celli] = sIterPLIC_.surfaceArea();
                 centre_[celli] = sIterPLIC_.surfaceCentre();
-                if(mag(normal_[celli]) == 0)
+                if (mag(normal_[celli]) == 0)
                 {
                     normal_[celli] = vector::zero;
                     centre_[celli] = vector::zero;
@@ -508,12 +507,12 @@ void Foam::reconstruction::plicRDF::reconstruct()
         }
 
 
-        if (iter == 0)
+        if (debug && iter == 0)
         {
-            DebugInfo<< "intial residual absolute = "
-                << avgRes/resCounter << endl;
-            DebugInfo<< "intial residual normalized = "
-                << avgNormRes/resCounter << endl;
+            Info<< "initial residual absolute = "
+                << avgRes/resCounter << nl
+                << "initial residual normalized = "
+                << avgNormRes/resCounter << nl;
         }
 
         if
@@ -525,12 +524,15 @@ void Foam::reconstruction::plicRDF::reconstruct()
          || iter + 1  == iteration_
         )
         {
-            DebugInfo << "iterations = " << iter << endl;
-            DebugInfo << "final residual absolute = "
-                << avgRes/resCounter << endl;
-            DebugInfo << "final residual normalized = " << avgNormRes/resCounter
+            if (debug)
+            {
+                Info<< "iterations = " << iter << nl
+                    << "final residual absolute = "
+                    << avgRes/resCounter << nl
+                    << "final residual normalized = " << avgNormRes/resCounter
+                    << endl;
+            }
 
-                << endl;
             break;
         }
     }
@@ -563,5 +565,7 @@ void Foam::reconstruction::plicRDF::mapAlphaField() const
     alpha1_.correctBoundaryConditions();
     alpha1_.oldTime () = alpha1_;
     alpha1_.oldTime().correctBoundaryConditions();
-
 }
+
+
+// ************************************************************************* //

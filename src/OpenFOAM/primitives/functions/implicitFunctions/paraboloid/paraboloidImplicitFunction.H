@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -43,7 +43,6 @@ SourceFiles
 #include "implicitFunction.H"
 #include "mathematicalConstants.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -64,16 +63,7 @@ private:
     // Private Member Data
 
         //- Coefficients of ax^2 + bx*y + cy^2
-        vector coeffs_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        paraboloidImplicitFunction(const paraboloidImplicitFunction&);
-
-        //- No bitwise assignment
-        void operator=(const paraboloidImplicitFunction&);
+        const vector coeffs_;
 
 
 public:
@@ -85,14 +75,17 @@ public:
     // Constructors
 
         //- Construct from components
-        paraboloidImplicitFunction(const vector& coeffs);
+        explicit paraboloidImplicitFunction(const vector& coeffs);
 
         //- Construct from dictionary
-        paraboloidImplicitFunction(const dictionary& dict);
+        explicit paraboloidImplicitFunction(const dictionary& dict);
 
 
     //- Destructor
     virtual ~paraboloidImplicitFunction() = default;
+
+
+    // Member Functions
 
     virtual scalar value(const vector& p) const
     {

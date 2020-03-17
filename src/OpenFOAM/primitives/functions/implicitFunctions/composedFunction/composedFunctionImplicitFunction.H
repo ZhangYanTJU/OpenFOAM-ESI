@@ -2,12 +2,12 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019 DLR
+    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -45,7 +45,6 @@ Usage
             function plane;
             origin (0 1. 0);
             normal (0 1 0);
-
         }
 
         sphere
@@ -94,10 +93,9 @@ class composedFunctionImplicitFunction
 :
     public implicitFunction
 {
-private:
-
     // Private Member Data
-         //- Enumeration defining the valid actions
+
+        //- Enumeration defining the valid actions
         enum class modeType
         {
             ADD,
@@ -130,7 +128,7 @@ private:
             const composedFunctionImplicitFunction&
         ) = delete;
 
-        //- No bitwise assignment
+        //- No copy assignment
         void operator=(const composedFunctionImplicitFunction&) = delete;
 
 

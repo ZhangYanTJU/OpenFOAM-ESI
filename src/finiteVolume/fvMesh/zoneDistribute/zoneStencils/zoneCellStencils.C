@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -31,13 +30,15 @@ License
 #include "dummyTransform.H"
 #include "emptyPolyPatch.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(zoneCellStencils, 0);
 }
 
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneCellStencils::nonEmptyFacesPatch() const
@@ -80,6 +81,7 @@ Foam::zoneCellStencils::nonEmptyFacesPatch() const
     );
 }
 
+
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneCellStencils::allCoupledFacesPatch() const
 {
@@ -121,6 +123,7 @@ Foam::zoneCellStencils::allCoupledFacesPatch() const
     );
 }
 
+
 void Foam::zoneCellStencils::validBoundaryFaces(boolList& isValidBFace) const
 {
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
@@ -142,6 +145,7 @@ void Foam::zoneCellStencils::validBoundaryFaces(boolList& isValidBFace) const
     }
 }
 
+
 void Foam::zoneCellStencils::unionEqOp::operator()
 (
     labelList& x,
@@ -162,6 +166,7 @@ void Foam::zoneCellStencils::unionEqOp::operator()
         }
     }
 }
+
 
 void Foam::zoneCellStencils::merge
 (
@@ -196,6 +201,7 @@ void Foam::zoneCellStencils::merge
         cCells[n++] = seti;
     }
 }
+
 
 void Foam::zoneCellStencils::insertFaceCells
 (
@@ -271,8 +277,6 @@ Foam::labelList Foam::zoneCellStencils::calcFaceCells
 }
 
 
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::zoneCellStencils::zoneCellStencils(const fvMesh& mesh)
@@ -282,14 +286,14 @@ Foam::zoneCellStencils::zoneCellStencils(const fvMesh& mesh)
     mesh_(mesh),
     needComm_(),
     globalNumbering_(mesh_.nCells()+mesh_.nFaces()-mesh_.nInternalFaces())
-{
+{}
 
-}
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::zoneCellStencils::updateMesh(const mapPolyMesh& mpm)
 {
-    if(mesh_.topoChanging())
+    if (mesh_.topoChanging())
     {
         globalNumbering_ = globalIndex
         (

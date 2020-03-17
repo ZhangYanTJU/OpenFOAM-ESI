@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -25,15 +24,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    isoSurf
 
 Description
-    Uses isoCutter to create a volume fraction field from either a cylinder,
-    a sphere or a plane.
-
-    Original code supplied by Henning Scheufler, DLR (2019)
 
 \*---------------------------------------------------------------------------*/
+
 #include "fvCFD.H"
 #include "reconstructionSchemes.H"
 #include "reconstructedDistanceFunction.H"
@@ -50,7 +45,6 @@ int main(int argc, char *argv[])
     #include "createMesh.H"
 
     Info<< "Reading field alpha1\n" << endl;
-
 
     volScalarField alpha1
     (
@@ -84,17 +78,19 @@ int main(int argc, char *argv[])
 
     dictionary dict = mesh.solverDict(alpha1.name());
 
-    autoPtr<reconstructionSchemes> surf = reconstructionSchemes::New(alpha1,phi,U,dict);
+    autoPtr<reconstructionSchemes> surf =
+        reconstructionSchemes::New(alpha1,phi,U,dict);
 
-    runTime++;
+    ++runTime;
+
     const volVectorField& centre = surf->centre();
     const volVectorField& normal = surf->normal();
 
 
     //pointField centres(0);
     //vectorField normals(0);
-    DynamicField <point> centres(1000);
-    DynamicField <vector> normals(1000);
+    DynamicField<point> centres(1000);
+    DynamicField<vector> normals(1000);
 
     surf->reconstruct();
 
@@ -102,9 +98,10 @@ int main(int argc, char *argv[])
 
     exchangeFields_.setUpCommforZone(surf->interfaceCell());
 
-    Map<Field <vector > > mapCentres =
+    Map<Field<vector>> mapCentres =
         exchangeFields_.getFields(surf->interfaceCell(),centre);
-    Map<Field <vector > > mapNormal =
+
+    Map<Field<vector>> mapNormal =
         exchangeFields_.getFields(surf->interfaceCell(),normal);
 
     forAll(surf->centre(),celli)
@@ -121,7 +118,7 @@ int main(int argc, char *argv[])
     {
         runTime.cpuTimeIncrement();
 
-        Info << "time " << runTime.cpuTimeIncrement()  << endl;
+        Info<< "Time " << runTime.cpuTimeIncrement()  << endl;
 
         distFunc.constructRDF
         (

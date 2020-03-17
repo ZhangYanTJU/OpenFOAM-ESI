@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -27,40 +26,39 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "leastSquareGrad.H"
-
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
 #include "wedgePolyPatch.H"
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
 template<class T>
 Foam::leastSquareGrad<T>::leastSquareGrad
 (
-    word functionName,
-    Vector<label> geomDir
+    const word& functionName,
+    const labelVector& geomDir
 )
 :
     polyFitter_(functionName,geomDir),
     geomDir_(geomDir),
     nDims_(0)
 {
-    // compute number of dimensions
-    forAll(geomDir_,i)
+    // Compute number of dimensions
+    for (const label dirn : geomDir_)
     {
-        if(geomDir_[i] == 1)
+        if (dirn == 1)
         {
-            nDims_++;
+            ++nDims_;
         }
     }
-
 }
 
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
 template<class T>
-typename Foam::outerProduct<Foam::vector, T>::type Foam::leastSquareGrad<T>::grad
+typename Foam::outerProduct<Foam::vector, T>::type
+Foam::leastSquareGrad<T>::grad
 (
     const List<vector>& positions,
     const List<T>& listValue
@@ -74,28 +72,28 @@ typename Foam::outerProduct<Foam::vector, T>::type Foam::leastSquareGrad<T>::gra
         listValue
     );
 
-    label dimCounter = 0;
-    GradType grad = Zero;
-
-    if(nDims_ == 3)
+    if (nDims_ == 3)
     {
-        grad = GradType(fitData[1],fitData[2],fitData[3]);
+        return GradType(fitData[1],fitData[2],fitData[3]);
     }
-    else
+
+
+    label dimCounter = 0;
+
+    GradType ret(Zero);
+
+    forAll(geomDir_,i)
     {
-        forAll(geomDir_,i)
+        if (geomDir_[i] == 1)
         {
-            if(geomDir_[i] == 1)
-            {
-                grad[i] = fitData[dimCounter+1];
-                dimCounter++;
-            }
+            ++dimCounter;
+            ret[i] = fitData[dimCounter];
         }
     }
 
-
-    return grad;
+    return ret;
 }
+
 
 namespace Foam // needed g++ bug
 {
@@ -106,6 +104,7 @@ namespace Foam // needed g++ bug
         const List<vector>& listValue
     )
     {
+        typedef tensor GradType;
 
         List<vector> fitData = polyFitter_.fitData
         (
@@ -113,64 +112,54 @@ namespace Foam // needed g++ bug
             listValue
         );
 
-        label dimCounter = 0;
-        tensor t = Zero;
-
-        if(nDims_ == 3)
+        if (nDims_ == 3)
         {
-            t = tensor(fitData[1],fitData[2],fitData[3]);
+            return GradType(fitData[1],fitData[2],fitData[3]);
         }
-        else
+
+        label dimCounter = 0;
+
+        GradType ret(Zero);
+
+        forAll(geomDir_,i)
         {
-            forAll(geomDir_,i)
+            if (geomDir_[i] == 1)
             {
-                if(geomDir_[i] == 1)
-                {
-                    const vector& fitVec = fitData[dimCounter+1];
-                    forAll(fitVec,j)
-                    {
-                        t[i*3 + j] = fitVec[j];
-                    }
-                    dimCounter++;
-                }
+                ++dimCounter;
+                ret.row(i, fitData[dimCounter]);
             }
         }
 
-
-        return t;
+        return ret;
     }
 }
 
 
 template<class T>
-Foam::Map < typename Foam::outerProduct<Foam::vector, T>::type >  Foam::leastSquareGrad<T>::grad
+Foam::Map<typename Foam::outerProduct<Foam::vector, T>::type>
+Foam::leastSquareGrad<T>::grad
 (
-    const Map <List<vector> >& positions,
-    const Map <List<T> >& listValue
+    const Map<List<vector>>& positions,
+    const Map<List<T>>& listValue
 )
 {
     typedef typename outerProduct<vector, T>::type GradType;
 
-    Map< GradType > gradMap(positions.size());
-    Map <List<vector> >::const_iterator iterPos = positions.cbegin();
-    typename Map <List<T> >::const_iterator iterValue = listValue.cbegin();
+    Map<GradType> gradMap(positions.capacity());
 
-    while(iterPos != positions.cend())
+    forAllConstIters(positions, iter)
     {
-        const List<vector>& positions = iterPos();
-        const List<T>& listValue = iterValue();
+        const label key = iter.key();
+        const List<vector>& positions = iter.val();
 
-        GradType grad = this->grad(positions,listValue);
+        GradType grad(this->grad(positions, listValue[key]));
 
-        gradMap.insert(iterPos.key(),grad);
-
-        ++iterPos;
-        ++iterValue;
-
+        gradMap.insert(key, grad);
     }
 
     return gradMap;
 }
+
 
 template class Foam::leastSquareGrad<Foam::scalar>;
 template class Foam::leastSquareGrad<Foam::vector>;

@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2020 DLR
 -------------------------------------------------------------------------------
-
 License
     This file is part of OpenFOAM.
 
@@ -34,17 +33,16 @@ Description
     This is often embedded as part of a sampled surfaces function object.
 
 Usage
-     Example of function object partial specification:
-     \verbatim
+    Example of function object partial specification:
+    \verbatim
     surfaces
-    (
+    {
         freeSurf
         {
             type            interface;
             interpolate     false;
         }
-
-    );
+    }
     \endverbatim
 
     Where the sub-entries comprise:
@@ -81,7 +79,7 @@ class sampledInterface
 :
     public sampledSurface
 {
-    // Private data
+    // Private Data
 
         //- Zone name/index (if restricted to zones)
         mutable cellZoneID zoneID_;
@@ -158,7 +156,7 @@ public:
 
 
     //- Destructor
-    virtual ~sampledInterface();
+    virtual ~sampledInterface() = default;
 
 
     // Member Functions
@@ -216,11 +214,6 @@ public:
         {
             return surface().Cf();
         }
-
-
-        //- Lookup or read isoField.
-        //  Sets volFieldPtr_ and pointFieldPtr_.
-        void getIsoField();
 
 
         // Sample
