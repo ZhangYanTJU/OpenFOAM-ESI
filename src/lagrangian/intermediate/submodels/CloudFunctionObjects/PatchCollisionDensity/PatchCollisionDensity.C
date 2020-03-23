@@ -135,13 +135,6 @@ Foam::PatchCollisionDensity<CloudType>::PatchCollisionDensity
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class CloudType>
-Foam::PatchCollisionDensity<CloudType>::~PatchCollisionDensity()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>

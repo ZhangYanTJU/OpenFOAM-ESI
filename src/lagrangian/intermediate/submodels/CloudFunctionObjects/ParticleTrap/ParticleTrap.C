@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,17 +64,13 @@ Foam::ParticleTrap<CloudType>::ParticleTrap
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class CloudType>
-Foam::ParticleTrap<CloudType>::~ParticleTrap()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::ParticleTrap<CloudType>::preEvolve()
+void Foam::ParticleTrap<CloudType>::preEvolve
+(
+    const typename parcelType::trackingData& td
+)
 {
     if (alphaPtr_ == nullptr)
     {
@@ -96,7 +93,10 @@ void Foam::ParticleTrap<CloudType>::preEvolve()
 
 
 template<class CloudType>
-void Foam::ParticleTrap<CloudType>::postEvolve()
+void Foam::ParticleTrap<CloudType>::postEvolve
+(
+    const typename parcelType::trackingData& td
+)
 {
     gradAlphaPtr_.clear();
 }
