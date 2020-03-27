@@ -87,8 +87,10 @@ bool Foam::sampledInterface::updateGeometry() const
 
     // Clear derived data
     clearGeom();
+    reconstructionSchemes& surf =
+        fvm.lookupObjectRef<reconstructionSchemes>("reconstructionScheme");
 
-    surfPtr_.reset(new interface(fvm));
+    surfPtr_.reset(new Foam::reconstructionSchemes::interface(surf.surface()));
 
     return true;
 }

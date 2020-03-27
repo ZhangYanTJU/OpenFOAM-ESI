@@ -60,35 +60,37 @@ Foam::sampledInterface::sampleOnPoints
 ) const
 {
     notImplemented("interpolation on the points values is currently not implemented");
-    updateGeometry();  // Recreate geometry if time has changed
+    // updateGeometry();  // Recreate geometry if time has changed
 
-    // Assume volPointInterpolation for the point field!
-    const auto& volFld = interpolator.psi();
+    // // Assume volPointInterpolation for the point field!
+    // const auto& volFld = interpolator.psi();
 
-    if (subMeshPtr_.valid())
-    {
-        auto tvolSubFld = subMeshPtr_().interpolate(volFld);
-        const auto& volSubFld = tvolSubFld();
+    // if (subMeshPtr_.valid())
+    // {
+    //     auto tvolSubFld = subMeshPtr_().interpolate(volFld);
+    //     const auto& volSubFld = tvolSubFld();
 
-        auto tpointFld =
-            volPointInterpolation::New(volSubFld.mesh()).interpolate(volSubFld);
+    //     auto tpointFld =
+    //         volPointInterpolation::New(volSubFld.mesh()).interpolate(volSubFld);
 
-        return surface().interpolate
-        (
-            volSubFld,
-            tpointFld()
-        );
-    }
+    //     return surface().interpolate
+    //     (
+    //         volSubFld,
+    //         tpointFld()
+    //     );
+    // }
 
 
-    auto tpointFld =
-        volPointInterpolation::New(volFld.mesh()).interpolate(volFld);
+    // auto tpointFld =
+    //     volPointInterpolation::New(volFld.mesh()).interpolate(volFld);
 
-    return surface().interpolate
-    (
-        volFld,
-        tpointFld()
-    );
+    // return surface().interpolate
+    // (
+    //     volFld,
+    //     tpointFld()
+    // );
+    Foam::tmp<Foam::Field<Type>> interpolField;
+    return interpolField;
 }
 
 

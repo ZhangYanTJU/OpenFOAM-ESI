@@ -61,10 +61,10 @@ SourceFiles
 #ifndef sampledInterface_H
 #define sampledInterface_H
 
-#include "interface.H"
 #include "sampledSurface.H"
 #include "ZoneIDs.H"
 #include "fvMeshSubset.H"
+#include "reconstructionSchemes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -87,7 +87,7 @@ class sampledInterface
         //- For zones: patch to put exposed faces into
         mutable word exposedPatchName_;
 
-        mutable autoPtr<interface> surfPtr_;
+        mutable autoPtr<Foam::reconstructionSchemes::interface> surfPtr_;
 
 
         // Recreated for every interface
@@ -161,7 +161,7 @@ public:
 
     // Member Functions
 
-        const interface& surface() const
+        const Foam::reconstructionSchemes::interface& surface() const
         {
             return surfPtr_();
         }

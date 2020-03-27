@@ -45,6 +45,8 @@ SourceFiles
 #include "autoPtr.H"
 #include "IOdictionary.H"
 #include "DynamicField.H"
+#include "MeshedSurface.H"
+#include "MeshedSurfacesFwd.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -114,6 +116,35 @@ public:
 
     //- Return const access to the model dictionary
     const dictionary& modelDict() const;
+
+    class interface
+    : public meshedSurface
+    {
+
+        //- For every face the original cell in mesh
+        labelList meshCells_;
+
+        public:
+
+            interface
+            (
+                const pointField& pointLst,
+                const faceList& faceLst,
+                const labelList& meshCells
+            )
+            : 
+                meshedSurface(pointLst,faceLst, surfZoneList()),
+                meshCells_(meshCells)
+            {
+
+            }
+
+            //- For every face, the original cell in mesh
+            const labelList& meshCells() const
+            {
+                return meshCells_;
+            }
+    };
 
 
 public:
@@ -202,6 +233,8 @@ public:
         {
             // do nothing;
         }
+
+        interface surface();
 };
 
 

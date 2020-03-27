@@ -33,7 +33,6 @@ surface/isoSurface/isoSurfaceBase.C
 surface/isoSurface/isoSurfaceCell.C
 surface/isoSurface/isoSurfaceTopo.C
 surface/thresholdCellFaces/thresholdCellFaces.C
-surface/interface/interface.C
 
 sampledSurface/sampledNone/sampledNone.C
 sampledSurface/sampledPatch/sampledPatch.C

@@ -27,6 +27,7 @@ License
 
 #include "reconstructionSchemes.H"
 #include "OFstream.H"
+#include "cutCellPLIC.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -35,6 +36,7 @@ namespace Foam
     defineTypeNameAndDebug(reconstructionSchemes, 0);
     defineRunTimeSelectionTable(reconstructionSchemes, components);
 }
+
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -138,6 +140,73 @@ const Foam::dictionary& Foam::reconstructionSchemes::modelDict() const
 Foam::dictionary& Foam::reconstructionSchemes::modelDict()
 {
     return reconstructionSchemesCoeffs_;
+}
+
+Foam::reconstructionSchemes::interface Foam::reconstructionSchemes::surface()
+{
+    reconstruct();
+    const fvMesh& mesh = centre_.mesh();
+
+    cutCellPLIC cellCut(mesh);
+
+    DynamicList<List<point>> facePts;
+    DynamicList<label> interfaceCellAdressing(0.1*mesh.nCells());
+
+    forAll(interfaceCell_,cellI)
+    {
+        if (interfaceCell_[cellI])
+        {
+            if (mag(normal_[cellI]) != 0)
+            {
+                interfaceCellAdressing.append(cellI);
+                vector n = -normal_[cellI]/mag(normal_[cellI]);
+
+                scalar cutVal = (centre_[cellI]-mesh.C()[cellI]) & n;
+
+                cellCut.calcSubCell(cellI,cutVal,n);
+                facePts.append(cellCut.facePoints());
+            }
+        }
+    }
+
+    labelList meshCells(interfaceCellAdressing.size());
+
+    forAll(meshCells,i)
+    {
+        meshCells[i] = interfaceCellAdressing[i];
+    }
+
+    // Transfer to mesh storage
+    
+    faceList faces(facePts.size());
+
+    label nPoints = 0;
+    forAll(facePts,i)
+    {
+        face f(facePts[i].size());
+        forAll(f,fi)
+        {
+            f[fi] = nPoints + fi;
+        }
+        faces[i] = f;
+
+        nPoints += facePts[i].size();
+    }
+    pointField pts(nPoints);
+
+    nPoints = 0; // reuse
+    forAll(facePts,i)
+    {
+        forAll(facePts[i],fi)
+        {
+            pts[nPoints] = facePts[i][fi];
+            ++nPoints;
+        }
+    }
+
+    interface surf(pts, faces, meshCells);
+
+    return surf;
 }
 
 
