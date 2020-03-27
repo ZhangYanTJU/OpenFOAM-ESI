@@ -48,13 +48,16 @@ Foam::autoPtr<Foam::implicitFunction> Foam::implicitFunction::New
 {
     auto cstrIter = dictConstructorTablePtr_->cfind(implicitFunctionType);
 
-    FatalIOErrorInLookup
-    (
-        dict,
-        "implicitFunction",
-        implicitFunctionType,
-        *dictConstructorTablePtr_
-    ) << exit(FatalIOError);
+    if (!cstrIter.found())
+    {
+        FatalIOErrorInLookup
+        (
+            dict,
+            "implicitFunction",
+            implicitFunctionType,
+            *dictConstructorTablePtr_
+        ) << exit(FatalIOError);
+    }
 
     return autoPtr<implicitFunction>(cstrIter()(dict));
 }

@@ -47,12 +47,15 @@ Foam::autoPtr<Foam::multiDimPolyFunctions> Foam::multiDimPolyFunctions::New
 {
     auto cstrIter = wordConstructorTablePtr_->cfind(multiDimPolyFunctionsType);
 
-    FatalErrorInLookup
-    (
-        "multiDimPolyFunction",
-        multiDimPolyFunctionsType,
-        *wordConstructorTablePtr_
-    ) << exit(FatalError);
+    if (!cstrIter.found())
+    {
+        FatalErrorInLookup
+        (
+            "multiDimPolyFunction",
+            multiDimPolyFunctionsType,
+            *wordConstructorTablePtr_
+        ) << exit(FatalError);
+    }
 
     return autoPtr<multiDimPolyFunctions>(cstrIter()(dirs));
 }
