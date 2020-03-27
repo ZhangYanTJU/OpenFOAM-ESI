@@ -258,7 +258,7 @@ Foam::scalar Foam::cutFaceAdvect::timeIntegratedFaceFlux
             }
         }
 
-        if (nShifts == 2)
+        if (nShifts == 2 || nShifts == 0)
         {
             dVf = phi / magSf * timeIntegratedArea(faceI, dt, magSf, Un0);
         }

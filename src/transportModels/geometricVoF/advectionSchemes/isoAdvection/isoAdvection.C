@@ -223,14 +223,14 @@ void Foam::isoAdvection::timeIntegratedFlux()
 
                     if (celli == own[facei])
                     {
-                        if (phiIn[facei] > 10*SMALL)
+                        if (phiIn[facei] >= 0)
                         {
                             isDownwindFace = true;
                         }
                     }
                     else
                     {
-                        if (phiIn[facei] < -10*SMALL)
+                        if (phiIn[facei] < 0)
                         {
                             isDownwindFace = true;
                         }
@@ -285,7 +285,7 @@ void Foam::isoAdvection::timeIntegratedFlux()
             const label patchFacei = facei - start;
             const scalar phiP = phib[patchi][patchFacei];
 
-            if (phiP > 10*SMALL)
+            if (phiP >= 0)
             {
                 const scalar magSf = magSfb[patchi][patchFacei];
 
@@ -341,12 +341,12 @@ void Foam::isoAdvection::setDownwindFaces
 
         if (own[facei] == celli)
         {
-            if (phi > 10*SMALL)
+            if (phi >= 0)
             {
                 downwindFaces.append(facei);
             }
         }
-        else if (phi < -10*SMALL)
+        else if (phi < 0)
         {
             downwindFaces.append(facei);
         }
