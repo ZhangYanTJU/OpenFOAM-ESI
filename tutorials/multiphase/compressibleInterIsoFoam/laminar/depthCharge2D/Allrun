@@ -7,5 +7,6 @@ restore0Dir
 runApplication setFields
 runApplication setAlphaField
 runApplication $(getApplication)
+foamSequenceVTKFiles -vtp
 
 #------------------------------------------------------------------------------

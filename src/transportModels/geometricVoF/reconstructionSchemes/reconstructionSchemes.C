@@ -149,60 +149,37 @@ Foam::reconstructionSchemes::interface Foam::reconstructionSchemes::surface()
 
     cutCellPLIC cellCut(mesh);
 
-    DynamicList<List<point>> facePts;
-    DynamicList<label> interfaceCellAdressing(0.1*mesh.nCells());
+    DynamicList<point> dynPts;
+    DynamicList<face> dynFaces(mesh.nCells()*0.1);
+    bitSet interfaceCellAddressing(mesh.nCells());
 
-    forAll(interfaceCell_,cellI)
+    label nPoints = 0;
+
+    forAll(interfaceCell_,celli)
     {
-        if (interfaceCell_[cellI])
+        if (interfaceCell_[celli])
         {
-            if (mag(normal_[cellI]) != 0)
+            if (mag(normal_[celli]) != 0)
             {
-                interfaceCellAdressing.append(cellI);
-                vector n = -normal_[cellI]/mag(normal_[cellI]);
+                interfaceCellAddressing.set(celli);
+                vector n = -normal_[celli]/mag(normal_[celli]);
 
-                scalar cutVal = (centre_[cellI]-mesh.C()[cellI]) & n;
+                scalar cutVal = (centre_[celli]-mesh.C()[celli]) & n;
+                cellCut.calcSubCell(celli,cutVal,n);
 
-                cellCut.calcSubCell(cellI,cutVal,n);
-                facePts.append(cellCut.facePoints());
+                face f(identity(cellCut.facePoints().size(),nPoints));
+                dynFaces.append(f);
+                dynPts.append(cellCut.facePoints());
+                nPoints += cellCut.facePoints().size();
             }
         }
     }
 
-    labelList meshCells(interfaceCellAdressing.size());
-
-    forAll(meshCells,i)
-    {
-        meshCells[i] = interfaceCellAdressing[i];
-    }
+    labelList meshCells(interfaceCellAddressing.toc());
 
     // Transfer to mesh storage
-    
-    faceList faces(facePts.size());
-
-    label nPoints = 0;
-    forAll(facePts,i)
-    {
-        face f(facePts[i].size());
-        forAll(f,fi)
-        {
-            f[fi] = nPoints + fi;
-        }
-        faces[i] = f;
-
-        nPoints += facePts[i].size();
-    }
-    pointField pts(nPoints);
-
-    nPoints = 0; // reuse
-    forAll(facePts,i)
-    {
-        forAll(facePts[i],fi)
-        {
-            pts[nPoints] = facePts[i][fi];
-            ++nPoints;
-        }
-    }
+    pointField pts(std::move(dynPts));
+    faceList faces(std::move(dynFaces));
 
     interface surf(pts, faces, meshCells);
 
