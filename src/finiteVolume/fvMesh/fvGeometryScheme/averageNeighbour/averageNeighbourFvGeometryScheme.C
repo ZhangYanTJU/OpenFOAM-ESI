@@ -31,7 +31,9 @@ License
 #include "cellAspectRatio.H"
 #include "syncTools.H"
 #include "polyMeshTools.H"
+#include "unitConversion.H"
 #include "OBJstream.H"
+#include "surfaceWriter.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -258,11 +260,18 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
         }
     }
 
-    // Now cc is still the correction vector
-    cc /= cellWeights;
-
-    // Add correction vector to the input cell centres
-    cc += cellCentres;
+    // Now cc is still the correction vector. Add to cell original centres.
+    forAll(cc, celli)
+    {
+        if (cellWeights[celli] > VSMALL)
+        {
+            cc[celli] = cellCentres[celli] + cc[celli]/cellWeights[celli];
+        }
+        else
+        {
+            cc[celli] = cellCentres[celli];
+        }
+    }
 
     return tcc;
 }
@@ -384,6 +393,60 @@ Foam::averageNeighbourFvGeometryScheme::averageCentres
 }
 
 
+void Foam::averageNeighbourFvGeometryScheme::makeNonOrthoWeights
+(
+    const pointField& cellCentres,
+    const vectorField& faceNormals,
+
+    scalarField& cosAngles,
+    scalarField& faceWeights
+) const
+{
+    cosAngles =
+        max
+        (
+            scalar(0),
+            min
+            (
+                scalar(1),
+                polyMeshTools::faceOrthogonality
+                (
+                    mesh_,
+                    faceNormals,
+                    cellCentres
+                )
+            )
+        );
+
+
+    // Make weight: 0 for ortho faces, 1 for 90degrees non-ortho
+    //const scalarField faceWeights(scalar(1)-cosAngles);
+    faceWeights.setSize(cosAngles.size());
+    {
+        const scalar minCos = Foam::cos(degToRad(80));
+        const scalar maxCos = Foam::cos(degToRad(10));
+
+        forAll(cosAngles, facei)
+        {
+            const scalar cosAngle = cosAngles[facei];
+            if (cosAngle < minCos)
+            {
+                faceWeights[facei] = 1.0;
+            }
+            else if (cosAngle > maxCos)
+            {
+                faceWeights[facei] = 0.0;
+            }
+            else
+            {
+                faceWeights[facei] =
+                    1.0-(cosAngle-minCos)/(maxCos-minCos);
+            }
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::averageNeighbourFvGeometryScheme::averageNeighbourFvGeometryScheme
@@ -393,9 +456,50 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourFvGeometryScheme
 )
 :
     highAspectRatioFvGeometryScheme(mesh, dict),
-    nIters_(dict.getOrDefault<label>("nIters", 1)),
-    relax_(dict.get<scalar>("relax"))
+    nIters_
+    (
+        dict.getCheckOrDefault<label>
+        (
+            "nIters",
+            1,
+            [&](const label& nIters)
+            {
+                return nIters >= 0;
+            }
+        )
+    ),
+    relax_
+    (
+        dict.getCheck<scalar>
+        (
+            "relax",
+            [&](const scalar& relax)
+            {
+                return relax > 0 && relax <= 1;
+            }
+        )
+    ),
+    minRatio_
+    (
+        dict.getCheckOrDefault<scalar>
+        (
+            "minRatio",
+            0.5,
+            [&](const scalar& minRatio)
+            {
+                return minRatio >= 0 && minRatio <= 1;
+            }
+        )
+    )
 {
+    if (debug)
+    {
+        Pout<< "averageNeighbourFvGeometryScheme :"
+            << " nIters:" << nIters_
+            << " relax:" << relax_
+            << " minRatio:" << minRatio_ << endl;
+    }
+
     // Force local calculation
     movePoints();
 }
@@ -453,26 +557,124 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
         );
 
         // How much is the cell centre to vary inside the cell.
-        minOwnHeight *= 0.5;
-        minNeiHeight *= 0.5;
+        minOwnHeight *= minRatio_;
+        minNeiHeight *= minRatio_;
 
+
+
+        autoPtr<OBJstream> osPtr;
+        autoPtr<surfaceWriter> writerPtr;
+        if (debug)
+        {
+            osPtr.set
+            (
+                new OBJstream
+                (
+                    mesh_.time().timePath()
+                  / "cellCentre_correction.obj"
+                )
+            );
+            Pout<< "averageNeighbourFvGeometryScheme::movePoints() :"
+                << " writing cell centre path to " << osPtr().name() << endl;
+
+
+            // Write current non-ortho
+            fileName outputDir =
+            (
+                mesh_.time().globalPath()
+              / functionObject::outputPrefix
+              / mesh_.pointsInstance()
+            );
+            outputDir.clean();
+            writerPtr = surfaceWriter::New
+            (
+                "ensight" //"vtk"
+                // options
+            );
+
+            // Use outputDir/TIME/surface-name
+            writerPtr->useTimeDir() = true;
+
+            writerPtr->beginTime(mesh_.time());
+
+            writerPtr->open
+            (
+                mesh_.points(),
+                mesh_.faces(),
+                (outputDir / "cosAngle"),
+                true  // merge parallel bits
+            );
+
+            writerPtr->endTime();
+        }
+
+
+        // Current cellCentres. These get adjusted to lower the
+        // non-orthogonality
         pointField cellCentres(mesh_.cellCentres());
 
         // Modify cell centres to be more in-line with the face normals
-        pointField newCellCentres(mesh_.cellCentres());
         for (label iter = 0; iter < nIters_; iter++)
         {
-            // Get neighbour average. Clip to limit change in pyramid height
-            // (minOwnWeight, minNeiWeight)
-            tmp<pointField> tcc
-            (
-                averageNeighbourCentres
+            // Get neighbour average (weighted by face area). This gives
+            // preference to the dominant faces. However if the non-ortho
+            // is not caused by the dominant faces this moves to the wrong
+            // direction.
+            //tmp<pointField> tcc
+            //(
+            //    averageNeighbourCentres
+            //    (
+            //        cellCentres,
+            //        faceNormals,
+            //        magFaceAreas
+            //    )
+            //);
+
+            // Get neighbour average weighted by non-ortho. Question: how to
+            // weight boundary faces?
+            tmp<pointField> tcc;
+            {
+                scalarField cosAngles;
+                scalarField faceWeights;
+                makeNonOrthoWeights
                 (
                     cellCentres,
                     faceNormals,
-                    magFaceAreas
-                )
-            );
+
+                    cosAngles,
+                    faceWeights
+                );
+
+                if (writerPtr.valid())
+                {
+                    writerPtr->beginTime(instant(scalar(iter)));
+                    writerPtr->write("cosAngles", cosAngles);
+                    writerPtr->endTime();
+                }
+
+                if (debug)
+                {
+                    forAll(cosAngles, facei)
+                    {
+                        if (cosAngles[facei] < Foam::cos(degToRad(85.0)))
+                        {
+                            Pout<< "    face:" << facei
+                                << " at:" << mesh_.faceCentres()[facei]
+                                << " cosAngle:" << cosAngles[facei]
+                                << " faceWeight:" << faceWeights[facei]
+                                << endl;
+                        }
+                    }
+                }
+
+                tcc = averageNeighbourCentres
+                (
+                    cellCentres,
+                    faceNormals,
+                    faceWeights
+                );
+            }
+
 
             // Calculate correction for cell centres. Leave low-aspect
             // ratio cells unaffected (i.e. correction = 0)
@@ -496,21 +698,31 @@ void Foam::averageNeighbourFvGeometryScheme::movePoints()
 
             if (debug)
             {
+                forAll(cellCentres, celli)
+                {
+                    const point& cc = cellCentres[celli];
+                    osPtr().write(linePointRef(cc-correction[celli], cc));
+                }
+
                 const scalarField magCorrection(mag(correction));
                 const scalarField faceOrthogonality
                 (
-                    polyMeshTools::faceOrthogonality
+                    min
                     (
-                        mesh_,
-                        faceAreas,
-                        cellCentres
+                        scalar(1),
+                        polyMeshTools::faceOrthogonality
+                        (
+                            mesh_,
+                            faceAreas,
+                            cellCentres
+                        )
                     )
                 );
                 const scalarField nonOrthoAngle
                 (
                     radToDeg
                     (
-                        Foam::acos(min(scalar(1), faceOrthogonality))
+                        Foam::acos(faceOrthogonality)
                     )
                 );
                 Pout<< "    iter:" << iter

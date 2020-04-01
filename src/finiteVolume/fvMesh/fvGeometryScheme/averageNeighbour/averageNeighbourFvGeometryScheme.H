@@ -74,6 +74,11 @@ protected:
         //- Blending between old-iteration cell centres and current average
         const scalar relax_;
 
+        //- Clipping for pyramid heights - allowable shrinkage as fraction
+        //  of original
+        const scalar minRatio_;
+
+
         //- Calculate pyramid heights
         void makePyrHeights
         (
@@ -112,6 +117,16 @@ protected:
             const pointField& cellCentres,
             const pointField& faceCentres,
             const vectorField& faceNormals
+        ) const;
+
+        //- Make weights based on non-orthogonality
+        void makeNonOrthoWeights
+        (
+            const pointField& cellCentres,
+            const vectorField& faceNormals,
+
+            scalarField& cosAngles,
+            scalarField& faceWeights
         ) const;
 
 
