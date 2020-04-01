@@ -46,6 +46,7 @@ namespace Foam
 {
 
 class primitiveMesh;
+class polyMesh;
 
 /*---------------------------------------------------------------------------*\
                Class highAspectRatioFvGeometryScheme Declaration
@@ -75,7 +76,7 @@ protected:
         //- Helper : calculate (weighted) average face and cell centres
         static void makeAverageCentres
         (
-            const primitiveMesh& mesh,
+            const polyMesh& mesh,
             const pointField& points,
             const pointField& faceAreas,
             const scalarField& magFaceAreas,

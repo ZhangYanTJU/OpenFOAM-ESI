@@ -30,6 +30,8 @@ License
 #include "fvMesh.H"
 #include "syncTools.H"
 #include "cellAspectRatio.H"
+#include "emptyPolyPatch.H"
+#include "wedgePolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -231,7 +233,7 @@ void Foam::highAspectRatioFvGeometryScheme::calcAspectRatioWeights
 
 void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
 (
-    const primitiveMesh& mesh,
+    const polyMesh& mesh,
     const pointField& p,
     const pointField& faceAreas,
     const scalarField& magFaceAreas,
@@ -305,28 +307,39 @@ void Foam::highAspectRatioFvGeometryScheme::makeAverageCentres
         const labelList& nei = mesh.faceNeighbour();
 
         Field<solveScalar> cellWeights(mesh.nCells(), Zero);
-        forAll(own, facei)
+        for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
         {
-            const solveVector fc(faceCentres[facei]);
             const solveScalar magfA(magFaceAreas[facei]);
+            const solveVector weightedFc(magfA*faceCentres[facei]);
 
             // Accumulate area-weighted face-centre
-            cellCentres[own[facei]] += magfA*fc;
+            cellCentres[own[facei]] += weightedFc;
+            cellCentres[nei[facei]] += weightedFc;
 
-            // Accumulate face-pyramid volume
+            // Accumulate weights
             cellWeights[own[facei]] += magfA;
+            cellWeights[nei[facei]] += magfA;
         }
 
-        forAll(nei, facei)
+        const polyBoundaryMesh& pbm = mesh.boundaryMesh();
+        for (const polyPatch& pp : pbm)
         {
-            const solveVector fc(faceCentres[facei]);
-            const solveScalar magfA(magFaceAreas[facei]);
+            if (!isA<emptyPolyPatch>(pp) && !isA<wedgePolyPatch>(pp))
+            {
+                for
+                (
+                    label facei = pp.start();
+                    facei < pp.start()+pp.size();
+                    facei++
+                )
+                {
+                    const solveScalar magfA(magFaceAreas[facei]);
+                    const solveVector weightedFc(magfA*faceCentres[facei]);
 
-            // Accumulate area-weighted face-centre
-            cellCentres[nei[facei]] += magfA*fc;
-
-            // Accumulate face-pyramid volume
-            cellWeights[nei[facei]] += magfA;
+                    cellCentres[own[facei]] += weightedFc;
+                    cellWeights[own[facei]] += magfA;
+                }
+            }
         }
 
         forAll(cellCentres, celli)
