@@ -153,8 +153,6 @@ Foam::reconstructionSchemes::interface Foam::reconstructionSchemes::surface()
     DynamicList<face> dynFaces(mesh.nCells()*0.1);
     bitSet interfaceCellAddressing(mesh.nCells());
 
-    label nPoints = 0;
-
     forAll(interfaceCell_,celli)
     {
         if (interfaceCell_[celli])
@@ -166,11 +164,14 @@ Foam::reconstructionSchemes::interface Foam::reconstructionSchemes::surface()
 
                 scalar cutVal = (centre_[celli]-mesh.C()[celli]) & n;
                 cellCut.calcSubCell(celli,cutVal,n);
-
-                face f(identity(cellCut.facePoints().size(),nPoints));
-                dynFaces.append(f);
+                // cellCut.facePoints() are ordered and not
+                // connected to the other face 
+                // append face with the starting label: dynPts.size()
+                dynFaces.append
+                (
+                    face(identity(cellCut.facePoints().size(), dynPts.size()))
+                );
                 dynPts.append(cellCut.facePoints());
-                nPoints += cellCut.facePoints().size();
             }
         }
     }
