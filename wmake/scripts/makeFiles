@@ -3,8 +3,10 @@
 # =========                 |
 # \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
 #  \\    /   O peration     |
-#   \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+#   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
+#------------------------------------------------------------------------------
+#     Copyright (C) 2011-2016 OpenFOAM Foundation
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM.
@@ -31,7 +33,7 @@
 #     Usage : makeFiles
 #
 #------------------------------------------------------------------------------
-dirToString="$WM_DIR/platforms/$WM_ARCH$WM_COMPILER"/dirToString
+dirToString="$WM_DIR/scripts/dirToString"
 
 if [ -r Make/files ]
 then
@@ -46,8 +48,10 @@ fi
 
 [ -d Make ] || mkdir Make
 rm -f Make/files
+
 #------------------------------------------------------------------------------
-echo "Creating Make/files"
+
+echo "Creating Make/files ..."
 
 for dir in $(find . -mindepth 1 -type d -print)
 do
@@ -56,7 +60,7 @@ do
         # Skip special directories
         ;;
     *)
-        echo "$(echo $dir | $dirToString -strip)  =  ${dir#./}"
+        echo "$($dirToString "$dir")  =  ${dir#./}"
         ;;
     esac
 done > Make/files
@@ -64,11 +68,11 @@ done > Make/files
 
 for file in $(find . -name "*.[cCylLfF]" -type f -print)
 do
-    pathName=$(echo ${file%/*} | $dirToString -strip)
+    pathName="$($dirToString "${file%/*}")"
 
     if [ -n "$pathName" ]
     then
-        echo '$('$pathName')/'"${file##*/}"
+        echo '$('"$pathName"')/'"${file##*/}"
     else
         echo "${file##*/}"
     fi
