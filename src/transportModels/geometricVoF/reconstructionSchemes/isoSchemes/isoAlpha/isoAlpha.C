@@ -61,7 +61,6 @@ Foam::reconstruction::isoAlpha::isoAlpha
     ),
     mesh_(alpha1.mesh()),
     // Interpolation data
-    vpi_(mesh_),
     ap_(mesh_.nPoints()),
 
     // Tolerances and solution controls
@@ -98,7 +97,7 @@ void Foam::reconstruction::isoAlpha::reconstruct()
             interfaceCell_.resize(mesh_.nCells());
         }
     }
-    ap_ = vpi_.interpolate(alpha1_);
+    ap_ = volPointInterpolation::New(mesh_).interpolate(alpha1_);
 
     DynamicList<List<point>> facePts;
 

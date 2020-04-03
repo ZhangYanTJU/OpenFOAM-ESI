@@ -82,9 +82,6 @@ class isoAlpha
         //- Reference to mesh
         const fvMesh& mesh_;
 
-        //- Interpolation object from cell centres to points
-        volPointInterpolation vpi_;
-
         //- VOF field interpolated to mesh points
         scalarField ap_;
 
