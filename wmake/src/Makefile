@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2017-2019 OpenCFD Ltd.
+#     Copyright (C) 2017-2020 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM.
@@ -63,9 +63,12 @@ archTarget  := $(shell basename $(WMAKE_BIN))
 # Targets
 #------------------------------------------------------------------------------
 
-.PHONY: all clean message
+.PHONY: all clean message old
 
 all: $(WMAKE_BIN)/wmkdepend$(EXT_EXE) message
+
+# Flex-based processing
+old: $(WMAKE_BIN)/wmkdep$(EXT_EXE)
 
 message:
 ifneq ($(archHost),$(archTarget))
@@ -76,14 +79,14 @@ endif
 
 clean:
 	@echo "clean wmake-bin ($(archTarget))"
-	@rm -rf $(WMAKE_BIN) 2>/dev/null
+	@rm -rf $(WMAKE_BIN)
 	@rmdir $(shell dirname $(WMAKE_BIN)) 2>/dev/null || true
 
 $(WMAKE_BIN)/wmkdep$(EXT_EXE): wmkdep.l
 	@mkdir -p $(WMAKE_BIN)
 	$(call QUIET_MESSAGE,flex,$(<F))
 	$E flex -o $@.c $(<F) && $(cc) $(cFLAGS) $@.c -o $@
-	@rm -f $@.c 2>/dev/null
+	@rm -f $@.c
 
 $(WMAKE_BIN)/wmkdepend$(EXT_EXE): wmkdepend.cpp
 	@mkdir -p $(WMAKE_BIN)
@@ -94,6 +97,6 @@ $(WMAKE_BIN)/wmkdepend$(EXT_EXE): wmkdepend.cpp
 # 	@mkdir -p $(WMAKE_BIN)
 # 	$(call QUIET_MESSAGE,ragel,$(<F))
 # 	$E ragel -G2 -o $@.cpp $(<F) && $(CC) $(c++FLAGS) $(c++LESSWARN) $@.cpp -o $@
-# 	@rm -f $@.cpp 2>/dev/null
+# 	@rm -f $@.cpp
 
 #------------------------------------------------------------------------------
