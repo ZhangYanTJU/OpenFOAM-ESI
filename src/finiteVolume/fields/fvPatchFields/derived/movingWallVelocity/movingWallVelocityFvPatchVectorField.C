@@ -103,35 +103,7 @@ void Foam::movingWallVelocityFvPatchVectorField::updateCoeffs()
 
     if (mesh.moving())
     {
-        const fvPatch& p = patch();
-        const polyPatch& pp = p.patch();
-        const pointField& oldPoints = mesh.oldPoints();
-
-        vectorField oldFc(pp.size());
-
-        forAll(oldFc, i)
-        {
-            oldFc[i] = pp[i].centre(oldPoints);
-        }
-
-        const scalar deltaT = mesh.time().deltaTValue();
-
-        const vectorField Up((pp.faceCentres() - oldFc)/deltaT);
-
-        const volVectorField& U =
-            static_cast<const volVectorField&>(internalField());
-
-        scalarField phip
-        (
-            p.patchField<surfaceScalarField, scalar>(fvc::meshPhi(U))
-        );
-
-        const vectorField n(p.nf());
-        const scalarField& magSf = p.magSf();
-        tmp<scalarField> Un = phip/(magSf + VSMALL);
-
-
-        vectorField::operator=(Up + n*(Un - (n & Up)));
+        vectorField::operator=(Uwall()());
     }
 
     fixedValueFvPatchVectorField::updateCoeffs();
@@ -142,6 +114,41 @@ void Foam::movingWallVelocityFvPatchVectorField::write(Ostream& os) const
 {
     fvPatchVectorField::write(os);
     writeEntry("value", os);
+}
+
+
+Foam::tmp<Foam::vectorField>
+Foam::movingWallVelocityFvPatchVectorField::Uwall() const
+{
+    const fvMesh& mesh = internalField().mesh();
+    const fvPatch& p = patch();
+    const polyPatch& pp = p.patch();
+    const pointField& oldPoints = mesh.oldPoints();
+
+    vectorField oldFc(pp.size());
+
+    forAll(oldFc, i)
+    {
+        oldFc[i] = pp[i].centre(oldPoints);
+    }
+
+    const scalar deltaT = mesh.time().deltaTValue();
+
+    const vectorField Up((pp.faceCentres() - oldFc)/deltaT);
+
+    const volVectorField& U =
+        static_cast<const volVectorField&>(internalField());
+
+    scalarField phip
+    (
+        p.patchField<surfaceScalarField, scalar>(fvc::meshPhi(U))
+    );
+
+    const vectorField n(p.nf());
+    const scalarField& magSf = p.magSf();
+    tmp<scalarField> Un = phip/(magSf + VSMALL);
+
+    return (Up + n*(Un - (n & Up)));
 }
 
 

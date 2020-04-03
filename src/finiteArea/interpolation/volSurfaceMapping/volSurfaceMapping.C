@@ -66,6 +66,38 @@ Foam::tmp<Foam::Field<Type>> Foam::volSurfaceMapping::mapToSurface
 
 
 template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::volSurfaceMapping::mapToSurface
+(
+    const Field<Type>& f
+) const
+{
+    const labelList& faceLabels = mesh_.faceLabels();
+
+    tmp<Field<Type>> tresult
+    (
+        new Field<Type>(faceLabels.size(), Zero)
+    );
+    Field<Type>& result = tresult.ref();
+
+    const polyMesh& pMesh = mesh_();
+    const polyBoundaryMesh& bm = pMesh.boundaryMesh();
+    label patchID, faceID;
+
+    forAll(faceLabels, i)
+    {
+        if (faceLabels[i] < pMesh.nFaces())
+        {
+            patchID = bm.whichPatch(faceLabels[i]);
+            faceID = bm[patchID].whichFace(faceLabels[i]);
+            result[i] = f[faceID];
+        }
+    }
+
+    return tresult;
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::volSurfaceMapping::mapInternalToSurface
 (
     const typename GeometricField<Type, fvPatchField, volMesh>::Boundary& df

@@ -2,11 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | www.openfoam.com
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
--------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,38 +22,61 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::movingWallVelocityFvPatchVectorField
+    Foam::compressible::velocityFilmShellFvPatchVectorField
 
 Group
-    grpWallBoundaryConditions
+    grpLiquidFilmBoundaryConditions
 
 Description
-    This boundary condition provides a velocity condition for cases with
-    moving walls.
+
 
 Usage
+    \table
+    Property    | Description                              | Required | Default
+    kappaMethod | 'fluidThermo', 'solidThermo'             | yes
+    thermo      | Solid thermo                             | yes
+    thermalShellModel  | thermal shell modes               | yes
+    region      | 2D region to be applied                  | yes
+    T           | Temperature field name                   | yes
+    \endtable
+
     Example of the boundary condition specification:
     \verbatim
-    <patchName>
+    <masterPatchName>
     {
-        type            movingWallVelocity;
-        value           uniform (0 0 0);    // Initial value
+        type                velocityFilmShell;
+
+        active              true;
+
+        U                   U;
+
+        thermo
+        {
+
+        }
+
+        region              ceilingShell;
+        liquidFilm          kinematicThinFilm;
+
+        value               uniform (0 0 0);
+
     }
     \endverbatim
 
-See also
-    Foam::fixedValueFvPatchVectorField
-    Foam::MRFZone
 
 SourceFiles
-    movingWallVelocityFvPatchVectorField.C
+    velocityFilmShellFvPatchVectorField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef movingWallVelocityFvPatchVectorField_H
-#define movingWallVelocityFvPatchVectorField_H
+#ifndef velocityFilmShellFvPatchVectorField_H
+#define velocityFilmShellFvPatchVectorField_H
 
-#include "fixedValueFvPatchFields.H"
+
+#include "autoPtr.H"
+#include "liquidFilmBase.H"
+#include "mixedFvPatchFields.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,66 +84,73 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-             Class movingWallVelocityFvPatchVectorField Declaration
+             Class velocityFilmShellFvPatchVectorField Declaration
 \*---------------------------------------------------------------------------*/
 
-class movingWallVelocityFvPatchVectorField
+class velocityFilmShellFvPatchVectorField
 :
-    public fixedValueFvPatchVectorField
+    public mixedFvPatchField<vector>
 {
+
+    // Private data
+
+        //- Thermal baffle
+        autoPtr<regionModels::areaSurfaceFilmModels::liquidFilmBase> baffle_;
+
+        //- Dictionary
+        mutable dictionary dict_;
+
+        //- Time index to evolve the film
+        label curTimeIndex_;
+
 
 public:
 
     //- Runtime type information
-    TypeName("movingWallVelocity");
+    TypeName("velocityFilmShell");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        movingWallVelocityFvPatchVectorField
+        velocityFilmShellFvPatchVectorField
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        movingWallVelocityFvPatchVectorField
+        velocityFilmShellFvPatchVectorField
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
             const dictionary&
         );
 
-        //- Construct by mapping given movingWallVelocityFvPatchVectorField
-        //  onto a new patch
-        movingWallVelocityFvPatchVectorField
+        //- Construct by mapping given
+        //  velocityFilmShellFvPatchVectorField onto a new patch
+        velocityFilmShellFvPatchVectorField
         (
-            const movingWallVelocityFvPatchVectorField&,
+            const velocityFilmShellFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
             const fvPatchFieldMapper&
         );
 
-        //- Construct as copy
-        movingWallVelocityFvPatchVectorField
-        (
-            const movingWallVelocityFvPatchVectorField&
-        );
 
         //- Construct and return a clone
         virtual tmp<fvPatchVectorField> clone() const
         {
             return tmp<fvPatchVectorField>
             (
-                new movingWallVelocityFvPatchVectorField(*this)
+                new velocityFilmShellFvPatchVectorField(*this)
             );
         }
 
         //- Construct as copy setting internal field reference
-        movingWallVelocityFvPatchVectorField
+        velocityFilmShellFvPatchVectorField
         (
-            const movingWallVelocityFvPatchVectorField&,
+            const velocityFilmShellFvPatchVectorField&,
             const DimensionedField<vector, volMesh>&
         );
 
@@ -135,21 +162,19 @@ public:
         {
             return tmp<fvPatchVectorField>
             (
-                new movingWallVelocityFvPatchVectorField(*this, iF)
+                new velocityFilmShellFvPatchVectorField(*this, iF)
             );
         }
 
 
     // Member functions
 
+
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
 
         //- Write
         virtual void write(Ostream&) const;
-
-        //- Wall velocity
-        tmp<vectorField> Uwall() const;
 };
 
 
@@ -158,6 +183,7 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 
 #endif
 

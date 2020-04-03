@@ -88,6 +88,8 @@ namespace regionModels
 \*---------------------------------------------------------------------------*/
 
 class regionFaModel
+:
+    public IOdictionary
 {
     // Private Member Functions
 
@@ -150,6 +152,9 @@ public:
 
     //- Runtime type information
     TypeName("regionFaModel");
+
+     //- Default name regionFaModel
+    static const word regionFaModelName;
 
 
     // Constructors
@@ -230,6 +235,9 @@ public:
 
             //- Post-evolve region
             virtual void postEvolveRegion();
+
+            //- Courant number of the region
+            virtual scalar CourantNumber() const;
 
 
         // IO

@@ -109,10 +109,9 @@ Foam::regionModels::regionFaModel::solution() const
 }
 
 
-inline Foam::label Foam::regionModels::regionFaModel::patchID()
+inline Foam::label Foam::regionModels::regionFaModel::patchID() const
 {
     return patchID_;
 }
-
 
 // ************************************************************************* //

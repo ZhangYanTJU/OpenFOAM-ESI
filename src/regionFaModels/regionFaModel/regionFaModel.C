@@ -41,6 +41,9 @@ namespace regionModels
 }
 }
 
+const Foam::word
+Foam::regionModels::regionFaModel::regionFaModelName("regionFaModel");
+
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
 void Foam::regionModels::regionFaModel::constructMeshObjects()
@@ -102,6 +105,17 @@ Foam::regionModels::regionFaModel::regionFaModel
     bool readFields
 )
 :
+    IOdictionary
+    (
+        IOobject
+        (
+            IOobject::groupName(regionFaModelName, patch.name()),
+            patch.boundaryMesh().mesh().time().constant(),
+            patch.boundaryMesh().mesh().time(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        )
+    ),
     primaryMesh_(patch.boundaryMesh().mesh()),
     patch_(patch),
     time_(patch.boundaryMesh().mesh().time()),
