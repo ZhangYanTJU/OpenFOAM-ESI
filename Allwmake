@@ -25,7 +25,7 @@ command -v mpirun 2>/dev/null || true
 echo "========================================"
 date "+%Y-%m-%d %H:%M:%S %z" 2>/dev/null || echo "date is unknown"
 echo "Starting compile ${WM_PROJECT_DIR##*/} ${0##*/}"
-echo "  $WM_COMPILER $WM_COMPILER_TYPE compiler"
+echo "  $WM_COMPILER ${WM_COMPILER_TYPE:-system} compiler"
 echo "  ${WM_OPTIONS}, with ${WM_MPLIB} ${FOAM_MPI}"
 echo "========================================"
 echo
@@ -36,9 +36,18 @@ echo
 # Compile ThirdParty libraries and applications
 if [ -d "$WM_THIRD_PARTY_DIR" ]
 then
-    $WM_THIRD_PARTY_DIR/Allwmake
+    if [ -e "$WM_THIRD_PARTY_DIR"/Allwmake.override ]
+    then
+        if [ -x "$WM_THIRD_PARTY_DIR"/Allwmake.override ]
+        then    "$WM_THIRD_PARTY_DIR"/Allwmake.override
+        fi
+    elif [ -x "$WM_THIRD_PARTY_DIR"/Allwmake ]
+    then      "$WM_THIRD_PARTY_DIR"/Allwmake
+    else
+        echo "Skip ThirdParty (no Allwmake* files)"
+    fi
 else
-    echo "No ThirdParty directory found - skipping"
+    echo "Skip ThirdParty (no directory)"
 fi
 
 echo "========================================"
@@ -57,13 +66,13 @@ then
     echo "========================================"
     echo "Compile OpenFOAM modules"
     echo
-    (cd $WM_PROJECT_DIR/modules 2>/dev/null && wmake -all)
+    (cd "$WM_PROJECT_DIR/modules" 2>/dev/null && wmake -all)
 fi
 
 # Count files in given directory. Ignore "Test-*" binaries.
 _foamCountDirEntries()
 {
-    (cd "$1" 2>/dev/null && find -mindepth 1 -maxdepth 1 -type f 2>/dev/null) |\
+    (cd "$1" 2>/dev/null && find . -mindepth 1 -maxdepth 1 -type f 2>/dev/null) |\
         sed -e '\@/Test-@d' | wc -l
 }
 
@@ -72,13 +81,13 @@ echo
 date "+%Y-%m-%d %H:%M:%S %z" 2>/dev/null || echo "date is unknown"
 echo "========================================"
 echo "  ${WM_PROJECT_DIR##*/}"
-echo "  $WM_COMPILER $WM_COMPILER_TYPE compiler"
+echo "  $WM_COMPILER ${WM_COMPILER_TYPE:-system} compiler"
 echo "  ${WM_OPTIONS}, with ${WM_MPLIB} ${FOAM_MPI}"
 echo
-echo "  api   = $(foamEtcFile -show-api 2>/dev/null)"
-echo "  patch = $(foamEtcFile -show-patch 2>/dev/null)"
-echo "  bin   = $(_foamCountDirEntries $FOAM_APPBIN) entries"
-echo "  lib   = $(_foamCountDirEntries $FOAM_LIBBIN) entries"
+echo "  api   = $(etc/openfoam -show-api 2>/dev/null)"
+echo "  patch = $(etc/openfoam -show-patch 2>/dev/null)"
+echo "  bin   = $(_foamCountDirEntries "$FOAM_APPBIN") entries"
+echo "  lib   = $(_foamCountDirEntries "$FOAM_LIBBIN") entries"
 echo
 echo "========================================"
 
