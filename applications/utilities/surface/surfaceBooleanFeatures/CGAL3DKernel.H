@@ -2,8 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2015 OpenFOAM Foundation
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2015 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,6 +28,7 @@ Typedefs
     CGAL3DKernel
 
 Description
+    A typedef for selecting inexact (faster) or exact (slower) 3D model.
 
 \*---------------------------------------------------------------------------*/
 
@@ -36,13 +40,13 @@ Description
 #ifdef CGAL_INEXACT
 
     // Fast kernel using a double as the storage type
-    #include "CGAL/Exact_predicates_inexact_constructions_kernel.h"
+    #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
     typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 
 #else
 
     // Very robust but expensive kernel
-    #include "CGAL/Exact_predicates_exact_constructions_kernel.h"
+    #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
     typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 
 #endif
