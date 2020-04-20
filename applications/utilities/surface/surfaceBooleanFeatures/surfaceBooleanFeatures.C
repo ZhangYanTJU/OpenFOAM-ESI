@@ -2,8 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
-     \\/     M anipulation  | Copyright (C) 2016 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,8 +102,10 @@ typedef CGAL::AABB_face_graph_triangle_primitive
 typedef CGAL::AABB_traits<K, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> Tree;
 
-typedef boost::optional<Tree::Intersection_and_primitive_id<Segment>::Type>
-Segment_intersection;
+typedef boost::optional
+<
+    Tree::Intersection_and_primitive_id<Segment>::Type
+> Segment_intersection;
 
 #endif // NO_CGAL
 
@@ -632,17 +637,14 @@ labelPair edgeIntersectionsCGAL
         segments.clear();
         tree.all_intersections(segment_query, std::back_inserter(segments));
 
-        for
-        (
-            std::vector<Segment_intersection>::const_iterator iter =
-                segments.begin(),
-            end = segments.end();
-            iter != end;
-            ++iter
-        )
+
+        for (const Segment_intersection& intersect : segments)
         {
             // Get intersection object
-            if (const Point* ptPtr = boost::get<Point>(&((*iter)->first)))
+            if
+            (
+                const Point* ptPtr = boost::get<Point>(&(intersect->first))
+            )
             {
                 point pt
                 (
@@ -651,7 +653,12 @@ labelPair edgeIntersectionsCGAL
                     CGAL::to_double(ptPtr->z())
                 );
 
-                Polyhedron::Face_handle f = (*iter)->second;
+                #if defined (CGAL_VERSION_NR) && (CGAL_VERSION_NR < 1041400000)
+                Polyhedron::Face_handle f = (intersect->second);
+                #else
+                // 4.14 and later
+                Polyhedron::Face_handle f = (intersect->second).first;
+                #endif
 
                 intersections[edgeI].append
                 (
@@ -664,18 +671,24 @@ labelPair edgeIntersectionsCGAL
                 );
                 // Intersection on edge interior
                 classifications[edgeI].append(-1);
-                nPoints++;
+                ++nPoints;
             }
             else if
             (
-                const Segment* sPtr = boost::get<Segment>(&((*iter)->first))
+                const Segment* sPtr = boost::get<Segment>(&(intersect->first))
             )
             {
+                #if defined (CGAL_VERSION_NR) && (CGAL_VERSION_NR < 1041400000)
+                Polyhedron::Face_handle f = (intersect->second);
+                #else
+                // 4.14 and later
+                Polyhedron::Face_handle f = (intersect->second).first;
+                #endif
+
                 //std::cout
                 //    << "intersection object is a segment:" << sPtr->source()
                 //    << " " << sPtr->target() << std::endl;
 
-                Polyhedron::Face_handle f = (*iter)->second;
                 //std::cout<< "triangle:" << f->index
                 //    << " region:" << f->region << std::endl;
 
@@ -705,7 +718,7 @@ labelPair edgeIntersectionsCGAL
                 );
                 // Intersection aligned with face. Tbd: enums
                 classifications[edgeI].append(2);
-                nSegments++;
+                ++nSegments;
             }
         }
     }
@@ -1244,7 +1257,7 @@ autoPtr<extendedFeatureEdgeMesh> createEdgeMesh
     label nFeatEds = inter.cutEdges().size();
 
     DynamicList<vector> normals(2*nFeatEds);
-    vectorField edgeDirections(nFeatEds, vector::zero);
+    vectorField edgeDirections(nFeatEds, Zero);
     DynamicList<extendedFeatureEdgeMesh::sideVolumeType> normalVolumeTypes
     (
         2*nFeatEds
