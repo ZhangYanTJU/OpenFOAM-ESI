@@ -120,11 +120,11 @@ Foam::reconstruction::gradAlpha::gradAlpha
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::reconstruction::gradAlpha::reconstruct()
+void Foam::reconstruction::gradAlpha::reconstruct(bool forceUpdate)
 {
-    bool uptodate = alreadyReconstructed();
+    bool uptodate = alreadyReconstructed(forceUpdate);
 
-    if (uptodate)
+    if (uptodate && !forceUpdate)
     {
         return;
     }

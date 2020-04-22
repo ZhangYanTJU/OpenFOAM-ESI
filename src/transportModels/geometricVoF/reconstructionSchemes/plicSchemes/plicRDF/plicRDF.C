@@ -371,11 +371,11 @@ Foam::reconstruction::plicRDF::plicRDF
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::reconstruction::plicRDF::reconstruct()
+void Foam::reconstruction::plicRDF::reconstruct(bool forceUpdate)
 {
-    const bool uptodate = alreadyReconstructed();
+    const bool uptodate = alreadyReconstructed(forceUpdate);
 
-    if (uptodate)
+    if (uptodate && !forceUpdate)
     {
         return;
     }

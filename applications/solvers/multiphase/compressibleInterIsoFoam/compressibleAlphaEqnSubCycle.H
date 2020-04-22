@@ -1,3 +1,12 @@
+if (pimple.nCorrPIMPLE() > 1)
+{
+    if (!pimple.firstIter())
+    {
+        // Resetting alpha1 to value before advection in first PIMPLE
+        // iteration.
+        alpha1 = alpha1.oldTime();
+    }
+}
 tmp<surfaceScalarField> talphaPhi1(alphaPhi10);
 
 if (nAlphaSubCycles > 1)

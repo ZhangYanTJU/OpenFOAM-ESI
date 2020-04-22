@@ -123,7 +123,7 @@ public:
     // Member Functions
 
         //- Reconstruct interface
-        virtual void reconstruct();
+        virtual void reconstruct(bool forceUpdate = true);
 
         //- map VoF Field in case of refinement
         virtual void mapAlphaField() const;

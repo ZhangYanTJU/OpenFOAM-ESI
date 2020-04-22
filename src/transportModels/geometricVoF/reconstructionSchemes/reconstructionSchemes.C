@@ -41,7 +41,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-bool Foam::reconstructionSchemes::alreadyReconstructed()
+bool Foam::reconstructionSchemes::alreadyReconstructed(bool forceUpdate)
 {
     const fvMesh& mesh = alpha1_.mesh();
     label& curTimeIndex = timeIndexAndIter_.first();
@@ -51,6 +51,12 @@ bool Foam::reconstructionSchemes::alreadyReconstructed()
     if (mesh.time().timeIndex() > curTimeIndex)
     {
         curTimeIndex = mesh.time().timeIndex();
+        curIter = 0;
+        return false;
+    }
+
+    if(forceUpdate)
+    {
         curIter = 0;
         return false;
     }
@@ -144,7 +150,7 @@ Foam::dictionary& Foam::reconstructionSchemes::modelDict()
 
 Foam::reconstructionSchemes::interface Foam::reconstructionSchemes::surface()
 {
-    reconstruct();
+    reconstruct(false);
     const fvMesh& mesh = centre_.mesh();
 
     cutCellPLIC cellCut(mesh);

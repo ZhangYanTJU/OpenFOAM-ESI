@@ -97,7 +97,7 @@ protected:
         Pair<label> timeIndexAndIter_;
 
         //- is the interface already up-to-date?
-        bool alreadyReconstructed();
+        bool alreadyReconstructed(bool forceUpdate = true);
 
 
     // Private Member Functions
@@ -202,7 +202,7 @@ public:
     // Member Functions
 
         //- reconstruct the interface
-        virtual void reconstruct() = 0;
+        virtual void reconstruct(bool forceUpdate = true) = 0;
 
         //- Reference to interface normals
         const volVectorField& normal() const

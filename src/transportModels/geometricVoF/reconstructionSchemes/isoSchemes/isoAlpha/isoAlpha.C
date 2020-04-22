@@ -74,11 +74,11 @@ Foam::reconstruction::isoAlpha::isoAlpha
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::reconstruction::isoAlpha::reconstruct()
+void Foam::reconstruction::isoAlpha::reconstruct(bool forceUpdate)
 {
-    bool uptodate = alreadyReconstructed();
+    const bool uptodate = alreadyReconstructed(forceUpdate);
 
-    if (uptodate)
+    if (uptodate && !forceUpdate)
     {
         return;
     }
