@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0";
     object      T;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -21,21 +20,16 @@ internalField   uniform 300;
 
 boundaryField
 {
-    bottom
+    "(bottom|top)"
     {
         type                compressible::thermalBaffle;
         kappaMethod         solidThermo;
         value               uniform 300;
     }
+
     side
     {
         type                zeroGradient;
-    }
-    top
-    {
-        type                compressible::thermalBaffle;
-        kappaMethod         solidThermo;
-        value               uniform 300;
     }
 }
 

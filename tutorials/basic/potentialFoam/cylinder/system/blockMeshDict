@@ -47,18 +47,17 @@ vertices #codeStream
         points[18] = point(-0.707107, 2, -0.5);
 
         // Duplicate z points
-        label sz = points.size();
+        const label sz = points.size();
         points.setSize(2*sz);
-        for (label i = 0; i < sz; i++)
+        for (label i = 0; i < sz; ++i)
         {
             const point& pt = points[i];
-            points[i+sz] = point(pt.x(), pt.y(), -pt.z());
+            points[i + sz] = point(pt.x(), pt.y(), -pt.z());
         }
 
         os  << points;
     #};
 };
-
 
 blocks
 (
@@ -152,5 +151,6 @@ boundary
 mergePatchPairs
 (
 );
+
 
 // ************************************************************************* //

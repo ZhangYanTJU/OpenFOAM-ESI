@@ -20,23 +20,12 @@ internalField   uniform 1e5;
 
 boundaryField
 {
-    floor
-    {
-        type            fixedFluxPressure;
-        value           uniform 1e5;
-    }
-
-    ceiling
-    {
-        type            fixedFluxPressure;
-        value           uniform 1e5;
-    }
-
-    fixedWalls
+    "(floor|ceiling|fixedWalls)"
     {
         type            fixedFluxPressure;
         value           uniform 1e5;
     }
 }
+
 
 // ************************************************************************* //

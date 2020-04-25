@@ -20,7 +20,7 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    down
+    "(down|up)"
     {
         type            symmetryPlane;
     }
@@ -28,11 +28,6 @@ boundaryField
     right
     {
         type            zeroGradient;
-    }
-
-    up
-    {
-        type            symmetryPlane;
     }
 
     left
@@ -51,5 +46,6 @@ boundaryField
         type            empty;
     }
 }
+
 
 // ************************************************************************* //

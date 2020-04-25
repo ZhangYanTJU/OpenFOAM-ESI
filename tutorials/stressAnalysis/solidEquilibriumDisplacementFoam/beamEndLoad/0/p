@@ -20,25 +20,7 @@ internalField       uniform 0;
 
 boundaryField
 {
-    topSurface
-    {
-        type                calculated;
-        value               uniform 0;
-    }
-
-    bottomSurface
-    {
-        type                calculated;
-        value               uniform 0;
-    }
-
-    fixedEnd
-    {
-        type                calculated;
-        value               uniform 0;
-    }
-
-    tractionEnd
+    "(topSurface|bottomSurface|fixedEnd|tractionEnd)"
     {
         type                calculated;
         value               uniform 0;

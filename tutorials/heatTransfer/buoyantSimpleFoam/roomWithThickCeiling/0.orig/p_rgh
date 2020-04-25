@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0";
     object      p_rgh;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -23,27 +22,15 @@ boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    floor
+    "(floor|ceiling|inlet|outlet)"
     {
         type            fixedFluxPressure;
     }
-    ceiling
-    {
-        type            fixedFluxPressure;
-    }
-    inlet
-    {
-        type            fixedFluxPressure;
-    }
-    outlet
-    {
-        type            fixedFluxPressure;
-    }
+
     fixedWalls
     {
         type            empty;
     }
-
 }
 
 

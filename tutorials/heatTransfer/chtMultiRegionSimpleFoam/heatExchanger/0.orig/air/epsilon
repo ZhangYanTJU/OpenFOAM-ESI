@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0";
     object      epsilon;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -21,24 +20,21 @@ internalField   uniform 0.54;
 
 boundaryField
 {
-    walls
+    "(walls|blades)"
     {
         type            epsilonWallFunction;
         value           $internalField;
     }
+
     inlet
     {
         type            fixedValue;
         value           $internalField;
     }
+
     outlet
     {
         type            zeroGradient;
-    }
-    blades
-    {
-        type            epsilonWallFunction;
-        value           $internalField;
     }
 }
 

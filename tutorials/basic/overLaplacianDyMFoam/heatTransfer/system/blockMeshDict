@@ -71,7 +71,6 @@ boundary
             ( 9 13 12  8)
         );
     }
-
     walls
     {
         type patch;
@@ -81,14 +80,12 @@ boundary
             (1 5 4 0)
         );
     }
-
     // Populated by subsetMesh
     hole
     {
         type patch;
         faces ();
     }
-
     frontAndBack
     {
         type empty;
@@ -100,7 +97,6 @@ boundary
             (12 13 14 15)
         );
     }
-
     left1
     {
         type patch;
@@ -109,7 +105,6 @@ boundary
             (0 4 7 3)
         );
     }
-
     right1
     {
         type patch;
@@ -119,5 +114,6 @@ boundary
         );
     }
 );
+
 
 // ************************************************************************* //

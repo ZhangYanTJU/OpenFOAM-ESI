@@ -4,8 +4,13 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 
 runApplication blockMesh
+
+restore0Dir
+
 runApplication boxTurb
+
 runApplication $(getApplication)
+
 runApplication -s enstrophy  postProcess -func enstrophy
 
 #------------------------------------------------------------------------------

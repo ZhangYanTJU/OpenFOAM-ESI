@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "constant";
     object      radiationProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -85,7 +84,6 @@ solarLoadCoeffs
     absorptionEmissionModel none;
     scatterModel            none;
     sootModel               none;
-
 }
 
 
@@ -108,5 +106,6 @@ absorptionEmissionModel none;
 scatterModel    none;
 
 sootModel       none;
+
 
 // ************************************************************************* //

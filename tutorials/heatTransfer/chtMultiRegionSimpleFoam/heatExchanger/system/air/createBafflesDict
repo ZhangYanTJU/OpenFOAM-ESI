@@ -19,7 +19,6 @@ FoamFile
 // faces.
 internalFacesOnly true;
 
-
 // Baffles to create.
 baffles
 {
@@ -28,7 +27,6 @@ baffles
         //- Use predefined faceZone to select faces and orientation.
         type        faceZone;
         zoneName    rotorBlades;
-
 
         patches
         {

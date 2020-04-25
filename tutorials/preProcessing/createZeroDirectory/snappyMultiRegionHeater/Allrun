@@ -3,18 +3,23 @@ cd "${0%/*}" || exit                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
 #------------------------------------------------------------------------------
 
-rm -rf constant/polyMesh/sets
+mkdir -p constant/triSurface
+
+cp -f $FOAM_TUTORIALS/resources/geometry/snappyMultiRegionHeater/* \\
+    constant/triSurface
 
 runApplication blockMesh
 
 runApplication surfaceFeatureExtract
 
 runApplication snappyHexMesh -overwrite
+
 runApplication splitMeshRegions -cellZones -overwrite
 
 for i in bottomAir topAir heater leftSolid rightSolid
 do
-    runApplication -s $i changeDictionary -region $i -subDict dictionaryReplacement
+    runApplication -s $i changeDictionary -region $i \\
+        -subDict dictionaryReplacement
 done
 
 runApplication decomposePar -allRegions
@@ -26,7 +31,6 @@ runParallel $(getApplication)
 
 # Reconstruct
 runApplication reconstructPar -allRegions
-
 
 echo
 echo "creating files for paraview post-processing"

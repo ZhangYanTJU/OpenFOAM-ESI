@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0";
     object      CH4;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -25,22 +24,18 @@ boundaryField
     {
         type            zeroGradient;
     }
-
     bottom
     {
         type            zeroGradient;
     }
-
     walls
     {
         type            zeroGradient;
     }
-
     symmetry
     {
         type            symmetryPlane;
     }
-
     frontAndBack
     {
         type            empty;

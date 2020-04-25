@@ -66,7 +66,6 @@ boundary
             (0 4 7 3)
         );
     }
-
     sectionCEnd
     {
         type wall;
@@ -75,7 +74,6 @@ boundary
             (20 21 23 22)
         );
     }
-
     front
     {
         type wall;
@@ -88,7 +86,6 @@ boundary
             (16 20 22 18)
         );
     }
-
     back
     {
         type wall;
@@ -101,7 +98,6 @@ boundary
             (17 19 23 21)
         );
     }
-
     top
     {
         type wall;
@@ -114,7 +110,6 @@ boundary
             (18 22 23 19)
         );
     }
-
     bottom
     {
         type wall;
@@ -132,5 +127,6 @@ boundary
 mergePatchPairs
 (
 );
+
 
 // ************************************************************************* //

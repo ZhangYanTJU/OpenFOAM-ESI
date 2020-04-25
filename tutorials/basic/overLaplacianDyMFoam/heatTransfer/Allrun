@@ -5,12 +5,19 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 ./Allrun.pre
 
+restore0Dir
+
+# Use cellSets to write zoneID
+runApplication setFields
+
 # Serial
 #runApplication $(getApplication)
 
 # Parallel
 runApplication decomposePar -cellDist
+
 runParallel $(getApplication)
+
 runApplication reconstructPar
 
 #------------------------------------------------------------------------------

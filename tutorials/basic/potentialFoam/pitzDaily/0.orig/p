@@ -20,7 +20,7 @@ internalField   uniform 0;
 
 boundaryField
 {
-    inlet
+    "(inlet|upperWall|lowerWall)"
     {
         type            zeroGradient;
     }
@@ -31,20 +31,11 @@ boundaryField
         value           uniform 0;
     }
 
-    upperWall
-    {
-        type            zeroGradient;
-    }
-
-    lowerWall
-    {
-        type            zeroGradient;
-    }
-
     frontAndBack
     {
         type            empty;
     }
 }
+
 
 // ************************************************************************* //

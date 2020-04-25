@@ -12,7 +12,6 @@ FoamFile
     class       dictionary;
     object      blockMeshDict;
 }
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 scale   1;
@@ -48,7 +47,6 @@ boundary
             (3 7 6 2)
         );
     }
-
     minX
     {
         type symmetryPlane;
@@ -57,7 +55,6 @@ boundary
             (0 4 7 3)
         );
     }
-
     maxX
     {
         type symmetryPlane;
@@ -66,7 +63,6 @@ boundary
             (2 6 5 1)
         );
     }
-
     minY
     {
         type symmetryPlane;
@@ -75,7 +71,6 @@ boundary
             (1 5 4 0)
         );
     }
-
     ground
     {
         type        wall;
@@ -84,7 +79,6 @@ boundary
             (0 3 2 1)
         );
     }
-
     maxZ
     {
         type symmetryPlane;
@@ -98,5 +92,6 @@ boundary
 mergePatchPairs
 (
 );
+
 
 // ************************************************************************* //

@@ -47,7 +47,6 @@ boundary
             (1 5 4 0)
         );
     }
-
     ceiling
     {
         type wall;
@@ -56,7 +55,6 @@ boundary
             (3 7 6 2)
         );
     }
-
     sideWalls
     {
         type wall;
@@ -66,7 +64,6 @@ boundary
             (2 6 5 1)
         );
     }
-
     frontAndBack
     {
         type empty;
@@ -81,5 +78,6 @@ boundary
 mergePatchPairs
 (
 );
+
 
 // ************************************************************************* //

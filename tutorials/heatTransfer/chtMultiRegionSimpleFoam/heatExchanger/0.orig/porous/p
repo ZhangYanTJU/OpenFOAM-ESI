@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0";
     object      p;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -21,17 +20,7 @@ internalField   uniform 100000;
 
 boundaryField
 {
-    inlet
-    {
-        type            calculated;
-        value           uniform 100000;
-    }
-    outlet
-    {
-        type            calculated;
-        value           uniform 100000;
-    }
-    fixedWalls
+    "(inlet|outlet|fixedWalls)"
     {
         type            calculated;
         value           uniform 100000;

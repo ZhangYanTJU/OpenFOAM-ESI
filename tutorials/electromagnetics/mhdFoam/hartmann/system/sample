@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type sets;
+type            sets;
 libs            (sampling);
 
 interpolationScheme cellPoint;

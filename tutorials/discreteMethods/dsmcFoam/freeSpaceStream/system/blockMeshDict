@@ -12,7 +12,6 @@ FoamFile
     class       dictionary;
     object      blockMeshDict;
 }
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 scale   0.01;
@@ -44,7 +43,6 @@ boundary
             (1 2 6 5)
         );
     }
-
     inlet
     {
         type patch;
@@ -53,7 +51,6 @@ boundary
             (0 4 7 3)
         );
     }
-
     sides
     {
         type patch;

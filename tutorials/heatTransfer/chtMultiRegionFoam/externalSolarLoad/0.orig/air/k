@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0/air";
     object      k;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -21,43 +20,14 @@ internalField   uniform 0.1;
 
 boundaryField
 {
-    maxY
+    "(maxY|minX|maxX|minY|maxZ)"
     {
         type            inletOutlet;
         value           uniform 0.1;
         inletValue      uniform 0.1;
     }
-    minX
-    {
-        type            inletOutlet;
-        value           uniform 0.1;
-        inletValue      uniform 0.1;
-    }
-    maxX
-    {
-        type            inletOutlet;
-        value           uniform 0.1;
-        inletValue      uniform 0.1;
-    }
-    minY
-    {
-        type            inletOutlet;
-        value           uniform 0.1;
-        inletValue      uniform 0.1;
-    }
-    maxZ
-    {
-        type            inletOutlet;
-        value           uniform 0.1;
-        inletValue      uniform 0.1;
-    }
-    air_to_floor
-    {
-        type            kqRWallFunction;
-        value           uniform 0.1;
-        inletValue      uniform 0.1;
-    }
-    air_to_solid
+
+    "(air_to_floor|air_to_solid)"
     {
         type            kqRWallFunction;
         value           uniform 0.1;

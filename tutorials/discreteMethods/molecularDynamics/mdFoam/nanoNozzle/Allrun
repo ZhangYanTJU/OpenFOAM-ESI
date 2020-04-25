@@ -4,9 +4,13 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 
 runApplication blockMesh
+
+restore0Dir
+
 runApplication decomposePar
 
 runParallel mdInitialise
+
 runParallel $(getApplication)
 
 runApplication reconstructPar

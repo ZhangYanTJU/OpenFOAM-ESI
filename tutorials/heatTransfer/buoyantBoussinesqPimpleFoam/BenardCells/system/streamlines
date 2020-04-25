@@ -7,7 +7,6 @@
 -------------------------------------------------------------------------------
 Description
     Writes out files of streamlines with interpolated field data in VTK format.
-
 \*---------------------------------------------------------------------------*/
 
 nLines  24;

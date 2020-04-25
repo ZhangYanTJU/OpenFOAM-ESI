@@ -6,7 +6,7 @@
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 
- // Solid thermo
+// Solid thermo
 thermoType
 {
     type            heSolidThermo;

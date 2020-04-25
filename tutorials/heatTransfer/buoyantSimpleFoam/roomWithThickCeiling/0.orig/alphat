@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0";
     object      alphat;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -23,30 +22,13 @@ boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    floor
+    "(floor|ceiling|inlet|outlet)"
     {
         type            compressible::alphatWallFunction;
         Prt             0.85;
         value           uniform 0;
     }
-    ceiling
-    {
-        type            compressible::alphatWallFunction;
-        Prt             0.85;
-        value           uniform 0;
-    }
-    inlet
-    {
-        type            compressible::alphatWallFunction;
-        Prt             0.85;
-        value           uniform 0;
-    }
-    outlet
-    {
-        type            compressible::alphatWallFunction;
-        Prt             0.85;
-        value           uniform 0;
-    }
+
     fixedWalls
     {
         type            empty;

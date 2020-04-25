@@ -67,7 +67,6 @@ oversetInterpolation
     //searchBoxDivisions  (100 100 1);
 }
 
-
 // Any additional fields that should not be interpolated
 oversetInterpolationSuppresed
 {

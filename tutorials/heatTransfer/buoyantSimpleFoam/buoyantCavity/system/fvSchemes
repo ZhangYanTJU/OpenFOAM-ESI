@@ -27,7 +27,6 @@ gradSchemes
 divSchemes
 {
     default         none;
-
     div(phi,U)      bounded Gauss limitedLinear 0.2;
     div(phi,K)      bounded Gauss limitedLinear 0.2;
     div(phi,h)      bounded Gauss limitedLinear 0.2;

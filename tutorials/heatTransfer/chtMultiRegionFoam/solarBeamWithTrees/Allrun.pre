@@ -26,7 +26,7 @@ do
         -region $region -subDict dictionaryReplacement
 done
 
-rm log.topoSet
+rm -f log.topoSet
 
 runApplication topoSet -region air
 

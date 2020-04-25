@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    location    "0/air";
     object      T;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -21,47 +20,14 @@ internalField   uniform 300;
 
 boundaryField
 {
-    maxY
+    "(maxY|minX|maxX|minY|maxZ)"
     {
         type            inletOutlet;
         value           uniform 300;
         inletValue      uniform 300;
     }
-    minX
-    {
-        type            inletOutlet;
-        value           uniform 300;
-        inletValue      uniform 300;
-    }
-    maxX
-    {
-        type            inletOutlet;
-        value           uniform 300;
-        inletValue      uniform 300;
-    }
-    minY
-    {
-        type            inletOutlet;
-        value           uniform 300;
-        inletValue      uniform 300;
-    }
-    maxZ
-    {
-        type            inletOutlet;
-        value           uniform 300;
-        inletValue      uniform 300;
-    }
-    air_to_floor
-    {
-        type            compressible::turbulentTemperatureRadCoupledMixed;
-        value           uniform 350;
-        Tnbr            T;
-        kappaMethod     fluidThermo;
-        qrNbr           none;
-        qr              qr;
-        kappa           none;
-    }
-    air_to_solid
+
+    "(air_to_floor|air_to_solid)"
     {
         type            compressible::turbulentTemperatureRadCoupledMixed;
         value           uniform 350;

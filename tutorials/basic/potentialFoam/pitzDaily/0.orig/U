@@ -31,12 +31,7 @@ boundaryField
         type            zeroGradient;
     }
 
-    upperWall
-    {
-        type            noSlip;
-    }
-
-    lowerWall
+    "(upperWall|lowerWall)"
     {
         type            noSlip;
     }
@@ -46,5 +41,6 @@ boundaryField
         type            empty;
     }
 }
+
 
 // ************************************************************************* //

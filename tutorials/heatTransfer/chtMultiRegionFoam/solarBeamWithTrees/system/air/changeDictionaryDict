@@ -83,7 +83,6 @@ dictionaryReplacement
                 type            epsilonWallFunction;
                 value           uniform 0.01;
             }
-
         }
     }
 
@@ -104,7 +103,6 @@ dictionaryReplacement
                 type            kqRWallFunction;
                 value           uniform 0.1;
             }
-
         }
     }
 
@@ -124,7 +122,6 @@ dictionaryReplacement
                 type            fixedFluxPressure;
                 value           uniform 1e5;
             }
-
         }
     }
 
@@ -140,8 +137,7 @@ dictionaryReplacement
             }
         }
     }
-
-
 }
+
 
 // ************************************************************************* //

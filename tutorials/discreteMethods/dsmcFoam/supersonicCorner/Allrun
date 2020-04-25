@@ -4,9 +4,15 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 
 runApplication blockMesh
+
+restore0Dir
+
 runApplication decomposePar
+
 runParallel dsmcInitialise
+
 runParallel $(getApplication)
+
 runApplication reconstructPar -noLagrangian
 
 #------------------------------------------------------------------------------

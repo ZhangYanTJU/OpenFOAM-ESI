@@ -5,8 +5,6 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 cleanCase0
 
-rm -rf VTK
-rm -rf constant/cellToRegion
 rm -rf constant/*/polyMesh  # region meshes
 
 #------------------------------------------------------------------------------
