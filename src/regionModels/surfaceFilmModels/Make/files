@@ -77,5 +77,6 @@ $(PATCHFIELDS)/filmHeightInletVelocity/filmHeightInletVelocityFvPatchVectorField
 $(PATCHFIELDS)/inclinedFilmNusseltHeight/inclinedFilmNusseltHeightFvPatchScalarField.C
 $(PATCHFIELDS)/inclinedFilmNusseltInletVelocity/inclinedFilmNusseltInletVelocityFvPatchVectorField.C
 
+functionObjects/filmFlux/filmFlux.C
 
 LIB = $(FOAM_LIBBIN)/libsurfaceFilmModels
