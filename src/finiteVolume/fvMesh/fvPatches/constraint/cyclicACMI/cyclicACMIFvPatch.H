@@ -60,10 +60,18 @@ class cyclicACMIFvPatch
 
         const cyclicACMIPolyPatch& cyclicACMIPolyPatch_;
 
+        //- Flag to detect whether AMI is up to date with mesh points
+        mutable uniformDimensionedScalarField areaTime_;
+
+
 
 protected:
 
     // Protected Member functions
+
+        //- Update the AMI and patch areas. Return true if anything
+        //  updated
+        virtual bool updateAreas() const;
 
         //- Helper function to reset the FV patch areas from the primitive patch
         void resetPatchAreas(const fvPatch& fvp) const;
@@ -84,12 +92,7 @@ public:
     // Constructors
 
         //- Construct from polyPatch
-        cyclicACMIFvPatch(const polyPatch& patch, const fvBoundaryMesh& bm)
-        :
-            coupledFvPatch(patch, bm),
-            cyclicACMILduInterface(),
-            cyclicACMIPolyPatch_(refCast<const cyclicACMIPolyPatch>(patch))
-        {}
+        cyclicACMIFvPatch(const polyPatch& patch, const fvBoundaryMesh& bm);
 
 
     // Member functions
@@ -137,6 +140,9 @@ public:
             //- Return a reference to the AMI interpolator
             virtual const AMIPatchToPatchInterpolation& AMI() const
             {
+                // Make sure any areas are up-to-date
+                updateAreas();
+
                 return cyclicACMIPolyPatch_.AMI();
             }
 
@@ -181,6 +187,9 @@ public:
                 const Field<Type>& fld
             ) const
             {
+                // Make sure areas are up-to-date
+                updateAreas();
+
                 return
                     cyclicACMIPolyPatch_.cyclicAMIPolyPatch::interpolate
                     (
