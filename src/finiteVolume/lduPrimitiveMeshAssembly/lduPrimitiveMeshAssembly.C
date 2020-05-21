@@ -102,6 +102,7 @@ Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
     faceMap_.setSize(nMeshes);
     patchLocalToGlobalMap_.setSize(nMeshes);
     magSfFaceBoundMap_.setSize(nMeshes);
+    patchRemoteToLocal_.setSize(nMeshes);
 
     // Determine cellOffset and faceOffset
     cellOffsets_.setSize(1+nMeshes);
@@ -111,6 +112,24 @@ Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
         cellOffsets_[meshi+1] =
             cellOffsets_[meshi] + meshes[meshi].lduAddr().size();
     }
+}
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::lduPrimitiveMeshAssembly::fluxRequired(const word& name) const
+{
+    bool flux = false;
+    for (label i=0; i < meshes_.size(); ++i)
+    {
+        if (meshes_[i].fluxRequired(name))
+        {
+            flux = true;
+            break;
+        }
+    }
+    return flux;
+
 }
 
 // ************************************************************************* //

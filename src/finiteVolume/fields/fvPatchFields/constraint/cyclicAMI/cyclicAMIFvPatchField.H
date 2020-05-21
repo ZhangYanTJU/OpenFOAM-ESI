@@ -84,6 +84,9 @@ class cyclicAMIFvPatchField
         //- Local reference cast into the cyclic patch
         const cyclicAMIFvPatch& cyclicAMIPatch_;
 
+        //- Name of the diffusivity field in the laplacian
+        const word diffusivityName_;
+
 
     // Private Member Functions
 
@@ -96,7 +99,11 @@ class cyclicAMIFvPatchField
 
 
         //- Return local gammaSfDelta
-        tmp<scalarField> gammaSfDelta(fvMatrixAssembly& matrix) const;
+        tmp<scalarField> gammaSfDelta
+        (
+            fvMatrixAssembly& matrix,
+            const label
+        ) const;
 
 
 public:
@@ -218,7 +225,21 @@ public:
             (
                 fvMatrixAssembly& m,
                 const labelList& faceMap,
-                const label cellOffset
+                const label cellOffset,
+                const label iMatrix
+            );
+
+
+            //- Calculate boundaryCoeffs/internalCoeffs for
+            //  fvMatrixAssembly
+            virtual void manipulateInterBoundCoeffs
+            (
+                fvMatrixAssembly& matrix,
+                const labelList& faceMap,
+                const label cellOffset,
+                const label iMatrix,
+                scalarField& boundaryCoeffs,
+                scalarField& internalCoeffs
             );
 
 

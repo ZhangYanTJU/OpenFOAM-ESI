@@ -103,8 +103,6 @@ protected:
 
         mutable fvMeshLduAddressing* lduPtr_;
 
-        //mutable lduPrimitiveMeshAssembly* lduPrimPtr_;
-
         //- Current time index for cell volumes
         //  Note.  The whole mechanism will be replaced once the
         //  dimensionedField is created and the dimensionedField
@@ -284,16 +282,6 @@ public:
             {
                 return polyMesh::time();
             }
-
-//             const lduPrimitiveMeshAssembly* lduPrimitive() const
-//             {
-//                 if (lduPrimPtr_)
-//                 {
-//                     return lduPrimPtr_;
-//                 }
-//
-//                 return lduPrimPtr_;
-//             }
 
             //- Return true if thisDb() is a valid DB
             virtual bool hasDb() const

@@ -251,7 +251,8 @@ void Foam::cyclicFvPatchField<Type>::manipulateMatrix
 (
     fvMatrixAssembly& matrix,
     const labelList& faceMap,
-    const label cellOffset
+    const label cellOffset,
+    const label iMatrix
 )
 {
     const scalarField pAlphaSfDelta(gammaSfDelta());

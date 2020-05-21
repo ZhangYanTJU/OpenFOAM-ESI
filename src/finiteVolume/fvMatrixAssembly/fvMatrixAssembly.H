@@ -115,6 +115,7 @@ private:
         //- components
         void transferFieldsAndClean();
 
+        //- Calculate flux of the matrix
         void calculateFlux();
 
         //- Update assembled source, internalCoeffs and boundaryCoeffs
@@ -133,6 +134,8 @@ private:
         //- Calculate face areas and cell volumes for the assembled matrix
         //- to be used by the GAMG solver
         void calcFaceAreasCellVolumes();
+
+        void relaxFields();
 
 
         //- No copy construct

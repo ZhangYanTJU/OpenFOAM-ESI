@@ -85,7 +85,7 @@ Foam::fvMatrix<Foam::scalar>::solver
 
     scalarField saveDiag(diag());
     addBoundaryDiag(diag(), 0);
-    
+
     lduInterfaceFieldPtrsList interfaces =
         psi_.boundaryField().scalarInterfaces();
 
@@ -176,10 +176,10 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
     scalarField totalSource(source_);
     addBoundarySource(totalSource, false);
-    
+
     lduInterfaceFieldPtrsList interfaces =
                 psi.boundaryField().scalarInterfaces();
-                
+
     // Solver call
     solverPerformance solverPerf = lduMatrix::solver::New
     (
@@ -220,7 +220,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveImplicitCyclic
     m.addFvMatrix(*this);
     solverPerformance solverPerf(m.solve(solverControls));
 
-    
+
     if (debug)
     {
         Info.masterStream(this->mesh().comm())

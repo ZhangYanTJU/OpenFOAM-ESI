@@ -524,7 +524,20 @@ public:
             (
                 fvMatrixAssembly& matrix,
                 const labelList& faceMap,
-                const label cellOffset
+                const label cellOffset,
+                const label iMatrix
+            );
+
+            //- Calculate boundaryCoeffs/internalCoeffs for
+            //  fvMatrixAssembly
+            virtual void manipulateInterBoundCoeffs
+            (
+                fvMatrixAssembly& matrix,
+                const labelList& faceMap,
+                const label cellOffset,
+                const label iMatrix,
+                scalarField& boundaryCoeffs,
+                scalarField& internalCoeffs
             );
 
 

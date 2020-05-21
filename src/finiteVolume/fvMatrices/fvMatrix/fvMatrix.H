@@ -142,12 +142,12 @@ class fvMatrix
         //- Face flux field for non-orthogonal correction
         mutable GeometricField<Type, fvsPatchField, surfaceMesh>
             *faceFluxCorrectionPtr_;
-            
-        //- Face flux field 
+
+        //- Face flux field
         mutable GeometricField<Type, fvsPatchField, surfaceMesh>
             *faceFluxPtr_;
-            
-        
+
+
 
 
 protected:
@@ -302,10 +302,10 @@ public:
 
             //- Return the patch evaluation schedule
             const lduSchedule& patchSchedule() const
-            {                
+            {
                 return lduMatrix::patchSchedule();
             }
-            
+
             const GeometricField<Type, fvPatchField, volMesh>& psi() const
             {
                 return psi_;
@@ -364,8 +364,7 @@ public:
             {
                 return faceFluxCorrectionPtr_;
             }
-            
-            
+
             surfaceTypeFieldPtr& faceFluxPtr()
             {
                 return faceFluxPtr_;
@@ -469,7 +468,7 @@ public:
             //- Solve coupled returning the solution statistics.
             //  Use the given solver controls
             SolverPerformance<Type> solveCoupled(const dictionary&);
-            
+
             //- Solve solveImplicitCyclic returning the solution statistics.
             //  Use the given solver controls
             SolverPerformance<Type> solveImplicitCyclic(const dictionary&);

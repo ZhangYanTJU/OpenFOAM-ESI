@@ -66,7 +66,7 @@ assemblyFaceAreaPairGAMGAgglomeration
 
     agglomerate
     (
-        matrix.mesh(),
+        assembleMatrix.mesh(),
         mag
         (
             cmptMultiply
