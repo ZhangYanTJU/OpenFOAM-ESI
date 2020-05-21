@@ -123,7 +123,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::calculatedProcessorFvPatchField<Type>::patchNeighbourField() const
 {
-    if (debug && !this->ready())
+    if (!this->ready())
     {
         FatalErrorInFunction
             << "On patch of size " << procInterface_.faceCells().size()
@@ -219,16 +219,16 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
 ) const
 {
     // Bypass patchInternalField since uses fvPatch addressing
-
+DebugVar(psiInternal)
     const labelList& fc = lduAddr.patchAddr(patchId);
-
+DebugVar(fc)
     scalarSendBuf_.setSize(fc.size());
     forAll(fc, i)
     {
         scalarSendBuf_[i] = psiInternal[fc[i]];
     }
-
-    if (debug && !this->ready())
+DebugVar(scalarSendBuf_)
+    if (!this->ready())
     {
         FatalErrorInFunction
             << "On patch " //<< interface_.name()
@@ -236,7 +236,8 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
             << abort(FatalError);
     }
 
-
+DebugVar(UPstream::nRequests())
+DebugVar(procInterface_.tag())
     scalarReceiveBuf_.setSize(scalarSendBuf_.size());
     outstandingRecvRequest_ = UPstream::nRequests();
     UIPstream::read
@@ -248,7 +249,8 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
         procInterface_.tag(),
         procInterface_.comm()
     );
-
+DebugVar(scalarReceiveBuf_)
+DebugVar(procInterface_.neighbProcNo())
     outstandingSendRequest_ = UPstream::nRequests();
     UOPstream::write
     (
@@ -264,6 +266,7 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
     (
         static_cast<const lduInterfaceField&>(*this)
     ).updatedMatrix() = false;
+DebugVar("Finish initInterfaceMatrixUpdate ")
 }
 
 
@@ -308,11 +311,14 @@ void Foam::calculatedProcessorFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
+DebugVar("updateInterfaceMatrix")
     if (this->updatedMatrix())
     {
         return;
     }
 
+DebugVar(outstandingRecvRequest_)
+DebugVar(Pstream::nRequests())
     if
     (
         outstandingRecvRequest_ >= 0

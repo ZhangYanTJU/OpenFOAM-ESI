@@ -45,6 +45,7 @@ SourceFiles
 namespace Foam
 {
 
+class lduPrimitiveProcessorInterface;
 /*---------------------------------------------------------------------------*\
                   Class lduPrimitiveMeshAssembly Declaration
 \*---------------------------------------------------------------------------*/
@@ -61,22 +62,28 @@ class lduPrimitiveMeshAssembly
         //- Overwrite patchAddr from lduPrimitiveMesh for assembly ldu address
         List<labelList> patchAddr_;
 
+        //- Added (processor)lduInterfaces for remote bits of stencil.
+        PtrList<const lduPrimitiveProcessorInterface> remoteStencilInterfaces_;
+
+        //- Origin patch of remote stencil
+        labelListList patchRemoteToLocal_;
+
         //- Map patches from local (-1 for non-existing)
         labelListList patchMap_;
 
         //- Map patches from local to global
         labelListList patchLocalToGlobalMap_;
 
-        //- Map faces from local to global
+        //- Map internal faces from local to global
         labelListList faceMap_;
 
-        //- Map patch face from local to global
+        //- Map patch local sub-face to global new internal face
         labelListListList faceBoundMap_;
 
-        //- Map patch local face to nbrCellId
+        //- Map patch local sub-face to nbrCellId
         labelListListList cellBoundMap_;
 
-        //- Map minimum face weights
+        //- Map patch local sub-face to local patch face
         labelListListList magSfFaceBoundMap_;
 
         //- Offset cells
@@ -211,6 +218,20 @@ public:
         {
             return resetCyclics_;
         }
+
+        const PtrList<const lduPrimitiveProcessorInterface>&
+        remoteStencilInterfaces() const
+        {
+            return remoteStencilInterfaces_;
+        }
+
+        const labelListList& patchRemoteToLocal() const
+        {
+            return patchRemoteToLocal_;
+        }
+
+        //- Flux required
+        bool fluxRequired(const word& name) const;
 };
 
 

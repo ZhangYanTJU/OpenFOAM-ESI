@@ -365,7 +365,23 @@ void Foam::fvPatchField<Type>::manipulateMatrix
 (
     fvMatrixAssembly& matrix,
     const labelList& faceMap,
-    const label cellOffset
+    const label cellOffset,
+    const label iMatrix
+)
+{
+    manipulatedMatrix_ = true;
+}
+
+
+template<class Type>
+void Foam::fvPatchField<Type>::manipulateInterBoundCoeffs
+(
+    fvMatrixAssembly& matrix,
+    const labelList& faceMap,
+    const label cellOffset,
+    const label iMatrix,
+    scalarField& boundaryCoeffs,
+    scalarField& internalCoeffs
 )
 {
     manipulatedMatrix_ = true;

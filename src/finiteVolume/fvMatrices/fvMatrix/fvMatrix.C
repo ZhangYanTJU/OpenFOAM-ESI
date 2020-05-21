@@ -282,14 +282,6 @@ Foam::fvMatrix<Type>::fvMatrix
     DebugInFunction
         << "Constructing fvMatrix<Type> for field " << psi_.name() << endl;
 
-//     forAll (psi.boundaryField(), patchI)
-//     {
-//         if (psi.boundaryField()[patchI].useImplicit() && !lduPrimPtr_)
-//         {
-//             useImplicit_ = true;
-//             lduPrimPtr_ =  new lduPrimitiveMeshAssembly(psi.mesh());
-//         }
-//     }
     // Initialise coupling coefficients
     forAll(psi.mesh().boundary(), patchi)
     {
@@ -337,7 +329,6 @@ Foam::fvMatrix<Type>::fvMatrix(const fvMatrix<Type>& fvm)
     faceFluxCorrectionPtr_(nullptr),
     faceFluxPtr_(nullptr)
 {
-
     DebugInFunction
         << "Copying fvMatrix<Type> for field " << psi_.name() << endl;
 
@@ -380,7 +371,6 @@ Foam::fvMatrix<Type>::fvMatrix(const tmp<fvMatrix<Type>>& tfvm)
     faceFluxCorrectionPtr_(nullptr),
     faceFluxPtr_(nullptr)
 {
-
     DebugInFunction
         << "Copying fvMatrix<Type> for field " << psi_.name() << endl;
 
@@ -424,7 +414,6 @@ Foam::fvMatrix<Type>::fvMatrix
 
     DebugInFunction
         << "Constructing fvMatrix<Type> for field " << psi_.name() << endl;
-
 
     // Initialise coupling coefficients
     forAll(psi.mesh().boundary(), patchi)

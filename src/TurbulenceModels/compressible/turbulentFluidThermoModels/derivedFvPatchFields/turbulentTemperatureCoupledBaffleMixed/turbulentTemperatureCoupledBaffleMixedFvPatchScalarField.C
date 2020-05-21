@@ -370,7 +370,8 @@ void turbulentTemperatureCoupledBaffleMixedFvPatchScalarField::manipulateMatrix
 (
     fvMatrixAssembly& matrix,
     const labelList& faceMap,
-    const label cellOffset
+    const label cellOffset,
+    const label iMatrix
 )
 {
     FatalErrorInFunction

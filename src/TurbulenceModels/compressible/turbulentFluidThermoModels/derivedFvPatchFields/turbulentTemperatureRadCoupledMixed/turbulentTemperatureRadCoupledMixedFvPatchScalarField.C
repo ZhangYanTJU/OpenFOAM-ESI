@@ -350,7 +350,8 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::manipulateMatrix
 (
     fvMatrixAssembly& matrix,
     const labelList& faceMap,
-    const label cellOffset
+    const label cellOffset,
+    const label iMatrix
 )
 {
     const mappedPatchBase& mpp =

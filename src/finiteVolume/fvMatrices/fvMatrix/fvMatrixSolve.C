@@ -316,7 +316,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveImplicitCyclic
                "solving fvMatrix<Type>"
             << endl;
     }
-    
+
     NotImplemented;
 
     GeometricField<Type, fvPatchField, volMesh>& psi =

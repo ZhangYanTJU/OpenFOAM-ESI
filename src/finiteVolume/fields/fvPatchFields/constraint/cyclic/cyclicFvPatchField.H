@@ -212,7 +212,8 @@ public:
             (
                 fvMatrixAssembly& m,
                 const labelList& faceMap,
-                const label cellOffset
+                const label cellOffset,
+                const label iMatrix
             );
 
 
