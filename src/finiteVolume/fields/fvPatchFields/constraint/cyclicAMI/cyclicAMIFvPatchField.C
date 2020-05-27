@@ -370,14 +370,31 @@ template<class Type>
 void Foam::cyclicAMIFvPatchField<Type>::manipulateInterBoundCoeffs
 (
     fvMatrixAssembly& matrix,
-    const labelList& faceMap,
-    const label cellOffset,
+    const scalarField& weights,
+    const labelUList& fc,
+    const vectorField& delta,
     const label iMatrix,
     scalarField& boundaryCoeffs,
     scalarField& internalCoeffs
 )
 {
-    DebugVar("manipulateInterBoundCoeffs")
+    const label index(this->patch().index());
+
+    const volScalarField& gamma =
+        this->db().objectRegistry::template lookupObject
+        <
+            volScalarField
+        >(diffusivityName_);
+
+    scalarField gammaf(fc.size(), Zero);
+    scalarField deltaf(fc.size(), Zero);
+    scalarField Sf(fc.size(), Zero);
+
+    const scalarField& magSf = this->patch().magSf();
+
+
+    //boundaryCoeffs = -;
+    //internalCoeffs = -;
 }
 
 
@@ -450,6 +467,7 @@ Foam::cyclicAMIFvPatchField<Type>::gammaSfDelta
         {
             const label faceIdMap =
                 matrix.mesh().magSfFaceBoundMap()[iMatrix][index][subFaceI];
+
             if (faceIdMap != -1)
             {
                 Sf[subFaceI] = w[i]*this->patch().magSf()[faceIdMap];

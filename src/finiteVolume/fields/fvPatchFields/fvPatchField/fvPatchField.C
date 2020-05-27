@@ -377,8 +377,9 @@ template<class Type>
 void Foam::fvPatchField<Type>::manipulateInterBoundCoeffs
 (
     fvMatrixAssembly& matrix,
-    const labelList& faceMap,
-    const label cellOffset,
+    const scalarField& weights,
+    const labelUList& fc,
+    const vectorField& delta,
     const label iMatrix,
     scalarField& boundaryCoeffs,
     scalarField& internalCoeffs

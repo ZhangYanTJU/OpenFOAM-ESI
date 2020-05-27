@@ -219,15 +219,15 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
 ) const
 {
     // Bypass patchInternalField since uses fvPatch addressing
-DebugVar(psiInternal)
+
     const labelList& fc = lduAddr.patchAddr(patchId);
-DebugVar(fc)
+
     scalarSendBuf_.setSize(fc.size());
     forAll(fc, i)
     {
         scalarSendBuf_[i] = psiInternal[fc[i]];
     }
-DebugVar(scalarSendBuf_)
+
     if (!this->ready())
     {
         FatalErrorInFunction
@@ -236,10 +236,11 @@ DebugVar(scalarSendBuf_)
             << abort(FatalError);
     }
 
-DebugVar(UPstream::nRequests())
-DebugVar(procInterface_.tag())
+
+
     scalarReceiveBuf_.setSize(scalarSendBuf_.size());
     outstandingRecvRequest_ = UPstream::nRequests();
+
     UIPstream::read
     (
         Pstream::commsTypes::nonBlocking,
@@ -249,9 +250,9 @@ DebugVar(procInterface_.tag())
         procInterface_.tag(),
         procInterface_.comm()
     );
-DebugVar(scalarReceiveBuf_)
-DebugVar(procInterface_.neighbProcNo())
+
     outstandingSendRequest_ = UPstream::nRequests();
+
     UOPstream::write
     (
         Pstream::commsTypes::nonBlocking,
@@ -317,8 +318,7 @@ DebugVar("updateInterfaceMatrix")
         return;
     }
 
-DebugVar(outstandingRecvRequest_)
-DebugVar(Pstream::nRequests())
+
     if
     (
         outstandingRecvRequest_ >= 0
@@ -331,7 +331,9 @@ DebugVar(Pstream::nRequests())
     outstandingSendRequest_ = -1;
     outstandingRecvRequest_ = -1;
 
-
+DebugVar(outstandingRecvRequest_)
+DebugVar(scalarReceiveBuf_)
+DebugVar(coeffs)
     // Consume straight from scalarReceiveBuf_. Note use of our own
     // helper to avoid using fvPatch addressing
     addToInternalField(result, !add, coeffs, scalarReceiveBuf_);

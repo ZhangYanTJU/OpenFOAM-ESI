@@ -42,6 +42,76 @@ namespace Foam
 
 //* * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
+Foam::tmp<Foam::scalarField> Foam::fvMatrixAssembly::weights
+(
+    const cyclicAMIFvPatch& pp,
+    const labelUList& fc
+)
+{
+    tmp<scalarField> tw(new scalarField(fc.size()));
+    scalarField& w = tw.ref();
+
+    const cyclicAMIPolyPatch& mpp = pp.cyclicAMIPatch();
+
+    const cyclicAMIFvPatch& nbrPatch = pp.neighbFvPatch();
+
+    const scalarField deltas(pp.nf() & pp.coupledFvPatch::delta());
+
+    tmp<scalarField> tnbrDeltas;
+        tnbrDeltas =
+            mpp.interpolate
+            (
+                nbrPatch.nf()
+              & nbrPatch.coupledFvPatch::delta()
+            );
+
+    const scalarField& nbrDeltas = tnbrDeltas();
+
+    //primitiveMesh_.subFaceCompPatchMap()[i][mpp.index()]
+
+    forAll(fc, j)
+    {
+        scalar di = deltas[fc[j]];
+        scalar dni = nbrDeltas[fc[j]];
+
+        w[j] = dni/(di + dni);
+    }
+
+    return tw;
+}
+
+
+Foam::tmp<Foam::vectorField> Foam::fvMatrixAssembly::deltaCoeffs
+(
+    const cyclicAMIFvPatch& pp,
+    const labelUList& fc
+)
+{
+    tmp<vectorField> tdeltaCoeffs(new vectorField(fc.size()));
+    vectorField& deltaCoeffs = tdeltaCoeffs.ref();
+
+    const cyclicAMIPolyPatch& mpp = pp.cyclicAMIPatch();
+
+    const cyclicAMIFvPatch& nbrPatch = pp.neighbFvPatch();
+
+    const vectorField patchD(pp.coupledFvPatch::delta());
+
+    tmp<vectorField> tnbrPatchD;
+    tnbrPatchD = mpp.interpolate(nbrPatch.coupledFvPatch::delta());
+    const vectorField& nbrPatchD = tnbrPatchD();
+
+    forAll(fc, j)
+    {
+        const vector& ddi = patchD[fc[j]];
+        const vector& dni = nbrPatchD[fc[j]];
+
+        deltaCoeffs[j] = ddi - dni;
+    }
+
+    return tdeltaCoeffs;
+}
+
+
 void Foam::fvMatrixAssembly::addBoundaryDiag
 (
     scalarField& diag
@@ -50,8 +120,6 @@ void Foam::fvMatrixAssembly::addBoundaryDiag
 
     forAll(psis_, i)
     {
-        const volScalarField& psi = psis_[i];
-
         //forAll(psi.boundaryField(), patchi)
         forAll(primitiveMesh_.patchMap()[i], patchi)
         {
@@ -582,10 +650,6 @@ DebugVar(interfaceID)
                             psis_[i]
                         )
                     );
-
-//DebugVar(interfaces_[interfaceID].myProcNo())
-//DebugVar(interfaces_[interfaceID].patchNeighbourField())
-
                     interfaceID++;
                 }
             }
@@ -631,19 +695,33 @@ void Foam::fvMatrixAssembly::setBounAndInterCoeffs()
         {
             if (primitiveMesh_.remoteStencilInterfaces().set(remoteI))
             {
-                label supressedPatch = primitiveMesh_.patchRemoteToLocal()[i][remoteI];
+                label supressedPatch =
+                    primitiveMesh_.patchRemoteToLocal()[i][remoteI];
+
                 if (supressedPatch != -1)
                 {
-                    //label globalPatchId = primitiveMesh_.patchMap()[i][interfaceID];
-                    const labelUList& fc = primitiveMesh_.patchAddr()[interfaceID];
-                    //interfaces_[interfaceID].interface().faceCells();
+                    const labelUList& fc =
+                        primitiveMesh_.patchAddr()[interfaceID];
+
+// We need : gammaf*Sf*deltaCoeffs as boundaryCoeffs/internalCoeffs
+// for the new processor Interface:
+// weights: remote  for gamma interpolation on face
+// Sf of source local
+// deltaCoeffs : remote
+// Normally all this is calculated by cyclicAMIFvPatch but here
+// we do it manually as fvPatch does not exist
+                    const cyclicAMIFvPatch& pp =
+                        refCast<const cyclicAMIFvPatch>
+                        (
+                            psis_[i].boundaryField()[supressedPatch]
+                        );
+
+                    tmp<scalarField> w = weights(pp, fc);
+                    //tmp<vectorField> localSf(pp.Sf(), fc);
+                    tmp<vectorField> delta(deltaCoeffs(pp, fc));
 
                     scalarField internalCoeffs(fc.size(), Zero);
                     scalarField boundaryCoeffs(fc.size(), Zero);
-    DebugVar(supressedPatch)
-    DebugVar(fc)
-    DebugVar(interfaceID)
-    DebugVar(primitiveMesh_.faceBoundMap()[i][supressedPatch])
 
                     psis_[i].boundaryFieldRef()
                     [
@@ -651,8 +729,9 @@ void Foam::fvMatrixAssembly::setBounAndInterCoeffs()
                     ].manipulateInterBoundCoeffs
                     (
                         *this,
-                        primitiveMesh_.faceBoundMap()[i][supressedPatch],
-                        primitiveMesh_.cellOffsets()[i],
+                        w,
+                        fc,
+                        delta,
                         i,
                         internalCoeffs,
                         boundaryCoeffs
