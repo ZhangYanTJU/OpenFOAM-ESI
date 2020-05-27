@@ -42,6 +42,7 @@ SourceFiles
 #include "fvMatricesFwd.H"
 #include "fvSolution.H"
 #include "lduPrimitiveMeshAssembly.H"
+#include "cyclicAMIFvPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -136,6 +137,20 @@ private:
         void calcFaceAreasCellVolumes();
 
         void relaxFields();
+
+        //- Calculate weight for remote stencils
+        tmp<scalarField> weights
+        (
+            const cyclicAMIFvPatch&,
+            const labelUList& fc
+        );
+
+        //- Calculate deltaCoeffs for remote stencils
+        tmp<vectorField> deltaCoeffs
+        (
+            const cyclicAMIFvPatch&,
+            const labelUList& fc
+        );
 
 
         //- No copy construct

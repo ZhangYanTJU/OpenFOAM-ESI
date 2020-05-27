@@ -102,6 +102,7 @@ Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
     faceMap_.setSize(nMeshes);
     patchLocalToGlobalMap_.setSize(nMeshes);
     magSfFaceBoundMap_.setSize(nMeshes);
+    subFaceCompPatchMap_.setSize(nMeshes);
     patchRemoteToLocal_.setSize(nMeshes);
 
     // Determine cellOffset and faceOffset

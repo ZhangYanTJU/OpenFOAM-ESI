@@ -86,6 +86,9 @@ class lduPrimitiveMeshAssembly
         //- Map patch local sub-face to local patch face
         labelListListList magSfFaceBoundMap_;
 
+        //- Map from subFace to compatch numebering
+        List<labelListListList> subFaceCompPatchMap_;
+
         //- Offset cells
         labelList cellOffsets_;
 
@@ -187,6 +190,12 @@ public:
         const labelListListList& magSfFaceBoundMap() const
         {
             return magSfFaceBoundMap_;
+        }
+
+
+        const List<labelListListList>& subFaceCompPatchMap() const
+        {
+            return subFaceCompPatchMap_;
         }
 
         //- Return cellOffsets [1+nMeshes]
