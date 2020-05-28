@@ -59,22 +59,16 @@ void fvMatrix<scalar>::setComponentReference
 );
 
 template<>
-autoPtr<fvMatrix<scalar>::fvSolver> fvMatrix<scalar>::solver
-(
-    const dictionary&
-);
+autoPtr<fvMatrix<scalar>::fvSolver> fvMatrix<scalar>::solver(const dictionary&);
 
 template<>
-solverPerformance fvMatrix<scalar>::fvSolver::solve
-(
-    const dictionary&
-);
+solverPerformance fvMatrix<scalar>::fvSolver::solve(const dictionary&);
 
 template<>
-solverPerformance fvMatrix<scalar>::solveSegregated
-(
-    const dictionary&
-);
+solverPerformance fvMatrix<scalar>::solveSegregated(const dictionary&);
+
+template<>
+solverPerformance fvMatrix<scalar>::solveImplicitCyclic(const dictionary&);
 
 template<>
 tmp<scalarField> fvMatrix<scalar>::residual() const;
