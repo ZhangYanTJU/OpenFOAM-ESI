@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,10 +37,9 @@ bool Foam::SolverPerformance<Type>::checkSingularity
     const Type& wApA
 )
 {
-    for(direction cmpt=0; cmpt<pTraits<Type>::nComponents; cmpt++)
+    for (direction cmpt=0; cmpt<pTraits<Type>::nComponents; ++cmpt)
     {
-        singular_[cmpt] =
-            component(wApA, cmpt) < vsmall_;
+        singular_[cmpt] = (component(wApA, cmpt) < vsmall_);
     }
 
     return singular();
@@ -49,9 +49,9 @@ bool Foam::SolverPerformance<Type>::checkSingularity
 template<class Type>
 bool Foam::SolverPerformance<Type>::singular() const
 {
-    for(direction cmpt=0; cmpt<pTraits<Type>::nComponents; cmpt++)
+    for (const bool val : singular_)
     {
-        if (!singular_[cmpt]) return false;
+        if (!val) return false;
     }
 
     return true;
@@ -73,7 +73,7 @@ bool Foam::SolverPerformance<Type>::checkConvergence
             << endl;
     }
 
-    if
+    converged_ =
     (
         finalResidual_ < Tolerance
      || (
@@ -81,14 +81,7 @@ bool Foam::SolverPerformance<Type>::checkConvergence
           > small_*pTraits<Type>::one
          && finalResidual_ < cmptMultiply(RelTolerance, initialResidual_)
         )
-    )
-    {
-        converged_ = true;
-    }
-    else
-    {
-        converged_ = false;
-    }
+    );
 
     return converged_;
 }
@@ -100,30 +93,26 @@ void Foam::SolverPerformance<Type>::print
     Ostream& os
 ) const
 {
-    for(direction cmpt=0; cmpt<pTraits<Type>::nComponents; cmpt++)
+    for (direction cmpt=0; cmpt<pTraits<Type>::nComponents; ++cmpt)
     {
-        if (pTraits<Type>::nComponents == 1)
+        os  << solverName_ << ":  Solving for " << fieldName_;
+        if (pTraits<Type>::nComponents > 1)
         {
-            os  << solverName_ << ":  Solving for " << fieldName_;
-
-        }
-        else
-        {
-            os  << solverName_ << ":  Solving for "
-                << word(fieldName_ + pTraits<Type>::componentNames[cmpt]);
+            os  << pTraits<Type>::componentNames[cmpt];
         }
 
         if (singular_[cmpt])
         {
-            os  << ":  solution singularity" << endl;
+            os  << ":  solution singularity";
         }
         else
         {
             os  << ", Initial residual = " << component(initialResidual_, cmpt)
                 << ", Final residual = " << component(finalResidual_, cmpt)
                 << ", No Iterations " << nIterations_
-                << endl;
+                ;
         }
+        os  << endl;
     }
 }
 

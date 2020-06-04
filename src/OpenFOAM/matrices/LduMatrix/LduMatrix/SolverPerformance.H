@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,31 +47,21 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of friend functions and operators
-
-template<class Type>
-class SolverPerformance;
+// Forward Declarations
+template<class Type> class SolverPerformance;
 
 template<class Type>
 SolverPerformance<Type> max
 (
-    const SolverPerformance<Type>&,
-    const SolverPerformance<Type>&
+    const SolverPerformance<Type>& sp1,
+    const SolverPerformance<Type>& sp2
 );
 
 template<class Type>
-Istream& operator>>
-(
-    Istream&,
-    SolverPerformance<Type>&
-);
+Istream& operator>>(Istream& is, SolverPerformance<Type>& sp);
 
 template<class Type>
-Ostream& operator<<
-(
-    Ostream&,
-    const SolverPerformance<Type>&
-);
+Ostream& operator<<(Ostream& os, const SolverPerformance<Type>& sp);
 
 
 /*---------------------------------------------------------------------------*\
@@ -83,7 +74,7 @@ class SolverPerformance
     // Label type corresponding to Type
     typedef typename pTraits<Type>::labelType labelType;
 
-    // Private data
+    // Private Data
 
         word        solverName_;
         word        fieldName_;
@@ -96,25 +87,29 @@ class SolverPerformance
 
 public:
 
-    // Static data
+    // Static Data
 
-        // Declare name of the class and its debug switch
+        //- Declare name of the class and its debug switch
         ClassName("SolverPerformance");
 
-        //- Large Type for the use in solvers
-        static const scalar great_;
+        //- Large value for the use in solvers
+        static constexpr scalar great_ = 1e20;
 
-        //- Small Type for the use in solvers
-        static const scalar small_;
+        //- Small value for the use in solvers
+        static constexpr scalar small_ = 1e-20;
 
-        //- Very small Type for the use in solvers
-        static const scalar vsmall_;
+        //- Very small value for the use in solvers
+        static constexpr scalar vsmall_ = VSMALL;
+
 
 
     // Constructors
 
+        //- Default construct, zero-initialized
         SolverPerformance()
         :
+            solverName_(),
+            fieldName_(),
             initialResidual_(Zero),
             finalResidual_(Zero),
             nIterations_(Zero),
@@ -123,6 +118,7 @@ public:
         {}
 
 
+        //- Construct for given solver and field, zero-initialized
         SolverPerformance
         (
             const word& solverName,
@@ -144,7 +140,7 @@ public:
         {}
 
 
-    // Member functions
+    // Member Functions
 
         //- Return solver name
         const word& solverName() const
@@ -157,7 +153,6 @@ public:
         {
             return solverName_;
         }
-
 
         //- Return field name
         const word& fieldName() const
@@ -204,7 +199,6 @@ public:
             return nIterations_;
         }
 
-
         //- Has the solver converged?
         bool converged() const
         {
@@ -221,7 +215,7 @@ public:
             const Type& relTolerance
         );
 
-        //- Singularity test
+        //- Test singularity
         bool checkSingularity(const Type& residual);
 
         //- Print summary of solver performance to the given stream
@@ -241,10 +235,11 @@ public:
 
     // Member Operators
 
+        //- Test for inequality
         bool operator!=(const SolverPerformance<Type>&) const;
 
 
-    // Friend functions
+    // Friend Functions
 
         //- Return the element-wise maximum of two SolverPerformance<Type>s
         friend SolverPerformance<Type> Foam::max <Type>
@@ -258,14 +253,14 @@ public:
 
         friend Istream& operator>> <Type>
         (
-            Istream&,
-            SolverPerformance<Type>&
+            Istream& is,
+            SolverPerformance<Type>& sp
         );
 
         friend Ostream& operator<< <Type>
         (
-            Ostream&,
-            const SolverPerformance<Type>&
+            Ostream& os,
+            const SolverPerformance<Type>& sp
         );
 };
 
@@ -276,21 +271,9 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define makeSolverPerformance(Type)                                            \
-                                                                               \
-typedef Foam::SolverPerformance<Type>                                          \
-    solverPerformance##Type;                                                   \
-                                                                               \
-defineNamedTemplateTypeNameAndDebug(solverPerformance##Type, 0);               \
-                                                                               \
-template<>                                                                     \
-const scalar solverPerformance##Type::great_(1e20);                            \
-                                                                               \
-template<>                                                                     \
-const scalar solverPerformance##Type::small_(1e-20);                           \
-                                                                               \
-template<>                                                                     \
-const scalar solverPerformance##Type::vsmall_(VSMALL);                         \
+#define makeSolverPerformance(Type)                                           \
+    typedef Foam::SolverPerformance<Type> solverPerformance##Type;            \
+    defineNamedTemplateTypeNameAndDebug(solverPerformance##Type, 0);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
