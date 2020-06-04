@@ -203,10 +203,11 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
             );
         }
 
-        solverPerformance solverPerf;
 
         // Solver call
-        solverPerf = lduMatrix::solver::New
+        const auto timing = clockValue::now();
+
+        solverPerformance solverPerf = lduMatrix::solver::New
         (
             psi.name() + pTraits<Type>::componentNames[cmpt],
             *this,
@@ -215,6 +216,8 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
             interfaces,
             solverControls
         )->solve(psiCmpt, sourceCmpt, cmpt);
+
+        solverPerf.setTiming(timing.elapsedTime());
 
         if (SolverPerformance<Type>::debug)
         {

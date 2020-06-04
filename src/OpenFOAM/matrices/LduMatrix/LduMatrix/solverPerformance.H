@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,9 +46,17 @@ namespace Foam
 {
     typedef SolverPerformance<scalar> solverPerformance;
 
-    // Specialization of the max function for scalar object
+    // Specialize max() member function for scalar
     template<>
-    SolverPerformance<scalar> SolverPerformance<scalar>::max();
+    SolverPerformance<scalar> SolverPerformance<scalar>::max() const;
+
+    // Specialize timing() member function for scalar
+    template<>
+    double SolverPerformance<scalar>::timing() const;
+
+    // Specialize maxTiming() member function for scalar
+    template<>
+    double SolverPerformance<scalar>::maxTiming() const;
 }
 
 

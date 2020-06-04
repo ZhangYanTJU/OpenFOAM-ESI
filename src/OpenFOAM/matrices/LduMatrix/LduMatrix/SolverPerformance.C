@@ -59,6 +59,34 @@ bool Foam::SolverPerformance<Type>::singular() const
 
 
 template<class Type>
+double Foam::SolverPerformance<Type>::timing() const
+{
+    double ret{0};
+
+    for (const double val : timing_)
+    {
+        ret += val;
+    }
+
+    return ret;
+}
+
+
+template<class Type>
+double Foam::SolverPerformance<Type>::maxTiming() const
+{
+    double ret{0};
+
+    for (const double val : timing_)
+    {
+        ret = Foam::max(ret, val);
+    }
+
+    return ret;
+}
+
+
+template<class Type>
 bool Foam::SolverPerformance<Type>::checkConvergence
 (
     const Type& Tolerance,
@@ -110,7 +138,7 @@ void Foam::SolverPerformance<Type>::print
             os  << ", Initial residual = " << component(initialResidual_, cmpt)
                 << ", Final residual = " << component(finalResidual_, cmpt)
                 << ", No Iterations " << nIterations_
-                ;
+                << ", Timing = " << timing_[cmpt];
         }
         os  << endl;
     }
@@ -128,12 +156,13 @@ void Foam::SolverPerformance<Type>::replace
     finalResidual_.replace(cmpt, sp.finalResidual());
     nIterations_.replace(cmpt, sp.nIterations());
     singular_[cmpt] = sp.singular();
+    timing_[cmpt] = sp.timing();
 }
 
 
 template<class Type>
 Foam::SolverPerformance<typename Foam::pTraits<Type>::cmptType>
-Foam::SolverPerformance<Type>::max()
+Foam::SolverPerformance<Type>::max() const
 {
     return SolverPerformance<typename pTraits<Type>::cmptType>
     (
@@ -143,46 +172,49 @@ Foam::SolverPerformance<Type>::max()
         cmptMax(finalResidual_),
         cmptMax(nIterations_),
         converged_,
-        singular()
+        singular(),
+        maxTiming()
     );
 }
 
 
 template<class Type>
-bool Foam::SolverPerformance<Type>::operator!=
+bool Foam::operator!=
 (
-    const SolverPerformance<Type>& sp
-) const
+    const SolverPerformance<Type>& a,
+    const SolverPerformance<Type>& b
+)
 {
     return
     (
-        solverName()      != sp.solverName()
-     || fieldName()       != sp.fieldName()
-     || initialResidual() != sp.initialResidual()
-     || finalResidual()   != sp.finalResidual()
-     || nIterations()     != sp.nIterations()
-     || converged()       != sp.converged()
-     || singular()        != sp.singular()
+        a.solverName()      != b.solverName()
+     || a.fieldName()       != b.fieldName()
+     || a.initialResidual() != b.initialResidual()
+     || a.finalResidual()   != b.finalResidual()
+     || a.nIterations()     != b.nIterations()
+     || a.converged()       != b.converged()
+     || a.singular()        != b.singular()
     );
 }
 
 
 template<class Type>
-typename Foam::SolverPerformance<Type> Foam::max
+Foam::SolverPerformance<Type> Foam::max
 (
-    const typename Foam::SolverPerformance<Type>& sp1,
-    const typename Foam::SolverPerformance<Type>& sp2
+    const SolverPerformance<Type>& a,
+    const SolverPerformance<Type>& b
 )
 {
     return SolverPerformance<Type>
     (
-        sp1.solverName(),
-        sp1.fieldName_,
-        max(sp1.initialResidual(), sp2.initialResidual()),
-        max(sp1.finalResidual(), sp2.finalResidual()),
-        max(sp1.nIterations(), sp2.nIterations()),
-        sp1.converged() && sp2.converged(),
-        sp1.singular() || sp2.singular()
+        a.solverName(),
+        a.fieldName(),
+        max(a.initialResidual(), b.initialResidual()),
+        max(a.finalResidual(), b.finalResidual()),
+        max(a.nIterations(), b.nIterations()),
+        a.converged() && b.converged(),
+        a.singular() || b.singular(),
+        max(a.maxTiming(), b.maxTiming())
     );
 }
 
@@ -201,7 +233,8 @@ Foam::Istream& Foam::operator>>
         >> sp.finalResidual_
         >> sp.nIterations_
         >> sp.converged_
-        >> sp.singular_;
+        >> sp.singular_
+        >> sp.timing_;
     is.readEnd("SolverPerformance");
 
     return is;
@@ -223,6 +256,7 @@ Foam::Ostream& Foam::operator<<
         << sp.nIterations_ << token::SPACE
         << sp.converged_ << token::SPACE
         << sp.singular_ << token::SPACE
+        << sp.timing_ << token::SPACE
         << token::END_LIST;
 
     return os;

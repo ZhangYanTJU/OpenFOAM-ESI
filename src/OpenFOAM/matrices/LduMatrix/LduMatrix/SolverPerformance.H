@@ -41,6 +41,7 @@ SourceFiles
 
 #include "word.H"
 #include "FixedList.H"
+#include "clockValue.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -83,6 +84,7 @@ class SolverPerformance
         labelType   nIterations_;
         bool        converged_;
         FixedList<bool, pTraits<Type>::nComponents> singular_;
+        FixedList<double, pTraits<Type>::nComponents> timing_;
 
 
 public:
@@ -114,7 +116,8 @@ public:
             finalResidual_(Zero),
             nIterations_(Zero),
             converged_(false),
-            singular_(false)
+            singular_(false),
+            timing_(Zero)
         {}
 
 
@@ -127,7 +130,8 @@ public:
             const Type& fRes = pTraits<Type>::zero,
             const labelType& nIter = pTraits<labelType>::zero,
             const bool converged = false,
-            const bool singular = false
+            const bool singular = false,
+            const scalar timingValue = 0
         )
         :
             solverName_(solverName),
@@ -136,8 +140,12 @@ public:
             finalResidual_(fRes),
             nIterations_(nIter),
             converged_(converged),
-            singular_(singular)
-        {}
+            singular_(singular),
+            timing_(Zero)
+        {
+            // Single-value assignment affects single component only
+            timing_.first() = timingValue;
+        }
 
 
     // Member Functions
@@ -208,6 +216,24 @@ public:
         //- Is the matrix singular?
         bool singular() const;
 
+        //- Return total timing, the sum of all components
+        double timing() const;
+
+        //- Add to single-component timing
+        void addTiming(double timingValue)
+        {
+            timing_.first() += timingValue;
+        }
+
+        //- Set single-component timing
+        void setTiming(double timingValue)
+        {
+            timing_.first() = timingValue;
+        }
+
+        //- Return the max timing
+        double maxTiming() const;
+
         //- Check, store and return convergence
         bool checkConvergence
         (
@@ -230,23 +256,7 @@ public:
 
         //- Return the summary maximum of SolverPerformance<Type>
         //  Effectively it will mostly return solverPerformanceScalar
-        SolverPerformance<typename pTraits<Type>::cmptType> max();
-
-
-    // Member Operators
-
-        //- Test for inequality
-        bool operator!=(const SolverPerformance<Type>&) const;
-
-
-    // Friend Functions
-
-        //- Return the element-wise maximum of two SolverPerformance<Type>s
-        friend SolverPerformance<Type> Foam::max <Type>
-        (
-            const SolverPerformance<Type>&,
-            const SolverPerformance<Type>&
-        );
+        SolverPerformance<typename pTraits<Type>::cmptType> max() const;
 
 
     // Ostream Operator
@@ -263,6 +273,28 @@ public:
             const SolverPerformance<Type>& sp
         );
 };
+
+
+// Global Operators
+
+//- Test for inequality
+template<class Type>
+bool operator!=
+(
+    const SolverPerformance<Type>& a,
+    const SolverPerformance<Type>& b
+);
+
+
+// Global Functions
+
+//- Return element-wise maximum of SolverPerformance
+template<class Type>
+SolverPerformance<Type> max
+(
+    const SolverPerformance<Type>& a,
+    const SolverPerformance<Type>& b
+);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

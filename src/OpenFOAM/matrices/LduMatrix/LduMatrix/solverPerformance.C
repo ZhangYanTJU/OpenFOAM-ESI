@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,9 +41,23 @@ namespace Foam
 
 template<>
 Foam::SolverPerformance<Foam::scalar>
-Foam::SolverPerformance<Foam::scalar>::max()
+Foam::SolverPerformance<Foam::scalar>::max() const
 {
     return *this;
+}
+
+
+template<>
+double Foam::SolverPerformance<Foam::scalar>::timing() const
+{
+    return timing_.first();
+}
+
+
+template<>
+double Foam::SolverPerformance<Foam::scalar>::maxTiming() const
+{
+    return timing_.first();
 }
 
 
