@@ -25,7 +25,7 @@ Class
     Foam::regionModels::thermalShellModels::vibrationShellModel
 
 Description
-   
+
 
 SourceFiles
     vibrationShellModel.C
@@ -84,13 +84,13 @@ protected:
 
         //- Shell displacement
         areaScalarField w_;
-        
+
         //- Shell acceleration
         areaScalarField a_;
 
         //- Pointer to faOptions
         Foam::fa::options& faOptions_;
-        
+
         //- Solid properties
         solidProperties solid_;
 
@@ -159,13 +159,13 @@ public:
 
             //- Return shell displacement
             const areaScalarField& w() const;
-            
+
             //- Return shell acceleration
             const areaScalarField& a() const;
 
             //- Return faOptions
             Foam::fa::options& faOptions();
-            
+
             //- Return solid properties
             const solidProperties& solid() const;
 

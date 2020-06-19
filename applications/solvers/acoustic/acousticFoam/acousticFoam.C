@@ -23,17 +23,17 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Application
-   acousticFoam 
+   acousticFoam
 
 Group
 
 Description
     Acoustic solver solving the acoustic pressure wave equation.
-    
+
     \f[
             \ddt2{pa} - sqr(c) \laplacian{pa} = 0
     \f]
-    
+
     Where:
     \vartable
         c       | Sound speed
@@ -44,10 +44,10 @@ SourceFiles
     acousticFoam.C
 
 company
-    Volkswagen Group Research 
+    Volkswagen Group Research
     by
     Alexander Kabat vel Job
-    email:alexander.kabat.vel.job@volkswagen.de 
+    email:alexander.kabat.vel.job@volkswagen.de
 
 
 \*---------------------------------------------------------------------------*/
@@ -64,9 +64,9 @@ int main(int argc, char *argv[])
     (
         "Acoustic solver solving the acoustic pressure wave equation."
     );
-    
+
     #include "postProcess.H"
-    
+
     #include "addCheckCaseOptions.H"
     #include "setRootCaseLists.H"
     #include "createTime.H"
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     while (runTime.run())
     {
         ++runTime;
-        
+
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         while (pimple.correct())
@@ -90,12 +90,12 @@ int main(int argc, char *argv[])
         }
 
         runTime.write();
-        
+
         runTime.printExecutionTime(Info);
     }
 
     Info<< "End\n" << endl;
-    
+
     return(0);
 }
 

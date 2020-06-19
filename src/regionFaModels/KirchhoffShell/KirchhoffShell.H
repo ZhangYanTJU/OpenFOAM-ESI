@@ -99,11 +99,11 @@ protected:
             //- Thickness [m]
             areaScalarField h_;
 
-            //- Cached Laplacian of w for dumping model
-            areaScalarField laplaceW_;
+            //- Cache w.oldTime() in sub-cycling
+            areaScalarField w0_;
 
-            //- Cached Laplacian of  laplacian w for dumping model
-            areaScalarField laplace2W_;
+            //- Cache w.oldTime.oldTime() in sub-cycling
+            areaScalarField w00_;
 
 
 
