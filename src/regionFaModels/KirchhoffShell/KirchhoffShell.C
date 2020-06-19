@@ -66,11 +66,15 @@ void KirchhoffShell::solveDisplacement()
     areaScalarField solidD(D()/solidMass);
 
     // Save old times
-    areaScalarField w0 = w_.oldTime();
-    areaScalarField w00 = w_.oldTime().oldTime();
+    areaScalarField w0(w_.oldTime());
+    areaScalarField w00(w_.oldTime().oldTime());
 
-    areaScalarField lap0(laplaceW_.oldTime());
-    areaScalarField lapLap0(laplace2W_.oldTime());
+    if (nSubCycles_ > 1)
+    {
+        // Restore the oldTime in sub-cycling
+        w_.oldTime() = w0_;
+        w_.oldTime().oldTime() = w00_;
+     }
 
     // Save old times
     areaScalarField w0(w_.oldTime());
@@ -95,8 +99,8 @@ void KirchhoffShell::solveDisplacement()
        !(++wSubCycle).end();
     )
     {
-        laplaceW_ = fac::laplacian(w_);
 
+        laplaceW_ = fac::laplacian(w_);
         laplace2W_ = fac::laplacian(laplaceW_);
 
         faScalarMatrix wEqn
@@ -133,21 +137,7 @@ void KirchhoffShell::solveDisplacement()
     w_.oldTime() = w0;
     w_.oldTime().oldTime() = w00;
 
-    // Reset the old-time field value
-    w_.oldTime() = w0;
-    w_.oldTime().timeIndex() = time.timeIndex();
-    w_.oldTime().oldTime() = w00;
-    w_.oldTime().oldTime().timeIndex() = time.timeIndex();
-
-    laplaceW_.oldTime() = lap0;
-    laplaceW_.oldTime().timeIndex() = time.timeIndex();
-
-    laplace2W_.oldTime() = lapLap0;
-    laplace2W_.oldTime().timeIndex() = time.timeIndex();
-
     faOptions().correct(w_);
-
-    Info<< "w min/max   = " << min(w_) << ", " << max(w_) << endl;
 }
 
 
@@ -191,15 +181,15 @@ KirchhoffShell::KirchhoffShell
         ),
         regionMesh()
     ),
-    laplaceW_
+    w0_
     (
         IOobject
         (
-            "laplaceW_" + regionName_,
+            "w0_" + regionName_,
             primaryMesh().time().timeName(),
             primaryMesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         regionMesh(),
         dimensionedScalar(inv(dimLength), Zero)
@@ -208,7 +198,7 @@ KirchhoffShell::KirchhoffShell
     (
         IOobject
         (
-            "laplace2W_" + regionName_,
+            "w00_" + regionName_,
             primaryMesh().time().timeName(),
             primaryMesh(),
             IOobject::NO_READ,
