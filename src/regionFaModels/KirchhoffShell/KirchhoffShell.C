@@ -72,6 +72,8 @@ void KirchhoffShell::solveDisplacement()
         // Restore the oldTime in sub-cycling
         w_.oldTime() = w0_;
         w_.oldTime().oldTime() = w00_;
+        laplaceW_.oldTime() = laplaceW0_;
+        laplace2W_.oldTime() = laplace2W0_;
      }
 
     for
@@ -85,15 +87,15 @@ void KirchhoffShell::solveDisplacement()
     )
     {
 
-        const areaScalarField laplaceW(fac::laplacian(w_));
-        const areaScalarField laplace2W(fac::laplacian(laplaceW));
+        laplaceW_ = fac::laplacian(w_);
+        laplace2W_ = fac::laplacian(laplaceW_);
 
         faScalarMatrix wEqn
         (
             fam::d2dt2(w_)
          +  f1_*fam::ddt(w_)
-         -  f0_*sqrt(solidD)*fac::ddt(laplaceW)
-         +  solidD*(laplace2W + f2_*fac::ddt(laplace2W))
+         -  f0_*sqrt(solidD)*fac::ddt(laplaceW_)
+         +  solidD*(laplace2W_ + f2_*fac::ddt(laplace2W_))
         ==
             ps_/solidMass
           + faOptions()(solidMass, w_, dimLength/sqr(dimTime))
@@ -105,9 +107,17 @@ void KirchhoffShell::solveDisplacement()
 
         Info<< "w min/max   = " << min(w_) << ", " << max(w_) << endl;
 
-        // Cache oldTimes inside the sub-cycling
-        w0_ = w_.oldTime();
-        w00_ = w_.oldTime().oldTime();
+        if (wSubCycle.index() >= wSubCycle.nSubCycles())
+        {
+            // Cache oldTimes inside the sub-cycling
+            w0_ = w_.oldTime();
+            w00_ = w_.oldTime().oldTime();
+            laplaceW0_ = laplaceW_.oldTime();
+            laplace2W0_ = laplace2W_.oldTime();
+
+            // Update shell acceleration
+            a_ = fac::d2dt2(w_);
+        }
     }
 
     // Restore old time in main time
@@ -158,6 +168,32 @@ KirchhoffShell::KirchhoffShell
         ),
         regionMesh()
     ),
+    laplaceW_
+    (
+        IOobject
+        (
+            "laplaceW_" + regionName_,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        regionMesh(),
+        dimensionedScalar(inv(dimLength), Zero)
+    ),
+    laplace2W_
+    (
+        IOobject
+        (
+            "laplace2W_" + regionName_,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        regionMesh(),
+        dimensionedScalar(inv(pow3(dimLength)), Zero)
+    ),
     w0_
     (
         IOobject
@@ -170,9 +206,9 @@ KirchhoffShell::KirchhoffShell
         ),
         regionMesh(),
         dimensionedScalar(dimLength, Zero)
-     ),
-     w00_
-     (
+    ),
+    w00_
+    (
          IOobject
         (
             "w00_" + regionName_,
@@ -183,6 +219,32 @@ KirchhoffShell::KirchhoffShell
         ),
         regionMesh(),
         dimensionedScalar(dimLength, Zero)
+    ),
+    laplaceW0_
+    (
+         IOobject
+        (
+            "laplaceW0_" + regionName_,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        regionMesh(),
+        dimensionedScalar(inv(dimLength), Zero)
+    ),
+    laplace2W0_
+    (
+         IOobject
+        (
+            "laplace2W0_" + regionName_,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        regionMesh(),
+        dimensionedScalar(inv(pow3(dimLength)), Zero)
      )
 {
     init();
@@ -214,10 +276,6 @@ void KirchhoffShell::evolveRegion()
     {
         solveDisplacement();
     }
-
-    // Update shell acceleration
-    a_ = fac::d2dt2(w_);
-
 }
 
 
