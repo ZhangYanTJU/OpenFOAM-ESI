@@ -74,6 +74,8 @@ void KirchhoffShell::solveDisplacement()
         // Restore the oldTime in sub-cycling
         w_.oldTime() = w0_;
         w_.oldTime().oldTime() = w00_;
+        laplaceW_.oldTime() = laplaceW0_;
+        laplace2W_.oldTime() = laplace2W0_;
      }
 
     // Save old times
@@ -180,6 +182,32 @@ KirchhoffShell::KirchhoffShell
             IOobject::AUTO_WRITE
         ),
         regionMesh()
+    ),
+    laplaceW_
+    (
+        IOobject
+        (
+            "laplaceW_" + regionName_,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        regionMesh(),
+        dimensionedScalar(inv(dimLength), Zero)
+    ),
+    laplace2W_
+    (
+        IOobject
+        (
+            "laplace2W_" + regionName_,
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        regionMesh(),
+        dimensionedScalar(inv(pow3(dimLength)), Zero)
     ),
     w0_
     (
