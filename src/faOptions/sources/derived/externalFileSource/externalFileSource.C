@@ -60,6 +60,20 @@ Foam::fa::externalFileSource::externalFileSource
     faceSetOption(sourceName, modelType, dict, p),
     fieldName_(dict.get<word>("fieldName")),
     tableName_(dict.get<word>("tableName")),
+    pExt_
+    (
+        IOobject
+        (
+            "pExt",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        regionMesh(),
+        dimensionedScalar("pExt", dimPressure, Zero),
+        zeroGradientFaPatchScalarField::typeName
+    ),
     value_
     (
         new PatchFunction1Types::MappedFile<scalar>
@@ -98,32 +112,15 @@ void Foam::fa::externalFileSource::addSup
 {
     const scalar t = mesh().time().value();
 
+
     if (isActive() && t > timeStart() && t < (timeStart() + duration()))
     {
         DebugInfo<< name() << ": applying source to " << eqn.psi().name()<<endl;
 
         if (curTimeIndex_ != mesh().time().timeIndex())
         {
-            IOobject io
-            (
-                "pExt",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE,
-                false
-            );
-
-            areaScalarField p
-            (
-                io,
-                regionMesh(),
-                dimensionedScalar("p", dimPressure, Zero),
-                zeroGradientFaPatchScalarField::typeName
-            );
-
-            p.field() = value_->value(t);
-            eqn += p/solidMass;
+            pExt_.field() = value_->value(t);
+            eqn += pExt_/solidMass;
             curTimeIndex_ = mesh().time().timeIndex();
         }
     }

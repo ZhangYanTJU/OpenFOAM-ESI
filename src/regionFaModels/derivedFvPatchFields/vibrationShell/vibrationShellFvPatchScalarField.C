@@ -96,7 +96,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
         refGrad() = 0;
         valueFraction() = 1;
     }
-    
+
     if (baffle_.empty())
     {
         baffle_.reset(regionModels::vibrationShellModel::New(p, dict).ptr());
@@ -127,10 +127,10 @@ void vibrationShellFvPatchScalarField::updateCoeffs()
     }
 
     baffle_->evolve();
-    
+
     const IOdictionary& transportProperties =
         db().lookupObject<IOdictionary>("transportProperties");
-        
+
     dimensionedScalar rho("rho", dimDensity, transportProperties);
 
     const areaScalarField aRho(rho*baffle_->a());

@@ -92,13 +92,16 @@ class externalFileSource
 
         //- Name of the field to apply this source
         word fieldName_;
-        
+
         //- Name of the table
         word tableName_;
-        
+
+        //- External pressure field
+        areaScalarField pExt_;
+
         //- Mapped data from file
         autoPtr<PatchFunction1Types::MappedFile<scalar>> value_;
- 
+
         //- Current time index (used for updating)
         label curTimeIndex_;
 

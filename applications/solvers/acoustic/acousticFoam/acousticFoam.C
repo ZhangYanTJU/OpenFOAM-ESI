@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createMesh.H"
     #include "createControl.H"
+    #include "createRegionControls.H"
 
     #include "readTransportProperties.H"
     #include "createFields.H"

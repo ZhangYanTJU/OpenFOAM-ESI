@@ -28,7 +28,7 @@ Group
     grpVibrationBoundaryConditions
 
 Description
-   
+
 
 
 Usage
@@ -55,7 +55,7 @@ Usage
             Cp                  600;
             Hf                  0;
             emissivity          0;
-            
+
             E                   0;
             nu                  1;
         }
