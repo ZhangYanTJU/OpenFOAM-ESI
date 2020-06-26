@@ -30,6 +30,10 @@ Group
     grpVibrationBoundaryConditions
 
 Description
+<<<<<<< HEAD
+=======
+
+>>>>>>> ENH: Registering pExt in database. Adding flag to run only primaryRegion
 
 
 Usage
