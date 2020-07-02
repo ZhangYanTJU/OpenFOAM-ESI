@@ -189,7 +189,7 @@ void Foam::cyclicACMIPolyPatch::scalePatchFaceAreas
 
     const scalar maxTol = scalar(1) - tolerance_;
 
-    if (noFaceArea.size())
+    //if (noFaceArea.size())
     {
         const polyPatch& nonOverlapPatch = acmipp.nonOverlapPatch();
         vectorField::subField noSf = nonOverlapPatch.faceAreas();
@@ -219,7 +219,7 @@ void Foam::cyclicACMIPolyPatch::scalePatchFaceAreas
         }
     }
 
-    if (faceArea.size())
+    if (!createAMIFaces_)
     {
         // Note: for topological update (createAMIFaces_ = true)
         // AMI coupled patch face areas are updated as part of the topological
