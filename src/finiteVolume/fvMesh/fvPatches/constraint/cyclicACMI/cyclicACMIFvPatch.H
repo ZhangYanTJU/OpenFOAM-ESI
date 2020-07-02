@@ -140,9 +140,6 @@ public:
             //- Return a reference to the AMI interpolator
             virtual const AMIPatchToPatchInterpolation& AMI() const
             {
-                // Make sure any areas are up-to-date
-                updateAreas();
-
                 return cyclicACMIPolyPatch_.AMI();
             }
 
