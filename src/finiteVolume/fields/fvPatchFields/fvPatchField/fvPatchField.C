@@ -381,6 +381,7 @@ void Foam::fvPatchField<Type>::manipulateInterBoundCoeffs
     const labelUList& fc,
     const vectorField& delta,
     const label iMatrix,
+    const label nProc,
     scalarField& boundaryCoeffs,
     scalarField& internalCoeffs
 )

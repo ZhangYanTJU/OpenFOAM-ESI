@@ -106,6 +106,16 @@ class cyclicAMIFvPatchField
         ) const;
 
 
+        template<class Type2>
+        void collectStencilData
+        (
+            const tmpNrc<mapDistribute>& mapPtr,
+            const labelListList& stencil,
+            const Type2& data,
+            List<Type2>& expandedData
+        );
+
+
 public:
 
     //- Runtime type information
@@ -239,6 +249,7 @@ public:
                 const labelUList& fc,
                 const vectorField& delta,
                 const label iMatrix,
+                const label neigProc,
                 scalarField& boundaryCoeffs,
                 scalarField& internalCoeffs
             );

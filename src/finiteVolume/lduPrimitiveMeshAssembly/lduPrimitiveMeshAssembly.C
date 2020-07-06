@@ -105,6 +105,8 @@ Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
     subFaceCompPatchMap_.setSize(nMeshes);
     patchRemoteToLocal_.setSize(nMeshes);
 
+    myRmtTgtFaces_.setSize(nMeshes);
+
     // Determine cellOffset and faceOffset
     cellOffsets_.setSize(1+nMeshes);
     cellOffsets_[0] = 0;
@@ -117,6 +119,131 @@ Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+
+bool Foam::lduPrimitiveMeshAssembly::createRemoteInterface
+(
+    const List<DynamicList<label>>& procOwner,
+    const List<DynamicList<label>>& dynProcNeighbour,
+    labelList& patchRemoteToLocal,
+    label index,
+    label& interfaceI
+)
+{
+    labelListList procNeighbour(dynProcNeighbour.size());
+    forAll(procNeighbour, i)
+    {
+        procNeighbour[i] = std::move(dynProcNeighbour[i]);
+    }
+
+    labelListList mySendCells;
+    Pstream::exchange<labelList, label>(procNeighbour, mySendCells);
+
+    bool newInterface = false;
+    forAll(procOwner, proci)
+    {
+        if (proci < Pstream::myProcNo() && procOwner[proci].size())
+        {
+            if (1)
+            {
+                Pout<< "Adding interface (1st loop)"
+                    << " to receive my " << procOwner[proci]
+                    << " from " << proci
+                    << " tag " << Pstream::msgType()+2 << endl;
+            }
+            remoteStencilInterfaces_.append
+            (
+                new lduPrimitiveProcessorInterface
+                (
+                    procOwner[proci],
+                    Pstream::myProcNo(),
+                    proci,
+                    tensorField(0),
+                    Pstream::msgType()+2
+                )
+            );
+            patchRemoteToLocal[interfaceI++] = index;
+            newInterface = true;
+        }
+        else if (proci > Pstream::myProcNo() && mySendCells[proci].size())
+        {
+            if (1)
+            {
+                Pout<< "Adding interface (1st loop)"
+                    << " to send my " << mySendCells[proci]
+                    << " to " << proci
+                    << " tag " << Pstream::msgType()+2 << endl;
+            }
+            remoteStencilInterfaces_.append
+            (
+                new lduPrimitiveProcessorInterface
+                (
+                    mySendCells[proci],
+                    Pstream::myProcNo(),
+                    proci,
+                    tensorField(0),
+                    Pstream::msgType()+2
+                )
+            );
+
+            newInterface = true;
+            patchRemoteToLocal[interfaceI++] = index;
+        }
+    }
+    forAll(procOwner, proci)
+    {
+        if (proci > Pstream::myProcNo() && procOwner[proci].size())
+        {
+            if (1)
+            {
+                Pout<< "Adding interface (2st loop)"
+                    << " to receive my " << procOwner[proci]
+                    << " from " << proci
+                    << " tag " << Pstream::msgType()+3 << endl;
+            }
+            remoteStencilInterfaces_.append
+            (
+                new lduPrimitiveProcessorInterface
+                (
+                    procOwner[proci],
+                    Pstream::myProcNo(),
+                    proci,
+                    tensorField(0),
+                    Pstream::msgType()+3
+                )
+            );
+
+            newInterface = true;
+            patchRemoteToLocal[interfaceI++] = index;
+        }
+        else if (proci < Pstream::myProcNo() && mySendCells[proci].size())
+        {
+            if (1)
+            {
+                Pout<< "Adding interface (2st loop)"
+                    << " to send my " << mySendCells[proci]
+                    << " to " << proci
+                    << " tag " << Pstream::msgType()+3 << endl;
+            }
+            remoteStencilInterfaces_.append
+            (
+                new lduPrimitiveProcessorInterface
+                (
+                    mySendCells[proci],
+                    Pstream::myProcNo(),
+                    proci,
+                    tensorField(0),
+                    Pstream::msgType()+3
+                )
+            );
+
+            newInterface = true;
+            patchRemoteToLocal[interfaceI++] = index;
+        }
+    }
+    return newInterface;
+}
+
 
 bool Foam::lduPrimitiveMeshAssembly::fluxRequired(const word& name) const
 {

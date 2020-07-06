@@ -63,7 +63,7 @@ class lduPrimitiveMeshAssembly
         List<labelList> patchAddr_;
 
         //- Added (processor)lduInterfaces for remote bits of stencil.
-        PtrList<const lduPrimitiveProcessorInterface> remoteStencilInterfaces_;
+        PtrDynList<const lduPrimitiveProcessorInterface> remoteStencilInterfaces_;
 
         //- Origin patch of remote stencil
         labelListList patchRemoteToLocal_;
@@ -86,8 +86,12 @@ class lduPrimitiveMeshAssembly
         //- Map patch local sub-face to local patch face
         labelListListList magSfFaceBoundMap_;
 
-        //- Map from subFace to compatch numebering
+        //- Map from subFace to compatch numbering
         List<labelListListList> subFaceCompPatchMap_;
+
+        //- Map from patch, proc and sub-faces to local faces
+        //  Used in calculating matrix flux for new processors lduInterfaces
+        List<List<labelListList>> myRmtTgtFaces_;
 
         //- Offset cells
         labelList cellOffsets_;
@@ -106,6 +110,15 @@ class lduPrimitiveMeshAssembly
         (
             const mappedPatchBase& pp,
             const UPtrList<fvMesh>& meshes
+        );
+
+        bool createRemoteInterface
+        (
+            const List<DynamicList<label>>& procOwner,
+            const List<DynamicList<label>>& dynProcNeighbour,
+            labelList& patchRemoteToLocal,
+            label index,
+            label& interfaceI
         );
 
 
@@ -180,6 +193,11 @@ public:
             return faceBoundMap_;
         }
 
+        const List<List<labelListList>>& myRmtTgtFaces() const
+        {
+            return myRmtTgtFaces_;
+        }
+
         //- Return boundary face cell
         const labelListListList& cellBoundMap() const
         {
@@ -228,7 +246,7 @@ public:
             return resetCyclics_;
         }
 
-        const PtrList<const lduPrimitiveProcessorInterface>&
+        const PtrDynList<const lduPrimitiveProcessorInterface>&
         remoteStencilInterfaces() const
         {
             return remoteStencilInterfaces_;

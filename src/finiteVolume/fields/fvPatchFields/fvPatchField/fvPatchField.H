@@ -537,6 +537,7 @@ public:
                 const labelUList& fc,
                 const vectorField& delta,
                 const label iMatrix,
+                const label neigProc,
                 scalarField& boundaryCoeffs,
                 scalarField& internalCoeffs
             );

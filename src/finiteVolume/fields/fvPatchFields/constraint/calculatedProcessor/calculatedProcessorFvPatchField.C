@@ -267,7 +267,6 @@ void Foam::calculatedProcessorFvPatchField<Type>::initInterfaceMatrixUpdate
     (
         static_cast<const lduInterfaceField&>(*this)
     ).updatedMatrix() = false;
-DebugVar("Finish initInterfaceMatrixUpdate ")
 }
 
 
@@ -312,7 +311,6 @@ void Foam::calculatedProcessorFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
-DebugVar("updateInterfaceMatrix")
     if (this->updatedMatrix())
     {
         return;
@@ -331,9 +329,6 @@ DebugVar("updateInterfaceMatrix")
     outstandingSendRequest_ = -1;
     outstandingRecvRequest_ = -1;
 
-DebugVar(outstandingRecvRequest_)
-DebugVar(scalarReceiveBuf_)
-DebugVar(coeffs)
     // Consume straight from scalarReceiveBuf_. Note use of our own
     // helper to avoid using fvPatch addressing
     addToInternalField(result, !add, coeffs, scalarReceiveBuf_);
