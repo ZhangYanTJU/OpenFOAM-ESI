@@ -106,6 +106,15 @@ private:
 
     // Private Member Functions
 
+        template<class Type>
+        void collectStencilData
+        (
+            const tmpNrc<mapDistribute>& mapPtr,
+            const labelListList& stencil,
+            const Type& data,
+            List<Type>& expandedData
+        );
+
         //- Add boundary contribution to diagonal
         void addBoundaryDiag(scalarField& diag) const;
 
@@ -139,17 +148,16 @@ private:
         void relaxFields();
 
         //- Calculate weight for remote stencils
-        tmp<scalarField> weights
+        void weights
         (
+            const List<pointField>& nbrCc,
+            const List<pointField>& nbrFaceCtr,
+            const List<vectorField>& nbrNf,
             const cyclicAMIFvPatch&,
-            const labelUList& fc
-        );
-
-        //- Calculate deltaCoeffs for remote stencils
-        tmp<vectorField> deltaCoeffs
-        (
-            const cyclicAMIFvPatch&,
-            const labelUList& fc
+            scalarField& w,
+            vectorField& deltaCoeffs,
+            const labelList& rmtFace,
+            const labelListList& sourceFaces
         );
 
 
