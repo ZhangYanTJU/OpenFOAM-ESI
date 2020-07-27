@@ -2,8 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2018 OpenCFD Ltd.
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2018-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,7 +86,19 @@ inline bool Foam::HashPtrTable<T, Key, Hash>::set
     T* ptr
 )
 {
-    return this->parent_type::set(key, ptr);
+    // Newer: const T* old = this->get(key);
+
+    iterator iter(this->find(key));
+    const T* old = (iter.found() ? iter.object() : nullptr);
+
+    const bool ok = this->parent_type::set(key, ptr);
+
+    if (ok && old != ptr)
+    {
+        delete const_cast<T*>(old);
+    }
+
+    return ok;
 }
 
 
