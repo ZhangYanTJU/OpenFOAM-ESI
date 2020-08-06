@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2017-2019 OpenCFD Ltd.
+#     Copyright (C) 2017-2020 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM.
@@ -80,14 +80,16 @@ options:
   -update           Update lnInclude dirs, dep files, remove deprecated files/dirs
   -show-api         Print api value
   -show-ext-so      Print shared library extension (with '.' separator)
-  -show-compile-c   Same as '-show-c -show-cflags'
-  -show-compile-cxx Same as '-show-cxx -show-cxxflags'
   -show-c           Print C compiler value
   -show-cflags      Print C compiler flags
   -show-cxx         Print C++ compiler value
   -show-cxxflags    Print C++ compiler flags
   -show-cflags-arch     The C compiler arch flag (eg, -m64 etc)
   -show-cxxflags-arch   The C++ compiler arch flag (eg, -m64 etc)
+  -show-compile-c   Same as '-show-c -show-cflags'
+  -show-compile-cxx Same as '-show-cxx -show-cxxflags'
+  -show-path-c      Print path to C compiler
+  -show-path-cxx    Print path to C++ compiler
   -version | --version  Print the api value
   -h | -help        Print the usage
 
@@ -116,6 +118,8 @@ USAGE
 # Default make is the "make" in the path
 make="make"
 
+# Print compiler/system information (serial only)
+printInfo() { make --no-print-directory -f "$WM_DIR"/makefiles/info "$@"; }
 
 #------------------------------------------------------------------------------
 
@@ -151,7 +155,11 @@ do
         -show-api | -show-ext-so | \
         -show-compile-c   | -show-c   | -show-cflags   | -show-cflags-arch | \
         -show-compile-cxx | -show-cxx | -show-cxxflags | -show-cxxflags-arch )
-            $make -f $WM_DIR/makefiles/info "${1#-show-}"
+            printInfo "${1#-show-}"
+            optShow=true
+            ;;
+        -show-path-c | -show-path-cxx )
+            command -v $(printInfo "${1#-show-path-}")
             optShow=true
             ;;
         -a | -all | all)
@@ -198,7 +206,7 @@ do
             : ${all:=all}  # implies 'all', unless previous set to 'queue' etc.
             ;;
         -version | --version)
-            $make -f $WM_DIR/makefiles/info api
+            printInfo api
             optShow=true
             break;
             ;;
