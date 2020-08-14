@@ -90,8 +90,6 @@ class icoTabulated
 :
     public Specie
 {
-    typedef nonUniformTable nonUniformTable;
-
 
     // Private Data
 
