@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2017 Wikki Ltd
+    Copyright (C) 2016-2017 Wikki Ltd.
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +29,24 @@ Application
 
 Description
     A mesh generator for finiteArea mesh.
+
+    Uses the finiteArea mesh description found in
+      - \c constant/faMesh/faMeshDefinition
+      - \c constant/\<region\>\/faMesh/faMeshDefinition
+
+Usage
+    \b makeFaMesh [OPTIONS]
+
+    \param -region \<name\> \n
+        Specify an alternative mesh region.
+
+    The inherited options are elaborated in argList.H.
+
+Note
+    - Parallel execution is currently not available.
+
+See also
+    Foam::checkFaMesh
 
 Author
     Zeljko Tukovic, FAMENA
@@ -71,7 +90,7 @@ int main(int argc, char *argv[])
 {
     argList::addNote
     (
-        "A mesh generator for finiteArea mesh"
+        "A mesh generator for finiteArea mesh."
     );
 
     #include "addRegionOption.H"
@@ -95,7 +114,7 @@ int main(int argc, char *argv[])
         )
     );
 
-    wordList polyMeshPatches
+    const wordList polyMeshPatches
     (
         faMeshDefinition.get<wordList>("polyMeshPatches")
     );
@@ -104,7 +123,7 @@ int main(int argc, char *argv[])
 
     const wordList faPatchNames(bndDict.toc());
 
-    List<faPatchData> faPatches(faPatchNames.size()+1);
+    List<faPatchData> faPatches(faPatchNames.size() + 1);
 
     forAll(faPatchNames, patchI)
     {
@@ -121,7 +140,7 @@ int main(int argc, char *argv[])
 
         if (faPatches[patchI].ownPolyPatchID_ < 0)
         {
-            FatalErrorIn("makeFaMesh:")
+            FatalErrorInFunction
                 << "neighbourPolyPatch " << ownName << " does not exist"
                 << exit(FatalError);
         }
@@ -133,7 +152,7 @@ int main(int argc, char *argv[])
 
         if (faPatches[patchI].ngbPolyPatchID_ < 0)
         {
-            FatalErrorIn("makeFaMesh:")
+            FatalErrorInFunction
                 << "neighbourPolyPatch " << neiName << " does not exist"
                 << exit(FatalError);
         }
@@ -151,7 +170,7 @@ int main(int argc, char *argv[])
 
         if (patchIDs[patchI] < 0)
         {
-            FatalErrorIn("makeFaMesh:")
+            FatalErrorInFunction
                 << "Patch " << polyMeshPatches[patchI] << " does not exist"
                 << exit(FatalError);
         }
@@ -169,9 +188,9 @@ int main(int argc, char *argv[])
 
     forAll(polyMeshPatches, patchI)
     {
-        label start = mesh.boundaryMesh()[patchIDs[patchI]].start();
+        const label start = mesh.boundaryMesh()[patchIDs[patchI]].start();
 
-        label size  = mesh.boundaryMesh()[patchIDs[patchI]].size();
+        const label size = mesh.boundaryMesh()[patchIDs[patchI]].size();
 
         for (label i = 0; i < size; ++i)
         {
@@ -180,14 +199,14 @@ int main(int argc, char *argv[])
     }
 
     // Creating faMesh
-    Info << "Create faMesh ... ";
+    Info<< "Create faMesh ... ";
 
     faMesh areaMesh
     (
         mesh,
         faceLabels
     );
-    Info << "Done" << endl;
+    Info<< "Done" << endl;
 
 
     // Determination of faPatch ID for each boundary edge.
@@ -198,12 +217,12 @@ int main(int argc, char *argv[])
 
     forAll(faceCells, faceI)
     {
-        label faceID = faceLabels[faceI];
+        const label faceID = faceLabels[faceI];
 
         faceCells[faceI] = mesh.faceOwner()[faceID];
     }
 
-    labelList meshEdges =
+    const labelList meshEdges =
         patch.meshEdges
         (
             mesh.edges(),
@@ -220,7 +239,7 @@ int main(int argc, char *argv[])
 
     for (label edgeI = nInternalEdges; edgeI < nTotalEdges; ++edgeI)
     {
-        label curMeshEdge = meshEdges[edgeI];
+        const label curMeshEdge = meshEdges[edgeI];
 
         labelList curEdgePatchIDs(2, label(-1));
 
@@ -228,9 +247,9 @@ int main(int argc, char *argv[])
 
         forAll(edgeFaces[curMeshEdge], faceI)
         {
-            label curFace = edgeFaces[curMeshEdge][faceI];
+            const label curFace = edgeFaces[curMeshEdge][faceI];
 
-            label curPatchID = mesh.boundaryMesh().whichPatch(curFace);
+            const label curPatchID = mesh.boundaryMesh().whichPatch(curFace);
 
             if (curPatchID != -1)
             {
@@ -261,7 +280,7 @@ int main(int argc, char *argv[])
 
 
     // Set edgeLabels for each faPatch
-    for (label pI=0; pI<(faPatches.size()-1); ++pI)
+    for (label pI = 0; pI < (faPatches.size() - 1); ++pI)
     {
         SLList<label> tmpList;
 
@@ -289,7 +308,7 @@ int main(int argc, char *argv[])
 
     if (tmpList.size() > 0)
     {
-        label pI = faPatches.size()-1;
+        const label pI = faPatches.size() - 1;
 
         faPatches[pI].name_ = "undefined";
         faPatches[pI].type_ = "patch";
@@ -344,17 +363,18 @@ int main(int argc, char *argv[])
         );
     }
 
-    Info << "Add faPatches ... ";
+    Info<< "Add faPatches ... ";
     areaMesh.addFaPatches(List<faPatch*>(faPatchLst));
-    Info << "Done" << endl;
+    Info<< "Done" << endl;
 
     // Writing faMesh
-    Info << "Write finite area mesh ... ";
+    Info<< "Write finite area mesh ... " << endl;
     areaMesh.write();
 
-    Info << "\nEnd" << endl;
+    Info<< "End\n" << endl;
 
     return 0;
 }
+
 
 // ************************************************************************* //
