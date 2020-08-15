@@ -9,21 +9,42 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       polyBoundaryMesh;
-    location    "constant/polyMesh";
-    object      boundary;
+    class       areaVectorField;
+    object      Us;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-1
-(
-outer
+dimensions          [0 1 -1 0 0 0 0];
+
+internalField       uniform (0 0 0);
+
+boundaryField
 {
-    type patch;
-    nFaces 600;
-    startFace 4500;
+    inlet
+    {
+        type zeroGradient;
+    }
+
+    outlet
+    {
+        type zeroGradient;
+    }
+
+    side
+    {
+        type slip;
+    }
+
+    symmetry
+    {
+        type symmetry;
+    }
+
+    cylinder
+    {
+        type slip;
+    }
 }
-)
 
 
 // ************************************************************************* //

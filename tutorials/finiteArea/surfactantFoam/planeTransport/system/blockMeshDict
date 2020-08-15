@@ -47,7 +47,6 @@ boundary
            (0 4 7 3)
         );
     }
-
     bound
     {
         type wall;
@@ -57,7 +56,6 @@ boundary
            (1 5 4 0)
         );
     }
-
     outlet
     {
         type patch;
@@ -66,7 +64,6 @@ boundary
             (2 6 5 1)
         );
     }
-
     bottom
     {
         type patch;
@@ -75,7 +72,6 @@ boundary
             (0 3 2 1)
         );
     }
-
     top
     {
         type patch;

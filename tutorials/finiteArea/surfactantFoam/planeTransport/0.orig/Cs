@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       areaScalarField;
-    location    "0";
     object      Cs;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -25,20 +24,23 @@ boundaryField
 {
     inlet
     {
-        type fixedValue;
-        value uniform 1;
+        type        fixedValue;
+        value       uniform 1;
     }
+
     outlet
     {
-        type inletOutlet;
-        value uniform 1;
-        phi phis;
-        inletValue uniform 0;
+        type        inletOutlet;
+        value       uniform 1;
+        phi         phis;
+        inletValue  uniform 0;
     }
+
     bound
     {
-        type symmetry;
+        type        symmetry;
     }
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
