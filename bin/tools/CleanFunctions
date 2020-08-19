@@ -107,6 +107,7 @@ cleanCase()
     cleanAdiosOutput
     cleanDynamicCode
     cleanOptimisation
+    cleanFaMesh
 
     rm -rf processor*
     rm -rf TDAC
