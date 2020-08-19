@@ -49,6 +49,8 @@ bool Foam::functionObjects::heatTransferCoeff::calc()
 
     htcModelPtr_->calc(htc, htcModelPtr_->q());
 
+    htc *= L_/kappa_;
+
     return true;
 }
 
@@ -63,6 +65,8 @@ Foam::functionObjects::heatTransferCoeff::heatTransferCoeff
 )
 :
     fieldExpression(name, runTime, dict),
+    L_(1),
+    kappa_(1),
     htcModelPtr_(nullptr)
 {
     read(dict);
@@ -94,6 +98,9 @@ bool Foam::functionObjects::heatTransferCoeff::read(const dictionary& dict)
 {
     if (fieldExpression::read(dict))
     {
+        L_ = dict.getCheckOrDefault<scalar>("L", 1, scalarMinMax::ge(0));
+        kappa_ =
+            dict.getCheckOrDefault<scalar>("kappa", 1, scalarMinMax::ge(SMALL));
         htcModelPtr_ = heatTransferCoeffModel::New(dict, mesh_, fieldName_);
 
         htcModelPtr_->read(dict);

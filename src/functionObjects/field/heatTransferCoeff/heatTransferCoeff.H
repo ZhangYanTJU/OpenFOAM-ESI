@@ -33,8 +33,20 @@ Description
     Computes the heat transfer coefficient as a \c volScalarField
     for a set of patches.
 
-    The field is stored on the mesh database so that it can be retrieved and
-    used for other applications.
+    Optionally, the Nusselt number (i.e. the ratio of convective to conductive
+    heat transfer at a boundary in a fluid) can be output:
+
+    \f[
+        Nu = \frac{h L}{\kappa}
+    \f]
+
+    where
+    \vartable
+        Nu | Nusselt number
+        h  | Convective heat transfer coefficient of the flow
+        L  | Characteristic length that defines the scale of the physical system
+        \kappa | Thermal conductivity of the fluid
+    \endvartable
 
     Operands:
     \table
@@ -177,6 +189,12 @@ class heatTransferCoeff
     public fieldExpression
 {
     // Private Data
+
+        //- Characteristic length that defines the scale of the physical system
+        scalar L_;
+
+        //- Thermal conductivity of the fluid
+        scalar kappa_;
 
         //- Heat transfer coefficient model
         autoPtr<heatTransferCoeffModel> htcModelPtr_;
