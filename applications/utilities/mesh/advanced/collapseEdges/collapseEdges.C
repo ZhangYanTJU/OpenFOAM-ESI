@@ -30,25 +30,82 @@ Application
 Group
     grpMeshAdvancedUtilities
 
-Description
-    Collapses short edges and combines edges that are in line.
+Synopsis
+    \verbatim
+        collapseEdges [OPTIONS]
+    \endverbatim
 
-    - collapse short edges. Length of edges to collapse provided as argument.
-    - merge two edges if they are in line. Maximum angle provided as argument.
-    - remove unused points.
-    - collapse faces:
-        - with small areas to a single point
-        - that have a high aspect ratio (i.e. sliver face) to a single edge
+Description
+    Utility to collapse small edges to a point or faces to a point or an edge.
+
+    PENDING: THE FOLLOWING HAS WRONG INFO - WHERE ARE THE ARGS?
+    - Collapses short edges to a point:
+      - Length of edges to collapse should be
+      provided as a dictionary argument, \c minimumEdgeLength
+    - Merges two edges if they are in line:
+      - Maximum angle should be provided as
+      a dictionary argument, \c maximumMergeAngle
+    - Removes unused points.
+    - (Optionally) Collapses faces:
+      - with small areas to a single point.
+      - that have a high aspect ratio (i.e. thin/sliver face) to a single edge.
 
     Optionally checks the resulting mesh for bad faces and reduces the desired
     face length factor for those faces attached to the bad faces.
 
     When collapsing an edge with one point on the boundary it will leave
-    the boundary point intact. When both points inside it chooses random. When
-    both points on boundary random again.
+    the boundary point intact. When both points inside it chooses random.
+    When both points on boundary random again.
 
-Usage
-    - collapseEdges [OPTION]
+Arguments
+    \c collapseEdges does not need any arguments.
+
+Options
+    \param -collapseFaceSet \<faceSet\>
+        Collapse faces that are in the supplied face set.
+
+    \param -collapseFaces
+        Collapse small and sliver faces as well as small edges.
+
+    \param -dict \<file\>
+        Use an alternative collapseDict.
+
+    \param -overwrite
+        Overwrite existing mesh/results files.
+
+    The inherited options are elaborated in:
+     - \link argList.H \endlink
+
+Operands
+    \table
+      Operand    | Type       | Location
+      input      | dictionary | $FOAM_CASE/system/collapseDict
+      output     | -        | -
+      output     |          | -
+    \endtable
+
+    Minimal example by using \c system/collapseDict:
+    \verbatim
+    collapseEdgesCoeffs
+    {
+        // Mandatory entries (unmodifiable)
+        minimumEdgeLength   2e-7;
+        maximumMergeAngle   5;
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property      | Description                        | Type | Reqd | Dflt
+      minimumEdgeLength | Edges shorter than this absolute <!--
+                        --> value will be merged [m]     | scalar | yes | -
+      maximumMergeAngle | The maximum angle between two edges <!--
+                        --> that share a point attached to no <!--
+                        --> other edges [deg]            | scalar | yes | -
+    \endtable
+
+Note
+    - Function objects are not allowed to be executed.
 
 \*---------------------------------------------------------------------------*/
 
@@ -68,7 +125,7 @@ int main(int argc, char *argv[])
 {
     argList::addNote
     (
-        "Collapses small edges to a point.\n"
+        "Collapse small edges to a point.\n"
         "Optionally collapse small faces to a point and thin faces to an edge."
     );
     timeSelector::addOptions(true, false);  // constant(true), zero(false)
@@ -108,7 +165,6 @@ int main(int argc, char *argv[])
     IOdictionary collapseDict(dictIO);
 
     const bool overwrite = args.found("overwrite");
-
     const bool collapseFaces = args.found("collapseFaces");
     const bool collapseFaceSet = args.found("collapseFaceSet");
 
@@ -146,6 +202,7 @@ int main(int argc, char *argv[])
         ),
         labelList(mesh.nPoints(), labelMin)
     );
+
     forAll(timeDirs, timeI)
     {
         runTime.setTime(timeDirs[timeI], timeI);

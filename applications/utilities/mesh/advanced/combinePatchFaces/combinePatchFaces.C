@@ -30,24 +30,49 @@ Application
 Group
     grpMeshAdvancedUtilities
 
+Synopsis
+    \verbatim
+        combinePatchFaces \<featureAngle\> [OPTIONS]
+    \endverbatim
+
 Description
     Checks for multiple patch faces on the same cell and combines them.
+
     Multiple patch faces can result from e.g. removal of refined
-    neighbouring cells, leaving 4 exposed faces with same owner.
+    neighbouring cells, leaving 4 exposed faces with the same owner.
 
     Rules for merging:
     - only boundary faces (since multiple internal faces between two cells
       not allowed anyway)
-    - faces have to have same owner
+    - faces have to have the same owner
     - faces have to be connected via edge which are not features (so angle
       between them < feature angle)
     - outside of faces has to be single loop
     - outside of face should not be (or just slightly) concave (so angle
-      between consecutive edges < concaveangle
+      between consecutive edges < concaveangle)
 
-    E.g. to allow all faces on same patch to be merged:
+    For example, to allow all faces on same patch to be merged:
 
+    \verbatim
         combinePatchFaces 180 -concaveAngle 90
+    \endverbatim
+
+Arguments
+
+Options
+
+    The inherited options are elaborated in:
+     - \link argList.H \endlink
+
+Operands
+    \table
+      Operand    | Type     | Location
+      input      | -        | -
+      output     | -        | -
+      output     |          | -
+    \endtable
+
+Note
 
 \*---------------------------------------------------------------------------*/
 
