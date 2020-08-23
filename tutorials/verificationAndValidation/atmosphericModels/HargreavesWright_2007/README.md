@@ -1,26 +1,28 @@
-#------------------------------------------------------------------------------
+<!------------------------------------------------------------------------- -->
 
-Overview
+# Overview
 
-    "By setting appropriate profiles for wind velocity and the turbulence
-    quantities at the inlet, it is often assumed that the boundary layer will
-    be maintained up to the buildings or obstructions in the flow." (HW:p. 355).
-    However, it was quantified by (HW:p. 355) that "even in the absence of
-    obstructions, ..., the velocity and turbulence profiles decay along the
-    fetch" (HW:p. 355). It was shown by (HW:p. 355) that a set of modifications
-    were required to maintain a neutral atmospheric boundary layer throughout
-    an empty and long computational domain of a RANS computation.
+>>>
+"By setting appropriate profiles for wind velocity and the turbulence
+quantities at the inlet, it is often assumed that the boundary layer
+will be maintained up to the buildings or obstructions in the flow."
+(HW:p. 355). However, it was quantified by (HW:p. 355) that "even in
+the absence of obstructions, ..., the velocity and turbulence decay
+along the fetch" (HW:p. 355). It was shown by (HW:p. 355) that a set of
+modifications were required to maintain a neutral atmospheric boundary
+layer throughout an empty and long computational domain of a RANS computation.
+>>>
 
-    Aim:
+## Aim
 
-        Verification of the following boundary conditions in terms of the
-        maintenance of inlet quantities downstream within a RANS computation:
+- Verification of the following boundary conditions in terms of
+the maintenance of inlet quantities downstream within a RANS computation:
+  - atmBoundaryLayerInletVelocity
+  - atmBoundaryLayerInletK
+  - atmBoundaryLayerInletEpsilon
+  - atmBoundaryLayerInletOmega
 
-        - atmBoundaryLayerInletVelocity
-        - atmBoundaryLayerInletK
-        - atmBoundaryLayerInletEpsilon
-        - atmBoundaryLayerInletOmega
-
+## Benchmark (Physical phenomenon)
     Benchmark (Physical phenomenon):
 
         The benchmark is an empty fetch computational domain, steady-state
@@ -41,6 +43,9 @@ Overview
         - Benchmark dataset: (HW:Fig. 6) (Obtained by the WebPlotDigitizer-4.2
         (Rohatgi, 2019))
 
+# Resources
+
+## Mesh
     Resources:
 
         Computational study (tag:HW):
@@ -57,7 +62,12 @@ Overview
             Computational solutions. Wind and structures, 5(2_3_4), 177-192.
             DOI:10.12989/was.2002.5.2_3_4.177
 
-    Physical modelling:
+## Dataset
+
+
+# Numerics
+
+## Physical domain
 
         - The governing equations for:
             - Steady-state, Newtonian, single-phase, incompressible fluid flows,
@@ -73,6 +83,15 @@ Overview
             - Displacement height, d = 0 [m]
             - Reference mean wind speed, Uref = 10 [m/s]
 
+## Physical modelling
+## Numerical domain modelling
+## Numerical domain discretisation
+## Equation discretisation
+## Numerical boundary/initial conditions
+## Pressure-velocity coupling algorithm
+## Linear solvers
+## Initialisation and sampling
+# Results
     Computational domain modelling:
 
         - Rectangular prism
@@ -113,5 +132,9 @@ Overview
         - Sampling at the end of the simulation via `system/sampleDict`
         - Refer to `system/controlDict` for further details
 
+# How to run and inspect?
 
-#------------------------------------------------------------------------------
+# Collection of quoted remarks from the benchmarks
+
+
+<!------------------------------------------------------------------------- -->
