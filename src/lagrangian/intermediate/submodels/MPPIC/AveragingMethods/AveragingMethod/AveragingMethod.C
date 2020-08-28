@@ -87,7 +87,11 @@ Foam::AveragingMethod<Type>::New
     const fvMesh& mesh
 )
 {
-    const word modelType(dict.get<word>(typeName));
+    //const word modelType(dict.get<word>(typeName));
+    const word modelType
+    (
+        dict.template getOrDefault<word>(typeName, "basic")
+    );
 
     //Info<< "Selecting averaging method " << modelType << endl;
 

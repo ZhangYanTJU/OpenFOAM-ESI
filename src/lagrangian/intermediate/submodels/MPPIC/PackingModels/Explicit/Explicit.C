@@ -150,8 +150,10 @@ Foam::vector Foam::PackingModels::Explicit<CloudType>::velocityCorrection
     // interpolated quantities
     const scalar alpha =
         this->volumeAverage_->interpolate(p.coordinates(), tetIs);
+
     const vector alphaGrad =
         this->volumeAverage_->interpolateGrad(p.coordinates(), tetIs);
+
     const vector uMean =
         this->uAverage_->interpolate(p.coordinates(), tetIs);
 
@@ -175,7 +177,7 @@ Foam::vector Foam::PackingModels::Explicit<CloudType>::velocityCorrection
     // correction velocity
     if ((uRelative & alphaGrad) > 0)
     {
-        dU = - deltaT*tauGrad/(p.rho()*alpha/* + deltaT*F.Sp()*/);
+        dU = - deltaT*tauGrad/(p.rho()*(alpha + SMALL)/* + deltaT*F.Sp()*/);
     }
 
     // apply the velocity limiters

@@ -85,8 +85,11 @@ Foam::PackingModel<CloudType>::New
     CloudType& owner
 )
 {
-    const word modelType(dict.get<word>(typeName));
-
+    //const word modelType(dict.readIfPresent(typeName));
+    const word modelType
+    (
+        dict.template getOrDefault<word>(typeName, "none")
+    );
     Info<< "Selecting packing model " << modelType << endl;
 
     auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);

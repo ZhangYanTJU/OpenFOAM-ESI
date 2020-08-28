@@ -86,7 +86,11 @@ Foam::IsotropyModel<CloudType>::New
     CloudType& owner
 )
 {
-    const word modelType(dict.get<word>(typeName));
+    //const word modelType(dict.get<word>(typeName));
+    const word modelType
+    (
+        dict.template getOrDefault<word>(typeName, "none")
+    );
 
     Info<< "Selecting isotropy model " << modelType << endl;
 

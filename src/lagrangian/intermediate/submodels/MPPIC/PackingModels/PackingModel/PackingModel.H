@@ -147,6 +147,39 @@ public:
 
 #define makePackingModel(CloudType)                                            \
                                                                                \
+    typedef Foam::CloudType::kinematicCloudType kinematicCloudType;            \
+    defineNamedTemplateTypeNameAndDebug                                        \
+    (                                                                          \
+        Foam::PackingModel<kinematicCloudType>,                                \
+        0                                                                      \
+    );                                                                         \
+                                                                               \
+    namespace Foam                                                             \
+    {                                                                          \
+        defineTemplateRunTimeSelectionTable                                    \
+        (                                                                      \
+            PackingModel<kinematicCloudType>,                                  \
+            dictionary                                                         \
+        );                                                                     \
+    }
+
+
+#define makePackingModelType(SS, CloudType)                                    \
+                                                                               \
+    typedef Foam::CloudType::kinematicCloudType kinematicCloudType;            \
+    defineNamedTemplateTypeNameAndDebug                                        \
+        (Foam::PackingModels::SS<kinematicCloudType>, 0);                      \
+                                                                               \
+    Foam::PackingModel<kinematicCloudType>::                                   \
+        adddictionaryConstructorToTable                                        \
+        <Foam::PackingModels::SS<kinematicCloudType>>                          \
+            add##SS##CloudType##kinematicCloudType##ConstructorToTable_;
+
+
+// These are used to defined models in MPPIC cloud specifically
+
+#define makePackingModelMPPIC(CloudType)                                   \
+                                                                               \
     typedef Foam::CloudType::MPPICCloudType MPPICCloudType;                    \
     defineNamedTemplateTypeNameAndDebug                                        \
     (                                                                          \
@@ -164,7 +197,7 @@ public:
     }
 
 
-#define makePackingModelType(SS, CloudType)                                    \
+#define makePackingModelTypeMPPIC(SS, CloudType)                               \
                                                                                \
     typedef Foam::CloudType::MPPICCloudType MPPICCloudType;                    \
     defineNamedTemplateTypeNameAndDebug                                        \
@@ -174,7 +207,6 @@ public:
         adddictionaryConstructorToTable                                        \
         <Foam::PackingModels::SS<MPPICCloudType>>                              \
             add##SS##CloudType##MPPICCloudType##ConstructorToTable_;
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
