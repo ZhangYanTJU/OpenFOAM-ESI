@@ -300,7 +300,9 @@ Foam::polyMesh::polyMesh(const IOobject& io)
     moving_(false),
     topoChanging_(false),
     curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr)
+    oldPointsPtr_(nullptr),
+    oldCellCentresPtr_(nullptr),
+    storeOldCellCentres_(false)
 {
     if (!owner_.headerClassName().empty())
     {
@@ -488,7 +490,9 @@ Foam::polyMesh::polyMesh
     moving_(false),
     topoChanging_(false),
     curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr)
+    oldPointsPtr_(nullptr),
+    oldCellCentresPtr_(nullptr),
+    storeOldCellCentres_(false)
 {
     // Check if the faces and cells are valid
     forAll(faces_, facei)
@@ -639,7 +643,9 @@ Foam::polyMesh::polyMesh
     moving_(false),
     topoChanging_(false),
     curMotionTimeIndex_(time().timeIndex()),
-    oldPointsPtr_(nullptr)
+    oldPointsPtr_(nullptr),
+    oldCellCentresPtr_(nullptr),
+    storeOldCellCentres_(false)
 {
     // Check if faces are valid
     forAll(faces_, facei)
@@ -1087,7 +1093,11 @@ const Foam::labelList& Foam::polyMesh::faceNeighbour() const
 
 const Foam::pointField& Foam::polyMesh::oldPoints() const
 {
-    if (oldPointsPtr_.empty())
+    if (!moving_)
+    {
+        return points_;
+    }
+    if (!oldPointsPtr_)
     {
         if (debug)
         {
@@ -1099,6 +1109,23 @@ const Foam::pointField& Foam::polyMesh::oldPoints() const
     }
 
     return *oldPointsPtr_;
+}
+
+const Foam::pointField& Foam::polyMesh::oldCellCentres() const
+{
+    storeOldCellCentres_ = true;
+
+    if (!moving_)
+    {
+        return cellCentres();
+    }
+
+    if (oldCellCentresPtr_.empty())
+    {
+        oldCellCentresPtr_.reset(new pointField(cellCentres()));
+    }
+
+    return *oldCellCentresPtr_;
 }
 
 
@@ -1131,6 +1158,12 @@ Foam::tmp<Foam::scalarField> Foam::polyMesh::movePoints
             Info<< "tmp<scalarField> polyMesh::movePoints(const pointField&) : "
                 << " Storing current points for time " << time().value()
                 << " index " << time().timeIndex() << endl;
+        }
+
+        if (storeOldCellCentres_)
+        {
+            oldCellCentresPtr_.clear();
+            oldCellCentresPtr_.reset(new pointField(cellCentres()));
         }
 
         // Mesh motion in the new time step
@@ -1228,6 +1261,7 @@ void Foam::polyMesh::resetMotion() const
 {
     curMotionTimeIndex_ = 0;
     oldPointsPtr_.clear();
+    oldCellCentresPtr_.clear();
 }
 
 

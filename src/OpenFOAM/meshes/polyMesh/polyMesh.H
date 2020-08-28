@@ -189,6 +189,12 @@ private:
             //- Old points (for the last mesh motion)
             mutable autoPtr<pointField> oldPointsPtr_;
 
+            //- Old cell centres (for the last mesh motion)
+            mutable autoPtr<pointField> oldCellCentresPtr_;
+
+            //- Whether or not to store the old cell centres
+            mutable bool storeOldCellCentres_;
+
 
     // Private Member Functions
 
@@ -431,6 +437,9 @@ public:
 
             //- Return old points for mesh motion
             virtual const pointField& oldPoints() const;
+
+            //- Return old points for mesh motion
+            virtual const pointField& oldCellCentres() const;
 
             //- Return boundary mesh
             const polyBoundaryMesh& boundaryMesh() const
