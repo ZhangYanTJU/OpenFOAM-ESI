@@ -38,6 +38,12 @@ License
 #include "SurfaceFilmModel.H"
 #include "profiling.H"
 
+#include "PackingModel.H"
+#include "ParticleStressModel.H"
+#include "DampingModel.H"
+#include "IsotropyModel.H"
+#include "TimeScaleModel.H"
+
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
 template<class CloudType>
@@ -73,6 +79,33 @@ void Foam::KinematicCloud<CloudType>::setModels()
     surfaceFilmModel_.reset
     (
         SurfaceFilmModel<KinematicCloud<CloudType>>::New
+        (
+            subModelProperties_,
+            *this
+        ).ptr()
+    );
+
+    packingModel_.reset
+    (
+        PackingModel<KinematicCloud<CloudType>>::New
+        (
+            subModelProperties_,
+            *this
+        ).ptr()
+    );
+
+    dampingModel_.reset
+    (
+        DampingModel<KinematicCloud<CloudType>>::New
+        (
+            subModelProperties_,
+            *this
+        ).ptr()
+    );
+
+    isotropyModel_.reset
+    (
+        IsotropyModel<KinematicCloud<CloudType>>::New
         (
             subModelProperties_,
             *this
@@ -210,7 +243,6 @@ void Foam::KinematicCloud<CloudType>::evolveCloud
 
         injectors_.inject(cloud, td);
 
-
         // Assume that motion will update the cellOccupancy as necessary
         // before it is required.
         cloud.motion(cloud, td);
@@ -262,6 +294,15 @@ void Foam::KinematicCloud<CloudType>::postEvolve
             true
         );
     }
+
+    if (this->dampingModel().active())
+    {
+        this->dampingModel().cacheFields(false);
+    }
+    if (this->packingModel().active())
+    {
+        this->packingModel().cacheFields(false);
+    }
 }
 
 
@@ -282,6 +323,10 @@ void Foam::KinematicCloud<CloudType>::cloudReset(KinematicCloud<CloudType>& c)
     patchInteractionModel_.reset(c.patchInteractionModel_.ptr());
     stochasticCollisionModel_.reset(c.stochasticCollisionModel_.ptr());
     surfaceFilmModel_.reset(c.surfaceFilmModel_.ptr());
+
+    packingModel_.reset(c.packingModel_.ptr());
+    dampingModel_.reset(c.dampingModel_.ptr());
+    isotropyModel_.reset(c.isotropyModel_.ptr());
 
     UIntegrator_.reset(c.UIntegrator_.ptr());
 }
@@ -373,6 +418,11 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
     patchInteractionModel_(nullptr),
     stochasticCollisionModel_(nullptr),
     surfaceFilmModel_(nullptr),
+
+    packingModel_(nullptr),
+    dampingModel_(nullptr),
+    isotropyModel_(nullptr),
+
     UIntegrator_(nullptr),
     UTrans_
     (
@@ -456,6 +506,11 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
     patchInteractionModel_(c.patchInteractionModel_->clone()),
     stochasticCollisionModel_(c.stochasticCollisionModel_->clone()),
     surfaceFilmModel_(c.surfaceFilmModel_->clone()),
+
+    packingModel_(c.packingModel_->clone()),
+    dampingModel_(c.dampingModel_->clone()),
+    isotropyModel_(c.isotropyModel_->clone()),
+
     UIntegrator_(c.UIntegrator_->clone()),
     UTrans_
     (
@@ -547,6 +602,11 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
     patchInteractionModel_(nullptr),
     stochasticCollisionModel_(nullptr),
     surfaceFilmModel_(nullptr),
+
+    packingModel_(nullptr),
+    dampingModel_(nullptr),
+    isotropyModel_(nullptr),
+
     UIntegrator_(nullptr),
     UTrans_(nullptr),
     UCoeff_(nullptr)
@@ -669,14 +729,31 @@ void Foam::KinematicCloud<CloudType>::preEvolve
     // with topology change due to lazy evaluation of valid mesh dimensions
     label nGeometricD = mesh_.nGeometricD();
 
-    Info<< "\nSolving " << nGeometricD << "-D cloud " << this->name() << endl;
+    Info<< "\nSolvin " << nGeometricD << "-D cloud " << this->name() << endl;
 
     this->dispersion().cacheFields(true);
     forces_.cacheFields(true);
-    updateCellOccupancy();
 
     pAmbient_ = constProps_.dict().template
         getOrDefault<scalar>("pAmbient", pAmbient_);
+
+    if (this->dampingModel().active() || this->packingModel().active())
+    {
+         const_cast<typename parcelType::trackingData&>(td).updateAverages(*this);
+    }
+
+    if (this->dampingModel().active())
+    {
+        DebugVar("dampingModel")
+        this->dampingModel().cacheFields(true);
+    }
+    if (this->packingModel().active())
+    {
+        DebugVar("packingModel")
+        this->packingModel().cacheFields(true);
+    }
+
+    updateCellOccupancy();
 
     functions_.preEvolve(td);
 }
@@ -688,7 +765,6 @@ void Foam::KinematicCloud<CloudType>::evolve()
     if (solution_.canEvolve())
     {
         typename parcelType::trackingData td(*this);
-
         solve(*this, td);
     }
 }
@@ -704,6 +780,12 @@ void Foam::KinematicCloud<CloudType>::motion
 {
     td.part() = parcelType::trackingData::tpLinearTrack;
     CloudType::move(cloud, td, solution_.trackTime());
+
+    if (isotropyModel_->active())
+    {
+        td.updateAverages(cloud);
+        isotropyModel_->calculate();
+    }
 
     updateCellOccupancy();
 }

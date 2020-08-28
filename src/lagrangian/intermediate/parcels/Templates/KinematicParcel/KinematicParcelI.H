@@ -305,6 +305,20 @@ inline Foam::vector& Foam::KinematicParcel<ParcelType>::U()
 
 
 template<class ParcelType>
+inline const Foam::vector& Foam::KinematicParcel<ParcelType>::UCorrect() const
+{
+    return UCorrect_;
+}
+
+
+template<class ParcelType>
+inline Foam::vector& Foam::KinematicParcel<ParcelType>::UCorrect()
+{
+    return UCorrect_;
+}
+
+
+template<class ParcelType>
 inline Foam::scalar& Foam::KinematicParcel<ParcelType>::rho()
 {
     return rho_;

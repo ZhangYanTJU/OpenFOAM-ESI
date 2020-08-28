@@ -43,6 +43,13 @@ License
     makeIsotropyModelType(Stochastic, CloudType);
 
 
+#define makeMPPICCloudParcelIsotropyModels(CloudType)                          \
+                                                                               \
+    makeIsotropyModelMPPIC(CloudType);                                         \
+                                                                               \
+    makeIsotropyModelTypeMPPIC(NoIsotropy, CloudType);                         \
+    makeIsotropyModelTypeMPPIC(Stochastic, CloudType);
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif

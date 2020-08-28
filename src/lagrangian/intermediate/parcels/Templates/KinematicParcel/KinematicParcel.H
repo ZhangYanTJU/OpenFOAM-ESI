@@ -55,6 +55,8 @@ SourceFiles
 #include "autoPtr.H"
 #include "interpolation.H"
 #include "demandDrivenEntry.H"
+#include "labelFieldIOField.H"
+#include "vectorFieldIOField.H"
 
 // #include "ParticleForceList.H" // TODO
 
@@ -65,6 +67,9 @@ namespace Foam
 
 template<class ParcelType>
 class KinematicParcel;
+
+template<class Type>
+class AveragingMethod;
 
 // Forward declaration of friend functions
 
@@ -199,6 +204,30 @@ public:
                 scalar muc_;
 
 
+            // MPPIC Averages
+
+                //- Volume average
+                autoPtr<AveragingMethod<scalar>> volumeAverage_;
+
+                //- Radius average [ volume^(1/3) ]
+                autoPtr<AveragingMethod<scalar>> radiusAverage_;
+
+                //- Density average
+                autoPtr<AveragingMethod<scalar>> rhoAverage_;
+
+                //- Velocity average
+                autoPtr<AveragingMethod<vector>> uAverage_;
+
+                //- Magnitude velocity squared average
+                autoPtr<AveragingMethod<scalar>> uSqrAverage_;
+
+                //- Frequency average
+                autoPtr<AveragingMethod<scalar>> frequencyAverage_;
+
+                //- Mass average
+                autoPtr<AveragingMethod<scalar>> massAverage_;
+
+
             //- Local gravitational or other body-force acceleration
             const vector& g_;
 
@@ -260,6 +289,11 @@ public:
 
             //- Return access to the part of the tracking operation taking place
             inline trackPart& part();
+
+            //- Update the MPPIC averages
+            template<class TrackCloudType>
+            inline void updateAverages(const TrackCloudType& cloud);
+
     };
 
 
@@ -299,6 +333,9 @@ protected:
 
             //- Turbulent velocity fluctuation [m/s]
             vector UTurb_;
+
+            //- Velocity correction due to collisions MPPIC [m/s]
+            vector UCorrect_;
 
 
     // Protected Member Functions
@@ -340,6 +377,7 @@ public:
           + " age"
           + " tTurb"
           + " (UTurbx UTurby UTurbz)"
+          + " (UCorrectx UCorrecty UCorrectz)"
         );
 
 
@@ -465,6 +503,9 @@ public:
             //- Return const access to turbulent velocity fluctuation
             inline const vector& UTurb() const;
 
+            //- Return const access to correction velocity
+            inline const vector& UCorrect() const;
+
 
         // Edit
 
@@ -497,6 +538,9 @@ public:
 
             //- Return access to turbulent velocity fluctuation
             inline vector& UTurb();
+
+            //- Return access to correction velocity
+            inline vector& UCorrect();
 
 
         // Helper functions
@@ -605,6 +649,15 @@ public:
             //- Update parcel properties over the time interval
             template<class TrackCloudType>
             void calc
+            (
+                TrackCloudType& cloud,
+                trackingData& td,
+                const scalar dt
+            );
+
+            //- Correct U following MP-PIC sub-models
+            template<class TrackCloudType>
+            void calcUCorrection
             (
                 TrackCloudType& cloud,
                 trackingData& td,

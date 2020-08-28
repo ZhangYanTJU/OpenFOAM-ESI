@@ -56,9 +56,15 @@ makeParcelStochasticCollisionModels(basicKinematicMPPICCloud);
 makeParcelSurfaceFilmModels(basicKinematicMPPICCloud);
 
 // MPPIC sub-models
+// WIP: These models are defined in Kinematic and MPPIC clouds temporarily
 makeMPPICParcelDampingModels(basicKinematicMPPICCloud);
+makeMPPICCloudParcelDampingModels(basicKinematicMPPICCloud);
+
 makeMPPICParcelIsotropyModels(basicKinematicMPPICCloud);
+makeMPPICCloudParcelIsotropyModels(basicKinematicMPPICCloud);
+
 makeMPPICParcelPackingModels(basicKinematicMPPICCloud);
+makeMPPICCloudParcelPackingModels(basicKinematicMPPICCloud);
 
 
 // ************************************************************************* //

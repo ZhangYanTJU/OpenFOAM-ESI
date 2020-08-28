@@ -40,6 +40,11 @@ License
 // Thermodynamic
 #include "makeParcelHeatTransferModels.H"
 
+// MPPIC sub-models
+#include "makeMPPICParcelDampingModels.H"
+#include "makeMPPICParcelIsotropyModels.H"
+#include "makeMPPICParcelPackingModels.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makeParcelCloudFunctionObjects(basicThermoCloud);
@@ -55,5 +60,10 @@ makeParcelSurfaceFilmModels(basicThermoCloud);
 // Thermo sub-models
 makeParcelHeatTransferModels(basicThermoCloud);
 
+
+// MPPIC sub-models
+makeMPPICParcelDampingModels(basicThermoCloud);
+makeMPPICParcelIsotropyModels(basicThermoCloud);
+makeMPPICParcelPackingModels(basicThermoCloud);
 
 // ************************************************************************* //

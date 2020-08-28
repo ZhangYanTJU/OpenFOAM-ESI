@@ -44,6 +44,15 @@ License
     makePackingModelType(Explicit, CloudType);                                 \
     makePackingModelType(Implicit, CloudType);
 
+
+#define makeMPPICCloudParcelPackingModels(CloudType)                           \
+                                                                               \
+    makePackingModelMPPIC(CloudType);                                          \
+                                                                               \
+    makePackingModelTypeMPPIC(NoPacking, CloudType);                           \
+    makePackingModelTypeMPPIC(Explicit, CloudType);                            \
+    makePackingModelTypeMPPIC(Implicit, CloudType);
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif
