@@ -86,15 +86,10 @@ class particle
         //- Size in bytes of the fields
         static const std::size_t sizeofFields;
 
-        //- The factor by which the displacement is increased when passing
-        //  through negative space. This should be slightly bigger than one.
-        //  This is needed as a straight trajectory can form a closed loop
-        //  through regions of overlapping positive and negative space, leading
-        //  to a track which never ends. By increasing the rate of displacement
-        //  through negative regions, the change in track fraction over this
-        //  part of the loop no longer exactly cancels the change over the
-        //  positive part, and the track therefore terminates.
-        static const scalar negativeSpaceDisplacementFactor;
+        //- The value of nBehind_ at which tracking is abandoned. See the
+        //  description of nBehind_.
+        static const label maxNBehind_;
+
 
 
 public:
@@ -160,6 +155,18 @@ private:
 
         //- Fraction of time-step completed
         scalar stepFraction_;
+
+        //- The distance behind the maximum distance reached so far
+        scalar behind_;
+
+        //- The number of tracks carried out that ended in a distance behind the
+        //  maximum distance reached so far. Once this reaches maxNBehind_,
+        //  tracking is abandoned for the current step. This is needed because
+        //  when tetrahedra are inverted a straight trajectory can form a closed
+        //  loop through regions of overlapping positive and negative space.
+        //  Without this break clause, such loops can result in a valid track
+        //  which never ends.
+        label nBehind_;
 
         //- Originating processor id
         label origProc_;
@@ -526,6 +533,9 @@ public:
             //- Return current particle position
             inline vector position() const;
 
+            //- Reset particle data
+            inline void reset();
+
 
     // Track
 
@@ -662,6 +672,7 @@ public:
 
         //- Set the addressing based on the provided position
         void relocate(const point& position, const label celli = -1);
+
 
 
     // I-O

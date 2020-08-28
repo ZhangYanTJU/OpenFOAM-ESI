@@ -68,6 +68,7 @@ inline void Foam::particle::movingTetGeometry
 ) const
 {
     const triFace triIs(currentTetIndices().faceTriIs(mesh_));
+
     const pointField& ptsOld = mesh_.oldPoints();
     const pointField& ptsNew = mesh_.points();
 
@@ -75,8 +76,11 @@ inline void Foam::particle::movingTetGeometry
     // we need to put a mesh_.oldCellCentres() method in for this to work. The
     // values obtained from the mesh and those obtained from the cell do not
     // necessarily match. See mantis #1993.
-    const vector ccOld = mesh_.cells()[celli_].centre(ptsOld, mesh_.faces());
-    const vector ccNew = mesh_.cells()[celli_].centre(ptsNew, mesh_.faces());
+    //const vector ccOld = mesh_.cells()[celli_].centre(ptsOld, mesh_.faces());
+    //const vector ccNew = mesh_.cells()[celli_].centre(ptsNew, mesh_.faces());
+
+    const vector ccOld = mesh_.oldCellCentres()[celli_];
+    const vector ccNew = mesh_.cellCentres()[celli_];
 
     // Old and new points and cell centres are not sub-cycled. If we are sub-
     // cycling, then we have to account for the timestep change here by
@@ -265,7 +269,7 @@ inline Foam::tetIndices Foam::particle::currentTetIndices() const
 
 inline Foam::barycentricTensor Foam::particle::currentTetTransform() const
 {
-    if (mesh_.moving())
+    if (mesh_.moving() && stepFraction_ != 1)
     {
         return movingTetTransform(0)[0];
     }
@@ -311,6 +315,13 @@ inline Foam::vector Foam::particle::position() const
     return currentTetTransform() & coordinates_;
 }
 
+inline void Foam::particle::reset()
+{
+    stepFraction_ = 0;
+    nBehind_ = 0;
+    behind_ = 0;
+}
+
 
 void Foam::particle::patchData(vector& n, vector& U) const
 {
@@ -321,7 +332,7 @@ void Foam::particle::patchData(vector& n, vector& U) const
             << exit(FatalError);
     }
 
-    if (mesh_.moving())
+    if ((mesh_.moving() && stepFraction_ != 1))
     {
         Pair<vector> centre, base, vertex1, vertex2;
         movingTetGeometry(1, centre, base, vertex1, vertex2);
