@@ -1,12 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | www.openfoam.com
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2017-2018 OpenFOAM Foundation
      \\/     M anipulation  |
--------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +37,8 @@ inline Foam::linearEqn::linearEqn(const Foam::zero)
 
 inline Foam::linearEqn::linearEqn(const scalar a, const scalar b)
 {
-    this->v_[A] = a;
-    this->v_[B] = b;
+    this->v_[coefficient::a] = a;
+    this->v_[coefficient::b] = b;
 }
 
 
@@ -49,25 +46,25 @@ inline Foam::linearEqn::linearEqn(const scalar a, const scalar b)
 
 inline Foam::scalar Foam::linearEqn::a() const
 {
-    return this->v_[A];
+    return this->v_[coefficient::a];
 }
 
 
 inline Foam::scalar Foam::linearEqn::b() const
 {
-    return this->v_[B];
+    return this->v_[coefficient::b];
 }
 
 
 inline Foam::scalar& Foam::linearEqn::a()
 {
-    return this->v_[A];
+    return this->v_[coefficient::a];
 }
 
 
 inline Foam::scalar& Foam::linearEqn::b()
 {
-    return this->v_[B];
+    return this->v_[coefficient::b];
 }
 
 
@@ -91,16 +88,32 @@ inline Foam::scalar Foam::linearEqn::error(const scalar x) const
 
 inline Foam::Roots<1> Foam::linearEqn::roots() const
 {
+    /*
+
+    This function solves a linear equation of the following form:
+
+        a*x + b = 0
+          x + b = 0
+
+    */
+
     const scalar a = this->a();
     const scalar b = this->b();
 
-    if (mag(a) < VSMALL)
+    if (a == 0)
     {
         return Roots<1>(roots::nan, 0);
     }
-    else if (mag(b/VGREAT) >= mag(a))
+
+    if (mag(b/VGREAT) >= mag(a))
     {
-        return Roots<1>(sign(a) == sign(b) ? roots::negInf : roots::posInf, 0);
+        return Roots<1>
+        (
+            sign(a) == sign(b)
+          ? roots::negInf
+          : roots::posInf,
+          0
+        );
     }
 
     return Roots<1>(roots::real, -b/a);
