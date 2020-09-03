@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -361,8 +362,6 @@ bool Foam::KinematicParcel<ParcelType>::move
 
         const scalar dt = (p.stepFraction() - sfrac)*trackTime;
 
-
-
         // Avoid problems with extremely small timesteps
         if (dt > ROOTVSMALL)
         {
@@ -387,12 +386,11 @@ bool Foam::KinematicParcel<ParcelType>::move
         {
             cloud.functions().postFace(p, ttd.keepParticle);
         }
-
         cloud.functions().postMove(p, dt, start, ttd.keepParticle);
 
         if (p.active() && p.onFace() && ttd.keepParticle)
         {
-            p.hitFace(f*s - d, cloud, ttd);
+            p.hitFace(s, cloud, ttd);
         }
     }
 

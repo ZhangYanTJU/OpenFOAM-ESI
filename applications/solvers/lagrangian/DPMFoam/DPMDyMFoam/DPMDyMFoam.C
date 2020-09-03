@@ -110,7 +110,6 @@ int main(int argc, char *argv[])
         continuousPhaseTransport.correct();
         muc = rhoc*continuousPhaseTransport.nu();
 
-        Info<< "Evolving " << kinematicCloud.name() << endl;
         kinematicCloud.evolve();
 
         // Update continuous phase volume fraction field
@@ -136,7 +135,6 @@ int main(int argc, char *argv[])
         cloudVolSUSu.primitiveFieldRef() = -cloudSU.source()/mesh.V();
         cloudVolSUSu.correctBoundaryConditions();
         cloudSU.source() = Zero;
-
 //         cloudVolSUSu.primitiveFieldRef() =
 //             (cloudSU.diag()*Uc() - cloudSU.source())/mesh.V();
 //         cloudVolSUSu.correctBoundaryConditions();
