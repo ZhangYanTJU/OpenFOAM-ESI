@@ -33,7 +33,7 @@ Description
     The formatOptions for nastran:
     \table
         Property | Description                              | Required | Default
-        fields   | field pairs for PLOAD2, PLOAD4           | yes   |
+        fields   | field pairs for PLOAD2/PLOAD4            | yes   |
         format   | short / long / free                      | no    | long
         scale    | output geometry scaling                  | no    | 1
         fieldScale | output field scaling (dictionary)      | no    | empty
@@ -45,7 +45,7 @@ Description
     {
         nastran
         {
-            // OpenFOAM field name to NASTRAN field name
+            // OpenFOAM field name to NASTRAN load types
             fields
             (
                 (pMean  PLOAD2)
@@ -90,6 +90,7 @@ Description
 
 Note
     Output variable scaling does not apply to integer types such as Ids.
+    Field pairs default to PLOAD2 for scalars and PLOAD4 for vectors etc.
 
 SourceFiles
     nastranSurfaceWriter.C
@@ -169,6 +170,7 @@ private:
         ) const;
 
         //- Write the surface mesh geometry, tracking face decomposition
+        //  Includes SHELL/MAT information
         //
         //  \param decompOffsets  begin/end offsets (size+1) into decompFaces
         //  \param decompFaces    Non tri/quad decomposed into triangles
@@ -186,9 +188,6 @@ private:
             Ostream& os,
             const word& keyword
         ) const;
-
-        //- Write the footer information
-        Ostream& writeFooter(Ostream& os, const meshedSurf& surf) const;
 
         //- Write a formatted value to the output stream
         template<class Type>

@@ -147,18 +147,42 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
 {
     checkOpen();
 
-    if (!fieldMap_.found(fieldName))
-    {
-        FatalErrorInFunction
-            << "No mapping found between field " << fieldName
-            << " and corresponding Nastran field.  Available types are:"
-            << fieldMap_
-            << exit(FatalError);
+    const loadFormat format
+    (
+        fieldMap_.lookup
+        (
+            fieldName,
+            // Default format
+            (
+                pTraits<Type>::nComponents == 1
+              ? loadFormat::PLOAD2
+              : loadFormat::PLOAD4
+            )
+        )
+    );
 
-        return fileName::null;
+    if
+    (
+        !std::is_integral<Type>::value  // Handle 'Ids' etc silently
+     && !fieldMap_.empty()
+     && !fieldMap_.found(fieldName)
+    )
+    {
+        WarningInFunction
+            << "No mapping found between field " << fieldName
+            << " and corresponding Nastran field.  Available types:"
+            << fieldMap_ << nl;
     }
 
-    const loadFormat format(fieldMap_[fieldName]);
+    // Emit any common warnings
+    if (format == loadFormat::PLOAD2 && pTraits<Type>::nComponents != 1)
+    {
+        WarningInFunction
+            << fileFormats::NASCore::loadFormatNames[format]
+            << " cannot be used for higher rank values"
+            << " - reverting to mag()" << endl;
+    }
+
 
     // Field:  rootdir/<TIME>/field/surfaceName.nas
 
@@ -190,16 +214,6 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
             Info<< " (scaling " << varScale << ')';
         }
         Info<< " to " << outputFile << endl;
-    }
-
-
-    // Emit any common warnings
-    if (format == loadFormat::PLOAD2 && pTraits<Type>::nComponents != 1)
-    {
-        WarningInFunction
-            << fileFormats::NASCore::loadFormatNames[format]
-            << " cannot be used for higher rank values"
-            << " - reverting to mag()" << endl;
     }
 
 
@@ -244,11 +258,11 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
             << "BEGIN BULK" << nl;
 
 
+        // Write geometry
         writeGeometry(os, surf, decompOffsets, decompFaces);
 
 
         // Write field
-
         os  << '$' << nl
             << "$ Field data" << nl
             << '$' << nl;
@@ -345,8 +359,7 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
             }
         }
 
-        writeFooter(os, surf)
-            << "ENDDATA" << endl;
+        os  << "ENDDATA" << endl;
     }
 
     wroteGeom_ = true;
