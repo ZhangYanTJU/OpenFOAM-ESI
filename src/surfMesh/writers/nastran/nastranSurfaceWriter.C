@@ -356,6 +356,7 @@ Foam::surfaceWriters::nastranWriter::nastranWriter()
     surfaceWriter(),
     writeFormat_(fieldFormat::SHORT),
     fieldMap_(),
+    commonGeometry_(false),
     geometryScale_(1),
     fieldScale_(),
     separator_()
@@ -378,6 +379,7 @@ Foam::surfaceWriters::nastranWriter::nastranWriter
         )
     ),
     fieldMap_(),
+    commonGeometry_(options.getOrDefault("commonGeometry", false)),
     geometryScale_(options.getOrDefault<scalar>("scale", 1)),
     fieldScale_(options.subOrEmptyDict("fieldScale")),
     separator_()
@@ -465,9 +467,7 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::write()
         OFstream os(outputFile);
         fileFormats::NASCore::setPrecision(os, writeFormat_);
 
-        os  << "TITLE=OpenFOAM " << outputPath_.name()
-            << " mesh" << nl
-            << '$' << nl
+        os  << "TITLE=OpenFOAM " << outputPath_.name() << " geometry" << nl
             << "BEGIN BULK" << nl;
 
         labelList decompOffsets;

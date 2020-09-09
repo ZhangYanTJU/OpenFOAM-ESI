@@ -145,6 +145,15 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
     const Field<Type>& localValues
 )
 {
+    // Geometry changed since last output? Capture now before any merging.
+    /// const bool geomChanged = (!upToDate_);
+
+    // Separate geometry, when commonGeometry = true
+    if (!wroteGeom_ && commonGeometry_)
+    {
+        write();
+    }
+
     checkOpen();
 
     const loadFormat format
@@ -184,7 +193,11 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
     }
 
 
-    // Field:  rootdir/<TIME>/field/surfaceName.nas
+    // Common geometry
+    // Field:  rootdir/<TIME>/<field>_surfaceName.bdf
+
+    // Embedded geometry
+    // Field:  rootdir/<TIME>/<field>/surfaceName.bdf
 
     fileName outputFile = outputPath_.path();
     if (useTimeDir() && !timeName().empty())
@@ -192,8 +205,23 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
         // Splice in time-directory
         outputFile /= timeName();
     }
-    outputFile /= fieldName / outputPath_.name();
-    outputFile.ext("nas");
+
+    fileName geomFileName;
+    if (commonGeometry_)
+    {
+        // Common geometry
+        geomFileName = outputPath_.name().ext("nas");
+
+        // Append <field>_surfaceName.usr
+        outputFile /= fieldName + '_' + outputPath_.name();
+    }
+    else
+    {
+        // Embedded geometry
+        // Use sub-directory
+        outputFile /= fieldName / outputPath_.name();
+    }
+    outputFile.ext("bdf");
 
 
     // Output scaling for the variable, but not for integer types.
@@ -238,8 +266,6 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
         DynamicList<face> decompFaces;
 
 
-        // Could handle separate geometry here
-
         OFstream os(outputFile);
         fileFormats::NASCore::setPrecision(os, writeFormat_);
 
@@ -252,15 +278,29 @@ Foam::fileName Foam::surfaceWriters::nastranWriter::writeTemplate
                 << "$ TIME " << timeName() << nl;
         }
 
-        os  << '$' << nl
-            << "TIME " << timeValue << nl
-            << '$' << nl
+        os  << "TIME " << timeValue << nl
+            << nl
             << "BEGIN BULK" << nl;
 
+        if (commonGeometry_)
+        {
+            os  << "INCLUDE '" << geomFileName.c_str() << "'" << nl;
 
-        // Write geometry
-        writeGeometry(os, surf, decompOffsets, decompFaces);
-
+            // Geometry already written (or suppressed)
+            // - still need decomposition information
+            fileFormats::NASCore::faceDecomposition
+            (
+                surf.points(),
+                surf.faces(),
+                decompOffsets,
+                decompFaces
+            );
+        }
+        else
+        {
+            // Write geometry
+            writeGeometry(os, surf, decompOffsets, decompFaces);
+        }
 
         // Write field
         os  << '$' << nl

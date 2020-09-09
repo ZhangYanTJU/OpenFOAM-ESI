@@ -37,6 +37,7 @@ Description
         format   | short / long / free                      | no    | long
         scale    | output geometry scaling                  | no    | 1
         fieldScale | output field scaling (dictionary)      | no    | empty
+        commonGeometry | use separate geometry files        | no    | false
     \endtable
 
     For example,
@@ -81,11 +82,11 @@ Description
     rootdir
     `-- timeName
         `-- field0
-        |   |-- surfaceName0.{nas}
-        |   `-- surfaceName1.{nas}
+        |   |-- surfaceName0.{bdf}
+        |   `-- surfaceName1.{bdf}
         `-- field1
-            |-- surfaceName0.{nas}
-            `-- surfaceName1.{nas}
+            |-- surfaceName0.{bdf}
+            `-- surfaceName1.{bdf}
     \endverbatim
 
 Note
@@ -138,6 +139,9 @@ private:
 
         //- Mapping from field name to data format enumeration
         HashTable<loadFormat> fieldMap_;
+
+        //- Use common geometry file
+        bool commonGeometry_;
 
         //- Output geometry scaling
         const scalar geometryScale_;
