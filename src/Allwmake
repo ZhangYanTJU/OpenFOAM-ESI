@@ -84,7 +84,7 @@ thermophysicalModels/Allwmake $targetType $*
 TurbulenceModels/Allwmake $targetType $*
 wmake $targetType combustionModels
 regionModels/Allwmake $targetType $*
-lagrangian/Allwmake $targetType $*
+
 
 wmake $targetType fvOptions
 wmake $targetType faOptions
