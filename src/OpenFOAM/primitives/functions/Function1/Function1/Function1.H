@@ -116,6 +116,14 @@ protected:
         //- No copy assignment
         void operator=(const Function1<Type>&) = delete;
 
+        //- Helper function for integrate() function to add limited contribution
+        void addLimitedAreaToSum
+        (
+            const scalar x1,
+            const scalar x2,
+            Type& sum
+        ) const;
+
 
 public:
 

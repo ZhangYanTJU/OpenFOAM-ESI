@@ -67,6 +67,12 @@ protected:
         //- Name of entry
         const word name_;
 
+        //- Optional minimum limit (x)
+        scalar minLimit_;
+
+        //- Optional maximum limit (x)
+        scalar maxLimit_;
+
 
     // Protected Member Functions
 
@@ -107,6 +113,9 @@ public:
 
         //- Convert time
         virtual void convertTimeBase(const Time& t);
+
+        //- Apply min|max limit to the input value
+        virtual scalar limitValue(const scalar x) const;
 };
 
 

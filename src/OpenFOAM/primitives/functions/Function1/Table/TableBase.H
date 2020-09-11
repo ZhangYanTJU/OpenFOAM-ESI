@@ -108,7 +108,7 @@ public:
 
 
     //- Destructor
-    virtual ~TableBase();
+    virtual ~TableBase() = default;
 
 
     // Member Functions

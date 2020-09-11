@@ -31,6 +31,28 @@ License
 // Required by clang 5 for correct instantiation of Function1::New
 #include "Constant.H"
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+template<class Type>
+void Foam::Function1<Type>::addLimitedAreaToSum
+(
+    const scalar x1,
+    const scalar x2,
+    Type& sum
+) const
+{
+    if (x1 < minLimit_)
+    {
+        sum += (min(minLimit_, x2) - x1)*this->value(minLimit_);
+    }
+
+    if (x2 > maxLimit_)
+    {
+        sum += (x2 - max(maxLimit_, x1))*this->value(maxLimit_);
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
 template<class Type>

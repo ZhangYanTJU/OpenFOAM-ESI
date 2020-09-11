@@ -33,7 +33,9 @@ License
 Foam::function1Base::function1Base(const word& entryName)
 :
     refCount(),
-    name_(entryName)
+    name_(entryName),
+    minLimit_(-GREAT),
+    maxLimit_(GREAT)
 {}
 
 
@@ -44,21 +46,48 @@ Foam::function1Base::function1Base
 )
 :
     refCount(),
-    name_(entryName)
+    name_(entryName),
+    minLimit_(dict.getOrDefault<scalar>("minLimit", -GREAT)),
+    maxLimit_(dict.getOrDefault<scalar>("maxLimit", GREAT))
 {}
 
 
 Foam::function1Base::function1Base(const function1Base& rhs)
 :
     refCount(),
-    name_(rhs.name_)
+    name_(rhs.name_),
+    minLimit_(rhs.minLimit_),
+    maxLimit_(rhs.maxLimit_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::function1Base::convertTimeBase(const Time& t)
-{}
+{
+    minLimit_ = t.userTimeToTime(minLimit_);
+    maxLimit_ = t.userTimeToTime(maxLimit_);
+}
+
+
+Foam::scalar Foam::function1Base::limitValue(const scalar x) const
+{
+    return min(max(minLimit_, x), maxLimit_);
+}
+
+
+// TBD
+// void Foam::function1Base::writeEntries(Ostream& os) const
+// {
+//     if (minLimit_ > -ROOTGREAT)
+//     {
+//         os.writeEntry("minLimit", minLimit_);
+//     }
+//     if (maxLimit_ < ROOTGREAT)
+//     {
+//         os.writeEntry("maxLimit", maxLimit_);
+//     }
+// }
 
 
 // ************************************************************************* //

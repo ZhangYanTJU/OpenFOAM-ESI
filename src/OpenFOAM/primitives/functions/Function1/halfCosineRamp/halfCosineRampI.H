@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +36,9 @@ inline Foam::scalar Foam::Function1Types::halfCosineRamp::value
     const scalar t
 ) const
 {
-    return 0.5*(1 - cos(constant::mathematical::pi*linearRamp(t)));
+    return
+        0.5
+       *(1 - cos(constant::mathematical::pi*linearRamp(this->limitValue(t))));
 }
 
 

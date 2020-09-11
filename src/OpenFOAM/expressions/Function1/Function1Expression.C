@@ -86,7 +86,7 @@ Type Foam::Function1Types::Function1Expression<Type>::value
     // Expression evaluation
     driver_.clearVariables();
 
-    driver_.setArgument(x);
+    driver_.setArgument(this->limitValue(x));
 
     driver_.parse(this->valueExpr_);
 

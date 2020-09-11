@@ -34,7 +34,9 @@ inline Foam::scalar Foam::Function1Types::stepFunction::value
     const scalar t
 ) const
 {
-    if (t < start_ || t > start_ + duration_)
+    const scalar tlim = this->limitValue(t);
+
+    if (tlim < start_ || tlim > start_ + duration_)
     {
         return 0;
     }

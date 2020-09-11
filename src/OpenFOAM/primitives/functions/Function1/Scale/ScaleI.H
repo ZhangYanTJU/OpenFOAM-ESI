@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +33,9 @@ License
 template<class Type>
 inline Type Foam::Function1Types::Scale<Type>::value(const scalar t) const
 {
-    return scale_->value(t)*value_->value(t);
+    const scalar tlim = this->limitValue(t);
+
+    return scale_->value(tlim)*value_->value(tlim);
 }
 
 

@@ -92,9 +92,11 @@ Foam::Function1Types::Sine<Type>::squareForm
 template<class Type>
 inline Type Foam::Function1Types::Sine<Type>::cosValue(const scalar t) const
 {
+    const scalar tlim = this->limitValue(t);
+
     return
     (
-        cosForm(t) * scale_->value(t) + level_->value(t)
+        cosForm(tlim) * scale_->value(tlim) + level_->value(tlim)
     );
 }
 
@@ -102,9 +104,11 @@ inline Type Foam::Function1Types::Sine<Type>::cosValue(const scalar t) const
 template<class Type>
 inline Type Foam::Function1Types::Sine<Type>::sinValue(const scalar t) const
 {
+    const scalar tlim = this->limitValue(t);
+
     return
     (
-        sinForm(t) * scale_->value(t) + level_->value(t)
+        sinForm(tlim) * scale_->value(tlim) + level_->value(tlim)
     );
 }
 
@@ -116,9 +120,11 @@ inline Type Foam::Function1Types::Sine<Type>::squareValue
     const scalar posFrac
 ) const
 {
+    const scalar tlim = this->limitValue(t);
+
     return
     (
-        squareForm(t, posFrac) * scale_->value(t) + level_->value(t)
+        squareForm(tlim, posFrac) * scale_->value(tlim) + level_->value(tlim)
     );
 }
 

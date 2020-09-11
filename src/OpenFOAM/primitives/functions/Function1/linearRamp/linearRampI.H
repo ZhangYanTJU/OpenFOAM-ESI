@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +35,7 @@ inline Foam::scalar Foam::Function1Types::linearRamp::value
     const scalar t
 ) const
 {
-    return ramp::linearRamp(t);
+    return ramp::linearRamp(this->limitValue(t));
 }
 
 

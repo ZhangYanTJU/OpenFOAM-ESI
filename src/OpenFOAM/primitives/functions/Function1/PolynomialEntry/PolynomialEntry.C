@@ -144,13 +144,15 @@ void Foam::Function1Types::Polynomial<Type>::convertTimeBase(const Time& t)
 template<class Type>
 Type Foam::Function1Types::Polynomial<Type>::value(const scalar x) const
 {
+    const scalar xlim = this->limitValue(x);
+
     Type y(Zero);
     forAll(coeffs_, i)
     {
         y += cmptMultiply
         (
             coeffs_[i].first(),
-            cmptPow(pTraits<Type>::one*x, coeffs_[i].second())
+            cmptPow(pTraits<Type>::one*xlim, coeffs_[i].second())
         );
     }
 
@@ -167,6 +169,11 @@ Type Foam::Function1Types::Polynomial<Type>::integrate
 {
     Type intx(Zero);
 
+    this->addLimitedAreaToSum(x1, x2, intx);
+
+    const scalar x1lim = this->limitValue(x1);
+    const scalar x2lim = this->limitValue(x2);
+
     if (canIntegrate_)
     {
         forAll(coeffs_, i)
@@ -180,12 +187,12 @@ Type Foam::Function1Types::Polynomial<Type>::integrate
                 ),
                 cmptPow
                 (
-                    pTraits<Type>::one*x2,
+                    pTraits<Type>::one*x2lim,
                     coeffs_[i].second() + pTraits<Type>::one
                 )
               - cmptPow
                 (
-                    pTraits<Type>::one*x1,
+                    pTraits<Type>::one*x1lim,
                     coeffs_[i].second() + pTraits<Type>::one
                 )
             );
