@@ -70,7 +70,11 @@ tmp<scalarField> alphatJayatillekeWallFunctionFvPatchScalarField::yPlus
     const tmp<volScalarField> tnut = turbModel.nut();
     const volScalarField& nut = tnut();
 
-    if (isA<nutWallFunctionFvPatchScalarField>(nut.boundaryField()[patchi]))
+    if
+    (
+        isA<nutWallFunctionFvPatchScalarField>(nut.boundaryField()[patchi])
+     && nominalYPlus_
+    )
     {
         const nutWallFunctionFvPatchScalarField& nutPf =
             dynamic_cast<const nutWallFunctionFvPatchScalarField&>
@@ -143,6 +147,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF),
+    nominalYPlus_(true),
     Prt_(0.85),
     kappa_(0.41),
     E_(9.8)
@@ -161,6 +166,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
+    nominalYPlus_(ptf.nominalYPlus_),
     Prt_(ptf.Prt_),
     kappa_(ptf.kappa_),
     E_(ptf.E_)
@@ -178,6 +184,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF, dict),
+    nominalYPlus_(dict.getOrDefault<bool>("nominalYPlus", true)),
     Prt_(dict.get<scalar>("Prt")), // force read to avoid ambiguity
     kappa_(dict.getOrDefault<scalar>("kappa", 0.41)),
     E_(dict.getOrDefault<scalar>("E", 9.8))
@@ -193,6 +200,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(wfpsf),
+    nominalYPlus_(wfpsf.nominalYPlus_),
     Prt_(wfpsf.Prt_),
     kappa_(wfpsf.kappa_),
     E_(wfpsf.E_)
@@ -209,6 +217,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(wfpsf, iF),
+    nominalYPlus_(wfpsf.nominalYPlus_),
     Prt_(wfpsf.Prt_),
     kappa_(wfpsf.kappa_),
     E_(wfpsf.E_)
@@ -227,8 +236,6 @@ void alphatJayatillekeWallFunctionFvPatchScalarField::updateCoeffs()
     }
 
     const label patchi = patch().index();
-
-    // Retrieve turbulence properties from model
 
     const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
     (

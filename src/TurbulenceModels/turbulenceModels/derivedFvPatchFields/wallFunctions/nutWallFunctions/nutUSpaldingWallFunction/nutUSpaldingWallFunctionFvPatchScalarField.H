@@ -66,10 +66,10 @@ Usage
 
     where the entries mean:
     \table
-      Property  | Description                         | Type   | Req'd  | Dflt
-      type      | Type name: nutUBlendedWallFunction  | word   | yes    | -
-      maxIter   | Number of Newton-Raphson iterations | label  | no     | 10
-      tolerance | Convergence tolerance               | scalar | no     | 0.0001
+      Property  | Description                         | Type   | Reqd | Dflt
+      type      | Type name: nutUBlendedWallFunction  | word   | yes  | -
+      maxIter   | Number of Newton-Raphson iterations | label  | no   | 10
+      tolerance | Convergence tolerance               | scalar | no   | 0.0001
     \endtable
 
     The inherited entries are elaborated in:
@@ -144,6 +144,10 @@ protected:
             const label maxIter,
             scalarField& err
         ) const;
+
+        //- Calculate the first-cell-centre
+        //- height from boundary in wall units, i.e. y+
+        virtual scalarField calcYPlus() const;
 
         //- Write local wall function variables
         virtual void writeLocalEntries(Ostream&) const;
@@ -223,12 +227,6 @@ public:
 
 
     // Member Functions
-
-        // Evaluation functions
-
-            //- Calculate and return the yPlus at the boundary
-            virtual tmp<scalarField> yPlus() const;
-
 
         // I-O
 

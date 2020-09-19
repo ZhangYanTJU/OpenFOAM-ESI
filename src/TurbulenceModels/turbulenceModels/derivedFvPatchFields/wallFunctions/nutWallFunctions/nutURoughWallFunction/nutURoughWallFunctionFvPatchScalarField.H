@@ -57,7 +57,7 @@ Usage
 
     where the entries mean:
     \table
-      Property  | Description                         | Type | Req'd  | Dflt
+      Property  | Description                         | Type | Reqd   | Dflt
       type      | Type name: nutURoughWallFunction    | word | yes    | -
       roughnessHeight   | Roughness height            | scalar | yes  | -
       roughnessConstant | Roughness constant          | scalar | yes  | -
@@ -118,14 +118,23 @@ class nutURoughWallFunctionFvPatchScalarField
         //- Convergence tolerance
         const scalar tolerance_;
 
+        //- Reynolds number field based on
+        //- the first-cell-centre height from boundary
+        mutable scalarField Re_;
+
 
     // Protected Member Functions
 
-        //- Calculate yPlus
-        virtual tmp<scalarField> calcYPlus(const scalarField& magUp) const;
-
         //- Calculate the turbulence viscosity
         virtual tmp<scalarField> calcNut() const;
+
+        //- Calculate the first-cell-centre
+        //- height from boundary in wall units, i.e. y+
+        virtual scalarField calcYPlus() const;
+
+        //- Calculate Reynolds number field based on
+        //- the first-cell-centre height from boundary
+        scalarField calcRe() const;
 
         //- Write local wall function variables
         virtual void writeLocalEntries(Ostream&) const;
@@ -241,11 +250,11 @@ public:
                 return roughnessFactor_;
             }
 
-
-        // Evaluation functions
-
-            //- Calculate and return the yPlus at the boundary
-            virtual tmp<scalarField> yPlus() const;
+            //- Return Re
+            scalarField& Re()
+            {
+                return Re_;
+            }
 
 
         // I-O

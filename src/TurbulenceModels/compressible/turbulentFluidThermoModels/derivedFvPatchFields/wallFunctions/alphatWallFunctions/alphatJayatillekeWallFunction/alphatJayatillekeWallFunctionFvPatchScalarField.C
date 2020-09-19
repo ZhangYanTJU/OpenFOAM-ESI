@@ -67,9 +67,13 @@ tmp<scalarField> alphatJayatillekeWallFunctionFvPatchScalarField::yPlus
 {
     const label patchi = patch().index();
     const tmp<volScalarField> tnut = turbModel.nut();
-    const volScalarField& nut = tnut();
+    const auto& nut = tnut();
 
-    if (isA<nutWallFunctionFvPatchScalarField>(nut.boundaryField()[patchi]))
+    if
+    (
+        isA<nutWallFunctionFvPatchScalarField>(nut.boundaryField()[patchi])
+     && nominalYPlus_
+    )
     {
         const nutWallFunctionFvPatchScalarField& nutPf =
             dynamic_cast<const nutWallFunctionFvPatchScalarField&>
@@ -142,6 +146,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF),
+    nominalYPlus_(true),
     Prt_(0.85),
     kappa_(0.41),
     E_(9.8)
@@ -160,6 +165,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
+    nominalYPlus_(ptf.nominalYPlus_),
     Prt_(ptf.Prt_),
     kappa_(ptf.kappa_),
     E_(ptf.E_)
@@ -175,6 +181,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF, dict),
+    nominalYPlus_(dict.getOrDefault<bool>("nominalYPlus", true)),
     Prt_(dict.getOrDefault<scalar>("Prt", 0.85)),
     kappa_(dict.getOrDefault<scalar>("kappa", 0.41)),
     E_(dict.getOrDefault<scalar>("E", 9.8))
@@ -190,6 +197,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(awfpsf),
+    nominalYPlus_(awfpsf.nominalYPlus_),
     Prt_(awfpsf.Prt_),
     kappa_(awfpsf.kappa_),
     E_(awfpsf.E_)
@@ -206,6 +214,7 @@ alphatJayatillekeWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(awfpsf, iF),
+    nominalYPlus_(awfpsf.nominalYPlus_),
     Prt_(awfpsf.Prt_),
     kappa_(awfpsf.kappa_),
     E_(awfpsf.E_)

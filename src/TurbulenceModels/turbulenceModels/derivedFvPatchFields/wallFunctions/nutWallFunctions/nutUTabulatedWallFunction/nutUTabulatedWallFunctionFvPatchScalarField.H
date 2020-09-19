@@ -56,9 +56,9 @@ Usage
 
     where the entries mean:
     \table
-      Property    | Description                          | Type | Req'd | Dflt
-      type        | Type name: nutUTabulatedWallFunction | word | yes   | -
-      uPlusTable  | u+ as a function of Re table name    | word | yes   | -
+      Property    | Description                          | Type | Reqd | Dflt
+      type        | Type name: nutUTabulatedWallFunction | word | yes  | -
+      uPlusTable  | u+ as a function of Re table name    | word | yes  | -
     \endtable
 
     The inherited entries are elaborated in:
@@ -102,6 +102,10 @@ protected:
         //- u+ table
         uniformInterpolationTable<scalar> uPlusTable_;
 
+        //- Reynolds number field based on
+        //- the first-cell-centre height from boundary
+        mutable scalarField Rey_;
+
 
     // Protected Member Functions
 
@@ -109,7 +113,15 @@ protected:
         virtual tmp<scalarField> calcNut() const;
 
         //- Calculate wall u+ from table
-        virtual tmp<scalarField> calcUPlus(const scalarField& Rey) const;
+        virtual tmp<scalarField> calcUPlus() const;
+
+        //- Calculate Reynolds number field based on
+        //- the first-cell-centre height from boundary
+        virtual scalarField calcRey(const scalarField& magUp) const;
+
+        //- Calculate the first-cell-centre
+        //- height from boundary in wall units, i.e. y+
+        virtual scalarField calcYPlus() const;
 
 
 public:
@@ -183,10 +195,13 @@ public:
 
     // Member Functions
 
-        // Evaluation functions
+        // Access
 
-            //- Calculate and return the yPlus at the boundary
-            virtual tmp<scalarField> yPlus() const;
+            //- Return Rey
+            scalarField& Rey() const
+            {
+                return Rey_;
+            }
 
 
         // I-O

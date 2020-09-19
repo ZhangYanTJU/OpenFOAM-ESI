@@ -12,6 +12,9 @@ yPlus1
     type            yPlus;
     libs            (fieldFunctionObjects);
 
+    // Optional entries
+    nominalYPlus    true;
+
     // Optional (inherited) entries
     writePrecision  10;
     writeToFile     true;

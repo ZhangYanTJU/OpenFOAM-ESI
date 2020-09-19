@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017 OpenCFD Ltd
+    Copyright (C) 2017-2020 OpenCFD Ltd
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,10 +36,10 @@ Description
 
 Usage
     \table
-        Property     | Description             | Required    | Default value
-        Prt          | turbulent Prandtl number | no         | 0.85
-        kappa        | Von Karman constant     | no          | 0.41
-        E            | model coefficient       | no          | 9.8
+        Property     | Description              | Type | Reqd | Dflt
+        Prt          | turbulent Prandtl number | Type | no   | 0.85
+        kappa        | Von Karman constant      | Type | no   | 0.41
+        E            | model coefficient        | Type | no   | 9.8
     \endtable
 
     Example of the boundary condition specification:
@@ -84,7 +84,10 @@ class alphatJayatillekeWallFunctionFvPatchScalarField
 {
 protected:
 
-    // Protected data
+    // Protected Data
+
+        //- Flag to use the wall function expressions to compute yPlus
+        bool nominalYPlus_;
 
         //- Turbulent Prandtl number
         scalar Prt_;
@@ -192,7 +195,7 @@ public:
 
     // Member functions
 
-        // Evaluation functions
+        // Evaluation
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();

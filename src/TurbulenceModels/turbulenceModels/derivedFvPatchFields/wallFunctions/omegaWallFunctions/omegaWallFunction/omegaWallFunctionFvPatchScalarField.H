@@ -78,12 +78,12 @@ Usage
     \endverbatim
 
     \table
-      Property  | Description                     | Type   | Req'd  | Dflt
-      type      | Type name: omegaWallFunction    | word   | yes    | -
-      beta1     | Model coefficient               | scalar | no     | 0.075
+      Property  | Description                     | Type   | Reqd | Dflt
+      type      | Type name: omegaWallFunction    | word   | yes  | -
+      beta1     | Model coefficient               | scalar | no   | 0.075
       blending  | Viscous/inertial sublayer blending method <!--
-                                              --> | word   | no     | binomial2
-      n         | Binomial blending exponent      | scalar | no     | 2.0
+                                              --> | word   | no   | binomial2
+      n         | Binomial blending exponent      | scalar | no   | 2.0
     \endtable
 
     The inherited entries are elaborated in:
@@ -398,7 +398,7 @@ public:
             scalarField& omega(bool init = false);
 
 
-        // Evaluation functions
+        // Evaluation
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();

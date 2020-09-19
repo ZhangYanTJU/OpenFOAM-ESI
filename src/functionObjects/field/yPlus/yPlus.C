@@ -70,7 +70,8 @@ Foam::functionObjects::yPlus::yPlus
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    writeFile(obr_, name, typeName, dict)
+    writeFile(obr_, name, typeName, dict),
+    nominalYPlus_(true)
 {
     read(dict);
 
@@ -101,10 +102,14 @@ Foam::functionObjects::yPlus::yPlus
 
 bool Foam::functionObjects::yPlus::read(const dictionary& dict)
 {
-    fvMeshFunctionObject::read(dict);
-    writeFile::read(dict);
+    if (fvMeshFunctionObject::read(dict) && writeFile::read(dict))
+    {
+        nominalYPlus_ = dict.getOrDefault<bool>("nominalYPlus", true);
 
-    return true;
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -139,7 +144,11 @@ bool Foam::functionObjects::yPlus::execute()
         {
             const fvPatch& patch = patches[patchi];
 
-            if (isA<nutWallFunctionFvPatchScalarField>(nutBf[patchi]))
+            if
+            (
+                isA<nutWallFunctionFvPatchScalarField>(nutBf[patchi])
+             && nominalYPlus_
+            )
             {
                 const nutWallFunctionFvPatchScalarField& nutPf =
                     dynamic_cast<const nutWallFunctionFvPatchScalarField&>

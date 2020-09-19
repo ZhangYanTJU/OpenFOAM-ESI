@@ -31,7 +31,27 @@ Group
     grpFieldFunctionObjects
 
 Description
-    Computes the near wall \f$y_1^+\f$ for turbulence models.
+    Computes the near wall \f$y_1^+\f$.
+
+    \f[
+        y_1^+ = \frac{u_* \, y_1}{\nu}
+    \f]
+
+    \f[
+        y_1^+ =
+            \frac{y_1 \sqrt{\nu_{eff} \, |\vec n \cdot \nabla \vec u_p| } }{\nu}
+    \f]
+
+    where
+    \vartable
+      y_1^+  | Wall-normal height of the first cell centre in wall units [-]
+      u_*    | Friction velocity                                         [m/s]
+      y_1    | Wall-normal height of the first cell centre               [m]
+      \nu    | Kinematic viscosity of fluid                              [m2/s]
+      \nu_{eff} | Effective patch kinematic viscosity                    [m2/s]
+      \vec n | Patch normal unit vector (into the domain)                [-]
+      \vec u_p | Patch velocity field                                    [m/s]
+    \endvartable
 
     Operands:
     \table
@@ -47,8 +67,11 @@ Usage
     yPlus1
     {
         // Mandatory entries (unmodifiable)
-        type        yPlus;
-        libs        (fieldFunctionObjects);
+        type               yPlus;
+        libs               (fieldFunctionObjects);
+
+        // Optional entries (runtime modifiable)
+        nominalYPlus    true;
 
         // Optional (inherited) entries
         ...
@@ -57,9 +80,13 @@ Usage
 
     where the entries mean:
     \table
-      Property   | Description                        | Type | Req'd | Dflt
-      type       | Type name: yPlus                   | word |  yes  | -
-      libs       | Library name: fieldFunctionObjects | word |  yes  | -
+      Property   | Description                        | Type | Reqd | Dflt
+      type       | Type name: yPlus                   | word | yes  | -
+      libs       | Library name: fieldFunctionObjects | word | yes  | -
+      nominalYPlus | Flag to use the local expressions of <!--
+                      --> the selected wall function to compute yPlus, <!--
+                      --> otherwise directly compute yPlus from flow field <!--
+                      -->                             | bool | no   | true
     \endtable
 
     The inherited entries are elaborated in:
@@ -70,6 +97,10 @@ Usage
     \verbatim
         <solver> -postProcess -func yPlus
     \endverbatim
+
+Note
+    - \c yPlus function object operates only
+    on either wall patches or patches using a \c nutWallFunction.
 
 See also
     - Foam::functionObject
@@ -106,6 +137,12 @@ class yPlus
     public fvMeshFunctionObject,
     public writeFile
 {
+    // Private Data
+
+        //- Flag to use the wall function expressions to compute yPlus
+        bool nominalYPlus_;
+
+
     // Private Member Functions
 
         //- File header information

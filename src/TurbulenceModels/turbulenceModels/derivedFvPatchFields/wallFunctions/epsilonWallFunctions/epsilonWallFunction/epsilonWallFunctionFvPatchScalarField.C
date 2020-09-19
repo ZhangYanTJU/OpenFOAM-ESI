@@ -208,91 +208,108 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
     const scalarField& y = turbModel.y()[patchi];
 
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
     const tmp<volScalarField> tk = turbModel.k();
     const volScalarField& k = tk();
-
-    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
-
-    const scalarField magGradUw(mag(Uw.snGrad()));
+    const tmp<scalarField> kwc = k.boundaryField()[patchi].patchInternalField();
 
     const scalar Cmu25 = pow025(nutw.Cmu());
     const scalar Cmu75 = pow(nutw.Cmu(), 0.75);
 
-    // Set epsilon and G
+    const tmp<scalarField> tyPlus = nutw.yPlus();
+    const auto& yPlus = tyPlus();
+
+    // Contribution from the viscous sublayer
+    const scalarField epsilonVis(cornerWeights*2*kwc*nuw/sqr(y));
+
+    // Contribution from the inertial sublayer
+    const scalarField epsilonLog
+    (
+        cornerWeights*Cmu75*pow(kwc, 1.5)/(nutw.kappa()*y)
+    );
+
+    switch (blending_)
+    {
+        case blendingType::STEPWISE:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+
+                if (lowReCorrection_ && yPlus[facei] < nutw.yPlusLam())
+                {
+                    epsilon0[celli] += epsilonVis[facei];
+                }
+                else
+                {
+                    epsilon0[celli] += epsilonLog[facei];
+                }
+            }
+            break;
+        }
+
+        case blendingType::MAX:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+
+                // (PH:Eq. 27)
+                epsilon0[celli] += max(epsilonVis[facei], epsilonLog[facei]);
+            }
+            break;
+        }
+
+        case blendingType::BINOMIAL:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+
+                // (ME:Eqs. 15-16)
+                epsilon0[celli] +=
+                    pow
+                    (
+                        pow(epsilonVis[facei], n_) + pow(epsilonLog[facei], n_),
+                        1/n_
+                    );
+            }
+            break;
+        }
+
+        case blendingType::EXPONENTIAL:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+
+                // (PH:p. 193)
+                const scalar Gamma =
+                    0.001*pow4(yPlus[facei])/(1 + yPlus[facei]);
+                const scalar invGamma = 1/(Gamma + ROOTVSMALL);
+                epsilon0[celli] +=
+                    epsilonVis[facei]*exp(-Gamma)
+                  + epsilonLog[facei]*exp(-invGamma);
+            }
+            break;
+        }
+    }
+
+    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
+    const scalarField magGradUw(cornerWeights*mag(Uw.snGrad()));
+
     forAll(nutw, facei)
     {
         const label celli = patch.faceCells()[facei];
 
-        const scalar yPlus = Cmu25*y[facei]*sqrt(k[celli])/nuw[facei];
-
-        const scalar w = cornerWeights[facei];
-
-        scalar epsilonBlended = 0.0;
-
-        // Contribution from the viscous sublayer
-        const scalar epsilonVis = w*2.0*k[celli]*nuw[facei]/sqr(y[facei]);
-
-        // Contribution from the inertial sublayer
-        const scalar epsilonLog =
-            w*Cmu75*pow(k[celli], 1.5)/(nutw.kappa()*y[facei]);
-
-        switch (blending_)
-        {
-            case blendingType::STEPWISE:
-            {
-                if (lowReCorrection_ && yPlus < nutw.yPlusLam())
-                {
-                    epsilonBlended = epsilonVis;
-                }
-                else
-                {
-                    epsilonBlended = epsilonLog;
-                }
-                break;
-            }
-
-            case blendingType::MAX:
-            {
-                // (PH:Eq. 27)
-                epsilonBlended = max(epsilonVis, epsilonLog);
-                break;
-            }
-
-            case blendingType::BINOMIAL:
-            {
-                // (ME:Eqs. 15-16)
-                epsilonBlended =
-                    pow
-                    (
-                        pow(epsilonVis, n_) + pow(epsilonLog, n_),
-                        1.0/n_
-                    );
-                break;
-            }
-
-            case blendingType::EXPONENTIAL:
-            {
-                // (PH:p. 193)
-                const scalar Gamma = 0.001*pow4(yPlus)/(1.0 + yPlus);
-                const scalar invGamma = 1.0/(Gamma + ROOTVSMALL);
-                epsilonBlended =
-                    epsilonVis*exp(-Gamma) + epsilonLog*exp(-invGamma);
-                break;
-            }
-        }
-
-        epsilon0[celli] += epsilonBlended;
-
-        if (!(lowReCorrection_ && yPlus < nutw.yPlusLam()))
+        if (!(lowReCorrection_ && yPlus[facei] < nutw.yPlusLam()))
         {
             G0[celli] +=
-                w
-               *(nutw[facei] + nuw[facei])
-               *magGradUw[facei]
-               *Cmu25*sqrt(k[celli])
-               /(nutw.kappa()*y[facei]);
+                (nutw[facei] + nuw[facei])
+                *magGradUw[facei]
+                *Cmu25*sqrt(k[celli])
+                /(nutw.kappa()*y[facei]);
         }
     }
 }

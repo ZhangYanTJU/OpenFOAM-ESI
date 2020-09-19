@@ -52,8 +52,8 @@ Usage
 
     where the entries mean:
     \table
-      Property  | Description                   | Type | Req'd  | Dflt
-      type      | Type name: kqRWallFunction    | word | yes    | -
+      Property  | Description                   | Type | Reqd | Dflt
+      type      | Type name: kqRWallFunction    | word | yes  | -
     \endtable
 
     The inherited entries are elaborated in:

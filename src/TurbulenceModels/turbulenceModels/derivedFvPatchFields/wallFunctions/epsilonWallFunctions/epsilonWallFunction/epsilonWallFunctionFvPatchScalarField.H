@@ -72,12 +72,12 @@ Usage
 
     where the entries mean:
     \table
-      Property  | Description                       | Type | Req'd  | Dflt
-      type      | Type name: epsilonWallFunction    | word | yes    | -
-      lowReCorrection | Flag: apply low-Re correction | bool |  no  | false
+      Property  | Description                       | Type | Reqd  | Dflt
+      type      | Type name: epsilonWallFunction    | word | yes   | -
+      lowReCorrection | Flag: apply low-Re correction | bool |  no | false
       blending  | Viscous/inertial sublayer blending method <!--
-                                                --> | word |  no    | stepwise
-      n         | Binomial blending exponent        | scalar | no   | 2.0
+                                                --> | word |  no   | stepwise
+      n         | Binomial blending exponent        | scalar | no  | 2.0
     \endtable
 
     The inherited entries are elaborated in:
@@ -365,7 +365,7 @@ public:
             scalarField& epsilon(bool init = false);
 
 
-        // Evaluation functions
+        // Evaluation
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();

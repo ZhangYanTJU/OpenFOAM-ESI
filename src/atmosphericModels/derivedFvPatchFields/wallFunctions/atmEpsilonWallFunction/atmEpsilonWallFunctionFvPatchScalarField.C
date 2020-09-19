@@ -51,13 +51,15 @@ void Foam::atmEpsilonWallFunctionFvPatchScalarField::calculate
     const scalarField& y = turbModel.y()[patchi];
 
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
     const tmp<volScalarField> tk = turbModel.k();
-    const volScalarField& k = tk();
+    const auto& k = tk();
+
+    const tmp<scalarField> tyPlus = nutw.yPlus();
+    const auto& yPlus = tyPlus();
 
     const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
-
     const scalarField magGradUw(mag(Uw.snGrad()));
 
     const scalar Cmu25 = pow025(nutw.Cmu());
@@ -86,8 +88,6 @@ void Foam::atmEpsilonWallFunctionFvPatchScalarField::calculate
     {
         const label celli = faceCells[facei];
 
-        const scalar yPlus = Cmu25*y[facei]*sqrt(k[celli])/nuw[facei];
-
         const scalar w = cornerWeights[facei];
 
         // (PGVB:Eq. 7, RH:Eq. 8)
@@ -101,9 +101,9 @@ void Foam::atmEpsilonWallFunctionFvPatchScalarField::calculate
            *Cmu25*sqrt(k[celli])
            /(nutw.kappa()*(y[facei] + z0[facei]));
 
-        if (lowReCorrection_ && yPlus < nutw.yPlusLam())
+        if (lowReCorrection_ && yPlus[facei] < nutw.yPlusLam())
         {
-            epsilonc = w*2.0*k[celli]*nuw[facei]/sqr(y[facei] + z0[facei]);
+            epsilonc = w*2*k[celli]*nuw[facei]/sqr(y[facei] + z0[facei]);
             Gc = 0;
         }
 

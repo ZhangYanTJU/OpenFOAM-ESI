@@ -94,10 +94,10 @@ Usage
 
     where the entries mean:
     \table
-      Property | Description                      | Type   | Req'd    | Dflt
-      type     | Type name: atmNutkWallFunction   | word   | yes      | -
+      Property | Description                      | Type   | Reqd    | Dflt
+      type     | Type name: atmNutkWallFunction   | word   | yes     | -
       z0       | Surface roughness length [m] | PatchFunction1<scalar> | yes | -
-      boundNut | Flag: zero-bound nut near wall   | bool   | no       | false
+      boundNut | Flag: zero-bound nut near wall   | bool   | no      | false
     \endtable
 
     The inherited entries are elaborated in:
@@ -224,7 +224,7 @@ public:
 
     // Member Functions
 
-        // Mapping functions
+        // Mapping
 
             //- Map (and resize as needed) from self given a mapping object
             virtual void autoMap(const fvPatchFieldMapper&);

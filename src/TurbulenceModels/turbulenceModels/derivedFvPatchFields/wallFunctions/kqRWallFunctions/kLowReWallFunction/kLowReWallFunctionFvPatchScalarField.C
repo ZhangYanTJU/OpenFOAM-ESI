@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016, 2019 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -137,15 +137,13 @@ void Foam::kLowReWallFunctionFvPatchScalarField::updateCoeffs()
     const nutWallFunctionFvPatchScalarField& nutw =
         nutWallFunctionFvPatchScalarField::nutw(turbModel, patchi);
 
-    const scalarField& y = turbModel.y()[patchi];
-
-    const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
-
     const tmp<volScalarField> tk = turbModel.k();
-    const volScalarField& k = tk();
+    const auto& k = tk();
 
     const scalar Cmu25 = pow025(nutw.Cmu());
+
+    const tmp<scalarField> tyPlus = nutw.yPlus();
+    const auto& yPlus = tyPlus();
 
     scalarField& kw = *this;
 
@@ -154,17 +152,17 @@ void Foam::kLowReWallFunctionFvPatchScalarField::updateCoeffs()
     {
         const label celli = patch().faceCells()[facei];
         const scalar uTau = Cmu25*sqrt(k[celli]);
-        const scalar yPlus = uTau*y[facei]/nuw[facei];
 
-        if (yPlus > nutw.yPlusLam())
+        if (yPlus[facei] > nutw.yPlusLam())
         {
-            kw[facei] = Ck_/nutw.kappa()*log(yPlus) + Bk_;
+            kw[facei] = Ck_/nutw.kappa()*log(yPlus[facei]) + Bk_;
         }
         else
         {
             const scalar Cf =
-                1.0/sqr(yPlus + C_) + 2.0*yPlus/pow3(C_) - 1.0/sqr(C_);
-            kw[facei] = 2400.0/sqr(Ceps2_)*Cf;
+                1/sqr(yPlus[facei] + C_) + 2*yPlus[facei]/pow3(C_) - 1/sqr(C_);
+
+            kw[facei] = 2400/sqr(Ceps2_)*Cf;
         }
 
         kw[facei] *= sqr(uTau);

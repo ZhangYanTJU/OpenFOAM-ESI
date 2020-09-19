@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016, 2019 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,6 @@ License
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 Foam::scalar Foam::nutkRoughWallFunctionFvPatchScalarField::fnRough
@@ -42,7 +41,6 @@ Foam::scalar Foam::nutkRoughWallFunctionFvPatchScalarField::fnRough
 ) const
 {
     // Return fn based on non-dimensional roughness height
-
     if (KsPlus < 90.0)
     {
         return pow
@@ -51,10 +49,8 @@ Foam::scalar Foam::nutkRoughWallFunctionFvPatchScalarField::fnRough
             sin(0.4258*(log(KsPlus) - 0.811))
         );
     }
-    else
-    {
-        return (1.0 + Cs*KsPlus);
-    }
+
+    return (1.0 + Cs*KsPlus);
 }
 
 
@@ -71,24 +67,19 @@ calcNut() const
             internalField().group()
         )
     );
-    const scalarField& y = turbModel.y()[patchi];
-    const tmp<volScalarField> tk = turbModel.k();
-    const volScalarField& k = tk();
+
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
-    const scalar Cmu25 = pow025(Cmu_);
+    uStar_ = calcUStar();
+    yPlus_ = calcYPlus();
 
-    tmp<scalarField> tnutw(new scalarField(*this));
-    scalarField& nutw = tnutw.ref();
+    auto tnutw = tmp<scalarField>::New(*this);
+    auto& nutw = tnutw.ref();
 
     forAll(nutw, facei)
     {
-        const label celli = patch().faceCells()[facei];
-
-        const scalar uStar = Cmu25*sqrt(k[celli]);
-        const scalar yPlus = uStar*y[facei]/nuw[facei];
-        const scalar KsPlus = uStar*Ks_[facei]/nuw[facei];
+        const scalar KsPlus = uStar_[facei]*Ks_[facei]/nuw[facei];
 
         scalar Edash = E_;
         if (2.25 < KsPlus)
@@ -106,14 +97,17 @@ calcNut() const
                 min
                 (
                     nuw[facei]
-                   *(yPlus*kappa_/log(max(Edash*yPlus, 1+1e-4)) - 1),
+                   *(
+                       yPlus_[facei]*kappa_
+                      /log(max(Edash*yPlus_[facei], 1+1e-4)) - 1
+                    ),
                     2*limitingNutw
                 ), 0.5*limitingNutw
             );
 
         if (debug)
         {
-            Info<< "yPlus = " << yPlus
+            Info<< "yPlus = " << yPlus_[facei]
                 << ", KsPlus = " << KsPlus
                 << ", Edash = " << Edash
                 << ", nutw = " << nutw[facei]
@@ -122,6 +116,46 @@ calcNut() const
     }
 
     return tnutw;
+}
+
+
+Foam::scalarField Foam::nutkRoughWallFunctionFvPatchScalarField::
+calcUStar() const
+{
+    const label patchi = patch().index();
+
+    const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
+    (
+        IOobject::groupName
+        (
+            turbulenceModel::propertiesName,
+            internalField().group()
+        )
+    );
+
+    const tmp<volScalarField> tk = turbModel.k();
+    const volScalarField& k = tk();
+    const tmp<scalarField> kwc = k.boundaryField()[patchi].patchInternalField();
+
+    return pow025(Cmu_)*sqrt(kwc);
+}
+
+
+Foam::scalarField Foam::nutkRoughWallFunctionFvPatchScalarField::
+calcYPlus() const
+{
+    const label patchi = patch().index();
+
+    const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
+    (
+        IOobject::groupName
+        (
+            turbulenceModel::propertiesName,
+            internalField().group()
+        )
+    );
+
+    return uStar_*turbModel.y()[patchi]/turbModel.nu(patchi);
 }
 
 
@@ -136,7 +170,8 @@ nutkRoughWallFunctionFvPatchScalarField
 :
     nutkWallFunctionFvPatchScalarField(p, iF),
     Ks_(p.size(), Zero),
-    Cs_(p.size(), Zero)
+    Cs_(p.size(), Zero),
+    uStar_(p.size(), Zero)
 {}
 
 
@@ -151,7 +186,8 @@ nutkRoughWallFunctionFvPatchScalarField
 :
     nutkWallFunctionFvPatchScalarField(ptf, p, iF, mapper),
     Ks_(ptf.Ks_, mapper),
-    Cs_(ptf.Cs_, mapper)
+    Cs_(ptf.Cs_, mapper),
+    uStar_(ptf.uStar_, mapper)
 {}
 
 
@@ -165,7 +201,8 @@ nutkRoughWallFunctionFvPatchScalarField
 :
     nutkWallFunctionFvPatchScalarField(p, iF, dict),
     Ks_("Ks", dict, p.size()),
-    Cs_("Cs", dict, p.size())
+    Cs_("Cs", dict, p.size()),
+    uStar_(p.size(), Zero)
 {}
 
 
@@ -177,7 +214,8 @@ nutkRoughWallFunctionFvPatchScalarField
 :
     nutkWallFunctionFvPatchScalarField(rwfpsf),
     Ks_(rwfpsf.Ks_),
-    Cs_(rwfpsf.Cs_)
+    Cs_(rwfpsf.Cs_),
+    uStar_(rwfpsf.uStar_)
 {}
 
 
@@ -190,7 +228,8 @@ nutkRoughWallFunctionFvPatchScalarField
 :
     nutkWallFunctionFvPatchScalarField(rwfpsf, iF),
     Ks_(rwfpsf.Ks_),
-    Cs_(rwfpsf.Cs_)
+    Cs_(rwfpsf.Cs_),
+    uStar_(rwfpsf.uStar_)
 {}
 
 
@@ -246,5 +285,6 @@ namespace Foam
         nutkRoughWallFunctionFvPatchScalarField
     );
 }
+
 
 // ************************************************************************* //

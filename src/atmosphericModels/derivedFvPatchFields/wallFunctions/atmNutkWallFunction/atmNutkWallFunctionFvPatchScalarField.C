@@ -53,18 +53,20 @@ tmp<scalarField> atmNutkWallFunctionFvPatchScalarField::calcNut() const
             internalField().group()
         )
     );
+
+    const nutWallFunctionFvPatchScalarField& nutwf =
+        nutWallFunctionFvPatchScalarField::nutw(turbModel, patchi);
+
     const scalarField& y = turbModel.y()[patchi];
 
-    const tmp<volScalarField> tk = turbModel.k();
-    const volScalarField& k = tk();
-
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
-    tmp<scalarField> tnutw(new scalarField(*this));
-    scalarField& nutw = tnutw.ref();
+    auto tnutw = tmp<scalarField>::New(*this);
+    auto& nutw = tnutw.ref();
 
-    const scalar Cmu25 = pow025(Cmu_);
+    const tmp<scalarField> tyPlus = nutwf.yPlus();
+    const auto& yPlus = tyPlus();
 
     const scalar t = db().time().timeOutputValue();
     const scalarField z0(z0_->value(t));
@@ -82,18 +84,13 @@ tmp<scalarField> atmNutkWallFunctionFvPatchScalarField::calcNut() const
     }
     #endif
 
-    const labelList& faceCells = patch().faceCells();
-
     // (HW:Eq. 5)
     forAll(nutw, facei)
     {
-        const label celli = faceCells[facei];
-
-        const scalar uStar = Cmu25*sqrt(k[celli]);
-        const scalar yPlus = uStar*y[facei]/nuw[facei];
         const scalar Edash = (y[facei] + z0[facei])/z0[facei];
 
-        nutw[facei] = nuw[facei]*(yPlus*kappa_/log(max(Edash, 1 + 1e-4)) - 1);
+        nutw[facei] =
+            nuw[facei]*(yPlus[facei]*kappa_/log(max(Edash, 1 + 1e-4)) - 1);
     }
 
     if (boundNut_)

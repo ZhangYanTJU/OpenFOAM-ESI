@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,6 @@ License
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
@@ -48,42 +47,25 @@ Foam::nutUWallFunctionFvPatchScalarField::calcNut() const
             internalField().group()
         )
     );
-    const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
-    const scalarField magUp(mag(Uw.patchInternalField() - Uw));
-    const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
 
-    tmp<scalarField> tyPlus = calcYPlus(magUp);
-    const scalarField& yPlus = tyPlus();
+    yPlus_ = calcYPlus();
 
-    tmp<scalarField> tnutw(new scalarField(patch().size(), Zero));
-    scalarField& nutw = tnutw.ref();
+    const scalarField nutLog
+    (
+        turbModel.nu(patchi)
+      * (yPlus_*kappa_/log(max(E_*yPlus_, 1 + 1e-4)) - 1)
+    );
 
-    forAll(yPlus, facei)
-    {
-        // Viscous sublayer contribution
-        const scalar nutVis = 0.0;
+    const scalar nutVis = 0;
 
-        // Inertial sublayer contribution
-        const scalar nutLog =
-            nuw[facei]
-           *(yPlus[facei]*kappa_/log(max(E_*yPlus[facei], 1 + 1e-4)) - 1.0);
-
-        nutw[facei] = blend(nutVis, nutLog, yPlus[facei]);
-    }
-
-    return tnutw;
+    return blend(nutLog, nutVis);
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::nutUWallFunctionFvPatchScalarField::calcYPlus
-(
-    const scalarField& magUp
-) const
+Foam::scalarField Foam::nutUWallFunctionFvPatchScalarField::
+calcYPlus() const
 {
     const label patchi = patch().index();
-
     const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
     (
         IOobject::groupName
@@ -92,34 +74,50 @@ Foam::nutUWallFunctionFvPatchScalarField::calcYPlus
             internalField().group()
         )
     );
+
     const scalarField& y = turbModel.y()[patchi];
+
+    const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
+    const scalarField magUp(mag(Uw.patchInternalField() - Uw));
+
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
-    tmp<scalarField> tyPlus(new scalarField(patch().size(), Zero));
-    scalarField& yPlus = tyPlus.ref();
+    // Viscous sublayer estimation
+    scalarField yplus(y*sqrt(turbModel.nuEff(patchi)*mag(Uw.snGrad()))/nuw);
 
-    forAll(yPlus, facei)
+    // Inertial sublayer estimation
+    scalarField yplusLog(patch().size());
+    forAll(yplusLog, facei)
     {
         const scalar kappaRe = kappa_*magUp[facei]*y[facei]/nuw[facei];
 
         scalar yp = yPlusLam_;
-        const scalar ryPlusLam = 1.0/yp;
+        const scalar ryPlusLam = 1/yp;
 
         int iter = 0;
-        scalar yPlusLast = 0.0;
+        scalar yPlusLast = 0;
 
         do
         {
             yPlusLast = yp;
-            yp = (kappaRe + yp)/(1.0 + log(E_*yp));
+            yp = (kappaRe + yp)/(1 + log(E_*yp));
 
         } while (mag(ryPlusLam*(yp - yPlusLast)) > 0.01 && ++iter < 10 );
 
-        yPlus[facei] = max(0.0, yp);
+        yplusLog[facei] = max(0, yp);
     }
 
-    return tyPlus;
+    // Replace viscous estimation with inertial est. if yplusLog > yPlusLam
+    std::copy_if
+    (
+        yplusLog.cbegin(),
+        yplusLog.cend(),
+        yplus.begin(),
+        [&](const scalar& ypLog){ return ypLog > yPlusLam_; }
+    );
+
+    return yplus;
 }
 
 
@@ -178,25 +176,6 @@ Foam::nutUWallFunctionFvPatchScalarField::nutUWallFunctionFvPatchScalarField
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::scalarField>
-Foam::nutUWallFunctionFvPatchScalarField::yPlus() const
-{
-    const label patchi = patch().index();
-    const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
-    (
-        IOobject::groupName
-        (
-            turbulenceModel::propertiesName,
-            internalField().group()
-        )
-    );
-    const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
-    const scalarField magUp(mag(Uw.patchInternalField() - Uw));
-
-    return calcYPlus(magUp);
-}
-
 
 void Foam::nutUWallFunctionFvPatchScalarField::write
 (

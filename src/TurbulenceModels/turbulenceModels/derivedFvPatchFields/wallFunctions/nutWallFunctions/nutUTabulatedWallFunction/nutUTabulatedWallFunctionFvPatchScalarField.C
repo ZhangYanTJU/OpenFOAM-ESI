@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,6 @@ License
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
@@ -48,39 +47,64 @@ Foam::nutUTabulatedWallFunctionFvPatchScalarField::calcNut() const
             internalField().group()
         )
     );
-    const scalarField& y = turbModel.y()[patchi];
     const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
     const scalarField magUp(mag(Uw.patchInternalField() - Uw));
     const scalarField magGradU(mag(Uw.snGrad()));
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
+
+    Rey_ = calcRey(magUp);
+
+    yPlus_ = calcYPlus();
 
     return
         max
         (
             scalar(0),
-            sqr(magUp/(calcUPlus(magUp*y/nuw) + ROOTVSMALL))
-           /(magGradU + ROOTVSMALL)
-          - nuw
+            sqr(magUp/(calcUPlus() + ROOTVSMALL))/(magGradU + ROOTVSMALL) - nuw
         );
 }
 
 
 Foam::tmp<Foam::scalarField>
-Foam::nutUTabulatedWallFunctionFvPatchScalarField::calcUPlus
-(
-    const scalarField& Rey
-) const
+Foam::nutUTabulatedWallFunctionFvPatchScalarField::calcUPlus() const
 {
-    tmp<scalarField> tuPlus(new scalarField(patch().size(), Zero));
-    scalarField& uPlus = tuPlus.ref();
+    auto tuPlus = tmp<scalarField>::New(patch().size(), Zero);
+    auto& uPlus = tuPlus.ref();
 
     forAll(uPlus, facei)
     {
-        uPlus[facei] = uPlusTable_.interpolateLog10(Rey[facei]);
+        uPlus[facei] = uPlusTable_.interpolateLog10(Rey_[facei]);
     }
 
     return tuPlus;
+}
+
+
+Foam::scalarField Foam::nutUTabulatedWallFunctionFvPatchScalarField::calcRey
+(
+    const scalarField& magUp
+) const
+{
+    const label patchi = patch().index();
+
+    const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
+    (
+        IOobject::groupName
+        (
+            turbulenceModel::propertiesName,
+            internalField().group()
+        )
+    );
+
+    return (magUp*turbModel.y()[patchi]/turbModel.nu(patchi));
+}
+
+
+Foam::scalarField Foam::nutUTabulatedWallFunctionFvPatchScalarField::
+calcYPlus() const
+{
+    return Rey_/(calcUPlus() + ROOTVSMALL);
 }
 
 
@@ -107,7 +131,8 @@ nutUTabulatedWallFunctionFvPatchScalarField
             false
         ),
         false
-    )
+    ),
+    Rey_(p.size(), Zero)
 {}
 
 
@@ -122,7 +147,8 @@ nutUTabulatedWallFunctionFvPatchScalarField
 :
     nutWallFunctionFvPatchScalarField(ptf, p, iF, mapper),
     uPlusTableName_(ptf.uPlusTableName_),
-    uPlusTable_(ptf.uPlusTable_)
+    uPlusTable_(ptf.uPlusTable_),
+    Rey_(ptf.Rey_)
 {}
 
 
@@ -148,7 +174,8 @@ nutUTabulatedWallFunctionFvPatchScalarField
             false
         ),
         true
-    )
+    ),
+    Rey_(p.size(), Zero)
 {}
 
 
@@ -160,7 +187,8 @@ nutUTabulatedWallFunctionFvPatchScalarField
 :
     nutWallFunctionFvPatchScalarField(wfpsf),
     uPlusTableName_(wfpsf.uPlusTableName_),
-    uPlusTable_(wfpsf.uPlusTable_)
+    uPlusTable_(wfpsf.uPlusTable_),
+    Rey_(wfpsf.Rey_)
 {}
 
 
@@ -173,35 +201,12 @@ nutUTabulatedWallFunctionFvPatchScalarField
 :
     nutWallFunctionFvPatchScalarField(wfpsf, iF),
     uPlusTableName_(wfpsf.uPlusTableName_),
-    uPlusTable_(wfpsf.uPlusTable_)
+    uPlusTable_(wfpsf.uPlusTable_),
+    Rey_(wfpsf.Rey_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::scalarField>
-Foam::nutUTabulatedWallFunctionFvPatchScalarField::yPlus() const
-{
-    const label patchi = patch().index();
-
-    const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
-    (
-        IOobject::groupName
-        (
-            turbulenceModel::propertiesName,
-            internalField().group()
-        )
-    );
-    const scalarField& y = turbModel.y()[patchi];
-    const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
-    const scalarField magUp(mag(Uw.patchInternalField() - Uw));
-    const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
-    const scalarField Rey(magUp*y/nuw);
-
-    return Rey/(calcUPlus(Rey) + ROOTVSMALL);
-}
-
 
 void Foam::nutUTabulatedWallFunctionFvPatchScalarField::write
 (

@@ -208,99 +208,138 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
     const scalarField& y = turbModel.y()[patchi];
 
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
     const tmp<volScalarField> tk = turbModel.k();
     const volScalarField& k = tk();
-
-    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
-
-    const scalarField magGradUw(mag(Uw.snGrad()));
-
+    const tmp<scalarField> kwc = k.boundaryField()[patchi].patchInternalField();
+ 
     const scalar Cmu25 = pow025(nutw.Cmu());
 
+    const tmp<scalarField> tyPlus = nutw.yPlus();
+    const auto& yPlus = tyPlus();
+
+    // Contribution from the viscous sublayer
+    const scalarField omegaVis(cornerWeights*6*nuw/(beta1_*sqr(y)));
+
+    // Contribution from the inertial sublayer
+    const scalarField omegaLog(cornerWeights*sqrt(kwc)/(Cmu25*nutw.kappa()*y));
+
     // Set omega and G
-    forAll(nutw, facei)
+    switch (blending_)
     {
-        const label celli = patch.faceCells()[facei];
-        const scalar yPlus = Cmu25*y[facei]*sqrt(k[celli])/nuw[facei];
-        const scalar w = cornerWeights[facei];
-
-        // Contribution from the viscous sublayer
-        const scalar omegaVis = 6.0*nuw[facei]/(beta1_*sqr(y[facei]));
-
-        // Contribution from the inertial sublayer
-        const scalar omegaLog = sqrt(k[celli])/(Cmu25*nutw.kappa()*y[facei]);
-
-        switch (blending_)
+        case blendingType::STEPWISE:
         {
-            case blendingType::STEPWISE:
+            forAll(nutw, facei)
             {
-                if (yPlus > nutw.yPlusLam())
+                const label celli = patch.faceCells()[facei];
+                if (yPlus[facei] > nutw.yPlusLam())
                 {
-                    omega0[celli] += w*omegaLog;
+                    omega0[celli] += omegaLog[facei];
                 }
                 else
                 {
-                    omega0[celli] += w*omegaVis;
+                    omega0[celli] += omegaVis[facei];
                 }
-                break;
             }
-
-            case blendingType::MAX:
-            {
-                // (PH:Eq. 27)
-                omega0[celli] += max(omegaVis, omegaLog);
-                break;
-            }
-
-            case blendingType::BINOMIAL2:
-            {
-                // (ME:Eq. 15)
-                omega0[celli] += w*sqrt(sqr(omegaVis) + sqr(omegaLog));
-                break;
-            }
-
-            case blendingType::BINOMIAL:
-            {
-                omega0[celli] +=
-                    w*pow
-                    (
-                        pow(omegaVis, n_) + pow(omegaLog, n_),
-                        1.0/n_
-                    );
-                break;
-            }
-
-            case blendingType::EXPONENTIAL:
-            {
-                // (PH:Eq. 31)
-                const scalar Gamma = 0.01*pow4(yPlus)/(1.0 + 5.0*yPlus);
-                const scalar invGamma = 1.0/(Gamma + ROOTVSMALL);
-
-                omega0[celli] +=
-                    w*(omegaVis*exp(-Gamma) + omegaLog*exp(-invGamma));
-                break;
-            }
-
-            case blendingType::TANH:
-            {
-                // (KAS:Eqs. 33-34)
-                const scalar phiTanh = tanh(pow4(yPlus/10.0));
-                const scalar omegab1 = omegaVis + omegaLog;
-                const scalar omegab2 =
-                    pow(pow(omegaVis, 1.2) + pow(omegaLog, 1.2), 1.0/1.2);
-
-                omega0[celli] += phiTanh*omegab1 + (1.0 - phiTanh)*omegab2;
-                break;
-            }
+            break;
         }
 
-        if (!(blending_ == blendingType::STEPWISE) || yPlus > nutw.yPlusLam())
+        case blendingType::MAX:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+                // (PH:Eq. 27)
+                omega0[celli] += max(omegaVis[facei], omegaLog[facei]);
+            }
+            break;
+        }
+
+        case blendingType::BINOMIAL2:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+                // (ME:Eq. 15)
+                omega0[celli] +=
+                    sqrt(sqr(omegaVis[facei]) + sqr(omegaLog[facei]));
+            }
+            break;
+        }
+
+        case blendingType::BINOMIAL:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+                omega0[celli] +=
+                    pow
+                    (
+                        pow(omegaVis[facei], n_) + pow(omegaLog[facei], n_),
+                        1/n_
+                    );
+            }
+            break;
+        }
+
+        case blendingType::EXPONENTIAL:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+
+                // (PH:Eq. 31)
+                const scalar Gamma =
+                    0.01*pow4(yPlus[facei])/(1 + 5*yPlus[facei]);
+                const scalar invGamma = 1/(Gamma + ROOTVSMALL);
+
+                omega0[celli] +=
+                    (
+                        omegaVis[facei]*exp(-Gamma)
+                      + omegaLog[facei]*exp(-invGamma)
+                    );
+            }
+            break;
+        }
+
+        case blendingType::TANH:
+        {
+            forAll(nutw, facei)
+            {
+                const label celli = patch.faceCells()[facei];
+
+                // (KAS:Eqs. 33-34)
+                const scalar phiTanh = tanh(pow4(yPlus[facei]/10));
+                const scalar omegab1 = omegaVis[facei] + omegaLog[facei];
+                const scalar omegab2 =
+                    pow
+                    (
+                        pow(omegaVis[facei], 1.2) + pow(omegaLog[facei], 1.2),
+                        1/1.2
+                    );
+
+                omega0[celli] += phiTanh*omegab1 + (1 - phiTanh)*omegab2;
+            }
+            break;
+        }
+    }
+
+    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
+    const scalarField magGradUw(cornerWeights*mag(Uw.snGrad()));
+
+    forAll(nutw, facei)
+    {
+        const label celli = patch.faceCells()[facei];
+
+        if
+        (
+            !(blending_ == blendingType::STEPWISE)
+          || yPlus[facei] > nutw.yPlusLam()
+        )
         {
             G0[celli] +=
-                w
-               *(nutw[facei] + nuw[facei])
+               (nutw[facei] + nuw[facei])
                *magGradUw[facei]
                *Cmu25*sqrt(k[celli])
                /(nutw.kappa()*y[facei]);

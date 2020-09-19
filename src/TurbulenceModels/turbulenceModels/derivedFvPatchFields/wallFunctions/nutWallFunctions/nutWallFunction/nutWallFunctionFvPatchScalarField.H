@@ -83,13 +83,13 @@ Usage
 
     where the entries mean:
     \table
-      Property  | Description                    | Type   | Req'd | Dflt
-      Cmu       | Empirical model coefficient    | scalar | no    | 0.09
-      kappa     | von Kármán constant            | scalar | no    | 0.41
-      E         | Wall roughness parameter       | scalar | no    | 9.8
-      blending  | Viscous/inertial sublayer blending | word | no  | stepwise
-      n         | Binomial blending exponent     | scalar | no    | 2.0
-      U         | Name of the velocity field     | word   | no    | U
+      Property  | Description                    | Type   | Reqd | Dflt
+      Cmu       | Empirical model coefficient    | scalar | no   | 0.09
+      kappa     | von Kármán constant            | scalar | no   | 0.41
+      E         | Wall roughness parameter       | scalar | no   | 9.8
+      blending  | Viscous/inertial sublayer blending | word | no | stepwise
+      n         | Binomial blending exponent     | scalar | no   | 2.0
+      U         | Name of the velocity field     | word   | no   | U
     \endtable
 
     The inherited entries are elaborated in:
@@ -227,6 +227,10 @@ protected:
         //- of the viscous and inertial sublayers
         scalar yPlusLam_;
 
+        //- The the first-cell-centre height
+        //- from boundary in wall units, i.e. y+
+        mutable scalarField yPlus_;
+
 
     // Protected Member Functions
 
@@ -242,6 +246,10 @@ protected:
 
         //- Write local wall function variables
         virtual void writeLocalEntries(Ostream&) const;
+
+        //- Calculate the first-cell-centre
+        //- height from boundary in wall units, i.e. y+
+        virtual scalarField calcYPlus() const = 0;
 
 
 public:
@@ -296,51 +304,52 @@ public:
 
     // Member Functions
 
-        //- Return Cmu
-        scalar Cmu() const
-        {
-            return Cmu_;
-        }
+        // Access
 
-        //- Return kappa
-        scalar kappa() const
-        {
-            return kappa_;
-        }
+            //- Return Cmu
+            scalar Cmu() const
+            {
+                return Cmu_;
+            }
 
-        //- Return E
-        scalar E() const
-        {
-            return E_;
-        }
+            //- Return kappa
+            scalar kappa() const
+            {
+                return kappa_;
+            }
 
-        //- Return the nut patchField for the given wall patch
-        static const nutWallFunctionFvPatchScalarField& nutw
-        (
-            const turbulenceModel& turbModel,
-            const label patchi
-        );
+            //- Return E
+            scalar E() const
+            {
+                return E_;
+            }
 
-        //- Estimate the y+ at the intersection of the two sublayers
-        static scalar yPlusLam(const scalar kappa, const scalar E);
-
-        //- Return the estimated y+ at the two-sublayer intersection
-        scalar yPlusLam() const;
-
-        //- Return the blended nut according to the chosen blending treatment
-        scalar blend
-        (
-            const scalar nutVis,
-            const scalar nutLog,
-            const scalar yPlus
-        ) const;
-
-        //- Calculate and return the yPlus at the boundary
-        //  yPlus is the first-cell-centre height from boundary in wall units
-        virtual tmp<scalarField> yPlus() const = 0;
+            //- Return the nut patchField for the given wall patch
+            static const nutWallFunctionFvPatchScalarField& nutw
+            (
+                const turbulenceModel& turbModel,
+                const label patchi
+            );
 
 
-        // Evaluation functions
+        // Evaluation
+
+            //- Estimate the y+ at the intersection of the two sublayers
+            static scalar yPlusLam(const scalar kappa, const scalar E);
+
+            //- Return the estimated y+ at the two-sublayer intersection
+            scalar yPlusLam() const;
+
+            //- Return the blended nut according to the chosen blending treatment
+            tmp<scalarField> blend
+            (
+                const scalarField& nutLog,
+                const scalar nutVis
+            ) const;
+
+            //- Calculate and return y+
+            //  y+ is the first-cell-centre height from boundary in wall units
+            virtual tmp<scalarField> yPlus() const;
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();

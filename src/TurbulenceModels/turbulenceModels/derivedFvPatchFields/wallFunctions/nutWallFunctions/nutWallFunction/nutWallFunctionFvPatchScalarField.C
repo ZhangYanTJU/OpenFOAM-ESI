@@ -66,7 +66,7 @@ void Foam::nutWallFunctionFvPatchScalarField::checkType()
             << "    Patch type for patch " << patch().name()
             << " must be wall" << nl
             << "    Current patch type is " << patch().type() << nl << endl
-            << abort(FatalError);
+            << exit(FatalError);
     }
 }
 
@@ -125,7 +125,8 @@ Foam::nutWallFunctionFvPatchScalarField::nutWallFunctionFvPatchScalarField
     Cmu_(0.09),
     kappa_(0.41),
     E_(9.8),
-    yPlusLam_(yPlusLam(kappa_, E_))
+    yPlusLam_(yPlusLam(kappa_, E_)),
+    yPlus_()
 {
     checkType();
 }
@@ -146,7 +147,8 @@ Foam::nutWallFunctionFvPatchScalarField::nutWallFunctionFvPatchScalarField
     Cmu_(ptf.Cmu_),
     kappa_(ptf.kappa_),
     E_(ptf.E_),
-    yPlusLam_(ptf.yPlusLam_)
+    yPlusLam_(ptf.yPlusLam_),
+    yPlus_()
 {
     checkType();
 }
@@ -185,7 +187,8 @@ Foam::nutWallFunctionFvPatchScalarField::nutWallFunctionFvPatchScalarField
         dict.getCheckOrDefault<scalar>("kappa", 0.41, scalarMinMax::ge(SMALL))
     ),
     E_(dict.getCheckOrDefault<scalar>("E", 9.8, scalarMinMax::ge(SMALL))),
-    yPlusLam_(yPlusLam(kappa_, E_))
+    yPlusLam_(yPlusLam(kappa_, E_)),
+    yPlus_()
 {
     checkType();
 }
@@ -203,7 +206,8 @@ Foam::nutWallFunctionFvPatchScalarField::nutWallFunctionFvPatchScalarField
     Cmu_(wfpsf.Cmu_),
     kappa_(wfpsf.kappa_),
     E_(wfpsf.E_),
-    yPlusLam_(wfpsf.yPlusLam_)
+    yPlusLam_(wfpsf.yPlusLam_),
+    yPlus_()
 {
     checkType();
 }
@@ -222,7 +226,8 @@ Foam::nutWallFunctionFvPatchScalarField::nutWallFunctionFvPatchScalarField
     Cmu_(wfpsf.Cmu_),
     kappa_(wfpsf.kappa_),
     E_(wfpsf.E_),
-    yPlusLam_(wfpsf.yPlusLam_)
+    yPlusLam_(wfpsf.yPlusLam_),
+    yPlus_()
 {
     checkType();
 }
@@ -263,61 +268,77 @@ Foam::scalar Foam::nutWallFunctionFvPatchScalarField::yPlusLam
 }
 
 
-Foam::scalar Foam::nutWallFunctionFvPatchScalarField::blend
+Foam::tmp<Foam::scalarField> Foam::nutWallFunctionFvPatchScalarField::blend
 (
-    const scalar nutVis,
-    const scalar nutLog,
-    const scalar yPlus
+    const scalarField& nutLog,
+    const scalar nutVis
 ) const
 {
-    scalar nutw = 0.0;
-
     switch (blending_)
     {
         case blendingType::STEPWISE:
         {
-            if (yPlus > yPlusLam_)
+            auto tnutw = tmp<scalarField>::New(nutLog);
+            auto& nutw = tnutw.ref();
+
+            forAll(nutw, i)
             {
-                nutw = nutLog;
+                if (yPlus_[i] <= yPlusLam_)
+                {
+                    nutw[i] = nutVis;
+                }
             }
-            else
-            {
-                nutw = nutVis;
-            }
-            break;
+
+            return tnutw;
         }
 
         case blendingType::MAX:
         {
             // (PH:Eq. 27)
-            nutw = max(nutVis, nutLog);
-            break;
+            return max(nutVis, nutLog);
         }
 
         case blendingType::BINOMIAL:
         {
             // (ME:Eqs. 15-16)
-            nutw =
-                pow
-                (
-                    pow(nutVis, n_) + pow(nutLog, n_),
-                    1.0/n_
-                );
-            break;
+            return pow(pow(nutVis, n_) + pow(nutLog, n_), 1/n_);
         }
 
         case blendingType::EXPONENTIAL:
         {
             // (PH:Eq. 31)
-            const scalar Gamma = 0.01*pow4(yPlus)/(1.0 + 5.0*yPlus);
-            const scalar invGamma = 1.0/(Gamma + ROOTVSMALL);
+            const scalarField Gamma(0.01*pow4(yPlus_)/(1 + 5*yPlus_));
+            const scalarField invGamma(1/(Gamma + ROOTVSMALL));
 
-            nutw = nutVis*exp(-Gamma) + nutLog*exp(-invGamma);
+            return nutVis*exp(-Gamma) + nutLog*exp(-invGamma);
+        }
+
+        default:
+        {
+            // This should never happen.
             break;
         }
     }
 
-    return nutw;
+    FatalErrorInFunction
+        << "Unimplemented method " << blendingTypeNames[blending_] << nl
+        << "Please set 'blending' to one of "
+        << flatOutput(blendingTypeNames.sortedToc())
+        << exit(FatalError);
+
+    return nullptr;
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::nutWallFunctionFvPatchScalarField::
+yPlus() const
+{
+    if (yPlus_.empty())
+    {
+        return calcYPlus();
+    }
+
+    return yPlus_;
 }
 
 

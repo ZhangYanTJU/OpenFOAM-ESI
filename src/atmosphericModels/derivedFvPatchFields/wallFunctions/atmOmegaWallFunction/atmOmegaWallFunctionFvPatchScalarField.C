@@ -51,13 +51,12 @@ void Foam::atmOmegaWallFunctionFvPatchScalarField::calculate
     const scalarField& y = turbModel.y()[patchi];
 
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
     const tmp<volScalarField> tk = turbModel.k();
-    const volScalarField& k = tk();
+    const auto& k = tk();
 
     const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
-
     const scalarField magGradUw(mag(Uw.snGrad()));
 
     const scalar Cmu25 = pow025(nutw.Cmu());

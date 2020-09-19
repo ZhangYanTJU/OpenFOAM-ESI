@@ -58,10 +58,10 @@ Usage
 
     where the entries mean:
     \table
-      Property    | Description                       | Type   | Req'd  | Dflt
-      type        | Type name: nutkRoughWallFunction  | word   | yes    | -
-      Ks          | Sand-grain roughness height  | scalarField | yes    | -
-      Cs          | Roughness constant           | scalarField | yes    | -
+      Property    | Description                       | Type   | Reqd | Dflt
+      type        | Type name: nutkRoughWallFunction  | word   | yes  | -
+      Ks          | Sand-grain roughness height  | scalarField | yes  | -
+      Cs          | Roughness constant           | scalarField | yes  | -
     \endtable
 
     The inherited entries are elaborated in:
@@ -100,6 +100,9 @@ protected:
         //- Roughness constant
         scalarField Cs_;
 
+        //- Friction velocity
+        mutable scalarField uStar_;
+
 
     // Protected Member Functions
 
@@ -108,6 +111,13 @@ protected:
 
         //- Calculate the turbulent viscosity
         virtual tmp<scalarField> calcNut() const;
+
+        //- Calculate friction velocity
+        scalarField calcUStar() const;
+
+        //- Calculate the first-cell-centre
+        //- height from boundary in wall units, i.e. y+
+        virtual scalarField calcYPlus() const;
 
 
 public:
@@ -181,7 +191,7 @@ public:
 
     // Member Functions
 
-        // Access functions
+        // Access
 
             // Return Ks
             scalarField& Ks()
@@ -195,8 +205,14 @@ public:
                 return Cs_;
             }
 
+            // Return uStar
+            scalarField& uStar()
+            {
+                return uStar_;
+            }
 
-        // Mapping functions
+
+        // Mapping
 
             //- Map (and resize as needed) from self given a mapping object
             virtual void autoMap(const fvPatchFieldMapper&);

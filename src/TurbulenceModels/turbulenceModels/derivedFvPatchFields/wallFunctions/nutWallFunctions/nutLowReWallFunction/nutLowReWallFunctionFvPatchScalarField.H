@@ -50,8 +50,8 @@ Usage
 
     where the entries mean:
     \table
-      Property  | Description                      | Type | Req'd  | Dflt
-      type      | Type name: nutLowReWallFunction  | word | yes    | -
+      Property  | Description                      | Type | Reqd  | Dflt
+      type      | Type name: nutLowReWallFunction  | word | yes   | -
     \endtable
 
     The inherited entries are elaborated in:
@@ -86,6 +86,10 @@ protected:
 
         //- Calculate the turbulent viscosity
         virtual tmp<scalarField> calcNut() const;
+
+        //- Calculate the first-cell-centre
+        //- height from boundary in wall units, i.e. y+
+        virtual scalarField calcYPlus() const;
 
 
 public:
@@ -155,12 +159,6 @@ public:
                 new nutLowReWallFunctionFvPatchScalarField(*this, iF)
             );
         }
-
-
-    // Member Functions
-
-        //- Calculate and return the yPlus at the boundary
-        virtual tmp<scalarField> yPlus() const;
 };
 
 

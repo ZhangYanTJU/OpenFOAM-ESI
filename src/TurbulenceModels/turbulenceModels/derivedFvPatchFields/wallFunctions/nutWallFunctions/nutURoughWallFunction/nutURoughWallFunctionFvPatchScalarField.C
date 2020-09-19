@@ -32,7 +32,6 @@ License
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
@@ -48,26 +47,21 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcNut() const
             internalField().group()
         )
     );
-    const scalarField& y = turbModel.y()[patchi];
-    const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
+
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    const auto& nuw = tnuw();
 
-    // The flow velocity at the adjacent cell centre
-    const scalarField magUp(mag(Uw.patchInternalField() - Uw));
+    yPlus_ = calcYPlus();
 
-    tmp<scalarField> tyPlus = calcYPlus(magUp);
-    scalarField& yPlus = tyPlus.ref();
+    auto tnutw(tmp<scalarField>::New(patch().size(), Zero));
+    auto& nutw = tnutw.ref();
 
-    tmp<scalarField> tnutw(new scalarField(patch().size(), Zero));
-    scalarField& nutw = tnutw.ref();
-
-    forAll(yPlus, facei)
+    forAll(yPlus_, facei)
     {
-        if (yPlusLam_ < yPlus[facei])
+        if (yPlus_[facei] > yPlusLam_)
         {
-            const scalar Re = magUp[facei]*y[facei]/nuw[facei] + ROOTVSMALL;
-            nutw[facei] = nuw[facei]*(sqr(yPlus[facei])/Re - 1);
+            nutw[facei] =
+                nuw[facei]*(sqr(yPlus_[facei])/(Re_[facei] + ROOTVSMALL) - 1);
         }
     }
 
@@ -75,12 +69,11 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcNut() const
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
-(
-    const scalarField& magUp
-) const
+Foam::scalarField Foam::nutURoughWallFunctionFvPatchScalarField::
+calcYPlus() const
 {
+    Re_ = calcRe();
+
     const label patchi = patch().index();
 
     const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
@@ -92,13 +85,10 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
         )
     );
     const scalarField& y = turbModel.y()[patchi];
-    const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
 
-    tmp<scalarField> tyPlus(new scalarField(patch().size(), Zero));
-    scalarField& yPlus = tyPlus.ref();
+    scalarField yPlus(patch().size(), Zero);
 
-    if (0.0 < roughnessHeight_)
+    if (0 < roughnessHeight_)
     {
         // Rough Walls
         const scalar c_1 = 1/(90 - 2.25) + roughnessConstant_;
@@ -112,15 +102,13 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
             // of the wall will depend on yPlus
             forAll(yPlus, facei)
             {
-                const scalar magUpara = magUp[facei];
-                const scalar Re = magUpara*y[facei]/nuw[facei];
-                const scalar kappaRe = kappa_*Re;
+                const scalar kappaRe = kappa_*Re_[facei];
 
                 scalar yp = yPlusLam_;
                 const scalar ryPlusLam = 1.0/yp;
 
                 int iter = 0;
-                scalar yPlusLast = 0.0;
+                scalar yPlusLast = 0;
                 scalar dKsPlusdYPlus = roughnessHeight_/y[facei];
 
                 // Additional tuning parameter - nominally = 1
@@ -134,9 +122,9 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
                     scalar KsPlus = yp*dKsPlusdYPlus;
 
                     // The extra term in the law-of-the-wall
-                    scalar G = 0.0;
+                    scalar G = 0;
 
-                    scalar yPlusGPrime = 0.0;
+                    scalar yPlusGPrime = 0;
 
                     if (KsPlus >= 90)
                     {
@@ -155,7 +143,7 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
                             (c_1*sint_2*KsPlus/t_1) + (c_3*logt_1*cos(t_2));
                     }
 
-                    scalar denom = 1.0 + log(E_*yp) - G - yPlusGPrime;
+                    scalar denom = 1 + log(E_*yp) - G - yPlusGPrime;
                     if (mag(denom) > VSMALL)
                     {
                         yp = (kappaRe + yp*(1 - yPlusGPrime))/denom;
@@ -167,7 +155,7 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
                  && yp > VSMALL
                 );
 
-                yPlus[facei] = max(0.0, yp);
+                yPlus[facei] = max(0, yp);
             }
         }
     }
@@ -176,20 +164,18 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
         // Smooth Walls
         forAll(yPlus, facei)
         {
-            const scalar magUpara = magUp[facei];
-            const scalar Re = magUpara*y[facei]/nuw[facei];
-            const scalar kappaRe = kappa_*Re;
+            const scalar kappaRe = kappa_*Re_[facei];
 
             scalar yp = yPlusLam_;
-            const scalar ryPlusLam = 1.0/yp;
+            const scalar ryPlusLam = 1/yp;
 
             int iter = 0;
-            scalar yPlusLast = 0.0;
+            scalar yPlusLast = 0;
 
             do
             {
                 yPlusLast = yp;
-                yp = (kappaRe + yp)/(1.0 + log(E_*yp));
+                yp = (kappaRe + yp)/(1 + log(E_*yp));
 
             }
             while
@@ -198,11 +184,33 @@ Foam::nutURoughWallFunctionFvPatchScalarField::calcYPlus
              && ++iter < maxIter_
             );
 
-            yPlus[facei] = max(0.0, yp);
+            yPlus[facei] = max(0, yp);
         }
     }
 
-    return tyPlus;
+    return yPlus;
+}
+
+
+Foam::scalarField Foam::nutURoughWallFunctionFvPatchScalarField::
+calcRe() const
+{
+    const label patchi = patch().index();
+
+    const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
+    (
+        IOobject::groupName
+        (
+            turbulenceModel::propertiesName,
+            internalField().group()
+        )
+    );
+    const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
+
+    // The flow velocity at the adjacent cell centre
+    const tmp<scalarField> magUp = mag(Uw.patchInternalField() - Uw);
+
+    return magUp*turbModel.y()[patchi]/turbModel.nu(patchi);
 }
 
 
@@ -306,26 +314,6 @@ nutURoughWallFunctionFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField>
-Foam::nutURoughWallFunctionFvPatchScalarField::yPlus() const
-{
-    const label patchi = patch().index();
-
-    const turbulenceModel& turbModel = db().lookupObject<turbulenceModel>
-    (
-        IOobject::groupName
-        (
-            turbulenceModel::propertiesName,
-            internalField().group()
-        )
-    );
-    const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
-    tmp<scalarField> magUp = mag(Uw.patchInternalField() - Uw);
-
-    return calcYPlus(magUp());
-}
-
-
 void Foam::nutURoughWallFunctionFvPatchScalarField::write
 (
     Ostream& os
@@ -347,5 +335,6 @@ namespace Foam
         nutURoughWallFunctionFvPatchScalarField
     );
 }
+
 
 // ************************************************************************* //
