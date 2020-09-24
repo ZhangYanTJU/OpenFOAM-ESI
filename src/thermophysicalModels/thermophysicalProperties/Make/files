@@ -15,6 +15,7 @@ APIfunctions           = thermophysicalFunctions/APIfunctions
 $(APIfunctions)/APIdiffCoefFunc/APIdiffCoefFunc.C
 
 thermophysicalFunctions/nonUniformTable/nonUniformTableThermophysicalFunction.C
+thermophysicalFunctions/integratedNonUniformTable/integratedNonUniformTableThermophysicalFunction.C
 
 thermophysicalProperties/thermophysicalProperties.C
 

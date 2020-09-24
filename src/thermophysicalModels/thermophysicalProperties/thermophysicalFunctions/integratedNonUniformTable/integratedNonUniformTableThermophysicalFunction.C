@@ -6,7 +6,6 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2020 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,120 +25,114 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "nonUniformTableThermophysicalFunction.H"
+#include "integratedNonUniformTableThermophysicalFunction.H"
+#include "specie.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(nonUniformTable, 0);
+namespace thermophysicalFunctions
+{
+    defineTypeNameAndDebug(integratedNonUniformTable, 0);
 
     addToRunTimeSelectionTable
     (
         thermophysicalFunction,
-        nonUniformTable,
+        integratedNonUniformTable,
         dictionary
     );
+}
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::nonUniformTable::nonUniformTable
+Foam::thermophysicalFunctions::integratedNonUniformTable::
+integratedNonUniformTable
 (
     const word& name,
     const dictionary& dict
 )
 :
-    name_(name),
-    Tlow_(GREAT),
-    Thigh_(-GREAT),
-    values_(dict.lookup(name)),
-    deltaT_(GREAT)
+    nonUniformTable(name, dict),
+    intf_(values().size()),
+    intfByT_(values().size())
 {
-    if (values_.size() < 2)
+    intf_[0] = 0;
+    intfByT_[0] = 0;
+
+    for(label i = 0; i<intf_.size() - 1; i++)
     {
-        FatalIOErrorInFunction(dict)
-            << "Table " << nl
-            << "    " << name_ << nl
-            << "    has less than 2 entries."
-            << exit(FatalIOError);
+        intf_[i + 1] = intf_[i] + intfdT(0, values()[i + 1].first());
+        intfByT_[i + 1] = intfByT_[i] + intfByTdT(0, values()[i + 1].first());
     }
-    else
+
+    const scalar intfStd = intfdT(Pstd, Tstd);
+    const scalar intfByTStd = intfByTdT(Pstd, Tstd);
+
+    forAll(intf_, i)
     {
-        Tlow_ = values_.first().first();
-        Thigh_ = values_.last().first();
-
-        for(label i = 1; i<values_.size(); i++)
-        {
-            deltaT_ = min(deltaT_, values_[i].first() - values_[i - 1].first());
-        }
-
-        deltaT_ *= 0.9;
-
-        jumpTable_.setSize((Thigh_ - Tlow_)/deltaT_ + 1);
-
-        label i = 0;
-        forAll(jumpTable_, j)
-        {
-            const scalar T = Tlow_ + j*deltaT_;
-
-            if (T > values_[i + 1].first())
-            {
-                i++;
-            }
-
-            jumpTable_[j] = i;
-        }
+        intf_[i] -= intfStd;
+        intfByT_[i] -= intfByTStd;
     }
 }
 
 
-Foam::nonUniformTable::nonUniformTable
+Foam::thermophysicalFunctions::integratedNonUniformTable::
+integratedNonUniformTable
 (
     const dictionary& dict
 )
 :
-    nonUniformTable("values", dict)
+    integratedNonUniformTable("values", dict)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::nonUniformTable::f
+Foam::scalar Foam::thermophysicalFunctions::integratedNonUniformTable::intfdT
 (
     scalar p,
     scalar T
 ) const
 {
     const label i = index(p, T);
-    const scalar Ti = values_[i].first();
-    const scalar lambda = (T - Ti)/(values_[i + 1].first() - Ti);
+    const scalar Ti = values()[i].first();
+    const scalar fi = values()[i].second();
+    const scalar dT = T - Ti;
+    const scalar lambda = dT/(values()[i + 1].first() - Ti);
 
     return
-        values_[i].second()
-      + lambda*(values_[i + 1].second() - values_[i].second());
+        intf_[i]
+      + (fi + 0.5*lambda*(values()[i + 1].second() - fi))*dT;
 }
 
 
-Foam::scalar Foam::nonUniformTable::dfdT
+Foam::scalar Foam::thermophysicalFunctions::integratedNonUniformTable::intfByTdT
 (
     scalar p,
     scalar T
 ) const
 {
     const label i = index(p, T);
+    const scalar Ti = values()[i].first();
+    const scalar fi = values()[i].second();
+    const scalar gradf =
+        (values()[i + 1].second() - fi)/(values()[i + 1].first() - Ti);
 
     return
-        (values_[i + 1].second() - values_[i].second())
-       /(values_[i + 1].first() - values_[i].first());
+        intfByT_[i] + ((fi - gradf*Ti)*log(T/Ti) + gradf*(T - Ti));
 }
 
 
-void Foam::nonUniformTable::writeData(Ostream& os) const
+void Foam::thermophysicalFunctions::integratedNonUniformTable::writeData
+(
+    Ostream& os
+) const
 {
-    os.writeEntry("values", values_);
+    nonUniformTable::writeData(os);
 }
 
 
