@@ -53,11 +53,14 @@ void Foam::hTabulatedThermo<EquationOfState>::write
 {
     EquationOfState::write(os);
 
-    dictionary dict("thermodynamics");
-    dict.add("Hf", Hf_);
-    dict.add("Sf", Sf_);
-    dict.add("Cp", Cp_.values());
-    os  << indent << dict.dictName() << dict;
+    // Entries in dictionary format
+    {
+        os.beginBlock("thermodynamics");
+        os.writeEntry("Sf", Sf_);
+        os.writeEntry("Hf", Hf_);
+        os.writeEntry("Cp", Cp_);
+        os.endBlock();
+    }
 }
 
 
