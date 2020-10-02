@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2018 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,8 +40,6 @@ License
 
 #include "sensibleEnthalpy.H"
 
-#include "hRefConstThermo.H"
-#include "eRefConstThermo.H"
 
 #include "constTransport.H"
 
