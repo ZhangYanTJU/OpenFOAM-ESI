@@ -128,6 +128,9 @@ protected:
         //- Model coefficients dictionary
         dictionary coeffs_;
 
+        //- Dictionary of output properties
+        autoPtr<IOdictionary> outputPropertiesPtr_;
+
         //-Volume-to surface mapping
         autoPtr<volSurfaceMapping> vsmPtr_;
 
@@ -207,6 +210,12 @@ public:
 
             //- Return the model coefficients dictionary
             inline const dictionary& coeffs() const;
+
+             //- Return const access to the output properties dictionary
+            inline const IOdictionary& outputProperties() const;
+
+            //- Return output properties dictionary
+            inline IOdictionary& outputProperties();
 
             //- Return the solution dictionary
             inline const dictionary& solution() const;

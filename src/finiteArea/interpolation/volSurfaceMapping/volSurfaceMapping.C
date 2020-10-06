@@ -184,13 +184,40 @@ void Foam::volSurfaceMapping::mapToField
     Field<Type>& f
 ) const
 {
+//     const labelList& faceLabels = mesh_.faceLabels();
+//
+//     const polyMesh& pMesh = mesh_();
+//     const polyBoundaryMesh& bm = pMesh.boundaryMesh();
+//     label patchID, faceID;
+
+    const Field<Type>& afi = af.internalField();
+
+    mapToField(afi, f);
+
+//     forAll(faceLabels, i)
+//     {
+//         if (faceLabels[i] < pMesh.nFaces())
+//         {
+//             patchID = bm.whichPatch(faceLabels[i]);
+//             faceID = bm[patchID].whichFace(faceLabels[i]);
+//             f[faceID] = afi[i];
+//         }
+//     }
+}
+
+
+template<class Type>
+void Foam::volSurfaceMapping::mapToField
+(
+    const Field<Type>& af,
+    Field<Type>& f
+) const
+{
     const labelList& faceLabels = mesh_.faceLabels();
 
     const polyMesh& pMesh = mesh_();
     const polyBoundaryMesh& bm = pMesh.boundaryMesh();
     label patchID, faceID;
-
-    const Field<Type>& afi = af.internalField();
 
     forAll(faceLabels, i)
     {
@@ -198,10 +225,9 @@ void Foam::volSurfaceMapping::mapToField
         {
             patchID = bm.whichPatch(faceLabels[i]);
             faceID = bm[patchID].whichFace(faceLabels[i]);
-            f[faceID] = afi[i];
+            f[faceID] = af[i];
         }
     }
 }
-
 
 // ************************************************************************* //

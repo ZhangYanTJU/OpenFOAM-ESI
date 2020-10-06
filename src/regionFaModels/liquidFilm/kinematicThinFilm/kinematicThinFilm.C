@@ -102,19 +102,18 @@ void kinematicThinFilm::evolveRegion()
         InfoInFunction << endl;
     }
 
-    const uniformDimensionedVectorField& g=meshObjects::gravity::New(time());
+    const uniformDimensionedVectorField& g = meshObjects::gravity::New(time());
 
     const areaVectorField gs(g - gn_*regionMesh().faceAreaNormals());
 
-    edgeScalarField phi2s("phi2s", fac::interpolate(h_)*phif_);
+    phi2s_ = fac::interpolate(h_)*phif_;
 
-    // Solve continuity for h
     for (int oCorr=1; oCorr<=nOuterCorr_; oCorr++)
     {
         faVectorMatrix UsEqn
         (
             fam::ddt(h_, Uf_)
-          + fam::div(phi2s, Uf_)
+          + fam::div(phi2s_, Uf_)
           ==
             gs*h_
           + turbulence_->Su(Uf_)
@@ -164,7 +163,7 @@ void kinematicThinFilm::evolveRegion()
 
                 if (nonOrth == nNonOrthCorr_)
                 {
-                    phi2s = hEqn.flux();
+                    phi2s_ = hEqn.flux();
                 }
             }
 

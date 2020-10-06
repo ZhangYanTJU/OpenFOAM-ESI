@@ -131,6 +131,16 @@ public:
         ) const;
 
 
+        //- Map surface field to volume field assumes Field faces in the same order
+        //  as Boundary
+        template<class Type>
+        void mapToField
+        (
+            const Field<Type>& af,
+            Field<Type>& f
+        ) const;
+
+
 };
 
 

@@ -46,6 +46,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "CloudSubModelBase.H"
 
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -100,10 +101,10 @@ protected:
         // Cached injector fields per film patch
 
             //- Parcel mass / patch face
-            scalarList massParcelPatch_;
+            scalarField massParcelPatch_;
 
             //- Parcel diameter / patch face
-            scalarList diameterParcelPatch_;
+            scalarField diameterParcelPatch_;
 
             //- Film velocity / patch face
             Field<vector> UFilmPatch_;
@@ -138,7 +139,7 @@ protected:
         virtual void cacheFilmFields
         (
             const label primaryPatchi,
-            const regionModels::areaSurfaceFilmModels::liquidFilmBase&
+            const areaFilm&
         );
 
         //- Inject particles in cloud

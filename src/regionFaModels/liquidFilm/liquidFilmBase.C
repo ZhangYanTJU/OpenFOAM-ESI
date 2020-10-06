@@ -28,7 +28,6 @@ License
 #include "liquidFilmBase.H"
 #include "faMesh.H"
 #include "faCFD.H"
-#include "uniformDimensionedFields.H"
 #include "gravityMeshObject.H"
 #include "movingWallVelocityFvPatchVectorField.H"
 #include "turbulentFluidThermoModel.H"
@@ -211,18 +210,6 @@ liquidFilmBase::liquidFilmBase
         fac::interpolate(h_*Uf_) & regionMesh().Le()
     ),
 
-    Tf_
-    (
-        IOobject
-        (
-            "Tf_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        regionMesh()
-    ),
 
     gn_
     (
@@ -237,6 +224,8 @@ liquidFilmBase::liquidFilmBase
         regionMesh(),
         dimensionedScalar(dimAcceleration, Zero)
     ),
+
+    g_(meshObjects::gravity::New(primaryMesh().time())),
 
     massSource_
     (
@@ -294,10 +283,9 @@ liquidFilmBase::liquidFilmBase
 
     faOptions_(Foam::fa::options::New(p))
 {
-    const uniformDimensionedVectorField& g =meshObjects::gravity::New(time());
+    //g_ = meshObjects::gravity::New(time());
 
-    gn_ = (g & regionMesh().faceAreaNormals());
-
+    gn_ = (g_ & regionMesh().faceAreaNormals());
 
     if (!faOptions_.optionList::size())
     {
@@ -520,6 +508,18 @@ void liquidFilmBase::addSources
 }
 
 
+void liquidFilmBase::preEvolveRegion()
+{
+    regionFaModel::preEvolveRegion();
+}
+
+
+void liquidFilmBase::postEvolveRegion()
+{
+    regionFaModel::postEvolveRegion();
+}
+
+
 Foam::fa::options& liquidFilmBase::faOptions()
 {
      return faOptions_;
@@ -532,19 +532,31 @@ const areaVectorField& liquidFilmBase::Uf() const
 }
 
 
-const areaScalarField& liquidFilmBase::Tf() const
-{
-     return Tf_;
-}
-
 const areaScalarField& liquidFilmBase::gn() const
 {
      return gn_;
 }
 
+
+const uniformDimensionedVectorField& liquidFilmBase::g() const
+{
+    return g_;
+}
+
+
 const areaScalarField& liquidFilmBase::h() const
 {
      return h_;
+}
+
+const edgeScalarField& liquidFilmBase::phif() const
+{
+    return phif_;
+}
+
+const edgeScalarField& liquidFilmBase::phi2s() const
+{
+    return phi2s_;
 }
 
 const dimensionedScalar& liquidFilmBase::h0() const
@@ -556,6 +568,7 @@ const regionFaModel& liquidFilmBase::region() const
 {
     return *this;
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

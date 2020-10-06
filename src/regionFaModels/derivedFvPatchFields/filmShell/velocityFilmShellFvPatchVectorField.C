@@ -79,7 +79,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
 )
 :
     mixedFvPatchField<vector>(p, iF),
-    baffle_(),
+    baffle_(nullptr),
     dict_(dict),
     curTimeIndex_(-1)
 {
@@ -102,11 +102,9 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
         valueFraction() = 1;
     }
 
+    if (!baffle_)
     {
-        if (baffle_.empty())
-        {
-            baffle_.reset(baffle::New(p, dict).ptr());
-        }
+        baffle_.reset(baffle::New(p, dict).ptr());
     }
 }
 

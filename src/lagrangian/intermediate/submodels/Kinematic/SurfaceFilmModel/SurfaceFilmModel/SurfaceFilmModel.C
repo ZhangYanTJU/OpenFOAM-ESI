@@ -215,7 +215,7 @@ void Foam::SurfaceFilmModel<CloudType>::inject(TrackCloudType& cloud)
             >(names[i]);
 
         // Check that it is a type areaFilm
-        if (regionFa && isA<areaFilm>(*regionFa))
+        if (regionFa && isA<areaFilm>(*regionFa) && regionFa->active())
         {
             areaFilm& film =
                 const_cast<areaFilm&>(refCast<const areaFilm>(*regionFa));
@@ -266,22 +266,30 @@ void Foam::SurfaceFilmModel<CloudType>::cacheFilmFields
     const regionModels::areaSurfaceFilmModels::liquidFilmBase& filmModel
 )
 {
-    // WIP: the finite area film does not support splashing so far
-    //massParcelPatch_ = filmModel.cloudMassTrans().boundaryField()[filmPatchi];
-    //filmModel.toPrimary(filmPatchi, massParcelPatch_);
-    massParcelPatch_.setSize(filmModel.Uf().size(), Zero);
-    diameterParcelPatch_.setSize(filmModel.Uf().size(), Zero);
-    //    filmModel.cloudDiameterTrans().boundaryField()[filmPatchi];
-    //filmModel.toPrimary(filmPatchi, diameterParcelPatch_, maxEqOp<scalar>());
     const volSurfaceMapping& map = filmModel.region().vsm();
+
+DebugVar("cacheFilmFields::SurfaceFilmModel")
+    massParcelPatch_.setSize(filmModel.Uf().size(), Zero);
+
+    const scalarField& massParcelPatch =
+        filmModel.cloudMassTrans().boundaryField()[filmPatchi];
+DebugVar(massParcelPatch)
+
+    map.mapToField(massParcelPatch, massParcelPatch_);
+
+    const scalarField&  diameterParcelPatch =
+        filmModel.cloudDiameterTrans().boundaryField()[filmPatchi];
+
+DebugVar(diameterParcelPatch)
+
+    diameterParcelPatch_.setSize(filmModel.Uf().size(), Zero);
+    map.mapToField(diameterParcelPatch, diameterParcelPatch_);
 
     UFilmPatch_.setSize(filmModel.Uf().size(), Zero);
     map.mapToField(filmModel.Uf(), UFilmPatch_);
-    //filmModel.toPrimary(filmPatchi, UFilmPatch_);
 
     rhoFilmPatch_.setSize(UFilmPatch_.size(), Zero);
     map.mapToField(filmModel.rho(), rhoFilmPatch_);
-    //filmModel.toPrimary(filmPatchi, rhoFilmPatch_);
 
     deltaFilmPatch_[filmPatchi].setSize(UFilmPatch_.size(), Zero);
     map.mapToField(filmModel.h(), deltaFilmPatch_[filmPatchi]);

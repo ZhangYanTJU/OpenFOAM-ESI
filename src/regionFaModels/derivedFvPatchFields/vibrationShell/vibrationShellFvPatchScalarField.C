@@ -68,7 +68,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
         iF,
         mapper
     ),
-    baffle_(),
+    baffle_(nullptr),
     dict_(ptf.dict_)
 {}
 

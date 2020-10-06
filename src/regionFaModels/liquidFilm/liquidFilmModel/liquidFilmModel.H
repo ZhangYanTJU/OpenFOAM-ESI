@@ -42,8 +42,14 @@ SourceFiles
 #include "volFieldsFwd.H"
 #include "liquidFilmBase.H"
 #include "faMesh.H"
+
 #include "filmTurbulenceModel.H"
+
 #include "liquidMixtureProperties.H"
+#include "injectionModelList.H"
+
+//#include "transferModelList.H"
+//#include "forceList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,6 +59,7 @@ namespace regionModels
 {
 namespace areaSurfaceFilmModels
 {
+
 
 /*---------------------------------------------------------------------------*\
                         Class liquidFilmModel Declaration
@@ -94,6 +101,12 @@ protected:
                 //- Dynamic viscosity [Pa.s]
                 areaScalarField mu_;
 
+                //- Film temperature
+                areaScalarField Tf_;
+
+                 //- Film Heat capacity
+                areaScalarField Cp_;
+
                 //- Surface tension [m/s2]
                 areaScalarField sigma_;
 
@@ -112,12 +125,39 @@ protected:
                     areaScalarField pnSp_;
 
 
+                 // Transfer fields
+
+                    //- Film mass available for transfer to the primary region
+                    volScalarField primaryMassTrans_;
+
+                    //- Film mass available for transfer to cloud
+                    volScalarField cloudMassTrans_;
+
+                    //- Parcel diameters originating from film to cloud
+                    volScalarField cloudDiameterTrans_;
+
+
     // General properties
 
 
 
             //- Turbulence model
             autoPtr<filmTurbulenceModel> turbulence_;
+
+
+            // Sub-models
+
+                //- Available mass for transfer via sub-models
+                scalarField availableMass_;
+
+                //- Cloud injection
+                injectionModelList injection_;
+
+                //- Transfer with the continuous phase
+                //transferModelList transfer_;
+
+                //- List of film forces
+                //forceList forces_;
 
 
     // Protected member functions
@@ -169,6 +209,23 @@ public:
             //- Access const reference sigma
             const areaScalarField& sigma() const;
 
+            //- Access const reference Tf
+            const areaScalarField& Tf() const;
+
+            //- Access const reference Cp
+            const areaScalarField& Cp() const;
+
+
+            // Transfer fields - to the primary region (lagragian injection)
+
+                //- Return mass transfer source - Eulerian phase only
+                virtual tmp<volScalarField> primaryMassTrans() const;
+
+                //- Return the film mass available for transfer to cloud
+                virtual const volScalarField& cloudMassTrans() const;
+
+                //- Return the parcel diameters originating from film to cloud
+                virtual const volScalarField& cloudDiameterTrans() const;
 
         // Evolution
 

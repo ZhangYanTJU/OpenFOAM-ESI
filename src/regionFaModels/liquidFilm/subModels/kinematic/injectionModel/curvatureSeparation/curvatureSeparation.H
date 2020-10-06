@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2011-2017 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,21 +24,33 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::regionModels::areaSurfaceFilmModels::laminar
+    Foam::regionModels::areaSurfaceFilmModels::curvatureSeparation
 
 Description
-    Film laminar turbulence model.
+    Curvature film separation model
+
+    Assesses film curvature via the mesh geometry and calculates a force
+    balance of the form:
+
+        F_sum = F_inertial + F_body + F_surface
+
+    If F_sum < 0, the film separates. Similarly, if F_sum > 0 the film will
+    remain attached.
+
+    Based on description given by
+        Owen and D. J. Ryley. The flow of thin liquid films around corners.
+        International Journal of Multiphase Flow, 11(1):51-62, 1985.
+
 
 SourceFiles
-    laminar.C
+    curvatureSeparation.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef regionFaModels_surfaceFilmModels_laminar_H
-#define regionFaModels_surfaceFilmModels_laminar_H
+#ifndef curvatureSeparation_H
+#define curvatureSeparation_H
 
-#include "liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.H"
-
+#include "injectionModel.H"
 #include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -51,61 +63,86 @@ namespace areaSurfaceFilmModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class laminar Declaration
+                   Class curvatureSeparation Declaration
 \*---------------------------------------------------------------------------*/
 
-class laminar
+class curvatureSeparation
 :
-    public filmTurbulenceModel
+    public injectionModel
 {
 private:
-
-    // Private Data
-
-        //- Surface roughness coefficient
-        scalar Cf_;
-
 
     // Private member functions
 
         //- No copy construct
-        laminar(const laminar&) = delete;
+        curvatureSeparation(const curvatureSeparation&) = delete;
 
         //- No copy assignment
-        void operator=(const laminar&) = delete;
+        void operator=(const curvatureSeparation&) = delete;
+
+
+protected:
+
+    // Protected data
+
+        //- Gradient of surface normals
+        areaTensorField gradNHat_;
+
+        //- Minimum gravity driven film thickness (non-dimensionalised delta/R1)
+        scalar deltaByR1Min_;
+
+        //- List of radii for patches - if patch not defined, radius
+        // calculated based on mesh geometry
+        scalar definedPatchRadii_;
+
+        //- Magnitude of gravity vector
+        scalar magG_;
+
+        //- Direction of gravity vector
+        vector gHat_;
+
+
+    // Protected Member Functions
+
+        //- Calculate local (inverse) radius of curvature
+        tmp<areaScalarField> calcInvR1(const areaVectorField& U) const;
+
+        //- Calculate the cosine of the angle between gravity vector and
+        //  cell out flow direction
+        tmp<scalarField> calcCosAngle(const edgeScalarField& phi) const;
 
 
 public:
 
     //- Runtime type information
-    TypeName("laminar");
+    TypeName("curvatureSeparation");
 
 
     // Constructors
 
         //- Construct from surface film model
-        laminar(liquidFilmBase& film, const dictionary& dict);
+        curvatureSeparation
+        (
+            liquidFilmBase& film,
+            const dictionary& dict
+        );
 
 
     //- Destructor
-    virtual ~laminar();
+    virtual ~curvatureSeparation();
 
 
     // Member Functions
 
         // Evolution
 
-            //- Return the film surface velocity
-            //virtual tmp<areaVectorField> Us() const;
-
-            //- Return the film turbulence viscosity
-            virtual tmp<areaScalarField> mut() const;
-
-            //- Correct/update the model
-            virtual void correct();
-
-            //- Return the source for the film momentum equation
-            virtual tmp<faVectorMatrix> Su(areaVectorField& U) const;
+            //- Correct
+            virtual void correct
+            (
+                scalarField& availableMass,
+                scalarField& massToInject,
+                scalarField& diameterToInject
+            );
 };
 
 
