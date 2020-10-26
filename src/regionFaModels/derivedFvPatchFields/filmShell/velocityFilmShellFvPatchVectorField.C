@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2020 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -42,7 +42,8 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     mixedFvPatchField<vector>(p, iF),
     baffle_(),
     dict_(dictionary::null),
-    curTimeIndex_(-1)
+    curTimeIndex_(-1),
+    zeroWallVelocity_(true)
 {
     refValue() = 0;
     refGrad() = 0;
@@ -67,7 +68,8 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     ),
     baffle_(),
     dict_(ptf.dict_),
-    curTimeIndex_(-1)
+    curTimeIndex_(-1),
+    zeroWallVelocity_(true)
 {}
 
 
@@ -81,7 +83,8 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     mixedFvPatchField<vector>(p, iF),
     baffle_(nullptr),
     dict_(dict),
-    curTimeIndex_(-1)
+    curTimeIndex_(-1),
+    zeroWallVelocity_(dict.getOrDefault<bool>("zeroWallVelocity", true))
 {
     fvPatchVectorField::operator=(vectorField("value", dict, p.size()));
 
@@ -118,7 +121,8 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     mixedFvPatchField<vector>(ptf, iF),
     baffle_(),
     dict_(ptf.dict_),
-    curTimeIndex_(-1)
+    curTimeIndex_(-1),
+    zeroWallVelocity_(true)
 {}
 
 
@@ -145,10 +149,17 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
 
         baffle_->vsm().mapToVolume(baffle_->Us(), vfb);
 
-        refValue() = vfb[patch().index()];
         refGrad() = Zero;
         valueFraction() = 1;
 
+        if (zeroWallVelocity_)
+        {
+            refValue() = Zero;
+        }
+        else
+        {
+            refValue() = vfb[patch().index()];
+        }
         curTimeIndex_ = this->db().time().timeIndex();
     }
 
@@ -160,9 +171,12 @@ void velocityFilmShellFvPatchVectorField::write(Ostream& os) const
 {
     mixedFvPatchField<vector>::write(os);
 
-    // Remove value and type already written by fixedValueFvPatchField
+    // Remove value and type already written by mixedFvPatchField
     dict_.remove("value");
     dict_.remove("type");
+    dict_.remove("refValue");
+    dict_.remove("refGradient");
+    dict_.remove("valueFraction");
     dict_.write(os, false);
 }
 

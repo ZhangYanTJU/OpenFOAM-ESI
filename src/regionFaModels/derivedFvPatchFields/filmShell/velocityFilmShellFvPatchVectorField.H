@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2020 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -33,11 +33,16 @@ Description
 Usage
     \table
     Property    | Description                              | Required | Default
-    kappaMethod | 'fluidThermo', 'solidThermo'             | yes
-    thermo      | Solid thermo                             | yes
-    thermalShellModel  | thermal shell modes               | yes
-    region      | 2D region to be applied                  | yes
-    T           | Temperature field name                   | yes
+    U           | Name of the primary U                    | yes
+    pRef        | Reference pressure for thermo            | yes
+    T0          | Film initial temperature                 | no       | READ
+    thermo      | flow thermo                              | yes
+    zeroWallVelocity    | Fix zero U for primary flow      | yes      | true
+    turbulence          | Film turbulnce                   | yes
+    injectionModels     | Lagrangian injection             | no
+    forces              | Film forces                      | no
+    region              | Name of the 2D region            | yes
+    liquidFilmModel     | Film model                       | yes
     \endtable
 
     Example of the boundary condition specification:
@@ -47,16 +52,42 @@ Usage
         type                velocityFilmShell;
 
         active              true;
+        infoOutput          true;
 
         U                   U;
+        pRef                1e5;
+        T0                  300;
+
+        zeroWallVelocity    true;
 
         thermo
         {
-
+            H2O;
         }
 
-        region              ceilingShell;
-        liquidFilm          kinematicThinFilm;
+        turbulence          laminar;
+
+        laminarCoeffs
+        {
+            friction        ManningStrickler;   // Wall friction model
+            n               0.005;              // Manning number
+            Cf              0.9;                // Gas friction
+        }
+
+        injectionModels
+        (
+            curvatureSeparation
+        );
+
+        forces ();
+
+        curvatureSeparationCoeffs
+        {
+            definedPatchRadii  0;
+        }
+
+        region              film;
+        liquidFilmModel     kinematicThinFilm;
 
         value               uniform (0 0 0);
 
@@ -103,6 +134,8 @@ class velocityFilmShellFvPatchVectorField
         //- Time index to evolve the film
         label curTimeIndex_;
 
+        //- Zero wall velocity. Fix U to zero or to film U
+        bool zeroWallVelocity_;
 
 public:
 
