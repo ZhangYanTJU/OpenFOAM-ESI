@@ -25,11 +25,16 @@ liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbu
 liquidFilm/subModels/kinematic/filmTurbulenceModel/laminar/laminar.C
 
 liquidFilm/subModels/kinematic/injectionModel/injectionModelList/injectionModelList.C
-
 liquidFilm/subModels/kinematic/injectionModel/injectionModel/injectionModel.C
 liquidFilm/subModels/kinematic/injectionModel/injectionModel/injectionModelNew.C
 
 liquidFilm/subModels/kinematic/injectionModel/curvatureSeparation/curvatureSeparation.C
+
+liquidFilm/subModels/kinematic/force/forceList/forceList.C
+liquidFilm/subModels/kinematic/force/force/force.C
+liquidFilm/subModels/kinematic/force/force/forceNew.C
+liquidFilm/subModels/kinematic/force/contactAngleForces/contactAngleForce/contactAngleForce.C
+liquidFilm/subModels/kinematic/force/contactAngleForces/perturbedTemperatureDependent/perturbedTemperatureDependentContactAngleForce.C
 
 liquidFilm/subModels/filmSubModelBase.C
 
