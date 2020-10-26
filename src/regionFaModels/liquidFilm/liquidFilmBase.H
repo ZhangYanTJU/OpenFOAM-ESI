@@ -97,8 +97,12 @@ protected:
             //- Cumulative continuity error
             scalar cumulativeContErr_;
 
-            //- Small delta
+            //- Smallest numerical thickness
             dimensionedScalar h0_;
+
+            //- Delta wet for sub-models
+            dimensionedScalar deltaWet_;
+
 
         //- Name of the velocity field
         word UName_;
@@ -236,6 +240,9 @@ public:
             //- Map primary static pressure
             tmp<areaScalarField> pg() const;
 
+            //- Wet indicator using h0
+            tmp<areaScalarField> alpha() const;
+
 
         // Access functions
 
@@ -271,7 +278,7 @@ public:
             // Transfer fields - to the primary region (lagragian injection)
 
                 //- Return mass transfer source - Eulerian phase only
-                virtual tmp<volScalarField> primaryMassTrans() const = 0;
+                //virtual tmp<volScalarField> primaryMassTrans() const = 0;
 
                 //- Return the film mass available for transfer to cloud
                 virtual const volScalarField& cloudMassTrans() const = 0;
@@ -321,7 +328,6 @@ public:
                 const scalar pressureSource,   // [kg.m/s] (normal momentum)
                 const scalar energySource = 0  // [J]
             );
-
 };
 
 

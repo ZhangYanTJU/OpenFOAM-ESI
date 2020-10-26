@@ -28,7 +28,7 @@ License
 #include "kinematicThinFilm.H"
 #include "addToRunTimeSelectionTable.H"
 #include "uniformDimensionedFields.H"
-#include "gravityMeshObject.H"
+//#include "gravityMeshObject.H"
 #include "volFields.H"
 
 
@@ -102,9 +102,9 @@ void kinematicThinFilm::evolveRegion()
         InfoInFunction << endl;
     }
 
-    const uniformDimensionedVectorField& g = meshObjects::gravity::New(time());
+    const areaVectorField& ns = regionMesh().faceAreaNormals();
 
-    const areaVectorField gs(g - gn_*regionMesh().faceAreaNormals());
+    const areaVectorField gs(g_ - ns*(ns & g_));
 
     phi2s_ = fac::interpolate(h_)*phif_;
 
@@ -118,7 +118,8 @@ void kinematicThinFilm::evolveRegion()
             gs*h_
           + turbulence_->Su(Uf_)
           + faOptions()(h_, Uf_, sqr(dimVelocity))
-          + rhoSp_*Uf_
+          + fam::Sp(rhoSp_*h_, Uf_)
+          + forces_.correct(Uf_)
           + USp_
         );
 
@@ -128,7 +129,7 @@ void kinematicThinFilm::evolveRegion()
 
         if (momentumPredictor_)
         {
-            solve(UsEqn == -fac::grad(pf_*h_)/rho_ + pf_*fac::grad(h_)/rho_);
+            solve(UsEqn == - fac::grad(pf_*h_)/rho_ + pf_*fac::grad(h_)/rho_);
         }
 
         for (int corr=1; corr<=nCorr_; corr++)
@@ -153,7 +154,7 @@ void kinematicThinFilm::evolveRegion()
                   + fam::div(phif_, h_)
                  ==
                     faOptions()(rho_, h_, dimVelocity)
-                  + rhoSp_
+                  + fam::Sp(rhoSp_, h_)
                 );
 
                 faOptions().constrain(hEqn);
@@ -182,8 +183,11 @@ void kinematicThinFilm::evolveRegion()
             pf_ = rho_*gn_*h_ - sigma_*fac::laplacian(h_) + ppf_ + pnSp_;
             pf_.correctBoundaryConditions();
 
+            //Uf_ -=
+            //    (h_/(rho_*UsA))*fac::grad(pf_) + (pf_/(rho_*UsA))*fac::grad(h_);
+
             Uf_ -= (1.0/(rho_*UsA))*fac::grad(pf_*h_)
-                 - (pf_/(rho_*UsA))*fac::grad(h_);
+                - (pf_/(rho_*UsA))*fac::grad(h_);
             Uf_.correctBoundaryConditions();
         }
     }
@@ -204,12 +208,6 @@ void kinematicThinFilm::postEvolveRegion()
     turbulence_->correct();
 
 }
-
-
-void kinematicThinFilm::info()
-{
-}
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

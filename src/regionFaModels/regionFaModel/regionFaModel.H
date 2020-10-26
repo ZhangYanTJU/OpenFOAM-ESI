@@ -252,7 +252,7 @@ public:
         // IO
 
             //- Provide some feedback
-            virtual void info();
+            virtual void info() = 0;
 };
 
 

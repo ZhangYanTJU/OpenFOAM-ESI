@@ -48,8 +48,10 @@ SourceFiles
 #include "liquidMixtureProperties.H"
 #include "injectionModelList.H"
 
+#include "faCFD.H"
+
 //#include "transferModelList.H"
-//#include "forceList.H"
+#include "forceList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -127,10 +129,7 @@ protected:
 
                  // Transfer fields
 
-                    //- Film mass available for transfer to the primary region
-                    volScalarField primaryMassTrans_;
-
-                    //- Film mass available for transfer to cloud
+                    //- Film mass  for transfer to cloud
                     volScalarField cloudMassTrans_;
 
                     //- Parcel diameters originating from film to cloud
@@ -157,7 +156,7 @@ protected:
                 //transferModelList transfer_;
 
                 //- List of film forces
-                //forceList forces_;
+                forceList forces_;
 
 
     // Protected member functions
@@ -218,9 +217,6 @@ public:
 
             // Transfer fields - to the primary region (lagragian injection)
 
-                //- Return mass transfer source - Eulerian phase only
-                virtual tmp<volScalarField> primaryMassTrans() const;
-
                 //- Return the film mass available for transfer to cloud
                 virtual const volScalarField& cloudMassTrans() const;
 
@@ -242,7 +238,7 @@ public:
        // I-O
 
             //- Provide some feedback
-            //virtual void info();
+            virtual void info();
 };
 
 

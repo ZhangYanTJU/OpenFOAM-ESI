@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -103,7 +102,7 @@ void injectionModelList::correct
 )
 {
     const label patchi = film().patchID();
-DebugVar("correct")
+
     // Correct models that accumulate mass and diameter transfers
     forAll(*this, i)
     {
@@ -115,10 +114,6 @@ DebugVar("correct")
             diameterToInject.boundaryFieldRef()[patchi]
         );
     }
-
-    // Push values to boundaries ready for transfer to the primary region
-    //massToInject.correctBoundaryConditions();
-    //diameterToInject.correctBoundaryConditions();
 
     massInjected_ += gSum(massToInject.boundaryField()[patchi]);
 }
@@ -154,7 +149,7 @@ void injectionModelList::info(Ostream& os)
     scalar mass(massInjected_);
     mass += mass0;
 
-    Info<< indent << "  - patch: " << pbm[patchi].name() << ": "
+    Info<< indent << "  - patch: " << pbm[patchi].name() << "  "
         << mass << endl;
 
     if (film().primaryMesh().time().writeTime())

@@ -59,9 +59,9 @@ bool liquidFilmBase::read(const dictionary& dict)
     regionFaModel::read(dict);
     if (active_)
     {
-        const dictionary& solution = this->solution().subDict("PISO");
+        const dictionary& solution = this->solution().subDict("PIMPLE");
         solution.readEntry("momentumPredictor", momentumPredictor_);
-        solution.readIfPresent("nOuterCorr", nOuterCorr_);
+        solution.readEntry("nOuterCorr", nOuterCorr_);
         solution.readEntry("nCorr", nCorr_);
         solution.readEntry("nNonOrthCorr", nNonOrthCorr_);
     }
@@ -72,28 +72,24 @@ bool liquidFilmBase::read(const dictionary& dict)
 scalar liquidFilmBase::CourantNumber() const
 {
     scalar CoNum = 0.0;
-    scalar meanCoNum = 0.0;
     scalar velMag = 0.0;
 
-    if (regionMesh().nInternalEdges())
-    {
-        edgeScalarField SfUfbyDelta
-        (
-            regionMesh().edgeInterpolation::deltaCoeffs()*mag(phif_)
-        );
+    edgeScalarField SfUfbyDelta
+    (
+        regionMesh().edgeInterpolation::deltaCoeffs()*mag(phif_)
+    );
 
-        CoNum = max(SfUfbyDelta/regionMesh().magLe())
-            .value()*time().deltaT().value();
+    CoNum = max(SfUfbyDelta/regionMesh().magLe())
+        .value()*time().deltaT().value();
 
-        meanCoNum = (sum(SfUfbyDelta)/sum(regionMesh().magLe()))
-            .value()*time().deltaT().value();
+    velMag = max(mag(phif_)/regionMesh().magLe()).value();
 
-        velMag = max(mag(phif_)/regionMesh().magLe()).value();
-    }
+    reduce(CoNum, maxOp<scalar>());
+    reduce(velMag, maxOp<scalar>());
 
-    Info<< "Film Courant Number mean: " << meanCoNum
+    Info<< "Film Courant Number: "
         << " max: " << CoNum
-        << " Film velocity magnitude: " << velMag << endl;
+        << " Film velocity magnitude: (h)" << velMag << endl;
 
     return CoNum;
 }
@@ -113,19 +109,21 @@ liquidFilmBase::liquidFilmBase
 
     momentumPredictor_
     (
-        this->solution().subDict("PISO").lookup("momentumPredictor")
+        this->solution().subDict("PIMPLE").get<bool>("momentumPredictor")
     ),
     nOuterCorr_
     (
-        this->solution().subDict("PISO").lookupOrDefault("nOuterCorr", 1)
+        this->solution().subDict("PIMPLE").get<label>("nOuterCorr")
     ),
-    nCorr_(this->solution().subDict("PISO").get<label>("nCorr")),
+    nCorr_(this->solution().subDict("PIMPLE").get<label>("nCorr")),
     nNonOrthCorr_
     (
-        this->solution().subDict("PISO").get<label>("nNonOrthCorr")
+        this->solution().subDict("PIMPLE").get<label>("nNonOrthCorr")
     ),
 
-    h0_("h0", dimLength, SMALL),
+    h0_("h0", dimLength, 1e-7, dict),
+
+    deltaWet_("deltaWet", dimLength, 1e-4, dict),
 
     UName_(dict.get<word>("U")),
 
@@ -283,9 +281,9 @@ liquidFilmBase::liquidFilmBase
 
     faOptions_(Foam::fa::options::New(p))
 {
-    //g_ = meshObjects::gravity::New(time());
+    const areaVectorField& ns = regionMesh().faceAreaNormals();
 
-    gn_ = (g_ & regionMesh().faceAreaNormals());
+    gn_ = g_ & ns;
 
     if (!faOptions_.optionList::size())
     {
@@ -395,37 +393,7 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Up() const
     );
 
     areaVectorField& Up = tUp.ref();
-/*
-    typedef compressible::turbulenceModel cmpTurbModelType;
-    typedef incompressible::turbulenceModel incmpTurbModelType;
 
-    word turbName
-    (
-        IOobject::groupName
-        (
-            turbulenceModel::propertiesName,
-            Up_.internalField().group()
-        )
-    );
-
-    scalarField nu(patch_.size(), Zero);
-    if (primaryMesh().foundObject<cmpTurbModelType>(turbName))
-    {
-        const cmpTurbModelType& turbModel =
-            primaryMesh().lookupObject<cmpTurbModelType>(turbName);
-
-        //const basicThermo& thermo = turbModel.transport();
-
-        nu = turbModel.nu(patchi);
-    }
-    if (primaryMesh().foundObject<incmpTurbModelType>(turbName))
-    {
-        const incmpTurbModelType& turbModel =
-            primaryMesh().lookupObject<incmpTurbModelType>(turbName);
-
-        nu = turbModel.nu(patchi);
-    }
-*/
     scalarField hp(patch_.size(), Zero);
 
     // map areas h to hp on primary
@@ -478,6 +446,30 @@ tmp<areaScalarField> liquidFilmBase::pg() const
 }
 
 
+tmp<areaScalarField> liquidFilmBase::alpha() const
+{
+    tmp<areaScalarField> talpha
+    (
+        new areaScalarField
+        (
+            IOobject
+            (
+                "talpha",
+                primaryMesh().time().timeName(),
+                primaryMesh()
+            ),
+            regionMesh(),
+            dimensionedScalar(dimless, Zero)
+        )
+    );
+    areaScalarField& alpha = talpha.ref();
+
+    alpha = pos0(h_ - deltaWet_);
+
+    return talpha;
+}
+
+
 void liquidFilmBase::addSources
 (
     const label patchi,
@@ -494,17 +486,6 @@ void liquidFilmBase::addSources
     pnSource_.boundaryFieldRef()[patchi][facei] += pressureSource;
 
     momentumSource_.boundaryFieldRef()[patchi][facei] += momentumSource;
-
-    addedMassTotal_ += massSource;
-
-    if (debug)
-    {
-        InfoInFunction
-            << "\nSurface film: " << type() << ": adding to film source:" << nl
-            << "    mass     = " << massSource << nl
-            << "    momentum = " << momentumSource << nl
-            << "    pressure = " << pressureSource << endl;
-    }
 }
 
 
@@ -513,36 +494,34 @@ void liquidFilmBase::preEvolveRegion()
     regionFaModel::preEvolveRegion();
 }
 
-
 void liquidFilmBase::postEvolveRegion()
 {
+    massSource_.boundaryFieldRef() = Zero;
+    pnSource_.boundaryFieldRef() = Zero;
+    momentumSource_.boundaryFieldRef() = Zero;
+
     regionFaModel::postEvolveRegion();
 }
-
 
 Foam::fa::options& liquidFilmBase::faOptions()
 {
      return faOptions_;
 }
 
-
 const areaVectorField& liquidFilmBase::Uf() const
 {
      return Uf_;
 }
-
 
 const areaScalarField& liquidFilmBase::gn() const
 {
      return gn_;
 }
 
-
 const uniformDimensionedVectorField& liquidFilmBase::g() const
 {
     return g_;
 }
-
 
 const areaScalarField& liquidFilmBase::h() const
 {

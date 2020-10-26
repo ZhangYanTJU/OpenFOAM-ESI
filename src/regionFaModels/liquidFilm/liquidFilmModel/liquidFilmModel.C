@@ -31,6 +31,7 @@ License
 #include "gravityMeshObject.H"
 #include "volFields.H"
 
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -81,6 +82,9 @@ void liquidFilmModel::correctThermoFields()
             patchCp[edgeI] = thermo_.Cp(pRef_, patchTf[edgeI], X);
         }
     }
+
+    //Initialize pf_
+    pf_ = rho_*gn_*h_ - sigma_*fac::laplacian(h_);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -183,7 +187,7 @@ liquidFilmModel::liquidFilmModel
             primaryMesh()
         ),
         regionMesh(),
-        dimensionedScalar(dimVelocity, Zero)
+        dimensionedScalar(dimVelocity/dimLength, Zero)
     ),
     USp_
     (
@@ -207,20 +211,6 @@ liquidFilmModel::liquidFilmModel
         regionMesh(),
         dimensionedScalar(dimPressure, Zero)
     ),
-
-     primaryMassTrans_
-    (
-        IOobject
-        (
-            "primaryMassTrans",
-            primaryMesh().time().timeName(),
-            primaryMesh()
-        ),
-        primaryMesh(),
-        dimensionedScalar(dimMass, Zero),
-        calculatedFvPatchField<scalar>::typeName
-    ),
-
     cloudMassTrans_
     (
         IOobject
@@ -251,7 +241,9 @@ liquidFilmModel::liquidFilmModel
 
     availableMass_(regionMesh().faces().size(), Zero),
 
-    injection_(*this, dict)
+    injection_(*this, dict),
+
+    forces_(*this, dict)
 {
 
     if (dict.found("T0"))
@@ -298,11 +290,6 @@ const areaScalarField& liquidFilmModel::Cp() const
      return Cp_;
 }
 
-tmp<volScalarField> liquidFilmModel::primaryMassTrans() const
-{
-    return primaryMassTrans_;
-}
-
 const volScalarField& liquidFilmModel::cloudMassTrans() const
 {
     return cloudMassTrans_;
@@ -318,6 +305,9 @@ const volScalarField& liquidFilmModel::cloudDiameterTrans() const
 void liquidFilmModel::preEvolveRegion()
 {
     liquidFilmBase::preEvolveRegion();
+
+    cloudMassTrans_ == dimensionedScalar(dimMass, Zero);
+    cloudDiameterTrans_ == dimensionedScalar(dimLength, Zero);
 
     const scalar deltaT = primaryMesh().time().deltaTValue();
     const scalarField rAreaDeltaT = 1/deltaT/regionMesh().S().field();
@@ -337,25 +327,35 @@ void liquidFilmModel::preEvolveRegion()
     rhoSp_.primitiveFieldRef() *= rAreaDeltaT/rho_;
     USp_.primitiveFieldRef() *= rAreaDeltaT/rho_;
     pnSp_.primitiveFieldRef() *= rAreaDeltaT/rho_;
-DebugVar("preEvolveRegion")
-    // Update injection model - mass returned is mass available for injection
-    injection_.correct(availableMass_, cloudMassTrans_, cloudDiameterTrans_);
+
 }
 
 void liquidFilmModel::postEvolveRegion()
 {
+    availableMass_ = (h() - h0_)*rho()*regionMesh().S();
+    injection_.correct(availableMass_, cloudMassTrans_, cloudDiameterTrans_);
     liquidFilmBase::postEvolveRegion();
+}
 
-    massSource_ == dimensionedScalar(massSource_.dimensions(), Zero);
-    momentumSource_ == dimensionedVector(momentumSource_.dimensions(), Zero);
-    pnSource_ == dimensionedScalar(pnSource_.dimensions(), Zero);
 
-    availableMass_ = h()*rho()*regionMesh().S();
+void liquidFilmModel::info()
+{
+    Info<< "\nSurface film: " << type() << " on patch: " << patchID() << endl;
 
-    cloudMassTrans_ == dimensionedScalar(dimMass, Zero);
-    cloudDiameterTrans_ == dimensionedScalar(dimLength, Zero);
+    const DimensionedField<scalar, areaMesh>& sf = regionMesh().S();
 
-    primaryMassTrans_ == dimensionedScalar(dimMass, Zero);
+    Info<< indent << "min/max(mag(Uf))    = " << gMin(mag(Uf_.field())) << ", "
+        << gMax(mag(Uf_.field())) << nl
+        << indent << "min/max(delta)     = " << gMin(h_.field()) << ", " << gMax(h_.field()) << nl
+        << indent << "coverage           = "
+        << gSum(alpha()().field()*mag(sf.field()))/gSum(mag(sf.field())) <<  nl
+        << indent << "total mass         = "
+        << gSum(availableMass_) << nl;
+
+
+    Info<< indent << CourantNumber() << endl;
+
+    injection_.info(Info);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

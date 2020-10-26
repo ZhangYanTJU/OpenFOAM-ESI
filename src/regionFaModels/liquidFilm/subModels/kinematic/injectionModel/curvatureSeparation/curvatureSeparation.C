@@ -56,14 +56,18 @@ addToRunTimeSelectionTable
 
 tmp<areaScalarField> curvatureSeparation::calcInvR1
 (
-    const areaVectorField& U
+    const areaVectorField& U,
+    const scalarField& calcCosAngle
 ) const
 {
     // method 1
 /*
     tmp<areaScalarField> tinvR1
     (
-        new areaScalarField("invR1", fvc::div(film().nHat()))
+        new areaScalarField
+        (
+            "invR1", fac::div(film().regionMesh().faceAreaNormals())
+        )
     );
 */
 
@@ -72,7 +76,7 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
     areaVectorField UHat(U/(mag(U) + smallU));
     tmp<areaScalarField> tinvR1
     (
-        new areaScalarField("invR1", UHat & (UHat & gradNHat_))
+        new areaScalarField("invR1", UHat & (UHat & -gradNHat_))
     );
 
     scalarField& invR1 = tinvR1.ref().primitiveFieldRef();
@@ -80,8 +84,6 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
     // apply defined patch radii
     const scalar rMin = 1e-6;
     scalar definedInvR1 = 1.0/max(rMin, definedPatchRadii_);
-
-    //UIndirectList<scalar>(invR1, pbm[patchi].faceCells()) = definedInvR1;
 
     if (definedPatchRadii_ > 0)
     {
@@ -92,17 +94,10 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
     const scalar rMax = 1e6;
     forAll(invR1, i)
     {
-        if (mag(invR1[i]) < 1/rMax)
+        if ((mag(invR1[i]) < 1/rMax) || (calcCosAngle[i] < 1e-3))
         {
             invR1[i] = -1.0;
         }
-    }
-
-    const faMesh& mesh = film().regionMesh();
-
-    if (debug && mesh.time().writeTime())
-    {
-        tinvR1().write();
     }
 
     return tinvR1;
@@ -114,13 +109,19 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
     const edgeScalarField& phi
 ) const
 {
+
+    dimensionedScalar smallU("smallU", dimVelocity, ROOTVSMALL);
+    //areaVectorField UHat(U/(mag(U) + smallU));
+
+
     const faMesh& mesh = film().regionMesh();
-    const areaVectorField nf(mesh.faceAreaNormals());
+    const edgeVectorField nf(mesh.edgeAreaNormals());
     const labelUList& own = mesh.edgeOwner();
     const labelUList& nbr = mesh.edgeNeighbour();
 
     scalarField phiMax(mesh.nFaces(), -GREAT);
     scalarField cosAngle(mesh.nFaces(), Zero);
+
     forAll(nbr, edgei)
     {
         label cellO = own[edgei];
@@ -135,23 +136,6 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
         {
             phiMax[cellN] = -phi[edgei];
             cosAngle[cellN] = -gHat_ & -nf[edgei];
-        }
-    }
-
-    forAll(phi.boundaryField(), patchi)
-    {
-        const faePatchScalarField& phip = phi.boundaryField()[patchi];
-        const faPatch& pp = phip.patch();
-        const labelList& edgeFaces = pp.edgeFaces();
-        const vectorField nf(pp.edgeNormals());
-        forAll(phip, i)
-        {
-            label facei = edgeFaces[i];
-            if (phip[i] > phiMax[facei])
-            {
-                phiMax[facei] = phip[i];
-                cosAngle[facei] = -gHat_ & nf[i];
-            }
         }
     }
 /*
@@ -255,9 +239,6 @@ void curvatureSeparation::correct
     scalarField& diameterToInject
 )
 {
-    //const kinematicSingleLayer& film =
-    //    refCast<const kinematicSingleLayer>(this->film());
-
     const faMesh& mesh = film().regionMesh();
 
     const areaScalarField& delta = film().h();
@@ -267,13 +248,15 @@ void curvatureSeparation::correct
     const scalarField magSqrU(magSqr(film().Uf()));
     const areaScalarField& sigma = film().sigma();
 
-    const scalarField invR1(calcInvR1(U));
     const scalarField cosAngle(calcCosAngle(phi));
+    const scalarField invR1(calcInvR1(U, cosAngle));
+
 
     // calculate force balance
-    const scalar Fthreshold = 1e-10;
+    const scalar Fthreshold = 10;//1e-10;
     scalarField Fnet(mesh.nFaces(), Zero);
     scalarField separated(mesh.nFaces(), Zero);
+
     forAll(invR1, i)
     {
         if ((invR1[i] > 0) && (delta[i]*invR1[i] > deltaByR1Min_))
@@ -305,7 +288,7 @@ void curvatureSeparation::correct
     diameterToInject = separated*delta;
     availableMass -= separated*availableMass;
 
-    addToInjectedMass(sum(separated*availableMass));
+    addToInjectedMass(sum(massToInject));
 
     if (debug && mesh.time().writeTime())
     {
@@ -323,6 +306,51 @@ void curvatureSeparation::correct
         );
         volFnet.primitiveFieldRef() = Fnet;
         volFnet.write();
+
+        areaScalarField areaSeparated
+        (
+            IOobject
+            (
+                "separated",
+                film().primaryMesh().time().timeName(),
+                film().primaryMesh(),
+                IOobject::NO_READ
+            ),
+            mesh,
+            dimensionedScalar(dimMass, Zero)
+        );
+        areaSeparated.primitiveFieldRef() = separated;
+        areaSeparated.write();
+
+        areaScalarField areaMassToInject
+        (
+            IOobject
+            (
+                "massToInject",
+                film().primaryMesh().time().timeName(),
+                film().primaryMesh(),
+                IOobject::NO_READ
+            ),
+            mesh,
+            dimensionedScalar(dimMass, Zero)
+        );
+        areaMassToInject.primitiveFieldRef() = massToInject;
+        areaMassToInject.write();
+
+        areaScalarField areaInvR1
+        (
+            IOobject
+            (
+                "InvR1",
+                film().primaryMesh().time().timeName(),
+                film().primaryMesh(),
+                IOobject::NO_READ
+            ),
+            mesh,
+            dimensionedScalar(inv(dimLength), Zero)
+        );
+        areaInvR1.primitiveFieldRef() = invR1;
+        areaInvR1.write();
     }
 
     injectionModel::correct();

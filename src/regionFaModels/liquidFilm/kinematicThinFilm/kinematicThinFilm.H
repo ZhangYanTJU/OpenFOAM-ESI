@@ -42,7 +42,6 @@ SourceFiles
 #include "volFieldsFwd.H"
 #include "liquidFilmModel.H"
 #include "faMesh.H"
-#include "faCFD.H"
 #include "filmTurbulenceModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -128,7 +127,7 @@ public:
        // I-O
 
             //- Provide some feedback
-            virtual void info();
+            //virtual void info();
 };
 
 

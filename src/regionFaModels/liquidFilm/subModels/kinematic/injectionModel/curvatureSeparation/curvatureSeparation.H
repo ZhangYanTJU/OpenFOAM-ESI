@@ -105,7 +105,11 @@ protected:
     // Protected Member Functions
 
         //- Calculate local (inverse) radius of curvature
-        tmp<areaScalarField> calcInvR1(const areaVectorField& U) const;
+        tmp<areaScalarField> calcInvR1
+        (
+            const areaVectorField& U,
+            const scalarField& calcCosAngle
+        ) const;
 
         //- Calculate the cosine of the angle between gravity vector and
         //  cell out flow direction
