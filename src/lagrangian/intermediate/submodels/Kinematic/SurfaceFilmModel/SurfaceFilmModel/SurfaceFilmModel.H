@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -125,6 +126,12 @@ protected:
             label nParcelsInjected_;
 
 
+        // Total mass info
+
+            //- Total mass transferred to the film
+            scalar totalMassTransferred_;
+
+
     // Protected functions
 
         //- Cache the film fields in preparation for injection
@@ -232,6 +239,12 @@ public:
             //- Return non-const access to the number of parcels injected from
             //  the film model
             inline label& nParcelsInjected();
+
+            //- Return non-const total mass transferred
+            inline scalar& totalMassTransferred();
+
+            //- Return consr access to mass transferred
+            inline scalar totalMassTransferred() const;
 
 
         // Member Functions

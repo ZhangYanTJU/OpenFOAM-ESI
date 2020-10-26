@@ -180,7 +180,8 @@ void Foam::ThermoSurfaceFilm<CloudType>::absorbInteraction
     const polyPatch& pp,
     const label facei,
     const scalar mass,
-    bool& keepParticle
+    bool& keepParticle,
+    const scalar h
 )
 {
     if (debug)
@@ -207,13 +208,15 @@ void Foam::ThermoSurfaceFilm<CloudType>::absorbInteraction
     (
         pp.index(),
         facei,
-        mass,                           // mass
+        mass/h,                           // mass
         mass*Ut,                        // tangential momentum
         mass*mag(Un),                   // impingement pressure
         mass*p.hs()                     // energy
     );
 
     this->nParcelsTransferred()++;
+
+    this->totalMassTransferred() += mass;
 
     keepParticle = false;
 }
@@ -294,7 +297,8 @@ void Foam::ThermoSurfaceFilm<CloudType>::drySplashInteraction
 
     if (We < Wec) // Adhesion - assume absorb
     {
-        absorbInteraction<filmType>(filmModel, p, pp, facei, m, keepParticle);
+        absorbInteraction<filmType>
+            (filmModel, p, pp, facei, m, keepParticle, 1);
     }
     else // Splash
     {
@@ -353,7 +357,8 @@ void Foam::ThermoSurfaceFilm<CloudType>::wetSplashInteraction
 
     if (We < 2) // Adhesion - assume absorb
     {
-        absorbInteraction<filmType>(filmModel, p, pp, facei, m, keepParticle);
+        absorbInteraction<filmType>
+            (filmModel, p, pp, facei, m, keepParticle, 1);
     }
     else if ((We >= 2) && (We < 20)) // Bounce
     {
@@ -371,7 +376,8 @@ void Foam::ThermoSurfaceFilm<CloudType>::wetSplashInteraction
     }
     else if ((We >= 20) && (We < Wec)) // Spread - assume absorb
     {
-        absorbInteraction<filmType>(filmModel, p, pp, facei, m, keepParticle);
+        absorbInteraction<filmType>
+            (filmModel, p, pp, facei, m, keepParticle, 1);
     }
     else    // Splash
     {
@@ -461,7 +467,8 @@ void Foam::ThermoSurfaceFilm<CloudType>::splashInteraction
     // Switch to absorb if insufficient energy for splash
     if (EKs <= 0)
     {
-        absorbInteraction<filmType>(filmModel, p, pp, facei, m, keepParticle);
+        absorbInteraction<filmType>
+            (filmModel, p, pp, facei, m, keepParticle, 1);
         return;
     }
 
@@ -516,7 +523,8 @@ void Foam::ThermoSurfaceFilm<CloudType>::splashInteraction
     // Transfer remaining part of parcel to film 0 - splashMass can be -ve
     // if entraining from the film
     const scalar mDash = m - mSplash;
-    absorbInteraction<filmType>(filmModel, p, pp, facei, mDash, keepParticle);
+    absorbInteraction<filmType>
+        (filmModel, p, pp, facei, mDash, keepParticle, 1);
 }
 
 
@@ -635,7 +643,7 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
                 const scalar m = p.nParticle()*p.mass();
 
                 absorbInteraction<regionFilm>
-                    (*filmModel_, p, pp, facei, m, keepParticle);
+                    (*filmModel_, p, pp, facei, m, keepParticle, 1);
 
                 break;
             }
@@ -674,6 +682,7 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
         if (patchi == film.patchID())
         {
             const label facei = pp.whichFace(p.face());
+            const label faceFilmI = facei + pp.start();
 
             switch (interactionType_)
             {
@@ -681,9 +690,12 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
                 case itAbsorb:
                 {
                     const scalar m = p.nParticle()*p.mass();
+                    const scalar h =
+                        max(film.h()[faceFilmI], film.h0().value());
+
                     absorbInteraction<areaFilm>
                     (
-                        film, p, pp, facei, m, keepParticle
+                        film, p, pp, facei, m, keepParticle, h
                     );
                     break;
                 }
@@ -695,7 +707,7 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
                 }
                 case itSplashBai:
                 {
-                    bool dry = this->deltaFilmPatch_[patchi][facei] < deltaWet_;
+                    bool dry = film.h()[faceFilmI] < deltaWet_;
 
                     if (dry)
                     {
@@ -763,7 +775,7 @@ void Foam::ThermoSurfaceFilm<CloudType>::cacheFilmFields
         filmModel
     );
     const volSurfaceMapping& map = filmModel.region().vsm();
-DebugVar("cacheFilmFields::ThermoSurfaceFilm")
+
     TFilmPatch_.setSize(filmModel.Tf().size(), Zero);
     map.mapToField(filmModel.Tf(), TFilmPatch_);
     CpFilmPatch_.setSize(filmModel.Tf().size(), Zero);

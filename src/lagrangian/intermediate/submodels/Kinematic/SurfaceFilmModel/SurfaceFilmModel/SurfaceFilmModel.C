@@ -47,7 +47,8 @@ Foam::SurfaceFilmModel<CloudType>::SurfaceFilmModel(CloudType& owner)
     rhoFilmPatch_(0),
     deltaFilmPatch_(0),
     nParcelsTransferred_(0),
-    nParcelsInjected_(0)
+    nParcelsInjected_(0),
+    totalMassTransferred_(0)
 {}
 
 
@@ -71,7 +72,8 @@ Foam::SurfaceFilmModel<CloudType>::SurfaceFilmModel
     rhoFilmPatch_(0),
     deltaFilmPatch_(owner.mesh().boundary().size()),
     nParcelsTransferred_(0),
-    nParcelsInjected_(0)
+    nParcelsInjected_(0),
+    totalMassTransferred_()
 {}
 
 
@@ -90,7 +92,8 @@ Foam::SurfaceFilmModel<CloudType>::SurfaceFilmModel
     rhoFilmPatch_(sfm.rhoFilmPatch_),
     deltaFilmPatch_(sfm.deltaFilmPatch_),
     nParcelsTransferred_(sfm.nParcelsTransferred_),
-    nParcelsInjected_(sfm.nParcelsInjected_)
+    nParcelsInjected_(sfm.nParcelsInjected_),
+    totalMassTransferred_(sfm.totalMassTransferred_)
 {}
 
 
@@ -144,7 +147,6 @@ void Foam::SurfaceFilmModel<CloudType>::injectParticles
             if (pPtr->nParticle() > 0.001)
             {
                 // Check new parcel properties
-//                cloud.checkParcelProperties(*pPtr, 0.0, true);
                 cloud.checkParcelProperties(*pPtr, 0.0, false);
 
                 // Add the new parcel to the cloud
@@ -227,6 +229,26 @@ void Foam::SurfaceFilmModel<CloudType>::inject(TrackCloudType& cloud)
             cacheFilmFields(patchId, film);
 
             injectParticles(patchId, injectorCellsPatch, cloud);
+
+            forAll(injectorCellsPatch, facei)
+            {
+                if (diameterParcelPatch_[facei] > 0)
+                {
+                    scalar massByh =
+                        -massParcelPatch_[facei]
+                        /deltaFilmPatch_[patchId][facei];
+
+                    film.addSources
+                    (
+                        patchId,
+                        facei,
+                        massByh,            // mass
+                        Zero,               // tangential momentum
+                        Zero,               // impingement
+                        Zero                // energy
+                    );
+                }
+            }
         }
     }
 }
@@ -268,24 +290,20 @@ void Foam::SurfaceFilmModel<CloudType>::cacheFilmFields
 {
     const volSurfaceMapping& map = filmModel.region().vsm();
 
-DebugVar("cacheFilmFields::SurfaceFilmModel")
     massParcelPatch_.setSize(filmModel.Uf().size(), Zero);
 
     const scalarField& massParcelPatch =
         filmModel.cloudMassTrans().boundaryField()[filmPatchi];
-DebugVar(massParcelPatch)
 
     map.mapToField(massParcelPatch, massParcelPatch_);
 
     const scalarField&  diameterParcelPatch =
         filmModel.cloudDiameterTrans().boundaryField()[filmPatchi];
 
-DebugVar(diameterParcelPatch)
-
     diameterParcelPatch_.setSize(filmModel.Uf().size(), Zero);
     map.mapToField(diameterParcelPatch, diameterParcelPatch_);
 
-    UFilmPatch_.setSize(filmModel.Uf().size(), Zero);
+    UFilmPatch_.setSize(filmModel.Uf().size(), vector::zero);
     map.mapToField(filmModel.Uf(), UFilmPatch_);
 
     rhoFilmPatch_.setSize(UFilmPatch_.size(), Zero);
@@ -311,6 +329,7 @@ void Foam::SurfaceFilmModel<CloudType>::setParcelProperties
 
     p.nParticle() = massParcelPatch_[filmFacei]/p.rho()/vol;
 
+
     if (ejectedParcelType_ >= 0)
     {
         p.typeId() = ejectedParcelType_;
@@ -327,22 +346,33 @@ void Foam::SurfaceFilmModel<CloudType>::info(Ostream& os)
     label nInject0 =
         this->template getModelProperty<label>("nParcelsInjected");
 
+    scalar massTransferred0 =
+        this->template getModelProperty<scalar>("massTransferred");
+
     label nTransTotal =
         nTrans0 + returnReduce(nParcelsTransferred_, sumOp<label>());
 
     label nInjectTotal =
         nInject0 + returnReduce(nParcelsInjected_, sumOp<label>());
 
+    scalar massTransferredTotal =
+        massTransferred0 + returnReduce(totalMassTransferred_, sumOp<scalar>());
+
+
     os  << "    Surface film:" << nl
         << "      - parcels absorbed            = " << nTransTotal << nl
+        << "      - mass absorbed               = " << massTransferredTotal << nl
         << "      - parcels ejected             = " << nInjectTotal << endl;
 
     if (this->writeTime())
     {
         this->setModelProperty("nParcelsTransferred", nTransTotal);
         this->setModelProperty("nParcelsInjected", nInjectTotal);
+        this->setModelProperty("massTransferred", massTransferredTotal);
+
         nParcelsTransferred_ = 0;
         nParcelsInjected_ = 0;
+        totalMassTransferred_ = 0;
     }
 }
 

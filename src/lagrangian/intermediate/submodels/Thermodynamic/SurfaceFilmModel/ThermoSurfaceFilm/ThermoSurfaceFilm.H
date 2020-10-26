@@ -210,19 +210,9 @@ protected:
                 const polyPatch& pp,
                 const label facei,
                 const scalar mass,
-                bool& keepParticle
+                bool& keepParticle,
+                const scalar h
             );
-
-            //- Absorb parcel into area film
-//             void absorbInteraction
-//             (
-//                 areaFilm&,
-//                 const parcelType& p,
-//                 const polyPatch& pp,
-//                 const label facei,
-//                 const scalar mass,
-//                 bool& keepParticle
-//             );
 
             //- Bounce parcel (flip parcel normal velocity)
             void bounceInteraction
