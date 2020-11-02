@@ -41,6 +41,8 @@ Foam::SurfaceFilmModel<CloudType>::SurfaceFilmModel(CloudType& owner)
     CloudSubModelBase<CloudType>(owner),
     g_(owner.g()),
     ejectedParcelType_(0),
+    injectionOffset_(1.1),
+    minDiameter_(0),
     massParcelPatch_(0),
     diameterParcelPatch_(0),
     UFilmPatch_(0),
@@ -64,7 +66,15 @@ Foam::SurfaceFilmModel<CloudType>::SurfaceFilmModel
     g_(owner.g()),
     ejectedParcelType_
     (
-        this->coeffDict().getOrDefault("ejectedParcelType", -1)
+        this->coeffDict().template getOrDefault<label>("ejectedParcelType", -1)
+    ),
+    injectionOffset_
+    (
+        this->coeffDict().template getOrDefault<scalar>("injectionOffset", 1.1)
+    ),
+    minDiameter_
+    (
+        this->coeffDict().template getOrDefault<scalar>("minDiameter", -1)
     ),
     massParcelPatch_(0),
     diameterParcelPatch_(0),
@@ -86,6 +96,8 @@ Foam::SurfaceFilmModel<CloudType>::SurfaceFilmModel
     CloudSubModelBase<CloudType>(sfm),
     g_(sfm.g_),
     ejectedParcelType_(sfm.ejectedParcelType_),
+    injectionOffset_(sfm.injectionOffset_),
+    minDiameter_(sfm.minDiameter_),
     massParcelPatch_(sfm.massParcelPatch_),
     diameterParcelPatch_(sfm.diameterParcelPatch_),
     UFilmPatch_(sfm.UFilmPatch_),
@@ -133,7 +145,7 @@ void Foam::SurfaceFilmModel<CloudType>::injectParticles
                     diameterParcelPatch_[j],
                     deltaFilmPatch_[primaryPatchi][j]
                 );
-            const point pos = Cf[j] - 1.1*offset*Sf[j]/magSf[j];
+            const point pos = Cf[j] - injectionOffset_*offset*Sf[j]/magSf[j];
 
             // Create a new parcel
             parcelType* pPtr =
@@ -234,18 +246,14 @@ void Foam::SurfaceFilmModel<CloudType>::inject(TrackCloudType& cloud)
             {
                 if (diameterParcelPatch_[facei] > 0)
                 {
-                    scalar massByh =
-                        -massParcelPatch_[facei]
-                        /deltaFilmPatch_[patchId][facei];
-
                     film.addSources
                     (
                         patchId,
                         facei,
-                        massByh,            // mass
-                        Zero,               // tangential momentum
-                        Zero,               // impingement
-                        Zero                // energy
+                       -massParcelPatch_[facei],    // mass
+                        Zero,                       // tangential momentum
+                        Zero,                       // impingement
+                        Zero                        // energy
                     );
                 }
             }
@@ -329,6 +337,13 @@ void Foam::SurfaceFilmModel<CloudType>::setParcelProperties
 
     p.nParticle() = massParcelPatch_[filmFacei]/p.rho()/vol;
 
+    if (minDiameter_ != -1)
+    {
+        if (p.d() < minDiameter_)
+        {
+            p.nParticle() = 0;
+        }
+    }
 
     if (ejectedParcelType_ >= 0)
     {

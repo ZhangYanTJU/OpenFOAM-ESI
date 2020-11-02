@@ -41,6 +41,8 @@ Usage
     turbulence          | Film turbulnce                   | yes
     injectionModels     | Lagrangian injection             | no
     forces              | Film forces                      | no
+    deltaWet            | Wet film thickness               | no       | 1e-4
+    h0                  | Numerical minimum thickness      | no       | 1e-7
     region              | Name of the 2D region            | yes
     liquidFilmModel     | Film model                       | yes
     \endtable
@@ -57,6 +59,9 @@ Usage
         U                   U;
         pRef                1e5;
         T0                  300;
+
+        deltaWet            1e-4;
+        h0                  1e-8;
 
         zeroWallVelocity    true;
 

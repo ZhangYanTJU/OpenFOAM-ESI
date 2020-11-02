@@ -210,8 +210,7 @@ protected:
                 const polyPatch& pp,
                 const label facei,
                 const scalar mass,
-                bool& keepParticle,
-                const scalar h
+                bool& keepParticle
             );
 
             //- Bounce parcel (flip parcel normal velocity)

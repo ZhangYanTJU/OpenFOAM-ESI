@@ -98,6 +98,12 @@ protected:
         //  type
         label ejectedParcelType_;
 
+        //- Injection offset position
+        scalar injectionOffset_;
+
+        //- Minimum diameter particle injection
+        scalar minDiameter_;
+
 
         // Cached injector fields per film patch
 

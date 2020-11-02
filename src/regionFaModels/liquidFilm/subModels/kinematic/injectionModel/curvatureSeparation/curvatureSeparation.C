@@ -94,7 +94,7 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
     const scalar rMax = 1e6;
     forAll(invR1, i)
     {
-        if ((mag(invR1[i]) < 1/rMax) || (calcCosAngle[i] < 1e-3))
+        if ((mag(invR1[i]) < 1/rMax))// || (calcCosAngle[i] < 1e-3))
         {
             invR1[i] = -1.0;
         }
@@ -109,18 +109,29 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
     const edgeScalarField& phi
 ) const
 {
-
+    const areaVectorField& U = film().Uf();
     dimensionedScalar smallU("smallU", dimVelocity, ROOTVSMALL);
-    //areaVectorField UHat(U/(mag(U) + smallU));
-
+    areaVectorField UHat(U/(mag(U) + smallU));
 
     const faMesh& mesh = film().regionMesh();
-    const edgeVectorField nf(mesh.edgeAreaNormals());
+    //const edgeVectorField nf(mesh.edgeAreaNormals());
     const labelUList& own = mesh.edgeOwner();
     const labelUList& nbr = mesh.edgeNeighbour();
 
+    //const vectorField& nf = film().regionMesh().faceAreaNormals().field();
+
     scalarField phiMax(mesh.nFaces(), -GREAT);
-    scalarField cosAngle(mesh.nFaces(), Zero);
+    //scalarField cosAngle(mesh.nFaces(), Zero);
+    scalarField cosAngle(UHat.size(), Zero);
+
+    scalarField UMax(mesh.nFaces(), -GREAT);
+
+//     forAll(UHat, facei)
+//     {
+//         cosAngle[facei] = gHat_ & UHat[facei];
+//     }
+
+    const scalarField invR1(calcInvR1(U, cosAngle));
 
     forAll(nbr, edgei)
     {
@@ -130,50 +141,17 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
         if (phi[edgei] > phiMax[cellO])
         {
             phiMax[cellO] = phi[edgei];
-            cosAngle[cellO] = -gHat_ & nf[edgei];
+            cosAngle[cellO] = -gHat_ & UHat[cellN];
         }
         if (-phi[edgei] > phiMax[cellN])
         {
             phiMax[cellN] = -phi[edgei];
-            cosAngle[cellN] = -gHat_ & -nf[edgei];
+            cosAngle[cellN] = -gHat_ & UHat[cellO];
         }
     }
-/*
-    // correction for cyclics - use cyclic pairs' face normal instead of
-    // local face normal
-    const fvBoundaryMesh& pbm = mesh.boundary();
-    forAll(phi.boundaryField(), patchi)
-    {
-        if (isA<cyclicPolyPatch>(pbm[patchi]))
-        {
-            const scalarField& phip = phi.boundaryField()[patchi];
-            const vectorField nf(pbm[patchi].nf());
-            const labelList& faceCells = pbm[patchi].faceCells();
-            const label sizeBy2 = pbm[patchi].size()/2;
 
-            for (label face0=0; face0<sizeBy2; face0++)
-            {
-                label face1 = face0 + sizeBy2;
-                label cell0 = faceCells[face0];
-                label cell1 = faceCells[face1];
+    cosAngle *= pos(invR1);
 
-                // flux leaving half 0, entering half 1
-                if (phip[face0] > phiMax[cell0])
-                {
-                    phiMax[cell0] = phip[face0];
-                    cosAngle[cell0] = -gHat_ & -nf[face1];
-                }
-
-                // flux leaving half 1, entering half 0
-                if (-phip[face1] > phiMax[cell1])
-                {
-                    phiMax[cell1] = -phip[face1];
-                    cosAngle[cell1] = -gHat_ & nf[face0];
-                }
-            }
-        }
-    }
-*/
     // checks
     if (debug && mesh.time().writeTime())
     {
@@ -209,7 +187,10 @@ curvatureSeparation::curvatureSeparation
     injectionModel(type(), film, dict),
     gradNHat_(fac::grad(film.regionMesh().faceAreaNormals())),
     deltaByR1Min_(coeffDict_.getOrDefault<scalar>("deltaByR1Min", 0)),
-    definedPatchRadii_(coeffDict_.getOrDefault<scalar>("definedPatchRadii", 0)),
+    definedPatchRadii_
+    (
+        coeffDict_.getOrDefault<scalar>("definedPatchRadii", 0)
+    ),
     magG_(mag(film.g().value())),
     gHat_(Zero)
 {
@@ -253,7 +234,7 @@ void curvatureSeparation::correct
 
 
     // calculate force balance
-    const scalar Fthreshold = 10;//1e-10;
+    const scalar Fthreshold = 1e-10;
     scalarField Fnet(mesh.nFaces(), Zero);
     scalarField separated(mesh.nFaces(), Zero);
 
@@ -269,7 +250,7 @@ void curvatureSeparation::correct
 
             // body force
             scalar Fb =
-              - 0.5*rho[i]*magG_*invR1[i]*(sqr(R1) - sqr(R2))*cosAngle[i];
+               - 0.5*rho[i]*magG_*invR1[i]*(sqr(R1) - sqr(R2))*cosAngle[i];
 
             // surface force
             scalar Fs = sigma[i]/R2;

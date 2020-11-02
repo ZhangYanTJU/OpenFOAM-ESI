@@ -184,10 +184,12 @@ liquidFilmModel::liquidFilmModel
         (
             "rhoSp",
             primaryMesh().time().timeName(),
-            primaryMesh()
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
         ),
         regionMesh(),
-        dimensionedScalar(dimVelocity/dimLength, Zero)
+        dimensionedScalar(dimVelocity, Zero)
     ),
     USp_
     (
@@ -217,7 +219,9 @@ liquidFilmModel::liquidFilmModel
         (
             "cloudMassTrans",
             primaryMesh().time().timeName(),
-            primaryMesh()
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
         ),
         primaryMesh(),
         dimensionedScalar(dimMass, Zero),
@@ -230,7 +234,9 @@ liquidFilmModel::liquidFilmModel
         (
             "cloudDiameterTrans",
             primaryMesh().time().timeName(),
-            primaryMesh()
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
         ),
         primaryMesh(),
         dimensionedScalar(dimLength, Zero),
@@ -248,7 +254,7 @@ liquidFilmModel::liquidFilmModel
 
     if (dict.found("T0"))
     {
-        Tf_ = dict.get<scalar>("T0");
+        Tf_ = dimensionedScalar("T0", dimTemperature, dict);
     }
     correctThermoFields();
 }

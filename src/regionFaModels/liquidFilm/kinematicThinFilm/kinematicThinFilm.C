@@ -28,7 +28,6 @@ License
 #include "kinematicThinFilm.H"
 #include "addToRunTimeSelectionTable.H"
 #include "uniformDimensionedFields.H"
-//#include "gravityMeshObject.H"
 #include "volFields.H"
 
 
@@ -118,7 +117,7 @@ void kinematicThinFilm::evolveRegion()
             gs*h_
           + turbulence_->Su(Uf_)
           + faOptions()(h_, Uf_, sqr(dimVelocity))
-          + fam::Sp(rhoSp_*h_, Uf_)
+        //  + fam::SuSp(rhoSp_*h_, Uf_)
           + forces_.correct(Uf_)
           + USp_
         );
@@ -154,7 +153,7 @@ void kinematicThinFilm::evolveRegion()
                   + fam::div(phif_, h_)
                  ==
                     faOptions()(rho_, h_, dimVelocity)
-                  + fam::Sp(rhoSp_, h_)
+                  + rhoSp_
                 );
 
                 faOptions().constrain(hEqn);
@@ -169,31 +168,27 @@ void kinematicThinFilm::evolveRegion()
             }
 
             // Bound h_
-            h_.primitiveFieldRef() = max
-            (
-                max
-                (
-                    h_.primitiveField(),
-                    fac::average(max(h_, h0_))().primitiveField()
-                    *pos(h0_.value() - h_.primitiveField())
-                ),
-                h0_.value()
-            );
+            h_ = max(h_, h0_);
 
             pf_ = rho_*gn_*h_ - sigma_*fac::laplacian(h_) + ppf_ + pnSp_;
             pf_.correctBoundaryConditions();
 
             //Uf_ -=
-            //    (h_/(rho_*UsA))*fac::grad(pf_) + (pf_/(rho_*UsA))*fac::grad(h_);
+            //    (h_/(rho_*UsA))*fac::grad(pf_)
+            // + (pf_/(rho_*UsA))*fac::grad(h_);
 
             Uf_ -= (1.0/(rho_*UsA))*fac::grad(pf_*h_)
                 - (pf_/(rho_*UsA))*fac::grad(h_);
             Uf_.correctBoundaryConditions();
         }
+
     }
 
-    // Update deltaRho_ with new delta_
-    //hRho_ == h_*rho_;
+     Info<< "Film h min/max   = " << min(h_).value() << ", "
+        << max(h_).value() << endl;
+
+     Info<< "Film U min/max   = " << max(mag(Uf_)).value() << endl;
+
 }
 
 void kinematicThinFilm::postEvolveRegion()

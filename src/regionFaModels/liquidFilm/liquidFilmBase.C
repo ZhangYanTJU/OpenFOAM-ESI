@@ -486,6 +486,7 @@ void liquidFilmBase::addSources
     pnSource_.boundaryFieldRef()[patchi][facei] += pressureSource;
 
     momentumSource_.boundaryFieldRef()[patchi][facei] += momentumSource;
+
 }
 
 
@@ -496,6 +497,12 @@ void liquidFilmBase::preEvolveRegion()
 
 void liquidFilmBase::postEvolveRegion()
 {
+    if (debug && primaryMesh().time().writeTime())
+    {
+        massSource_.write();
+        pnSource_.write();
+    }
+
     massSource_.boundaryFieldRef() = Zero;
     pnSource_.boundaryFieldRef() = Zero;
     momentumSource_.boundaryFieldRef() = Zero;
