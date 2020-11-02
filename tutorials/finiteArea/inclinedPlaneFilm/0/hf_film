@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       areaScalarField;
+    location    "0";
+    object      h_film;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions          [0 1 0 0 0 0 0];
+
+internalField       uniform 1e-5;
+
+boundaryField
+{
+    inlet
+    {
+        type    fixedValue;
+        value   uniform 0.000141;
+    }
+
+    outlet
+    {
+        type        inletOutlet;
+        inletValue  $internalField;
+        value       $internalField;
+        phi         phi2s_film;
+    }
+
+    side
+    {
+        type        zeroGradient;//inletOutlet;
+        inletValue  $internalField;
+        value       $internalField;
+        phi         phi2s_film;
+    }
+
+    symmetry
+    {
+        type        zeroGradient;//inletOutlet;
+        inletValue  $internalField;
+        value       $internalField;
+        phi         phi2s_film;
+    }
+
+    cylinder
+    {
+        type        zeroGradient;//inletOutlet;
+        inletValue  $internalField;
+        value       $internalField;
+        phi         phi2s_film;
+    }
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
