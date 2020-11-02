@@ -123,11 +123,6 @@ public:
             //- Post-evolve film
             virtual void postEvolveRegion();
 
-
-       // I-O
-
-            //- Provide some feedback
-            //virtual void info();
 };
 
 
