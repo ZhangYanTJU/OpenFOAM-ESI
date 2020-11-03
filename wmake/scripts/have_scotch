@@ -20,7 +20,7 @@
 #     config.sh/scotch
 #
 # Functions provided
-#     have_scotch, no_scotch, echo_scotch, query_scotch
+#     have_ptscotch, search_ptscotch
 #
 # Variables set on success
 #     HAVE_SCOTCH
@@ -28,12 +28,62 @@
 #     SCOTCH_INC_DIR
 #     SCOTCH_LIB_DIR
 #
+# Functions provided [Must call have_scotch first]
+#     have_ptscotch, search_ptscotch
+#
+# Variables set on success
+#     HAVE_PTSCOTCH
+#     PTSCOTCH_ARCH_PATH
+#     PTSCOTCH_INC_DIR
+#     PTSCOTCH_LIB_DIR
+#
+#
+# System files can be hiding in a large variety of locations
+#
+# ArchLinux
+# ---------
+#     scotch   include=/usr/include/ptscotch
+#
+#     ptscotch include=/usr/include/ptscotch
+#
+#
+# Debian/Ubuntu
+# -------------
+#     scotch   include=/usr/include/scotch-int32
+#     scotch   library=/usr/lib/x86_64-linux-gnu
+#
+#     ptscotch include=/usr/include/scotch-int32
+#     ptscotch library=/usr/lib/x86_64-linux-gnu
+#
+#
+# RedHat
+# ------
+#     scotch   include=/usr/include
+#     scotch   library=/usr/lib64
+#
+#     ptscotch include=/usr/include/openmpi-x86_64
+#     ptscotch library=/usr/lib64/openmpi/lib
+#
+# when MPI_ARCH_PATH=/usr/lib64/openmpi
+# and mpicc --showme:compile -> -I/usr/include/openmpi-x86_64
+#
+#
+# openSUSE
+# --------
+#     scotch   include=/usr/include
+#     scotch   library=/usr/lib64
+#
+#     ptscotch include=/usr/lib64/mpi/gcc/openmpi2/include
+#     ptscotch library=/usr/lib64/mpi/gcc/openmpi2/lib64
+#
+# when MPI_ARCH_PATH=/usr/lib64/mpi/gcc/openmpi2
+#
 #------------------------------------------------------------------------------
 . ${WM_PROJECT_DIR:?}/wmake/scripts/sysFunctions    # General system functions
 
 #------------------------------------------------------------------------------
 
-# Reset variables
+# Reset
 no_scotch()
 {
     unset HAVE_SCOTCH SCOTCH_ARCH_PATH SCOTCH_INC_DIR SCOTCH_LIB_DIR
@@ -46,55 +96,30 @@ no_scotch()
 echo_scotch()
 {
     echo "scotch=${HAVE_SCOTCH:-false}"
-    echo "root=$SCOTCH_ARCH_PATH"
-    echo "include=$SCOTCH_INC_DIR"
-    echo "library=$SCOTCH_LIB_DIR"
+    echo "root=\"$SCOTCH_ARCH_PATH\""
+    echo "include=\"$SCOTCH_INC_DIR\""
+    echo "library=\"$SCOTCH_LIB_DIR\""
     echo
     echo "ptscotch=${HAVE_PTSCOTCH:-false}"
-    echo "root=$PTSCOTCH_ARCH_PATH"
-    echo "include=$PTSCOTCH_INC_DIR"
-    echo "library=$PTSCOTCH_LIB_DIR"
+    echo "root=\"$PTSCOTCH_ARCH_PATH\""
+    echo "include=\"$PTSCOTCH_INC_DIR\""
+    echo "library=\"$PTSCOTCH_LIB_DIR\""
 }
 
 
-# Query settings
-query_scotch()
-{
-    local config="config.sh/scotch"
-    local settings
-
-    if settings="$("$WM_PROJECT_DIR"/bin/foamEtcFile -mode=o "$config")"
-    then
-        . "$settings"
-        _process_query scotch "$SCOTCH_ARCH_PATH"
-    else
-        echo "(no $config settings)" 1>&2
-        echo "scotch=unknown"
-    fi
-}
-
-
+# Search
+# $1 : prefix (*_ARCH_PATH, system, ...)
+#
 # On success, return 0 and export variables
 # -> HAVE_SCOTCH, SCOTCH_ARCH_PATH, SCOTCH_INC_DIR, SCOTCH_LIB_DIR
-have_scotch()
+search_scotch()
 {
     local warn="==> skip scotch"
-    local config="config.sh/scotch"
-    local settings
-
-    if settings="$("$WM_PROJECT_DIR"/bin/foamEtcFile "$config")"
-    then
-        . "$settings"
-    else
-        [ -n "$warn" ] && echo "$warn (no $config settings)"
-        return 2
-    fi
-
-    # Expected location, include/library names
-    local prefix="$SCOTCH_ARCH_PATH"
     local incName="scotch.h"
     local libName="libscotch"
     local localDir="scotch-int$WM_LABEL_SIZE"
+
+    local prefix="${1:-system}"
     local header library
 
     # ----------------------------------
@@ -193,29 +218,23 @@ have_scotch()
 }
 
 
-# Must be called after have_scotch!
+# Search
+# $1 : prefix (*_ARCH_PATH, system, ...)
 #
 # On success, return 0 and export variables
 # -> HAVE_PTSCOTCH, PTSCOTCH_ARCH_PATH, PTSCOTCH_INC_DIR, PTSCOTCH_LIB_DIR
-have_ptscotch()
+search_ptscotch()
 {
     local warn="==> skip ptscotch"
-
-    if [ "$HAVE_SCOTCH" != true ]
-    then
-        echo "$warn (no serial scotch available?)"
-        return 1
-    fi
-
-    # Reuse old settings
-    [ -n "$PTSCOTCH_ARCH_PATH" ] || PTSCOTCH_ARCH_PATH="$SCOTCH_ARCH_PATH"
-
-    # Expected location, include/library names
-    local prefix="$PTSCOTCH_ARCH_PATH"
     local incName="ptscotch.h"
     local libName="libptscotch"
     local localDir="scotch-int$WM_LABEL_SIZE"
+
+    local prefix="${1:-system}"
     local header library
+
+    local mpiPrefix="$MPI_ARCH_PATH"
+    local mpiName="${MPI_ARCH_PATH##*/}"
 
     # ----------------------------------
     if isNone "$prefix"
@@ -229,7 +248,10 @@ have_ptscotch()
             "$prefix/include/$localDir/$incName" \
             "$prefix/include/ptscotch/$incName" \
             "$prefix/include/scotch/$incName" \
-            "$prefix/include/$incName"
+            "$prefix/include/$incName" \
+            "$mpiPrefix/include/$incName" \
+            "$prefix/include/$mpiName/$incName" \
+            "$prefix/include/${mpiName}-$(uname -m)/$incName" \
         )
         library="$(findExtLib $FOAM_MPI/$libName $libName)"
     elif isSystem "$prefix"
@@ -243,6 +265,9 @@ have_ptscotch()
             "/usr/include/ptscotch/$incName" \
             "/usr/include/scotch/$incName" \
             "/usr/include/$incName" \
+            "$mpiPrefix/include/$incName" \
+            "/usr/include/$mpiName/$incName" \
+            "$prefix/include/${mpiName}-$(uname -m)/$incName" \
         )
         prefix=$(sysPrefix "$header")
     else
@@ -260,6 +285,7 @@ have_ptscotch()
     # Library
     [ -n "$library" ] \
     || library=$(findLibrary -prefix="$prefix" -name="$libName" -local="$localDir") \
+    || library=$(findLibrary -prefix="$mpiPrefix" -name="$libName" -local="$localDir") \
     || {
         [ -n "$warn" ] && echo "$warn (no library)"
         return 2
@@ -276,7 +302,63 @@ have_ptscotch()
 }
 
 
-# Reset variables
+# Output as per search_* function
+have_scotch()
+{
+    local warn="==> skip scotch"
+    local config="config.sh/scotch"
+    local file
+
+    if file="$("$WM_PROJECT_DIR"/bin/foamEtcFile "$config")"
+    then
+        . "$file"
+    else
+        [ -n "$warn" ] && echo "$warn (no $config)"
+        return 2
+    fi
+
+    search_scotch "$SCOTCH_ARCH_PATH"
+}
+
+
+# Output as per search_* function
+have_ptscotch()
+{
+    local warn="==> skip ptscotch"
+
+    if [ "$HAVE_SCOTCH" != true ]
+    then
+        echo "$warn (no serial scotch available?)"
+        return 1
+    fi
+
+    # Reuse old settings
+    [ -n "$PTSCOTCH_ARCH_PATH" ] || PTSCOTCH_ARCH_PATH="$SCOTCH_ARCH_PATH"
+
+    search_ptscotch "$PTSCOTCH_ARCH_PATH"
+}
+
+
+# Query settings
+query_scotch()
+{
+    local config="config.sh/scotch"
+    local file
+
+    if file="$("$WM_PROJECT_DIR"/bin/foamEtcFile -mode=o "$config")"
+    then
+        . "$file"
+        _process_query scotch "$SCOTCH_ARCH_PATH"
+    else
+        echo "(no $config)" 1>&2
+        echo "scotch=unknown"
+    fi
+}
+
+
+#------------------------------------------------------------------------------
+
+# Reset
 no_scotch
 
 # Test/query

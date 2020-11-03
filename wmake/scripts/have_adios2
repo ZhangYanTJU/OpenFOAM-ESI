@@ -20,7 +20,8 @@
 #     ADIOS2_ARCH_PATH
 #
 # Functions provided
-#     have_adios2, no_adios2, echo_adios2, hint_adios2, query_adios2
+#     have_adios2, no_adios2, echo_adios2, query_adios2, search_adios2
+#     hint_adios2
 #
 # Variables set on success
 #     HAVE_ADIOS2
@@ -33,7 +34,7 @@
 
 #------------------------------------------------------------------------------
 
-# Reset variables
+# Reset
 no_adios2()
 {
     unset HAVE_ADIOS2 ADIOS2_INC_DIR ADIOS2_LIB_DIR
@@ -44,9 +45,9 @@ no_adios2()
 echo_adios2()
 {
     echo "adios2=${HAVE_ADIOS2:-false}"
-    echo "root=$ADIOS2_ARCH_PATH"
-    echo "include=$ADIOS2_INC_DIR"
-    echo "library=$ADIOS2_LIB_DIR"
+    echo "root=\"$ADIOS2_ARCH_PATH\""
+    echo "include=\"$ADIOS2_INC_DIR\""
+    echo "library=\"$ADIOS2_LIB_DIR\""
 }
 
 
@@ -55,9 +56,7 @@ hint_adios2()
 {
     /bin/cat<<INFORMATION 1>&2
 ==> adios2 not found?
-
-Enable in the OpenFOAM etc/bashrc, define manually or try with the
-following (POSIX shell):
+Define manually, enable in OpenFOAM etc/bashrc, or try the following [POSIX]:
 
     eval \$(foamEtcFile -sh -config adios2 -- -force)
 
@@ -66,43 +65,19 @@ INFORMATION
 }
 
 
-# Query settings
-query_adios2()
-{
-    local config="config.sh/adios2"
-    local settings
-
-    if settings="$("$WM_PROJECT_DIR"/bin/foamEtcFile -mode=o "$config")"
-    then
-        . "$settings"
-        _process_query adios2 "$ADIOS2_ARCH_PATH"
-    else
-        echo "(no $config settings)" 1>&2
-        echo "adios2=unknown"
-    fi
-}
-
-
+# Search
+# $1 : prefix (*_ARCH_PATH, system, ...)
+#
 # On success, return 0 and export variables
 # -> HAVE_ADIOS2, ADIOS2_INC_DIR, ADIOS2_LIB_DIR
-have_adios2()
+search_adios2()
 {
     local warn # warn="==> skip adios2"
-    local config="config.sh/adios2"
-    local settings
-
-    if settings="$("$WM_PROJECT_DIR"/bin/foamEtcFile "$config")"
-    then
-        . "$settings"
-    else
-        [ -n "$warn" ] && echo "$warn (no $config settings)"
-        return 2
-    fi
-
-    # Expected location, include/library names
-    local prefix="$ADIOS2_ARCH_PATH"
     local incName="adios2.h"
     local libName="libadios2"
+    local libName2="libadios2_cxx11_mpi"
+
+    local prefix="${1:-system}"
     local header library
 
     # ----------------------------------
@@ -132,6 +107,7 @@ have_adios2()
     # Library
     [ -n "$library" ] \
     || library=$(findLibrary -prefix="$prefix" -name="$libName") \
+    || library=$(findLibrary -prefix="$prefix" -name="$libName2") \
     || {
         [ -n "$warn" ] && echo "$warn (no library)"
         return 2
@@ -147,7 +123,45 @@ have_adios2()
 }
 
 
-# Reset variables
+# Output as per search_* function
+have_adios2()
+{
+    local warn # warn="==> skip adios2"
+    local config="config.sh/adios2"
+    local file
+
+    if file="$("$WM_PROJECT_DIR"/bin/foamEtcFile "$config")"
+    then
+        . "$file"
+    else
+        [ -n "$warn" ] && echo "$warn (no $config)"
+        return 2
+    fi
+
+    search_adios2 "$ADIOS2_ARCH_PATH"
+}
+
+
+# Query settings
+query_adios2()
+{
+    local config="config.sh/adios2"
+    local file
+
+    if file="$("$WM_PROJECT_DIR"/bin/foamEtcFile -mode=o "$config")"
+    then
+        . "$file"
+        _process_query adios2 "$ADIOS2_ARCH_PATH"
+    else
+        echo "(no $config)" 1>&2
+        echo "adios2=unknown"
+    fi
+}
+
+
+#------------------------------------------------------------------------------
+
+# Reset
 no_adios2
 
 # Test/query
@@ -158,6 +172,9 @@ case "$1" in
     ;;
 -query)
     query_adios2
+    ;;
+-hint)
+    hint_adios2
     ;;
 esac
 
