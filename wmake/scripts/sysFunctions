@@ -17,15 +17,26 @@
 #     General system helper functions
 #
 # Functions provided
-#     isDarwin
-#     isNone
-#     isSystem
-#     isAbsdir, hasAbsdir
+#     isNone, isSystem, isAbsdir, hasAbsdir
+#     isDarwin, isWindows
 #     findFirstFile
-#     thirdExtLib
+#     findSystemInclude
+#     findLibrary
+#     findExtLib
 #     versionCompare
 #
-# Variables provided
+# Internal variables used
+#     extLibraries
+#
+# External variables used
+#     WM_OSTYPE  (is set for Windows)
+#     WM_COMPILER_LIB_ARCH
+#     DEB_TARGET_MULTIARCH
+#
+# Compatibility functions
+#     thirdExtLib
+#
+# Compatibility variables
 #     extLiba
 #     extLibso
 #
@@ -36,27 +47,38 @@ then
     # Load once, but do not rely on this variable elsewhere
     WMAKE_SCRIPTS_SYSFUNCTIONS=loaded
 
-    # Static library extension. Default=.a
-    extLiba=".a"
-
-    # Shared library extension. Default=.so
-    case "$(uname -s 2>/dev/null)" in
-    Darwin)
-        extLibso=".dylib"
-        ;;
-    *)
-        extLibso=".so"
-        ;;
-    esac
-
+    # Debian multi-arch, ignore missing/bad dpkg-architecture.
+    if [ -z "$DEB_TARGET_MULTIARCH" ]
+    then
+        DEB_TARGET_MULTIARCH=$(dpkg-architecture -qDEB_TARGET_MULTIARCH 2>/dev/null || true)
+    fi
 
     # True if OS is Darwin.
-    # Uses libso extension to cache the value
-    # (instead of calling 'uname -s' each time)
     isDarwin()
     {
-        test "$extLibso" = ".dylib"
+        test Darwin = "$(uname -s 2>/dev/null || true)"
     }
+
+    # True if target OS is Windows
+    isWindows()
+    {
+        test MSwindows = "$WM_OSTYPE"
+    }
+
+    # Static, dynamic library extensions
+    extLibraries=".a .so"
+
+    extLiba=".a"    # [compat] static library
+    extLibso=".so"  # [compat] dynamic library
+
+    if isDarwin
+    then
+        extLibraries=".a .dylib"
+        extLibso=".dylib"  # [compat] dynamic library
+    elif isWindows
+    then
+        extLibraries=".a .dll .dll.a"  # including cross-compiling
+    fi
 
 
     # True if '$1' begins with '/'
@@ -73,16 +95,16 @@ then
     }
 
 
-    # True if '$1' is an empty string or matches "*-none".
+    # True if '$1' is an empty string, "none" or ends in "-none"
     # Eg,
-    #    if isNone "$KAHIP_ARCH_PATH" ...
+    #    if isNone "$BOOST_ARCH_PATH" ...
     isNone()
     {
         test -z "$1" -o "${1##*-}" = none
     }
 
 
-    # True if '$1' matches "*-system"
+    # True if '$1' is "system" or ends in "-system"
     # Eg,
     #    if isSystem "$BOOST_ARCH_PATH"
     isSystem()
@@ -91,22 +113,226 @@ then
     }
 
 
-    # Check for the existence of any of the files
+    # True if '$1' and '$2' have the same directory basename
+    # Eg,
+    #    equalBaseName "/usr/include/scotch-int32" "scotch-int32"
+    equalBaseName()
+    {
+        test "${1##*/}" = "${2##*/}"
+    }
+
+
+    # Simple output for -query
+    # $1 = software
+    # $2 = setting
+    _process_query()
+    {
+        if isNone "$2"
+        then
+            echo "$1=none"
+        elif isAbsdir "$2"    ## not hasAbsdir
+        then
+            echo "$1=${2##*/}"
+        elif isSystem "$2"
+        then
+            echo "$1=system"
+        else
+            echo "$1=unknown"
+        fi
+    }
+
+
+    # Return system prefix (/usr, /usr/local, ...) based on hint provided
+    # Eg,
+    #    sysPrefix "/usr/local/include/fftw3.h"  -> "/usr/local"
+    #
+    # Without a hint, echoes "/usr"
+    sysPrefix()
+    {
+        case "$1" in
+        /usr/local/*)
+            echo "/usr/local"
+            ;;
+        *)
+            echo "/usr"
+            ;;
+        esac
+    }
+
+
+    # Check existence of any of the files
     # On success, echoes the file found and returns 0, otherwise returns 2
     findFirstFile()
     {
         local file
         for file
         do
-            if [ -f "$file" -a -r "$file" ]
+            if [ -f "$file" ] && [ -r "$file" ]
             then
-                echo "$file"
+                echo "$file"  # Found
                 return 0
             fi
         done
         return 2
     }
 
+    # Check system /usr/local/include /usr/include paths
+    #
+    # On success, echoes the resolved file and returns 0, otherwise returns 2
+    #
+    # Specify -name=incName to search for
+    #
+    findSystemInclude()
+    {
+        local searchName
+
+        case "$1" in
+        -name=*)
+            searchName="${1#*=}"
+            ;;
+        esac
+
+        if [ -z "$searchName" ]
+        then
+            return 1
+        fi
+
+        findFirstFile \
+            "/usr/local/include/$searchName" \
+            "/usr/include/$searchName" \
+            ;
+    }
+
+    # Check existence of library with ending '.a', '.so' ...
+    #
+    # On success, echoes the resolved file and returns 0, otherwise returns 2
+    #
+    # This function has two modes of operation.
+    #
+    # 1) Automated search.
+    #    Specify -prefix=dirName -name=libName, optionally -local=subdirName
+    #    and search for (lib, lib64, lib/x86_64..) etc.
+    #
+    # 2) Directed search.
+    #    specify the fully qualified names to search on the parameter list
+    #
+    findLibrary()
+    {
+        local prefixDir localDir searchDir searchName
+        local file ext
+
+        searchDir=true
+
+        while [ "$searchDir" = true ] && [ "$#" -gt 0 ]
+        do
+            case "$1" in
+            -prefix=*)
+                prefixDir="${1#*=}"
+                shift
+                ;;
+
+            -local=*)
+                # Prefix with directory separator
+                localDir="/${1#*=}"
+                shift
+                ;;
+
+            -name=*)
+                searchName="${1#*=}"
+                shift
+                ;;
+
+            (*)
+                unset searchDir
+                ;;
+            esac
+        done
+
+        if [ -n "$searchName" ]
+        then
+            # Automated search (eg, lib/ lib64/, lib/x86_64-linux-gnu)
+            # but also handle possible local versions (eg, lib/scotch-int32)
+
+            : "${prefixDir:=/usr}"  # A reasonable default
+            [ -d "$prefixDir" ] || return 2
+
+            # Local and regular search paths
+            set -- \
+                "lib${localDir}" \
+                "${WM_COMPILER_LIB_ARCH:+lib${WM_COMPILER_LIB_ARCH}${localDir}}" \
+                "${DEB_TARGET_MULTIARCH:+lib/${DEB_TARGET_MULTIARCH}${localDir}}" \
+                "lib" \
+                "${WM_COMPILER_LIB_ARCH:+lib${WM_COMPILER_LIB_ARCH}}" \
+                "${DEB_TARGET_MULTIARCH:+lib/${DEB_TARGET_MULTIARCH}}" \
+                ;
+
+            # Ignore empty local search path ("/")
+            [ "${#localDir}" -gt 1 ] || shift 3
+
+            ## echo "search: $# $@" 1>&2
+
+            for searchDir in "$@"
+            do
+                [ -n "$searchDir" ] || continue
+                for ext in '' $extLibraries
+                do
+                    file="$prefixDir/$searchDir/$searchName$ext"
+                    if [ -f "$file" ] && [ -r "$file" ]
+                    then
+                        echo "$file"  # Found
+                        return 0
+                    fi
+                done
+            done
+
+        else
+            # Directed search
+
+            for file
+            do
+                [ -n "$file" ] || continue
+                for ext in '' $extLibraries
+                do
+                    if [ -f "$file$ext" ] && [ -r "$file$ext" ]
+                    then
+                        echo "$file$ext"  # Found
+                        return 0
+                    fi
+                done
+            done
+        fi
+
+        return 2
+    }
+
+
+    # Check existence of library in FOAM_EXT_LIBBIN, but conditional
+    # on FOAM_EXT_LIBBIN being located in the ThirdParty directory
+    #
+    # On success, echoes the resolved file and returns 0, otherwise returns 2
+    findExtLib()
+    {
+        local file
+
+        if [ -n "$FOAM_EXT_LIBBIN" ] && \
+           [ -n "$WM_THIRD_PARTY_DIR" ] && \
+           [ "${FOAM_EXT_LIBBIN#$WM_THIRD_PARTY_DIR}" != "$FOAM_EXT_LIBBIN" ]
+        then
+            for file
+            do
+                if file="$(findLibrary "$FOAM_EXT_LIBBIN/$file")"
+                then
+                    echo "$file"
+                    return 0
+                fi
+            done
+        fi
+
+        return 2
+    }
+
+
+    # [compat]
     # Check for existence of file in FOAM_EXT_LIBBIN,
     # but not if either file or FOAM_EXT_LIBBIN are empty or
     # if the FOAM_EXT_LIBBIN is not located in the ThirdParty directory
