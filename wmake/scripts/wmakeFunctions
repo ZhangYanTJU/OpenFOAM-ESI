@@ -6,17 +6,19 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2015-2016 OpenFOAM Foundation
-#     Copyright (C) 2018 OpenCFD Ltd.
+#     Copyright (C) 2018-2020 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
-#     This file is part of OpenFOAM, licensed under GNU General Public License
-#     <http://www.gnu.org/licenses/>.
+#     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 #
 # Script
 #     wmakeFunctions
 #
 # Description
-#     Functions to check wmake environment and find .dep and .o files
+#     Support functions for wmake infrastructure.
+#     For example, check environment, find .dep and .o files, various
+#     wrappers when making libraries.
+#
 #------------------------------------------------------------------------------
 
 # Ensure these variables are always defined
@@ -32,16 +34,17 @@ fi
 
 
 #------------------------------------------------------------------------------
-# Check environment variables
-#------------------------------------------------------------------------------
 
+# Check environment variables
 checkEnv()
 {
     local check failed
 
-    for check in WM_PROJECT_DIR WM_OPTIONS WM_DIR
+    # Default for WM_DIR already provided above
+
+    for check in WM_PROJECT_DIR WM_OPTIONS
     do
-        eval test "\$$check" || failed="$failed $check"
+        eval test -n "\$$check" || failed="$failed $check"
     done
 
     [ -z "$failed" ] || {
@@ -52,11 +55,8 @@ checkEnv()
 }
 
 
-#------------------------------------------------------------------------------
-# Search up directories tree for the Make sub-directory
-#------------------------------------------------------------------------------
-
-# Return the absolute path for a directory or a file's parent directory
+# Return the absolute (physical) path for a directory or
+# for a file's parent directory
 # expandPath dirName
 # expandPath fileName
 #
@@ -69,11 +69,12 @@ expandPath()
         (cd "$1" && pwd -P)
     elif [ -n "$1" ]
     then
-        (cd $(dirname "$1") && pwd -P)
+        (cd "$(dirname "$1")" && pwd -P)
     else
         pwd -P
     fi
 }
+
 
 # Find the target directory, which contains a Make/ directory
 # search upwards in its parent directories, but stopping
@@ -88,15 +89,15 @@ expandPath()
 # - WM_PROJECT_DIR, HOME
 findTarget()
 {
-    local project=$(expandPath $WM_PROJECT_DIR)
-    local home=$(expandPath $HOME)
+    local project=$(expandPath "$WM_PROJECT_DIR")
+    local home=$(expandPath "$HOME")
     local reldir="${1:-.}"
-    local absdir=$(expandPath $reldir)
+    local absdir=$(expandPath "$reldir")
 
     while [ -n "$absdir" ]
     do
         case "$absdir" in
-        ($project | $home | /)
+        ("$project" | "$home" | /)
             break
             ;;
         esac
@@ -112,7 +113,7 @@ findTarget()
         fi
     done
 
-    echo "Error: no Make directory for $(expandPath $1)" 1>&2
+    echo "Error: no Make directory for $(expandPath "$1")" 1>&2
     echo 1>&2
     return 1
 }
@@ -132,14 +133,14 @@ cdSource()
         echo "    Searching up directories tree for Make directory" 1>&2
 
         dir=$(findTarget .) || exit 1 # Fatal
-        cd $dir 2>/dev/null || {
+        cd "$dir" 2>/dev/null || {
             echo "$Script error: could not change to directory '$dir'" 1>&2
             exit 1
         }
         unset targetType
     fi
 
-    [ -r $MakeDir/files ] || {
+    [ -r "$MakeDir"/files ] || {
         echo "$Script error: file '$MakeDir/files' does not exist in $PWD" 1>&2
         exit 1
     }
@@ -157,23 +158,34 @@ cdSource()
 # - WM_PROJECT_DIR, WM_OPTIONS
 findObjectDir()
 {
-    local project=$(expandPath $WM_PROJECT_DIR)
-    local absdir=$(expandPath ${1:-.})
-    local objectsDir
+    local project="$(expandPath "$WM_PROJECT_DIR")"
+    local absdir="$(expandPath "${1:-.}")"
+    local appDir relativeDir objectsDir
 
-    case "$absdir" in
-    ("$project"/*)
-        local buildPath=$WM_PROJECT_DIR/build/${WM_OPTIONS}
-        objectsDir=$buildPath$(echo $absdir | sed s%$project%% )
-        ;;
-    (*)
-        local path=$absdir
-        local appDir=.
-        [ -d Make ] || appDir=$(findTarget .) || exit 1 # Fatal
-        absdir=$(expandPath $appDir/.)
-        objectsDir=$appDir/Make/${WM_OPTIONS}$(echo $path | sed s%$absdir%% )
-    ;;
-    esac
+    # Treat project/ builds as out-of-source
+    relativeDir="${absdir#${project}/}"
+    if [ "$relativeDir" != "$absdir" ]
+    then
+        [ -w "$WM_PROJECT_DIR" ] && \
+            objectsDir="${WM_PROJECT_DIR}/build/${WM_OPTIONS}/${relativeDir}"
+    fi
+
+    # Default (local) build directory
+    if [ -z "$objectsDir" ]
+    then
+        if [ -d "$absdir/Make" ]
+        then
+            objectsDir="${absdir}/Make/${WM_OPTIONS}"
+        else
+            relativeDir="$absdir"
+            appDir=.
+            [ -d Make ] || appDir=$(findTarget .) || exit 1 # Fatal
+            absdir=$(expandPath "$appDir"/.)
+
+            relativeDir="${relativeDir#${absdir}}"
+            objectsDir="${appDir}/Make/${WM_OPTIONS}${relativeDir}"
+        fi
+    fi
 
     echo "$objectsDir"
 }
@@ -190,13 +202,146 @@ findObjectDir()
 # - WM_PROJECT_DIR, WM_OPTIONS
 removeObjectDir()
 {
-    local objectsDir=$(findObjectDir ${1:-.})
+    local objectsDir="$(findObjectDir "${1:-.}")"
     if [ -d "$objectsDir" ]
     then
         rm -rf "$objectsDir" 2>/dev/null
     fi
 }
 
+
+# Save build/configure parameter information (dependency) into sentinel file
+#
+# 1 - sentinelFile
+# 2... build/configure parameters
+#
+storeDependency()
+{
+    local sentinel="$1"
+    local depend
+    shift
+
+    if [ -n "$sentinel" ]
+    then
+        mkdir -p "$(dirname "$sentinel")"
+
+        echo '# Build/configure parameters' >| "$sentinel"
+
+        for depend
+        do
+            echo "-- $depend"
+        done >> "$sentinel"
+    fi
+    return 0
+}
+
+
+# Check sentinel file(s) to handle changed build/configure parameters
+# such as paraview / vtk version changes
+#
+# 1 - sourceDir
+# 2... build/configure parameters
+#
+# The additional test for "CMakeCache.txt" helps for cmake projects and
+# has no adverse affect for others
+#
+sameDependency()
+{
+    local sourceDir="$1"
+    shift
+    local objectsDir
+    local compare=0
+
+    # Where generated files are stored
+    objectsDir=$(findObjectDir "$sourceDir") || exit 1 # Fatal
+    local sentinel="$objectsDir/ConfigParameters"
+
+    if [ -f "$sentinel" ]
+    then
+        # Create an .update version for comparison
+        storeDependency   "${sentinel}.update" $@
+        cmp "${sentinel}" "${sentinel}.update" >/dev/null 2>&1
+        compare=$?
+
+        if [ "$compare" -ne 0 ]
+        then
+            echo "build/configure parameters changed between builds" 1>&2
+            ## cat "${sentinel}.update" 1>&2
+        fi
+
+    else
+        # No sentinel file: First time, or failed compilation?
+        if [ -f "$objectsDir/CMakeCache.txt" ]
+        then
+            echo "previous build was incomplete" 1>&2
+            compare=1
+        fi
+    fi
+
+    echo "$sentinel"
+    return "$compare"
+}
+
+
+# Build a mpi-versioned library (targetType)
+# - use sentinel file(s) to handle paraview version changes
+# compile into qualified directory
+# use sentinel file(s) to handle version changes
+# 1 - libName
+# 2... build/configure information
+#
+# Global variables used:
+# - WM_OPTIONS, WM_MPLIB, FOAM_MPI
+#
+# Requires that WM_MPLIB contain an "MPI" string
+wmakeLibMpi()
+{
+    local libName="$1"
+    shift
+
+    case "$WM_MPLIB" in (*MPI* | *mpi*)
+    (
+        WM_OPTIONS="$WM_OPTIONS$WM_MPLIB"
+
+        # Where generated files are stored
+        objectsDir="$(findObjectDir "$libName")" || exit 1 # Fatal
+
+        # Something changed
+        sentinel=$(sameDependency "$libName" "MPLIB=$WM_MPLIB" "MPI=$FOAM_MPI" $@) || \
+            wclean "$libName"
+
+        echo "wmake $targetType $libName (mpi=$WM_MPLIB)"
+        wmake $targetType "$libName" && \
+        storeDependency "$sentinel" "MPLIB=$WM_MPLIB" "MPI=$FOAM_MPI" $@
+    )
+    ;;
+    esac
+}
+
+
+# Clean an mpi-versioned library
+#
+# Global variables used:
+# - WM_OPTIONS, WM_MPLIB
+#
+# Requires that WM_MPLIB contain an "MPI" string
+wcleanLibMpi()
+{
+    case "$WM_MPLIB" in (*MPI* | *mpi*)
+    (
+        WM_OPTIONS="$WM_OPTIONS$WM_MPLIB"
+
+        for libName
+        do
+            wclean "$libName"
+        done
+    )
+    ;;
+    esac
+}
+
+
+#------------------------------------------------------------------------------
 
 # depToSource depFile
 #
@@ -210,7 +355,7 @@ if [ -n "$BASH_VERSION" ]
 then
     depToSource()
     {
-        local sourceFile=${1%.dep}
+        local sourceFile="${1%.dep}"
         sourceFile="${sourceFile/build\/${WM_OPTIONS}\//}"
         sourceFile="${sourceFile/build\/${WM_OPTIONS}${WM_MPLIB}\//}"
         sourceFile="${sourceFile/Make\/${WM_OPTIONS}\//}"
@@ -221,13 +366,11 @@ then
 else
     depToSource()
     {
-        local sourceFile=$(echo ${1%.dep} |             \
-            sed -e s%build/${WM_OPTIONS}/%%             \
-                -e s%build/${WM_OPTIONS}${WM_MPLIB}/%%  \
-                -e s%Make/${WM_OPTIONS}/%%              \
-                -e s%Make/${WM_OPTIONS}${WM_MPLIB}/%% )
-
-        echo "$sourceFile"
+        echo "${1%.dep}" | sed \
+            -e "s%build/${WM_OPTIONS}/%%"             \
+            -e "s%build/${WM_OPTIONS}${WM_MPLIB}/%%"  \
+            -e "s%Make/${WM_OPTIONS}/%%"              \
+            -e "s%Make/${WM_OPTIONS}${WM_MPLIB}/%%"
     }
 fi
 
