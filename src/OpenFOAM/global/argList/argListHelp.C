@@ -425,6 +425,16 @@ void Foam::argList::printUsage(bool full) const
     }
 
 
+    // Redirections
+    if (full)
+    {
+        printOption("stdout <file>", "Redirect stdout to file");
+        printOption("stderr <file>", "Redirect stderr to file");
+        printOption("join-stderr", "Join stderr to stdout");
+        printOption("append-rank", "Append stdout/stderr files with MPI-rank");
+    }
+
+
     // Place documentation/help options at the end
 
     printOption("doc", "Display documentation in browser");

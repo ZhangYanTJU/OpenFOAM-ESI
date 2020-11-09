@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "argListRedirect.H"
 #include "OSspecific.H"
 #include "Switch.H"
 #include "clock.H"
@@ -47,6 +48,7 @@ License
 #include "stringListOps.H"
 #include "fileOperation.H"
 #include "fileOperationInitialise.H"
+#include "fstreamPointer.H"
 
 #include <cctype>
 
@@ -911,7 +913,9 @@ Foam::argList::argList
     runControl_(),
     args_(argc),
     options_(argc),
-    libs_()
+    libs_(),
+    stdout_(nullptr),
+    stderr_(nullptr)
 {
     // Pre-scan for some options needed for initial setup:
     //   -fileHandler (takes an argument)
@@ -1018,6 +1022,53 @@ Foam::argList::argList
 
 
     // ------------------------------------------------------------------------
+    // Capture stdout/stderr redirection names. Filters argv
+    Detail::redirectOutputs redirects(argc, argv);
+
+    // Perform output redirection
+    if (redirects.active())
+    {
+        word suffix;
+
+        if (redirects.ranks_ && parRunControl_.parRun())
+        {
+            suffix = Foam::name(Pstream::myProcNo());
+        }
+
+        if (!redirects.stdout_.empty())
+        {
+            fileName file(fileName::validate(redirects.stdout_));
+            file.ext(suffix);
+
+            stdout_.reset(ofstreamPointer(file).release());
+        }
+
+        if (!redirects.stderr_.empty())
+        {
+            fileName file(fileName::validate(redirects.stderr_));
+            file.ext(suffix);
+
+            stderr_.reset(ofstreamPointer(file).release());
+        }
+
+        if (stdout_)
+        {
+            Sout.attach(*stdout_);
+            Pout.attach(*stdout_);
+        }
+
+        if (stderr_)
+        {
+            Serr.attach(*stderr_);
+            Perr.attach(*stderr_);
+        }
+        else if (redirects.join_)
+        {
+            Serr.attach(Sout.stdStream());
+            Perr.attach(Sout.stdStream());
+        }
+    }
+
 
     // Convert argv -> args_ and capture ( ... ) lists
     regroupArgv(argc, argv);
@@ -1172,6 +1223,8 @@ Foam::argList::argList
     args_(args.args_),
     options_(options),
     libs_(),
+    stdout_(nullptr),
+    stderr_(nullptr),
     executable_(args.executable_),
     rootPath_(args.rootPath_),
     globalCase_(args.globalCase_),

@@ -146,6 +146,12 @@ class argList
         //- Additional libraries
         mutable dlLibraryTable libs_;
 
+        //- File redirection for stdout (Sout, Pout)
+        std::unique_ptr<std::ostream> stdout_;
+
+        //- File redirection for stderr (Serr, Perr)
+        std::unique_ptr<std::ostream> stderr_;
+
         word executable_;
         fileName rootPath_;
         fileName globalCase_;
