@@ -157,6 +157,9 @@ protected:
             ioState_ = std::ios_base::goodbit;
         }
 
+        //- Adjustments when attaching a new stream
+        void attach(const std::ios& s);
+
 
 public:
 

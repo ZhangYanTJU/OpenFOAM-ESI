@@ -37,9 +37,9 @@ inline Foam::ISstream::ISstream
 :
     Istream(streamOpt),
     name_(streamName),
-    is_(is)
+    is_(&is)
 {
-    if (is_.good())
+    if (is_->good())
     {
         setOpened();
         setGood();
@@ -53,9 +53,20 @@ inline Foam::ISstream::ISstream
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+inline std::istream& Foam::ISstream::attach(std::istream& is)
+{
+    std::istream* old = is_;
+
+    is_ = &is;
+    IOstream::attach(*is_);
+
+    return *old;
+}
+
+
 inline Foam::ISstream& Foam::ISstream::get(char& c)
 {
-    is_.get(c);
+    is_->get(c);
     syncState();
 
     if (c == '\n' && good())
@@ -69,13 +80,13 @@ inline Foam::ISstream& Foam::ISstream::get(char& c)
 
 inline int Foam::ISstream::peek()
 {
-    return is_.peek();
+    return is_->peek();
 }
 
 
 inline Foam::ISstream& Foam::ISstream::getLine(std::string& str, char delim)
 {
-    std::getline(is_, str, delim);
+    std::getline(*is_, str, delim);
     syncState();
 
     if (delim == '\n')
@@ -89,10 +100,10 @@ inline Foam::ISstream& Foam::ISstream::getLine(std::string& str, char delim)
 
 inline std::streamsize Foam::ISstream::getLine(std::nullptr_t, char delim)
 {
-    is_.ignore(std::numeric_limits<std::streamsize>::max(), delim);
+    is_->ignore(std::numeric_limits<std::streamsize>::max(), delim);
     syncState();
 
-    std::streamsize count = is_.gcount();
+    std::streamsize count = is_->gcount();
 
     if (delim == '\n' && count)
     {
@@ -110,7 +121,7 @@ inline Foam::ISstream& Foam::ISstream::putback(const char c)
         --lineNumber_;
     }
 
-    if (!is_.putback(c))
+    if (!is_->putback(c))
     {
         setBad();
     }

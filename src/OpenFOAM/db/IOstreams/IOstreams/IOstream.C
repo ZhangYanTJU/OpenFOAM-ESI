@@ -35,6 +35,27 @@ License
 Foam::fileName Foam::IOstream::staticName_("stream");
 
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::IOstream::attach(const std::ios& s)
+{
+    labelByteSize_ = sizeof(label);
+    scalarByteSize_ = sizeof(scalar);
+    lineNumber_ = 0;
+
+    if (s.good())
+    {
+        setOpened();
+        setGood();
+    }
+    else
+    {
+        setClosed();
+        setState(s.rdstate());
+    }
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::fileName& Foam::IOstream::name() const

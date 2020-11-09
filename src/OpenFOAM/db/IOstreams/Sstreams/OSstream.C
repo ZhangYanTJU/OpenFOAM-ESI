@@ -88,7 +88,7 @@ bool Foam::OSstream::write(const token& tok)
 
 Foam::Ostream& Foam::OSstream::write(const char c)
 {
-    os_ << c;
+    (*os_) << c;
     if (c == token::NL)
     {
         ++lineNumber_;
@@ -101,7 +101,7 @@ Foam::Ostream& Foam::OSstream::write(const char c)
 Foam::Ostream& Foam::OSstream::write(const char* str)
 {
     lineNumber_ += stringOps::count(str, token::NL);
-    os_ << str;
+    (*os_) << str;
     syncState();
     return *this;
 }
@@ -109,7 +109,7 @@ Foam::Ostream& Foam::OSstream::write(const char* str)
 
 Foam::Ostream& Foam::OSstream::write(const word& str)
 {
-    os_ << str;
+    (*os_) << str;
     syncState();
     return *this;
 }
@@ -125,7 +125,7 @@ Foam::Ostream& Foam::OSstream::writeQuoted
     {
         // Output unquoted, only advance line number on newline
         lineNumber_ += stringOps::count(str, token::NL);
-        os_ << str;
+        (*os_) << str;
 
         syncState();
         return *this;
@@ -133,7 +133,7 @@ Foam::Ostream& Foam::OSstream::writeQuoted
 
 
     // Output with surrounding quotes and backslash escaping
-    os_ << token::DQUOTE;
+    (*os_) << token::DQUOTE;
 
     unsigned backslash = 0;
     for (auto iter = str.cbegin(); iter != str.cend(); ++iter)
@@ -158,16 +158,16 @@ Foam::Ostream& Foam::OSstream::writeQuoted
         // output all pending backslashes
         while (backslash)
         {
-            os_ << '\\';
+            (*os_) << '\\';
             --backslash;
         }
 
-        os_ << c;
+        (*os_) << c;
     }
 
     // silently drop any trailing backslashes
     // they would otherwise appear like an escaped end-quote
-    os_ << token::DQUOTE;
+    (*os_) << token::DQUOTE;
 
     syncState();
     return *this;
@@ -182,7 +182,7 @@ Foam::Ostream& Foam::OSstream::write(const string& str)
 
 Foam::Ostream& Foam::OSstream::write(const int32_t val)
 {
-    os_ << val;
+    (*os_) << val;
     syncState();
     return *this;
 }
@@ -190,7 +190,7 @@ Foam::Ostream& Foam::OSstream::write(const int32_t val)
 
 Foam::Ostream& Foam::OSstream::write(const int64_t val)
 {
-    os_ << val;
+    (*os_) << val;
     syncState();
     return *this;
 }
@@ -198,7 +198,7 @@ Foam::Ostream& Foam::OSstream::write(const int64_t val)
 
 Foam::Ostream& Foam::OSstream::write(const float val)
 {
-    os_ << val;
+    (*os_) << val;
     syncState();
     return *this;
 }
@@ -206,7 +206,7 @@ Foam::Ostream& Foam::OSstream::write(const float val)
 
 Foam::Ostream& Foam::OSstream::write(const double val)
 {
-    os_ << val;
+    (*os_) << val;
     syncState();
     return *this;
 }
@@ -231,17 +231,18 @@ bool Foam::OSstream::beginRawWrite(std::streamsize count)
             << abort(FatalIOError);
     }
 
-    os_ << token::BEGIN_LIST;
+    (*os_) << token::BEGIN_LIST;
     syncState();
-    return os_.good();
+
+    return os_->good();
 }
 
 
 bool Foam::OSstream::endRawWrite()
 {
-    os_ << token::END_LIST;
+    (*os_) << token::END_LIST;
     syncState();
-    return os_.good();
+    return os_->good();
 }
 
 
@@ -254,8 +255,9 @@ Foam::Ostream& Foam::OSstream::writeRaw
     // No check for IOstreamOption::BINARY since this is either done in the
     // beginRawWrite() method, or the caller knows what they are doing.
 
-    os_.write(data, count);
+    os_->write(data, count);
     syncState();
+
     return *this;
 }
 
@@ -264,7 +266,7 @@ void Foam::OSstream::indent()
 {
     for (unsigned short i = 0; i < indentLevel_*indentSize_; ++i)
     {
-        os_ << ' ';
+        (*os_) << ' ';
     }
     syncState();
 }
@@ -272,14 +274,14 @@ void Foam::OSstream::indent()
 
 void Foam::OSstream::flush()
 {
-    os_.flush();
+    os_->flush();
 }
 
 
 void Foam::OSstream::endl()
 {
     write('\n');
-    os_.flush();
+    os_->flush();
 }
 
 
@@ -287,37 +289,37 @@ void Foam::OSstream::endl()
 
 char Foam::OSstream::fill() const
 {
-    return os_.fill();
+    return os_->fill();
 }
 
 
 char Foam::OSstream::fill(const char fillch)
 {
-    return os_.fill(fillch);
+    return os_->fill(fillch);
 }
 
 
 int Foam::OSstream::width() const
 {
-    return os_.width();
+    return os_->width();
 }
 
 
 int Foam::OSstream::width(const int w)
 {
-    return os_.width(w);
+    return os_->width(w);
 }
 
 
 int Foam::OSstream::precision() const
 {
-    return os_.precision();
+    return os_->precision();
 }
 
 
 int Foam::OSstream::precision(const int p)
 {
-    return os_.precision(p);
+    return os_->precision(p);
 }
 
 

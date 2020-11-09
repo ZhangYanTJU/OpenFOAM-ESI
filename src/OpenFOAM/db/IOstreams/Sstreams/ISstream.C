@@ -723,7 +723,7 @@ Foam::Istream& Foam::ISstream::read(token& t)
             // readScalar determine the validity
             while
             (
-                is_.get(c)
+                is_->get(c)
              && (
                     isdigit(c)
                  || c == '+'
@@ -758,13 +758,13 @@ Foam::Istream& Foam::ISstream::read(token& t)
 
             syncState();
 
-            if (is_.bad())
+            if (is_->bad())
             {
                 t.setBad();
             }
             else
             {
-                is_.putback(c);
+                is_->putback(c);
 
                 if (nChar == 1 && buf[0] == '-')
                 {
@@ -1009,7 +1009,7 @@ Foam::Istream& Foam::ISstream::read(string& str)
 
 Foam::Istream& Foam::ISstream::read(label& val)
 {
-    is_ >> val;
+    (*is_) >> val;
     syncState();
     return *this;
 }
@@ -1017,7 +1017,7 @@ Foam::Istream& Foam::ISstream::read(label& val)
 
 Foam::Istream& Foam::ISstream::read(float& val)
 {
-    is_ >> val;
+    (*is_) >> val;
     syncState();
     return *this;
 }
@@ -1025,7 +1025,7 @@ Foam::Istream& Foam::ISstream::read(float& val)
 
 Foam::Istream& Foam::ISstream::read(double& val)
 {
-    is_ >> val;
+    (*is_) >> val;
     syncState();
     return *this;
 }
@@ -1047,24 +1047,11 @@ Foam::Istream& Foam::ISstream::readRaw(char* data, std::streamsize count)
     {
         if (data)
         {
-            is_.read(data, count);
+            is_->read(data, count);
         }
         else
         {
-            // Forward seek
-            // - use absolute positioning (see C++ notes about std::ifstream)
-            is_.seekg(is_.tellg() + std::istream::pos_type(count));
-
-            // Not sure if this is needed (as per rewind)
-            // some documentation indicates that ifstream needs
-            // seekg with values from a tellg
-            //
-            // stdStream().rdbuf()->pubseekpos
-            // (
-            //     count,
-            //     std::ios_base::seekdir::cur,
-            //     std::ios_base::in
-            // );
+            is_->ignore(count);
         }
     }
     syncState();
@@ -1083,7 +1070,7 @@ bool Foam::ISstream::beginRawRead()
 
     readBegin("binaryBlock");
     syncState();
-    return is_.good();
+    return is_->good();
 }
 
 
@@ -1091,7 +1078,7 @@ bool Foam::ISstream::endRawRead()
 {
     readEnd("binaryBlock");
     syncState();
-    return is_.good();
+    return is_->good();
 }
 
 

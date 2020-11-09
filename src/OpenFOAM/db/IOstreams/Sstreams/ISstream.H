@@ -61,7 +61,7 @@ class ISstream
 
         fileName name_;
 
-        std::istream& is_;
+        std::istream* is_;
 
 
     // Private Member Functions
@@ -135,10 +135,10 @@ public:
     // STL stream
 
         //- Const access to underlying std::istream
-        virtual const std::istream& stdStream() const { return is_; }
+        virtual const std::istream& stdStream() const { return *is_; }
 
         //- Access to underlying std::istream
-        virtual std::istream& stdStream() { return is_; }
+        virtual std::istream& stdStream() { return *is_; }
 
 
     // Stream State
@@ -146,19 +146,19 @@ public:
         //- Return flags of output stream
         virtual ios_base::fmtflags flags() const
         {
-            return is_.flags();
+            return is_->flags();
         }
 
         //- Set stream flags
         virtual ios_base::fmtflags flags(const ios_base::fmtflags f)
         {
-            return is_.flags(f);
+            return is_->flags(f);
         }
 
         //- Set stream state to match that of the std::istream
         void syncState()
         {
-            setState(is_.rdstate());
+            setState(is_->rdstate());
         }
 
 
@@ -179,6 +179,10 @@ public:
             std::string& str,
             const bool stripComments = true
         );
+
+        //- Associate a different std::istream with the ISstream
+        //  \return the previously attached stream
+        inline std::istream& attach(std::istream& is);
 
 
         // Read Functions

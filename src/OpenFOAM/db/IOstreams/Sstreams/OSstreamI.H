@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,18 +39,32 @@ inline Foam::OSstream::OSstream
 :
     Ostream(streamOpt),
     name_(streamName),
-    os_(os)
+    os_(&os)
 {
-    if (os_.good())
+    if (os_->good())
     {
         setOpened();
         setGood();
-        os_.precision(precision_);
+        os_->precision(precision_);
     }
     else
     {
         syncState();
     }
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+inline std::ostream& Foam::OSstream::attach(std::ostream& os)
+{
+    std::ostream* old = os_;
+
+    os_ = &os;
+    IOstream::attach(*os_);
+    // Leave precision untouched
+
+    return *old;
 }
 
 

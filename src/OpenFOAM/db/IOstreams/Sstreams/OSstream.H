@@ -60,7 +60,7 @@ class OSstream
 
         fileName name_;
 
-        std::ostream& os_;
+        std::ostream* os_;
 
 
 public:
@@ -123,10 +123,10 @@ public:
     // STL stream
 
         //- Const access to underlying std::ostream
-        virtual const std::ostream& stdStream() const { return os_; }
+        virtual const std::ostream& stdStream() const { return *os_; }
 
         //- Access to underlying std::ostream
-        virtual std::ostream& stdStream() { return os_; }
+        virtual std::ostream& stdStream() { return *os_; }
 
 
     // Stream State
@@ -134,20 +134,24 @@ public:
         //- Get stream flags
         virtual ios_base::fmtflags flags() const
         {
-            return os_.flags();
+            return os_->flags();
         }
 
         //- Set stream flags
         virtual ios_base::fmtflags flags(const ios_base::fmtflags f)
         {
-            return os_.flags(f);
+            return os_->flags(f);
         }
 
         //- Set stream state to match that of the std::ostream
         void syncState()
         {
-            setState(os_.rdstate());
+            setState(os_->rdstate());
         }
+
+        //- Associate a different std::ostream with the OSstream
+        //  \return the previously attached stream
+        inline std::ostream& attach(std::ostream& os);
 
 
     // Write Functions
