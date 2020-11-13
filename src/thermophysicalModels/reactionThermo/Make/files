@@ -20,5 +20,6 @@ derivedFvPatchFields/gradientUnburntEnthalpy/gradientUnburntEnthalpyFvPatchScala
 derivedFvPatchFields/mixedUnburntEnthalpy/mixedUnburntEnthalpyFvPatchScalarField.C
 
 functionObjects/moleFractions/moleFractionsFunctionObjects.C
+functionObjects/BilgerMixtureFraction/BilgerMixtureFraction.C
 
 LIB = $(FOAM_LIBBIN)/libreactionThermophysicalModels
