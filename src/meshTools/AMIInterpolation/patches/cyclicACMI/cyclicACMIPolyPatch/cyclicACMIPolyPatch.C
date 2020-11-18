@@ -189,34 +189,31 @@ void Foam::cyclicACMIPolyPatch::scalePatchFaceAreas
 
     const scalar maxTol = scalar(1) - tolerance_;
 
-    //if (noFaceArea.size())
+    const polyPatch& nonOverlapPatch = acmipp.nonOverlapPatch();
+    vectorField::subField noSf = nonOverlapPatch.faceAreas();
+
+    DebugPout
+        << "rescaling non-overlap patch areas for: "
+        << nonOverlapPatch.name() << endl;
+
+    if (mask.size() != noSf.size())
     {
-        const polyPatch& nonOverlapPatch = acmipp.nonOverlapPatch();
-        vectorField::subField noSf = nonOverlapPatch.faceAreas();
+        WarningInFunction
+            << "Inconsistent sizes for patch: " << acmipp.name()
+            << " - not manipulating patches" << nl
+            << " - size: " << size() << nl
+            << " - non-overlap patch size: " << noSf.size() << nl
+            << " - mask size: " << mask.size() << nl
+            << "This is OK for decomposition but"
+            << " should be considered fatal at run-time" << endl;
 
-        DebugPout
-            << "rescaling non-overlap patch areas for: "
-            << nonOverlapPatch.name() << endl;
+        return;
+    }
 
-        if (mask.size() != noSf.size())
-        {
-            WarningInFunction
-                << "Inconsistent sizes for patch: " << acmipp.name()
-                << " - not manipulating patches" << nl
-                << " - size: " << size() << nl
-                << " - non-overlap patch size: " << noSf.size() << nl
-                << " - mask size: " << mask.size() << nl
-                << "This is OK for decomposition but"
-                << " should be considered fatal at run-time" << endl;
-
-            return;
-        }
-
-        forAll(noSf, facei)
-        {
-            const scalar w = min(maxTol, max(tolerance_, mask[facei]));
-            noSf[facei] = noFaceArea[facei]*(scalar(1) - w);
-        }
+    forAll(noSf, facei)
+    {
+        const scalar w = min(maxTol, max(tolerance_, mask[facei]));
+        noSf[facei] = noFaceArea[facei]*(scalar(1) - w);
     }
 
     if (!createAMIFaces_)
