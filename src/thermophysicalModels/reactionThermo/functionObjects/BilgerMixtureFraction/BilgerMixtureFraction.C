@@ -31,6 +31,9 @@ License
 #include "reactingMixture.H"
 #include "thermoPhysicsTypes.H"
 #include "scalarRange.H"
+#include "basicChemistryModel.H"
+#include "psiReactionThermo.H"
+#include "rhoReactionThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -272,9 +275,15 @@ bool Foam::functionObjects::BilgerMixtureFraction::read(const dictionary& dict)
     auto& Y = thermo_.Y();
     const speciesTable& speciesTab = thermo_.species();
 
-    const specieCompositionTable& speciesComp =
-        dynamicCast<const reactingMixture<???????????>&>(thermo_).
-        specieComposition();
+//    Without templating huge amount of thermoPhysics types - no-op
+//    const specieCompositionTable& speciesComp =
+//        dynamicCast<const reactingMixture<ThermoType>(thermo_).
+//        specieComposition();
+
+//    ReactionThermo does not have access to specieComposition?! - no-op
+//    typedef BasicChemistryModel <psiReactionThermo> chemistryModelType;
+//    auto& a = mesh_.lookupObject<chemistryModelType>("chemistryProperties");
+//    auto speciesComp = a.thermo().specieComposition();
 
     forAll(Y, i)
     {
