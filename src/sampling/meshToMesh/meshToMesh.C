@@ -152,7 +152,7 @@ void Foam::meshToMesh::mapInternalTgtToSrc
     const bool secondOrder
 ) const
 {
-    mapSrcToTgt(field, cop, result.primitiveFieldRef());
+    mapTgtToSrc(field, cop, result.primitiveFieldRef());
 }
 
 
@@ -165,7 +165,7 @@ void Foam::meshToMesh::mapInternalTgtToSrc
     const bool secondOrder
 ) const
 {
-    mapSrcToTgt(field, cop, result.primitiveFieldRef());
+    mapTgtToSrc(field, cop, result.primitiveFieldRef());
 }
 
 
@@ -178,7 +178,7 @@ void Foam::meshToMesh::mapInternalTgtToSrc
     const bool secondOrder
 ) const
 {
-    mapSrcToTgt(field, cop, result.primitiveFieldRef());
+    mapTgtToSrc(field, cop, result.primitiveFieldRef());
 }
 
 
@@ -191,7 +191,7 @@ void Foam::meshToMesh::mapInternalTgtToSrc
     const bool secondOrder
 ) const
 {
-    mapSrcToTgt(field, cop, result.primitiveFieldRef());
+    mapTgtToSrc(field, cop, result.primitiveFieldRef());
 }
 
 
@@ -204,7 +204,7 @@ void Foam::meshToMesh::mapInternalTgtToSrc
     const bool secondOrder
 ) const
 {
-    mapSrcToTgt(field, cop, result.primitiveFieldRef());
+    mapTgtToSrc(field, cop, result.primitiveFieldRef());
 }
 
 
@@ -217,7 +217,7 @@ void Foam::meshToMesh::mapInternalTgtToSrc
     const bool secondOrder
 ) const
 {
-    mapSrcToTgt(field, cop, result.primitiveFieldRef());
+    mapTgtToSrc(field, cop, result.primitiveFieldRef());
 }
 
 
