@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "isoSurfaceTopo.H"
-#include "isoSurface.H"
 #include "polyMesh.H"
 #include "volFields.H"
 #include "tetMatcher.H"

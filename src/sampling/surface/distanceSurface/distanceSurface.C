@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -124,8 +124,8 @@ Foam::distanceSurface::distanceSurface
         )
     ),
     bounds_(dict.getOrDefault("bounds", boundBox::invertedBox)),
-    isoSurfPtr_(nullptr),
     isoSurfCellPtr_(nullptr),
+    isoSurfPointPtr_(nullptr),
     isoSurfTopoPtr_(nullptr)
 {}
 
@@ -169,8 +169,8 @@ Foam::distanceSurface::distanceSurface
     isoAlgo_(algo),
     filter_(filter),
     bounds_(bounds),
-    isoSurfPtr_(nullptr),
     isoSurfCellPtr_(nullptr),
+    isoSurfPointPtr_(nullptr),
     isoSurfTopoPtr_(nullptr)
 {}
 
@@ -185,8 +185,8 @@ void Foam::distanceSurface::createGeometry()
     }
 
     // Clear any stored topologies
-    isoSurfPtr_.clear();
     isoSurfCellPtr_.clear();
+    isoSurfPointPtr_.clear();
     isoSurfTopoPtr_.clear();
 
     const fvMesh& fvm = static_cast<const fvMesh&>(mesh_);
@@ -425,8 +425,24 @@ void Foam::distanceSurface::createGeometry()
             )
         );
     }
-    else if (isoAlgo_ == isoSurfaceBase::ALGO_TOPO)
+    else if (isoAlgo_ == isoSurfaceBase::ALGO_POINT)
     {
+        isoSurfPointPtr_.reset
+        (
+            new isoSurfacePoint
+            (
+                cellDistance,
+                pointDistance_,
+                distance_,
+                filter_,
+                bounds_,
+                1e-6  // mergeTol
+            )
+        );
+    }
+    else
+    {
+        // isoSurfaceBase::ALGO_TOPO
         isoSurfTopoPtr_.reset
         (
             new isoSurfaceTopo
@@ -438,21 +454,6 @@ void Foam::distanceSurface::createGeometry()
                 filter_,
                 bounds_,
                 ignoreCells
-            )
-        );
-    }
-    else
-    {
-        isoSurfPtr_.reset
-        (
-            new isoSurface
-            (
-                cellDistance,
-                pointDistance_,
-                distance_,
-                filter_,
-                bounds_,
-                1e-6
             )
         );
     }

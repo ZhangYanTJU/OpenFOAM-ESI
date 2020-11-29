@@ -138,7 +138,7 @@ bool Foam::sampledIsoSurfaceTopo::updateGeometry() const
 
     if (debug)
     {
-        Pout<< "sampledIsoSurfaceTopo::updateGeometry() : constructed iso:"
+        Pout<< "isoSurfaceTopo::updateGeometry() : constructed iso:"
             << nl
             << "    filter         : " << isoSurfaceBase::filterNames[filter_]
             << nl
@@ -328,7 +328,7 @@ Foam::sampledIsoSurfaceTopo::interpolate
 
 void Foam::sampledIsoSurfaceTopo::print(Ostream& os) const
 {
-    os  << "sampledIsoSurfaceTopo: " << name() << " :"
+    os  << "isoSurfaceTopo: " << name() << " :"
         << "  field:" << isoField_
         << "  value:" << isoVal_;
         //<< "  faces:" << faces().size()   // possibly no geom yet

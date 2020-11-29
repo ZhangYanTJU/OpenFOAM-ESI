@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "isoSurfaceCell.H"
-#include "isoSurface.H"
+#include "isoSurfacePoint.H"
 #include "dictionary.H"
 #include "polyMesh.H"
 #include "mergePoints.H"
@@ -1493,7 +1493,7 @@ Foam::isoSurfaceCell::isoSurfaceCell
         labelList trimTriPointMap;
         if (bounds_.valid())
         {
-            isoSurface::trimToBox
+            isoSurfacePoint::trimToBox
             (
                 treeBoundBox(bounds_),
                 triPoints,              // new points

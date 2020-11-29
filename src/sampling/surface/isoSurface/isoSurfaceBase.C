@@ -57,6 +57,31 @@ Foam::isoSurfaceBase::filterNames
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
+Foam::isoSurfaceBase::algorithmType
+Foam::isoSurfaceBase::getAlgorithmType
+(
+    const dictionary& dict,
+    const isoSurfaceBase::algorithmType deflt
+)
+{
+    word enumName;
+    if (!dict.readIfPresent("isoAlgorithm", enumName, keyType::LITERAL))
+    {
+        return deflt;
+    }
+
+    if (!algorithmNames.found(enumName))
+    {
+        FatalIOErrorInFunction(dict)
+            << enumName << " is not in enumeration: "
+            << (algorithmNames) << nl
+            << exit(FatalIOError);
+    }
+
+    return isoSurfaceBase::algorithmNames[enumName];
+}
+
+
 Foam::isoSurfaceBase::filterType
 Foam::isoSurfaceBase::getFilterType
 (
@@ -64,36 +89,30 @@ Foam::isoSurfaceBase::getFilterType
     const isoSurfaceBase::filterType deflt
 )
 {
-    word filterName;
-
-    if (!dict.readIfPresent("regularise", filterName, keyType::LITERAL))
+    word enumName;
+    if (!dict.readIfPresent("regularise", enumName, keyType::LITERAL))
     {
         return deflt;
     }
 
     // Try as bool/switch
-    Switch sw = Switch::find(filterName);
+    const Switch sw = Switch::find(enumName);
 
     if (sw.good())
     {
-        return
-        (
-            sw
-          ? deflt
-          : isoSurfaceBase::filterType::NONE
-        );
+        return (sw ? deflt : filterType::NONE);
     }
 
     // As enum
-    if (!isoSurfaceBase::filterNames.found(filterName))
+    if (!isoSurfaceBase::filterNames.found(enumName))
     {
         FatalIOErrorInFunction(dict)
-            << filterName << " is not in enumeration: "
-            << isoSurfaceBase::filterNames << nl
+            << enumName << " is not in enumeration: "
+            << (filterNames) << nl
             << exit(FatalIOError);
     }
 
-    return isoSurfaceBase::filterNames[filterName];
+    return isoSurfaceBase::filterNames[enumName];
 }
 
 
