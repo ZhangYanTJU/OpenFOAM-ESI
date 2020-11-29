@@ -41,7 +41,7 @@ Usage
     (
         surface1
         {
-            type    sampledIsoSurface;
+            type    isoSurfacePoint;
             cell    false;
         }
     );
@@ -50,7 +50,7 @@ Usage
     Where the sub-entries comprise:
     \table
         Property | Description                              | Required | Default
-        type     | sampledIsoSurface                        | yes |
+        type     | isoSurfacePoint                          | yes |
         isoField | field name for obtaining iso-surface     | yes |
         isoValue | value of iso-surface                     | yes |
         mergeTol | tolerance for merging points             | no  | 1e-6
@@ -64,13 +64,14 @@ Usage
 
 SourceFiles
     sampledIsoSurface.C
+    sampledIsoSurfaceTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef sampledIsoSurface_H
 #define sampledIsoSurface_H
 
-#include "isoSurface.H"
+#include "isoSurfacePoint.H"
 #include "sampledSurface.H"
 #include "fvMeshSubset.H"
 
@@ -80,14 +81,14 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class sampledIsoSurface Declaration
+                      Class sampledIsoSurface Declaration
 \*---------------------------------------------------------------------------*/
 
 class sampledIsoSurface
 :
     public sampledSurface
 {
-    // Private data
+    // Private Data
 
         //- Field to get isoSurface of
         const word isoField_;
@@ -107,7 +108,7 @@ class sampledIsoSurface
         //- For zones: patch to put exposed faces into
         mutable word exposedPatchName_;
 
-        mutable autoPtr<isoSurface> surfPtr_;
+        mutable autoPtr<isoSurfacePoint> isoSurfacePtr_;
 
 
     // Recreated for every isoSurface
@@ -162,7 +163,7 @@ class sampledIsoSurface
 public:
 
     //- Runtime type information
-    TypeName("sampledIsoSurface");
+    TypeName("samplediIsoSurfacePoint");
 
 
     // Constructors
@@ -182,9 +183,9 @@ public:
 
     // Member Functions
 
-        const isoSurface& surface() const
+        const isoSurfacePoint& surface() const
         {
-            return *surfPtr_;
+            return *isoSurfacePtr_;
         }
 
         //- Does the surface need an update?

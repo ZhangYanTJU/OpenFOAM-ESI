@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,8 +27,8 @@ Class
     Foam::sampledDistanceSurface
 
 Description
-    A sampledSurface defined by a distance to a surface - using either
-    an isoSurfaceCell or an isoSurface.
+    A sampledSurface defined by a distance to a surface - resolved using
+    an iso-surface (algorithm: cell, point, topo)
 
     This is often embedded as part of a sampled surfaces function object.
 
@@ -86,7 +86,7 @@ class sampledDistanceSurface
     public sampledSurface,
     public distanceSurface
 {
-    // Private data
+    // Private Data
 
         //- Whether to recalculate cell values as average of point values
         bool average_;

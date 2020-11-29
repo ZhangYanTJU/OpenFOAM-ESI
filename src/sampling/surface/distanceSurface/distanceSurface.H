@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,8 +66,8 @@ SourceFiles
 
 #include "sampledSurface.H"
 #include "searchableSurface.H"
-#include "isoSurface.H"
 #include "isoSurfaceCell.H"
+#include "isoSurfacePoint.H"
 #include "isoSurfaceTopo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -104,11 +104,11 @@ class distanceSurface
         //- Distance to points
         scalarField pointDistance_;
 
-        //- Constructed iso surface (ALGO_POINT)
-        autoPtr<isoSurface> isoSurfPtr_;
-
         //- Constructed iso surface (ALGO_CELL)
         autoPtr<isoSurfaceCell> isoSurfCellPtr_;
+
+        //- Constructed iso surface (ALGO_POINT)
+        autoPtr<isoSurfacePoint> isoSurfPointPtr_;
 
         //- Constructed iso surface (ALGO_TOPO)
         autoPtr<isoSurfaceTopo> isoSurfTopoPtr_;
@@ -171,11 +171,11 @@ public:
             {
                 return *isoSurfCellPtr_;
             }
-            else if (isoSurfTopoPtr_)
+            else if (isoSurfPointPtr_)
             {
-                return *isoSurfTopoPtr_;
+                return *isoSurfPointPtr_;
             }
-            return *isoSurfPtr_;
+            return *isoSurfTopoPtr_;
         }
 
 
@@ -186,11 +186,11 @@ public:
             {
                 return *isoSurfCellPtr_;
             }
-            else if (isoSurfTopoPtr_)
+            else if (isoSurfPointPtr_)
             {
-                return *isoSurfTopoPtr_;
+                return *isoSurfPointPtr_;
             }
-            return *isoSurfPtr_;
+            return *isoSurfTopoPtr_;
         }
 
         //- For each face, the original cell in mesh
@@ -200,11 +200,11 @@ public:
             {
                 return isoSurfCellPtr_->meshCells();
             }
-            else if (isoSurfTopoPtr_)
+            else if (isoSurfPointPtr_)
             {
-                return isoSurfTopoPtr_->meshCells();
+                return isoSurfPointPtr_->meshCells();
             }
-            return isoSurfPtr_->meshCells();
+            return isoSurfTopoPtr_->meshCells();
         }
 
         //- For each face, the original cell in mesh
@@ -214,11 +214,11 @@ public:
             {
                 return isoSurfCellPtr_->meshCells();
             }
-            else if (isoSurfTopoPtr_)
+            else if (isoSurfPointPtr_)
             {
-                return isoSurfTopoPtr_->meshCells();
+                return isoSurfPointPtr_->meshCells();
             }
-            return isoSurfPtr_->meshCells();
+            return isoSurfTopoPtr_->meshCells();
         }
 
 
@@ -237,7 +237,6 @@ public:
 
         //- Print information
         void print(Ostream& os) const;
-
 };
 
 
