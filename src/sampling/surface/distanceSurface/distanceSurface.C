@@ -72,26 +72,13 @@ Foam::distanceSurface::distanceSurface
     (
         distance_ < 0 || equal(distance_, Zero) || dict.get<bool>("signed")
     ),
-    isoAlgo_
+    isoParams_
     (
-        isoSurfaceBase::getAlgorithmType
-        (
-            dict,
-            isoSurfaceBase::ALGO_TOPO
-        )
+        dict,
+        isoSurfaceParams::ALGO_TOPO,
+        isoSurfaceParams::filterType::DIAGCELL
     ),
-    filter_
-    (
-        isoSurfaceBase::getFilterType
-        (
-            dict,
-            isoSurfaceBase::filterType::DIAGCELL
-        )
-    ),
-    bounds_(dict.getOrDefault("bounds", boundBox::invertedBox)),
-    isoSurfCellPtr_(nullptr),
-    isoSurfPointPtr_(nullptr),
-    isoSurfTopoPtr_(nullptr)
+    isoSurfacePtr_(nullptr)
 {}
 
 
@@ -103,9 +90,7 @@ Foam::distanceSurface::distanceSurface
     const word& surfaceName,
     const scalar distance,
     const bool signedDistance,
-    const isoSurfaceBase::algorithmType algo,
-    const isoSurfaceBase::filterType filter,
-    const boundBox& bounds
+    const isoSurfaceParams& params
 )
 :
     mesh_(mesh),
@@ -131,12 +116,8 @@ Foam::distanceSurface::distanceSurface
     (
         signedDistance || distance_ < 0 || equal(distance_, Zero)
     ),
-    isoAlgo_(algo),
-    filter_(filter),
-    bounds_(bounds),
-    isoSurfCellPtr_(nullptr),
-    isoSurfPointPtr_(nullptr),
-    isoSurfTopoPtr_(nullptr)
+    isoParams_(params),
+    isoSurfacePtr_(nullptr)
 {}
 
 
@@ -150,9 +131,7 @@ void Foam::distanceSurface::createGeometry()
     }
 
     // Clear any stored topologies
-    isoSurfCellPtr_.clear();
-    isoSurfPointPtr_.clear();
-    isoSurfTopoPtr_.clear();
+    isoSurfacePtr_.clear();
 
     const fvMesh& fvm = static_cast<const fvMesh&>(mesh_);
 
@@ -185,7 +164,7 @@ void Foam::distanceSurface::createGeometry()
     const bool filterCells =
     (
         isZeroDist
-     && isoAlgo_ != isoSurfaceBase::ALGO_POINT
+     && isoParams_.algorithm() != isoSurfaceParams::ALGO_POINT
     );
 
     bitSet ignoreCells;
@@ -372,56 +351,17 @@ void Foam::distanceSurface::createGeometry()
     }
 
 
-    // Direct from cell field and point field.
-    if (isoAlgo_ == isoSurfaceBase::ALGO_CELL)
-    {
-        isoSurfCellPtr_.reset
+    isoSurfacePtr_.reset
+    (
+        isoSurfaceBase::New
         (
-            new isoSurfaceCell
-            (
-                fvm,
-                cellDistance,
-                pointDistance_,
-                distance_,
-                filter_,
-                bounds_,
-                1e-6,  // mergeTol
-                ignoreCells
-            )
-        );
-    }
-    else if (isoAlgo_ == isoSurfaceBase::ALGO_POINT)
-    {
-        isoSurfPointPtr_.reset
-        (
-            new isoSurfacePoint
-            (
-                cellDistance,
-                pointDistance_,
-                distance_,
-                filter_,
-                bounds_,
-                1e-6  // mergeTol
-            )
-        );
-    }
-    else
-    {
-        // isoSurfaceBase::ALGO_TOPO
-        isoSurfTopoPtr_.reset
-        (
-            new isoSurfaceTopo
-            (
-                fvm,
-                cellDistance,
-                pointDistance_,
-                distance_,
-                filter_,
-                bounds_,
-                ignoreCells
-            )
-        );
-    }
+            isoParams_,
+            cellDistance,
+            pointDistance_,
+            distance_,
+            ignoreCells
+        )
+    );
 
     if (debug)
     {

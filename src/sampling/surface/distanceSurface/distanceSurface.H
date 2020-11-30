@@ -69,9 +69,7 @@ SourceFiles
 
 #include "sampledSurface.H"
 #include "searchableSurface.H"
-#include "isoSurfaceCell.H"
-#include "isoSurfacePoint.H"
-#include "isoSurfaceTopo.H"
+#include "isoSurfaceBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -98,14 +96,8 @@ class distanceSurface
         //- Signed distance
         const bool signed_;
 
-        //- The iso-surface algorithm type
-        const isoSurfaceBase::algorithmType isoAlgo_;
-
-        //- Filtering for iso-surface triangles
-        const isoSurfaceBase::filterType filter_;
-
-        //- Optional bounding box to trim against
-        const boundBox bounds_;
+        //- Parameters for iso-surface (algorithm, filter, mergeTol, etc)
+        isoSurfaceParams isoParams_;
 
         //- Distance to cell centres
         autoPtr<volScalarField> cellDistancePtr_;
@@ -113,14 +105,9 @@ class distanceSurface
         //- Distance to points
         scalarField pointDistance_;
 
-        //- Constructed iso surface (ALGO_CELL)
-        autoPtr<isoSurfaceCell> isoSurfCellPtr_;
+        //- Constructed iso surface
+        autoPtr<isoSurfaceBase> isoSurfacePtr_;
 
-        //- Constructed iso surface (ALGO_POINT)
-        autoPtr<isoSurfacePoint> isoSurfPointPtr_;
-
-        //- Constructed iso surface (ALGO_TOPO)
-        autoPtr<isoSurfaceTopo> isoSurfTopoPtr_;
 
 public:
 
@@ -147,9 +134,7 @@ public:
             const word& surfaceName,
             const scalar distance,
             const bool signedDistance,
-            const isoSurfaceBase::algorithmType algo,
-            const isoSurfaceBase::filterType filter,
-            const boundBox& bounds = boundBox::invertedBox
+            const isoSurfaceParams& params = isoSurfaceParams()
         );
 
 
@@ -174,62 +159,32 @@ public:
             return distance_;
         }
 
-
         //- The underlying surface
         const meshedSurface& surface() const
         {
-            if (isoSurfCellPtr_)
-            {
-                return *isoSurfCellPtr_;
-            }
-            else if (isoSurfPointPtr_)
-            {
-                return *isoSurfPointPtr_;
-            }
-            return *isoSurfTopoPtr_;
+            return *isoSurfacePtr_;
         }
-
 
         //- The underlying surface
         meshedSurface& surface()
         {
-            if (isoSurfCellPtr_)
-            {
-                return *isoSurfCellPtr_;
-            }
-            else if (isoSurfPointPtr_)
-            {
-                return *isoSurfPointPtr_;
-            }
-            return *isoSurfTopoPtr_;
+            return *isoSurfacePtr_;
         }
 
         //- For each face, the original cell in mesh
         const labelList& meshCells() const
         {
-            if (isoSurfCellPtr_)
+            if (isoSurfacePtr_)
             {
-                return isoSurfCellPtr_->meshCells();
+                return isoSurfacePtr_->meshCells();
             }
-            else if (isoSurfPointPtr_)
-            {
-                return isoSurfPointPtr_->meshCells();
-            }
-            return isoSurfTopoPtr_->meshCells();
+            return labelList::null();
         }
 
         //- For each face, the original cell in mesh
         labelList& meshCells()
         {
-            if (isoSurfCellPtr_)
-            {
-                return isoSurfCellPtr_->meshCells();
-            }
-            else if (isoSurfPointPtr_)
-            {
-                return isoSurfPointPtr_->meshCells();
-            }
-            return isoSurfTopoPtr_->meshCells();
+            return isoSurfacePtr_->meshCells();
         }
 
 
@@ -241,7 +196,14 @@ public:
         (
             const GeometricField<Type, fvPatchField, volMesh>& cellValues,
             const Field<Type>& pointValues
-        ) const;
+        ) const
+        {
+            if (isoSurfacePtr_)
+            {
+                return isoSurfacePtr_->interpolate(cellValues, pointValues);
+            }
+            return nullptr;
+        }
 
 
     // Output
@@ -254,12 +216,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "distanceSurfaceTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

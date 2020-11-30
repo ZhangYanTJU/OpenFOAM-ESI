@@ -81,9 +81,7 @@ SourceFiles
 #include "sampledSurface.H"
 #include "plane.H"
 #include "fvMeshSubset.H"
-#include "isoSurfaceCell.H"
-#include "isoSurfacePoint.H"
-#include "isoSurfaceTopo.H"
+#include "isoSurfaceBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -103,17 +101,8 @@ class sampledCuttingPlane
         //- Plane
         const plane plane_;
 
-        //- Optional bounding box to trim triangles against
-        const boundBox bounds_;
-
-        //- Merge tolerance
-        const scalar mergeTol_;
-
-        //- The iso-surface algorithm type
-        const isoSurfaceBase::algorithmType isoAlgo_;
-
-        //- Filtering for iso-surface triangles
-        const isoSurfaceBase::filterType filter_;
+        //- Parameters (filtering etc) for iso-surface
+        const isoSurfaceParams isoParams_;
 
         //- Whether to recalculate cell values as average of point values
         const bool average_;
@@ -137,14 +126,8 @@ class sampledCuttingPlane
         //- Distance to points
         scalarField pointDistance_;
 
-        //- Constructed iso surface (ALGO_CELL)
-        autoPtr<isoSurfaceCell> isoSurfCellPtr_;
-
-        //- Constructed iso surface (ALGO_POINT)
-        autoPtr<isoSurfacePoint> isoSurfPointPtr_;
-
-        //- Constructed iso surface (ALGO_TOPO)
-        autoPtr<isoSurfaceTopo> isoSurfTopoPtr_;
+        //- Constructed iso surface
+        autoPtr<isoSurfaceBase> isoSurfacePtr_;
 
 
     // Private Member Functions
@@ -179,7 +162,15 @@ class sampledCuttingPlane
         (
             const GeometricField<Type, fvPatchField, volMesh>& cellValues,
             const Field<Type>& pointValues
-        ) const;
+        ) const
+        {
+            if (isoSurfacePtr_)
+            {
+                return isoSurfacePtr_->interpolate(cellValues, pointValues);
+            }
+            return nullptr;
+        }
+
 
 public:
 
@@ -256,57 +247,29 @@ public:
         //- The underlying surface
         const meshedSurface& surface() const
         {
-            if (isoSurfCellPtr_)
-            {
-                return *isoSurfCellPtr_;
-            }
-            else if (isoSurfPointPtr_)
-            {
-                return *isoSurfPointPtr_;
-            }
-            return *isoSurfTopoPtr_;
+            return *isoSurfacePtr_;
         }
 
         //- The underlying surface
         meshedSurface& surface()
         {
-            if (isoSurfCellPtr_)
-            {
-                return *isoSurfCellPtr_;
-            }
-            else if (isoSurfPointPtr_)
-            {
-                return *isoSurfPointPtr_;
-            }
-            return *isoSurfTopoPtr_;
+            return *isoSurfacePtr_;
         }
 
         //- For each face, the original cell in mesh
         const labelList& meshCells() const
         {
-            if (isoSurfCellPtr_)
+            if (isoSurfacePtr_)
             {
-                return isoSurfCellPtr_->meshCells();
+                return isoSurfacePtr_->meshCells();
             }
-            else if (isoSurfPointPtr_)
-            {
-                return isoSurfPointPtr_->meshCells();
-            }
-            return isoSurfTopoPtr_->meshCells();
+            return labelList::null();
         }
 
         //- For each face, the original cell in mesh
         labelList& meshCells()
         {
-            if (isoSurfCellPtr_)
-            {
-                return isoSurfCellPtr_->meshCells();
-            }
-            else if (isoSurfPointPtr_)
-            {
-                return isoSurfPointPtr_->meshCells();
-            }
-            return isoSurfTopoPtr_->meshCells();
+            return isoSurfacePtr_->meshCells();
         }
 
 

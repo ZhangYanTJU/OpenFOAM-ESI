@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,18 +49,17 @@ Usage
 
     Where the sub-entries comprise:
     \table
-        Property | Description                             | Required | Default
-        type     | sampledIsoSurfaceCell                   | yes      |
-        isoField | field name for obtaining iso-surface    | yes      |
-        isoValue | value of iso-surface                    | yes      |
-        mergeTol | tolerance for merging points            | no       | 1e-6
-        regularise | point snapping                        | yes      |
-        average  | cell values from averaged point values  | no       | false
-        bounds   | limit with bounding box                 | no       |
+        Property | Description                              | Required | Default
+        type     | sampledIsoSurfaceCell                    | yes |
+        isoField | field name for obtaining iso-surface     | yes |
+        isoValue | value of iso-surface                     | yes |
+        mergeTol | tolerance for merging points             | no  | 1e-6
+        regularise | point snapping                         | yes |
+        average  | cell values from averaged point values   | no  | false
+        bounds   | limit with bounding box                  | no  |
+        zone     | limit to cell zone (name or regex)       | no  |
+        zones    | limit to cell zones (names, regexs)      | no  |
     \endtable
-
-Note
-    Does not currently support cell zones.
 
 SourceFiles
     sampledIsoSurfaceCell.C
@@ -92,7 +91,8 @@ class sampledIsoSurfaceCell
     // Private typedefs for convenience
     typedef meshedSurface Mesh;
 
-    // Private data
+
+    // Private Data
 
         //- Field to get isoSurface of
         const word isoField_;
@@ -100,14 +100,14 @@ class sampledIsoSurfaceCell
         //- Iso value
         const scalar isoVal_;
 
-        //- Filtering for iso-surface triangles
-        const isoSurfaceBase::filterType filter_;
+        //- Parameters (filtering etc) for iso-surface
+        const isoSurfaceParams isoParams_;
 
         //- Whether to recalculate cell values as average of point values
         const bool average_;
 
-        //- Optional bounding box to trim triangles against
-        const boundBox bounds_;
+        //- The zone or zones for the iso-surface
+        wordRes zoneNames_;
 
 
     // Recreated for every isoSurface
@@ -117,6 +117,12 @@ class sampledIsoSurfaceCell
 
         //- For every triangle the original cell in mesh
         mutable labelList meshCells_;
+
+
+    // Mesh subsetting
+
+        //- Cached ignore cells for sub-mesh (zoned)
+        mutable autoPtr<bitSet> ignoreCellsPtr_;
 
 
     // Private Member Functions

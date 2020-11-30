@@ -26,108 +26,334 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "isoSurfaceBase.H"
+#include "polyMesh.H"
+#include "tetMatcher.H"
+#include "cyclicACMIPolyPatch.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-const Foam::Enum
-<
-    Foam::isoSurfaceBase::algorithmType
->
-Foam::isoSurfaceBase::algorithmNames
-({
-    { algorithmType::ALGO_CELL, "cell" },
-    { algorithmType::ALGO_TOPO, "topo" },
-    { algorithmType::ALGO_POINT, "point" },
-});
+#include "isoSurfaceBaseMethods.H"
+defineIsoSurfaceInterpolateMethods(Foam::isoSurfaceBase);
 
 
-const Foam::Enum
-<
-    Foam::isoSurfaceBase::filterType
->
-Foam::isoSurfaceBase::filterNames
-({
-    { filterType::NONE, "none" },
-    { filterType::CELL, "cell" },
-    { filterType::DIAGCELL, "diagcell" },
-    { filterType::PARTIAL, "partial" },
-    { filterType::FULL, "full" },
-});
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
+namespace Foam
+{
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
-
-Foam::isoSurfaceBase::algorithmType
-Foam::isoSurfaceBase::getAlgorithmType
+// Test face for edge cuts
+inline static bool isFaceCut
 (
-    const dictionary& dict,
-    const isoSurfaceBase::algorithmType deflt
+    const scalar isoval,
+    const scalarField& pointValues,
+    const labelUList& indices
 )
 {
-    word enumName;
-    if (!dict.readIfPresent("isoAlgorithm", enumName, keyType::LITERAL))
+    auto iter = indices.cbegin();
+    const auto last = indices.cend();
+
+    // if (iter == last) return false;  // ie, indices.empty()
+
+    const bool aLower = (pointValues[*iter] < isoval);
+    ++iter;
+
+    while (iter != last)
     {
-        return deflt;
+        if (aLower != (pointValues[*iter] < isoval))
+        {
+            return true;
+        }
+        ++iter;
     }
 
-    if (!algorithmNames.found(enumName))
-    {
-        FatalIOErrorInFunction(dict)
-            << enumName << " is not in enumeration: "
-            << (algorithmNames) << nl
-            << exit(FatalIOError);
-    }
-
-    return isoSurfaceBase::algorithmNames[enumName];
+    return false;
 }
 
-
-Foam::isoSurfaceBase::filterType
-Foam::isoSurfaceBase::getFilterType
-(
-    const dictionary& dict,
-    const isoSurfaceBase::filterType deflt
-)
-{
-    word enumName;
-    if (!dict.readIfPresent("regularise", enumName, keyType::LITERAL))
-    {
-        return deflt;
-    }
-
-    // Try as bool/switch
-    const Switch sw = Switch::find(enumName);
-
-    if (sw.good())
-    {
-        return (sw ? deflt : filterType::NONE);
-    }
-
-    // As enum
-    if (!isoSurfaceBase::filterNames.found(enumName))
-    {
-        FatalIOErrorInFunction(dict)
-            << enumName << " is not in enumeration: "
-            << (filterNames) << nl
-            << exit(FatalIOError);
-    }
-
-    return isoSurfaceBase::filterNames[enumName];
-}
+} // End namespace Foam
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::isoSurfaceBase::isoSurfaceBase
 (
+    const polyMesh& mesh,
+    const scalarField& cellValues,
+    const scalarField& pointValues,
     const scalar iso,
-    const boundBox& bounds
+    const isoSurfaceParams& params
 )
 :
     meshedSurface(),
+    isoSurfaceParams(params),
+    mesh_(mesh),
+    cVals_(cellValues),
+    pVals_(pointValues),
     iso_(iso),
-    bounds_(bounds)
+    ignoreBoundaryFaces_(),
+    meshCells_()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::bitSet Foam::isoSurfaceBase::tetCells() const
+{
+    // Calculate a tet/non-tet filter
+    bitSet isTet(mesh_.nCells());
+
+    tetMatcher tet;
+
+    for (label celli = 0; celli < mesh_.nCells(); ++celli)
+    {
+        if (tet.isA(mesh_, celli))
+        {
+            isTet.set(celli);
+        }
+    }
+
+    return isTet;
+}
+
+
+void Foam::isoSurfaceBase::ignoreCyclics()
+{
+    // Determine boundary pyramids to ignore (originating from ACMI faces)
+    // Maybe needs to be optional argument or more general detect colocated
+    // faces.
+
+    for (const polyPatch& pp : mesh_.boundaryMesh())
+    {
+        if (isA<cyclicACMIPolyPatch>(pp))
+        {
+            ignoreBoundaryFaces_.set(labelRange(pp.offset(), pp.size()));
+        }
+    }
+}
+
+
+Foam::label Foam::isoSurfaceBase::countCutType
+(
+    const UList<cutType>& cuts,
+    const uint8_t maskValue
+)
+{
+    label count = 0;
+
+    for (const cutType cut : cuts)
+    {
+        if (maskValue ? (cut & maskValue) != 0 : !cut)
+        {
+            ++count;
+        }
+    }
+
+    return count;
+}
+
+
+void Foam::isoSurfaceBase::resetCuts(UList<cutType>& cuts)
+{
+    for (cutType& cut : cuts)
+    {
+        if (cut != cutType::BLOCKED)
+        {
+            cut = cutType::UNVISITED;
+        }
+    }
+}
+
+
+Foam::label Foam::isoSurfaceBase::blockCells
+(
+    UList<cutType>& cuts,
+    const bitSet& ignoreCells
+) const
+{
+    label count = 0;
+
+    for (const label celli : ignoreCells)
+    {
+        if (celli >= cuts.size())
+        {
+            break;
+        }
+
+        cuts[celli] = cutType::BLOCKED;
+        ++count;
+    }
+
+    return count;
+}
+
+
+Foam::label Foam::isoSurfaceBase::blockCells
+(
+    UList<cutType>& cuts,
+    const boundBox& bb,
+    const volumeType::type volType
+) const
+{
+    label count = 0;
+
+    // Mark cells inside/outside bounding box as blocked
+    const bool keepInside = (volType == volumeType::INSIDE);
+
+    if (!keepInside && volType != volumeType::OUTSIDE)
+    {
+        // Could warn about invalid...
+    }
+    else if (bb.valid())
+    {
+        const pointField& cc = mesh_.cellCentres();
+
+        forAll(cuts, celli)
+        {
+            if
+            (
+                cuts[celli] == cutType::UNVISITED
+             && (bb.contains(cc[celli]) ? keepInside : !keepInside)
+            )
+            {
+                cuts[celli] = cutType::BLOCKED;
+                ++count;
+            }
+        }
+    }
+
+    return count;
+}
+
+
+Foam::label Foam::isoSurfaceBase::calcCellCuts
+(
+    List<cutType>& cuts
+) const
+{
+    return calcCellCuts(cuts, tetCells());
+}
+
+
+Foam::label Foam::isoSurfaceBase::calcCellCuts
+(
+    List<cutType>& cuts,
+    const bitSet& isTetCell
+) const
+{
+    // Don't consider SPHERE cuts in the total number of cells cut
+    constexpr uint8_t realCut(cutType::CUT | cutType::TETCUT);
+
+    cuts.resize(mesh_.nCells(), cutType::UNVISITED);
+
+    label nCuts = 0;
+    forAll(cuts, celli)
+    {
+        if (cuts[celli] == cutType::UNVISITED)
+        {
+            cuts[celli] = getCellCutType(celli, isTetCell.test(celli));
+
+            if ((cuts[celli] & realCut) != 0)
+            {
+                ++nCuts;
+            }
+        }
+    }
+
+    return nCuts;
+}
+
+
+Foam::isoSurfaceBase::cutType
+Foam::isoSurfaceBase::getFaceCutType(const label facei) const
+{
+    return
+    (
+        (
+            mesh_.isInternalFace(facei)
+         || !ignoreBoundaryFaces_.test(facei-mesh_.nInternalFaces())
+        )
+     && isFaceCut(iso_, pVals_, mesh_.faces()[facei])
+    ) ? cutType::CUT : cutType::NOTCUT;
+}
+
+
+Foam::isoSurfaceBase::cutType
+Foam::isoSurfaceBase::getCellCutType_tet(const label celli) const
+{
+    // Tet-only version of calcCutType()
+
+    for (const label facei : mesh_.cells()[celli])
+    {
+        if
+        (
+            !mesh_.isInternalFace(facei)
+         && ignoreBoundaryFaces_.test(facei-mesh_.nInternalFaces())
+        )
+        {
+            continue;
+        }
+
+        if (isFaceCut(iso_, pVals_, mesh_.faces()[facei]))
+        {
+            return cutType::TETCUT;
+        }
+    }
+
+    return cutType::NOTCUT;
+}
+
+
+Foam::isoSurfaceBase::cutType
+Foam::isoSurfaceBase::getCellCutType
+(
+    const label celli,
+    const bool isTet
+) const
+{
+    if (isTet)
+    {
+        return getCellCutType_tet(celli);
+    }
+
+    label nPyrEdges = 0;
+    label nPyrCuts = 0;
+
+    const bool cellLower = (cVals_[celli] < iso_);
+
+    for (const label facei : mesh_.cells()[celli])
+    {
+        if
+        (
+           !mesh_.isInternalFace(facei)
+         && ignoreBoundaryFaces_.test(facei-mesh_.nInternalFaces())
+        )
+        {
+            continue;
+        }
+
+        const face& f = mesh_.faces()[facei];
+
+        // Count pyramid edges cut
+        for (const label pointi : f)
+        {
+            ++nPyrEdges;
+
+            if (cellLower != (pVals_[pointi] < iso_))
+            {
+                ++nPyrCuts;
+            }
+        }
+    }
+
+    if (nPyrCuts == 0)
+    {
+        return cutType::NOTCUT;
+    }
+
+    // If all pyramid edges are cut (no outside faces),
+    // it is a sphere cut
+
+    return (nPyrCuts == nPyrEdges) ? cutType::SPHERE : cutType::CUT;
+}
 
 
 // ************************************************************************* //

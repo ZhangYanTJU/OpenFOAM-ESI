@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2018 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,6 +64,27 @@ bool Foam::sampledIsoSurfaceCell::updateGeometry() const
 
     // Clear derived data
     sampledSurface::clearGeom();
+
+
+    // Handle cell zones as inverse (blocked) selection
+    if (!ignoreCellsPtr_)
+    {
+        ignoreCellsPtr_.reset(new bitSet);
+
+        if (-1 != mesh().cellZones().findIndex(zoneNames_))
+        {
+            bitSet select(mesh().cellZones().selection(zoneNames_));
+
+            if (select.any() && !select.all())
+            {
+                // From selection to blocking
+                select.flip();
+
+                *ignoreCellsPtr_ = std::move(select);
+            }
+        }
+    }
+
 
     // Use field from database, or try to read it in
 
@@ -148,9 +169,8 @@ bool Foam::sampledIsoSurfaceCell::updateGeometry() const
         tcellValues(),
         tpointFld().primitiveField(),
         isoVal_,
-        filter_,
-        bounds_,
-        1e-6  // mergeTol
+        isoParams_,
+        *ignoreCellsPtr_
     );
 
     mySurface.transfer(static_cast<meshedSurface&>(surf));
@@ -158,13 +178,13 @@ bool Foam::sampledIsoSurfaceCell::updateGeometry() const
 
     if (debug)
     {
-        Pout<< "isoSurfaceCell::updateGeometry() : constructed iso:"
-            << nl
-            << "    filter         : " << Switch(bool(filter_)) << nl
+        Pout<< "isoSurfaceCell::updateGeometry() : constructed iso:" << nl
+            << "    filter         : "
+            << Switch(bool(isoParams_.filter())) << nl
             << "    average        : " << Switch(average_) << nl
             << "    isoField       : " << isoField_ << nl
             << "    isoValue       : " << isoVal_ << nl
-            << "    bounds         : " << bounds_ << nl
+            << "    bounds         : " << isoParams_.getClipBounds() << nl
             << "    points         : " << points().size() << nl
             << "    faces          : " << Mesh::size() << nl
             << "    cut cells      : " << meshCells_.size() << endl;
@@ -187,19 +207,24 @@ Foam::sampledIsoSurfaceCell::sampledIsoSurfaceCell
     Mesh(),
     isoField_(dict.get<word>("isoField")),
     isoVal_(dict.get<scalar>("isoValue")),
-    filter_
-    (
-        isoSurfaceBase::getFilterType
-        (
-            dict,
-            isoSurfaceBase::filterType::DIAGCELL
-        )
-    ),
+    isoParams_(dict),
     average_(dict.getOrDefault("average", true)),
-    bounds_(dict.getOrDefault("bounds", boundBox::invertedBox)),
+    zoneNames_(),
     prevTimeIndex_(-1),
     meshCells_()
-{}
+{
+    if (!dict.readIfPresent("zones", zoneNames_) && dict.found("zone"))
+    {
+        zoneNames_.resize(1);
+        dict.readEntry("zone", zoneNames_.first());
+    }
+
+    if (-1 != mesh.cellZones().findIndex(zoneNames_))
+    {
+        DebugInfo
+            << "Restricting to cellZone(s) " << flatOutput(zoneNames_) << endl;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -222,6 +247,8 @@ bool Foam::sampledIsoSurfaceCell::expire()
 {
     // Clear derived data
     sampledSurface::clearGeom();
+
+    ignoreCellsPtr_.reset(nullptr);
 
     // Already marked as expired
     if (prevTimeIndex_ == -1)

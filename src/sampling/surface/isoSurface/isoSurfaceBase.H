@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,24 +29,26 @@ Class
 Description
     Low-level components common to various iso-surface algorithms.
 
-    Some common dictionary properties:
-    \table
-        Property | Description                              | Required | Default
-        isoAlgorithm | (cell/topo/point)                    | no  | point
-        regularise | point snapping (bool or enum)          | no  | true
-    \endtable
+Note
+    The interpolation samplers currently require a volField for the cell
+    values. This is largely a restriction imposed by the point algorithm
+    and may be revised in the future.
 
 SourceFiles
     isoSurfaceBase.C
+    isoSurfaceBaseNew.C
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef isoSurfaceBase_H
 #define isoSurfaceBase_H
 
-#include "scalar.H"
-#include "Enum.H"
+#include "isoSurfaceParams.H"
+#include "bitSet.H"
 #include "boundBox.H"
+#include "scalarField.H"
+#include "volumeType.H"
+#include "volFieldsFwd.H"
 #include "MeshedSurface.H"
 #include "MeshedSurfacesFwd.H"
 
@@ -55,109 +57,273 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
+class polyMesh;
+class tetCell;
+
 /*---------------------------------------------------------------------------*\
                        Class isoSurfaceBase Declaration
 \*---------------------------------------------------------------------------*/
 
 class isoSurfaceBase
 :
-    public meshedSurface
+    public meshedSurface,
+    public isoSurfaceParams
 {
+public:
+
+    // Data Types
+
+        //- The type of cell/face cuts
+        enum cutType : uint8_t
+        {
+            NOTCUT = 0,         //!< Not cut
+            CUT = 0x1,          //!< Normal cut
+            TETCUT = 0x2,       //!< Cell cut is a tet
+            SPHERE = 0x4,       //!< All edges to cell centre cut
+            ANYCUT = 0xF,       //!< Any cut type (bitmask)
+
+            UNVISITED = 0x10,   //!< Unvisited
+            BLOCKED = 0x20,     //!< Blocked (never cut)
+            SPECIAL = 0xF0      //!< Bitmask for specials
+        };
+
+
 protected:
 
     // Protected typedefs for convenience
     typedef meshedSurface Mesh;
 
+    // Typedef for code transition
+    typedef cutType cellCutType;
+
+
     // Protected Data
+
+        //- Reference to mesh
+        const polyMesh& mesh_;
+
+        //- Cell values
+        const scalarField& cVals_;
+
+        //- Point values
+        const scalarField& pVals_;
 
         //- Iso value
         const scalar iso_;
 
-        //- Optional bounds
-        const boundBox bounds_;
+
+    // Controls, restrictions
+
+        //- Optional boundary faces to ignore.
+        //  Eg, Used to exclude cyclicACMI (since duplicate faces)
+        bitSet ignoreBoundaryFaces_;
+
+
+    // Sampling information
 
         //- For every face, the original cell in mesh
         labelList meshCells_;
 
 
+    // Protected Member Functions
+
+        //- Check for tet values above/below given (iso) value
+        //  Result encoded as a single integer
+        inline static constexpr int getTetCutIndex
+        (
+            const scalar a,
+            const scalar b,
+            const scalar c,
+            const scalar d,
+            const scalar isoval
+        ) noexcept
+        {
+            return
+            (
+                (a < isoval ? 1 : 0)
+              | (b < isoval ? 2 : 0)
+              | (c < isoval ? 4 : 0)
+              | (d < isoval ? 8 : 0)
+            );
+        }
+
+        //- Count the number of cuts matching the mask type
+        //  Checks as bitmask or as zero.
+        static label countCutType
+        (
+            const UList<cutType>& cuts,
+            const uint8_t maskValue
+        );
+
+        //- Dummy templated interpolate method
+        template<class Type>
+        tmp<Field<Type>> interpolateTemplate
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& cellValues,
+            const Field<Type>& pointValues
+        ) const
+        {
+            return nullptr;
+        }
+
+        //- No copy construct
+        isoSurfaceBase(const isoSurfaceBase&) = delete;
+
+        //- No copy assignment
+        void operator=(const isoSurfaceBase&) = delete;
+
+
 public:
 
-    //- The algorithm types
-    enum algorithmType : uint8_t
-    {
-        ALGO_POINT,
-        ALGO_CELL,
-        ALGO_TOPO
-    };
-
-
-    //- The filtering (regularization) to apply
-    enum class filterType : uint8_t
-    {
-        NONE = 0,   //!< No filtering
-        CELL,       //!< Remove points from pyramid edges
-        DIAGCELL,   //!< Remove points from pyramid edges and face-diagonals
-        PARTIAL = CELL,     //!< Same as CELL
-        FULL = DIAGCELL,    //!< Same as DIAGCELL
-    };
-
-
-    // Public Data
-
-        //- Names for the iso-surface algorithms
-        static const Enum<algorithmType> algorithmNames;
-
-        //- Names for the filtering types
-        static const Enum<filterType> filterNames;
-
-
-
-    // Static Member Functions
-
-        //- Get 'isoAlgorithm' as enumeration
-        static algorithmType getAlgorithmType
-        (
-            const dictionary& dict,
-            const isoSurfaceBase::algorithmType deflt
-        );
-
-        //- Get 'regularise' as bool or enumeration
-        static filterType getFilterType
-        (
-            const dictionary& dict,
-            const isoSurfaceBase::filterType deflt
-        );
+    // Typedefs for code transition
+    using isoSurfaceParams::algorithmType;
+    using isoSurfaceParams::filterType;
 
 
     // Constructors
 
-        //- Construct with iso value
-        explicit isoSurfaceBase
+        //- Construct with mesh, cell/point values and iso-value
+        isoSurfaceBase
         (
+            const polyMesh& mesh,
+            const scalarField& cellValues,
+            const scalarField& pointValues,
             const scalar iso,
-            const boundBox& bounds = boundBox::invertedBox
+            const isoSurfaceParams& params = isoSurfaceParams()
+        );
+
+
+    // Selector
+
+        //- Create for specified algorithm type
+        //  Currently uses hard-code lookups based in isoSurfaceParams
+        static autoPtr<isoSurfaceBase> New
+        (
+            const isoSurfaceParams& params,
+            const volScalarField& cellValues,
+            const scalarField& pointValues,
+            const scalar iso,
+            const bitSet& ignoreCells = bitSet()
         );
 
 
     // Member Functions
 
+    // Access, Edit
+
+        //- The mesh for which the iso-surface is associated
+        const polyMesh& mesh() const noexcept
+        {
+            return mesh_;
+        }
+
+        //- The mesh cell values used for creating the iso-surface
+        const scalarField& cellValues() const noexcept
+        {
+            return cVals_;
+        }
+
+        //- The mesh point values used for creating the iso-surface
+        const scalarField& pointValues() const noexcept
+        {
+            return pVals_;
+        }
+
         //- The iso-value associated with the surface
-        inline scalar isoValue() const
+        scalar isoValue() const noexcept
         {
             return iso_;
         }
 
         //- For each face, the original cell in mesh
-        const labelList& meshCells() const
+        const labelList& meshCells() const noexcept
         {
             return meshCells_;
         }
 
         //- For each face, the original cell in mesh
-        labelList& meshCells()
+        labelList& meshCells() noexcept
         {
             return meshCells_;
         }
+
+
+    // Helpers
+
+        //- Return a bitSet marking tet cells.
+        bitSet tetCells() const;
+
+        //- Restore non-BLOCKED state to an UNVISITED state
+        static void resetCuts(UList<cutType>& cuts);
+
+        //- Mark ignoreCells as BLOCKED
+        label blockCells
+        (
+            UList<cutType>& cuts,
+            const bitSet& ignoreCells
+        ) const;
+
+        //- Mark cells inside/outside a (valid) bound box as BLOCKED
+        //  The volType is INSIDE or OUTSIDE only
+        label blockCells
+        (
+            UList<cutType>& cuts,
+            const boundBox& bb,
+            const volumeType::type volType
+        ) const;
+
+
+    // Cutting
+
+        //- Set ignoreBoundaryFaces to ignore cyclics (cyclicACMI)
+        void ignoreCyclics();
+
+        //- Populate a list of candidate cell cuts.
+        //  Uses tetMatcher to pick TET specialization
+        label calcCellCuts(List<cutType>& cuts) const;
+
+        //- Populate a list of candidate cell cuts.
+        //  Uses supplied bitSet to pick TET specialization
+        label calcCellCuts
+        (
+            List<cutType>& cuts,
+            const bitSet& isTetCell
+        ) const;
+
+
+        //- Determine face cut for an individual face
+        cutType getFaceCutType(const label facei) const;
+
+        //- Determine cell cut for an individual cell, optionally
+        //- with specialization for a TET cell
+        cutType getCellCutType
+        (
+            const label celli,
+            const bool isTet = false
+        ) const;
+
+        //- Determine cell cut for an individual TET cell
+        cutType getCellCutType_tet(const label celli) const;
+
+
+    // Sampling
+
+#undef  declareIsoSurfaceInterpolateMethod
+#define declareIsoSurfaceInterpolateMethod(Type)                               \
+        /*! \brief interpolate Type cellValues, pointValues on iso-surface */  \
+        virtual tmp<Field<Type>>                                               \
+        interpolate                                                            \
+        (                                                                      \
+            const GeometricField<Type, fvPatchField, volMesh>& cellValues,     \
+            const Field<Type>& pointValues                                     \
+        ) const;
+
+        declareIsoSurfaceInterpolateMethod(scalar);
+        declareIsoSurfaceInterpolateMethod(vector);
+        declareIsoSurfaceInterpolateMethod(sphericalTensor);
+        declareIsoSurfaceInterpolateMethod(symmTensor);
+        declareIsoSurfaceInterpolateMethod(tensor);
 };
 
 

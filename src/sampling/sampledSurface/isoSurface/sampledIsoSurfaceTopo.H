@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 OpenFOAM Foundation
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,10 +56,10 @@ Usage
         isoValue | value of iso-surface                     | yes |
         regularise | filter faces (bool or enum)            | no  | true
         triangulate | triangulate faces (if regularise)     | no  | false
+        bounds   | limit with bounding box                  | no  |
+        zone     | limit to cell zone (name or regex)       | no  |
+        zones    | limit to cell zones (names, regexs)      | no  |
     \endtable
-
-Note
-    Does not currently support cell zones.
 
 SourceFiles
     sampledIsoSurfaceTopo.C
@@ -100,11 +100,17 @@ class sampledIsoSurfaceTopo
         //- Iso value
         const scalar isoVal_;
 
-        //- Filtering for iso-surface triangles
-        const isoSurfaceBase::filterType filter_;
+        //- Parameters (filtering etc) for iso-surface
+        const isoSurfaceParams isoParams_;
 
         //- Whether to triangulate (after filtering)
         const bool triangulate_;
+
+        //- Optional bounding box to restrict cells
+        const boundBox bounds_;
+
+        //- The zone or zones for the iso-surface
+        wordRes zoneNames_;
 
 
     // Recreated for every isoSurface
@@ -114,6 +120,12 @@ class sampledIsoSurfaceTopo
 
         //- For every triangle/face the original cell in mesh
         mutable labelList meshCells_;
+
+
+    // Mesh subsetting
+
+        //- Cached ignore cells for sub-mesh (zoned)
+        mutable autoPtr<bitSet> ignoreCellsPtr_;
 
 
     // Private Member Functions

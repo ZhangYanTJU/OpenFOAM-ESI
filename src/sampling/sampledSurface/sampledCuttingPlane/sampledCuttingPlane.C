@@ -57,27 +57,27 @@ void Foam::sampledCuttingPlane::checkBoundsIntersection
 ) const
 {
     // Verify specified bounding box
-    if (bounds_.valid())
+    if (isoParams_.getClipBounds().valid())
     {
         // Bounding box does not overlap with (global) mesh!
-        if (!bounds_.overlaps(meshBb))
+        if (!isoParams_.getClipBounds().overlaps(meshBb))
         {
             WarningInFunction
                 << nl
                 << name() << " : "
-                << "Bounds " << bounds_
+                << "Bounds " << isoParams_.getClipBounds()
                 << " do not overlap the mesh bounding box " << meshBb
                 << nl << endl;
         }
 
         // Plane does not intersect the bounding box
-        if (!bounds_.intersects(pln))
+        if (!isoParams_.getClipBounds().intersects(pln))
         {
             WarningInFunction
                 << nl
                 << name() << " : "
                 << "Plane "<< pln << " does not intersect the bounds "
-                << bounds_
+                << isoParams_.getClipBounds()
                 << nl << endl;
         }
     }
@@ -104,9 +104,7 @@ void Foam::sampledCuttingPlane::createGeometry()
     }
 
     // Clear any stored topologies
-    isoSurfCellPtr_.clear();
-    isoSurfPointPtr_.clear();
-    isoSurfTopoPtr_.clear();
+    isoSurfacePtr_.clear();
     pointDistance_.clear();
     cellDistancePtr_.clear();
 
@@ -138,7 +136,7 @@ void Foam::sampledCuttingPlane::createGeometry()
 
         // If we will use a fvMeshSubset so can apply bounds as well to make
         // the initial selection smaller.
-        if (bounds_.valid() && cellsToSelect.any())
+        if (isoParams_.getClipBounds().valid() && cellsToSelect.any())
         {
             const auto& cellCentres = fvm.C();
 
@@ -146,7 +144,7 @@ void Foam::sampledCuttingPlane::createGeometry()
             {
                 const point& cc = cellCentres[celli];
 
-                if (!bounds_.contains(cc))
+                if (!isoParams_.getClipBounds().contains(cc))
                 {
                     cellsToSelect.unset(celli);
                 }
@@ -296,54 +294,17 @@ void Foam::sampledCuttingPlane::createGeometry()
     }
 
 
-    // Direct from cell field and point field.
-    if (isoAlgo_ == isoSurfaceBase::ALGO_CELL)
-    {
-        isoSurfCellPtr_.reset
+    isoSurfacePtr_.reset
+    (
+        isoSurfaceBase::New
         (
-            new isoSurfaceCell
-            (
-                fvm,
-                cellDistance,
-                pointDistance_,
-                0,
-                filter_,
-                bounds_,
-                mergeTol_
-            )
-        );
-    }
-    else if (isoAlgo_ == isoSurfaceBase::ALGO_POINT)
-    {
-        isoSurfPointPtr_.reset
-        (
-            new isoSurfacePoint
-            (
-                cellDistance,
-                pointDistance_,
-                0,
-                filter_,
-                bounds_,
-                mergeTol_
-            )
-        );
-    }
-    else
-    {
-        // isoSurfaceBase::ALGO_TOPO
-        isoSurfTopoPtr_.reset
-        (
-            new isoSurfaceTopo
-            (
-                fvm,
-                cellDistance,
-                pointDistance_,
-                0,
-                filter_,
-                bounds_
-            )
-        );
-    }
+            isoParams_,
+            cellDistance,
+            pointDistance_,
+            scalar(0)
+            // nothing ignored: ignoreCells
+        )
+    );
 
     if (debug)
     {
@@ -364,33 +325,14 @@ Foam::sampledCuttingPlane::sampledCuttingPlane
 :
     sampledSurface(name, mesh, dict),
     plane_(dict),
-    bounds_(dict.getOrDefault("bounds", boundBox::invertedBox)),
-    mergeTol_(dict.getOrDefault<scalar>("mergeTol", 1e-6)),
-    isoAlgo_
-    (
-        isoSurfaceBase::getAlgorithmType
-        (
-            dict,
-            isoSurfaceBase::ALGO_TOPO
-        )
-    ),
-    filter_
-    (
-        isoSurfaceBase::getFilterType
-        (
-            dict,
-            isoSurfaceBase::filterType::DIAGCELL
-        )
-    ),
+    isoParams_(dict),
     average_(dict.getOrDefault("average", false)),
     zoneNames_(),
     exposedPatchName_(),
     needsUpdate_(true),
     subMeshPtr_(nullptr),
     cellDistancePtr_(nullptr),
-    isoSurfCellPtr_(nullptr),
-    isoSurfPointPtr_(nullptr),
-    isoSurfTopoPtr_(nullptr)
+    isoSurfacePtr_(nullptr)
 {
     if (!dict.readIfPresent("zones", zoneNames_) && dict.found("zone"))
     {

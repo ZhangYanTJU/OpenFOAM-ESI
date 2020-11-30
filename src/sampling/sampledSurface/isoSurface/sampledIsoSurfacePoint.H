@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,17 +96,11 @@ class sampledIsoSurfacePoint
         //- Iso value
         const scalar isoVal_;
 
-        //- Merge tolerance
-        const scalar mergeTol_;
-
-        //- Filtering for iso-surface triangles
-        const isoSurfaceBase::filterType filter_;
+        //- Parameters (filtering etc) for iso-surface
+        const isoSurfaceParams isoParams_;
 
         //- Whether to recalculate cell values as average of point values
         const bool average_;
-
-        //- Optional bounding box to trim triangles against
-        const boundBox bounds_;
 
         //- The zone or zones for the iso-surface
         wordRes zoneNames_;

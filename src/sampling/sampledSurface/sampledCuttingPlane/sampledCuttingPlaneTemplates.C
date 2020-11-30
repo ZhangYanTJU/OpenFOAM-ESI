@@ -87,24 +87,4 @@ Foam::sampledCuttingPlane::sampleOnPoints
 }
 
 
-template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::sampledCuttingPlane::isoSurfaceInterpolate
-(
-    const GeometricField<Type, fvPatchField, volMesh>& cellValues,
-    const Field<Type>& pointValues
-) const
-{
-    if (isoSurfCellPtr_)
-    {
-        return isoSurfCellPtr_->interpolate(cellValues, pointValues);
-    }
-    else if (isoSurfPointPtr_)
-    {
-        return isoSurfPointPtr_->interpolate(cellValues, pointValues);
-    }
-    return isoSurfTopoPtr_->interpolate(cellValues, pointValues);
-}
-
-
 // ************************************************************************* //

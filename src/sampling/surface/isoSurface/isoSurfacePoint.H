@@ -76,9 +76,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declarations
-
-class fvMesh;
+// Forward Declarations
 class plane;
 class treeBoundBox;
 class triSurface;
@@ -93,26 +91,7 @@ class isoSurfacePoint
 {
     // Private Data
 
-        enum segmentCutType
-        {
-            NEARFIRST,      // intersection close to e.first()
-            NEARSECOND,     //  ,,                   e.second()
-            NOTNEAR         // no intersection
-        };
-
-        enum cellCutType
-        {
-            NOTCUT,     // not cut
-            SPHERE,     // all edges to cell centre cut
-            CUT         // normal cut
-        };
-
-
-        //- Reference to mesh
-        const fvMesh& mesh_;
-
-        const scalarField& pVals_;
-
+        //- Cell values.
         //- Input volScalarField with separated coupled patches rewritten
         autoPtr<slicedVolScalarField> cValsPtr_;
 
@@ -120,10 +99,10 @@ class isoSurfacePoint
         const scalar mergeDistance_;
 
         //- Whether face might be cut
-        List<cellCutType> faceCutType_;
+        List<cutType> faceCutType_;
 
         //- Whether cell might be cut
-        List<cellCutType> cellCutType_;
+        List<cutType> cellCutType_;
 
         //- Estimated number of cut cells
         label nCutCells_;
@@ -374,14 +353,23 @@ class isoSurfacePoint
             labelList& newToOldPoints
         );
 
+
+        //- Interpolates cCoords, pCoords.
+        //  Uses the references to the original fields used to create the
+        //  iso surface.
+        template<class Type>
+        tmp<Field<Type>> interpolateTemplate
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& cCoords,
+            const Field<Type>& pCoords
+        ) const;
+
+
 public:
 
     //- Declare friendship to share some functionality
     friend class isoSurfaceCell;
     friend class isoSurfaceTopo;
-
-    //- Filtering type
-    using isoSurfaceBase::filterType;
 
 
     //- Runtime type information
@@ -394,31 +382,27 @@ public:
         //  Uses boundaryField for boundary values.
         //  Holds reference to cellIsoVals and pointIsoVals.
         //
-        //  \param bounds optional bounding box for trimming
-        //  \param mergeTol fraction of mesh bounding box for merging points
+        //  Control parameters include
+        //  - bounds optional bounding box for trimming
+        //  - mergeTol fraction of mesh bounding box for merging points
         isoSurfacePoint
         (
             const volScalarField& cellValues,
             const scalarField& pointValues,
             const scalar iso,
-            const filterType filter = filterType::DIAGCELL,
-            const boundBox& bounds = boundBox::invertedBox,
-            const scalar mergeTol = 1e-6
+            const isoSurfaceParams& params = isoSurfaceParams()
         );
 
 
     // Member Functions
 
-        //- Interpolates cCoords, pCoords.
-        //  Uses the references to the original fields used to create the
-        //  iso surface.
-        template<class Type>
-        tmp<Field<Type>> interpolate
-        (
-            const GeometricField<Type, fvPatchField, volMesh>& cCoords,
-            const Field<Type>& pCoords
-        ) const;
+    // Sampling
 
+        declareIsoSurfaceInterpolateMethod(scalar);
+        declareIsoSurfaceInterpolateMethod(vector);
+        declareIsoSurfaceInterpolateMethod(sphericalTensor);
+        declareIsoSurfaceInterpolateMethod(symmTensor);
+        declareIsoSurfaceInterpolateMethod(tensor);
 };
 
 

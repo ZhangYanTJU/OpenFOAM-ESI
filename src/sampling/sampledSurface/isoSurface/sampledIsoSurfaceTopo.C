@@ -65,6 +65,27 @@ bool Foam::sampledIsoSurfaceTopo::updateGeometry() const
     // Clear derived data
     sampledSurface::clearGeom();
 
+
+    // Handle cell zones as inverse (blocked) selection
+    if (!ignoreCellsPtr_)
+    {
+        ignoreCellsPtr_.reset(new bitSet);
+
+        if (-1 != mesh().cellZones().findIndex(zoneNames_))
+        {
+            bitSet select(mesh().cellZones().selection(zoneNames_));
+
+            if (select.any() && !select.all())
+            {
+                // From selection to blocking
+                select.flip();
+
+                *ignoreCellsPtr_ = std::move(select);
+            }
+        }
+    }
+
+
     // Use field from database, or try to read it in
 
     const auto* cellFldPtr = fvm.findObject<volScalarField>(isoField_);
@@ -119,7 +140,8 @@ bool Foam::sampledIsoSurfaceTopo::updateGeometry() const
         cellFld.primitiveField(),
         tpointFld().primitiveField(),
         isoVal_,
-        filter_
+        isoParams_,
+        *ignoreCellsPtr_
     );
 
     mySurface.transfer(static_cast<meshedSurface&>(surf));
@@ -138,10 +160,9 @@ bool Foam::sampledIsoSurfaceTopo::updateGeometry() const
 
     if (debug)
     {
-        Pout<< "isoSurfaceTopo::updateGeometry() : constructed iso:"
-            << nl
-            << "    filter         : " << isoSurfaceBase::filterNames[filter_]
-            << nl
+        Pout<< "isoSurfaceTopo::updateGeometry() : constructed iso:" << nl
+            << "    filter         : "
+            << isoSurfaceParams::filterNames[isoParams_.filter()] << nl
             << "    triangulate    : " << Switch(triangulate_) << nl
             << "    isoField       : " << isoField_ << nl
             << "    isoValue       : " << isoVal_ << nl
@@ -167,23 +188,34 @@ Foam::sampledIsoSurfaceTopo::sampledIsoSurfaceTopo
     Mesh(),
     isoField_(dict.get<word>("isoField")),
     isoVal_(dict.get<scalar>("isoValue")),
-    filter_
-    (
-        isoSurfaceBase::getFilterType
-        (
-            dict,
-            isoSurfaceBase::filterType::DIAGCELL
-        )
-    ),
+    isoParams_(dict),
     triangulate_(dict.getOrDefault("triangulate", false)),
+    bounds_(dict.getOrDefault("bounds", boundBox::invertedBox)),
+    zoneNames_(),
     prevTimeIndex_(-1),
     meshCells_()
 {
-    if (triangulate_ && filter_ == isoSurfaceBase::filterType::NONE)
+    if
+    (
+        triangulate_
+     && (isoParams_.filter() == isoSurfaceBase::filterType::NONE)
+    )
     {
         FatalIOErrorInFunction(dict)
             << "Cannot triangulate without a regularise filter" << nl
             << exit(FatalIOError);
+    }
+
+    if (!dict.readIfPresent("zones", zoneNames_) && dict.found("zone"))
+    {
+        zoneNames_.resize(1);
+        dict.readEntry("zone", zoneNames_.first());
+    }
+
+    if (-1 != mesh.cellZones().findIndex(zoneNames_))
+    {
+        DebugInfo
+            << "Restricting to cellZone(s) " << flatOutput(zoneNames_) << endl;
     }
 }
 
@@ -208,6 +240,8 @@ bool Foam::sampledIsoSurfaceTopo::expire()
 {
     // Clear derived data
     sampledSurface::clearGeom();
+
+    ignoreCellsPtr_.reset(nullptr);
 
     // Already marked as expired
     if (prevTimeIndex_ == -1)

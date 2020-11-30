@@ -49,10 +49,6 @@ SourceFiles
 namespace Foam
 {
 
-// Forward Declarations
-class polyMesh;
-class tetMatcher;
-
 /*---------------------------------------------------------------------------*\
                        Class isoSurfaceTopo Declaration
 \*---------------------------------------------------------------------------*/
@@ -63,28 +59,6 @@ class isoSurfaceTopo
 {
     // Private Data
 
-        enum cellCutType
-        {
-            NOTCUT,     //!< Not cut
-            SPHERE,     //!< All edges to cell centre cut
-            CUT         //!< Normal cut
-        };
-
-
-        //- Reference to mesh
-        const polyMesh& mesh_;
-
-        const scalarField& cVals_;
-
-        const scalarField& pVals_;
-
-        //- Optional cells to ignore
-        const bitSet& ignoreCells_;
-
-        //- Optional boundary faces to ignore. Used to exclude cyclicACMI
-        //  (since duplicate faces)
-        bitSet ignoreBoundaryFaces_;
-
         //- Corrected version of tetBasePtIs
         labelList tetBasePtIs_;
 
@@ -93,6 +67,9 @@ class isoSurfaceTopo
 
         //- For every point the originating face in mesh
         labelList pointToFace_;
+
+        //- The cell cut type
+        List<cutType> cellCutType_;
 
 
     // Private Member Functions
@@ -104,21 +81,6 @@ class isoSurfaceTopo
         ) const;
 
         void fixTetBasePtIs();
-
-        //- Determine whether cell is cut
-        cellCutType calcCutType
-        (
-            const bool isTet,
-            const label
-        ) const;
-
-        //- Determine for all mesh whether cell is cut
-        //  \return number of cells cut
-        label calcCutTypes
-        (
-            tetMatcher& tet,
-            List<cellCutType>& cellCutTypes
-        );
 
         //- Generate single point on edge
         label generatePoint
@@ -137,9 +99,8 @@ class isoSurfaceTopo
         void generateTriPoints
         (
             const label facei,
-            const FixedList<scalar, 4>& s,
-            const FixedList<point, 4>& p,
-            const FixedList<label, 4>& tetLabels,
+            const int tetCutIndex,  //!< Encoded tet cuts. getTetCutIndex()
+            const tetCell& tetLabels,
             const FixedList<bool, 6>& edgeIsDiag,
 
             DynamicList<edge>& pointToVerts,
@@ -168,7 +129,7 @@ class isoSurfaceTopo
 
         // Simplification
 
-            void triangulateOutside
+            static void triangulateOutside
             (
                 const bool filterDiag,
                 const primitivePatch& pp,
@@ -179,12 +140,12 @@ class isoSurfaceTopo
 
                 DynamicList<face>& compactFaces,
                 DynamicList<label>& compactCellIDs
-            ) const;
+            );
 
-            Mesh removeInsidePoints
+            static void removeInsidePoints
             (
+                Mesh& s,                            // Modify inplace
                 const bool filterDiag,
-                const Mesh& s,
 
                 // Inputs
                 const boolUList& pointFromDiag,
@@ -194,14 +155,20 @@ class isoSurfaceTopo
                 // Outputs
                 DynamicList<label>& pointCompactMap, // Per point the original
                 DynamicList<label>& compactCellIDs   // Per face the cellID
-            ) const;
+            );
 
+
+    // Sampling
+
+        //- Interpolates cCoords,pCoords.
+        template<class Type>
+        tmp<Field<Type>> interpolateTemplate
+        (
+            const Field<Type>& cCoords,
+            const Field<Type>& pCoords
+        ) const;
 
 public:
-
-    //- Filtering type
-    using isoSurfaceBase::filterType;
-
 
     //- Runtime type information
     TypeName("isoSurfaceTopo");
@@ -216,8 +183,7 @@ public:
             const scalarField& cellValues,
             const scalarField& pointValues,
             const scalar iso,
-            const filterType filter = filterType::DIAGCELL,
-            const boundBox& bounds = boundBox::invertedBox,
+            const isoSurfaceParams& params = isoSurfaceParams(),
             const bitSet& ignoreCells = bitSet()
         );
 
@@ -236,13 +202,14 @@ public:
             return pointToVerts_;
         }
 
-        //- Interpolates cCoords,pCoords.
-        template<class Type>
-        tmp<Field<Type>> interpolate
-        (
-            const Field<Type>& cCoords,
-            const Field<Type>& pCoords
-        ) const;
+
+    // Sampling
+
+        declareIsoSurfaceInterpolateMethod(scalar);
+        declareIsoSurfaceInterpolateMethod(vector);
+        declareIsoSurfaceInterpolateMethod(sphericalTensor);
+        declareIsoSurfaceInterpolateMethod(symmTensor);
+        declareIsoSurfaceInterpolateMethod(tensor);
 };
 
 
