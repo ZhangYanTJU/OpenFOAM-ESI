@@ -40,48 +40,6 @@ namespace Foam
     defineTypeNameAndDebug(distanceSurface, 0);
 }
 
-
-// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-    static isoSurfaceBase::algorithmType getIsoAlgorithm(const dictionary& dict)
-    {
-        // Previously 'cell' (bool), but now 'isoAlgorithm' (enum)
-
-        // Default (bool) for 1906 and earlier
-        bool useCell = true;
-
-        // Default (enum) after 1906
-        isoSurfaceBase::algorithmType algo = isoSurfaceBase::ALGO_CELL;
-
-        if
-        (
-            !isoSurfaceBase::algorithmNames.readIfPresent
-            (
-                "isoAlgorithm", dict, algo
-            )
-            // When above fails, use 'compat' to also get upgrade messages
-         && dict.readIfPresentCompat
-            (
-                "isoAlgorithm", {{"cell", 1906}}, useCell
-            )
-        )
-        {
-            return
-            (
-                useCell
-              ? isoSurfaceBase::ALGO_CELL
-              : isoSurfaceBase::ALGO_POINT
-            );
-        }
-
-        return algo;
-    }
-
-} // End namespace Foam
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::distanceSurface::distanceSurface
@@ -114,7 +72,14 @@ Foam::distanceSurface::distanceSurface
     (
         distance_ < 0 || equal(distance_, Zero) || dict.get<bool>("signed")
     ),
-    isoAlgo_(getIsoAlgorithm(dict)),
+    isoAlgo_
+    (
+        isoSurfaceBase::getAlgorithmType
+        (
+            dict,
+            isoSurfaceBase::ALGO_TOPO
+        )
+    ),
     filter_
     (
         isoSurfaceBase::getFilterType

@@ -368,11 +368,10 @@ Foam::sampledCuttingPlane::sampledCuttingPlane
     mergeTol_(dict.getOrDefault<scalar>("mergeTol", 1e-6)),
     isoAlgo_
     (
-        isoSurfaceBase::algorithmNames.getOrDefault
+        isoSurfaceBase::getAlgorithmType
         (
-            "isoAlgorithm",
             dict,
-            isoSurfaceBase::ALGO_POINT
+            isoSurfaceBase::ALGO_TOPO
         )
     ),
     filter_
