@@ -123,6 +123,7 @@ class sampledIsoSurface
         //- Cached pointfield
         mutable const pointScalarField* pointFieldPtr_;
 
+
     // And on subsetted mesh
 
         //- Cached submesh
