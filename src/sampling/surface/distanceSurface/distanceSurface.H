@@ -38,8 +38,8 @@ Usage
         Property | Description                              | Required | Default
         distance | distance from surface                    | yes |
         signed   | Use sign when distance is positive       | partly |
-        isoAlgorithm | (cell/topo/point)                    | no  | cell
-        regularise | Point snapping (enum or bool)          | no  | true
+        isoAlgorithm | (cell/point/topo)                    | no  | topo
+        regularise | Face simplification (enum or bool)     | no  | true
         bounds   | Limit with bounding box                  | no  |
         surfaceType | Type of surface                       | yes |
         surfaceName | Name of surface in \c triSurface/     | no  | dict name
@@ -54,7 +54,10 @@ Note
       surface. The resulting surface elements will not, however, contain
       partial cell coverage.
 
-    For compatibility, the keyword 'cell' (as a bool) is accepted
+The keyword \c cell (bool value) which was use in 1906 and earlier to switch
+between point/cell algorithms is now ignored (2020-12).
+
+In (2020-12) changed the default algorithm from cell to topo.
 
 SourceFiles
     distanceSurface.C
@@ -81,7 +84,7 @@ namespace Foam
 
 class distanceSurface
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const polyMesh& mesh_;

@@ -50,16 +50,13 @@ Usage
         type     | distanceSurface                          | yes |
         distance | Distance from surface                    | yes |
         signed   | Use sign when distance is positive       | partly |
-        isoAlgorithm | (cell/topo/point)                    | no  | cell
+        isoAlgorithm | (cell/topo/point)                    | no  | topo
         regularise | Point snapping for iso-surface         | no  | true
         average  | Cell values from averaged point values   | no  | false
         bounds   | Limit with bounding box                  | no  |
         surfaceType | Type of surface                       | yes |
         surfaceName | Name of surface in \c triSurface/     | no  | dict name
     \endtable
-
-Note
-    For compatibility, the keyword 'cell' (as a bool) is accepted
 
 SourceFiles
     sampledDistanceSurface.C
