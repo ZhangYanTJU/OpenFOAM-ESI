@@ -351,8 +351,8 @@ void Foam::isoSurfaceTopo::fixTetBasePtIs()
 
             if
             (
-                !problemPoints[f[f.rcIndex(fp0)]]
-             && !problemPoints[f[f.fcIndex(fp0)]]
+                !problemPoints[f.rcValue(fp0)]
+             && !problemPoints[f.fcValue(fp0)]
             )
             {
                 continue;
@@ -366,8 +366,8 @@ void Foam::isoSurfaceTopo::fixTetBasePtIs()
             {
                 if
                 (
-                    !problemPoints[f[f.rcIndex(fp)]]
-                 && !problemPoints[f[f.fcIndex(fp)]]
+                    !problemPoints[f.rcValue(fp)]
+                 && !problemPoints[f.fcValue(fp)]
                 )
                 {
                     const scalar q = minTetQ(facei, fp);
@@ -420,19 +420,19 @@ Foam::label Foam::isoSurfaceTopo::generatePoint
     EdgeMap<label>& vertsToPoint
 ) const
 {
-    const auto edgeFnd = vertsToPoint.cfind(vertices);
-    if (edgeFnd.found())
+    // Generate new point, unless it already exists for edge
+
+    label pointi = vertsToPoint.lookup(vertices, -1);
+    if (pointi == -1)
     {
-        return edgeFnd.val();
+        pointi = pointToVerts.size();
+
+        pointToVerts.append(vertices);
+        pointToFace.append(facei);
+        pointFromDiag.append(edgeIsDiag);
+        vertsToPoint.insert(vertices, pointi);
     }
 
-    // Generate new point
-    label pointi = pointToVerts.size();
-
-    pointToVerts.append(vertices);
-    pointToFace.append(facei);
-    pointFromDiag.append(edgeIsDiag);
-    vertsToPoint.insert(vertices, pointi);
     return pointi;
 }
 
@@ -442,7 +442,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
     const label facei,
     const FixedList<scalar, 4>& s,
     const FixedList<point, 4>& p,
-    const FixedList<label, 4>& pIndex,
+    const FixedList<label, 4>& tetLabels,
     const FixedList<bool, 6>& edgeIsDiag,// Per tet edge whether is face diag
 
     DynamicList<edge>& pointToVerts,
@@ -487,7 +487,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[0],
-                    edge(pIndex[0], pIndex[1]),
+                    edge(tetLabels[0], tetLabels[1]),  // Edge 0
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -497,7 +497,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[1],
-                    edge(pIndex[0], pIndex[2]),
+                    edge(tetLabels[0], tetLabels[2]),  // Edge 1
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -507,7 +507,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[2],
-                    edge(pIndex[0], pIndex[3]),
+                    edge(tetLabels[0], tetLabels[3]),  // Edge 2
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -530,7 +530,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[0],
-                    edge(pIndex[1], pIndex[0]),
+                    edge(tetLabels[1], tetLabels[0]),  // Reverse Edge 0
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -540,7 +540,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[3],
-                    edge(pIndex[1], pIndex[3]),
+                    edge(tetLabels[1], tetLabels[3]),  // Reverse Edge 3
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -550,7 +550,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[4],
-                    edge(pIndex[1], pIndex[2]),
+                    edge(tetLabels[1], tetLabels[2]),  // Edge 4
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -573,7 +573,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[1],
-                    edge(pIndex[0], pIndex[2]),
+                    edge(tetLabels[0], tetLabels[2]),  // Edge 1
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -583,7 +583,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[3],
-                    edge(pIndex[1], pIndex[3]),
+                    edge(tetLabels[1], tetLabels[3]),  // Reverse Edge 3
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -594,7 +594,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[2],
-                    edge(pIndex[0], pIndex[3]),
+                    edge(tetLabels[0], tetLabels[3]),  // Edge 2
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -607,7 +607,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[4],
-                    edge(pIndex[1], pIndex[2]),
+                    edge(tetLabels[1], tetLabels[2]),  // Edge 4
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -632,7 +632,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[1],
-                    edge(pIndex[2], pIndex[0]),
+                    edge(tetLabels[2], tetLabels[0]),  // Reverse Edge 1
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -642,7 +642,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[4],
-                    edge(pIndex[2], pIndex[1]),
+                    edge(tetLabels[2], tetLabels[1]),  // Reverse Edge 4
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -652,7 +652,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[5],
-                    edge(pIndex[2], pIndex[3]),
+                    edge(tetLabels[2], tetLabels[3]),  // Reverse Edge 5
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -675,7 +675,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[0],
-                    edge(pIndex[0], pIndex[1]),
+                    edge(tetLabels[0], tetLabels[1]),  // Edge 0
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -685,7 +685,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[5],
-                    edge(pIndex[2], pIndex[3]),
+                    edge(tetLabels[2], tetLabels[3]),  // Reverse Edge 5
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -698,7 +698,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[2],
-                    edge(pIndex[0], pIndex[3]),
+                    edge(tetLabels[0], tetLabels[3]),  // Edge 2
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -709,7 +709,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[4],
-                    edge(pIndex[1], pIndex[2]),
+                    edge(tetLabels[1], tetLabels[2]),  // Edge 4
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -734,7 +734,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[0],
-                    edge(pIndex[0], pIndex[1]),
+                    edge(tetLabels[0], tetLabels[1]),  // Edge 0
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -744,7 +744,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[5],
-                    edge(pIndex[2], pIndex[3]),
+                    edge(tetLabels[2], tetLabels[3]),  // Reverse Edge 5
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -756,7 +756,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[3],
-                    edge(pIndex[1], pIndex[3]),
+                    edge(tetLabels[1], tetLabels[3]),  // Reverse Edge 3
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -769,7 +769,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[1],
-                    edge(pIndex[0], pIndex[2]),
+                    edge(tetLabels[0], tetLabels[2]),  // Edge 1
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -793,7 +793,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[2],
-                    edge(pIndex[3], pIndex[0]),
+                    edge(tetLabels[3], tetLabels[0]),  // Reverse Edge 2
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -803,7 +803,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[5],
-                    edge(pIndex[3], pIndex[2]),
+                    edge(tetLabels[3], tetLabels[2]),  // Reverse Edge 5
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
@@ -813,14 +813,14 @@ void Foam::isoSurfaceTopo::generateTriPoints
                 (
                     facei,
                     edgeIsDiag[3],
-                    edge(pIndex[3], pIndex[1]),
+                    edge(tetLabels[3], tetLabels[1]),  // Edge 3
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
             if (triIndex == 0x07)
             {
                 // Flip normals
-                label sz = verts.size();
+                const label sz = verts.size();
                 Swap(verts[sz-2], verts[sz-1]);
             }
         }
@@ -1035,10 +1035,11 @@ void Foam::isoSurfaceTopo::triangulateOutside
 (
     const bool filterDiag,
     const primitivePatch& pp,
-    const boolList& pointFromDiag,
-    const labelList& pointToFace,
+    const boolUList& pointFromDiag,
+    const labelUList& pointToFace,
     const label cellID,
 
+    // outputs
     DynamicList<face>& compactFaces,
     DynamicList<label>& compactCellIDs
 ) const
@@ -1057,10 +1058,9 @@ void Foam::isoSurfaceTopo::triangulateOutside
     {
         if (loop.size() > 2)
         {
-            compactFaces.append(face(0));
+            compactFaces.append(face(loop.size()));
             face& f = compactFaces.last();
 
-            f.setSize(loop.size());
             label fpi = 0;
             forAll(f, i)
             {
@@ -1089,14 +1089,14 @@ void Foam::isoSurfaceTopo::triangulateOutside
 
             if (fpi > 2)
             {
-                f.setSize(fpi);
+                f.resize(fpi);
             }
             else
             {
                 // Keep original face
                 forAll(f, i)
                 {
-                    label pointi = mp[loop[i]];
+                    const label pointi = mp[loop[i]];
                     f[i] = pointi;
                 }
             }
@@ -1110,9 +1110,13 @@ Foam::meshedSurface Foam::isoSurfaceTopo::removeInsidePoints
 (
     const bool filterDiag,
     const Mesh& s,
-    const boolList& pointFromDiag,
-    const labelList& pointToFace,
-    const labelList& start,                 // Per cell the starting triangle
+
+    // inputs
+    const boolUList& pointFromDiag,
+    const labelUList& pointToFace,
+    const labelUList& start,                // Per cell the starting triangle
+
+    // outputs
     DynamicList<label>& pointCompactMap,    // Per returned point the original
     DynamicList<label>& compactCellIDs      // Per returned tri the cellID
 ) const
@@ -1126,14 +1130,17 @@ Foam::meshedSurface Foam::isoSurfaceTopo::removeInsidePoints
 
     for (label celli = 0; celli < start.size()-1; ++celli)
     {
-        // All triangles of the current cell
+        // All triangles for the current cell
 
-        label nTris = start[celli+1]-start[celli];
+        const label nTris = start[celli+1]-start[celli];
 
         if (nTris)
         {
-            const SubList<face> cellFaces(s, nTris, start[celli]);
-            const primitivePatch pp(cellFaces, points);
+            const primitivePatch pp
+            (
+                SubList<face>(s, nTris, start[celli]),
+                points
+            );
 
             triangulateOutside
             (
@@ -1152,10 +1159,8 @@ Foam::meshedSurface Foam::isoSurfaceTopo::removeInsidePoints
 
 
     // Compact out unused points
-    // Pick up the used vertices
     labelList oldToCompact(points.size(), -1);
-    DynamicField<point> compactPoints(points.size());
-    pointCompactMap.clear();
+    pointCompactMap.clear();  // Extra safety (paranoid)
 
     for (face& f : compactFaces)
     {
@@ -1165,15 +1170,18 @@ Foam::meshedSurface Foam::isoSurfaceTopo::removeInsidePoints
             label compacti = oldToCompact[pointi];
             if (compacti == -1)
             {
-                compacti = compactPoints.size();
+                compacti = pointCompactMap.size();
                 oldToCompact[pointi] = compacti;
-                compactPoints.append(points[pointi]);
                 pointCompactMap.append(pointi);
             }
             f[fp] = compacti;
         }
     }
 
+    pointField compactPoints
+    (
+        UIndirectList<point>(s.points(), pointCompactMap)
+    );
 
     Mesh cpSurface
     (
@@ -1222,20 +1230,14 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
     // Determine boundary pyramids to ignore (since originating from ACMI faces)
     // Maybe needs to be optional argument or more general detect colocated
     // faces.
+    for (const polyPatch& pp : mesh_.boundaryMesh())
     {
-        const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
-        forAll(pbm, patchi)
+        if (isA<cyclicACMIPolyPatch>(pp))
         {
-            const polyPatch& pp = pbm[patchi];
-            if (isA<cyclicACMIPolyPatch>(pp))
-            {
-                ignoreBoundaryFaces_.setSize(mesh_.nBoundaryFaces());
-                forAll(pp, i)
-                {
-                    label facei = pp.start()+i;
-                    ignoreBoundaryFaces_.set(facei-mesh_.nInternalFaces());
-                }
-            }
+            ignoreBoundaryFaces_.set
+            (
+                labelRange(pp.offset(), pp.size())
+            );
         }
     }
 
@@ -1247,6 +1249,39 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
     // Determine if any cut through cell
     List<cellCutType> cellCutTypes;
     const label nCutCells = calcCutTypes(tet, cellCutTypes);
+
+    if (debug && isA<fvMesh>(mesh))
+    {
+        const fvMesh& fvmesh = dynamicCast<const fvMesh&>(mesh);
+
+        volScalarField debugField
+        (
+            IOobject
+            (
+                "isoSurfaceTopo.cutType",
+                fvmesh.time().timeName(),
+                fvmesh.time(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            fvmesh,
+            dimensionedScalar(dimless, Zero)
+        );
+
+        auto& debugFld = debugField.primitiveFieldRef();
+
+        forAll(cellCutTypes, celli)
+        {
+            debugFld[celli] = cellCutTypes[celli];
+        }
+
+        Pout<< "Writing cut types:"
+            << debugField.objectPath() << endl;
+
+        debugField.write();
+    }
+
 
     // Per cell: 5 pyramids cut, each generating 2 triangles
     //  - pointToVerts : from generated iso point to originating mesh verts
@@ -1315,7 +1350,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
     label verti = 0;
     for (face& allTri : allTris)
     {
-        allTri.setSize(3);
+        allTri.resize(3);
         allTri[0] = verts[verti++];
         allTri[1] = verts[verti++];
         allTri[2] = verts[verti++];
@@ -1391,9 +1426,8 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
             // Solved by eroding open-edges
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-            // Mark points on mesh outside. Note that we extend with nCells
-            // so we can easily index with pointToVerts_.
-            bitSet isBoundaryPoint(mesh.nPoints() + mesh.nCells());
+            // Mark points on mesh outside.
+            bitSet isBoundaryPoint(mesh.nPoints());
             for
             (
                 label facei = mesh.nInternalFaces();
@@ -1411,7 +1445,6 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
                 const labelList& faceOwner = mesh_.faceOwner();
                 const labelList& faceNeighbour = mesh_.faceNeighbour();
 
-                label nMore = 0;
                 for
                 (
                     label facei = 0;
@@ -1419,17 +1452,15 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
                     ++facei
                 )
                 {
-                    int n = 0;
-                    if (ignoreCells_.test(faceOwner[facei])) ++n;
-                    if (ignoreCells_.test(faceNeighbour[facei])) ++n;
-
                     // Only one of the cells is being ignored.
                     // That means it is an exposed subMesh face.
-                    if (n == 1)
+                    if
+                    (
+                        ignoreCells_.test(faceOwner[facei])
+                     != ignoreCells_.test(faceNeighbour[facei])
+                    )
                     {
                         isBoundaryPoint.set(mesh.faces()[facei]);
-
-                        ++nMore;
                     }
                 }
             }
@@ -1458,10 +1489,10 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
                         const edge& verts1 = pointToVerts_[mp[e[1]]];
                         if
                         (
-                            isBoundaryPoint[verts0[0]]
-                         && isBoundaryPoint[verts0[1]]
-                         && isBoundaryPoint[verts1[0]]
-                         && isBoundaryPoint[verts1[1]]
+                            isBoundaryPoint.test(verts0[0])
+                         && isBoundaryPoint.test(verts0[1])
+                         && isBoundaryPoint.test(verts1[0])
+                         && isBoundaryPoint.test(verts1[1])
                         )
                         {
                             // Open edge on boundary face. Keep
@@ -1478,7 +1509,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
                 {
                     Pout<< "isoSurfaceTopo :"
                         << " removing " << faceSelection.count()
-                        << " faces since on open edges" << endl;
+                        << " faces on open edges" << endl;
                 }
 
                 if (returnReduce(faceSelection.none(), andOp<bool>()))
