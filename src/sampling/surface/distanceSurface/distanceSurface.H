@@ -33,26 +33,54 @@ Description
     distance surface.
 
 Usage
+    Example of function object partial specification:
+    \verbatim
+    surfaces
+    {
+        surface1
+        {
+            type        distanceSurface;
+            distance    0;
+
+            surfaceType triSurfaceMesh;
+            surfaceName something.obj;
+
+            topology    nearestPoints;
+            nearestPoints
+            (
+                (0 0 0)
+                (10 10 0)
+            );
+
+            //- Max distance from nearestPoints
+            maxDistance 0.005;
+        }
+    }
+    \endverbatim
+
     Dictionary controls:
     \table
         Property | Description                              | Required | Default
         distance | distance from surface                    | yes |
-        signed   | Use sign when distance is positive       | partly |
+        signed   | Use sign when distance is positive       | no  | true
         isoAlgorithm | (cell/point/topo)                    | no  | topo
         regularise | Face simplification (enum or bool)     | no  | true
         bounds   | Limit with bounding box                  | no  |
         surfaceType | Type of surface                       | yes |
         surfaceName | Name of surface in \c triSurface/     | no  | dict name
+        topology    | Topology filter (none/largestRegion/nearestPoints) | no  | -
+        nearestPoints | Point-based surface segmentation    | no  | -
+        maxDistance | Max search distance for nearestPoints | no  | GREAT
     \endtable
 
 Note
     For distance = 0, some special adjustments.
     - Always signed (ignoring the input value).
     - Use normal distance from surface (for better treatment of open edges).
-    - When the isoSurfaceCell algorithm is used, additional checks for open
-      surfaces edges are used to limit the extend of resulting distance
-      surface. The resulting surface elements will not, however, contain
-      partial cell coverage.
+    - Additional checks for open surfaces edges are used to limit the extend
+      of resulting distance surface.
+      The resulting surface elements will, however, contain partial cell
+      coverage. NB: Not applicable if the \c point isoAlgorithm is used.
 
 The keyword \c cell (bool value) which was use in 1906 and earlier to switch
 between point/cell algorithms is now ignored (2020-12).
@@ -82,22 +110,48 @@ namespace Foam
 
 class distanceSurface
 {
+    // Data Types
+
+        //- The type of cell/face cuts
+        enum class topologyFilterType : uint8_t
+        {
+            NONE,               //!< No additional filtering
+            LARGEST_REGION,     //!< Retain largest region
+            NEAREST_POINTS,     //!< Retain regions nearest to the points
+        };
+
+        //- Names for the topology filter
+        static const Enum<topologyFilterType> topoFilterNames_;
+
+
     // Private Data
 
         //- Reference to mesh
         const polyMesh& mesh_;
 
-        //- Surface
-        const autoPtr<searchableSurface> surfPtr_;
+        //- Searchable surface
+        const autoPtr<searchableSurface> surfacePtr_;
 
         //- Distance value
         const scalar distance_;
 
-        //- Signed distance
-        const bool signed_;
+        //- Distance is zero. Implies signed and additional optimizations
+        const bool withZeroDistance_;
+
+        //- Use signed distance
+        const bool withSignDistance_;
 
         //- Parameters for iso-surface (algorithm, filter, mergeTol, etc)
         isoSurfaceParams isoParams_;
+
+        //- Optional topology filter
+        topologyFilterType topoFilter_;
+
+        //- Points for nearest-points segmentation
+        pointField nearestPoints_;
+
+        //- Max search distance squared (for nearestPoints)
+        scalar maxDistanceSqr_;
 
         //- Distance to cell centres
         autoPtr<volScalarField> cellDistancePtr_;
@@ -107,6 +161,28 @@ class distanceSurface
 
         //- Constructed iso surface
         autoPtr<isoSurfaceBase> isoSurfacePtr_;
+
+
+    // Private Member Functions
+
+        //- Prepare for region split.
+        bool refineBlockedCells
+        (
+            bitSet& ignoreCells,
+            const isoSurfaceBase& isoContext
+        ) const;
+
+        //- Prepare for region split.
+        boolList filterPrepareRegionSplit
+        (
+            const bitSet& ignoreCells
+        ) const;
+
+        //- Keep region with the most cuts (after region split)
+        void filterKeepLargestRegion(bitSet& ignoreCells) const;
+
+        //- Keep region(s) closest to the nearest points
+        void filterKeepNearestRegions(bitSet& ignoreCells) const;
 
 
 public:
@@ -133,7 +209,7 @@ public:
             const word& surfaceType,
             const word& surfaceName,
             const scalar distance,
-            const bool signedDistance,
+            const bool useSignedDistance,
             const isoSurfaceParams& params = isoSurfaceParams()
         );
 
@@ -150,7 +226,7 @@ public:
         //- The name of the underlying searchableSurface
         const word& surfaceName() const
         {
-            return surfPtr_->name();
+            return surfacePtr_->name();
         }
 
         //- The distance to the underlying searchableSurface
