@@ -131,6 +131,10 @@ protected:
 
         // Sub models
 
+            //- Name of the primary region radiative flux
+            const word qrName_;
+
+
             //- Pointer to radiation model
             //autoPtr<radiation::radiationModel> radiation_;
 
@@ -138,6 +142,8 @@ protected:
         //- Read control parameters from dictionary
         virtual bool read(const dictionary& dict);
 
+        //- Return radiative heat flux
+        tmp<areaScalarField> qr();
 
         // Equations
 

@@ -53,6 +53,41 @@ bool thermalShell::read(const dictionary& dict)
 }
 
 
+tmp<areaScalarField> thermalShell::qr()
+{
+    IOobject io
+    (
+        "tqr",
+        primaryMesh().time().timeName(),
+        primaryMesh()
+    );
+
+    tmp<areaScalarField> taqr
+    (
+        new areaScalarField
+        (
+            io,
+            regionMesh(),
+            dimensionedScalar(dimPower/dimArea, Zero)
+        )
+    );
+
+    if (qrName_ != "none")
+    {
+        areaScalarField& aqr = taqr.ref();
+
+        const volScalarField qr =
+            primaryMesh().lookupObject<volScalarField>(qrName_);
+
+        const volScalarField::Boundary& vqr = qr.boundaryField();
+
+        aqr.primitiveFieldRef() = vsm().mapToSurface<scalar>(vqr);
+    }
+
+    return taqr;
+}
+
+
 void thermalShell::solveEnergy()
 {
     if (debug)
@@ -68,6 +103,7 @@ void thermalShell::solveEnergy()
       - fam::laplacian(kappa()*h_, T_)
      ==
         qs_
+      + qr()
       //+ q(T_) handled by faOption contactHeatFlux
       + faOptions()(h_, rhoCph, T_)
     );
@@ -118,7 +154,8 @@ thermalShell::thermalShell
             IOobject::AUTO_WRITE
         ),
         regionMesh()
-    )
+    ),
+    qrName_(dict.getOrDefault<word>("qr", "none"))
 {
     init();
 }
