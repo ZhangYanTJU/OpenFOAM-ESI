@@ -1,0 +1,46 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1812                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      faSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+
+    Ts_ceilingShell
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-07;
+        relTol          0.01;
+    }
+
+    jouleHeatingSource:V_ceilingShell
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-07;
+        relTol          0.01;
+    }
+}
+
+nNonOrthCorr    1;
+//nOuterCorrectors 15;
+
+relaxationFactors
+{
+    T   1;
+}
+
+// ************************************************************************* //
