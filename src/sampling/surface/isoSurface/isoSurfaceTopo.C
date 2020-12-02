@@ -29,6 +29,7 @@ License
 #include "isoSurfaceTopo.H"
 #include "isoSurface.H"
 #include "polyMesh.H"
+#include "volFields.H"
 #include "tetMatcher.H"
 #include "tetPointRef.H"
 #include "DynamicField.H"
@@ -219,7 +220,7 @@ Foam::label Foam::isoSurfaceTopo::calcCutTypes
 
     if (debug)
     {
-        Pout<< "isoSurfaceCell : candidate cut cells "
+        Pout<< "isoSurfaceTopo : candidate cut cells "
             << nCutCells << " / " << mesh_.nCells() << endl;
     }
     return nCutCells;
@@ -515,7 +516,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
             if (triIndex == 0x0E)
             {
                 // Flip normals
-                label sz = verts.size();
+                const label sz = verts.size();
                 Swap(verts[sz-2], verts[sz-1]);
             }
         }
@@ -558,7 +559,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
             if (triIndex == 0x0D)
             {
                 // Flip normals
-                label sz = verts.size();
+                const label sz = verts.size();
                 Swap(verts[sz-2], verts[sz-1]);
             }
         }
@@ -567,7 +568,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
         case 0x03:
         case 0x0C:
         {
-            label p0p2
+            const label p0p2
             (
                 generatePoint
                 (
@@ -577,7 +578,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
-            label p1p3
+            const label p1p3
             (
                 generatePoint
                 (
@@ -616,7 +617,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
             if (triIndex == 0x0C)
             {
                 // Flip normals
-                label sz = verts.size();
+                const label sz = verts.size();
                 Swap(verts[sz-5], verts[sz-4]);
                 Swap(verts[sz-2], verts[sz-1]);
             }
@@ -660,7 +661,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
             if (triIndex == 0x0B)
             {
                 // Flip normals
-                label sz = verts.size();
+                const label sz = verts.size();
                 Swap(verts[sz-2], verts[sz-1]);
             }
         }
@@ -669,7 +670,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
         case 0x05:
         case 0x0A:
         {
-            label p0p1
+            const label p0p1
             (
                 generatePoint
                 (
@@ -679,7 +680,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
-            label p2p3
+            const label p2p3
             (
                 generatePoint
                 (
@@ -718,7 +719,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
             if (triIndex == 0x0A)
             {
                 // Flip normals
-                label sz = verts.size();
+                const label sz = verts.size();
                 Swap(verts[sz-5], verts[sz-4]);
                 Swap(verts[sz-2], verts[sz-1]);
             }
@@ -728,7 +729,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
         case 0x06:
         case 0x09:
         {
-            label p0p1
+            const label p0p1
             (
                 generatePoint
                 (
@@ -738,7 +739,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
                     pointToVerts, pointToFace, pointFromDiag, vertsToPoint
                 )
             );
-            label p2p3
+            const label p2p3
             (
                 generatePoint
                 (
@@ -777,7 +778,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
             if (triIndex == 0x09)
             {
                 // Flip normals
-                label sz = verts.size();
+                const label sz = verts.size();
                 Swap(verts[sz-5], verts[sz-4]);
                 Swap(verts[sz-2], verts[sz-1]);
             }
@@ -958,7 +959,7 @@ void Foam::isoSurfaceTopo::generateTriPoints
             label fp = f.fcIndex(fp0);
             for (label i = 2; i < f.size(); ++i)
             {
-                label nextFp = f.fcIndex(fp);
+                const label nextFp = f.fcIndex(fp);
 
                 FixedList<bool, 6> edgeIsDiag(false);
 
@@ -1106,10 +1107,10 @@ void Foam::isoSurfaceTopo::triangulateOutside
 }
 
 
-Foam::MeshedSurface<Foam::face> Foam::isoSurfaceTopo::removeInsidePoints
+Foam::meshedSurface Foam::isoSurfaceTopo::removeInsidePoints
 (
     const bool filterDiag,
-    const MeshStorage& s,
+    const Mesh& s,
     const boolList& pointFromDiag,
     const labelList& pointToFace,
     const labelList& start,                 // Per cell the starting triangle
@@ -1175,7 +1176,7 @@ Foam::MeshedSurface<Foam::face> Foam::isoSurfaceTopo::removeInsidePoints
     }
 
 
-    MeshStorage cpSurface
+    Mesh cpSurface
     (
         std::move(compactPoints),
         std::move(compactFaces),
@@ -1207,15 +1208,11 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
 {
     if (debug)
     {
-        Pout<< "isoSurfaceTopo::"
-            << "    cell min/max  : "
-            << min(cVals_) << " / "
-            << max(cVals_) << nl
-            << "    point min/max : "
-            << min(pVals_) << " / "
-            << max(pVals_) << nl
+        Pout<< "isoSurfaceTopo:" << nl
+            << "    cell min/max  : " << minMax(cVals_) << nl
+            << "    point min/max : " << minMax(pVals_) << nl
             << "    isoValue      : " << iso << nl
-            << "    filter        : " << isoSurfaceTopo::filterNames[filter]
+            << "    filter        : " << isoSurfaceBase::filterNames[filter]
             << nl
             << "    mesh span     : " << mesh.bounds().mag() << nl
             << "    ignoreCells   : " << ignoreCells_.count()
@@ -1328,14 +1325,14 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
 
     surfZoneList allZones(one{}, surfZone("allFaces", allTris.size()));
 
-    MeshStorage::clear();
-    MeshStorage updated
+    Mesh::clear();
+    Mesh updated
     (
         std::move(allPoints),
         std::move(allTris),
         std::move(allZones)
     );
-    MeshStorage::transfer(updated);
+    Mesh::transfer(updated);
 
     // Now:
     // - generated faces and points are assigned to *this
@@ -1358,7 +1355,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
         // face diagonals)
         DynamicList<label> pointCompactMap(size()); // Back to original point
         DynamicList<label> compactCellIDs(size());  // Per tri the cell
-        MeshStorage::operator=
+        Mesh::operator=
         (
             removeInsidePoints
             (
@@ -1448,7 +1445,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
 
                 const labelList& mp = meshPoints();
 
-                const labelListList& edgeFaces = MeshStorage::edgeFaces();
+                const labelListList& edgeFaces = Mesh::edgeFaces();
 
                 forAll(edgeFaces, edgei)
                 {
@@ -1496,16 +1493,16 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
 
                 labelList pointMap;
                 labelList faceMap;
-                MeshStorage filteredSurf
+                Mesh filteredSurf
                 (
-                    MeshStorage::subsetMesh
+                    Mesh::subsetMesh
                     (
                         faceSelection,
                         pointMap,
                         faceMap
                     )
                 );
-                MeshStorage::transfer(filteredSurf);
+                Mesh::transfer(filteredSurf);
 
                 pointToVerts_ = UIndirectList<edge>(pointToVerts_, pointMap)();
                 pointToFace_ = UIndirectList<label>(pointToFace_, pointMap)();
