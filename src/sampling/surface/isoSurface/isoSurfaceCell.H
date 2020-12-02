@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,7 +58,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declarations
+// Forward Declarations
 
 class polyMesh;
 class triSurface;
@@ -324,24 +324,7 @@ public:
             const scalarField& cellValues,
             const scalarField& pointValues,
             const scalar iso,
-            const isoSurfaceBase::filterType filter,
-            const boundBox& bounds = boundBox::invertedBox,
-            const scalar mergeTol = 1e-6,
-            const bitSet& ignoreCells = bitSet()
-        );
-
-        //- Construct from cell and point values
-        //
-        //  \param bounds optional bounding box for trimming
-        //  \param mergeTol fraction of mesh bounding box for merging points
-        //  \param ignoreCells cells to ignore in the cellValues
-        isoSurfaceCell
-        (
-            const polyMesh& mesh,
-            const scalarField& cellValues,
-            const scalarField& pointValues,
-            const scalar iso,
-            const bool regularise,
+            const filterType filter = filterType::DIAGCELL,
             const boundBox& bounds = boundBox::invertedBox,
             const scalar mergeTol = 1e-6,
             const bitSet& ignoreCells = bitSet()

@@ -311,7 +311,7 @@ tmp<scalarField> signedDistance
 )
 {
     tmp<scalarField> tfld(new scalarField(points.size(), Foam::sqr(GREAT)));
-    scalarField& fld = tfld();
+    scalarField& fld = tfld.ref();
 
     // Find nearest
     List<pointIndexHit> nearest;
@@ -713,8 +713,8 @@ int main(int argc, char *argv[])
             fvm,
             cellDistance,
             pointDistance,
-            0,      //distance,
-            false   //regularise
+            scalar(0), // distance
+            isoSurfaceBase::filterType::NONE
         );
 
         isoFaces.setSize(iso.size());

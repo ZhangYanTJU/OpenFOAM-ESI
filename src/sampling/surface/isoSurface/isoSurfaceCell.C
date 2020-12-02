@@ -1300,32 +1300,6 @@ Foam::isoSurfaceCell::isoSurfaceCell
     const bitSet& ignoreCells
 )
 :
-    isoSurfaceCell
-    (
-        mesh,
-        cellValues,
-        pointValues,
-        iso,
-        (filter != filterType::NONE),
-        bounds,
-        mergeTol,
-        ignoreCells
-    )
-{}
-
-
-Foam::isoSurfaceCell::isoSurfaceCell
-(
-    const polyMesh& mesh,
-    const scalarField& cellValues,
-    const scalarField& pointValues,
-    const scalar iso,
-    const bool regularise,
-    const boundBox& bounds,
-    const scalar mergeTol,
-    const bitSet& ignoreCells
-)
-:
     isoSurfaceBase(iso, bounds),
     mesh_(mesh),
     cVals_(cellValues),
@@ -1333,6 +1307,8 @@ Foam::isoSurfaceCell::isoSurfaceCell
     ignoreCells_(ignoreCells),
     mergeDistance_(mergeTol*mesh.bounds().mag())
 {
+    const bool regularise = (filter != filterType::NONE);
+
     if (debug)
     {
         Pout<< "isoSurfaceCell:" << nl

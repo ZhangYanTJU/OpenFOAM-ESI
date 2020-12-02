@@ -116,9 +116,6 @@ class isoSurfacePoint
         //- Input volScalarField with separated coupled patches rewritten
         autoPtr<slicedVolScalarField> cValsPtr_;
 
-        //- Regularise?
-        const bool regularise_;
-
         //- When to merge points
         const scalar mergeDistance_;
 
@@ -407,24 +404,7 @@ public:
             const volScalarField& cellValues,
             const scalarField& pointValues,
             const scalar iso,
-            const isoSurfaceBase::filterType filter,
-            const boundBox& bounds = boundBox::invertedBox,
-            const scalar mergeTol = 1e-6
-        );
-
-
-        //- Construct from cell values and point values.
-        //  Uses boundaryField for boundary values.
-        //  Holds reference to cellIsoVals and pointIsoVals.
-        //
-        //  \param bounds optional bounding box for trimming
-        //  \param mergeTol fraction of mesh bounding box for merging points
-        isoSurfacePoint
-        (
-            const volScalarField& cellValues,
-            const scalarField& pointValues,
-            const scalar iso,
-            const bool regularise,
+            const filterType filter = filterType::DIAGCELL,
             const boundBox& bounds = boundBox::invertedBox,
             const scalar mergeTol = 1e-6
         );

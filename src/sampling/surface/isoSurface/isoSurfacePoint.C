@@ -1345,34 +1345,13 @@ Foam::isoSurfacePoint::isoSurfacePoint
     const scalar mergeTol
 )
 :
-    isoSurfacePoint
-    (
-        cellValues,
-        pointValues,
-        iso,
-        (filter != filterType::NONE),
-        bounds,
-        mergeTol
-    )
-{}
-
-
-Foam::isoSurfacePoint::isoSurfacePoint
-(
-    const volScalarField& cellValues,
-    const scalarField& pointValues,
-    const scalar iso,
-    const bool regularise,
-    const boundBox& bounds,
-    const scalar mergeTol
-)
-:
     isoSurfaceBase(iso, bounds),
     mesh_(cellValues.mesh()),
     pVals_(pointValues),
-    regularise_(regularise),
     mergeDistance_(mergeTol*mesh_.bounds().mag())
 {
+    const bool regularise = (filter != filterType::NONE);
+
     if (debug)
     {
         Pout<< "isoSurfacePoint:" << nl
@@ -1381,7 +1360,7 @@ Foam::isoSurfacePoint::isoSurfacePoint
             << minMax(cellValues.primitiveField()) << nl
             << "    point min/max : " << minMax(pVals_) << nl
             << "    isoValue      : " << iso << nl
-            << "    filter        : " << Switch(regularise_) << nl
+            << "    filter        : " << Switch(regularise) << nl
             << "    mergeTol      : " << mergeTol << nl
             << endl;
     }
@@ -1530,7 +1509,7 @@ Foam::isoSurfacePoint::isoSurfacePoint
 
     // Per cc -1 or a point inside snappedPoints.
     labelList snappedCc;
-    if (regularise_)
+    if (regularise)
     {
         calcSnappedCc
         (
@@ -1562,7 +1541,7 @@ Foam::isoSurfacePoint::isoSurfacePoint
 
     // Per point -1 or a point inside snappedPoints.
     labelList snappedPoint;
-    if (regularise_)
+    if (regularise)
     {
         // Determine if point is on boundary.
         bitSet isBoundaryPoint(mesh_.nPoints());
