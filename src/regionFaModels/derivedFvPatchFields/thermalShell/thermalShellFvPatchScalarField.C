@@ -124,15 +124,18 @@ void thermalShellFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    baffle_->evolve();
+    if (baffle_->active())
+    {
+        baffle_->evolve();
 
-    volScalarField::Boundary& vfb =
-        db().lookupObjectRef<volScalarField>
-        (
-            this->internalField().name()
-        ).boundaryFieldRef();
+        volScalarField::Boundary& vfb =
+            db().lookupObjectRef<volScalarField>
+            (
+                this->internalField().name()
+            ).boundaryFieldRef();
 
-    baffle_->vsm().mapToVolume(baffle_->T(), vfb);
+        baffle_->vsm().mapToVolume(baffle_->T(), vfb);
+    }
 
     fixedValueFvPatchField<scalar>::updateCoeffs();
 }

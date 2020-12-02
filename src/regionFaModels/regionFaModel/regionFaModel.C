@@ -150,15 +150,12 @@ Foam::regionModels::regionFaModel::regionFaModel
     patchID_(patch.index()),
     regionName_(dict.lookup("region"))
 {
-    if (active_)
-    {
-        constructMeshObjects();
-        initialise();
+    constructMeshObjects();
+    initialise();
 
-        if (readFields)
-        {
-            read(dict);
-        }
+    if (readFields)
+    {
+        read(dict);
     }
 }
 

@@ -29,7 +29,7 @@ boundaryField
     ceiling
     {
         type                compressible::thermalShell;
-        active              true;
+        active              false;
         T                   T;
 
         thermo
@@ -46,6 +46,7 @@ boundaryField
         thermalShellModel   thermalShell;
 
         qr                  qr;
+        thickness           1e-3;
 
         value               uniform 300;
     }

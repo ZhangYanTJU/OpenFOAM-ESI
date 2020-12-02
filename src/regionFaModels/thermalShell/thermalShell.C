@@ -138,7 +138,7 @@ thermalShell::thermalShell
             primaryMesh().time().timeName(),
             primaryMesh(),
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         regionMesh(),
         dimensionedScalar(dimPower/dimArea, Zero)
@@ -150,12 +150,14 @@ thermalShell::thermalShell
             "h_" + regionName_,
             primaryMesh().time().timeName(),
             primaryMesh(),
-            IOobject::MUST_READ,
+            IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        regionMesh()
+        regionMesh(),
+        dimensionedScalar(dimLength, Zero)
     ),
-    qrName_(dict.getOrDefault<word>("qr", "none"))
+    qrName_(dict.getOrDefault<word>("qr", "none")),
+    thickness_(dict.getOrDefault<scalar>("thickness", 0))
 {
     init();
 }
@@ -165,6 +167,10 @@ thermalShell::thermalShell
 
 void thermalShell::init()
 {
+    if (thickness_ > 0)
+    {
+        h_ = dimensionedScalar("thickness", dimLength, thickness_);
+    }
 }
 
 

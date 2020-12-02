@@ -135,8 +135,8 @@ protected:
             const word qrName_;
 
 
-            //- Pointer to radiation model
-            //autoPtr<radiation::radiationModel> radiation_;
+            //- Unifor thickness
+            scalar thickness_;
 
 
         //- Read control parameters from dictionary
