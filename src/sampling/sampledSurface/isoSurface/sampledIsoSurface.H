@@ -243,11 +243,6 @@ public:
         }
 
 
-        //- Lookup or read isoField.
-        //  Sets volFieldPtr_ and pointFieldPtr_.
-        void getIsoField();
-
-
     // Sample
 
         //- Sample volume field onto surface faces
@@ -317,7 +312,7 @@ public:
     // Output
 
         //- Write
-        virtual void print(Ostream&) const;
+        virtual void print(Ostream& os) const;
 };
 
 

@@ -86,12 +86,13 @@ namespace Foam
 class sampledIsoSurfaceTopo
 :
     public sampledSurface,
-    public MeshedSurface<face>
+    public meshedSurface
 {
     // Private typedefs for convenience
-    typedef MeshedSurface<face> MeshStorage;
+    typedef meshedSurface Mesh;
 
-    // Private data
+
+    // Private Data
 
         //- Field to get isoSurface of
         const word isoField_;
@@ -175,7 +176,7 @@ public:
         //- Points of surface
         virtual const pointField& points() const
         {
-            return MeshStorage::points();
+            return Mesh::points();
         }
 
         //- Faces of surface
@@ -193,19 +194,19 @@ public:
         //- Face area magnitudes
         virtual const vectorField& Sf() const
         {
-            return MeshStorage::Sf();
+            return Mesh::Sf();
         }
 
         //- Face area magnitudes
         virtual const scalarField& magSf() const
         {
-            return MeshStorage::magSf();
+            return Mesh::magSf();
         }
 
         //- Face centres
         virtual const vectorField& Cf() const
         {
-            return MeshStorage::Cf();
+            return Mesh::Cf();
         }
 
 
@@ -275,7 +276,7 @@ public:
         ) const;
 
         //- Write
-        virtual void print(Ostream&) const;
+        virtual void print(Ostream& os) const;
 };
 
 

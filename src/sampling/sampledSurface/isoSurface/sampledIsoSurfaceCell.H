@@ -90,7 +90,7 @@ class sampledIsoSurfaceCell
     public meshedSurface
 {
     // Private typedefs for convenience
-    typedef meshedSurface MeshStorage;
+    typedef meshedSurface Mesh;
 
     // Private data
 
@@ -179,13 +179,13 @@ public:
         //- Points of surface
         virtual const pointField& points() const
         {
-            return MeshStorage::points();
+            return Mesh::points();
         }
 
         //- Faces of surface
         virtual const faceList& faces() const
         {
-            return MeshStorage::surfFaces();
+            return Mesh::surfFaces();
         }
 
         //- Per-face zone/region information
@@ -197,19 +197,19 @@ public:
         //- Face area magnitudes
         virtual const vectorField& Sf() const
         {
-            return MeshStorage::Sf();
+            return Mesh::Sf();
         }
 
         //- Face area magnitudes
         virtual const scalarField& magSf() const
         {
-            return MeshStorage::magSf();
+            return Mesh::magSf();
         }
 
         //- Face centres
         virtual const vectorField& Cf() const
         {
-            return MeshStorage::Cf();
+            return Mesh::Cf();
         }
 
 
@@ -279,7 +279,7 @@ public:
         ) const;
 
         //- Write
-        virtual void print(Ostream&) const;
+        virtual void print(Ostream& os) const;
 };
 
 
