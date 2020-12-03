@@ -89,7 +89,7 @@ class sampledDistanceSurface
     // Private data
 
         //- Whether to recalculate cell values as average of point values
-        const bool average_;
+        bool average_;
 
         //- Track if the surface needs an update
         mutable bool needsUpdate_;

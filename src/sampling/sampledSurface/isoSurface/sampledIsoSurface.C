@@ -363,9 +363,7 @@ bool Foam::sampledIsoSurface::updateGeometry() const
                 vfld,
                 *pointSubFieldPtr_,
                 isoVal_,
-                filter_,
-                bounds_,
-                mergeTol_
+                isoParams_
             )
         );
     }
@@ -380,9 +378,7 @@ bool Foam::sampledIsoSurface::updateGeometry() const
                 vfld,
                 *pointFieldPtr_,
                 isoVal_,
-                filter_,
-                bounds_,
-                mergeTol_
+                isoParams_
             )
         );
     }
@@ -392,14 +388,15 @@ bool Foam::sampledIsoSurface::updateGeometry() const
     {
         Pout<< "sampledIsoSurface::updateGeometry() : constructed iso:"
             << nl
-            << "    filter         : " << Switch(bool(filter_)) << nl
-            << "    average        : " << Switch(average_) << nl
             << "    isoField       : " << isoField_ << nl
-            << "    isoValue       : " << isoVal_ << nl;
+            << "    isoValue       : " << isoVal_ << nl
+            << "    average        : " << Switch(average_) << nl
+            << "    filter         : "
+            << Switch(bool(isoParams_.filter())) << nl;
         if (subMeshPtr_)
         {
-            Pout<< "    zone size      : " << subMeshPtr_->subMesh().nCells()
-                << nl;
+            Pout<< "    zone size      : "
+                << subMeshPtr_->subMesh().nCells() << nl;
         }
         Pout<< "    points         : " << points().size() << nl
             << "    faces          : " << surface().size() << nl
@@ -423,17 +420,8 @@ Foam::sampledIsoSurface::sampledIsoSurface
     sampledSurface(name, mesh, dict),
     isoField_(dict.get<word>("isoField")),
     isoVal_(dict.get<scalar>("isoValue")),
-    mergeTol_(dict.getOrDefault<scalar>("mergeTol", 1e-6)),
-    filter_
-    (
-        isoSurfaceBase::getFilterType
-        (
-            dict,
-            isoSurfaceBase::filterType::DIAGCELL
-        )
-    ),
+    isoParams_(dict),
     average_(dict.getOrDefault("average", false)),
-    bounds_(dict.getOrDefault("bounds", boundBox::invertedBox)),
     zoneNames_(),
     exposedPatchName_(),
     surfPtr_(nullptr),
@@ -442,6 +430,8 @@ Foam::sampledIsoSurface::sampledIsoSurface
     volFieldPtr_(nullptr),
     pointFieldPtr_(nullptr)
 {
+    isoParams_.algorithm(isoSurfaceParams::ALGO_POINT);  // Force
+
     if (!sampledSurface::interpolate())
     {
         FatalIOErrorInFunction(dict)

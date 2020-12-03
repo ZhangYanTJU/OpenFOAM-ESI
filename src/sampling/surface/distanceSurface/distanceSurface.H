@@ -95,14 +95,8 @@ class distanceSurface
         //- Signed distance
         const bool signed_;
 
-        //- The iso-surface algorithm type
-        const isoSurfaceBase::algorithmType isoAlgo_;
-
-        //- Filtering for iso-surface triangles
-        const isoSurfaceBase::filterType filter_;
-
-        //- Optional bounding box to trim against
-        const boundBox bounds_;
+        //- Parameters for iso-surface (algorithm, filter, mergeTol, etc)
+        isoSurfaceParams isoParams_;
 
         //- Distance to cell centres
         autoPtr<volScalarField> cellDistancePtr_;
@@ -143,10 +137,8 @@ public:
             const word& surfaceType,
             const word& surfaceName,
             const scalar distance,
-            const bool signedDistance,
-            const isoSurfaceBase::algorithmType algo,
-            const isoSurfaceBase::filterType filter,
-            const boundBox& bounds = boundBox::invertedBox
+            const bool useSignedDistance,
+            const isoSurfaceParams& params = isoSurfaceParams()
         );
 
 
