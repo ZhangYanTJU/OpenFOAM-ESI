@@ -27,7 +27,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "sampledIsoSurface.H"
+#include "isoSurfacePoint.H"
 #include "dictionary.H"
+#include "fvMesh.H"
 #include "volFields.H"
 #include "volPointInterpolation.H"
 #include "addToRunTimeSelectionTable.H"
@@ -384,13 +386,13 @@ bool Foam::sampledIsoSurface::updateGeometry() const
 
     if (debug)
     {
-        Pout<< "isoSurfacePoint::updateGeometry() : constructed iso:"
-            << nl
+        Pout<< "isoSurfacePoint::updateGeometry() : constructed iso:" << nl
             << "    isoField       : " << isoField_ << nl
             << "    isoValue       : " << isoVal_ << nl
             << "    average        : " << Switch(average_) << nl
             << "    filter         : "
-            << Switch(bool(isoParams_.filter())) << nl;
+            << Switch(bool(isoParams_.filter())) << nl
+            << "    bounds         : " << isoParams_.getClipBounds() << nl;
         if (subMeshPtr_)
         {
             Pout<< "    zone size      : "
@@ -441,9 +443,9 @@ Foam::sampledIsoSurface::sampledIsoSurface
     {
         FatalIOErrorInFunction(dict)
             << "Non-interpolated iso surface not supported since triangles"
-            << " span across cells." << exit(FatalIOError);
+            << " span across cells." << nl
+            << exit(FatalIOError);
     }
-
 
     if (!dict.readIfPresent("zones", zoneNames_) && dict.found("zone"))
     {

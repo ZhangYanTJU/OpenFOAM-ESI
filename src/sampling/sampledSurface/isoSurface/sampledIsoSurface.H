@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,13 +53,13 @@ Usage
         type     | isoSurfacePoint                          | yes |
         isoField | field name for obtaining iso-surface     | yes |
         isoValue | value of iso-surface                     | yes |
-        mergeTol | tolerance for merging points             | no  | 1e-6
-        regularise | point snapping (bool or enum)          | no  | true
         average  | cell values from averaged point values   | no  | false
         bounds   | limit with bounding box                  | no  |
         zone     | limit to cell zone (name or regex)       | no  |
         zones    | limit to cell zones (names, regexs)      | no  |
         exposedPatchName | name for zone subset             | optional |
+        regularise | point snapping (bool or enum)          | no  | true
+        mergeTol | tolerance for merging points             | no  | 1e-6
     \endtable
 
 SourceFiles
