@@ -59,7 +59,7 @@ Usage
         bounds   | limit with bounding box                  | no  |
         zone     | limit to cell zone (name or regex)       | no  |
         zones    | limit to cell zones (names, regexs)      | no  |
-        exposedPatchName | name for zone subset             | partly |
+        exposedPatchName | name for zone subset             | optional |
     \endtable
 
 SourceFiles
@@ -101,6 +101,9 @@ class sampledIsoSurface
 
         //- Whether to recalculate cell values as average of point values
         bool average_;
+
+        //- Placeholder
+        bool triangulate_;
 
         //- The zone or zones for the iso-surface
         wordRes zoneNames_;

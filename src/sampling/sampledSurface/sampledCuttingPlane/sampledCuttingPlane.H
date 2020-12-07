@@ -61,7 +61,7 @@ Usage
         bounds   | limit with bounding box                  | no  |
         zone     | limit to cell zone (name or regex)       | no  |
         zones    | limit to cell zones (names, regexs)      | no  |
-        exposedPatchName | name for zone subset             | partly |
+        exposedPatchName | name for zone subset             | optional |
     \endtable
 
 Note
