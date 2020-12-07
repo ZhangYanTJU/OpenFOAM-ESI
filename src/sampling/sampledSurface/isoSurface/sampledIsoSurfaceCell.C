@@ -63,6 +63,11 @@ bool Foam::sampledIsoSurfaceCell::updateGeometry() const
 
     prevTimeIndex_ = fvm.time().timeIndex();
 
+    // Clear any previously stored topologies
+    surface_.clear();
+    meshCells_.clear();
+    isoSurfacePtr_.reset(nullptr);
+
     // Clear derived data
     sampledSurface::clearGeom();
 
@@ -160,7 +165,6 @@ bool Foam::sampledIsoSurfaceCell::updateGeometry() const
         }
     }
 
-    meshedSurface& mySurface = const_cast<sampledIsoSurfaceCell&>(*this);
     {
         isoSurfaceCell surf
         (
@@ -172,9 +176,16 @@ bool Foam::sampledIsoSurfaceCell::updateGeometry() const
             *ignoreCellsPtr_
         );
 
-        mySurface.transfer(static_cast<meshedSurface&>(surf));
+        surface_.transfer(static_cast<meshedSurface&>(surf));
         meshCells_.transfer(surf.meshCells());
     }
+
+    // if (subMeshPtr_ && meshCells_.size())
+    // {
+    //     // With the correct addressing into the full mesh
+    //     meshCells_ =
+    //         UIndirectList<label>(subMeshPtr_->cellMap(), meshCells_);
+    // }
 
     if (debug)
     {
@@ -187,8 +198,8 @@ bool Foam::sampledIsoSurfaceCell::updateGeometry() const
             << "    triangulate    : " << triangulate_ << " (ignored)" << nl
             << "    bounds         : " << isoParams_.getClipBounds() << nl
             << "    points         : " << points().size() << nl
-            << "    faces          : " << Mesh::size() << nl
-            << "    cut cells      : " << meshCells_.size() << endl;
+            << "    faces          : " << surface().size() << nl
+            << "    cut cells      : " << meshCells().size() << endl;
     }
 
     return true;
@@ -205,7 +216,6 @@ Foam::sampledIsoSurfaceCell::sampledIsoSurfaceCell
 )
 :
     sampledSurface(name, mesh, dict),
-    Mesh(),
     isoField_(dict.get<word>("isoField")),
     isoVal_(dict.get<scalar>("isoValue")),
     isoParams_(dict),
@@ -213,8 +223,9 @@ Foam::sampledIsoSurfaceCell::sampledIsoSurfaceCell
     triangulate_(false),  // unused
     zoneNames_(),
     prevTimeIndex_(-1),
+    surface_(),
     meshCells_(),
-    ignoreCellsPtr_(nullptr)
+    isoSurfacePtr_(nullptr)
 {
     isoParams_.algorithm(isoSurfaceParams::ALGO_CELL);  // Force
 
@@ -250,6 +261,10 @@ bool Foam::sampledIsoSurfaceCell::needsUpdate() const
 
 bool Foam::sampledIsoSurfaceCell::expire()
 {
+    surface_.clear();
+    meshCells_.clear();
+    isoSurfacePtr_.reset(nullptr);
+
     // Clear derived data
     sampledSurface::clearGeom();
 

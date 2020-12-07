@@ -111,13 +111,23 @@ class sampledIsoSurface
         //- For zones: patch to put exposed faces into
         mutable word exposedPatchName_;
 
-        mutable autoPtr<isoSurfacePoint> isoSurfacePtr_;
 
-
-    // Recreated for every isoSurface
+    // Sampling geometry. Directly stored or via an iso-surface (ALGO_POINT)
 
         //- Time at last call, also track if surface needs an update
         mutable label prevTimeIndex_;
+
+        //- The extracted surface (direct storage)
+        mutable meshedSurface surface_;
+
+        //- For every face the original cell in mesh (direct storage)
+        mutable labelList meshCells_;
+
+        //- Extracted iso-surface, for interpolators
+        mutable autoPtr<isoSurfacePoint> isoSurfacePtr_;
+
+
+    // Fields
 
         //- Cached volfield
         mutable autoPtr<volScalarField> storedVolFieldPtr_;
@@ -125,7 +135,6 @@ class sampledIsoSurface
 
         //- Cached pointfield
         mutable const pointScalarField* pointFieldPtr_;
-
 
     // And on subsetted mesh
 
@@ -163,6 +172,24 @@ class sampledIsoSurface
             const interpolation<Type>& interpolator
         ) const;
 
+        //- Use isoSurfacePtr_ for point interpolation
+        template<class Type>
+        tmp<Field<Type>> sampleOnIsoSurfacePoints
+        (
+            const interpolation<Type>& interpolator
+        ) const;
+
+
+protected:
+
+    // Protected Member Functions
+
+        //- Is currently backed by an isoSurfacePtr_
+        bool hasIsoSurface() const
+        {
+            return bool(isoSurfacePtr_);
+        }
+
 
 public:
 
@@ -187,11 +214,6 @@ public:
 
     // Member Functions
 
-        const isoSurfacePoint& surface() const
-        {
-            return *isoSurfacePtr_;
-        }
-
         //- Does the surface need an update?
         virtual bool needsUpdate() const;
 
@@ -204,6 +226,25 @@ public:
         //  Do nothing (and return false) if no update was needed
         virtual bool update();
 
+        //- The currently created surface geometry
+        const meshedSurface& surface() const
+        {
+            if (isoSurfacePtr_)
+            {
+                return *isoSurfacePtr_;
+            }
+            return surface_;
+        }
+
+        //- For each face, the original cell in mesh
+        const labelList& meshCells() const
+        {
+            if (isoSurfacePtr_)
+            {
+                return isoSurfacePtr_->meshCells();
+            }
+            return meshCells_;
+        }
 
         //- Points of surface
         virtual const pointField& points() const

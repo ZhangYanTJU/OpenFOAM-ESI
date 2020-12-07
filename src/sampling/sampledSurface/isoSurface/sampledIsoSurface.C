@@ -321,6 +321,17 @@ bool Foam::sampledIsoSurface::updateGeometry() const
         return false;
     }
 
+    prevTimeIndex_ = fvm.time().timeIndex();
+
+    // Clear any previously stored topologies
+    surface_.clear();
+    meshCells_.clear();
+    isoSurfacePtr_.reset(nullptr);
+
+    // Clear derived data
+    sampledSurface::clearGeom();
+
+
     // Get sub-mesh if any
     if
     (
@@ -348,15 +359,7 @@ bool Foam::sampledIsoSurface::updateGeometry() const
         );
     }
 
-
-    prevTimeIndex_ = fvm.time().timeIndex();
     getIsoFields();
-
-    // Clear any stored topo
-    isoSurfacePtr_.clear();
-
-    // Clear derived data
-    clearGeom();
 
     refPtr<volScalarField> tvolFld(*volFieldPtr_);
     refPtr<pointScalarField> tpointFld(*pointFieldPtr_);
@@ -395,7 +398,7 @@ bool Foam::sampledIsoSurface::updateGeometry() const
         }
         Pout<< "    points         : " << points().size() << nl
             << "    faces          : " << surface().size() << nl
-            << "    cut cells      : " << surface().meshCells().size()
+            << "    cut cells      : " << meshCells().size()
             << endl;
     }
 
@@ -420,11 +423,17 @@ Foam::sampledIsoSurface::sampledIsoSurface
     triangulate_(false),  // unused
     zoneNames_(),
     exposedPatchName_(),
-    isoSurfacePtr_(nullptr),
     prevTimeIndex_(-1),
+    surface_(),
+    meshCells_(),
+    isoSurfacePtr_(nullptr),
     storedVolFieldPtr_(nullptr),
     volFieldPtr_(nullptr),
-    pointFieldPtr_(nullptr)
+    pointFieldPtr_(nullptr),
+    subMeshPtr_(nullptr),
+    storedVolSubFieldPtr_(nullptr),
+    volSubFieldPtr_(nullptr),
+    pointSubFieldPtr_(nullptr)
 {
     isoParams_.algorithm(isoSurfaceParams::ALGO_POINT);  // Force
 
@@ -472,11 +481,13 @@ bool Foam::sampledIsoSurface::needsUpdate() const
 
 bool Foam::sampledIsoSurface::expire()
 {
-    isoSurfacePtr_.clear();
-    subMeshPtr_.clear();
+    surface_.clear();
+    meshCells_.clear();
+    isoSurfacePtr_.reset(nullptr);
+    subMeshPtr_.reset(nullptr);
 
     // Clear derived data
-    clearGeom();
+    sampledSurface::clearGeom();
 
     // Already marked as expired
     if (prevTimeIndex_ == -1)
