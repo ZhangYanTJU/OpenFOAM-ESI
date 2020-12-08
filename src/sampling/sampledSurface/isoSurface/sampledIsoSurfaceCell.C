@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,19 +26,13 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "sampledIsoSurfaceCell.H"
-#include "isoSurfaceCell.H"
-#include "dictionary.H"
-#include "fvMesh.H"
-#include "volFields.H"
-#include "volPointInterpolation.H"
 #include "addToRunTimeSelectionTable.H"
-#include "fvMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(sampledIsoSurfaceCell, 0);
+    defineTypeName(sampledIsoSurfaceCell);
     addNamedToRunTimeSelectionTable
     (
         sampledSurface,
@@ -48,163 +41,6 @@ namespace Foam
         isoSurfaceCell
     );
 }
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-bool Foam::sampledIsoSurfaceCell::updateGeometry() const
-{
-    const fvMesh& fvm = static_cast<const fvMesh&>(mesh());
-
-    // No update needed
-    if (fvm.time().timeIndex() == prevTimeIndex_)
-    {
-        return false;
-    }
-
-    prevTimeIndex_ = fvm.time().timeIndex();
-
-    // Clear any previously stored topologies
-    surface_.clear();
-    meshCells_.clear();
-    isoSurfacePtr_.reset(nullptr);
-
-    // Clear derived data
-    sampledSurface::clearGeom();
-
-
-    // Handle cell zones as inverse (blocked) selection
-    if (!ignoreCellsPtr_)
-    {
-        ignoreCellsPtr_.reset(new bitSet);
-
-        if (-1 != mesh().cellZones().findIndex(zoneNames_))
-        {
-            bitSet select(mesh().cellZones().selection(zoneNames_));
-
-            if (select.any() && !select.all())
-            {
-                // From selection to blocking
-                select.flip();
-
-                *ignoreCellsPtr_ = std::move(select);
-            }
-        }
-    }
-
-
-    // Use field from database, or try to read it in
-    const auto* cellFldPtr = fvm.findObject<volScalarField>(isoField_);
-
-    if (debug)
-    {
-        if (cellFldPtr)
-        {
-            InfoInFunction << "Lookup " << isoField_ << endl;
-        }
-        else
-        {
-            InfoInFunction
-                << "Reading " << isoField_
-                << " from time " << fvm.time().timeName()
-                << endl;
-        }
-    }
-
-    // For holding the volScalarField read in.
-    autoPtr<volScalarField> fieldReadPtr;
-
-    if (!cellFldPtr)
-    {
-        // Bit of a hack. Read field and store.
-
-        fieldReadPtr = autoPtr<volScalarField>::New
-        (
-            IOobject
-            (
-                isoField_,
-                fvm.time().timeName(),
-                fvm,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            fvm
-        );
-    }
-
-    const volScalarField& cellFld =
-        (fieldReadPtr ? *fieldReadPtr : *cellFldPtr);
-
-    auto tpointFld = volPointInterpolation::New(fvm).interpolate(cellFld);
-
-    // Field reference (assuming non-averaged)
-    tmp<scalarField> tcellValues(cellFld.primitiveField());
-
-    if (average_)
-    {
-        // From point field and interpolated cell.
-        tcellValues = tmp<scalarField>::New(fvm.nCells(), Zero);
-        auto& cellAvg = tcellValues.ref();
-
-        labelField nPointCells(fvm.nCells(), Zero);
-
-        for (label pointi = 0; pointi < fvm.nPoints(); ++pointi)
-        {
-            const scalar& val = tpointFld().primitiveField()[pointi];
-            const labelList& pCells = fvm.pointCells(pointi);
-
-            for (const label celli : pCells)
-            {
-                cellAvg[celli] += val;
-                ++nPointCells[celli];
-            }
-        }
-        forAll(cellAvg, celli)
-        {
-            cellAvg[celli] /= nPointCells[celli];
-        }
-    }
-
-    {
-        isoSurfaceCell surf
-        (
-            fvm,
-            tcellValues(), // A primitiveField
-            tpointFld().primitiveField(),
-            isoVal_,
-            isoParams_,
-            *ignoreCellsPtr_
-        );
-
-        surface_.transfer(static_cast<meshedSurface&>(surf));
-        meshCells_.transfer(surf.meshCells());
-    }
-
-    // if (subMeshPtr_ && meshCells_.size())
-    // {
-    //     // With the correct addressing into the full mesh
-    //     meshCells_ =
-    //         UIndirectList<label>(subMeshPtr_->cellMap(), meshCells_);
-    // }
-
-    if (debug)
-    {
-        Pout<< "isoSurfaceCell::updateGeometry() : constructed iso:" << nl
-            << "    isoField       : " << isoField_ << nl
-            << "    isoValue       : " << isoVal_ << nl
-            << "    average        : " << Switch(average_) << nl
-            << "    filter         : "
-            << Switch(bool(isoParams_.filter())) << nl
-            << "    triangulate    : " << triangulate_ << " (ignored)" << nl
-            << "    bounds         : " << isoParams_.getClipBounds() << nl
-            << "    points         : " << points().size() << nl
-            << "    faces          : " << surface().size() << nl
-            << "    cut cells      : " << meshCells().size() << endl;
-    }
-
-    return true;
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -215,186 +51,14 @@ Foam::sampledIsoSurfaceCell::sampledIsoSurfaceCell
     const dictionary& dict
 )
 :
-    sampledSurface(name, mesh, dict),
-    isoField_(dict.get<word>("isoField")),
-    isoVal_(dict.get<scalar>("isoValue")),
-    isoParams_(dict),
-    average_(dict.getOrDefault("average", true)),
-    triangulate_(false),  // unused
-    zoneNames_(),
-    prevTimeIndex_(-1),
-    surface_(),
-    meshCells_(),
-    isoSurfacePtr_(nullptr)
-{
-    isoParams_.algorithm(isoSurfaceParams::ALGO_CELL);  // Force
-
-    if (!dict.readIfPresent("zones", zoneNames_) && dict.found("zone"))
-    {
-        zoneNames_.resize(1);
-        dict.readEntry("zone", zoneNames_.first());
-    }
-
-    if (-1 != mesh.cellZones().findIndex(zoneNames_))
-    {
-        DebugInfo
-            << "Restricting to cellZone(s) " << flatOutput(zoneNames_) << endl;
-    }
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::sampledIsoSurfaceCell::~sampledIsoSurfaceCell()
+    sampledIsoSurface
+    (
+        isoSurfaceParams(isoSurfaceParams::ALGO_CELL),
+        name,
+        mesh,
+        dict
+    )
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::sampledIsoSurfaceCell::needsUpdate() const
-{
-    const fvMesh& fvm = static_cast<const fvMesh&>(mesh());
-
-    return fvm.time().timeIndex() != prevTimeIndex_;
-}
-
-
-bool Foam::sampledIsoSurfaceCell::expire()
-{
-    surface_.clear();
-    meshCells_.clear();
-    isoSurfacePtr_.reset(nullptr);
-
-    // Clear derived data
-    sampledSurface::clearGeom();
-
-    ignoreCellsPtr_.reset(nullptr);
-
-    // Already marked as expired
-    if (prevTimeIndex_ == -1)
-    {
-        return false;
-    }
-
-    // Force update
-    prevTimeIndex_ = -1;
-    return true;
-}
-
-
-bool Foam::sampledIsoSurfaceCell::update()
-{
-    return updateGeometry();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::sampledIsoSurfaceCell::sample
-(
-    const interpolation<scalar>& sampler
-) const
-{
-    return sampleOnFaces(sampler);
-}
-
-
-Foam::tmp<Foam::vectorField>
-Foam::sampledIsoSurfaceCell::sample
-(
-    const interpolation<vector>& sampler
-) const
-{
-    return sampleOnFaces(sampler);
-}
-
-
-Foam::tmp<Foam::sphericalTensorField>
-Foam::sampledIsoSurfaceCell::sample
-(
-    const interpolation<sphericalTensor>& sampler
-) const
-{
-    return sampleOnFaces(sampler);
-}
-
-
-Foam::tmp<Foam::symmTensorField>
-Foam::sampledIsoSurfaceCell::sample
-(
-    const interpolation<symmTensor>& sampler
-) const
-{
-    return sampleOnFaces(sampler);
-}
-
-
-Foam::tmp<Foam::tensorField>
-Foam::sampledIsoSurfaceCell::sample
-(
-    const interpolation<tensor>& sampler
-) const
-{
-    return sampleOnFaces(sampler);
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::sampledIsoSurfaceCell::interpolate
-(
-    const interpolation<scalar>& interpolator
-) const
-{
-    return sampleOnPoints(interpolator);
-}
-
-
-Foam::tmp<Foam::vectorField>
-Foam::sampledIsoSurfaceCell::interpolate
-(
-    const interpolation<vector>& interpolator
-) const
-{
-    return sampleOnPoints(interpolator);
-}
-
-Foam::tmp<Foam::sphericalTensorField>
-Foam::sampledIsoSurfaceCell::interpolate
-(
-    const interpolation<sphericalTensor>& interpolator
-) const
-{
-    return sampleOnPoints(interpolator);
-}
-
-
-Foam::tmp<Foam::symmTensorField>
-Foam::sampledIsoSurfaceCell::interpolate
-(
-    const interpolation<symmTensor>& interpolator
-) const
-{
-    return sampleOnPoints(interpolator);
-}
-
-
-Foam::tmp<Foam::tensorField>
-Foam::sampledIsoSurfaceCell::interpolate
-(
-    const interpolation<tensor>& interpolator
-) const
-{
-    return sampleOnPoints(interpolator);
-}
-
-
-void Foam::sampledIsoSurfaceCell::print(Ostream& os) const
-{
-    os  << "isoSurfaceCell: " << name() << " :"
-        << "  field:" << isoField_
-        << "  value:" << isoVal_;
-        //<< "  faces:" << faces().size()   // possibly no geom yet
-        //<< "  points:" << points().size();
-}
 
 
 // ************************************************************************* //

@@ -41,7 +41,7 @@ Usage
     (
         surface1
         {
-            type    isoSurfacePoint;
+            type    isoSurface;
             cell    false;
         }
     );
@@ -50,17 +50,25 @@ Usage
     Where the sub-entries comprise:
     \table
         Property | Description                              | Required | Default
-        type     | isoSurfacePoint                          | yes |
+        type     | isoSurface                               | yes |
+        isoAlgorithm | (cell/topo/point)                    | no  | topo
         isoField | field name for obtaining iso-surface     | yes |
         isoValue | value of iso-surface                     | yes |
+        isoValues| values for iso-surfaces                  | yes |
         average  | cell values from averaged point values   | no  | false
         bounds   | limit with bounding box                  | no  |
         zone     | limit to cell zone (name or regex)       | no  |
         zones    | limit to cell zones (names, regexs)      | no  |
+        simpleSubMesh | Simple sub-meshing in algorithm itself | no  | false
         exposedPatchName | name for zone subset             | optional |
         regularise | point snapping (bool or enum)          | no  | true
+        triangulate | triangulate faces (if regularise)     | no  | false
         mergeTol | tolerance for merging points             | no  | 1e-6
     \endtable
+
+    Some options are limited to particular algorithms.
+    - triangulate is topo-only
+    - simpleSubMesh and multiple isoValues are not available for point.
 
 SourceFiles
     sampledIsoSurface.C
@@ -71,9 +79,9 @@ SourceFiles
 #ifndef sampledIsoSurface_H
 #define sampledIsoSurface_H
 
-#include "isoSurfacePoint.H"
 #include "sampledSurface.H"
 #include "fvMeshSubset.H"
+#include "isoSurfaceBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -93,8 +101,8 @@ class sampledIsoSurface
         //- Field to get isoSurface of
         const word isoField_;
 
-        //- Iso value
-        const scalar isoVal_;
+        //- The iso-value(s)
+        List<scalar> isoValues_;
 
         //- Parameters (filtering etc) for iso-surface
         isoSurfaceParams isoParams_;
@@ -102,8 +110,11 @@ class sampledIsoSurface
         //- Whether to recalculate cell values as average of point values
         bool average_;
 
-        //- Placeholder
+        //- Whether to triangulate ALGO_TOPO (after filtering)
         bool triangulate_;
+
+        //- Use simple sub-meshing in algorithm itself
+        bool simpleSubMesh_;
 
         //- The zone or zones for the iso-surface
         wordRes zoneNames_;
@@ -124,7 +135,16 @@ class sampledIsoSurface
         mutable labelList meshCells_;
 
         //- Extracted iso-surface, for interpolators
-        mutable autoPtr<isoSurfacePoint> isoSurfacePtr_;
+        mutable autoPtr<isoSurfaceBase> isoSurfacePtr_;
+
+
+    // Mesh Subsetting
+
+        //- Cached subMesh for (pre-)subset of cell zones
+        mutable autoPtr<fvMeshSubset> subMeshPtr_;
+
+        //- Cached ignore cells for (post-)subset of cell zones
+        mutable autoPtr<bitSet> ignoreCellsPtr_;
 
 
     // Fields
@@ -136,10 +156,8 @@ class sampledIsoSurface
         //- Cached pointfield
         mutable const pointScalarField* pointFieldPtr_;
 
-    // And on subsetted mesh
 
-        //- Cached submesh
-        mutable autoPtr<fvMeshSubset> subMeshPtr_;
+    // And on (pre-)subsetted mesh
 
         //- Cached volfield
         mutable autoPtr<volScalarField> storedVolSubFieldPtr_;
@@ -153,6 +171,9 @@ class sampledIsoSurface
 
         //- Get fields needed to recreate iso surface.
         void getIsoFields() const;
+
+        //- Collect iso-surfaces into a single surface (No point merging)
+        void combineSurfaces(PtrList<isoSurfaceBase>& isoSurfPtrs);
 
         //- Create iso surface (if time has changed)
         //  Do nothing (and return false) if no update was needed
@@ -198,6 +219,15 @@ public:
 
 
     // Constructors
+
+        //- Construct from dictionary
+        sampledIsoSurface
+        (
+            const isoSurfaceParams& params,
+            const word& name,
+            const polyMesh& mesh,
+            const dictionary& dict
+        );
 
         //- Construct from dictionary
         sampledIsoSurface

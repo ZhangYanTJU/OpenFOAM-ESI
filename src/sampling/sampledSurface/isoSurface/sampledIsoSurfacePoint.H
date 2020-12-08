@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,10 +24,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::sampledIsoSurfaceTopo
+    Foam::sampledIsoSurfacePoint
 
 Description
-    A sampledSurface defined by a surface of iso value.
+    A sampledSurface defined by a surface of iso value. Always triangulated.
     To be used in sampleSurfaces / functionObjects. Recalculates iso surface
     only if time changes.
 
@@ -41,9 +40,7 @@ Usage
     (
         surface1
         {
-            type    isoSurfaceTopo;
-            isoField        p;
-            isoValue        0.0;
+            type    sampledIsoSurfacePoint;
         }
     );
     \endverbatim
@@ -51,24 +48,24 @@ Usage
     Where the sub-entries comprise:
     \table
         Property | Description                              | Required | Default
-        type     | isoSurfaceTopo                           | yes |
+        type     | sampledIsoSurfacePoint                    | yes |
         isoField | field name for obtaining iso-surface     | yes |
         isoValue | value of iso-surface                     | yes |
         average  | cell values from averaged point values   | no  | false
         bounds   | limit with bounding box                  | no  |
         zone     | limit to cell zone (name or regex)       | no  |
         zones    | limit to cell zones (names, regexs)      | no  |
-        regularise | filter faces (bool or enum)            | no  | true
-        triangulate | triangulate faces (if regularise)     | no  | false
+        regularise | point snapping                         | yes |
+        mergeTol | tolerance for merging points             | no  | 1e-6
     \endtable
 
 SourceFiles
-    sampledIsoSurfaceTopo.C
+    sampledIsoSurfacePoint.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sampledIsoSurfaceTopo_H
-#define sampledIsoSurfaceTopo_H
+#ifndef sampledIsoSurfacePoint_H
+#define sampledIsoSurfacePoint_H
 
 #include "sampledIsoSurface.H"
 
@@ -78,23 +75,23 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class sampledIsoSurfaceTopo Declaration
+                    Class sampledIsoSurfacePoint Declaration
 \*---------------------------------------------------------------------------*/
 
-class sampledIsoSurfaceTopo
+class sampledIsoSurfacePoint
 :
     public sampledIsoSurface
 {
 public:
 
     //- Runtime type information
-    TypeNameNoDebug("sampledIsoSurfaceTopo");
+    TypeNameNoDebug("sampledIsoSurfacePoint");
 
 
     // Constructors
 
         //- Construct from dictionary
-        sampledIsoSurfaceTopo
+        sampledIsoSurfacePoint
         (
             const word& name,
             const polyMesh& mesh,
@@ -103,7 +100,7 @@ public:
 
 
     //- Destructor
-    virtual ~sampledIsoSurfaceTopo() = default;
+    virtual ~sampledIsoSurfacePoint() = default;
 };
 
 
