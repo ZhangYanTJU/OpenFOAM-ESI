@@ -33,6 +33,12 @@ Foam::mappedPatchBase::mode() const
 }
 
 
+inline const Foam::word& Foam::mappedPatchBase::sampleWorld() const
+{
+    return sampleWorld_;
+}
+
+
 inline const Foam::word& Foam::mappedPatchBase::sampleRegion() const
 {
     if (sampleRegion_.empty())
@@ -135,6 +141,20 @@ inline const Foam::vector& Foam::mappedPatchBase::offset() const
 inline const Foam::vectorField& Foam::mappedPatchBase::offsets() const
 {
     return offsets_;
+}
+
+
+inline Foam::label Foam::mappedPatchBase::comm() const
+{
+    return comm_;
+}
+
+
+inline bool Foam::mappedPatchBase::sameWorld() const
+{
+    return
+        UPstream::allWorlds().size() == 1
+     || UPstream::myWorld() == sampleWorld_;
 }
 
 
