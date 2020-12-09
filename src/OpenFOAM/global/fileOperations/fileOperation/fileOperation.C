@@ -2,8 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2017-2018 OpenFOAM Foundation
+    \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2017-2018 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -264,24 +267,64 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
             return iter();
         }
 
+        DynamicList<dirIndex> procDirs;
+        fileNameList dirEntries;
+
         // Read all directories to see any beginning with processor
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        DynamicList<dirIndex> procDirs;
 
         // Note: use parallel synchronised reading so cache will be same
         //       order on all processors
         fileNameList dirNames(readDir(path, fileName::Type::DIRECTORY));
+
+        const bool readDirMasterOnly
+        (
+            regIOobject::fileModificationChecking == IOobject::timeStampMaster
+         || regIOobject::fileModificationChecking == IOobject::inotifyMaster
+        );
+
+        // As byproduct of the above selection, we exclude masterUncollated
+        // from using read/send, but that doesn't matter since that is what
+        // its own internals for readDir() do anyhow.
+
+        if (readDirMasterOnly && Pstream::parRun() /* && !distributed() */)
+        {
+            // Non-distributed.
+            // Read on master only and send to subProcs
+
+            if (Pstream::master())
+            {
+                dirEntries = Foam::readDir(path, fileName::Type::DIRECTORY);
+
+                DebugInfo
+                    << "readDir on master: send " << dirEntries.size()
+                    << " names to sub-processes" << endl;
+            }
+
+            Pstream::scatter(dirEntries, Pstream::msgType(), comm_);
+        }
+        else
+        {
+            // Serial or distributed roots.
+            // Handle readDir() with virtual method
+
+            if (debug)
+            {
+                Pout<< "readDir without special master/send treatment"
+                    << endl;
+            }
+
+            dirEntries = readDir(path, fileName::Type::DIRECTORY);
+        }
+
 
         // Extract info from processorsDDD or processorDDD:
         // - highest processor number
         // - directory+offset containing data for proci
         label maxProc = -1;
 
-        forAll(dirNames, i)
+        for (const fileName& dirN : dirEntries)
         {
-            const fileName& dirN = dirNames[i];
-
             // Analyse directory name
             fileName rp, rd, rl;
             label rStart, rSize, rNum;
