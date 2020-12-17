@@ -270,6 +270,19 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
         DynamicList<dirIndex> procDirs;
         fileNameList dirEntries;
 
+        // Fast path for UNCOLLATED
+        if
+        (
+            !syncPar
+         && numProcs == -1
+         && procPath.type(true) == fileName::Type::DIRECTORY
+        )
+        {
+            // Found "processorDDD"
+            dirEntries.resize(1);
+            dirEntries.first() = pDir;
+        }
+
         // Read all directories to see any beginning with processor
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -287,7 +300,11 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
         // from using read/send, but that doesn't matter since that is what
         // its own internals for readDir() do anyhow.
 
-        if (readDirMasterOnly && Pstream::parRun() /* && !distributed() */)
+        if (!dirEntries.empty())
+        {
+            // Fast-path invoked, skip readDir
+        }
+        else if (readDirMasterOnly && Pstream::parRun() /* && !distributed() */)
         {
             // Non-distributed.
             // Read on master only and send to subProcs
