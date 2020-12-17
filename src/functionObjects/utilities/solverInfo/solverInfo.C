@@ -36,13 +36,7 @@ namespace Foam
 namespace functionObjects
 {
     defineTypeNameAndDebug(solverInfo, 0);
-
-    addToRunTimeSelectionTable
-    (
-        functionObject,
-        solverInfo,
-        dictionary
-    );
+    addToRunTimeSelectionTable(functionObject, solverInfo, dictionary);
 }
 }
 
@@ -129,8 +123,8 @@ Foam::functionObjects::solverInfo::solverInfo
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(obr_, name, typeName, dict),
     fieldSet_(mesh_),
-    writeResidualFields_(false),
     residualFieldNames_(),
+    writeResidualFields_(false),
     initialised_(false)
 {
     read(dict);
