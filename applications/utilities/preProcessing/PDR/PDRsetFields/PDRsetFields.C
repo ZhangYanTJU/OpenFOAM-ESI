@@ -83,14 +83,14 @@ int main(int argc, char* argv[])
     #include "setRootCase.H"
     #include "createTime.H"
 
+    const bool dryrun = args.found("dry-run");
+
     const word dictName("PDRsetFieldsDict");
     #include "setSystemRunTimeDictionaryIO.H"
 
     Info<< "Reading " << dictIO.name() << nl << endl;
 
     IOdictionary setFieldsDict(dictIO);
-
-    const bool dryrun = args.found("dry-run");
 
     const fileName& casepath = runTime.globalPath();
 

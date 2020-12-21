@@ -1,0 +1,105 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      PDRfitMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Settings for PDRfitMesh
+
+cellWidth       0.22;
+
+// Tuning parameters (defaults) for PDRfitMesh
+
+bounds
+{
+//     xmin -1e16;
+//     xmax 1e16;
+//
+//     ymin -1e16;
+//     ymax 1e16;
+//
+//     zmin -1e16;
+//     zmax 1e16;
+}
+
+
+findPlanes
+{
+    // A face smaller than this multiple of cell face area will not be
+    // recorded
+    minSigFaceArea          5;
+
+    // Only fit a plane if the face area at the coordinate is at least
+    // this times the cell face area
+    minAreaRatio            20.0;
+
+    // Size of search zones for face areas will be this * the cell width.
+    // So faces closer than this zone size might be grouped together
+    areasetWidthFactor      0.7;
+
+    // Very long zones produce bad outer boundary shape from
+    // makePDRmeshBlocks, so we subdivide a zone if its length is greater
+    // than this * the height of the area of cuboid vells
+    //
+    maxRatioZoneToH 2.0 ;
+}
+
+
+/****************** Choosing cell width ***************/
+
+// Note "cellWidth" and "cellWidthFactor" are read from PDRsetFieldsDict
+// cellWidth
+// {
+// }
+
+// Note "cellWidth" and "cellWidthFactor" are read from PDRsetFieldsDict
+grid
+{
+    auto   true;
+    width  0;
+    max    great;
+}
+
+
+// Width of obstacles must be less than this * cell width to added
+// into subgrid length
+widthFactor            1.0;
+
+// Optimal average number of obstacles per cell
+obsPerCell              2.0;
+
+// Minimum number of cells in any direction
+minStepsPerDim          10;
+
+// Do not try a cell width more than this times the initial estimate
+maxCwToEst              5.0;
+
+// Assume converged if optimised width changes by less than this
+maxWidthRatio           1.2;
+
+// Maximum iterations in optimizing cell width
+maxPasses               5;
+
+
+/****************** Defining outer expanding region ***************/
+
+// Number of rectangular cell layers each side of the congested region. (double, not int)
+nEdgeLayers     5.0;
+
+// Ratio of the outer extension distance to the average radius of the congested region
+ratioOuterToCongRad     20.0;
+
+// Cell size ratio - should be same as that hard-wired in makePDRmeshBlocks
+outerRatio              1.2;
+
+
+// ************************************************************************* //

@@ -1,0 +1,7 @@
+PDRfitMeshParams.C
+PDRfitMeshScan.C
+PDRfitMeshScans.C
+
+PDRfitMesh.C
+
+EXE = $(FOAM_APPBIN)/PDRfitMesh

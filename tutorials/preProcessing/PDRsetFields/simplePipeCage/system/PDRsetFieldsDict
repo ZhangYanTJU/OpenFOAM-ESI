@@ -35,6 +35,24 @@ cellWidth       0.22;
 // Optional
 cellWidthFactor 1.0;
 
+// Here or in PDRfitMeshDict. Largely pass-through to PDRblockMesh
+
+// Copy for PDRblockMeshDict
+outer
+{
+    type        sphere;
+    onGround    true;
+    expansion   relative;
+
+    ratios      1.1;
+
+    size        3;
+    nCells      10;
+
+    // For PDRfitMesh only:
+    zmin        0;
+}
+
 
 // ------------------
 // Advanced
