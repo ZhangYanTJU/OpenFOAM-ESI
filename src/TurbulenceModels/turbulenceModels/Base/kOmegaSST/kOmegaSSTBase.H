@@ -347,25 +347,6 @@ public:
         }
 
         //- Return the turbulence kinetic energy dissipation rate
-        virtual tmp<volScalarField> epsilon() const
-        {
-            return tmp<volScalarField>
-            (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        "epsilon",
-                        this->mesh_.time().timeName(),
-                        this->mesh_
-                    ),
-                    betaStar_*k_*omega_,
-                    omega_.boundaryField().types()
-                )
-            );
-        }
-
-        //- Return the turbulence kinetic energy dissipation rate
         virtual tmp<volScalarField> omega() const
         {
             return omega_;

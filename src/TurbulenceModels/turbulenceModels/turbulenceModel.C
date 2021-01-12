@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,10 +87,31 @@ bool Foam::turbulenceModel::read()
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::turbulenceModel::epsilon() const
+{
+    const scalar Cmu = 0.09;
+
+    Info<< "I do return epsilon" << endl;
+
+    return tmp<volScalarField>::New
+    (
+        IOobject
+        (
+            IOobject::groupName("epsilon", alphaRhoPhi_.group()),
+            runTime_.timeName(),
+            mesh_
+        ),
+        Cmu*k()*omega()
+    );
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::turbulenceModel::omega() const
 {
     const scalar betaStar = 0.09;
     const dimensionedScalar k0(sqr(dimLength/dimTime), SMALL);
+
+    Info<< "I do return omega" << endl;
 
     return tmp<volScalarField>::New
     (
@@ -99,8 +121,7 @@ Foam::tmp<Foam::volScalarField> Foam::turbulenceModel::omega() const
             runTime_.timeName(),
             mesh_
         ),
-        epsilon()/(betaStar*(k() + k0)),
-        epsilon().boundaryField().types()
+        epsilon()/(betaStar*(k() + k0))
     );
 }
 
