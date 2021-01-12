@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2011-2020 OpenFOAM Foundation
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,28 +31,60 @@ Group
     grpRASTurbulence
 
 Description
-    Spalart-Allmaras one-eqn mixing-length model for incompressible and
-    compressible external flows.
+    Spalart-Allmaras one-transport-equation linear-eddy-viscosity turbulence
+    closure model for incompressible and compressible external flows.
 
-    Reference:
+    \heading Required fields
+    \plaintable
+        nuTilda   | Modified kinematic viscosity [m2/s]
+    \endplaintable
+
+    References:
     \verbatim
-        Spalart, P.R., & Allmaras, S.R. (1994).
-        A one-equation turbulence model for aerodynamic flows.
-        La Recherche Aerospatiale, 1, 5-21.
+        Standard model:
+            Spalart, P.R., & Allmaras, S.R. (1994).
+            A one-equation turbulence model for aerodynamic flows.
+            La Recherche Aerospatiale, 1, 5-21.
+
+        Standard model without ft2 term (tag:R):
+            Rumsey, C. (2020).
+            The Spalart-Allmaras Turbulence Model.
+            Spalart-Allmaras One-Equation Model without ft2 Term (SA-noft2).
+            https://turbmodels.larc.nasa.gov/spalart.html#sanoft2
+            (Retrieved:12-01-2021).
+
+        Estimation expression for k (tag:Rk):
+            Rumsey, C. (2019).
+            2D Fully-Developed Channel Flow
+            at High Reynolds Number Validation Case. SA Model Results.
+            https://turbmodels.larc.nasa.gov/channelflow_val_sa.html
+            (Retrieved:12-01-2021).
+
+        Estimation expressions for epsilon and omega (tag:P):
+            Pope, S. B. (2000).
+            Turbulent flows.
+            Cambridge, UK: Cambridge Univ. Press
+            DOI:10.1017/CBO9780511840531
     \endverbatim
 
-    The model is implemented without the trip-term and hence the ft2 term is
-    not needed.
+    The Stilda generation term should never be allowed to be zero or negative to
+    avoid potential numerical issues and unphysical results for complex flows.
+    The limiting method for the Stilda generation term is a limiter
+    proposed by Spalart (R:Note-1(b)) wherein Stilda is clipped at Cs*Omega
+    with the default value of Cs=0.3.
 
-    It is necessary to limit the Stilda generation term as the model generates
-    unphysical results if this term becomes negative which occurs for complex
-    flow.  Several approaches have been proposed to limit Stilda but it is not
-    clear which is the most appropriate.  Here the limiter proposed by Spalart
-    is implemented in which Stilda is clipped at Cs*Omega with the default value
-    of Cs = 0.3.
-
-    The default model coefficients are
+Usage
+    Example by using \c constant/turbulenceProperties:
     \verbatim
+    RAS
+    {
+        // Mandatory entries
+        RASModel        SpalartAllmaras;
+
+        // Optional entries
+        turbulence      on;
+        printCoeffs     on;
+
         SpalartAllmarasCoeffs
         {
             Cb1         0.1355;
@@ -64,7 +96,18 @@ Description
             sigmaNut    0.66666;
             kappa       0.41;
         }
+    }
     \endverbatim
+
+Note
+  - The model is implemented without the trip-term since the model has almost
+    always been used in fully turbulent applications rather than those where
+    laminar-turbulent transition occurs.
+  - It has been argued that the ft2 term is not needed in the absence of the
+    trip-term, hence ft2-term is also not implementated.
+  - Spalart-Allmaras model does not produce \c k, \c epsilon or \c omega.
+    Nevertheless, these quantities can be estimated by using an expression
+    reported in (Rk) for turbulent kinetic energy.
 
 SourceFiles
     SpalartAllmaras.C
@@ -104,7 +147,7 @@ class SpalartAllmaras
 
 protected:
 
-    // Protected data
+    // Protected Data
 
         // Model coefficients
 
@@ -122,12 +165,13 @@ protected:
 
         // Fields
 
+            //- Modified kinematic viscosity [m2/s]
             volScalarField nuTilda_;
 
             //- Wall distance
             //  Note: different to wall distance in parent RASModel
             //  which is for near-wall cells only
-            const volScalarField& y_;
+            const volScalarField::Internal& y_;
 
 
     // Protected Member Functions
@@ -136,20 +180,25 @@ protected:
 
         tmp<volScalarField> fv1(const volScalarField& chi) const;
 
-        tmp<volScalarField> fv2
+        tmp<volScalarField::Internal> fv2
         (
-            const volScalarField& chi,
-            const volScalarField& fv1
+            const volScalarField::Internal& chi,
+            const volScalarField::Internal& fv1
         ) const;
 
-        tmp<volScalarField> Stilda
+        tmp<volScalarField::Internal> Stilda
         (
-            const volScalarField& chi,
-            const volScalarField& fv1
+            const volScalarField::Internal& chi,
+            const volScalarField::Internal& fv1
         ) const;
 
-        tmp<volScalarField> fw(const volScalarField& Stilda) const;
+        tmp<volScalarField::Internal> fw
+        (
+            const volScalarField::Internal& Stilda
+        ) const;
 
+
+        //- Update nut with the latest available nuTilda
         void correctNut(const volScalarField& fv1);
         virtual void correctNut();
 
@@ -193,16 +242,16 @@ public:
         //- Return the effective diffusivity for nuTilda
         tmp<volScalarField> DnuTildaEff() const;
 
-        //- Return the turbulence kinetic energy
+        //- Return the (estimated) turbulent kinetic energy
         virtual tmp<volScalarField> k() const;
 
-        //- Return the turbulence kinetic energy dissipation rate
+        //- Return the (estimated) turbulent kinetic energy dissipation rate
         virtual tmp<volScalarField> epsilon() const;
 
         //- Return the (estimated) specific dissipation rate
         virtual tmp<volScalarField> omega() const;
 
-        //- Solve the turbulence equations and correct the turbulence viscosity
+        //- Solve the turbulence equations and correct the turbulent viscosity
         virtual void correct();
 };
 
