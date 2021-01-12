@@ -46,7 +46,7 @@ Description
             A one-equation turbulence model for aerodynamic flows.
             La Recherche Aerospatiale, 1, 5-21.
 
-        Standard model without ft2 term (tag:R):
+        Standard model without trip and ft2 terms (tag:R):
             Rumsey, C. (2020).
             The Spalart-Allmaras Turbulence Model.
             Spalart-Allmaras One-Equation Model without ft2 Term (SA-noft2).
@@ -66,12 +66,6 @@ Description
             Cambridge, UK: Cambridge Univ. Press
             DOI:10.1017/CBO9780511840531
     \endverbatim
-
-    The Stilda generation term should never be allowed to be zero or negative to
-    avoid potential numerical issues and unphysical results for complex flows.
-    The limiting method for the Stilda generation term is a limiter
-    proposed by Spalart (R:Note-1(b)) wherein Stilda is clipped at Cs*Omega
-    with the default value of Cs=0.3.
 
 Usage
     Example by using \c constant/turbulenceProperties:
@@ -108,6 +102,10 @@ Note
   - Spalart-Allmaras model does not produce \c k, \c epsilon or \c omega.
     Nevertheless, these quantities can be estimated by using an expression
     reported in (Rk) for turbulent kinetic energy.
+  - The Stilda generation term should never be allowed to be zero or negative to
+    avoid potential numerical issues and unphysical results for complex flows.
+    To this end, a limiter proposed by Spalart (R:Note-1(b)) is applied onto
+    Stilda where Stilda is clipped at Cs*Omega with the default value of Cs=0.3.
 
 SourceFiles
     SpalartAllmaras.C
