@@ -279,26 +279,6 @@ public:
             );
         }
 
-        //- Return the (estimated) specific dissipation rate
-        virtual tmp<volScalarField> omega() const
-        {
-            // (P:p. 384)
-            const scalar betaStar = 0.09;
-            const dimensionedScalar k0(sqr(dimLength/dimTime), SMALL);
-
-            return tmp<volScalarField>::New
-            (
-                IOobject
-                (
-                    IOobject::groupName("omega", this->alphaRhoPhi_.group()),
-                    this->runTime_.timeName(),
-                    this->mesh_
-                ),
-                this->epsilon()/(betaStar*(this->k() + k0)),
-                this->nut_.boundaryField().types()
-            );
-        }
-
         //- Solve the turbulence equations and correct the turbulent viscosity
         virtual void correct();
 };

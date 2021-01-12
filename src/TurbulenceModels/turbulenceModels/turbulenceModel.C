@@ -86,6 +86,25 @@ bool Foam::turbulenceModel::read()
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::turbulenceModel::omega() const
+{
+    const scalar betaStar = 0.09;
+    const dimensionedScalar k0(sqr(dimLength/dimTime), SMALL);
+
+    return tmp<volScalarField>::New
+    (
+        IOobject
+        (
+            IOobject::groupName("omega", alphaRhoPhi_.group()),
+            runTime_.timeName(),
+            mesh_
+        ),
+        epsilon()/(betaStar*(k() + k0)),
+        epsilon().boundaryField().types()
+    );
+}
+
+
 void Foam::turbulenceModel::validate()
 {}
 

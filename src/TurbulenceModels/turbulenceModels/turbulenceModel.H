@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,7 +205,7 @@ public:
         virtual tmp<volScalarField> epsilon() const = 0;
 
         //- Return the specific dissipation rate
-        virtual tmp<volScalarField> omega() const = 0;
+        virtual tmp<volScalarField> omega() const;
 
         //- Return the Reynolds stress tensor
         virtual tmp<volSymmTensorField> R() const = 0;
