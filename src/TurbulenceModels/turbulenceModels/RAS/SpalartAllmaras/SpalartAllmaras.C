@@ -308,68 +308,6 @@ tmp<volScalarField> SpalartAllmaras<BasicTurbulenceModel>::DnuTildaEff() const
 
 
 template<class BasicTurbulenceModel>
-tmp<volScalarField> SpalartAllmaras<BasicTurbulenceModel>::k() const
-{
-    // (Rk:Last paragraph)
-    const scalar a1 = 1.0/0.31;
-
-    return tmp<volScalarField>::New
-    (
-        IOobject
-        (
-            IOobject::groupName("k", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_
-        ),
-        a1*this->nut_*::sqrt(scalar(2))*mag(symm(fvc::grad(this->U_))),
-        zeroGradientFvPatchField<scalar>::typeName
-    );
-}
-
-
-template<class BasicTurbulenceModel>
-tmp<volScalarField> SpalartAllmaras<BasicTurbulenceModel>::epsilon() const
-{
-    // (P:Eq. 10.47)
-    const scalar Cmu = 0.09;
-    const dimensionedScalar nut0(sqr(dimLength)/dimTime, SMALL);
-
-    return tmp<volScalarField>::New
-    (
-        IOobject
-        (
-            IOobject::groupName("epsilon", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_
-        ),
-        Cmu*sqr(this->k())/(this->nut_ + nut0),
-        zeroGradientFvPatchField<scalar>::typeName
-    );
-}
-
-
-template<class BasicTurbulenceModel>
-tmp<volScalarField> SpalartAllmaras<BasicTurbulenceModel>::omega() const
-{
-    // (P:p. 384)
-    const scalar betaStar = 0.09;
-    const dimensionedScalar k0(sqr(dimLength/dimTime), SMALL);
-
-    return tmp<volScalarField>::New
-    (
-        IOobject
-        (
-            IOobject::groupName("omega", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_
-        ),
-        this->epsilon()/(betaStar*(this->k() + k0)),
-        zeroGradientFvPatchField<scalar>::typeName
-    );
-}
-
-
-template<class BasicTurbulenceModel>
 void SpalartAllmaras<BasicTurbulenceModel>::correct()
 {
     if (!this->turbulence_)

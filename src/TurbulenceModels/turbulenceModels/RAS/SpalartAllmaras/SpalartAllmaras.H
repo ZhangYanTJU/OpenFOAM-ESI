@@ -81,14 +81,14 @@ Usage
 
         SpalartAllmarasCoeffs
         {
+            sigmaNut    0.66666;
+            kappa       0.41;
             Cb1         0.1355;
             Cb2         0.622;
             Cw2         0.3;
             Cw3         2.0;
             Cv1         7.1;
             Cs          0.3;
-            sigmaNut    0.66666;
-            kappa       0.41;
         }
     }
     \endverbatim
@@ -99,13 +99,13 @@ Note
     laminar-turbulent transition occurs.
   - It has been argued that the ft2 term is not needed in the absence of the
     trip-term, hence ft2-term is also not implementated.
-  - Spalart-Allmaras model does not produce \c k, \c epsilon or \c omega.
-    Nevertheless, these quantities can be estimated by using an expression
-    reported in (Rk) for turbulent kinetic energy.
   - The Stilda generation term should never be allowed to be zero or negative to
     avoid potential numerical issues and unphysical results for complex flows.
     To this end, a limiter proposed by Spalart (R:Note-1(b)) is applied onto
     Stilda where Stilda is clipped at Cs*Omega with the default value of Cs=0.3.
+  - The model does not produce \c k, \c epsilon or \c omega. Nevertheless,
+    these quantities can be estimated by using an approximate expression for
+    turbulent kinetic energy reported in (Rk:Last paragraph).
 
 SourceFiles
     SpalartAllmaras.C
@@ -241,13 +241,63 @@ public:
         tmp<volScalarField> DnuTildaEff() const;
 
         //- Return the (estimated) turbulent kinetic energy
-        virtual tmp<volScalarField> k() const;
+        virtual tmp<volScalarField> k() const
+        {
+            // (Rk:Last paragraph)
+            const scalar a1 = 1.0/0.31;
+
+            return tmp<volScalarField>::New
+            (
+                IOobject
+                (
+                    IOobject::groupName("k", this->alphaRhoPhi_.group()),
+                    this->runTime_.timeName(),
+                    this->mesh_
+                ),
+                a1*this->nut_*::sqrt(scalar(2))*mag(symm(fvc::grad(this->U_))),
+                this->nut_.boundaryField().types()
+            );
+        }
 
         //- Return the (estimated) turbulent kinetic energy dissipation rate
-        virtual tmp<volScalarField> epsilon() const;
+        virtual tmp<volScalarField> epsilon() const
+        {
+            // (P:Eq. 10.47)
+            const scalar Cmu = 0.09;
+            const dimensionedScalar nut0(sqr(dimLength)/dimTime, SMALL);
+
+            return tmp<volScalarField>::New
+            (
+                IOobject
+                (
+                    IOobject::groupName("epsilon", this->alphaRhoPhi_.group()),
+                    this->runTime_.timeName(),
+                    this->mesh_
+                ),
+                Cmu*sqr(this->k())/(this->nut_ + nut0),
+                this->nut_.boundaryField().types()
+            );
+        }
 
         //- Return the (estimated) specific dissipation rate
-        virtual tmp<volScalarField> omega() const;
+        virtual tmp<volScalarField> omega() const
+        {
+            // (P:p. 384)
+            const scalar betaStar = 0.09;
+            const dimensionedScalar k0(sqr(dimLength/dimTime), SMALL);
+
+            return tmp<volScalarField>::New
+            (
+                IOobject
+                (
+                    IOobject::groupName("omega", this->alphaRhoPhi_.group()),
+                    this->runTime_.timeName(),
+                    this->mesh_
+                ),
+                this->epsilon()/(betaStar*(this->k() + k0)),
+                this->nut_.boundaryField().types()
+            );
+        }
 
         //- Solve the turbulence equations and correct the turbulent viscosity
         virtual void correct();
