@@ -208,10 +208,6 @@ protected:
             const tmp<GeometricField<Type, fvPatchField, volMesh>>& tvalue
         );
 
-        //- Return omega calculated from k and epsilon
-        template<class Model>
-        tmp<volScalarField> omega(const Model& model) const;
-
         //- Return nuTilda calculated from k and omega
         template<class Model>
         tmp<volScalarField> nuTilda(const Model& model) const;
