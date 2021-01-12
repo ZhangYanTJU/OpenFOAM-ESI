@@ -202,7 +202,7 @@ public:
         virtual tmp<volScalarField> k() const = 0;
 
         //- Return the turbulence kinetic energy dissipation rate
-        virtual tmp<volScalarField> epsilon() const;
+        virtual tmp<volScalarField> epsilon() const = 0;
 
         //- Return the specific dissipation rate
         virtual tmp<volScalarField> omega() const;

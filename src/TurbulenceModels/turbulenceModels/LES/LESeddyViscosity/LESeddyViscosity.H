@@ -110,9 +110,6 @@ public:
 
         //- Return sub-grid dissipation rate
         virtual tmp<volScalarField> epsilon() const;
-
-        //- Return sub-grid specific dissipation rate
-        virtual tmp<volScalarField> omega() const;
 };
 
 

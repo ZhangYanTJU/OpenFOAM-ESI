@@ -30,6 +30,7 @@ License
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "wallFvPatch.H"
+#include "zeroGradientFvPatchField.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -87,25 +88,6 @@ bool Foam::turbulenceModel::read()
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::turbulenceModel::epsilon() const
-{
-    const scalar Cmu = 0.09;
-
-    Info<< "I do return epsilon" << endl;
-
-    return tmp<volScalarField>::New
-    (
-        IOobject
-        (
-            IOobject::groupName("epsilon", alphaRhoPhi_.group()),
-            runTime_.timeName(),
-            mesh_
-        ),
-        Cmu*k()*omega()
-    );
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::turbulenceModel::omega() const
 {
     const scalar betaStar = 0.09;
@@ -121,7 +103,8 @@ Foam::tmp<Foam::volScalarField> Foam::turbulenceModel::omega() const
             runTime_.timeName(),
             mesh_
         ),
-        epsilon()/(betaStar*(k() + k0))
+        epsilon()/(betaStar*(k() + k0)),
+        zeroGradientFvPatchField<scalar>::typeName
     );
 }
 

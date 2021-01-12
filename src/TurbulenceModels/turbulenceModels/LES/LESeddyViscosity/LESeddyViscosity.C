@@ -119,29 +119,6 @@ tmp<volScalarField> LESeddyViscosity<BasicTurbulenceModel>::epsilon() const
 }
 
 
-template<class BasicTurbulenceModel>
-tmp<volScalarField> LESeddyViscosity<BasicTurbulenceModel>::omega() const
-{
-    tmp<volScalarField> tk(this->k());
-    tmp<volScalarField> tepsilon(this->epsilon());
-
-    auto tomega = tmp<volScalarField>::New
-    (
-        IOobject
-        (
-            IOobject::groupName("omega", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_
-        ),
-        tepsilon()/(0.09*tk())
-    );
-    auto& omega = tomega.ref();
-    omega.correctBoundaryConditions();
-
-    return tomega;
-}
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace LESModels

@@ -164,25 +164,6 @@ tmp<volScalarField> DeardorffDiffStress<BasicTurbulenceModel>::epsilon() const
 
 
 template<class BasicTurbulenceModel>
-tmp<volScalarField> DeardorffDiffStress<BasicTurbulenceModel>::omega() const
-{
-    volScalarField k(this->k());
-    volScalarField epsilon(this->Ce_*k*sqrt(k)/this->delta());
-
-    return tmp<volScalarField>::New
-    (
-        IOobject
-        (
-            IOobject::groupName("omega", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_
-        ),
-        epsilon/(0.09*k)
-    );
-}
-
-
-template<class BasicTurbulenceModel>
 void DeardorffDiffStress<BasicTurbulenceModel>::correct()
 {
     if (!this->turbulence_)
