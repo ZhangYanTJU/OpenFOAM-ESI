@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,28 +31,49 @@ Group
     grpGenericBoundaryConditions grpWallBoundaryConditions
 
 Description
-    This boundary condition sets the patch-normal component to a fixed value.
+    This boundary condition sets the patch-normal component to the field (vector
+    or tensor) to the patch-normal component of a user specified field.
+    The tangential component is treated as slip, i.e. copied from the internal
+    field.
 
 Usage
-    \table
-        Property     | Description             | Required    | Default value
-        fixedValue   | fixed value             | yes         |
-    \endtable
-
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
+        // Mandatory entries (unmodifiable)
         type            fixedNormalSlip;
-        fixedValue      uniform 0;     // example entry for a scalar field
+        fixedValue      uniform (1 0 0);    // example entry for a vector field
+
+        // Optional entries
+        writeValue      false;
+
+        // Mandatory/Optional (inherited) entries
+        ...
     }
     \endverbatim
+
+    where the entries mean:
+    \table
+      Property     | Description                      | Type    | Reqd | Deflt
+      type         | Type name: fixedNormalSlip       | word    | yes  | -
+      fixedValue   | User-defined value the normal component of which  <!--
+                   --> the boundary is set to                          <!--
+                   -->                | vectorField/tensorField | yes  | -
+      writeValue   | Flag to output patch values (e.g. ParaView)       <!--
+                   -->                                | bool    | no   | false
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link transformFvPatchField.H \endlink
+      - \link fvPatchField.H \endlink
 
 See also
     Foam::transformFvPatchField
 
 SourceFiles
     fixedNormalSlipFvPatchField.C
+    fixedNormalSlipFvPatchFields.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -74,10 +96,13 @@ class fixedNormalSlipFvPatchField
 :
     public transformFvPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Value the normal component of which the boundary is set to
         Field<Type> fixedValue_;
+
+        //- Flag to output patch values (e.g. for ParaView)
+        bool writeValue_;
 
 
 public:
@@ -104,7 +129,7 @@ public:
         );
 
         //- Construct by mapping given fixedNormalSlipFvPatchField
-        //  onto a new patch
+        //- onto a new patch
         fixedNormalSlipFvPatchField
         (
             const fixedNormalSlipFvPatchField<Type>&,
@@ -148,7 +173,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Access
 
@@ -158,37 +183,36 @@ public:
                 return false;
             }
 
-
-        // Mapping functions
-
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap
-            (
-                const fvPatchFieldMapper&
-            );
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap
-            (
-                const fvPatchField<Type>&,
-                const labelList&
-            );
-
-
-        // Return defining fields
-
+            //- Return user-defined input field
             virtual Field<Type>& fixedValue()
             {
                 return fixedValue_;
             }
 
+            //- Return user-defined input field as const field
             virtual const Field<Type>& fixedValue() const
             {
                 return fixedValue_;
             }
 
 
-        // Evaluation functions
+        // Mapping
+
+            //- Map (and resize as needed) from self given a mapping object
+            virtual void autoMap
+            (
+                const fvPatchFieldMapper& m
+            );
+
+            //- Reverse map the given fvPatchField onto this fvPatchField
+            virtual void rmap
+            (
+                const fvPatchField<Type>& ptf,
+                const labelList& addr
+            );
+
+
+        // Evaluation
 
             //- Return gradient at boundary
             virtual tmp<Field<Type>> snGrad() const;
@@ -208,7 +232,7 @@ public:
         virtual void write(Ostream&) const;
 
 
-    // Member operators
+    // Member Operators
 
         virtual void operator=(const UList<Type>&) {}
 

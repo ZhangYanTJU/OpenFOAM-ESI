@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,7 +29,6 @@ License
 #include "fixedNormalSlipFvPatchField.H"
 #include "symmTransformField.H"
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -40,7 +39,8 @@ Foam::fixedNormalSlipFvPatchField<Type>::fixedNormalSlipFvPatchField
 )
 :
     transformFvPatchField<Type>(p, iF),
-    fixedValue_(p.size(), Zero)
+    fixedValue_(p.size(), Zero),
+    writeValue_(false)
 {}
 
 
@@ -54,7 +54,8 @@ Foam::fixedNormalSlipFvPatchField<Type>::fixedNormalSlipFvPatchField
 )
 :
     transformFvPatchField<Type>(ptf, p, iF, mapper),
-    fixedValue_(ptf.fixedValue_, mapper)
+    fixedValue_(ptf.fixedValue_, mapper),
+    writeValue_(ptf.writeValue_)
 {}
 
 
@@ -67,7 +68,8 @@ Foam::fixedNormalSlipFvPatchField<Type>::fixedNormalSlipFvPatchField
 )
 :
     transformFvPatchField<Type>(p, iF),
-    fixedValue_("fixedValue", dict, p.size())
+    fixedValue_("fixedValue", dict, p.size()),
+    writeValue_(dict.getOrDefault("writeValue", false))
 {
     this->patchType() = dict.getOrDefault<word>("patchType", word::null);
     evaluate();
@@ -81,7 +83,8 @@ Foam::fixedNormalSlipFvPatchField<Type>::fixedNormalSlipFvPatchField
 )
 :
     transformFvPatchField<Type>(ptf),
-    fixedValue_(ptf.fixedValue_)
+    fixedValue_(ptf.fixedValue_),
+    writeValue_(ptf.writeValue_)
 {}
 
 
@@ -93,7 +96,8 @@ Foam::fixedNormalSlipFvPatchField<Type>::fixedNormalSlipFvPatchField
 )
 :
     transformFvPatchField<Type>(ptf, iF),
-    fixedValue_(ptf.fixedValue_)
+    fixedValue_(ptf.fixedValue_),
+    writeValue_(ptf.writeValue_)
 {}
 
 
@@ -183,6 +187,12 @@ void Foam::fixedNormalSlipFvPatchField<Type>::write(Ostream& os) const
 {
     transformFvPatchField<Type>::write(os);
     fixedValue_.writeEntry("fixedValue", os);
+
+    if (writeValue_)
+    {
+        os.writeEntry("writeValue", "true");
+        this->writeEntry("value", os);
+    }
 }
 
 
