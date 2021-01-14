@@ -55,7 +55,7 @@ DebugVar(interfacei)
                 (
                     result,
                     add,
-                    lduMesh_.lduAddr(),
+                    mesh().lduAddr(),
                     interfacei,
                     psiif,
                     coupleCoeffs[interfacei],
@@ -84,7 +84,7 @@ DebugVar(interfacei)
                 (
                     result,
                     add,
-                    lduMesh_.lduAddr(),
+                    mesh().lduAddr(),
                     interfacei,
                     psiif,
                     coupleCoeffs[interfacei],
@@ -125,7 +125,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
                 (
                     result,
                     add,
-                    lduMesh_.lduAddr(),
+                    mesh().lduAddr(),
                     interfacei,
                     psiif,
                     coupleCoeffs[interfacei],
@@ -156,7 +156,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
                             (
                                 result,
                                 add,
-                                lduMesh_.lduAddr(),
+                                mesh().lduAddr(),
                                 interfacei,
                                 psiif,
                                 coupleCoeffs[interfacei],
@@ -206,7 +206,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
                 (
                     result,
                     add,
-                    lduMesh_.lduAddr(),
+                    mesh().lduAddr(),
                     interfacei,
                     psiif,
                     coupleCoeffs[interfacei],
@@ -233,7 +233,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
                     (
                         result,
                         add,
-                        lduMesh_.lduAddr(),
+                        mesh().lduAddr(),
                         interfacei,
                         psiif,
                         coupleCoeffs[interfacei],
@@ -247,7 +247,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
                     (
                         result,
                         add,
-                        lduMesh_.lduAddr(),
+                        mesh().lduAddr(),
                         interfacei,
                         psiif,
                         coupleCoeffs[interfacei],
@@ -273,7 +273,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
                 (
                     result,
                     add,
-                    lduMesh_.lduAddr(),
+                    mesh().lduAddr(),
                     interfacei,
                     psiif,
                     coupleCoeffs[interfacei],
