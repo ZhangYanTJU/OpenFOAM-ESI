@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,27 +50,31 @@ Foam::distributionModels::normal::normal
 )
 :
     distributionModel(typeName, dict, rndGen),
-    minValue_(distributionModelDict_.get<scalar>("minValue")),
-    maxValue_(distributionModelDict_.get<scalar>("maxValue")),
-    expectation_(distributionModelDict_.get<scalar>("expectation")),
-    variance_(distributionModelDict_.get<scalar>("variance")),
+    minValue_(distributionModelDict_.getScalar("minValue")),
+    maxValue_(distributionModelDict_.getScalar("maxValue")),
+    mu_(distributionModelDict_.getCompat<scalar>("mu",{{"expectation", 2012}})),
+    sigmaSqr_
+    (
+        distributionModelDict_.getCompat<scalar>
+        (
+            "sigmaSqr",
+            {{"variance", 2012}}
+        )
+    ),
     a_(0.147)
 {
-    if (minValue_ < 0)
+    if (mu_ < minValue_ || mu_ > maxValue_)
     {
         FatalErrorInFunction
-            << "Minimum value must be greater than zero. "
-            << "Supplied minValue = " << minValue_
-            << abort(FatalError);
+            << "Expectation cannot be smaller than given minimum value, or "
+            << "cannot be larger than given maximum value." << nl
+            << "    mu = " << mu_ << nl
+            << "    minValue = " << minValue_ << nl
+            << "    maxValue = " << maxValue_
+            << exit(FatalError);
     }
 
-    if (maxValue_ < minValue_)
-    {
-        FatalErrorInFunction
-            << "Maximum value is smaller than the minimum value:"
-            << "    maxValue = " << maxValue_ << ", minValue = " << minValue_
-            << abort(FatalError);
-    }
+    check();
 }
 
 
@@ -78,15 +83,9 @@ Foam::distributionModels::normal::normal(const normal& p)
     distributionModel(p),
     minValue_(p.minValue_),
     maxValue_(p.maxValue_),
-    expectation_(p.expectation_),
-    variance_(p.variance_),
+    mu_(p.mu_),
+    sigmaSqr_(p.sigmaSqr_),
     a_(p.a_)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::distributionModels::normal::~normal()
 {}
 
 
@@ -94,19 +93,16 @@ Foam::distributionModels::normal::~normal()
 
 Foam::scalar Foam::distributionModels::normal::sample() const
 {
+    const scalar a = erf((minValue_ - mu_)/sigmaSqr_);
+    const scalar b = erf((maxValue_ - mu_)/sigmaSqr_);
 
-    scalar a = erf((minValue_ - expectation_)/variance_);
-    scalar b = erf((maxValue_ - expectation_)/variance_);
-
-    scalar y = rndGen_.sample01<scalar>();
-    scalar x = erfInv(y*(b - a) + a)*variance_ + expectation_;
+    const scalar u = rndGen_.sample01<scalar>();
+    const scalar x = erfInv(u*(b - a) + a)*sigmaSqr_ + mu_;
 
     // Note: numerical approximation of the inverse function yields slight
     //       inaccuracies
 
-    x = min(max(x, minValue_), maxValue_);
-
-    return x;
+    return min(max(x, minValue_), maxValue_);
 }
 
 
@@ -124,7 +120,7 @@ Foam::scalar Foam::distributionModels::normal::maxValue() const
 
 Foam::scalar Foam::distributionModels::normal::meanValue() const
 {
-    return expectation_;
+    return mu_;
 }
 
 

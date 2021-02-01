@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,8 +49,8 @@ Foam::distributionModels::uniform::uniform
 )
 :
     distributionModel(typeName, dict, rndGen),
-    minValue_(distributionModelDict_.get<scalar>("minValue")),
-    maxValue_(distributionModelDict_.get<scalar>("maxValue"))
+    minValue_(distributionModelDict_.getScalar("minValue")),
+    maxValue_(distributionModelDict_.getScalar("maxValue"))
 {
     check();
 }
@@ -60,12 +61,6 @@ Foam::distributionModels::uniform::uniform(const uniform& p)
     distributionModel(p),
     minValue_(p.minValue_),
     maxValue_(p.maxValue_)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::distributionModels::uniform::~uniform()
 {}
 
 

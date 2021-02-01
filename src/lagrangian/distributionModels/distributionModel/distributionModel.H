@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,15 +24,22 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Namespace
+    Foam::distributionModels
+
+Description
+    A namespace for various probability distribution model implementations.
+
 Class
     Foam::distributionModel
 
 Description
-    A library of runtime-selectable distribution models.
+    A library of runtime-selectable probability distribution models.
 
-    Returns a sampled value given the expectation (nu) and variance (sigma^2)
+    Returns a sampled value given the expectation (mu) and variance (sigma^2)
 
     Current distribution models include:
+    - binned
     - exponential
     - fixedValue
     - general
@@ -41,10 +49,10 @@ Description
     - Mass-based Rosin-Rammler
     - uniform
 
-    The distributionModel is tabulated in equidistant nPoints, in an interval.
-    These values are integrated to obtain the cumulated distribution model,
-    which is then used to change the distribution from unifrom to
-    the actual distributionModel.
+    The \c distributionModel is tabulated in equidistant \c nPoints,
+    in an interval. These values are integrated to obtain the cumulated
+    distribution model, which is then used to change the distribution
+    from unifrom to the actual \c distributionModel.
 
 SourceFiles
     distributionModel.C
@@ -70,10 +78,9 @@ namespace Foam
 
 class distributionModel
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Coefficients dictionary
         const dictionary distributionModelDict_;
@@ -118,7 +125,7 @@ public:
             Random& rndGen
         );
 
-        //- Construct copy
+        //- Copy construct
         distributionModel(const distributionModel& p);
 
         //- Construct and return a clone
@@ -134,7 +141,7 @@ public:
 
 
     //- Destructor
-    virtual ~distributionModel();
+    virtual ~distributionModel() = default;
 
 
     // Member Functions
@@ -148,7 +155,7 @@ public:
         //- Return the maximum value
         virtual scalar maxValue() const = 0;
 
-        //- Return the maximum value
+        //- Return the mean value
         virtual scalar meanValue() const = 0;
 };
 

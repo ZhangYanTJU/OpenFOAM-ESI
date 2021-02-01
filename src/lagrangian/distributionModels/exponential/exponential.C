@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,10 +49,18 @@ Foam::distributionModels::exponential::exponential
 )
 :
     distributionModel(typeName, dict, rndGen),
-    minValue_(distributionModelDict_.get<scalar>("minValue")),
-    maxValue_(distributionModelDict_.get<scalar>("maxValue")),
-    lambda_(distributionModelDict_.get<scalar>("lambda"))
+    minValue_(distributionModelDict_.getScalar("minValue")),
+    maxValue_(distributionModelDict_.getScalar("maxValue")),
+    lambda_(distributionModelDict_.getScalar("lambda"))
 {
+    if (lambda_ < VSMALL)
+    {
+        FatalErrorInFunction
+            << "Rate parameter cannot be equal to or less than zero:"
+            << "    lambda = " << lambda_
+            << exit(FatalError);
+    }
+
     check();
 }
 
@@ -65,19 +74,14 @@ Foam::distributionModels::exponential::exponential(const exponential& p)
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::distributionModels::exponential::~exponential()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::scalar Foam::distributionModels::exponential::sample() const
 {
-    scalar y = rndGen_.sample01<scalar>();
-    scalar K = exp(-lambda_*maxValue_) - exp(-lambda_*minValue_);
-    return -(1.0/lambda_)*log(exp(-lambda_*minValue_) + y*K);
+    const scalar u = rndGen_.sample01<scalar>();
+    const scalar qMin = exp(-lambda_*minValue_);
+    const scalar qMax = exp(-lambda_*maxValue_);
+    return -(scalar(1)/lambda_)*log(qMin + u*(qMax - qMin));
 }
 
 
@@ -95,7 +99,7 @@ Foam::scalar Foam::distributionModels::exponential::maxValue() const
 
 Foam::scalar Foam::distributionModels::exponential::meanValue() const
 {
-    return 1.0/lambda_;
+    return scalar(1)/lambda_;
 }
 
 
