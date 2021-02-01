@@ -321,6 +321,32 @@ bool Foam::LocalInteraction<CloudType>::correct
 
                 break;
             }
+            case PatchInteractionModel<CloudType>::itFilter:
+            {
+                keepParticle = true;
+
+                // Retain fraction
+                const scalar fraction = patchData_[patchi].filterFraction();
+
+                // Retained mass
+                const scalar dm = p.mass()*p.nParticle()*fraction;
+
+                // Reset the number of particles by (1 - fraction)
+                p.nParticle() *= 1 - fraction;
+
+                massStick_[patchi][idx] += dm;
+
+                if (writeFields_)
+                {
+                    const label pI = pp.index();
+                    const label fI = pp.whichFace(p.face());
+                    massStick().boundaryFieldRef()[pI][fI] += dm;
+                }
+
+                // Set interactions to continue
+                return false;
+            }
+
             default:
             {
                 FatalErrorInFunction

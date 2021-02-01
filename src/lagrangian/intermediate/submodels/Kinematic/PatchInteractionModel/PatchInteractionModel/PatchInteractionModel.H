@@ -50,6 +50,7 @@ SourceFiles
 #include "tetIndices.H"
 #include "CloudSubModelBase.H"
 #include "writeFile.H"
+#include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -77,10 +78,11 @@ public:
             itRebound,
             itStick,
             itEscape,
+            itFilter,
             itOther
         };
 
-        static wordList interactionTypeNames_;
+        static const Enum<interactionType> interactionTypeNames_;
 
 
 protected:

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,6 +72,9 @@ class patchInteractionData
         //- Restitution coefficient
         scalar mu_;
 
+        //- Filter fraction
+        scalar filterFraction_;
+
 
 public:
 
@@ -95,6 +99,9 @@ public:
 
             //- Return const access to the restitution coefficient
             scalar mu() const;
+
+            //- Return const access to the filter fraction [0-1]
+            scalar filterFraction() const;
 
 
         // I-O

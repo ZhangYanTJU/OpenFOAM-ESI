@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,10 +34,16 @@ License
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 template<class CloudType>
-Foam::wordList Foam::PatchInteractionModel<CloudType>::interactionTypeNames_
-{
-    "rebound", "stick", "escape"
-};
+const Foam::Enum<typename Foam::PatchInteractionModel<CloudType>::interactionType>
+Foam::PatchInteractionModel<CloudType>::interactionTypeNames_
+({
+    { itNone, "none" },
+    { itRebound, "rebound" },
+    { itStick, "stick" },
+    { itEscape, "escape" },
+    { itFilter, "filter" },
+    { itOther, "other" }
+});
 
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
@@ -62,36 +68,7 @@ Foam::word Foam::PatchInteractionModel<CloudType>::interactionTypeToWord
     const interactionType& itEnum
 )
 {
-    word it = "other";
-
-    switch (itEnum)
-    {
-        case itNone:
-        {
-            it = "none";
-            break;
-        }
-        case itRebound:
-        {
-            it = "rebound";
-            break;
-        }
-        case itStick:
-        {
-            it = "stick";
-            break;
-        }
-        case itEscape:
-        {
-            it = "escape";
-            break;
-        }
-        default:
-        {
-        }
-    }
-
-    return it;
+    return interactionTypeNames_[itEnum];
 }
 
 
@@ -102,26 +79,7 @@ Foam::PatchInteractionModel<CloudType>::wordToInteractionType
     const word& itWord
 )
 {
-    if (itWord == "none")
-    {
-        return itNone;
-    }
-    if (itWord == "rebound")
-    {
-        return itRebound;
-    }
-    else if (itWord == "stick")
-    {
-        return itStick;
-    }
-    else if (itWord == "escape")
-    {
-        return itEscape;
-    }
-    else
-    {
-        return itOther;
-    }
+    return interactionTypeNames_[itWord];
 }
 
 

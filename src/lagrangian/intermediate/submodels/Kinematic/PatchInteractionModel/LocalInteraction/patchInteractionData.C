@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +37,8 @@ Foam::patchInteractionData::patchInteractionData()
     interactionTypeName_("unknownInteractionTypeName"),
     patchName_("unknownPatch"),
     e_(0.0),
-    mu_(0.0)
+    mu_(0.0),
+    filterFraction_(0.0)
 {}
 
 
@@ -67,6 +68,12 @@ Foam::scalar Foam::patchInteractionData::mu() const
 }
 
 
+Foam::scalar Foam::patchInteractionData::filterFraction() const
+{
+    return filterFraction_;
+}
+
+
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 Foam::Istream& Foam::operator>>
@@ -85,6 +92,13 @@ Foam::Istream& Foam::operator>>
     dict.readEntry("type", pid.interactionTypeName_);
     pid.e_ = dict.getOrDefault<scalar>("e", 1);
     pid.mu_ = dict.getOrDefault<scalar>("mu", 0);
+    pid.filterFraction_ =
+        dict.getCheckOrDefault<scalar>
+        (
+            "filterFraction",
+            0.0,
+            scalarMinMax::zero_one()
+        );
 
     return is;
 }
