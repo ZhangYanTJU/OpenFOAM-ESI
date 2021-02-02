@@ -91,8 +91,8 @@ protected:
             //- Number of PISO-like correctors
             label nCorr_;
 
-            //- Number of non-orthogonal correctors
-            label nNonOrthCorr_;
+            //- Number of film thickness correctors
+            label nFilmCorr_;
 
             //- Cumulative continuity error
             scalar cumulativeContErr_;

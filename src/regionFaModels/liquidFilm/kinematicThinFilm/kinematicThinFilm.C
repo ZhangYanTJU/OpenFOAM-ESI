@@ -83,6 +83,10 @@ void kinematicThinFilm::init()
 
 void kinematicThinFilm::preEvolveRegion()
 {
+    rhoSp_.storePrevIter();
+    USp_.storePrevIter();
+    pnSp_.storePrevIter();
+
     // Update reads
     liquidFilmModel::read(coeffs());
 
@@ -109,6 +113,8 @@ void kinematicThinFilm::evolveRegion()
 
     for (int oCorr=1; oCorr<=nOuterCorr_; oCorr++)
     {
+        pf_.storePrevIter();
+
         faVectorMatrix UsEqn
         (
             fam::ddt(h_, Uf_)
@@ -117,19 +123,20 @@ void kinematicThinFilm::evolveRegion()
             gs*h_
           + turbulence_->Su(Uf_)
           + faOptions()(h_, Uf_, sqr(dimVelocity))
-        //  + fam::SuSp(rhoSp_*h_, Uf_)
+          //+ fam::SuSp(rhoSp_, Uf_)
           + forces_.correct(Uf_)
           + USp_
         );
 
-        faOptions().constrain(UsEqn);
-
         UsEqn.relax();
+
+        faOptions().constrain(UsEqn);
 
         if (momentumPredictor_)
         {
             solve(UsEqn == - fac::grad(pf_*h_)/rho_ + pf_*fac::grad(h_)/rho_);
         }
+
 
         for (int corr=1; corr<=nCorr_; corr++)
         {
@@ -137,6 +144,7 @@ void kinematicThinFilm::evolveRegion()
 
             Uf_ = UsEqn.H()/UsA;
             Uf_.correctBoundaryConditions();
+            faOptions().correct(Uf_);
 
             phif_ =
                 (fac::interpolate(Uf_) & regionMesh().Le())
@@ -145,7 +153,7 @@ void kinematicThinFilm::evolveRegion()
                 + fac::interpolate(pf_/(rho_*UsA))
                 * fac::lnGrad(h_)*regionMesh().magLe();
 
-            for (int nonOrth=0; nonOrth<=nNonOrthCorr_; nonOrth++)
+            for (int nFilm=1; nFilm<=nFilmCorr_; nFilm++)
             {
                 faScalarMatrix hEqn
                 (
@@ -156,12 +164,12 @@ void kinematicThinFilm::evolveRegion()
                   + rhoSp_
                 );
 
-                faOptions().constrain(hEqn);
-
                 hEqn.relax();
+                faOptions().constrain(hEqn);
                 hEqn.solve();
+                faOptions().correct(h_);
 
-                if (nonOrth == nNonOrthCorr_)
+                if (nFilm == nFilmCorr_)
                 {
                     phi2s_ = hEqn.flux();
                 }
@@ -170,16 +178,14 @@ void kinematicThinFilm::evolveRegion()
             // Bound h_
             h_ = max(h_, h0_);
 
-            pf_ = rho_*gn_*h_ - sigma_*fac::laplacian(h_) + ppf_ + pnSp_;
+            pf_ = rho_*gn_*h_ - sigma_*fac::laplacian(h_) + pnSp_ + ppf_;
             pf_.correctBoundaryConditions();
-
-            //Uf_ -=
-            //    (h_/(rho_*UsA))*fac::grad(pf_)
-            // + (pf_/(rho_*UsA))*fac::grad(h_);
+            pf_.relax();
 
             Uf_ -= (1.0/(rho_*UsA))*fac::grad(pf_*h_)
                 - (pf_/(rho_*UsA))*fac::grad(h_);
             Uf_.correctBoundaryConditions();
+            faOptions().correct(Uf_);
         }
 
     }

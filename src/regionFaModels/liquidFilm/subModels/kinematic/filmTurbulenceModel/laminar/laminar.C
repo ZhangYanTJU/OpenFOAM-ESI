@@ -98,13 +98,13 @@ tmp<faVectorMatrix> laminar::Su(areaVectorField& U) const
     tmp<areaVectorField> Up(film_.Up());
 
     // employ simple coeff-based model
-    areaScalarField Cs("Cs", Cf_*mag(Up() - U));
+    dimensionedScalar Cf("Cs", dimVelocity, Cf_);
 
     tmp<areaScalarField> wf = Cw();
 
     return
     (
-       - fam::Sp(Cs, U) + Cs*Up()     // surface contribution
+       - fam::Sp(Cf, U) + Cf*Up()     // surface contribution
        - fam::Sp(wf(), U) + wf()*Uw() // wall contribution
     );
 }

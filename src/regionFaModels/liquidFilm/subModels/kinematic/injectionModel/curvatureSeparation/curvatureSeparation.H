@@ -101,6 +101,13 @@ protected:
         //- Direction of gravity vector
         vector gHat_;
 
+        //- Threshold force for separation
+        scalar fThreshold_;
+
+        //- Minimum inv R1 for separation
+        scalar minInvR1_;
+
+
 
     // Protected Member Functions
 

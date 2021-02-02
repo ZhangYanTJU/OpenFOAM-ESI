@@ -312,6 +312,8 @@ void liquidFilmModel::preEvolveRegion()
 {
     liquidFilmBase::preEvolveRegion();
 
+
+
     cloudMassTrans_ == dimensionedScalar(dimMass, Zero);
     cloudDiameterTrans_ == dimensionedScalar(dimLength, Zero);
 
@@ -334,6 +336,9 @@ void liquidFilmModel::preEvolveRegion()
     USp_.primitiveFieldRef() *= rAreaDeltaT/rho_;
     pnSp_.primitiveFieldRef() *= rAreaDeltaT/rho_;
 
+    rhoSp_.relax();
+    pnSp_.relax();
+    USp_.relax();
 }
 
 void liquidFilmModel::postEvolveRegion()

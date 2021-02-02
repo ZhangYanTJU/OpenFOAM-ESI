@@ -63,7 +63,7 @@ bool liquidFilmBase::read(const dictionary& dict)
         solution.readEntry("momentumPredictor", momentumPredictor_);
         solution.readEntry("nOuterCorr", nOuterCorr_);
         solution.readEntry("nCorr", nCorr_);
-        solution.readEntry("nNonOrthCorr", nNonOrthCorr_);
+        solution.readEntry("nFilmCorr", nFilmCorr_);
     }
     return true;
 }
@@ -116,9 +116,9 @@ liquidFilmBase::liquidFilmBase
         this->solution().subDict("PIMPLE").get<label>("nOuterCorr")
     ),
     nCorr_(this->solution().subDict("PIMPLE").get<label>("nCorr")),
-    nNonOrthCorr_
+    nFilmCorr_
     (
-        this->solution().subDict("PIMPLE").get<label>("nNonOrthCorr")
+        this->solution().subDict("PIMPLE").get<label>("nFilmCorr")
     ),
 
     h0_("h0", dimLength, 1e-7, dict),
@@ -437,7 +437,10 @@ tmp<areaScalarField> liquidFilmBase::pg() const
         const volScalarField& pp =
             primaryMesh().lookupObject<volScalarField>(pName_);
 
-        const volScalarField::Boundary& pw = pp.boundaryField();
+        volScalarField::Boundary& pw =
+            const_cast<volScalarField::Boundary&>(pp.boundaryField());
+
+        //pw -= pRef_;
 
         pfg.primitiveFieldRef() = vsmPtr_->mapInternalToSurface<scalar>(pw)();
     }
@@ -501,6 +504,7 @@ void liquidFilmBase::postEvolveRegion()
     {
         massSource_.write();
         pnSource_.write();
+        momentumSource_.write();
     }
 
     massSource_.boundaryFieldRef() = Zero;

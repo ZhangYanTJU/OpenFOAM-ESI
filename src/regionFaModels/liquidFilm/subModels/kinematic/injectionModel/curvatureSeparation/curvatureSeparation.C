@@ -71,6 +71,7 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
     );
 */
 
+
     // method 2
     dimensionedScalar smallU("smallU", dimVelocity, ROOTVSMALL);
     areaVectorField UHat(U/(mag(U) + smallU));
@@ -192,7 +193,15 @@ curvatureSeparation::curvatureSeparation
         coeffDict_.getOrDefault<scalar>("definedPatchRadii", 0)
     ),
     magG_(mag(film.g().value())),
-    gHat_(Zero)
+    gHat_(Zero),
+    fThreshold_
+    (
+        coeffDict_.getOrDefault<scalar>("fThreshold", 1e-8)
+    ),
+    minInvR1_
+    (
+        coeffDict_.getOrDefault<scalar>("minInvR1", 5)
+    )
 {
     if (magG_ < ROOTVSMALL)
     {
@@ -234,13 +243,12 @@ void curvatureSeparation::correct
 
 
     // calculate force balance
-    const scalar Fthreshold = 1e-10;
     scalarField Fnet(mesh.nFaces(), Zero);
     scalarField separated(mesh.nFaces(), Zero);
 
     forAll(invR1, i)
     {
-        if ((invR1[i] > 0) && (delta[i]*invR1[i] > deltaByR1Min_))
+        if ((invR1[i] > minInvR1_) && (delta[i]*invR1[i] > deltaByR1Min_))
         {
             scalar R1 = 1.0/(invR1[i] + ROOTVSMALL);
             scalar R2 = R1 + delta[i];
@@ -257,7 +265,7 @@ void curvatureSeparation::correct
 
             Fnet[i] = Fi + Fb + Fs;
 
-            if (Fnet[i] + Fthreshold < 0)
+            if (Fnet[i] + fThreshold_ < 0)
             {
                 separated[i] = 1.0;
             }
