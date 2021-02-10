@@ -73,7 +73,7 @@ inline bool Foam::AMIInterpolation::distributed() const
 
 inline bool Foam::AMIInterpolation::requireMatch() const
 {
-    return requireMatch_ && lowWeightCorrection_ < 0;
+    return requireMatch_;
 }
 
 
@@ -81,6 +81,12 @@ inline bool Foam::AMIInterpolation::setRequireMatch(const bool flag)
 {
     requireMatch_ = flag;
     return requireMatch_;
+}
+
+
+inline bool Foam::AMIInterpolation::mustMatchFaces() const
+{
+    return requireMatch_ && !applyLowWeightCorrection();
 }
 
 

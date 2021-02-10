@@ -108,6 +108,10 @@ protected:
         //- cases
         label singlePatchProc_;
 
+        //- Flag to indicate that interpolation patches are conformal, i.e.
+        //- should fully cover each other
+        bool conformal_;
+
 
         // Source patch
 
@@ -363,6 +367,9 @@ public:
 
             //- Access to the requireMatch flag
             inline bool setRequireMatch(const bool flag);
+
+            //- Return true if requireMatch and lowWeightCorrectionin active
+            inline bool mustMatchFaces() const;
 
             //- Access to the reverseTarget flag
             inline bool reverseTarget() const;

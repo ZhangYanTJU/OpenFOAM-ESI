@@ -25,20 +25,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::faceAreaWeightAMI
+    Foam::faceAreaWeightAMI2D_octree
 
 Description
     Face area weighted Arbitrary Mesh Interface (AMI) method
 
-    Searching is performed using an advancing front.
+    Searching is performed using an octree.
 
 SourceFiles
-    faceAreaWeightAMI.C
+    faceAreaWeightAMI2D_octree.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faceAreaWeightAMI_H
-#define faceAreaWeightAMI_H
+#ifndef faceAreaWeightAMI2D_octree_H
+#define faceAreaWeightAMI2D_octree_H
 
 #include "advancingFrontAMI.H"
 
@@ -48,27 +48,34 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class faceAreaWeightAMI Declaration
+                      Class faceAreaWeightAMI2D_octree Declaration
 \*---------------------------------------------------------------------------*/
 
-class faceAreaWeightAMI
+class faceAreaWeightAMI2D_octree
 :
     public advancingFrontAMI
 {
-private:
-
-    // Private data
-
-        //- Flag to restart uncovered source faces
-        const bool restartUncoveredSourceFace_;
-
-
 protected:
+
+    // Protected Data
+
+        //- Face bounding box factor
+        scalar Cbb_;
+
 
     // Protected Member Functions
 
         //- No copy assignment
-        void operator=(const faceAreaWeightAMI&) = delete;
+        void operator=(const faceAreaWeightAMI2D_octree&) = delete;
+
+        //- Helper function to write non-matched source faces to the set
+        //- of candidate faces
+        void writeNoMatch
+        (
+            const label srcFacei,
+            const labelList& tgtFaceCandidates,
+            const boundBox& srcFaceBb
+        ) const;
 
         //- Initialise the geometry
         void initGeom
@@ -79,96 +86,39 @@ protected:
             labelList& extendedTgtFaceIDs
         );
 
-
-        // Marching front
-
-            //- Calculate addressing, weights and centroids using temporary
-            //- storage
-            virtual void calcAddressing
-            (
-                List<DynamicList<label>>& srcAddress,
-                List<DynamicList<scalar>>& srcWeights,
-                List<DynamicList<point>>& srcCentroids,
-                List<DynamicList<label>>& tgtAddress,
-                List<DynamicList<scalar>>& tgtWeights,
-                label srcFacei,
-                label tgtFacei
-            );
-
-            //- Determine overlap contributions for source face srcFacei
-            virtual bool processSourceFace
-            (
-                const label srcFacei,
-                const label tgtStartFacei,
-                DynamicList<label>& nbrFaces,
-                DynamicList<label>& visitedFaces,
-                List<DynamicList<label>>& srcAddr,
-                List<DynamicList<scalar>>& srcWght,
-                List<DynamicList<point>>& srcCtr,
-                List<DynamicList<label>>& tgtAddr,
-                List<DynamicList<scalar>>& tgtWght
-            );
-
-            //- Attempt to re-evaluate source faces that have not been included
-            virtual void restartUncoveredSourceFace
-            (
-                List<DynamicList<label>>& srcAddr,
-                List<DynamicList<scalar>>& srcWght,
-                List<DynamicList<point>>& srcCtr,
-                List<DynamicList<label>>& tgtAddr,
-                List<DynamicList<scalar>>& tgtWght
-            );
-
-            //- Set the source and target seed faces
-            virtual bool setNextFaces
-            (
-                label& startSeedi,
-                label& srcFacei,
-                label& tgtFacei,
-                const bitSet& mapFlag,
-                labelList& seedFaces,
-                const DynamicList<label>& visitedFaces,
-                const bool errorOnNotFound = true
-            ) const;
-
-
         // Evaluation
 
-            //- Area of intersection between source and target faces
-            virtual void calcInterArea
+            //- Calculate and store the area of intersection between source and
+            //- target faces
+            void storeInterArea
             (
                 const label srcFacei,
                 const label tgtFacei,
-                scalar& area,
-                vector& centroid
-            ) const;
-
-            //- Return true if faces overlap
-            virtual bool overlaps
-            (
-                const label srcFacei,
-                const label tgtFacei,
-                const scalar threshold
+                DynamicList<label>& srcAddr,
+                DynamicList<scalar>& srcWght,
+                DynamicList<vector>& srcCtr,
+                DynamicList<label>& tgtAddr,
+                DynamicList<scalar>& tgtWght
             ) const;
 
 
 public:
 
     //- Runtime type information
-    TypeName("faceAreaWeightAMI");
+    TypeName("faceAreaWeightAMI2D_octree");
 
 
     // Constructors
 
         //- Construct from dictionary
-        faceAreaWeightAMI
+        faceAreaWeightAMI2D_octree
         (
             const dictionary& dict,
             const bool reverseTarget = false
         );
 
         //- Construct from components
-        faceAreaWeightAMI
+        faceAreaWeightAMI2D_octree
         (
             const bool requireMatch,
             const bool reverseTarget = false,
@@ -179,17 +129,20 @@ public:
         );
 
         //- Construct as copy
-        faceAreaWeightAMI(const faceAreaWeightAMI& ami);
+        faceAreaWeightAMI2D_octree(const faceAreaWeightAMI2D_octree& ami);
 
         //- Construct and return a clone
         virtual autoPtr<AMIInterpolation> clone() const
         {
-            return autoPtr<AMIInterpolation>(new faceAreaWeightAMI(*this));
+            return autoPtr<AMIInterpolation>
+            (
+                new faceAreaWeightAMI2D_octree(*this)
+            );
         }
 
 
     //- Destructor
-    virtual ~faceAreaWeightAMI() = default;
+    virtual ~faceAreaWeightAMI2D_octree() = default;
 
 
     // Member Functions
