@@ -64,6 +64,10 @@ using std::cin;
 using std::cout;
 using std::cerr;
 
+// Additional constructors and methods (as per v2012 and earlier)
+#define Foam_IOstream_extras
+// COMPAT_OPENFOAM_ORG
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -175,12 +179,12 @@ public:
         //- Construct with format, version (compression)
         IOstream
         (
-            streamFormat fmt,
-            versionNumber ver,
-            compressionType comp = compressionType::UNCOMPRESSED
+            IOstreamOption::streamFormat fmt,
+            IOstreamOption::versionNumber ver,
+            IOstreamOption::compressionType cmp = IOstreamOption::UNCOMPRESSED
         )
         :
-            IOstream(IOstreamOption(fmt, comp, ver))
+            IOstream(IOstreamOption(fmt, ver, cmp))
         {}
 
 
