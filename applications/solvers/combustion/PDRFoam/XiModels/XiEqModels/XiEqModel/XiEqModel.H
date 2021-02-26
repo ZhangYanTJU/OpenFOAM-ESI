@@ -28,12 +28,6 @@ Class
 
 Description
     Base-class for all XiEq models used by the b-XiEq combustion model.
-    The available models are :
-        \link basicXiSubXiEq.H \endlink
-        \link Gulder.H \endlink
-        \link instabilityXiEq.H \endlink
-        \link SCOPEBlendXiEq.H \endlink
-        \link SCOPEXiEq.H \endlink
 
 SourceFiles
     XiEqModel.C
@@ -76,16 +70,15 @@ protected:
         //- Laminar burning velocity
         const volScalarField& Su_;
 
-
 private:
 
     // Private Member Functions
 
-        //- No copy construct
-        XiEqModel(const XiEqModel&) = delete;
+        //- Disallow copy construct
+        XiEqModel(const XiEqModel&);
 
-        //- No copy assignment
-        void operator=(const XiEqModel&) = delete;
+        //- Disallow default bitwise assignment
+        void operator=(const XiEqModel&);
 
 
 public:
@@ -103,12 +96,14 @@ public:
             dictionary,
             (
                 const dictionary& XiEqProperties,
+                const word& modelType,
                 const psiuReactionThermo& thermo,
                 const compressible::RASModel& turbulence,
                 const volScalarField& Su
             ),
             (
                 XiEqProperties,
+                modelType,
                 thermo,
                 turbulence,
                 Su
@@ -122,6 +117,7 @@ public:
         static autoPtr<XiEqModel> New
         (
             const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -134,6 +130,7 @@ public:
         XiEqModel
         (
             const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -146,14 +143,15 @@ public:
 
     // Member Functions
 
-        //- Return the flame-wrinkling XiEq
-        virtual tmp<volScalarField> XiEq() const
-        {
-            return turbulence_.muEff();
-        }
+        //- Return the flame-wrinking XiEq
+        virtual tmp<volScalarField> XiEq() const = 0;
 
-        //- Return the sub-grid Schelkin effect
-        tmp<volScalarField> calculateSchelkinEffect(const scalar) const;
+        // Only used by sperseded modles
+        tmp<volScalarField> calculateSchelkinEffect
+        (
+            const scalar uPrimeCoef,
+            const scalar nrExp
+        ) const;
 
         //- Update properties from given dictionary
         virtual bool read(const dictionary& XiEqProperties) = 0;

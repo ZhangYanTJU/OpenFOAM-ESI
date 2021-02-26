@@ -76,11 +76,11 @@ private:
 
     // Private Member Functions
 
-        //- No copy construct
-        PDRDragModel(const PDRDragModel&) = delete;
+        //- Disallow copy construct
+        PDRDragModel(const PDRDragModel&);
 
-        //- No copy assignment
-        void operator=(const PDRDragModel&) = delete;
+        //- Disallow default bitwise assignment
+        void operator=(const PDRDragModel&);
 
 
 public:
@@ -161,13 +161,15 @@ public:
         using regIOobject::read;
 
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& PDRProperties) = 0;
+        virtual bool read(const dictionary& PDRProperties);
 
+        //- Write Data
         virtual bool writeData(Ostream&) const
         {
             return true;
         }
 
+        //- Write fields
         virtual void writeFields() const
         {
             NotImplemented;

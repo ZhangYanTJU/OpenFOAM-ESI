@@ -6,7 +6,6 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,32 +31,34 @@ License
 
 Foam::autoPtr<Foam::PDRDragModel> Foam::PDRDragModel::New
 (
-    const dictionary& dict,
+    const dictionary& PDRProperties,
     const compressible::RASModel& turbulence,
     const volScalarField& rho,
     const volVectorField& U,
     const surfaceScalarField& phi
 )
 {
-    const word modelType(dict.get<word>("PDRDragModel"));
+    const word modelType(PDRProperties.get<word>("PDRDragModel"));
 
-    Info<< "Selecting drag model " << modelType << endl;
+    Info<< "Selecting flame-wrinkling model " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(modelType);
 
-    if (!cstrIter.found())
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalIOErrorInLookup
+        FatalErrorIn
         (
-            dict,
-            "PDRDragModel",
-            modelType,
-            *dictionaryConstructorTablePtr_
-        ) << exit(FatalIOError);
+            "PDRDragModel::New"
+        )   << "Unknown PDRDragModel type "
+            << modelType << nl << nl
+            << "Valid  PDRDragModels are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
     }
 
     return autoPtr<PDRDragModel>
-        (cstrIter()(dict, turbulence, rho, U, phi));
+        (cstrIter()(PDRProperties,turbulence, rho, U, phi));
 }
 
 

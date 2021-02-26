@@ -45,19 +45,20 @@ namespace XiGModels
 Foam::XiGModels::instabilityG::instabilityG
 (
     const dictionary& XiGProperties,
+    const word& modelType,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su
 )
 :
-    XiGModel(XiGProperties, thermo, turbulence, Su),
-    GIn_("GIn", dimless/dimTime, XiGModelCoeffs_),
-    lambdaIn_("lambdaIn", dimLength, XiGModelCoeffs_),
-    XiGModel_(XiGModel::New(XiGModelCoeffs_, thermo, turbulence, Su))
+    XiGModel(XiGProperties, modelType, thermo, turbulence, Su),
+    GIn_("GIn", XiGModelCoeffs_),
+    lambdaIn_("lambdaIn", XiGModelCoeffs_),
+    XiGModel_(XiGModel::New(XiGModelCoeffs_,modelType,thermo, turbulence, Su))
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Destructors * * * * * * * * * * * * * * * //
 
 Foam::XiGModels::instabilityG::~instabilityG()
 {}
@@ -76,11 +77,14 @@ Foam::tmp<Foam::volScalarField> Foam::XiGModels::instabilityG::Db() const
 {
     const objectRegistry& db = Su_.db();
     const volScalarField& Xi = db.lookupObject<volScalarField>("Xi");
+    const volScalarField& Xp = db.lookupObject<volScalarField>("Xp");
     const volScalarField& rho = db.lookupObject<volScalarField>("rho");
     const volScalarField& mgb = db.lookupObject<volScalarField>("mgb");
+    const volScalarField& Db1 = db.lookupObject<volScalarField>("Db");
 
-    return XiGModel_->Db()
-        + rho*Su_*(Xi - 1.0)*mgb*(0.5*lambdaIn_)/(mgb + 1.0/lambdaIn_);
+   //return  turbulence_.muEff()
+    return Db1
+        + rho*Su_*(Xp*Xi - 1.0)*mgb*(0.5*lambdaIn_)/(mgb + 1.0/lambdaIn_);
 }
 
 

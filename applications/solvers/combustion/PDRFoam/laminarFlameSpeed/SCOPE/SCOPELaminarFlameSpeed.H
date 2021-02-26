@@ -123,11 +123,50 @@ class SCOPE
         //- Upper Su polynomial
         polynomial SuPolyU_;
 
-        //- Temperature correction exponent
-        scalar Texp_;
+        //- Temperature correction exponent0
+        scalar Texp0_;
 
-        //- Pressure correction exponent
-        scalar pexp_;
+        //- Temperature correction exponent1
+        scalar Texp1_;
+
+        //- Temperature correction exponent2
+        scalar Texp2_;
+
+        //- Temperature correction exponent3
+        scalar Texp3_;
+
+        //- Temperature correction exponent4
+        scalar Texp4_;
+
+        //- Temperature correction exponent5
+        scalar Texp5_;
+
+        //- Temperature correction exponent6
+        scalar Texp6_;
+
+        //- Pressure correction exponent0
+        scalar pexp0_;
+
+        //- Pressure correction exponent1
+        scalar pexp1_;
+
+        //- pressure correction exponent2
+        scalar pexp2_;
+
+        //- pressure correction exponent3
+        scalar pexp3_;
+
+        //- Pressure correction exponent4
+        scalar pexp4_;
+
+        //- Pressure correction exponent5
+        scalar pexp5_;
+
+        //- pressure correction exponent6
+        scalar pexp6_;
+
+        //- Additional coefficient
+        scalar CIn_;
 
         //- Lower Ma polynomial
         polynomial MaPolyL_;
@@ -136,25 +175,25 @@ class SCOPE
         polynomial MaPolyU_;
 
 
-    // Private member functions
+    // Private Member Functions
 
         //- Polynomial evaluated from the given equivalence ratio
-        //  and polynomial coefficients
+        //- and polynomial coefficients
         static inline scalar polyPhi(scalar phi, const polynomial& a);
 
         //- Laminar flame speed evaluated from the given equivalence ratio
-        //  at the reference temperature and pressure
+        //- at the reference temperature and pressure
         inline scalar SuRef(scalar phi) const;
 
         //- Markstein evaluated from the given equivalence ratio
         inline scalar Ma(scalar phi) const;
 
         //- Laminar flame speed evaluated from the given equivalence ratio
-        //  corrected for temperature and pressure dependence
+        //- corrected for temperature and pressure dependence
         inline scalar Su0pTphi(scalar p, scalar Tu, scalar phi) const;
 
         //- Laminar flame speed evaluated from the given uniform
-        //  equivalence ratio corrected for temperature and pressure dependence
+        //- equivalence ratio corrected for temperature and pressure dependence
         tmp<volScalarField> Su0pTphi
         (
             const volScalarField& p,
@@ -163,7 +202,7 @@ class SCOPE
         ) const;
 
         //- Laminar flame speed evaluated from the given equivalence ratio
-        //  distribution corrected for temperature and pressure dependence
+        //- distribution corrected for temperature and pressure dependence
         tmp<volScalarField> Su0pTphi
         (
             const volScalarField& p,
@@ -172,13 +211,14 @@ class SCOPE
         ) const;
 
         //- Return the Markstein number
-        //  evaluated from the given equivalence ratio
+        //- evaluated from the given equivalence ratio
         tmp<volScalarField> Ma(const volScalarField& phi) const;
 
-        //- Construct as copy (not implemented)
-        SCOPE(const SCOPE&);
+        //- No copy construct
+        SCOPE(const SCOPE&) = delete;
 
-        void operator=(const SCOPE&);
+        //- No copy assign
+        void operator=(const SCOPE&) = delete;
 
 
 public:
@@ -191,8 +231,8 @@ public:
         //- Construct from dictionary and psiuReactionThermo
         SCOPE
         (
-            const dictionary&,
-            const psiuReactionThermo&
+            const dictionary& dict,
+            const psiuReactionThermo& ct
         );
 
 
@@ -204,6 +244,9 @@ public:
 
         //- Return the Markstein number
         tmp<volScalarField> Ma() const;
+
+        //- Return CIn
+        scalar CIn() const;
 
         //- Return the laminar flame speed [m/s]
         tmp<volScalarField> operator()() const;

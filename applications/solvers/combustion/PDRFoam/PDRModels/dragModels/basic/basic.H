@@ -110,11 +110,11 @@ class basic
 
     // Private Member Functions
 
-        //- No copy construct
-        basic(const basic&) = delete;
+        //- Disallow copy construct
+        basic(const basic&);
 
-        //- No copy assignment
-        void operator=(const basic&) = delete;
+        //- Disallow default bitwise assignment
+        void operator=(const basic&);
 
 
 public:

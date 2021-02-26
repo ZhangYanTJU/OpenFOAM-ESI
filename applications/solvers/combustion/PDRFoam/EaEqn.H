@@ -15,7 +15,7 @@
             )
           : -betav*dpdt
         )
-      - fvm::laplacian(Db, hea)
+      - fvm::laplacian(DbThermal, hea)
       + betav*fvOptions(rho, hea)
     );
 

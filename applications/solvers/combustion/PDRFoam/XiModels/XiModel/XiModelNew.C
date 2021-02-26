@@ -6,7 +6,6 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +31,7 @@ License
 
 Foam::autoPtr<Foam::XiModel> Foam::XiModel::New
 (
-    const dictionary& dict,
+    const dictionary& propDict,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su,
@@ -41,25 +40,27 @@ Foam::autoPtr<Foam::XiModel> Foam::XiModel::New
     const surfaceScalarField& phi
 )
 {
-    const word modelType(dict.get<word>("XiModel"));
+    const word modelType(propDict.get<word>("XiModel"));
 
     Info<< "Selecting flame-wrinkling model " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(modelType);
 
-    if (!cstrIter.found())
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalIOErrorInLookup
+        FatalErrorIn
         (
-            dict,
-            "XiModel",
-            modelType,
-            *dictionaryConstructorTablePtr_
-        ) << exit(FatalIOError);
+            "XiModel::New"
+        )   << "Unknown XiModel type "
+            << modelType << nl << nl
+            << "Valid XiModels are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
     }
 
     return autoPtr<XiModel>
-        (cstrIter()(dict, thermo, turbulence, Su, rho, b, phi));
+        (cstrIter()(propDict, thermo, turbulence, Su, rho, b, phi));
 }
 
 

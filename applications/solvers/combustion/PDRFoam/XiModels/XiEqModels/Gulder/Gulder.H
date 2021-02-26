@@ -65,6 +65,7 @@ class Gulder
 
         //- Schelkin effect Model constant
         scalar uPrimeCoef_;
+        scalar nrExp_;
 
         //- Use sub-grid Schelkin effect
         bool subGridSchelkin_;
@@ -72,11 +73,11 @@ class Gulder
 
     // Private Member Functions
 
-        //- No copy construct
-        Gulder(const Gulder&) = delete;
+        //- Disallow copy construct
+        Gulder(const Gulder&);
 
-        //- No copy assignment
-        void operator=(const Gulder&) = delete;
+        //- Disallow default bitwise assignment
+        void operator=(const Gulder&);
 
 
 public:
@@ -91,6 +92,7 @@ public:
         Gulder
         (
             const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -103,7 +105,7 @@ public:
 
     // Member Functions
 
-        //- Return the flame-wrinkling XiEq
+        //- Return the flame-wrinking XiEq
         virtual tmp<volScalarField> XiEq() const;
 
         //- Update properties from given dictionary

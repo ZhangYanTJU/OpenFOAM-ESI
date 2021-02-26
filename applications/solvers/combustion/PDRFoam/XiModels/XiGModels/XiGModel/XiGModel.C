@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2011-2015 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +41,7 @@ namespace Foam
 Foam::XiGModel::XiGModel
 (
     const dictionary& XiGProperties,
+    const word& modelType,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su
@@ -50,7 +51,7 @@ Foam::XiGModel::XiGModel
     (
         XiGProperties.subDict
         (
-            XiGProperties.get<word>("XiGModel") + "Coeffs"
+            XiGProperties.get<word>(modelType) + "Coeffs"
         )
     ),
     thermo_(thermo),
@@ -59,7 +60,7 @@ Foam::XiGModel::XiGModel
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Destructors * * * * * * * * * * * * * * * //
 
 Foam::XiGModel::~XiGModel()
 {}
@@ -69,7 +70,7 @@ Foam::XiGModel::~XiGModel()
 
 bool Foam::XiGModel::read(const dictionary& XiGProperties)
 {
-    XiGModelCoeffs_ = XiGProperties.optionalSubDict(type() + "Coeffs");
+    XiGModelCoeffs_ = XiGProperties.subDict(type() + "Coeffs");
 
     return true;
 }

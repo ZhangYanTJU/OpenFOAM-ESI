@@ -28,9 +28,6 @@ Class
 
 Description
     Base-class for all Xi generation models used by the b-Xi combustion model.
-    See Technical Report SH/RE/01R for details on the PDR modelling. For details
-    on the use of XiGModel see \link XiModel.H \endlink. The model available is
-    \link instabilityG.H \endlink
 
 SourceFiles
     XiGModel.C
@@ -72,11 +69,11 @@ private:
 
     // Private Member Functions
 
-        //- No copy construct
-        XiGModel(const XiGModel&) = delete;
+        //- Disallow copy construct
+        XiGModel(const XiGModel&);
 
-        //- No copy assignment
-        void operator=(const XiGModel&) = delete;
+        //- Disallow default bitwise assignment
+        void operator=(const XiGModel&);
 
 
 public:
@@ -94,12 +91,14 @@ public:
             dictionary,
             (
                 const dictionary& XiGProperties,
+                const word& modelType,
                 const psiuReactionThermo& thermo,
                 const compressible::RASModel& turbulence,
                 const volScalarField& Su
             ),
             (
                 XiGProperties,
+                modelType,
                 thermo,
                 turbulence,
                 Su
@@ -113,6 +112,7 @@ public:
         static autoPtr<XiGModel> New
         (
             const dictionary& XiGProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -125,6 +125,7 @@ public:
         XiGModel
         (
             const dictionary& XiGProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -137,14 +138,11 @@ public:
 
     // Member Functions
 
-        //- Return the flame-wrinkling generation rate
+        //- Return the flame-wrinking genration rate
         virtual tmp<volScalarField> G() const = 0;
 
         //- Return the flame diffusivity
-        virtual tmp<volScalarField> Db() const
-        {
-            return turbulence_.muEff();
-        }
+        virtual tmp<volScalarField> Db() const = 0;
 
         //- Update properties from given dictionary
         virtual bool read(const dictionary& XiGProperties) = 0;

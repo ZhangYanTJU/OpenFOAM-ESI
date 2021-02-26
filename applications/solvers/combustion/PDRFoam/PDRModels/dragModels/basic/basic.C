@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,7 +83,7 @@ Foam::PDRDragModels::basic::basic
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Destructors * * * * * * * * * * * * * * * //
 
 Foam::PDRDragModels::basic::~basic()
 {}
@@ -158,6 +158,7 @@ Foam::tmp<Foam::volScalarField> Foam::PDRDragModels::basic::Gk() const
             (0.5*rho_)*mag(U_)*(U_ & CT & U_)
           + Csk*betav*turbulence_.muEff()*sqr(Aw_)*magSqr(U_);
     }
+
 
     return tGk;
 }

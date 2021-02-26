@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2011-2012 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -75,32 +75,28 @@ Foam::laminarFlameSpeedModels::SCOPE::SCOPE
     (
         dictionary
         (
-            IFstream
-            (
-                dict.get<fileName>("fuelFile")
-            )()
-        ).optionalSubDict(typeName + "Coeffs")
+            IFstream(dict.get<fileName>("fuelFile"))()
+        ).subDict(typeName + "Coeffs")
     ),
-    LFL_
-    (
-        coeffsDict_.getCompat<scalar>
-        (
-            "lowerFlammabilityLimit",
-            {{"lowerFlamabilityLimit", 1712}}
-        )
-    ),
-    UFL_
-    (
-        coeffsDict_.getCompat<scalar>
-        (
-            "upperFlammabilityLimit",
-            {{"upperFlamabilityLimit", 1712}}
-        )
-    ),
+    LFL_(coeffsDict_.get<scalar>("lowerFlamabilityLimit")),
+    UFL_(coeffsDict_.get<scalar>("upperFlamabilityLimit")),
     SuPolyL_(coeffsDict_.subDict("lowerSuPolynomial")),
     SuPolyU_(coeffsDict_.subDict("upperSuPolynomial")),
-    Texp_(coeffsDict_.get<scalar>("Texp")),
-    pexp_(coeffsDict_.get<scalar>("pexp")),
+    Texp0_(coeffsDict_.get<scalar>("Texp0")),
+    Texp1_(coeffsDict_.get<scalar>("Texp1")),
+    Texp2_(coeffsDict_.get<scalar>("Texp2")),
+    Texp3_(coeffsDict_.get<scalar>("Texp3")),
+    Texp4_(coeffsDict_.get<scalar>("Texp4")),
+    Texp5_(coeffsDict_.get<scalar>("Texp5")),
+    Texp6_(coeffsDict_.get<scalar>("Texp6")),
+    pexp0_(coeffsDict_.get<scalar>("pexp0")),
+    pexp1_(coeffsDict_.get<scalar>("pexp1")),
+    pexp2_(coeffsDict_.get<scalar>("pexp2")),
+    pexp3_(coeffsDict_.get<scalar>("pexp3")),
+    pexp4_(coeffsDict_.get<scalar>("pexp4")),
+    pexp5_(coeffsDict_.get<scalar>("pexp5")),
+    pexp6_(coeffsDict_.get<scalar>("pexp6")),
+    CIn_(coeffsDict_.getOrDefault<scalar>("CIn", 0)),
     MaPolyL_(coeffsDict_.subDict("lowerMaPolynomial")),
     MaPolyU_(coeffsDict_.subDict("upperMaPolynomial"))
 {
@@ -158,19 +154,19 @@ inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::SuRef
 {
     if (phi < LFL_ || phi > UFL_)
     {
-        // Return 0 beyond the flammability limits
+        // Return 0 beyond the flamibility limits
         return scalar(0);
     }
     else if (phi < SuPolyL_.ll)
     {
         // Use linear interpolation between the low end of the
-        // lower polynomial and the lower flammability limit
+        // lower polynomial and the lower flamibility limit
         return SuPolyL_.llv*(phi - LFL_)/(SuPolyL_.ll - LFL_);
     }
     else if (phi > SuPolyU_.ul)
     {
         // Use linear interpolation between the upper end of the
-        // upper polynomial and the upper flammability limit
+        // upper polynomial and the upper flamibility limit
         return SuPolyU_.ulv*(UFL_ - phi)/(UFL_ - SuPolyU_.ul);
     }
     else if (phi < SuPolyL_.lu)
@@ -185,7 +181,7 @@ inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::SuRef
     }
     else
     {
-        FatalErrorInFunction
+        FatalErrorIn("laminarFlameSpeedModels::SCOPE::SuRef(scalar phi)")
             << "phi = " << phi
             << " cannot be handled by SCOPE function with the "
                "given coefficients"
@@ -195,35 +191,41 @@ inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::SuRef
     }
 }
 
-
 inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::Ma
 (
     scalar phi
 ) const
 {
-    if (phi < MaPolyL_.ll)
+    if (phi < LFL_ || phi > UFL_)
     {
-        // Beyond the lower limit assume Ma is constant
-        return MaPolyL_.llv;
+        // Return 0 beyond the flamibility limits
+        return scalar(0);
+    }
+    else if (phi < MaPolyL_.ll)
+    {
+        // Use linear interpolation between the low end of the
+        // lower polynomial and the lower flamibility limit
+        return MaPolyL_.llv*(phi - LFL_)/(MaPolyL_.ll - LFL_);
     }
     else if (phi > MaPolyU_.ul)
     {
-        // Beyond the upper limit assume Ma is constant
-        return MaPolyU_.ulv;
+        // Use linear interpolation between the upper end of the
+        // upper polynomial and the upper flamibility limit
+        return MaPolyU_.ulv*(UFL_ - phi)/(UFL_ - MaPolyU_.ul);
     }
-    else if (phi < SuPolyL_.lu)
+    else if (phi < MaPolyL_.lu)
     {
         // Evaluate the lower polynomial
         return polyPhi(phi, MaPolyL_);
     }
-    else if (phi > SuPolyU_.lu)
+    else if (phi > MaPolyU_.lu)
     {
         // Evaluate the upper polynomial
         return polyPhi(phi, MaPolyU_);
     }
     else
     {
-        FatalErrorInFunction
+        FatalErrorIn("laminarFlameSpeedModels::SCOPE::Ma(scalar phi)")
             << "phi = " << phi
             << " cannot be handled by SCOPE function with the "
                "given coefficients"
@@ -243,8 +245,31 @@ inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
 {
     static const scalar Tref = 300.0;
     static const scalar pRef = 1.013e5;
+    scalar phi1=phi-1.0;
 
-    return SuRef(phi)*pow((Tu/Tref), Texp_)*pow((p/pRef), pexp_);
+    scalar Texp_=
+        Texp0_+phi1*
+        (
+            Texp1_
+            +Texp2_*phi1+
+            Texp3_*pow(phi1, 2) +
+            Texp4_*pow(phi1, 3) +
+            Texp5_*pow(phi1, 4) +
+            Texp6_*pow(phi1, 5)
+        );
+
+    scalar pexp =
+        pexp0_ + phi1
+       *(
+            pexp1_
+          + pexp2_*phi1
+          + pexp3_*pow(phi1, 2)
+          + pexp4_*pow(phi1, 3)
+          + pexp5_*pow(phi1, 4)
+          + pexp6_*pow(phi1, 5)
+        );
+
+    return SuRef(phi)*pow((Tu/Tref), Texp_)*pow((p/pRef), pexp);
 }
 
 
@@ -279,11 +304,9 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
         Su0[celli] = Su0pTphi(p[celli], Tu[celli], phi);
     }
 
-    volScalarField::Boundary& Su0Bf = Su0.boundaryFieldRef();
-
-    forAll(Su0Bf, patchi)
+    forAll(Su0.boundaryField(), patchi)
     {
-        scalarField& Su0p = Su0Bf[patchi];
+        scalarField& Su0p = Su0.boundaryFieldRef()[patchi];
         const scalarField& pp = p.boundaryField()[patchi];
         const scalarField& Tup = Tu.boundaryField()[patchi];
 
@@ -328,11 +351,9 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
         Su0[celli] = Su0pTphi(p[celli], Tu[celli], phi[celli]);
     }
 
-    volScalarField::Boundary& Su0Bf = Su0.boundaryFieldRef();
-
-    forAll(Su0Bf, patchi)
+    forAll(Su0.boundaryField(), patchi)
     {
-        scalarField& Su0p = Su0Bf[patchi];
+        scalarField& Su0p = Su0.boundaryFieldRef()[patchi];
         const scalarField& pp = p.boundaryField()[patchi];
         const scalarField& Tup = Tu.boundaryField()[patchi];
         const scalarField& phip = phi.boundaryField()[patchi];
@@ -351,7 +372,6 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
 
     return tSu0;
 }
-
 
 Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Ma
 (
@@ -382,11 +402,11 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Ma
         ma[celli] = Ma(phi[celli]);
     }
 
-    volScalarField::Boundary& maBf = ma.boundaryFieldRef();
 
-    forAll(maBf, patchi)
+
+    forAll(ma.boundaryField(), patchi)
     {
-        scalarField& map = maBf[patchi];
+        scalarField& map = ma.boundaryFieldRef()[patchi];
         const scalarField& phip = phi.boundaryField()[patchi];
 
         forAll(map, facei)
@@ -396,6 +416,11 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Ma
     }
 
     return tMa;
+}
+
+Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::CIn() const
+{
+    return  CIn_ ;
 }
 
 
@@ -410,7 +435,8 @@ Foam::laminarFlameSpeedModels::SCOPE::Ma() const
         (
             dimensionedScalar
             (
-                "stoichiometricAirFuelMassRatio", dimless, psiuReactionThermo_
+                "stoichiometricAirFuelMassRatio",
+                psiuReactionThermo_
             )*ft/(scalar(1) - ft)
         );
     }
@@ -451,7 +477,8 @@ Foam::laminarFlameSpeedModels::SCOPE::operator()() const
             psiuReactionThermo_.Tu(),
             dimensionedScalar
             (
-                "stoichiometricAirFuelMassRatio", dimless, psiuReactionThermo_
+                "stoichiometricAirFuelMassRatio",
+                psiuReactionThermo_
             )*ft/(scalar(1) - ft)
         );
     }

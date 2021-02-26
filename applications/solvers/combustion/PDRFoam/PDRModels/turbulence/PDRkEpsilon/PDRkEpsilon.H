@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,30 +31,6 @@ Description
     Standard k-epsilon turbulence model with additional source terms
     corresponding to PDR basic drag model (\link basic.H \endlink)
 
-    The default model coefficients correspond to the following:
-    \verbatim
-        PDRkEpsilonCoeffs
-        {
-            Cmu         0.09;
-            C1          1.44;
-            C2          1.92;
-            C3          -0.33;  // only for compressible
-            C4          0.1;
-            sigmak      1.0;    // only for compressible
-            sigmaEps    1.3;
-            Prt         1.0;    // only for compressible
-        }
-    \endverbatim
-
-    The turbulence source term \f$ G_{R} \f$ appears in the
-    \f$ \kappa-\epsilon \f$ equation for the generation of turbulence due to
-    interaction with unresolved obstacles.
-
-    In the \f$ \epsilon  \f$ equation \f$ C_{1} G_{R} \f$ is added as a source
-    term.
-
-    In the \f$ \kappa \f$ equation \f$ G_{R} \f$ is added as a source term.
-
 SourceFiles
     PDRkEpsilon.C
 
@@ -63,6 +40,7 @@ SourceFiles
 #define compressiblePDRkEpsilon_H
 
 #include "kEpsilon.H"
+#include "ignition.H"
 #include "turbulentFluidThermoModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -88,10 +66,18 @@ class PDRkEpsilon
         >
     >
 {
-    // Private data
+    // Private Data
 
         // Model coefficients
-        dimensionedScalar C4_;
+        scalar C5_;
+        scalar C6_;
+        scalar maxLOverCellW_;
+        scalar lCoef_;
+        dimensionedScalar noTurbUntil_;
+        dimensionedScalar LOverLobs_;
+        dimensionedScalar LOverMobs_;
+        scalar bMin_;
+        bool flameFilteredG_;
 
 
 public:

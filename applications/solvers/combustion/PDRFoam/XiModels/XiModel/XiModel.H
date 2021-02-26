@@ -95,8 +95,8 @@ SourceFiles
 #include "IOdictionary.H"
 #include "psiuReactionThermo.H"
 #include "turbulentFluidThermoModel.H"
-#include "multivariateSurfaceInterpolationScheme.H"
 #include "fvcDiv.H"
+#include "multivariateSurfaceInterpolationScheme.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -124,19 +124,21 @@ protected:
         const volScalarField& b_;
         const surfaceScalarField& phi_;
 
-        //- Flame wrinkling field
+        //- Flame wrinking field
         volScalarField Xi_;
 
+        //- Flame wrinking field for the subgrid obstacles
+        volScalarField Xp_;
 
 private:
 
     // Private Member Functions
 
-        //- No copy construct
-        XiModel(const XiModel&) = delete;
+        //- Disallow copy construct
+        XiModel(const XiModel&);
 
-        //- No copy assignment
-        void operator=(const XiModel&) = delete;
+        //- Disallow default bitwise assignment
+        void operator=(const XiModel&);
 
 
 public:
@@ -209,30 +211,42 @@ public:
 
     // Member Functions
 
-        //- Return the flame-wrinkling Xi
+        //- Return the flame-wrinking Xi
         virtual const volScalarField& Xi() const
         {
             return Xi_;
         }
 
+        //- Return the obstacle-flame-wrinking Xp
+        virtual const volScalarField& Xp() const
+        {
+             return Xp_;
+        }
+
         //- Return the flame diffusivity
         virtual tmp<volScalarField> Db() const
         {
-            return turbulence_.muEff();
+           const objectRegistry& db = Su_.db();
+           const volScalarField& Db1 = db.lookupObject<volScalarField>("Db");
+           //return turbulence_.muEff();
+             return Db1;
         }
 
         //- Add Xi to the multivariateSurfaceInterpolationScheme table
         //  if required
-        virtual void addXi
+        void addXi
         (
-            multivariateSurfaceInterpolationScheme<scalar>::fieldTable&
+            multivariateSurfaceInterpolationScheme<scalar>::fieldTable& fields
         )
-        {}
+        {
+            fields.add(Xi_);
+            fields.add(Xp_);
+        }
 
-        //- Correct the flame-wrinkling Xi
+        //- Correct the flame-wrinking Xi
         virtual void correct() = 0;
 
-        //- Correct the flame-wrinkling Xi using the given convection scheme
+        //- Correct the flame-wrinking Xi using the given convection scheme
         virtual void correct(const fv::convectionScheme<scalar>&)
         {
             correct();

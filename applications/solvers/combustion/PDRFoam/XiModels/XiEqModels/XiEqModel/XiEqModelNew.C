@@ -6,7 +6,6 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,30 +31,42 @@ License
 
 Foam::autoPtr<Foam::XiEqModel> Foam::XiEqModel::New
 (
-    const dictionary& dict,
+    const dictionary& propDict,
+    const word& modelName,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su
 )
 {
-    const word modelType(dict.get<word>("XiEqModel"));
+    const word modelType(propDict.get<word>(modelName));
 
-    Info<< "Selecting flame-wrinkling model " << modelType << endl;
+    Info<< "Selecting flame-wrinkling model Eq " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(modelType);
 
-    if (!cstrIter.found())
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        FatalIOErrorInLookup
+        FatalErrorIn
         (
-            dict,
-            "XiEqModel",
-            modelType,
-            *dictionaryConstructorTablePtr_
-        ) << exit(FatalIOError);
+            "XiEqModel::New"
+            "("
+            "    const psiuReactionThermo& thermo,"
+            "    const word& modelType,"
+            "    const compressible::RASModel& turbulence,"
+            "    const volScalarField& Su"
+            ")"
+        )   << "Unknown XiEqModel type "
+            << modelType << nl << nl
+            << "Valid XiEqModels are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
     }
 
-    return autoPtr<XiEqModel>(cstrIter()(dict, thermo, turbulence, Su));
+    return autoPtr<XiEqModel>(cstrIter()
+    (
+        propDict, modelName, thermo, turbulence, Su)
+    );
 }
 
 
