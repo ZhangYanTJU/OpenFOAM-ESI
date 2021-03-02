@@ -50,23 +50,6 @@ divSchemes
 
     div(phi,K)      Gauss limitedLinear 1;
 
-    div(phi,ft_b_ha_hau_H2OPS_Y) Gauss multivariateSelection
-    {
-        ft          limitedLinear01 1;
-        b           limitedLinear01 1;
-        Xi          limitedLinear 1;
-        Xp          limitedLinear 1;
-        Ep          limitedLinear 1;
-        h           limitedLinear 1;
-        hu          limitedLinear 1;
-        ha          limitedLinear 1;
-        hau         limitedLinear 1;
-        H2OPS       limitedLinear 1;
-        water       limitedLinear 1;
-        Y           limitedLinear 1;
-        AIR         limitedLinear 1;
-    };
-
     div(phi,ft_b_h_hu) Gauss multivariateSelection
     {
         ft          limitedLinear01 1;

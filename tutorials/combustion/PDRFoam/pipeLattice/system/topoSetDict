@@ -26,29 +26,6 @@ actions
         source  nearestToCell;
         points  ( $location );
     }
-
-    // Optionally grow cellSet by attached?
-
-    /*
-    {
-        name    corners;
-        type    pointSet;
-        action  new;
-        source  cellToPoint;
-        set     ignition;
-        option  all;
-    }
-
-    {
-        name    ignition;
-        type    cellSet;
-        action  add;
-        source  pointToCell;
-
-        set     corners;
-        option  edge;
-    }
-    */
 );
 
 

@@ -15,19 +15,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+smoothSt        false;
 StSmoothCoef    1000.0;
-
-//No smooth if >100
 
 schelkin
 {
-    subGridSchelkin true;
-    uPrimeCoef  1.0;
-    lCoef       0.336;
-    maxSchFac   100.0;
-    nrCoef      0.1;
-    nrExp       0.0;
-    nrExp2      0.05;
+    subGridSchelkin     true;
+    uPrimeCoef          1.0;
+    lCoef               0.336;
+    maxSchFac           100.0;
+    nrCoef              0.1;
+    nrExp               0.0;
+    nrExp2              0.05;
 }
 
 PDRDragModel    basic;
@@ -47,17 +46,8 @@ basicSchCoeffs
     Csk         0.0;
 }
 
-XiModel         transport;
+XiModel    transportTwoEqs;
 
-algebraicCoeffs
-{
-    XiShapeCoef 1;
-    XpShapeCoef 1;
-    CpfiDot     0.0;
-    CpfiCross   0.0;
-    GEtaExp     0.0;
-    LOverCw     0.01;
-}
 
 transportTwoEqsCoeffs
 {
@@ -69,51 +59,11 @@ transportTwoEqsCoeffs
     LOverCw     0.01;
 }
 
-k3Coeffs
-{
-    k3Obs       10.0;
-    k3Open      1.0;
-}
-
-transportThreeEqsCoeffs
-{
-    $transportTwoEqsCoeffs;
-    $k3Coeffs;
-}
-
-transportFourEqsCoeffs
-{
-    $transportTwoEqsCoeffs;
-    $k3Coeffs;
-}
-
-transportOneEqObsCoeffs
-{
-    XiShapeCoef 1;
-    Cpfi        0.0;
-    GEtaExp     0.0;
-}
-
-transportXp
-{
-}
-
-transportCoeffs
-{
-    XiShapeCoef 1;
-    GEtaExp     0.28;
-}
-
-fixedCoeffs
-{
-}
-
-
 /*---------------------------------------------------------------------------*\
                           XiEqModel : Model for XiEq
 \*---------------------------------------------------------------------------*/
 
-XiEqModel       instability;
+XiEqModel       instability2XiEq;
 
 BLMcoeffs
 {
@@ -141,12 +91,9 @@ instability2XiEqCoeffs
     BLMgMaXiEqCoeffs
     {
         $schelkin;
-        gulderCoef  1.0; //this value is not usssed 1.0.
         kaCoef      0.25;
         lowK0       0.1;
         lowKg       0.0;
-        gMaCoef     0.032; //not used
-        gMaCoef1    0.0;  // not used
         $BLMcoeffs;
     }
 
@@ -161,45 +108,6 @@ instability2XiEqCoeffs
      }
 }
 
-instabilityCoeffs
-{
-
-    XiEqIn      2.5;
-    XiEqModel   Gulder;
-    GulderCoeffs
-    {
-        uPrimeCoef      1.0;
-        subGridSchelkin true;
-        XiEqCoef        0.62;
-    }
-
-    SCOPEBlendCoeffs
-    {
-        XiEqModelL
-        {
-            XiEqModel   Gulder;
-
-            GulderCoeffs
-            {
-                $schelkin;
-                XiEqCoef    0.62;
-            }
-        }
-
-        XiEqModelH
-        {
-            XiEqModel       SCOPEXiEq;
-
-            SCOPEXiEqCoeffs
-            {
-                $schelkin;
-                XiEqCoef    1.6;
-                XiEqExp     0.33333;
-            }
-        }
-    }
-}
-
 
 /*---------------------------------------------------------------------------*\
                      XiGModel : Model for generation of Xi
@@ -207,25 +115,10 @@ instabilityCoeffs
 
 XiGModel            instabilityG;
 
-instability2GCoeffs
-{
-    lambdaIn        0.0001;
-    defaultCIn      10.0;
-    GInMult         5.0;
-    GInFade         4.0;
-
-    XiGModel KTS;
-
-    KTSCoeffs
-    {
-        GEtaCoef    0.28;
-    }
-}
-
 instabilityGCoeffs
 {
-    lambdaIn        4.5e-3;
-    GIn             1.917;
+    lambdaIn        lambdaIn   [0 1 0 0 0 0 0] 4.5e-3;
+    GIn             GIn        [0 0 -1 0 0 0 0] 1.917;
 
     XiGModel        KTS;
     KTSCoeffs
@@ -249,11 +142,6 @@ normBasicSubGridCoeffs
     Cxpe4       1.0;
 }
 
-basicSubGridCoeffs
-{
-}
-
-
 /*---------------------------------------------------------------------------*\
                      XpGModel : Model for generation of Xp
 \*---------------------------------------------------------------------------*/
@@ -273,14 +161,4 @@ normBasicSubGridGCoeffs
     Cxpe3       400.0;
     Cxpe4       1.0;
 }
-
-basicSubGridGCoeffs
-{
-    XpGModel    KTS;
-    KTSCoeffs
-    {
-        GEtaCoef    0.28;
-    }
-}
-
 // ************************************************************************* //

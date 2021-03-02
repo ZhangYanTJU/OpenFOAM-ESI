@@ -15,40 +15,16 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//thermoType  hhuMixtureThermo<inhomogeneousMixture<sutherlandTransport<specieThermo<janafThermo<perfectGas>>>>>;
 
 thermoType
 {
     type            heheuPsiThermo;
     mixture         inhomogeneousMixture;
-    //mixture         sprayHomogeneousMixtureDisp;
-    //mixture         sprayInhomogeneousMixture;
-    //mixture         inhomogeneousMixture;
     transport       sutherland;
     thermo          janaf;
     equationOfState perfectGas;
     specie          specie;
     energy          absoluteEnthalpy;
-}
-
-inertSpecie     AIR;
-
-liquids
-{
-    //liquidComponents ( H2OPS );
-    H2OPS
-    {
-        defaultCoeffs   yes;
-    }
-    water
-    {
-        defaultCoeffs   yes;
-    }
-}
-
-solids
-{
-    //solidComponents ( );
 }
 
 stoichiometricAirFuelMassRatio 17.1667;
@@ -119,27 +95,7 @@ burntProducts
     }
 }
 
-steam
-{
-    specie
-    {
-        nMoles          1;
-        molWeight       18.02;
-    }
-    thermodynamics
-    {
-        Tlow            200.00;
-        Thigh           5000.00;
-        Tcommon         1000.00;
-        highCpCoeffs    ( 2.67215e+00 3.05629e-03 -8.73026e-07 1.20100e-10 -6.39162e-15 -29899.199219 6.862820);
-        lowCpCoeffs     ( 3.38684e+00 3.47498e-03 -6.35470e-06 6.96858e-09 -2.50659e-12 -30208.099609 2.590230);
-    }
-    transport
-    {
-        As      1.6721e-06;
-        Ts      1.7067e+02;
-    }
-}
-
+dpdt        false;
+pMin        1e3;
 
 // ************************************************************************* //
