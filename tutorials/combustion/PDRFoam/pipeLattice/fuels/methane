@@ -4,8 +4,8 @@ name    methane;
 
 SCOPECoeffs
 {
-    lowerFlammabilityLimit  0.502449441017432;
-    upperFlammabilityLimit  1.68468341988198;
+    lowerFlamabilityLimit  0.502449441017432;
+    upperFlamabilityLimit  1.68468341988198;
 
     lowerSuPolynomial
     {
@@ -72,7 +72,23 @@ SCOPECoeffs
     }
 
     Texp    2.0;
-    pexp    -0.5;
+    Texp0                    1.5453;
+    Texp1                    -0.4204;
+    Texp2                    3.7503;
+    Texp3                    1.782;
+    Texp4                    0.0;
+    Texp5                    0.0;
+    Texp6                    0.0;
+
+    pexp                    -0.5;
+    pexp0                   -0.314;
+    pexp1                    0.608;
+    pexp2                    0.0;
+    pexp3                    0.0;
+    pexp4                    0.0;
+    pexp5                    0.0;
+    pexp6                    0.0;
+
     CIn     10.2;
 }
 

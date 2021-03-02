@@ -22,13 +22,13 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0.125;
+endTime         0.5;
 
 deltaT          5e-06;
 
 writeControl    runTime;
 
-writeInterval   0.001;
+writeInterval   0.01;
 
 purgeWrite      0;
 
@@ -53,6 +53,43 @@ maxDeltaT       1;
 functions
 {
     #include "probes"
+
+    normalisedGradP
+    {
+        libs    (utilityFunctionObjects);
+        type     coded;
+        name     normalisedGradP;
+
+        writeControl    none;
+        writeInterval   -1;
+        executeControl  timeStep;
+        executeInterval -1;
+
+        codeExecute
+        #{
+
+            const volScalarField& p = mesh().lookupObject<volScalarField>("p");
+
+            if (!mesh().foundObject<volScalarField>("normalisedGradP"))
+            {
+                volScalarField* normalisedGradPPtr =
+                    new volScalarField("normalisedGradP", mag(fvc::grad(p)));
+
+                normalisedGradPPtr->store();
+
+                Info << "Found normalisedGradP"<< endl;
+            }
+
+            volScalarField& normalisedGradP =
+                mesh().lookupObjectRef<volScalarField>("normalisedGradP");
+
+            normalisedGradP = mag(fvc::grad(p));
+
+            Info << "Found not normalisedGradP"<< max(normalisedGradP) << endl;
+
+        #};
+
+    }
 }
 
 // ************************************************************************* //
