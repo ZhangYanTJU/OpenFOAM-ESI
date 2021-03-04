@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,52 +24,26 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Global
+    readTimeControls
+
+Description
+    Read the control parameters used by setDeltaT.
+    Modified for PDRFoam to include maxDeltaTRatio.
+
 \*---------------------------------------------------------------------------*/
 
-#include "fixed.H"
-#include "addToRunTimeSelectionTable.H"
+const bool adjustTimeStep =
+    runTime.controlDict().getOrDefault("adjustTimeStep", false);
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+scalar maxCo =
+    runTime.controlDict().getOrDefault<scalar>("maxCo", 1);
 
-namespace Foam
-{
-namespace XiModels
-{
-    defineTypeNameAndDebug(fixed, 0);
-    addToRunTimeSelectionTable(XiModel, fixed, dictionary);
-}
-}
+scalar maxDeltaT =
+    runTime.controlDict().getOrDefault<scalar>("maxDeltaT", GREAT);
 
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::XiModels::fixed::fixed
-(
-    const dictionary& XiProperties,
-    const psiuReactionThermo& thermo,
-    const compressible::RASModel& turbulence,
-    const volScalarField& Su,
-    const volScalarField& rho,
-    const volScalarField& b,
-    const surfaceScalarField& phi
-)
-:
-    XiModel(XiProperties, thermo, turbulence, Su, rho, b, phi)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::XiModels::fixed::~fixed()
-{}
-
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-bool Foam::XiModels::fixed::read(const dictionary& XiProperties)
-{
-    return XiModel::read(XiProperties);
-}
+scalar maxDeltaTRatio =
+    runTime.controlDict().getOrDefault<scalar>("maxDeltaTRatio", 1.2);
 
 
 // ************************************************************************* //

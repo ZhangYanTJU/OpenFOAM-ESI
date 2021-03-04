@@ -25,8 +25,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "instabilityG.H"
+#include "IFstream.H"
+#include "instability2G.H"
 #include "addToRunTimeSelectionTable.H"
+#include "fvCFD.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -34,15 +36,15 @@ namespace Foam
 {
 namespace XiGModels
 {
-    defineTypeNameAndDebug(instabilityG, 0);
-    addToRunTimeSelectionTable(XiGModel, instabilityG, dictionary);
+    defineTypeNameAndDebug(instability2G, 0);
+    addToRunTimeSelectionTable(XiGModel, instability2G, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::XiGModels::instabilityG::instabilityG
+Foam::XiGModels::instability2G::instability2G
 (
     const dictionary& XiGProperties,
     const word& modelType,
@@ -52,41 +54,108 @@ Foam::XiGModels::instabilityG::instabilityG
 )
 :
     XiGModel(XiGProperties, modelType, thermo, turbulence, Su),
-    GIn_("GIn", XiGModelCoeffs_),
+    saModel_
+    (
+        IOdictionary
+        (
+            IOobject
+            (
+                "combustionProperties",
+                Su.mesh().time().constant(),
+                Su.mesh(),
+                IOobject::MUST_READ
+            )
+        ),
+        thermo
+    ),
+    CIn_(saModel_.CIn()),
+    defaultCIn_(XiGModelCoeffs_.get<scalar>("defaultCIn")),
+    GInFade_(XiGModelCoeffs_.get<scalar>("GInFade")),
+    GInMult_(XiGModelCoeffs_.get<scalar>("GInMult")),
     lambdaIn_("lambdaIn", XiGModelCoeffs_),
-    XiGModel_(XiGModel::New(XiGModelCoeffs_,modelType,thermo, turbulence, Su))
-{}
+    XiGModel_
+    (
+        XiGModel::New(XiGModelCoeffs_, modelType, thermo, turbulence, Su)
+    )
+{
+    if (CIn_ <= 0.0)
+    {
+        CIn_ = defaultCIn_;
+    }
+}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::XiGModels::instabilityG::G() const
+Foam::tmp<Foam::volScalarField> Foam::XiGModels::instability2G::G() const
 {
+    IOdictionary combustionProperties
+    (
+        IOobject
+        (
+            "combustionProperties",
+            Su_.mesh().time().constant(),
+            Su_.mesh(),
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        )
+    );
+
+    ignition ign(combustionProperties, Su_.mesh().time(), Su_.mesh());
+
+    scalar curTime = Su_.mesh().time().value();
+    scalar deltaT = Su_.mesh().time().deltaTValue();
+    const scalar ignTim = curTime - deltaT - ign.sites()[0].time();
+
     volScalarField turbXiG(XiGModel_->G());
-    return (GIn_*GIn_/(GIn_ + turbXiG) + turbXiG);
+
+    volScalarField GIn("GIn", 0.0*turbXiG);
+
+    forAll (GIn, i)
+    {
+        GIn[i] = CIn_*Su_[i]*Su_[i]*exp(CIn_*Su_[i]*Su_[i]*ignTim)*GInMult_;
+    }
+
+    dimensionedScalar CIn("CIn", dimensionSet(0, -2, 1, 0, 0, 0, 0), CIn_);
+    dimensionedScalar ignTm("ignTm", dimTime, ignTim);
+
+    GIn = CIn*Su_*Su_*exp(CIn*Su_*Su_*ignTm)*GInMult_;
+
+    GIn *=
+    (
+        GIn /
+        (
+            GIn
+          + GInFade_*turbXiG
+          + dimensionedScalar("GSmall", inv(dimTime), SMALL)
+        )
+    );
+
+    return (GIn + turbXiG);
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::XiGModels::instabilityG::Db() const
+Foam::tmp<Foam::volScalarField> Foam::XiGModels::instability2G::Db() const
 {
     const objectRegistry& db = Su_.db();
     const volScalarField& Xi = db.lookupObject<volScalarField>("Xi");
-    const volScalarField& Xp = db.lookupObject<volScalarField>("Xp");
     const volScalarField& rho = db.lookupObject<volScalarField>("rho");
     const volScalarField& mgb = db.lookupObject<volScalarField>("mgb");
     const volScalarField& Db1 = db.lookupObject<volScalarField>("Db");
 
-    //// OLD return turbulence_.muEff()
+    //return  turbulence_.muEff()
     return Db1
-        + rho*Su_*(Xp*Xi - 1.0)*mgb*(0.5*lambdaIn_)/(mgb + 1.0/lambdaIn_);
+        + rho*Su_*(Xi - 1.0)*mgb*(0.5*lambdaIn_)/(mgb + 1.0/lambdaIn_);
 }
 
 
-bool Foam::XiGModels::instabilityG::read(const dictionary& XiGProperties)
+bool Foam::XiGModels::instability2G::read(const dictionary& XiGProperties)
 {
     XiGModel::read(XiGProperties);
 
-    XiGModelCoeffs_.readEntry("GIn", GIn_);
+    XiGModelCoeffs_.readEntry("defaultCIn", defaultCIn_);
+    XiGModelCoeffs_.readEntry("GInFade", GInFade_);
+    XiGModelCoeffs_.readEntry("GInMult", GInMult_);
     XiGModelCoeffs_.readEntry("lambdaIn", lambdaIn_);
 
     return true;

@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +42,7 @@ namespace Foam
 Foam::XiEqModel::XiEqModel
 (
     const dictionary& XiEqProperties,
+    const word& modelType,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su
@@ -50,7 +52,7 @@ Foam::XiEqModel::XiEqModel
     (
         XiEqProperties.subDict
         (
-            XiEqProperties.get<word>("XiEqModel") + "Coeffs"
+            XiEqProperties.get<word>(modelType) + "Coeffs"
         )
     ),
     thermo_(thermo),
@@ -69,56 +71,51 @@ Foam::XiEqModel::~XiEqModel()
 
 bool Foam::XiEqModel::read(const dictionary& XiEqProperties)
 {
-    XiEqModelCoeffs_ = XiEqProperties.optionalSubDict(type() + "Coeffs");
+
+    XiEqModelCoeffs_ = XiEqProperties.subDict(type() + "Coeffs");
 
     return true;
 }
 
 
 void Foam::XiEqModel::writeFields() const
-{
-    //***HGW It is not clear why B is written here
-    if (Su_.mesh().foundObject<volSymmTensorField>("B"))
-    {
-        const volSymmTensorField& B =
-            Su_.mesh().lookupObject<volSymmTensorField>("B");
-        B.write();
-    }
-}
+{}
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::XiEqModel::calculateSchelkinEffect(const scalar uPrimeCoef) const
+Foam::tmp<Foam::volScalarField>Foam::XiEqModel::calculateSchelkinEffect
+(
+    const scalar uPrimeCoef,
+    const scalar nrExp
+) const
 {
     const fvMesh& mesh = Su_.mesh();
 
     const volVectorField& U = mesh.lookupObject<volVectorField>("U");
+
     const volSymmTensorField& CT = mesh.lookupObject<volSymmTensorField>("CT");
     const volScalarField& Nv = mesh.lookupObject<volScalarField>("Nv");
     const volSymmTensorField& nsv =
         mesh.lookupObject<volSymmTensorField>("nsv");
 
-    tmp<volScalarField> tN
+    auto tN = tmp<volScalarField>::New
     (
-        new volScalarField
+        IOobject
         (
-            IOobject
-            (
-                "tN",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            "tN",
+            mesh.time().timeName(),
             mesh,
-            dimensionedScalar(Nv.dimensions(), Zero)
-        )
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        mesh,
+        dimensionedScalar(Nv.dimensions(), Zero)
     );
-    volScalarField& N = tN.ref();
+    auto& N = tN.ref();
+
     N.primitiveFieldRef() = Nv.primitiveField()*pow(mesh.V(), 2.0/3.0);
 
-    volSymmTensorField ns
+    auto tns = tmp<volSymmTensorField>::New
     (
         IOobject
         (
@@ -131,6 +128,8 @@ Foam::XiEqModel::calculateSchelkinEffect(const scalar uPrimeCoef) const
         mesh,
         dimensionedSymmTensor(nsv.dimensions(), Zero)
     );
+    auto& ns = tns.ref();
+
     ns.primitiveFieldRef() = nsv.primitiveField()*pow(mesh.V(), 2.0/3.0);
 
     const volVectorField Uhat
@@ -144,10 +143,8 @@ Foam::XiEqModel::calculateSchelkinEffect(const scalar uPrimeCoef) const
 
     const scalarField upLocal(uPrimeCoef*sqrt((U & CT & U)*cellWidth));
 
-    const scalarField deltaUp(upLocal*(max(scalar(1), pow(nr, 0.5)) - 1.0));
-
-    // Re use tN
-    N.primitiveFieldRef() = upLocal*(max(scalar(1), pow(nr, 0.5)) - 1.0);
+    //Re use tN
+    N.primitiveFieldRef() = upLocal*(max(scalar(1.0), pow(nr, nrExp)) - 1.0);
 
     return tN;
 }

@@ -56,8 +56,7 @@ Foam::autoPtr<Foam::PDRDragModel> Foam::PDRDragModel::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<PDRDragModel>
-        (cstrIter()(dict, turbulence, rho, U, phi));
+    return autoPtr<PDRDragModel>(cstrIter()(dict, turbulence, rho, U, phi));
 }
 
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,110 +24,114 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::XiEqModels::SCOPEXiEq
+    Foam::PDRDragModels::basicSch
 
 Description
-    Simple SCOPEXiEq model for XiEq based on SCOPEXiEqs correlation
-    with a linear correction function to give a plausible profile for XiEq.
-    See \link SCOPELaminarFlameSpeed.H \endlink for details on the SCOPE laminar
-    flame speed model.
 
 SourceFiles
-    SCOPEXiEq.C
+    basicSch.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SCOPEXiEq_H
-#define SCOPEXiEq_H
+#ifndef basicSch_H
+#define basicSch_H
 
+#include "PDRDragModel.H"
 #include "XiEqModel.H"
-#include "SCOPELaminarFlameSpeed.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace XiEqModels
+namespace PDRDragModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class SCOPEXiEq Declaration
+                          Class basicSch Declaration
 \*---------------------------------------------------------------------------*/
 
-class SCOPEXiEq
+class basicSch
 :
-    public XiEqModel
+    public PDRDragModel
 {
-    // Private data
+    // Private Data
 
-        // Model constant
-        scalar XiEqCoef_;
+        dimensionedScalar Csu;
+        dimensionedScalar Csk;
+        volScalarField Aw_;
+        volSymmTensorField CR_;
 
-        // Model constant
-        scalar XiEqExp_;
-
-        // Model constant
-        scalar lCoef_;
-
-        //- Minimum Su
-        dimensionedScalar SuMin_;
-
-        //- Schelkin effect Model constant
-        scalar uPrimeCoef_;
+        //- Schelkin effect Model constants
+        const scalar nrCoef_;
+        const scalar nrExp2_;
+        const scalar lCoef_;
+        const scalar maxSchFac_;
 
         //- Use sub-grid Schelkin effect
         bool subGridSchelkin_;
-
-        //- The SCOPE laminar flame speed model used to obtain the
-        //  Marstein number.  Note: the laminar flame speed need not be
-        //  obtained form the same model.
-        laminarFlameSpeedModels::SCOPE MaModel;
 
 
     // Private Member Functions
 
         //- No copy construct
-        SCOPEXiEq(const SCOPEXiEq&) = delete;
+        basicSch(const basicSch&) = delete;
 
         //- No copy assignment
-        void operator=(const SCOPEXiEq&) = delete;
+        void operator=(const basicSch&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("SCOPEXiEq");
+    TypeName("basicSch");
 
 
     // Constructors
 
         //- Construct from components
-        SCOPEXiEq
+        basicSch
         (
-            const dictionary& XiEqProperties,
-            const psiuReactionThermo& thermo,
+            const dictionary& PDRProperties,
             const compressible::RASModel& turbulence,
-            const volScalarField& Su
+            const volScalarField& rho,
+            const volVectorField& U,
+            const surfaceScalarField& phi
         );
 
 
     //- Destructor
-    virtual ~SCOPEXiEq();
+    virtual ~basicSch();
 
 
     // Member Functions
 
-        //- Return the flame-wrinkling XiEq
-        virtual tmp<volScalarField> XiEq() const;
+        //- Return the momentum drag coefficient
+        virtual tmp<volSymmTensorField> Dcu() const;
+
+        //- Return the momentum drag turbulence generation rate
+        virtual tmp<volScalarField> Gk() const;
 
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& XiEqProperties);
+        virtual bool read(const dictionary& PDRProperties);
+
+        //- Write fields
+        void writeFields() const;
+
+        //- Return the Schelkin factor for drag turbulence generation rate
+        tmp<volScalarField> SchelkinFactor() const;
+
+        //- Return the sub-grid Schelkin effect exponent
+        tmp<volScalarField> SchelkinExponent
+        (
+            const scalar,
+            const scalar,
+            const volScalarField&
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace XiEqModels
+} // End namespace PDRDragModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,22 +46,21 @@ namespace XiEqModels
 Foam::XiEqModels::Gulder::Gulder
 (
     const dictionary& XiEqProperties,
+    const word& modelType,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su
 )
 :
-    XiEqModel(XiEqProperties, thermo, turbulence, Su),
+    XiEqModel(XiEqProperties, modelType, thermo, turbulence, Su),
     XiEqCoef_(XiEqModelCoeffs_.get<scalar>("XiEqCoef")),
     SuMin_(0.01*Su.average()),
     uPrimeCoef_(XiEqModelCoeffs_.get<scalar>("uPrimeCoef")),
-    subGridSchelkin_(XiEqModelCoeffs_.get<bool>("subGridSchelkin"))
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::XiEqModels::Gulder::~Gulder()
+    nrExp_(XiEqModelCoeffs_.get<scalar>("nrExp")),
+    subGridSchelkin_
+    (
+        XiEqModelCoeffs_.get<bool>("subGridSchelkin")
+    )
 {}
 
 
@@ -73,7 +73,7 @@ Foam::tmp<Foam::volScalarField> Foam::XiEqModels::Gulder::XiEq() const
 
     if (subGridSchelkin_)
     {
-        up.primitiveFieldRef() += calculateSchelkinEffect(uPrimeCoef_);
+        up.primitiveFieldRef() += calculateSchelkinEffect(uPrimeCoef_, nrExp_);
     }
 
     volScalarField tauEta(sqrt(mag(thermo_.muu()/(thermo_.rhou()*epsilon))));
@@ -97,6 +97,7 @@ bool Foam::XiEqModels::Gulder::read(const dictionary& XiEqProperties)
 
     XiEqModelCoeffs_.readEntry("XiEqCoef", XiEqCoef_);
     XiEqModelCoeffs_.readEntry("uPrimeCoef", uPrimeCoef_);
+    XiEqModelCoeffs_.readEntry("nrExp", nrExp_);
     XiEqModelCoeffs_.readEntry("subGridSchelkin", subGridSchelkin_);
 
     return true;

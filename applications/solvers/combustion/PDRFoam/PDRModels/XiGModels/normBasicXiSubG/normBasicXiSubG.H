@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,97 +24,79 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::XiEqModels::basicSubGrid
+    Foam::XiGModel::normBasicSubGrid
 
 Description
-    Basic sub-grid obstacle flame-wrinkling enhancement factor model.
-    Details supplied by J Puttock 2/7/06.
-
-    <b> Sub-grid flame area generation </b>
-
-    \f$ n = N - \hat{\dwea{\vec{U}}}.n_{s}.\hat{\dwea{\vec{U}}} \f$
-    \f$ n_{r} = \sqrt{n} \f$
-
-    where:
-
-        \f$ \hat{\dwea{\vec{U}}} = \dwea{\vec{U}} / \vert \dwea{\vec{U}}
-        \vert \f$
-
-        \f$ b = \hat{\dwea{\vec{U}}}.B.\hat{\dwea{\vec{U}}} / n_{r} \f$
-
-    where:
-
-        \f$ B \f$ is the file "B".
-
-        \f$ N \f$ is the file "N".
-
-        \f$  n_{s} \f$ is the file "ns".
-
-    The flame area enhancement factor \f$ \Xi_{sub} \f$ is expected to
-    approach:
-
-    \f[
-        \Xi_{{sub}_{eq}} =
-            1 + max(2.2 \sqrt{b}, min(0.34 \frac{\vert \dwea{\vec{U}}
-            \vert}{{\vec{U}}^{'}}, 1.6)) \times min(\frac{n}{4}, 1)
-    \f]
 
 
 SourceFiles
-    basicSubGrid.C
+    normBasicSubGrid.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSubGrid_H
-#define basicSubGrid_H
+#ifndef normBasicSubGrid_H
+#define normBasicSubGrid_H
 
-#include "XiEqModel.H"
+#include "XiGModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace XiEqModels
+namespace XiGModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class basicSubGrid Declaration
+                          Class normBasicSubGrid Declaration
 \*---------------------------------------------------------------------------*/
 
-class basicSubGrid
+class normBasicSubGrid
 :
-    public XiEqModel
+    public XiGModel
 {
-    // Private data
+    // Private Data
 
-        //- tblock
-        volSymmTensorField B_;
+        //- Sub-grid generation rate coefficient
+        scalar k1_;
 
-        //- Equilibrium Xi model due to turbulence
-        autoPtr<XiEqModel> XiEqModel_;
+        //- Sub-grid generation rate coefficient - * sqrt(b)
+        scalar kb1_;
+
+        //- Sub-grid generation rate coefficient - * b
+        scalar kbe_;
+
+        //- Sub-grid generation rate upper limit coefficient - * b
+        scalar kbx_;
+
+        //- Sub-grid generation rate coefficient
+        scalar k2_;
+
+        //- Maximum Lobs/CellWidth
+        scalar LOverCw_;
 
 
     // Private Member Functions
 
         //- No copy construct
-        basicSubGrid(const basicSubGrid&) = delete;
+        normBasicSubGrid(const normBasicSubGrid&) = delete;
 
         //- No copy assignment
-        void operator=(const basicSubGrid&) = delete;
+        void operator=(const normBasicSubGrid&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("basicSubGrid");
+    TypeName("normBasicSubGridG");
 
 
     // Constructors
 
         //- Construct from components
-        basicSubGrid
+        normBasicSubGrid
         (
-            const dictionary& XiEqProperties,
+            const dictionary& XiGProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -122,22 +104,25 @@ public:
 
 
     //- Destructor
-    virtual ~basicSubGrid();
+    virtual ~normBasicSubGrid() = default;
 
 
     // Member Functions
 
-        //- Return the flame-wrinkling XiEq
-        virtual tmp<volScalarField> XiEq() const;
+        //- Return the flame-wrinkling generation rate
+        virtual tmp<volScalarField> G() const;
+
+        //- Return the flame diffusivity
+        virtual tmp<volScalarField> Db() const;
 
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& XiEqProperties);
+        virtual bool read(const dictionary& XiGProperties);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace XiEqModels
+} // End namespace XiGModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

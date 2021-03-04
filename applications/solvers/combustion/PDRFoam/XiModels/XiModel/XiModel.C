@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2011-2015 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -73,7 +73,19 @@ Foam::XiModel::XiModel
             IOobject::AUTO_WRITE
         ),
         b.mesh()
-    )
+    ),
+    Xp_
+    (
+        IOobject
+        (
+            "Xp",
+            b.time().timeName(),
+            b.db(),
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        b.mesh()
+     )
 {}
 
 

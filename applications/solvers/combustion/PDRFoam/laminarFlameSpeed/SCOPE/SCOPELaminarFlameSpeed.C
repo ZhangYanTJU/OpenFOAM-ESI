@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,6 +48,34 @@ namespace laminarFlameSpeedModels
 }
 
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+static void readPolynomialCoeffs
+(
+    Polynomial<7>& coeffs,
+    const word& keyword,
+    const dictionary& dict
+)
+{
+    {
+        coeffs[0] = dict.get<scalar>(keyword + "0");
+        coeffs[1] = dict.get<scalar>(keyword + "1");
+        coeffs[2] = dict.get<scalar>(keyword + "2");
+        coeffs[3] = dict.get<scalar>(keyword + "3");
+        coeffs[4] = dict.get<scalar>(keyword + "4");
+        coeffs[5] = dict.get<scalar>(keyword + "5");
+        coeffs[6] = dict.get<scalar>(keyword + "6");
+    }
+
+    // TBD: support direct reading of all coeffs?
+}
+
+} // End namespace Foam
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::laminarFlameSpeedModels::SCOPE::polynomial::polynomial
@@ -75,35 +104,22 @@ Foam::laminarFlameSpeedModels::SCOPE::SCOPE
     (
         dictionary
         (
-            IFstream
-            (
-                dict.get<fileName>("fuelFile")
-            )()
-        ).optionalSubDict(typeName + "Coeffs")
+            IFstream(dict.get<fileName>("fuelFile"))()
+        ).subDict(typeName + "Coeffs")
     ),
-    LFL_
-    (
-        coeffsDict_.getCompat<scalar>
-        (
-            "lowerFlammabilityLimit",
-            {{"lowerFlamabilityLimit", 1712}}
-        )
-    ),
-    UFL_
-    (
-        coeffsDict_.getCompat<scalar>
-        (
-            "upperFlammabilityLimit",
-            {{"upperFlamabilityLimit", 1712}}
-        )
-    ),
+    LFL_(coeffsDict_.get<scalar>("lowerFlamabilityLimit")),
+    UFL_(coeffsDict_.get<scalar>("upperFlamabilityLimit")),
     SuPolyL_(coeffsDict_.subDict("lowerSuPolynomial")),
     SuPolyU_(coeffsDict_.subDict("upperSuPolynomial")),
-    Texp_(coeffsDict_.get<scalar>("Texp")),
-    pexp_(coeffsDict_.get<scalar>("pexp")),
+    Texp_(),
+    pexp_(),
+    CIn_(coeffsDict_.getOrDefault<scalar>("CIn", 0)),
     MaPolyL_(coeffsDict_.subDict("lowerMaPolynomial")),
     MaPolyU_(coeffsDict_.subDict("upperMaPolynomial"))
 {
+    readPolynomialCoeffs(Texp_, "Texp", coeffsDict_);
+    readPolynomialCoeffs(pexp_, "pexp", coeffsDict_);
+
     SuPolyL_.ll = max(SuPolyL_.ll, LFL_) + SMALL;
     SuPolyU_.ul = min(SuPolyU_.ul, UFL_) - SMALL;
 
@@ -116,7 +132,7 @@ Foam::laminarFlameSpeedModels::SCOPE::SCOPE
     if (debug)
     {
         Info<< "phi     Su  (T = Tref, p = pref)" << endl;
-        label n = 200;
+        const label n = 200;
         for (int i=0; i<n; i++)
         {
             scalar phi = (2.0*i)/n;
@@ -140,7 +156,7 @@ inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::polyPhi
     const polynomial& a
 )
 {
-    scalar x = phi - 1.0;
+    const scalar x = phi - 1.0;
 
     return
         a[0]
@@ -195,28 +211,34 @@ inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::SuRef
     }
 }
 
-
 inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::Ma
 (
     scalar phi
 ) const
 {
-    if (phi < MaPolyL_.ll)
+    if (phi < LFL_ || phi > UFL_)
     {
-        // Beyond the lower limit assume Ma is constant
-        return MaPolyL_.llv;
+        // Return 0 beyond the flamibility limits
+        return scalar(0);
+    }
+    else if (phi < MaPolyL_.ll)
+    {
+        // Use linear interpolation between the low end of the
+        // lower polynomial and the lower flammability limit
+        return MaPolyL_.llv*(phi - LFL_)/(MaPolyL_.ll - LFL_);
     }
     else if (phi > MaPolyU_.ul)
     {
-        // Beyond the upper limit assume Ma is constant
-        return MaPolyU_.ulv;
+        // Use linear interpolation between the upper end of the
+        // upper polynomial and the upper flammability limit
+        return MaPolyU_.ulv*(UFL_ - phi)/(UFL_ - MaPolyU_.ul);
     }
-    else if (phi < SuPolyL_.lu)
+    else if (phi < MaPolyL_.lu)
     {
         // Evaluate the lower polynomial
         return polyPhi(phi, MaPolyL_);
     }
-    else if (phi > SuPolyU_.lu)
+    else if (phi > MaPolyU_.lu)
     {
         // Evaluate the upper polynomial
         return polyPhi(phi, MaPolyU_);
@@ -241,10 +263,13 @@ inline Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
     scalar phi
 ) const
 {
-    static const scalar Tref = 300.0;
-    static const scalar pRef = 1.013e5;
+    constexpr scalar Tref = 300.0;
+    constexpr scalar pRef = 1.013e5;
 
-    return SuRef(phi)*pow((Tu/Tref), Texp_)*pow((p/pRef), pexp_);
+    const scalar Texp = Texp_.value(phi-1.0);
+    const scalar pexp = pexp_.value(phi-1.0);
+
+    return SuRef(phi)*pow((Tu/Tref), Texp)*pow((p/pRef), pexp);
 }
 
 
@@ -255,35 +280,29 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
     scalar phi
 ) const
 {
-    tmp<volScalarField> tSu0
+    auto tSu0 = tmp<volScalarField>::New
     (
-        new volScalarField
+        IOobject
         (
-            IOobject
-            (
-                "Su0",
-                p.time().timeName(),
-                p.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            p.mesh(),
-            dimensionedScalar(dimVelocity, Zero)
-        )
+            "Su0",
+            p.time().timeName(),
+            p.db(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        p.mesh(),
+        dimensionedScalar(dimVelocity, Zero)
     );
-
-    volScalarField& Su0 = tSu0.ref();
+    auto& Su0 = tSu0.ref();
 
     forAll(Su0, celli)
     {
         Su0[celli] = Su0pTphi(p[celli], Tu[celli], phi);
     }
 
-    volScalarField::Boundary& Su0Bf = Su0.boundaryFieldRef();
-
-    forAll(Su0Bf, patchi)
+    forAll(Su0.boundaryField(), patchi)
     {
-        scalarField& Su0p = Su0Bf[patchi];
+        scalarField& Su0p = Su0.boundaryFieldRef()[patchi];
         const scalarField& pp = p.boundaryField()[patchi];
         const scalarField& Tup = Tu.boundaryField()[patchi];
 
@@ -304,35 +323,29 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
     const volScalarField& phi
 ) const
 {
-    tmp<volScalarField> tSu0
+    auto tSu0 = tmp<volScalarField>::New
     (
-        new volScalarField
+        IOobject
         (
-            IOobject
-            (
-                "Su0",
-                p.time().timeName(),
-                p.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            p.mesh(),
-            dimensionedScalar(dimVelocity, Zero)
-        )
+            "Su0",
+            p.time().timeName(),
+            p.db(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        p.mesh(),
+        dimensionedScalar(dimVelocity, Zero)
     );
-
-    volScalarField& Su0 = tSu0.ref();
+    auto& Su0 = tSu0.ref();
 
     forAll(Su0, celli)
     {
         Su0[celli] = Su0pTphi(p[celli], Tu[celli], phi[celli]);
     }
 
-    volScalarField::Boundary& Su0Bf = Su0.boundaryFieldRef();
-
-    forAll(Su0Bf, patchi)
+    forAll(Su0.boundaryField(), patchi)
     {
-        scalarField& Su0p = Su0Bf[patchi];
+        scalarField& Su0p = Su0.boundaryFieldRef()[patchi];
         const scalarField& pp = p.boundaryField()[patchi];
         const scalarField& Tup = Tu.boundaryField()[patchi];
         const scalarField& phip = phi.boundaryField()[patchi];
@@ -353,40 +366,40 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
 }
 
 
+Foam::scalar Foam::laminarFlameSpeedModels::SCOPE::CIn() const noexcept
+{
+    return CIn_ ;
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Ma
 (
     const volScalarField& phi
 ) const
 {
-    tmp<volScalarField> tMa
+    auto tMa = tmp<volScalarField>::New
     (
-        new volScalarField
+        IOobject
         (
-            IOobject
-            (
-                "Ma",
-                phi.time().timeName(),
-                phi.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            phi.mesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+            "Ma",
+            phi.time().timeName(),
+            phi.db(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        phi.mesh(),
+        dimensionedScalar(dimless, Zero)
     );
-
-    volScalarField& ma = tMa.ref();
+    auto& ma = tMa.ref();
 
     forAll(ma, celli)
     {
         ma[celli] = Ma(phi[celli]);
     }
 
-    volScalarField::Boundary& maBf = ma.boundaryFieldRef();
-
-    forAll(maBf, patchi)
+    forAll(ma.boundaryField(), patchi)
     {
-        scalarField& map = maBf[patchi];
+        scalarField& map = ma.boundaryFieldRef()[patchi];
         const scalarField& phip = phi.boundaryField()[patchi];
 
         forAll(map, facei)
@@ -410,7 +423,8 @@ Foam::laminarFlameSpeedModels::SCOPE::Ma() const
         (
             dimensionedScalar
             (
-                "stoichiometricAirFuelMassRatio", dimless, psiuReactionThermo_
+                "stoichiometricAirFuelMassRatio",
+                psiuReactionThermo_
             )*ft/(scalar(1) - ft)
         );
     }
@@ -418,21 +432,18 @@ Foam::laminarFlameSpeedModels::SCOPE::Ma() const
     {
         const fvMesh& mesh = psiuReactionThermo_.p().mesh();
 
-        return tmp<volScalarField>
+        return tmp<volScalarField>::New
         (
-            new volScalarField
+            IOobject
             (
-                IOobject
-                (
-                    "Ma",
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
+                "Ma",
+                mesh.time().timeName(),
                 mesh,
-                dimensionedScalar("Ma", dimless, Ma(equivalenceRatio_))
-            )
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh,
+            dimensionedScalar("Ma", dimless, Ma(equivalenceRatio_))
         );
     }
 }
@@ -451,7 +462,8 @@ Foam::laminarFlameSpeedModels::SCOPE::operator()() const
             psiuReactionThermo_.Tu(),
             dimensionedScalar
             (
-                "stoichiometricAirFuelMassRatio", dimless, psiuReactionThermo_
+                "stoichiometricAirFuelMassRatio",
+                psiuReactionThermo_
             )*ft/(scalar(1) - ft)
         );
     }

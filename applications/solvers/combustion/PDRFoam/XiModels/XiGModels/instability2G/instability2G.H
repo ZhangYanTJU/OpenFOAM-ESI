@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,120 +24,115 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::XiModels::transport
+    Foam::XiGModels::instability2G
 
 Description
-    Simple transport model for Xi based on Gulders correlation
-    with a linear correction function to give a plausible profile for Xi.
-    See report TR/HGW/10 for details on the Weller two equations model.
-    See \link XiModel.H \endlink for more details on flame wrinkling modelling.
+    Flame-surface instabilityG flame-wrinkling generation rate coefficient model
+    used in \link XiModel.H \endlink.
 
 SourceFiles
-    transport.C
+    instability2G.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef transport_H
-#define transport_H
+#ifndef instability2G_H
+#define instability2G_H
 
-#include "XiModel.H"
-#include "XiEqModel.H"
+#include "laminarFlameSpeed.H"
+#include "SCOPELaminarFlameSpeed.H"
 #include "XiGModel.H"
+#include "ignitionSite.H"
+#include "ignition.H"
+#include "Time.H"
+#include "fvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace XiModels
+namespace XiGModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class transport Declaration
+                          Class instability2G Declaration
 \*---------------------------------------------------------------------------*/
 
-class transport
+class instability2G
 :
-    public XiModel
+    public XiGModel
 {
-    // Private data
+    // Private Data
 
-        scalar XiShapeCoef;
+        laminarFlameSpeedModels::SCOPE saModel_;
 
-        autoPtr<XiEqModel> XiEqModel_;
+        // GIn (inituial instability G)divided by Su^2. Read from fuel file
+        scalar CIn_;
+
+        //- Default CIn if not in fuel file
+        scalar defaultCIn_;
+
+        // Determine how fast GIn fades out as turbulence starts
+        scalar GInFade_;
+
+        // Set GIn large so that XiEq determines Xi value.
+        // Son increase byfactor:
+        scalar GInMult_;
+
+        //- The instability2G length-scale
+        dimensionedScalar lambdaIn_;
+
+        //- Xi generation rate model due to all other processes
         autoPtr<XiGModel> XiGModel_;
 
 
     // Private Member Functions
 
         //- No copy construct
-        transport(const transport&) = delete;
+        instability2G(const instability2G&) = delete;
 
         //- No copy assignment
-        void operator=(const transport&) = delete;
+        void operator=(const instability2G&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("transport");
+    TypeName("instability2G");
 
 
     // Constructors
 
         //- Construct from components
-        transport
+        instability2G
         (
-            const dictionary& XiProperties,
+            const dictionary& XiGProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
-            const volScalarField& Su,
-            const volScalarField& rho,
-            const volScalarField& b,
-            const surfaceScalarField& phi
+            const volScalarField& Su
         );
 
 
     //- Destructor
-    virtual ~transport();
+    virtual ~instability2G() = default;
 
 
     // Member Functions
 
+        //- Return the flame-wrinkling generation rate
+        virtual tmp<volScalarField> G() const;
+
         //- Return the flame diffusivity
         virtual tmp<volScalarField> Db() const;
 
-        //- Add Xi to the multivariateSurfaceInterpolationScheme table
-        virtual void addXi
-        (
-            multivariateSurfaceInterpolationScheme<scalar>::fieldTable& fields
-        )
-        {
-            fields.add(Xi_);
-        }
-
-        //- Correct the flame-wrinkling Xi
-        virtual void correct()
-        {
-            NotImplemented;
-        }
-
-        //- Correct the flame-wrinkling Xi using the given convection scheme
-        virtual void correct(const fv::convectionScheme<scalar>& mvConvection);
-
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& XiProperties);
-
-        //- Write fields of the XiEq model
-        virtual void writeFields()
-        {
-            XiEqModel_().writeFields();
-        }
+        virtual bool read(const dictionary& XiGProperties);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace XiModels
+} // End namespace XiGModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,6 +66,7 @@ SourceFiles
 #define SCOPE_H
 
 #include "laminarFlameSpeed.H"
+#include "Polynomial.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -105,7 +107,7 @@ class SCOPE
             scalar lu;
 
             //- Construct from dictionary
-            polynomial(const dictionary& polyDict);
+            explicit polynomial(const dictionary& polyDict);
         };
 
 
@@ -123,11 +125,14 @@ class SCOPE
         //- Upper Su polynomial
         polynomial SuPolyU_;
 
-        //- Temperature correction exponent
-        scalar Texp_;
+        //- Temperature correction exponents
+        Polynomial<7> Texp_;
 
-        //- Pressure correction exponent
-        scalar pexp_;
+        //- Pressure correction exponents
+        Polynomial<7> pexp_;
+
+        //- Additional coefficient
+        scalar CIn_;
 
         //- Lower Ma polynomial
         polynomial MaPolyL_;
@@ -136,25 +141,25 @@ class SCOPE
         polynomial MaPolyU_;
 
 
-    // Private member functions
+    // Private Member Functions
 
         //- Polynomial evaluated from the given equivalence ratio
-        //  and polynomial coefficients
+        //- and polynomial coefficients
         static inline scalar polyPhi(scalar phi, const polynomial& a);
 
         //- Laminar flame speed evaluated from the given equivalence ratio
-        //  at the reference temperature and pressure
+        //- at the reference temperature and pressure
         inline scalar SuRef(scalar phi) const;
 
         //- Markstein evaluated from the given equivalence ratio
         inline scalar Ma(scalar phi) const;
 
         //- Laminar flame speed evaluated from the given equivalence ratio
-        //  corrected for temperature and pressure dependence
+        //- corrected for temperature and pressure dependence
         inline scalar Su0pTphi(scalar p, scalar Tu, scalar phi) const;
 
         //- Laminar flame speed evaluated from the given uniform
-        //  equivalence ratio corrected for temperature and pressure dependence
+        //- equivalence ratio corrected for temperature and pressure dependence
         tmp<volScalarField> Su0pTphi
         (
             const volScalarField& p,
@@ -163,7 +168,7 @@ class SCOPE
         ) const;
 
         //- Laminar flame speed evaluated from the given equivalence ratio
-        //  distribution corrected for temperature and pressure dependence
+        //- distribution corrected for temperature and pressure dependence
         tmp<volScalarField> Su0pTphi
         (
             const volScalarField& p,
@@ -172,13 +177,14 @@ class SCOPE
         ) const;
 
         //- Return the Markstein number
-        //  evaluated from the given equivalence ratio
+        //- evaluated from the given equivalence ratio
         tmp<volScalarField> Ma(const volScalarField& phi) const;
 
-        //- Construct as copy (not implemented)
-        SCOPE(const SCOPE&);
+        //- No copy construct
+        SCOPE(const SCOPE&) = delete;
 
-        void operator=(const SCOPE&);
+        //- No copy assignment
+        void operator=(const SCOPE&) = delete;
 
 
 public:
@@ -191,8 +197,8 @@ public:
         //- Construct from dictionary and psiuReactionThermo
         SCOPE
         (
-            const dictionary&,
-            const psiuReactionThermo&
+            const dictionary& dict,
+            const psiuReactionThermo& ct
         );
 
 
@@ -201,6 +207,9 @@ public:
 
 
     // Member functions
+
+        //- Return CIn
+        scalar CIn() const noexcept;
 
         //- Return the Markstein number
         tmp<volScalarField> Ma() const;

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -81,8 +82,11 @@ Description
 #include "PDRDragModel.H"
 #include "ignition.H"
 #include "bound.H"
+#include "dynamicFvMesh.H"
+#include "dynamicRefineFvMesh.H"
 #include "pimpleControl.H"
 #include "fvOptions.H"
+#include "fvcSmooth.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -95,22 +99,24 @@ int main(int argc, char *argv[])
     );
 
     #include "postProcess.H"
-
     #include "addCheckCaseOptions.H"
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createMesh.H"
-    #include "createControl.H"
+
+    #include "createDynamicFvMesh.H"
+    #include "createDyMControls.H"
+    #include "initContinuityErrs.H"
+
     #include "readCombustionProperties.H"
     #include "readGravitationalAcceleration.H"
     #include "createFields.H"
     #include "createFieldRefs.H"
-    #include "initContinuityErrs.H"
-    #include "createTimeControls.H"
+
     #include "compressibleCourantNo.H"
     #include "setInitialDeltaT.H"
 
     turbulence->validate();
+
     scalar StCoNum = 0.0;
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -119,33 +125,62 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        #include "readTimeControls.H"
+        #include "readDyMControls.H"
+
         #include "compressibleCourantNo.H"
         #include "setDeltaT.H"
 
         ++runTime;
-        Info<< "\n\nTime = " << runTime.timeName() << endl;
 
-        #include "rhoEqn.H"
+        Info<< "\n\nTime = " << runTime.timeName() << endl;
 
         // --- Pressure-velocity PIMPLE corrector loop
         while (pimple.loop())
         {
+            if (pimple.firstIter() || moveMeshOuterCorrectors)
+            {
+                fvc::makeAbsolute(phi, rho, U);
+
+                // Flux estimate for introduced faces.
+                volVectorField rhoU("rhoU", rho*U);
+
+                bool meshChanged = mesh.controlledUpdate();
+
+                if (runTime.write() && meshChanged)
+                {
+                    betav.write();
+                    betai.write();
+                    Blong.write();
+                    Bv.write();
+                    Lobs.write();
+                    CT.write();
+                    drag->writeFields();
+                    flameWrinkling->writeFields();
+                }
+
+                // Make the fluxes relative to the mesh motion
+                fvc::makeRelative(phi, rho, U);
+            }
+
+            if (pimple.firstIter())
+            {
+                #include "rhoEqn.H"
+            }
+
             #include "UEqn.H"
+            #include "bEqn.H"
+            #include "ftEqn.H"
+            #include "EauEqn.H"
+            #include "EaEqn.H"
+
+            if (!ign.ignited())
+            {
+                thermo.heu() == thermo.he();
+            }
 
             // --- Pressure corrector loop
             while (pimple.correct())
             {
-                #include "bEqn.H"
-                #include "ftEqn.H"
-                #include "EauEqn.H"
-                #include "EaEqn.H"
-
-                if (!ign.ignited())
-                {
-                    thermo.heu() == thermo.he();
-                }
-
                 #include "pEqn.H"
             }
 
@@ -155,12 +190,14 @@ int main(int argc, char *argv[])
             }
         }
 
+        rho = thermo.rho();
+
         runTime.write();
 
         runTime.printExecutionTime(Info);
     }
 
-    Info<< "\n end\n";
+    Info<< "\nEnd\n" << endl;
 
     return 0;
 }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,23 +24,25 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::XiEqModels::SCOPEBlend
+    Foam::XiEqModel::BLMgMaXiEq
 
 Description
-    Simple SCOPEBlendXiEq model for XiEq based on SCOPEXiEqs correlation
+    Model for XiEq based on Bradley, Lawes and Mansour (2011)
+    Cobustion and Falme, 158, 123 correlation
     with a linear correction function to give a plausible profile for XiEq.
-    See \link SCOPELaminarFlameSpeed.H \endlink for details on the SCOPE
-    laminar flame speed model.
+    See \link SCOPELaminarFlameSpeed.H \endlink for details on the SCOPE laminar
+    flame speed model.
 
 SourceFiles
-    SCOPEBlend.C
+    BLMgMaXiEq.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SCOPEBlend_H
-#define SCOPEBlend_H
+#ifndef BLMgMaXiEq_H
+#define BLMgMaXiEq_H
 
 #include "XiEqModel.H"
+#include "SCOPELaminarFlameSpeed.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,43 +52,69 @@ namespace XiEqModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class SCOPEBlend Declaration
+                          Class BLMgMaXiEq Declaration
 \*---------------------------------------------------------------------------*/
 
-class SCOPEBlend
+class BLMgMaXiEq
 :
     public XiEqModel
 {
     // Private data
 
-        //- Low turbulence intensity equilibrium Xi model
-        autoPtr<XiEqModel> XiEqModelL_;
+        // Model constants
 
-        //- High turbulence intensity equilibrium Xi model
-        autoPtr<XiEqModel> XiEqModelH_;
+        scalar kaCoef_;
+        scalar lowK0_;
+        scalar lowKg_;
+        scalar XiEqCoef_;
+        scalar alphaCoefP_;
+        scalar betaCoefP_;
+        scalar alphaCoefN_;
+        scalar betaCoefN_;
+        scalar maLim_;
+        scalar maLim1_;
+        scalar quenchCoef_, quenchExp_, quenchM_;
+        scalar quenchRate1_, quenchRate2_;
+        scalar lCoef_;
+
+        //- Minimum Su
+        dimensionedScalar SuMin_;
+
+        //- Schelkin effect Model constants
+        scalar uPrimeCoef_;
+        scalar nrExp_;
+
+        //- Use sub-grid Schelkin effect
+        bool subGridSchelkin_;
+
+        //- The SCOPE laminar flame speed model used to obtain the
+        //  Marstein number.  Note: the laminar flame speed need not be
+        //  obtained form the same model.
+        laminarFlameSpeedModels::SCOPE MaModel;
 
 
     // Private Member Functions
 
         //- No copy construct
-        SCOPEBlend(const SCOPEBlend&) = delete;
+        BLMgMaXiEq(const BLMgMaXiEq&) = delete;
 
         //- No copy assignment
-        void operator=(const SCOPEBlend&) = delete;
+        void operator=(const BLMgMaXiEq&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("SCOPEBlend");
+    TypeName("BLMgMaXiEq");
 
 
     // Constructors
 
         //- Construct from components
-        SCOPEBlend
+        BLMgMaXiEq
         (
             const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -94,7 +122,7 @@ public:
 
 
     //- Destructor
-    virtual ~SCOPEBlend();
+    virtual ~BLMgMaXiEq();
 
 
     // Member Functions
@@ -103,11 +131,7 @@ public:
         virtual tmp<volScalarField> XiEq() const;
 
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& XiEqProperties)
-        {
-            return true;
-        }
-
+        virtual bool read(const dictionary& XiEqProperties);
 };
 
 

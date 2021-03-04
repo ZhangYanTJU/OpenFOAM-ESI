@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,8 +30,6 @@ Class
 Description
     Flame-surface instabilityG flame-wrinkling generation rate coefficient model
     used in \link XiModel.H \endlink.
-
-    See Technical Report SH/RE/01R for details on the PDR modelling.
 
 SourceFiles
     instabilityG.C
@@ -57,9 +56,9 @@ class instabilityG
 :
     public XiGModel
 {
-    // Private data
+    // Private Data
 
-        //- Flame instabilityG wrinkling generation rate coefficient
+        //- Flame instabilityG wrinling generation rate coefficient
         dimensionedScalar GIn_;
 
         //- InstabilityG length-scale
@@ -90,6 +89,7 @@ public:
         instabilityG
         (
             const dictionary& XiGProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -97,7 +97,7 @@ public:
 
 
     //- Destructor
-    virtual ~instabilityG();
+    virtual ~instabilityG() = default;
 
 
     // Member Functions

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,10 +36,9 @@ Description
 
     if (mesh.nInternalFaces())
     {
-       scalarField sumPhi
+        scalarField sumPhi
         (
-            fvc::surfaceSum(mag(phiSt))().primitiveField()
-          / rho.primitiveField()
+            fvc::surfaceSum(mag(phiSt))().primitiveField()/rho.primitiveField()
         );
 
         StCoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();

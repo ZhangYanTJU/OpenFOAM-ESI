@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,19 +46,14 @@ namespace XiGModels
 Foam::XiGModels::KTS::KTS
 (
     const dictionary& XiGProperties,
+    const word& modelType,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su
 )
 :
-    XiGModel(XiGProperties, thermo, turbulence, Su),
+    XiGModel(XiGProperties, modelType, thermo, turbulence, Su),
     GEtaCoef_(XiGModelCoeffs_.get<scalar>("GEtaCoef"))
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::XiGModels::KTS::~KTS()
 {}
 
 
@@ -71,6 +67,15 @@ Foam::tmp<Foam::volScalarField> Foam::XiGModels::KTS::G() const
     volScalarField tauEta(sqrt(mag(thermo_.muu()/(thermo_.rhou()*epsilon))));
 
     return (GEtaCoef_/tauEta);
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::XiGModels::KTS::Db() const
+{
+    const objectRegistry& db = Su_.db();
+    const volScalarField& Db1 = db.lookupObject<volScalarField>("Db");
+    //return turbulence_.muEff();
+    return Db1;
 }
 
 

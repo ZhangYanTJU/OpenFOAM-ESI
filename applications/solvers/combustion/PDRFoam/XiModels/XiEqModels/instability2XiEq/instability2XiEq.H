@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,85 +24,82 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::XiGModels::basicSubGrid
+    Foam::XiEqModels::instability2XiEq
 
 Description
 
-    Basic sub-grid obstacle flame-wrinkling generation rate coefficient model.
-    Details supplied by J Puttock 2/7/06.
-
-    \f$ G_{sub} \f$ denotes the generation coefficient and it is given by
-
-    \f[
-        G_{sub} = k_{1} /frac{\vert \dwea{\vec{U}} \vert}{L_{obs}}
-                 \frac{/Xi_{{sub}_{eq}}-1}{/Xi_{sub}}
-    \f]
-
-    and the removal:
-
-    \f[
-        - k_{1} /frac{\vert \dwea{\vec{U}} \vert}{L_{sub}}
-        \frac{\Xi_{sub}-1}{\Xi_{sub}}
-    \f]
-
-    Finally, \f$ G_{sub} \f$ is added to generation rate \f$ G_{in} \f$
-    due to the turbulence.
 
 SourceFiles
-    basicSubGrid.C
+    instability2XiEq.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSubGrid_H
-#define basicSubGrid_H
+#ifndef instability2XiEq_H
+#define instability2XiEq_H
 
-#include "XiGModel.H"
+#include "laminarFlameSpeed.H"
+#include "SCOPELaminarFlameSpeed.H"
+#include "ignitionSite.H"
+#include "ignition.H"
+#include "Time.H"
+#include "fvMesh.H"
+#include "XiEqModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace XiGModels
+namespace XiEqModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class basicSubGrid Declaration
+                          Class instability2 Declaration
 \*---------------------------------------------------------------------------*/
 
-class basicSubGrid
+class instability2XiEq
 :
-    public XiGModel
+    public XiEqModel
 {
     // Private data
 
-        //- Sub-grid generation rate coefficient
-        scalar k1;
+        //- Laminar burning speed
+        laminarFlameSpeedModels::SCOPE saModel_;
 
-        //- Xi generation rate model due to turbulence
-        autoPtr<XiGModel> XiGModel_;
+        //- GIn (initial instability G)divided by Su^2. Read from fuel file
+        scalar CIn_;
+
+        //- Default CIn if not in fuel file
+        scalar defaultCIn_;
+
+        //- Determines how fast XiEqIn fades out as turbulence comes in
+        scalar XiEqInFade_;
+
+        //- Equilibrium Xi model due to all other effects
+        autoPtr<XiEqModel> XiEqModel_;
 
 
     // Private Member Functions
 
         //- No copy construct
-        basicSubGrid(const basicSubGrid&) = delete;
+        instability2XiEq(const instability2XiEq&) = delete;
 
         //- No copy assignment
-        void operator=(const basicSubGrid&) = delete;
+        void operator=(const instability2XiEq&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("basicSubGridG");
+    TypeName("instability2XiEq");
 
 
     // Constructors
 
         //- Construct from components
-        basicSubGrid
+        instability2XiEq
         (
-            const dictionary& XiGProperties,
+            const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -110,25 +107,22 @@ public:
 
 
     //- Destructor
-    virtual ~basicSubGrid();
+    virtual ~instability2XiEq() = default;
 
 
     // Member Functions
 
-        //- Return the flame-wrinkling generation rate
-        virtual tmp<volScalarField> G() const;
-
-        //- Return the flame diffusivity
-        virtual tmp<volScalarField> Db() const;
+        //- Return the flame-wrinkling XiEq
+        virtual tmp<volScalarField> XiEq() const;
 
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& XiGProperties);
+        virtual bool read(const dictionary& XiEqProperties);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace XiGModels
+} // End namespace XiEqModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

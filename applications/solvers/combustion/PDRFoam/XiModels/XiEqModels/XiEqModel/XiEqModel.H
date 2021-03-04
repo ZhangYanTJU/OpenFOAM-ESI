@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,12 +29,6 @@ Class
 
 Description
     Base-class for all XiEq models used by the b-XiEq combustion model.
-    The available models are :
-        \link basicXiSubXiEq.H \endlink
-        \link Gulder.H \endlink
-        \link instabilityXiEq.H \endlink
-        \link SCOPEBlendXiEq.H \endlink
-        \link SCOPEXiEq.H \endlink
 
 SourceFiles
     XiEqModel.C
@@ -59,10 +54,9 @@ namespace Foam
 
 class XiEqModel
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Dictionary
         dictionary XiEqModelCoeffs_;
@@ -77,9 +71,7 @@ protected:
         const volScalarField& Su_;
 
 
-private:
-
-    // Private Member Functions
+    // Protected Member Functions
 
         //- No copy construct
         XiEqModel(const XiEqModel&) = delete;
@@ -103,12 +95,14 @@ public:
             dictionary,
             (
                 const dictionary& XiEqProperties,
+                const word& modelType,
                 const psiuReactionThermo& thermo,
                 const compressible::RASModel& turbulence,
                 const volScalarField& Su
             ),
             (
                 XiEqProperties,
+                modelType,
                 thermo,
                 turbulence,
                 Su
@@ -122,6 +116,7 @@ public:
         static autoPtr<XiEqModel> New
         (
             const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -134,6 +129,7 @@ public:
         XiEqModel
         (
             const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -147,13 +143,14 @@ public:
     // Member Functions
 
         //- Return the flame-wrinkling XiEq
-        virtual tmp<volScalarField> XiEq() const
-        {
-            return turbulence_.muEff();
-        }
+        virtual tmp<volScalarField> XiEq() const = 0;
 
-        //- Return the sub-grid Schelkin effect
-        tmp<volScalarField> calculateSchelkinEffect(const scalar) const;
+        // Only used by sperseded modles
+        tmp<volScalarField> calculateSchelkinEffect
+        (
+            const scalar uPrimeCoef,
+            const scalar nrExp
+        ) const;
 
         //- Update properties from given dictionary
         virtual bool read(const dictionary& XiEqProperties) = 0;

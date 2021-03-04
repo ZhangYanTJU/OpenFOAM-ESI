@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,14 +33,15 @@ License
 Foam::autoPtr<Foam::XiEqModel> Foam::XiEqModel::New
 (
     const dictionary& dict,
+    const word& modelName,
     const psiuReactionThermo& thermo,
     const compressible::RASModel& turbulence,
     const volScalarField& Su
 )
 {
-    const word modelType(dict.get<word>("XiEqModel"));
+    const word modelType(dict.get<word>(modelName));
 
-    Info<< "Selecting flame-wrinkling model " << modelType << endl;
+    Info<< "Selecting flame-wrinkling model Eq " << modelType << endl;
 
     auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
 
@@ -49,13 +50,16 @@ Foam::autoPtr<Foam::XiEqModel> Foam::XiEqModel::New
         FatalIOErrorInLookup
         (
             dict,
-            "XiEqModel",
+            modelName,
             modelType,
             *dictionaryConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<XiEqModel>(cstrIter()(dict, thermo, turbulence, Su));
+    return autoPtr<XiEqModel>(cstrIter()
+    (
+        dict, modelName, thermo, turbulence, Su)
+    );
 }
 
 

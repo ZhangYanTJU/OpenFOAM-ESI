@@ -55,7 +55,7 @@ class Gulder
 :
     public XiEqModel
 {
-    // Private data
+    // Private Data
 
         //- Model constant
         scalar XiEqCoef_;
@@ -65,6 +65,8 @@ class Gulder
 
         //- Schelkin effect Model constant
         scalar uPrimeCoef_;
+
+        scalar nrExp_;
 
         //- Use sub-grid Schelkin effect
         bool subGridSchelkin_;
@@ -91,6 +93,7 @@ public:
         Gulder
         (
             const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
             const volScalarField& Su
@@ -98,7 +101,7 @@ public:
 
 
     //- Destructor
-    virtual ~Gulder();
+    virtual ~Gulder() = default;
 
 
     // Member Functions
@@ -108,7 +111,6 @@ public:
 
         //- Update properties from given dictionary
         virtual bool read(const dictionary& XiEqProperties);
-
 };
 
 

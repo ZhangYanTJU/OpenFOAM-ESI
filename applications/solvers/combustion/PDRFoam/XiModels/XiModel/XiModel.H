@@ -95,8 +95,8 @@ SourceFiles
 #include "IOdictionary.H"
 #include "psiuReactionThermo.H"
 #include "turbulentFluidThermoModel.H"
-#include "multivariateSurfaceInterpolationScheme.H"
 #include "fvcDiv.H"
+#include "multivariateSurfaceInterpolationScheme.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -110,10 +110,9 @@ namespace Foam
 
 class XiModel
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         dictionary XiModelCoeffs_;
 
@@ -127,10 +126,11 @@ protected:
         //- Flame wrinkling field
         volScalarField Xi_;
 
+        //- Flame wrinkling field for the subgrid obstacles
+        volScalarField Xp_;
 
-private:
 
-    // Private Member Functions
+    // Protected Member Functions
 
         //- No copy construct
         XiModel(const XiModel&) = delete;
@@ -215,19 +215,31 @@ public:
             return Xi_;
         }
 
+        //- Return the obstacle-flame-wrinkling Xp
+        virtual const volScalarField& Xp() const
+        {
+             return Xp_;
+        }
+
         //- Return the flame diffusivity
         virtual tmp<volScalarField> Db() const
         {
-            return turbulence_.muEff();
+            const objectRegistry& db = Su_.db();
+            const volScalarField& Db1 = db.lookupObject<volScalarField>("Db");
+            //return turbulence_.muEff();
+            return Db1;
         }
 
         //- Add Xi to the multivariateSurfaceInterpolationScheme table
         //  if required
-        virtual void addXi
+        void addXi
         (
-            multivariateSurfaceInterpolationScheme<scalar>::fieldTable&
+            multivariateSurfaceInterpolationScheme<scalar>::fieldTable& fields
         )
-        {}
+        {
+            fields.add(Xi_);
+            fields.add(Xp_);
+        }
 
         //- Correct the flame-wrinkling Xi
         virtual void correct() = 0;

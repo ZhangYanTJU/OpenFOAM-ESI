@@ -5,11 +5,20 @@ tmp<fv::convectionScheme<scalar>> mvConvection
         mesh,
         fields,
         phi,
-        mesh.divScheme("div(phi,ft_b_ha_hau)")
+        mesh.divScheme("div(phi,ft_b_h_hu)")
     )
 );
 
-volScalarField Db("Db", turbulence->muEff());
+rhou = thermo.rhou();
+muu = thermo.muu();
+
+volScalarField Db("Db", turbulence->mut());
+const volScalarField DbThermal
+(
+    "DbAlpha",
+    turbulence->alphaEff()
+    //thermo.alpha() + turbulence->mut()/Prt
+);
 
 if (ign.ignited())
 {
@@ -17,30 +26,31 @@ if (ign.ignited())
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Su = unstrainedLaminarFlameSpeed()();
 
+    // Wrinkling due to turbulence
     const volScalarField& Xi = flameWrinkling->Xi();
 
-    // progress variable
-    // ~~~~~~~~~~~~~~~~~
-    volScalarField c("c", 1.0 - b);
+    // Wrinkling due to obstacles
+    const volScalarField& Xp = flameWrinkling->Xp();
 
-    // Unburnt gas density
-    // ~~~~~~~~~~~~~~~~~~~
-    volScalarField rhou(thermo.rhou());
+    // Progress variable
+    // ~~~~~~~~~~~~~~~~~
+    c = (1.0 - b);
+
 
     // Calculate flame normal etc.
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    //volVectorField n(fvc::grad(b));
     volVectorField n(fvc::reconstruct(fvc::snGrad(b)*mesh.magSf()));
 
     volScalarField mgb("mgb", mag(n));
+    volScalarField ddtb("ddtb",fvc::ddt(b));
 
     dimensionedScalar dMgb("dMgb", mgb.dimensions(), SMALL);
 
     {
         volScalarField bc(b*c);
 
-        dMgb += 1.0e-3*
+        dMgb += 1.0e-8*
             (bc*mgb)().weightedAverage(mesh.V())
            /(bc.weightedAverage(mesh.V()) + SMALL);
     }
@@ -54,6 +64,7 @@ if (ign.ignited())
     surfaceScalarField nf("nf", mesh.Sf() & nfVec);
     n /= mgb;
 
+
     #include "StCorr.H"
 
     // Calculate turbulent flame speed flux
@@ -64,8 +75,6 @@ if (ign.ignited())
 
     Db = flameWrinkling->Db();
 
-    // Create b equation
-    // ~~~~~~~~~~~~~~~~~
     fvScalarMatrix bEqn
     (
         betav*fvm::ddt(rho, b)
@@ -75,6 +84,7 @@ if (ign.ignited())
       - fvm::laplacian(Db, b)
      ==
         betav*fvOptions(rho, b)
+        // + betav*rhou*St*StCorr*mag(fvc::grad(b))
     );
 
 
@@ -82,17 +92,14 @@ if (ign.ignited())
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #include "ignite.H"
 
-    // Solve for b
-    // ~~~~~~~~~~~
     bEqn.relax();
-
     fvOptions.constrain(bEqn);
-
     bEqn.solve();
 
     fvOptions.correct(b);
 
-    Info<< "min(b) = " << min(b).value() << endl;
+    Info<< "min(b) = " << min(b).value() << nl
+        << "max(b) = " << max(b).value() << endl;
 
     if (composition.contains("ft"))
     {
@@ -109,8 +116,14 @@ if (ign.ignited())
             << endl;
     }
 
-    // Correct the flame-wrinkling
-    flameWrinkling->correct(mvConvection);
 
-    St = Xi*Su;
+    // Correct the flame-wrinkling, smoothing
+    flameWrinkling->correct(mvConvection);
+    St = Xp*Xi*Su*combustFlag;
+
+    if (PDRProperties.getOrDefault("smoothSt", false))
+    {
+        const scalar coeff = PDRProperties.get<scalar>("smoothStCoeff");
+        fvc::smooth(St, coeff);
+    }
 }

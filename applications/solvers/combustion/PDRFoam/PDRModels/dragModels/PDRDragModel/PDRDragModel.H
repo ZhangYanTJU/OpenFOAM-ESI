@@ -57,10 +57,9 @@ class PDRDragModel
 :
     public regIOobject
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         dictionary PDRDragModelCoeffs_;
 
@@ -72,9 +71,7 @@ protected:
         bool on_;
 
 
-private:
-
-    // Private Member Functions
+    // Protected Member Functions
 
         //- No copy construct
         PDRDragModel(const PDRDragModel&) = delete;
@@ -146,7 +143,7 @@ public:
     // Member Functions
 
         //- Return true if the drag model is switched on
-        bool on() const
+        bool on() const noexcept
         {
             return on_;
         }
@@ -161,17 +158,16 @@ public:
         using regIOobject::read;
 
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& PDRProperties) = 0;
+        virtual bool read(const dictionary& PDRProperties);
 
+        //- Write Data
         virtual bool writeData(Ostream&) const
         {
             return true;
         }
 
-        virtual void writeFields() const
-        {
-            NotImplemented;
-        }
+        //- Write fields
+        virtual void writeFields() const;
 };
 
 

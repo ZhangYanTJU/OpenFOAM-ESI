@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2012 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,106 +24,90 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::XiModels::algebraic
+    Foam::XiEqModels::normBasicSubGrid
 
 Description
-    Simple algebraic model for Xi based on Gulders correlation
-    with a linear correction function to give a plausible profile for Xi.
-    See report TR/HGW/10 for details on the Weller two equations model.
-    See \link XiModel.H \endlink for more details on flame wrinkling modelling.
+
 
 SourceFiles
-    algebraic.C
+    normBasicSubGrid.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef algebraic_H
-#define algebraic_H
+#ifndef normBasicSubGrid_H
+#define normBasicSubGrid_H
 
-#include "XiModel.H"
 #include "XiEqModel.H"
-#include "XiGModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace XiModels
+namespace XiEqModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class algebraic Declaration
+                          Class normBasicSubGrid Declaration
 \*---------------------------------------------------------------------------*/
 
-class algebraic
+class normBasicSubGrid
 :
-    public XiModel
+    public XiEqModel
 {
-    // Private data
+    // Private Data
 
-        scalar XiShapeCoef;
-
-        autoPtr<XiEqModel> XiEqModel_;
-        autoPtr<XiGModel> XiGModel_;
+        // Constants in the equilibrium Xp equation
+        scalar Cxpe1_;
+        scalar Cxpe2_;
+        scalar Cxpe3_;
+        scalar Cxpe4_;
 
 
     // Private Member Functions
 
         //- No copy construct
-        algebraic(const algebraic&) = delete;
+        normBasicSubGrid(const normBasicSubGrid&) = delete;
 
         //- No copy assignment
-        void operator=(const algebraic&) = delete;
+        void operator=(const normBasicSubGrid&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("algebraic");
+    TypeName("normBasicSubGrid");
 
 
     // Constructors
 
         //- Construct from components
-        algebraic
+        normBasicSubGrid
         (
-            const dictionary& XiProperties,
+            const dictionary& XiEqProperties,
+            const word& modelType,
             const psiuReactionThermo& thermo,
             const compressible::RASModel& turbulence,
-            const volScalarField& Su,
-            const volScalarField& rho,
-            const volScalarField& b,
-            const surfaceScalarField& phi
+            const volScalarField& Su
         );
 
 
     //- Destructor
-    virtual ~algebraic();
+    virtual ~normBasicSubGrid();
 
 
     // Member Functions
 
-        //- Return the flame diffusivity
-        virtual tmp<volScalarField> Db() const;
-
-        //- Correct the flame-wrinkling Xi
-        virtual void correct();
+        //- Return the flame-wrinkling XiEq
+        virtual tmp<volScalarField> XiEq() const;
 
         //- Update properties from given dictionary
-        virtual bool read(const dictionary& XiProperties);
-
-        //- Write fields of the XiEq model
-        virtual void writeFields()
-        {
-            XiEqModel_().writeFields();
-        }
-
+        virtual bool read(const dictionary& XiEqProperties);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace XiModels
+} // End namespace XiEqModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
