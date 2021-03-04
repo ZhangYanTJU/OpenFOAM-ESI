@@ -40,7 +40,7 @@ writeCompression off;
 
 timeFormat      general;
 
-timePrecision   6;
+timePrecision   8;
 
 runTimeModifiable yes;
 
@@ -52,8 +52,6 @@ maxDeltaT       1;
 
 functions
 {
-    #include "probes"
-
     normalisedGradP
     {
         libs    (utilityFunctionObjects);

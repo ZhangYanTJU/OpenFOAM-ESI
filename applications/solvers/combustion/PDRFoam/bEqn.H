@@ -95,6 +95,8 @@ if (ign.ignited())
     bEqn.relax();
     fvOptions.constrain(bEqn);
     bEqn.solve();
+    b.max(0.0);
+    b.min(1.0);
 
     fvOptions.correct(b);
 
