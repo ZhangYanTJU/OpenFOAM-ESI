@@ -508,13 +508,8 @@ bool Foam::fileOperations::uncollatedFileOperation::readHeader
         return false;
     }
 
-    bool ok = io.readHeader(*isPtr);
-
-    if (io.headerClassName() == decomposedBlockData::typeName)
-    {
-        // Read the header inside the container (master data)
-        ok = decomposedBlockData::readMasterHeader(io, *isPtr);
-    }
+    // Regular header or from decomposed data
+    bool ok = decomposedBlockData::readHeader(io, *isPtr);
 
     if (debug)
     {

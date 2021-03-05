@@ -27,10 +27,40 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "IOobject.H"
+#include "dictionary.H"
 #include "objectRegistry.H"
 #include "foamVersion.H"
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+inline void writeSpaces(Ostream& os, label nSpaces)
+{
+    if (nSpaces < 1)
+    {
+        nSpaces = 1;
+    }
+    while (nSpaces--)
+    {
+        os.write(char(token::SPACE));
+    }
+}
+
+// Similar to writeEntry, but with fewer spaces
+template<class T>
+inline void writeHeaderEntry(Ostream& os, const word& key, const T& value)
+{
+    os << indent << key;
+    writeSpaces(os, 12 - label(key.size()));
+    os << value << char(token::END_STATEMENT) << nl;
+}
+
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 // A banner corresponding to this:
 //
@@ -117,11 +147,57 @@ Foam::Ostream& Foam::IOobject::writeEndDivider(Ostream& os)
 }
 
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::IOobject::writeHeaderContent
+(
+    Ostream& os,
+    const IOobject& io,
+    const word& objectType,
+    const dictionary* metaDataDict
+)
+{
+    // Standard header entries
+    writeHeaderEntry(os, "version", os.version());
+    writeHeaderEntry(os, "format", os.format());
+
+    if (os.format() == IOstream::BINARY || IOobject::emitArchEnabled())
+    {
+        // Arch information (BINARY: always, ASCII: can disable)
+        writeHeaderEntry(os, "arch", foamVersion::buildArch);
+    }
+    if (!io.note().empty())
+    {
+        writeHeaderEntry(os, "note", io.note());
+    }
+
+    if (objectType.empty())
+    {
+        // Empty type not allowed - use 'dictionary' fallback
+        writeHeaderEntry(os, "class", word("dictionary"));
+    }
+    else
+    {
+        writeHeaderEntry(os, "class", objectType);
+    }
+
+    writeHeaderEntry(os, "location", io.instance()/io.db().dbDir()/io.local());
+    writeHeaderEntry(os, "object", io.name());
+
+    // Meta-data (if any)
+    if (metaDataDict && !metaDataDict->empty())
+    {
+        metaDataDict->writeEntry("meta", os);
+    }
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
 bool Foam::IOobject::writeHeader
 (
     Ostream& os,
-    const word& objectType,
-    const bool noArchAscii
+    const word& objectType
 ) const
 {
     if (!os.good())
@@ -133,39 +209,28 @@ bool Foam::IOobject::writeHeader
         return false;
     }
 
-    IOobject::writeBanner(os)
-        << "FoamFile" << nl
-        << '{' << nl
-        << "    version     " << os.version() << ';' << nl
-        << "    format      " << os.format() << ';' << nl;
-
-    if (os.format() == IOstream::BINARY || !noArchAscii)
+    if (IOobject::bannerEnabled())
     {
-        // Arch information (BINARY: always, ASCII: can disable)
-        os  << "    arch        " << foamVersion::buildArch << ';' << nl;
-    }
-    if (!note().empty())
-    {
-        os  << "    note        " << note() << ';' << nl;
+        IOobject::writeBanner(os);
     }
 
-    os  << "    class       ";
-    if (objectType.empty())
-    {
-        // Empty type not allowed - use 'dictionary' fallback
-        os  << "dictionary";
-    }
-    else
-    {
-        os  << objectType;
-    }
-    os  << ';' << nl;
+    os.beginBlock("FoamFile");
 
-    os  << "    location    " << instance()/db().dbDir()/local() << ';' << nl
-        << "    object      " << name() << ';' << nl
-        << '}' << nl;
+    // Standard header entries
+    IOobject::writeHeaderContent
+    (
+        os,
+        *this,
+        objectType,
+        this->findMetaData()
+    );
 
-    writeDivider(os) << nl;
+    os.endBlock();
+
+    if (IOobject::bannerEnabled())
+    {
+        IOobject::writeDivider(os) << nl;
+    }
 
     return true;
 }
@@ -173,7 +238,7 @@ bool Foam::IOobject::writeHeader
 
 bool Foam::IOobject::writeHeader(Ostream& os) const
 {
-    return writeHeader(os, type());
+    return IOobject::writeHeader(os, this->type());
 }
 
 
