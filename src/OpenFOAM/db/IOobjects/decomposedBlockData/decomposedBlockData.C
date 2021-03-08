@@ -37,9 +37,10 @@ License
 #include "charList.H"
 #include "labelPair.H"
 #include "masterUncollatedFileOperation.H"
-#include "IListStream.H"
+#include "ListStream.H"
 #include "StringStream.H"
-#include "foamVersion.H"
+#include "registerSwitch.H"
+#include <cctype>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -47,6 +48,19 @@ namespace Foam
 {
     defineTypeNameAndDebug(decomposedBlockData, 0);
 }
+
+
+int Foam::decomposedBlockData::collatedBlockFormat_
+(
+    Foam::debug::optimisationSwitch("collatedFormat", 1)
+);
+
+registerOptSwitch
+(
+    "collatedFormat",
+    int,
+    Foam::decomposedBlockData::collatedBlockFormat_
+);
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -61,6 +75,7 @@ Foam::decomposedBlockData::decomposedBlockData
     regIOobject(io),
     commsType_(commsType),
     comm_(comm),
+    streamOption_(),
     contentData_()
 {
     // Temporary warning
@@ -143,9 +158,17 @@ std::streamoff Foam::decomposedBlockData::writeBlockEntry
 
     const word procName("processor" + Foam::name(blocki));
 
+    if (decomposedBlockData::oldBlockFormat())
     {
+        // Bare old style
         os  << nl << "// " << procName << nl;
         charData.writeList(os) << nl;
+    }
+    else
+    {
+        // Dictionary format
+        os  << nl;
+        charData.writeEntry(procName, os);
     }
 
     return blockOffset;
@@ -220,7 +243,25 @@ Foam::decomposedBlockData::readBlock
     unsigned streamLabelByteSize = sizeof(label);
     unsigned streamScalarByteSize = sizeof(scalar);
 
-    bool needsHeader = true;
+    is.fatalCheck(FUNCTION_NAME);
+    token tok(is);
+    is.fatalCheck(FUNCTION_NAME);
+
+    const bool hasBlockHeader = tok.isWord(decomposedBlockData::headerName);
+
+    if (hasBlockHeader)
+    {
+        // FoamBlock: header for block data
+        dictionary headerDict(is, false);  // Read sub-dictionary content
+
+        streamOptData = headerIO.parseHeader(headerDict);
+        streamLabelByteSize = headerIO.labelByteSize();
+        streamScalarByteSize = headerIO.scalarByteSize();
+    }
+    else
+    {
+        is.putBack(tok);
+    }
 
     autoPtr<ISstream> realIsPtr;
 
@@ -233,8 +274,9 @@ Foam::decomposedBlockData::readBlock
         realIsPtr.reset(new IListStream(std::move(data)));
         realIsPtr->name() = is.name();
 
-        if (needsHeader)
+        if (!hasBlockHeader)
         {
+            // No separate FoamBlock:
             // Read header from first block,
             // advancing the stream position
             if (!headerIO.readHeader(*realIsPtr))
@@ -256,8 +298,9 @@ Foam::decomposedBlockData::readBlock
     }
     else
     {
-        if (needsHeader)
+        if (!hasBlockHeader)
         {
+            // No separate FoamBlock:
             // Read header from first block
             UIListStream headerStream(data);
             if (!headerIO.readHeader(headerStream))
@@ -423,7 +466,31 @@ Foam::autoPtr<Foam::ISstream> Foam::decomposedBlockData::readBlocks
     if (UPstream::master(comm))
     {
         auto& is = *isPtr;
+
+        // Extracted header information
+        IOstreamOption streamOptData;
+        unsigned streamLabelByteSize = sizeof(label);
+        unsigned streamScalarByteSize = sizeof(scalar);
+
         is.fatalCheck(FUNCTION_NAME);
+        token tok(is);
+        is.fatalCheck(FUNCTION_NAME);
+
+        const bool hasBlockHeader = tok.isWord(decomposedBlockData::headerName);
+
+        if (hasBlockHeader)
+        {
+            // FoamBlock: header for block data
+            dictionary headerDict(is, false);  // Read sub-dictionary content
+
+            streamOptData = headerIO.parseHeader(headerDict);
+            streamLabelByteSize = headerIO.labelByteSize();
+            streamScalarByteSize = headerIO.scalarByteSize();
+        }
+        else
+        {
+            is.putBack(tok);
+        }
 
         // Read master data
         decomposedBlockData::readBlockEntry(is, data);
@@ -431,7 +498,9 @@ Foam::autoPtr<Foam::ISstream> Foam::decomposedBlockData::readBlocks
         realIsPtr.reset(new IListStream(std::move(data)));
         realIsPtr->name() = fName;
 
+        if (!hasBlockHeader)
         {
+            // No separate FoamBlock:
             // Read header from first block,
             // advancing the stream position
             if (!headerIO.readHeader(*realIsPtr))
@@ -441,6 +510,14 @@ Foam::autoPtr<Foam::ISstream> Foam::decomposedBlockData::readBlocks
                     << is.name() << nl
                     << exit(FatalIOError);
             }
+        }
+        else
+        {
+            // Apply stream settings
+            realIsPtr().format(streamOptData.format());
+            realIsPtr().version(streamOptData.version());
+            realIsPtr().setLabelByteSize(streamLabelByteSize);
+            realIsPtr().setScalarByteSize(streamScalarByteSize);
         }
     }
 
@@ -715,7 +792,8 @@ bool Foam::decomposedBlockData::writeBlocks
     const PtrList<SubList<char>>& slaveData,
 
     const UPstream::commsTypes commsType,
-    const bool syncReturnState
+    const bool syncReturnState,
+    const bool separateHeader
 )
 {
     if (debug)
@@ -738,12 +816,60 @@ bool Foam::decomposedBlockData::writeBlocks
 
         OSstream& os = *osPtr;
 
+        label leadingChars = 0;
+
+        if (separateHeader)
+        {
+            // Check for header in first block
+            UIListStream headerStream(masterData);
+            token tok(headerStream);
+
+            if (tok.isWord("FoamFile"))
+            {
+                const char* blockBegin =
+                    (masterData.cdata() + headerStream.pos());
+
+                // Read (and discard) sub-dictionary content
+                dictionary headerDict(headerStream, false);
+
+                const char* blockEnd =
+                    (masterData.cdata() + headerStream.pos());
+
+                leadingChars = label(headerStream.pos());
+                while (std::isspace(masterData[leadingChars]))
+                {
+                    ++leadingChars;
+                }
+
+                // Write the header content as FoamBlock
+                os.write(word(decomposedBlockData::headerName));
+
+                if (isA<OFstream>(os))
+                {
+                    // Serial file output - can use writeRaw()
+                    os.writeRaw(blockBegin, (blockEnd-blockBegin));
+                }
+                else
+                {
+                    // Other cases are less fortunate, and no std::string_view
+                    std::string str(blockBegin, (blockEnd-blockBegin));
+                    os.writeQuoted(str, false);
+                }
+                os << nl;
+            }
+        }
+
         blockOffset[UPstream::masterNo()] =
             decomposedBlockData::writeBlockEntry
             (
                 os,
                 UPstream::masterNo(),
-                masterData
+                SubList<char>
+                (
+                    masterData,
+                    masterData.size()-leadingChars,
+                    leadingChars
+                )
             );
 
         ok = os.good();
@@ -919,32 +1045,104 @@ bool Foam::decomposedBlockData::read()
 {
     autoPtr<ISstream> isPtr;
     fileName objPath(fileHandler().filePath(false, *this, word::null));
+
+    bool hasBlockHeader = false;
     if (UPstream::master(comm_))
     {
         isPtr.reset(new IFstream(objPath));
-        IOobject::readHeader(*isPtr);
+        auto& is = *isPtr;
+        IOobject::readHeader(is);
+
+        is.fatalCheck(FUNCTION_NAME);
+        token tok(is);
+        is.fatalCheck(FUNCTION_NAME);
+
+        hasBlockHeader = tok.isWord(decomposedBlockData::headerName);
+
+        if (hasBlockHeader)
+        {
+            // FoamBlock: header for block data
+            dictionary headerDict(is, false);  // Read sub-dictionary content
+
+            IOobject dummyIO(*this);
+            streamOption_ = dummyIO.parseHeader(headerDict);
+        }
+        else
+        {
+            is.putBack(tok);
+        }
     }
 
-    return readBlocks(comm_, isPtr, contentData_, commsType_);
+    bool ok = readBlocks(comm_, isPtr, contentData_, commsType_);
+
+    // No separate FoamBlock:
+    // Read header from first block
+
+    if (!hasBlockHeader && UPstream::master(comm_))
+    {
+        IOobject dummyIO(*this);
+
+        UIListStream headerStream(contentData_);
+        if (dummyIO.readHeader(headerStream))
+        {
+            streamOption_ = static_cast<IOstreamOption>(headerStream);
+        }
+        else
+        {
+            FatalIOErrorInFunction(headerStream)
+                << "Problem while reading header for object "
+                << isPtr->name() << nl
+                << exit(FatalIOError);
+        }
+    }
+
+    // Scatter IOstreamOption
+    int verValue;
+    int fmtValue;
+    if (UPstream::master(comm_))
+    {
+        verValue = streamOption_.version().canonical();
+        fmtValue = static_cast<int>(streamOption_.format());
+    }
+    Pstream::scatter(verValue); //,  Pstream::msgType(), comm);
+    Pstream::scatter(fmtValue); //,  Pstream::msgType(), comm);
+
+    streamOption_.version(IOstreamOption::versionNumber::canonical(verValue));
+    streamOption_.format(IOstreamOption::streamFormat(fmtValue));
+
+    return ok;
 }
 
 
 bool Foam::decomposedBlockData::writeData(Ostream& os) const
 {
     IOobject io(*this);
-    IOstreamOption streamOpt(os);
+    IOstreamOption streamOpt(streamOption_);
 
+    // Ensure consistent stream format information
     int verValue;
     int fmtValue;
 
-    // Re-read my own data to find out the header information
-    if (Pstream::master(comm_))
+    bool embeddedHeader = false;
+    if (UPstream::master(comm_))
     {
+        // Check for header in first block
         UIListStream headerStream(contentData_);
-        io.readHeader(headerStream);
+        token tok(headerStream);
 
-        verValue = headerStream.version().canonical();
-        fmtValue = static_cast<int>(headerStream.format());
+        embeddedHeader = tok.isWord("FoamFile");
+        if (embeddedHeader)
+        {
+            headerStream.rewind();
+
+            verValue = headerStream.version().canonical();
+            fmtValue = static_cast<int>(headerStream.format());
+        }
+        else
+        {
+            verValue = streamOption_.version().canonical();
+            fmtValue = static_cast<int>(streamOption_.format());
+        }
     }
 
     // Scatter header information
@@ -965,12 +1163,12 @@ bool Foam::decomposedBlockData::writeData(Ostream& os) const
     fileName masterLocation(instance()/db().dbDir()/local());
     Pstream::scatter(masterLocation, Pstream::msgType(), comm_);
 
-    if (!Pstream::master(comm_))
+    if (!embeddedHeader)
     {
         decomposedBlockData::writeHeader
         (
             os,
-            streamOpt,  // streamOpt for data
+            streamOpt,
             io.headerClassName(),
             io.note(),
             masterLocation,
@@ -1006,6 +1204,9 @@ bool Foam::decomposedBlockData::writeObject
     const bool valid
 ) const
 {
+    // Remember the output format
+    const_cast<IOstreamOption&>(streamOption_) = streamOpt;
+
     autoPtr<OSstream> osPtr;
     if (UPstream::master(comm_))
     {
@@ -1014,8 +1215,11 @@ bool Foam::decomposedBlockData::writeObject
 
         osPtr.reset(new OFstream(objectPath(), IOstreamOption::BINARY));
 
-        // // Update meta-data for current state
-        // const_cast<regIOobject&>(io).updateMetaData();
+        // Update meta-data for current state
+        static_cast<regIOobject&>
+        (
+            const_cast<decomposedBlockData&>(*this)
+        ).updateMetaData();
 
         decomposedBlockData::writeHeader
         (
@@ -1038,7 +1242,9 @@ bool Foam::decomposedBlockData::writeObject
         contentData_,
         recvSizes,
         slaveData,
-        commsType_
+        commsType_,
+        true,   // syncReturnState
+        false   // no separateHeader - already done (if required) above
     );
 }
 

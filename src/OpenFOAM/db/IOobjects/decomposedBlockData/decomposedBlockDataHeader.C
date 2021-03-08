@@ -29,7 +29,7 @@ License
 #include "dictionary.H"
 #include "foamVersion.H"
 #include "objectRegistry.H"
-#include "UIListStream.H"
+#include "ListStream.H"
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
@@ -56,6 +56,7 @@ inline void writeHeaderEntry(Ostream& os, const word& key, const T& value)
     writeSpaces(os, 12 - label(key.size()));
     os << value << char(token::END_STATEMENT) << nl;
 }
+
 
 } // End namespace Foam
 
@@ -117,7 +118,23 @@ bool Foam::decomposedBlockData::readHeader(IOobject& io, Istream& is)
             return ok;
         }
 
+        // Check for "FoamBlock" header
+        token tok;
+        is >> tok;
+
+        if (tok.isWord(decomposedBlockData::headerName))
         {
+            headerDict.read(is, false);  // Read sub-dictionary content
+
+            // Does not affect stream characteristics
+            (void) io.parseHeader(headerDict);
+            ok = true;
+        }
+        else
+        {
+            // Older format, "FoamFile" embedded in the first data block
+            is.putBack(tok);
+
             // Master-only reading of header
             List<char> charData;
             decomposedBlockData::readBlockEntry(is, charData);
@@ -193,9 +210,26 @@ void Foam::decomposedBlockData::writeHeader
         io.name()
     );
 
+    if (decomposedBlockData::oldBlockFormat())
     {
         writeHeaderEntry(os, "data.format", streamOptData.format());
         writeHeaderEntry(os, "data.class", io.type());
+    }
+    else
+    {
+        os.endBlock(); // FoamFile
+
+        os.beginBlock(decomposedBlockData::headerName);
+
+        decomposedBlockData::writeHeaderContent
+        (
+            os,
+            streamOptData,
+            io.type(),
+            io.note(),
+            (io.instance()/io.db().dbDir()/io.local()),  // location
+            io.name()
+        );
     }
 
     // Meta-data (if any)

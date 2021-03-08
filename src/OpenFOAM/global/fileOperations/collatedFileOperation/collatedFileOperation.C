@@ -272,7 +272,7 @@ bool Foam::fileOperations::collatedFileOperation::appendObject
         io,
         proci,
         // With FoamFile header on master?
-        isMaster
+        (isMaster && decomposedBlockData::oldBlockFormat())
     );
 
     return (blockOffset >= 0) && os.good();

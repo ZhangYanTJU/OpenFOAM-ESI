@@ -38,7 +38,43 @@ Description
     has \c class = \c %decomposedBlockData and normally \c format = \c binary.
     This description refers to the \em entire file container, not the
     individual blocks.
+    A secondary \b FoamBlock header specifies the header information
+    for the blocks. Each data block is written as a dictionary entry.
+    .
+    For example,
 
+\verbatim
+FoamFile
+{
+    version     2.0;
+    format      binary;
+    arch        "LSB;label=32;scalar=64";
+    class       decomposedBlockData;
+    location    "constant/polyMesh";
+    object      points;
+}
+FoamBlock
+{
+    version     2.0;
+    format      ascii;
+    arch        "LSB;label=32;scalar=64";
+    class       vectorField;
+    location    "constant/polyMesh";
+    object      points;
+}
+
+processor0 List<char>
+NCHARS
+(...content...);
+
+processor1 List<char>
+NCHARS
+(...content...);
+
+...
+\endverbatim
+
+    The original format (OpenFOAM-v2012 and earlier) is slightly different.
     Each processor block is simply a binary chunk of characters and the
     first block also contains the header description for all of the blocks.
     For example,
@@ -119,11 +155,17 @@ protected:
 
     // Protected Data
 
+        //- Name for secondary file header
+        static constexpr const char* const headerName = "FoamBlock";
+
         //- Type to use for gather
         const UPstream::commsTypes commsType_;
 
         //- Communicator for all parallel comms
         const label comm_;
+
+        //- The format/version for the block(s).
+        IOstreamOption streamOption_;
 
         //- The block content
         List<char> contentData_;
@@ -153,6 +195,18 @@ protected:
 
 public:
 
+    // Static Members
+
+        //- The collated block output format (0: old)
+        static int collatedBlockFormat_;
+
+        //- Using the old block output format (2012 and older)
+        static bool oldBlockFormat() noexcept
+        {
+            return collatedBlockFormat_ == 0;
+        }
+
+
     //- Declare type-name, virtual type (with debug switch)
     TypeName("decomposedBlockData");
 
@@ -177,8 +231,8 @@ public:
         //- Read object
         virtual bool read();
 
-        //- Write separated content. Assumes content is the serialised data
-        //  and that the master data contains a header
+        //- Write separated content (assumes content is the serialised data)
+        //  The master data may or may not contain an embedded FoamFile header
         virtual bool writeData(Ostream& os) const;
 
         //- Write using stream options
@@ -289,6 +343,9 @@ public:
 
         //- Write *this. Ostream only valid on master.
         //  Returns offsets of processor blocks in blockOffset
+        //
+        //  \note the separateHeader parameter will attempt to rewrite
+        //  the embedded FoamFile information as a separate FoamBlock header
         static bool writeBlocks
         (
             const label comm,
@@ -303,7 +360,8 @@ public:
             const PtrList<SubList<char>>& slaveData,
 
             const UPstream::commsTypes,
-            const bool syncReturnState = true
+            const bool syncReturnState = true,
+            const bool separateHeader = !decomposedBlockData::oldBlockFormat()
         );
 };
 
