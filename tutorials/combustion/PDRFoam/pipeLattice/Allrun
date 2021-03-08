@@ -12,6 +12,8 @@ runApplication PDRblockMesh
 
 runApplication PDRsetFields
 
+runApplication PDRMesh
+
 # Get location for ignition
 
 echo "Ignition point from constant/combustionProperties > system/ignitionPoint"
