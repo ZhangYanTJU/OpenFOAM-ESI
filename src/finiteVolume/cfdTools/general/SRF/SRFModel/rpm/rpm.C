@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,16 +47,14 @@ namespace Foam
     }
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::SRF::rpm::rpm(const volVectorField& U)
 :
     SRFModel(typeName, U),
-    rpm_(SRFModelCoeffs_.get<scalar>("rpm"))
-{
-    // The angular velocity
-    omega_.value() = axis_*rpmToRads(rpm_);
-}
+    rpmPtr_(Function1<scalar>::New("rpm", SRFModelCoeffs_))
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -65,15 +63,23 @@ bool Foam::SRF::rpm::read()
 {
     if (SRFModel::read())
     {
-        SRFModelCoeffs_.readEntry("rpm", rpm_);
-
-        omega_.value() = axis_*rpmToRads(rpm_);
+        rpmPtr_.reset(Function1<scalar>::New("rpm", SRFModelCoeffs_));
 
         return true;
     }
 
     return false;
 }
+
+
+Foam::dimensionedVector Foam::SRF::rpm::omega() const
+{
+    const scalar t = this->db().time().timeOutputValue();
+    const scalar rpm = rpmPtr_->value(t);
+
+    return dimensionedVector("omega", dimless/dimTime, axis_*rpmToRads(rpm));
+}
+
 
 
 // ************************************************************************* //

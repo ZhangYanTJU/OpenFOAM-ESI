@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,6 +40,7 @@ SourceFiles
 #define SRF_rpm_H
 
 #include "SRFModel.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -60,7 +61,7 @@ class rpm
     // Private data
 
         //- Revolutions per minute
-        scalar rpm_;
+        autoPtr<Function1<scalar>> rpmPtr_;
 
 
     // Private Member Functions
@@ -85,13 +86,16 @@ public:
 
 
     //- Destructor
-    ~rpm() = default;
+    virtual ~rpm() = default;
 
 
     // Member functions
 
         //- Read coefficients
         bool read();
+
+        //- Return the angular velocity field [rad/s]
+        virtual dimensionedVector omega() const;
 };
 
 

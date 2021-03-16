@@ -41,7 +41,8 @@ Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
 :
     fixedValueFvPatchVectorField(p, iF),
     relative_(false),
-    inletValue_(p.size(), Zero)
+    inletValue_(p.size(), Zero),
+    refValuePtr_(fvPatchVectorField::New("refValue", p, iF))
 {}
 
 
@@ -55,8 +56,15 @@ Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
 :
     fixedValueFvPatchVectorField(ptf, p, iF, mapper),
     relative_(ptf.relative_),
-    inletValue_(ptf.inletValue_, mapper)
-{}
+    inletValue_(ptf.inletValue_, mapper),
+    refValuePtr_()
+{
+    if (ptf.refValuePtr_.valid())
+    {
+        refValuePtr_ =
+            fvPatchVectorField::New(ptf.refValuePtr_(), p, iF, mapper);
+    }
+}
 
 
 Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
@@ -68,8 +76,22 @@ Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
 :
     fixedValueFvPatchVectorField(p, iF, dict),
     relative_(dict.get<Switch>("relative")),
-    inletValue_("inletValue", dict, p.size())
-{}
+    inletValue_(p.size(), Zero),
+    refValuePtr_()
+{
+    if (dict.found("inletValue"))
+    {
+        inletValue_ = vectorField("inletValue", dict, p.size());
+    }
+    else
+    {
+        if (dict.found("refValue"))
+        {
+            refValuePtr_ =
+                fvPatchVectorField::New(p, iF, dict.subDict("refValue"));
+        }
+    }
+}
 
 
 Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
@@ -79,8 +101,14 @@ Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
 :
     fixedValueFvPatchVectorField(srfvpvf),
     relative_(srfvpvf.relative_),
-    inletValue_(srfvpvf.inletValue_)
-{}
+    inletValue_(srfvpvf.inletValue_),
+    refValuePtr_()
+{
+    if (srfvpvf.refValuePtr_.valid())
+    {
+        refValuePtr_ = srfvpvf.refValuePtr_().clone();
+    }
+}
 
 
 Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
@@ -91,8 +119,14 @@ Foam::SRFVelocityFvPatchVectorField::SRFVelocityFvPatchVectorField
 :
     fixedValueFvPatchVectorField(srfvpvf, iF),
     relative_(srfvpvf.relative_),
-    inletValue_(srfvpvf.inletValue_)
-{}
+    inletValue_(srfvpvf.inletValue_),
+    refValuePtr_()
+{
+    if (srfvpvf.refValuePtr_.valid())
+    {
+        refValuePtr_ = srfvpvf.refValuePtr_().clone();
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -104,6 +138,11 @@ void Foam::SRFVelocityFvPatchVectorField::autoMap
 {
     vectorField::autoMap(m);
     inletValue_.autoMap(m);
+
+    if (refValuePtr_.valid())
+    {
+        refValuePtr_->autoMap(m);
+    }
 }
 
 
@@ -115,10 +154,14 @@ void Foam::SRFVelocityFvPatchVectorField::rmap
 {
     fixedValueFvPatchVectorField::rmap(ptf, addr);
 
-    const SRFVelocityFvPatchVectorField& tiptf =
-        refCast<const SRFVelocityFvPatchVectorField>(ptf);
+    const auto& srfptf = refCast<const SRFVelocityFvPatchVectorField>(ptf);
 
-    inletValue_.rmap(tiptf.inletValue_, addr);
+    inletValue_.rmap(srfptf.inletValue_, addr);
+
+    if (srfptf.refValuePtr_.valid())
+    {
+        refValuePtr_->rmap(srfptf.refValuePtr_(), addr);
+    }
 }
 
 
@@ -133,19 +176,34 @@ void Foam::SRFVelocityFvPatchVectorField::updateCoeffs()
     if (!relative_)
     {
         // Get reference to the SRF model
-        const SRF::SRFModel& srf =
-            db().lookupObject<SRF::SRFModel>("SRFProperties");
+        const auto& srf = db().lookupObject<SRF::SRFModel>("SRFProperties");
 
         // Determine patch velocity due to SRF
         const vectorField SRFVelocity(srf.velocity(patch().Cf()));
 
-        operator==(-SRFVelocity + inletValue_);
+        if (refValuePtr_.valid())
+        {
+            refValuePtr_->evaluate();
+            operator==(-SRFVelocity + refValuePtr_());
+        }
+        else
+        {
+            operator==(-SRFVelocity + inletValue_);
+        }
     }
     // If already relative to the SRF simply supply the inlet value as a fixed
     // value
     else
     {
-        operator==(inletValue_);
+        if (refValuePtr_.valid())
+        {
+            refValuePtr_->evaluate();
+            operator==(refValuePtr_());
+        }
+        else
+        {
+            operator==(inletValue_);
+        }
     }
 
     fixedValueFvPatchVectorField::updateCoeffs();
@@ -156,7 +214,18 @@ void Foam::SRFVelocityFvPatchVectorField::write(Ostream& os) const
 {
     fvPatchVectorField::write(os);
     os.writeEntry("relative", relative_);
-    inletValue_.writeEntry("inletValue", os);
+
+    if (refValuePtr_.valid())
+    {
+        os.beginBlock("refValue");
+        refValuePtr_->write(os);
+        os.endBlock();
+    }
+    else
+    {
+        inletValue_.writeEntry("inletValue", os);
+    }
+
     writeEntry("value", os);
 }
 

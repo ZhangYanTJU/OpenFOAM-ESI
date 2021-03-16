@@ -114,6 +114,9 @@ class SRFVelocityFvPatchVectorField
         //- Inlet value [m/s]
         vectorField inletValue_;
 
+        //- Optional patch to retrieve values from
+        tmp<fvPatchVectorField> refValuePtr_;
+
 
 public:
 

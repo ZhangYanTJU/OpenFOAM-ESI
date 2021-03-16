@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,14 +64,7 @@ Foam::SRF::SRFModel::SRFModel
     mesh_(Urel_.mesh()),
     origin_("origin", dimLength, get<vector>("origin")),
     axis_(normalised(get<vector>("axis"))),
-    SRFModelCoeffs_(optionalSubDict(type + "Coeffs")),
-    omega_(dimensionedVector("omega", dimless/dimTime, Zero))
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::SRF::SRFModel::~SRFModel()
+    SRFModelCoeffs_(optionalSubDict(type + "Coeffs"))
 {}
 
 
@@ -109,29 +103,20 @@ const Foam::vector& Foam::SRF::SRFModel::axis() const
 }
 
 
-const Foam::dimensionedVector& Foam::SRF::SRFModel::omega() const
-{
-    return omega_;
-}
-
-
 Foam::tmp<Foam::DimensionedField<Foam::vector, Foam::volMesh>>
 Foam::SRF::SRFModel::Fcoriolis() const
 {
-    return tmp<volVectorField::Internal>
+    return tmp<DimensionedField<vector, Foam::volMesh>>::New
     (
-        new volVectorField::Internal
+        IOobject
         (
-            IOobject
-            (
-                "Fcoriolis",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            2.0*omega_ ^ Urel_
-        )
+            "Fcoriolis",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        2.0*omega() ^ Urel_
     );
 }
 
@@ -139,20 +124,19 @@ Foam::SRF::SRFModel::Fcoriolis() const
 Foam::tmp<Foam::DimensionedField<Foam::vector, Foam::volMesh>>
 Foam::SRF::SRFModel::Fcentrifugal() const
 {
-    return tmp<volVectorField::Internal>
+    const dimensionedVector omega = this->omega();
+
+    return tmp<DimensionedField<vector, Foam::volMesh>>::New
     (
-        new volVectorField::Internal
+        IOobject
         (
-            IOobject
-            (
-                "Fcentrifugal",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            omega_ ^ (omega_ ^ (mesh_.C() - origin_))
-        )
+            "Fcentrifugal",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        omega ^ (omega ^ (mesh_.C() - origin_))
     );
 }
 
@@ -170,7 +154,7 @@ Foam::vectorField Foam::SRF::SRFModel::velocity
 ) const
 {
     tmp<vectorField> tfld =
-        omega_.value()
+        omega().value()
       ^ (
             (positions - origin_.value())
           - axis_*(axis_ & (positions - origin_.value()))
@@ -182,21 +166,18 @@ Foam::vectorField Foam::SRF::SRFModel::velocity
 
 Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::U() const
 {
-    return tmp<volVectorField>
+    return tmp<volVectorField>::New
     (
-        new volVectorField
+        IOobject
         (
-            IOobject
-            (
-                "Usrf",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            omega_
-          ^ ((mesh_.C() - origin_) - axis_*(axis_ & (mesh_.C() - origin_)))
-        )
+            "Usrf",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        omega()
+      ^ ((mesh_.C() - origin_) - axis_*(axis_ & (mesh_.C() - origin_)))
     );
 }
 
@@ -205,21 +186,18 @@ Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::Uabs() const
 {
     tmp<volVectorField> Usrf = U();
 
-    tmp<volVectorField> tUabs
+    auto tUabs = tmp<volVectorField>::New
     (
-        new volVectorField
+        IOobject
         (
-            IOobject
-            (
-                "Uabs",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            Usrf
-        )
+            "Uabs",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        Usrf
     );
 
     volVectorField& Uabs = tUabs.ref();

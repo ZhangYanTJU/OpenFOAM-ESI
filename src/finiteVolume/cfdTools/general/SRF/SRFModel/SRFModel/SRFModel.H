@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,6 +51,7 @@ SourceFiles
 #include "fvMesh.H"
 #include "volFields.H"
 #include "vectorField.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -85,9 +87,6 @@ protected:
 
         //- SRF model coefficients dictionary
         dictionary SRFModelCoeffs_;
-
-        //- Angular velocity of the frame (rad/s)
-        dimensionedVector omega_;
 
 
 private:
@@ -141,7 +140,7 @@ public:
 
 
     //- Destructor
-    virtual ~SRFModel();
+    virtual ~SRFModel() = default;
 
 
     // Member Functions
@@ -154,14 +153,14 @@ public:
 
         // Access
 
+            //- Return the angular velocity field [rad/s]
+            virtual dimensionedVector omega() const = 0;
+
             //- Return the origin of rotation
             const dimensionedVector& origin() const;
 
             //- Return the axis of rotation
             const vector& axis() const;
-
-            //- Return the angular velocity field [rad/s]
-            const dimensionedVector& omega() const;
 
             //- Return the coriolis force
             tmp<volVectorField::Internal> Fcoriolis() const;
