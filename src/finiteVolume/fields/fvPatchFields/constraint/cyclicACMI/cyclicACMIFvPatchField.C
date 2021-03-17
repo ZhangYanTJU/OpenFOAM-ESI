@@ -26,6 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "fvMatrix.H"
 #include "cyclicACMIFvPatchField.H"
 #include "transformField.H"
 
@@ -160,7 +161,13 @@ Foam::tmp<Foam::Field<Type>>
 Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
 {
     const Field<Type>& iField = this->primitiveField();
-    const cyclicACMIPolyPatch& cpp = cyclicACMIPatch_.cyclicACMIPatch();
+    //const cyclicACMIPolyPatch& cpp = cyclicACMIPatch_.cyclicACMIPatch();
+
+    // By pass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
+    // neighbPatch()
+    const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
+    const labelUList& nbrFaceCells = neighbPatch.faceCells();
+
     tmp<Field<Type>> tpnf
     (
         cyclicACMIPatch_.interpolate
@@ -168,7 +175,8 @@ Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
             Field<Type>
             (
                 iField,
-                cpp.neighbPatch().faceCells()
+                nbrFaceCells
+                //cpp.neighbPatch().faceCells()
             )
         )
     );
@@ -209,6 +217,7 @@ Foam::cyclicACMIFvPatchField<Type>::nonOverlapPatchField() const
             this->primitiveField()
         );
 
+    // WIP: Needs to re-direct nonOverlapPatchID to new patchId for assembly?
     return fld.boundaryField()[cyclicACMIPatch_.nonOverlapPatchID()];
 }
 
@@ -227,11 +236,15 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     // note: only applying coupled contribution
+
+//     const labelUList& nbrFaceCellsCoupled =
+//         lduAddr.patchAddr
+//         (
+//             cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID()
+//         );
+
     const labelUList& nbrFaceCellsCoupled =
-        lduAddr.patchAddr
-        (
-            cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID()
-        );
+        lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
 
     solveScalarField pnf(psiInternal, nbrFaceCellsCoupled);
 
@@ -258,11 +271,16 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
+    // note: only applying coupled contribution
+
+//     const labelUList& nbrFaceCellsCoupled =
+//         lduAddr.patchAddr
+//         (
+//             cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID()
+//         );
+
     const labelUList& nbrFaceCellsCoupled =
-        lduAddr.patchAddr
-        (
-            cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID()
-        );
+        lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
 
     Field<Type> pnf(psiInternal, nbrFaceCellsCoupled);
 
@@ -290,6 +308,145 @@ void Foam::cyclicACMIFvPatchField<Type>::manipulateMatrix
     const fvPatchField<Type>& npf = nonOverlapPatchField();
 
     const_cast<fvPatchField<Type>&>(npf).manipulateMatrix(matrix, 1.0 - mask);
+}
+
+
+template<class Type>
+void Foam::cyclicACMIFvPatchField<Type>::manipulateMatrix
+(
+    fvMatrix<Type>& matrix,
+    const label mat,
+    const direction cmpt
+)
+{
+    if (cyclicACMIPatch_.owner())
+    {
+        label index = this->patch().index();
+
+        const label globalPatchID =
+            matrix.lduMesh().patchLocalToGlobalMap()[mat][index];
+
+        if (matrix.internalCoeffs().set(globalPatchID))
+        {
+            const Field<scalar> intCoeffsCmpt
+            (
+                matrix.internalCoeffs()[globalPatchID].component(cmpt)
+            );
+
+            const Field<scalar> boundCoeffsCmpt
+            (
+                matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
+            );
+
+            tmp<Field<scalar>> tintCoeffs(coeffs(matrix, intCoeffsCmpt, mat));
+            tmp<Field<scalar>> tbndCoeffs(coeffs(matrix, boundCoeffsCmpt, mat));
+            const Field<scalar>& intCoeffs = tintCoeffs.ref();
+            const Field<scalar>& bndCoeffs = tbndCoeffs.ref();
+
+            const labelUList& u = matrix.lduAddr().upperAddr();
+            const labelUList& l = matrix.lduAddr().lowerAddr();
+
+            label subFaceI = 0;
+
+            const labelList& faceMap = matrix.lduMesh().faceBoundMap()[mat][index];
+
+            if (faceMap.size() > 0)
+            {
+                forAll (faceMap, j)
+                {
+                    label globalFaceI = faceMap[j];
+
+                    if (globalFaceI != -1)
+                    {
+                        const scalar boundCorr = -bndCoeffs[subFaceI];
+                        const scalar intCorr = -intCoeffs[subFaceI];
+
+                        matrix.upper()[globalFaceI] += boundCorr;
+                        matrix.diag()[u[globalFaceI]] -= intCorr;
+                        matrix.diag()[l[globalFaceI]] -= boundCorr;
+
+                        if (matrix.asymmetric())
+                        {
+                            matrix.lower()[globalFaceI] += intCorr;
+                        }
+                        subFaceI++;
+                    }
+                }
+            }
+
+
+            // Set internalCoeffs and boundaryCoeffs in the assembly matrix
+            // on clyclicAMI patches to be used in the individual matrix by
+            // matrix.flux()
+            if (matrix.lduMesh().fluxRequired(this->internalField().name()))
+            {
+                matrix.internalCoeffs().set
+                (
+                    globalPatchID, intCoeffs*pTraits<Type>::one
+                );
+                matrix.boundaryCoeffs().set
+                (
+                    globalPatchID, bndCoeffs*pTraits<Type>::one
+                );
+
+                const label nbrPathID =
+                    cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID();
+
+                const label nbrGlobalPatchID =
+                    matrix.lduMesh().patchLocalToGlobalMap()[mat][nbrPathID];
+
+                matrix.internalCoeffs().set
+                (
+                    nbrGlobalPatchID, intCoeffs*pTraits<Type>::one
+                );
+                matrix.boundaryCoeffs().set
+                (
+                    nbrGlobalPatchID, bndCoeffs*pTraits<Type>::one
+                );
+            }
+        }
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Foam::scalar>>
+Foam::cyclicACMIFvPatchField<Type>::coeffs
+(
+    fvMatrix<Type>& matrix,
+    const Field<scalar>& coeffs,
+    const label mat
+) const
+{
+    const label index(this->patch().index());
+
+    const label nSubFaces(matrix.lduMesh().cellBoundMap()[mat][index].size());
+
+    Field<scalar> mapCoeffs(nSubFaces, Zero);
+
+    const scalarListList& srcWeight =
+        cyclicACMIPatch_.cyclicACMIPatch().AMI().srcWeights();
+
+    const scalarField& mask = cyclicACMIPatch_.cyclicACMIPatch().mask();
+
+    scalar tol = cyclicACMIPolyPatch::tolerance();
+    label subFaceI = 0;
+    forAll(mask, faceI)
+    {
+        if (mask[faceI] > tol)
+        {
+            const scalarList& w = srcWeight[faceI];
+            for(label i=0; i<w.size(); i++)
+            {
+                const label localFaceId =
+                    matrix.lduMesh().magSfFaceBoundMap()[mat][index][subFaceI];
+                mapCoeffs[subFaceI] = w[i]*coeffs[localFaceId];
+                subFaceI++;
+            }
+        }
+    }
+
+    return tmp<Field<scalar>>(new Field<scalar>(mapCoeffs));
 }
 
 

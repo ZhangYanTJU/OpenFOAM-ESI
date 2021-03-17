@@ -67,7 +67,7 @@ class volMesh;
 template<class Type> class fvPatchField;
 template<class Type> class calculatedFvPatchField;
 template<class Type> class fvMatrix;
-class fvMatrixAssembly;
+
 
 template<class Type>
 Ostream& operator<<(Ostream&, const fvPatchField<Type>&);
@@ -102,6 +102,9 @@ class fvPatchField
         //  to be applied to constraint patches by providing the constraint
         //  patch type as 'patchType'
         word patchType_;
+
+        //- Use implicit formulation
+        bool useImplicit_;
 
 
 public:
@@ -300,6 +303,15 @@ public:
 
 
     // Member Functions
+
+        // Implicit Functions
+
+            //- Use implicit formulation for coupled patches only
+            bool useImplicit() const
+            {
+                return useImplicit_;
+            }
+
 
         // Attributes
 
@@ -519,27 +531,12 @@ public:
                 const scalarField& weights
             );
 
-            //- Manipulate fvMatrixAssembly
+            //- Manipulate fvMatrix
             virtual void manipulateMatrix
             (
-                fvMatrixAssembly& matrix,
-                const labelList& faceMap,
-                const label cellOffset,
-                const label iMatrix
-            );
-
-            //- Calculate boundaryCoeffs/internalCoeffs for
-            //  fvMatrixAssembly
-            virtual void manipulateInterBoundCoeffs
-            (
-                fvMatrixAssembly& matrix,
-                const scalarField& weights,
-                const labelUList& fc,
-                const vectorField& delta,
+                fvMatrix<Type>& matrix,
                 const label iMatrix,
-                const label neigProc,
-                scalarField& boundaryCoeffs,
-                scalarField& internalCoeffs
+                const direction cmp
             );
 
 

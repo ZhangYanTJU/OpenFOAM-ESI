@@ -90,9 +90,6 @@ class cyclicFvPatchField
             const Field<Type2>&
         ) const;
 
-        //- Return local gammaSfDelta
-        tmp<scalarField> gammaSfDelta() const;
-
 
 public:
 
@@ -210,10 +207,9 @@ public:
             //- Manipulate matrix
             virtual void manipulateMatrix
             (
-                fvMatrixAssembly& m,
-                const labelList& faceMap,
-                const label cellOffset,
-                const label iMatrix
+                fvMatrix<Type>& m,
+                const label iMatrix,
+                const direction cmp
             );
 
 

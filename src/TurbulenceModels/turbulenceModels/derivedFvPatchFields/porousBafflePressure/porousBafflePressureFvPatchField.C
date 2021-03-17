@@ -30,7 +30,6 @@ License
 #include "surfaceFields.H"
 #include "turbulenceModel.H"
 #include "addToRunTimeSelectionTable.H"
-#include "fvMatrixAssembly.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -123,121 +122,6 @@ Foam::porousBafflePressureFvPatchField::porousBafflePressureFvPatchField
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::porousBafflePressureFvPatchField::manipulateMatrix
-(
-    fvMatrixAssembly& matrix,
-    const labelList& faceMap,
-    const label cellOffset,
-    const label iMatrix
-)
-{
-    const cyclicPolyPatch& cpp =
-        refCast<const cyclicPolyPatch>(patch().patch());
-
-    //const scalarField vf(gammaDeltaVf());
-    const scalarField pAlphaSfDelta(gammaSfDelta());
-
-    const labelUList& u = matrix.lduAddr().upperAddr();
-    const labelUList& l = matrix.lduAddr().lowerAddr();
-
-    forAll (*this, faceI)
-    {
-        if (faceMap.size() > 0)
-        {
-            label globalFaceI = faceMap[faceI];
-            if (globalFaceI != -1)
-            {
-                const scalar corr(pAlphaSfDelta[faceI]);
-                if (cpp.owner())
-                {
-
-                    matrix.lower()[globalFaceI] += corr;
-                    matrix.upper()[globalFaceI] += corr;
-                    matrix.diag()[u[globalFaceI]] -= corr;
-                    matrix.diag()[l[globalFaceI]] -= corr;
-                }
-            }
-            else
-            {
-                FatalErrorInFunction
-                    << "Can not find faceId : " <<  globalFaceI
-                    << exit(FatalError);
-            }
-        }
-    }
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::porousBafflePressureFvPatchField::gammaDeltaVf() const
-{
-
-    const label nbrPatchi = this->cyclicPatch().neighbPatchID();
-
-    const label patchId = patch().index();
-
-    //const label patchi = patch().index();
-    //const polyMesh& nbrMesh = mpp.sampleMesh();
-    const volScalarField& gamma =
-            db().lookupObject<volScalarField>("(1|A(U))");
-
-    const cyclicFvPatch& nbrPatch = this->cyclicPatch().neighbPatch();
-
-    scalarField gammaDeltaNbr
-    (
-        gamma.boundaryField()[nbrPatchi]*nbrPatch.deltaCoeffs()
-    );
-
-
-    scalarField gammaDelta
-    (
-        gamma.boundaryField()[patchId]*patch().deltaCoeffs()
-    );
-
-    return (gammaDeltaNbr/(gammaDeltaNbr + gammaDelta));
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::porousBafflePressureFvPatchField::gammaSfDelta() const
-{
-    const volScalarField& gamma =
-            db().lookupObject<volScalarField>("(1|A(U))");
-
-    const cyclicFvPatch& nbrPatch = this->cyclicPatch().neighbPatch();
-
-    scalarField gammab
-    (
-        gamma,
-        this->cyclicPatch().faceCells()
-    );
-
-    scalarField gammaNbr
-    (
-        gamma,
-        nbrPatch.faceCells()
-    );
-
-    scalarField deltaf
-    (
-        1/patch().deltaCoeffs() + 1/nbrPatch.deltaCoeffs()
-    );
-
-    scalarField gammaf
-    (
-        (
-            gammab*(1/patch().deltaCoeffs())
-          + gammaNbr*(1/nbrPatch.deltaCoeffs())
-        )
-       /deltaf
-    );
-
-    return
-    (
-         gammaf*patch().magSf()/deltaf
-    );
-}
-
 
 
 void Foam::porousBafflePressureFvPatchField::updateCoeffs()

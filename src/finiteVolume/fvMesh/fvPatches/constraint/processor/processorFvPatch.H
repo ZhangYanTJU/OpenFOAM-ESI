@@ -186,13 +186,6 @@ public:
                 const labelUList& internalData
             ) const;
 
-            //- Return neighbour field
-            virtual tmp<labelField> internalFieldTransfer
-            (
-                const Pstream::commsTypes commsType,
-                const labelUList& iF,
-                const labelUList& faceCells
-            ) const;
 };
 
 

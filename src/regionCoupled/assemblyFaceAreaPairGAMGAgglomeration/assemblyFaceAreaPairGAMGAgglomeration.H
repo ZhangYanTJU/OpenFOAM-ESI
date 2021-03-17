@@ -43,13 +43,20 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                 Class assemblyFaceAreaPairGAMGAgglomeration Declaration
+            Class assemblyFaceAreaPairGAMGAgglomeration Declaration
 \*---------------------------------------------------------------------------*/
 
 class assemblyFaceAreaPairGAMGAgglomeration
 :
     public pairGAMGAgglomeration
 {
+private:
+
+        //- Face areas of the assembled mesh
+        vectorField* faceAreasPtr_;
+
+        //- Cell volumes of the assembled mesh
+        scalarField* cellVolumesPtr_;
 
 public:
 

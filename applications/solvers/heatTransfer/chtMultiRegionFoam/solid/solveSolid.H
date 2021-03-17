@@ -15,7 +15,7 @@
 
     fvOptions.constrain(hEqn);
 
-    if (fvMatrixAssemblyPtr)
+    if (coupled)
     {
         fvMatrixAssemblyPtr->addFvMatrix(hEqn);
     }

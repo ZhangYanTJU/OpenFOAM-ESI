@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2021 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -21,36 +21,34 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::AssemblyPvPatch
+
+Description
+    An assembly of lduMatrix that is specific inter-region coupling
+    through mapped patches.
+
+SourceFiles
+    AssemblyPvPatch.C
+
 \*---------------------------------------------------------------------------*/
 
-#include "cyclicAssemblyFvPatch.H"
+#include "AssemblyFvPatch.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+#include "cyclicFvPatch.H"
+#include "cyclicAMIFvPatch.H"
+#include "cyclicACMIFvPatch.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(cyclicAssemblyFvPatch, 0);
+
+makeAssemblyFvPatch(cyclicFvPatch);
+makeAssemblyFvPatch(cyclicAMIFvPatch);
+makeAssemblyFvPatch(cyclicACMIFvPatch);
+
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::labelField> Foam::cyclicAssemblyFvPatch::internalFieldTransfer
-(
-    const Pstream::commsTypes commsType,
-    const labelUList& iF
-) const
-{
-    auto tpif = tmp<labelField>::New(size());
-    auto& pif = tpif.ref();
-
-    forAll(pif, facei)
-    {
-        pif[facei] = iF[nrbFaceCells_[facei]];
-    }
-
-    return tpif;
-}
-
-
-// ************************************************************************* //

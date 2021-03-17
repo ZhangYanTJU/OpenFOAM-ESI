@@ -26,7 +26,8 @@ License
 #include "assemblyFaceAreaPairGAMGAgglomeration.H"
 #include "lduMatrix.H"
 #include "addToRunTimeSelectionTable.H"
-#include "fvMatrixAssembly.H"
+#include "lduPrimitiveMeshAssembly.H"
+#include "fvMatrix.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -59,19 +60,109 @@ assemblyFaceAreaPairGAMGAgglomeration
     const dictionary& controlDict
 )
 :
-    pairGAMGAgglomeration(matrix.mesh(), controlDict)
+    pairGAMGAgglomeration(matrix.mesh(), controlDict),
+    faceAreasPtr_(nullptr),
+    cellVolumesPtr_(nullptr)
 {
-    const fvMatrixAssembly& assembleMatrix =
-        static_cast<const fvMatrixAssembly&>(matrix);
+
+    const lduMesh& ldumesh = matrix.mesh();
+
+    const lduPrimitiveMeshAssembly& mesh =
+        refCast<const lduPrimitiveMeshAssembly>(ldumesh);
+
+    faceAreasPtr_ = new vectorField(mesh.lduAddr().upperAddr().size(), Zero);
+    vectorField& faceAreas = *faceAreasPtr_;
+
+    cellVolumesPtr_ = new scalarField(mesh.lduAddr().size(), Zero);
+    scalarField& cellVolumes = *cellVolumesPtr_;
+
+    const labelListList& faceMap = mesh.faceMap();
+
+    for (label i=0; i < mesh.meshes().size(); ++i)
+    {
+        const fvMesh& m = mesh.meshes()[i];
+        const labelList& subFaceMap = faceMap[i];
+        const vectorField& areas = m.Sf();
+
+        forAll(subFaceMap, facei)
+        {
+            faceAreas[subFaceMap[facei]] = areas[facei];
+        }
+
+        const polyBoundaryMesh& patches = m.boundaryMesh();
+
+        // Fill faceAreas for new faces
+        forAll(patches, patchI)
+        {
+            const polyPatch& pp = patches[patchI];
+            label globalPatchID = mesh.patchMap()[i][patchI];
+
+            if (globalPatchID == -1)
+            {
+                if (pp.masterImplicit())
+                {
+                    const vectorField& sf = m.boundary()[patchI].Sf();
+
+                    if (isA<cyclicAMIPolyPatch>(pp))
+                    {
+                        const cyclicAMIPolyPatch& mpp =
+                                refCast<const cyclicAMIPolyPatch>(patches[patchI]);
+
+                        const scalarListList& srcWeight = mpp.AMI().srcWeights();
+
+                        label subFaceI = 0;
+                        forAll(pp.faceCells(), faceI)
+                        {
+                            const scalarList& w = srcWeight[faceI];
+
+                            for(label j=0; j<w.size(); j++)
+                            {
+                                const label globalFaceI =
+                                    mesh.faceBoundMap()[i][patchI][subFaceI];
+
+                                if (globalFaceI != -1)
+                                {
+                                    faceAreas[globalFaceI] = w[j]*sf[faceI];
+                                }
+                                subFaceI++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        forAll(pp.faceCells(), faceI)
+                        {
+                            const label globalFaceI =
+                                mesh.faceBoundMap()[i][patchI][faceI];
+
+                            if (globalFaceI != -1)
+                            {
+                                faceAreas[globalFaceI] = sf[faceI];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fill cellVolumes
+        const scalarField& vol = m.V();
+        const label cellOffset = mesh.cellOffsets()[i];
+
+        forAll(vol, cellI)
+        {
+            cellVolumes[cellOffset + cellI] = vol[cellI];
+        }
+    }
 
     agglomerate
     (
-        assembleMatrix.mesh(),
+        mesh,
         mag
         (
             cmptMultiply
             (
-                assembleMatrix.Sf()/sqrt(mag(assembleMatrix.Sf())),
+                *faceAreasPtr_/sqrt(mag(*faceAreasPtr_)),
                 vector(1, 1.01, 1.02)
             )
         )

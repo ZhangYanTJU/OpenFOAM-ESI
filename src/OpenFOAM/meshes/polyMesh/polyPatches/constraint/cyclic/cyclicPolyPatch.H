@@ -321,6 +321,49 @@ public:
 
     // Member Functions
 
+        // Implicit Functions
+
+             //- Return number of new internal of this polyPatch faces
+            virtual void newInternalProcFaces
+            (
+                label& newFaces,
+                label& newProcFaces
+            ) const
+            {
+                newFaces = this->size();
+                newProcFaces = neighbPatch().size() - this->size();
+            }
+
+            //- Return nbrCells
+            virtual const labelUList& nbrCells() const
+            {
+                return neighbPatch().faceCells();
+            }
+
+            virtual label neighbPolyPatchID() const
+            {
+                return this->neighbPatchID();
+            }
+
+            virtual tmpNrc<labelListList> mapCollocatedFaces() const
+            {
+                tmpNrc<labelListList> tMap(new labelListList(this->size()));
+                labelListList& map = tMap.ref();
+                forAll (map, i)
+                {
+                    labelList& subMap = map[i];
+                    subMap.setSize(1);
+                    subMap[0] = i;
+                }
+                return tMap;
+            }
+
+            //- Return implicit master
+            virtual bool masterImplicit() const
+            {
+                return owner();
+            }
+
         //- Neighbour patch name
         const word& neighbPatchName() const;
 

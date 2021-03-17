@@ -265,6 +265,14 @@ public:
             const label newStart
         );
 
+        //- Copy construct, resetting nbrPatchID and faceCells
+        cyclicAMIPolyPatch
+        (
+            const cyclicAMIPolyPatch&,
+            label nbrPatchID,
+            const labelList& faceCells
+        );
+
 
         //- Construct and return a clone, resetting the boundary mesh
         virtual autoPtr<polyPatch> clone(const polyBoundaryMesh& bm) const
@@ -325,6 +333,38 @@ public:
 
 
     // Member Functions
+
+        // Implicit treatment functions
+
+            //- Return number of new internal of this polyPatch faces
+            virtual void newInternalProcFaces(label&, label&) const;
+
+
+            //- Return nbrCells
+            virtual const labelUList& nbrCells() const
+            {
+                return neighbPatch().faceCells();
+            }
+
+            //- Return nbr patch ID
+            virtual label neighbPolyPatchID() const
+            {
+                return neighbPatch().index();
+            }
+
+            //- Return collocated faces map
+            virtual tmpNrc<labelListList> mapCollocatedFaces() const
+            {
+                const labelListList& sourceFaces = AMI().srcAddress();
+                return tmpNrc<labelListList>(new labelListList(sourceFaces));
+            }
+
+            //- Return implicit master
+            virtual bool masterImplicit() const
+            {
+                return owner();
+            }
+
 
         // Access
 

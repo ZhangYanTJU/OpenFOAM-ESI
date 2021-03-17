@@ -60,6 +60,7 @@ SourceFiles
 #ifndef cyclicAMIFvPatchField_H
 #define cyclicAMIFvPatchField_H
 
+
 #include "coupledFvPatchField.H"
 #include "cyclicAMILduInterfaceField.H"
 #include "cyclicAMIFvPatch.H"
@@ -84,9 +85,6 @@ class cyclicAMIFvPatchField
         //- Local reference cast into the cyclic patch
         const cyclicAMIFvPatch& cyclicAMIPatch_;
 
-        //- Name of the diffusivity field in the laplacian
-        const word diffusivityName_;
-
 
     // Private Member Functions
 
@@ -98,10 +96,11 @@ class cyclicAMIFvPatchField
         ) const;
 
 
-        //- Return local gammaSfDelta
-        tmp<scalarField> gammaSfDelta
+        //- Return new matrix coeffs
+        tmp<Field<scalar>> coeffs
         (
-            fvMatrixAssembly& matrix,
+            fvMatrix<Type>& matrix,
+            const Field<scalar>&,
             const label
         ) const;
 
@@ -200,7 +199,6 @@ public:
             //- Return neighbour coupled internal cell data
             virtual tmp<Field<Type>> patchNeighbourField() const;
 
-
             //- Return reference to neighbour patchField
             const cyclicAMIFvPatchField<Type>& neighbourPatchField() const;
 
@@ -233,25 +231,9 @@ public:
             //- Manipulate matrix
             virtual void manipulateMatrix
             (
-                fvMatrixAssembly& m,
-                const labelList& faceMap,
-                const label cellOffset,
-                const label iMatrix
-            );
-
-
-            //- Calculate boundaryCoeffs/internalCoeffs for
-            //  fvMatrixAssembly
-            virtual void manipulateInterBoundCoeffs
-            (
-                fvMatrixAssembly& matrix,
-                const scalarField& weights,
-                const labelUList& fc,
-                const vectorField& delta,
+                fvMatrix<Type>& m,
                 const label iMatrix,
-                const label neigProc,
-                scalarField& boundaryCoeffs,
-                scalarField& internalCoeffs
+                const direction cmpt
             );
 
 

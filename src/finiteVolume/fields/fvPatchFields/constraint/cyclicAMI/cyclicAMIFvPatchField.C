@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvMatrixAssembly.H"
+#include "fvMatrix.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -40,8 +40,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
 :
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF),
-    cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p)),
-    diffusivityName_("none")
+    cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p))
 {}
 
 
@@ -55,8 +54,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
 :
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF, dict, dict.found("value")),
-    cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p, dict)),
-    diffusivityName_(dict.lookupOrDefault<word>("diffusivity", "none"))
+    cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p, dict))
 {
     if (!isA<cyclicAMIFvPatch>(p))
     {
@@ -94,8 +92,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
 :
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, p, iF, mapper),
-    cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p)),
-    diffusivityName_(ptf.diffusivityName_)
+    cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p))
 {
     if (!isA<cyclicAMIFvPatch>(this->patch()))
     {
@@ -117,8 +114,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
 :
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf),
-    cyclicAMIPatch_(ptf.cyclicAMIPatch_),
-    diffusivityName_(ptf.diffusivityName_)
+    cyclicAMIPatch_(ptf.cyclicAMIPatch_)
 {}
 
 
@@ -131,8 +127,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
 :
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, iF),
-    cyclicAMIPatch_(ptf.cyclicAMIPatch_),
-    diffusivityName_(ptf.diffusivityName_)
+    cyclicAMIPatch_(ptf.cyclicAMIPatch_)
 {}
 
 
@@ -149,16 +144,26 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
 {
+
     const Field<Type>& iField = this->primitiveField();
-    const labelUList& nbrFaceCells =
-        cyclicAMIPatch_.cyclicAMIPatch().neighbPatch().faceCells();
+
+    //const labelUList& nbrFaceCells =
+    //    cyclicAMIPatch_.cyclicAMIPatch().neighbPatch().faceCells();
+
+    // By pass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
+    // neighbPatch()
+    const cyclicAMIFvPatch& neighbPatch = cyclicAMIPatch_.neighbPatch();
+    const labelUList& nbrFaceCells = neighbPatch.faceCells();
 
     Field<Type> pnf(iField, nbrFaceCells);
 
     tmp<Field<Type>> tpnf;
     if (cyclicAMIPatch_.applyLowWeightCorrection())
     {
-        tpnf = cyclicAMIPatch_.interpolate(pnf, this->patchInternalField()());
+        Field<Type> pnfInternal(iField, cyclicAMIPatch_.faceCells());
+
+        tpnf = cyclicAMIPatch_.interpolate(pnf, pnfInternal);
+        //tpnf = cyclicAMIPatch_.interpolate(pnf, this->patchInternalField()());
     }
     else
     {
@@ -204,11 +209,14 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
+//     const labelUList& nbrFaceCells =
+//         lduAddr.patchAddr
+//         (
+//             cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID()
+//         );
+
     const labelUList& nbrFaceCells =
-        lduAddr.patchAddr
-        (
-            cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID()
-        );
+        lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
 
     solveScalarField pnf(psiInternal, nbrFaceCells);
 
@@ -244,11 +252,14 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
+//     const labelUList& nbrFaceCells =
+//         lduAddr.patchAddr
+//         (
+//             cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID()
+//         );
+
     const labelUList& nbrFaceCells =
-        lduAddr.patchAddr
-        (
-            cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID()
-        );
+        lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
 
     Field<Type> pnf(psiInternal, nbrFaceCells);
 
@@ -275,234 +286,133 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 template<class Type>
 void Foam::cyclicAMIFvPatchField<Type>::manipulateMatrix
 (
-    fvMatrixAssembly& matrix,
-    const labelList& faceMap,
-    const label cellOffset,
-    const label iMatrix
+    fvMatrix<Type>& matrix,
+    const label mat,
+    const direction cmpt
 )
 {
     if (cyclicAMIPatch_.owner())
     {
-        const scalarField pAlphaSfDelta(gammaSfDelta(matrix, iMatrix));
+        label index = this->patch().index();
 
-        const labelUList& u = matrix.lduAddr().upperAddr();
-        const labelUList& l = matrix.lduAddr().lowerAddr();
+        const label globalPatchID =
+            matrix.lduMesh().patchLocalToGlobalMap()[mat][index];
 
-        label subFaceI = 0;
-
-        if (faceMap.size() > 0)
+        if (matrix.internalCoeffs().set(globalPatchID))
         {
-            forAll (faceMap, j)
+            const Field<scalar> intCoeffsCmpt
+            (
+                matrix.internalCoeffs()[globalPatchID].component(cmpt)
+            );
+
+            const Field<scalar> boundCoeffsCmpt
+            (
+                matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
+            );
+
+            tmp<Field<scalar>> tintCoeffs(coeffs(matrix, intCoeffsCmpt, mat));
+            tmp<Field<scalar>> tbndCoeffs(coeffs(matrix, boundCoeffsCmpt, mat));
+            const Field<scalar>& intCoeffs = tintCoeffs.ref();
+            const Field<scalar>& bndCoeffs = tbndCoeffs.ref();
+
+            const labelUList& u = matrix.lduAddr().upperAddr();
+            const labelUList& l = matrix.lduAddr().lowerAddr();
+
+            label subFaceI = 0;
+
+            const labelList& faceMap = matrix.lduMesh().faceBoundMap()[mat][index];
+
+            if (faceMap.size() > 0)
             {
-                label globalFaceI = faceMap[j];
-
-                if (globalFaceI != -1)
+                forAll (faceMap, j)
                 {
-                    const scalar corr(pAlphaSfDelta[subFaceI]);
+                    label globalFaceI = faceMap[j];
 
-                    matrix.upper()[globalFaceI] += corr;
-                    matrix.diag()[u[globalFaceI]] -= corr;
-                    matrix.diag()[l[globalFaceI]] -= corr;
-
-                    if (matrix.asymmetric())
+                    if (globalFaceI != -1)
                     {
-                        matrix.lower()[globalFaceI] += corr;
+                        const scalar boundCorr = -bndCoeffs[subFaceI];
+                        const scalar intCorr = -intCoeffs[subFaceI];
+
+                        matrix.upper()[globalFaceI] += boundCorr;
+                        matrix.diag()[u[globalFaceI]] -= intCorr;
+                        matrix.diag()[l[globalFaceI]] -= boundCorr;
+
+                        if (matrix.asymmetric())
+                        {
+                            matrix.lower()[globalFaceI] += intCorr;
+                        }
+                        subFaceI++;
                     }
-                    subFaceI++;
                 }
             }
-        }
-    }
-}
 
-template<class Type>
-void Foam::cyclicAMIFvPatchField<Type>::manipulateInterBoundCoeffs
-(
-    fvMatrixAssembly& matrix,
-    const scalarField& weights,
-    const labelUList& fc,
-    const vectorField& delta,
-    const label iMatrix,
-    const label neigProc,
-    scalarField& boundaryCoeffs,
-    scalarField& internalCoeffs
-)
-{
-    const volScalarField& gamma =
-        this->db().objectRegistry::template lookupObject
-        <
-            volScalarField
-        >(diffusivityName_);
 
-    const scalarListList& srcWeight =
-        cyclicAMIPatch_.cyclicAMIPatch().AMI().srcWeights();
-
-    const labelListList& sourceFaces =
-        cyclicAMIPatch_.cyclicAMIPatch().AMI().srcAddress();
-
-    const cyclicAMIFvPatch& neigPatch = cyclicAMIPatch_.neighbPatch();
-
-    const tmpNrc<mapDistribute> tgtMapPtr =
-        cyclicAMIPatch_.cyclicAMIPatch().AMI().tgtMap();
-
-    List<scalarField> srcFaceToTgtGamma;
-    collectStencilData
-    (
-        tgtMapPtr,
-        sourceFaces,
-        scalarField(gamma, neigPatch.faceCells()),
-        srcFaceToTgtGamma
-    );
-    const scalarField& magSf = this->patch().magSf();
-
-    scalarField gammaf(fc.size(), Zero);
-    scalarField Sf(fc.size(), Zero);
-
-    const labelList& rmtFaces =
-        matrix.mesh().myRmtTgtFaces()[iMatrix][this->patch().index()][neigProc];
-
-    const labelList& faceCellsIds = cyclicAMIPatch_.faceCells();
-
-    forAll (rmtFaces, subFaceI)
-    {
-        label faceI = rmtFaces[subFaceI];
-
-        forAll(sourceFaces[faceI], j)
-        {
-            label cellI = faceCellsIds[faceI];
-
-            const scalarList& w = srcWeight[faceI];
-
+            // Set internalCoeffs and boundaryCoeffs in the assembly matrix
+            // on clyclicAMI patches to be used in the individual matrix by
+            // matrix.flux()
+            if (matrix.lduMesh().fluxRequired(this->internalField().name()))
             {
-                //Remote
-                gammaf[subFaceI] =
-                    gamma[cellI]*(1 - weights[subFaceI])
-                  + weights[subFaceI]*srcFaceToTgtGamma[faceI][j];
+                matrix.internalCoeffs().set
+                (
+                    globalPatchID, intCoeffs*pTraits<Type>::one
+                );
+                matrix.boundaryCoeffs().set
+                (
+                    globalPatchID, bndCoeffs*pTraits<Type>::one
+                );
 
-                Sf[subFaceI] = w[j]*magSf[faceI];
+                const label nbrPathID =
+                    cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID();
 
+                const label nbrGlobalPatchID =
+                    matrix.lduMesh().patchLocalToGlobalMap()[mat][nbrPathID];
+
+                matrix.internalCoeffs().set
+                (
+                    nbrGlobalPatchID, intCoeffs*pTraits<Type>::one
+                );
+                matrix.boundaryCoeffs().set
+                (
+                    nbrGlobalPatchID, bndCoeffs*pTraits<Type>::one
+                );
             }
         }
     }
-
-    boundaryCoeffs = -gammaf*Sf/(mag(delta) + ROOTSMALL);
-    internalCoeffs = -gammaf*Sf/(mag(delta) + ROOTSMALL);
 }
 
 
 template<class Type>
-Foam::tmp<Foam::scalarField>
-Foam::cyclicAMIFvPatchField<Type>::gammaSfDelta
+Foam::tmp<Foam::Field<Foam::scalar>>
+Foam::cyclicAMIFvPatchField<Type>::coeffs
 (
-    fvMatrixAssembly& matrix,
-    const label iMatrix
+    fvMatrix<Type>& matrix,
+    const Field<scalar>& coeffs,
+    const label mat
 ) const
 {
     const label index(this->patch().index());
 
-    const volScalarField& gamma =
-        this->db().objectRegistry::template lookupObject
-        <
-            volScalarField
-        >(diffusivityName_);
+    const label nSubFaces(matrix.lduMesh().cellBoundMap()[mat][index].size());
 
-    label nbrPathID = cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID();
-
-    const labelList& nbrCellIds =
-        matrix.mesh().cellBoundMap()[iMatrix][index];
-    const labelList& cellIds =
-        matrix.mesh().cellBoundMap()[iMatrix][nbrPathID];
-
-    const labelList& faceMap =
-        matrix.mesh().faceBoundMap()[iMatrix][index];
-
-    label nSubFaces = 0;
-    forAll (faceMap, i)
-    {
-        if (faceMap[i] != -1)
-        {
-            nSubFaces++;
-        }
-    }
-
-    scalarField gammaf(nSubFaces, Zero);
-    scalarField deltaf(nSubFaces, Zero);
-    vectorField deltafV(nSubFaces, Zero);
-    scalarField Sf(nSubFaces, Zero);
-
-    tmp<vectorField> C(matrix.mesh().meshes()[iMatrix].C());
-
-    label subFaceI = 0;
-    forAll (cellIds, i)
-    {
-        label cellI = cellIds[i];
-        label nbrCellI = nbrCellIds[i];
-
-        if (cellI != -1 && nbrCellI != -1)
-        {
-            gammaf[subFaceI] = 0.5*(gamma[cellI] + gamma[nbrCellI]);
-
-            // Outgoing from the patch
-            deltafV[subFaceI] = C()[nbrCellI] - C()[cellI];
-        }
-        subFaceI++;
-    }
+    Field<scalar> mapCoeffs(nSubFaces, Zero);
 
     const scalarListList& srcWeight =
         cyclicAMIPatch_.cyclicAMIPatch().AMI().srcWeights();
 
-    const vectorField& patchSf = this->patch().Sf();
-    const scalarField& magSf = this->patch().magSf();
-
-    subFaceI = 0;
+    label subFaceI = 0;
     forAll(*this, faceI)
     {
         const scalarList& w = srcWeight[faceI];
         for(label i=0; i<w.size(); i++)
         {
             const label localFaceId =
-                matrix.mesh().magSfFaceBoundMap()[iMatrix][index][subFaceI];
-
-            if (localFaceId != -1)
-            {
-                Sf[subFaceI] = w[i]*this->patch().magSf()[localFaceId];
-
-                vector unitArea = patchSf[localFaceId]/magSf[localFaceId];
-
-                //nonOrthDeltaCoeffs from uncorrected SnGrad
-                deltaf[subFaceI] =
-                    max
-                    (
-                        unitArea & deltafV[subFaceI],
-                        0.05*mag(deltafV[subFaceI])
-                    );
-            }
+                matrix.lduMesh().magSfFaceBoundMap()[mat][index][subFaceI];
+            mapCoeffs[subFaceI] = w[i]*coeffs[localFaceId];
             subFaceI++;
         }
     }
 
-    const scalarField gammaSfDelta(gammaf*Sf/deltaf);
-
-    // Set internalCoeffs and boundaryCoeffs in the assembly matrix
-    // on clyclicAMI patches to be used in the individual matrix by
-    // matrix.flux()
-
-    if (matrix.mesh().fluxRequired(this->internalField().name()))
-    {
-        const label globalPatchID =
-            matrix.mesh().patchLocalToGlobalMap()[iMatrix][index];
-
-        matrix.internalCoeffs().set(globalPatchID, -gammaSfDelta);
-        matrix.boundaryCoeffs().set(globalPatchID, -gammaSfDelta);
-
-        const label nbrGlobalPatchID =
-            matrix.mesh().patchLocalToGlobalMap()[iMatrix][nbrPathID];
-
-        matrix.internalCoeffs().set(nbrGlobalPatchID, -gammaSfDelta);
-        matrix.boundaryCoeffs().set(nbrGlobalPatchID, -gammaSfDelta);
-    }
-
-    return tmp<scalarField>(new scalarField(gammaSfDelta));
+    return tmp<Field<scalar>>(new Field<scalar>(mapCoeffs));
 }
 
 
@@ -549,7 +459,6 @@ template<class Type>
 void Foam::cyclicAMIFvPatchField<Type>::write(Ostream& os) const
 {
     fvPatchField<Type>::write(os);
-    os.writeEntryIfDifferent<word>("diffusivity", "none", diffusivityName_);
     this->writeEntry("value", os);
 }
 

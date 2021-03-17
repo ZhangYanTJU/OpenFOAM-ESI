@@ -47,6 +47,7 @@ SourceFiles
 #include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 #include "SubField.H"
+#include "tmpNrc.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -313,6 +314,44 @@ public:
 
 
     // Member Functions
+
+
+        // Implicit treatment functions
+
+            //- Return number of new internal of this polyPatch faces
+            virtual void newInternalProcFaces(label&, label&) const
+            {
+                NotImplemented;
+            }
+
+            //- Return nbrCells
+            virtual const labelUList& nbrCells() const
+            {
+                NotImplemented
+                return faceCells();
+            }
+
+            //- Return nbr patchID
+            virtual label neighbPolyPatchID() const
+            {
+                NotImplemented;
+                return -1;
+            }
+
+            virtual tmpNrc<labelListList> mapCollocatedFaces() const
+            {
+                NotImplemented;
+                tmpNrc<labelListList> tMap(new labelListList(size()));
+                return tMap;
+            }
+
+            //- Return implicit master
+            virtual bool masterImplicit() const
+            {
+                NotImplemented;
+                return false;
+            }
+
 
         //- The offset where this patch starts in the boundary face list
         //  The value is the same as  patch.start() - mesh.nInternalFaces()

@@ -153,15 +153,4 @@ Foam::tmp<Foam::labelField> Foam::processorFvPatch::internalFieldTransfer
 }
 
 
-Foam::tmp<Foam::labelField> Foam::processorFvPatch::internalFieldTransfer
-(
-    const Pstream::commsTypes commsType,
-    const labelUList&,
-    const labelUList&
-) const
-{
-    return receive<label>(commsType, this->size());
-}
-
-
 // ************************************************************************* //

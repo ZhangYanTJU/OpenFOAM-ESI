@@ -100,10 +100,6 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregatedOrCoupled
     {
         return solveCoupled(solverControls);
     }
-    else if (type == "implicitCyclic")
-    {
-        return solveImplicitCyclic(solverControls);
-    }
     else
     {
         FatalIOErrorInFunction(solverControls)
@@ -140,6 +136,41 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         psi.name()
     );
 
+    if (useImplicit_)
+    {
+        createOrUpdateLduPrimitiveAssembly();
+    }
+
+    scalarField saveLower;
+    scalarField saveUpper;
+
+    typename Type::labelType validComponents
+    (
+        psi.mesh().template validComponents<Type>()
+    );
+
+    if (lduMeshPtr_)
+    {
+        if (psi_.mesh().fluxRequired(psi_.name()))
+        {
+            // Save lower/upper for flux calculation
+            if (asymmetric())
+            {
+                saveLower = lower();
+            }
+            saveUpper = upper();
+        }
+
+        setLduMesh(lduMesh());
+        transferFvMatrixCoeffs();
+        setBounAndInterCoeffs();
+        for (direction cmpt=0; cmpt<Type::nComponents; cmpt++)
+        {
+            if (validComponents[cmpt] == -1) continue;
+            manipulateMatrix(cmpt);
+        }
+    }
+
     scalarField saveDiag(diag());
 
     Field<Type> source(source_);
@@ -149,11 +180,6 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
     // the component loop.
     addBoundarySource(source);
 
-    typename Type::labelType validComponents
-    (
-        psi.mesh().template validComponents<Type>()
-    );
-
     for (direction cmpt=0; cmpt<Type::nComponents; cmpt++)
     {
         if (validComponents[cmpt] == -1) continue;
@@ -161,6 +187,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         // copy field and source
 
         scalarField psiCmpt(psi.primitiveField().component(cmpt));
+
         addBoundaryDiag(diag(), cmpt);
 
         scalarField sourceCmpt(source.component(cmpt));
@@ -175,8 +202,15 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
             internalCoeffs_.component(cmpt)
         );
 
-        lduInterfaceFieldPtrsList interfaces =
-                psi.boundaryField().scalarInterfaces();
+        lduInterfaceFieldPtrsList interfaces;
+        if (!lduMeshPtr_)
+        {
+            interfaces = this->psi(0).boundaryField().scalarInterfaces();
+        }
+        else
+        {
+            setInterfaces(interfaces);
+        }
 
         // Use the initMatrixInterfaces and updateMatrixInterfaces to correct
         // bouCoeffsCmpt for the explicit part of the coupled boundary
@@ -237,6 +271,24 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
     psi.correctBoundaryConditions();
 
     psi.mesh().setSolverPerformance(psi.name(), solverPerfVec);
+
+    if (lduMeshPtr_)
+    {
+        if (psi_.mesh().fluxRequired(psi_.name()))
+        {
+            // Restore lower/upper
+            if (asymmetric())
+            {
+                lower().setSize(saveLower.size());
+                lower() = saveLower;
+            }
+
+            upper().setSize(saveUpper.size());
+            upper() = saveUpper;
+        }
+        // Set the original lduMesh
+        setLduMesh(psi_.mesh());
+    }
 
     return solverPerfVec;
 }
@@ -299,36 +351,6 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveCoupled
     psi.mesh().setSolverPerformance(psi.name(), solverPerf);
 
     return solverPerf;
-}
-
-
-template<class Type>
-Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveImplicitCyclic
-(
-    const dictionary& solverControls
-)
-{
-    if (debug)
-    {
-        Info.masterStream(this->mesh().comm())
-            << "fvMatrix<Type>::solveImplicitCyclic"
-               "(const dictionary& solverControls) : "
-               "solving fvMatrix<Type>"
-            << endl;
-    }
-
-    NotImplemented;
-
-    GeometricField<Type, fvPatchField, volMesh>& psi =
-       const_cast<GeometricField<Type, fvPatchField, volMesh>&>(psi_);
-
-    SolverPerformance<Type> solverPerfVec
-    (
-        "fvMatrix<Type>::solveImplicitCyclic",
-        psi.name()
-    );
-
-    return solverPerfVec;
 }
 
 
