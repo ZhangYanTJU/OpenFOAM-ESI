@@ -38,35 +38,32 @@ SourceFiles
 
 #include "fvMesh.H"
 #include "lduPrimitiveMesh.H"
-#include "mappedPolyPatch.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class lduPrimitiveProcessorInterface;
 /*---------------------------------------------------------------------------*\
                   Class lduPrimitiveMeshAssembly Declaration
 \*---------------------------------------------------------------------------*/
 class lduPrimitiveMeshAssembly
 :
-    public objectRegistry,
+    public regIOobject,
     public lduPrimitiveMesh
 {
+public:
+
+private:
+
     // Private Data
 
         //- UPtrList for fvMesh
-        const UPtrList<fvMesh>& meshes_;
+        UPtrList<fvMesh> meshes_;
 
         //- Overwrite patchAddr from lduPrimitiveMesh for assembly ldu address
         List<labelList> patchAddr_;
-
-        //- Added (processor)lduInterfaces for remote bits of stencil.
-        PtrDynList<const lduPrimitiveProcessorInterface> remoteStencilInterfaces_;
-
-        //- Origin patch of remote stencil
-        labelListList patchRemoteToLocal_;
 
         //- Map patches from local (-1 for non-existing)
         labelListList patchMap_;
@@ -86,18 +83,11 @@ class lduPrimitiveMeshAssembly
         //- Map patch local sub-face to local patch face
         labelListListList magSfFaceBoundMap_;
 
-        //- Map from subFace to compatch numbering
-        List<labelListListList> subFaceCompPatchMap_;
-
-        //- Map from patch, proc and sub-faces to local faces
-        //  Used in calculating matrix flux for new processors lduInterfaces
-        List<List<labelListList>> myRmtTgtFaces_;
-
         //- Offset cells
         labelList cellOffsets_;
 
-        //- Reset cyclics patch ID's
-        bool resetCyclics_;
+        //- Time index
+        label timeIndex_;
 
 
     // Private Member Functions
@@ -108,19 +98,9 @@ class lduPrimitiveMeshAssembly
         //- Find nrb mesh Id for mapped patches
         static label findNbrMeshId
         (
-            const mappedPatchBase& pp,
+            const polyPatch& pp,
             const UPtrList<fvMesh>& meshes
         );
-
-        bool createRemoteInterface
-        (
-            const List<DynamicList<label>>& procOwner,
-            const List<DynamicList<label>>& dynProcNeighbour,
-            labelList& patchRemoteToLocal,
-            label index,
-            label& interfaceI
-        );
-
 
         //- No copy construct
         lduPrimitiveMeshAssembly(const lduPrimitiveMeshAssembly&) = delete;
@@ -134,7 +114,7 @@ public:
     // Static Data
 
         // Declare name of the class and its debug switch
-        ClassName("lduPrimitiveMeshAssembly");
+        TypeName("lduPrimitiveMeshAssembly");
 
 
     // Constructors
@@ -143,16 +123,25 @@ public:
         lduPrimitiveMeshAssembly
         (
             const UPtrList<fvMesh>& meshes,
-            const IOobject& io,
-            bool resetCyclics = true
+            const IOobject& io
+        );
+
+        //- Construct from one mesh
+        lduPrimitiveMeshAssembly
+        (
+            const fvMesh&,
+            const IOobject& io
         );
 
 
     // Public functions
 
-        //- Assemble matrix
-        template<class type>
-        void assemble();
+        //- Update mappings
+        template<class Type>
+        void update
+        (
+            UPtrList<GeometricField<Type, fvPatchField, volMesh>> psis
+        );
 
 
     //- Destructor
@@ -160,6 +149,24 @@ public:
 
 
     // Member Functions
+
+        //- Time index
+        label timeIndex()
+        {
+            return timeIndex_;
+        }
+
+        label timeIndex() const
+        {
+            return timeIndex_;
+        }
+
+
+        //- Return the object registry
+        virtual const objectRegistry& thisDb() const
+        {
+            return meshes_[0].thisDb();
+        }
 
     // Access
 
@@ -169,11 +176,6 @@ public:
             return patchAddr_[patchNo];
         }
 
-        //- Return the object registry
-        virtual const objectRegistry& thisDb() const
-        {
-            return *this;
-        }
 
         //- Return patchMap
         const labelListList& patchMap() const
@@ -193,28 +195,17 @@ public:
             return faceBoundMap_;
         }
 
-        const List<List<labelListList>>& myRmtTgtFaces() const
-        {
-            return myRmtTgtFaces_;
-        }
-
         //- Return boundary face cell
         const labelListListList& cellBoundMap() const
         {
             return cellBoundMap_;
         }
 
-
         const labelListListList& magSfFaceBoundMap() const
         {
             return magSfFaceBoundMap_;
         }
 
-
-        const List<labelListListList>& subFaceCompPatchMap() const
-        {
-            return subFaceCompPatchMap_;
-        }
 
         //- Return cellOffsets [1+nMeshes]
         const labelList& cellOffsets() const
@@ -240,25 +231,15 @@ public:
             return meshes_;
         }
 
-        //- Return resetCyclics
-        bool resetCyclics() const
-        {
-            return resetCyclics_;
-        }
-
-        const PtrDynList<const lduPrimitiveProcessorInterface>&
-        remoteStencilInterfaces() const
-        {
-            return remoteStencilInterfaces_;
-        }
-
-        const labelListList& patchRemoteToLocal() const
-        {
-            return patchRemoteToLocal_;
-        }
-
         //- Flux required
         bool fluxRequired(const word& name) const;
+
+        //- Write Data
+        virtual bool writeData(Ostream&) const
+        {
+            NotImplemented;
+            return false;
+        }
 };
 
 

@@ -1,7 +1,6 @@
 fvMesh/fvMeshGeometry.C
 fvMesh/fvMesh.C
 
-
 fvGeometryScheme = fvMesh/fvGeometryScheme
 $(fvGeometryScheme)/fvGeometryScheme/fvGeometryScheme.C
 $(fvGeometryScheme)/basic/basicFvGeometryScheme.C
@@ -12,7 +11,6 @@ $(fvGeometryScheme)/stabilised/stabilisedFvGeometryScheme.C
 
 surfaceInterpolation = interpolation/surfaceInterpolation
 $(surfaceInterpolation)/surfaceInterpolation/surfaceInterpolation.C
-
 
 fvMesh/singleCellFvMesh/singleCellFvMesh.C
 
@@ -43,7 +41,6 @@ $(constraintFvPatches)/processorCyclic/processorCyclicFvPatch.C
 $(constraintFvPatches)/symmetryPlane/symmetryPlaneFvPatch.C
 $(constraintFvPatches)/symmetry/symmetryFvPatch.C
 $(constraintFvPatches)/wedge/wedgeFvPatch.C
-$(constraintFvPatches)/cyclicAssembly/cyclicAssemblyFvPatch.C
 
 derivedFvPatches = $(fvPatches)/derived
 $(derivedFvPatches)/wall/wallFvPatch.C
@@ -519,5 +516,9 @@ $(fvOptions)/fvOption.C
 $(fvOptions)/fvOptionIO.C
 $(fvOptions)/fvOptionList.C
 $(fvOptions)/fvOptions.C
+
+lduPrimitiveMeshAssembly/AssemblyFvPatchs.C
+lduPrimitiveMeshAssembly/lduPrimitiveMeshAssembly.C
+
 
 LIB = $(FOAM_LIBBIN)/libfiniteVolume

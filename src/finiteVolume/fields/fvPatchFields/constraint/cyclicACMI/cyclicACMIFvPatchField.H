@@ -89,6 +89,15 @@ class cyclicACMIFvPatchField
             const Field<Type2>&
         ) const;
 
+         //- Return new matrix coeffs
+        tmp<Field<scalar>> coeffs
+        (
+            fvMatrix<Type>& matrix,
+            const Field<scalar>&,
+            const label
+        ) const;
+
+
 
 public:
 
@@ -228,6 +237,14 @@ public:
 
             //- Manipulate matrix
             virtual void manipulateMatrix(fvMatrix<Type>& matrix);
+
+            //- Manipulate matrix
+            virtual void manipulateMatrix
+            (
+                fvMatrix<Type>& m,
+                const label iMatrix,
+                const direction cmpt
+            );
 
             //- Update the coefficients associated with the patch field
             virtual void updateCoeffs();

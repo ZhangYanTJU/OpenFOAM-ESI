@@ -83,7 +83,7 @@ class lduPrimitiveMesh
         static label totalSize(const PtrList<lduPrimitiveMesh>&);
 
         //- No copy construct
-        lduPrimitiveMesh(const lduPrimitiveMesh&) = delete;
+        //lduPrimitiveMesh(const lduPrimitiveMesh&) = delete;
 
         //- No copy assignment
         void operator=(const lduPrimitiveMesh&) = delete;
@@ -112,6 +112,10 @@ public:
             const label comm,
             bool reuse
         );
+
+
+        // Copy constructor
+        lduPrimitiveMesh(const lduPrimitiveMesh&);
 
         //- Add interfaces to a mesh constructed without
         void addInterfaces

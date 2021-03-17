@@ -2,59 +2,57 @@ fvSolution solutionDict(runTime);
 
 const bool coupled(solutionDict.getOrDefault("coupledEnergyField", false));
 
-autoPtr<lduPrimitiveMeshAssembly> meshPtr;
-autoPtr<fvMatrixAssembly> fvMatrixAssemblyPtr;
+autoPtr<fvMatrix<scalar>> fvMatrixAssemblyPtr;
+//autoPtr<lduPrimitiveMeshAssembly> meshPtr;
 
 if (coupled)
 {
-    UPtrList<fvMesh> meshes(fluidRegions.size() + solidRegions.size());
+//     UPtrList<fvMesh> meshes(fluidRegions.size() + solidRegions.size());
+//
+//     label meshi = 0;
+//
+//     for (fvMesh& mesh : fluidRegions)
+//     {
+//         meshes.set(meshi, &mesh);
+//         ++meshi;
+//     }
+//
+//     for (fvMesh& mesh : solidRegions)
+//     {
+//         meshes.set(meshi, &mesh);
+//         ++meshi;
+//     }
+//
+//     Info<< "Creating coupled mesh." << nl << endl;
+//
+//     IOobject io
+//     (
+//         "interRegionAssemblyLdu",
+//         runTime.timeName(),
+//         runTime,
+//         IOobject::NO_READ,
+//         IOobject::NO_WRITE,
+//         true
+//     );
+//
+//     meshPtr.reset
+//     (
+//         new lduPrimitiveMeshAssembly(meshes, io)
+//     );
 
-    label meshi = 0;
+    //meshPtr->assemble<mappedPatchBase>();
 
-    for (fvMesh& mesh : fluidRegions)
-    {
-        meshes.set(meshi, &mesh);
-        ++meshi;
-    }
+//    Info<< "Creating coupled matrix." << nl << endl;
 
-    for (fvMesh& mesh : solidRegions)
-    {
-        meshes.set(meshi, &mesh);
-        ++meshi;
-    }
+//     fvMatrixAssemblyPtr.reset
+//     (
+//         new fvMatrix
+//         (
+//             meshPtr(),
+//             dimEnergy/dimTime,
+//             "he"
+//         )
+//     );
 
-    Info<< "Creating coupled mesh." << nl << endl;
-
-    IOobject io
-    (
-        "assemblyLdu",
-        runTime.timeName(),
-        runTime,
-        IOobject::NO_READ,
-        IOobject::NO_WRITE,
-        true
-    );
-
-    meshPtr.reset
-    (
-        new lduPrimitiveMeshAssembly(meshes, io)
-    );
-
-    meshPtr->assemble<mappedPatchBase>();
-
-    Info<< "Creating coupled matrix." << nl << endl;
-
-    fvMatrixAssemblyPtr.reset
-    (
-        new fvMatrixAssembly
-        (
-            meshPtr(),
-            dimEnergy/dimTime,
-            "he"
-        )
-    );
-
-
-
-    Info<< "Created coupled matrix." << nl << endl;
+//    Info<< "Created coupled matrix." << nl << endl;
 }

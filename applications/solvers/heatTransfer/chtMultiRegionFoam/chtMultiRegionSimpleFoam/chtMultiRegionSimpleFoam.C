@@ -46,7 +46,6 @@ Description
 #include "fvOptions.H"
 #include "coordinateSystem.H"
 #include "loopControl.H"
-#include "fvMatrixAssembly.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -91,7 +90,7 @@ int main(int argc, char *argv[])
         }
 
 
-        if (fvMatrixAssemblyPtr)
+        if (coupled)
         {
             Info<< "\nSolving energy coupled regions" << endl;
             fvMatrixAssemblyPtr->solve(solutionDict.subDict("solver"));
@@ -135,7 +134,7 @@ int main(int argc, char *argv[])
                     #include "solveSolid.H"
                 }
 
-                if (fvMatrixAssemblyPtr)
+                if (coupled)
                 {
                     Info<< "\nSolving energy coupled regions.. " << endl;
                     fvMatrixAssemblyPtr->solve(solutionDict.subDict("solver"));

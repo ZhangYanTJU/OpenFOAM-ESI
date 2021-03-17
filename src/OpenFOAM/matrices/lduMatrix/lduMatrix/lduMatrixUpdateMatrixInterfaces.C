@@ -50,7 +50,6 @@ void Foam::lduMatrix::initMatrixInterfaces
         {
             if (interfaces.set(interfacei))
             {
-DebugVar(interfacei)
                 interfaces[interfacei].initInterfaceMatrixUpdate
                 (
                     result,

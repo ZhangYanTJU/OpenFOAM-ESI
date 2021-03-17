@@ -32,7 +32,6 @@ License
 #include "volFields.H"
 #include "mappedPatchBase.H"
 #include "basicThermo.H"
-#include "fvMatrixAssembly.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -348,6 +347,52 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
 
 void turbulentTemperatureRadCoupledMixedFvPatchScalarField::manipulateMatrix
 (
+    fvMatrix<scalar>& m,
+    const label iMatrix,
+    const direction cmpt
+)
+{
+    FatalErrorInFunction
+        << "This BC does not support energy coupling "
+        << "Use compressible::turbulentTemperatureRadCoupledMixed "
+        << "which has more functionalities and it can handle "
+        << "the assemble coupled option for energy. "
+        << abort(FatalError);
+}
+
+
+tmp<Field<scalar>> turbulentTemperatureRadCoupledMixedFvPatchScalarField::coeffs
+(
+    fvMatrix<scalar>& matrix,
+    const Field<scalar>& coeffs,
+    const label mat
+) const
+{
+    FatalErrorInFunction
+        << "This BC does not support energy coupling "
+        << "Use compressible::turbulentTemperatureRadCoupledMixed "
+        << "which has more functionalities and it can handle "
+        << "the assemble coupled option for energy. "
+        << abort(FatalError);
+    /*
+    const label index(this->patch().index());
+
+    const label nSubFaces(matrix.lduMesh().cellBoundMap()[mat][index].size());
+
+    Field<scalar> mapCoeffs(nSubFaces, Zero);
+
+    label subFaceI = 0;
+    forAll(*this, faceI)
+    {
+
+    }
+    */
+    return tmp<Field<scalar>>(new Field<scalar>());
+}
+
+/*
+void turbulentTemperatureRadCoupledMixedFvPatchScalarField::manipulateMatrix
+(
     fvMatrixAssembly& matrix,
     const labelList& faceMap,
     const label cellOffset,
@@ -410,7 +455,7 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::manipulateMatrix
         matrix.source()[globalCelli] += sourceCorrection[i];
     }
 }
-
+*/
 
 tmp<scalarField>
 turbulentTemperatureRadCoupledMixedFvPatchScalarField::alphaSfDelta() const

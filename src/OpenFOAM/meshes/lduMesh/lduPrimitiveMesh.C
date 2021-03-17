@@ -346,6 +346,32 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
 {}
 
 
+Foam::lduPrimitiveMesh::lduPrimitiveMesh(const lduPrimitiveMesh& ldu)
+:
+    lduAddressing(ldu.lduAddr().size()),
+    lowerAddr_(ldu.lowerAddr()),
+    upperAddr_(ldu.upperAddr()),
+    interfaces_(ldu.interfaces()),
+    primitiveInterfaces_(),
+    patchSchedule_(ldu.patchSchedule()),
+    comm_(ldu.comm())
+{
+    //if (ldu.primitiveInterfaces())
+    {
+        // Create interfaces
+        primitiveInterfaces_.setSize(interfaces_.size());
+
+        forAll(interfaces_, i)
+        {
+            if (interfaces_.set(i))
+            {
+                primitiveInterfaces_.set(i, &interfaces_[i]);
+            }
+        }
+    }
+}
+
+
 void Foam::lduPrimitiveMesh::addInterfaces
 (
     lduInterfacePtrsList& interfaces,

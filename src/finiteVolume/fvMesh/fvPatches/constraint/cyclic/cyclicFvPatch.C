@@ -122,15 +122,4 @@ Foam::tmp<Foam::labelField> Foam::cyclicFvPatch::internalFieldTransfer
 }
 
 
-Foam::tmp<Foam::labelField> Foam::cyclicFvPatch::internalFieldTransfer
-(
-    const Pstream::commsTypes commsType,
-    const labelUList& iF,
-    const labelUList& nbrFaceCells
-) const
-{
-    return patchInternalField(iF, nbrFaceCells);
-}
-
-
 // ************************************************************************* //

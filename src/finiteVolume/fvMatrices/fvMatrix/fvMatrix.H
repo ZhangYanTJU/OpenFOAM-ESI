@@ -125,6 +125,18 @@ class fvMatrix
         //  Converted into a non-const reference at the point of solution.
         const GeometricField<Type, fvPatchField, volMesh>& psi_;
 
+        //- Pointer list to coupled fvMatrices. matrices_[0] is *this
+        UPtrList<fvMatrix<Type>> matrices_;
+
+        //- Optional lduAdressing
+        lduPrimitiveMeshAssembly* lduMeshPtr_;
+
+        //- Is the fvMatrix using implicit formulation
+        bool useImplicit_;
+
+        //- Name of the lduAssembly
+        word lduAssemblyName_;
+
         //- Dimension set
         dimensionSet dimensions_;
 
@@ -148,13 +160,10 @@ class fvMatrix
             *faceFluxPtr_;
 
 
-
-
 protected:
 
     //- Declare friendship with the fvSolver class
     friend class fvSolver;
-    friend class fvMatrixAssembly;
 
 
     // Protected Member Functions
@@ -294,22 +303,108 @@ public:
 
         // Access
 
+            // Coupling
+
+                label nMatrices() const
+                {
+                    return matrices_.size();
+                }
+
+                const fvMatrix<Type>& matrix(const label i) const
+                {
+                    return matrices_[i];
+                }
+
+                fvMatrix<Type>& matrix(const label i)
+                {
+                    return matrices_[i];
+                }
+
+                label globalPatchID
+                (
+                    const label fieldi,
+                    const label patchi
+                ) const
+                {
+                    if (!lduMeshPtr_)
+                    {
+                        return patchi;
+                    }
+                    else
+                    {
+                        return lduMeshPtr_->patchMap()[fieldi][patchi];
+                    }
+                }
+
+                //- Update lower, upper, diag and source
+                void transferFvMatrixCoeffs();
+
+                //- Create or update ldu assembly
+                void createOrUpdateLduPrimitiveAssembly();
+
+                //- Manipulate matrix
+                void manipulateMatrix(direction cmp);
+
+                //- Manipulate boundary/internal coeffs for coupling
+                void setBounAndInterCoeffs();
+
+                //- Set interfaces for coupling
+                void setInterfaces(lduInterfaceFieldPtrsList&);
+
+                //- Add internal and boundary contribution to local patches
+                void mapContributions
+                (
+                    label fieldi,
+                    const FieldField<Field, Type>& fluxContrib,
+                    FieldField<Field, Type>& contrib,
+                    bool internal
+                ) const;
+
+                //- Return optional lduAdressing
+                const lduPrimitiveMeshAssembly& lduMesh()
+                {
+                    return *lduMeshPtr_;
+                }
+
+                //- Return psi
+                const GeometricField<Type, fvPatchField, volMesh>& psi
+                (
+                    const label i = 0
+                ) const
+                {
+                    return (i == 0 ? psi_ : matrix(i).psi(i));
+                }
+
+
+                GeometricField<Type, fvPatchField, volMesh>& psi
+                (
+                    const label i = 0
+                )
+                {
+                    return
+                    (
+                        i == 0
+                      ? const_cast<GeometricField<Type, fvPatchField, volMesh>&>(psi_)
+                      : const_cast<GeometricField<Type, fvPatchField, volMesh>&>
+                        (
+                            matrix(i).psi(i)
+                        )
+                    );
+                }
+
+
             //- Return the LDU addressing
-            const lduAddressing& lduAddr() const
-            {
-                return lduMatrix::lduAddr();
-            }
+//             const lduAddressing& lduAddr() const
+//             {
+//                 return lduMatrix::lduAddr();
+//             }
+            //
+            ////- Return the patch evaluation schedule
+            //const lduSchedule& patchSchedule() const
+            //{
+            //    return lduMatrix::patchSchedule();
+            //}
 
-            //- Return the patch evaluation schedule
-            const lduSchedule& patchSchedule() const
-            {
-                return lduMatrix::patchSchedule();
-            }
-
-            const GeometricField<Type, fvPatchField, volMesh>& psi() const
-            {
-                return psi_;
-            }
 
             const dimensionSet& dimensions() const
             {
@@ -431,6 +526,9 @@ public:
                 const scalar value
             );
 
+            //- Add fvMatrix
+            void addFvMatrix(fvMatrix<Type>& matrix);
+
             //- Relax matrix (for steady-state solution).
             //  alpha = 1 : diagonally equal
             //  alpha < 1 : diagonally dominant
@@ -468,10 +566,6 @@ public:
             //- Solve coupled returning the solution statistics.
             //  Use the given solver controls
             SolverPerformance<Type> solveCoupled(const dictionary&);
-
-            //- Solve solveImplicitCyclic returning the solution statistics.
-            //  Use the given solver controls
-            SolverPerformance<Type> solveImplicitCyclic(const dictionary&);
 
             //- Solve returning the solution statistics.
             //  Use the given solver controls

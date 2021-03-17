@@ -68,9 +68,6 @@ template<>
 solverPerformance fvMatrix<scalar>::solveSegregated(const dictionary&);
 
 template<>
-solverPerformance fvMatrix<scalar>::solveImplicitCyclic(const dictionary&);
-
-template<>
 tmp<scalarField> fvMatrix<scalar>::residual() const;
 
 template<>

@@ -26,9 +26,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "fvMatrix.H"
 #include "cyclicFvPatchField.H"
 #include "transformField.H"
-#include "fvMatrixAssembly.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -249,84 +249,89 @@ void Foam::cyclicFvPatchField<Type>::write(Ostream& os) const
 template<class Type>
 void Foam::cyclicFvPatchField<Type>::manipulateMatrix
 (
-    fvMatrixAssembly& matrix,
-    const labelList& faceMap,
-    const label cellOffset,
-    const label iMatrix
+    fvMatrix<Type>& matrix,
+    const label mat,
+    const direction cmpt
 )
 {
-    const scalarField pAlphaSfDelta(gammaSfDelta());
-
-    const labelUList& u = matrix.lduAddr().upperAddr();
-    const labelUList& l = matrix.lduAddr().lowerAddr();
-
-    DebugVar("manipulateMatrix")
-    forAll (*this, faceI)
+    if (cyclicPatch_.owner())
     {
-        if (faceMap.size() > 0)
+        label index = this->patch().index();
+
+        const label globalPatchID =
+            matrix.lduMesh().patchLocalToGlobalMap()[mat][index];
+
+        if (matrix.internalCoeffs().set(globalPatchID))
         {
-            label globalFaceI = faceMap[faceI];
-            if (globalFaceI != -1)
+            const Field<scalar> intCoeffsCmpt
+            (
+                matrix.internalCoeffs()[globalPatchID].component(cmpt)
+            );
+
+            const Field<scalar> boundCoeffsCmpt
+            (
+                matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
+            );
+
+
+            const labelUList& u = matrix.lduAddr().upperAddr();
+            const labelUList& l = matrix.lduAddr().lowerAddr();
+
+            const labelList& faceMap = matrix.lduMesh().faceBoundMap()[mat][index];
+
+            forAll (faceMap, faceI)
             {
-                const scalar corr(pAlphaSfDelta[faceI]);
-                if (cyclicPatch_.owner())
+                label globalFaceI = faceMap[faceI];
+                if (globalFaceI != -1)
                 {
-                    matrix.lower()[globalFaceI] += corr;
-                    matrix.upper()[globalFaceI] += corr;
-                    matrix.diag()[u[globalFaceI]] -= corr;
-                    matrix.diag()[l[globalFaceI]] -= corr;
+                    const scalar boundCorr = -boundCoeffsCmpt[faceI];
+                    const scalar intCorr = -intCoeffsCmpt[faceI];
+
+                    matrix.upper()[globalFaceI] += boundCorr;
+                    matrix.diag()[u[globalFaceI]] -= boundCorr;
+                    matrix.diag()[l[globalFaceI]] -= intCorr;
+
+                    if (matrix.asymmetric())
+                    {
+                        matrix.lower()[globalFaceI] += intCorr;
+                    }
+                }
+                else
+                {
+                    FatalErrorInFunction
+                        << "Can not find faceId : " <<  globalFaceI
+                        << exit(FatalError);
                 }
             }
-            else
+
+            if (matrix.lduMesh().fluxRequired(this->internalField().name()))
             {
-                FatalErrorInFunction
-                    << "Can not find faceId : " <<  globalFaceI
-                    << exit(FatalError);
+                matrix.internalCoeffs().set
+                (
+                    globalPatchID, intCoeffsCmpt*pTraits<Type>::one
+                );
+                matrix.boundaryCoeffs().set
+                (
+                    globalPatchID, boundCoeffsCmpt*pTraits<Type>::one
+                );
+
+                const label nbrPathID = this->cyclicPatch().neighbPatchID();
+
+                const label nbrGlobalPatchID =
+                    matrix.lduMesh().patchLocalToGlobalMap()[mat][nbrPathID];
+
+                matrix.internalCoeffs().set
+                (
+                    nbrGlobalPatchID, intCoeffsCmpt*pTraits<Type>::one
+
+                );
+                matrix.boundaryCoeffs().set
+                (
+                    nbrGlobalPatchID, boundCoeffsCmpt*pTraits<Type>::one
+                );
             }
         }
     }
 }
-
-
-template<class Type>
-Foam::tmp<Foam::scalarField>
-Foam::cyclicFvPatchField<Type>::gammaSfDelta() const
-{
-    const volScalarField& gamma =
-        this->db().objectRegistry::template lookupObject
-        <volScalarField>("(1|A(U))");
-
-    const cyclicFvPatch& nbrPatch = cyclicPatch_.neighbPatch();
-
-    scalarField gammab
-    (
-        gamma,
-        cyclicPatch_.faceCells()
-    );
-
-    scalarField gammaNbr
-    (
-        gamma,
-        nbrPatch.faceCells()
-    );
-
-    scalarField deltaf(1/cyclicPatch_.deltaCoeffs() + 1/nbrPatch.deltaCoeffs());
-
-    scalarField gammaf
-    (
-        (
-            gammab*(1/cyclicPatch_.deltaCoeffs())
-          + gammaNbr*(1/nbrPatch.deltaCoeffs())
-        )
-        / deltaf
-    );
-
-    return
-    (
-         gammaf*this->patch().magSf()/deltaf
-    );
-}
-
-
 
 // ************************************************************************* //

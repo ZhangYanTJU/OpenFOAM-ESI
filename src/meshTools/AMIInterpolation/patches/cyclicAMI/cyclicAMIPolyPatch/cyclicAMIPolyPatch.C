@@ -807,7 +807,71 @@ Foam::cyclicAMIPolyPatch::cyclicAMIPolyPatch
 {}
 
 
+Foam::cyclicAMIPolyPatch::cyclicAMIPolyPatch
+(
+    const cyclicAMIPolyPatch& pp,
+    label nbrPatchID,
+    const labelList& faceCells
+)
+:
+    coupledPolyPatch(pp, faceCells),
+    nbrPatchName_(pp.nbrPatchName_),
+    coupleGroup_(pp.coupleGroup_),
+    nbrPatchID_(nbrPatchID),
+    rotationAxis_(pp.rotationAxis_),
+    rotationCentre_(pp.rotationCentre_),
+    rotationAngleDefined_(pp.rotationAngleDefined_),
+    rotationAngle_(pp.rotationAngle_),
+    separationVector_(pp.separationVector_),
+    AMIPtr_(nullptr),
+    AMIMethod_(pp.AMIMethod_),
+    AMIReverse_(pp.AMIReverse_),
+    AMIRequireMatch_(pp.AMIRequireMatch_),
+    AMILowWeightCorrection_(pp.AMILowWeightCorrection_),
+    surfPtr_(nullptr),
+    surfDict_(pp.surfDict_)
+{}
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::cyclicAMIPolyPatch::~cyclicAMIPolyPatch()
+>>>>>>> 3db29afe76... ENH: Implicit AMI development phase 1
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::cyclicAMIPolyPatch::newInternalProcFaces
+(
+    label& newFaces,
+    label& newProcFaces
+) const
+{
+    const labelListList& addSourceFaces = AMI().srcAddress();
+
+    // Add new faces as many weights for AMI
+    forAll (addSourceFaces, faceI)
+    {
+        const labelList& nbrFaceIs = addSourceFaces[faceI];
+
+        forAll (nbrFaceIs, j)
+        {
+            label nbrFaceI = nbrFaceIs[j];
+
+            if (nbrFaceI < neighbPatch().size())
+            {
+                // local faces
+                newFaces++;
+            }
+            else
+            {
+                // Proc faces
+                newProcFaces++;
+            }
+        }
+    }
+}
+
 
 Foam::label Foam::cyclicAMIPolyPatch::neighbPatchID() const
 {

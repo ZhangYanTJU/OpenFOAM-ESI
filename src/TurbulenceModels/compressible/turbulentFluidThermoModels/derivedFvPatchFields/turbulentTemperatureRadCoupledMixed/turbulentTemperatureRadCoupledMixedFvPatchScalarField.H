@@ -142,6 +142,15 @@ class turbulentTemperatureRadCoupledMixedFvPatchScalarField
             tmp<scalarField> deltaQflux() const;
 
 
+            //- Calculate coefficients for assembly matrix
+            tmp<Field<scalar>> coeffs
+            (
+                fvMatrix<scalar>& matrix,
+                const Field<scalar>&,
+                const label
+            ) const;
+
+
 public:
 
     //- Runtime type information
@@ -218,13 +227,12 @@ public:
         //- Update the coefficients associated with the patch field
         virtual void updateCoeffs();
 
-        //- Manipulate fvMatrixAssembly
+        //- Manipulate matrix
         virtual void manipulateMatrix
         (
-            fvMatrixAssembly& matrix,
-            const labelList& faceMap,
-            const label cellOffset,
-            const label iMatrix
+            fvMatrix<scalar>& m,
+            const label iMatrix,
+            const direction cmpt
         );
 
 
