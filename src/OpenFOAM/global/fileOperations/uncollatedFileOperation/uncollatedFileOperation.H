@@ -68,14 +68,6 @@ protected:
             const bool search
         ) const;
 
-        //- Lookup name of processorsDDD using cache.
-        //  \note Do not use any parallel synchronisation
-        //  \return empty fileName if not found.
-        virtual refPtr<dirIndexList> lookupProcessorsPath
-        (
-            const fileName&
-        ) const;
-
 
 public:
 

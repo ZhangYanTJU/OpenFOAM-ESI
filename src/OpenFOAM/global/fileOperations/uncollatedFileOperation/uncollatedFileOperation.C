@@ -116,11 +116,7 @@ Foam::fileName Foam::fileOperations::uncollatedFileOperation::filePathInfo
             {
                 refPtr<dirIndexList> pDirs
                 (
-                    fileOperation::lookupAndCacheProcessorsPath
-                    (
-                        io.objectPath(),
-                        false // No additional parallel synchronisation
-                    )
+                    lookupProcessorsPath(io.objectPath())
                 );
 
                 for (const dirIndex& dirIdx : pDirs())
@@ -164,17 +160,6 @@ Foam::fileName Foam::fileOperations::uncollatedFileOperation::filePathInfo
 
         return fileName::null;
     }
-}
-
-
-Foam::refPtr<Foam::fileOperation::dirIndexList>
-Foam::fileOperations::uncollatedFileOperation::lookupProcessorsPath
-(
-    const fileName& fName
-) const
-{
-    // No additional parallel synchronisation
-    return fileOperation::lookupAndCacheProcessorsPath(fName, false);
 }
 
 

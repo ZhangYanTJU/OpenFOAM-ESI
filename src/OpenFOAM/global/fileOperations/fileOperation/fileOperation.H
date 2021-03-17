@@ -64,13 +64,6 @@ class regIOobject;
 class objectRegistry;
 class Time;
 
-// Description of processor directory naming:
-//  - processor directory naming
-//  - whether directory contains a range (so differs on different processors)
-//  - index in range
-//typedef Tuple2<fileName, Tuple2<bool, label>> dirIndex;
-//typedef List<dirIndex> dirIndexList;
-
 /*---------------------------------------------------------------------------*\
                          Class fileOperation Declaration
 \*---------------------------------------------------------------------------*/
@@ -80,28 +73,32 @@ class fileOperation
 public:
 
         //- Enumeration for the location of an IOobject
-        enum pathType
+        enum pathType : int
         {
-            NOTFOUND,               // not found
-            ABSOLUTE,               // instance is absolute directory
-            OBJECT,                 // io.objectPath() exists
-            WRITEOBJECT,            // write path exists
-            PROCUNCOLLATED,         // objectPath exists in processor0
-            PROCBASEOBJECT,         // objectPath exists in specified, constant
-                                    // processorsDir (usually 'processorsDDD')
-            PROCOBJECT,             // objectPath exists in locally differing
-                                    // processorsDir (e.g. 'processorsDDD_0-1')
-            PARENTOBJECT,           // parent of object path
-            FINDINSTANCE,           // file found in time directory
-            PROCUNCOLLATEDINSTANCE, // as PROCUNCOLLATED but with instance
-            PROCBASEINSTANCE,       // as PROCBASEOBJECT but with instance
-            PROCINSTANCE            // as PROCOBJECT but with instance
+            NOTFOUND = 0,           //!< Not found
+            ABSOLUTE,               //!< instance is absolute directory
+            OBJECT,                 //!< io.objectPath() exists
+            WRITEOBJECT,            //!< write path exists
+
+            // NOTE: increasing precedence (uncollated, collated, rank-collated)
+
+            PROCUNCOLLATED,
+                        //!< objectPath exists in 'processorN'
+            PROCBASEOBJECT = PROCUNCOLLATED + 1,
+                        //!< objectPath exists in 'processorsNN'
+            PROCOBJECT = PROCBASEOBJECT + 1,
+                        //!< objectPath exists in 'processorsNN_first-last'
+
+            PARENTOBJECT,           //!< parent of object path
+            FINDINSTANCE,           //!< file found in time directory
+            PROCUNCOLLATEDINSTANCE, //!< as PROCUNCOLLATED but with instance
+            PROCBASEINSTANCE,       //!< as PROCBASEOBJECT but with instance
+            PROCINSTANCE            //!< as PROCOBJECT but with instance
         };
         static const Enum<pathType> pathTypeNames_;
 
-
-        //- A dirIndex adds the path type and local offset to a fileName
-        typedef Tuple2<fileName, Tuple2<pathType, label>> dirIndex;
+        //- Augment fileName with pathType and local offset
+        typedef Tuple2<fileName, Tuple2<pathType, int>> dirIndex;
         typedef List<dirIndex> dirIndexList;
 
         //- For addressing a range of processors,
@@ -146,8 +143,7 @@ protected:
         //  \return empty fileName if not found.
         refPtr<dirIndexList> lookupAndCacheProcessorsPath
         (
-            const fileName&,
-            const bool syncPar
+            const fileName& objectPath
         ) const;
 
         //- Lookup name of processorsDDD using cache.
@@ -158,8 +154,8 @@ protected:
             const fileName& objectPath
         ) const;
 
-        //- Does ioobject exist. Is either a directory (empty name()) or
-        //  a file
+        //- Does IOObject exist.
+        //- Is either a directory (empty name()) or a file
         bool exists(IOobject& io) const;
 
 
