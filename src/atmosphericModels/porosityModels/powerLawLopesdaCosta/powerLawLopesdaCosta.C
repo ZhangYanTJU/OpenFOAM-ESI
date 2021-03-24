@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -314,12 +314,6 @@ Foam::porosityModels::powerLawLopesdaCosta::powerLawLopesdaCosta
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::porosityModels::powerLawLopesdaCosta::~powerLawLopesdaCosta()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::scalarField&
@@ -344,47 +338,47 @@ void Foam::porosityModels::powerLawLopesdaCosta::calcForce
     scalarField Udiag(U.size(), Zero);
     const scalarField& V = mesh_.V();
 
-    apply(Udiag, V, rho, U);
+    apply(V, rho, U, Udiag);
 
-    force = Udiag*U;
+    force += Udiag*U;
 }
 
 
 void Foam::porosityModels::powerLawLopesdaCosta::correct
 (
-    fvVectorMatrix& UEqn
+    const volVectorField& U,
+    scalarField& Udiag,
+    vectorField& Usource,
+    bool compressible
 ) const
 {
-    const vectorField& U = UEqn.psi();
     const scalarField& V = mesh_.V();
-    scalarField& Udiag = UEqn.diag();
 
-    if (UEqn.dimensions() == dimForce)
+    if (compressible)
     {
-        const volScalarField& rho =
-            mesh_.lookupObject<volScalarField>(rhoName_);
+        const auto& rho = mesh_.lookupObject<volScalarField>(rhoName_);
 
-        apply(Udiag, V, rho, U);
+        apply(V, rho, U, Udiag);
     }
     else
     {
-        apply(Udiag, V, geometricOneField(), U);
+        apply(V, geometricOneField(), U, Udiag);
     }
 }
 
 
 void Foam::porosityModels::powerLawLopesdaCosta::correct
 (
-    fvVectorMatrix& UEqn,
+    const volVectorField& U,
     const volScalarField& rho,
-    const volScalarField& mu
+    const volScalarField& mu,
+    scalarField& Udiag,
+    vectorField& Usource
 ) const
 {
-    const vectorField& U = UEqn.psi();
     const scalarField& V = mesh_.V();
-    scalarField& Udiag = UEqn.diag();
 
-    apply(Udiag, V, rho, U);
+    apply(V, rho, U, Udiag);
 }
 
 
@@ -394,18 +388,17 @@ void Foam::porosityModels::powerLawLopesdaCosta::correct
     volTensorField& AU
 ) const
 {
-    const vectorField& U = UEqn.psi();
+    const volVectorField& U = UEqn.psi();
 
     if (UEqn.dimensions() == dimForce)
     {
-        const volScalarField& rho =
-            mesh_.lookupObject<volScalarField>(rhoName_);
+        const auto& rho = mesh_.lookupObject<volScalarField>(rhoName_);
 
-        apply(AU, rho, U);
+        apply(rho, U, AU);
     }
     else
     {
-        apply(AU, geometricOneField(), U);
+        apply(geometricOneField(), U, AU);
     }
 }
 

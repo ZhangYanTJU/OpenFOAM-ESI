@@ -96,6 +96,9 @@ protected:
         //- Local coordinate system
         autoPtr<coordinateSystem> csysPtr_;
 
+        //- Flag to use relative velocity for MRF regions; default = yes
+        Switch MRFRelativeVelocity_;
+
 
     // Protected Member Functions
 
@@ -114,13 +117,21 @@ protected:
             vectorField& force
         ) const = 0;
 
-        virtual void correct(fvVectorMatrix& UEqn) const = 0;
+        virtual void correct
+        (
+            const volVectorField& U,
+            scalarField& Udiag,
+            vectorField& Usource,
+            bool compressible
+        ) const = 0;
 
         virtual void correct
         (
-            fvVectorMatrix& UEqn,
+            const volVectorField& U,
             const volScalarField& rho,
-            const volScalarField& mu
+            const volScalarField& mu,
+            scalarField& Udiag,
+            vectorField& Usource
         ) const = 0;
 
         virtual void correct
@@ -232,7 +243,8 @@ public:
         const dictionary& dict() const;
 
         //- Transform the model data wrt mesh changes
-        virtual void transformModelData();
+        //  Returns the reference velocity (if applicable)
+        virtual tmp<volVectorField> transformModelData();
 
         //- Return the force over the cell zone(s)
         virtual tmp<vectorField> force
@@ -248,9 +260,9 @@ public:
         //- Add resistance
         virtual void addResistance
         (
-            fvVectorMatrix& UEqn,
             const volScalarField& rho,
-            const volScalarField& mu
+            const volScalarField& mu,
+            fvVectorMatrix& UEqn
         );
 
         //- Add resistance

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,19 +84,19 @@ class powerLaw
         template<class RhoFieldType>
         void apply
         (
-            scalarField& Udiag,
             const scalarField& V,
             const RhoFieldType& rho,
-            const vectorField& U
+            const vectorField& U,
+            scalarField& Udiag
         ) const;
 
         //- Apply resistance
         template<class RhoFieldType>
         void apply
         (
-            tensorField& AU,
             const RhoFieldType& rho,
-            const vectorField& U
+            const vectorField& U,
+            tensorField& AU
         ) const;
 
         //- No copy construct
@@ -139,14 +140,22 @@ public:
         ) const;
 
         //- Add resistance
-        virtual void correct(fvVectorMatrix& UEqn) const;
+        virtual void correct
+        (
+            const volVectorField& U,
+            scalarField& Udiag,
+            vectorField& Usource,
+            bool compressible
+        ) const;
 
         //- Add resistance
         virtual void correct
         (
-            fvVectorMatrix& UEqn,
+            const volVectorField& U,
             const volScalarField& rho,
-            const volScalarField& mu
+            const volScalarField& mu,
+            scalarField& Udiag,
+            vectorField& Usource
         ) const;
 
         //- Add resistance

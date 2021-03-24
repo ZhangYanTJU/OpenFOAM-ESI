@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,19 +83,19 @@ class fixedCoeff
         //- Apply
         void apply
         (
-            scalarField& Udiag,
-            vectorField& Usource,
             const scalarField& V,
             const vectorField& U,
-            const scalar rho
+            const scalar rho,
+            scalarField& Udiag,
+            vectorField& Usource
         ) const;
 
         //- Apply
         void apply
         (
-            tensorField& AU,
             const vectorField& U,
-            const scalar rho
+            const scalar rho,
+            tensorField& AU
         ) const;
 
         //- No copy construct
@@ -138,14 +139,22 @@ public:
         ) const;
 
         //- Add resistance
-        virtual void correct(fvVectorMatrix& UEqn) const;
+        virtual void correct
+        (
+            const volVectorField& U,
+            scalarField& Udiag,
+            vectorField& Usource,
+            bool compressible
+        ) const;
 
         //- Add resistance
         virtual void correct
         (
-            fvVectorMatrix& UEqn,
+            const volVectorField& U,
             const volScalarField& rho,
-            const volScalarField& mu
+            const volScalarField& mu,
+            scalarField& Udiag,
+            vectorField& Usource
         ) const;
 
         //- Add resistance

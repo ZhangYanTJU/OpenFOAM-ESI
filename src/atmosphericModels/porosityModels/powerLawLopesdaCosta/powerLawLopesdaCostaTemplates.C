@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,10 +33,10 @@ License
 template<class RhoFieldType>
 void Foam::porosityModels::powerLawLopesdaCosta::apply
 (
-    scalarField& Udiag,
     const scalarField& V,
     const RhoFieldType& rho,
-    const vectorField& U
+    const vectorField& U,
+    scalarField& Udiag
 ) const
 {
     const scalar C1m1b2 = (C1_ - 1.0)/2.0;
@@ -59,9 +60,9 @@ void Foam::porosityModels::powerLawLopesdaCosta::apply
 template<class RhoFieldType>
 void Foam::porosityModels::powerLawLopesdaCosta::apply
 (
-    tensorField& AU,
     const RhoFieldType& rho,
-    const vectorField& U
+    const vectorField& U,
+    tensorField& AU
 ) const
 {
     const scalar C1m1b2 = (C1_ - 1.0)/2.0;

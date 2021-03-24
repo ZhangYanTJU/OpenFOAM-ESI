@@ -28,6 +28,7 @@ License
 
 #include "porosityModel.H"
 #include "volFields.H"
+#include "IOMRFZoneList.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -97,7 +98,8 @@ Foam::porosityModel::porosityModel
     csysPtr_
     (
         coordinateSystem::New(mesh, coeffs_, coordinateSystem::typeName_())
-    )
+    ),
+    MRFRelativeVelocity_(true)
 {
     if (zoneName_.empty())
     {
@@ -146,12 +148,17 @@ Foam::porosityModel::porosityModel
 
         Info<< "    local bounds: " << bb.span() << nl << endl;
     }
+
+    if (dict.readIfPresent("MRFRelativeVelocity", MRFRelativeVelocity_))
+    {
+        Info<< "    MRFRelativeVelocity " << MRFRelativeVelocity_ << endl;
+    }
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::porosityModel::transformModelData()
+Foam::tmp<Foam::volVectorField> Foam::porosityModel::transformModelData()
 {
     if (!mesh_.upToDatePoints(*this))
     {
@@ -160,6 +167,32 @@ void Foam::porosityModel::transformModelData()
         // set model up-to-date wrt points
         mesh_.setUpToDatePoints(*this);
     }
+
+
+    auto* MRF = mesh_.findObject<IOMRFZoneList>("MRFProperties");
+    if (MRF && MRFRelativeVelocity_)
+    {
+        auto tUref =
+            tmp<volVectorField>::New
+            (
+                IOobject
+                (
+                    IOobject::scopedName(word("Uporous"), name_),
+                    mesh_.time().timeName(),
+                    mesh_,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE
+                ),
+                mesh_,
+                dimensionedVector(dimVelocity, Zero)
+            );
+
+        MRF->makeRelative(tUref.ref());
+
+        return tUref;
+    }
+
+    return nullptr;
 }
 
 
@@ -170,13 +203,18 @@ Foam::tmp<Foam::vectorField> Foam::porosityModel::porosityModel::force
     const volScalarField& mu
 )
 {
-    transformModelData();
+    tmp<volVectorField> tUref = transformModelData();
 
-    tmp<vectorField> tforce(new vectorField(U.size(), Zero));
+    auto tforce = tmp<vectorField>::New(U.size(), Zero);
 
     if (!cellZoneIDs_.empty())
     {
         this->calcForce(U, rho, mu, tforce.ref());
+
+        if (tUref.valid())
+        {
+            this->calcForce(tUref(), rho, mu, tforce.ref());
+        }
     }
 
     return tforce;
@@ -190,16 +228,30 @@ void Foam::porosityModel::addResistance(fvVectorMatrix& UEqn)
         return;
     }
 
-    transformModelData();
-    this->correct(UEqn);
+    bool compressible = UEqn.dimensions() == dimForce;
+
+    tmp<volVectorField> tUref = transformModelData();
+
+    this->correct(UEqn.psi(), UEqn.diag(), UEqn.source(), compressible);
+
+    if (tUref.valid())
+    {
+        const auto& Uref = tUref();
+        scalarField Udiag(Uref.size(), Zero);
+        vectorField Usource(Uref.size(), Zero);
+
+        this->correct(Uref, Udiag, Usource, compressible);
+
+        UEqn.source() -= Udiag*Uref - Usource;
+    }
 }
 
 
 void Foam::porosityModel::addResistance
 (
-    fvVectorMatrix& UEqn,
     const volScalarField& rho,
-    const volScalarField& mu
+    const volScalarField& mu,
+    fvVectorMatrix& UEqn
 )
 {
     if (cellZoneIDs_.empty())
@@ -207,8 +259,20 @@ void Foam::porosityModel::addResistance
         return;
     }
 
-    transformModelData();
-    this->correct(UEqn, rho, mu);
+    tmp<volVectorField> tUref = transformModelData();
+
+    this->correct(UEqn.psi(), rho, mu, UEqn.diag(), UEqn.source());
+
+    if (tUref.valid())
+    {
+        const auto& Uref = tUref();
+        scalarField Udiag(Uref.size(), Zero);
+        vectorField Usource(Uref.size(), Zero);
+
+        this->correct(Uref, rho, mu, Udiag, Usource);
+
+        UEqn.source() -= Udiag*Uref - Usource;
+    }
 }
 
 
@@ -224,7 +288,10 @@ void Foam::porosityModel::addResistance
         return;
     }
 
-    transformModelData();
+    // Note: reference velocity contribution not handled!
+    // tmp<volVectorField> tUref = transformModelData();
+    (void) transformModelData();
+
     this->correct(UEqn, AU);
 
     if (correctAUprocBC)

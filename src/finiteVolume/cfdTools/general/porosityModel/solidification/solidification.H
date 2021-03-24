@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -120,40 +121,40 @@ class solidification
         template<class AlphaFieldType, class RhoFieldType>
         void apply
         (
-            scalarField& Udiag,
             const scalarField& V,
             const AlphaFieldType& alpha,
             const RhoFieldType& rho,
-            const volVectorField& U
+            const volVectorField& U,
+            scalarField& Udiag
         ) const;
 
         //- Apply resistance
         template<class AlphaFieldType, class RhoFieldType>
         void apply
         (
-            tensorField& AU,
             const AlphaFieldType& alpha,
             const RhoFieldType& rho,
-            const volVectorField& U
+            const volVectorField& U,
+            tensorField& AU
         ) const;
 
         //- Apply resistance
         template<class RhoFieldType>
         void apply
         (
-            scalarField& Udiag,
             const scalarField& V,
             const RhoFieldType& rho,
-            const volVectorField& U
+            const volVectorField& U,
+            scalarField& Udiag
         ) const;
 
         //- Apply resistance
         template<class RhoFieldType>
         void apply
         (
-            tensorField& AU,
             const RhoFieldType& rho,
-            const volVectorField& U
+            const volVectorField& U,
+            tensorField& AU
         ) const;
 
         //- No copy construct
@@ -179,7 +180,7 @@ public:
     );
 
     //- Destructor
-    virtual ~solidification();
+    virtual ~solidification() = default;
 
 
     // Member Functions
@@ -197,14 +198,22 @@ public:
         ) const;
 
         //- Add resistance
-        virtual void correct(fvVectorMatrix& UEqn) const;
+        virtual void correct
+        (
+            const volVectorField& U,
+            scalarField& Udiag,
+            vectorField& Usource,
+            bool compressible
+        ) const;
 
         //- Add resistance
         virtual void correct
         (
-            fvVectorMatrix& UEqn,
+            const volVectorField& U,
             const volScalarField& rho,
-            const volScalarField& mu
+            const volScalarField& mu,
+            scalarField& Udiag,
+            vectorField& Usource
         ) const;
 
         //- Add resistance

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -270,7 +270,7 @@ void Foam::fv::interRegionExplicitPorositySource::addSup
         muNbr.primitiveFieldRef()
     );
 
-    porosityPtr_->addResistance(nbrEqn, rhoNbr, muNbr);
+    porosityPtr_->addResistance(rhoNbr, muNbr, nbrEqn);
 
     // Convert source from neighbour to local region
     fvMatrix<vector> porosityEqn(U, eqn.dimensions());

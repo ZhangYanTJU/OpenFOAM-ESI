@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,11 +47,11 @@ namespace Foam
 
 void Foam::porosityModels::fixedCoeff::apply
 (
-    scalarField& Udiag,
-    vectorField& Usource,
     const scalarField& V,
     const vectorField& U,
-    const scalar rho
+    const scalar rho,
+    scalarField& Udiag,
+    vectorField& Usource
 ) const
 {
     forAll(cellZoneIDs_, zoneI)
@@ -77,9 +77,9 @@ void Foam::porosityModels::fixedCoeff::apply
 
 void Foam::porosityModels::fixedCoeff::apply
 (
-    tensorField& AU,
     const vectorField& U,
-    const scalar rho
+    const scalar rho,
+    tensorField& AU
 ) const
 {
     forAll(cellZoneIDs_, zoneI)
@@ -183,51 +183,46 @@ void Foam::porosityModels::fixedCoeff::calcForce
     const scalarField& V = mesh_.V();
     const scalar rhoRef = coeffs_.get<scalar>("rhoRef");
 
-    apply(Udiag, Usource, V, U, rhoRef);
+    apply(V, U, rhoRef, Udiag, Usource);
 
-    force = Udiag*U - Usource;
+    force += Udiag*U - Usource;
 }
 
 
 void Foam::porosityModels::fixedCoeff::correct
 (
-    fvVectorMatrix& UEqn
+    const volVectorField& U,
+    scalarField& Udiag,
+    vectorField& Usource,
+    bool compressible
 ) const
 {
-    const vectorField& U = UEqn.psi();
     const scalarField& V = mesh_.V();
-    scalarField& Udiag = UEqn.diag();
-    vectorField& Usource = UEqn.source();
 
     scalar rho = 1.0;
-    if (UEqn.dimensions() == dimForce)
+    if (compressible)
     {
         coeffs_.readEntry("rhoRef", rho);
     }
 
-    apply(Udiag, Usource, V, U, rho);
+    apply(V, U, rho, Udiag, Usource);
 }
 
 
 void Foam::porosityModels::fixedCoeff::correct
 (
-    fvVectorMatrix& UEqn,
+    const volVectorField& U,
     const volScalarField&,
-    const volScalarField&
+    const volScalarField&,
+    scalarField& Udiag,
+    vectorField& Usource
 ) const
 {
-    const vectorField& U = UEqn.psi();
     const scalarField& V = mesh_.V();
-    scalarField& Udiag = UEqn.diag();
-    vectorField& Usource = UEqn.source();
 
-    scalar rho = 1.0;
-    if (UEqn.dimensions() == dimForce)
-    {
-        coeffs_.readEntry("rhoRef", rho);
-    }
+    const scalar rho = coeffs_.get<scalar>("rhoRef");
 
-    apply(Udiag, Usource, V, U, rho);
+    apply(V, U, rho, Udiag, Usource);
 }
 
 
@@ -237,15 +232,13 @@ void Foam::porosityModels::fixedCoeff::correct
     volTensorField& AU
 ) const
 {
-    const vectorField& U = UEqn.psi();
-
     scalar rho = 1.0;
     if (UEqn.dimensions() == dimForce)
     {
         coeffs_.readEntry("rhoRef", rho);
     }
 
-    apply(AU, U, rho);
+    apply(UEqn.psi(), rho, AU);
 }
 
 

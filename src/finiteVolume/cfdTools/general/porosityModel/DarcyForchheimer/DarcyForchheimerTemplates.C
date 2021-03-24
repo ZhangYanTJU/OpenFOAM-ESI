@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,12 +31,12 @@ License
 template<class RhoFieldType>
 void Foam::porosityModels::DarcyForchheimer::apply
 (
-    scalarField& Udiag,
-    vectorField& Usource,
     const scalarField& V,
     const RhoFieldType& rho,
     const scalarField& mu,
-    const vectorField& U
+    const vectorField& U,
+    scalarField& Udiag,
+    vectorField& Usource
 ) const
 {
     forAll(cellZoneIDs_, zoneI)
@@ -64,10 +65,10 @@ void Foam::porosityModels::DarcyForchheimer::apply
 template<class RhoFieldType>
 void Foam::porosityModels::DarcyForchheimer::apply
 (
-    tensorField& AU,
     const RhoFieldType& rho,
     const scalarField& mu,
-    const vectorField& U
+    const vectorField& U,
+    tensorField& AU
 ) const
 {
     forAll(cellZoneIDs_, zoneI)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,12 +62,6 @@ Foam::porosityModels::solidification::solidification
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::porosityModels::solidification::~solidification()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::porosityModels::solidification::calcTransformModelData()
@@ -85,49 +79,50 @@ void Foam::porosityModels::solidification::calcForce
     scalarField Udiag(U.size(), Zero);
     const scalarField& V = mesh_.V();
 
-    apply(Udiag, V, rho, U);
+    apply(V, rho, U, Udiag);
 
-    force = Udiag*U;
+    force += Udiag*U;
 }
 
 
 void Foam::porosityModels::solidification::correct
 (
-    fvVectorMatrix& UEqn
+    const volVectorField& U,
+    scalarField& Udiag,
+    vectorField& Usource,
+    bool compressible
 ) const
 {
-    const volVectorField& U = UEqn.psi();
     const scalarField& V = mesh_.V();
-    scalarField& Udiag = UEqn.diag();
 
-    if (UEqn.dimensions() == dimForce)
+    if (compressible)
     {
         const auto& rho = mesh_.lookupObject<volScalarField>
         (
             IOobject::groupName(rhoName_, U.group())
         );
 
-        apply(Udiag, V, rho, U);
+        apply(V, rho, U, Udiag);
     }
     else
     {
-        apply(Udiag, V, geometricOneField(), U);
+        apply(V, geometricOneField(), U, Udiag);
     }
 }
 
 
 void Foam::porosityModels::solidification::correct
 (
-    fvVectorMatrix& UEqn,
+    const volVectorField& U,
     const volScalarField& rho,
-    const volScalarField& mu
+    const volScalarField& mu,
+    scalarField& Udiag,
+    vectorField& Usource
 ) const
 {
-    const volVectorField& U = UEqn.psi();
     const scalarField& V = mesh_.V();
-    scalarField& Udiag = UEqn.diag();
 
-    apply(Udiag, V, rho, U);
+    apply(V, rho, U, Udiag);
 }
 
 
@@ -146,11 +141,11 @@ void Foam::porosityModels::solidification::correct
             IOobject::groupName(rhoName_, U.group())
         );
 
-        apply(AU, rho, U);
+        apply(rho, U, AU);
     }
     else
     {
-        apply(AU, geometricOneField(), U);
+        apply(geometricOneField(), U, AU);
     }
 }
 

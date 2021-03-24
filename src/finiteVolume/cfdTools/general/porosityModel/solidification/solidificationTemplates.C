@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,11 +34,11 @@ License
 template<class AlphaFieldType, class RhoFieldType>
 void Foam::porosityModels::solidification::apply
 (
-    scalarField& Udiag,
     const scalarField& V,
     const AlphaFieldType& alpha,
     const RhoFieldType& rho,
-    const volVectorField& U
+    const volVectorField& U,
+    scalarField& Udiag
 ) const
 {
     const auto& T = mesh_.lookupObject<volScalarField>
@@ -61,10 +62,10 @@ void Foam::porosityModels::solidification::apply
 template<class AlphaFieldType, class RhoFieldType>
 void Foam::porosityModels::solidification::apply
 (
-    tensorField& AU,
     const AlphaFieldType& alpha,
     const RhoFieldType& rho,
-    const volVectorField& U
+    const volVectorField& U,
+    tensorField& AU
 ) const
 {
     const auto& T = mesh_.lookupObject<volScalarField>
@@ -88,15 +89,15 @@ void Foam::porosityModels::solidification::apply
 template<class RhoFieldType>
 void Foam::porosityModels::solidification::apply
 (
-    scalarField& Udiag,
     const scalarField& V,
     const RhoFieldType& rho,
-    const volVectorField& U
+    const volVectorField& U,
+    scalarField& Udiag
 ) const
 {
     if (alphaName_ == "none")
     {
-        return apply(Udiag, V, geometricOneField(), rho, U);
+        return apply(V, geometricOneField(), rho, U, Udiag);
     }
     else
     {
@@ -105,7 +106,7 @@ void Foam::porosityModels::solidification::apply
             IOobject::groupName(alphaName_, U.group())
         );
 
-        return apply(Udiag, V, alpha, rho, U);
+        return apply(V, alpha, rho, U, Udiag);
     }
 }
 
@@ -113,14 +114,14 @@ void Foam::porosityModels::solidification::apply
 template<class RhoFieldType>
 void Foam::porosityModels::solidification::apply
 (
-    tensorField& AU,
     const RhoFieldType& rho,
-    const volVectorField& U
+    const volVectorField& U,
+    tensorField& AU
 ) const
 {
     if (alphaName_ == "none")
     {
-        return apply(AU, geometricOneField(), rho, U);
+        return apply(geometricOneField(), rho, U, AU);
     }
     else
     {
@@ -129,7 +130,7 @@ void Foam::porosityModels::solidification::apply
             IOobject::groupName(alphaName_, U.group())
         );
 
-        return apply(AU, alpha, rho, U);
+        return apply(alpha, rho, U, AU);
     }
 }
 

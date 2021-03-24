@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2014 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -97,9 +98,8 @@ void Foam::porosityModelList::reset(const dictionary& dict)
 bool Foam::porosityModelList::read(const dictionary& dict)
 {
     bool allOk = true;
-    forAll(*this, i)
+    for (auto& pm : *this)
     {
-        porosityModel& pm = this->operator[](i);
         bool ok = pm.read(dict.subDict(pm.name()));
         allOk = (allOk && ok);
     }
@@ -109,24 +109,21 @@ bool Foam::porosityModelList::read(const dictionary& dict)
 
 bool Foam::porosityModelList::writeData(Ostream& os) const
 {
-    forAll(*this, i)
+    for (const auto& pm : *this)
     {
         os  << nl;
-        this->operator[](i).writeData(os);
+        pm.writeData(os);
     }
 
     return os.good();
 }
 
 
-void Foam::porosityModelList::addResistance
-(
-    fvVectorMatrix& UEqn
-)
+void Foam::porosityModelList::addResistance(fvVectorMatrix& UEqn)
 {
-    forAll(*this, i)
+    for (auto& pm : *this)
     {
-        this->operator[](i).addResistance(UEqn);
+        pm.addResistance(UEqn);
     }
 }
 
@@ -138,9 +135,9 @@ void Foam::porosityModelList::addResistance
     const volScalarField& mu
 )
 {
-    forAll(*this, i)
+    for (auto& pm : *this)
     {
-        this->operator[](i).addResistance(UEqn, rho, mu);
+        pm.addResistance(rho, mu, UEqn);
     }
 }
 
@@ -152,9 +149,9 @@ void Foam::porosityModelList::addResistance
     bool correctAUprocBC
 )
 {
-    forAll(*this, i)
+    for (auto& pm : *this)
     {
-        this->operator[](i).addResistance(UEqn, AU, correctAUprocBC);
+        pm.addResistance(UEqn, AU, correctAUprocBC);
     }
 }
 
