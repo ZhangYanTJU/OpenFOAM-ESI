@@ -285,7 +285,7 @@ Type Foam::Function1Types::TableBase<Type>::value(const scalar x) const
     // Use interpolator
     interpolator().valueWeights(xDash, currentIndices_, currentWeights_);
 
-    Type t = currentWeights_[0]*table_[currentIndices_[0]].second();
+    Type t(currentWeights_[0]*table_[currentIndices_[0]].second());
     for (label i = 1; i < currentIndices_.size(); i++)
     {
         t += currentWeights_[i]*table_[currentIndices_[i]].second();
@@ -305,7 +305,7 @@ Type Foam::Function1Types::TableBase<Type>::integrate
     // Use interpolator
     interpolator().integrationWeights(x1, x2, currentIndices_, currentWeights_);
 
-    Type sum = currentWeights_[0]*table_[currentIndices_[0]].second();
+    Type sum(currentWeights_[0]*table_[currentIndices_[0]].second());
     for (label i = 1; i < currentIndices_.size(); i++)
     {
        sum += currentWeights_[i]*table_[currentIndices_[i]].second();

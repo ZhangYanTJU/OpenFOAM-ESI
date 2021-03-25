@@ -89,7 +89,7 @@ Foam::tmp<Foam::Field<Type>> Foam::Function1Types::Constant<Type>::value
     return tmp<Field<Type>>::New(x.size(), value_);
 }
 
-
+/*
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::Function1Types::Constant<Type>::integrate
 (
@@ -99,7 +99,7 @@ Foam::tmp<Foam::Field<Type>> Foam::Function1Types::Constant<Type>::integrate
 {
     return (x2 - x1)*value_;
 }
-
+*/
 template<class Type>
 void Foam::Function1Types::Constant<Type>::writeData(Ostream& os) const
 {

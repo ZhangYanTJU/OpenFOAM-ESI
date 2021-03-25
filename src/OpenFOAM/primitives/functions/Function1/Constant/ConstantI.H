@@ -43,7 +43,7 @@ inline Type Foam::Function1Types::Constant<Type>::integrate
     const scalar x2
 ) const
 {
-    return (x2 - x1)*value_;
+    return Type((x2 - x1)*value_);
 }
 
 
