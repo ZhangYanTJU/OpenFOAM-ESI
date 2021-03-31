@@ -263,15 +263,23 @@ Foam::mappedPatchFieldBase<Type>::mappedPatchFieldBase
     if
     (
         mapper_.sampleDatabase()
-     && mapper_.mode() != mappedPatchBase::NEARESTPATCHFACE
+     && (
+            mapper_.mode() != mappedPatchBase::NEARESTPATCHFACE
+         && mapper_.mode() != mappedPatchBase::NEARESTPATCHFACEAMI
+        )
     )
     {
         FatalErrorInFunction
             << "Mapping using the database only supported for "
-            << "sampleMode "
+            << "sampleModes "
             <<  mappedPatchBase::sampleModeNames_
                 [
                     mappedPatchBase::NEARESTPATCHFACE
+                ]
+            << " and "
+            <<  mappedPatchBase::sampleModeNames_
+                [
+                    mappedPatchBase::NEARESTPATCHFACEAMI
                 ]
             << exit(FatalError);
     }
@@ -299,8 +307,11 @@ Foam::mappedPatchFieldBase<Type>::mappedPatchFieldBase
 {
     if
     (
-        mapper_.mode() == mappedPatchBase::NEARESTPATCHFACE
-     && mapper_.sampleDatabase()
+        mapper_.sampleDatabase()
+     && (
+            mapper_.mode() == mappedPatchBase::NEARESTPATCHFACE
+         || mapper_.mode() == mappedPatchBase::NEARESTPATCHFACEAMI
+        )
     )
     {
         // Store my data on receive buffers so we have some initial data
