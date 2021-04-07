@@ -1349,7 +1349,7 @@ void matchRegions
                 cellRegion,
                 nCellRegions,
                 clusterI,
-                1               // minimum overlap
+                clusterSizes[clusterI]  // require exact match
             );
 
             if (regionI != -1)
@@ -1736,8 +1736,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        // Collect sets of zones into clusters. If no cluster is just an identity
-        // list (cluster 0 is cellZone 0 etc.)
+        // Collect sets of zones into clusters. If no cluster is just an
+        // identity list (cluster 0 is cellZone 0 etc.)
         wordList clusterNames;
         labelListList clusterToZones;
         labelList zoneToCluster;
