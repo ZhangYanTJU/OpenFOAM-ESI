@@ -17,11 +17,11 @@ FoamFile
 
 libs        (utilityFunctionObjects);
 
-//DebugSwitches
-//{
-//    mappedPatchBase 1;
-//    syncObjects     1;
-//}
+DebugSwitches
+{
+//    mappedPatchBase 2;
+//    syncObjects     2;
+}
 
 
 application     laplacianFoam;
@@ -55,20 +55,20 @@ timePrecision   6;
 
 runTimeModifiable true;
 
-//functions
-//{
-//    syncObjects
-//    {
-//        type        syncObjects;
-//        libs        (utilityFunctionObjects);
-//
-//        // Where is data located relative to runTime. Given as a filename
-//        // with every '/' indicating a sub-objectRegistry w.r.t. runTime.
-//        // Local data is under <root>/send/processorXXX. After execution
-//        // data will be under the corresponding <root>/receive/processorYYY
-//        // objectRegistry
-//        //root        "level0/level1/level2";
-//    }
-//}
+functions
+{
+    syncObjects
+    {
+        type        syncObjects;
+        libs        (utilityFunctionObjects);
+
+        // Where is data located relative to runTime. Given as a filename
+        // with every '/' indicating a sub-objectRegistry w.r.t. runTime.
+        // Local data is under <root>/send/processorXXX. After execution
+        // data will be under the corresponding <root>/receive/processorYYY
+        // objectRegistry
+        //root        "level0/level1/level2";
+    }
+}
 
 // ************************************************************************* //
