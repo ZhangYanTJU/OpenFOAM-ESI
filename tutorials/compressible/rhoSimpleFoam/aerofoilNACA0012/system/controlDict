@@ -16,7 +16,7 @@ FoamFile
 
 application     rhoSimpleFoam;
 
-startFrom       latestTime;
+startFrom       startTime;
 
 startTime       0;
 
@@ -48,6 +48,33 @@ functions
 {
     #includeFunc MachNo
     #includeFunc solverInfo
+
+    readFields1
+    {
+        type        readFields;
+        libs        (fieldFunctionObjects);
+        fields      (phi);
+        readOnStart true;
+    }
+
+    contErr
+    {
+        type            div;
+        libs            (libfieldFunctionObjects);
+        field           phi;
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
+
+    momErr
+    {
+        type            momentumError;
+        libs            (libfieldFunctionObjects);
+        cellZones       (z1);
+        nLayers         2;
+        executeControl  writeTime;
+        writeControl    writeTime;
+    }
 }
 
 

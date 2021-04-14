@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -153,11 +153,6 @@ void Foam::haloToCell::combine(topoSet& set, const bool add) const
             current -= updates;
         }
 
-        if (updates.none())
-        {
-            break;
-        }
-
         addOrDelete(set, updates, add);
     }
 }
@@ -172,7 +167,7 @@ Foam::haloToCell::haloToCell
 )
 :
     topoSetCellSource(mesh),
-    steps_(max(steps, 1))
+    steps_(max(steps, 0))
 {}
 
 
@@ -182,7 +177,7 @@ Foam::haloToCell::haloToCell
     const dictionary& dict
 )
 :
-    haloToCell(mesh, dict.getOrDefault<label>("steps", 1))
+    haloToCell(mesh, dict.getOrDefault<label>("steps", 0))
 {}
 
 

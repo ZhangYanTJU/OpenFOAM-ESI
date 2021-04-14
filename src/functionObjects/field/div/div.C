@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,6 +53,27 @@ bool Foam::functionObjects::div::calc()
     processed = processed || calcDiv<volVectorField>();
 
     return processed;
+}
+
+
+bool Foam::functionObjects::div::write()
+{
+    if (!zoneSubSetPtr_)
+    {
+        return writeObject(resultName_);
+    }
+    else
+    {
+        const bool written
+        (
+            writeField<scalar>()
+         || writeField<vector>()
+        );
+
+        return written;
+    }
+
+    return false;
 }
 
 

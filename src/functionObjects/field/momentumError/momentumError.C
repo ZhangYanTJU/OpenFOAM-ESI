@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,9 @@ License
 #include "turbulenceModel.H"
 #include "turbulentTransportModel.H"
 #include "turbulentFluidThermoModel.H"
+#include "topoSetSource.H"
 #include "addToRunTimeSelectionTable.H"
+#include "topoSet.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -54,6 +56,7 @@ Foam::functionObjects::momentumError::divDevRhoReff()
     typedef compressible::turbulenceModel cmpTurbModel;
     typedef incompressible::turbulenceModel icoTurbModel;
 
+    const auto& U = lookupObject<volVectorField>(UName_);
     {
         auto* turb = findObject<cmpTurbModel>
         (
@@ -62,22 +65,56 @@ Foam::functionObjects::momentumError::divDevRhoReff()
 
         if (turb)
         {
-            return tmp<volVectorField>::New
-            (
-                "divDevRhoReff",
-              - fvc::div
+            if (zoneSubSetPtr_)
+            {
+                const fvMeshSubset& subSetMesh= zoneSubSetPtr_->subSetMesh();
+
+                tmp<volVectorField> tU(subSetMesh.interpolate(U, false));
+                tmp<volScalarField> tRho
                 (
-                    (turb->rho()*turb->nuEff())
-                   *dev2(T(fvc::grad(turb->U()))),
-                   "div(((rho*nuEff)*dev2(T(grad(U)))))"
-                )
-              - fvc::laplacian
+                    subSetMesh.interpolate(turb->rho(), false)
+                );
+
+                tmp<volScalarField> tnuEff
                 (
-                    turb->rho()*turb->nuEff(),
-                    turb->U(),
-                    "laplacian(nuEff,U)"
-                )
-            );
+                    subSetMesh.interpolate(turb->nuEff()(), false)
+                );
+
+                return tmp<volVectorField>::New
+                (
+                    "divDevRhoReff",
+                   - fvc::div
+                    (
+                        tRho()*tnuEff()*dev2(T(fvc::grad(tU()))),
+                        "div(((rho*nuEff)*dev2(T(grad(U)))))"
+                    )
+                  - fvc::laplacian
+                    (
+                        tRho()*tnuEff(),
+                        tU(),
+                        "laplacian(nuEff,U)"
+                    )
+                );
+            }
+            else
+            {
+                return tmp<volVectorField>::New
+                (
+                    "divDevRhoReff",
+                  - fvc::div
+                    (
+                        (turb->rho()*turb->nuEff())
+                       *dev2(T(fvc::grad(U))),
+                        "div(((rho*nuEff)*dev2(T(grad(U)))))"
+                    )
+                  - fvc::laplacian
+                    (
+                        turb->rho()*turb->nuEff(),
+                        U,
+                        "laplacian(nuEff,U)"
+                    )
+                );
+            }
         }
     }
 
@@ -89,19 +126,39 @@ Foam::functionObjects::momentumError::divDevRhoReff()
 
         if (turb)
         {
-            return tmp<volVectorField>::New
-            (
-                "divDevReff",
-              - fvc::div
+            if (zoneSubSetPtr_)
+            {
+                const fvMeshSubset& subSetMesh= zoneSubSetPtr_->subSetMesh();
+
+                tmp<volVectorField> tU =
+                    subSetMesh.interpolate(turb->U(), true);
+                tmp<volScalarField> tnuEff =
+                    subSetMesh.interpolate(turb->nuEff()(), true);
+
+                return tmp<volVectorField>::New
                 (
-                    (turb->nuEff())*dev2(T(fvc::grad(turb->U()))),
-                    "div((nuEff*dev2(T(grad(U)))))"
-                )
-              - fvc::laplacian
+                    "divDevRhoReff",
+                  - fvc::div
+                    (
+                        tnuEff()*dev2(T(fvc::grad(tU()))),
+                        "div(((nuEff)*dev2(T(grad(U)))))"
+                    )
+                  - fvc::laplacian(tnuEff(), tU(), "laplacian(nuEff,U)")
+                );
+            }
+            else
+            {
+                return tmp<volVectorField>::New
                 (
-                    turb->nuEff(), turb->U(), "laplacian(nuEff,U)"
-                )
-            );
+                    "divDevReff",
+                  - fvc::div
+                    (
+                        (turb->nuEff())*dev2(T(fvc::grad(U))),
+                        "div((nuEff*dev2(T(grad(U)))))"
+                    )
+                  - fvc::laplacian(turb->nuEff(), U, "laplacian(nuEff,U)")
+                );
+            }
         }
      }
 
@@ -125,16 +182,43 @@ Foam::functionObjects::momentumError::momentumError
 {
     read(dict);
 
-    const surfaceScalarField& phi =
-        lookupObject<surfaceScalarField>(phiName_);
+    const auto& phi =lookupObject<surfaceScalarField>(phiName_);
 
-    volVectorField* momentPtr
+    word momName(scopedName("momentError"));
+
+    if (zoneSubSetPtr_)
+    {
+        const fvMesh& subMesh = zoneSubSetPtr_->subSetMesh().subMesh();
+
+        auto* momentMapPtr
+        (
+            new volVectorField
+            (
+                IOobject
+                (
+                    scopedName("momentErrorMap"),
+                    subMesh.time().timeName(),
+                    subMesh,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE
+                ),
+                subMesh,
+                dimensionedVector(phi.dimensions()*dimVelocity/dimVolume, Zero)
+            )
+        );
+
+        subMesh.objectRegistry::store(momentMapPtr);
+
+        momName = scopedName("momentErrorZone");
+    }
+
+    auto* momentPtr
     (
         new volVectorField
         (
             IOobject
             (
-                "momentError",
+                momName,
                 time_.timeName(),
                 mesh_,
                 IOobject::NO_READ,
@@ -148,46 +232,82 @@ Foam::functionObjects::momentumError::momentumError
     mesh_.objectRegistry::store(momentPtr);
 }
 
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 bool Foam::functionObjects::momentumError::read(const dictionary& dict)
 {
-    fvMeshFunctionObject::read(dict);
-
-    Info<< type() << " " << name() << ":" << nl;
-
-    // Optional field name entries
-    if (dict.readIfPresent<word>("p", pName_))
+    if (fvMeshFunctionObject::read(dict))
     {
-        Info<< "    p: " << pName_ << endl;
-    }
-    if (dict.readIfPresent<word>("U", UName_))
-    {
-        Info<< "    U: " << UName_ << endl;
+        Info<< type() << " " << name() << ":" << nl;
+
+        // Optional field name entries
+        if (dict.readIfPresent<word>("p", pName_))
+        {
+            Info<< "    p: " << pName_ << endl;
+        }
+        if (dict.readIfPresent<word>("U", UName_))
+        {
+            Info<< "    U: " << UName_ << endl;
+        }
+
+        if (dict.readIfPresent<word>("phi", phiName_))
+        {
+            Info<< "    phi: " << phiName_ << endl;
+        }
+
+        if (dict.found("cellZones"))
+        {
+            zoneSubSetPtr_.reset(new zoneSubSet(name(), mesh_, dict));
+        }
+
+        return true;
     }
 
-    if (dict.readIfPresent<word>("phi", phiName_))
-    {
-        Info<< "    phi: " << phiName_ << endl;
-    }
-
-    return true;
+    return false;
 }
 
 
 void Foam::functionObjects::momentumError::calcMomentError()
 {
+    const auto& p = lookupObject<volScalarField>(pName_);
+    const auto& U = lookupObject<volVectorField>(UName_);
+    const auto& phi = lookupObject<surfaceScalarField>(phiName_);
 
-    volVectorField& momentErr =
-        lookupObjectRef<volVectorField>("momentError");
+    if (zoneSubSetPtr_)
+    {
+        zoneSubSetPtr_->subSetMesh().subMesh().fvSchemes::readOpt() =
+            mesh_.fvSchemes::readOpt();
 
-    const volScalarField& p = lookupObject<volScalarField>(pName_);
-    const volVectorField& U = lookupObject<volVectorField>(UName_);
-    const surfaceScalarField& phi =
-        lookupObject<surfaceScalarField>(phiName_);
+        zoneSubSetPtr_->subSetMesh().subMesh().fvSchemes::read();
 
-    momentErr = divDevRhoReff() + fvc::div(phi, U) + fvc::grad(p);
+        const fvMeshSubset& subFvMesh= zoneSubSetPtr_->subSetMesh();
 
+        auto& momentErrMap =
+            subFvMesh.subMesh().lookupObjectRef<volVectorField>
+            (
+                scopedName("momentErrorMap")
+            );
+
+        tmp<volScalarField> tp = subFvMesh.interpolate(p, false);
+        tmp<volVectorField> tU = subFvMesh.interpolate(U, false);
+        tmp<surfaceScalarField> tphi =
+            subFvMesh.interpolate(phi, false);
+
+         momentErrMap =
+         (
+            divDevRhoReff()
+          + fvc::div(tphi, tU, "div(phi,U)")
+          + fvc::grad(tp, "grad(p)")
+         );
+    }
+    else
+    {
+        auto& momentErr =
+            lookupObjectRef<volVectorField>(scopedName("momentError"));
+
+        momentErr =  fvc::div(phi, U) + fvc::grad(p) + divDevRhoReff();
+    }
 }
 
 
@@ -201,10 +321,35 @@ bool Foam::functionObjects::momentumError::execute()
 
 bool Foam::functionObjects::momentumError::write()
 {
-    const volVectorField& momentErr =
-        lookupObjectRef<volVectorField>("momentError");
+    Log << "    functionObjects::" << type() << " " << name();
 
-    momentErr.write();
+    if (!zoneSubSetPtr_)
+    {
+        Log << " writing field: " << scopedName("momentError") << endl;
+
+        const auto& momentErr =
+            lookupObjectRef<volVectorField>(scopedName("momentError"));
+
+        momentErr.write();
+    }
+    else
+    {
+        Log << " writing field: " << scopedName("momentErrorMap") << endl;
+
+        const fvMeshSubset& subSetMesh= zoneSubSetPtr_->subSetMesh();
+        const fvMesh& subMesh = subSetMesh.subMesh();
+
+        const auto& momentErrMap =
+            subMesh.lookupObject<volVectorField>
+            (
+                scopedName("momentErrorMap")
+            );
+
+        tmp<volVectorField> mapMomErr =
+            zoneSubSetPtr_->mapToZone<vector>(momentErrMap);
+
+        mapMomErr().write();
+    }
 
     return true;
 }
