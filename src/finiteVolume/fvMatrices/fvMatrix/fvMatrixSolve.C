@@ -151,7 +151,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
 
     if (lduMeshPtr_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()))
+        if (psi_.mesh().fluxRequired(psi_.name()) && (nMatrix_ == 0))
         {
             // Save lower/upper for flux calculation
             if (asymmetric())
@@ -161,7 +161,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
             saveUpper = upper();
         }
 
-        setLduMesh(lduMesh());
+        setLduMesh(*lduMeshPtr_);
         transferFvMatrixCoeffs();
         setBounAndInterCoeffs();
         for (direction cmpt=0; cmpt<Type::nComponents; cmpt++)
@@ -268,13 +268,9 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         diag() = saveDiag;
     }
 
-    psi.correctBoundaryConditions();
-
-    psi.mesh().setSolverPerformance(psi.name(), solverPerfVec);
-
     if (lduMeshPtr_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()))
+        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0))
         {
             // Restore lower/upper
             if (asymmetric())
@@ -289,6 +285,9 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         // Set the original lduMesh
         setLduMesh(psi_.mesh());
     }
+
+    psi.correctBoundaryConditions();
+    psi.mesh().setSolverPerformance(psi.name(), solverPerfVec);
 
     return solverPerfVec;
 }

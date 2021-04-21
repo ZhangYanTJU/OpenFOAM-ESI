@@ -112,15 +112,6 @@ public:
             ) const;
 
 
-            //- Transfer and return internal field adjacent to the interface
-            //- using faceCells mapping
-            virtual tmp<labelField> internalFieldTransfer
-            (
-                const Pstream::commsTypes commsType,
-                const labelUList& iF,
-                const labelUList& nbrFaceCells
-            ) const;
-
 
         //- Cyclic interface functions
 

@@ -131,6 +131,7 @@ Foam::labelList Foam::assemblyDecomp::decompose
 
     const lduAddressing& addr = assemblyLduMesh.lduAddr();
 
+
     globalIndex globalNumbering
     (
         addr.size(),
@@ -138,6 +139,8 @@ Foam::labelList Foam::assemblyDecomp::decompose
         mesh.comm(),
         Pstream::parRun()
     );
+
+
 
     const labelListList assemblyCellCells
     (

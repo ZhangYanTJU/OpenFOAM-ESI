@@ -304,16 +304,11 @@ public:
 
         // Implicit treatment functions
 
-             //- Return number of new internal sub-faces and new proc faces
+            //- Return number of new internal sub-faces and new proc faces
             virtual void newInternalProcFaces(label&, label&) const;
 
-            //- Return nbrCells
-//             virtual const labelUList& nbrCells() const
-//             {
-//                 return neighbPatch().faceCells();
-//             }
-
-            virtual tmpNrc<labelListList> mapCollocatedFaces() const;
+            //- Return collocated faces
+            virtual refPtr<labelListList> mapCollocatedFaces() const;
 
 
         // Access

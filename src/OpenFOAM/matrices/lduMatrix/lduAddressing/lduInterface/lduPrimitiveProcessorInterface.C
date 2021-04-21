@@ -122,17 +122,4 @@ Foam::lduPrimitiveProcessorInterface::internalFieldTransfer
     return processorLduInterface::receive<label>(commsType, faceCells_.size());
 }
 
-
-Foam::tmp<Foam::labelField>
-Foam::lduPrimitiveProcessorInterface::internalFieldTransfer
-(
-    const Pstream::commsTypes commsType,
-    const labelUList&,
-    const labelUList& faceCells
-) const
-{
-    return processorLduInterface::receive<label>(commsType, faceCells.size());
-}
-
-
 // ************************************************************************* //

@@ -319,91 +319,82 @@ void Foam::cyclicACMIFvPatchField<Type>::manipulateMatrix
     const direction cmpt
 )
 {
-    if (cyclicACMIPatch_.owner())
+    if (this->cyclicACMIPatch().owner())
     {
         label index = this->patch().index();
 
         const label globalPatchID =
-            matrix.lduMesh().patchLocalToGlobalMap()[mat][index];
+            matrix.lduMeshAssembly().patchLocalToGlobalMap()[mat][index];
 
-        if (matrix.internalCoeffs().set(globalPatchID))
+        const Field<scalar> intCoeffsCmpt
+        (
+            matrix.internalCoeffs()[globalPatchID].component(cmpt)
+        );
+
+        const Field<scalar> boundCoeffsCmpt
+        (
+            matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
+        );
+
+        tmp<Field<scalar>> tintCoeffs(coeffs(matrix, intCoeffsCmpt, mat));
+        tmp<Field<scalar>> tbndCoeffs(coeffs(matrix, boundCoeffsCmpt, mat));
+        const Field<scalar>& intCoeffs = tintCoeffs.ref();
+        const Field<scalar>& bndCoeffs = tbndCoeffs.ref();
+
+        const labelUList& u = matrix.lduAddr().upperAddr();
+        const labelUList& l = matrix.lduAddr().lowerAddr();
+
+        label subFaceI = 0;
+
+        const labelList& faceMap =
+            matrix.lduMeshAssembly().faceBoundMap()[mat][index];
+
+        forAll (faceMap, j)
         {
-            const Field<scalar> intCoeffsCmpt
+            label globalFaceI = faceMap[j];
+
+            const scalar boundCorr = -bndCoeffs[subFaceI];
+            const scalar intCorr = -intCoeffs[subFaceI];
+
+            matrix.upper()[globalFaceI] += boundCorr;
+            matrix.diag()[u[globalFaceI]] -= intCorr;
+            matrix.diag()[l[globalFaceI]] -= boundCorr;
+
+            if (matrix.asymmetric())
+            {
+                matrix.lower()[globalFaceI] += intCorr;
+            }
+            subFaceI++;
+        }
+
+        // Set internalCoeffs and boundaryCoeffs in the assembly matrix
+        // on clyclicAMI patches to be used in the individual matrix by
+        // matrix.flux()
+        if (matrix.psi(mat).mesh().fluxRequired(this->internalField().name()))
+        {
+            matrix.internalCoeffs().set
             (
-                matrix.internalCoeffs()[globalPatchID].component(cmpt)
+                globalPatchID, intCoeffs*pTraits<Type>::one
+            );
+            matrix.boundaryCoeffs().set
+            (
+                globalPatchID, bndCoeffs*pTraits<Type>::one
             );
 
-            const Field<scalar> boundCoeffsCmpt
+            const label nbrPathID =
+                cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID();
+
+            const label nbrGlobalPatchID =
+                matrix.lduMeshAssembly().patchLocalToGlobalMap()[mat][nbrPathID];
+
+            matrix.internalCoeffs().set
             (
-                matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
+                nbrGlobalPatchID, intCoeffs*pTraits<Type>::one
             );
-
-            tmp<Field<scalar>> tintCoeffs(coeffs(matrix, intCoeffsCmpt, mat));
-            tmp<Field<scalar>> tbndCoeffs(coeffs(matrix, boundCoeffsCmpt, mat));
-            const Field<scalar>& intCoeffs = tintCoeffs.ref();
-            const Field<scalar>& bndCoeffs = tbndCoeffs.ref();
-
-            const labelUList& u = matrix.lduAddr().upperAddr();
-            const labelUList& l = matrix.lduAddr().lowerAddr();
-
-            label subFaceI = 0;
-
-            const labelList& faceMap = matrix.lduMesh().faceBoundMap()[mat][index];
-
-            if (faceMap.size() > 0)
-            {
-                forAll (faceMap, j)
-                {
-                    label globalFaceI = faceMap[j];
-
-                    if (globalFaceI != -1)
-                    {
-                        const scalar boundCorr = -bndCoeffs[subFaceI];
-                        const scalar intCorr = -intCoeffs[subFaceI];
-
-                        matrix.upper()[globalFaceI] += boundCorr;
-                        matrix.diag()[u[globalFaceI]] -= intCorr;
-                        matrix.diag()[l[globalFaceI]] -= boundCorr;
-
-                        if (matrix.asymmetric())
-                        {
-                            matrix.lower()[globalFaceI] += intCorr;
-                        }
-                        subFaceI++;
-                    }
-                }
-            }
-
-
-            // Set internalCoeffs and boundaryCoeffs in the assembly matrix
-            // on clyclicAMI patches to be used in the individual matrix by
-            // matrix.flux()
-            if (matrix.lduMesh().fluxRequired(this->internalField().name()))
-            {
-                matrix.internalCoeffs().set
-                (
-                    globalPatchID, intCoeffs*pTraits<Type>::one
-                );
-                matrix.boundaryCoeffs().set
-                (
-                    globalPatchID, bndCoeffs*pTraits<Type>::one
-                );
-
-                const label nbrPathID =
-                    cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID();
-
-                const label nbrGlobalPatchID =
-                    matrix.lduMesh().patchLocalToGlobalMap()[mat][nbrPathID];
-
-                matrix.internalCoeffs().set
-                (
-                    nbrGlobalPatchID, intCoeffs*pTraits<Type>::one
-                );
-                matrix.boundaryCoeffs().set
-                (
-                    nbrGlobalPatchID, bndCoeffs*pTraits<Type>::one
-                );
-            }
+            matrix.boundaryCoeffs().set
+            (
+                nbrGlobalPatchID, bndCoeffs*pTraits<Type>::one
+            );
         }
     }
 }
@@ -420,7 +411,10 @@ Foam::cyclicACMIFvPatchField<Type>::coeffs
 {
     const label index(this->patch().index());
 
-    const label nSubFaces(matrix.lduMesh().cellBoundMap()[mat][index].size());
+    const label nSubFaces
+    (
+        matrix.lduMeshAssembly().cellBoundMap()[mat][index].size()
+    );
 
     Field<scalar> mapCoeffs(nSubFaces, Zero);
 
@@ -429,20 +423,21 @@ Foam::cyclicACMIFvPatchField<Type>::coeffs
 
     const scalarField& mask = cyclicACMIPatch_.cyclicACMIPatch().mask();
 
-    scalar tol = cyclicACMIPolyPatch::tolerance();
+    const scalar tol = cyclicACMIPolyPatch::tolerance();
     label subFaceI = 0;
     forAll(mask, faceI)
     {
-        if (mask[faceI] > tol)
+        const scalarList& w = srcWeight[faceI];
+        for(label i=0; i<w.size(); i++)
         {
-            const scalarList& w = srcWeight[faceI];
-            for(label i=0; i<w.size(); i++)
+            if (mask[faceI] > tol)
             {
                 const label localFaceId =
-                    matrix.lduMesh().magSfFaceBoundMap()[mat][index][subFaceI];
+                    matrix.lduMeshAssembly().facePatchFaceMap()
+                    [mat][index][subFaceI];
                 mapCoeffs[subFaceI] = w[i]*coeffs[localFaceId];
-                subFaceI++;
             }
+            subFaceI++;
         }
     }
 

@@ -747,7 +747,7 @@ void Foam::cyclicACMIPolyPatch::newInternalProcFaces
 ) const
 {
     const List<labelList>& addSourceFaces = AMI().srcAddress();
-    const scalarField& fMask = mask();
+    const scalarField& fMask = srcMask();
 
     // Add new faces as many weights for AMI
     forAll (addSourceFaces, faceI)
@@ -776,32 +776,26 @@ void Foam::cyclicACMIPolyPatch::newInternalProcFaces
 }
 
 
-Foam::tmpNrc<Foam::labelListList> Foam::cyclicACMIPolyPatch::
-mapCollocatedFaces() const
+Foam::refPtr<Foam::labelListList> Foam::cyclicACMIPolyPatch::mapCollocatedFaces() const
 {
-    const scalarField& fMask = mask();
-    const labelListList& sourceFaces = AMI().srcAddress();
+    const scalarField& fMask = srcMask();
+    const labelListList& srcFaces = AMI().srcAddress();
     labelListList dOverFaces;
-    label overSize(0);
-    forAll (fMask, faceI)
+
+    dOverFaces.setSize(srcFaces.size());
+    forAll (dOverFaces, faceI)
     {
         if (fMask[faceI] > tolerance_)
         {
-            overSize++;
+            dOverFaces[faceI].setSize(srcFaces[faceI].size());
+
+            forAll (dOverFaces[faceI], subFaceI)
+            {
+                dOverFaces[faceI][subFaceI] = srcFaces[faceI][subFaceI];
+            }
         }
     }
-    dOverFaces.setSize(overSize);
-    forAll (dOverFaces, faceI)
-    {
-        dOverFaces[faceI].setSize(sourceFaces[faceI].size());
-
-        forAll (dOverFaces[faceI], subFaceI)
-        {
-            dOverFaces[faceI][subFaceI] = sourceFaces[faceI][subFaceI];
-        }
-
-    }
-    return tmpNrc<labelListList>(new labelListList(dOverFaces));
+    return refPtr<labelListList>(new labelListList(dOverFaces));
 }
 
 

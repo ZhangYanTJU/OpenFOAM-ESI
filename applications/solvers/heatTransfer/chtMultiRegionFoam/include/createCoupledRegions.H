@@ -1,58 +1,51 @@
 fvSolution solutionDict(runTime);
 
-const bool coupled(solutionDict.getOrDefault("coupledEnergyField", false));
+bool coupled(solutionDict.getOrDefault("coupledEnergyField", false));
 
 autoPtr<fvMatrix<scalar>> fvMatrixAssemblyPtr;
-//autoPtr<lduPrimitiveMeshAssembly> meshPtr;
 
-if (coupled)
+forAll(fluidRegions, i)
 {
-//     UPtrList<fvMesh> meshes(fluidRegions.size() + solidRegions.size());
-//
-//     label meshi = 0;
-//
-//     for (fvMesh& mesh : fluidRegions)
-//     {
-//         meshes.set(meshi, &mesh);
-//         ++meshi;
-//     }
-//
-//     for (fvMesh& mesh : solidRegions)
-//     {
-//         meshes.set(meshi, &mesh);
-//         ++meshi;
-//     }
-//
-//     Info<< "Creating coupled mesh." << nl << endl;
-//
-//     IOobject io
-//     (
-//         "interRegionAssemblyLdu",
-//         runTime.timeName(),
-//         runTime,
-//         IOobject::NO_READ,
-//         IOobject::NO_WRITE,
-//         true
-//     );
-//
-//     meshPtr.reset
-//     (
-//         new lduPrimitiveMeshAssembly(meshes, io)
-//     );
+    const rhoThermo& thermo = refCast<const rhoThermo>(thermoFluid[i]);
+    const auto& bpsi = thermo.T().boundaryField();
 
-    //meshPtr->assemble<mappedPatchBase>();
+    forAll (bpsi, patchI)
+    {
+        if (bpsi[patchI].useImplicit())
+        {
+            coupled = true;
+        }
+    }
+}
 
-//    Info<< "Creating coupled matrix." << nl << endl;
+forAll(solidRegions, i)
+{
+    solidThermo& thermo = thermos[i];
+    const auto& bpsi = thermo.T().boundaryField();
 
-//     fvMatrixAssemblyPtr.reset
-//     (
-//         new fvMatrix
-//         (
-//             meshPtr(),
-//             dimEnergy/dimTime,
-//             "he"
-//         )
-//     );
+    forAll (bpsi, patchI)
+    {
+        if (bpsi[patchI].useImplicit())
+        {
+            coupled = true;
+        }
+    }
+}
 
-//    Info<< "Created coupled matrix." << nl << endl;
+forAll(fluidRegions, i)
+{
+    const rhoThermo& thermo = refCast<const rhoThermo>(thermoFluid[i]);
+    if (coupled)
+    {
+        Info << "Create fvMatrixAssembly." << endl;
+        fvMatrixAssemblyPtr.reset
+        (
+            new fvMatrix<scalar>
+            (
+                thermo.he(),
+                dimEnergy/dimTime
+            )
+        );
+        break;
+    }
 }

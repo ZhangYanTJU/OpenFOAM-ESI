@@ -173,20 +173,10 @@ Foam::tmp<Foam::labelField> Foam::cyclicAMIGAMGInterface::internalFieldTransfer
 {
     const cyclicAMIGAMGInterface& nbr =
         dynamic_cast<const cyclicAMIGAMGInterface&>(neighbPatch());
+    const labelUList& nbrFaceCells = nbr.faceCells();
 
-    return this->internalFieldTransfer(commsType, iF, nbr.faceCells());
-}
-
-
-Foam::tmp<Foam::labelField> Foam::cyclicAMIGAMGInterface::internalFieldTransfer
-(
-    const Pstream::commsTypes commsType,
-    const labelUList& iF,
-    const labelUList& nbrFaceCells
-) const
-{
-    auto tpnf = tmp<labelField>::New(nbrFaceCells.size());
-    auto& pnf = tpnf.ref();
+    tmp<labelField> tpnf(new labelField(nbrFaceCells.size()));
+    labelField& pnf = tpnf.ref();
 
     forAll(pnf, facei)
     {

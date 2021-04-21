@@ -179,12 +179,6 @@ inline const Foam::mapDistribute& Foam::AMIInterpolation::srcMap() const
     return *srcMapPtr_;
 }
 
-template<class SourcePatch, class TargetPatch>
-inline const Foam::List<Foam::Map<Foam::label>>&
-Foam::AMIInterpolation<SourcePatch, TargetPatch>::srccMap() const
-{
-    return srccMap_;
-}
 
 inline const Foam::List<Foam::scalar>& Foam::AMIInterpolation::tgtMagSf() const
 {
@@ -237,13 +231,6 @@ inline Foam::scalarField& Foam::AMIInterpolation::tgtWeightsSum()
 inline const Foam::mapDistribute& Foam::AMIInterpolation::tgtMap() const
 {
     return *tgtMapPtr_;
-}
-
-template<class SourcePatch, class TargetPatch>
-inline const Foam::List<Foam::Map<Foam::label>>&
-Foam::AMIInterpolation<SourcePatch, TargetPatch>::tgtcMap() const
-{
-    return tgtcMap_;
 }
 
 // ************************************************************************* //

@@ -119,7 +119,7 @@ Foam::fvPatchField<Type>::fvPatchField
     internalField_(iF),
     updated_(false),
     manipulatedMatrix_(false),
-    patchType_(dict.getOrDefault<word>("patchType", word::null))
+    patchType_(dict.getOrDefault<word>("patchType", word::null)),
     useImplicit_(dict.getOrDefault<bool>("useImplicit", false))
 {
     if (valueRequired)

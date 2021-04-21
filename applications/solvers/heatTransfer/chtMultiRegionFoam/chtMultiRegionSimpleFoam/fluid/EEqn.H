@@ -22,14 +22,6 @@
 
     if (coupled)
     {
-        fvMatrixAssemblyPtr.reset
-        (
-            new fvMatrix<scalar>
-            (
-                he,
-                dimEnergy/dimTime
-            )
-        );
         fvMatrixAssemblyPtr->addFvMatrix(EEqn);
     }
     else

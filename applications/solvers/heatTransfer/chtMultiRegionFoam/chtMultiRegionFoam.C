@@ -74,13 +74,14 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createMeshes.H"
     #include "createFields.H"
-    #include "createCoupledRegions.H"
     #include "initContinuityErrs.H"
     #include "createTimeControls.H"
     #include "readSolidTimeControls.H"
     #include "compressibleMultiRegionCourantNo.H"
     #include "solidRegionDiffusionNo.H"
     #include "setInitialMultiRegionDeltaT.H"
+
+    #include "createCoupledRegions.H"
 
     while (runTime.run())
     {
@@ -126,7 +127,7 @@ int main(int argc, char *argv[])
             if (coupled)
             {
                 Info<< "\nSolving energy coupled regions " << endl;
-                fvMatrixAssemblyPtr->solve(solutionDict.subDict("solver"));
+                fvMatrixAssemblyPtr->solve();
                 #include "correctThermos.H"
 
                 forAll(fluidRegions, i)
@@ -178,10 +179,7 @@ int main(int argc, char *argv[])
                     if (coupled)
                     {
                         Info<< "\nSolving energy coupled regions " << endl;
-                        fvMatrixAssemblyPtr->solve
-                        (
-                            solutionDict.subDict("solver")
-                        );
+                        fvMatrixAssemblyPtr->solve();
                         #include "correctThermos.H"
 
                         forAll(fluidRegions, i)
@@ -192,6 +190,11 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+        }
+
+        if (coupled)
+        {
+            fvMatrixAssemblyPtr->clear();
         }
 
         runTime.write();

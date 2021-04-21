@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         if (coupled)
         {
             Info<< "\nSolving energy coupled regions" << endl;
-            fvMatrixAssemblyPtr->solve(solutionDict.subDict("solver"));
+            fvMatrixAssemblyPtr->solve();
             #include "correctThermos.H"
 
             forAll(fluidRegions, i)
@@ -102,8 +102,6 @@ int main(int argc, char *argv[])
                 #include "readSolidMultiRegionSIMPLEControls.H"
                 #include "pEqn.H"
                 turb.correct();
-                Info<< "Min/max T:" << min(thermo.T()).value() << ' '
-                    << max(thermo.T()).value() << endl;
             }
         }
 
@@ -137,7 +135,7 @@ int main(int argc, char *argv[])
                 if (coupled)
                 {
                     Info<< "\nSolving energy coupled regions.. " << endl;
-                    fvMatrixAssemblyPtr->solve(solutionDict.subDict("solver"));
+                    fvMatrixAssemblyPtr->solve();
                     #include "correctThermos.H"
 
                     forAll(fluidRegions, i)
@@ -147,6 +145,11 @@ int main(int argc, char *argv[])
                     }
                 }
             }
+        }
+
+        if (coupled)
+        {
+            fvMatrixAssemblyPtr->clear();
         }
 
         runTime.write();

@@ -345,9 +345,9 @@ public:
                 return this->neighbPatchID();
             }
 
-            virtual tmpNrc<labelListList> mapCollocatedFaces() const
+            virtual refPtr<labelListList> mapCollocatedFaces() const
             {
-                tmpNrc<labelListList> tMap(new labelListList(this->size()));
+                refPtr<labelListList> tMap(new labelListList(this->size()));
                 labelListList& map = tMap.ref();
                 forAll (map, i)
                 {
