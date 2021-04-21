@@ -50,9 +50,17 @@ License
 
 void Foam::printMeshStats(const polyMesh& mesh, const bool allTopology)
 {
-    Info<< "Mesh stats" << nl
-        << "    points:           "
+    if (mesh.name() == Foam::polyMesh::defaultRegion)
+    {
+        Info<< "Mesh stats" << nl;
+    }
+    else
+    {
+        Info<< "Mesh " << mesh.name() << " stats" << nl;
+    }
+    Info<< "    points:           "
         << returnReduce(mesh.points().size(), sumOp<label>()) << nl;
+
 
     // Count number of internal points (-1 if not sorted; 0 if no internal
     // points)
