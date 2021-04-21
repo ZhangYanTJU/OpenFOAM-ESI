@@ -14,24 +14,4 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-coupledEnergyField     true;
-
-solver
-{
-    he
-    {
-        solver           GAMG;
-        smoother         symGaussSeidel;
-        tolerance        1e-7;
-        relTol           0.05;
-
-        cacheAgglomeration  true;
-        agglomerator        assembledFaceAreaPair;
-        nPreSweeps      2;
-        nCellsInCoarsestLevel 10;
-        mergeLevels      1;
-        //maxIter          30;
-    }
-}
-
 // ************************************************************************* //

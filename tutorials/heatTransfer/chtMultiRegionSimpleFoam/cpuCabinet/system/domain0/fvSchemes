@@ -28,7 +28,7 @@ divSchemes
     div((muEff*dev2(T(grad(U))))) Gauss linear;
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
     div(phi,K)      bounded Gauss linearUpwind default;
-    div(phi,h)      bounded Gauss linearUpwind default;
+    div(phi,h)      bounded Gauss upwind;
     div(phid,p)     bounded Gauss upwind;
 }
 

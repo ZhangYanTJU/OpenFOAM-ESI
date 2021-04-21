@@ -20,6 +20,7 @@ internalField   uniform 0.5;
 
 boundaryField
 {
+     #includeEtc "caseDicts/setConstraintTypes"
     FAN_SHROUD
     {
         type            kqRWallFunction;

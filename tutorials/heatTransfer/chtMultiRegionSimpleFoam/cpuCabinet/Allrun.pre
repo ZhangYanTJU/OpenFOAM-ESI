@@ -6,10 +6,10 @@ cd "${0%/*}" || exit                                # Run from this directory
 runApplication blockMesh
 runApplication surfaceFeatureExtract
 runApplication snappyHexMesh -overwrite
-runApplication splitMeshRegions -cellZones -overwrite
-topoSet -region domain0
+runApplication $decompDict decomposePar
+restore0Dir -processor
 
-# Restore initial fields
-restore0Dir
+runParallel splitMeshRegions -cellZones -overwrite
+runParallel topoSet -region domain0
 
 #------------------------------------------------------------------------------
