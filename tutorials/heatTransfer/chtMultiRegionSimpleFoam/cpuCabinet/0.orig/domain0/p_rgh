@@ -20,6 +20,7 @@ internalField   uniform 101325;
 
 boundaryField
 {
+     #includeEtc "caseDicts/setConstraintTypes"
     FAN_SHROUD
     {
         type            fixedFluxPressure;

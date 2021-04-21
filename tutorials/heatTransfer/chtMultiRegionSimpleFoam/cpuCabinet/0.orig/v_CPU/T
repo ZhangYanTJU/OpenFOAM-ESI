@@ -20,6 +20,7 @@ internalField   uniform 300;
 
 boundaryField
 {
+     #includeEtc "caseDicts/setConstraintTypes"
     PROCESSOR
     {
         type            externalWallHeatFluxTemperature;
@@ -40,6 +41,7 @@ boundaryField
         qr              none;
         Tnbr            T;
         kappaMethod     solidThermo;
+        useImplicit     true;
         value           $internalField;
     }
 
@@ -63,6 +65,7 @@ boundaryField
         qr              none;
         Tnbr            T;
         kappaMethod     solidThermo;
+        useImplicit     true;
         value           $internalField;
     }
 }

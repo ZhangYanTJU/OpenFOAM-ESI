@@ -20,6 +20,8 @@ internalField   uniform 300;
 
 boundaryField
 {
+     #includeEtc "caseDicts/setConstraintTypes"
+
     FAN_SHROUD
     {
         type            externalWallHeatFluxTemperature;
@@ -119,6 +121,7 @@ boundaryField
         qr              none;
         Tnbr            T;
         kappaMethod     fluidThermo;
+        useImplicit     true;
         value           $internalField;
     }
 
@@ -127,6 +130,7 @@ boundaryField
         type            compressible::turbulentTemperatureRadCoupledMixed;
         Tnbr            T;
         kappaMethod     fluidThermo;
+        useImplicit     true;
         qrNbr           none;
         qr              none;
         value           $internalField;

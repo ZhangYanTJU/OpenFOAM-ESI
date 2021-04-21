@@ -25,15 +25,5 @@ MRF_region.obj
     }
 }
 
-Cabinet.obj
-{
-    extractionMethod extractFromSurface;
-    writeObj        yes;
-
-    extractFromSurfaceCoeffs
-    {
-        includedAngle   150;
-    }
-}
 
 // ************************************************************************* //

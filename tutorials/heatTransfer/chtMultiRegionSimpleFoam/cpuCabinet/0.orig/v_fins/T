@@ -20,6 +20,8 @@ internalField   uniform 300;
 
 boundaryField
 {
+    #includeEtc "caseDicts/setConstraintTypes"
+
     v_fins_to_domain0
     {
         type            compressible::turbulentTemperatureRadCoupledMixed;
@@ -27,6 +29,7 @@ boundaryField
         qr              none;
         Tnbr            T;
         kappaMethod     solidThermo;
+        useImplicit     true;
         value           $internalField;
     }
 
@@ -37,6 +40,7 @@ boundaryField
         qr              none;
         Tnbr            T;
         kappaMethod     solidThermo;
+        useImplicit     true;
         value           $internalField;
     }
 }
