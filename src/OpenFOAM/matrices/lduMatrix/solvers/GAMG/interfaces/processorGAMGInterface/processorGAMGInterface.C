@@ -214,19 +214,6 @@ Foam::tmp<Foam::labelField> Foam::processorGAMGInterface::internalFieldTransfer
 }
 
 
-Foam::tmp<Foam::labelField> Foam::processorGAMGInterface::internalFieldTransfer
-(
-    const Pstream::commsTypes commsType,
-    const labelUList&,
-    const labelUList&
-) const
-{
-    tmp<labelField> tfld(receive<label>(commsType, this->size()));
-
-    return tfld;
-}
-
-
 void Foam::processorGAMGInterface::write(Ostream& os) const
 {
     GAMGInterface::write(os);

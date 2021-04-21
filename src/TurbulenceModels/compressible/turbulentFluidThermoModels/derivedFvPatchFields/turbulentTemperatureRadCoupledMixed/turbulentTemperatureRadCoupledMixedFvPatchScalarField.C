@@ -69,6 +69,7 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
     this->refValue() = 0.0;
     this->refGrad() = 0.0;
     this->valueFraction() = 1.0;
+    this->source() = 0.0;
 }
 
 
@@ -151,6 +152,19 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
         refValue() = *this;
         refGrad() = 0.0;
         valueFraction() = 1.0;
+    }
+
+    if (dict.found("useImplicit"))
+    {
+        useImplicit() = dict.get<Switch>("useImplicit");
+    }
+    if (dict.found("source"))
+    {
+        source() = scalarField("source", dict, p.size());
+    }
+    else
+    {
+        source() = 0.0;
     }
 }
 
@@ -320,6 +334,18 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
         refGrad() = (qr + qrNbr)/kappa(Tp);
     }
 
+    source() = Zero;
+    // If useImplicit is true we need the source term associated with this BC
+    if (this->useImplicit())
+    {
+        const basicThermo& thermo = basicThermo::lookupThermo(*this);
+        const scalarField& pw = thermo.p().boundaryField()[patchi];
+
+        source() =
+            alphaSfDelta()*valueFraction()*deltaH()
+          + (1 - valueFraction())*thermo.Cpv(pw, Tp, patchi)*refGrad();
+    }
+
     mixedFvPatchScalarField::updateCoeffs();
 
     if (debug)
@@ -353,10 +379,8 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::manipulateMatrix
 )
 {
     FatalErrorInFunction
-        << "This BC does not support energy coupling "
-        << "Use compressible::turbulentTemperatureRadCoupledMixed "
-        << "which has more functionalities and it can handle "
-        << "the assemble coupled option for energy. "
+        << "This T BC does not support energy coupling "
+        << "It is implemented on he field "
         << abort(FatalError);
 }
 
@@ -374,88 +398,10 @@ tmp<Field<scalar>> turbulentTemperatureRadCoupledMixedFvPatchScalarField::coeffs
         << "which has more functionalities and it can handle "
         << "the assemble coupled option for energy. "
         << abort(FatalError);
-    /*
-    const label index(this->patch().index());
 
-    const label nSubFaces(matrix.lduMesh().cellBoundMap()[mat][index].size());
-
-    Field<scalar> mapCoeffs(nSubFaces, Zero);
-
-    label subFaceI = 0;
-    forAll(*this, faceI)
-    {
-
-    }
-    */
     return tmp<Field<scalar>>(new Field<scalar>());
 }
 
-/*
-void turbulentTemperatureRadCoupledMixedFvPatchScalarField::manipulateMatrix
-(
-    fvMatrixAssembly& matrix,
-    const labelList& faceMap,
-    const label cellOffset,
-    const label iMatrix
-)
-{
-    const mappedPatchBase& mpp =
-        refCast<const mappedPatchBase>(patch().patch());
-
-    const scalarField vf(alphaDeltaVf());
-
-    const scalarField pAlphaSfDelta(alphaSfDelta());
-
-    forAll (*this, faceI)
-    {
-        if (faceMap.size() > 0)
-        {
-            label globalFaceI = faceMap[faceI];
-            if (globalFaceI != -1)
-            {
-                const scalar corr(vf[faceI]*pAlphaSfDelta[faceI]);
-
-                if (mpp.owner())
-                {
-                    const labelUList& l = matrix.lduAddr().lowerAddr();
-                    matrix.diag()[l[globalFaceI]] += corr;
-                    matrix.lower()[globalFaceI] -= corr;
-                }
-                else
-                {
-                    matrix.upper()[globalFaceI] -= corr;
-                    const labelUList& u = matrix.lduAddr().upperAddr();
-                    matrix.diag()[u[globalFaceI]] += corr;
-                }
-            }
-            else
-            {
-                FatalErrorInFunction
-                    << "Can not find faceId : " <<  globalFaceI
-                    << exit(FatalError);
-            }
-        }
-    }
-
-    const scalarField sourceCorrection
-    (
-        pAlphaSfDelta
-        *(
-            deltaH()*vf
-          + deltaQflux()/beta()
-        )
-    );
-
-    const labelUList& fc = patch().faceCells();
-
-    forAll(fc, i)
-    {
-        label localCelli = fc[i];
-        label globalCelli = cellOffset + localCelli;
-        matrix.source()[globalCelli] += sourceCorrection[i];
-    }
-}
-*/
 
 tmp<scalarField>
 turbulentTemperatureRadCoupledMixedFvPatchScalarField::alphaSfDelta() const
@@ -548,12 +494,12 @@ deltaH() const
     const polyMesh& nbrMesh = mpp.sampleMesh();
 
     const basicThermo* nbrThermo =
-            nbrMesh.lookupObjectPtr<basicThermo>(basicThermo::dictName);
+        nbrMesh.cfindObject<basicThermo>(basicThermo::dictName);
 
     const polyMesh& mesh = patch().boundaryMesh().mesh();
 
     const basicThermo* localThermo =
-                mesh.lookupObjectPtr<basicThermo>(basicThermo::dictName);
+        mesh.cfindObject<basicThermo>(basicThermo::dictName);
 
 
     if (nbrThermo && localThermo)
@@ -566,12 +512,19 @@ deltaH() const
             refCast<const mappedPatchBase>(patch().patch());
 
         const label patchiNrb = mpp.samplePolyPatch().index();
-        const scalarField& ppNbr = nbrThermo->p().boundaryField()[patchiNrb];
 
+        const scalarField& ppNbr = nbrThermo->p().boundaryField()[patchiNrb];
+        //const scalarField& TpNbr = nbrThermo->T().boundaryField()[patchiNrb];
+
+        // Use this Tp to evaluate he jump as this is updated while doing
+        // updateCoeffs on boundary fields which set T values on patches
+        // then non consistent Tp and Tpnbr could be used from different
+        // updated values (specially when T changes drastically between time
+        // steps/
         return
         (
-            localThermo->he(pp, Tp, patchi)
-          - nbrThermo->he(ppNbr, Tp, patchiNrb)
+          -  localThermo->he(pp, Tp, patchi)
+          +  nbrThermo->he(ppNbr, Tp, patchiNrb)
         );
     }
     else

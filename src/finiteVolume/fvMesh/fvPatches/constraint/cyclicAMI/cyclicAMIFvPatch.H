@@ -103,6 +103,41 @@ public:
 
         // Access
 
+//             // Implicit treatment functions
+//
+//                 //- Return number of new internal of this polyPatch faces
+//                 virtual void newInternalProcFaces(label&, label&) const;
+//
+//                 //- Return nbrCells
+//                 virtual const labelUList& nbrCells() const
+//                 {
+//                     return cyclicAMIPolyPatch_.neighbPatch().faceCells();
+//                 }
+//
+//                 //- Return nbr patch ID
+//                 virtual label neighbPolyPatchID() const
+//                 {
+//                     return neighbPatchID();
+//                 }
+//
+//                 //- Return collocated faces map
+//                 virtual refPtr<labelListList> mapCollocatedFaces() const
+//                 {
+//                     const labelListList& sourceFaces =
+//                         cyclicAMIPolyPatch_.AMI().srcAddress();
+//                     return refPtr<labelListList>
+//                     (
+//                         new labelListList(sourceFaces)
+//                     );
+//                 }
+//
+//                 //- Return implicit master
+//                 virtual bool masterImplicit() const
+//                 {
+//                     return owner();
+//                 }
+
+
             //- Return local reference cast into the cyclic patch
             const cyclicAMIPolyPatch& cyclicAMIPatch() const
             {
@@ -168,15 +203,10 @@ public:
                 );
             }
 
-<<<<<<< HEAD
+
             //- Return true if this patch is coupled. This is equivalent
             //- to the coupledPolyPatch::coupled() if parallel running or
             //- both sides present, false otherwise
-=======
-            //- Return true if this patch is coupled.
-            //  This is equivalent to coupledPolyPatch::coupled()
-            //  if parallel running or both sides present, false otherwise
->>>>>>> 79a503f9f7... ENH: add face-cell addressing (finer addressing granularity)
             virtual bool coupled() const;
 
             //- Return delta (P to N) vectors across coupled patch

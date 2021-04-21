@@ -29,10 +29,6 @@ License
 #include "cyclicAMIFvPatch.H"
 #include "cyclicACMIFvPatch.H"
 
-//#include "cyclicAMIPolyPatch.H"
-//#include "cyclicACMIPolyPatch.H"
-//#include "cyclicPolyPatch.H"
-
 #include "lduPrimitiveProcessorInterface.H"
 #include "AssemblyFvPatch.H"
 
@@ -41,7 +37,7 @@ License
 template<class Type>
 void Foam::lduPrimitiveMeshAssembly::update
 (
-    UPtrList<GeometricField<Type, fvPatchField, volMesh>> psis
+    UPtrList<GeometricField<Type, fvPatchField, volMesh>>& psis
 )
 {
     label newFaces(0);
@@ -51,61 +47,77 @@ void Foam::lduPrimitiveMeshAssembly::update
     const label nMeshes(meshes_.size());
 
     // patchMap: maps from original to asembled (-1 for removed)
-
     for (label i=0; i < nMeshes; ++i)
     {
-        patchMap_[i].setSize(meshes_[i].boundaryMesh().size(), -1);
+        patchMap_[i].setSize(meshes_[i].interfaces().size(), -1);
         patchLocalToGlobalMap_[i].setSize(patchMap_[i].size(), -1);
 
         faceBoundMap_[i].setSize(patchMap_[i].size());
         cellBoundMap_[i].setSize(patchMap_[i].size());
-        magSfFaceBoundMap_[i].setSize(patchMap_[i].size());
+        facePatchFaceMap_[i].setSize(patchMap_[i].size());
+    }
 
-        forAll(meshes_[i].boundaryMesh(), patchI)
+    for (label i=0; i < nMeshes; ++i)
+    {
+        forAll(meshes_[i].interfaces(), patchI)
         {
-            const polyPatch& pp = meshes_[i].boundaryMesh()[patchI];
-            const fvPatchField<Type>& fvp = psis[i].boundaryField()[patchI];
-
-            if (fvp.coupled() && fvp.useImplicit())
+            //if (meshes_[i].interfaces().set(patchI))
             {
-                if (pp.masterImplicit())
+                //const lduInterface& pp = meshes_[i].interfaces()[patchI];
+                //const polyPatch& pp = meshes_[i].boundaryMesh()[patchI];
+
+                const polyPatch& pp = psis[i].mesh().boundaryMesh()[patchI];
+                const fvPatchField<Type>& fvp = psis[i].boundaryField()[patchI];
+
+                if (fvp.useImplicit())
                 {
-                    label newFacesPatch(0);
-                    label newFacesProcPatch(0);
-
-                    pp.newInternalProcFaces(newFacesPatch, newFacesProcPatch);
-
-                    newFaces += newFacesPatch;
-                    newFacesProc += newFacesProcPatch;
-
-                    if (newFacesProc > 0)
+                    if (pp.masterImplicit())
                     {
-                        FatalErrorInFunction
-                            << "The number of faces on either side of the coupled"
-                            << "patch " << pp.name() << " are not the same. "
-                            << "This might be due to the decomposition used. "
-                            << " Please use decomposition preserving the AMI on a "
-                            << " single processor."
-                            << exit(FatalError);
+                        label newFacesPatch(0);
+                        label newFacesProcPatch(0);
+
+                        pp.newInternalProcFaces(newFacesPatch, newFacesProcPatch);
+
+                        newFaces += newFacesPatch;
+                        newFacesProc += newFacesProcPatch;
+
+                        if (newFacesProc > 0)
+                        {
+                            FatalErrorInFunction
+                                << "The number of faces on either side of the coupled"
+                                << "patch " << patchI << " are not the same. "
+                                << "This might be due to the decomposition used. "
+                                << " Please use decomposition preserving the AMI on a "
+                                << " single processor."
+                                << exit(FatalError);
+                        }
+
+                        cellBoundMap_[i][patchI].setSize(newFacesPatch, -1);
+                        facePatchFaceMap_[i][patchI].setSize(newFacesPatch, -1);
+                        faceBoundMap_[i][patchI].setSize(newFacesPatch, -1);
+
+                        const label nbrId = pp.neighbPolyPatchID();
+                        //const label meshNrbId = pp.neighbRegionID();
+                        const label meshNrbId = findNbrMeshId(pp, i);
+
+                        cellBoundMap_[meshNrbId][nbrId].setSize(newFacesPatch, -1);
+                        facePatchFaceMap_[meshNrbId][nbrId].setSize(newFacesPatch, -1);
+                        faceBoundMap_[meshNrbId][nbrId].setSize(newFacesPatch, -1);
                     }
-
-                    cellBoundMap_[i][patchI].setSize(newFacesPatch, -1);
-                    magSfFaceBoundMap_[i][patchI].setSize(newFacesPatch, -1);
-                    faceBoundMap_[i][patchI].setSize(newFacesPatch, -1);
-
-                    const label nbrId = pp.neighbPolyPatchID();
-
-                    cellBoundMap_[i][nbrId].setSize(newFacesPatch, -1);
-                    magSfFaceBoundMap_[i][nbrId].setSize(newFacesPatch, -1);
-                    faceBoundMap_[i][nbrId].setSize(newFacesPatch, -1);
+                }
+                else
+                {
+                    patchMap_[i][patchI] = newPatches;
+                    patchLocalToGlobalMap_[i][patchI] = newPatches;
+                    newPatches++;
                 }
             }
-            else
-            {
-                patchMap_[i][patchI] = newPatches;
-                patchLocalToGlobalMap_[i][patchI] = newPatches;
-                newPatches++;
-            }
+//             else
+//             {
+//                 patchMap_[i][patchI] = newPatches;
+//                 patchLocalToGlobalMap_[i][patchI] = newPatches;
+//                 newPatches++;
+//             }
         }
     }
 
@@ -115,7 +127,7 @@ void Foam::lduPrimitiveMeshAssembly::update
 
     for (label i=0; i < nMeshes; ++i)
     {
-        forAll(meshes_[i].boundaryMesh(), patchI)
+        forAll(meshes_[i].interfaces(), patchI)
         {
             if (patchLocalToGlobalMap_[i][patchI] == -1)
             {
@@ -137,13 +149,14 @@ void Foam::lduPrimitiveMeshAssembly::update
 
     if (true)
     {
-        Pout<< " old nFaces : " << oldFaces
-            << " new nFaces (internal) : " << newFaces
-            << " new nFaces (remote) : " << newFacesProc << endl;
+        Info<< " old total faces : " << oldFaces
+            << " new total faces (internal) : " << newFaces
+            << " new faces (remote) : " << newFacesProc
+            << " new Faces : " << newFaces - oldFaces << endl;
 
-        Pout<< " new patches : " << newPatches << endl;
+        Info<< " new patches : " << newPatches << endl;
 
-        Pout<< "Local to Global patch Map  : " << patchLocalToGlobalMap_ << endl;
+        Info<< "Local to Global patch Map  : " << patchLocalToGlobalMap_ << endl;
     }
 
     // This gives the global cellId given the local patchId for interfaces
@@ -155,31 +168,34 @@ void Foam::lduPrimitiveMeshAssembly::update
 
         forAll(interfacesLst, patchI)
         {
-            label globalPatchId = patchMap_[i][patchI];
-
-            if (globalPatchId != -1)
+            //if (meshes_[i].interfaces().set(patchI))
             {
-                const labelUList& faceCells =
-                    meshes_[i].lduAddr().patchAddr(patchI);
+                label globalPatchId = patchMap_[i][patchI];
 
-                // Fill local patchAddr for standard patches
-                if (!faceCells.empty())
+                if (globalPatchId != -1)
                 {
-                    patchAddr_[globalPatchId].setSize(faceCells.size(), -1);
+                    const labelUList& faceCells =
+                        meshes_[i].lduAddr().patchAddr(patchI);
 
-                    for (label celli = 0; celli < faceCells.size(); ++celli)
+                    // Fill local patchAddr for standard patches
+                    if (!faceCells.empty())
                     {
-                        patchAddr_[globalPatchId][celli] =
-                            cellOffsets_[i] + faceCells[celli];
+                        patchAddr_[globalPatchId].setSize(faceCells.size(), -1);
+
+                        for (label celli = 0; celli < faceCells.size(); ++celli)
+                        {
+                            patchAddr_[globalPatchId][celli] =
+                                cellOffsets_[i] + faceCells[celli];
+                        }
                     }
                 }
             }
         }
     }
 
-    if (debug)
+    if (true)
     {
-        Pout<< "Patch MAp : " << patchMap_ <<  endl;
+        Pout<< "Patch Map : " << patchMap_ <<  endl;
     }
 
     // Interfaces
@@ -200,7 +216,10 @@ void Foam::lduPrimitiveMeshAssembly::update
             {
                 if (interfacesLst.set(patchI))
                 {
-                    const polyPatch& pp = meshes_[i].boundaryMesh()[patchI];
+                    //const polyPatch& pp = meshes_[i].boundaryMesh()[patchI];
+                    const polyPatch& pp = psis[i].mesh().boundaryMesh()[patchI];
+                    const fvBoundaryMesh& bm = psis[i].mesh().boundary();
+                    //const lduInterface& pp = meshes_[i].interfaces()[patchI];
 
                     if (isA<cyclicLduInterface>(interfacesLst[patchI]))
                     {
@@ -218,7 +237,7 @@ void Foam::lduPrimitiveMeshAssembly::update
                             new AssemblyFvPatch<cyclicFvPatch>
                             (
                                 pp,
-                                meshes_[i].boundary(),
+                                bm,
                                 patchAddr_[globalNbr],
                                 patchAddr_[globalPatchId],
                                 globalNbr
@@ -250,7 +269,7 @@ void Foam::lduPrimitiveMeshAssembly::update
                                 new AssemblyFvPatch<cyclicAMIFvPatch>
                                 (
                                     pp,
-                                    meshes_[i].boundary(),
+                                    bm,
                                     patchAddr_[globalNbr],
                                     patchAddr_[globalPatchId],
                                     globalNbr
@@ -265,7 +284,7 @@ void Foam::lduPrimitiveMeshAssembly::update
                                 new AssemblyFvPatch<cyclicACMIFvPatch>
                                 (
                                     pp,
-                                    meshes_[i].boundary(),
+                                    bm,
                                     patchAddr_[globalNbr],
                                     patchAddr_[globalPatchId],
                                     globalNbr
@@ -330,7 +349,6 @@ void Foam::lduPrimitiveMeshAssembly::update
 
         startIndex += nFaces;
     }
-
     // Add new lower/upper adressing for new internal faces corresponding
     // to patch faces that has a correspondent on the slave patch
     // (i.e map, AMI,etc)
@@ -340,57 +358,68 @@ void Foam::lduPrimitiveMeshAssembly::update
 
     for (label i=0; i < nMeshes; ++i)
     {
-        forAll(meshes_[i].boundaryMesh(), patchI)
+        //forAll(meshes_[i].boundaryMesh(), patchI)
+        const lduInterfacePtrsList interfacesLst = meshes_[i].interfaces();
+
+        forAll(interfacesLst, patchI)
         {
-            const polyPatch& pp = meshes_[i].boundaryMesh()[patchI];
-            const fvPatchField<Type>& fvp = psis[i].boundaryField()[patchI];
-
-            if (fvp.useImplicit() && pp.size() > 0)
+            //if (meshes_[i].interfaces().set(patchI))
             {
-                label meshNrbId = this->findNbrMeshId(pp, meshes_);
+                //const polyPatch& pp = meshes_[i].boundaryMesh()[patchI];
+                const polyPatch& pp = psis[i].mesh().boundaryMesh()[patchI];
+                //const lduInterface& pp = meshes_[i].interfaces()[patchI];
 
-                if (pp.masterImplicit())
+                const fvPatchField<Type>& fvp = psis[i].boundaryField()[patchI];
+
+                if (fvp.useImplicit())// && pp.size() > 0)
                 {
-                    const labelUList& nbrFaceCells = pp.nbrCells();
-                    const label nbrPatchId = pp.neighbPolyPatchID();
-                    tmpNrc<labelListList> tlocalFaceToFace =
-                        pp.mapCollocatedFaces();
-                    const labelListList& localFaceToFace = tlocalFaceToFace();
+                    label meshNrbId = this->findNbrMeshId(pp, i);
+                    //label meshNrbId = pp.neighbRegionID();
 
-                    // Compact target map
-                    // key() = local face in proci
-                    // *iter = compactId
-
-                    label subFaceI(0);
-                    forAll(pp.faceCells(), faceI)
+                    if (pp.masterImplicit())
                     {
-                        const label cellI =
-                            pp.faceCells()[faceI] + cellOffsets_[i];
+                        const labelUList& nbrFaceCells = pp.nbrCells();
+                        const label nbrPatchId = pp.neighbPolyPatchID();
+                        refPtr<labelListList> tlocalFaceToFace =
+                            pp.mapCollocatedFaces();
+                        const labelListList& localFaceToFace = tlocalFaceToFace();
 
-                        const labelList& facesIds = localFaceToFace[faceI];
+                        // Compact target map
+                        // key() = local face in proci
+                        // *iter = compactId
 
-                        forAll(facesIds, j)
+                        label subFaceI(0);
+                        forAll(pp.faceCells(), faceI)
                         {
-                            label nbrFaceId = facesIds[j];
+                            const label cellI =
+                                pp.faceCells()[faceI] + cellOffsets_[i];
 
-                            // local faces
-                            const label nbrCellI =
-                                nbrFaceCells[nbrFaceId] + cellOffsets_[meshNrbId];
+                            const labelList& facesIds = localFaceToFace[faceI];
 
-                            lowerAddr()[nFaces] = min(cellI, nbrCellI);
-                            upperAddr()[nFaces] = max(cellI, nbrCellI);
+                            forAll(facesIds, j)
+                            {
+                                label nbrFaceId = facesIds[j];
 
-                            cellBoundMap_[i][patchI][subFaceI] = nbrCellI;
-                            cellBoundMap_[i][nbrPatchId][subFaceI] = cellI;
+                                // local faces
+                                const label nbrCellI =
+                                    nbrFaceCells[nbrFaceId] + cellOffsets_[meshNrbId];
 
-                            magSfFaceBoundMap_[i][patchI][subFaceI] = faceI;
-                            magSfFaceBoundMap_[i][nbrPatchId][subFaceI] = nbrFaceId;
+                                lowerAddr()[nFaces] = min(cellI, nbrCellI);
+                                upperAddr()[nFaces] = max(cellI, nbrCellI);
 
-                            faceBoundMap_[i][patchI][subFaceI] = nFaces;
-                            faceBoundMap_[i][nbrPatchId][subFaceI] = nFaces;
+                                cellBoundMap_[i][patchI][subFaceI] = nbrCellI;
+                                cellBoundMap_[meshNrbId][nbrPatchId][subFaceI] = cellI;
 
-                            ++subFaceI;
-                            ++nFaces;
+                                facePatchFaceMap_[i][patchI][subFaceI] = faceI;
+                                facePatchFaceMap_[meshNrbId][nbrPatchId][subFaceI] =
+                                    nbrFaceId;
+
+                                faceBoundMap_[i][patchI][subFaceI] = nFaces;
+                                faceBoundMap_[meshNrbId][nbrPatchId][subFaceI] = nFaces;
+
+                                ++subFaceI;
+                                ++nFaces;
+                            }
                         }
                     }
                 }
@@ -445,7 +474,7 @@ void Foam::lduPrimitiveMeshAssembly::update
     // Update time index
     timeIndex_ = psis[0].mesh().time().timeIndex();
 
-    if (debug)
+    if (false)
     {
         DebugVar(faceBoundMap_);
         DebugVar(cellBoundMap_);

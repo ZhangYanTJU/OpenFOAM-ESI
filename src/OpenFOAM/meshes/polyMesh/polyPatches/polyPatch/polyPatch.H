@@ -47,7 +47,6 @@ SourceFiles
 #include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 #include "SubField.H"
-#include "tmpNrc.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -338,10 +337,11 @@ public:
                 return -1;
             }
 
-            virtual tmpNrc<labelListList> mapCollocatedFaces() const
+            //- Return mapped collocacated faces
+            virtual refPtr<labelListList> mapCollocatedFaces() const
             {
                 NotImplemented;
-                tmpNrc<labelListList> tMap(new labelListList(size()));
+                refPtr<labelListList> tMap(new labelListList(size()));
                 return tMap;
             }
 
@@ -350,6 +350,12 @@ public:
             {
                 NotImplemented;
                 return false;
+            }
+
+            //- Return neighbour region name
+            virtual word neighbRegionID() const
+            {
+                return word("none");
             }
 
 

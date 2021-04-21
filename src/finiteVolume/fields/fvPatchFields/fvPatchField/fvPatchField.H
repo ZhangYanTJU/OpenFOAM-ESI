@@ -312,6 +312,12 @@ public:
                 return useImplicit_;
             }
 
+            //- Non-const access to useImplicit
+            bool& useImplicit()
+            {
+                return useImplicit_;
+            }
+
 
         // Attributes
 

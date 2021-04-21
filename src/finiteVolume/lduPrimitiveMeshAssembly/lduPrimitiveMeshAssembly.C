@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lduPrimitiveMeshAssembly.H"
+#include "mappedPatchBase.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -37,7 +38,7 @@ namespace Foam
 
 Foam::label Foam::lduPrimitiveMeshAssembly::totalSize
 (
-    const UPtrList<fvMesh>& meshes
+    const UPtrList<lduMesh>& meshes
 )
 {
     label tot = 0;
@@ -54,22 +55,22 @@ Foam::label Foam::lduPrimitiveMeshAssembly::totalSize
 Foam::label Foam::lduPrimitiveMeshAssembly::findNbrMeshId
 (
     const polyPatch& pp,
-    const UPtrList<fvMesh>& meshes
-)
+    const label iMesh
+) const
 {
-    if (meshes.size() == 1)
+    if (pp.neighbRegionID() != "none")
     {
-        return 0;
-    }
-    else
-    {
-        forAll(meshes, meshi)
+        forAll(meshes_, meshi)
         {
-            if (meshes[meshi].name() == pp.boundaryMesh().mesh().name())
+            if (meshes_[meshi].thisDb().name() == pp.neighbRegionID())
             {
                 return meshi;
             }
         }
+    }
+    else
+    {
+        return iMesh;
     }
     return -1;
 }
@@ -79,14 +80,14 @@ Foam::label Foam::lduPrimitiveMeshAssembly::findNbrMeshId
 
 Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
 (
-    const UPtrList<fvMesh>& meshes,
+    const UPtrList<lduMesh>& meshes,
     const IOobject& io
 )
 :
     regIOobject(io),
     lduPrimitiveMesh(totalSize(meshes)),
     meshes_(meshes),
-    timeIndex_(meshes[0].time().timeIndex())
+    timeIndex_(io.time().timeIndex())
 {
     forAll(meshes, meshi)
     {
@@ -105,8 +106,7 @@ Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
     cellBoundMap_.setSize(nMeshes);
     faceMap_.setSize(nMeshes);
     patchLocalToGlobalMap_.setSize(nMeshes);
-    magSfFaceBoundMap_.setSize(nMeshes);
-
+    facePatchFaceMap_.setSize(nMeshes);
 
     // Determine cellOffset and faceOffset
     cellOffsets_.setSize(1+nMeshes);
@@ -121,46 +121,28 @@ Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
 
 Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
 (
-    const fvMesh& mesh,
+    const lduMesh& mesh,
     const IOobject& io
 )
 :
     regIOobject(io),
     lduPrimitiveMesh(mesh.lduAddr().size()),
     meshes_(1),
-    timeIndex_(mesh.time().timeIndex())
+    timeIndex_(io.time().timeIndex())
 {
-    //meshes_.setSize(1);
-    meshes_.set(0, const_cast<fvMesh*>(&mesh));
+    meshes_.set(0, const_cast<lduMesh*>(&mesh));
     const label nMeshes(1);
     patchMap_.setSize(nMeshes);
     faceBoundMap_.setSize(nMeshes);
     cellBoundMap_.setSize(nMeshes);
     faceMap_.setSize(nMeshes);
     patchLocalToGlobalMap_.setSize(nMeshes);
-    magSfFaceBoundMap_.setSize(nMeshes);
+    facePatchFaceMap_.setSize(nMeshes);
 
     // Determine cellOffset and faceOffset
     cellOffsets_.setSize(nMeshes);
     cellOffsets_[0] = 0;
 }
 
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-bool Foam::lduPrimitiveMeshAssembly::fluxRequired(const word& name) const
-{
-    bool flux = false;
-    for (label i=0; i < meshes_.size(); ++i)
-    {
-        if (meshes_[i].fluxRequired(name))
-        {
-            flux = true;
-            break;
-        }
-    }
-    return flux;
-
-}
 
 // ************************************************************************* //

@@ -60,15 +60,16 @@ private:
     // Private Data
 
         //- UPtrList for fvMesh
-        UPtrList<fvMesh> meshes_;
+        //UPtrList<fvMesh> meshes_;
+        UPtrList<lduMesh> meshes_;
 
         //- Overwrite patchAddr from lduPrimitiveMesh for assembly ldu address
         List<labelList> patchAddr_;
 
-        //- Map patches from local (-1 for non-existing)
+        //- Map from original to asembled (-1 for non-existing)
         labelListList patchMap_;
 
-        //- Map patches from local to global
+        //- Map from original to asembled plus extra virtual patch Ids
         labelListList patchLocalToGlobalMap_;
 
         //- Map internal faces from local to global
@@ -81,7 +82,7 @@ private:
         labelListListList cellBoundMap_;
 
         //- Map patch local sub-face to local patch face
-        labelListListList magSfFaceBoundMap_;
+        labelListListList facePatchFaceMap_;
 
         //- Offset cells
         labelList cellOffsets_;
@@ -93,14 +94,7 @@ private:
     // Private Member Functions
 
         //- Get size of all meshes
-        static label totalSize(const UPtrList<fvMesh>&);
-
-        //- Find nrb mesh Id for mapped patches
-        static label findNbrMeshId
-        (
-            const polyPatch& pp,
-            const UPtrList<fvMesh>& meshes
-        );
+        static label totalSize(const UPtrList<lduMesh>&);
 
         //- No copy construct
         lduPrimitiveMeshAssembly(const lduPrimitiveMeshAssembly&) = delete;
@@ -122,14 +116,14 @@ public:
         //- Construct from fvMeshes combining mapped faces into internal faces
         lduPrimitiveMeshAssembly
         (
-            const UPtrList<fvMesh>& meshes,
+            const UPtrList<lduMesh>& meshes,
             const IOobject& io
         );
 
         //- Construct from one mesh
         lduPrimitiveMeshAssembly
         (
-            const fvMesh&,
+            const lduMesh&,
             const IOobject& io
         );
 
@@ -140,8 +134,16 @@ public:
         template<class Type>
         void update
         (
-            UPtrList<GeometricField<Type, fvPatchField, volMesh>> psis
+            UPtrList<GeometricField<Type, fvPatchField, volMesh>>& psis
         );
+
+
+        //- Find nrb mesh Id for mapped patches
+        label findNbrMeshId
+        (
+            const polyPatch& pp,
+            const label iMesh
+        ) const;
 
 
     //- Destructor
@@ -176,7 +178,6 @@ public:
             return patchAddr_[patchNo];
         }
 
-
         //- Return patchMap
         const labelListList& patchMap() const
         {
@@ -195,19 +196,19 @@ public:
             return faceBoundMap_;
         }
 
-        //- Return boundary face cell
+        //- Return patch local sub-face to nbrCellId map
         const labelListListList& cellBoundMap() const
         {
             return cellBoundMap_;
         }
 
-        const labelListListList& magSfFaceBoundMap() const
+        //- Return patch local sub-face to local patch face map
+        const labelListListList& facePatchFaceMap() const
         {
-            return magSfFaceBoundMap_;
+            return facePatchFaceMap_;
         }
 
-
-        //- Return cellOffsets [1+nMeshes]
+        //- Return cellOffsets
         const labelList& cellOffsets() const
         {
             return cellOffsets_;
@@ -226,13 +227,10 @@ public:
         }
 
         //- Return fvMeshes
-        const UPtrList<fvMesh>& meshes() const
+        const UPtrList<lduMesh>& meshes() const
         {
             return meshes_;
         }
-
-        //- Flux required
-        bool fluxRequired(const word& name) const;
 
         //- Write Data
         virtual bool writeData(Ostream&) const

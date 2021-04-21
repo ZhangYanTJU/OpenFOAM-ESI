@@ -67,6 +67,14 @@ assemblyFaceAreaPairGAMGAgglomeration
 
     const lduMesh& ldumesh = matrix.mesh();
 
+    if (!isA<lduPrimitiveMeshAssembly>(ldumesh))
+    {
+        FatalErrorInFunction
+            << "assemblyFaceAreaPairGAMGAgglomeration requested but "
+            << " lduMesh is not  lduPrimitiveMeshAssembly." << nl
+            << " Change agglomerator type to faceAreaPair "
+            << abort(FatalError);
+    }
     const lduPrimitiveMeshAssembly& mesh =
         refCast<const lduPrimitiveMeshAssembly>(ldumesh);
 
@@ -80,7 +88,7 @@ assemblyFaceAreaPairGAMGAgglomeration
 
     for (label i=0; i < mesh.meshes().size(); ++i)
     {
-        const fvMesh& m = mesh.meshes()[i];
+        const fvMesh& m = refCast<const fvMesh>(mesh.meshes()[i]);
         const labelList& subFaceMap = faceMap[i];
         const vectorField& areas = m.Sf();
 
@@ -99,6 +107,8 @@ assemblyFaceAreaPairGAMGAgglomeration
 
             if (globalPatchID == -1)
             {
+                //const lduInterface& inter = m.interfaces()[patchI];
+
                 if (pp.masterImplicit())
                 {
                     const vectorField& sf = m.boundary()[patchI].Sf();

@@ -58,12 +58,14 @@ protected:
 
         // Private Data
 
-        //- Nbr faceCell
-        const labelList& nrbFaceCells_;
+            //- Nbr faceCell
+            const labelList& nrbFaceCells_;
 
-        const labelList& faceCells_;
+            //- Local faceCells
+            const labelList& faceCells_;
 
-        label nbrPatchID_;
+            //- Nbr patch ID
+            label nbrPatchID_;
 
 public:
 

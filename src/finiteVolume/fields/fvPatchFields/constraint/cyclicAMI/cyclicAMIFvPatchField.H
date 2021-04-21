@@ -108,7 +108,7 @@ class cyclicAMIFvPatchField
         template<class Type2>
         void collectStencilData
         (
-            const tmpNrc<mapDistribute>& mapPtr,
+            const refPtr<mapDistribute>& mapPtr,
             const labelListList& stencil,
             const Type2& data,
             List<Type2>& expandedData

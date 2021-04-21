@@ -52,6 +52,7 @@ SourceFiles
 #include "zero.H"
 #include "className.H"
 #include "lduPrimitiveMeshAssembly.H"
+#include "lduMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -109,6 +110,7 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> operator&
 );
 
 
+
 /*---------------------------------------------------------------------------*\
                            Class fvMatrix Declaration
 \*---------------------------------------------------------------------------*/
@@ -126,7 +128,7 @@ class fvMatrix
         const GeometricField<Type, fvPatchField, volMesh>& psi_;
 
         //- Pointer list to coupled fvMatrices. matrices_[0] is *this
-        UPtrList<fvMatrix<Type>> matrices_;
+        PtrList<fvMatrix<Type>> matrices_;
 
         //- Optional lduAdressing
         lduPrimitiveMeshAssembly* lduMeshPtr_;
@@ -136,6 +138,9 @@ class fvMatrix
 
         //- Name of the lduAssembly
         word lduAssemblyName_;
+
+        //- Number of fvMatrices added to this
+        label nMatrix_;
 
         //- Dimension set
         dimensionSet dimensions_;
@@ -307,17 +312,17 @@ public:
 
                 label nMatrices() const
                 {
-                    return matrices_.size();
+                    return (nMatrix_ == 0 ? 1 : nMatrix_);
                 }
 
                 const fvMatrix<Type>& matrix(const label i) const
                 {
-                    return matrices_[i];
+                    return (nMatrix_ == 0 ? *this : matrices_[i]);
                 }
 
                 fvMatrix<Type>& matrix(const label i)
                 {
-                    return matrices_[i];
+                    return (nMatrix_ == 0 ? *this : matrices_[i]);
                 }
 
                 label globalPatchID
@@ -336,7 +341,7 @@ public:
                     }
                 }
 
-                //- Update lower, upper, diag and source
+                //- Transfer lower, upper, diag and source to this fvMatrix
                 void transferFvMatrixCoeffs();
 
                 //- Create or update ldu assembly
@@ -361,7 +366,7 @@ public:
                 ) const;
 
                 //- Return optional lduAdressing
-                const lduPrimitiveMeshAssembly& lduMesh()
+                const lduPrimitiveMeshAssembly& lduMeshAssembly()
                 {
                     return *lduMeshPtr_;
                 }
@@ -372,7 +377,7 @@ public:
                     const label i = 0
                 ) const
                 {
-                    return (i == 0 ? psi_ : matrix(i).psi(i));
+                    return ((i == 0 && nMatrix_ == 0) ? psi_ : matrix(i).psi());
                 }
 
 
@@ -383,13 +388,20 @@ public:
                 {
                     return
                     (
-                        i == 0
+                        (i == 0 && nMatrix_ == 0)
                       ? const_cast<GeometricField<Type, fvPatchField, volMesh>&>(psi_)
                       : const_cast<GeometricField<Type, fvPatchField, volMesh>&>
                         (
-                            matrix(i).psi(i)
+                            matrix(i).psi()
                         )
                     );
+                }
+
+                //- Clear multiple fvMatrices
+                void clear()
+                {
+                    matrices_.clear();
+                    nMatrix_ = 0;
                 }
 
 

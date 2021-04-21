@@ -97,6 +97,15 @@ public:
 
     // Member functions
 
+//         // Implicit treatment functions
+//
+//             //- Return number of new internal sub-faces and new proc faces
+//             virtual void newInternalProcFaces(label&, label&) const;
+//
+//             //- Return collocated faces
+//             virtual refPtr<labelListList> mapCollocatedFaces() const;
+
+
         // Access
 
             //- Return local reference cast into the cyclic patch

@@ -93,6 +93,7 @@ class cyclicFvPatchField
 
 public:
 
+
     //- Runtime type information
     TypeName(cyclicFvPatch::typeName_());
 

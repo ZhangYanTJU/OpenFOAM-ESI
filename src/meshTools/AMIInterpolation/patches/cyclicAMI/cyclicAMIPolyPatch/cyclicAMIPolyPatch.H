@@ -265,14 +265,6 @@ public:
             const label newStart
         );
 
-        //- Copy construct, resetting nbrPatchID and faceCells
-        cyclicAMIPolyPatch
-        (
-            const cyclicAMIPolyPatch&,
-            label nbrPatchID,
-            const labelList& faceCells
-        );
-
 
         //- Construct and return a clone, resetting the boundary mesh
         virtual autoPtr<polyPatch> clone(const polyBoundaryMesh& bm) const
@@ -353,10 +345,10 @@ public:
             }
 
             //- Return collocated faces map
-            virtual tmpNrc<labelListList> mapCollocatedFaces() const
+            virtual refPtr<labelListList> mapCollocatedFaces() const
             {
                 const labelListList& sourceFaces = AMI().srcAddress();
-                return tmpNrc<labelListList>(new labelListList(sourceFaces));
+                return refPtr<labelListList>(new labelListList(sourceFaces));
             }
 
             //- Return implicit master

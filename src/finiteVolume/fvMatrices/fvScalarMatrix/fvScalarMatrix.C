@@ -177,7 +177,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
     if (lduMeshPtr_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()))
+        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0)
         {
             // Save lower/upper for flux calculation
             if (asymmetric())
@@ -236,7 +236,6 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
     }
     scalarField& psi = tpsi.constCast();
 
-
     // Solver call
     solverPerformance solverPerf = lduMatrix::solver::New
     (
@@ -264,6 +263,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
             {
                 psiInternal[localCellI] = psi[localCellI + cellOffset];
             }
+
         }
     }
 
@@ -274,21 +274,9 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
     diag() = saveDiag;
 
-    for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
-    {
-        auto& localPsi =
-            const_cast<GeometricField<scalar, fvPatchField, volMesh>&>
-            (
-                this->psi(fieldi)
-            );
-
-        localPsi.correctBoundaryConditions();
-        localPsi.mesh().setSolverPerformance(localPsi.name(), solverPerf);
-    }
-
     if (lduMeshPtr_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()))
+        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0)
         {
             // Restore lower/upper
             if (asymmetric())
@@ -302,6 +290,18 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
         }
         // Set the original lduMesh
         setLduMesh(psi_.mesh());
+    }
+
+    for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
+    {
+        auto& localPsi =
+            const_cast<GeometricField<scalar, fvPatchField, volMesh>&>
+            (
+                this->psi(fieldi)
+            );
+
+        localPsi.correctBoundaryConditions();
+        localPsi.mesh().setSolverPerformance(localPsi.name(), solverPerf);
     }
 
     return solverPerf;

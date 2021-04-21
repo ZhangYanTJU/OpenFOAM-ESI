@@ -100,6 +100,7 @@ class turbulentTemperatureRadCoupledMixedFvPatchScalarField
     public mixedFvPatchScalarField,
     public temperatureCoupledBase
 {
+
     // Private Data
 
         //- Name of field on the neighbour region
