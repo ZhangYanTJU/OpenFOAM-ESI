@@ -127,7 +127,7 @@ class fvMatrix
         //  Converted into a non-const reference at the point of solution.
         const GeometricField<Type, fvPatchField, volMesh>& psi_;
 
-        //- Pointer list to coupled fvMatrices. matrices_[0] is *this
+        //- Originating fvMatrices when assembling matrices. Empty if not used.
         PtrList<fvMatrix<Type>> matrices_;
 
         //- Optional lduAdressing
