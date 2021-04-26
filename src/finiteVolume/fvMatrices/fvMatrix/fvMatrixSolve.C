@@ -270,7 +270,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
 
     if (lduMeshPtr_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0))
+        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0)
         {
             // Restore lower/upper
             if (asymmetric())
