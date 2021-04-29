@@ -261,77 +261,66 @@ void Foam::cyclicFvPatchField<Type>::manipulateMatrix
         const label globalPatchID =
             matrix.lduMeshAssembly().patchLocalToGlobalMap()[mat][index];
 
-        //if (matrix.internalCoeffs().set(globalPatchID))
-        //{
-            const Field<scalar> intCoeffsCmpt
+        const Field<scalar> intCoeffsCmpt
+        (
+            matrix.internalCoeffs()[globalPatchID].component(cmpt)
+        );
+
+        const Field<scalar> boundCoeffsCmpt
+        (
+            matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
+        );
+
+
+        const labelUList& u = matrix.lduAddr().upperAddr();
+        const labelUList& l = matrix.lduAddr().lowerAddr();
+
+        const labelList& faceMap =
+            matrix.lduMeshAssembly().faceBoundMap()[mat][index];
+
+        forAll (faceMap, faceI)
+        {
+            label globalFaceI = faceMap[faceI];
+
+            const scalar boundCorr = -boundCoeffsCmpt[faceI];
+            const scalar intCorr = -intCoeffsCmpt[faceI];
+
+            matrix.upper()[globalFaceI] += boundCorr;
+            matrix.diag()[u[globalFaceI]] -= boundCorr;
+            matrix.diag()[l[globalFaceI]] -= intCorr;
+
+            if (matrix.asymmetric())
+            {
+                matrix.lower()[globalFaceI] += intCorr;
+            }
+        }
+
+        if (matrix.psi(mat).mesh().fluxRequired(this->internalField().name()))
+        {
+            matrix.internalCoeffs().set
             (
-                matrix.internalCoeffs()[globalPatchID].component(cmpt)
+                globalPatchID, intCoeffsCmpt*pTraits<Type>::one
+            );
+            matrix.boundaryCoeffs().set
+            (
+                globalPatchID, boundCoeffsCmpt*pTraits<Type>::one
             );
 
-            const Field<scalar> boundCoeffsCmpt
+            const label nbrPathID = this->cyclicPatch().neighbPatchID();
+
+            const label nbrGlobalPatchID =
+                matrix.lduMeshAssembly().patchLocalToGlobalMap()[mat][nbrPathID];
+
+            matrix.internalCoeffs().set
             (
-                matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
+                nbrGlobalPatchID, intCoeffsCmpt*pTraits<Type>::one
+
             );
-
-
-            const labelUList& u = matrix.lduAddr().upperAddr();
-            const labelUList& l = matrix.lduAddr().lowerAddr();
-
-            const labelList& faceMap =
-                matrix.lduMeshAssembly().faceBoundMap()[mat][index];
-
-            forAll (faceMap, faceI)
-            {
-                label globalFaceI = faceMap[faceI];
-                //if (globalFaceI != -1)
-                {
-                    const scalar boundCorr = -boundCoeffsCmpt[faceI];
-                    const scalar intCorr = -intCoeffsCmpt[faceI];
-
-                    matrix.upper()[globalFaceI] += boundCorr;
-                    matrix.diag()[u[globalFaceI]] -= boundCorr;
-                    matrix.diag()[l[globalFaceI]] -= intCorr;
-
-                    if (matrix.asymmetric())
-                    {
-                        matrix.lower()[globalFaceI] += intCorr;
-                    }
-                }
-//                 else
-//                 {
-//                     FatalErrorInFunction
-//                         << "Can not find faceId : " <<  globalFaceI
-//                         << exit(FatalError);
-//                 }
-            }
-
-            if (matrix.psi(mat).mesh().fluxRequired(this->internalField().name()))
-            {
-                matrix.internalCoeffs().set
-                (
-                    globalPatchID, intCoeffsCmpt*pTraits<Type>::one
-                );
-                matrix.boundaryCoeffs().set
-                (
-                    globalPatchID, boundCoeffsCmpt*pTraits<Type>::one
-                );
-
-                const label nbrPathID = this->cyclicPatch().neighbPatchID();
-
-                const label nbrGlobalPatchID =
-                    matrix.lduMeshAssembly().patchLocalToGlobalMap()[mat][nbrPathID];
-
-                matrix.internalCoeffs().set
-                (
-                    nbrGlobalPatchID, intCoeffsCmpt*pTraits<Type>::one
-
-                );
-                matrix.boundaryCoeffs().set
-                (
-                    nbrGlobalPatchID, boundCoeffsCmpt*pTraits<Type>::one
-                );
-            }
-        //}
+            matrix.boundaryCoeffs().set
+            (
+                nbrGlobalPatchID, boundCoeffsCmpt*pTraits<Type>::one
+            );
+        }
     }
 }
 

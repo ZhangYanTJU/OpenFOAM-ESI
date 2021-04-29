@@ -131,16 +131,16 @@ class turbulentTemperatureRadCoupledMixedFvPatchScalarField
             tmp<scalarField> alphaSfDelta() const;
 
             //- Return alpha-based value fraction between nbr patch and local
-            tmp<scalarField> alphaDeltaVf() const;
+            //tmp<scalarField> alphaDeltaVf() const;
 
             //- Return delta enthalpy between regions
             tmp<scalarField> deltaH() const;
 
             //- Return the sum of deltaCoeff*alpha from nbr and local
-            tmp<scalarField> beta() const;
+            //tmp<scalarField> beta() const;
 
             //- Return the difference of heat flux between both regions
-            tmp<scalarField> deltaQflux() const;
+            //tmp<scalarField> deltaQflux() const;
 
 
             //- Calculate coefficients for assembly matrix

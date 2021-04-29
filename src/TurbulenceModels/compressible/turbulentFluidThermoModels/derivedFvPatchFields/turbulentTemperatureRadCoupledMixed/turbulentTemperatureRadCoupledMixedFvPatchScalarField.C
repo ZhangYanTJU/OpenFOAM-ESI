@@ -409,7 +409,7 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField::alphaSfDelta() const
     return (alpha(*this)*patch().deltaCoeffs()*patch().magSf());
 }
 
-
+/*
 tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
 alphaDeltaVf() const
 {
@@ -444,8 +444,9 @@ alphaDeltaVf() const
 
     return (alphaDeltaNbr/(alphaDeltaNbr + alphaDelta));
 }
+*/
 
-
+/*
 tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
 beta() const
 {
@@ -482,7 +483,7 @@ beta() const
 
     return (alphaDeltaNbr + alphaDelta);
 }
-
+*/
 
 tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
 deltaH() const
@@ -538,7 +539,7 @@ deltaH() const
     return tmp<scalarField>::New(patch().size(), Zero);
 }
 
-
+/*
 tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
 deltaQflux() const
 {
@@ -563,7 +564,7 @@ deltaQflux() const
 
     return(qr + qrNbr);
 }
-
+*/
 
 void turbulentTemperatureRadCoupledMixedFvPatchScalarField::write
 (
