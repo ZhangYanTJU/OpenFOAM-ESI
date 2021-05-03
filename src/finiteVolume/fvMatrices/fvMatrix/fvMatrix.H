@@ -128,7 +128,7 @@ class fvMatrix
         const GeometricField<Type, fvPatchField, volMesh>& psi_;
 
         //- Originating fvMatrices when assembling matrices. Empty if not used.
-        PtrList<fvMatrix<Type>> matrices_;
+        PtrList<fvMatrix<Type>> subMatrices_;
 
         //- Optional lduAdressing
         lduPrimitiveMeshAssembly* lduMeshPtr_;
@@ -155,6 +155,17 @@ class fvMatrix
         //- Boundary scalar field containing pseudo-matrix coeffs
         //- for boundary cells
         FieldField<Field, Type> boundaryCoeffs_;
+
+        //- Cached total internal Coeffs for implicit patches
+        //- Use for A,DD,H,H1 operators
+        FieldField<Field, Type> orgInternalCoeffs_;
+
+        //- Cached total boundary Coeffs for implicit patches
+        //- Use for A,DD,H,H1 operators
+        FieldField<Field, Type> orgBoundaryCoeffs_;
+
+        //- Original Int/Bou coeffs set up
+        bool orginalCoeffs_;
 
         //- Face flux field for non-orthogonal correction
         mutable GeometricField<Type, fvsPatchField, surfaceMesh>
@@ -317,12 +328,12 @@ public:
 
                 const fvMatrix<Type>& matrix(const label i) const
                 {
-                    return (nMatrix_ == 0 ? *this : matrices_[i]);
+                    return (nMatrix_ == 0 ? *this : subMatrices_[i]);
                 }
 
                 fvMatrix<Type>& matrix(const label i)
                 {
-                    return (nMatrix_ == 0 ? *this : matrices_[i]);
+                    return (nMatrix_ == 0 ? *this : subMatrices_[i]);
                 }
 
                 label globalPatchID
@@ -343,6 +354,9 @@ public:
 
                 //- Transfer lower, upper, diag and source to this fvMatrix
                 void transferFvMatrixCoeffs();
+
+                //- Restore the original internal/boundary coefficients
+                void restoreBounAndInterCoeffs();
 
                 //- Create or update ldu assembly
                 void createOrUpdateLduPrimitiveAssembly();
@@ -400,22 +414,9 @@ public:
                 //- Clear multiple fvMatrices
                 void clear()
                 {
-                    matrices_.clear();
+                    subMatrices_.clear();
                     nMatrix_ = 0;
                 }
-
-
-            //- Return the LDU addressing
-//             const lduAddressing& lduAddr() const
-//             {
-//                 return lduMatrix::lduAddr();
-//             }
-            //
-            ////- Return the patch evaluation schedule
-            //const lduSchedule& patchSchedule() const
-            //{
-            //    return lduMatrix::patchSchedule();
-            //}
 
 
             const dimensionSet& dimensions() const
@@ -591,19 +592,19 @@ public:
             tmp<Field<Type>> residual() const;
 
             //- Return the matrix scalar diagonal
-            tmp<scalarField> D() const;
+            tmp<scalarField> D();// const;
 
             //- Return the matrix Type diagonal
-            tmp<Field<Type>> DD() const;
+            tmp<Field<Type>> DD();// const;
 
             //- Return the central coefficient
-            tmp<volScalarField> A() const;
+            tmp<volScalarField> A();// const;
 
             //- Return the H operation source
-            tmp<GeometricField<Type, fvPatchField, volMesh>> H() const;
+            tmp<GeometricField<Type, fvPatchField, volMesh>> H();// const;
 
             //- Return H(1)
-            tmp<volScalarField> H1() const;
+            tmp<volScalarField> H1();// const;
 
             //- Return the face-flux field from the matrix
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
