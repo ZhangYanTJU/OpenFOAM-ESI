@@ -571,12 +571,7 @@ public:
             }
 
             //- Set the LDU mesh containing the addressing is obtained
-//             const lduMesh& mesh(const lduMesh& m)
-//             {
-//                 return lduMesh_ = m;
-//             }
-
-            void setLduMesh(const lduMesh& m)
+            void setLduMesh(const  lduMesh& m)
             {
                 lduMesh_ = m;
             }

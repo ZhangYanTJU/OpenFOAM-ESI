@@ -338,8 +338,12 @@ Foam::tmp<Foam::scalarField> Foam::fvMatrix<Foam::scalar>::residual() const
 
 
 template<>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H() const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H() //const
 {
+    if (useImplicit_)
+    {
+        restoreBounAndInterCoeffs();
+    }
     tmp<volScalarField> tHphi
     (
         new volScalarField
@@ -370,8 +374,12 @@ Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H() const
 
 
 template<>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H1() const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H1() //const
 {
+    if (useImplicit_)
+    {
+        restoreBounAndInterCoeffs();
+    }
     tmp<volScalarField> tH1
     (
         new volScalarField

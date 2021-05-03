@@ -282,6 +282,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
             upper().setSize(saveUpper.size());
             upper() = saveUpper;
         }
+
         // Set the original lduMesh
         setLduMesh(psi_.mesh());
     }

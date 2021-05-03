@@ -126,15 +126,6 @@ void Foam::fvMatrix<Type>::addBoundaryDiag
     const direction solveCmpt
 ) const
 {
-//     forAll(internalCoeffs_, patchi)
-//     {
-//         addToInternalField
-//         (
-//             lduAddr().patchAddr(patchi),
-//             internalCoeffs_[patchi].component(solveCmpt),
-//             diag
-//         );
-//     }
     for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
     {
         const auto& bpsi = this->psi(fieldi).boundaryField();
@@ -160,16 +151,6 @@ void Foam::fvMatrix<Type>::addBoundaryDiag
 template<class Type>
 void Foam::fvMatrix<Type>::addCmptAvBoundaryDiag(scalarField& diag) const
 {
-//     forAll(internalCoeffs_, patchi)
-//     {
-//         addToInternalField
-//         (
-//             lduAddr().patchAddr(patchi),
-//             cmptAv(internalCoeffs_[patchi]),
-//             diag
-//         );
-//     }
-
     for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
     {
         const auto& bpsi = this->psi(fieldi).boundaryField();
@@ -177,7 +158,6 @@ void Foam::fvMatrix<Type>::addCmptAvBoundaryDiag(scalarField& diag) const
         forAll(bpsi, ptfi)
         {
             const label patchi = globalPatchID(fieldi, ptfi);
-
             if (patchi != -1)
             {
                 addToInternalField
@@ -343,6 +323,9 @@ Foam::fvMatrix<Type>::fvMatrix
     source_(psi.size(), Zero),
     internalCoeffs_(),
     boundaryCoeffs_(),
+    orgInternalCoeffs_(),
+    orgBoundaryCoeffs_(),
+    orginalCoeffs_(true),
     faceFluxCorrectionPtr_(nullptr),
     faceFluxPtr_(nullptr)
 {
@@ -442,6 +425,9 @@ Foam::fvMatrix<Type>::fvMatrix(const fvMatrix<Type>& fvm)
     source_(fvm.source_),
     internalCoeffs_(fvm.internalCoeffs_),
     boundaryCoeffs_(fvm.boundaryCoeffs_),
+    orgInternalCoeffs_(fvm.orgInternalCoeffs_),
+    orgBoundaryCoeffs_(fvm.orgBoundaryCoeffs_),
+    orginalCoeffs_(true),
     faceFluxCorrectionPtr_(nullptr),
     faceFluxPtr_(nullptr)
 {
@@ -488,6 +474,17 @@ Foam::fvMatrix<Type>::fvMatrix(const tmp<fvMatrix<Type>>& tfvm)
         const_cast<fvMatrix<Type>&>(tfvm()).boundaryCoeffs_,
         tfvm.isTmp()
     ),
+    orgInternalCoeffs_
+    (
+        const_cast<fvMatrix<Type>&>(tfvm()).orgInternalCoeffs_,
+        tfvm.isTmp()
+    ),
+    orgBoundaryCoeffs_
+    (
+        const_cast<fvMatrix<Type>&>(tfvm()).orgBoundaryCoeffs_,
+        tfvm.isTmp()
+    ),
+    orginalCoeffs_(true),
     faceFluxCorrectionPtr_(nullptr),
     faceFluxPtr_(nullptr)
 {
@@ -532,6 +529,9 @@ Foam::fvMatrix<Type>::fvMatrix
     source_(is),
     internalCoeffs_(),
     boundaryCoeffs_(),
+    orgInternalCoeffs_(),
+    orgBoundaryCoeffs_(),
+    orginalCoeffs_(true),
     faceFluxCorrectionPtr_(nullptr),
     faceFluxPtr_(nullptr)
 {
@@ -609,7 +609,7 @@ Foam::fvMatrix<Type>::~fvMatrix()
         << "Destroying fvMatrix<Type> for field " << psi_.name() << endl;
 
     deleteDemandDrivenData(faceFluxCorrectionPtr_);
-    matrices_.clear();
+    subMatrices_.clear();
 }
 
 
@@ -802,6 +802,63 @@ void Foam::fvMatrix<Type>::mapContributions
     }
 }
 
+template<class Type>
+void Foam::fvMatrix<Type>::restoreBounAndInterCoeffs()
+{
+    DebugVar("restoreBounAndInterCoeffs")
+    DebugVar(orginalCoeffs_)
+    if (!orginalCoeffs_)
+    {
+        for (label i=0; i < nMatrices(); ++i)
+        {
+            const auto& bpsi = this->psi(i).boundaryField();
+
+            FieldField<Field, Type> boundary(bpsi.size());
+            FieldField<Field, Type> internal(bpsi.size());
+
+            // Update cached implicit patches
+            forAll(bpsi, patchI)
+            {
+                label globalPatchId = lduMeshPtr_->patchMap()[i][patchI];
+                if (globalPatchId == -1)
+                {
+                    internal.set(patchI, orgInternalCoeffs_[patchI].clone());
+                    boundary.set(patchI, orgBoundaryCoeffs_[patchI].clone());
+                }
+            }
+
+            // Update non-implicit patches back to original order
+            forAll(bpsi, patchI)
+            {
+                label globalPatchId = lduMeshPtr_->patchMap()[i][patchI];
+                if (globalPatchId != -1)
+                {
+
+                    internal.set
+                    (
+                        patchI,
+                        matrix(i).internalCoeffs()[globalPatchId].clone()
+                    );
+
+                    boundary.set
+                    (
+                        patchI,
+                        matrix(i).boundaryCoeffs()[globalPatchId].clone()
+                    );
+                }
+            }
+
+            // Copy into internalCoeffs_/boundaryCoeffs_
+            forAll(bpsi, patchI)
+            {
+                internalCoeffs_.set(patchI, internal[patchI].clone());
+                boundaryCoeffs_.set(patchI, boundary[patchI].clone());
+            }
+        }
+        orginalCoeffs_ = true;
+    }
+}
+
 
 template<class Type>
 void Foam::fvMatrix<Type>::setBounAndInterCoeffs()
@@ -868,8 +925,16 @@ void Foam::fvMatrix<Type>::setBounAndInterCoeffs()
             label globalPatchId = lduMeshPtr_->patchMap()[i][patchI];
             if (globalPatchId == -1)
             {
-                boundary.set(implicit, matrix(i).boundaryCoeffs()[patchI].clone());
-                internal.set(implicit, matrix(i).internalCoeffs()[patchI].clone());
+                boundary.set
+                (
+                    implicit,
+                    matrix(i).boundaryCoeffs()[patchI].clone()
+                );
+                internal.set
+                (
+                    implicit,
+                    matrix(i).internalCoeffs()[patchI].clone()
+                );
                 implicit++;
             }
         }
@@ -900,7 +965,9 @@ void Foam::fvMatrix<Type>::setBounAndInterCoeffs()
             }
         }
 
-        // Store implicit patches at the end of the list
+        // Store implicit patches at the end of the list andcaching original
+        orgInternalCoeffs_.setSize(bpsi.size());
+        orgBoundaryCoeffs_.setSize(bpsi.size());
         implicit = 0;
         forAll(bpsi, patchI)
         {
@@ -912,10 +979,23 @@ void Foam::fvMatrix<Type>::setBounAndInterCoeffs()
 
                 internalCoeffs_.set(implicitPatchId, internal[implicit].clone());
                 boundaryCoeffs_.set(implicitPatchId, boundary[implicit].clone());
+
+                // Cached original coeff for implicit patches
+                orgInternalCoeffs_.set
+                (
+                    patchI,
+                    internal[implicit].clone()
+                );
+                orgBoundaryCoeffs_.set
+                (
+                    patchI,
+                    boundary[implicit].clone()
+                );
                 implicit++;
             }
         }
     }
+    orginalCoeffs_ = false;
 
     //forAll(internalCoeffs_, patchI)
     //{
@@ -1176,7 +1256,7 @@ void Foam::fvMatrix<Type>::setReferences
 template<class Type>
 void Foam::fvMatrix<Type>::addFvMatrix(fvMatrix& matrix)
 {
-    matrices_.append(matrix.clone());
+    subMatrices_.append(matrix.clone());
     ++nMatrix_;
 
     if (dimensions_ != matrix.dimensions())
@@ -1393,8 +1473,12 @@ void Foam::fvMatrix<Type>::boundaryManipulate
 
 
 template<class Type>
-Foam::tmp<Foam::scalarField> Foam::fvMatrix<Type>::D() const
+Foam::tmp<Foam::scalarField> Foam::fvMatrix<Type>::D() //const
 {
+    if (useImplicit_)
+    {
+        restoreBounAndInterCoeffs();
+    }
     tmp<scalarField> tdiag(new scalarField(diag()));
     addCmptAvBoundaryDiag(tdiag.ref());
     return tdiag;
@@ -1402,7 +1486,7 @@ Foam::tmp<Foam::scalarField> Foam::fvMatrix<Type>::D() const
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::fvMatrix<Type>::DD() const
+Foam::tmp<Foam::Field<Type>> Foam::fvMatrix<Type>::DD() //const
 {
     tmp<Field<Type>> tdiag(pTraits<Type>::one*diag());
 
@@ -1426,7 +1510,7 @@ Foam::tmp<Foam::Field<Type>> Foam::fvMatrix<Type>::DD() const
 
 
 template<class Type>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::A() const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::A() //const
 {
     tmp<volScalarField> tAphi
     (
@@ -1455,8 +1539,13 @@ Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::A() const
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvPatchField, Foam::volMesh>>
-Foam::fvMatrix<Type>::H() const
+Foam::fvMatrix<Type>::H() //const
 {
+    if (useImplicit_)
+    {
+        restoreBounAndInterCoeffs();
+    }
+
     tmp<GeometricField<Type, fvPatchField, volMesh>> tHphi
     (
         new GeometricField<Type, fvPatchField, volMesh>
@@ -1517,8 +1606,13 @@ Foam::fvMatrix<Type>::H() const
 
 
 template<class Type>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::H1() const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::H1() //const
 {
+    if (useImplicit_)
+    {
+        restoreBounAndInterCoeffs();
+    }
+
     tmp<volScalarField> tH1
     (
         new volScalarField
@@ -1737,6 +1831,7 @@ void Foam::fvMatrix<Type>::operator=(const fvMatrix<Type>& fvmv)
     useImplicit_ = fvmv.useImplicit_;
     lduAssemblyName_ = fvmv.lduAssemblyName_;
     nMatrix_ = fvmv.nMatrix_;
+    orginalCoeffs_ = fvmv.orginalCoeffs_;
 }
 
 
