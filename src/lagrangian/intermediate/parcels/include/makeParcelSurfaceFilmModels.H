@@ -31,14 +31,15 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "NoSurfaceFilm.H"
+#include "KinematicSurfaceFilm.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define makeParcelSurfaceFilmModels(CloudType)                                 \
                                                                                \
     makeSurfaceFilmModel(CloudType);                                           \
-    makeSurfaceFilmModelType(NoSurfaceFilm, CloudType);
-
+    makeSurfaceFilmModelType(NoSurfaceFilm, CloudType);                        \
+    makeSurfaceFilmModelType(KinematicSurfaceFilm, CloudType);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

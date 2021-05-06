@@ -94,6 +94,9 @@ protected:
             //- Liquid thermo
             liquidMixtureProperties thermo_;
 
+            //- Reference tempararure
+            scalar Tref_;
+
 
             // Fields
 
@@ -213,6 +216,12 @@ public:
 
             //- Access const reference Cp
             const areaScalarField& Cp() const;
+
+            //- Access to thermo
+            const liquidMixtureProperties& thermo() const;
+
+            //- Access to reference temperature
+            scalar Tref() const;
 
 
             // Transfer fields - to the primary region (lagragian injection)

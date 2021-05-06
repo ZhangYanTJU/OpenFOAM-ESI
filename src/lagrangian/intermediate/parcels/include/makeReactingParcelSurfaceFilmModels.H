@@ -32,6 +32,7 @@ License
 
 #include "NoSurfaceFilm.H"
 #include "ThermoSurfaceFilm.H"
+#include "KinematicSurfaceFilm.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,7 +40,8 @@ License
                                                                                \
     makeSurfaceFilmModel(CloudType);                                           \
     makeSurfaceFilmModelType(NoSurfaceFilm, CloudType);                        \
-    makeSurfaceFilmModelType(ThermoSurfaceFilm, CloudType);
+    makeSurfaceFilmModelType(ThermoSurfaceFilm, CloudType);                    \
+    makeSurfaceFilmModelType(KinematicSurfaceFilm, CloudType);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

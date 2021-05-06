@@ -274,6 +274,9 @@ public:
             //- Access to this region
             const regionFaModel& region() const;
 
+            //- Access to pRef
+            scalar pRef();
+
 
             // Transfer fields - to the primary region (lagragian injection)
 

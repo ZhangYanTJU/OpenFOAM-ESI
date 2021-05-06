@@ -29,7 +29,7 @@ boundaryField
     ceiling
     {
         type                compressible::thermalShell;
-        active              false;
+        active              true;
         T                   T;
 
         thermo

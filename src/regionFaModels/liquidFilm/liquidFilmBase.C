@@ -559,6 +559,11 @@ const regionFaModel& liquidFilmBase::region() const
     return *this;
 }
 
+scalar liquidFilmBase::pRef()
+{
+    return pRef_;
+}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

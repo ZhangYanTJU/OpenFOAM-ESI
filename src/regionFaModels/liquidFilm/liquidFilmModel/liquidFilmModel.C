@@ -254,6 +254,7 @@ liquidFilmModel::liquidFilmModel
 
     if (dict.found("T0"))
     {
+        Tref_ = dict.get<scalar>("T0");
         Tf_ = dimensionedScalar("T0", dimTemperature, dict);
     }
     correctThermoFields();
@@ -295,6 +296,18 @@ const areaScalarField& liquidFilmModel::Cp() const
 {
      return Cp_;
 }
+
+
+const liquidMixtureProperties& liquidFilmModel::thermo() const
+{
+    return thermo_;
+}
+
+scalar liquidFilmModel::Tref() const
+{
+    return Tref_;
+}
+
 
 const volScalarField& liquidFilmModel::cloudMassTrans() const
 {
