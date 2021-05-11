@@ -60,7 +60,6 @@ private:
     // Private Data
 
         //- UPtrList for fvMesh
-        //UPtrList<fvMesh> meshes_;
         UPtrList<lduMesh> meshes_;
 
         //- Overwrite patchAddr from lduPrimitiveMesh for assembly ldu address
