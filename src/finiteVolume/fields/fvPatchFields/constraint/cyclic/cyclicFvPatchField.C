@@ -271,7 +271,6 @@ void Foam::cyclicFvPatchField<Type>::manipulateMatrix
             matrix.boundaryCoeffs()[globalPatchID].component(cmpt)
         );
 
-
         const labelUList& u = matrix.lduAddr().upperAddr();
         const labelUList& l = matrix.lduAddr().lowerAddr();
 

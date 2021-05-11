@@ -343,7 +343,7 @@ Foam::fvMatrix<Type>::fvMatrix
             if (bpsi[patchI].useImplicit())
             {
                 useImplicit_ = true;
-                id += pow(patchI, 2);
+                id += pow(2, patchI);
             }
         }
         nInterfaces += bpsi.size();
@@ -550,7 +550,7 @@ Foam::fvMatrix<Type>::fvMatrix
             if (bpsi[patchI].useImplicit())
             {
                 useImplicit_ = true;
-                id += pow(patchI, 2);
+                id += pow(2, patchI);
             }
         }
         nInterfaces += bpsi.size();
