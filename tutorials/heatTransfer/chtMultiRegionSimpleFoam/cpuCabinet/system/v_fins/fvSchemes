@@ -27,41 +27,21 @@ divSchemes
 
 laplacianSchemes
 {
-    default         Gauss linear limited 0.33;
+    default         Gauss linear limited 0.333;
 }
 
 interpolationSchemes
 {
     default         linear;
-    UD              cubic;
 }
 
 snGradSchemes
 {
-    default         limited 0.33;
+    default         limited 0.333;
 }
 
 gradSchemes
 {
-    default         cellLimited leastSquares 1.0;
-    grad(p)         cellLimited leastSquares 1.0;
-    grad(U)         cellLimited leastSquares 1.0;
-    grad(k)         cellLimited Gauss linear 1;
-    grad(epsilon)   cellLimited Gauss linear 1;
+    default         Gauss linear;
 }
-
-fluxRequired
-{
-    default         no;
-    pCorr           ;
-    p_rgh           ;
-}
-
-wallDist
-{
-    method          meshWave;
-    nRequired       false;
-}
-
-
 // ************************************************************************* //

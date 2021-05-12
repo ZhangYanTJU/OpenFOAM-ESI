@@ -22,7 +22,7 @@ ddtSchemes
 
 divSchemes
 {
-    div(phi,U)      bounded Gauss linearUpwind grad(U);
+    div(phi,U)      bounded Gauss upwind;
     div(phi,k)      bounded Gauss linearUpwind grad(k);
     div(phi,epsilon) bounded Gauss linearUpwind grad(epsilon);
     div((muEff*dev2(T(grad(U))))) Gauss linear;
@@ -34,7 +34,7 @@ divSchemes
 
 laplacianSchemes
 {
-    default         Gauss linear limited 0.33;
+    default         Gauss linear limited 0.333;
 }
 
 interpolationSchemes
@@ -44,16 +44,12 @@ interpolationSchemes
 
 snGradSchemes
 {
-    default         limited 0.33;
+    default         limited 0.333;
 }
 
 gradSchemes
 {
-    default         cellLimited leastSquares 1.0;
-    grad(p)         leastSquares;
-    grad(U)         cellLimited leastSquares 1.0;
-    grad(k)         cellLimited Gauss linear 1;
-    grad(epsilon)   cellLimited Gauss linear 1;
+    default         Gauss linear;
 }
 
 fluxRequired
