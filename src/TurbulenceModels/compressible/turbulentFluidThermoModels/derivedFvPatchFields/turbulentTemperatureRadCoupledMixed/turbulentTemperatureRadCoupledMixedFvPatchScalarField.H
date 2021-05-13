@@ -137,7 +137,7 @@ class turbulentTemperatureRadCoupledMixedFvPatchScalarField
             tmp<scalarField> deltaH() const;
 
             //- Return the sum of deltaCoeff*alpha from nbr and local
-            //tmp<scalarField> beta() const;
+            tmp<scalarField> beta() const;
 
             //- Return the difference of heat flux between both regions
             //tmp<scalarField> deltaQflux() const;

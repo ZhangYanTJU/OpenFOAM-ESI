@@ -339,11 +339,13 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     if (this->useImplicit())
     {
         const basicThermo& thermo = basicThermo::lookupThermo(*this);
-        const scalarField& pw = thermo.p().boundaryField()[patchi];
 
         source() =
-            alphaSfDelta()*valueFraction()*deltaH()
-          + (1 - valueFraction())*thermo.Cpv(pw, Tp, patchi)*refGrad();
+            alphaSfDelta()*
+            (
+                valueFraction()*deltaH()
+              + (qr + qrNbr)/beta()
+            );
     }
 
     mixedFvPatchScalarField::updateCoeffs();
@@ -446,7 +448,7 @@ alphaDeltaVf() const
 }
 */
 
-/*
+
 tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
 beta() const
 {
@@ -483,7 +485,7 @@ beta() const
 
     return (alphaDeltaNbr + alphaDelta);
 }
-*/
+
 
 tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
 deltaH() const
