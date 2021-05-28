@@ -219,6 +219,7 @@ protected:
         ) const;
 
 
+
         // Matrix completion functionality
 
             void addBoundaryDiag
@@ -367,8 +368,20 @@ public:
                 //- Manipulate boundary/internal coeffs for coupling
                 void setBounAndInterCoeffs();
 
-                //- Set interfaces for coupling
-                void setInterfaces(lduInterfaceFieldPtrsList&);
+                //- Set re-ordered interfaces on cyclic, etc, if implicit
+                //  addressing is used
+                void setInterfaces
+                (
+                    lduInterfaceFieldPtrsList&,
+                    labelList& globalIdPatch
+                );
+
+                //- Release interfaces created by setInterfaces
+                void releaseInterfaces
+                (
+                    lduInterfaceFieldPtrsList&,
+                    const labelList& globalIdPatch
+                );
 
                 //- Add internal and boundary contribution to local patches
                 void mapContributions
