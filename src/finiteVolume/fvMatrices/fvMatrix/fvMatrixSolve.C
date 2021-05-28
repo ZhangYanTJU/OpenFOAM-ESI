@@ -176,9 +176,19 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
     Field<Type> source(source_);
 
     // At this point include the boundary source from the coupled boundaries.
-    // This is corrected for the implicit part by updateMatrixInterfaces within
-    // the component loop.
+    // This is corrected for the implicit part by updateMatrixInterfaces
+    // within the component loop.
     addBoundarySource(source);
+
+    lduInterfaceFieldPtrsList interfaces;
+    if (!lduMeshPtr_)
+    {
+        interfaces = this->psi(0).boundaryField().scalarInterfaces();
+    }
+    else
+    {
+        setInterfaces(interfaces);
+    }
 
     for (direction cmpt=0; cmpt<Type::nComponents; cmpt++)
     {
@@ -201,16 +211,6 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         (
             internalCoeffs_.component(cmpt)
         );
-
-        lduInterfaceFieldPtrsList interfaces;
-        if (!lduMeshPtr_)
-        {
-            interfaces = this->psi(0).boundaryField().scalarInterfaces();
-        }
-        else
-        {
-            setInterfaces(interfaces);
-        }
 
         // Use the initMatrixInterfaces and updateMatrixInterfaces to correct
         // bouCoeffsCmpt for the explicit part of the coupled boundary
@@ -285,6 +285,11 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
 
         // Set the original lduMesh
         setLduMesh(psi_.mesh());
+        // Delete interfaces
+        forAll(interfaces, intI)
+        {
+            delete interfaces.get(intI);
+        }
     }
 
     psi.correctBoundaryConditions();

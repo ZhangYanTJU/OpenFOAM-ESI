@@ -290,6 +290,10 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
         }
         // Set the original lduMesh
         setLduMesh(psi_.mesh());
+        forAll(interfaces, intI)
+        {
+            delete interfaces.get(intI);
+        }
     }
 
     for (label fieldi = 0; fieldi < nMatrices(); fieldi++)

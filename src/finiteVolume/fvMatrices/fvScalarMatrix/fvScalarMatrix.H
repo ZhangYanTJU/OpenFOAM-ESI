@@ -71,10 +71,10 @@ template<>
 tmp<scalarField> fvMatrix<scalar>::residual() const;
 
 template<>
-tmp<volScalarField> fvMatrix<scalar>::H();// const;
+tmp<volScalarField> fvMatrix<scalar>::H();
 
 template<>
-tmp<volScalarField> fvMatrix<scalar>::H1();// const;
+tmp<volScalarField> fvMatrix<scalar>::H1();
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

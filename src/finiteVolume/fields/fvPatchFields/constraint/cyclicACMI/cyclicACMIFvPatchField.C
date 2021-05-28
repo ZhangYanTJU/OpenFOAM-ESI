@@ -273,12 +273,6 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 {
     // note: only applying coupled contribution
 
-//     const labelUList& nbrFaceCellsCoupled =
-//         lduAddr.patchAddr
-//         (
-//             cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID()
-//         );
-
     const labelUList& nbrFaceCellsCoupled =
         lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
 
@@ -385,7 +379,8 @@ void Foam::cyclicACMIFvPatchField<Type>::manipulateMatrix
                 cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID();
 
             const label nbrGlobalPatchID =
-                matrix.lduMeshAssembly().patchLocalToGlobalMap()[mat][nbrPathID];
+                matrix.lduMeshAssembly().patchLocalToGlobalMap()
+                [mat][nbrPathID];
 
             matrix.internalCoeffs().set
             (

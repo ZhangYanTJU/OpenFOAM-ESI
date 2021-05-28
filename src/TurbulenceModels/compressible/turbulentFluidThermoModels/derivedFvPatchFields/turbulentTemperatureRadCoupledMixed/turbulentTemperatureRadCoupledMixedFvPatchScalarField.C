@@ -411,43 +411,6 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField::alphaSfDelta() const
     return (alpha(*this)*patch().deltaCoeffs()*patch().magSf());
 }
 
-/*
-tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
-alphaDeltaVf() const
-{
-    const mappedPatchBase& mpp =
-        refCast<const mappedPatchBase>(patch().patch());
-
-    const label samplePatchi = mpp.samplePolyPatch().index();
-    //const label patchi = patch().index();
-    const polyMesh& nbrMesh = mpp.sampleMesh();
-
-    const fvPatch& nbrPatch =
-        refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
-
-    const turbulentTemperatureRadCoupledMixedFvPatchScalarField&
-        nbrField = refCast
-            <const turbulentTemperatureRadCoupledMixedFvPatchScalarField>
-            (
-                nbrPatch.lookupPatchField<volScalarField, scalar>(TnbrName_)
-            );
-
-    // Swap to obtain full local values of neighbour internal field
-    scalarField TcNbr(nbrField.patchInternalField());
-    mpp.distribute(TcNbr);
-
-    scalarField alphaDeltaNbr(nbrField.alpha(TcNbr)*nbrPatch.deltaCoeffs());
-    mpp.distribute(alphaDeltaNbr);
-
-    scalarField alphaDelta
-    (
-        alpha(*this)*patch().deltaCoeffs()
-    );
-
-    return (alphaDeltaNbr/(alphaDeltaNbr + alphaDelta));
-}
-*/
-
 
 tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
 beta() const
@@ -541,32 +504,6 @@ deltaH() const
     return tmp<scalarField>::New(patch().size(), Zero);
 }
 
-/*
-tmp<scalarField> turbulentTemperatureRadCoupledMixedFvPatchScalarField::
-deltaQflux() const
-{
-    scalarField qr(patch().size(), 0.0);
-    if (qrName_ != "none")
-    {
-        qr = patch().lookupPatchField<volScalarField, scalar>(qrName_);
-    }
-
-    scalarField qrNbr(patch().size(), 0.0);
-    if (qrNbrName_ != "none")
-    {
-        const mappedPatchBase& mpp =
-            refCast<const mappedPatchBase>(patch().patch());
-        const polyMesh& nbrMesh = mpp.sampleMesh();
-        const label samplePatchi = mpp.samplePolyPatch().index();
-        const fvPatch& nbrPatch =
-            refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
-        qrNbr = nbrPatch.lookupPatchField<volScalarField, scalar>(qrNbrName_);
-        mpp.distribute(qrNbr);
-    }
-
-    return(qr + qrNbr);
-}
-*/
 
 void turbulentTemperatureRadCoupledMixedFvPatchScalarField::write
 (

@@ -450,7 +450,8 @@ public:
                     const label facei
                 ) const;
 
-                //- Transform a patch-based direction from this side to nbr side
+                //- Transform a patch-based direction from this side to
+                //  nbr side
                 virtual void reverseTransformDirection
                 (
                     vector& d,

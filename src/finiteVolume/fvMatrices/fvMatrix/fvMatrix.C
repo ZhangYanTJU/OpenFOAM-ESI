@@ -740,8 +740,8 @@ void Foam::fvMatrix<Type>::mapContributions
         }
         else if (globalPtchId == -1)
         {
-            const polyPatch& pp = this->psi(fieldi).mesh().boundaryMesh()[patchi];
-            //const lduInterface& pp = this->psi(fieldi).mesh().interfaces()[patchi];
+            const polyPatch& pp =
+                this->psi(fieldi).mesh().boundaryMesh()[patchi];
 
             if (pp.masterImplicit())
             {
@@ -763,9 +763,11 @@ void Foam::fvMatrix<Type>::mapContributions
                 nbrCoeffs = pTraits<Type>::zero;
 
                 // nrb cells
-                const labelList& nbrCellIds = ptr->cellBoundMap()[fieldi][patchi];
+                const labelList& nbrCellIds =
+                    ptr->cellBoundMap()[fieldi][patchi];
 
-                const labelList& cellIds = ptr->cellBoundMap()[fieldi][nbrPatchId];
+                const labelList& cellIds =
+                    ptr->cellBoundMap()[fieldi][nbrPatchId];
 
                 const GeometricField<Type, fvPatchField, volMesh>& psi =
                     this->psi(fieldi);
@@ -805,8 +807,6 @@ void Foam::fvMatrix<Type>::mapContributions
 template<class Type>
 void Foam::fvMatrix<Type>::restoreBounAndInterCoeffs()
 {
-    DebugVar("restoreBounAndInterCoeffs")
-    DebugVar(orginalCoeffs_)
     if (!orginalCoeffs_)
     {
         for (label i=0; i < nMatrices(); ++i)
@@ -977,8 +977,14 @@ void Foam::fvMatrix<Type>::setBounAndInterCoeffs()
                 const label implicitPatchId =
                      lduMeshPtr_->patchLocalToGlobalMap()[i][patchI];
 
-                internalCoeffs_.set(implicitPatchId, internal[implicit].clone());
-                boundaryCoeffs_.set(implicitPatchId, boundary[implicit].clone());
+                internalCoeffs_.set
+                (
+                    implicitPatchId, internal[implicit].clone()
+                );
+                boundaryCoeffs_.set
+                (
+                    implicitPatchId, boundary[implicit].clone()
+                );
 
                 // Cached original coeff for implicit patches
                 orgInternalCoeffs_.set
@@ -1017,7 +1023,12 @@ void Foam::fvMatrix<Type>::manipulateMatrix(direction cmp)
 
             if (globalPatchId == -1)
             {
-                psi(i).boundaryFieldRef()[patchI].manipulateMatrix(*this, i, cmp);
+                psi(i).boundaryFieldRef()[patchI].manipulateMatrix
+                (
+                    *this,
+                    i,
+                    cmp
+                );
             }
         }
     }
@@ -1128,9 +1139,12 @@ void Foam::fvMatrix<Type>::createOrUpdateLduPrimitiveAssembly()
         lduMeshPtr_ =
             new lduPrimitiveMeshAssembly(uMeshPtr, io);
 
+        lduMeshPtr_->store();
+
         lduMeshPtr_->update(uFieldPtr);
 
-        Info << "Creating lduPrimitiveAssembly: " << lduAssemblyName_ << endl;
+        DebugInfo
+        << "Creating lduPrimitiveAssembly: " << lduAssemblyName_ << endl;
     }
     else
     {
@@ -1146,13 +1160,17 @@ void Foam::fvMatrix<Type>::createOrUpdateLduPrimitiveAssembly()
             lduMeshPtr_ =
                 new lduPrimitiveMeshAssembly(uMeshPtr, io);
 
+            lduMeshPtr_->store();
+
             lduMeshPtr_->update(uFieldPtr);
 
-            Info << "Updating lduPrimitiveAssembly: " << lduAssemblyName_ << endl;
+            DebugInfo
+            << "Updating lduPrimitiveAssembly: " << lduAssemblyName_ << endl;
         }
         else
         {
-            Info << "Using lduPrimitiveAssembly: " << lduAssemblyName_ << endl;
+            DebugInfo
+            << "Using lduPrimitiveAssembly: " << lduAssemblyName_ << endl;
         }
     }
 }
@@ -1473,7 +1491,7 @@ void Foam::fvMatrix<Type>::boundaryManipulate
 
 
 template<class Type>
-Foam::tmp<Foam::scalarField> Foam::fvMatrix<Type>::D() //const
+Foam::tmp<Foam::scalarField> Foam::fvMatrix<Type>::D()
 {
     if (useImplicit_)
     {
@@ -1486,7 +1504,7 @@ Foam::tmp<Foam::scalarField> Foam::fvMatrix<Type>::D() //const
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::fvMatrix<Type>::DD() //const
+Foam::tmp<Foam::Field<Type>> Foam::fvMatrix<Type>::DD()
 {
     tmp<Field<Type>> tdiag(pTraits<Type>::one*diag());
 
@@ -1510,7 +1528,7 @@ Foam::tmp<Foam::Field<Type>> Foam::fvMatrix<Type>::DD() //const
 
 
 template<class Type>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::A() //const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::A()
 {
     tmp<volScalarField> tAphi
     (
@@ -1539,7 +1557,7 @@ Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::A() //const
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvPatchField, Foam::volMesh>>
-Foam::fvMatrix<Type>::H() //const
+Foam::fvMatrix<Type>::H()
 {
     if (useImplicit_)
     {
@@ -1606,7 +1624,7 @@ Foam::fvMatrix<Type>::H() //const
 
 
 template<class Type>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::H1() //const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Type>::H1()
 {
     if (useImplicit_)
     {
