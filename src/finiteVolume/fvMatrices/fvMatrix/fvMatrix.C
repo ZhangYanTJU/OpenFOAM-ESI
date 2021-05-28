@@ -302,7 +302,6 @@ void Foam::fvMatrix<Type>::setValuesFromList
     }
 }
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 
@@ -616,9 +615,14 @@ Foam::fvMatrix<Type>::~fvMatrix()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::fvMatrix<Type>::setInterfaces(lduInterfaceFieldPtrsList& interfaces)
+void Foam::fvMatrix<Type>::setInterfaces
+(
+    lduInterfaceFieldPtrsList& interfaces,
+    labelList& globalIdPatch
+)
 {
     interfaces.setSize(internalCoeffs_.size());
+    globalIdPatch.setSize(interfaces.size(), Zero);
     for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
     {
         const auto& bpsi = this->psi(fieldi).boundaryField();
@@ -646,6 +650,7 @@ void Foam::fvMatrix<Type>::setInterfaces(lduInterfaceFieldPtrsList& interfaces)
                                 bpsi[patchi].internalField()
                             )
                         );
+                        globalIdPatch[globalPatchID] = 1;
                     }
                     else if (isA<cyclicAMILduInterfaceField>(bpsi[patchi]))
                     {
@@ -661,6 +666,7 @@ void Foam::fvMatrix<Type>::setInterfaces(lduInterfaceFieldPtrsList& interfaces)
                                 bpsi[patchi].internalField()
                             )
                         );
+                        globalIdPatch[globalPatchID] = 1;
                     }
                     else if (isA<cyclicACMILduInterfaceField>(bpsi[patchi]))
                     {
@@ -676,11 +682,37 @@ void Foam::fvMatrix<Type>::setInterfaces(lduInterfaceFieldPtrsList& interfaces)
                                 bpsi[patchi].internalField()
                             )
                         );
+                        globalIdPatch[globalPatchID] = 1;
                     }
                     else if (isA<processorLduInterfaceField>(bpsi[patchi]))
                     {
                         interfaces.set(globalPatchID, &fieldInterfaces[patchi]);
                     }
+                }
+            }
+        }
+    }
+}
+
+
+template<class Type>
+void Foam::fvMatrix<Type>::releaseInterfaces
+(
+    lduInterfaceFieldPtrsList& interfaces,
+    const labelList& globalIdPatch
+)
+{
+    for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
+    {
+        forAll (interfaces, patchi)
+        {
+            label globalPatchID = lduMeshPtr_->patchMap()[fieldi][patchi];
+
+            if (globalPatchID != -1 && globalIdPatch[globalPatchID] == 1)
+            {
+                if (interfaces.set(globalPatchID))
+                {
+                    delete interfaces.get(globalPatchID);
                 }
             }
         }

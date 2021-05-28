@@ -181,13 +181,14 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
     addBoundarySource(source);
 
     lduInterfaceFieldPtrsList interfaces;
+    labelList globalIdPatch;
     if (!lduMeshPtr_)
     {
         interfaces = this->psi(0).boundaryField().scalarInterfaces();
     }
     else
     {
-        setInterfaces(interfaces);
+        setInterfaces(interfaces, globalIdPatch);
     }
 
     for (direction cmpt=0; cmpt<Type::nComponents; cmpt++)
@@ -286,10 +287,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         // Set the original lduMesh
         setLduMesh(psi_.mesh());
         // Delete interfaces
-        forAll(interfaces, intI)
-        {
-            delete interfaces.get(intI);
-        }
+        releaseInterfaces(interfaces, globalIdPatch);
     }
 
     psi.correctBoundaryConditions();
