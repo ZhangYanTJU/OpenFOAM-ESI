@@ -39,14 +39,6 @@ if (pimple.nCorrPISO() <= 1)
 // Update the pressure BCs to ensure flux consistency
 constrainPressure(p, U, phiHbyA, rAtU(), MRF);
 
-if (runTime.outputTime())
-{
-    volScalarField divPhiHbyA("divPhiHbyA", fvc::div(phiHbyA));
-    divPhiHbyA.write();
-    HbyA.write();
-    rAU.write();
-}
-
 // Non-orthogonal pressure corrector loop
 while (pimple.correctNonOrthogonal())
 {
@@ -62,18 +54,6 @@ while (pimple.correctNonOrthogonal())
     if (pimple.finalNonOrthogonalIter())
     {
         phi = phiHbyA - pEqn.flux();
-
-        if (runTime.outputTime())
-        {
-            word iterN("divPhi" + name(pimple.corrPISO()));
-            volScalarField divPhi(iterN, fvc::div(phi));
-            divPhi.write();
-            volScalarField divMeshFlux("divMeshFlux",
-                fvc::surfaceIntegrate(pEqn.flux()));
-
-            //volScalarField divMeshFlux("divMeshFlux", fvc::div(pEqn.flux()));
-            divMeshFlux.write();
-        }
     }
 }
 
@@ -85,13 +65,6 @@ p.relax();
 U = HbyA - rAtU*fvc::grad(p);
 U.correctBoundaryConditions();
 fvOptions.correct(U);
-
-if (runTime.outputTime())
-{
-    surfaceScalarField phiTmp(fvc::flux(U));
-    volScalarField divPhi("divUTemp", fvc::div(phiTmp));
-    divPhi.write();
-}
 
 // Correct Uf if the mesh is moving
 fvc::correctUf(Uf, U, phi);

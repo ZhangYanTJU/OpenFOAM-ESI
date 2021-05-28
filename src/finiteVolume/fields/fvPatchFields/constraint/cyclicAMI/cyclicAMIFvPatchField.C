@@ -145,11 +145,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
 {
-
     const Field<Type>& iField = this->primitiveField();
-
-    //const labelUList& nbrFaceCells =
-    //    cyclicAMIPatch_.cyclicAMIPatch().neighbPatch().faceCells();
 
     // By pass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
     // neighbPatch()
@@ -164,7 +160,6 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
         Field<Type> pnfInternal(iField, cyclicAMIPatch_.faceCells());
 
         tpnf = cyclicAMIPatch_.interpolate(pnf, pnfInternal);
-        //tpnf = cyclicAMIPatch_.interpolate(pnf, this->patchInternalField()());
     }
     else
     {
@@ -210,12 +205,6 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
-//     const labelUList& nbrFaceCells =
-//         lduAddr.patchAddr
-//         (
-//             cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID()
-//         );
-
     const labelUList& nbrFaceCells =
         lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
 
@@ -253,11 +242,6 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
-//     const labelUList& nbrFaceCells =
-//         lduAddr.patchAddr
-//         (
-//             cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID()
-//         );
 
     const labelUList& nbrFaceCells =
         lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
@@ -358,7 +342,8 @@ void Foam::cyclicAMIFvPatchField<Type>::manipulateMatrix
                 cyclicAMIPatch_.cyclicAMIPatch().neighbPatchID();
 
             const label nbrGlobalPatchID =
-                matrix.lduMeshAssembly().patchLocalToGlobalMap()[mat][nbrPathID];
+                matrix.lduMeshAssembly().patchLocalToGlobalMap()
+                    [mat][nbrPathID];
 
             matrix.internalCoeffs().set
             (

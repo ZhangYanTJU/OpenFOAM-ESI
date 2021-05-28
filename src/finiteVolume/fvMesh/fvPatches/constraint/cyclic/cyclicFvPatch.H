@@ -88,51 +88,6 @@ public:
 
     // Member functions
 
-//         // Implicit Functions
-//
-//             //- Return number of new internal of this polyPatch faces
-//             virtual void newInternalProcFaces
-//             (
-//                 label& newFaces,
-//                 label& newProcFaces
-//             ) const
-//             {
-//                 newFaces = size();
-//                 newProcFaces = neighbPatch().size() - size();
-//             }
-//
-//             //- Return nbrCells
-//             virtual const labelUList& nbrCells() const
-//             {
-//                 return neighbPatch().faceCells();
-//             }
-//
-//             //- Return nbr patchID
-//             virtual label neighbPolyPatchID() const
-//             {
-//                 return neighbPatchID();
-//             }
-//
-//             //- Return collocated faces
-//             virtual refPtr<labelListList> mapCollocatedFaces() const
-//             {
-//                 refPtr<labelListList> tMap(new labelListList(size()));
-//                 labelListList& map = tMap.ref();
-//                 forAll (map, i)
-//                 {
-//                     labelList& subMap = map[i];
-//                     subMap.setSize(1);
-//                     subMap[0] = i;
-//                 }
-//                 return tMap;
-//             }
-//
-//             //- Return implicit master
-//             virtual bool masterImplicit() const
-//             {
-//                 return owner();
-//             }
-
 
         // Access
 

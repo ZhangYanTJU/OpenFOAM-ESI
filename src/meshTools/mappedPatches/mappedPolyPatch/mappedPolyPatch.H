@@ -217,9 +217,14 @@ public:
         // Implicit treatment functions
 
             //- Return number of new internal of this polyPatch faces
-            virtual void newInternalProcFaces(label& iFaces, label& pFaces) const
+            virtual void newInternalProcFaces
+            (
+                label& iFaces,
+                label& pFaces
+            ) const
             {
-                label nbrFaces = lookupPatch(sampleRegion_, samplePatch_).size();
+                label nbrFaces =
+                    lookupPatch(sampleRegion_, samplePatch_).size();
                 iFaces = patch_.size();
                 pFaces = max(iFaces - nbrFaces, 0);
             }
@@ -242,7 +247,7 @@ public:
             {
                 refPtr<labelListList> tMap(new labelListList(patch_.size()));
                 labelListList& map = tMap.ref();
-                forAll (map, i)
+                forAll(map, i)
                 {
                     labelList& subMap = map[i];
                     subMap.setSize(1);

@@ -403,8 +403,14 @@ public:
                     return
                     (
                         (i == 0 && nMatrix_ == 0)
-                      ? const_cast<GeometricField<Type, fvPatchField, volMesh>&>(psi_)
-                      : const_cast<GeometricField<Type, fvPatchField, volMesh>&>
+                      ? const_cast
+                        <
+                            GeometricField<Type, fvPatchField, volMesh>&
+                        >(psi_)
+                      : const_cast
+                        <
+                            GeometricField<Type, fvPatchField, volMesh>&
+                        >
                         (
                             matrix(i).psi()
                         )
@@ -461,7 +467,6 @@ public:
             {
                 return boundaryCoeffs_;
             }
-
 
             //- Declare return type of the faceFluxCorrectionPtr() function
             typedef GeometricField<Type, fvsPatchField, surfaceMesh>
@@ -592,19 +597,19 @@ public:
             tmp<Field<Type>> residual() const;
 
             //- Return the matrix scalar diagonal
-            tmp<scalarField> D();// const;
+            tmp<scalarField> D();
 
             //- Return the matrix Type diagonal
-            tmp<Field<Type>> DD();// const;
+            tmp<Field<Type>> DD();
 
             //- Return the central coefficient
-            tmp<volScalarField> A();// const;
+            tmp<volScalarField> A();
 
             //- Return the H operation source
-            tmp<GeometricField<Type, fvPatchField, volMesh>> H();// const;
+            tmp<GeometricField<Type, fvPatchField, volMesh>> H();
 
             //- Return H(1)
-            tmp<volScalarField> H1();// const;
+            tmp<volScalarField> H1();
 
             //- Return the face-flux field from the matrix
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>

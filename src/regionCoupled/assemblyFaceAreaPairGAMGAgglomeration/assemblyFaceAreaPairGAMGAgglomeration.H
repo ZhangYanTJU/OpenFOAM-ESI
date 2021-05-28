@@ -64,6 +64,10 @@ public:
     TypeName("assembledFaceAreaPair");
 
 
+    //- Destructor
+    ~assemblyFaceAreaPairGAMGAgglomeration();
+
+
     // Constructors
 
         //- Construct given mesh and controls

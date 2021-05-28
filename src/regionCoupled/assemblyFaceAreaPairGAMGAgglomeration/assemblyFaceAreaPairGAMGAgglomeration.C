@@ -51,6 +51,15 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * * * //
+
+Foam::assemblyFaceAreaPairGAMGAgglomeration::
+~assemblyFaceAreaPairGAMGAgglomeration()
+{
+    deleteDemandDrivenData(faceAreasPtr_);
+    deleteDemandDrivenData(cellVolumesPtr_);
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::assemblyFaceAreaPairGAMGAgglomeration::
