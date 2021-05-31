@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2015-2016 OpenFOAM Foundation
-#     Copyright (C) 2018-2020 OpenCFD Ltd.
+#     Copyright (C) 2018-2021 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -54,6 +54,43 @@ checkEnv()
     }
 }
 
+
+# Set FOAM_MODULE_PREFIX according to
+# - absolute/relative path
+# - predefined type (u,user | g,group | o,openfoam)
+setModulePrefix()
+{
+    export FOAM_MODULE_PREFIX="$1"
+    case "$FOAM_MODULE_PREFIX" in
+    # Prefix: user
+    (u | user)      FOAM_MODULE_PREFIX="${FOAM_USER_LIBBIN%/*}" ;;
+
+    # Prefix: group
+    (g | group)     FOAM_MODULE_PREFIX="${FOAM_SITE_LIBBIN%/*}" ;;
+
+    # Prefix: openfoam (other)
+    (o | openfoam)  FOAM_MODULE_PREFIX="${FOAM_LIBBIN%/*}" ;;
+
+    # Prefix: false | none (ie, 'disabled')
+    (false | none)  FOAM_MODULE_PREFIX=false ;;
+
+    # Prefix: directory (absolute or relative)
+    (*)
+        : "${FOAM_MODULE_PREFIX:=/usr/local}"  # Fallback (autoconf-like)
+
+        # Require absolute path
+        [ "${FOAM_MODULE_PREFIX#/}" != "${FOAM_MODULE_PREFIX}" ] || \
+            FOAM_MODULE_PREFIX="${PWD}/${FOAM_MODULE_PREFIX}"
+        ;;
+    esac
+
+    # Avoid potential conflicts
+    unset FOAM_MODULE_APPBIN FOAM_MODULE_LIBBIN
+    echo "Module prefix = ${FOAM_MODULE_PREFIX:-[]}" 1>&2
+}
+
+
+#------------------------------------------------------------------------------
 
 # Return the absolute (physical) path for a directory or
 # for a file's parent directory
