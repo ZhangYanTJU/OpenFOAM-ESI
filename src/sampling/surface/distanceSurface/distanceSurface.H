@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,13 +77,26 @@ Usage
         bounds   | Limit with bounding box                  | no  |
         surfaceType | Type of surface                       | yes |
         surfaceName | Name of surface in \c triSurface/     | no  | dict name
-        topology    | Topology filter (none/largestRegion/nearestPoints/proximity) | no  | none
+        topology    | Topology filter name                  | no  | none
         nearestPoints | Points for point-based segmentation | no  |
         maxDistance | Max search distance for nearestPoints | no  | GREAT
         absProximity | Max proximity of face centres        | no  | 1e-5
     \endtable
 
-    Filtering (for zero-distance only)
+    Topology/Filtering (for zero-distance only)
+
+    - \c none :
+        No filtering
+
+    - \c proximityFaces or \c proximity (post-filter):
+        Checks the resulting faces against the original search surface
+        and rejects faces with a distance greater than \c absProximity.
+
+    - \c proxityRegions (post-filter):
+        Checks the resulting faces against the original search surface
+        as well as checking the cut cells for topological connectivity.
+        If the area-weighted distance for a region is greater than
+        \c absProximity, the region is discarded.
 
     - \c largestRegion (pre-filter):
         The cut cells are checked for topological connectivity and the
@@ -94,10 +107,6 @@ Usage
         The cut cells split into regions, the regions closest to the
         user-defined points are retained.
         Uses \c maxDistance for additional control.
-
-    - \c proximity (post-filter):
-        Checks the resulting faces against the original search surface
-        and rejects faces with a distance greater than \c absProximity.
     .
 
 Note
@@ -146,7 +155,9 @@ class distanceSurface
             NONE,               //!< No additional filtering
             LARGEST_REGION,     //!< Retain largest region
             NEAREST_POINTS,     //!< Retain regions nearest to the points
-            PROXIMITY           //!< Post-filter for surface proximity
+            PROXIMITY_REGIONS,  //!< Retain regions with good surface proximity
+            PROXIMITY_FACES,    //!< Retain faces with good surface proximity
+            PROXIMITY = PROXIMITY_FACES
         };
 
         //- Names for the topology filter
@@ -262,14 +273,17 @@ protected:
         //- Prepare blockedFaces for region split
         bitSet filterPrepareRegionSplit(const bitSet& ignoreCells) const;
 
-        //- Adjust extracted iso-surface to remove far faces
-        void filterByProximity();
-
         //- Keep region with the most cuts (after region split)
         void filterKeepLargestRegion(bitSet& ignoreCells) const;
 
         //- Keep region(s) closest to the nearest points
         void filterKeepNearestRegions(bitSet& ignoreCells) const;
+
+        //- Remove region(s) that have far faces
+        void filterRegionProximity(bitSet& ignoreCells) const;
+
+        //- Adjust extracted iso-surface to remove far faces
+        void filterFaceProximity();
 
 
 public:
