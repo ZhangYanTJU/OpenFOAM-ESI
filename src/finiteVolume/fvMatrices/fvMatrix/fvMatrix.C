@@ -704,7 +704,10 @@ void Foam::fvMatrix<Type>::releaseInterfaces
 {
     for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
     {
-        forAll (interfaces, patchi)
+        const auto& bpsi = this->psi(fieldi).boundaryField();
+        lduInterfaceFieldPtrsList fieldInterfaces(bpsi.scalarInterfaces());
+
+        forAll (fieldInterfaces, patchi)
         {
             label globalPatchID = lduMeshPtr_->patchMap()[fieldi][patchi];
 
