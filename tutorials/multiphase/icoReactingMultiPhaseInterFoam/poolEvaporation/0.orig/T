@@ -63,11 +63,13 @@ boundaryField
         kappaMethod     fluidThermo;
         value           $internalField;
     }
+
     right
     {
         type            zeroGradient;
         value           $internalField;
     }
+
     bottom
     {
         type            externalWallHeatFluxTemperature;
@@ -76,12 +78,14 @@ boundaryField
         kappaMethod     fluidThermo;
         value           $internalField;
     }
+
     top
     {
         type            inletOutlet;
         value           uniform 371;
         inletValue      uniform 371;
     }
+
     frontAndBack
     {
         type            zeroGradient;
@@ -89,4 +93,5 @@ boundaryField
     }
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// ************************************************************************* //
