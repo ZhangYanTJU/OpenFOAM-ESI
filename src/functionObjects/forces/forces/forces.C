@@ -171,25 +171,25 @@ Foam::functionObjects::forces::devRhoReff() const
     typedef compressible::turbulenceModel cmpTurbModel;
     typedef incompressible::turbulenceModel icoTurbModel;
 
+    const auto& U = lookupObject<volVectorField>(UName_);
+
     if (foundObject<cmpTurbModel>(cmpTurbModel::propertiesName))
     {
         const auto& turb =
             lookupObject<cmpTurbModel>(cmpTurbModel::propertiesName);
 
-        return turb.devRhoReff();
+        return turb.devRhoReff(U);
     }
     else if (foundObject<icoTurbModel>(icoTurbModel::propertiesName))
     {
         const auto& turb =
             lookupObject<icoTurbModel>(icoTurbModel::propertiesName);
 
-        return rho()*turb.devReff();
+        return rho()*turb.devReff(U);
     }
     else if (foundObject<fluidThermo>(fluidThermo::dictName))
     {
         const auto& thermo = lookupObject<fluidThermo>(fluidThermo::dictName);
-
-        const auto& U = lookupObject<volVectorField>(UName_);
 
         return -thermo.mu()*dev(twoSymm(fvc::grad(U)));
     }
@@ -197,8 +197,6 @@ Foam::functionObjects::forces::devRhoReff() const
     {
         const auto& laminarT =
             lookupObject<transportModel>("transportProperties");
-
-        const auto& U = lookupObject<volVectorField>(UName_);
 
         return -rho()*laminarT.nu()*dev(twoSymm(fvc::grad(U)));
     }
@@ -208,8 +206,6 @@ Foam::functionObjects::forces::devRhoReff() const
             lookupObject<dictionary>("transportProperties");
 
         const dimensionedScalar nu("nu", dimViscosity, transportProperties);
-
-        const auto& U = lookupObject<volVectorField>(UName_);
 
         return -rho()*nu*dev(twoSymm(fvc::grad(U)));
     }
