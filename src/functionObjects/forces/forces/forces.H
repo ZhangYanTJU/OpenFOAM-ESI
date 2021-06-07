@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -143,10 +143,6 @@ SourceFiles
 #include "writeFile.H"
 #include "cartesianCS.H"
 #include "volFieldsFwd.H"
-#include "HashSet.H"
-#include "Tuple2.H"
-#include "OFstream.H"
-#include "Switch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -164,7 +160,6 @@ class forces
     public fvMeshFunctionObject,
     public writeFile
 {
-
 protected:
 
     // Protected data
@@ -175,6 +170,15 @@ protected:
         //- Pressure, viscous and porous moment per bin
         List<Field<vector>> moments_;
 
+        //- Integrated force constituents
+        //  [0] = total; [1] = pressure; [2] = viscous; (optional: [3] = porous)
+        List<vector> sumForces_;
+
+        //- Integrated moment constituents
+        //  [0] = total; [1] = pressure; [2] = viscous; (optional: [3] = porous)
+        List<vector> sumMoments_;
+
+
         // File streams
 
             //- Forces
@@ -183,17 +187,20 @@ protected:
             //- Moments
             autoPtr<OFstream> momentFilePtr_;
 
-            //- Force bins
-            autoPtr<OFstream> forceBinFilePtr_;
-
-            //- Moment bins
-            autoPtr<OFstream> momentBinFilePtr_;
-
 
         // Read from dictionary
 
+            //- Coordinate system used when evaluating forces/moments
+            coordSystem::cartesian coordSys_;
+
             //- Patches to integrate forces over
             labelHashSet patchSet_;
+
+            //- Reference density needed for incompressible calculations
+            scalar rhoRef_;
+
+            //- Reference pressure
+            scalar pRef_;
 
             //- Name of pressure field
             word pName_;
@@ -204,48 +211,14 @@ protected:
             //- Name of density field (optional)
             word rhoName_;
 
-            //- Is the force density being supplied directly?
-            Switch directForceDensity_;
-
             //- The name of the force density (fD) field
             word fDName_;
 
-            //- Reference density needed for incompressible calculations
-            scalar rhoRef_;
-
-            //- Reference pressure
-            scalar pRef_;
-
-            //- Coordinate system used when evaluating forces/moments
-            coordSystem::cartesian coordSys_;
+            //- Is the force density being supplied directly?
+            bool directForceDensity_;
 
             //- Flag to include porosity effects
             bool porosity_;
-
-
-            // Bin information
-
-                //- Number of bins
-                label nBin_;
-
-                //- Direction used to determine bin orientation
-                vector binDir_;
-
-                //- Distance between bin divisions
-                scalar binDx_;
-
-                //- Minimum bin bounds
-                scalar binMin_;
-
-                //- Maximum bin bounds
-                scalar binMax_;
-
-                //- Bin positions along binDir
-                List<point> binPoints_;
-
-                //- Should bin data be cumulative?
-                bool binCumulative_;
-
 
             //- Write fields flag
             bool writeFields_;
@@ -259,15 +232,6 @@ protected:
         //- Create a field name
         word fieldName(const word& name) const;
 
-        //- Create the output files
-        void createFiles();
-
-        //- Write header for integrated data
-        void writeIntegratedHeader(const word& header, Ostream& os) const;
-
-        //- Write header for binned data
-        void writeBinHeader(const word& header, Ostream& os) const;
-
         //- Set the co-ordinate system from dictionary and axes names
         void setCoordinateSystem
         (
@@ -279,77 +243,94 @@ protected:
         //- Initialise the fields
         void initialise();
 
-        //- Initialise the collection bins
-        void initialiseBins();
+        //- Reset containers and fields
+        void reset();
 
-        //- Reset the fields prior to accumulation of force/moments
-        void resetFields();
 
-        //- Return the effective viscous stress (laminar + turbulent).
-        tmp<volSymmTensorField> devRhoReff() const;
+        // Evaluation
 
-        //- Dynamic viscosity field
-        tmp<volScalarField> mu() const;
+            //- Return the effective stress (viscous + turbulent)
+            tmp<volSymmTensorField> devRhoReff() const;
 
-        //- Return rho if specified otherwise rhoRef
-        tmp<volScalarField> rho() const;
+            //- Return dynamic viscosity field
+            tmp<volScalarField> mu() const;
 
-        //- Return rhoRef if the pressure field is dynamic, i.e. p/rho
-        //  otherwise return 1
-        scalar rho(const volScalarField& p) const;
+            //- Return rho if specified otherwise rhoRef
+            tmp<volScalarField> rho() const;
 
-        //- Accumulate bin data
-        void applyBins
-        (
-            const vectorField& Md,
-            const vectorField& fN,
-            const vectorField& fT,
-            const vectorField& fP,
-            const vectorField& d
-        );
+            //- Return rhoRef if the pressure field is
+            //- dynamic (i.e. p/rho), otherwise return 1
+            scalar rho(const volScalarField& p) const;
 
-        //- Add patch contributions to force and moment fields
-        void addToFields
-        (
-            const label patchi,
-            const vectorField& Md,
-            const vectorField& fN,
-            const vectorField& fT,
-            const vectorField& fP
-        );
+            void applyBins
+            (
+                const vectorField& Md,
+                const vectorField& fN,
+                const vectorField& fT,
+                const vectorField& fP,
+                const vectorField& d
+            );
 
-        //- Add cell contributions to force and moment fields
-        void addToFields
-        (
-            const labelList& cellIDs,
-            const vectorField& Md,
-            const vectorField& fN,
-            const vectorField& fT,
-            const vectorField& fP
-        );
+            //- Add patch contributions to force and moment fields
+            void addToFields
+            (
+                const label patchi,
+                const vectorField& Md,
+                const vectorField& fN,
+                const vectorField& fT
+            );
 
-        //- Helper function to write integrated forces and moments
-        void writeIntegratedForceMoment
-        (
-            const string& descriptor,
-            const vectorField& fm0,
-            const vectorField& fm1,
-            const vectorField& fm2,
-            autoPtr<OFstream>& osPtr
-        ) const;
+            //- Add cell contributions to force and
+            //- moment fields, and include porosity effects
+            void addToFields
+            (
+                const labelList& cellIDs,
+                const vectorField& Md,
+                const vectorField& fN,
+                const vectorField& fT,
+                const vectorField& fP
+            );
 
-        //- Write force data
-        void writeForces();
+            //- Return integrated {total, pressure, viscous, porous} components
+            List<vector> integrateData
+            (
+                const vectorField& fm0,
+                const vectorField& fm1,
+                const vectorField& fm2
+            ) const;
 
-        //- Helper function to write binned forces and moments
-        void writeBinnedForceMoment
-        (
-            const List<Field<vector>>& fm,
-            autoPtr<OFstream>& osPtr
-        ) const;
 
-        //- Write binned data
-        void writeBins();
+        // Write
+
+            //- Create the integrated-data files
+            bool createDataFiles();
+
+            //- Write header for an integrated-data file
+            bool writeDataFileHeader
+            (
+                const word& header,
+                OFstream& os
+            ) const;
+
+            //- Write integrated data to files
+            bool writeDataFiles();
+
+            //- Write integrated data to a file
+            bool writeDataFile
+            (
+                const List<vector>& fm,
+                autoPtr<OFstream>& osPtr
+            ) const;
+
+            //- Write integrated data to stream
+            void logData
+            (
+                const string& descriptor,
+                const List<vector>& fm
+            ) const;
+
+
+    // Generated Methods
 
         //- No copy construct
         forces(const forces&) = delete;
@@ -391,10 +372,10 @@ public:
 
     // Member Functions
 
-        //- Read the forces data
-        virtual bool read(const dictionary&);
+        //- Read the dictionary
+        virtual bool read(const dictionary& dict);
 
-        //- Calculate the forces and moments
+        //- Calculate forces and moments
         virtual void calcForcesMoments();
 
         //- Return the total force
@@ -403,10 +384,10 @@ public:
         //- Return the total moment
         virtual vector momentEff() const;
 
-        //- Execute, currently does nothing
+        //- Execute the function object
         virtual bool execute();
 
-        //- Write the forces
+        //- Write to data files/fields and to streams
         virtual bool write();
 };
 
