@@ -27,7 +27,7 @@ License
 #include "lduMatrix.H"
 #include "addToRunTimeSelectionTable.H"
 #include "lduPrimitiveMeshAssembly.H"
-#include "fvMatrix.H"
+#include "surfaceFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -55,10 +55,7 @@ namespace Foam
 
 Foam::assemblyFaceAreaPairGAMGAgglomeration::
 ~assemblyFaceAreaPairGAMGAgglomeration()
-{
-    deleteDemandDrivenData(faceAreasPtr_);
-    deleteDemandDrivenData(cellVolumesPtr_);
-}
+{}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -69,123 +66,134 @@ assemblyFaceAreaPairGAMGAgglomeration
     const dictionary& controlDict
 )
 :
-    pairGAMGAgglomeration(matrix.mesh(), controlDict),
-    faceAreasPtr_(nullptr),
-    cellVolumesPtr_(nullptr)
+    pairGAMGAgglomeration(matrix.mesh(), controlDict)
 {
 
     const lduMesh& ldumesh = matrix.mesh();
 
-    if (!isA<lduPrimitiveMeshAssembly>(ldumesh))
+    if (isA<lduPrimitiveMeshAssembly>(ldumesh))
     {
-        FatalErrorInFunction
-            << "assemblyFaceAreaPairGAMGAgglomeration requested but "
-            << " lduMesh is not  lduPrimitiveMeshAssembly." << nl
-            << " Change agglomerator type to faceAreaPair "
-            << abort(FatalError);
-    }
-    const lduPrimitiveMeshAssembly& mesh =
-        refCast<const lduPrimitiveMeshAssembly>(ldumesh);
+        const lduPrimitiveMeshAssembly& mesh =
+            refCast<const lduPrimitiveMeshAssembly>(ldumesh);
 
-    faceAreasPtr_ = new vectorField(mesh.lduAddr().upperAddr().size(), Zero);
-    vectorField& faceAreas = *faceAreasPtr_;
+        vectorField faceAreas(mesh.lduAddr().upperAddr().size(), Zero);
+        //scalarField cellVolumes(mesh.lduAddr().size(), Zero);
 
-    cellVolumesPtr_ = new scalarField(mesh.lduAddr().size(), Zero);
-    scalarField& cellVolumes = *cellVolumesPtr_;
+        const labelListList& faceMap = mesh.faceMap();
 
-    const labelListList& faceMap = mesh.faceMap();
-
-    for (label i=0; i < mesh.meshes().size(); ++i)
-    {
-        const fvMesh& m = refCast<const fvMesh>(mesh.meshes()[i]);
-        const labelList& subFaceMap = faceMap[i];
-        const vectorField& areas = m.Sf();
-
-        forAll(subFaceMap, facei)
+        for (label i=0; i < mesh.meshes().size(); ++i)
         {
-            faceAreas[subFaceMap[facei]] = areas[facei];
-        }
+            const fvMesh& m = refCast<const fvMesh>(mesh.meshes()[i]);
+            const labelList& subFaceMap = faceMap[i];
+            const vectorField& areas = m.Sf().internalField();
 
-        const polyBoundaryMesh& patches = m.boundaryMesh();
-
-        // Fill faceAreas for new faces
-        forAll(patches, patchI)
-        {
-            const polyPatch& pp = patches[patchI];
-            label globalPatchID = mesh.patchMap()[i][patchI];
-
-            if (globalPatchID == -1)
+            forAll(subFaceMap, facei)
             {
-                //const lduInterface& inter = m.interfaces()[patchI];
+                faceAreas[subFaceMap[facei]] = areas[facei];
+            }
 
-                if (pp.masterImplicit())
+            const polyBoundaryMesh& patches = m.boundaryMesh();
+
+            // Fill faceAreas for new faces
+            forAll(patches, patchI)
+            {
+                const polyPatch& pp = patches[patchI];
+                label globalPatchID = mesh.patchMap()[i][patchI];
+
+                if (globalPatchID == -1)
                 {
-                    const vectorField& sf = m.boundary()[patchI].Sf();
+                    //const lduInterface& inter = m.interfaces()[patchI];
 
-                    if (isA<cyclicAMIPolyPatch>(pp))
+                    if (pp.masterImplicit())
                     {
-                        const cyclicAMIPolyPatch& mpp =
-                                refCast<const cyclicAMIPolyPatch>(patches[patchI]);
+                        const vectorField& sf = m.boundary()[patchI].Sf();
 
-                        const scalarListList& srcWeight = mpp.AMI().srcWeights();
-
-                        label subFaceI = 0;
-                        forAll(pp.faceCells(), faceI)
+                        if (isA<cyclicAMIPolyPatch>(pp))
                         {
-                            const scalarList& w = srcWeight[faceI];
+                            const cyclicAMIPolyPatch& mpp =
+                                    refCast<const cyclicAMIPolyPatch>(pp);
 
-                            for(label j=0; j<w.size(); j++)
+                            const scalarListList& srcWeight =
+                                mpp.AMI().srcWeights();
+
+                            label subFaceI = 0;
+                            forAll(pp.faceCells(), faceI)
+                            {
+                                const scalarList& w = srcWeight[faceI];
+
+                                for(label j=0; j<w.size(); j++)
+                                {
+                                    const label globalFaceI =
+                                        mesh.faceBoundMap()[i][patchI][subFaceI];
+
+                                    if (globalFaceI != -1)
+                                    {
+                                        faceAreas[globalFaceI] = w[j]*sf[faceI];
+                                    }
+                                    subFaceI++;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            forAll(pp.faceCells(), faceI)
                             {
                                 const label globalFaceI =
-                                    mesh.faceBoundMap()[i][patchI][subFaceI];
+                                    mesh.faceBoundMap()[i][patchI][faceI];
 
                                 if (globalFaceI != -1)
                                 {
-                                    faceAreas[globalFaceI] = w[j]*sf[faceI];
+                                    faceAreas[globalFaceI] = sf[faceI];
                                 }
-                                subFaceI++;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        forAll(pp.faceCells(), faceI)
-                        {
-                            const label globalFaceI =
-                                mesh.faceBoundMap()[i][patchI][faceI];
-
-                            if (globalFaceI != -1)
-                            {
-                                faceAreas[globalFaceI] = sf[faceI];
                             }
                         }
                     }
                 }
             }
+
+            //// Fill cellVolumes
+            //const scalarField& vol = m.V();
+            //const label cellOffset = mesh.cellOffsets()[i];
+            //
+            //forAll(vol, cellI)
+            //{
+            //    cellVolumes[cellOffset + cellI] = vol[cellI];
+            //}
         }
 
-        // Fill cellVolumes
-        const scalarField& vol = m.V();
-        const label cellOffset = mesh.cellOffsets()[i];
-
-        forAll(vol, cellI)
-        {
-            cellVolumes[cellOffset + cellI] = vol[cellI];
-        }
-    }
-
-    agglomerate
-    (
-        mesh,
-        mag
+        agglomerate
         (
-            cmptMultiply
+            mesh,
+            mag
             (
-                *faceAreasPtr_/sqrt(mag(*faceAreasPtr_)),
-                vector(1, 1.01, 1.02)
+                cmptMultiply
+                (
+                    faceAreas/sqrt(mag(faceAreas)),
+                    vector(1, 1.01, 1.02)
+                )
             )
-        )
-    );
+        );
+    }
+    else
+    {
+        // Revert to faceAreaPairGAMGAgglomeration
+        const fvMesh& fvmesh = refCast<const fvMesh>(matrix.mesh());
+
+        agglomerate
+        (
+            matrix.mesh(),
+            mag
+            (
+                cmptMultiply
+                (
+                    fvmesh.Sf().primitiveField()
+                   /sqrt(fvmesh.magSf().primitiveField()),
+                    vector(1, 1.01, 1.02)
+                    //vector::one
+                )
+            )
+        );
+    }
 }
 
 
