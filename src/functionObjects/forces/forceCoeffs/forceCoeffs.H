@@ -31,132 +31,236 @@ Group
     grpForcesFunctionObjects
 
 Description
-    Extends the \c forces functionObject by providing coefficients for:
-    - drag, side and lift forces (Cd, Cs, and Cl)
-    - roll, pitch and yaw moments (CmRoll, CmPitch, and CmYaw)
-    - front and rear axle force contributions (C(f) and C(r)) wherein
-
+    Computes force and moment coefficients over a given
+    list of patches, and optionally over given porous zones.
+    The following coefficients can be selected and output:
     \verbatim
-        Cd(f/r) = 0.5*Cd \pm CmRoll
-        Cs(f/r) = 0.5*Cs \pm CmYaw
-        Cl(f/r) = 0.5*Cl \pm CmPitch
+      Cd      | Drag coefficient
+      Cs      | Side-force coefficient
+      Cl      | Lift coefficient
+      CmRoll  | Roll-moment coefficient
+      CmPitch | Pitch-moment coefficient
+      CmYaw   | Yaw-moment coefficient
     \endverbatim
 
-    The data can optionally be output into bins, defined in a given direction.
+    The force coefficients can also be optionally output
+    in terms of their front and rear axle constituents:
+    \verbatim
+        Cd{f,r} = 0.5*Cd {+,-} CmRoll
+        Cs{f,r} = 0.5*Cs {+,-} CmYaw
+        Cl{f,r} = 0.5*Cl {+,-} CmPitch
+    \endverbatim
+    where \c f and \c r represent front and rear axles, respectively.
 
-    The binned data provides the total and consitituent components per bin:
-    - total coefficient
-    - pressure coefficient contribution
-    - viscous coefficient contribution
-    - porous coefficient contribution
+    Force and moment coefficients are output
+    in their total and constituent components:
+    - total force and moment coefficients
+    - pressure contributions
+    - viscous contributions
+    - porous resistance contributions (optional)
 
-    Data is written into multiple files in the
-    postProcessing/\<functionObjectName\> directory:
-    - coefficient.dat   : integrated coefficients over all geometries
-    - CdBin.dat         : drag coefficient bins
-    - CsBin.dat         : side coefficient bins
-    - ClBin.dat         : lift coefficient bins
-    - CmRollBin.dat     : roll moment coefficient bins
-    - CmPitchBin.dat    : pitch moment coefficient bins
-    - CmYawBin.dat      : yaw moment coefficient bins
+    Force and moment coefficients can be computed and output in:
+    - the global Cartesian coordinate system (default)
+    - a user-defined Cartesian coordinate system
+
+    Force and moment coefficients can also be equidistant-spatially
+    'binned' over given patches. See the following link for the details:
+     - \link binModel.H \endlink
+
+    Operands:
+    \table
+      Operand       | Type           | Location
+      input         | -              | -
+      output file   | dat | $FOAM_CASE/postProcessing/\<FO\>/\<time\>/\<file\>s
+      output field  | volVectorField | $FOAM_CASE/\<time\>/\<outField\>s
+    \endtable
+
+    where \c \<file\>s:
+    \verbatim
+      coefficient.dat  | Integrated coefficients over all patches
+    \endverbatim
+
+    If a bin model is activated, additional \c \<file\>s are output:
+    \verbatim
+      CdBin.dat        | Drag coefficient bins
+      CsBin.dat        | Side-force coefficient bins
+      ClBin.dat        | Lift coefficient bins
+      CmRollBin.dat    | Roll-moment coefficient bins
+      CmPitchBin.dat   | Pitch moment coefficient bins
+      CmYawBin.dat     | Yaw-moment coefficient bins
+    \endverbatim
+
+    where \c \<outField\>s:
+    \verbatim
+      forceCoeff       | Force coefficient field
+      momentCoeff      | Moment coefficient field
+    \endverbatim
 
 Usage
-    Example of function object specification:
+    Minimal example by using \c system/controlDict.functions:
     \verbatim
     forceCoeffs1
     {
-        type        forceCoeffs;
-        libs        (forces);
+        // Mandatory entries (unmodifiable)
+        type                forceCoeffs;
+        libs                (forces);
+
+        // Mandatory entries (runtime modifiable)
+        patches             (<patch1> ... <patchN>); // (wall1 "(wall2|wall3)");
+        magUInf             100;
+        lRef                3.5;
+        Aref                2.2;
+
+        // Optional entries (runtime modifiable)
+        directForceDensity  false;
+        porosity            false;
+        writeFields         false;
+
+        forceCoeffs         (Cd Cs Cl);
+        momentCoeffs        (CmRoll CmPitch CmYaw);
+        frontRearForceCoeffs (Cdf Csf Clf Cdr Csr Clr);
+
+        // Conditional mandatory entries (runtime modifiable)
+
+            // Cartesian coordinate system specification when evaluating
+            // force and moment coefficients, either of the below
+
+            // Option-1, i.e. the centre of rotation
+            // by inherently using e3=(0 0 1) and e1=(1 0 0)
+            CofR                (0 0 0); // Centre of rotation
+            dragDir             (1 0 0);
+            liftDir             (0 0 1);
+
+            // Option-2, i.e. local coordinate system specification
+            origin              (0 0 0);
+            e1                  (1 0 0);
+            e3                  (0 0 1); // (e1, e2) or (e2, e3) or (e3, e1)
+
+            // Option-3, i.e. general coordinate system specification
+            coordinateSystem
+            {
+                type            cartesian;
+                origin          (0 0 0);
+                rotation
+                {
+                    type        axes;
+                    e3          (0 0 1);
+                    e1          (1 0 0); // (e1, e2) or (e2, e3) or (e3, e1)
+                }
+            }
+
+        // Conditional optional entries (runtime modifiable)
+
+            // if directForceDensity == true
+            fD              <fDName>;
+
+            // if directForceDensity == false
+            p               <pName>;
+            U               <UName>;
+            rho             <rhoName>;
+            rhoInf          1; // redundant for incompressible-flow cases
+            pRef            0;
+
+        // Inherited entries
         ...
-        log         yes;
-        writeFields yes;
-        patches     (walls);
-
-        // input keywords for directions of force/moment coefficients
-        // refer below for options, and relations
-
-        magUInf     100;
-        lRef        3.5;
-        Aref        2.2;
-        porosity    no;
-
-        binData
-        {
-            nBin        20;
-            direction   (1 0 0);
-            cumulative  yes;
-        }
     }
     \endverbatim
 
-    Where the entries comprise:
+    where the entries mean:
     \table
-        Property     | Description                          | Required | Default
-        type         | Type name: forceCoeffs               | yes |
-        log          | Write force data to standard output  | no  | no
-        writeFields  | Write force,moment coefficient fields | no | no
-        patches      | Patches included in the forces calculation | yes |
-        magUInf      | Free stream velocity magnitude       | yes |
-        rhoInf       | Free stream density | for compressible cases |
-        lRef         | Reference length scale for moment calculations | yes |
-        Aref         | Reference area                       | yes |
-        porosity     | Include porosity contributions       | no  | false
+      Property   | Description               | Type     | Reqd | Deflt
+      type       | Type name: forceCoeffs    | word     | yes  | -
+      libs       | Library name: forces      | word     | yes  | -
+      patches    | Names of operand patches  | wordList | yes  | -
+      magUInf    | Reference velocity magnitude       | scalar | yes | -
+      lRef       | Reference length scale for moment          <!--
+                 -->  calculations           | scalar | yes    | -
+      Aref       | Reference area            | scalar | yes    | -
+      directForceDensity | Flag to directly supply force      <!--
+                 --> density - see below     | bool   | no     | false
+      porosity   | Flag to include porosity contributions | bool | no | false
+      writeFields | Flag to write force and moment fields | bool | no | false
+      forceCoeffs  | Names of operand force coefficients      <!--
+                 --> - see below             | wordList | no   | all
+      momentCoeffs | Names of operand moment coefficients     <!--
+                 --> - see below             | wordList | no   | all
+      frontRearForceCoeffs | Names of operand front- and      <!--
+                 --> rear-axle force coefficients - see below <!--
+                 -->                         | wordList | no   | none
+      CofR    | Centre of rotation           | vector | cndtnl | -
+      origin  | Origin of coordinate system  | vector | cndtnl | -
+      e3      | e3 coordinate axis           | vector | cndtnl | -
+      e1      | e1 coordinate axis           | vector | cndtnl | -
+      coordinateSystem | Coordinate system specifier | dictionary | cndtnl | -
+      fD      | Name of force density field  | word   | cndtnl-no | fD
+      p       | Name of pressure field       | word   | cndtnl-no | p
+      U       | Name of velocity field       | word   | cndtnl-no | U
+      rho     | Name of density field        | word   | cndtnl-no | rho
+      rhoInf  | Value of reference density   | scalar | cndtnl-yes | -
+      pRef    | Value of reference pressure  | scalar | cndtnl-no | 0
     \endtable
 
-    Bin data is optional, but if the dictionary is present, the entries must
-    be defined according to following:
+    Options for the \c forceCoeffs entry:
+    \verbatim
+      Cd      | Drag coefficient
+      Cs      | Side-force coefficient
+      Cl      | Lift coefficient
+    \endverbatim
+
+    Options for the \c momentCoeffs entry:
+    \verbatim
+      CmRoll  | Roll-moment coefficient
+      CmPitch | Pitch-moment coefficient
+      CmYaw   | Yaw-moment coefficient
+    \endverbatim
+
+    Options for the \c frontRearForceCoeffs entry:
+    \verbatim
+      Cdf     | Front-axle drag coefficient
+      Csf     | Front-axle side-force coefficient
+      Clf     | Front-axle lift coefficient
+      Cdr     | Rear-axle drag coefficient
+      Csr     | Rear-axle side-force coefficient
+      Clr     | Rear-axle lift coefficient
+    \endverbatim
+
+    The inherited entries are elaborated in:
+     - \link functionObject.H \endlink
+     - \link writeFile.H \endlink
+     - \link binModel.H \endlink
+     - \link coordinateSystem.H \endlink
+
+Note
+  - \c rhoInf is always redundant for incompressible computations.
+    That is, \c rhoInf is always equal to 1 in incompressible
+    computations no matter which input value is assigned to \c rhoInf.
+    The value of \c rhoInf is only used for compressible computations.
+  - \c writeControl and \c writeInterval entries of function
+    object do control when to output force and moment files.
+  - \c writeControl and \c writeInterval entries of \c controlDict
+    do control when to output force and moment fields.
+  - Binning is not supported for force and moment fields,
+    and for front-axle and rear-axle coefficients.
+  - Input for force/moment coefficient directions
+    require an origin and two orthogonal directions where
+    the remaining orthogonal direction is automatically computed.
+  - The default direction relations are shown below:
+
     \table
-        nBin         | Number of data bins                    | yes |
-        direction    | Direction along which bins are defined | yes |
-        cumulative   | Bin data accumulated with incresing distance | yes |
-    \endtable
-
-    Input of force/moment coefficient directions:
-    - require an origin, and two orthogonal directions; the remaining orthogonal
-    direction is determined accordingly.
-    - can be added by the three options below.
-
-    \verbatim
-        CofR        (0 0 0); // Centre of rotation
-        dragDir     (1 0 0);
-        liftDir     (0 0 1);
-    \endverbatim
-
-    \verbatim
-        origin (0 0 0);
-        e1     (1 0 0);
-        e3     (0 0 1); // combinations: (e1, e2) or (e2, e3) or (e3, e1)
-    \endverbatim
-
-    \verbatim
-        coordinateSystem
-        {
-            origin  (0 0 0);
-            rotation
-            {
-                type axes;
-                e1 (1 0 0);
-                e3 (0 0 1); // combinations: (e1, e2) or (e2, e3) or (e3, e1)
-            }
-        }
-    \endverbatim
-
-    The default direction relations are shown below:
-
-    \table
-        Property     | Description           | Alias | Direction
-        dragDir      | Drag direction        | e1    | (1 0 0)
-        sideDir      | Side force direction  | e2    | (0 1 0)
-        liftDir      | Lift direction        | e3    | (0 0 1)
-        rollAxis     | Roll axis             | e1    | (1 0 0)
-        pitchAxis    | Pitch axis            | e2    | (0 1 0)
-        yawAxis      | Yaw axis              | e3    | (0 0 1)
+      Property     | Description           | Alias | Direction
+      dragDir      | Drag direction        | e1    | (1 0 0)
+      sideDir      | Side force direction  | e2    | (0 1 0)
+      liftDir      | Lift direction        | e3    | (0 0 1)
+      rollAxis     | Roll axis             | e1    | (1 0 0)
+      pitchAxis    | Pitch axis            | e2    | (0 1 0)
+      yawAxis      | Yaw axis              | e3    | (0 0 1)
     \endtable
 
 See also
-    Foam::functionObject
-    Foam::functionObjects::timeControl
-    Foam::functionObjects::forces
+  - Foam::functionObject
+  - Foam::functionObjects::forces
+  - Foam::functionObjects::writeFile
+  - Foam::binModel
 
 SourceFiles
     forceCoeffs.C

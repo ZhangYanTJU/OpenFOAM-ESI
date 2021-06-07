@@ -31,105 +31,155 @@ Group
     grpForcesFunctionObjects
 
 Description
-    Calculates the forces and moments by integrating the pressure and
-    skin-friction forces over a given list of patches, and the resistance
-    from porous zones.
+    Computes forces and moments over a given list of patches by integrating
+    pressure and viscous forces and moments, and optionally resistance forces
+    and moments from porous zones.
 
-    Forces and moments are calculated in a global Cartesian coordinate system
-    by default, or using a user-defined system.  Contributions can be 'binned'
-    according to a user-defined number of uniform-width collection zones (bins)
-    that span the input geometries, oriented by a user-defined direction vector.
+    Forces and moments are output in their total and constituent components:
+    - total forces and moments
+    - pressure contributions
+    - viscous contributions
+    - porous resistance contributions (optional)
 
-    Results are written to multiple files as a function of time in the
-    postProcessing/\<functionObjectName\> directory:
-    - force.dat          : forces
-    - moment.dat         : moments
-    - forceBin.dat       : force bins
-    - momentBin.dat      : moment bins
+    Forces and moments can be computed and output in:
+    - the global Cartesian coordinate system (default)
+    - a user-defined Cartesian coordinate system
+
+    Forces and moments can also be equidistant-spatially 'binned'
+    over given patches. See the following link for the details:
+     - \link binModel.H \endlink
+
+    Operands:
+    \table
+      Operand       | Type           | Location
+      input         | -              | -
+      output file   | dat | $FOAM_CASE/postProcessing/\<FO\>/\<time\>/\<file\>s
+      output field  | volVectorField | $FOAM_CASE/\<time\>/\<outField\>s
+    \endtable
+
+    where \c \<file\>s:
+    \verbatim
+      force.dat        | Forces
+      moment.dat       | Moments
+    \endverbatim
+
+    If a bin model is activated, additional \c \<file\>s are output:
+    \verbatim
+      forceBin.dat     | Force bins
+      momentBin.dat    | Moment bins
+    \endverbatim
+
+    where \c \<outField\>s:
+    \verbatim
+      force            | Force field
+      moment           | Moment field
+    \endverbatim
 
 Usage
-    Example of function object specification:
+    Minimal example by using \c system/controlDict.functions:
     \verbatim
     forces1
     {
-        type        forces;
-        libs        (forces);
-        ...
-        log         yes;
-        writeFields yes;
-        patches     (walls);
+        // Mandatory entries (unmodifiable)
+        type                forces;
+        libs                (forces);
 
-        binData
-        {
-            nBin        20;
-            direction   (1 0 0);
-            cumulative  yes;
-        }
+        // Mandatory entries (runtime modifiable)
+        patches             (<patch1> ... <patchN>); // (wall1 "(wall2|wall3)");
+
+        // Optional entries (runtime modifiable)
+        directForceDensity  false;
+        porosity            false;
+        writeFields         false;
+
+        // Conditional mandatory entries (runtime modifiable)
+
+            // Cartesian coordinate system specification when
+            // evaluating forces and moments, either of the below
+
+            // Option-1, i.e. the centre of rotation
+            // by inherently using e3=(0 0 1) and e1=(1 0 0)
+            CofR                (0 0 0); // Centre of rotation
+
+            // Option-2, i.e. local coordinate system specification
+            origin              (0 0 0);
+            e1                  (1 0 0);
+            e3                  (0 0 1); // (e1, e2) or (e2, e3) or (e3, e1)
+
+            // Option-3, i.e. general coordinate system specification
+            coordinateSystem
+            {
+                type            cartesian;
+                origin          (0 0 0);
+                rotation
+                {
+                    type        axes;
+                    e3          (0 0 1);
+                    e1          (1 0 0); // (e1, e2) or (e2, e3) or (e3, e1)
+                }
+            }
+
+        // Conditional optional entries (runtime modifiable)
+
+            // if directForceDensity == true
+            fD              <fDName>;
+
+            // if directForceDensity == false
+            p               <pName>;
+            U               <UName>;
+            rho             <rhoName>;
+            rhoInf          1; // enabled if rho=rhoInf
+            pRef            0;
+
+        // Inherited entries
+        ...
     }
     \endverbatim
 
-    Where the entries comprise:
+    where the entries mean:
     \table
-        Property     | Description             | Required    | Default value
-        type         | Type name: forces       | yes         |
-        log          | Write force data to standard output | no | no
-        writeFields  | Write the force and moment fields | no | no
-        patches      | Patches included in the forces calculation | yes |
-        p            | Pressure field name     | no          | p
-        U            | Velocity field name     | no          | U
-        rho          | Density field name (see below) | no   | rho
-        CofR         | Centre of rotation (see below) | no   |
-        porosity     | flag to include porosity contributions | no | no
-        directForceDensity | Force density supplied directly (see below)|no|no
-        fD           | Name of force density field (see below) | no | fD
+      Property   | Description               | Type     | Rqd | Deflt
+      type       | Type name: forces         | word     | yes | -
+      libs       | Library name: forces      | word     | yes | -
+      patches    | Names of operand patches  | wordList | yes | -
+      directForceDensity | Flag to directly supply force density <!--
+                            --> - see below  | bool     | no  | false
+      porosity   | Flag to include porosity contributions | bool | no | false
+      writeFields | Flag to write force and moment fields | bool | no | false
+      CofR    | Centre of rotation          | vector | cndtnl     | -
+      origin  | Origin of coordinate system | vector | cndtnl     | -
+      e3      | e3 coordinate axis          | vector | cndtnl     | -
+      e1      | e1 coordinate axis          | vector | cndtnl     | -
+      coordinateSystem | Coordinate system specifier | dictionary | cndtnl | -
+      fD      | Name of force density field | word   | cndtnl-no  | fD
+      p       | Name of pressure field      | word   | cndtnl-no  | p
+      U       | Name of velocity field      | word   | cndtnl-no  | U
+      rho     | Name of density field       | word   | cndtnl-no  | rho
+      rhoInf  | Value of reference density  | scalar | cndtnl-yes | -
+      pRef    | Value of reference pressure | scalar | cndtnl-no  | 0
     \endtable
 
-    Bin data is optional, but if the dictionary is present, the entries must
-    be defined according o
-    \table
-        nBin         | number of data bins     | yes         |
-        direction    | direction along which bins are defined | yes |
-        cumulative   | bin data accumulated with incresing distance | yes |
-    \endtable
+    The inherited entries are elaborated in:
+     - \link functionObject.H \endlink
+     - \link writeFile.H \endlink
+     - \link binModel.H \endlink
+     - \link coordinateSystem.H \endlink
 
 Note
-  - For incompressible cases, set \c rho to \c rhoInf.  You will then be
-    required to provide a \c rhoInf value corresponding to the free-stream
-    constant density.
-  - If the force density is supplied directly, set the \c directForceDensity
-    flag to 'yes', and supply the force density field using the \c
-    fDName entry
-  - The centre of rotation (CofR) for moment calculations can either be
-    specified by an \c CofR entry, or be taken from origin of the local
-    coordinate system.  For example,
-    \verbatim
-        CofR        (0 0 0);
-    \endverbatim
-    or
-    \verbatim
-        origin  (0 0 0);
-        e1      (0 1 0);
-        e3      (0 0 1);
-    \endverbatim
-    or
-    \verbatim
-        coordinateSystem
-        {
-            origin  (0 0 0);
-            rotation
-            {
-                type    axes;
-                e3      (0 0 1);
-                e1      (1 0 0);
-            }
-        }
-    \endverbatim
+  - For incompressible cases, set \c rho to \c rhoInf.
+    You will then be required to provide a \c rhoInf
+    value corresponding to the constant freestream density.
+  - \c writeControl and \c writeInterval entries of function
+    object do control when to output force and moment files.
+  - \c writeControl and \c writeInterval entries of \c controlDict
+    do control when to output force and moment fields.
+  - Binning is not supported for force and moment fields.
 
 See also
-    Foam::functionObject
-    Foam::functionObjects::fvMeshFunctionObject
-    Foam::functionObjects::writeFile
-    Foam::functionObjects::timeControl
+  - Foam::functionObject
+  - Foam::functionObjects::fvMeshFunctionObject
+  - Foam::functionObjects::writeFile
+  - Foam::binModel
 
 SourceFiles
     forces.C
@@ -164,15 +214,15 @@ class forces
 {
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Bin model
         autoPtr<binModel> binModelPtr_;
 
-        //- Pressure, viscous and porous force per bin
+        //- Forces per bin (i.e. pressure, viscous and porous)
         List<Field<vector>> forces_;
 
-        //- Pressure, viscous and porous moment per bin
+        //- Moments per bin (i.e. pressure, viscous and porous)
         List<Field<vector>> moments_;
 
         //- Integrated force constituents
@@ -186,19 +236,19 @@ protected:
 
         // File streams
 
-            //- Forces
+            //- File stream for forces
             autoPtr<OFstream> forceFilePtr_;
 
-            //- Moments
+            //- File stream for moments
             autoPtr<OFstream> momentFilePtr_;
 
 
         // Read from dictionary
 
-            //- Coordinate system used when evaluating forces/moments
+            //- Coordinate system used when evaluating forces and moments
             coordSystem::cartesian coordSys_;
 
-            //- Patches to integrate forces over
+            //- Names of operand patches
             labelHashSet patchSet_;
 
             //- Reference density needed for incompressible calculations
@@ -213,22 +263,22 @@ protected:
             //- Name of velocity field
             word UName_;
 
-            //- Name of density field (optional)
+            //- Name of density field
             word rhoName_;
 
-            //- The name of the force density (fD) field
+            //- Name of force density field
             word fDName_;
 
-            //- Is the force density being supplied directly?
+            //- Flag to directly supply force density
             bool directForceDensity_;
 
             //- Flag to include porosity effects
             bool porosity_;
 
-            //- Write fields flag
+            //- Flag to write force and moment fields
             bool writeFields_;
 
-            //- Initialised flag
+            //- Flag of initialisation (internal)
             bool initialised_;
 
 
@@ -245,7 +295,7 @@ protected:
             const word& e1Name = word::null
         );
 
-        //- Initialise the fields
+        //- Initialise containers and fields
         void initialise();
 
         //- Reset containers and fields
