@@ -50,14 +50,6 @@ class assemblyFaceAreaPairGAMGAgglomeration
 :
     public pairGAMGAgglomeration
 {
-private:
-
-        //- Face areas of the assembled mesh
-        vectorField* faceAreasPtr_;
-
-        //- Cell volumes of the assembled mesh
-        scalarField* cellVolumesPtr_;
-
 public:
 
     //- Runtime type information
