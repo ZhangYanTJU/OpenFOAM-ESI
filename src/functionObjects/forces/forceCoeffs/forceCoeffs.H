@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -167,6 +167,8 @@ SourceFiles
 #define functionObjects_forceCoeffs_H
 
 #include "forces.H"
+#include "HashSet.H"
+#include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -183,48 +185,120 @@ class forceCoeffs
 :
     public forces
 {
-    // Private data
+    // Private Enumerations
 
-        // Free-stream conditions
+        //- Options for the force coefficients
+        enum forceCoeffType
+        {
+            CD,        //!< Drag coefficient
+            CS,        //!< Side-force coefficient
+            CL         //!< Lift coefficient
+        };
 
-            //- Free-stream velocity magnitude
-            scalar magUInf_;
+        //- Names for forceCoeffType
+        static const Enum<forceCoeffType> forceCoeffTypeNames_;
+
+        //- Options for the moment coefficients
+        enum momentCoeffType
+        {
+            CMROLL,    //!< Roll-moment coefficient
+            CMPITCH,   //!< Pitch-moment coefficient
+            CMYAW,     //!< Yaw-moment coefficient
+        };
+
+        //- Names for momentCoeffType
+        static const Enum<momentCoeffType> momentCoeffTypeNames_;
+
+        //- Options for the front- and rear-axle force coefficients
+        enum frontRearForceCoeffType
+        {
+            CDF,       //!< Front-axle drag coefficient
+            CSF,       //!< Front-axle side-force coefficient
+            CLF,       //!< Front-axle lift coefficient
+            CDR,       //!< Rear-axle drag coefficient
+            CSR,       //!< Rear-axle side-force coefficient
+            CLR        //!< Rear-axle lift coefficient
+        };
+
+        //- Names for frontRearForceCoeffType
+        static const Enum<frontRearForceCoeffType>
+            frontRearForceCoeffTypeNames_;
+
+
+    // Private Data
+
+        //- Force coefficients per bin (i.e. Cd, Cs, Cl)
+        //  [0] = pressure; [1] = viscous; (optional: [2] = porous)
+        //  e.g. CFs_[0][1] is Cd.viscous bins
+        List<List<scalarField>> CFs_;
+
+        //- Moment coefficients per bin (i.e. CmRoll, CmPitch, CmYaw)
+        //  [0] = pressure; [1] = viscous; [2] = porous
+        //  e.g. CMs_[2][0] is CmYaw.pressure bins
+        List<List<scalarField>> CMs_;
+
+        //- Integrated force coefficients (i.e. Cd, Cs, Cl)
+        //  [0] = total; [1] = pressure; [2] = viscous; (optional: [3] = porous)
+        //  e.g. sumCFs_[0][2] is Cd.viscous
+        List<List<scalar>> sumCFs_;
+
+        //- Integrated moment coefficients (i.e. CmRoll, CmPitch, CmYaw)
+        //  [0] = total; [1] = pressure; [2] = viscous; (optional: [3] = porous)
+        //  e.g. sumCMs_[0][1] is CmRoll.pressure
+        List<List<scalar>> sumCMs_;
+
+        //- Integrated front-axle force coefficients (i.e. Cdf Csf Clf)
+        //  [0] = total; [1] = pressure; [2] = viscous; (optional: [3] = porous)
+        //  e.g. sumFrontCFs_[2][0] is Clf.total
+        List<List<scalar>> sumFrontCFs_;
+
+        //- Integrated rear-axle force coefficients (i.e. Cdr Csr Clr)
+        //  [0] = total; [1] = pressure; [2] = viscous; (optional: [3] = porous)
+        //  e.g. sumRearCFs_[2][2] is Clr.viscous
+        List<List<scalar>> sumRearCFs_;
+
+        //- Output force coefficients
+        wordHashSet forceCoeffNames_;
+
+        //- Output moment coefficients
+        wordHashSet momentCoeffNames_;
+
+        //- Output front and rear force coefficients
+        wordHashSet frontRearForceCoeffNames_;
+
+        //- Identifiers for operand force coefficients
+        std::vector<label> idCFs_;
+
+        //- Identifiers for operand moment coefficients
+        std::vector<label> idCMs_;
+
+
+        // File streams
+
+            //- File stream for integrated operand coefficients
+            autoPtr<OFstream> coeffFilePtr_;
 
 
         // Reference scales
 
-            //- Reference length [m]
+            //- Reference velocity magnitude [m/s]
+            scalar magUInf_;
+
+            //- Reference length scale [m]
             scalar lRef_;
 
             //- Reference area [m^2]
             scalar Aref_;
 
 
-        // File streams
+        //- Flag to log front-axle and rear-axle coefficients (internal)
+        bool calcFrontRear_;
 
-            //- Integrated coefficients
-            autoPtr<OFstream> coeffFilePtr_;
-
-            //- Drag coefficient
-            autoPtr<OFstream> CdBinFilePtr_;
-
-            //- Side coefficient
-            autoPtr<OFstream> CsBinFilePtr_;
-
-            //- Lift coefficient
-            autoPtr<OFstream> ClBinFilePtr_;
-
-            //- Roll moment coefficient
-            autoPtr<OFstream> CmRollBinFilePtr_;
-
-            //- Pitch moment coefficient
-            autoPtr<OFstream> CmPitchBinFilePtr_;
-
-            //- Yaw moment coefficient
-            autoPtr<OFstream> CmYawBinFilePtr_;
+        //- Flag of initialisation (internal)
+        bool initialised_;
 
 
-    // Private Member Functions
+    // Generated Methods
 
         //- No copy construct
         forceCoeffs(const forceCoeffs&) = delete;
@@ -237,24 +311,46 @@ protected:
 
     // Protected Member Functions
 
-        //- Create the output files
-        void createFiles();
+        //- Initialise containers and fields
+        void initialise();
 
-        //- Write header for integrated data
-        void writeIntegratedHeader(const word& header, Ostream& os) const;
+        //- Reset containers and fields
+        void reset();
 
-        //- Write header for binned data
-        void writeBinHeader(const word& header, Ostream& os) const;
 
-        //- Write integrated data
-        void writeIntegratedData
-        (
-            const word& title,
-            const List<Field<scalar>>& coeff
-        ) const;
+        // Evaluate
 
-        //- Write binned data
-        void writeBinData(const List<Field<scalar>> coeffs, Ostream& os) const;
+            //- Calculate force coefficients
+            void calcForceCoeffs();
+
+            //- Calculate moment coefficients
+            void calcMomentCoeffs();
+
+            //- Return integrated {total, pressure, viscous, porous} components
+            List<scalar> integrateData(const List<Field<scalar>>& coeff) const;
+
+
+        // Write
+
+            //- Create the integrated-coefficient file
+            bool createDataFile();
+
+            //- Write header to the integrated-coefficient file
+            bool writeDataFileHeader
+            (
+                const word& header,
+                OFstream& os
+            ) const;
+
+            //- Write integrated coefficients to the integrated-coefficient file
+            bool writeDataFile();
+
+            //- Write integrated data to stream
+            void logData
+            (
+                const word& descriptor,
+                const List<scalar>& coeff
+            ) const;
 
 
 public:
@@ -270,7 +366,7 @@ public:
         (
             const word& name,
             const Time& runTime,
-            const dictionary&,
+            const dictionary& dict,
             const bool readFields = true
         );
 
@@ -281,13 +377,13 @@ public:
 
     // Member Functions
 
-        //- Read the forces data
-        virtual bool read(const dictionary&);
+        //- Read the dictionary
+        virtual bool read(const dictionary& dict);
 
-        //- Execute
+        //- Execute the function object
         virtual bool execute();
 
-        //- Write the forces
+        //- Write to data files/fields and to streams
         virtual bool write();
 };
 

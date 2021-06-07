@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,48 +48,315 @@ namespace functionObjects
 }
 
 
+const Foam::Enum
+<
+    Foam::functionObjects::forceCoeffs::forceCoeffType
+>
+Foam::functionObjects::forceCoeffs::forceCoeffTypeNames_
+({
+    { forceCoeffType::CD, "Cd" },
+    { forceCoeffType::CS, "Cs" },
+    { forceCoeffType::CL, "Cl" }
+});
+
+
+const Foam::Enum
+<
+    Foam::functionObjects::forceCoeffs::momentCoeffType
+>
+Foam::functionObjects::forceCoeffs::momentCoeffTypeNames_
+({
+    { momentCoeffType::CMROLL, "CmRoll" },
+    { momentCoeffType::CMPITCH, "CmPitch" },
+    { momentCoeffType::CMYAW, "CmYaw" }
+});
+
+
+const Foam::Enum
+<
+    Foam::functionObjects::forceCoeffs::frontRearForceCoeffType
+>
+Foam::functionObjects::forceCoeffs::frontRearForceCoeffTypeNames_
+({
+    { frontRearForceCoeffType::CDF, "Cdf" },
+    { frontRearForceCoeffType::CSF, "Csf" },
+    { frontRearForceCoeffType::CLF, "Clf" },
+    { frontRearForceCoeffType::CDR, "Cdr" },
+    { frontRearForceCoeffType::CSR, "Csr" },
+    { frontRearForceCoeffType::CLR, "Clr" }
+});
+
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::functionObjects::forceCoeffs::createFiles()
+void Foam::functionObjects::forceCoeffs::initialise()
 {
-    // Note: Only possible to create bin files after bins have been initialised
-
-    if (writeToFile() && !coeffFilePtr_)
+    if (initialised_)
     {
-        coeffFilePtr_ = createFile("coefficient");
-        writeIntegratedHeader("Coefficients", coeffFilePtr_());
+        return;
+    }
 
-        if (nBin_ > 1)
+    // Collect the identifiers of operand coeffs,
+    // which can be different from output coeffs
+    idCFs_.clear();
+    idCMs_.clear();
+    for (const word& coeff : forceCoeffNames_)
+    {
+        switch (forceCoeffTypeNames_[coeff])
         {
-            CdBinFilePtr_ = createFile("CdBin");
-            writeBinHeader("Drag coefficient bins", CdBinFilePtr_());
-
-            CsBinFilePtr_ = createFile("CsBin");
-            writeBinHeader("Side coefficient bins", CsBinFilePtr_());
-
-            ClBinFilePtr_ = createFile("ClBin");
-            writeBinHeader("Lift coefficient bins", ClBinFilePtr_());
-
-            CmRollBinFilePtr_ = createFile("CmRollBin");
-            writeBinHeader("Roll moment coefficient bins", CmRollBinFilePtr_());
-
-            CmPitchBinFilePtr_ = createFile("CmPitchBin");
-            writeBinHeader("Moment coefficient bins", CmPitchBinFilePtr_());
-
-            CmYawBinFilePtr_ = createFile("CmYawBin");
-            writeBinHeader("Yaw moment coefficient bins", CmYawBinFilePtr_());
+            case CD:
+            {
+                idCFs_.push_back(0);
+                break;
+            }
+            case CS:
+            {
+                idCFs_.push_back(1);
+                break;
+            }
+            case CL:
+            {
+                idCFs_.push_back(2);
+                break;
+            }
+            default:
+                break;
         }
+    }
+
+    for (const word& coeff : momentCoeffNames_)
+    {
+        switch (momentCoeffTypeNames_[coeff])
+        {
+            case CMROLL:
+            {
+                idCMs_.push_back(0);
+                break;
+            }
+            case CMPITCH:
+            {
+                idCMs_.push_back(1);
+                break;
+            }
+            case CMYAW:
+            {
+                idCMs_.push_back(2);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    if (calcFrontRear_)
+    {
+        for (const word& coeff : frontRearForceCoeffNames_)
+        {
+            switch (frontRearForceCoeffTypeNames_[coeff])
+            {
+                case CDF:
+                {
+                    idCFs_.push_back(0);
+                    idCMs_.push_back(0);
+                    break;
+                }
+                case CSF:
+                {
+                    idCFs_.push_back(1);
+                    idCMs_.push_back(2);
+                    break;
+                }
+                case CLF:
+                {
+                    idCFs_.push_back(2);
+                    idCMs_.push_back(1);
+                    break;
+                }
+                case CDR:
+                {
+                    idCFs_.push_back(0);
+                    idCMs_.push_back(0);
+                    break;
+                }
+                case CSR:
+                {
+                    idCFs_.push_back(1);
+                    idCMs_.push_back(2);
+                    break;
+                }
+                case CLR:
+                {
+                    idCFs_.push_back(2);
+                    idCMs_.push_back(1);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Sort and remove duplicated identifiers of operand coeffs
+    std::sort(idCFs_.begin(), idCFs_.end());
+    idCFs_.erase
+    (
+        std::unique(idCFs_.begin(), idCFs_.end()),
+        idCFs_.end()
+    );
+    std::sort(idCMs_.begin(), idCMs_.end());
+    idCMs_.erase
+    (
+        std::unique(idCMs_.begin(), idCMs_.end()),
+        idCMs_.end()
+    );
+
+    for (label i : idCFs_)
+    {
+        CFs_[i].setSize(vector::nComponents);
+        sumCFs_[i].setSize(vector::nComponents + 1);
+    }
+
+    for (label i : idCMs_)
+    {
+        CMs_[i].setSize(vector::nComponents);
+        sumCMs_[i].setSize(vector::nComponents + 1);
+    }
+
+    if (calcFrontRear_)
+    {
+        sumFrontCFs_.setSize(vector::nComponents);
+        sumRearCFs_.setSize(vector::nComponents);
+
+        for (direction i = 0; i < vector::nComponents; ++i)
+        {
+            sumFrontCFs_[i].setSize(vector::nComponents + 1);
+            sumRearCFs_[i].setSize(vector::nComponents + 1);
+        }
+    }
+
+    initialised_ = true;
+}
+
+
+void Foam::functionObjects::forceCoeffs::reset()
+{
+    CFs_ = Zero;
+    CMs_ = Zero;
+    sumCFs_ = Zero;
+    sumCMs_ = Zero;
+
+    if (calcFrontRear_)
+    {
+        sumFrontCFs_ = Zero;
+        sumRearCFs_ = Zero;
+    }
+
+    if (writeFields_)
+    {
+        auto& fldForceCoeff =
+            lookupObjectRef<volVectorField>(fieldName("forceCoeff"));
+
+        fldForceCoeff == dimensionedVector(fldForceCoeff.dimensions(), Zero);
+
+        auto& fldMomentCoeff =
+            lookupObjectRef<volVectorField>(fieldName("momentCoeff"));
+
+        fldMomentCoeff == dimensionedVector(fldMomentCoeff.dimensions(), Zero);
     }
 }
 
 
-void Foam::functionObjects::forceCoeffs::writeIntegratedHeader
+void Foam::functionObjects::forceCoeffs::calcForceCoeffs()
+{
+    if (idCFs_.size() == 0)
+    {
+        return;
+    }
+
+    // Calculate scaling factors
+    const scalar pDyn = 0.5*rhoRef_*sqr(magUInf_);
+    const scalar forceScaling = scalar(1)/(Aref_*pDyn + SMALL);
+
+    // Calculate force coefficients
+    for (direction compi = 0; compi < vector::nComponents ; ++compi)
+    {
+        const Field<vector> localForce(coordSys_.localVector(force_[compi]));
+
+        for (label coeffi : idCFs_)
+        {
+            CFs_[coeffi][compi] = forceScaling*(localForce.component(coeffi));
+        }
+    }
+
+    for (label coeffi : idCFs_)
+    {
+        // Calculate integrated force coefficients
+        sumCFs_[coeffi] = integrateData(CFs_[coeffi]);
+    }
+}
+
+
+void Foam::functionObjects::forceCoeffs::calcMomentCoeffs()
+{
+    if (idCMs_.size() == 0)
+    {
+        return;
+    }
+
+    // Calculate scaling factors
+    const scalar pDyn = 0.5*rhoRef_*sqr(magUInf_);
+    const scalar momentScaling = scalar(1)/(Aref_*pDyn*lRef_ + SMALL);
+
+    // Calculate moment coefficients
+    for (direction compi = 0; compi < vector::nComponents ; ++compi)
+    {
+        const Field<vector> localMoment(coordSys_.localVector(moment_[compi]));
+
+        for (label coeffi : idCMs_)
+        {
+            CMs_[coeffi][compi] = momentScaling*(localMoment.component(coeffi));
+        }
+    }
+
+    for (label coeffi : idCMs_)
+    {
+        // Calculate integrated moment coefficients
+        sumCMs_[coeffi] = integrateData(CMs_[coeffi]);
+    }
+}
+
+
+Foam::List<Foam::scalar> Foam::functionObjects::forceCoeffs::integrateData
 (
-    const word& header,
-    Ostream& os
+    const List<Field<scalar>>& coeff
 ) const
 {
-    writeHeader(os, "Force coefficients");
+    scalar pressure = sum(coeff[0]);
+    scalar viscous = sum(coeff[1]);
+    scalar porous = porosity_ ? sum(coeff[2]) : 0;
+    scalar total = pressure + viscous + porous;
+
+    return List<scalar>({total, pressure, viscous, porous});
+}
+
+
+bool Foam::functionObjects::forceCoeffs::createDataFile()
+{
+    if (!coeffFilePtr_.valid())
+    {
+        coeffFilePtr_ = createFile("coefficient");
+        writeDataFileHeader("Coefficients", coeffFilePtr_());
+    }
+
+    return true;
+}
+
+
+bool Foam::functionObjects::forceCoeffs::writeDataFileHeader
+(
+    const word& header,
+    OFstream& os
+) const
+{
+    writeHeader(os, "Force and moment coefficients");
     writeHeaderValue(os, "dragDir", coordSys_.e1());
     writeHeaderValue(os, "sideDir", coordSys_.e2());
     writeHeaderValue(os, "liftDir", coordSys_.e3());
@@ -102,81 +369,133 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedHeader
     writeHeaderValue(os, "CofR", coordSys_.origin());
     writeHeader(os, "");
     writeCommented(os, "Time");
-    writeTabbed(os, "Cd");
-    writeTabbed(os, "Cs");
-    writeTabbed(os, "Cl");
-    writeTabbed(os, "CmRoll");
-    writeTabbed(os, "CmPitch");
-    writeTabbed(os, "CmYaw");
-    writeTabbed(os, "Cd(f)");
-    writeTabbed(os, "Cd(r)");
-    writeTabbed(os, "Cs(f)");
-    writeTabbed(os, "Cs(r)");
-    writeTabbed(os, "Cl(f)");
-    writeTabbed(os, "Cl(r)");
-    os  << endl;
-}
 
-
-void Foam::functionObjects::forceCoeffs::writeBinHeader
-(
-    const word& header,
-    Ostream& os
-) const
-{
-    writeHeader(os, header);
-    writeHeaderValue(os, "bins", nBin_);
-    writeHeaderValue(os, "start", binMin_);
-    writeHeaderValue(os, "delta", binDx_);
-    writeHeaderValue(os, "direction", binDir_);
-
-    vectorField binPoints(nBin_);
-    writeCommented(os, "x co-ords  :");
-    forAll(binPoints, pointi)
+    for (const word& coeff : forceCoeffNames_)
     {
-        binPoints[pointi] = (binMin_ + (pointi + 1)*binDx_)*binDir_;
-        os  << tab << binPoints[pointi].x();
+        writeTabbed(os, coeff);
     }
-    os  << nl;
 
-    writeCommented(os, "y co-ords  :");
-    forAll(binPoints, pointi)
+    for (const word& coeff : momentCoeffNames_)
     {
-        os  << tab << binPoints[pointi].y();
+        writeTabbed(os, coeff);
     }
-    os  << nl;
 
-    writeCommented(os, "z co-ords  :");
-    forAll(binPoints, pointi)
+    if (calcFrontRear_)
     {
-        os  << tab << binPoints[pointi].z();
-    }
-    os  << nl;
-
-    writeHeader(os, "");
-    writeCommented(os, "Time");
-
-    for (label j = 0; j < nBin_; ++j)
-    {
-        const word jn(Foam::name(j) + ':');
-        writeTabbed(os, jn + "total");
-        writeTabbed(os, jn + "pressure");
-        writeTabbed(os, jn + "viscous");
-
-        if (porosity_)
+        for (const word& coeff : frontRearForceCoeffNames_)
         {
-            writeTabbed(os, jn + "porous");
+            writeTabbed(os, coeff);
         }
     }
 
     os  << endl;
+
+    return true;
 }
 
 
-void Foam::functionObjects::forceCoeffs::writeIntegratedData
+bool Foam::functionObjects::forceCoeffs::writeDataFile()
+{
+    writeCurrentTime(coeffFilePtr_());
+
+    for (const word& coeff : forceCoeffNames_)
+    {
+        switch (forceCoeffTypeNames_[coeff])
+        {
+            case CD:
+            {
+                coeffFilePtr_() << sumCFs_[0][0] << tab;
+                break;
+            }
+            case CS:
+            {
+                coeffFilePtr_() << sumCFs_[1][0] << tab;
+                break;
+            }
+            case CL:
+            {
+                coeffFilePtr_() << sumCFs_[2][0] << tab;
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    for (const word& coeff : momentCoeffNames_)
+    {
+        switch (momentCoeffTypeNames_[coeff])
+        {
+            case CMROLL:
+            {
+                coeffFilePtr_() << sumCMs_[0][0] << tab;
+                break;
+            }
+            case CMPITCH:
+            {
+                coeffFilePtr_() << sumCMs_[1][0] << tab;
+                break;
+            }
+            case CMYAW:
+            {
+                coeffFilePtr_() << sumCMs_[2][0] << tab;
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    if (calcFrontRear_)
+    {
+        for (const word& coeff : frontRearForceCoeffNames_)
+        {
+            switch (frontRearForceCoeffTypeNames_[coeff])
+            {
+                case CDF:
+                {
+                    coeffFilePtr_() << sumFrontCFs_[0][0] << tab;
+                    break;
+                }
+                case CSF:
+                {
+                    coeffFilePtr_() << sumFrontCFs_[1][0] << tab;
+                    break;
+                }
+                case CLF:
+                {
+                    coeffFilePtr_() << sumFrontCFs_[2][0] << tab;
+                    break;
+                }
+                case CDR:
+                {
+                    coeffFilePtr_() << sumRearCFs_[0][0] << tab;
+                    break;
+                }
+                case CSR:
+                {
+                    coeffFilePtr_() << sumRearCFs_[1][0] << tab;
+                    break;
+                }
+                case CLR:
+                {
+                    coeffFilePtr_() << sumRearCFs_[2][0] << tab;
+                    break;
+                }
+            }
+        }
+    }
+
+    coeffFilePtr_() <<  endl;
+
+    return true;
+}
+
+
+void Foam::functionObjects::forceCoeffs::logData
 (
     const word& title,
-    const List<Field<scalar>>& coeff
+    const List<scalar>& coeff
 ) const
 {
     if (!log)
@@ -184,46 +503,17 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedData
         return;
     }
 
-    const scalar pressure = sum(coeff[0]);
-    const scalar viscous = sum(coeff[1]);
-    const scalar porous = sum(coeff[2]);
-    const scalar total = pressure + viscous + porous;
-
-    Info<< "        " << title << "       : " << total << token::TAB
-        << '('
-        << "pressure: " << pressure << token::TAB
-        << "viscous: " << viscous;
+    Log << "        " << title
+        << "       : "  << coeff[0] << tab
+        << "pressure: " << coeff[1] << tab
+        << "viscous: "  << coeff[2];
 
     if (porosity_)
     {
-        Info<< token::TAB << "porous: " << porous;
+        Log << tab << "porous: " << coeff[3];
     }
 
-    Info<< ')' << endl;
-}
-
-
-void Foam::functionObjects::forceCoeffs::writeBinData
-(
-    const List<Field<scalar>> coeffs,
-    Ostream& os
-) const
-{
-    writeCurrentTime(os);
-
-    for (label bini = 0; bini < nBin_; ++bini)
-    {
-        scalar total = coeffs[0][bini] + coeffs[1][bini] + coeffs[2][bini];
-
-        os  << tab << total << tab << coeffs[0][bini] << tab << coeffs[1][bini];
-
-        if (porosity_)
-        {
-            os  << tab << coeffs[2][bini];
-        }
-    }
-
-    os  << endl;
+    Log << endl;
 }
 
 
@@ -238,16 +528,23 @@ Foam::functionObjects::forceCoeffs::forceCoeffs
 )
 :
     forces(name, runTime, dict, false),
+    CFs_(vector::nComponents),
+    CMs_(vector::nComponents),
+    sumCFs_(vector::nComponents),
+    sumCMs_(vector::nComponents),
+    sumFrontCFs_(Zero),
+    sumRearCFs_(Zero),
+    forceCoeffNames_(),
+    momentCoeffNames_(),
+    frontRearForceCoeffNames_(),
+    idCFs_(),
+    idCMs_(),
+    coeffFilePtr_(),
     magUInf_(Zero),
     lRef_(Zero),
     Aref_(Zero),
-    coeffFilePtr_(),
-    CdBinFilePtr_(),
-    CsBinFilePtr_(),
-    ClBinFilePtr_(),
-    CmRollBinFilePtr_(),
-    CmPitchBinFilePtr_(),
-    CmYawBinFilePtr_()
+    calcFrontRear_(false),
+    initialised_(false)
 {
     if (readFields)
     {
@@ -262,26 +559,116 @@ Foam::functionObjects::forceCoeffs::forceCoeffs
 
 bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
 {
-    forces::read(dict);
+    if (!forces::read(dict))
+    {
+        return false;
+    }
 
-    // Free stream velocity magnitude
+    initialised_ = false;
+
+    // Reference scales
     dict.readEntry("magUInf", magUInf_);
+    dict.readEntry("lRef", lRef_);
+    dict.readEntry("Aref", Aref_);
 
-    // If case is compressible we must read rhoInf (store in rhoRef_) to
-    // calculate the reference dynamic pressure
-    // Note: for incompressible, rhoRef_ is already initialised
+    // If case is compressible we must read rhoInf
+    // (stored in rhoRef_) to calculate the reference dynamic pressure
+    // Note: for incompressible, rhoRef_ is already initialised to 1
     if (rhoName_ != "rhoInf")
     {
         dict.readEntry("rhoInf", rhoRef_);
     }
 
-    // Reference length and area scales
-    dict.readEntry("lRef", lRef_);
-    dict.readEntry("Aref", Aref_);
+    Info<< "    magUInf: " << magUInf_ << nl
+        << "    lRef   : " << lRef_ << nl
+        << "    Aref   : " << Aref_ << nl
+        << "    rhoInf : " << rhoRef_ << endl;
+
+    if (min(magUInf_, rhoRef_) < SMALL || min(lRef_, Aref_) < SMALL)
+    {
+        FatalIOErrorInFunction(dict)
+            << "Non-zero values are required for reference scales"
+            << exit(FatalIOError);
+
+        return false;
+    }
+
+    forceCoeffNames_.insert
+    (
+        dict.getOrDefault<wordList>
+        (
+            "forceCoeffs",
+            wordList({"Cd", "Cs", "Cl"})
+        )
+    );
+
+    if (forceCoeffNames_.size())
+    {
+        Info<< "    Operand force coefficients:" << nl;
+        for (const word& forceCoeff : forceCoeffNames_)
+        {
+            Info<< "        " << forceCoeff << nl;
+        }
+    }
+
+    momentCoeffNames_.insert
+    (
+        dict.getOrDefault<wordList>
+        (
+            "momentCoeffs",
+            wordList({"CmRoll", "CmPitch", "CmYaw"})
+        )
+    );
+
+    if (momentCoeffNames_.size())
+    {
+        Info<< "    Operand moment coefficients:" << nl;
+        for (const word& momentCoeff : momentCoeffNames_)
+        {
+            Info<< "        " << momentCoeff << nl;
+        }
+    }
+
+    if (dict.found("frontRearForceCoeffs"))
+    {
+        frontRearForceCoeffNames_.insert
+        (
+            dict.get<wordList>("frontRearForceCoeffs")
+        );
+    }
+
+    if (frontRearForceCoeffNames_.size())
+    {
+        Info<< "    Operand front- and rear-axle force coefficients:" << nl;
+        for (const word& frontRearForceCoeff : frontRearForceCoeffNames_)
+        {
+            Info<< "        " << frontRearForceCoeff << nl;
+        }
+
+        calcFrontRear_ = true;
+    }
+
+    if
+    (
+        (
+            forceCoeffNames_.size()
+          + momentCoeffNames_.size()
+          + frontRearForceCoeffNames_.size()
+        )
+        <= 0
+    )
+    {
+        FatalIOErrorInFunction(dict)
+            << "No coefficient is requested" << nl
+            << "Please request at least one force/moment coefficient"
+            << exit(FatalIOError);
+
+        return false;
+    }
 
     if (writeFields_)
     {
-        volVectorField* forceCoeffPtr
+        auto* fldForceCoeffPtr
         (
             new volVectorField
             (
@@ -291,16 +678,16 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    IOobject::AUTO_WRITE
                 ),
                 mesh_,
                 dimensionedVector(dimless, Zero)
             )
         );
 
-        mesh_.objectRegistry::store(forceCoeffPtr);
+        mesh_.objectRegistry::store(fldForceCoeffPtr);
 
-        volVectorField* momentCoeffPtr
+        auto* fldMomentCoeffPtr
         (
             new volVectorField
             (
@@ -310,15 +697,17 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    IOobject::AUTO_WRITE
                 ),
                 mesh_,
                 dimensionedVector(dimless, Zero)
             )
         );
 
-        mesh_.objectRegistry::store(momentCoeffPtr);
+        mesh_.objectRegistry::store(fldMomentCoeffPtr);
     }
+
+    Info<< endl;
 
     return true;
 }
@@ -328,161 +717,146 @@ bool Foam::functionObjects::forceCoeffs::execute()
 {
     forces::calcForcesMoment();
 
-    createFiles();
+    initialise();
 
-    // Storage for pressure, viscous and porous contributions to coeffs
-    List<Field<scalar>> dragCoeffs(3);
-    List<Field<scalar>> sideCoeffs(3);
-    List<Field<scalar>> liftCoeffs(3);
-    List<Field<scalar>> rollMomentCoeffs(3);
-    List<Field<scalar>> pitchMomentCoeffs(3);
-    List<Field<scalar>> yawMomentCoeffs(3);
+    reset();
 
-    forAll(liftCoeffs, i)
+    Log << type() << " " << name() << " write:" << nl;
+
+    calcForceCoeffs();
+
+    calcMomentCoeffs();
+
+    // Calculate force coefficients
+    for (const word& coeff : forceCoeffNames_)
     {
-        dragCoeffs[i].setSize(nBin_);
-        sideCoeffs[i].setSize(nBin_);
-        liftCoeffs[i].setSize(nBin_);
-        rollMomentCoeffs[i].setSize(nBin_);
-        pitchMomentCoeffs[i].setSize(nBin_);
-        yawMomentCoeffs[i].setSize(nBin_);
-    }
-
-    // Calculate coefficients
-    scalar CdTot = 0;
-    scalar CsTot = 0;
-    scalar ClTot = 0;
-    scalar CmRollTot = 0;
-    scalar CmPitchTot = 0;
-    scalar CmYawTot = 0;
-
-    const scalar pDyn = 0.5*rhoRef_*sqr(magUInf_);
-
-    // Avoid divide by zero in 2D cases
-    const scalar momentScaling = 1.0/(Aref_*pDyn*lRef_ + SMALL);
-    const scalar forceScaling = 1.0/(Aref_*pDyn + SMALL);
-
-    forAll(liftCoeffs, i)
-    {
-        const Field<vector> localForce(coordSys_.localVector(force_[i]));
-        const Field<vector> localMoment(coordSys_.localVector(moment_[i]));
-
-        dragCoeffs[i] = forceScaling*(localForce.component(0));
-        sideCoeffs[i] = forceScaling*(localForce.component(1));
-        liftCoeffs[i] = forceScaling*(localForce.component(2));
-        rollMomentCoeffs[i] = momentScaling*(localMoment.component(0));
-        pitchMomentCoeffs[i] = momentScaling*(localMoment.component(1));
-        yawMomentCoeffs[i] = momentScaling*(localMoment.component(2));
-
-        CdTot += sum(dragCoeffs[i]);
-        CsTot += sum(sideCoeffs[i]);
-        ClTot += sum(liftCoeffs[i]);
-        CmRollTot += sum(rollMomentCoeffs[i]);
-        CmPitchTot += sum(pitchMomentCoeffs[i]);
-        CmYawTot += sum(yawMomentCoeffs[i]);
-    }
-
-    // Single contributions to the front and rear
-    const scalar CdfTot = 0.5*CdTot + CmRollTot;
-    const scalar CdrTot = 0.5*CdTot - CmRollTot;
-    const scalar CsfTot = 0.5*CsTot + CmYawTot;
-    const scalar CsrTot = 0.5*CsTot - CmYawTot;
-    const scalar ClfTot = 0.5*ClTot + CmPitchTot;
-    const scalar ClrTot = 0.5*ClTot - CmPitchTot;
-
-    Log << type() << " " << name() << " execute:" << nl
-        << "    Coefficients" << nl;
-
-    writeIntegratedData("Cd", dragCoeffs);
-    writeIntegratedData("Cs", sideCoeffs);
-    writeIntegratedData("Cl", liftCoeffs);
-    writeIntegratedData("CmRoll", rollMomentCoeffs);
-    writeIntegratedData("CmPitch", pitchMomentCoeffs);
-    writeIntegratedData("CmYaw", yawMomentCoeffs);
-
-    Log << "        Cd(f)    : " << CdfTot << nl
-        << "        Cd(r)    : " << CdrTot << nl;
-
-    Log << "        Cs(f)    : " << CsfTot << nl
-        << "        Cs(r)    : " << CsrTot << nl;
-
-    Log << "        Cl(f)    : " << ClfTot << nl
-        << "        Cl(r)    : " << ClrTot << nl;
-
-    if (writeToFile())
-    {
-        writeCurrentTime(coeffFilePtr_());
-        coeffFilePtr_()
-            << tab << CdTot << tab << CsTot << tab << ClTot
-            << tab << CmRollTot << tab << CmPitchTot << tab << CmYawTot
-            << tab << CdfTot << tab << CdrTot
-            << tab << CsfTot << tab << CsrTot
-            << tab << ClfTot << tab << ClrTot << endl;
-
-        if (nBin_ > 1)
+        switch (forceCoeffTypeNames_[coeff])
         {
-            if (binCumulative_)
+            case CD:
             {
-                forAll(liftCoeffs, i)
-                {
-                    for (label bini = 1; bini < nBin_; ++bini)
-                    {
-                        dragCoeffs[i][bini] += dragCoeffs[i][bini-1];
-                        sideCoeffs[i][bini] += sideCoeffs[i][bini-1];
-                        liftCoeffs[i][bini] += liftCoeffs[i][bini-1];
-                        rollMomentCoeffs[i][bini] +=
-                            rollMomentCoeffs[i][bini-1];
-                        pitchMomentCoeffs[i][bini] +=
-                            pitchMomentCoeffs[i][bini-1];
-                        yawMomentCoeffs[i][bini] += yawMomentCoeffs[i][bini-1];
-                    }
-                }
+                setResult(coeff, sumCFs_[0][0]);
+                logData(coeff, sumCFs_[0]);
+                break;
             }
-
-            writeBinData(dragCoeffs, CdBinFilePtr_());
-            writeBinData(sideCoeffs, CsBinFilePtr_());
-            writeBinData(liftCoeffs, ClBinFilePtr_());
-            writeBinData(rollMomentCoeffs, CmRollBinFilePtr_());
-            writeBinData(pitchMomentCoeffs, CmPitchBinFilePtr_());
-            writeBinData(yawMomentCoeffs, CmYawBinFilePtr_());
+            case CS:
+            {
+                setResult(coeff, sumCFs_[1][0]);
+                logData(coeff, sumCFs_[1]);
+                break;
+            }
+            case CL:
+            {
+                setResult(coeff, sumCFs_[2][0]);
+                logData(coeff, sumCFs_[2]);
+                break;
+            }
+            default:
+                break;
         }
     }
 
-    // Write state/results information
+    // Calculate moment coefficients
+    for (const word& coeff : momentCoeffNames_)
     {
-        setResult("Cd", CdTot);
-        setResult("Cs", CsTot);
-        setResult("Cl", ClTot);
-        setResult("CmRoll", CmRollTot);
-        setResult("CmPitch", CmPitchTot);
-        setResult("CmYaw", CmYawTot);
-        setResult("Cd(f)", CdfTot);
-        setResult("Cd(r)", CdrTot);
-        setResult("Cs(f)", CsfTot);
-        setResult("Cs(r)", CsrTot);
-        setResult("Cl(f)", ClfTot);
-        setResult("Cl(r)", ClrTot);
+        switch (momentCoeffTypeNames_[coeff])
+        {
+            case CMROLL:
+            {
+                setResult(coeff, sumCMs_[0][0]);
+                logData(coeff, sumCMs_[0]);
+                break;
+            }
+            case CMPITCH:
+            {
+                setResult(coeff, sumCMs_[1][0]);
+                logData(coeff, sumCMs_[1]);
+                break;
+            }
+            case CMYAW:
+            {
+                setResult(coeff, sumCMs_[2][0]);
+                logData(coeff, sumCMs_[2]);
+                break;
+            }
+            default:
+                break;
+        }
     }
+
+    if (calcFrontRear_)
+    {
+        // Calculate integrated front- and rear-axle force coefficients
+        for (const word& coeff : frontRearForceCoeffNames_)
+        {
+            switch (frontRearForceCoeffTypeNames_[coeff])
+            {
+                case CDF:
+                {
+                    sumFrontCFs_[0] = integrateData(0.5*CFs_[0] + CMs_[0]);
+                    setResult(coeff, sumFrontCFs_[0][0]);
+                    logData(coeff, sumFrontCFs_[0]);
+                    break;
+                }
+                case CSF:
+                {
+                    sumFrontCFs_[1] = integrateData(0.5*CFs_[1] + CMs_[2]);
+                    setResult(coeff, sumFrontCFs_[1][0]);
+                    logData(coeff, sumFrontCFs_[1]);
+                    break;
+                }
+                case CLF:
+                {
+                    sumFrontCFs_[2] = integrateData(0.5*CFs_[2] + CMs_[1]);
+                    setResult(coeff, sumFrontCFs_[2][0]);
+                    logData(coeff, sumFrontCFs_[2]);
+                    break;
+                }
+                case CDR:
+                {
+                    sumRearCFs_[0] = integrateData(0.5*CFs_[0] - CMs_[0]);
+                    setResult(coeff, sumRearCFs_[0][0]);
+                    logData(coeff, sumRearCFs_[0]);
+                    break;
+                }
+                case CSR:
+                {
+                    sumRearCFs_[1] = integrateData(0.5*CFs_[1] - CMs_[2]);
+                    setResult(coeff, sumRearCFs_[1][0]);
+                    logData(coeff, sumRearCFs_[1]);
+                    break;
+                }
+                case CLR:
+                {
+                    sumRearCFs_[2] = integrateData(0.5*CFs_[2] - CMs_[1]);
+                    setResult(coeff, sumRearCFs_[2][0]);
+                    logData(coeff, sumRearCFs_[2]);
+                    break;
+                }
+            }
+        }
+    }
+
 
     if (writeFields_)
     {
-        const volVectorField& force =
+        const auto& fldForce =
             lookupObject<volVectorField>(fieldName("force"));
 
-        const volVectorField& moment =
+        const auto& fldMoment =
             lookupObject<volVectorField>(fieldName("moment"));
 
-        volVectorField& forceCoeff =
+        auto& fldForceCoeff =
             lookupObjectRef<volVectorField>(fieldName("forceCoeff"));
 
-        volVectorField& momentCoeff =
+        auto& fldMomentCoeff =
             lookupObjectRef<volVectorField>(fieldName("momentCoeff"));
 
-        dimensionedScalar f0("f0", dimForce, Aref_*pDyn);
-        dimensionedScalar m0("m0", dimForce*dimLength, Aref_*lRef_*pDyn);
+        const scalar pDyn = 0.5*rhoRef_*sqr(magUInf_);
+        const dimensionedScalar f0(dimForce, Aref_*pDyn);
+        const dimensionedScalar m0(dimForce*dimLength, Aref_*lRef_*pDyn);
 
-        forceCoeff == force/f0;
-        momentCoeff == moment/m0;
+        fldForceCoeff == fldForce/f0;
+        fldMomentCoeff == fldMoment/m0;
     }
 
     return true;
@@ -491,17 +865,16 @@ bool Foam::functionObjects::forceCoeffs::execute()
 
 bool Foam::functionObjects::forceCoeffs::write()
 {
-    if (writeFields_)
+    if (writeToFile() && Pstream::master())
     {
-        const volVectorField& forceCoeff =
-            lookupObject<volVectorField>(fieldName("forceCoeff"));
+        Log << "    writing force and moment coefficient files." << endl;
 
-        const volVectorField& momentCoeff =
-            lookupObject<volVectorField>(fieldName("momentCoeff"));
+        createDataFile();
 
-        forceCoeff.write();
-        momentCoeff.write();
+        writeDataFile();
     }
+
+    Log << endl;
 
     return true;
 }
