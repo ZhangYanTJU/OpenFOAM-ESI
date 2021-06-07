@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -221,7 +221,7 @@ void sixDoFRigidBodyDisplacementPointPatchVectorField::updateCoeffs()
 
     functionObjects::forces f("forces", db(), forcesDict);
 
-    f.calcForcesMoment();
+    f.calcForcesMoments();
 
     // Get the forces on the patch faces at the current positions
 

@@ -170,10 +170,10 @@ protected:
     // Protected data
 
         //- Pressure, viscous and porous force per bin
-        List<Field<vector>> force_;
+        List<Field<vector>> forces_;
 
         //- Pressure, viscous and porous moment per bin
-        List<Field<vector>> moment_;
+        List<Field<vector>> moments_;
 
         // File streams
 
@@ -395,7 +395,7 @@ public:
         virtual bool read(const dictionary&);
 
         //- Calculate the forces and moments
-        virtual void calcForcesMoment();
+        virtual void calcForcesMoments();
 
         //- Return the total force
         virtual vector forceEff() const;

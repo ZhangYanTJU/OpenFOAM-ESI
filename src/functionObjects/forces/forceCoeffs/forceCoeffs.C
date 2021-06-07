@@ -278,7 +278,7 @@ void Foam::functionObjects::forceCoeffs::calcForceCoeffs()
     // Calculate force coefficients
     for (direction compi = 0; compi < vector::nComponents ; ++compi)
     {
-        const Field<vector> localForce(coordSys_.localVector(force_[compi]));
+        const Field<vector> localForce(coordSys_.localVector(forces_[compi]));
 
         for (label coeffi : idCFs_)
         {
@@ -308,7 +308,7 @@ void Foam::functionObjects::forceCoeffs::calcMomentCoeffs()
     // Calculate moment coefficients
     for (direction compi = 0; compi < vector::nComponents ; ++compi)
     {
-        const Field<vector> localMoment(coordSys_.localVector(moment_[compi]));
+        const Field<vector> localMoment(coordSys_.localVector(moments_[compi]));
 
         for (label coeffi : idCMs_)
         {
@@ -715,7 +715,7 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
 
 bool Foam::functionObjects::forceCoeffs::execute()
 {
-    forces::calcForcesMoment();
+    forces::calcForcesMoments();
 
     initialise();
 

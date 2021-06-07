@@ -311,23 +311,23 @@ void Foam::functionObjects::forces::initialiseBins()
     }
 
     // Allocate storage for forces and moments
-    forAll(force_, i)
+    forAll(forces_, i)
     {
-        force_[i].setSize(nBin_, vector::zero);
-        moment_[i].setSize(nBin_, vector::zero);
+        forces_[i].setSize(nBin_, vector::zero);
+        moments_[i].setSize(nBin_, vector::zero);
     }
 }
 
 
 void Foam::functionObjects::forces::resetFields()
 {
-    force_[0] = Zero;
-    force_[1] = Zero;
-    force_[2] = Zero;
+    forces_[0] = Zero;
+    forces_[1] = Zero;
+    forces_[2] = Zero;
 
-    moment_[0] = Zero;
-    moment_[1] = Zero;
-    moment_[2] = Zero;
+    moments_[0] = Zero;
+    moments_[1] = Zero;
+    moments_[2] = Zero;
 
     if (writeFields_)
     {
@@ -490,12 +490,12 @@ void Foam::functionObjects::forces::applyBins
 {
     if (nBin_ == 1)
     {
-        force_[0][0] += sum(fN);
-        force_[1][0] += sum(fT);
-        force_[2][0] += sum(fP);
-        moment_[0][0] += sum(Md^fN);
-        moment_[1][0] += sum(Md^fT);
-        moment_[2][0] += sum(Md^fP);
+        forces_[0][0] += sum(fN);
+        forces_[1][0] += sum(fT);
+        forces_[2][0] += sum(fP);
+        moments_[0][0] += sum(Md^fN);
+        moments_[1][0] += sum(Md^fT);
+        moments_[2][0] += sum(Md^fP);
     }
     else
     {
@@ -503,14 +503,14 @@ void Foam::functionObjects::forces::applyBins
 
         forAll(dd, i)
         {
-            label bini = min(max(floor(dd[i]/binDx_), 0), force_[0].size() - 1);
+            label bini = min(max(floor(dd[i]/binDx_), 0), forces_[0].size() - 1);
 
-            force_[0][bini] += fN[i];
-            force_[1][bini] += fT[i];
-            force_[2][bini] += fP[i];
-            moment_[0][bini] += Md[i]^fN[i];
-            moment_[1][bini] += Md[i]^fT[i];
-            moment_[2][bini] += Md[i]^fP[i];
+            forces_[0][bini] += fN[i];
+            forces_[1][bini] += fT[i];
+            forces_[2][bini] += fP[i];
+            moments_[0][bini] += Md[i]^fN[i];
+            moments_[1][bini] += Md[i]^fT[i];
+            moments_[2][bini] += Md[i]^fP[i];
         }
     }
 }
@@ -617,18 +617,18 @@ void Foam::functionObjects::forces::writeForces()
     writeIntegratedForceMoment
     (
         "forces",
-        coordSys_.localVector(force_[0]),
-        coordSys_.localVector(force_[1]),
-        coordSys_.localVector(force_[2]),
+        coordSys_.localVector(forces_[0]),
+        coordSys_.localVector(forces_[1]),
+        coordSys_.localVector(forces_[2]),
         forceFilePtr_
     );
 
     writeIntegratedForceMoment
     (
         "moments",
-        coordSys_.localVector(moment_[0]),
-        coordSys_.localVector(moment_[1]),
-        coordSys_.localVector(moment_[2]),
+        coordSys_.localVector(moments_[0]),
+        coordSys_.localVector(moments_[1]),
+        coordSys_.localVector(moments_[2]),
         momentFilePtr_
     );
 
@@ -685,12 +685,12 @@ void Foam::functionObjects::forces::writeBins()
 {
     List<Field<vector>> lf(3);
     List<Field<vector>> lm(3);
-    lf[0] = coordSys_.localVector(force_[0]);
-    lf[1] = coordSys_.localVector(force_[1]);
-    lf[2] = coordSys_.localVector(force_[2]);
-    lm[0] = coordSys_.localVector(moment_[0]);
-    lm[1] = coordSys_.localVector(moment_[1]);
-    lm[2] = coordSys_.localVector(moment_[2]);
+    lf[0] = coordSys_.localVector(forces_[0]);
+    lf[1] = coordSys_.localVector(forces_[1]);
+    lf[2] = coordSys_.localVector(forces_[2]);
+    lm[0] = coordSys_.localVector(moments_[0]);
+    lm[1] = coordSys_.localVector(moments_[1]);
+    lm[2] = coordSys_.localVector(moments_[2]);
 
     writeBinnedForceMoment(lf, forceBinFilePtr_);
     writeBinnedForceMoment(lm, momentBinFilePtr_);
@@ -709,8 +709,8 @@ Foam::functionObjects::forces::forces
 :
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(mesh_, name),
-    force_(3),
-    moment_(3),
+    forces_(3),
+    moments_(3),
     forceFilePtr_(),
     momentFilePtr_(),
     forceBinFilePtr_(),
@@ -754,8 +754,8 @@ Foam::functionObjects::forces::forces
 :
     fvMeshFunctionObject(name, obr, dict),
     writeFile(mesh_, name),
-    force_(3),
-    moment_(3),
+    forces_(3),
+    moments_(3),
     forceFilePtr_(),
     momentFilePtr_(),
     forceBinFilePtr_(),
@@ -791,10 +791,10 @@ Foam::functionObjects::forces::forces
     // Turn off writing to file
     writeToFile_ = false;
 
-    forAll(force_, i)
+    forAll(forces_, i)
     {
-        force_[i].setSize(nBin_, vector::zero);
-        moment_[i].setSize(nBin_, vector::zero);
+        forces_[i].setSize(nBin_, vector::zero);
+        moments_[i].setSize(nBin_, vector::zero);
     }
 */
 }
@@ -954,7 +954,7 @@ bool Foam::functionObjects::forces::read(const dictionary& dict)
 }
 
 
-void Foam::functionObjects::forces::calcForcesMoment()
+void Foam::functionObjects::forces::calcForcesMoments()
 {
     initialise();
 
@@ -1073,28 +1073,28 @@ void Foam::functionObjects::forces::calcForcesMoment()
         }
     }
 
-    Pstream::listCombineGather(force_, plusEqOp<vectorField>());
-    Pstream::listCombineGather(moment_, plusEqOp<vectorField>());
-    Pstream::listCombineScatter(force_);
-    Pstream::listCombineScatter(moment_);
+    Pstream::listCombineGather(forces_, plusEqOp<vectorField>());
+    Pstream::listCombineGather(moments_, plusEqOp<vectorField>());
+    Pstream::listCombineScatter(forces_);
+    Pstream::listCombineScatter(moments_);
 }
 
 
 Foam::vector Foam::functionObjects::forces::forceEff() const
 {
-    return sum(force_[0]) + sum(force_[1]) + sum(force_[2]);
+    return sum(forces_[0]) + sum(forces_[1]) + sum(forces_[2]);
 }
 
 
 Foam::vector Foam::functionObjects::forces::momentEff() const
 {
-    return sum(moment_[0]) + sum(moment_[1]) + sum(moment_[2]);
+    return sum(moments_[0]) + sum(moments_[1]) + sum(moments_[2]);
 }
 
 
 bool Foam::functionObjects::forces::execute()
 {
-    calcForcesMoment();
+    calcForcesMoments();
 
     if (Pstream::master())
     {
@@ -1108,13 +1108,13 @@ bool Foam::functionObjects::forces::execute()
     }
 
     // Write state/results information
-    setResult("normalForce", sum(force_[0]));
-    setResult("tangentialForce", sum(force_[1]));
-    setResult("porousForce", sum(force_[2]));
+    setResult("normalForce", sum(forces_[0]));
+    setResult("tangentialForce", sum(forces_[1]));
+    setResult("porousForce", sum(forces_[2]));
 
-    setResult("normalMoment", sum(moment_[0]));
-    setResult("tangentialMoment", sum(moment_[1]));
-    setResult("porousMoment", sum(moment_[2]));
+    setResult("normalMoment", sum(moments_[0]));
+    setResult("tangentialMoment", sum(moments_[1]));
+    setResult("porousMoment", sum(moments_[2]));
 
     return true;
 }
