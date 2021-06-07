@@ -34,6 +34,7 @@ License
 #include "fvMesh.H"
 #include "dimensionedTypes.H"
 #include "volFields.H"
+#include "binModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -208,16 +209,29 @@ void Foam::functionObjects::forceCoeffs::initialise()
         idCMs_.end()
     );
 
+    // Allocate storage for forces and moments
+    const label nBin = binModelPtr_->nBin();
+
     for (label i : idCFs_)
     {
         CFs_[i].setSize(vector::nComponents);
         sumCFs_[i].setSize(vector::nComponents + 1);
+
+        for (direction j = 0; j < vector::nComponents; ++j)
+        {
+            CFs_[i][j].setSize(nBin, 0);
+        }
     }
 
     for (label i : idCMs_)
     {
         CMs_[i].setSize(vector::nComponents);
         sumCMs_[i].setSize(vector::nComponents + 1);
+
+        for (direction j = 0; j < vector::nComponents; ++j)
+        {
+            CMs_[i][j].setSize(nBin, 0);
+        }
     }
 
     if (calcFrontRear_)
@@ -872,6 +886,63 @@ bool Foam::functionObjects::forceCoeffs::write()
         createDataFile();
 
         writeDataFile();
+
+        if (binModelPtr_->nBin() > 1)
+        {
+            for (const word& coeff : forceCoeffNames_)
+            {
+                switch (forceCoeffTypeNames_[coeff])
+                {
+                    case CD:
+                    {
+                        binModelPtr_->createBinnedDataFile(coeff, 0);
+                        binModelPtr_->writeBinnedDataFile(CFs_[0], 0);
+                        break;
+                    }
+                    case CS:
+                    {
+                        binModelPtr_->createBinnedDataFile(coeff, 1);
+                        binModelPtr_->writeBinnedDataFile(CFs_[1], 1);
+                        break;
+                    }
+                    case CL:
+                    {
+                        binModelPtr_->createBinnedDataFile(coeff, 2);
+                        binModelPtr_->writeBinnedDataFile(CFs_[2], 2);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+
+            for (const word& coeff : momentCoeffNames_)
+            {
+                switch (momentCoeffTypeNames_[coeff])
+                {
+                    case CMROLL:
+                    {
+                        binModelPtr_->createBinnedDataFile(coeff, 3);
+                        binModelPtr_->writeBinnedDataFile(CMs_[0], 3);
+                        break;
+                    }
+                    case CMPITCH:
+                    {
+                        binModelPtr_->createBinnedDataFile(coeff, 4);
+                        binModelPtr_->writeBinnedDataFile(CMs_[1], 4);
+                        break;
+                    }
+                    case CMYAW:
+                    {
+                        binModelPtr_->createBinnedDataFile(coeff, 5);
+                        binModelPtr_->writeBinnedDataFile(CMs_[2], 5);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+        }
     }
 
     Log << endl;

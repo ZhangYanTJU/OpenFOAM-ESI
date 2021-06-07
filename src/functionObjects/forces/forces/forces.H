@@ -143,11 +143,13 @@ SourceFiles
 #include "writeFile.H"
 #include "cartesianCS.H"
 #include "volFieldsFwd.H"
+#include "binModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
 namespace functionObjects
 {
 
@@ -163,6 +165,9 @@ class forces
 protected:
 
     // Protected data
+
+        //- Bin model
+        autoPtr<binModel> binModelPtr_;
 
         //- Pressure, viscous and porous force per bin
         List<Field<vector>> forces_;
@@ -247,7 +252,7 @@ protected:
         void reset();
 
 
-        // Evaluation
+        // Evaluate
 
             //- Return the effective stress (viscous + turbulent)
             tmp<volSymmTensorField> devRhoReff() const;
@@ -261,15 +266,6 @@ protected:
             //- Return rhoRef if the pressure field is
             //- dynamic (i.e. p/rho), otherwise return 1
             scalar rho(const volScalarField& p) const;
-
-            void applyBins
-            (
-                const vectorField& Md,
-                const vectorField& fN,
-                const vectorField& fT,
-                const vectorField& fP,
-                const vectorField& d
-            );
 
             //- Add patch contributions to force and moment fields
             void addToFields

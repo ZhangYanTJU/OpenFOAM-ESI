@@ -1,4 +1,11 @@
 forces/forces.C
 forceCoeffs/forceCoeffs.C
 
+binModels/binModel/binModel.C
+binModels/binModel/binModelNew.C
+
+binModels/derived/noBin/noBin.C
+binModels/derived/singleDirectionUniformBin/singleDirectionUniformBin.C
+binModels/derived/uniformBin/uniformBin.C
+
 LIB = $(FOAM_LIBBIN)/libforces

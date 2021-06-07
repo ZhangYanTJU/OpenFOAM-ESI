@@ -133,16 +133,18 @@ void Foam::functionObjects::forces::initialise()
         }
     }
 
+    binModelPtr_->initialise();
+    const label nBin = binModelPtr_->nBin();
+
     // Set size of force and moment containers according to the bin
     for (direction i = 0; i < vector::nComponents; ++i)
     {
-        forces_[i].setSize(1, Zero);
-        moments_[i].setSize(1, Zero);
+        forces_[i].setSize(nBin, Zero);
+        moments_[i].setSize(nBin, Zero);
     }
 
     initialised_ = true;
 }
-
 
 
 void Foam::functionObjects::forces::reset()
@@ -293,24 +295,6 @@ Foam::scalar Foam::functionObjects::forces::rho(const volScalarField& p) const
     }
 
     return rhoRef_;
-}
-
-
-void Foam::functionObjects::forces::applyBins
-(
-    const vectorField& Md,
-    const vectorField& fN,
-    const vectorField& fT,
-    const vectorField& fP,
-    const vectorField& d
-)
-{
-    forces_[0][0] += sum(fN);
-    forces_[1][0] += sum(fT);
-    forces_[2][0] += sum(fP);
-    moments_[0][0] += sum(Md^fN);
-    moments_[1][0] += sum(Md^fT);
-    moments_[2][0] += sum(Md^fP);
 }
 
 
@@ -492,6 +476,7 @@ Foam::functionObjects::forces::forces
 :
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(mesh_, name),
+    binModelPtr_(binModel::New(name, dict, mesh_)),
     forces_(vector::nComponents),
     moments_(vector::nComponents),
     sumForces_(Zero),
@@ -530,6 +515,7 @@ Foam::functionObjects::forces::forces
 :
     fvMeshFunctionObject(name, obr, dict),
     writeFile(mesh_, name),
+    binModelPtr_(binModel::New(name, dict, mesh_)),
     forces_(vector::nComponents),
     moments_(vector::nComponents),
     sumForces_(Zero),
@@ -670,6 +656,8 @@ bool Foam::functionObjects::forces::read(const dictionary& dict)
         mesh_.objectRegistry::store(momentPtr);
     }
 
+    binModelPtr_->read(dict);
+
     return true;
 }
 
@@ -706,12 +694,9 @@ void Foam::functionObjects::forces::calcForcesMoments()
             // Tangential force (total force minus normal fN)
             const vectorField fT(sA*fD.boundaryField()[patchi] - fN);
 
-            // Porous force
-            vectorField fP(Md.size(), Zero);
-
             addToFields(patchi, Md, fN, fT);
 
-            applyBins(Md, fN, fT, fP, mesh_.C().boundaryField()[patchi]);
+            binModelPtr_->applyBins(forces_, moments_, d, Md, fN, fT);
         }
     }
     else
@@ -741,11 +726,9 @@ void Foam::functionObjects::forces::calcForcesMoments()
 
             const vectorField fT(Sfb[patchi] & devRhoReffb[patchi]);
 
-            vectorField fP(Md.size(), Zero);
-
             addToFields(patchi, Md, fN, fT);
 
-            applyBins(Md, fN, fT, fP, mesh_.C().boundaryField()[patchi]);
+            binModelPtr_->applyBins(forces_, moments_, d, Md, fN, fT);
         }
     }
 
@@ -787,7 +770,7 @@ void Foam::functionObjects::forces::calcForcesMoments()
 
                 addToFields(cZone, Md, fNT, fNT, fP);
 
-                applyBins(Md, fNT, fNT, fP, d);
+                binModelPtr_->applyBins(forces_, moments_, d, Md, fNT, fNT, fP);
             }
         }
     }
@@ -857,7 +840,11 @@ bool Foam::functionObjects::forces::write()
 
         createDataFiles();
 
+        binModelPtr_->createBinnedDataFiles();
+
         writeDataFiles();
+
+        binModelPtr_->writeBinnedDataFiles(forces_, moments_, coordSys_);
 
         Log << endl;
     }
