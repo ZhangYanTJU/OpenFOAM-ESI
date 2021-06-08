@@ -223,8 +223,6 @@ void Foam::lduPrimitiveMeshAssembly::update
                         psis[i].mesh().boundaryMesh()[patchI];
 
                     const fvBoundaryMesh& bm = psis[i].mesh().boundary();
-                    //const lduInterface& pp =
-                    //    meshes_[i].interfaces()[patchI];
 
                     if (isA<cyclicLduInterface>(interfacesLst[patchI]))
                     {
@@ -258,7 +256,6 @@ void Foam::lduPrimitiveMeshAssembly::update
                     else if
                     (
                         isA<cyclicAMILduInterface>(interfacesLst[patchI])
-                     || isA<cyclicACMILduInterface>(interfacesLst[patchI])
                     )
                     {
                         label nbrId =
@@ -269,51 +266,71 @@ void Foam::lduPrimitiveMeshAssembly::update
 
                         label globalNbr = patchMap()[i][nbrId];
 
-                        if (isA<cyclicAMILduInterface>(interfacesLst[patchI]))
-                        {
-                            primitiveInterfaces().set
+                        primitiveInterfaces().set
+                        (
+                            globalPatchId,
+                            new AssemblyFvPatch<cyclicAMIFvPatch>
                             (
-                                globalPatchId,
-                                new AssemblyFvPatch<cyclicAMIFvPatch>
-                                (
-                                    pp,
-                                    bm,
-                                    patchAddr_[globalNbr],
-                                    patchAddr_[globalPatchId],
-                                    globalNbr
-                                )
-                            );
-                        }
-                        else
-                        {
-                            primitiveInterfaces().set
-                            (
-                                globalPatchId,
-                                new AssemblyFvPatch<cyclicACMIFvPatch>
-                                (
-                                    pp,
-                                    bm,
-                                    patchAddr_[globalNbr],
-                                    patchAddr_[globalPatchId],
-                                    globalNbr
-                                )
-                            );
-                        }
-
+                                pp,
+                                bm,
+                                patchAddr_[globalNbr],
+                                patchAddr_[globalPatchId],
+                                globalNbr
+                            )
+                        );
                         interfaces().set
                         (
                             globalPatchId,
                             &primitiveInterfaces()[globalPatchId]
                         );
                     }
-                    else // All the other patches are conserved
+                    else if
+                    (
+                        isA<cyclicACMILduInterface>(interfacesLst[patchI])
+                    )
+                    {
+                        label nbrId =
+                            refCast
+                            <
+                                const cyclicACMIPolyPatch
+                            >(pp).neighbPatchID();
+
+                        label globalNbr = patchMap()[i][nbrId];
+
+                        label nonOverlId =
+                            refCast
+                            <
+                                const cyclicACMIPolyPatch
+                            >(pp).nonOverlapPatchID();
+
+                        label globalnonOverlId = patchMap()[i][nonOverlId];
+
+                        primitiveInterfaces().set
+                        (
+                            globalPatchId,
+                            new AssemblyFvPatch<cyclicACMIFvPatch>
+                            (
+                                pp,
+                                bm,
+                                patchAddr_[globalNbr],
+                                patchAddr_[globalPatchId],
+                                globalNbr,
+                                globalnonOverlId
+                            )
+                        );
+                        interfaces().set
+                        (
+                            globalPatchId,
+                            &primitiveInterfaces()[globalPatchId]
+                        );
+                    }
+                    else
                     {
                         primitiveInterfaces().set
                         (
                             globalPatchId,
                             nullptr
                         );
-
                         interfaces().set
                         (
                             globalPatchId,
@@ -372,7 +389,7 @@ void Foam::lduPrimitiveMeshAssembly::update
         forAll(interfacesLst, patchI)
         {
             //if (meshes_[i].interfaces().set(patchI))
-            //{
+            {
             //const polyPatch& pp = meshes_[i].boundaryMesh()[patchI];
             const polyPatch& pp = psis[i].mesh().boundaryMesh()[patchI];
             //const lduInterface& pp = meshes_[i].interfaces()[patchI];
@@ -433,7 +450,7 @@ void Foam::lduPrimitiveMeshAssembly::update
                     }
                 }
             }
-           // }
+           }
         }
     }
 
@@ -484,7 +501,7 @@ void Foam::lduPrimitiveMeshAssembly::update
     // Update time index
     timeIndex_ = psis[0].mesh().time().timeIndex();
 
-    if (debug)
+    if (debug & 2)
     {
         DebugVar(faceBoundMap_);
         DebugVar(cellBoundMap_);
