@@ -67,10 +67,13 @@ protected:
             //- Nbr patch ID
             label nbrPatchID_;
 
+            //- Non-overlap patch ID
+            label nonOverlapPatchID_;
+
 public:
 
 
-     //- Runtime type information
+    //- Runtime type information
     TypeName(CyclicType::typeName_());
 
 
@@ -83,13 +86,15 @@ public:
             const fvBoundaryMesh& bm,
             const labelList& nrbFaceCells,
             const labelList& faceCells,
-            const label nbrPatchID
+            const label nbrPatchID,
+            const label nonOverPatchID = -1
         )
         :
             CyclicType(patch, bm),
             nrbFaceCells_(nrbFaceCells),
             faceCells_(faceCells),
-            nbrPatchID_(nbrPatchID)
+            nbrPatchID_(nbrPatchID),
+            nonOverlapPatchID_(nonOverPatchID)
         {}
 
 
@@ -99,42 +104,56 @@ public:
 
     // Member Functions
 
-    //- Return neighbour field
-    virtual tmp<labelField> internalFieldTransfer
-    (
-        const Pstream::commsTypes commsType,
-        const labelUList& internalData
-    ) const
-    {
-        auto tpif = tmp<labelField>::New(nrbFaceCells_.size());
-        auto& pif = tpif.ref();
-
-        forAll(pif, facei)
+        //- Return neighbour field
+        virtual tmp<labelField> internalFieldTransfer
+        (
+            const Pstream::commsTypes commsType,
+            const labelUList& internalData
+        ) const
         {
-            pif[facei] = internalData[nrbFaceCells_[facei]];
+            auto tpif = tmp<labelField>::New(nrbFaceCells_.size());
+            auto& pif = tpif.ref();
+
+            forAll(pif, facei)
+            {
+                pif[facei] = internalData[nrbFaceCells_[facei]];
+            }
+
+            return tpif;
         }
 
-        return tpif;
-    }
+        //- Return neighbour
+        virtual label neighbPatchID() const
+        {
+            return nbrPatchID_;
+        }
 
-    //- Return neighbour
-    virtual label neighbPatchID() const
-    {
-        return nbrPatchID_;
-    }
+        //- Return non-overlap patch ID for ACMI
+        virtual label nonOverlapPatchID() const
+        {
+            return nonOverlapPatchID_;
+        }
 
-    virtual const CyclicType& neighbPatch() const
-    {
-        return refCast<const CyclicType>
-        (
-            this->boundaryMesh()[nbrPatchID_]
-        );
-    }
+        //- Return non-overlapping fvPatch for ACMI
+        virtual const fvPatch& nonOverlapPatch() const
+        {
+            return this->boundaryMesh()[nonOverlapPatchID_];
+        }
 
-    virtual const labelUList& faceCells() const
-    {
-        return faceCells_;
-    }
+        //- Return nbr patch
+        virtual const CyclicType& neighbPatch() const
+        {
+            return refCast<const CyclicType>
+            (
+                this->boundaryMesh()[nbrPatchID_]
+            );
+        }
+
+        //- Return faceCells
+        virtual const labelUList& faceCells() const
+        {
+            return faceCells_;
+        }
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
