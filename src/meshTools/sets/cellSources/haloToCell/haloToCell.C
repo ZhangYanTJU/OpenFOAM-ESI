@@ -177,7 +177,7 @@ Foam::haloToCell::haloToCell
     const dictionary& dict
 )
 :
-    haloToCell(mesh, dict.getOrDefault<label>("steps", 0))
+    haloToCell(mesh, dict.getOrDefault<label>("steps", 1))
 {}
 
 

@@ -57,6 +57,8 @@ Foam::functionObjects::momentumError::divDevRhoReff()
     typedef incompressible::turbulenceModel icoTurbModel;
 
     const auto& U = lookupObject<volVectorField>(UName_);
+    tmp<volVectorField> tU(U);
+
     {
         auto* turb = findObject<cmpTurbModel>
         (
@@ -65,56 +67,52 @@ Foam::functionObjects::momentumError::divDevRhoReff()
 
         if (turb)
         {
+            tmp<volScalarField> trho = turb->rho();
+            tmp<volScalarField> tnuEff = turb->nuEff();
+
             if (zoneSubSetPtr_)
             {
                 const fvMeshSubset& subSetMesh= zoneSubSetPtr_->subSetMesh();
 
-                tmp<volVectorField> tU(subSetMesh.interpolate(U, false));
-                tmp<volScalarField> tRho
+                tU.reset
                 (
-                    subSetMesh.interpolate(turb->rho(), false)
-                );
-
-                tmp<volScalarField> tnuEff
-                (
-                    subSetMesh.interpolate(turb->nuEff()(), false)
-                );
-
-                return tmp<volVectorField>::New
-                (
-                    "divDevRhoReff",
-                   - fvc::div
+                    new volVectorField
                     (
-                        tRho()*tnuEff()*dev2(T(fvc::grad(tU()))),
-                        "div(((rho*nuEff)*dev2(T(grad(U)))))"
+                        subSetMesh.interpolate(U, false)
                     )
-                  - fvc::laplacian
+
+                );
+                trho.reset
+                (
+                    new volScalarField
                     (
-                        tRho()*tnuEff(),
-                        tU(),
-                        "laplacian(nuEff,U)"
+                        subSetMesh.interpolate(turb->rho(), false)
+                    )
+                );
+                tnuEff.reset
+                (
+                    new volScalarField
+                    (
+                        subSetMesh.interpolate(turb->nuEff()(), false)
                     )
                 );
             }
-            else
-            {
-                return tmp<volVectorField>::New
+            return tmp<volVectorField>::New
+            (
+                "divDevRhoReff",
+                - fvc::div
                 (
-                    "divDevRhoReff",
-                  - fvc::div
-                    (
-                        (turb->rho()*turb->nuEff())
-                       *dev2(T(fvc::grad(U))),
-                        "div(((rho*nuEff)*dev2(T(grad(U)))))"
-                    )
-                  - fvc::laplacian
-                    (
-                        turb->rho()*turb->nuEff(),
-                        U,
-                        "laplacian(nuEff,U)"
-                    )
-                );
-            }
+                    (trho()*tnuEff())
+                    *dev2(T(fvc::grad(tU()))),
+                    "div(((rho*nuEff)*dev2(T(grad(U)))))"
+                )
+                - fvc::laplacian
+                (
+                    trho()*tnuEff(),
+                    tU(),
+                    "laplacian(nuEff,U)"
+                )
+            );
         }
     }
 
@@ -126,39 +124,39 @@ Foam::functionObjects::momentumError::divDevRhoReff()
 
         if (turb)
         {
+            tmp<volScalarField> tnuEff = turb->nuEff();
+
             if (zoneSubSetPtr_)
             {
                 const fvMeshSubset& subSetMesh= zoneSubSetPtr_->subSetMesh();
 
-                tmp<volVectorField> tU =
-                    subSetMesh.interpolate(turb->U(), true);
-                tmp<volScalarField> tnuEff =
-                    subSetMesh.interpolate(turb->nuEff()(), true);
+                tnuEff.reset
+                (
+                    new volScalarField
+                    (
+                        subSetMesh.interpolate(turb->nuEff()(), false)
+                    )
+                );
+                tU.reset
+                (
+                    new volVectorField
+                    (
+                        subSetMesh.interpolate(U, false)
+                    )
 
-                return tmp<volVectorField>::New
-                (
-                    "divDevRhoReff",
-                  - fvc::div
-                    (
-                        tnuEff()*dev2(T(fvc::grad(tU()))),
-                        "div(((nuEff)*dev2(T(grad(U)))))"
-                    )
-                  - fvc::laplacian(tnuEff(), tU(), "laplacian(nuEff,U)")
                 );
             }
-            else
-            {
-                return tmp<volVectorField>::New
+
+            return tmp<volVectorField>::New
+            (
+                "divDevRhoReff",
+                - fvc::div
                 (
-                    "divDevReff",
-                  - fvc::div
-                    (
-                        (turb->nuEff())*dev2(T(fvc::grad(U))),
-                        "div((nuEff*dev2(T(grad(U)))))"
-                    )
-                  - fvc::laplacian(turb->nuEff(), U, "laplacian(nuEff,U)")
-                );
-            }
+                    tnuEff()*dev2(T(fvc::grad(tU()))),
+                    "div(((nuEff)*dev2(T(grad(U)))))"
+                )
+                - fvc::laplacian(tnuEff(), tU(), "laplacian(nuEff,U)")
+            );
         }
      }
 
