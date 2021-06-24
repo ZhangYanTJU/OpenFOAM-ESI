@@ -171,6 +171,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
     return tmtx;
 }
 
+
 template<class Type>
 Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
 (
@@ -182,15 +183,13 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
     checkApplied();
 
     const dimensionSet dsMat(ds*dimArea);
-    
+
     tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, dsMat));
     faMatrix<Type>& mtx = tmtx.ref();
 
-    forAll(*this, i)
+    for (fa::option& source : *this)
     {
-        option& source = this->operator[](i);
-
-        label fieldi = source.applyToField(field.name());
+        const label fieldi = source.applyToField(field.name());
 
         if (fieldi != -1)
         {
@@ -198,14 +197,24 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
 
             source.setApplied(fieldi);
 
-            if (source.isActive())
-            {
-                if (debug)
-                {
-                    Info<< "Applying source " << source.name() << " to field "
-                        << field.name() << endl;
-                }
+            const bool ok = source.isActive();
 
+            if (debug)
+            {
+                if (ok)
+                {
+                    Info<< "Apply";
+                }
+                else
+                {
+                    Info<< "(Inactive)";
+                }
+                Info<< " source " << source.name()
+                    << " for field " << field.name() << endl;
+            }
+
+            if (ok)
+            {
                 source.addSup(rho, mtx, fieldi);
             }
         }
@@ -358,6 +367,7 @@ void Foam::fa::optionList::correct
                 {
                     Info<< "(Inactive correct)";
                 }
+
                 Info<< " source " << source.name()
                     << " for field " << fieldName << endl;
             }

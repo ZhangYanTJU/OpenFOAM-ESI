@@ -88,8 +88,6 @@ namespace regionModels
 \*---------------------------------------------------------------------------*/
 
 class regionFaModel
-:
-    public IOdictionary
 {
     // Private Member Functions
 
@@ -128,9 +126,6 @@ protected:
         //- Model coefficients dictionary
         dictionary coeffs_;
 
-        //- Dictionary of output properties
-        autoPtr<IOdictionary> outputPropertiesPtr_;
-
         //-Volume-to surface mapping
         autoPtr<volSurfaceMapping> vsmPtr_;
 
@@ -155,9 +150,6 @@ public:
 
     //- Runtime type information
     TypeName("regionFaModel");
-
-     //- Default name regionFaModel
-    static const word regionFaModelName;
 
 
     // Constructors
@@ -211,12 +203,6 @@ public:
             //- Return the model coefficients dictionary
             inline const dictionary& coeffs() const;
 
-             //- Return const access to the output properties dictionary
-            inline const IOdictionary& outputProperties() const;
-
-            //- Return output properties dictionary
-            inline IOdictionary& outputProperties();
-
             //- Return the solution dictionary
             inline const dictionary& solution() const;
 
@@ -245,14 +231,11 @@ public:
             //- Post-evolve region
             virtual void postEvolveRegion();
 
-            //- Courant number of the region
-            virtual scalar CourantNumber() const;
-
 
         // IO
 
             //- Provide some feedback
-            virtual void info() = 0;
+            virtual void info();
 };
 
 

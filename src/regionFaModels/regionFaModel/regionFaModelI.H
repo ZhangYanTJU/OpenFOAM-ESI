@@ -102,34 +102,6 @@ inline const Foam::dictionary& Foam::regionModels::regionFaModel::coeffs() const
 }
 
 
-inline const Foam::IOdictionary&
-Foam::regionModels::regionFaModel::outputProperties() const
-{
-    if (!outputPropertiesPtr_)
-    {
-        FatalErrorInFunction
-            << "outputProperties dictionary not available"
-            << abort(FatalError);
-    }
-
-    return *outputPropertiesPtr_;
-}
-
-
-inline Foam::IOdictionary&
-Foam::regionModels::regionFaModel::outputProperties()
-{
-    if (!outputPropertiesPtr_)
-    {
-        FatalErrorInFunction
-            << "outputProperties dictionary not available"
-            << abort(FatalError);
-    }
-
-    return *outputPropertiesPtr_;
-}
-
-
 inline const Foam::dictionary&
 Foam::regionModels::regionFaModel::solution() const
 {
@@ -137,9 +109,10 @@ Foam::regionModels::regionFaModel::solution() const
 }
 
 
-inline Foam::label Foam::regionModels::regionFaModel::patchID() const
+inline Foam::label Foam::regionModels::regionFaModel::patchID()
 {
     return patchID_;
 }
+
 
 // ************************************************************************* //

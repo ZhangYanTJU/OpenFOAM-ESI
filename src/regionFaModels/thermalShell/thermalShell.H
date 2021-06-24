@@ -139,11 +139,10 @@ protected:
             scalar thickness_;
 
 
+
         //- Read control parameters from dictionary
         virtual bool read(const dictionary& dict);
 
-        //- Return radiative heat flux
-        tmp<areaScalarField> qr();
 
         // Equations
 

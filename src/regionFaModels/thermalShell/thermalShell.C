@@ -53,41 +53,6 @@ bool thermalShell::read(const dictionary& dict)
 }
 
 
-tmp<areaScalarField> thermalShell::qr()
-{
-    IOobject io
-    (
-        "tqr",
-        primaryMesh().time().timeName(),
-        primaryMesh()
-    );
-
-    tmp<areaScalarField> taqr
-    (
-        new areaScalarField
-        (
-            io,
-            regionMesh(),
-            dimensionedScalar(dimPower/dimArea, Zero)
-        )
-    );
-
-    if (qrName_ != "none")
-    {
-        areaScalarField& aqr = taqr.ref();
-
-        const volScalarField qr =
-            primaryMesh().lookupObject<volScalarField>(qrName_);
-
-        const volScalarField::Boundary& vqr = qr.boundaryField();
-
-        aqr.primitiveFieldRef() = vsm().mapToSurface<scalar>(vqr);
-    }
-
-    return taqr;
-}
-
-
 void thermalShell::solveEnergy()
 {
     if (debug)
@@ -103,7 +68,6 @@ void thermalShell::solveEnergy()
       - fam::laplacian(kappa()*h_, T_)
      ==
         qs_
-      + qr()
       //+ q(T_) handled by faOption contactHeatFlux
       + faOptions()(h_, rhoCph, T_)
     );
@@ -138,7 +102,7 @@ thermalShell::thermalShell
             primaryMesh().time().timeName(),
             primaryMesh(),
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         regionMesh(),
         dimensionedScalar(dimPower/dimArea, Zero)
@@ -150,14 +114,11 @@ thermalShell::thermalShell
             "h_" + regionName_,
             primaryMesh().time().timeName(),
             primaryMesh(),
-            IOobject::READ_IF_PRESENT,
+            IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
-        regionMesh(),
-        dimensionedScalar(dimLength, Zero)
-    ),
-    qrName_(dict.getOrDefault<word>("qr", "none")),
-    thickness_(dict.getOrDefault<scalar>("thickness", 0))
+        regionMesh()
+    )
 {
     init();
 }
@@ -166,12 +127,7 @@ thermalShell::thermalShell
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 void thermalShell::init()
-{
-    if (thickness_ > 0)
-    {
-        h_ = dimensionedScalar("thickness", dimLength, thickness_);
-    }
-}
+{}
 
 
 void thermalShell::preEvolveRegion()

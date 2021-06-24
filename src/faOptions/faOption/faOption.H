@@ -82,7 +82,6 @@ SourceFiles
 #include "volSurfaceMapping.H"
 #include "runTimeSelectionTables.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -153,8 +152,25 @@ private:
         //- Source active flag
         bool active_;
 
-        //-Volume-to surface mapping
-        autoPtr<volSurfaceMapping> vsmPtr_;
+
+    // Protected Member Functions
+
+        //- Resize/reset applied flag list for all fieldNames_ entries
+        void resetApplied();
+
+
+private:
+
+    // Private Data
+
+        //- Demand-driven: pointer to region mesh database
+        mutable autoPtr<faMesh> regionMeshPtr_;
+
+        //- Demand-driven: volume-to-surface mapping
+        mutable autoPtr<volSurfaceMapping> vsmPtr_;
+
+        //- Source active flag
+        bool active_;
 
 
 public:
@@ -265,7 +281,7 @@ public:
             inline const fvPatch& patch() const noexcept;
 
             //- Return const access to fvPatch
-            inline const fvPatch& patch() const;
+            inline const fvPatch& patch() const noexcept;
 
             //- Return dictionary
             inline const dictionary& coeffs() const noexcept;

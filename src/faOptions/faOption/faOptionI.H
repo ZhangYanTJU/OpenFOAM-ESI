@@ -39,12 +39,6 @@ inline const Foam::fvMesh& Foam::fa::option::mesh() const noexcept
 }
 
 
-inline const Foam::fvPatch& Foam::fa::option::patch() const
-{
-    return patch_;
-}
-
-
 inline const Foam::fvPatch& Foam::fa::option::patch() const noexcept
 {
     return patch_;
@@ -105,16 +99,11 @@ inline const Foam::volSurfaceMapping& Foam::fa::option::vsm() const
 
 inline const Foam::volSurfaceMapping& Foam::fa::option::vsm() const
 {
-    if (vsmPtr_.valid())
+    if (!vsmPtr_)
     {
-        return vsmPtr_();
+        vsmPtr_.reset(new volSurfaceMapping(this->regionMesh()));
     }
-    else
-    {
-        FatalErrorInFunction
-            << "vsmPtr not available" << abort(FatalError);
-    }
-    return *(new volSurfaceMapping(regionMeshPtr_()));
+    return *vsmPtr_;
 }
 
 
