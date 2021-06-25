@@ -39,7 +39,7 @@ void Foam::functionObjects::turbulenceFields::processField
 {
     typedef GeometricField<Type, fvPatchField, volMesh> FieldType;
 
-    const word scopedName(modelName_ + ':' + fieldName);
+    const word scopedName(prefix_ + fieldName);
 
     FieldType* fldPtr = obr_.getObjectPtr<FieldType>(scopedName);
 
