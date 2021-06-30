@@ -52,6 +52,85 @@ Foam::label Foam::lduPrimitiveMeshAssembly::totalSize
 }
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
+(
+    const IOobject& io,
+    const UPtrList<lduMesh>& meshes
+)
+:
+    regIOobject(io),
+    lduPrimitiveMesh(totalSize(meshes)),
+    meshes_(meshes)
+{
+    forAll(meshes, meshi)
+    {
+        if (meshes[meshi].comm() != comm())
+        {
+            WarningInFunction
+                << "Communicator " << meshes[meshi].comm()
+                << " at index " << meshi
+                << " differs between meshes " << nl;
+        }
+    }
+
+    updateMaps(meshes);
+}
+
+
+Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
+(
+    const IOobject& io,
+    const lduMesh& mesh
+)
+:
+    regIOobject(io),
+    lduPrimitiveMesh(mesh.lduAddr().size()),
+    meshes_(1)
+{
+    meshes_.set(0, const_cast<lduMesh*>(&mesh));
+    updateMaps(meshes_);
+}
+
+// * * * * * * * * * * * * * Public Member Functions  * * * * * * * * * * * //
+
+
+void Foam::lduPrimitiveMeshAssembly::updateMaps
+(
+    const UPtrList<lduMesh>& meshes
+)
+{
+    const label nMeshes = meshes.size();
+    patchMap_.setSize(nMeshes);
+    patchLocalToGlobalMap_.setSize(nMeshes);
+    faceMap_.setSize(nMeshes);
+    faceBoundMap_.setSize(nMeshes);
+    cellBoundMap_.setSize(nMeshes);
+
+    facePatchFaceMap_.setSize(nMeshes);
+
+    // Determine cellOffset and faceOffset
+    cellOffsets_.setSize(1+nMeshes);
+    cellOffsets_[0] = 0;
+    for (label meshi=0; meshi < nMeshes; ++meshi)
+    {
+        cellOffsets_[meshi+1] =
+            cellOffsets_[meshi] + meshes[meshi].lduAddr().size();
+    }
+
+    for (label i=0; i < nMeshes; ++i)
+    {
+        patchMap_[i].setSize(meshes_[i].interfaces().size(), -1);
+        patchLocalToGlobalMap_[i].setSize(patchMap_[i].size(), -1);
+
+        faceBoundMap_[i].setSize(patchMap_[i].size());
+        cellBoundMap_[i].setSize(patchMap_[i].size());
+        facePatchFaceMap_[i].setSize(patchMap_[i].size());
+    }
+}
+
+
 Foam::label Foam::lduPrimitiveMeshAssembly::findNbrMeshId
 (
     const polyPatch& pp,
@@ -74,75 +153,5 @@ Foam::label Foam::lduPrimitiveMeshAssembly::findNbrMeshId
     }
     return -1;
 }
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
-(
-    const UPtrList<lduMesh>& meshes,
-    const IOobject& io
-)
-:
-    regIOobject(io),
-    lduPrimitiveMesh(totalSize(meshes)),
-    meshes_(meshes),
-    timeIndex_(io.time().timeIndex())
-{
-    forAll(meshes, meshi)
-    {
-        if (meshes[meshi].comm() != comm())
-        {
-            WarningInFunction
-                << "Communicator " << meshes[meshi].comm()
-                << " at index " << meshi
-                << " differs between meshes " << nl;
-        }
-    }
-
-    const label nMeshes = meshes.size();
-    patchMap_.setSize(nMeshes);
-    faceBoundMap_.setSize(nMeshes);
-    cellBoundMap_.setSize(nMeshes);
-    faceMap_.setSize(nMeshes);
-    patchLocalToGlobalMap_.setSize(nMeshes);
-    facePatchFaceMap_.setSize(nMeshes);
-
-    // Determine cellOffset and faceOffset
-    cellOffsets_.setSize(1+nMeshes);
-    cellOffsets_[0] = 0;
-    for (label meshi=0; meshi < nMeshes; ++meshi)
-    {
-        cellOffsets_[meshi+1] =
-            cellOffsets_[meshi] + meshes[meshi].lduAddr().size();
-    }
-}
-
-
-Foam::lduPrimitiveMeshAssembly::lduPrimitiveMeshAssembly
-(
-    const lduMesh& mesh,
-    const IOobject& io
-)
-:
-    regIOobject(io),
-    lduPrimitiveMesh(mesh.lduAddr().size()),
-    meshes_(1),
-    timeIndex_(io.time().timeIndex())
-{
-    meshes_.set(0, const_cast<lduMesh*>(&mesh));
-    const label nMeshes(1);
-    patchMap_.setSize(nMeshes);
-    faceBoundMap_.setSize(nMeshes);
-    cellBoundMap_.setSize(nMeshes);
-    faceMap_.setSize(nMeshes);
-    patchLocalToGlobalMap_.setSize(nMeshes);
-    facePatchFaceMap_.setSize(nMeshes);
-
-    // Determine cellOffset and faceOffset
-    cellOffsets_.setSize(nMeshes);
-    cellOffsets_[0] = 0;
-}
-
 
 // ************************************************************************* //

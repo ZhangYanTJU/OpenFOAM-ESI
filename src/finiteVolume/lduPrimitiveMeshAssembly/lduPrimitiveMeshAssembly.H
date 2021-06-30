@@ -53,10 +53,6 @@ class lduPrimitiveMeshAssembly
     public regIOobject,
     public lduPrimitiveMesh
 {
-public:
-
-private:
-
     // Private Data
 
         //- UPtrList for fvMesh
@@ -86,9 +82,6 @@ private:
         //- Offset cells
         labelList cellOffsets_;
 
-        //- Time index
-        label timeIndex_;
-
 
     // Private Member Functions
 
@@ -104,6 +97,7 @@ private:
 
 public:
 
+
     // Static Data
 
         // Declare name of the class and its debug switch
@@ -112,22 +106,26 @@ public:
 
     // Constructors
 
-        //- Construct from fvMeshes combining mapped faces into internal faces
+        //- Construct from UPtrList of lduMesh
         lduPrimitiveMeshAssembly
         (
-            const UPtrList<lduMesh>& meshes,
-            const IOobject& io
+            const IOobject& io,
+            const UPtrList<lduMesh>& meshes
         );
 
         //- Construct from one mesh
         lduPrimitiveMeshAssembly
         (
-            const lduMesh&,
-            const IOobject& io
+            const IOobject& io,
+            const lduMesh&
         );
 
 
-    // Public functions
+    //- Destructor
+    virtual ~lduPrimitiveMeshAssembly() = default;
+
+
+    // Public Member Functions
 
         //- Update mappings
         template<class Type>
@@ -136,32 +134,14 @@ public:
             UPtrList<GeometricField<Type, fvPatchField, volMesh>>& psis
         );
 
+        //- Size maps
+        void updateMaps(const UPtrList<lduMesh>&);
 
         //- Find nrb mesh Id for mapped patches
-        label findNbrMeshId
-        (
-            const polyPatch& pp,
-            const label iMesh
-        ) const;
+        label findNbrMeshId(const polyPatch& pp,const label iMesh) const;
 
 
-    //- Destructor
-    virtual ~lduPrimitiveMeshAssembly() = default;
-
-
-    // Member Functions
-
-        //- Time index
-        label timeIndex()
-        {
-            return timeIndex_;
-        }
-
-        label timeIndex() const
-        {
-            return timeIndex_;
-        }
-
+    // Access
 
         //- Return the object registry
         virtual const objectRegistry& thisDb() const
@@ -169,7 +149,11 @@ public:
             return meshes_[0].thisDb();
         }
 
-    // Access
+        //- Return true if thisDb() is a valid DB
+        virtual bool hasDb() const
+        {
+            return true;
+        }
 
         //- Return patch addressing
         virtual const labelUList& patchAddr(const label patchNo) const

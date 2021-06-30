@@ -335,11 +335,10 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     }
 
     source() = Zero;
+
     // If useImplicit is true we need the source term associated with this BC
     if (this->useImplicit())
     {
-        const basicThermo& thermo = basicThermo::lookupThermo(*this);
-
         source() =
             alphaSfDelta()*
             (

@@ -68,7 +68,6 @@ assemblyFaceAreaPairGAMGAgglomeration
 :
     pairGAMGAgglomeration(matrix.mesh(), controlDict)
 {
-
     const lduMesh& ldumesh = matrix.mesh();
 
     if (isA<lduPrimitiveMeshAssembly>(ldumesh))
@@ -102,8 +101,6 @@ assemblyFaceAreaPairGAMGAgglomeration
 
                 if (globalPatchID == -1)
                 {
-                    //const lduInterface& inter = m.interfaces()[patchI];
-
                     if (pp.masterImplicit())
                     {
                         const vectorField& sf = m.boundary()[patchI].Sf();
@@ -134,6 +131,35 @@ assemblyFaceAreaPairGAMGAgglomeration
                                 }
                             }
                         }
+                        else if (isA<cyclicACMIPolyPatch>(pp))
+                        {
+                            const cyclicACMIPolyPatch& mpp =
+                                refCast<const cyclicACMIPolyPatch>(pp);
+
+                            const scalarListList& srcWeight =
+                                mpp.AMI().srcWeights();
+
+                            const scalarField& mask = mpp.mask();
+                            const scalar tol = mpp.tolerance();
+                            label subFaceI = 0;
+                            forAll(mask, faceI)
+                            {
+                                const scalarList& w = srcWeight[faceI];
+
+                                for(label j=0; j<w.size(); j++)
+                                {
+                                    if (mask[faceI] > tol)
+                                    {
+                                        const label globalFaceI =
+                                            mesh.faceBoundMap()[i]
+                                            [patchI][subFaceI];
+
+                                        faceAreas[globalFaceI] = w[j]*sf[faceI];
+                                    }
+                                    subFaceI++;
+                                }
+                            }
+                        }
                         else
                         {
                             forAll(pp.faceCells(), faceI)
@@ -150,15 +176,6 @@ assemblyFaceAreaPairGAMGAgglomeration
                     }
                 }
             }
-
-            //// Fill cellVolumes
-            //const scalarField& vol = m.V();
-            //const label cellOffset = mesh.cellOffsets()[i];
-            //
-            //forAll(vol, cellI)
-            //{
-            //    cellVolumes[cellOffset + cellI] = vol[cellI];
-            //}
         }
 
         agglomerate
