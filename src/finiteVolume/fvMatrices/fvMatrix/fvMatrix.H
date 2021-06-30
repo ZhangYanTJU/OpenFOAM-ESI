@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -130,9 +130,6 @@ class fvMatrix
         //- Originating fvMatrices when assembling matrices. Empty if not used.
         PtrList<fvMatrix<Type>> subMatrices_;
 
-        //- Optional lduAdressing
-        lduPrimitiveMeshAssembly* lduMeshPtr_;
-
         //- Is the fvMatrix using implicit formulation
         bool useImplicit_;
 
@@ -156,24 +153,9 @@ class fvMatrix
         //- for boundary cells
         FieldField<Field, Type> boundaryCoeffs_;
 
-        //- Cached total internal Coeffs for implicit patches
-        //- Use for A,DD,H,H1 operators
-        FieldField<Field, Type> orgInternalCoeffs_;
-
-        //- Cached total boundary Coeffs for implicit patches
-        //- Use for A,DD,H,H1 operators
-        FieldField<Field, Type> orgBoundaryCoeffs_;
-
-        //- Original Int/Bou coeffs set up
-        bool orginalCoeffs_;
-
         //- Face flux field for non-orthogonal correction
         mutable GeometricField<Type, fvsPatchField, surfaceMesh>
             *faceFluxCorrectionPtr_;
-
-        //- Face flux field
-        mutable GeometricField<Type, fvsPatchField, surfaceMesh>
-            *faceFluxPtr_;
 
 
 protected:
@@ -218,6 +200,11 @@ protected:
             Field<Type2>& intf
         ) const;
 
+
+        // Implicit helper functions
+
+            //- Name the implicit assembly addressing
+            label checkImplicit(const label fieldI = 0);
 
 
         // Matrix completion functionality
@@ -343,24 +330,27 @@ public:
                     const label patchi
                 ) const
                 {
-                    if (!lduMeshPtr_)
+                    if (!lduMeshPtr())
                     {
                         return patchi;
                     }
                     else
                     {
-                        return lduMeshPtr_->patchMap()[fieldi][patchi];
+                        return lduMeshPtr()->patchMap()[fieldi][patchi];
                     }
                 }
 
                 //- Transfer lower, upper, diag and source to this fvMatrix
                 void transferFvMatrixCoeffs();
 
-                //- Restore the original internal/boundary coefficients
-                void restoreBounAndInterCoeffs();
-
                 //- Create or update ldu assembly
                 void createOrUpdateLduPrimitiveAssembly();
+
+                //- Access to lduPrimitiveMeshAssembly
+                lduPrimitiveMeshAssembly* lduMeshPtr();
+
+                //- Const Access to lduPrimitiveMeshAssembly
+                const lduPrimitiveMeshAssembly* lduMeshPtr() const;
 
                 //- Manipulate matrix
                 void manipulateMatrix(direction cmp);
@@ -368,19 +358,11 @@ public:
                 //- Manipulate boundary/internal coeffs for coupling
                 void setBounAndInterCoeffs();
 
-                //- Set re-ordered interfaces on cyclic, etc, if implicit
-                //  addressing is used
+                //- Set interfaces
                 void setInterfaces
                 (
                     lduInterfaceFieldPtrsList&,
-                    labelList& globalIdPatch
-                );
-
-                //- Release interfaces created by setInterfaces
-                void releaseInterfaces
-                (
-                    lduInterfaceFieldPtrsList&,
-                    const labelList& globalIdPatch
+                    PtrDynList<lduInterfaceField>& newInterfaces
                 );
 
                 //- Add internal and boundary contribution to local patches
@@ -395,7 +377,7 @@ public:
                 //- Return optional lduAdressing
                 const lduPrimitiveMeshAssembly& lduMeshAssembly()
                 {
-                    return *lduMeshPtr_;
+                    return *lduMeshPtr();
                 }
 
                 //- Return psi
@@ -404,7 +386,10 @@ public:
                     const label i = 0
                 ) const
                 {
-                    return ((i == 0 && nMatrix_ == 0) ? psi_ : matrix(i).psi());
+                    return
+                    (
+                        (i == 0 && nMatrix_ == 0) ? psi_ : matrix(i).psi()
+                    );
                 }
 
 
@@ -489,11 +474,6 @@ public:
             surfaceTypeFieldPtr& faceFluxCorrectionPtr()
             {
                 return faceFluxCorrectionPtr_;
-            }
-
-            surfaceTypeFieldPtr& faceFluxPtr()
-            {
-                return faceFluxPtr_;
             }
 
 
@@ -610,19 +590,19 @@ public:
             tmp<Field<Type>> residual() const;
 
             //- Return the matrix scalar diagonal
-            tmp<scalarField> D();
+            tmp<scalarField> D() const;
 
             //- Return the matrix Type diagonal
-            tmp<Field<Type>> DD();
+            tmp<Field<Type>> DD() const;
 
             //- Return the central coefficient
-            tmp<volScalarField> A();
+            tmp<volScalarField> A() const;
 
             //- Return the H operation source
-            tmp<GeometricField<Type, fvPatchField, volMesh>> H();
+            tmp<GeometricField<Type, fvPatchField, volMesh>> H() const;
 
             //- Return H(1)
-            tmp<volScalarField> H1();
+            tmp<volScalarField> H1() const;
 
             //- Return the face-flux field from the matrix
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>

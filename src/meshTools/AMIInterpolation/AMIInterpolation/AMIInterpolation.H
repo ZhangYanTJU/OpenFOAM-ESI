@@ -421,9 +421,6 @@ public:
                 //- tgtAddress, tgtWeights
                 inline const mapDistribute& srcMap() const;
 
-                //- Source compact to local global for source
-                inline const List<Map<label>>& srccMap() const;
-
 
             // Target patch
 
@@ -457,9 +454,6 @@ public:
                 //- This gets target data into a form to be consumed by
                 //- srcAddress, srcWeights
                 inline const mapDistribute& tgtMap() const;
-
-                //- Source compact to local global for target
-                inline const List<Map<label>>& tgtcMap() const;
 
 
         // Manipulation

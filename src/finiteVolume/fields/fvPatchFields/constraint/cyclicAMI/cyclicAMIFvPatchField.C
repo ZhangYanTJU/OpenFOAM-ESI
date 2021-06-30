@@ -242,7 +242,6 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
-
     const labelUList& nbrFaceCells =
         lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
 
@@ -276,6 +275,7 @@ void Foam::cyclicAMIFvPatchField<Type>::manipulateMatrix
     const direction cmpt
 )
 {
+
     if (this->cyclicAMIPatch().owner())
     {
         label index = this->patch().index();

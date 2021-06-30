@@ -167,17 +167,14 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
             << endl;
     }
 
-    if (useImplicit_)
-    {
-        createOrUpdateLduPrimitiveAssembly();
-    }
-
     scalarField saveLower;
     scalarField saveUpper;
 
-    if (lduMeshPtr_)
+    if (useImplicit_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0)
+        createOrUpdateLduPrimitiveAssembly();
+
+        if (psi_.mesh().fluxRequired(psi_.name()))
         {
             // Save lower/upper for flux calculation
             if (asymmetric())
@@ -187,7 +184,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
             saveUpper = upper();
         }
 
-        setLduMesh(*lduMeshPtr_);
+        setLduMesh(*lduMeshPtr());
         transferFvMatrixCoeffs();
         setBounAndInterCoeffs();
         direction cmpt = 0;
@@ -201,18 +198,18 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
     addBoundarySource(totalSource, false);
 
     lduInterfaceFieldPtrsList interfaces;
-    labelList globalIdPatch;
-    if (!lduMeshPtr_)
+    PtrDynList<lduInterfaceField> newInterfaces;
+    if (!useImplicit_)
     {
         interfaces = this->psi(0).boundaryField().scalarInterfaces();
     }
     else
     {
-        setInterfaces(interfaces, globalIdPatch);
+        setInterfaces(interfaces, newInterfaces);
     }
 
     tmp<scalarField> tpsi;
-    if (!lduMeshPtr_)
+    if (!useImplicit_)
     {
         GeometricField<scalar, fvPatchField, volMesh>& psi =
            const_cast<GeometricField<scalar, fvPatchField, volMesh>&>(psi_);
@@ -226,7 +223,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
         for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
         {
-            const label cellOffset = lduMeshPtr_->cellOffsets()[fieldi];
+            const label cellOffset = lduMeshPtr()->cellOffsets()[fieldi];
             const auto& psiInternal = this->psi(fieldi).primitiveField();
 
             forAll(psiInternal, localCellI)
@@ -248,7 +245,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
         solverControls
     )->solve(psi, totalSource);
 
-    if (lduMeshPtr_)
+    if (useImplicit_)
     {
         for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
         {
@@ -258,13 +255,12 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
                     this->psi(fieldi)
                 ).primitiveFieldRef();
 
-            const label cellOffset = lduMeshPtr_->cellOffsets()[fieldi];
+            const label cellOffset = lduMeshPtr()->cellOffsets()[fieldi];
 
             forAll(psiInternal, localCellI)
             {
                 psiInternal[localCellI] = psi[localCellI + cellOffset];
             }
-
         }
     }
 
@@ -275,9 +271,9 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
     diag() = saveDiag;
 
-    if (lduMeshPtr_)
+    if (useImplicit_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0)
+        if (psi_.mesh().fluxRequired(psi_.name()))
         {
             // Restore lower/upper
             if (asymmetric())
@@ -291,7 +287,6 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
         }
         // Set the original lduMesh
         setLduMesh(psi_.mesh());
-        releaseInterfaces(interfaces, globalIdPatch);
     }
 
     for (label fieldi = 0; fieldi < nMatrices(); fieldi++)
@@ -340,12 +335,8 @@ Foam::tmp<Foam::scalarField> Foam::fvMatrix<Foam::scalar>::residual() const
 
 
 template<>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H() //const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H() const
 {
-    if (useImplicit_)
-    {
-        restoreBounAndInterCoeffs();
-    }
     tmp<volScalarField> tHphi
     (
         new volScalarField
@@ -376,12 +367,8 @@ Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H() //const
 
 
 template<>
-Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H1() //const
+Foam::tmp<Foam::volScalarField> Foam::fvMatrix<Foam::scalar>::H1() const
 {
-    if (useImplicit_)
-    {
-        restoreBounAndInterCoeffs();
-    }
     tmp<volScalarField> tH1
     (
         new volScalarField

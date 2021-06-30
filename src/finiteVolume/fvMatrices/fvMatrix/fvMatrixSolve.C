@@ -30,8 +30,6 @@ License
 #include "diagTensorField.H"
 #include "profiling.H"
 #include "PrecisionAdaptor.H"
-#include "coupledFvPatchField.H"
-#include "lduPrimitiveMeshAssembly.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -118,6 +116,12 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
     const dictionary& solverControls
 )
 {
+    if (useImplicit_)
+    {
+        FatalErrorInFunction
+            << "Implicit option is not allowed for type: " << Type::typeName
+            << exit(FatalError);
+    }
     if (debug)
     {
         Info.masterStream(this->mesh().comm())
@@ -136,60 +140,19 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         psi.name()
     );
 
-    if (useImplicit_)
-    {
-        createOrUpdateLduPrimitiveAssembly();
-    }
-
-    scalarField saveLower;
-    scalarField saveUpper;
-
-    typename Type::labelType validComponents
-    (
-        psi.mesh().template validComponents<Type>()
-    );
-
-    if (lduMeshPtr_)
-    {
-        if (psi_.mesh().fluxRequired(psi_.name()) && (nMatrix_ == 0))
-        {
-            // Save lower/upper for flux calculation
-            if (asymmetric())
-            {
-                saveLower = lower();
-            }
-            saveUpper = upper();
-        }
-
-        setLduMesh(*lduMeshPtr_);
-        transferFvMatrixCoeffs();
-        setBounAndInterCoeffs();
-        for (direction cmpt=0; cmpt<Type::nComponents; cmpt++)
-        {
-            if (validComponents[cmpt] == -1) continue;
-            manipulateMatrix(cmpt);
-        }
-    }
-
     scalarField saveDiag(diag());
 
     Field<Type> source(source_);
 
     // At this point include the boundary source from the coupled boundaries.
-    // This is corrected for the implicit part by updateMatrixInterfaces
-    // within the component loop.
+    // This is corrected for the implicit part by updateMatrixInterfaces within
+    // the component loop.
     addBoundarySource(source);
 
-    lduInterfaceFieldPtrsList interfaces;
-    labelList globalIdPatch;
-    if (!lduMeshPtr_)
-    {
-        interfaces = this->psi(0).boundaryField().scalarInterfaces();
-    }
-    else
-    {
-        setInterfaces(interfaces, globalIdPatch);
-    }
+    typename Type::labelType validComponents
+    (
+        psi.mesh().template validComponents<Type>()
+    );
 
     for (direction cmpt=0; cmpt<Type::nComponents; cmpt++)
     {
@@ -198,7 +161,6 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         // copy field and source
 
         scalarField psiCmpt(psi.primitiveField().component(cmpt));
-
         addBoundaryDiag(diag(), cmpt);
 
         scalarField sourceCmpt(source.component(cmpt));
@@ -212,6 +174,9 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         (
             internalCoeffs_.component(cmpt)
         );
+
+        lduInterfaceFieldPtrsList interfaces =
+            psi.boundaryField().scalarInterfaces();
 
         // Use the initMatrixInterfaces and updateMatrixInterfaces to correct
         // bouCoeffsCmpt for the explicit part of the coupled boundary
@@ -269,28 +234,8 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
         diag() = saveDiag;
     }
 
-    if (lduMeshPtr_)
-    {
-        if (psi_.mesh().fluxRequired(psi_.name()) && nMatrix_ == 0)
-        {
-            // Restore lower/upper
-            if (asymmetric())
-            {
-                lower().setSize(saveLower.size());
-                lower() = saveLower;
-            }
-
-            upper().setSize(saveUpper.size());
-            upper() = saveUpper;
-        }
-
-        // Set the original lduMesh
-        setLduMesh(psi_.mesh());
-        // Delete interfaces
-        releaseInterfaces(interfaces, globalIdPatch);
-    }
-
     psi.correctBoundaryConditions();
+
     psi.mesh().setSolverPerformance(psi.name(), solverPerfVec);
 
     return solverPerfVec;
