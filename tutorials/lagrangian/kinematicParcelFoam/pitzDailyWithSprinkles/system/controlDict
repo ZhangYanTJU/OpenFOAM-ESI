@@ -21,7 +21,7 @@ DebugSwitches
     liquidFilmBase         0;
 }
 
-application     reactingParcelFoam;
+application     kinematicParcelFoam;
 
 startFrom       latestTime;
 
