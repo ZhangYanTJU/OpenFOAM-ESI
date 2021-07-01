@@ -27,8 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ThermoSurfaceFilm.H"
-//#include "surfaceFilmRegionModel.H"
-//#include "liquidFilmBase.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -93,13 +91,13 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
 
         switch (this->interactionType_)
         {
-            case this->itBounce:
+            case KinematicSurfaceFilm<CloudType>::itBounce:
             {
                 this->bounceInteraction(p, pp, facei, keepParticle);
 
                 break;
             }
-            case this->itAbsorb:
+            case KinematicSurfaceFilm<CloudType>::itAbsorb:
             {
                 const scalar m = p.nParticle()*p.mass();
 
@@ -108,7 +106,7 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
 
                 break;
             }
-            case this->itSplashBai:
+            case KinematicSurfaceFilm<CloudType>::itSplashBai:
             {
                 // Local pressure
                 const scalar pc = thermo_.thermo().p()[p.cell()];
@@ -153,7 +151,7 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
             switch (this->interactionType_)
             {
                 // It only supports absorp model
-                case this->itAbsorb:
+                case KinematicSurfaceFilm<CloudType>::itAbsorb:
                 {
                     const scalar m = p.nParticle()*p.mass();
 
@@ -163,13 +161,13 @@ bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
                     );
                     break;
                 }
-                case this->itBounce:
+                case KinematicSurfaceFilm<CloudType>::itBounce:
                 {
                     this->bounceInteraction(p, pp, facei, keepParticle);
 
                     break;
                 }
-                case this->itSplashBai:
+                case KinematicSurfaceFilm<CloudType>::itSplashBai:
                 {
                     // Local pressure
                     const scalar pc = thermo_.thermo().p()[p.cell()];

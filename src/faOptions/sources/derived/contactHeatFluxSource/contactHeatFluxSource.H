@@ -2,17 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-<<<<<<< HEAD
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
-=======
-    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
->>>>>>> ENH: Adding faOption contactHeatFluxSource
 License
     This file is part of OpenFOAM.
 
@@ -33,7 +27,6 @@ Class
     Foam::fa::contactHeatFluxSource
 
 Group
-
     grpFaOptionsSources
 
 Description
@@ -78,7 +71,6 @@ Usage
      - \link faceSetOption.H \endlink
      - \link temperatureCoupledBase.H \endlink
 
-
 SourceFiles
     contactHeatFluxSource.C
 
@@ -112,7 +104,6 @@ class contactHeatFluxSource
     // Private Data
 
         //- Name of temperature field
-
         word TName_;
 
         //- Name of primary temperature field
@@ -138,12 +129,6 @@ class contactHeatFluxSource
 
 
     // Private Member Functions
-
-        //- No copy construct
-        contactHeatFluxSource(const contactHeatFluxSource&) = delete;
-
-        //- No copy assignment
-        void operator=(const contactHeatFluxSource&) = delete;
 
         //- Return htc from the primary region
         tmp<areaScalarField> htc() const;

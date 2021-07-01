@@ -96,15 +96,6 @@ class vibrationShellModel
 :
     public regionFaModel
 {
-    // Private Member Functions
-
-        //- No copy construct
-        vibrationShellModel(const vibrationShellModel&) = delete;
-
-        //- No copy assignment
-        void operator=(const vibrationShellModel&) = delete;
-
-
 protected:
 
     // Protected Data
@@ -126,12 +117,6 @@ protected:
 
         //- Solid properties
         solidProperties solid_;
-
-
-    // Protected Member Functions
-
-        //- Read control parameters from dictionary
-        virtual bool read(const dictionary&);
 
 
 public:
@@ -167,6 +152,12 @@ public:
             const dictionary& dict
         );
 
+        //- No copy construct
+        vibrationShellModel(const vibrationShellModel&) = delete;
+
+        //- No copy assignment
+        void operator=(const vibrationShellModel&) = delete;
+
 
     // Selectors
 
@@ -180,7 +171,6 @@ public:
 
     //- Destructor
     virtual ~vibrationShellModel() = default;
-
 
 
     // Member Functions

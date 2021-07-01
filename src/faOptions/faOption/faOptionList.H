@@ -186,16 +186,6 @@ public:
             );
 
 
-            //- Return source for equation with specified name and dimensios
-            template<class Type>
-            tmp<faMatrix<Type>> operator()
-            (
-                const areaScalarField& rho,
-                GeometricField<Type, faPatchField, areaMesh>& field,
-                const dimensionSet& ds
-            );
-
-
             //- Return source for equation with second time derivative
             template<class Type>
             tmp<faMatrix<Type>> d2dt2

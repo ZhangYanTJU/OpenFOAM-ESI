@@ -157,6 +157,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
                 {
                     Info<< "(Inactive)";
                 }
+
                 Info<< " source " << source.name()
                     << " for field " << fieldName << endl;
             }
@@ -209,58 +210,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
                 {
                     Info<< "(Inactive)";
                 }
-                Info<< " source " << source.name()
-                    << " for field " << field.name() << endl;
-            }
 
-            if (ok)
-            {
-                source.addSup(rho, mtx, fieldi);
-            }
-        }
-    }
-
-    return tmtx;
-}
-
-
-template<class Type>
-Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
-(
-    const areaScalarField& rho,
-    GeometricField<Type, faPatchField, areaMesh>& field,
-    const dimensionSet& ds
-)
-{
-    checkApplied();
-
-    const dimensionSet dsMat(ds*dimArea);
-
-    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, dsMat));
-    faMatrix<Type>& mtx = tmtx.ref();
-
-    for (fa::option& source : *this)
-    {
-        const label fieldi = source.applyToField(field.name());
-
-        if (fieldi != -1)
-        {
-            addProfiling(faopt, "faOption()." + source.name());
-
-            source.setApplied(fieldi);
-
-            const bool ok = source.isActive();
-
-            if (debug)
-            {
-                if (ok)
-                {
-                    Info<< "Apply";
-                }
-                else
-                {
-                    Info<< "(Inactive)";
-                }
                 Info<< " source " << source.name()
                     << " for field " << field.name() << endl;
             }

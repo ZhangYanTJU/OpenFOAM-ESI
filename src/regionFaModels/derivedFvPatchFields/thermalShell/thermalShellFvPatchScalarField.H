@@ -55,22 +55,6 @@ Usage
       type     | Type name: compressible::thermalShell | word  | yes  | -
     \endtable
 
-
-    The inherited entries are elaborated in:
-      - \link fixedValueFvPatchField.H \endlink
-      - \link thermalShellModel.H \endlink
-
-Note
-  - The two-dimensional area mesh needs to be
-    generated in the pre-processing steps.
-
-
-    where the entries mean:
-    \table
-      Property | Description                           | Type  | Reqd | Dflt
-      type     | Type name: compressible::thermalShell | word  | yes  | -
-    \endtable
-
     The inherited entries are elaborated in:
       - \link fixedValueFvPatchField.H \endlink
       - \link thermalShellModel.H \endlink

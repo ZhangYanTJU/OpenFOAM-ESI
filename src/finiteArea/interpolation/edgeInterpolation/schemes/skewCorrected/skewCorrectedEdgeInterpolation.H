@@ -2,18 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-<<<<<<< HEAD
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
     Copyright (C) 2020 OpenCFD Ltd.
-=======
-    \\  /    A nd           |
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-                            | Copyright (C) 2016-2017 Wikki Ltd
->>>>>>> ENH: Adding features to thermalShell:
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,11 +28,7 @@ Class
     Foam::skewCorrectedEdgeInterpolation
 
 Description
-<<<<<<< HEAD
     Linear/upwind blended differencing scheme
-=======
-    linear/upwind blended differencing scheme.
->>>>>>> ENH: Adding features to thermalShell:
 
 SourceFiles
     skewCorrectedEdgeInterpolationMake.C
@@ -69,27 +58,11 @@ class skewCorrectedEdgeInterpolation
 :
     virtual public edgeInterpolationScheme<Type>
 {
-<<<<<<< HEAD
     // Private Data
-=======
-    // Private data
->>>>>>> ENH: Adding features to thermalShell:
 
         tmp<edgeInterpolationScheme<Type>> tScheme_;
 
 
-<<<<<<< HEAD
-=======
-    // Private Member Functions
-
-        //- No copy construct
-        skewCorrectedEdgeInterpolation(const skewCorrectedEdgeInterpolation&) = delete;
-
-        //- No copy assignment
-        void operator=(const skewCorrectedEdgeInterpolation&) = delete;
-
-
->>>>>>> ENH: Adding features to thermalShell:
 public:
 
     //- Runtime type information
@@ -123,15 +96,12 @@ public:
             )
         {}
 
-<<<<<<< HEAD
         //- No copy construct
         skewCorrectedEdgeInterpolation(const skewCorrectedEdgeInterpolation&) =
             delete;
 
         //- No copy assignment
         void operator=(const skewCorrectedEdgeInterpolation&) = delete;
-=======
->>>>>>> ENH: Adding features to thermalShell:
 
 
     // Member Functions

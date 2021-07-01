@@ -44,14 +44,15 @@ defineTypeNameAndDebug(KirchhoffShell, 0);
 
 addToRunTimeSelectionTable(vibrationShellModel, KirchhoffShell, dictionary);
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-bool KirchhoffShell::read(const dictionary& dict)
+bool KirchhoffShell::init(const dictionary& dict)
 {
     this->solution().readEntry("nNonOrthCorr", nNonOrthCorr_);
     return true;
 }
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 void KirchhoffShell::solveDisplacement()
 {
@@ -64,19 +65,6 @@ void KirchhoffShell::solveDisplacement()
 
     areaScalarField solidMass(rho()*h_);
     areaScalarField solidD(D()/solidMass);
-
-    // Save old times
-    areaScalarField w0(w_.oldTime());
-    areaScalarField w00(w_.oldTime().oldTime());
-
-    if (nSubCycles_ > 1)
-    {
-        // Restore the oldTime in sub-cycling
-        w_.oldTime() = w0_;
-        w_.oldTime().oldTime() = w00_;
-        laplaceW_.oldTime() = laplaceW0_;
-        laplace2W_.oldTime() = laplace2W0_;
-     }
 
     // Save old times
     areaScalarField w0(w_.oldTime());
@@ -220,32 +208,6 @@ KirchhoffShell::KirchhoffShell
             IOobject::NO_WRITE
         ),
         regionMesh(),
-        dimensionedScalar(inv(dimLength), Zero)
-    ),
-    laplace2W_
-    (
-        IOobject
-        (
-            "w00_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        regionMesh(),
-        dimensionedScalar(inv(pow3(dimLength)), Zero)
-    ),
-    w0_
-    (
-        IOobject
-        (
-            "w0_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        regionMesh(),
         dimensionedScalar(dimLength, Zero)
     ),
     w00_
@@ -288,15 +250,10 @@ KirchhoffShell::KirchhoffShell
         dimensionedScalar(inv(pow3(dimLength)), Zero)
     )
 {
-    init();
+    init(dict);
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-void KirchhoffShell::init()
-{}
-
-
 
 void KirchhoffShell::preEvolveRegion()
 {}

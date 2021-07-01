@@ -46,14 +46,6 @@ defineTypeNameAndDebug(kinematicThinFilm, 0);
 
 addToRunTimeSelectionTable(liquidFilmBase, kinematicThinFilm, dictionary);
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool kinematicThinFilm::read(const dictionary& dict)
-{
-    return true;
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 kinematicThinFilm::kinematicThinFilm
@@ -64,31 +56,15 @@ kinematicThinFilm::kinematicThinFilm
 )
 :
     liquidFilmModel(modelType, patch, dict)
-{
-    init();
-}
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-kinematicThinFilm::~kinematicThinFilm()
 {}
 
-
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-void kinematicThinFilm::init()
-{
-}
-
 
 void kinematicThinFilm::preEvolveRegion()
 {
     rhoSp_.storePrevIter();
     USp_.storePrevIter();
     pnSp_.storePrevIter();
-
-    // Update reads
-    liquidFilmModel::read(coeffs());
 
     // Update mass exchange sources
     liquidFilmModel::preEvolveRegion();

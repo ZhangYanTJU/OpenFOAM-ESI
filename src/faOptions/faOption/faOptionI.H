@@ -97,14 +97,4 @@ inline const Foam::volSurfaceMapping& Foam::fa::option::vsm() const
 }
 
 
-inline const Foam::volSurfaceMapping& Foam::fa::option::vsm() const
-{
-    if (!vsmPtr_)
-    {
-        vsmPtr_.reset(new volSurfaceMapping(this->regionMesh()));
-    }
-    return *vsmPtr_;
-}
-
-
 // ************************************************************************* //

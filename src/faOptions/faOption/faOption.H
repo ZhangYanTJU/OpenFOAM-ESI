@@ -153,26 +153,6 @@ private:
         bool active_;
 
 
-    // Protected Member Functions
-
-        //- Resize/reset applied flag list for all fieldNames_ entries
-        void resetApplied();
-
-
-private:
-
-    // Private Data
-
-        //- Demand-driven: pointer to region mesh database
-        mutable autoPtr<faMesh> regionMeshPtr_;
-
-        //- Demand-driven: volume-to-surface mapping
-        mutable autoPtr<volSurfaceMapping> vsmPtr_;
-
-        //- Source active flag
-        bool active_;
-
-
 public:
 
     //- Switch write log to Info
@@ -276,9 +256,6 @@ public:
 
             //- Return const access to the mesh database
             inline const fvMesh& mesh() const noexcept;
-
-            //- Return const access to fvPatch
-            inline const fvPatch& patch() const noexcept;
 
             //- Return const access to fvPatch
             inline const fvPatch& patch() const noexcept;

@@ -19,4 +19,5 @@ LIB_LIBS = \
     -lmeshTools \
     -lthermophysicalProperties \
     -lspecie \
-    -lfaOptions
+    -lfaOptions \
+    -ldistributionModels

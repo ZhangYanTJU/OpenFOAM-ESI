@@ -43,20 +43,6 @@ defineTypeNameAndDebug(vibrationShellModel, 0);
 
 defineRunTimeSelectionTable(vibrationShellModel, dictionary);
 
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool vibrationShellModel::read(const dictionary& dict)
-{
-    if (regionFaModel::read(dict))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 vibrationShellModel::vibrationShellModel

@@ -42,6 +42,7 @@ SourceFiles
 #define volSurfaceMapping_H
 
 #include "faMesh.H"
+#include "volMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

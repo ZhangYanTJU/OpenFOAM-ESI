@@ -30,14 +30,8 @@ Group
     grpVibrationBoundaryConditions
 
 Description
-<<<<<<< HEAD
-=======
-
->>>>>>> ENH: Registering pExt in database. Adding flag to run only primaryRegion
-
 
 Usage
-
     Example of the boundary condition specification:
     \verbatim
     <masterPatchName>
@@ -85,7 +79,6 @@ class vibrationShellFvPatchScalarField
 :
     public mixedFvPatchField<scalar>
 {
-
     // Private Data
 
         //- Thermal baffle
@@ -127,7 +120,6 @@ public:
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
-
 
         //- Construct and return a clone
         virtual tmp<fvPatchScalarField> clone() const

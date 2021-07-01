@@ -42,6 +42,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "faMatrices.H"
 #include "liquidFilmBase.H"
+#include "fvMesh.H"
 #include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

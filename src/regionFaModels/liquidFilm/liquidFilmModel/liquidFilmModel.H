@@ -71,102 +71,79 @@ class liquidFilmModel
 :
     public liquidFilmBase
 {
-private:
-
-    // Private member functions
-
-        //- No copy construct
-        liquidFilmModel(const liquidFilmModel&) = delete;
-
-        //- No copy assignment
-        void operator=(const liquidFilmModel&) = delete;
-
-        //- Initialize liquidFilmModel
-        void init();
-
-
 protected:
-
 
     // Thermo properties
 
+        //- Liquid thermo
+        liquidMixtureProperties thermo_;
 
-            //- Liquid thermo
-            liquidMixtureProperties thermo_;
-
-            //- Reference tempararure
-            scalar Tref_;
-
-
-            // Fields
-
-                //- Density [kg/m3]
-                areaScalarField rho_;
-
-                //- Dynamic viscosity [Pa.s]
-                areaScalarField mu_;
-
-                //- Film temperature
-                areaScalarField Tf_;
-
-                 //- Film Heat capacity
-                areaScalarField Cp_;
-
-                //- Surface tension [m/s2]
-                areaScalarField sigma_;
-
-                //- Film rho*height
-                areaScalarField hRho_;
-
-                // Mass exchange sources
-
-                    //- Mass source
-                    areaScalarField rhoSp_;
-
-                    //- Momentum source
-                    areaVectorField USp_;
-
-                    //- Normal pressure by particles
-                    areaScalarField pnSp_;
+        //- Reference tempararure
+        scalar Tref_;
 
 
-                 // Transfer fields
+    // Fields
 
-                    //- Film mass  for transfer to cloud
-                    volScalarField cloudMassTrans_;
+        //- Density [kg/m3]
+        areaScalarField rho_;
 
-                    //- Parcel diameters originating from film to cloud
-                    volScalarField cloudDiameterTrans_;
+        //- Dynamic viscosity [Pa.s]
+        areaScalarField mu_;
+
+        //- Film temperature
+        areaScalarField Tf_;
+
+            //- Film Heat capacity
+        areaScalarField Cp_;
+
+        //- Surface tension [m/s2]
+        areaScalarField sigma_;
+
+        //- Film rho*height
+        areaScalarField hRho_;
+
+
+    // Mass exchange sources
+
+        //- Mass source
+        areaScalarField rhoSp_;
+
+        //- Momentum source
+        areaVectorField USp_;
+
+        //- Normal pressure by particles
+        areaScalarField pnSp_;
+
+
+    // Transfer fields
+
+        //- Film mass  for transfer to cloud
+        volScalarField cloudMassTrans_;
+
+        //- Parcel diameters originating from film to cloud
+        volScalarField cloudDiameterTrans_;
 
 
     // General properties
 
 
-
-            //- Turbulence model
-            autoPtr<filmTurbulenceModel> turbulence_;
-
-
-            // Sub-models
-
-                //- Available mass for transfer via sub-models
-                scalarField availableMass_;
-
-                //- Cloud injection
-                injectionModelList injection_;
-
-                //- Transfer with the continuous phase
-                //transferModelList transfer_;
-
-                //- List of film forces
-                forceList forces_;
+        //- Turbulence model
+        autoPtr<filmTurbulenceModel> turbulence_;
 
 
-    // Protected member functions
+        // Sub-models
 
+            //- Available mass for transfer via sub-models
+            scalarField availableMass_;
 
-        //- Read control parameters from dictionary
-        virtual bool read(const dictionary& dict);
+            //- Cloud injection
+            injectionModelList injection_;
+
+            //- Transfer with the continuous phase
+            //transferModelList transfer_;
+
+            //- List of film forces
+            forceList forces_;
 
 
 public:
@@ -186,15 +163,20 @@ public:
             const dictionary& dict
         );
 
+        //- No copy construct
+        liquidFilmModel(const liquidFilmModel&) = delete;
+
+        //- No copy assignment
+        void operator=(const liquidFilmModel&) = delete;
+
 
     //- Destructor
-    virtual ~liquidFilmModel();
+    virtual ~liquidFilmModel() = default;
 
 
     // Member Functions
 
         // Help function
-
 
             //- Correct thermo
             void correctThermoFields();

@@ -29,7 +29,6 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "dictionaryContent.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -68,7 +67,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
         iF,
         mapper
     ),
-    baffle_(nullptr),
+    baffle_(),
     dict_(ptf.dict_)
 {}
 

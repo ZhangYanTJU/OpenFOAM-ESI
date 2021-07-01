@@ -98,7 +98,10 @@ class thermalShell
     // Private Member Functions
 
         //- Initialize thermalShell
-        void init();
+        bool init(const dictionary& dict);
+
+        //- Return radiative heat flux
+        tmp<areaScalarField> qr();
 
 
 protected:
@@ -125,24 +128,14 @@ protected:
             //- Thickness
             areaScalarField h_;
 
-
-
-    // Protected Member Functions
-
-        // Sub models
-
             //- Name of the primary region radiative flux
             const word qrName_;
 
-
-            //- Unifor thickness
+            //- Uniform thickness
             scalar thickness_;
 
 
-
-        //- Read control parameters from dictionary
-        virtual bool read(const dictionary& dict);
-
+    // Protected Member Functions
 
         // Equations
 

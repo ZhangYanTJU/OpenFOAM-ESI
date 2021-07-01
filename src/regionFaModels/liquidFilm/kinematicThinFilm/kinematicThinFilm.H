@@ -61,30 +61,6 @@ class kinematicThinFilm
 :
     public liquidFilmModel
 {
-private:
-
-    // Private member functions
-
-        //- No copy construct
-        kinematicThinFilm(const kinematicThinFilm&) = delete;
-
-        //- No copy assignment
-        void operator=(const kinematicThinFilm&) = delete;
-
-        //- Initialize kinematicThinFilm
-        void init();
-
-
-protected:
-
-
-    // Protected member functions
-
-
-        //- Read control parameters from dictionary
-        virtual bool read(const dictionary& dict);
-
-
 public:
 
     //- Runtime type information
@@ -102,15 +78,18 @@ public:
             const dictionary& dict
         );
 
+        //- No copy construct
+        kinematicThinFilm(const kinematicThinFilm&) = delete;
+
+        //- No copy assignment
+        void operator=(const kinematicThinFilm&) = delete;
+
 
     //- Destructor
-    virtual ~kinematicThinFilm();
+    virtual ~kinematicThinFilm() = default;
 
 
     // Member Functions
-
-        // Help functions
-
 
         // Evolution
 
@@ -122,7 +101,6 @@ public:
 
             //- Post-evolve film
             virtual void postEvolveRegion();
-
 };
 
 

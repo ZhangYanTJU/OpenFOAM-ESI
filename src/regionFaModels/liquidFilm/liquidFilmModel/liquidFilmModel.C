@@ -47,12 +47,6 @@ defineTypeNameAndDebug(liquidFilmModel, 0);
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool liquidFilmModel::read(const dictionary& dict)
-{
-    liquidFilmBase::read(dict);
-    return true;
-}
-
 void liquidFilmModel::correctThermoFields()
 {
     scalarField X(thermo_.size(), 1);
@@ -260,11 +254,6 @@ liquidFilmModel::liquidFilmModel
     correctThermoFields();
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-liquidFilmModel::~liquidFilmModel()
-{}
-
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
@@ -303,6 +292,7 @@ const liquidMixtureProperties& liquidFilmModel::thermo() const
     return thermo_;
 }
 
+
 scalar liquidFilmModel::Tref() const
 {
     return Tref_;
@@ -331,7 +321,7 @@ void liquidFilmModel::preEvolveRegion()
     cloudDiameterTrans_ == dimensionedScalar(dimLength, Zero);
 
     const scalar deltaT = primaryMesh().time().deltaTValue();
-    const scalarField rAreaDeltaT = 1/deltaT/regionMesh().S().field();
+    const scalarField rAreaDeltaT(scalar(1)/deltaT/regionMesh().S().field());
 
     // Map the total mass, mom and pnSource from particles
     rhoSp_.primitiveFieldRef() =
@@ -353,6 +343,7 @@ void liquidFilmModel::preEvolveRegion()
     pnSp_.relax();
     USp_.relax();
 }
+
 
 void liquidFilmModel::postEvolveRegion()
 {

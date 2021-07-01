@@ -102,7 +102,6 @@ void Foam::fa::externalFileSource::addSup
 {
     const scalar t = mesh().time().value();
 
-
     if (isActive() && t > timeStart() && t < (timeStart() + duration()))
     {
         DebugInfo<< name() << ": applying source to " << eqn.psi().name()<<endl;
@@ -127,5 +126,5 @@ bool Foam::fa::externalFileSource::read(const dictionary& dict)
     return false;
 }
 
-// ************************************************************************* //
 
+// ************************************************************************* //

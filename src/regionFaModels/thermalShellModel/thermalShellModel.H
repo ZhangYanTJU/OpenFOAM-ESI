@@ -90,12 +90,6 @@ class thermalShellModel
 :
     public regionFaModel
 {
-    // Private Member Functions
-
-        //- Initialize thermal Baffle
-        void init();
-
-
 protected:
 
     // Protected Data
@@ -111,12 +105,6 @@ protected:
 
         //- Pointer to faOptions
         Foam::fa::options& faOptions_;
-
-
-    // Protected Member Functions
-
-        //- Read control parameters from dictionary
-        virtual bool read(const dictionary&);
 
 
 public:

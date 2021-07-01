@@ -43,19 +43,6 @@ defineTypeNameAndDebug(thermalShellModel, 0);
 
 defineRunTimeSelectionTable(thermalShellModel, dictionary);
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool thermalShellModel::read(const dictionary& dict)
-{
-    if (regionFaModel::read(dict))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 thermalShellModel::thermalShellModel

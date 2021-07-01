@@ -13,11 +13,6 @@ KirchhoffShell/KirchhoffShell.C
 derivedFvPatchFields/thermalShell/thermalShellFvPatchScalarField.C
 derivedFvPatchFields/vibrationShell/vibrationShellFvPatchScalarField.C
 
-vibrationShellModel/vibrationShellModel.C
-vibrationShellModel/vibrationShellModelNew.C
-KirchhoffShell/KirchhoffShell.C
-derivedFvPatchFields/vibrationShell/vibrationShellFvPatchScalarField.C
-
 /* Sub-Model */
 
 liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.C
