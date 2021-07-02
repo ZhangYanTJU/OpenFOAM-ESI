@@ -557,11 +557,11 @@ bool Foam::functionObjects::momentum::write()
             forAll(pbm, patchi)
             {
                 const auto& pts = pbm[patchi].faceCentres();
-                const label len = pts.size();
 
                 UList<scalar>& r = cyl_r->boundaryFieldRef(false)[patchi];
                 UList<scalar>& t = cyl_t->boundaryFieldRef(false)[patchi];
                 UList<scalar>& z = cyl_z->boundaryFieldRef(false)[patchi];
+                const label len = r.size();
 
                 for (label i=0; i < len; ++i)
                 {
