@@ -835,7 +835,7 @@ void Foam::fvMatrix<Type>::setBounAndInterCoeffs()
             }
         }
 
-        // Store implicit patches at the end of the list andcaching original
+        // Store implicit patches at the end of the list
         implicit = 0;
         forAll(bpsi, patchI)
         {
@@ -858,14 +858,13 @@ void Foam::fvMatrix<Type>::setBounAndInterCoeffs()
             }
         }
     }
-  //  orginalCoeffs_ = false;
 
-    forAll(internalCoeffs_, patchI)
-    {
+//    forAll(internalCoeffs_, patchI)
+//    {
 //         DebugVar(patchI)
 //         DebugVar(internalCoeffs_[patchI])
 //         DebugVar(boundaryCoeffs_[patchI])
-    }
+//    }
 }
 
 
@@ -968,7 +967,6 @@ Foam::lduPrimitiveMeshAssembly* Foam::fvMatrix<Type>::lduMeshPtr()
             lduPrimitiveMeshAssembly
         > (lduAssemblyName_);
 
-
     return const_cast<lduPrimitiveMeshAssembly*>(lduAssemMeshPtr);
 }
 
@@ -978,7 +976,7 @@ const Foam::lduPrimitiveMeshAssembly* Foam::fvMatrix<Type>::lduMeshPtr() const
 {
     return
     (
-        psi_.mesh().thisDb().objectRegistry::template findObject
+        psi_.mesh().thisDb().objectRegistry::template cfindObject
         <
             lduPrimitiveMeshAssembly
         > (lduAssemblyName_)
