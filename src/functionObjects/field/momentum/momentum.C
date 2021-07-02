@@ -420,7 +420,6 @@ bool Foam::functionObjects::momentum::read(const dictionary& dict)
 
     Info<< type() << " " << name() << ":" << nl;
 
-    // Optional entries U and p
     UName_ = dict.getOrDefault<word>("U", "U");
     pName_ = dict.getOrDefault<word>("p", "p");
     rhoName_ = dict.getOrDefault<word>("rho", "rho");
@@ -489,8 +488,6 @@ bool Foam::functionObjects::momentum::execute()
         writeFileHeader(file());
 
         writeValues(file());
-
-        Log << endl;
     }
 
     // Write state/results information
@@ -510,7 +507,8 @@ bool Foam::functionObjects::momentum::write()
 {
     if (writeMomentum_ || (hasCsys_ && (writeVelocity_ || writePosition_)))
     {
-        Log << "Writing fields" << nl;
+        Log << "    functionObjects::" << type() << " " << name()
+            << " writing fields" << nl << endl;
 
         const volVectorField* fieldPtr;
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,10 +35,21 @@ Description
 
     Operands:
     \table
-      Operand       | Type | Location
-      input         | -    | -
-      output file   | dat  | $FOAM_CASE/postProcessing/\<FO\>/\<time\>/\<file\>
-      output field  | -    | -
+      Operand       | Type           | Location
+      input         | -              | -
+      output file   | dat            | postProcessing/\<FO\>/\<time\>/\<file\>
+      output field  | vol{Vector,Scalar}Field | \<time\>/\<FO\>:\<outField\>
+    \endtable
+
+    where output fields can be:
+    \table
+      Name               | Condition
+      momentum           | writeMomentum=true
+      angularMomentum    | writeMomentum=true and cylindrical=true
+      angularVelocity    | writeVelocity=true and cylindrical=true
+      cyl_r              | writePosition=true and cylindrical=true
+      cyl_theta          | writePosition=true and cylindrical=true
+      cyl_z              | writePosition=true and cylindrical=true
     \endtable
 
 Usage
@@ -65,16 +76,16 @@ Usage
         e1              (1 0 0);
         e3              (0 0 1);
 
-        // Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property     | Description                        | Type | Req'd | Dflt
-      type         | Type name: momentum                | word |  yes  | -
-      libs         | Library name: fieldFunctionObjects | word |  yes  | -
+      Property     | Description                        | Type | Reqd | Deflt
+      type         | Type name: momentum                | word | yes  | -
+      libs         | Library name: fieldFunctionObjects | word | yes  | -
       regionType   | Selection type: all/cellSet/cellZone | word   | no  | all
       writeMomentum | Write (linear, angular) momentum  fields | bool | no | no
       writePosition | Write angular position component fields | bool | no  | no
@@ -224,8 +235,6 @@ protected:
 
         //- Write momentum data
         void writeValues(Ostream& os);
-
-    // Protected Member Functions
 
         //- Return a scoped name
         //  TODO - revisit issue #1675
