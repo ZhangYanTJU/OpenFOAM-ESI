@@ -60,6 +60,7 @@ void Foam::functionObjects::volRegion::calculateCache()
 {
     regionID_ = -1;
     cellIds_.clear();
+    requireUpdate_ = false;
 
     switch (regionType_)
     {
@@ -112,8 +113,6 @@ void Foam::functionObjects::volRegion::calculateCache()
             << "    Region has no cells" << nl
             << exit(FatalError);
     }
-
-    requireUpdate_ = false;
 }
 
 
