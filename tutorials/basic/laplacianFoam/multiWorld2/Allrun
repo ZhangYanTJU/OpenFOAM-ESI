@@ -1,0 +1,19 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+# Run serial
+./Allrun.pre
+echo "Begin run"
+mpirun -app ./mpirun_full.schema
+
+# Not yet
+## Run with database
+## ./Allrun.addDatabase
+## mv -f log.run* 2>/dev/null
+## mpirun -app ./mpirun_full.schema
+
+echo "End"
+
+#------------------------------------------------------------------------------

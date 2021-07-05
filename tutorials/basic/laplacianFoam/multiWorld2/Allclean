@@ -1,0 +1,14 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/CleanFunctions      # Tutorial clean functions
+#------------------------------------------------------------------------------
+
+for subcase in $(./list-worlds)
+do
+(
+    cd "$subcase" && cleanCase0
+)
+done
+rm -rf log.* 2>/dev/null
+
+#------------------------------------------------------------------------------
