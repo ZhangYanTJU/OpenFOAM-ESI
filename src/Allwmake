@@ -85,8 +85,9 @@ TurbulenceModels/Allwmake $targetType $*
 wmake $targetType combustionModels
 
 wmakeLnInclude -u regionFaModels
+wmakeLnInclude -u faOptions
 regionModels/Allwmake $targetType $*
-
+lagrangian/Allwmake $targetType $*
 
 wmake $targetType fvOptions
 wmake $targetType faOptions
