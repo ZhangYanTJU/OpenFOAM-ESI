@@ -16,6 +16,12 @@ cyclicAMI
     type  cyclicAMI;
 }
 
+cyclicPeriodicAMI
+{
+    type  cyclicPeriodicAMI;
+    value $internalField;
+}
+
 cyclicACMI
 {
     type  cyclicACMI;

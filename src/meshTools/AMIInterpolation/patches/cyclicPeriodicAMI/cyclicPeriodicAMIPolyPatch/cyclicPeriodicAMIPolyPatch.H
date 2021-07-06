@@ -214,6 +214,25 @@ public:
 
         //- Write the polyPatch data as a dictionary
         virtual void write(Ostream&) const;
+
+
+        // Interpolations
+
+            //- Interpolate field
+            template<class Type>
+            tmp<Field<Type>> interpolate
+            (
+                const Field<Type>& fld,
+                const UList<Type>& defaultValues = UList<Type>()
+            ) const;
+
+            //- Interpolate tmp field
+            template<class Type>
+            tmp<Field<Type>> interpolate
+            (
+                const tmp<Field<Type>>& tFld,
+                const UList<Type>& defaultValues = UList<Type>()
+            ) const;
 };
 
 
@@ -223,6 +242,9 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#ifdef NoRepository
+    #include "cyclicPeriodicAMIPolyPatchTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

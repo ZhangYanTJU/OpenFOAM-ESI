@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "cyclicAMIFvPatch.H"
+#include "cyclicPeriodicAMIFvPatch.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvMesh.H"
 #include "Time.H"
@@ -37,14 +36,14 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(cyclicAMIFvPatch, 0);
-    addToRunTimeSelectionTable(fvPatch, cyclicAMIFvPatch, polyPatch);
+    defineTypeNameAndDebug(cyclicPeriodicAMIFvPatch, 0);
+    addToRunTimeSelectionTable(fvPatch, cyclicPeriodicAMIFvPatch, polyPatch);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::cyclicAMIFvPatch::coupled() const
+bool Foam::cyclicPeriodicAMIFvPatch::coupled() const
 {
     return
         Pstream::parRun()
@@ -52,13 +51,21 @@ bool Foam::cyclicAMIFvPatch::coupled() const
 }
 
 
-void Foam::cyclicAMIFvPatch::makeWeights(scalarField& w) const
+void Foam::cyclicPeriodicAMIFvPatch::makeWeights(scalarField& w) const
 {
     if (coupled())
     {
-        const cyclicAMIFvPatch& nbrPatch = neighbFvPatch();
+        const cyclicPeriodicAMIFvPatch& nbrPatch = neighbFvPatch();
 
         const scalarField deltas(nf() & coupledFvPatch::delta());
+
+        if (debug&2)
+        {
+            Pout<< "cyclicPeriodicAMIFvPatch::makeWeights :"
+                << " patch:" << this->name()
+                << " nbrPatch:" << nbrPatch.name()
+                << endl;
+        }
 
         tmp<scalarField> tnbrDeltas;
         if (applyLowWeightCorrection())
@@ -95,33 +102,47 @@ void Foam::cyclicAMIFvPatch::makeWeights(scalarField& w) const
 }
 
 
-void Foam::cyclicAMIFvPatch::makeDeltaCoeffs(scalarField& coeffs) const
+void Foam::cyclicPeriodicAMIFvPatch::makeDeltaCoeffs(scalarField& coeffs) const
 {
     // Apply correction to default coeffs
 }
 
 
-void Foam::cyclicAMIFvPatch::makeNonOrthoDeltaCoeffs(scalarField& coeffs) const
+void Foam::cyclicPeriodicAMIFvPatch::makeNonOrthoDeltaCoeffs
+(
+    scalarField& coeffs
+) const
 {
     // Apply correction to default coeffs
     //coeffs = Zero;
 }
 
 
-void Foam::cyclicAMIFvPatch::makeNonOrthoCorrVectors(vectorField& vecs) const
+void Foam::cyclicPeriodicAMIFvPatch::makeNonOrthoCorrVectors
+(
+    vectorField& vecs
+) const
 {
     // Apply correction to default vectors
     //vecs = Zero;
 }
 
 
-Foam::tmp<Foam::vectorField> Foam::cyclicAMIFvPatch::delta() const
+Foam::tmp<Foam::vectorField> Foam::cyclicPeriodicAMIFvPatch::delta() const
 {
-    const cyclicAMIFvPatch& nbrPatch = neighbFvPatch();
+    const cyclicPeriodicAMIFvPatch& nbrPatch = neighbFvPatch();
 
     if (coupled())
     {
         const vectorField patchD(coupledFvPatch::delta());
+
+        if (debug&2)
+        {
+            Pout<< "cyclicPeriodicAMIFvPatch::delta :"
+                << " patch:" << this->name()
+                << " nbrPatch:" << nbrPatch.name()
+                << endl;
+        }
 
         tmp<vectorField> tnbrPatchD;
         if (applyLowWeightCorrection())
@@ -174,7 +195,8 @@ Foam::tmp<Foam::vectorField> Foam::cyclicAMIFvPatch::delta() const
 }
 
 
-Foam::tmp<Foam::labelField> Foam::cyclicAMIFvPatch::interfaceInternalField
+Foam::tmp<Foam::labelField>
+Foam::cyclicPeriodicAMIFvPatch::interfaceInternalField
 (
     const labelUList& internalData
 ) const
@@ -183,7 +205,8 @@ Foam::tmp<Foam::labelField> Foam::cyclicAMIFvPatch::interfaceInternalField
 }
 
 
-Foam::tmp<Foam::labelField> Foam::cyclicAMIFvPatch::internalFieldTransfer
+Foam::tmp<Foam::labelField>
+Foam::cyclicPeriodicAMIFvPatch::internalFieldTransfer
 (
     const Pstream::commsTypes commsType,
     const labelUList& iF
@@ -193,9 +216,11 @@ Foam::tmp<Foam::labelField> Foam::cyclicAMIFvPatch::internalFieldTransfer
 }
 
 
-void Foam::cyclicAMIFvPatch::movePoints()
+void Foam::cyclicPeriodicAMIFvPatch::movePoints()
 {
-    if (!owner() || !cyclicAMIPolyPatch_.createAMIFaces())
+    const auto& cyclicAMI = cyclicPeriodicAMIPolyPatch_;
+
+    if (!owner() || !cyclicAMI.createAMIFaces())
     {
         // Only manipulating patch face areas and mesh motion flux if the AMI
         // creates additional faces
@@ -203,13 +228,14 @@ void Foam::cyclicAMIFvPatch::movePoints()
     }
 
     // Update face data based on values set by the AMI manipulations
-    const_cast<vectorField&>(Sf()) = cyclicAMIPolyPatch_.faceAreas();
-    const_cast<vectorField&>(Cf()) = cyclicAMIPolyPatch_.faceCentres();
+    const_cast<vectorField&>(Sf()) = cyclicAMI.faceAreas();
+    const_cast<vectorField&>(Cf()) = cyclicAMI.faceCentres();
     const_cast<scalarField&>(magSf()) = mag(Sf());
 
-    const cyclicAMIFvPatch& nbr = neighbPatch();
-    const_cast<vectorField&>(nbr.Sf()) = nbr.cyclicAMIPatch().faceAreas();
-    const_cast<vectorField&>(nbr.Cf()) = nbr.cyclicAMIPatch().faceCentres();
+    const cyclicPeriodicAMIFvPatch& nbr = neighbPatch();
+    const cyclicPeriodicAMIPolyPatch& nbrPp = nbr.cyclicPeriodicAMIPatch();
+    const_cast<vectorField&>(nbr.Sf()) = nbrPp.faceAreas();
+    const_cast<vectorField&>(nbr.Cf()) = nbrPp.faceCentres();
     const_cast<scalarField&>(nbr.magSf()) = mag(nbr.Sf());
 
 
@@ -221,17 +247,17 @@ void Foam::cyclicAMIFvPatch::movePoints()
     surfaceScalarField& meshPhi = const_cast<fvMesh&>(mesh).setPhi();
     surfaceScalarField::Boundary& meshPhiBf = meshPhi.boundaryFieldRef();
 
-    if (cyclicAMIPolyPatch_.owner())
+    if (cyclicAMI.owner())
     {
         scalarField& phip = meshPhiBf[patch().index()];
         forAll(phip, facei)
         {
-            const face& f = cyclicAMIPolyPatch_.localFaces()[facei];
+            const face& f = cyclicAMI.localFaces()[facei];
 
             // Note: using raw point locations to calculate the geometric
             // area - faces areas are currently scaled by the AMI weights
             // (decoupled from mesh points)
-            const scalar geomArea = f.mag(cyclicAMIPolyPatch_.localPoints());
+            const scalar geomArea = f.mag(cyclicAMI.localPoints());
 
             const scalar scaledArea = magSf()[facei];
             phip[facei] *= scaledArea/geomArea;
