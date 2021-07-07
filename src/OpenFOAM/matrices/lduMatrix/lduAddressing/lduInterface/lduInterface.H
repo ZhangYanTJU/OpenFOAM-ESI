@@ -73,47 +73,6 @@ public:
     // Member Functions
 
 
-//         // Implicit treatment functions
-//
-//             //- Return number of new internal of this polyPatch faces
-//             virtual void newInternalProcFaces(label&, label&) const
-//             {
-//                 NotImplemented;
-//             }
-//
-//             //- Return nbrCells
-//             virtual const labelUList& nbrCells() const
-//             {
-//                 NotImplemented
-//                 return faceCells();
-//             }
-//
-//             //- Return nbr patchID
-//             virtual label neighbPolyPatchID() const
-//             {
-//                 NotImplemented;
-//                 return -1;
-//             }
-//
-//             virtual refPtr<labelListList> mapCollocatedFaces() const
-//             {
-//                 NotImplemented;
-//                 refPtr<labelListList> tMap(new labelListList());
-//                 return tMap;
-//             }
-//
-//             //- Return implicit master
-//             virtual bool masterImplicit() const
-//             {
-//                 NotImplemented;
-//                 return false;
-//             }
-//
-//             virtual label neighbRegionID() const
-//             {
-//                 return 0;
-//             }
-
         // Access
 
             //- Return faceCell addressing
