@@ -1033,6 +1033,7 @@ void Foam::fvMatrix<Type>::createOrUpdateLduPrimitiveAssembly()
         // Clear losortPtr_, ownerStartPtr_, losortStartPtr_
         ptr->lduAddr().clearOut();
         ptr->update(uFieldPtr);
+        psi_.mesh().setUpToDatePoints(*ptr);
 
         Info
             << "Updating lduPrimitiveAssembly: " << lduAssemblyName_ << endl;
