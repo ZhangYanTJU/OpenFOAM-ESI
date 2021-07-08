@@ -40,6 +40,7 @@ PIMPLE
     nOuterCorr        4;
     nCorr             1;
     nNonOrthCorr      0;
+    nFilmCorr         1;
 }
 
 relaxationFactors
