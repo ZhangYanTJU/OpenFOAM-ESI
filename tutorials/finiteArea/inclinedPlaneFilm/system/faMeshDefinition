@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-polyMeshPatches  1( film );
+polyMeshPatches  ( film );
 
 boundary
 {
@@ -54,6 +54,5 @@ boundary
         neighbourPolyPatch  cylinder;
     }
 }
-
 
 // ************************************************************************** //
