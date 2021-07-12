@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,19 +57,19 @@ Foam::autoPtr<Foam::interpolationWeights> Foam::interpolationWeights::New
 {
     DebugInFunction << "Selecting interpolationWeights " << type << endl;
 
-    auto cstrIter = wordConstructorTablePtr_->cfind(type);
+    auto* ctorPtr = wordConstructorTable(type);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "interpolationWeights",
             type,
-            *wordConstructorTablePtr_
+            wordConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<interpolationWeights>(cstrIter()(samples));
+    return autoPtr<interpolationWeights>(ctorPtr(samples));
 }
 
 

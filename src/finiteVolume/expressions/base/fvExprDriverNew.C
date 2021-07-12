@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2010-2018 Bernhard Gschaider
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,16 +53,16 @@ Foam::expressions::fvExprDriver::New
 {
     const word driverType(dict.get<word>("valueType"));
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(driverType);
+    auto* ctorPtr = dictionaryConstructorTable(driverType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "valueType",
             driverType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
@@ -70,7 +70,7 @@ Foam::expressions::fvExprDriver::New
 
     resetDefaultMesh(mesh, false); // lazy
 
-    return autoPtr<fvExprDriver>(cstrIter()(dict, mesh));
+    return autoPtr<fvExprDriver>(ctorPtr(dict, mesh));
 }
 
 
@@ -82,15 +82,15 @@ Foam::expressions::fvExprDriver::New
     const fvMesh& mesh
 )
 {
-    auto cstrIter = idNameConstructorTablePtr_->cfind(driverType);
+    auto* ctorPtr = idNameConstructorTable(driverType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "valueType",
             driverType,
-            *idNameConstructorTablePtr_
+            idNameConstructorTable()
         ) << exit(FatalError);
     }
 
@@ -98,7 +98,7 @@ Foam::expressions::fvExprDriver::New
 
     resetDefaultMesh(mesh, false); // lazy
 
-    return autoPtr<fvExprDriver>(cstrIter()(id, mesh));
+    return autoPtr<fvExprDriver>(ctorPtr(id, mesh));
 }
 
 

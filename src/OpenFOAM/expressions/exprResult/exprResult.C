@@ -314,43 +314,43 @@ Foam::expressions::exprResult::New
 
     if (dict.getOrDefault("unsetValue", false))
     {
-        auto cstrIter = emptyConstructorTablePtr_->cfind(resultType);
+        auto* ctorPtr = emptyConstructorTable(resultType);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 dict,
                 "resultType",
                 resultType,
-                *emptyConstructorTablePtr_
+                emptyConstructorTable()
             ) << exit(FatalIOError);
         }
 
         DebugInfo
             << "Creating unset result of type " << resultType << nl;
 
-        return autoPtr<exprResult>(cstrIter()());
+        return autoPtr<exprResult>(ctorPtr());
     }
 
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(resultType);
+    auto* ctorPtr = dictionaryConstructorTable(resultType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "resultType",
             resultType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     DebugInfo
         << "Creating result of type " << resultType << nl;
 
-    return autoPtr<exprResult>(cstrIter()(dict));
+    return autoPtr<exprResult>(ctorPtr(dict));
 }
 
 

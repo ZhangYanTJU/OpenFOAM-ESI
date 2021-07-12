@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2015-2019 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,23 +43,23 @@ Foam::functionObjects::runTimeControls::runTimeCondition::New
 
     Info<< "Selecting runTimeCondition " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "runTimeCondition",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     return
         autoPtr<runTimeCondition>
         (
-            cstrIter()(conditionName, obr, dict, state)
+            ctorPtr(conditionName, obr, dict, state)
         );
 }
 

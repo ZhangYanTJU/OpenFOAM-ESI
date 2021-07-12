@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2007-2019 PCOpt/NTUA
     Copyright (C) 2013-2019 FOSS GP
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,22 +99,22 @@ autoPtr<adjointTurbulenceModel> adjointTurbulenceModel::New
 
     Info<< "Selecting turbulence model type " << modelType << endl;
 
-    auto cstrIter =
-        adjointTurbulenceModelConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr =
+        adjointTurbulenceModelConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "adjointTurbulenceModel",
             modelType,
-            *adjointTurbulenceModelConstructorTablePtr_
+            adjointTurbulenceModelConstructorTable()
         ) << exit(FatalError);
     }
 
     return autoPtr<adjointTurbulenceModel>
     (
-        cstrIter()
+        ctorPtr
         (
             primalVars,
             adjointVars,

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,20 +60,20 @@ Foam::fvGeometryScheme::New
         InfoInFunction << "Geometry scheme = " << schemeName << endl;
     }
 
-    auto cstrIter = dictConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = dictConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "fvGeometryScheme",
             schemeName,
-            *dictConstructorTablePtr_
+            dictConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, dict);
+    return ctorPtr(mesh, dict);
 }
 
 

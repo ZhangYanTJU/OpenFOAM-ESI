@@ -24,7 +24,7 @@
     {
         Info<< "scalarBCs"
             << fvPatchField<Foam::scalar>::
-               dictionaryConstructorTablePtr_->sortedToc()
+               dictionaryConstructorTable().sortedToc()
             << endl;
         listOptions = true;
     }
@@ -33,7 +33,7 @@
     {
         Info<< "vectorBCs"
             <<  fvPatchField<Foam::vector>::
-                dictionaryConstructorTablePtr_->sortedToc()
+                dictionaryConstructorTable().sortedToc()
             << endl;
         listOptions = true;
     }
@@ -43,7 +43,7 @@
     if (args.found("listFunctionObjects"))
     {
         Info<< "functionObjects"
-            << functionObject::dictionaryConstructorTablePtr_->sortedToc()
+            << functionObject::dictionaryConstructorTable().sortedToc()
             << endl;
         listOptions = true;
     }
@@ -53,7 +53,7 @@
     if (args.found("listFvOptions"))
     {
         Info<< "fvOptions"
-            << fv::option::dictionaryConstructorTablePtr_->sortedToc()
+            << fv::option::dictionaryConstructorTable().sortedToc()
             << endl;
         listOptions = true;
     }
@@ -64,17 +64,17 @@
     {
         Info<< "Turbulence models"
             << incompressible::turbulenceModel::
-               dictionaryConstructorTablePtr_->sortedToc()
+               dictionaryConstructorTable().sortedToc()
             << endl;
 
         Info<< "RAS models"
             << incompressible::RASModel::
-               dictionaryConstructorTablePtr_->sortedToc()
+               dictionaryConstructorTable().sortedToc()
             << endl;
 
         Info<< "LES models"
             << incompressible::LESModel::
-               dictionaryConstructorTablePtr_->sortedToc()
+               dictionaryConstructorTable().sortedToc()
             << endl;
         listOptions = true;
     }
@@ -83,17 +83,17 @@
     {
         Info<< "Turbulence models"
             << compressible::turbulenceModel::
-               dictionaryConstructorTablePtr_->sortedToc()
+               dictionaryConstructorTable().sortedToc()
             << endl;
 
         Info<< "RAS models"
             << compressible::RASModel::
-               dictionaryConstructorTablePtr_->sortedToc()
+               dictionaryConstructorTable().sortedToc()
             << endl;
 
         Info<< "LES models"
             << compressible::LESModel::
-               dictionaryConstructorTablePtr_->sortedToc()
+               dictionaryConstructorTable().sortedToc()
             << endl;
         listOptions = true;
     }

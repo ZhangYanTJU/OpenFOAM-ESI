@@ -51,11 +51,11 @@ Foam::chemistryReductionMethod<CompType, ThermoType>::New
       + '<' + CompType::typeName + ',' + ThermoType::typeName() + '>'
     );
 
-    const auto& cnstrTable = *(dictionaryConstructorTablePtr_);
+    const auto& cnstrTable = dictionaryConstructorTable();
 
-    auto cstrIter = cnstrTable.cfind(methodTypeName);
+    auto* ctorPtr = dictionaryConstructorTable(methodTypeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         const wordList names(cnstrTable.sortedToc());
 
@@ -123,7 +123,7 @@ Foam::chemistryReductionMethod<CompType, ThermoType>::New
 
     return autoPtr<chemistryReductionMethod<CompType, ThermoType>>
     (
-        cstrIter()(dict, chemistry)
+        ctorPtr(dict, chemistry)
     );
 }
 

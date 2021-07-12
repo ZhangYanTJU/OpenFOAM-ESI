@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,20 +92,20 @@ Foam::AveragingMethod<Type>::New
         dict.template getOrDefault<word>(typeName, "basic")
     );
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "averaging limiter",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << abort(FatalIOError);
     }
 
-    return autoPtr<AveragingMethod<Type>>(cstrIter()(io, dict, mesh));
+    return autoPtr<AveragingMethod<Type>>(ctorPtr(io, dict, mesh));
 }
 
 

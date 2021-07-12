@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2007-2019 PCOpt/NTUA
     Copyright (C) 2013-2019 FOSS GP
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -135,24 +135,24 @@ autoPtr<ATCModel> ATCModel::New
 {
     const word modelType(dict.get<word>("ATCModel"));
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
     Info<< "ATCModel type " << modelType << endl;
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "ATCModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     return autoPtr<ATCModel>
     (
-        cstrIter()(mesh, primalVars, adjointVars, dict)
+        ctorPtr(mesh, primalVars, adjointVars, dict)
     );
 }
 

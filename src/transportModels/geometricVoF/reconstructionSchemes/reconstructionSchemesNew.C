@@ -51,20 +51,20 @@ Foam::reconstructionSchemes::New
 
     Info<< "Selecting reconstructionScheme: " << schemeType << endl;
 
-    auto cstrIter = componentsConstructorTablePtr_->cfind(schemeType);
+    auto* ctorPtr = componentsConstructorTable(schemeType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "reconstructionSchemes",
             schemeType,
-            *componentsConstructorTablePtr_
+            componentsConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<reconstructionSchemes>(cstrIter()(alpha1, phi, U, dict));
+    return autoPtr<reconstructionSchemes>(ctorPtr(alpha1, phi, U, dict));
 }
 
 

@@ -711,19 +711,19 @@ Foam::fileOperation::New
     DebugInFunction
         << "Constructing fileHandler" << endl;
 
-    auto cstrIter = wordConstructorTablePtr_->cfind(handlerType);
+    auto* ctorPtr = wordConstructorTable(handlerType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "fileHandler",
             handlerType,
-            *wordConstructorTablePtr_
+            wordConstructorTable()
         ) << abort(FatalError);
     }
 
-    return autoPtr<fileOperation>(cstrIter()(verbose));
+    return autoPtr<fileOperation>(ctorPtr(verbose));
 }
 
 

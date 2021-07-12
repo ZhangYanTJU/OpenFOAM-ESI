@@ -38,20 +38,20 @@ Foam::autoPtr<Foam::DMDModel> Foam::DMDModel::New
 {
     const word modelType(dict.get<word>("DMDModel"));
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "DMDModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<DMDModel>(cstrIter()(mesh, name, dict));
+    return autoPtr<DMDModel>(ctorPtr(mesh, name, dict));
 }
 
 

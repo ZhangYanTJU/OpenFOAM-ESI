@@ -74,20 +74,20 @@ Foam::autoPtr<Foam::blockVertex> Foam::blockVertex::New
     {
         const word faceType(firstToken.wordToken());
 
-        auto cstrIter = IstreamConstructorTablePtr_->cfind(faceType);
+        auto* ctorPtr = IstreamConstructorTable(faceType);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 dict,
                 "blockVertex",
                 faceType,
-                *IstreamConstructorTablePtr_
+                IstreamConstructorTable()
             ) << abort(FatalIOError);
         }
 
-        return autoPtr<blockVertex>(cstrIter()(dict, index, geometry, is));
+        return autoPtr<blockVertex>(ctorPtr(dict, index, geometry, is));
     }
 
     FatalIOErrorInFunction(is)

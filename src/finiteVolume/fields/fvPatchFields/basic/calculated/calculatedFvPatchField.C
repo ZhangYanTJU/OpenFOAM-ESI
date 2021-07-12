@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -104,11 +105,11 @@ Foam::fvPatchField<Type>::NewCalculatedType
     const fvPatch& p
 )
 {
-    auto patchTypeCstrIter = patchConstructorTablePtr_->cfind(p.type());
+    auto* patchTypeCnstr = patchConstructorTable(p.type());
 
-    if (patchTypeCstrIter.found())
+    if (patchTypeCnstr)
     {
-        return patchTypeCstrIter()
+        return patchTypeCnstr
         (
             p,
             DimensionedField<Type, volMesh>::null()

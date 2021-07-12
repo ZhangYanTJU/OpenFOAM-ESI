@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
     Copyright (C) 2019-2020 DLR
 -------------------------------------------------------------------------------
 License
@@ -46,20 +46,20 @@ Foam::autoPtr<Foam::implicitFunction> Foam::implicitFunction::New
     const dictionary& dict
 )
 {
-    auto cstrIter = dictConstructorTablePtr_->cfind(implicitFunctionType);
+    auto* ctorPtr = dictConstructorTable(implicitFunctionType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "implicitFunction",
             implicitFunctionType,
-            *dictConstructorTablePtr_
+            dictConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<implicitFunction>(cstrIter()(dict));
+    return autoPtr<implicitFunction>(ctorPtr(dict));
 }
 
 

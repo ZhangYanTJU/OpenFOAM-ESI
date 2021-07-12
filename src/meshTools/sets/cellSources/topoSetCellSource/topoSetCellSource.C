@@ -65,20 +65,20 @@ Foam::topoSetCellSource::New
     const dictionary& dict
 )
 {
-    auto cstrIter = wordConstructorTablePtr_->cfind(sourceType);
+    auto* ctorPtr = wordConstructorTable(sourceType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "cellSetSource",
             sourceType,
-            *wordConstructorTablePtr_
+            wordConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<topoSetCellSource>(cstrIter()(mesh, dict));
+    return autoPtr<topoSetCellSource>(ctorPtr(mesh, dict));
 }
 
 
@@ -90,19 +90,19 @@ Foam::topoSetCellSource::New
     Istream& is
 )
 {
-    auto cstrIter = istreamConstructorTablePtr_->cfind(sourceType);
+    auto* ctorPtr = istreamConstructorTable(sourceType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "cellSetSource",
             sourceType,
-            *istreamConstructorTablePtr_
+            istreamConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<topoSetCellSource>(cstrIter()(mesh, is));
+    return autoPtr<topoSetCellSource>(ctorPtr(mesh, is));
 }
 
 

@@ -95,7 +95,7 @@ Foam::basicSolidChemistryModel::New(solidReactionThermo& thermo)
 
     Info<< "chemistryTypeName " << chemistryTypeName << endl;
 
-    const auto& cnstrTable = *(thermoConstructorTablePtr_);
+    const auto& cnstrTable = thermoConstructorTable();
 
     auto ctorIter = cnstrTable.cfind(chemistryTypeName);
 

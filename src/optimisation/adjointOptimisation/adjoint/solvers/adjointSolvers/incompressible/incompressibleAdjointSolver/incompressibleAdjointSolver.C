@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2007-2020 PCOpt/NTUA
     Copyright (C) 2013-2020 FOSS GP
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -78,23 +78,23 @@ Foam::incompressibleAdjointSolver::New
 )
 {
     const word solverType(dict.get<word>("solver"));
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(solverType);
+    auto* ctorPtr = dictionaryConstructorTable(solverType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "incompressibleAdjointSolver",
             solverType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     return
         autoPtr<incompressibleAdjointSolver>
         (
-            cstrIter()(mesh, managerType, dict, primalSolverName)
+            ctorPtr(mesh, managerType, dict, primalSolverName)
         );
 }
 

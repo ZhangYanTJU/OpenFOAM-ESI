@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -100,13 +100,13 @@ Foam::label Foam::extendedEdgeMesh::externalStart_ = 0;
 
 Foam::wordHashSet Foam::extendedEdgeMesh::readTypes()
 {
-    return wordHashSet(*fileExtensionConstructorTablePtr_);
+    return wordHashSet(fileExtensionConstructorTable());
 }
 
 
 Foam::wordHashSet Foam::extendedEdgeMesh::writeTypes()
 {
-    return wordHashSet(*writefileExtensionMemberFunctionTablePtr_);
+    return wordHashSet(writefileExtensionMemberFunctionTable());
 }
 
 

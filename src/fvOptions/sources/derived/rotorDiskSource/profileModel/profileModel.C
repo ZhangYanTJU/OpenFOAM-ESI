@@ -75,20 +75,20 @@ Foam::autoPtr<Foam::profileModel> Foam::profileModel::New
 
     Info<< "    - creating " << modelType << " profile " << modelName << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "profileModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<profileModel>(cstrIter()(dict, modelName));
+    return autoPtr<profileModel>(ctorPtr(dict, modelName));
 }
 
 

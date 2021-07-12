@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,20 +51,20 @@ Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
 
     //Info<< "Selecting renumberMethod " << methodType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(methodType);
+    auto* ctorPtr = dictionaryConstructorTable(methodType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "renumberMethod",
             methodType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<renumberMethod>(cstrIter()(dict));
+    return autoPtr<renumberMethod>(ctorPtr(dict));
 }
 
 

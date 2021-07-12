@@ -154,22 +154,22 @@ Foam::LESModel<BasicTurbulenceModel>::New
 
     Info<< "Selecting LES turbulence model " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "LES model",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     return autoPtr<LESModel>
     (
-        cstrIter()(alpha, rho, U, alphaRhoPhi, phi, transport, propertiesName)
+        ctorPtr(alpha, rho, U, alphaRhoPhi, phi, transport, propertiesName)
     );
 }
 

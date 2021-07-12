@@ -86,7 +86,7 @@ Foam::autoPtr<CombustionModel> Foam::combustionModel::New
     );
 
 
-    const auto& cnstrTable = *(CombustionModel::dictionaryConstructorTablePtr_);
+    const auto& cnstrTable = CombustionModel::dictionaryConstructorTable();
 
     auto ctorIter = cnstrTable.cfind(thermoCombModelName);
 

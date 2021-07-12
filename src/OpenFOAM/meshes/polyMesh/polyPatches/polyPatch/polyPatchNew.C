@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,21 +43,21 @@ Foam::autoPtr<Foam::polyPatch> Foam::polyPatch::New
 {
     DebugInFunction << "Constructing polyPatch" << endl;
 
-    auto cstrIter = wordConstructorTablePtr_->cfind(patchType);
+    auto* ctorPtr = wordConstructorTable(patchType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "polyPatch",
             patchType,
-            *wordConstructorTablePtr_
+            wordConstructorTable()
         ) << exit(FatalError);
     }
 
     return autoPtr<polyPatch>
     (
-        cstrIter()
+        ctorPtr
         (
             name,
             size,
@@ -98,28 +98,28 @@ Foam::autoPtr<Foam::polyPatch> Foam::polyPatch::New
 {
     DebugInFunction << "Constructing polyPatch" << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(patchType);
+    auto* ctorPtr = dictionaryConstructorTable(patchType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         if (!disallowGenericPolyPatch)
         {
-            cstrIter = dictionaryConstructorTablePtr_->cfind("genericPatch");
+            ctorPtr = dictionaryConstructorTable("genericPatch");
         }
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 dict,
                 "polyPatch",
                 patchType,
-                *dictionaryConstructorTablePtr_
+                dictionaryConstructorTable()
             ) << exit(FatalIOError);
         }
     }
 
-    return autoPtr<polyPatch>(cstrIter()(name, dict, index, bm, patchType));
+    return autoPtr<polyPatch>(ctorPtr(name, dict, index, bm, patchType));
 }
 
 

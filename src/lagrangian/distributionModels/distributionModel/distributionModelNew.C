@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,23 +40,23 @@ Foam::autoPtr<Foam::distributionModel> Foam::distributionModel::New
 
     Info<< "Selecting distribution model " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "distribution model",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     const dictionary distributionDict =
         dict.subOrEmptyDict(modelType & "Distribution");
 
-    return autoPtr<distributionModel>(cstrIter()(distributionDict, rndGen));
+    return autoPtr<distributionModel>(ctorPtr(distributionDict, rndGen));
 }
 
 

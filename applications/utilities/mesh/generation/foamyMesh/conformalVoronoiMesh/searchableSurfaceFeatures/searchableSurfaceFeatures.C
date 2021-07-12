@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,20 +48,20 @@ Foam::searchableSurfaceFeatures::New
 {
     const word modelType(surface.type() + "Features");
 
-    auto cstrIter = dictConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "searchableSurfaceFeatures",
             modelType,
-            *dictConstructorTablePtr_
+            dictConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<searchableSurfaceFeatures>(cstrIter()(surface, dict));
+    return autoPtr<searchableSurfaceFeatures>(ctorPtr(surface, dict));
 }
 
 

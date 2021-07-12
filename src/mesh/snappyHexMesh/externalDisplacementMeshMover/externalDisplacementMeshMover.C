@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2019 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,22 +144,22 @@ Foam::externalDisplacementMeshMover::New
 {
     Info<< "Selecting externalDisplacementMeshMover " << type << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(type);
+    auto* ctorPtr = dictionaryConstructorTable(type);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "externalDisplacementMeshMover",
             type,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     return autoPtr<externalDisplacementMeshMover>
     (
-        cstrIter()(dict, baffles, pointDisplacement, dryRun)
+        ctorPtr(dict, baffles, pointDisplacement, dryRun)
     );
 }
 

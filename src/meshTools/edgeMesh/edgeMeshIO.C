@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,19 +92,19 @@ void Foam::edgeMesh::write
 {
     DebugInFunction << "Writing to " << name << endl;
 
-    auto mfIter = writefileExtensionMemberFunctionTablePtr_->cfind(fileType);
+    auto* mfuncPtr = writefileExtensionMemberFunctionTable(fileType);
 
-    if (!mfIter.found())
+    if (!mfuncPtr)
     {
         FatalErrorInLookup
         (
             "extension",
             fileType,
-            *writefileExtensionMemberFunctionTablePtr_
+            writefileExtensionMemberFunctionTable()
         ) << exit(FatalError);
     }
 
-    mfIter()(name, mesh);
+    mfuncPtr(name, mesh);
 }
 
 

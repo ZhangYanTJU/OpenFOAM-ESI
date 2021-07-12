@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,20 +88,20 @@ Foam::autoPtr<Foam::blockEdge> Foam::blockEdge::New
 
     const word edgeType(is);
 
-    auto cstrIter = IstreamConstructorTablePtr_->cfind(edgeType);
+    auto* ctorPtr = IstreamConstructorTable(edgeType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "blockEdge",
             edgeType,
-            *IstreamConstructorTablePtr_
+            IstreamConstructorTable()
         ) << abort(FatalIOError);
     }
 
-    return autoPtr<blockEdge>(cstrIter()(dict, index, geometry, points, is));
+    return autoPtr<blockEdge>(ctorPtr(dict, index, geometry, points, is));
 }
 
 

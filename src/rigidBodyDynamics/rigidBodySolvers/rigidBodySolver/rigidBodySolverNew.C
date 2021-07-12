@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,20 +40,20 @@ Foam::autoPtr<Foam::RBD::rigidBodySolver> Foam::RBD::rigidBodySolver::New
 
     Info<< "Selecting rigidBodySolver " << solverType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(solverType);
+    auto* ctorPtr = dictionaryConstructorTable(solverType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "rigidBodySolverType",
             solverType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(body, dict);
+    return ctorPtr(body, dict);
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,20 +51,20 @@ Foam::diameterModels::nucleationModel::New
     const dictionary& dict
 )
 {
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(type);
+    auto* ctorPtr = dictionaryConstructorTable(type);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "nucleationModel",
             type,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<nucleationModel>(cstrIter()(popBal, dict));
+    return autoPtr<nucleationModel>(ctorPtr(popBal, dict));
 }
 
 

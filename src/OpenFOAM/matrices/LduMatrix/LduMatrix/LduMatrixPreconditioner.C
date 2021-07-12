@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,23 +45,23 @@ Foam::LduMatrix<Type, DType, LUType>::preconditioner::New
 
     if (sol.matrix().symmetric())
     {
-        auto cstrIter =
-            symMatrixConstructorTablePtr_->cfind(preconditionerName);
+        auto* ctorPtr =
+            symMatrixConstructorTable(preconditionerName);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 preconditionerDict,
                 "symmetric matrix preconditioner",
                 preconditionerName,
-                *symMatrixConstructorTablePtr_
+                symMatrixConstructorTable()
             ) << exit(FatalIOError);
         }
 
         return autoPtr<typename LduMatrix<Type, DType, LUType>::preconditioner>
         (
-            cstrIter()
+            ctorPtr
             (
                 sol,
                 preconditionerDict
@@ -70,23 +70,23 @@ Foam::LduMatrix<Type, DType, LUType>::preconditioner::New
     }
     else if (sol.matrix().asymmetric())
     {
-        auto cstrIter =
-            asymMatrixConstructorTablePtr_->cfind(preconditionerName);
+        auto* ctorPtr =
+            asymMatrixConstructorTable(preconditionerName);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 preconditionerDict,
                 "asymmetric matrix preconditioner",
                 preconditionerName,
-                *asymMatrixConstructorTablePtr_
+                asymMatrixConstructorTable()
             ) << exit(FatalIOError);
         }
 
         return autoPtr<typename LduMatrix<Type, DType, LUType>::preconditioner>
         (
-            cstrIter()
+            ctorPtr
             (
                 sol,
                 preconditionerDict

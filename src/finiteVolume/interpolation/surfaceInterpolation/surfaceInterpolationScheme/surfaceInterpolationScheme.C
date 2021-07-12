@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,7 +47,7 @@ Foam::surfaceInterpolationScheme<Type>::New
         FatalIOErrorInFunction(schemeData)
             << "Discretisation scheme not specified\n\n"
             << "Valid schemes:\n"
-            << MeshConstructorTablePtr_->sortedToc()
+            << MeshConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
@@ -58,20 +58,20 @@ Foam::surfaceInterpolationScheme<Type>::New
         InfoInFunction << "Discretisation scheme = " << schemeName << endl;
     }
 
-    auto cstrIter = MeshConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = MeshConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "discretisation",
             schemeName,
-            *MeshConstructorTablePtr_
+            MeshConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, schemeData);
+    return ctorPtr(mesh, schemeData);
 }
 
 
@@ -90,7 +90,7 @@ Foam::surfaceInterpolationScheme<Type>::New
             << "Discretisation scheme not specified"
             << endl << endl
             << "Valid schemes are :" << endl
-            << MeshConstructorTablePtr_->sortedToc()
+            << MeshConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
@@ -101,20 +101,20 @@ Foam::surfaceInterpolationScheme<Type>::New
         InfoInFunction << "Discretisation scheme = " << schemeName << endl;
     }
 
-    auto cstrIter = MeshFluxConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = MeshFluxConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "discretisation",
             schemeName,
-            *MeshFluxConstructorTablePtr_
+            MeshFluxConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, faceFlux, schemeData);
+    return ctorPtr(mesh, faceFlux, schemeData);
 }
 
 

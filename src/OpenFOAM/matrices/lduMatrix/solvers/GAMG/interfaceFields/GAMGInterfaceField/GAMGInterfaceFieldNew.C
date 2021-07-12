@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,19 +38,19 @@ Foam::autoPtr<Foam::GAMGInterfaceField> Foam::GAMGInterfaceField::New
 {
     const word coupleType(fineInterface.interfaceFieldType());
 
-    auto cstrIter = lduInterfaceFieldConstructorTablePtr_->cfind(coupleType);
+    auto* ctorPtr = lduInterfaceFieldConstructorTable(coupleType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "GAMGInterfaceField",
             coupleType,
-            *lduInterfaceFieldConstructorTablePtr_
+            lduInterfaceFieldConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<GAMGInterfaceField>(cstrIter()(GAMGCp, fineInterface));
+    return autoPtr<GAMGInterfaceField>(ctorPtr(GAMGCp, fineInterface));
 }
 
 
@@ -63,19 +63,19 @@ Foam::autoPtr<Foam::GAMGInterfaceField> Foam::GAMGInterfaceField::New
 {
     const word coupleType(GAMGCp.type());
 
-    auto cstrIter = lduInterfaceConstructorTablePtr_->cfind(coupleType);
+    auto* ctorPtr = lduInterfaceConstructorTable(coupleType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "GAMGInterfaceField",
             coupleType,
-            *lduInterfaceConstructorTablePtr_
+            lduInterfaceConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<GAMGInterfaceField>(cstrIter()(GAMGCp, doTransform, rank));
+    return autoPtr<GAMGInterfaceField>(ctorPtr(GAMGCp, doTransform, rank));
 }
 
 

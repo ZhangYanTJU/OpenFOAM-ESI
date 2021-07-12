@@ -45,19 +45,19 @@ Foam::autoPtr<Foam::multiDimPolyFunctions> Foam::multiDimPolyFunctions::New
     const labelVector& dirs
 )
 {
-    auto cstrIter = wordConstructorTablePtr_->cfind(multiDimPolyFunctionsType);
+    auto* ctorPtr = wordConstructorTable(multiDimPolyFunctionsType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "multiDimPolyFunction",
             multiDimPolyFunctionsType,
-            *wordConstructorTablePtr_
+            wordConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<multiDimPolyFunctions>(cstrIter()(dirs));
+    return autoPtr<multiDimPolyFunctions>(ctorPtr(dirs));
 }
 
 

@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2007-2019 PCOpt/NTUA
     Copyright (C) 2013-2019 FOSS GP
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,19 +79,19 @@ Foam::autoPtr<Foam::displacementMethod> Foam::displacementMethod::New
 
     Info<< "displacementMethod type : " << solverType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(solverType);
+    auto* ctorPtr = dictionaryConstructorTable(solverType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dynamicMeshDict,
             "solver",
             solverType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
-    return autoPtr<displacementMethod>(cstrIter()(mesh, patchIDs));
+    return autoPtr<displacementMethod>(ctorPtr(mesh, patchIDs));
 }
 
 

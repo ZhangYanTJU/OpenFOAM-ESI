@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ License
 template<class Face>
 Foam::wordHashSet Foam::MeshedSurfaceProxy<Face>::writeTypes()
 {
-    return wordHashSet(*writefileExtensionMemberFunctionTablePtr_);
+    return wordHashSet(writefileExtensionMemberFunctionTable());
 }
 
 
@@ -103,18 +103,18 @@ void Foam::MeshedSurfaceProxy<Face>::write
 
     DebugInFunction << "Writing to " << name << nl;
 
-    auto mfIter = writefileExtensionMemberFunctionTablePtr_->cfind(fileType);
+    auto* mfuncPtr = writefileExtensionMemberFunctionTable(fileType);
 
-    if (!mfIter.found())
+    if (!mfuncPtr)
     {
         FatalErrorInFunction
             << "Unknown file type " << fileType << nl << nl
             << "Valid types:" << nl
-            << flatOutput(writeTypes().sortedToc()) << nl
+            << flatOutput(writefileExtensionMemberFunctionTable().sortedToc())
             << exit(FatalError);
     }
 
-    mfIter()(name, surf, streamOpt, options);
+    mfuncPtr(name, surf, streamOpt, options);
 }
 
 

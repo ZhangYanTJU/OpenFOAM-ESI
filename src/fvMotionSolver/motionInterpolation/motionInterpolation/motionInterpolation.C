@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2015-2019 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,20 +76,20 @@ Foam::motionInterpolation::New(const fvMesh& mesh, Istream& is)
 
     Info<< "Selecting motion interpolation: " << modelType << endl;
 
-    auto cstrIter = IstreamConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = IstreamConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             is,
             "interpolation",
             modelType,
-            *IstreamConstructorTablePtr_
+            IstreamConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<motionInterpolation>(cstrIter()(mesh, is));
+    return autoPtr<motionInterpolation>(ctorPtr(mesh, is));
 }
 
 

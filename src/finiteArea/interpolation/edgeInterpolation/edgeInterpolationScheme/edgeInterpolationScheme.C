@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,26 +55,26 @@ Foam::edgeInterpolationScheme<Type>::New
         FatalIOErrorInFunction(schemeData)
             << "Discretisation scheme not specified" << nl << nl
             << "Valid schemes are :" << nl
-            << MeshConstructorTablePtr_->sortedToc()
+            << MeshConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
     const word schemeName(schemeData);
 
-    auto cstrIter = MeshConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = MeshConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "discretisation",
             schemeName,
-            *MeshConstructorTablePtr_
+            MeshConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, schemeData);
+    return ctorPtr(mesh, schemeData);
 }
 
 
@@ -100,26 +100,26 @@ Foam::edgeInterpolationScheme<Type>::New
             << "Discretisation scheme not specified"
             << endl << endl
             << "Valid schemes are :" << endl
-            << MeshConstructorTablePtr_->sortedToc()
+            << MeshConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
     const word schemeName(schemeData);
 
-    auto cstrIter = MeshFluxConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = MeshFluxConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "discretisation",
             schemeName,
-            *MeshFluxConstructorTablePtr_
+            MeshFluxConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, faceFlux, schemeData);
+    return ctorPtr(mesh, faceFlux, schemeData);
 }
 
 

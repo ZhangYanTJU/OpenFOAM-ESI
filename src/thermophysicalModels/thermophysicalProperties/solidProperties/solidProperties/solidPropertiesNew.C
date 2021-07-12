@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,19 +38,19 @@ Foam::autoPtr<Foam::solidProperties> Foam::solidProperties::New
 {
     DebugInFunction << "Constructing solidProperties" << endl;
 
-    auto cstrIter = ConstructorTablePtr_->cfind(name);
+    auto* ctorPtr = ConstructorTable(name);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "solidProperties",
             name,
-            *ConstructorTablePtr_
+            ConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<solidProperties>(cstrIter()());
+    return autoPtr<solidProperties>(ctorPtr());
 }
 
 
@@ -78,20 +78,20 @@ Foam::autoPtr<Foam::solidProperties> Foam::solidProperties::New
         );
     }
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(solidType);
+    auto* ctorPtr = dictionaryConstructorTable(solidType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "solidProperties",
             solidType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<solidProperties>(cstrIter()(dict));
+    return autoPtr<solidProperties>(ctorPtr(dict));
 }
 
 

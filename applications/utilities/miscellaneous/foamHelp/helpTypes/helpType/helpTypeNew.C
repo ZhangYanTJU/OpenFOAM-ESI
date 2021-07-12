@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,9 +35,9 @@ Foam::autoPtr<Foam::helpType> Foam::helpType::New
     const word& helpTypeName
 )
 {
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(helpTypeName);
+    auto* ctorPtr = dictionaryConstructorTable(helpTypeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         // special treatment for -help
         // exit without stack trace
@@ -45,7 +46,7 @@ Foam::autoPtr<Foam::helpType> Foam::helpType::New
             FatalErrorInFunction
                 << "Valid helpType selections:" << nl
                 << "    "
-                << flatOutput(dictionaryConstructorTablePtr_->sortedToc()) << nl
+                << flatOutput(dictionaryConstructorTable().sortedToc()) << nl
                 << exit(FatalError);
         }
         else
@@ -54,14 +55,14 @@ Foam::autoPtr<Foam::helpType> Foam::helpType::New
                 << "Unknown helpType type '" << helpTypeName << "'" << nl << nl
                 << "Valid helpType selections:" << nl
                 << "    "
-                << flatOutput(dictionaryConstructorTablePtr_->sortedToc()) << nl
+                << flatOutput(dictionaryConstructorTable().sortedToc()) << nl
                 << abort(FatalError);
         }
     }
 
     Info<< "Selecting helpType '" << helpTypeName << "'" << endl;
 
-    return autoPtr<helpType>(cstrIter()());
+    return autoPtr<helpType>(ctorPtr());
 }
 
 

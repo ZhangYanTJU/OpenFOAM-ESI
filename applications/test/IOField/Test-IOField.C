@@ -145,7 +145,7 @@ void doTests(IOobject& io, const label sz)
 {
     const wordList handlers
     (
-        Foam::fileOperation::wordConstructorTablePtr_->sortedToc()
+        Foam::fileOperation::wordConstructorTable().sortedToc()
     );
 
     Info<< "Found handlers: " << flatOutput(handlers) << nl

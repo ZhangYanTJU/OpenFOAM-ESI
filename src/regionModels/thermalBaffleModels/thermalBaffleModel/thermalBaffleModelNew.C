@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,20 +59,20 @@ autoPtr<thermalBaffleModel> thermalBaffleModel::New(const fvMesh& mesh)
         dict.getOrDefault<word>("thermalBaffleModel", "thermalBaffle")
     );
 
-    auto cstrIter = meshConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = meshConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "thermalBaffleModel",
             modelType,
-            *meshConstructorTablePtr_
+            meshConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<thermalBaffleModel>(cstrIter()(modelType, mesh));
+    return autoPtr<thermalBaffleModel>(ctorPtr(modelType, mesh));
 }
 
 
@@ -87,20 +87,20 @@ autoPtr<thermalBaffleModel> thermalBaffleModel::New
         dict.getOrDefault<word>("thermalBaffleModel", "thermalBaffle")
     );
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "thermalBaffleModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<thermalBaffleModel>(cstrIter()(modelType, mesh, dict));
+    return autoPtr<thermalBaffleModel>(ctorPtr(modelType, mesh, dict));
 }
 
 

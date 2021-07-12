@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2007-2021 PCOpt/NTUA
     Copyright (C) 2013-2021 FOSS GP
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -146,22 +146,22 @@ autoPtr<objectiveManager> objectiveManager::New
     const word objectiveType(dict.get<word>("type"));
     const word managerType("objectiveManager" & objectiveType);
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(managerType);
+    auto* ctorPtr = dictionaryConstructorTable(managerType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "objectiveManagerType",
             managerType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     return autoPtr<objectiveManager>
     (
-        cstrIter()(mesh, dict, adjointSolverName, primalSolverName)
+        ctorPtr(mesh, dict, adjointSolverName, primalSolverName)
     );
 }
 

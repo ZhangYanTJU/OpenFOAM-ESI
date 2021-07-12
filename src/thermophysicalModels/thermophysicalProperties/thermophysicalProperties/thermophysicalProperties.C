@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,19 +61,19 @@ Foam::thermophysicalProperties::New
 {
     DebugInFunction << "Constructing thermophysicalProperties" << endl;
 
-    auto cstrIter = ConstructorTablePtr_->cfind(name);
+    auto* ctorPtr = ConstructorTable(name);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "thermophysicalProperties",
             name,
-            *ConstructorTablePtr_
+            ConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<thermophysicalProperties>(cstrIter()());
+    return autoPtr<thermophysicalProperties>(ctorPtr());
 }
 
 
@@ -87,20 +87,20 @@ Foam::thermophysicalProperties::New
 
     const word& modelType = dict.dictName();
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "thermophysicalProperties",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<thermophysicalProperties>(cstrIter()(dict));
+    return autoPtr<thermophysicalProperties>(ctorPtr(dict));
 }
 
 

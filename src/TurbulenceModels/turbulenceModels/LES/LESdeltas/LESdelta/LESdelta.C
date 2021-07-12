@@ -77,20 +77,20 @@ Foam::autoPtr<Foam::LESdelta> Foam::LESdelta::New
 
     Info<< "Selecting LES " << lookupName << " type " << deltaType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(deltaType);
+    auto* ctorPtr = dictionaryConstructorTable(deltaType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "LESdelta",
             deltaType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<LESdelta>(cstrIter()(name, turbulence, dict));
+    return autoPtr<LESdelta>(ctorPtr(name, turbulence, dict));
 }
 
 
@@ -108,22 +108,22 @@ Foam::autoPtr<Foam::LESdelta> Foam::LESdelta::New
     Info<< "Selecting LES " << lookupName << " type " << deltaType << endl;
 
     // Additional ones first
-    auto cstrIter = additionalConstructors.cfind(deltaType);
+    auto* ctorPtr = additionalConstructors.lookup(deltaType, nullptr);
 
     // Regular ones
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
-        cstrIter = dictionaryConstructorTablePtr_->cfind(deltaType);
+        ctorPtr = dictionaryConstructorTable(deltaType);
     }
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "LESdelta",
             deltaType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         );
 
         if (additionalConstructors.size())
@@ -136,7 +136,7 @@ Foam::autoPtr<Foam::LESdelta> Foam::LESdelta::New
             << exit(FatalIOError);
     }
 
-    return autoPtr<LESdelta>(cstrIter()(name, turbulence, dict));
+    return autoPtr<LESdelta>(ctorPtr(name, turbulence, dict));
 }
 
 

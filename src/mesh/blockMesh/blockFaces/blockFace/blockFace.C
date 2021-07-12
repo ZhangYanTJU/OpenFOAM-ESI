@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,20 +84,20 @@ Foam::autoPtr<Foam::blockFace> Foam::blockFace::New
 
     const word faceType(is);
 
-    auto cstrIter = IstreamConstructorTablePtr_->cfind(faceType);
+    auto* ctorPtr = IstreamConstructorTable(faceType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "blockFace",
             faceType,
-            *IstreamConstructorTablePtr_
+            IstreamConstructorTable()
         ) << abort(FatalIOError);
     }
 
-    return autoPtr<blockFace>(cstrIter()(dict, index, geometry, is));
+    return autoPtr<blockFace>(ctorPtr(dict, index, geometry, is));
 }
 
 

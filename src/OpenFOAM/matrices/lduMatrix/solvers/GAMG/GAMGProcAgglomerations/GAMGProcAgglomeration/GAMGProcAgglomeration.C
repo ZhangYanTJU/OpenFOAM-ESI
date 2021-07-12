@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+    Copyright (C) 2021-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -364,19 +365,19 @@ Foam::autoPtr<Foam::GAMGProcAgglomeration> Foam::GAMGProcAgglomeration::New
 {
     DebugInFunction << "Constructing GAMGProcAgglomeration" << endl;
 
-    auto cstrIter = GAMGAgglomerationConstructorTablePtr_->cfind(type);
+    auto* ctorPtr = GAMGAgglomerationConstructorTable(type);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInFunction
             << "Unknown GAMGProcAgglomeration type "
             << type << " for GAMGAgglomeration " << agglom.type() << nl << nl
             << "Valid GAMGProcAgglomeration types :" << endl
-            << GAMGAgglomerationConstructorTablePtr_->sortedToc()
+            << GAMGAgglomerationConstructorTable().sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<GAMGProcAgglomeration>(cstrIter()(agglom, controlDict));
+    return autoPtr<GAMGProcAgglomeration>(ctorPtr(agglom, controlDict));
 }
 
 

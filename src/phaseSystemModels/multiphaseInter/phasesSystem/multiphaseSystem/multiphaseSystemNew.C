@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,20 +51,20 @@ Foam::autoPtr<Foam::multiphaseSystem> Foam::multiphaseSystem::New
 
     Info<< "Selecting multiphaseSystem " << systemType << endl;
 
-    const auto cstrIter = dictionaryConstructorTablePtr_->cfind(systemType);
+    auto* ctorPtr = dictionaryConstructorTable(systemType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "multiphaseSystem",
             systemType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<multiphaseSystem>(cstrIter()(mesh));
+    return autoPtr<multiphaseSystem>(ctorPtr(mesh));
 }
 
 

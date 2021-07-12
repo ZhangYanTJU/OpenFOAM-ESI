@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -120,22 +120,22 @@ Foam::laminarModel<BasicTurbulenceModel>::New
 
         Info<< "Selecting laminar stress model " << modelType << endl;
 
-        auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+        auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 dict,
                 "laminar model",
                 modelType,
-                *dictionaryConstructorTablePtr_
+                dictionaryConstructorTable()
             ) << exit(FatalIOError);
         }
 
         return autoPtr<laminarModel>
         (
-            cstrIter()
+            ctorPtr
             (
                 alpha,
                 rho,

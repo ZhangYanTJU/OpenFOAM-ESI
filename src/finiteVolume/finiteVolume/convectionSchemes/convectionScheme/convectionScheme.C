@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,7 +74,7 @@ tmp<convectionScheme<Type>> convectionScheme<Type>::New
         FatalIOErrorInFunction(schemeData)
             << "Convection scheme not specified" << endl << endl
             << "Valid convection schemes are :" << endl
-            << IstreamConstructorTablePtr_->sortedToc()
+            << IstreamConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
@@ -85,20 +85,20 @@ tmp<convectionScheme<Type>> convectionScheme<Type>::New
         InfoInFunction << "schemeName:" << schemeName << endl;
     }
 
-    auto cstrIter = IstreamConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = IstreamConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "convection",
             schemeName,
-            *IstreamConstructorTablePtr_
+            IstreamConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, faceFlux, schemeData);
+    return ctorPtr(mesh, faceFlux, schemeData);
 }
 
 
@@ -122,26 +122,26 @@ tmp<convectionScheme<Type>> convectionScheme<Type>::New
         FatalIOErrorInFunction(schemeData)
             << "Convection scheme not specified" << endl << endl
             << "Valid convection schemes are :" << endl
-            << MultivariateConstructorTablePtr_->sortedToc()
+            << MultivariateConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
     const word schemeName(schemeData);
 
-    auto cstrIter = MultivariateConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = MultivariateConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "convection",
             schemeName,
-            *MultivariateConstructorTablePtr_
+            MultivariateConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, fields, faceFlux, schemeData);
+    return ctorPtr(mesh, fields, faceFlux, schemeData);
 }
 
 

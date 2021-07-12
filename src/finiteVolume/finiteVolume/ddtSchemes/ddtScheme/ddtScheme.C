@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,26 +62,26 @@ tmp<ddtScheme<Type>> ddtScheme<Type>::New
         FatalIOErrorInFunction(schemeData)
             << "Ddt scheme not specified" << endl << endl
             << "Valid ddt schemes are :" << endl
-            << IstreamConstructorTablePtr_->sortedToc()
+            << IstreamConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
     const word schemeName(schemeData);
 
-    auto cstrIter = IstreamConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = IstreamConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "ddt",
             schemeName,
-            *IstreamConstructorTablePtr_
+            IstreamConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, schemeData);
+    return ctorPtr(mesh, schemeData);
 }
 
 

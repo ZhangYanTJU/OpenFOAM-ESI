@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,22 +93,22 @@ Foam::autoPtr<Foam::lduMatrix::smoother> Foam::lduMatrix::smoother::New
 
     if (matrix.symmetric())
     {
-        auto cstrIter = symMatrixConstructorTablePtr_->cfind(name);
+        auto* ctorPtr = symMatrixConstructorTable(name);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 solverControls,
                 "symmetric matrix smoother",
                 name,
-                *symMatrixConstructorTablePtr_
+                symMatrixConstructorTable()
             ) << exit(FatalIOError);
         }
 
         return autoPtr<lduMatrix::smoother>
         (
-            cstrIter()
+            ctorPtr
             (
                 fieldName,
                 matrix,
@@ -120,22 +120,22 @@ Foam::autoPtr<Foam::lduMatrix::smoother> Foam::lduMatrix::smoother::New
     }
     else if (matrix.asymmetric())
     {
-        auto cstrIter = asymMatrixConstructorTablePtr_->cfind(name);
+        auto* ctorPtr = asymMatrixConstructorTable(name);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 solverControls,
                 "asymmetric matrix smoother",
                 name,
-                *asymMatrixConstructorTablePtr_
+                asymMatrixConstructorTable()
             ) << exit(FatalIOError);
         }
 
         return autoPtr<lduMatrix::smoother>
         (
-            cstrIter()
+            ctorPtr
             (
                 fieldName,
                 matrix,

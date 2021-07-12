@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,21 +100,21 @@ bool Foam::functionEntry::execute
         return true;
     }
 
-    auto mfIter =
-        executedictionaryIstreamMemberFunctionTablePtr_->cfind(functionName);
+    auto* mfuncPtr =
+        executedictionaryIstreamMemberFunctionTable(functionName);
 
-    if (!mfIter.found())
+    if (!mfuncPtr)
     {
         FatalErrorInFunction
             << "Unknown functionEntry '" << functionName
             << "' in " << is.name() << " near line " << is.lineNumber()
             << nl << nl
             << "Valid functionEntries :" << endl
-            << executedictionaryIstreamMemberFunctionTablePtr_->sortedToc()
+            << executedictionaryIstreamMemberFunctionTable().sortedToc()
             << exit(FatalError);
     }
 
-    return mfIter()(parentDict, is);
+    return mfuncPtr(parentDict, is);
 }
 
 
@@ -138,24 +139,21 @@ bool Foam::functionEntry::execute
         return true;
     }
 
-    auto mfIter =
-        executeprimitiveEntryIstreamMemberFunctionTablePtr_->cfind
-        (
-            functionName
-        );
+    auto* mfuncPtr =
+        executeprimitiveEntryIstreamMemberFunctionTable(functionName);
 
-    if (!mfIter.found())
+    if (!mfuncPtr)
     {
         FatalErrorInFunction
             << "Unknown functionEntry '" << functionName
             << "' in " << is.name() << " near line " << is.lineNumber()
             << nl << nl
             << "Valid functionEntries :" << endl
-            << executeprimitiveEntryIstreamMemberFunctionTablePtr_->sortedToc()
+            << executeprimitiveEntryIstreamMemberFunctionTable().sortedToc()
             << exit(FatalError);
     }
 
-    return mfIter()(parentDict, entry, is);
+    return mfuncPtr(parentDict, entry, is);
 }
 
 

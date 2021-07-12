@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2007-2019 PCOpt/NTUA
     Copyright (C) 2013-2019 FOSS GP
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -106,20 +106,20 @@ Foam::autoPtr<Foam::lineSearch> Foam::lineSearch::New
 
     if (modelType != "none")
     {
-        auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+        auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalIOErrorInLookup
             (
                 dict,
                 "lineSearch",
                 modelType,
-                *dictionaryConstructorTablePtr_
+                dictionaryConstructorTable()
             ) << exit(FatalIOError);
         }
 
-        lineSrch.reset((cstrIter()(dict, time)).ptr());
+        lineSrch.reset((ctorPtr(dict, time)).ptr());
     }
     else
     {

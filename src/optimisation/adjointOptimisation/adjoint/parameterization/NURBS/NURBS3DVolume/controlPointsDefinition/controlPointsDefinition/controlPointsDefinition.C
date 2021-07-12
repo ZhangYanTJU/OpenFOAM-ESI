@@ -30,7 +30,6 @@ License
 #include "controlPointsDefinition.H"
 #include "mathematicalConstants.H"
 
-
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
@@ -120,20 +119,20 @@ Foam::autoPtr<Foam::controlPointsDefinition> Foam::controlPointsDefinition::New
 
     Info<< "controlPointsDefinition type : " << type << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(type);
+    auto* ctorPtr = dictionaryConstructorTable(type);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "controlPointsDefinition",
             type,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<controlPointsDefinition>(cstrIter()(box));
+    return autoPtr<controlPointsDefinition>(ctorPtr(box));
 }
 
 

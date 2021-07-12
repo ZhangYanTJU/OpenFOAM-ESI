@@ -71,20 +71,21 @@ Foam::patchDistMethod::New
     );
 
     Info<< "Selecting patchDistMethod " << modelType << endl;
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
 
-    if (!cstrIter.found())
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
+
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "patchDistMethod",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(dict, mesh, patchIDs);
+    return ctorPtr(dict, mesh, patchIDs);
 }
 
 

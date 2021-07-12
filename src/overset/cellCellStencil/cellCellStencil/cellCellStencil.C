@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,20 +71,20 @@ Foam::autoPtr<Foam::cellCellStencil> Foam::cellCellStencil::New
 
     const word stencilType(dict.get<word>("method"));
 
-    auto cstrIter = meshConstructorTablePtr_->cfind(stencilType);
+    auto* ctorPtr = meshConstructorTable(stencilType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "cellCellStencil",
             stencilType,
-            *meshConstructorTablePtr_
+            meshConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<cellCellStencil>(cstrIter()(mesh, dict, update));
+    return autoPtr<cellCellStencil>(ctorPtr(mesh, dict, update));
 }
 
 

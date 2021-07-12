@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,7 +45,7 @@ Foam::wordList Foam::helpTypes::helpBoundary::fieldConditions
     {
         wordList types
         (
-            fvPatchField<Type>::dictionaryConstructorTablePtr_->sortedToc()
+            fvPatchField<Type>::dictionaryConstructorTable().sortedToc()
         );
 
         if (write)

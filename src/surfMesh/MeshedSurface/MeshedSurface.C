@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,21 +37,20 @@ License
 #include "surfMesh.H"
 #include "primitivePatch.H"
 #include "faceTraits.H"
-#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 template<class Face>
 Foam::wordHashSet Foam::MeshedSurface<Face>::readTypes()
 {
-    return wordHashSet(*fileExtensionConstructorTablePtr_);
+    return wordHashSet(fileExtensionConstructorTable());
 }
 
 
 template<class Face>
 Foam::wordHashSet Foam::MeshedSurface<Face>::writeTypes()
 {
-    return wordHashSet(*writefileExtensionMemberFunctionTablePtr_);
+    return wordHashSet(writefileExtensionMemberFunctionTable());
 }
 
 
@@ -149,9 +148,9 @@ void Foam::MeshedSurface<Face>::write
 
     DebugInFunction << "Writing to " << name << nl;
 
-    auto mfIter = writefileExtensionMemberFunctionTablePtr_->cfind(fileType);
+    auto* mfuncPtr = writefileExtensionMemberFunctionTable(fileType);
 
-    if (!mfIter.found())
+    if (!mfuncPtr)
     {
         // Delegate to proxy if possible
         const wordHashSet delegate(ProxyType::writeTypes());
@@ -172,7 +171,7 @@ void Foam::MeshedSurface<Face>::write
     }
     else
     {
-        mfIter()(name, surf, streamOpt, options);
+        mfuncPtr(name, surf, streamOpt, options);
     }
 }
 

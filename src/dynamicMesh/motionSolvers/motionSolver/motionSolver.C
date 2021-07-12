@@ -123,27 +123,20 @@ Foam::autoPtr<Foam::motionSolver> Foam::motionSolver::New
         dictionaryConstructorTablePtr_
     );
 
-    if (!dictionaryConstructorTablePtr_)
-    {
-        FatalErrorInFunction
-            << "solver table is empty"
-            << exit(FatalError);
-    }
+    auto* ctorPtr = dictionaryConstructorTable(solverName);
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(solverName);
-
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             solverDict,
             "solver",
             solverName,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<motionSolver>(cstrIter()(mesh, solverDict));
+    return autoPtr<motionSolver>(ctorPtr(mesh, solverDict));
 }
 
 

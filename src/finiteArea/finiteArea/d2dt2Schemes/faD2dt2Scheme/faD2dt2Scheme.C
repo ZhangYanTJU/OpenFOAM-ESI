@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 Volkswagen AG
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,26 +62,26 @@ tmp<faD2dt2Scheme<Type>> faD2dt2Scheme<Type>::New
         FatalIOErrorInFunction(schemeData)
             << "faD2dt2 scheme not specified" << nl << nl
             << "Valid faD2dt2 schemes are :" << endl
-            << IstreamConstructorTablePtr_->sortedToc()
+            << IstreamConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
     const word schemeName(schemeData);
 
-    auto cstrIter = IstreamConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = IstreamConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "d2dt2",
             schemeName,
-            *IstreamConstructorTablePtr_
+            IstreamConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, schemeData);
+    return ctorPtr(mesh, schemeData);
 }
 
 

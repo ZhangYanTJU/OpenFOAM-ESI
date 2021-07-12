@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd
+    Copyright (C) 2017-2021 OpenCFD Ltd
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -358,22 +358,22 @@ Foam::Reaction<ReactionThermo>::New
 {
     const word reactionTypeName(dict.get<word>("type"));
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(reactionTypeName);
+    auto* ctorPtr = dictionaryConstructorTable(reactionTypeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "reaction",
             reactionTypeName,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
     return autoPtr<Reaction<ReactionThermo>>
     (
-        cstrIter()(species, thermoDatabase, dict)
+        ctorPtr(species, thermoDatabase, dict)
     );
 }
 

@@ -98,19 +98,19 @@ Foam::autoPtr<Foam::fa::option> Foam::fa::option::New
         dictionaryConstructorTablePtr_
     );
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInFunction
             << "Unknown faOption model type "
             << modelType << nl << nl
             << "Valid faOption types are:" << nl
-            << dictionaryConstructorTablePtr_->sortedToc()
+            << dictionaryConstructorTable().sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<option>(cstrIter()(name, modelType, coeffs, patch));
+    return autoPtr<option>(ctorPtr(name, modelType, coeffs, patch));
 }
 
 

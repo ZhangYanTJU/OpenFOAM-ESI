@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2007-2019 PCOpt/NTUA
     Copyright (C) 2013-2019 FOSS GP
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,19 +67,19 @@ Foam::autoPtr<Foam::SIMPLEControl> Foam::SIMPLEControl::New
     const solver& solver
 )
 {
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(managerType);
+    auto* ctorPtr = dictionaryConstructorTable(managerType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "control",
             managerType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<SIMPLEControl>(cstrIter()(mesh, managerType, solver));
+    return autoPtr<SIMPLEControl>(ctorPtr(mesh, managerType, solver));
 }
 
 

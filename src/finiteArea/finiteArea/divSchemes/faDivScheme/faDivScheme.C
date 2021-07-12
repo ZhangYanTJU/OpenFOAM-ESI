@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,26 +61,26 @@ tmp<divScheme<Type>> divScheme<Type>::New
         FatalIOErrorInFunction(schemeData)
             << "Div scheme not specified" << nl << nl
             << "Valid div schemes are :" << nl
-            << IstreamConstructorTablePtr_->sortedToc()
+            << IstreamConstructorTable().sortedToc()
             << exit(FatalIOError);
     }
 
     const word schemeName(schemeData);
 
-    auto cstrIter = IstreamConstructorTablePtr_->cfind(schemeName);
+    auto* ctorPtr = IstreamConstructorTable(schemeName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             schemeData,
             "div",
             schemeName,
-            *IstreamConstructorTablePtr_
+            IstreamConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, schemeData);
+    return ctorPtr(mesh, schemeData);
 }
 
 

@@ -104,7 +104,7 @@ Foam::autoPtr<ChemistryModel> Foam::basicChemistryModel::New
     );
 
 
-    const auto& cnstrTable = *(ChemistryModel::thermoConstructorTablePtr_);
+    const auto& cnstrTable = ChemistryModel::thermoConstructorTable();
 
     auto ctorIter = cnstrTable.cfind(chemSolverCompThermoName);
 

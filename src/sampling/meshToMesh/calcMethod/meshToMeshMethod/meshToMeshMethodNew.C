@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,19 +39,19 @@ Foam::autoPtr<Foam::meshToMeshMethod> Foam::meshToMeshMethod::New
 {
     DebugInfo << "Selecting AMIMethod " << methodName << endl;
 
-    auto cstrIter = componentsConstructorTablePtr_->cfind(methodName);
+    auto* ctorPtr = componentsConstructorTable(methodName);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "meshToMesh",
             methodName,
-            *componentsConstructorTablePtr_
+            componentsConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<meshToMeshMethod>(cstrIter()(src, tgt));
+    return autoPtr<meshToMeshMethod>(ctorPtr(src, tgt));
 }
 
 

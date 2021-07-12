@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,20 +56,20 @@ Foam::autoPtr<Foam::RBD::joint> Foam::RBD::joint::New
 {
     const word bodyType(dict.get<word>("type"));
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(bodyType);
+    auto* ctorPtr = dictionaryConstructorTable(bodyType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "joint",
             bodyType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<joint>(cstrIter()(dict));
+    return autoPtr<joint>(ctorPtr(dict));
 }
 
 

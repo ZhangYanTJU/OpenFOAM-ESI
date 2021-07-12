@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -315,21 +315,21 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
             lduMeshConstructorTablePtr_
         );
 
-        auto cstrIter = lduMeshConstructorTablePtr_->cfind(agglomeratorType);
+        auto* ctorPtr = lduMeshConstructorTable(agglomeratorType);
 
-        if (!cstrIter.found())
+        if (!ctorPtr)
         {
             FatalErrorInFunction
                 << "Unknown GAMGAgglomeration type "
                 << agglomeratorType << ".\n"
                 << "Valid matrix GAMGAgglomeration types :"
-                << lduMatrixConstructorTablePtr_->sortedToc() << endl
+                << lduMatrixConstructorTable().sortedToc() << endl
                 << "Valid geometric GAMGAgglomeration types :"
-                << lduMeshConstructorTablePtr_->sortedToc()
+                << lduMeshConstructorTable().sortedToc()
                 << exit(FatalError);
         }
 
-        return store(cstrIter()(mesh, controlDict).ptr());
+        return store(ctorPtr(mesh, controlDict).ptr());
     }
     else
     {
@@ -379,10 +379,9 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
         }
         else
         {
-            auto cstrIter =
-                lduMatrixConstructorTablePtr_->cfind(agglomeratorType);
+            auto* ctorPtr = lduMatrixConstructorTable(agglomeratorType);
 
-            return store(cstrIter()(matrix, controlDict).ptr());
+            return store(ctorPtr(matrix, controlDict).ptr());
         }
     }
     else
@@ -415,21 +414,21 @@ Foam::autoPtr<Foam::GAMGAgglomeration> Foam::GAMGAgglomeration::New
         geometryConstructorTablePtr_
     );
 
-    auto cstrIter = geometryConstructorTablePtr_->cfind(agglomeratorType);
+    auto* ctorPtr = geometryConstructorTable(agglomeratorType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInFunction
             << "Unknown GAMGAgglomeration type "
             << agglomeratorType << ".\n"
             << "Valid geometric GAMGAgglomeration types :"
-            << geometryConstructorTablePtr_->sortedToc()
+            << geometryConstructorTable().sortedToc()
             << exit(FatalError);
     }
 
     return autoPtr<GAMGAgglomeration>
     (
-        cstrIter()
+        ctorPtr
         (
             mesh,
             cellVolumes,

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,16 +39,17 @@ namespace Foam
     addToRunTimeSelectionTable(AMIInterpolation, faceAreaWeightAMI, dict);
     addToRunTimeSelectionTable(AMIInterpolation, faceAreaWeightAMI, component);
 
-    // Backwards compatibility for pre v2106 versions
+    // Backwards compatibility for pre-v2106 versions
     // - partialFaceAreaWeightAMI deprecated in v2106
-    addNamedToRunTimeSelectionTable
+    addAliasToRunTimeSelectionTable
     (
         AMIInterpolation,
         faceAreaWeightAMI,
         dict,
-        partialFaceAreaWeightAMI
+        faceAreaWeightAMI,
+        partialFaceAreaWeightAMI,
+        2012
     );
-
 }
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //

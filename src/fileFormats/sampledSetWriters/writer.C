@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,19 +39,19 @@ Foam::autoPtr<Foam::writer<Type>> Foam::writer<Type>::New
     const word& writeType
 )
 {
-    auto cstrIter = wordConstructorTablePtr_->cfind(writeType);
+    auto* ctorPtr = wordConstructorTable(writeType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
             "writer",
             writeType,
-            *wordConstructorTablePtr_
+            wordConstructorTable()
         ) << exit(FatalError);
     }
 
-    return autoPtr<writer<Type>>(cstrIter()());
+    return autoPtr<writer<Type>>(ctorPtr());
 }
 
 

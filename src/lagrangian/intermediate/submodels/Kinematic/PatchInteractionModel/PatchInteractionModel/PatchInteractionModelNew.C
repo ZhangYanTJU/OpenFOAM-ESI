@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,20 +42,20 @@ Foam::PatchInteractionModel<CloudType>::New
 
     Info<< "Selecting patch interaction model " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
             dict,
             "patchInteractionModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            dictionaryConstructorTable()
         ) << abort(FatalIOError);
     }
 
-    return autoPtr<PatchInteractionModel<CloudType>>(cstrIter()(dict, owner));
+    return autoPtr<PatchInteractionModel<CloudType>>(ctorPtr(dict, owner));
 }
 
 
