@@ -51,12 +51,16 @@ Description
     /* Construct from argList function pointer type */                         \
     typedef autoPtr<baseType> (*argNames##ConstructorPtr)argList;              \
                                                                                \
-    /* Construct from argList function table type */                           \
-    typedef HashTable<argNames##ConstructorPtr, word>                          \
-        argNames##ConstructorTable;                                            \
+    /* Function table type: construct from argList */                          \
+    typedef ::Foam::HashTable                                                  \
+    <                                                                          \
+        argNames##ConstructorPtr,                                              \
+        ::Foam::word,                                                          \
+        ::Foam::string::hasher                                                 \
+    > argNames##ConstructorTableType;                                          \
                                                                                \
     /* Construct from argList function pointer table pointer */                \
-    static argNames##ConstructorTable* argNames##ConstructorTablePtr_;         \
+    static argNames##ConstructorTableType* argNames##ConstructorTablePtr_;     \
                                                                                \
     /* Table constructor called from the table add function */                 \
     static void construct##argNames##ConstructorTables();                      \
@@ -151,12 +155,16 @@ Description
     /* Construct from argList function pointer type */                         \
     typedef autoPtr<baseType> (*argNames##ConstructorPtr)argList;              \
                                                                                \
-    /* Construct from argList function table type */                           \
-    typedef HashTable<argNames##ConstructorPtr, word>                          \
-        argNames##ConstructorTable;                                            \
+    /* Function table type: construct from argList */                          \
+    typedef ::Foam::HashTable                                                  \
+    <                                                                          \
+        argNames##ConstructorPtr,                                              \
+        ::Foam::word,                                                          \
+        ::Foam::string::hasher                                                 \
+    > argNames##ConstructorTableType;                                          \
                                                                                \
     /* Construct from argList function pointer table pointer */                \
-    static argNames##ConstructorTable* argNames##ConstructorTablePtr_;         \
+    static argNames##ConstructorTableType* argNames##ConstructorTablePtr_;     \
                                                                                \
     /* Table constructor called from the table add function */                 \
     static void construct##argNames##ConstructorTables();                      \
@@ -264,7 +272,7 @@ Description
         {                                                                      \
             constructed = true;                                                \
             baseType::argNames##ConstructorTablePtr_                           \
-                = new baseType::argNames##ConstructorTable;                    \
+                = new baseType::argNames##ConstructorTableType;                \
         }                                                                      \
     }
 
@@ -287,7 +295,7 @@ Description
 #define defineRunTimeSelectionTablePtr(baseType,argNames)                      \
                                                                                \
     /* Define the constructor function table */                                \
-    baseType::argNames##ConstructorTable*                                      \
+    baseType::argNames##ConstructorTableType*                                  \
         baseType::argNames##ConstructorTablePtr_(nullptr)
 
 
@@ -327,7 +335,7 @@ Description
         {                                                                      \
             constructed = true;                                                \
             baseType<Targ>::argNames##ConstructorTablePtr_                     \
-                = new baseType<Targ>::argNames##ConstructorTable;              \
+                = new baseType<Targ>::argNames##ConstructorTableType;          \
         }                                                                      \
     }
 
@@ -351,7 +359,7 @@ Description
 #define defineTemplatedRunTimeSelectionTablePtr(baseType,argNames,Targ)        \
                                                                                \
     /* Define the constructor function table */                                \
-    baseType<Targ>::argNames##ConstructorTable*                                \
+    baseType<Targ>::argNames##ConstructorTableType*                            \
         baseType<Targ>::argNames##ConstructorTablePtr_(nullptr)
 
 
