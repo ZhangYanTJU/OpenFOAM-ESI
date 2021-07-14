@@ -40,95 +40,176 @@ Description
 #ifndef runTimeSelectionTables_H
 #define runTimeSelectionTables_H
 
+#include <memory>   // For std::unique_ptr
+#include <utility>  // For std::pair
+
 #include "autoPtr.H"
 #include "HashTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- Declare a run-time selection
-#define declareRunTimeSelectionTable(autoPtr,baseType,argNames,argList,parList)\
+// Common infrastructure
+
+// Not used directly: declare run-time selection (variables)
+#define declareRunTimeSelectionTable0(returnType,prefix,argList)               \
                                                                                \
-    /* Construct from argList function pointer type */                         \
-    typedef autoPtr<baseType> (*argNames##ConstructorPtr)argList;              \
+    /* Function pointer type: construct from argList */                        \
+    typedef returnType (*prefix##Ptr)argList;                                  \
                                                                                \
     /* Function table type: construct from argList */                          \
     typedef ::Foam::HashTable                                                  \
     <                                                                          \
-        argNames##ConstructorPtr,                                              \
+        prefix##Ptr,                                                           \
         ::Foam::word,                                                          \
         ::Foam::string::hasher                                                 \
-    > argNames##ConstructorTableType;                                          \
+    > prefix##TableType;                                                       \
                                                                                \
-    /* Construct from argList function pointer table pointer */                \
-    static argNames##ConstructorTableType* argNames##ConstructorTablePtr_;     \
+    /* Lookup aliases for constructors */                                      \
+    typedef ::Foam::HashTable                                                  \
+    <                                                                          \
+        std::pair<::Foam::word,int>,                                           \
+        ::Foam::word,                                                          \
+        ::Foam::string::hasher                                                 \
+    > prefix##CompatTableType;                                                 \
                                                                                \
-    /* Table constructor called from the table add function */                 \
-    static void construct##argNames##ConstructorTables();                      \
+    /* Table singleton (storage) */                                            \
+    static std::unique_ptr<prefix##TableType> prefix##TablePtr_;               \
                                                                                \
-    /* Table destructor called from the table add function destructor */       \
-    static void destroy##argNames##ConstructorTables();                        \
+    /* Lookup aliases singleton (storage) */                                   \
+    static std::unique_ptr<prefix##CompatTableType> prefix##CompatTablePtr_;   \
+                                                                               \
+    /* Table singleton (access) */                                             \
+    static prefix##TableType& prefix##Table();                                 \
+                                                                               \
+    /* Aliases singleton (access) */                                           \
+    static prefix##CompatTableType& prefix##CompatTable();                     \
+                                                                               \
+    /* Lookup function pointer */                                              \
+    static prefix##Ptr prefix##Table(const ::Foam::word& k)
+
+
+// Not used directly: storage and access for runtime tables
+#define defineRunTimeSelectionTable0(baseType,prefix,Tspecialize)              \
+                                                                               \
+    /* Define table singleton (storage) */                                     \
+    Tspecialize                                                                \
+    std::unique_ptr<prefix##TableType> prefix##TablePtr_(nullptr);             \
+                                                                               \
+    /* Define aliases singleton (storage) */                                   \
+    Tspecialize                                                                \
+    std::unique_ptr<prefix##CompatTableType> prefix##CompatTablePtr_(nullptr); \
+                                                                               \
+    /* Define table singleton (access) */                                      \
+    Tspecialize prefix##TableType& prefix##Table()                             \
+    {                                                                          \
+        if (!prefix##TablePtr_)                                                \
+        {                                                                      \
+            prefix##TablePtr_.reset(new prefix##TableType);                    \
+        }                                                                      \
+        return *(prefix##TablePtr_);                                           \
+    }                                                                          \
+                                                                               \
+    /* Define table singleton (access) for aliases */                          \
+    Tspecialize prefix##CompatTableType& prefix##CompatTable()                 \
+    {                                                                          \
+        if (!prefix##CompatTablePtr_)                                          \
+        {                                                                      \
+            prefix##CompatTablePtr_.reset(new prefix##CompatTableType);        \
+        }                                                                      \
+        return *(prefix##CompatTablePtr_);                                     \
+    }                                                                          \
+                                                                               \
+    /* Define lookup function pointer (singleton) */                           \
+    Tspecialize prefix##Ptr prefix##Table(const ::Foam::word& k)               \
+    {                                                                          \
+        if (prefix##TablePtr_)                                                 \
+        {                                                                      \
+            const auto& tbl = *prefix##TablePtr_;                              \
+            auto iter = tbl.cfind(k);                                          \
+            if (!iter.found() && prefix##CompatTablePtr_)                      \
+            {                                                                  \
+                const auto fnd = prefix##CompatTablePtr_->cfind(k);            \
+                if (fnd.found())                                               \
+                {                                                              \
+                    const auto& alt = fnd.val();                               \
+                    iter = tbl.cfind(alt.first);                               \
+                    if (::Foam::error::warnAboutAge(alt.second))               \
+                    {                                                          \
+                        std::cerr                                              \
+                            << "Using [v" << alt.second << "] '" << k          \
+                            << "' instead of '" << alt.first                   \
+                            << " in runtime selection table: " << #baseType    \
+                            << std::endl;                                      \
+                        ::Foam::error::warnAboutAge("lookup", alt.second);     \
+                    }                                                          \
+                }                                                              \
+            }                                                                  \
+            if (iter.found())                                                  \
+            {                                                                  \
+                return iter.val();                                             \
+            }                                                                  \
+        }                                                                      \
+        return nullptr;                                                        \
+    }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//
+// Declaration Macros
+//
+
+//- Declare run-time selection (variables and adder classes)
+#define declareRunTimeSelectionTable\
+(AutoPtr,baseType,argNames,argList,parList)                                    \
+                                                                               \
+    declareRunTimeSelectionTable0(                                             \
+        AutoPtr<baseType>, argNames##Constructor, argList);                    \
                                                                                \
     /* Class to add constructor from argList to table */                       \
     template<class baseType##Type>                                             \
-    class add##argNames##ConstructorToTable                                    \
+    struct add##argNames##ConstructorToTable                                   \
     {                                                                          \
-    public:                                                                    \
-                                                                               \
-        static autoPtr<baseType> New argList                                   \
+        static AutoPtr<baseType> New argList                                   \
         {                                                                      \
-            return autoPtr<baseType>(new baseType##Type parList);              \
+            return AutoPtr<baseType>(new baseType##Type parList);              \
         }                                                                      \
                                                                                \
         explicit add##argNames##ConstructorToTable                             \
         (                                                                      \
-            const word& lookup = baseType##Type::typeName                      \
+            const ::Foam::word& k = baseType##Type::typeName                   \
         )                                                                      \
         {                                                                      \
-            construct##argNames##ConstructorTables();                          \
-            if (!argNames##ConstructorTablePtr_->insert(lookup, New))          \
+            if (!argNames##ConstructorTable().insert(k, New))                  \
             {                                                                  \
-                std::cerr<< "Duplicate entry " << lookup                       \
-                    << " in runtime selection table " << #baseType             \
-                    << std::endl;                                              \
-                error::safePrintStack(std::cerr);                              \
+                std::cerr                                                      \
+                    << "Duplicate entry " << k << " in runtime table "         \
+                    << #baseType << std::endl;                                 \
+                ::Foam::error::safePrintStack(std::cerr);                      \
             }                                                                  \
         }                                                                      \
-                                                                               \
-        ~add##argNames##ConstructorToTable()                                   \
-        {                                                                      \
-            destroy##argNames##ConstructorTables();                            \
-        }                                                                      \
-                                                                               \
-        add##argNames##ConstructorToTable                                      \
-            (const add##argNames##ConstructorToTable&) = delete;               \
-                                                                               \
-        void operator=                                                         \
-            (const add##argNames##ConstructorToTable&) = delete;               \
     };                                                                         \
                                                                                \
     /* Class to add constructor from argList to table */                       \
     /* Remove only the entry (not the table) upon destruction */               \
     template<class baseType##Type>                                             \
-    class addRemovable##argNames##ConstructorToTable                           \
+    struct addRemovable##argNames##ConstructorToTable                          \
     {                                                                          \
-    public:                                                                    \
+        const ::Foam::word name;  /* Lookup name for later removal */          \
                                                                                \
-        const word name;  /* Lookup name for later removal */                  \
-                                                                               \
-        static autoPtr<baseType> New argList                                   \
+        static AutoPtr<baseType> New argList                                   \
         {                                                                      \
-            return autoPtr<baseType>(new baseType##Type parList);              \
+            return AutoPtr<baseType>(new baseType##Type parList);              \
         }                                                                      \
                                                                                \
         explicit addRemovable##argNames##ConstructorToTable                    \
         (                                                                      \
-            const word& lookup = baseType##Type::typeName                      \
+            const ::Foam::word& k = baseType##Type::typeName                   \
         )                                                                      \
         :                                                                      \
-            name(lookup)                                                       \
+            name(k)                                                            \
         {                                                                      \
-            construct##argNames##ConstructorTables();                          \
-            argNames##ConstructorTablePtr_->set(lookup, New);                  \
+            argNames##ConstructorTable().set(k, New);                          \
         }                                                                      \
                                                                                \
         ~addRemovable##argNames##ConstructorToTable()                          \
@@ -144,105 +225,75 @@ Description
                                                                                \
         void operator=                                                         \
             (const addRemovable##argNames##ConstructorToTable&) = delete;      \
-    };
-
-
-
-//- Declare a run-time selection for derived classes
-#define declareRunTimeNewSelectionTable(                                       \
-    autoPtr,baseType,argNames,argList,parList)                                 \
-                                                                               \
-    /* Construct from argList function pointer type */                         \
-    typedef autoPtr<baseType> (*argNames##ConstructorPtr)argList;              \
-                                                                               \
-    /* Function table type: construct from argList */                          \
-    typedef ::Foam::HashTable                                                  \
-    <                                                                          \
-        argNames##ConstructorPtr,                                              \
-        ::Foam::word,                                                          \
-        ::Foam::string::hasher                                                 \
-    > argNames##ConstructorTableType;                                          \
-                                                                               \
-    /* Construct from argList function pointer table pointer */                \
-    static argNames##ConstructorTableType* argNames##ConstructorTablePtr_;     \
-                                                                               \
-    /* Table constructor called from the table add function */                 \
-    static void construct##argNames##ConstructorTables();                      \
-                                                                               \
-    /* Table destructor called from the table add function destructor */       \
-    static void destroy##argNames##ConstructorTables();                        \
-                                                                               \
-    /* Class to add constructor from argList to table */                       \
-    template<class baseType##Type>                                             \
-    class add##argNames##ConstructorToTable                                    \
-    {                                                                          \
-    public:                                                                    \
-                                                                               \
-        static autoPtr<baseType> New##baseType argList                         \
-        {                                                                      \
-            return autoPtr<baseType>(baseType##Type::New parList.ptr());       \
-        }                                                                      \
-                                                                               \
-        explicit add##argNames##ConstructorToTable                             \
-        (                                                                      \
-            const word& lookup = baseType##Type::typeName                      \
-        )                                                                      \
-        {                                                                      \
-            construct##argNames##ConstructorTables();                          \
-            if                                                                 \
-            (                                                                  \
-               !argNames##ConstructorTablePtr_->insert                         \
-                (                                                              \
-                    lookup,                                                    \
-                    New##baseType                                              \
-                )                                                              \
-            )                                                                  \
-            {                                                                  \
-                std::cerr<< "Duplicate entry " << lookup                       \
-                    << " in runtime selection table " << #baseType             \
-                    << std::endl;                                              \
-                error::safePrintStack(std::cerr);                              \
-            }                                                                  \
-        }                                                                      \
-                                                                               \
-        ~add##argNames##ConstructorToTable()                                   \
-        {                                                                      \
-            destroy##argNames##ConstructorTables();                            \
-        }                                                                      \
-                                                                               \
-        add##argNames##ConstructorToTable                                      \
-            (const add##argNames##ConstructorToTable&) = delete;               \
-                                                                               \
-        void operator=                                                         \
-            (const add##argNames##ConstructorToTable&) = delete;               \
     };                                                                         \
                                                                                \
     /* Class to add constructor from argList to table */                       \
     template<class baseType##Type>                                             \
-    class addRemovable##argNames##ConstructorToTable                           \
+    struct addAlias##argNames##ConstructorToTable                              \
     {                                                                          \
-    public:                                                                    \
-                                                                               \
-        const word name;  /* Lookup name for later removal */                  \
-                                                                               \
-        static autoPtr<baseType> New##baseType argList                         \
+        explicit addAlias##argNames##ConstructorToTable                        \
+        (                                                                      \
+            const ::Foam::word& k,                                             \
+            const ::Foam::word& alias,                                         \
+            const int ver                                                      \
+        )                                                                      \
         {                                                                      \
-            return autoPtr<baseType>(baseType##Type::New parList.ptr());       \
+            argNames##ConstructorCompatTable()                                 \
+                .set(alias, std::pair<::Foam::word,int>(k,ver));               \
+        }                                                                      \
+    };
+
+
+//- Declare a run-time selection for derived classes
+#define declareRunTimeNewSelectionTable\
+(AutoPtr,baseType,argNames,argList,parList)                                    \
+                                                                               \
+    declareRunTimeSelectionTable0(                                             \
+        AutoPtr<baseType>,argNames##Constructor,argList);                      \
+                                                                               \
+    /* Helper to add constructor from argList to table */                      \
+    template<class baseType##Type>                                             \
+    struct add##argNames##ConstructorToTable                                   \
+    {                                                                          \
+        static AutoPtr<baseType> New##baseType argList                         \
+        {                                                                      \
+            return AutoPtr<baseType>(baseType##Type::New parList.ptr());       \
+        }                                                                      \
+                                                                               \
+        explicit add##argNames##ConstructorToTable                             \
+        (                                                                      \
+            const ::Foam::word& k = baseType##Type::typeName                   \
+        )                                                                      \
+        {                                                                      \
+            if (!argNames##ConstructorTable().insert(k, New##baseType))        \
+            {                                                                  \
+                std::cerr                                                      \
+                    << "Duplicate entry " << k << " in runtime table "         \
+                    << #baseType << std::endl;                                 \
+                ::Foam::error::safePrintStack(std::cerr);                      \
+            }                                                                  \
+        }                                                                      \
+    };                                                                         \
+                                                                               \
+    /* Helper to add constructor from argList to table */                      \
+    template<class baseType##Type>                                             \
+    struct addRemovable##argNames##ConstructorToTable                          \
+    {                                                                          \
+        const ::Foam::word name;  /* Retain name for later removal */          \
+                                                                               \
+        static AutoPtr<baseType> New##baseType argList                         \
+        {                                                                      \
+            return AutoPtr<baseType>(baseType##Type::New parList.ptr());       \
         }                                                                      \
                                                                                \
         explicit addRemovable##argNames##ConstructorToTable                    \
         (                                                                      \
-            const word& lookup = baseType##Type::typeName                      \
+            const ::Foam::word& k = baseType##Type::typeName                   \
         )                                                                      \
         :                                                                      \
-            name(lookup)                                                       \
+            name(k)                                                            \
         {                                                                      \
-            construct##argNames##ConstructorTables();                          \
-            argNames##ConstructorTablePtr_->set                                \
-            (                                                                  \
-                lookup,                                                        \
-                New##baseType                                                  \
-            );                                                                 \
+            argNames##ConstructorTable().set(k, New##baseType);                \
         }                                                                      \
                                                                                \
         ~addRemovable##argNames##ConstructorToTable()                          \
@@ -255,124 +306,54 @@ Description
                                                                                \
         addRemovable##argNames##ConstructorToTable                             \
             (const addRemovable##argNames##ConstructorToTable&) = delete;      \
-                                                                               \
         void operator=                                                         \
             (const addRemovable##argNames##ConstructorToTable&) = delete;      \
+    };                                                                         \
+                                                                               \
+    /* Helper to add constructor from argList to table */                      \
+    template<class baseType##Type>                                             \
+    struct addAlias##argNames##ConstructorToTable                              \
+    {                                                                          \
+        explicit addAlias##argNames##ConstructorToTable                        \
+        (                                                                      \
+            const ::Foam::word& k,                                             \
+            const ::Foam::word& alias,                                         \
+            const int ver                                                      \
+        )                                                                      \
+        {                                                                      \
+            argNames##ConstructorCompatTable()                                 \
+                .set(alias, std::pair<::Foam::word,int>(k,ver));               \
+        }                                                                      \
     };
-
-
-// Constructor aid
-#define defineRunTimeSelectionTableConstructor(baseType,argNames)              \
-                                                                               \
-    /* Table constructor called from the table add function */                 \
-    void baseType::construct##argNames##ConstructorTables()                    \
-    {                                                                          \
-        static bool constructed = false;                                       \
-        if (!constructed)                                                      \
-        {                                                                      \
-            constructed = true;                                                \
-            baseType::argNames##ConstructorTablePtr_                           \
-                = new baseType::argNames##ConstructorTableType;                \
-        }                                                                      \
-    }
-
-
-// Destructor aid
-#define defineRunTimeSelectionTableDestructor(baseType,argNames)               \
-                                                                               \
-    /* Table destructor called from the table add function destructor */       \
-    void baseType::destroy##argNames##ConstructorTables()                      \
-    {                                                                          \
-        if (baseType::argNames##ConstructorTablePtr_)                          \
-        {                                                                      \
-            delete baseType::argNames##ConstructorTablePtr_;                   \
-            baseType::argNames##ConstructorTablePtr_ = nullptr;                \
-        }                                                                      \
-    }
-
-
-// Create pointer to hash-table of functions
-#define defineRunTimeSelectionTablePtr(baseType,argNames)                      \
-                                                                               \
-    /* Define the constructor function table */                                \
-    baseType::argNames##ConstructorTableType*                                  \
-        baseType::argNames##ConstructorTablePtr_(nullptr)
-
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+//
+// Definition Macros
+//
+
 //- Define run-time selection table
 #define defineRunTimeSelectionTable(baseType,argNames)                         \
                                                                                \
-    defineRunTimeSelectionTablePtr(baseType,argNames);                         \
-    defineRunTimeSelectionTableConstructor(baseType,argNames);                 \
-    defineRunTimeSelectionTableDestructor(baseType,argNames)
+    defineRunTimeSelectionTable0(                                              \
+    baseType,baseType::argNames##Constructor,)
 
 
 //- Define run-time selection table for template classes
 //  use when baseType doesn't need a template argument (eg, is a typedef)
 #define defineTemplateRunTimeSelectionTable(baseType,argNames)                 \
                                                                                \
-    template<>                                                                 \
-    defineRunTimeSelectionTablePtr(baseType,argNames);                         \
-    template<>                                                                 \
-    defineRunTimeSelectionTableConstructor(baseType,argNames);                 \
-    template<>                                                                 \
-    defineRunTimeSelectionTableDestructor(baseType,argNames)
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-// Constructor aid: use when baseType requires the Targ template argument
-#define defineTemplatedRunTimeSelectionTableConstructor(baseType,argNames,Targ)\
-                                                                               \
-    /* Table constructor called from the table add function */                 \
-    void baseType<Targ>::construct##argNames##ConstructorTables()              \
-    {                                                                          \
-        static bool constructed = false;                                       \
-        if (!constructed)                                                      \
-        {                                                                      \
-            constructed = true;                                                \
-            baseType<Targ>::argNames##ConstructorTablePtr_                     \
-                = new baseType<Targ>::argNames##ConstructorTableType;          \
-        }                                                                      \
-    }
-
-
-// Destructor aid: use when baseType requires the Targ template argument
-#define defineTemplatedRunTimeSelectionTableDestructor(baseType,argNames,Targ) \
-                                                                               \
-    /* Table destructor called from the table add function destructor */       \
-    void baseType<Targ>::destroy##argNames##ConstructorTables()                \
-    {                                                                          \
-        if (baseType<Targ>::argNames##ConstructorTablePtr_)                    \
-        {                                                                      \
-            delete baseType<Targ>::argNames##ConstructorTablePtr_;             \
-            baseType<Targ>::argNames##ConstructorTablePtr_ = nullptr;          \
-        }                                                                      \
-    }
-
-
-//- Create pointer to hash-table of functions
-//  use when baseType requires the Targ template argument
-#define defineTemplatedRunTimeSelectionTablePtr(baseType,argNames,Targ)        \
-                                                                               \
-    /* Define the constructor function table */                                \
-    baseType<Targ>::argNames##ConstructorTableType*                            \
-        baseType<Targ>::argNames##ConstructorTablePtr_(nullptr)
+    defineRunTimeSelectionTable0(                                              \
+    baseType,baseType::argNames##Constructor,template<>)
 
 
 //- Define run-time selection table for template classes
 //  use when baseType requires the Targ template argument
 #define defineTemplatedRunTimeSelectionTable(baseType,argNames,Targ)           \
                                                                                \
-    template<>                                                                 \
-    defineTemplatedRunTimeSelectionTablePtr(baseType,argNames,Targ);           \
-    template<>                                                                 \
-    defineTemplatedRunTimeSelectionTableConstructor(baseType,argNames,Targ);   \
-    template<>                                                                 \
-    defineTemplatedRunTimeSelectionTableDestructor(baseType,argNames,Targ)
+    defineRunTimeSelectionTable0(                                              \
+    baseType,baseType<Targ>::argNames##Constructor,template<>)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
