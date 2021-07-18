@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -100,7 +100,7 @@ void Foam::blockDescriptor::check(const Istream& is)
 }
 
 
-void Foam::blockDescriptor::findCurvedFaces()
+void Foam::blockDescriptor::findCurvedFaces(const label blockIndex)
 {
     const faceList shapeFaces(blockShape().faces());
 
@@ -108,17 +108,21 @@ void Foam::blockDescriptor::findCurvedFaces()
     {
         forAll(blockFaces_, facei)
         {
+            const face& f = blockFaces_[facei].vertices();
+
+            // Accept (<block> <face>) face description
             if
             (
-                face::sameVertices
                 (
-                    blockFaces_[facei].vertices(),
-                    shapeFaces[shapeFacei]
+                    f.size() == 2
+                 && f[0] == blockIndex
+                 && f[1] == shapeFacei
                 )
+             || face::sameVertices(f, shapeFaces[shapeFacei])
             )
             {
                 curvedFaces_[shapeFacei] = facei;
-                nCurvedFaces_++;
+                ++nCurvedFaces_;
                 break;
             }
         }
@@ -167,7 +171,7 @@ Foam::blockDescriptor::blockDescriptor
 Foam::blockDescriptor::blockDescriptor
 (
     const dictionary& dict,
-    const label index,
+    const label blockIndex,
     const pointField& vertices,
     const blockEdgeList& edges,
     const blockFaceList& faces,
@@ -277,7 +281,7 @@ Foam::blockDescriptor::blockDescriptor
 
     check(is);
 
-    findCurvedFaces();
+    findCurvedFaces(blockIndex);
 }
 
 

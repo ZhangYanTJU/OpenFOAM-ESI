@@ -66,13 +66,13 @@ inline const Foam::word& Foam::blockDescriptor::zoneName() const
 
 
 inline const Foam::FixedList<Foam::label, 6>&
-Foam::blockDescriptor::curvedFaces() const
+Foam::blockDescriptor::curvedFaces() const noexcept
 {
     return curvedFaces_;
 }
 
 
-inline Foam::label Foam::blockDescriptor::nCurvedFaces() const
+inline Foam::label Foam::blockDescriptor::nCurvedFaces() const noexcept
 {
     return nCurvedFaces_;
 }
