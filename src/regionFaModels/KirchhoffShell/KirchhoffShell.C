@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -107,7 +107,9 @@ void KirchhoffShell::solveDisplacement()
 
         wEqn.solve();
 
-        Info<< "w min/max   = " << min(w_) << ", " << max(w_) << endl;
+        Info<< "ws_vibrationShell: "
+            << "min = " << min(w_).value() << ", "
+            << "max = " << max(w_).value() << endl;
 
         if (wSubCycle.index() >= wSubCycle.nSubCycles())
         {
