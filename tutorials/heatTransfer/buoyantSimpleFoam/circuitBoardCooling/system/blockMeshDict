@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2106                                 |
+|  \\    /   O peration     | Version:  v2112                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -30,11 +30,7 @@ vertices
 
 blocks
 (
-    hex (0 1 2 3 4 5 6 7) (50 40 1) simpleGrading (1 1 1)
-);
-
-edges
-(
+    hex (0 1 2 3 4 5 6 7) (50 40 1) grading (1 1 1)
 );
 
 boundary
@@ -44,7 +40,7 @@ boundary
         type wall;
         faces
         (
-            (1 5 4 0)
+            (0 2)
         );
     }
 
@@ -53,7 +49,7 @@ boundary
         type wall;
         faces
         (
-            (2 6 7 3)
+            (0 3)
         );
     }
 
@@ -62,7 +58,7 @@ boundary
         type patch;
         faces
         (
-            (0 4 7 3)
+            (0 0)
         );
     }
 
@@ -71,7 +67,7 @@ boundary
         type patch;
         faces
         (
-            (1 5 6 2)
+            (1 1)
         );
     }
 
@@ -80,14 +76,10 @@ boundary
         type empty;
         faces
         (
-            (0 3 2 1)
-            (4 5 6 7)
+            (0 4)
+            (0 5)
         );
     }
-);
-
-mergePatchPairs
-(
 );
 
 
