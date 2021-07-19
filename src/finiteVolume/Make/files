@@ -519,6 +519,7 @@ $(fvOptions)/fvOptions.C
 
 lduPrimitiveMeshAssembly/AssemblyFvPatchs.C
 lduPrimitiveMeshAssembly/lduPrimitiveMeshAssembly.C
+lduPrimitiveMeshAssembly/assemblyFaceAreaPairGAMGAgglomeration/assemblyFaceAreaPairGAMGAgglomeration.C
 
 
 LIB = $(FOAM_LIBBIN)/libfiniteVolume

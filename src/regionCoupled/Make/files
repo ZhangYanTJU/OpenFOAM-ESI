@@ -1,5 +1,0 @@
-
-assemblyFaceAreaPairGAMGAgglomeration/assemblyFaceAreaPairGAMGAgglomeration.C
-
-
-LIB = $(FOAM_LIBBIN)/libregionCoupled

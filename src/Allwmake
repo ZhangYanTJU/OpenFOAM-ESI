@@ -57,7 +57,6 @@ wmake $targetType mesh/extrudeModel  # Requires: blockMesh
 wmake $targetType dynamicMesh  # Requires: extrudeModel
 wmake $targetType genericPatchFields
 
-wmake $targetType regionCoupled
 wmake $targetType parallel/decompose/decompositionMethods
 
 # Make dummy decomposition methods (dummyThirdParty)

@@ -19,5 +19,4 @@ LIB_LIBS = \
     -lsolidThermo \
     -lsolidSpecie \
     -lturbulenceModels \
-    -lspecie \
-    -lregionCoupled
+    -lspecie

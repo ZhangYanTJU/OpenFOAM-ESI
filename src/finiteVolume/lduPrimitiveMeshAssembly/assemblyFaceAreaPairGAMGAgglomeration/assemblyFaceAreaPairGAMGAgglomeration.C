@@ -76,7 +76,6 @@ assemblyFaceAreaPairGAMGAgglomeration
             refCast<const lduPrimitiveMeshAssembly>(ldumesh);
 
         vectorField faceAreas(mesh.lduAddr().upperAddr().size(), Zero);
-        //scalarField cellVolumes(mesh.lduAddr().size(), Zero);
 
         const labelListList& faceMap = mesh.faceMap();
 
