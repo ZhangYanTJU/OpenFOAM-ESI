@@ -130,7 +130,10 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::fvSolver::solve
         totalSource
     );
 
-    if (solverPerformance::debug)
+    const label log =
+        solverControls.getOrDefault<label>("log", solverPerformance::debug);
+
+    if (log)
     {
         solverPerf.print(Info.masterStream(fvMat_.mesh().comm()));
     }
@@ -180,7 +183,10 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
         solverControls
     )->solve(psi.primitiveFieldRef(), totalSource);
 
-    if (solverPerformance::debug)
+    const label log =
+        solverControls.getOrDefault<label>("log", solverPerformance::debug);
+
+    if (log)
     {
         solverPerf.print(Info.masterStream(mesh().comm()));
     }
