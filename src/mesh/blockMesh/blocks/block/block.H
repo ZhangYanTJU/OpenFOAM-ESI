@@ -43,8 +43,7 @@ SourceFiles
 #ifndef block_H
 #define block_H
 
-#include "pointField.H"
-#include "faceList.H"
+#include "hexCell.H"
 #include "blockDescriptor.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -66,7 +65,7 @@ class block
         pointField points_;
 
         //- The cells (hex)
-        List<FixedList<label, 8>> blockCells_;
+        List<hexCell> blockCells_;
 
         //- Boundary patches
         FixedList<List<FixedList<label, 4>>, 6> blockPatches_;
@@ -127,7 +126,7 @@ public:
 
     // Constructors
 
-        //- Construct from components. Optional cellSet/zone name.
+        //- Construct from components. Optional zone name.
         block
         (
             const cellShape& bshape,
@@ -135,7 +134,8 @@ public:
             const blockEdgeList& edges,
             const blockFaceList& faces,
             const labelVector& density,
-            const UList<gradingDescriptors>& expand,
+            const UList<gradingDescriptors>& expand
+                = UList<gradingDescriptors>::null(),
             const word& zoneName = ""
         );
 
@@ -216,8 +216,8 @@ public:
         //- The points for filling the block
         inline const pointField& points() const;
 
-        //- The cells for filling the block
-        inline const List<FixedList<label, 8>>& cells() const;
+        //- The hex cells for filling the block
+        inline const List<hexCell>& cells() const;
 
         //- The boundary patch faces for the block
         inline const FixedList<List<FixedList<label, 4>>, 6>&

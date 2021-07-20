@@ -34,8 +34,7 @@ inline const Foam::pointField& Foam::block::points() const
 }
 
 
-inline const Foam::List<Foam::FixedList<Foam::label, 8>>&
-Foam::block::cells() const
+inline const Foam::List<Foam::hexCell>& Foam::block::cells() const
 {
     if (blockCells_.empty())
     {

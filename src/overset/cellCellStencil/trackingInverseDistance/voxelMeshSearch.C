@@ -506,19 +506,19 @@ Foam::autoPtr<Foam::fvMesh> Foam::voxelMeshSearch::makeMesh
 
         block b
         (
-            cellShape(hex, identity(8), false),
+            cellShape(hex, identity(8)),
             localBb_.points(),
             blockEdgeList(),
             blockFaceList(),
             nDivs_,
-            List<gradingDescriptors>(12)
+            UList<gradingDescriptors>::null()
         );
 
-        List<FixedList<label, 8>> bCells(b.cells());
-        cellShapes.setSize(bCells.size());
+        List<hexCell> bCells(b.cells());
+        cellShapes.resize(bCells.size());
         forAll(cellShapes, celli)
         {
-            cellShapes[celli].reset(hex, labelList(bCells[celli]), false);
+            cellShapes[celli] = bCells[celli].shape();
         }
 
         //Info<< "Creating boundary faces" << endl;

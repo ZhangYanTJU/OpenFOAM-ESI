@@ -525,6 +525,9 @@ $(cell)/cell.C
 $(cell)/oppositeCellFace.C
 $(cell)/cellIOList.C
 
+hexCell = $(meshShapes)/hexCell
+$(hexCell)/hexCell.C
+
 tetCell = $(meshShapes)/tetCell
 $(tetCell)/tetCell.C
 
