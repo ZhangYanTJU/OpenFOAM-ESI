@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,6 +129,10 @@ SourceFiles
 
 namespace Foam
 {
+
+// Forward Declarations
+class regIOobject;
+
 namespace surfaceWriters
 {
 
@@ -150,6 +154,9 @@ class boundaryDataWriter
 
 
     // Private Member Functions
+
+        //- Write serial surface geometry to "points" file.
+        void serialWriteGeometry(const regIOobject&, const meshedSurf& surf);
 
         //- Templated write field operation
         template<class Type>
