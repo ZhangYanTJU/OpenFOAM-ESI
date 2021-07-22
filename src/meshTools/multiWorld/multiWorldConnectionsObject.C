@@ -237,11 +237,6 @@ void Foam::multiWorldConnections::createComms()
         Pstream::scatter(allConnections);
     }
 
-    if (debug && Pstream::master(oldWorldComm))
-    {
-        printDOT(Sout, allConnections);
-    }
-
     // Check for mismatched connections
     label brokenConnections = 0;
 
@@ -286,6 +281,11 @@ void Foam::multiWorldConnections::createComms()
 
         Pstream::warnComm = oldWarnComm;
         Pstream::worldComm = oldWorldComm;
+    }
+
+    if (debug)
+    {
+        printDOT(Info, allConnections);
     }
 }
 
