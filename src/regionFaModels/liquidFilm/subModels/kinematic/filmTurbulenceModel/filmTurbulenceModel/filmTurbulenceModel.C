@@ -105,8 +105,9 @@ tmp<areaScalarField> filmTurbulenceModel::Cw() const
         {
             const scalarField& mu = film_.mu().primitiveField();
             const scalarField& h = film_.h().primitiveField();
+            const scalarField& rho = film_.rho().primitiveField();
             const scalar h0 = film_.h0().value();
-            Cw.primitiveFieldRef() = 3*mu/(h + h0);
+            Cw.primitiveFieldRef() = 3*mu/(h + h0)/rho;
             Cw.min(5000.0);
             break;
         }
@@ -115,7 +116,8 @@ tmp<areaScalarField> filmTurbulenceModel::Cw() const
             const scalarField& mu = film_.mu().primitiveField();
             const scalarField& h = film_.h().primitiveField();
             const scalar h0 = film_.h0().value();
-            Cw.primitiveFieldRef() = 2*mu/(h + h0);
+            const scalarField& rho = film_.rho().primitiveField();
+            Cw.primitiveFieldRef() = 2*mu/(h + h0)/rho;
             break;
         }
         case mDarcyWeisbach:
@@ -124,9 +126,9 @@ tmp<areaScalarField> filmTurbulenceModel::Cw() const
                 meshObjects::gravity::New(film_.primaryMesh().time());
 
             const vectorField& Uf = film_.Uf().primitiveField();
-
-            scalar Cf = dict_.get<scalar>("Cf");
-            Cw.primitiveFieldRef() = Cf*mag(g.value())*mag(Uf);
+            const scalarField& rho = film_.rho().primitiveField();
+            scalar Cf = dict_.get<scalar>("DarcyWeisbach");
+            Cw.primitiveFieldRef() = Cf*mag(g.value())*mag(Uf)/rho;
             break;
         }
         case mManningStrickler:
