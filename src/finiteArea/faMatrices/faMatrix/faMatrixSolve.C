@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -141,7 +141,14 @@ Foam::SolverPerformance<Type> Foam::faMatrix<Type>::solve
             solverControls
         )->solve(psiCmpt, sourceCmpt, cmpt);
 
-        if (SolverPerformance<Type>::debug)
+        const label log =
+            solverControls.getOrDefault<label>
+            (
+                "log",
+                SolverPerformance<Type>::debug
+            );
+
+        if (log)
         {
             solverPerf.print(Info);
         }
