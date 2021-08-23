@@ -68,6 +68,17 @@ protected:
         //- Master patch ID
         mutable label masterPatchID_;
 
+        // Hole cell controls
+
+            //- Set hole cell value
+            const bool setHoleCellValue_;
+
+            //- Interpolate hole cell value (from nearby non-hole cell)
+            const bool interpolateHoleCellValue_;
+
+            //- Hole cell value
+            const Type holeCellValue_;
+
 
 public:
 
@@ -139,6 +150,9 @@ public:
 
             //- Initialise the evaluation of the patch field
             virtual void initEvaluate(const Pstream::commsTypes commsType);
+
+            //- Manipulate matrix
+            virtual void manipulateMatrix(fvMatrix<Type>& matrix);
 
         // I-O
 

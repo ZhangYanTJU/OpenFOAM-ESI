@@ -48,6 +48,7 @@ Foam::cellCellStencil::cellTypeNames_
     { cellType::CALCULATED, "calculated" },
     { cellType::INTERPOLATED, "interpolated" },
     { cellType::HOLE, "hole" },
+    { cellType::SPECIAL, "special" },
 });
 
 
@@ -95,6 +96,17 @@ Foam::cellCellStencil::~cellCellStencil()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::word Foam::cellCellStencil::baseName(const word& name)
+{
+    if (name.ends_with("_0"))
+    {
+        return baseName(name.substr(0, name.size()-2));
+    }
+
+    return name;
+}
+
 
 const Foam::labelIOList& Foam::cellCellStencil::zoneID(const fvMesh& mesh)
 {
@@ -296,5 +308,89 @@ void Foam::cellCellStencil::globalCellCells
     }
 }
 
+
+// * * * * * * * * * * * * * Ostream operator  * * * * * * * * * * * * * * * //
+
+template<>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const InfoProxy<cellCellStencil>& ic
+)
+{
+    const cellCellStencil& e = ic.t_;
+
+    const labelUList& cellTypes = e.cellTypes();
+    const labelUList& interpolationCells = e.interpolationCells();
+    const labelListList& cellStencil = e.cellStencil();
+
+    labelList nCells(cellCellStencil::count(4, cellTypes));
+
+    label nInvalidInterpolated = 0;
+    label nLocal = 0;
+    label nMixed = 0;
+    label nRemote = 0;
+    forAll(interpolationCells, i)
+    {
+        label celli = interpolationCells[i];
+        const labelList& slots = cellStencil[celli];
+
+        if (slots.empty())
+        {
+            nInvalidInterpolated++;
+        }
+
+        bool hasLocal = false;
+        bool hasRemote = false;
+
+        forAll(slots, sloti)
+        {
+            if (slots[sloti] >= cellTypes.size())
+            {
+                hasRemote = true;
+            }
+            else
+            {
+                hasLocal = true;
+            }
+        }
+
+        if (hasRemote)
+        {
+            if (!hasLocal)
+            {
+                nRemote++;
+            }
+            else
+            {
+                nMixed++;
+            }
+        }
+        else if (hasLocal)
+        {
+            nLocal++;
+        }
+    }
+    reduce(nLocal, sumOp<label>());
+    reduce(nMixed, sumOp<label>());
+    reduce(nRemote, sumOp<label>());
+    reduce(nInvalidInterpolated, sumOp<label>());
+
+    Info<< "Overset analysis : nCells : "
+        << returnReduce(cellTypes.size(), sumOp<label>()) << nl
+        << incrIndent
+        << indent << "calculated   : " << nCells[cellCellStencil::CALCULATED]
+        << nl
+        << indent << "interpolated : " << nCells[cellCellStencil::INTERPOLATED]
+        << " (interpolated from local:" << nLocal
+        << "  mixed local/remote:" << nMixed
+        << "  remote:" << nRemote
+        << "  special:" << nInvalidInterpolated << ")" << nl
+        << indent << "hole         : " << nCells[cellCellStencil::HOLE] << nl
+        << indent << "special      : " << nCells[cellCellStencil::SPECIAL] << nl
+        << decrIndent << endl;
+
+    return os;
+}
 
 // ************************************************************************* //

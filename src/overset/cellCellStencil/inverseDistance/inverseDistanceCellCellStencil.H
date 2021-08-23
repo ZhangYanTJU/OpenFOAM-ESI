@@ -76,6 +76,12 @@ protected:
         //- Dictionary of motion control parameters
         const dictionary dict_;
 
+        //- Allow holes as donors
+        const bool allowHoleDonors_;
+
+        //- Allow interpolared as donors
+        const bool allowInterpolatedDonors_;
+
         //- Small perturbation vector for geometric tests
         vector smallVec_;
 
@@ -217,6 +223,8 @@ protected:
             const boolList& isBlockedFace,
             labelList& cellRegion
         ) const;
+
+
         autoPtr<globalIndex> compactedRegionSplit
         (
             const fvMesh& mesh,
@@ -250,11 +258,22 @@ protected:
             const scalar layerRelax,
             const labelListList& allStencil,
             labelList& allCellTypes,
-            scalarField& allWeight
+            scalarField& allWeight,
+            const labelList& zoneID
         ) const;
 
         //- Create stencil starting from the donor containing the acceptor
-        virtual void createStencil(const globalIndex&);
+        //  allowHoleDonors : allow donors of type HOLE (otherwise are filtered
+        //  out)
+        virtual void createStencil
+        (
+            const globalIndex&,
+            const bool allowHoleDonors
+        );
+
+        //- Make holes next to live ones type SPECIAL and include in
+        //  interpolation stencil
+        void holeExtrapolationStencil(const globalIndex& globalCells);
 
 
 private:
@@ -285,6 +304,7 @@ public:
 
 
     // Member Functions
+
 
         //- Update stencils. Return false if nothing changed.
         virtual bool update();

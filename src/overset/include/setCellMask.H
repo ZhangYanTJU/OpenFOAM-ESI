@@ -35,12 +35,18 @@ Description
     cellMask.primitiveFieldRef() = 1.0;
     forAll(cellMask, cellI)
     {
-        if (cellTypes[cellI] == cellCellStencil::HOLE)
+        if
+        (
+            cellTypes[cellI] == cellCellStencil::HOLE
+         || cellTypes[cellI] == cellCellStencil::SPECIAL
+        )
         {
             cellMask[cellI] = 0.0;
         }
     }
     cellMask.correctBoundaryConditions();
+
+    faceMask = localMin<scalar>(mesh).interpolate(cellMask);
 }
 
 // ************************************************************************* //

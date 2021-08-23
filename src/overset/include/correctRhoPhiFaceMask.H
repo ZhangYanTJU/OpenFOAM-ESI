@@ -23,38 +23,34 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Global
-    blockedCellMask
-
 Description
-    Creates mask for blocked out cells
+    Correct phi on new faces C-I faces
 
 \*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-Info<< "Creating cellMask field to block out hole cells\n" << endl;
-
-volScalarField cellMask
+const surfaceScalarField faceMaskOld
 (
-    IOobject
-    (
-        "cellMask",
-        runTime.timeName(),
-        mesh,
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
-    ),
-    mesh,
-    dimensionedScalar("one", dimless, 1.0),
-    zeroGradientFvPatchScalarField::typeName
+    localMin<scalar>(mesh).interpolate(cellMask.oldTime())
 );
 
-surfaceScalarField faceMask
-(
-    localMin<scalar>(mesh).interpolate(cellMask)
-);
+// Zero Uf on old faceMask (H-I)
+rhoUf() *= faceMaskOld;
 
-#include "setCellMask.H"
+surfaceVectorField rhoUfint(fvc::interpolate(rho*U));
+
+// Update Uf and phi on new C-I faces
+rhoUf() += (1-faceMaskOld)*rhoUfint;
+
+// Update Uf boundary
+forAll(rhoUf().boundaryField(), patchI)
+{
+    rhoUf().boundaryFieldRef()[patchI] =
+        rhoUfint.boundaryField()[patchI];
+}
+
+// Calculate absolute flux from the mapped surface velocity
+phi = mesh.Sf() & rhoUf();
+
+phi *= faceMask;
 
 // ************************************************************************* //

@@ -8,7 +8,10 @@ cellCellStencil/trackingInverseDistance/voxelMeshSearch.C
 cellCellStencil/trackingInverseDistance/trackingInverseDistanceCellCellStencil.C
 cellCellStencil/leastSquares/leastSquaresCellCellStencil.C
 
-dynamicOversetFvMesh/dynamicOversetFvMesh.C
+oversetFvMesh = oversetFvMesh
+$(oversetFvMesh)/oversetFvMeshBase.C
+$(oversetFvMesh)/dynamicOversetFvMesh/dynamicOversetFvMesh.C
+$(oversetFvMesh)/staticOversetFvMesh/staticOversetFvMesh.C
 
 fvMeshPrimitiveLduAddressing/fvMeshPrimitiveLduAddressing.C
 

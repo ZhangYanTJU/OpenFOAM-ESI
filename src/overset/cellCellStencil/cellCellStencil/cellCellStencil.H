@@ -74,7 +74,9 @@ public:
     {
         CALCULATED = 0,     // normal operation
         INTERPOLATED = 1,   // interpolated
-        HOLE = 2            // hole
+        HOLE = 2,           // hole
+        SPECIAL = 3,         // hole that changes
+        POROUS = 4
     };
 
 
@@ -94,8 +96,6 @@ protected:
 
     // Protected Member Functions
 
-        //- Count occurrences (in parallel)
-        static labelList count(const label size, const labelUList& lst);
 
         //- Helper: create volScalarField for postprocessing.
         template<class Type>
@@ -105,6 +105,9 @@ protected:
             const word& name,
             const UList<Type>&
         );
+
+        //- Helper: strip off trailing _0
+        static word baseName(const word& name);
 
 
 private:
@@ -213,6 +216,9 @@ public:
             return zoneID(mesh_);
         }
 
+        //- Count occurrences (in parallel)
+        static labelList count(const label size, const labelUList& lst);
+
         //- Helper: create cell-cell addressing in global numbering
         static void globalCellCells
         (
@@ -223,8 +229,50 @@ public:
             labelListList& cellCells,
             pointListList& cellCellCentres
         );
+
+        //- Interpolation of acceptor cells from donor cells
+        template<class T>
+        static void interpolate
+        (
+            Field<T>& psi,
+            const fvMesh& mesh,
+            const cellCellStencil& overlap,
+            const List<scalarList>& wghts
+        );
+
+        //- Explicit interpolation of acceptor cells from donor cells. Looks
+        //  up cellCellStencil.
+        template<class T>
+        void interpolate(const fvMesh& mesh, Field<T>& psi) const;
+
+        //- Explicit interpolation of acceptor cells from donor cells with
+        //  boundary condition handling
+        template<class GeoField>
+        void interpolate(GeoField& psi) const;
+
+        //- Explicit interpolation of all registered fields. No boundary
+        //  conditions. Excludes selected fields (and their old-time fields)
+        template<class GeoField>
+        void interpolate
+        (
+            const fvMesh& mesh,
+            const wordHashSet& suppressed
+        ) const;
+
+        //- Version of correctBoundaryConditions that excludes 'overset' bcs
+        template<class GeoField, class SuppressBC>
+        static void correctBoundaryConditions(GeoField& psi);
+
+        //- Return info proxy.
+        //  Used to print stencil information to a stream
+        InfoProxy<cellCellStencil> info() const
+        {
+            return *this;
+        }
 };
 
+template<>
+Ostream& operator<<(Ostream& os, const InfoProxy<cellCellStencil>& ic);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
