@@ -30,6 +30,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "fvMatrix.H"
 #include "volFields.H"
+#include "cellCellStencilObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -64,14 +65,14 @@ void Foam::fv::velocityDampingConstraint::addDamping(fvMatrix<vector>& eqn)
 
     label nDamped = 0;
 
-    forAll(U, cellI)
+    for (const label celli : cells_)
     {
-        const scalar magU = mag(U[cellI]);
+        const scalar magU = mag(U[celli]);
         if (magU > UMax_)
         {
-            const scalar scale = sqr(Foam::cbrt(vol[cellI]));
+            const scalar scale = sqr(Foam::cbrt(vol[celli]));
 
-            diag[cellI] += scale*(magU-UMax_);
+            diag[celli] += C_*scale*(magU-UMax_);
 
             ++nDamped;
         }
@@ -96,7 +97,8 @@ Foam::fv::velocityDampingConstraint::velocityDampingConstraint
     const fvMesh& mesh
 )
 :
-    fv::cellSetOption(name, modelType, dict, mesh)
+    fv::cellSetOption(name, modelType, dict, mesh),
+    C_(1)
 {
     read(dict);
 }
@@ -125,6 +127,8 @@ bool Foam::fv::velocityDampingConstraint::read(const dictionary& dict)
     if (fv::cellSetOption::read(dict))
     {
         coeffs_.readEntry("UMax", UMax_);
+
+        coeffs_.readIfPresent("C", C_);
 
         if (!coeffs_.readIfPresent("UNames", fieldNames_))
         {

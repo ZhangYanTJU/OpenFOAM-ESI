@@ -10,7 +10,8 @@ EXE_INC = \
     -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
-    -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude
+    -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude \
+    -I$(LIB_SRC)/overset/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \
@@ -20,4 +21,5 @@ LIB_LIBS = \
     -lsolidThermo \
     -lturbulenceModels \
     -lincompressibleTurbulenceModels \
-    -lcompressibleTurbulenceModels
+    -lcompressibleTurbulenceModels \
+    -loverset
