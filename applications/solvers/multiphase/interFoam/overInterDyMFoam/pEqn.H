@@ -1,8 +1,5 @@
 {
     rAU = 1.0/UEqn.A();
-    //mesh.interpolate(rAU);
-
-    surfaceScalarField faceMask(localMin<scalar>(mesh).interpolate(cellMask));
 
     surfaceScalarField rAUf("rAUf", fvc::interpolate(rAU));
 
@@ -12,35 +9,14 @@
     //HbyA = rAU*UEqn.H();
     HbyA = constrainHbyA(rAU*H, U, p_rgh);
 
-    if (massFluxInterpolation)
-    {
-        #include "interpolatedFaces.H"
-    }
-
     surfaceScalarField phiHbyA("phiHbyA", fvc::flux(HbyA));
 
-    if (ddtCorr)
-    {
-        surfaceScalarField faceMaskOld
-        (
-            localMin<scalar>(mesh).interpolate(cellMask.oldTime())
-        );
-        phiHbyA +=
-            fvc::interpolate(rho*rAU)*faceMaskOld*fvc::ddtCorr(U, Uf);
-    }
     MRF.makeRelative(phiHbyA);
 
     if (p_rgh.needReference())
     {
         fvc::makeRelative(phiHbyA, U);
         adjustPhi(phiHbyA, U, p_rgh);
-        fvc::makeAbsolute(phiHbyA, U);
-    }
-
-    if (adjustFringe)
-    {
-        fvc::makeRelative(phiHbyA, U);
-        oversetAdjustPhi(phiHbyA, U);
         fvc::makeAbsolute(phiHbyA, U);
     }
 

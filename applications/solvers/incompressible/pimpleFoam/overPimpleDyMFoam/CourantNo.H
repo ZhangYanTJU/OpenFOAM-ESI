@@ -37,7 +37,10 @@ scalar meanCoNum = 0.0;
 
 if (mesh.nInternalFaces())
 {
-    surfaceScalarField phiMask(localMin<scalar>(mesh).interpolate(cellMask));
+    surfaceScalarField phiMask
+    (
+        localMin<scalar>(mesh).interpolate(cellMask + interpolatedCells)
+    );
 
     scalarField sumPhi(fvc::surfaceSum(mag(phiMask*phi))().internalField());
 

@@ -49,13 +49,9 @@ Description
 #include "turbulentTransportModel.H"
 #include "pimpleControl.H"
 #include "fvOptions.H"
-#include "CorrectPhi.H"
 #include "fvcSmooth.H"
 #include "cellCellStencilObject.H"
 #include "localMin.H"
-#include "interpolationCellPoint.H"
-#include "transform.H"
-#include "fvMeshSubset.H"
 #include "oversetAdjustPhi.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -76,8 +72,7 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
     #include "initContinuityErrs.H"
-    pimpleControl pimple(mesh);
-    #include "createTimeControls.H"
+
     #include "createDyMControls.H"
     #include "createFields.H"
     #include "createAlphaFluxes.H"
@@ -102,6 +97,7 @@ int main(int argc, char *argv[])
         #include "correctPhi.H"
     }
     #include "createUf.H"
+    #include "createControls.H"
 
     #include "setCellMask.H"
     #include "setInterpolatedCells.H"
@@ -119,7 +115,7 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        #include "readControls.H"
+        #include "readDyMControls.H"
 
         if (LTS)
         {
@@ -164,27 +160,7 @@ int main(int argc, char *argv[])
                     // Update cellMask field for blocking out hole cells
                     #include "setCellMask.H"
                     #include "setInterpolatedCells.H"
-
-                    const surfaceScalarField faceMaskOld
-                    (
-                        localMin<scalar>(mesh).interpolate(cellMask.oldTime())
-                    );
-
-                    // Zero Uf on old faceMask (H-I)
-                    Uf *= faceMaskOld;
-
-                    const surfaceVectorField Uint(fvc::interpolate(U));
-                    // Update Uf and phi on new C-I faces
-                    Uf += (1-faceMaskOld)*Uint;
-
-                    // Update Uf boundary
-                    forAll(Uf.boundaryField(), patchI)
-                    {
-                        Uf.boundaryFieldRef()[patchI] =
-                            Uint.boundaryField()[patchI];
-                    }
-
-                    phi = mesh.Sf() & Uf;
+                    #include "correctPhiFaceMask.H"
 
                     // Correct phi on individual regions
                     if (correctPhi)
@@ -194,17 +170,8 @@ int main(int argc, char *argv[])
 
                     mixture.correct();
 
-                    // Zero phi on current H-I
-                    const surfaceScalarField faceMask
-                    (
-                        localMin<scalar>(mesh).interpolate(cellMask)
-                    );
-                    phi *= faceMask;
-                    U   *= cellMask;
-
                     // Make the flux relative to the mesh motion
                     fvc::makeRelative(phi, U);
-
                 }
 
                 if (mesh.changing() && checkMeshCourantNo)
@@ -213,14 +180,9 @@ int main(int argc, char *argv[])
                 }
             }
 
-
             #include "alphaControls.H"
             #include "alphaEqnSubCycle.H"
 
-            const surfaceScalarField faceMask
-            (
-                localMin<scalar>(mesh).interpolate(cellMask)
-            );
             rhoPhi *= faceMask;
 
             mixture.correct();

@@ -86,9 +86,6 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        #include "readTimeControls.H"
-
-        #include "readControls.H"
         #include "readDyMControls.H"
 
         #include "compressibleCourantNo.H"
@@ -128,44 +125,13 @@ int main(int argc, char *argv[])
                     MRF.update();
 
                     #include "setCellMask.H"
-
-                    const surfaceScalarField faceMaskOld
-                    (
-                        localMin<scalar>(mesh).interpolate(cellMask.oldTime())
-                    );
-
-                    // Zero Uf on old faceMask (H-I)
-                    rhoUf() *= faceMaskOld;
-
-                    //fvc::correctRhoUf(rhoUfint, rho, U, phi);
-                    surfaceVectorField rhoUfint(fvc::interpolate(rho*U));
-
-                    // Update Uf and phi on new C-I faces
-                    rhoUf() += (1-faceMaskOld)*rhoUfint;
-
-                    // Update Uf boundary
-                    forAll(rhoUf().boundaryField(), patchI)
-                    {
-                        rhoUf().boundaryFieldRef()[patchI] =
-                            rhoUfint.boundaryField()[patchI];
-                    }
-
-                    // Calculate absolute flux from the mapped surface velocity
-                    phi = mesh.Sf() & rhoUf();
+                    #include "setInterpolatedCells.H"
+                    #include "correctRhoPhiFaceMask.H"
 
                     if (correctPhi)
                     {
                         #include "correctPhi.H"
                     }
-
-                    // Zero phi on current H-I
-                    const surfaceScalarField faceMask
-                    (
-                        localMin<scalar>(mesh).interpolate(cellMask)
-                    );
-
-                    phi *= faceMask;
-                    U   *= cellMask;
 
                      // Make the fluxes relative to the mesh-motion
                     fvc::makeRelative(phi, rho, U);

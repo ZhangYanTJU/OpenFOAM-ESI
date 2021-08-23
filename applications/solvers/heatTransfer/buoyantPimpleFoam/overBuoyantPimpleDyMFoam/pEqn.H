@@ -21,16 +21,6 @@ surfaceScalarField phiHbyA
     fvc::flux(rho*HbyA) + phig
 );
 
-if (ddtCorr)
-{
-    surfaceScalarField faceMaskOld
-    (
-        localMin<scalar>(mesh).interpolate(cellMask.oldTime())
-    );
-
-    phiHbyA +=
-        faceMaskOld*MRF.zeroFilter(rhorAUf*fvc::ddtCorr(rho, U, phi));
-}
 
 MRF.makeRelative(fvc::interpolate(rho), phiHbyA);
 
@@ -122,8 +112,4 @@ if (thermo.dpdt())
     }
 }
 
-surfaceScalarField faceMask
-(
-    localMin<scalar>(mesh).interpolate(cellMask)
-);
 phi *= faceMask;
