@@ -1,0 +1,25 @@
+/*--------------------------------*- C++ -*---------------------------------*\
+|    //\\          A            |                                            |
+|   //   \\        X            | Axion:    GM's End-2-End CFD Solution      |
+|  //      \\      I            | Version:  0.2                              |
+| //         \\    O            | Web:      axion.gm.com                     |
+| ==============   N            |                                            |
+\*--------------------------------------------------------------------------*/
+
+FoamFile
+{
+	object         fvOptions;
+	class          dictionary;
+	format         ascii;
+	version        2.0;
+	location       "system";
+}
+
+limitU
+{
+    type            velocityDampingConstraint;
+    active          true;
+    selectionMode   cellType;
+    UMax        0;
+    C           4;
+}
