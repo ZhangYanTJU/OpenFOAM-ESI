@@ -1080,7 +1080,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
 
     reduce(nHoleDonors, sumOp<label>());
 
-    DebugInfo<< FUNCTION_NAME << "nHole Donors : " << nHoleDonors << endl
+    DebugInfo<< FUNCTION_NAME << "nHole Donors : " << nHoleDonors << endl;
 
     interpolationCells_.transfer(interpolationCells);
 
