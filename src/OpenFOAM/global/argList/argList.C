@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1205,7 +1205,7 @@ void Foam::argList::parse
             {
                 parRunControl_.distributed(true);
                 source = "-roots";
-                if (roots.size() != 1)
+                if (roots.size() > 1)
                 {
                     dictNProcs = roots.size()+1;
                 }
@@ -1214,6 +1214,7 @@ void Foam::argList::parse
             {
                 roots.resize(Pstream::nProcs()-1, fileName::null);
 
+                parRunControl_.distributed(true);
                 source = "-hostRoots";
                 ITstream is(source, options_["hostRoots"]);
 
@@ -1252,7 +1253,7 @@ void Foam::argList::parse
                     }
                 }
 
-                if (roots.size() != 1)
+                if (roots.size() > 1)
                 {
                     dictNProcs = roots.size()+1;
                 }
@@ -1296,6 +1297,12 @@ void Foam::argList::parse
                 {
                     parRunControl_.distributed(true);
                     decompDict.readEntry("roots", roots);
+                    if (roots.empty())
+                    {
+                        DetailInfo
+                            << "WARNING: running distributed"
+                            << " but did not specify roots!" << nl;
+                    }
                 }
             }
 
@@ -1363,8 +1370,8 @@ void Foam::argList::parse
                 {
                     options_.set("case", roots[slave-1]/globalCase_);
 
-                    OPstream toSlave(Pstream::commsTypes::scheduled, slave);
-                    toSlave << args_ << options_ << roots.size();
+                    OPstream toProc(Pstream::commsTypes::scheduled, slave);
+                    toProc << args_ << options_ << parRunControl_.distributed();
                 }
                 options_.erase("case");
 
@@ -1410,24 +1417,24 @@ void Foam::argList::parse
                 // Distribute the master's argument list (unaltered)
                 for (const int slave : Pstream::subProcs())
                 {
-                    OPstream toSlave(Pstream::commsTypes::scheduled, slave);
-                    toSlave << args_ << options_ << roots.size();
+                    OPstream toProc(Pstream::commsTypes::scheduled, slave);
+                    toProc << args_ << options_ << parRunControl_.distributed();
                 }
             }
         }
         else
         {
             // Collect the master's argument list
-            label nroots;
+            bool isDistributed;
 
             IPstream fromMaster
             (
                 Pstream::commsTypes::scheduled,
                 Pstream::masterNo()
             );
-            fromMaster >> args_ >> options_ >> nroots;
+            fromMaster >> args_ >> options_ >> isDistributed;
 
-            parRunControl_.distributed(nroots);
+            parRunControl_.distributed(isDistributed);
 
             // Establish rootPath_/globalCase_/case_ for slave
             setCasePaths();
