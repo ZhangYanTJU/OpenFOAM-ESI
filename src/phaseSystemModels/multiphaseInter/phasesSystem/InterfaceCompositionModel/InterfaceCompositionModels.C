@@ -51,6 +51,7 @@ License
 #include "kineticGasEvaporation.H"
 #include "Lee.H"
 #include "interfaceHeatResistance.H"
+#include "interfaceOxide.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -571,6 +572,37 @@ namespace Foam
             solidThermo,
             pureMixture,
             hPowerSolidThermoPhysics
+        );
+
+
+        // interfaceOxide model definitions
+
+        //From pure phase (tabulated) to solid phase (const)
+        makeInterfacePureType
+        (
+            interfaceOxide,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics,
+            heSolidThermo,
+            solidThermo,
+            pureMixture,
+            hConstSolidThermoPhysics
+        );
+
+        // From pure phase (rho const) to phase (rho const)
+        makeInterfacePureType
+        (
+            interfaceOxide,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            constRhoHThermoPhysics,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            constRhoHThermoPhysics
         );
 
 }
