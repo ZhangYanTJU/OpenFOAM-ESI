@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,8 +51,8 @@ laminar::laminar
     const dictionary& dict
 )
 :
-    filmTurbulenceModel(type(), film, dict),
-    Cf_(dict_.get<scalar>("Cf"))
+    filmTurbulenceModel(type(), film, dict)
+//     Cf_(dict_.get<scalar>("Cf"))
 {}
 
 
@@ -91,21 +91,38 @@ void laminar::correct()
 
 tmp<faVectorMatrix> laminar::Su(areaVectorField& U) const
 {
-    // local references to film fields
+    return
+    (
+        primaryRegionFriction(U) + wallFriction(U)
+    );
+}
+
+
+tmp<faVectorMatrix> laminar::wallFriction(areaVectorField& U) const
+{
+     // local references to film fields
     tmp<areaVectorField> Uw = film_.Uw();
-    tmp<areaVectorField> Up = film_.Up();
-
-    // employ simple coeff-based model
-    const dimensionedScalar Cf("Cf", dimVelocity, Cf_);
-
     tmp<areaScalarField> wf = Cw();
 
     return
     (
-       - fam::Sp(Cf, U) + Cf*Up()     // surface contribution
        - fam::Sp(wf(), U) + wf()*Uw() // wall contribution
     );
 }
+
+
+// tmp<faVectorMatrix> laminar::primaryRegionFriction(areaVectorField& U) const
+// {
+//     tmp<areaVectorField> Up = film_.Up();
+//
+//     // employ simple coeff-based model
+//     const dimensionedScalar Cf("Cf", dimVelocity, Cf_);
+//
+//     return
+//     (
+//        - fam::Sp(Cf, U) + Cf*Up()     // surface contribution
+//     );
+// }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

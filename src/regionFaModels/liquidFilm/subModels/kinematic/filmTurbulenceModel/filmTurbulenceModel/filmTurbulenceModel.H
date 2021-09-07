@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,6 +82,12 @@ public:
             mManningStrickler
         };
 
+        enum shearMethodType
+        {
+            msimple,
+            mwallFunction
+        };
+
 
 protected:
 
@@ -93,11 +99,23 @@ protected:
         //- Names for friction models
         static const Enum<frictionMethodType> frictionMethodTypeNames_;
 
+        //- Names for shear stress models
+        static const Enum<shearMethodType> shearMethodTypeNames_;
+
         //- Model dictionary
         const dictionary dict_;
 
         //- Method used
         const frictionMethodType method_;
+
+        //- Shear method used
+        const shearMethodType shearMethod_;
+
+        //- Name of density field (optional)
+        word rhoName_;
+
+        //- Reference density needed for incompressible calculations
+        scalar rhoRef_;
 
 
 public:
@@ -154,13 +172,29 @@ public:
             const liquidFilmBase& film() const;
 
 
-        // Evolution
+        // Turbulence
+
+             //- Return the effective viscous stress (laminar + turbulent).
+            tmp<volSymmTensorField> devRhoReff() const;
+
+            //- Return primary region frintion
+            tmp<faVectorMatrix> primaryRegionFriction
+            (
+                areaVectorField& U
+            ) const;
+
+            //- Return rho if specified otherwise rhoRef
+            tmp<volScalarField> rho() const;
 
             //- Return the wall film surface friction
             virtual tmp<areaScalarField> Cw() const;
 
             //- Return the film turbulence viscosity
             virtual tmp<areaScalarField> mut() const = 0;
+
+
+        // Evolution
+
 
             //- Correct/update the model
             virtual void correct() = 0;

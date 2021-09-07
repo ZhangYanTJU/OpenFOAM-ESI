@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,7 +60,7 @@ class laminar
     // Private Data
 
         //- Surface roughness coefficient
-        scalar Cf_;
+        //scalar Cf_;
 
 
     // Private Member Functions
@@ -90,16 +90,22 @@ public:
 
     // Member Functions
 
-        // Evolution
+        // Turbulence
+
+            //- Wall friction
+            tmp<faVectorMatrix> wallFriction(areaVectorField& U) const;
 
             //- Return the film turbulence viscosity
             virtual tmp<areaScalarField> mut() const;
 
-            //- Correct/update the model
-            virtual void correct();
-
             //- Return the source for the film momentum equation
             virtual tmp<faVectorMatrix> Su(areaVectorField& U) const;
+
+
+        // Evolution
+
+            //- Correct/update the model
+            virtual void correct();
 };
 
 

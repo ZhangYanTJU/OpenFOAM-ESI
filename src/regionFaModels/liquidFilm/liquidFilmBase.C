@@ -551,6 +551,12 @@ scalar liquidFilmBase::pRef()
     return pRef_;
 }
 
+
+word liquidFilmBase::UName() const
+{
+    return UName_;
+}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace areaSurfaceFilmModels

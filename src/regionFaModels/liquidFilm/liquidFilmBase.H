@@ -261,6 +261,9 @@ public:
             //- Access to pRef
             scalar pRef();
 
+            //- Name of the U field
+            word UName() const;
+
 
             // Transfer fields - to the primary region (lagragian injection)
 
