@@ -25,35 +25,56 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "interfaceOxide.H"
-#include "constants.H"
-#include "cutCellIso.H"
-#include "volPointInterpolation.H"
-#include "wallPolyPatch.H"
-#include "fvcSmooth.H"
-
-using namespace Foam::constant;
+#include "interfaceOxideRate.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo, class OtherThermo>
-Foam::meltingEvaporationModels::interfaceOxide<Thermo, OtherThermo>
-::interfaceOxide
+Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>
+::interfaceOxideRate
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
     InterfaceCompositionModel<Thermo, OtherThermo>(dict, pair),
-    C_("C", dimDensity/dimTime, dict),
-    Tactivate_("Tactivate", dimTemperature, dict),
-    alphaCrit_("alphaCrit", dimless, dict),
-
-    mDotc_
+    C_
+    (
+        dimensionedScalar
+        (
+            dimDensity/dimTime,
+            dict.getCheck<scalar>("C", scalarMinMax::ge(0))
+        )
+    ),
+    Tliquidus_
+    (
+        dimensionedScalar
+        (
+            dimTemperature,
+            dict.getCheck<scalar>("Tliquidus", scalarMinMax::ge(0))
+        )
+    ),
+    Tsolidus_
+    (
+        dimensionedScalar
+        (
+            dimTemperature,
+            dict.getCheck<scalar>("Tsolidus", scalarMinMax::ge(0))
+        )
+    ),
+    oxideCrit_
+    (
+        dimensionedScalar
+        (
+            dimDensity,
+            dict.getCheck<scalar>("oxideCrit", scalarMinMax::ge(0))
+        )
+    ),
+    mDotOxide_
     (
         IOobject
         (
-            "mDotc",
+            "mDotOxide",
             this->mesh_.time().timeName(),
             this->mesh_,
             IOobject::NO_READ,
@@ -62,76 +83,61 @@ Foam::meltingEvaporationModels::interfaceOxide<Thermo, OtherThermo>
         this->mesh_,
         dimensionedScalar(dimDensity/dimTime, Zero)
     )
-{
-    if (sign(C_.value()) < 0)
-    {
-
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class Thermo, class OtherThermo>
 Foam::tmp<Foam::volScalarField>
-Foam::meltingEvaporationModels::interfaceOxide<Thermo, OtherThermo>
-::Kexp(const volScalarField& T)
+Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>::Kexp
+(
+    const volScalarField& T
+)
 {
-    const volScalarField ST(Foam::exp(1 - 1/max(T/Tactivate_, 1e-6)));
-
     const volScalarField& from = this->pair().from();
     const volScalarField& to = this->pair().to();
 
-    const volScalarField boundedAlphaSqr
-    (
-        from*(1-from)*max((alphaCrit_.value() - to)/alphaCrit_.value(), scalar(0))
-    );
+    // (CSC:Eq. 2)
+    tmp<volScalarField> Salpha = from*(1 - from);
 
-    mDotc_ = C_*boundedAlphaSqr*ST;
+    // (CSC:Eq. 5)
+    tmp<volScalarField> Soxide =
+        max((oxideCrit_.value() - to)/oxideCrit_.value(), scalar(0));
 
-    return tmp<volScalarField>(new volScalarField(mDotc_));
+    // (CSC:Eq. 4)
+    tmp<volScalarField> ST =
+        Foam::exp(1 - 1/max((T - Tsolidus_)/(Tliquidus_ - Tsolidus_), 1e-6));
+
+    // (CSC:Eq. 6)
+    mDotOxide_ = C_*Salpha*Soxide*ST;
+
+    return tmp<volScalarField>::New(mDotOxide_);
 }
 
 
 template<class Thermo, class OtherThermo>
 Foam::tmp<Foam::volScalarField>
-Foam::meltingEvaporationModels::interfaceOxide<Thermo, OtherThermo>::KSp
+Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>::KSp
 (
     label variable,
     const volScalarField& refValue
 )
 {
-    return tmp<volScalarField> ();
+    return nullptr;
 }
 
 
 template<class Thermo, class OtherThermo>
 Foam::tmp<Foam::volScalarField>
-Foam::meltingEvaporationModels::interfaceOxide<Thermo, OtherThermo>::KSu
+Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>::KSu
 (
     label variable,
     const volScalarField& refValue
 )
 {
-    return tmp<volScalarField> ();
+    return nullptr;
 }
 
-
-template<class Thermo, class OtherThermo>
-const Foam::dimensionedScalar&
-Foam::meltingEvaporationModels::interfaceOxide<Thermo, OtherThermo>
-::Tactivate() const
-{
-    return Tactivate_;
-}
-
-
-template<class Thermo, class OtherThermo>
-bool
-Foam::meltingEvaporationModels::
-interfaceOxide<Thermo, OtherThermo>::includeDivU()
-{
-    return true;
-}
 
 // ************************************************************************* //

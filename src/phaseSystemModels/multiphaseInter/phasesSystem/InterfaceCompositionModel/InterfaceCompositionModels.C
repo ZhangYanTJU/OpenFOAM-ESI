@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,7 +51,7 @@ License
 #include "kineticGasEvaporation.H"
 #include "Lee.H"
 #include "interfaceHeatResistance.H"
-#include "interfaceOxide.H"
+#include "interfaceOxideRate.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -575,12 +575,12 @@ namespace Foam
         );
 
 
-        // interfaceOxide model definitions
+        // interfaceOxideRate model definitions
 
         //From pure phase (tabulated) to solid phase (const)
         makeInterfacePureType
         (
-            interfaceOxide,
+            interfaceOxideRate,
             heRhoThermo,
             rhoThermo,
             pureMixture,
@@ -594,7 +594,7 @@ namespace Foam
         // From pure phase (rho const) to phase (rho const)
         makeInterfacePureType
         (
-            interfaceOxide,
+            interfaceOxideRate,
             heRhoThermo,
             rhoThermo,
             pureMixture,
