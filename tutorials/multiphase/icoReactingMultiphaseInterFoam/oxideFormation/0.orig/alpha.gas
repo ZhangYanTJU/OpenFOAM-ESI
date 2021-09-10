@@ -16,34 +16,24 @@ FoamFile
 
 dimensions      [0 0 0 0 0 0 0];
 
-internalField   uniform 0;
+internalField   uniform 1;
 
 boundaryField
 {
-    left
-    {
-        type            zeroGradient;
-    }
-
-    right
-    {
-        type            zeroGradient;
-    }
-
-    bottom
+    bottomInlet
     {
         type            fixedValue;
         value           uniform 0;
     }
 
-    top
+    topOutlet
     {
         type            inletOutlet;
-        inletValue      uniform 1;
-        value           uniform 1;
+        inletValue      $internalField;
+        value           $internalField;
     }
 
-    frontAndBack
+    "(left|right|front|back|bottomLeft|bottomRight)"
     {
         type            zeroGradient;
     }

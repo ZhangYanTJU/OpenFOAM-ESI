@@ -14,41 +14,29 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions          [ 1 -1 -2 0 0 0 0 ];
+dimensions      [ 1 -1 -2 0 0 0 0 ];
 
-internalField       uniform 1e5;
+internalField   uniform 1e5;
 
 boundaryField
 {
-    left
+    bottomInlet
     {
         type            fixedFluxPressure;
-        value           uniform 1e5;
+        value           $internalField;
     }
 
-    right
-    {
-        type            fixedFluxPressure;
-        value           uniform 1e5;
-    }
-
-    bottom
-    {
-        type            fixedFluxPressure;
-        value           uniform 1e5;
-    }
-
-    top
+    topOutlet
     {
         type            prghTotalPressure;
         p0              $internalField;
-        value           uniform 100000;
+        value           $internalField;
     }
 
-    frontAndBack
+    "(left|right|front|back|bottomLeft|bottomRight)"
     {
         type            fixedFluxPressure;
-        value           uniform 1e5;
+        value           $internalField;
     }
 }
 

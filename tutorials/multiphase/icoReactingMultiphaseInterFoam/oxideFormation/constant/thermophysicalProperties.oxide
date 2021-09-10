@@ -25,26 +25,27 @@ thermoType
     energy          sensibleEnthalpy;
 }
 
+
 mixture
 {
     specie
     {
-        nMoles          1;
-        molWeight       18.9;
+        molWeight   101.96;
     }
     equationOfState
     {
-        rho             950.4;
+        rho         3950;
     }
     thermodynamics
     {
-        Cp              4216;
-        Hf              2.45e6;
+        Hf          0;
+        Cp          451;
     }
     transport
     {
         Pr              6.62;
         mu              959e-6;
+//      kappa       30;
     }
 }
 

@@ -20,32 +20,35 @@ internalField   uniform 0;
 
 boundaryField
 {
-    left
+    bottomInlet
     {
-        type            zeroGradient;
+        type                fixedValue;
+        value               $internalField;
     }
 
-    right
+    topOutlet
     {
-        type            zeroGradient;
+        type                inletOutlet;
+        inletValue          $internalField;
+        value               $internalField;
     }
 
-    bottom
+    "(left|right|front|back|bottomLeft|bottomRight)"
     {
-        type            fixedValue;
-        value           uniform 0;
-    }
-
-    top
-    {
-        type            inletOutlet;
-        inletValue      uniform 0;
-        value           uniform 0;
-    }
-
-    frontAndBack
-    {
-        type            zeroGradient;
+        type                fastSorption;
+        /*
+        model               Langmuir;
+        LangmuirCoeffs
+        {
+            max             0.5;
+            aL              0.1;
+        }
+        */
+        model               Henry;
+        HenryCoeffs
+        {
+            k             0.1;
+        }
     }
 }
 

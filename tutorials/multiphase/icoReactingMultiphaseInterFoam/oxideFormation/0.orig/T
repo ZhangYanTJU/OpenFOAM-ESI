@@ -14,44 +14,28 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions          [0 0 0 1 0 0 0];
+dimensions      [0 0 0 1 0 0 0];
 
-internalField       uniform 371;
+internalField   uniform 1013.15;
 
 boundaryField
 {
-    left
+    bottomInlet
     {
-         type            zeroGradient;
+        type            fixedValue;
         value           $internalField;
     }
 
-    right
-    {
-        type            zeroGradient;
-        value           $internalField;
-    }
-
-    bottom
-    {
-        type            externalWallHeatFluxTemperature;
-        mode            flux;
-        q               uniform  18.5e3;
-        kappaMethod     fluidThermo;
-        value           $internalField;
-    }
-
-    top
+    topOutlet
     {
         type            inletOutlet;
-        value           uniform 371;
-        inletValue      uniform 371;
+        value           $internalField;
+        inletValue      $internalField;
     }
 
-    frontAndBack
+    "(left|right|front|back|bottomLeft|bottomRight)"
     {
         type            zeroGradient;
-        value           $internalField;
     }
 }
 

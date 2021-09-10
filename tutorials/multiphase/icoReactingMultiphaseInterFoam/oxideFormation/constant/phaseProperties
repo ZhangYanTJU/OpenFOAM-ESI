@@ -10,7 +10,6 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-
     object      phaseProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -39,7 +38,7 @@ surfaceTension
     (gas and liquid)
     {
         type            constant;
-        sigma           0.07;
+        sigma           0.87;
     }
 
     (oxide and liquid)
@@ -61,9 +60,10 @@ massTransferModel
     (liquid to oxide)
     {
         type                interfaceOxideRate;
-        C                   0.1;
-        alphaCrit           0.01;
-        Tactivate           372;
+        C                   20;
+        Tsolidus            823.15;
+        Tliquidus           884.15;
+        oxideCrit           1;
    }
 );
 

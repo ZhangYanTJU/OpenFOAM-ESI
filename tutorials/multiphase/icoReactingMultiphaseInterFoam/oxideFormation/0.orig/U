@@ -10,7 +10,7 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volVectorField;
-    object      U.air;
+    object      U;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -20,35 +20,22 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    left
+    bottomInlet
     {
         type            fixedValue;
-        value           uniform (0 0 0);
+        value           uniform (0 0 0.4);
     }
 
-    right
-    {
-        type            fixedValue;
-        value           uniform (0 0 0);
-    }
-
-    bottom
-    {
-        type            fixedValue;
-        value           uniform (0 0.1 0);
-    }
-
-    top
+    topOutlet
     {
         type            pressureInletOutletVelocity;
-        value           uniform (0 0 0);
-        inletValue      uniform (0 0 0);
+        inletValue      $internalField;
+        value           $internalField;
     }
 
-    frontAndBack
+    "(left|right|front|back|bottomLeft|bottomRight)"
     {
-        type            fixedValue;
-        value           uniform (0 0 0);
+        type            noSlip;
     }
 }
 
