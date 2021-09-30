@@ -61,17 +61,20 @@ void Foam::solution::read(const dictionary& dict)
             if (relaxDict.found("fields"))
             {
                 fieldRelaxDict_ = relaxDict.subDict("fields");
+                fieldRelaxFns_.clear();
             }
 
             if (relaxDict.found("equations"))
             {
                 eqnRelaxDict_ = relaxDict.subDict("equations");
+                eqnRelaxFns_.clear();
             }
         }
         else
         {
             // backwards compatibility
             fieldRelaxDict_.clear();
+            fieldRelaxFns_.clear();
 
             for (const word& e : relaxDict.toc())
             {
@@ -89,13 +92,38 @@ void Foam::solution::read(const dictionary& dict)
             }
 
             eqnRelaxDict_ = relaxDict;
+            eqnRelaxFns_.clear();
         }
 
-        fieldRelaxDefault_ =
-            fieldRelaxDict_.getOrDefault<scalar>("default", 0);
+        // fieldRelaxDefault_ =
+        //     fieldRelaxDict_.getOrDefault<scalar>("default", 0);
+        fieldRelaxDefault_ = Function1<scalar>::NewIfPresent
+        (
+            "default",
+            fieldRelaxDict_
+        );
+        if (!fieldRelaxDefault_.valid())
+        {
+            fieldRelaxDefault_.set
+            (
+                new Function1Types::Constant<scalar>("default", 0)
+            );
+        }
 
-        eqnRelaxDefault_ =
-            eqnRelaxDict_.getOrDefault<scalar>("default", 0);
+        //eqnRelaxDefault_ =
+        //    eqnRelaxDict_.getOrDefault<scalar>("default", 0);
+        eqnRelaxDefault_ = Function1<scalar>::NewIfPresent
+        (
+            "default",
+            eqnRelaxDict_
+        );
+        if (!eqnRelaxDefault_.valid())
+        {
+            eqnRelaxDefault_.set
+            (
+                new Function1Types::Constant<scalar>("default", 0)
+            );
+        }
 
         DebugInfo
             << "Relaxation factors:" << nl
@@ -141,8 +169,6 @@ Foam::solution::solution
     caching_(false),
     fieldRelaxDict_(),
     eqnRelaxDict_(),
-    fieldRelaxDefault_(0),
-    eqnRelaxDefault_(0),
     solvers_()
 {
     if
@@ -257,11 +283,20 @@ Foam::scalar Foam::solution::fieldRelaxationFactor(const word& name) const
 
     if (fieldRelaxDict_.found(name))
     {
-        return fieldRelaxDict_.get<scalar>(name);
+        //return fieldRelaxDict_.get<scalar>(name);
+Pout<< "fieldRelaxDict_:" << fieldRelaxDict_ << endl;
+Pout<< "name:" << name << endl;
+
+        return Function1<scalar>::New
+        (
+            name,
+            fieldRelaxDict_,
+            fieldRelaxFns_
+        )().value(time().timeOutputValue());
     }
-    else if (fieldRelaxDefault_ > SMALL)
+    else if (fieldRelaxDefault_.valid())
     {
-        return fieldRelaxDefault_;
+        return fieldRelaxDefault_().value(time().timeOutputValue());
     }
 
     FatalIOErrorInFunction(fieldRelaxDict_)
@@ -279,11 +314,17 @@ Foam::scalar Foam::solution::equationRelaxationFactor(const word& name) const
 
     if (eqnRelaxDict_.found(name))
     {
-        return eqnRelaxDict_.get<scalar>(name);
+        //return eqnRelaxDict_.get<scalar>(name);
+        return Function1<scalar>::New
+        (
+            name,
+            eqnRelaxDict_,
+            eqnRelaxFns_
+        )().value(time().timeOutputValue());
     }
-    else if (eqnRelaxDefault_ > SMALL)
+    else if (eqnRelaxDefault_.valid())
     {
-        return eqnRelaxDefault_;
+        return eqnRelaxDefault_().value(time().timeOutputValue());
     }
 
     FatalIOErrorInFunction(eqnRelaxDict_)

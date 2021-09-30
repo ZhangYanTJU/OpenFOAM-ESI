@@ -209,4 +209,81 @@ Foam::Function1<Type>::NewIfPresent
 }
 
 
+template<class Type>
+Foam::refPtr<Foam::Function1<Type>>
+Foam::Function1<Type>::New
+(
+    const word& entryName,
+    const dictionary& dict,
+    HashPtrTable<Function1<Type>>& cache,
+    const bool mandatory
+)
+{
+    // Use the dictionary to find the keyword (allowing wildcards).
+    // Alternative would be to have
+    // a HashTable where the key type uses a wildcard match
+
+    const entry* eptr = dict.findEntry(entryName);
+
+    if (eptr)
+    {
+        // Use keyword (potentially a wildcard) instead of entry name
+
+        const auto& kw = eptr->keyword();
+
+        const auto iter = cache.find(kw);
+        if (iter.found())
+        {
+            // Return reference to cached version
+            return *iter();
+        }
+        else
+        {
+            // Use normal New function. Note that search can now be literal
+            // (since kw can be wildcard but will match perfectly)
+            auto f(Function1<Type>::New(kw, dict, mandatory));
+
+            if (f.valid())
+            {
+                Function1<Type>& fPtr = f.ref();
+                cache.insert(kw, f);
+                // Return reference to inserted
+                return fPtr;
+            }
+            else if (mandatory)
+            {
+                FatalIOErrorInFunction(dict) << "No match for " << entryName
+                    << exit(FatalIOError);
+            }
+        }
+    }
+    else if (mandatory)
+    {
+        FatalIOErrorInFunction(dict) << "No match for " << entryName
+            << exit(FatalIOError);
+    }
+    return nullptr;
+}
+
+
+template<class Type>
+Foam::refPtr<Foam::Function1<Type>>
+Foam::Function1<Type>::NewOrDefault
+(
+    const word& entryName,
+    const dictionary& dict,
+    HashPtrTable<Function1<Type>>& cache,
+    const Type& defltVal
+)
+{
+    auto f(Function1<Type>::New(entryName, dict, cache, false));
+
+    if (!f.valid())
+    {
+        f.reset(new Function1Types::Constant<scalar>("default", defltVal));
+    }
+    return f;
+}
+
+
 // ************************************************************************* //

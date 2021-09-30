@@ -39,6 +39,7 @@ SourceFiles
 #define solution_H
 
 #include "IOdictionary.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,14 +65,20 @@ class solution
         //- Dictionary of relaxation factors for all the fields
         dictionary fieldRelaxDict_;
 
+        //- Cache of Function1s in above dictionary
+        mutable HashPtrTable<Function1<scalar>> fieldRelaxFns_;
+
         //- Dictionary of relaxation factors for all the equations
         dictionary eqnRelaxDict_;
 
+        //- Cache of Function1s in above dictionary
+        mutable HashPtrTable<Function1<scalar>> eqnRelaxFns_;
+
         //- Optional default relaxation factor for all the fields
-        scalar fieldRelaxDefault_;
+        autoPtr<Function1<scalar>> fieldRelaxDefault_;
 
         //- Optional default relaxation factor for all the equations
-        scalar eqnRelaxDefault_;
+        autoPtr<Function1<scalar>> eqnRelaxDefault_;
 
         //- Dictionary of solver parameters for all the fields
         dictionary solvers_;

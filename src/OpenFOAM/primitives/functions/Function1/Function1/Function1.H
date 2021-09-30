@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,6 +76,7 @@ SourceFiles
 
 #include "function1Base.H"
 #include "Field.H"
+#include "HashPtrTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -189,6 +190,28 @@ public:
             const dictionary& dict,
             const word& redirectType = word::null
         );
+
+        //- Caching versions - accept wildcards in dictionary
+
+            //- Selector with external storage of Function1 to allow wildcards
+            //  in dictionary
+            static refPtr<Function1<Type>> New
+            (
+                const word& entryName,
+                const dictionary& dict,
+                HashPtrTable<Function1<Type>>& cache,
+                const bool mandatory = true
+            );
+
+            //- Selector with external storage of Function1 to allow wildcards
+            //  in dictionary
+            static refPtr<Function1<Type>> NewOrDefault
+            (
+                const word& entryName,
+                const dictionary& dict,
+                HashPtrTable<Function1<Type>>& cache,
+                const Type& defaultValue
+            );
 
 
     //- Destructor
