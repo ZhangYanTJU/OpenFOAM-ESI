@@ -109,6 +109,20 @@ void Foam::ParticleCollector<CloudType>::makeLogFile
 
 
 template<class CloudType>
+bool Foam::ParticleCollector<CloudType>::hitPlane
+(
+    const scalar d1,
+    const scalar d2
+) const
+{
+    return
+        sign(d1) != sign(d2)
+     || mag(d1) < ROOTVSMALL
+     || mag(d2) < ROOTVSMALL;
+}
+
+
+template<class CloudType>
 void Foam::ParticleCollector<CloudType>::initPolygons
 (
     const List<Field<point>>& polygons
@@ -303,9 +317,16 @@ void Foam::ParticleCollector<CloudType>::collectParcelPolygon
         const scalar d1 = normal_[facei] & (p1 - pf);
         const scalar d2 = normal_[facei] & (p2 - pf);
 
-        if (sign(d1) == sign(d2))
+        if (!hitPlane(d1, d2))
         {
-            // Did not cross polygon plane
+            DebugInfo
+                << "Did not cross plane:"
+                << " origin:" << coordSys_.origin()
+                << " normal:" << normal_[0]
+                << " p1:" << p1
+                << " p2:" << p2
+                << endl;
+
             continue;
         }
 
@@ -354,8 +375,16 @@ void Foam::ParticleCollector<CloudType>::collectParcelConcentricCircles
     const scalar d1 = normal_[0] & (p1 - coordSys_.origin());
     const scalar d2 = normal_[0] & (p2 - coordSys_.origin());
 
-    if (sign(d1) == sign(d2))
+    if (!hitPlane(d1, d2))
     {
+        DebugInfo
+            << "Did not cross plane:"
+            << " origin:" << coordSys_.origin()
+            << " normal:" << normal_[0]
+            << " p1:" << p1
+            << " p2:" << p2
+            << endl;
+
         // Did not cross plane
         return;
     }

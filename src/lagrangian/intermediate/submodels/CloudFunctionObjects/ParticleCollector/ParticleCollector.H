@@ -214,6 +214,14 @@ private:
             const Field<scalar>& area
         );
 
+        //- Return true if the signed distances show the particle hit the
+        //- collection plane
+        bool hitPlane
+        (
+            const scalar d1,
+            const scalar d2
+        ) const;
+
         //- Initialise polygon collectors
         void initPolygons(const List<Field<point>>& polygons);
 
