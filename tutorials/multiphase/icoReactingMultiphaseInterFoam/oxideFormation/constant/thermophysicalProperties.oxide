@@ -30,21 +30,22 @@ mixture
 {
     specie
     {
-        molWeight   101.96;
+        nMoles          1;
+        molWeight       50;
     }
     equationOfState
     {
-        rho         3950;
+        rho             2416;
     }
     thermodynamics
     {
-        Hf          0;
-        Cp          451;
+        Hf              0;
+        Cp              1190;
     }
     transport
     {
-        Pr              6.62;
-        mu              959e-6;
+        mu              2.8e-3;
+        Pr              0.031;
 //      kappa       30;
     }
 }

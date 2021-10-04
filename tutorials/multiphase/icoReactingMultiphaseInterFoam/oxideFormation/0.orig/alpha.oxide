@@ -35,20 +35,9 @@ boundaryField
 
     "(left|right|front|back|bottomLeft|bottomRight)"
     {
-        type                fastSorption;
-        /*
-        model               Langmuir;
-        LangmuirCoeffs
-        {
-            max             0.5;
-            aL              0.1;
-        }
-        */
-        model               Henry;
-        HenryCoeffs
-        {
-            k             0.1;
-        }
+        type            timeVaryingMassSorption;
+        kabs            1e1;
+        max             1e-3;
     }
 }
 

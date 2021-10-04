@@ -23,7 +23,7 @@ boundaryField
     bottomInlet
     {
         type            fixedValue;
-        value           uniform (0 0 0.4);
+        value           uniform (0 0 0.1);
     }
 
     topOutlet

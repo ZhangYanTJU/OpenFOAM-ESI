@@ -29,7 +29,7 @@ solvers
                             (oxide and liquid)  1
                          );
 
-        nAlphaCorr      1;
+        nAlphaCorr      2;
         nAlphaSubCycles 2;
 
         // Compressiion factor for species in each alpha phase

@@ -38,7 +38,7 @@ surfaceTension
     (gas and liquid)
     {
         type            constant;
-        sigma           0.87;
+        sigma           0.0;
     }
 
     (oxide and liquid)
@@ -63,7 +63,9 @@ massTransferModel
         C                   20;
         Tsolidus            823.15;
         Tliquidus           884.15;
-        oxideCrit           1;
+        oxideCrit           1e-3;
+        isoAlpha            0.9;
+        includeVolChange    false;
    }
 );
 
