@@ -24,35 +24,35 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::timeVaryingAdsorptionFvPatchScalarField
+    Foam::timeVaryingMassSorptionFvPatchScalarField
 
 Group
     grpGenericBoundaryConditions
 
 Description
-    This boundary condition provides a time-varying fixed-value condition
-    for a given scalar field to model time-dependent adsorption processes:
+    This boundary condition provides a first order fixed-value condition
+    for a given scalar field to model time-dependent adsorption-desoprtion
+    processes to be used with the interfaceOxideRate mass model
 
     \f[
-        \frac{d c}{d t} = k (c_{p_{max}} - c)
+        \frac{d c}{d t} =
+            kasb w (c_{int} - c_{p_{w}}) + kdes (c_{p_{w} - c_{int}})
+    \f]
+
+    \f[
+        w = max(1 - c_{p_{w}/max, 0);
     \f]
 
     where
     \vartable
-      c            | Adsorbed substance on patch at time t
-      k            | Adsorption rate constant
-      c_{p_{max}}  | Maximum substance that can be adsorbed on patch
+      c_{int}      | Concentration at cell
+      c_{p_{w}}    | Concentration at wall
+      kasb         | Adsorption rate constant [1/s]
+      kdes         | Desorption rate constant [1/s]
+      w            | Weight function
+      max          | Max concentration at wall
     \endvartable
 
-    References:
-    \verbatim
-        Pseudo-first order adsorption model (tag:ANK):
-            Adelodun, A. A., Ngila, J. C., Kim, D. G., & Jo, Y. M. (2016).
-            Isotherm, thermodynamic and kinetic studies of selective
-            CO2 adsorption on chemically modified carbon surfaces.
-            Aerosol and Air Quality Research, 16(12), 3312-3329.
-            DOI:10.4209/aaqr.2016.01.0014
-    \endverbatim
 
 Usage
     Example of the boundary condition specification:
@@ -60,8 +60,8 @@ Usage
     <patchName>
     {
         // Mandatory entries
-        type        timeVaryingAdsorption;
-        k           <scalar>;
+        type        timeVaryingMassSorption;
+        kbas        <scalar>;
         max         <scalar>;
 
         // Inherited entries
@@ -73,21 +73,21 @@ Usage
     \table
       Property | Description                      | Type   | Reqd   | Deflt
       type     | Type name: timeVaryingAdsorption | word   | yes    | -
-      k        | Adsorption rate constant         | scalar | yes    | -
-      max      | Maximum level of adsorption of a given substance on patch <!--
-               -->                                | scalar | yes    | -
+      kbas     | Adsorption rate constant         | scalar | no     | 0
+      kdes     | Desorption rate constant         | scalar | no     | 0
+      max      | Maximum concentation at wall     | scalar | yes    | -
     \endtable
 
     The inherited entries are elaborated in:
       - \link fixedValueFvPatchFields.H \endlink
 
 SourceFiles
-    timeVaryingAdsorptionFvPatchScalarField.C
+    timeVaryingMassSorptionFvPatchScalarField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef timeVaryingAdsorptionFvPatchScalarField_H
-#define timeVaryingAdsorptionFvPatchScalarField_H
+#ifndef timeVaryingMassSorptionFvPatchScalarField_H
+#define timeVaryingMassSorptionFvPatchScalarField_H
 
 #include "fixedValueFvPatchFields.H"
 
@@ -97,10 +97,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-             Class timeVaryingAdsorptionFvPatchScalarField Declaration
+             Class timeVaryingMassSorptionFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
-class timeVaryingAdsorptionFvPatchScalarField
+class timeVaryingMassSorptionFvPatchScalarField
 :
     public fixedValueFvPatchScalarField
 {
@@ -125,7 +125,10 @@ private:
         static const Enum<ddtSchemeType> ddtSchemeTypeNames_;
 
         //- Adsorption rate constant
-        scalar k_;
+        scalar kabs_;
+
+        //- Desorption rate constant
+        scalar kdes_;
 
         //- Maximum level of adsorption of a given substance on patch
         scalar max_;
@@ -134,20 +137,20 @@ private:
 public:
 
     //- Runtime type information
-    TypeName("timeVaryingAdsorption");
+    TypeName("timeVaryingMassSorption");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        timeVaryingAdsorptionFvPatchScalarField
+        timeVaryingMassSorptionFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        timeVaryingAdsorptionFvPatchScalarField
+        timeVaryingMassSorptionFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
@@ -155,19 +158,19 @@ public:
         );
 
         //- Construct by mapping given
-        //- timeVaryingAdsorptionFvPatchScalarField onto a new patch
-        timeVaryingAdsorptionFvPatchScalarField
+        //- timeVaryingMassSorptionFvPatchScalarField onto a new patch
+        timeVaryingMassSorptionFvPatchScalarField
         (
-            const timeVaryingAdsorptionFvPatchScalarField&,
+            const timeVaryingMassSorptionFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Construct as copy
-        timeVaryingAdsorptionFvPatchScalarField
+        timeVaryingMassSorptionFvPatchScalarField
         (
-            const timeVaryingAdsorptionFvPatchScalarField&
+            const timeVaryingMassSorptionFvPatchScalarField&
         );
 
         //- Construct and return a clone
@@ -175,14 +178,14 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new timeVaryingAdsorptionFvPatchScalarField(*this)
+                new timeVaryingMassSorptionFvPatchScalarField(*this)
             );
         }
 
         //- Construct as copy setting internal field reference
-        timeVaryingAdsorptionFvPatchScalarField
+        timeVaryingMassSorptionFvPatchScalarField
         (
-            const timeVaryingAdsorptionFvPatchScalarField&,
+            const timeVaryingMassSorptionFvPatchScalarField&,
             const DimensionedField<scalar, volMesh>&
         );
 
@@ -194,7 +197,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new timeVaryingAdsorptionFvPatchScalarField(*this, iF)
+                new timeVaryingMassSorptionFvPatchScalarField(*this, iF)
             );
         }
 
@@ -215,6 +218,11 @@ public:
                 const fvPatchScalarField&,
                 const labelList&
             );
+
+        // Help
+
+            //- Return source rate
+            tmp<scalarField> source() const;
 
 
         // Evaluation

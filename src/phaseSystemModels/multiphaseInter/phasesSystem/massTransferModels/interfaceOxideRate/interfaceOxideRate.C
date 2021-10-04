@@ -26,6 +26,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "interfaceOxideRate.H"
+#include "cutCellIso.H"
+#include "volPointInterpolation.H"
+#include "timeVaryingMassSorptionFvPatchScalarField.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -82,7 +85,8 @@ Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>
         ),
         this->mesh_,
         dimensionedScalar(dimDensity/dimTime, Zero)
-    )
+    ),
+    isoAlpha_(dict.getOrDefault<scalar>("isoAlpha", 0.5))
 {}
 
 
@@ -99,7 +103,26 @@ Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>::Kexp
     const volScalarField& to = this->pair().to();
 
     // (CSC:Eq. 2)
-    tmp<volScalarField> Salpha = from*(1 - from);
+    const fvMesh& mesh = this->mesh_;
+    scalarField ap
+    (
+        volPointInterpolation::New(mesh).interpolate(from)
+    );
+
+    cutCellIso cutCell(mesh, ap);
+
+    volScalarField Salpha(0.0*from);
+
+    forAll(Salpha, celli)
+    {
+        label status = cutCell.calcSubCell(celli, isoAlpha_);
+        if (status == 0) // cell is cut
+        {
+            Salpha[celli] =  1;
+        }
+    }
+
+    //tmp<volScalarField> Salpha = (from)*(1 - from);
 
     // (CSC:Eq. 5)
     tmp<volScalarField> Soxide =
@@ -111,6 +134,47 @@ Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>::Kexp
 
     // (CSC:Eq. 6)
     mDotOxide_ = C_*Salpha*Soxide*ST;
+
+    const volScalarField::Boundary& alphab = to.boundaryField();
+
+    forAll(alphab, patchi)
+    {
+        if (isA<timeVaryingMassSorptionFvPatchScalarField>(alphab[patchi]))
+        {
+            const timeVaryingMassSorptionFvPatchScalarField& pp =
+                refCast<const timeVaryingMassSorptionFvPatchScalarField>
+                (
+                    alphab[patchi]
+                );
+            const labelUList& fc = mesh.boundary()[patchi].faceCells();
+            tmp<scalarField> tsb = pp.source();
+
+            tmp<volScalarField> tRhoto
+            (
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        "tRhov",
+                        mesh.time().timeName(),
+                        mesh
+                    ),
+                    mesh,
+                    dimensionedScalar(dimDensity, Zero)
+                )
+            );
+            volScalarField& rhoto = tRhoto.ref();
+
+            rhoto = this->pair().to().rho();
+
+            forAll(fc, faceI)
+            {
+                label cellI = fc[faceI];
+                scalar rhoI = rhoto[cellI];
+                mDotOxide_[cellI] += rhoI*tsb()[faceI];
+            }
+        }
+    }
 
     return tmp<volScalarField>::New(mDotOxide_);
 }

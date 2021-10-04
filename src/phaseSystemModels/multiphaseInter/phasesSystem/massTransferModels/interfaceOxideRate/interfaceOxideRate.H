@@ -93,6 +93,7 @@ Usage
             Tliquidus           <scalar>;
             Tsolidus            <scalar>;
             oxideCrit           <scalar>;
+            isoAlpha            <scalar>;
         }
     );
     \endverbatim
@@ -105,6 +106,7 @@ Usage
       Tliquidus | Liquidus temperature of reducing agent  | scalar | yes | -
       Tsolidus  | Solidus temperature of reducing agent   | scalar | yes | -
       oxideCrit | Critical oxide-inclusion density        | scalar | yes | -
+      isoAlpha  | Location of the source                  | scalar | yes | -
     \endtable
 
 Note
@@ -157,6 +159,9 @@ class interfaceOxideRate
 
         //- Oxide-inclusion formation rate
         volScalarField mDotOxide_;
+
+        //- Interface Iso-value
+        scalar isoAlpha_;
 
 
 public:

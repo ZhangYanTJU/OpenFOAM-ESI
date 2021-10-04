@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "timeVaryingAdsorptionFvPatchScalarField.H"
+#include "timeVaryingMassSorptionFvPatchScalarField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
@@ -37,9 +37,9 @@ License
 
 const Foam::Enum
 <
-    Foam::timeVaryingAdsorptionFvPatchScalarField::ddtSchemeType
+    Foam::timeVaryingMassSorptionFvPatchScalarField::ddtSchemeType
 >
-Foam::timeVaryingAdsorptionFvPatchScalarField::ddtSchemeTypeNames_
+Foam::timeVaryingMassSorptionFvPatchScalarField::ddtSchemeTypeNames_
 ({
     {
         ddtSchemeType::tsEuler,
@@ -58,21 +58,22 @@ Foam::timeVaryingAdsorptionFvPatchScalarField::ddtSchemeTypeNames_
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeVaryingAdsorptionFvPatchScalarField::
-timeVaryingAdsorptionFvPatchScalarField
+Foam::timeVaryingMassSorptionFvPatchScalarField::
+timeVaryingMassSorptionFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
     fixedValueFvPatchScalarField(p, iF),
-    k_(scalar(1)),
+    kabs_(scalar(1)),
+    kdes_(scalar(1)),
     max_(scalar(1))
 {}
 
 
-Foam::timeVaryingAdsorptionFvPatchScalarField::
-timeVaryingAdsorptionFvPatchScalarField
+Foam::timeVaryingMassSorptionFvPatchScalarField::
+timeVaryingMassSorptionFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -80,8 +81,9 @@ timeVaryingAdsorptionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF, dict, false),
-    k_(dict.getCheck<scalar>("k", scalarMinMax::ge(SMALL))),
-    max_(dict.getCheck<scalar>("max", scalarMinMax::ge(SMALL)))
+    kabs_(dict.getCheck<scalar>("kabs", scalarMinMax::ge(0))),
+    kdes_(dict.getCheckOrDefault<scalar>("kdes", 0, scalarMinMax::ge(0))),
+    max_(dict.getCheck<scalar>("max", scalarMinMax::ge(0)))
 {
     if (dict.found("value"))
     {
@@ -97,49 +99,52 @@ timeVaryingAdsorptionFvPatchScalarField
 }
 
 
-Foam::timeVaryingAdsorptionFvPatchScalarField::
-timeVaryingAdsorptionFvPatchScalarField
+Foam::timeVaryingMassSorptionFvPatchScalarField::
+timeVaryingMassSorptionFvPatchScalarField
 (
-    const timeVaryingAdsorptionFvPatchScalarField& ptf,
+    const timeVaryingMassSorptionFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
-    k_(ptf.k_),
+    kabs_(ptf.kabs_),
+    kdes_(ptf.kdes_),
     max_(ptf.max_)
 {}
 
 
-Foam::timeVaryingAdsorptionFvPatchScalarField::
-timeVaryingAdsorptionFvPatchScalarField
+Foam::timeVaryingMassSorptionFvPatchScalarField::
+timeVaryingMassSorptionFvPatchScalarField
 (
-    const timeVaryingAdsorptionFvPatchScalarField& ptf
+    const timeVaryingMassSorptionFvPatchScalarField& ptf
 )
 :
     fixedValueFvPatchScalarField(ptf),
-    k_(ptf.k_),
+    kabs_(ptf.kabs_),
+    kdes_(ptf.kdes_),
     max_(ptf.max_)
 {}
 
 
-Foam::timeVaryingAdsorptionFvPatchScalarField::
-timeVaryingAdsorptionFvPatchScalarField
+Foam::timeVaryingMassSorptionFvPatchScalarField::
+timeVaryingMassSorptionFvPatchScalarField
 (
-    const timeVaryingAdsorptionFvPatchScalarField& ptf,
+    const timeVaryingMassSorptionFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
     fixedValueFvPatchScalarField(ptf, iF),
-    k_(ptf.k_),
+    kabs_(ptf.kabs_),
+    kdes_(ptf.kdes_),
     max_(ptf.max_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::timeVaryingAdsorptionFvPatchScalarField::autoMap
+void Foam::timeVaryingMassSorptionFvPatchScalarField::autoMap
 (
     const fvPatchFieldMapper& m
 )
@@ -148,7 +153,7 @@ void Foam::timeVaryingAdsorptionFvPatchScalarField::autoMap
 }
 
 
-void Foam::timeVaryingAdsorptionFvPatchScalarField::rmap
+void Foam::timeVaryingMassSorptionFvPatchScalarField::rmap
 (
     const fvPatchScalarField& ptf,
     const labelList& addr
@@ -158,7 +163,24 @@ void Foam::timeVaryingAdsorptionFvPatchScalarField::rmap
 }
 
 
-void Foam::timeVaryingAdsorptionFvPatchScalarField::updateCoeffs()
+Foam::tmp<Foam::scalarField>
+Foam::timeVaryingMassSorptionFvPatchScalarField::source() const
+{
+    tmp<scalarField> tsource(new scalarField(patch().size(), Zero));
+    scalarField& source = tsource.ref();
+
+    const scalarField cp(*this);
+    const scalarField w(max(1 - cp/max_, scalar(0)));
+
+    source = -kabs_*w*(max(patchInternalField()-cp, 0.0));
+
+    source += kdes_*(max(cp-patchInternalField(), 0.0));
+
+    return tsource;
+}
+
+
+void Foam::timeVaryingMassSorptionFvPatchScalarField::updateCoeffs()
 {
     if (updated())
     {
@@ -177,8 +199,21 @@ void Foam::timeVaryingAdsorptionFvPatchScalarField::updateCoeffs()
     const word ddtSchemeName(fld.mesh().ddtScheme(fld.name()));
     const ddtSchemeType& ddtScheme = ddtSchemeTypeNames_[ddtSchemeName];
 
+    const scalarField cp(*this);
+    const scalarField w(max(1 - cp/max_, scalar(0)));
 
-    tmp<scalarField> dfldp = k_*(max_ - patchInternalField())*dt;
+    tmp<scalarField> dfldp =
+         kabs_
+        *w
+        *(
+            max(patchInternalField()-cp, 0.0)
+         )
+        *dt;
+
+    dfldp.ref() -=
+        kdes_
+       *max(cp - patchInternalField(), 0.0)
+       *dt;
 
     switch (ddtScheme)
     {
@@ -201,8 +236,8 @@ void Foam::timeVaryingAdsorptionFvPatchScalarField::updateCoeffs()
                 (
                     (
                         c0*fld0.boundaryField()[patchi]
-                    - c00*fld0.oldTime().boundaryField()[patchi]
-                    + dfldp
+                     - c00*fld0.oldTime().boundaryField()[patchi]
+                     + dfldp
                     )/c
                 );
 
@@ -223,11 +258,12 @@ void Foam::timeVaryingAdsorptionFvPatchScalarField::updateCoeffs()
 }
 
 
-void Foam::timeVaryingAdsorptionFvPatchScalarField::write(Ostream& os) const
+void Foam::timeVaryingMassSorptionFvPatchScalarField::write(Ostream& os) const
 {
     fvPatchScalarField::write(os);
 
-    os.writeEntry("k", k_);
+    os.writeEntry("kabs", kabs_);
+    os.writeEntry("kdes", kdes_);
     os.writeEntry("max", max_);
 
     writeEntry("value", os);
@@ -241,7 +277,7 @@ namespace Foam
     makePatchTypeField
     (
         fvPatchScalarField,
-        timeVaryingAdsorptionFvPatchScalarField
+        timeVaryingMassSorptionFvPatchScalarField
     );
 }
 
