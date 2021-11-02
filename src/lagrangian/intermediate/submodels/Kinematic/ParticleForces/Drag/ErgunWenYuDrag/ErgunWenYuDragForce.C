@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,22 +110,22 @@ Foam::forceSuSp Foam::ErgunWenYuDragForce<CloudType>::calcCoupled
 
     if (alphac < 0.8)
     {
+        // (ZZB:Eq. 17)
         return forceSuSp
         (
             Zero,
             (mass/p.rho())
-           *(150.0*(1.0 - alphac)/alphac + 1.75*Re)*muc/(alphac*sqr(p.d()))
+           *(150.0*(1.0 - alphac)/alphac + 1.75*Re)*(1.0-alphac)*muc/sqr(p.d())
         );
     }
-    else
-    {
-        return forceSuSp
-        (
-            Zero,
-            (mass/p.rho())
-           *0.75*CdRe(alphac*Re)*muc*pow(alphac, -2.65)/(alphac*sqr(p.d()))
-        );
-    }
+
+    // (ZZB:Eq. 13)
+    return forceSuSp
+    (
+        Zero,
+        (mass/p.rho())
+       *0.75*(1.0 - alphac)*muc*CdRe(alphac*Re)*pow(alphac, -2.65)/sqr(p.d())
+    );
 }
 
 
