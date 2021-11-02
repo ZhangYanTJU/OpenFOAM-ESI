@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,12 +110,13 @@ Foam::forceSuSp Foam::PlessisMasliyahDragForce<CloudType>::calcCoupled
 
     scalar cbrtAlphap(cbrt(1.0 - alphac));
 
-    scalar A =
-        26.8*pow3(alphac)
+    // (P:Eq. 35)
+    const scalar A =
+        26.8*sqr(alphac)
        /(
             sqr(cbrtAlphap)
            *(1.0 - cbrtAlphap)
-           *sqr(1.0 - sqr(cbrtAlphap))
+           *(1.0 - sqr(cbrtAlphap))
           + SMALL
         );
 
@@ -122,11 +124,12 @@ Foam::forceSuSp Foam::PlessisMasliyahDragForce<CloudType>::calcCoupled
         sqr(alphac)
        /sqr(1.0 - sqr(cbrtAlphap));
 
+    // (P:Eq. 34)
     return forceSuSp
     (
         Zero,
         (mass/p.rho())
-       *(A*(1.0 - alphac)/alphac + B*Re)*muc/(alphac*sqr(p.d()))
+       *(A*(1.0 - alphac) + B*Re)*(1.0 - alphac)*muc/(sqr(alphac*p.d()))
     );
 }
 
