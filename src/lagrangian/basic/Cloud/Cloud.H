@@ -45,6 +45,7 @@ SourceFiles
 #include "CompactIOField.H"
 #include "polyMesh.H"
 #include "bitSet.H"
+#include "wordRes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -238,6 +239,21 @@ public:
             (
                 const Cloud<ParticleType>& c,
                 const CompactIOField<Field<DataType>, DataType>& data
+            ) const;
+
+            //- Helper function to store a cloud field on its registry
+            template<class Type>
+            bool readStoreFile
+            (
+                const IOobject& io,
+                const IOobject& ioNew
+            ) const;
+
+            //- Read from files into objectRegistry
+            void readFromFiles
+            (
+                objectRegistry& obr,
+                const wordRes& fields
             ) const;
 
 
