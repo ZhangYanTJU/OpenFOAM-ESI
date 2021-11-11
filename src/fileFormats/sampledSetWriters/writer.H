@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -123,11 +124,28 @@ public:
             ()
         );
 
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            writer,
+            dict,
+            (
+                const dictionary& formatOptions
+            ),
+            (formatOptions)
+        );
 
     // Selectors
 
         //- Return a reference to the selected writer
         static autoPtr<writer> New(const word& writeFormat);
+
+        //- Return a reference to the selected writer
+        static autoPtr<writer> New
+        (
+            const word& writeFormat,
+            const dictionary& formatOptions
+        );
 
 
     // Constructors
@@ -135,9 +153,12 @@ public:
         //- Construct null
         writer();
 
+        //- Construct with dictionary
+        writer(const dictionary& dict);
+
 
     //- Destructor
-    virtual ~writer() = 0;
+    virtual ~writer() = default;
 
 
     // Member Functions

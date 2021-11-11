@@ -82,18 +82,7 @@ class sampledSets
             autoPtr<writer<Type>> formatter;
 
             //- Construct null
-            fieldGroup()
-            :
-                DynamicList<word>(0),
-                formatter(nullptr)
-            {}
-
-            //- Construct for a particular format
-            fieldGroup(const word& writeFormat)
-            :
-                DynamicList<word>(0),
-                formatter(writer<Type>::New(writeFormat))
-            {}
+            fieldGroup() = default;
 
             //- Reset format and field list
             void clear()
@@ -102,10 +91,9 @@ class sampledSets
                 formatter.clear();
             }
 
-            //- Assign a new formatter
-            void operator=(const word& writeFormat)
+            void setFormatter(const word& writeFormat, const dictionary& dict)
             {
-                formatter = writer<Type>::New(writeFormat);
+                formatter = writer<Type>::New(writeFormat, dict);
             }
         };
 
@@ -175,7 +163,7 @@ class sampledSets
         meshSearch searchEngine_;
 
 
-      // Read from dictonary
+      // Read from dictionary
 
         //- Names of fields to sample
         wordRes fieldSelection_;
@@ -185,6 +173,9 @@ class sampledSets
 
         //- Output format to use
         word writeFormat_;
+
+        //- Dictionary containing writer options
+        dictionary writeFormatOptions_;
 
 
       // Categorized scalar/vector/tensor fields

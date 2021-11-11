@@ -55,6 +55,29 @@ Foam::autoPtr<Foam::writer<Type>> Foam::writer<Type>::New
 }
 
 
+template<class Type>
+Foam::autoPtr<Foam::writer<Type>> Foam::writer<Type>::New
+(
+    const word& writeType,
+    const dictionary& formatOptions
+)
+{
+    auto ctorPtr = dictConstructorTable(writeType);
+
+    if (!ctorPtr)
+    {
+        FatalErrorInLookup
+        (
+            "writer",
+            writeType,
+            *dictConstructorTablePtr_
+        ) << exit(FatalError);
+    }
+
+    return autoPtr<writer<Type>>(ctorPtr(formatOptions));
+}
+
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type>
@@ -143,10 +166,8 @@ Foam::writer<Type>::writer()
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
 template<class Type>
-Foam::writer<Type>::~writer()
+Foam::writer<Type>::writer(const dictionary& dict)
 {}
 
 
