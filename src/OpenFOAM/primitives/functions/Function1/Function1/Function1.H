@@ -152,6 +152,12 @@ public:
         //- Construct and return a clone
         virtual tmp<Function1<Type>> clone() const = 0;
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return refPtr<regIOobject>(clone());
+        }
+
 
     // Selectors
 
@@ -188,6 +194,52 @@ public:
             const word& entryName,
             const dictionary& dict,
             const word& redirectType = word::null
+        );
+
+
+    // Caching Selectors - accept wildcards in dictionary
+
+        //- Selector with external storage of Function1.
+        //- This also allows wildcard matches in a dictionary
+        static refPtr<Function1<Type>> New
+        (
+            HashPtrTable<Function1<Type>>& cache,
+            const word& entryName,
+            const dictionary& dict,
+            enum keyType::option matchOpt = keyType::LITERAL,
+            const bool mandatory = true
+        );
+
+        //- Selector, without fallback redirection
+        static refPtr<Function1<Type>> New
+        (
+            const IOobject& io,
+            const dictionary& dict,
+            enum keyType::option matchOpt = keyType::LITERAL,
+            const bool mandatory = true
+        );
+
+
+    // Constructors from IOobject
+
+        //- Declare runtime constructor selection table
+        declareRunTimeSelectionTable
+        (
+            refPtr,
+            Function1,
+            IOobject,
+            (
+                const IOobject& io,
+                const dictionary& dict
+            ),
+            (io, dict)
+        );
+
+        //- Construct from IOobject and dictionary (unused)
+        Function1
+        (
+            const IOobject& io,
+            const dictionary& dict
         );
 
 
@@ -228,7 +280,7 @@ public:
 
         //- Write in dictionary format.
         //  \note The base output is \em without an END_STATEMENT
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 
         //- Write coefficient entries in dictionary format
         void writeEntries(Ostream& os) const;
@@ -254,8 +306,21 @@ public:
         //- Construct from entry name and dictionary
         FieldFunction1(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary (unused)
+        FieldFunction1
+        (
+            const IOobject& io,
+            const dictionary& dict
+        );
+
         //- Construct and return a clone
         virtual tmp<Function1<Type>> clone() const;
+
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return refPtr<regIOobject>(clone());
+        }
 
 
     //- Destructor
@@ -323,6 +388,23 @@ public:
 #define makeScalarFunction1(SS)                                                \
                                                                                \
     makeConcreteFunction1(SS, scalar);
+
+
+
+// Define a non-templated Function1 and add to (templated) run-time selection
+#define makeConcreteIOobjectFunction1(SS, Type)                                \
+                                                                               \
+    Function1<Type>::addIOobjectConstructorToTable                             \
+        <FieldFunction1<SS>>                                                   \
+        add##SS##Type##IOobjectConstructorToTable_;
+
+// Define a non-templated Function1 and add to (templated) run-time selection
+#define makeIOobjectFunction1Type(SS, Type)                                    \
+                                                                               \
+    Function1<Type>::addIOobjectConstructorToTable                             \
+        <FieldFunction1<Function1Types::SS<Type>>>                             \
+        add##SS##Type##IOobjectConstructorToTable_;
+
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

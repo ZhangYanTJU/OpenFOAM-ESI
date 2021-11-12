@@ -50,4 +50,14 @@ Foam::Function1Types::quarterSineRamp::quarterSineRamp
 {}
 
 
+Foam::Function1Types::quarterSineRamp::quarterSineRamp
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    ramp(io, dict)
+{}
+
+
 // ************************************************************************* //

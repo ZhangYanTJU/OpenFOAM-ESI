@@ -101,6 +101,13 @@ public:
         //  Uses read-option READ_IF_PRESENT
         explicit polyTopoChanger(polyMesh& mesh);
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~polyTopoChanger() = default;

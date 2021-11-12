@@ -54,6 +54,14 @@ Foam::Function1<Type>::Function1(const Function1<Type>& rhs)
 {}
 
 
+template<class Type>
+Foam::Function1<Type>::Function1(const IOobject& io, const dictionary& dict)
+:
+    function1Base(io, dict)
+{}
+
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
@@ -127,6 +135,17 @@ Foam::FieldFunction1<Function1Type>::FieldFunction1
 
 
 template<class Function1Type>
+Foam::FieldFunction1<Function1Type>::FieldFunction1
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1Type(io, dict)
+{}
+
+
+template<class Function1Type>
 Foam::tmp<Foam::Function1<typename Function1Type::returnType>>
 Foam::FieldFunction1<Function1Type>::clone() const
 {
@@ -163,9 +182,10 @@ void Foam::Function1<Type>::writeEntries(Ostream& os) const
 
 
 template<class Type>
-void Foam::Function1<Type>::writeData(Ostream& os) const
+bool Foam::Function1<Type>::writeData(Ostream& os) const
 {
-    os.writeKeyword(name_) << type();
+    os.writeKeyword(name()) << type();
+    return os.good();
 }
 
 

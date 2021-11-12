@@ -199,6 +199,13 @@ public:
         //- Construct from mesh
         solutionControl(fvMesh& mesh, const word& algorithmName);
 
+        //- Return a clone. Not applicable for singleton
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~solutionControl() = default;

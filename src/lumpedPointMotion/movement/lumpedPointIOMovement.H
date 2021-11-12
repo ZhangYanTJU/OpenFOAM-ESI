@@ -92,6 +92,13 @@ public:
         //- Construct from IOobject, optionally with some owner information
         explicit lumpedPointIOMovement(const IOobject& io, label ownerId = -1);
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~lumpedPointIOMovement() = default;

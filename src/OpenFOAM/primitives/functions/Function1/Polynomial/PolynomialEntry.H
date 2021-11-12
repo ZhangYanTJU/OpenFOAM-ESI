@@ -111,6 +111,9 @@ public:
         //- Construct from entry name and dictionary
         Polynomial(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        Polynomial(const IOobject& io, const dictionary& dict);
+
         //- Construct from components
         Polynomial
         (
@@ -144,7 +147,7 @@ public:
         virtual Type integrate(const scalar x1, const scalar x2) const;
 
         //- Write as primitive (inline) format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 };
 
 

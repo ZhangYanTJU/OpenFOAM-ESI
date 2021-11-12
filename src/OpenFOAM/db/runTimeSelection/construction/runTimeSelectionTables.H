@@ -276,7 +276,7 @@ Description
         ptrWrapper<baseType>,argNames##Constructor,argList);                   \
                                                                                \
     /* Helper to add compatibility/alias for runtime selection table */        \
-    template<class baseType##Type>                                             \
+    template<class baseType##Type, class Factory = baseType##Type>             \
     struct addAlias##argNames##ConstructorToTable                              \
     {                                                                          \
         explicit addAlias##argNames##ConstructorToTable                        \
@@ -292,12 +292,12 @@ Description
     };                                                                         \
                                                                                \
     /* Helper to add constructor from argList to table */                      \
-    template<class baseType##Type>                                             \
+    template<class baseType##Type, class Factory = baseType##Type>             \
     struct add##argNames##ConstructorToTable                                   \
     {                                                                          \
         static ptrWrapper<baseType> New##baseType argList                      \
         {                                                                      \
-            return ptrWrapper<baseType>(baseType##Type::New parList.ptr());    \
+            return ptrWrapper<baseType>(Factory::New parList.ptr());           \
         }                                                                      \
                                                                                \
         explicit add##argNames##ConstructorToTable                             \
@@ -328,14 +328,14 @@ Description
     };                                                                         \
                                                                                \
     /* Helper to add constructor from argList to table */                      \
-    template<class baseType##Type>                                             \
+    template<class baseType##Type, class Factory = baseType##Type>             \
     struct addRemovable##argNames##ConstructorToTable                          \
     {                                                                          \
         const ::Foam::word name;  /* Retain name for later removal */          \
                                                                                \
         static ptrWrapper<baseType> New##baseType argList                      \
         {                                                                      \
-            return ptrWrapper<baseType>(baseType##Type::New parList.ptr());    \
+            return ptrWrapper<baseType>(Factory::New parList.ptr());           \
         }                                                                      \
                                                                                \
         explicit addRemovable##argNames##ConstructorToTable                    \
@@ -364,6 +364,105 @@ Description
             (const addRemovable##argNames##ConstructorToTable&) = delete;      \
     };
 
+
+
+//MEJ
+//- Declare a run-time selection for derived classes
+#define declareRunTimeRefPtrSelectionTable\
+(ptrWrapper,baseType,argNames,argList,parList)                                 \
+                                                                               \
+    declareRunTimeSelectionTableBase(                                          \
+        ptrWrapper<baseType>,argNames##Constructor,argList);                   \
+                                                                               \
+    /* Helper to add compatibility/alias for runtime selection table */        \
+    template<class baseType##Type, class Factory = baseType##Type>             \
+    struct addAlias##argNames##ConstructorToTable                              \
+    {                                                                          \
+        explicit addAlias##argNames##ConstructorToTable                        \
+        (                                                                      \
+            const ::Foam::word& k,                                             \
+            const ::Foam::word& alias,                                         \
+            const int ver                                                      \
+        )                                                                      \
+        {                                                                      \
+            argNames##ConstructorCompatTable()                                 \
+                .set(alias, std::pair<::Foam::word,int>(k,ver));               \
+        }                                                                      \
+    };                                                                         \
+                                                                               \
+    /* Helper to add constructor from argList to table */                      \
+    template<class baseType##Type, class Factory = baseType##Type>             \
+    struct add##argNames##ConstructorToTable                                   \
+    {                                                                          \
+        static ptrWrapper<baseType> New##baseType argList                      \
+        {                                                                      \
+            return ptrWrapper<baseType>(Factory::New parList);                 \
+        }                                                                      \
+                                                                               \
+        explicit add##argNames##ConstructorToTable                             \
+        (                                                                      \
+            const ::Foam::word& k = baseType##Type::typeName                   \
+        )                                                                      \
+        {                                                                      \
+            argNames##ConstructorTablePtr_construct(true);                     \
+            if (!argNames##ConstructorTablePtr_->insert(k, New##baseType))     \
+            {                                                                  \
+                std::cerr                                                      \
+                    << "Duplicate entry " << k << " in runtime table "         \
+                    << #baseType << std::endl;                                 \
+                ::Foam::error::safePrintStack(std::cerr);                      \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        ~add##argNames##ConstructorToTable()                                   \
+        {                                                                      \
+            argNames##ConstructorTablePtr_construct(false);                    \
+        }                                                                      \
+                                                                               \
+        add##argNames##ConstructorToTable                                      \
+            (const add##argNames##ConstructorToTable&) = delete;               \
+                                                                               \
+        void operator=                                                         \
+            (const add##argNames##ConstructorToTable&) = delete;               \
+    };                                                                         \
+                                                                               \
+    /* Helper to add constructor from argList to table */                      \
+    template<class baseType##Type, class Factory = baseType##Type>             \
+    struct addRemovable##argNames##ConstructorToTable                          \
+    {                                                                          \
+        const ::Foam::word name;  /* Retain name for later removal */          \
+                                                                               \
+        static ptrWrapper<baseType> New##baseType argList                      \
+        {                                                                      \
+            return ptrWrapper<baseType>(Factory::New parList.ptr());           \
+        }                                                                      \
+                                                                               \
+        explicit addRemovable##argNames##ConstructorToTable                    \
+        (                                                                      \
+            const ::Foam::word& k = baseType##Type::typeName                   \
+        )                                                                      \
+        :                                                                      \
+            name(k)                                                            \
+        {                                                                      \
+            argNames##ConstructorTablePtr_construct(true);                     \
+            argNames##ConstructorTablePtr_->set(k, New##baseType);             \
+        }                                                                      \
+                                                                               \
+        ~addRemovable##argNames##ConstructorToTable()                          \
+        {                                                                      \
+            if (argNames##ConstructorTablePtr_)                                \
+            {                                                                  \
+                argNames##ConstructorTablePtr_->erase(name);                   \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+        addRemovable##argNames##ConstructorToTable                             \
+            (const addRemovable##argNames##ConstructorToTable&) = delete;      \
+                                                                               \
+        void operator=                                                         \
+            (const addRemovable##argNames##ConstructorToTable&) = delete;      \
+    };
+//MEJ
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -148,6 +148,13 @@ public:
             const dictionary& dict
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~ATCModel() = default;

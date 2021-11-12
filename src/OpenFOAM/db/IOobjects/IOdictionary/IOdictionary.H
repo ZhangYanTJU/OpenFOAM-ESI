@@ -60,6 +60,9 @@ public:
 
     // Constructors
 
+        //- Copy construct
+        IOdictionary(const IOdictionary&) = default;
+
         //- Construct given an IOobject
         //- and optional fallback dictionary content
         //  A null dictionary pointer is treated like an empty dictionary.
@@ -85,6 +88,12 @@ public:
 
         //- Construct given an IOobject and Istream
         IOdictionary(const IOobject& io, Istream& is);
+
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
 
 
     //- Destructor

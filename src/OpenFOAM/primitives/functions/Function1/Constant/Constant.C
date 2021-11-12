@@ -81,6 +81,42 @@ Foam::Function1Types::Constant<Type>::Constant
 template<class Type>
 Foam::Function1Types::Constant<Type>::Constant
 (
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1<Type>(io, dict),
+    value_(Zero)
+{
+    const entry* eptr = dict.findEntry(io.name(), keyType::LITERAL);
+
+    if (eptr && eptr->isStream())
+    {
+        // Primitive (inline) format. Eg,
+        // - key constant 1.2;
+        // - key 1.2;
+
+        ITstream& is = eptr->stream();
+        if (is.peek().isWord())
+        {
+            is.skip();  // Discard leading 'constant'
+        }
+        is >> value_;
+        dict.checkITstream(is, io.name());
+    }
+    else
+    {
+        // Dictionary format. Eg,
+        // key { type constant; value 1.2; }
+
+        dict.readEntry("value", value_);
+    }
+}
+
+
+template<class Type>
+Foam::Function1Types::Constant<Type>::Constant
+(
     const word& entryName,
     Istream& is
 )
@@ -111,11 +147,13 @@ Foam::tmp<Foam::Field<Type>> Foam::Function1Types::Constant<Type>::value
 
 
 template<class Type>
-void Foam::Function1Types::Constant<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::Constant<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
 
     os  << token::SPACE << value_ << token::END_STATEMENT << nl;
+
+    return os.good();
 }
 
 

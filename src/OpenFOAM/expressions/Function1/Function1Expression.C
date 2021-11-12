@@ -119,7 +119,7 @@ Type Foam::Function1Types::Function1Expression<Type>::integrate
 
 
 template<class Type>
-void Foam::Function1Types::Function1Expression<Type>::writeData
+bool Foam::Function1Types::Function1Expression<Type>::writeData
 (
     Ostream& os
 ) const
@@ -127,6 +127,8 @@ void Foam::Function1Types::Function1Expression<Type>::writeData
     // Function1-from-subdict so out dictionary contains
     // only the relevant entries.
     dict_.writeEntry(this->name(), os);
+
+    return os.good();
 }
 
 

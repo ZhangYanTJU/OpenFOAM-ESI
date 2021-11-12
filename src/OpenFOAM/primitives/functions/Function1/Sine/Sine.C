@@ -53,6 +53,28 @@ Foam::Function1Types::Sine<Type>::Sine
 
 
 template<class Type>
+Foam::Function1Types::Sine<Type>::Sine
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1<Type>(io, dict),
+    t0_(dict.getOrDefault<scalar>("t0", 0)),
+    amplitude_(Function1<scalar>::NewIfPresent("amplitude", dict)),
+    period_(Function1<scalar>::NewIfPresent("period", dict)),
+    frequency_(nullptr),
+    scale_(Function1<Type>::New("scale", dict)),
+    level_(Function1<Type>::New("level", dict))
+{
+    if (!period_)
+    {
+        frequency_ = Function1<scalar>::New("frequency", dict);
+    }
+}
+
+
+template<class Type>
 Foam::Function1Types::Sine<Type>::Sine(const Sine<Type>& rhs)
 :
     Function1<Type>(rhs),
@@ -96,7 +118,7 @@ void Foam::Function1Types::Sine<Type>::writeEntries(Ostream& os) const
 
 
 template<class Type>
-void Foam::Function1Types::Sine<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::Sine<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os.endEntry();
@@ -104,6 +126,8 @@ void Foam::Function1Types::Sine<Type>::writeData(Ostream& os) const
     os.beginBlock(word(this->name() + "Coeffs"));
     writeEntries(os);
     os.endBlock();
+
+    return os.good();
 }
 
 

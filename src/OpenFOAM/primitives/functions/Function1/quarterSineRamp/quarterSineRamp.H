@@ -69,6 +69,9 @@ public:
         //- Construct from entry name and dictionary
         quarterSineRamp(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        quarterSineRamp(const IOobject& io, const dictionary& dict);
+
 
     //- Destructor
     virtual ~quarterSineRamp() = default;

@@ -103,6 +103,13 @@ public:
             const bool registerObject
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~virtualMassModel() = default;

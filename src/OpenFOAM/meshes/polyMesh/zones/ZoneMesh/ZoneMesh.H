@@ -132,6 +132,13 @@ public:
             const PtrList<ZoneType>& pzm
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     ~ZoneMesh();

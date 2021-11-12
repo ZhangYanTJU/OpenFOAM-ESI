@@ -122,6 +122,9 @@ public:
         //- Construct from entry name and dictionary.
         Table(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        Table(const IOobject& io, const dictionary& dict);
+
         //- Copy construct
         explicit Table(const Table<Type>& tbl);
 
@@ -139,7 +142,7 @@ public:
     // Member Functions
 
         //- Write coefficients in dictionary format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 };
 
 

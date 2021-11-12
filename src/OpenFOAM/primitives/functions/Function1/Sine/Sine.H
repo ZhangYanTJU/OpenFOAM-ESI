@@ -184,6 +184,9 @@ public:
         //- Construct from entry name and dictionary
         Sine(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        Sine(const IOobject& io, const dictionary& dict);
+
         //- Copy construct
         explicit Sine(const Sine<Type>& rhs);
 
@@ -204,7 +207,7 @@ public:
         }
 
         //- Write in dictionary format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 
         //- Write coefficient entries in dictionary format
         void writeEntries(Ostream& os) const;

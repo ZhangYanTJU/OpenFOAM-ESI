@@ -134,6 +134,12 @@ public:
             );
         }
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
+
 
     //- Destructor
     virtual ~Dual() = default;

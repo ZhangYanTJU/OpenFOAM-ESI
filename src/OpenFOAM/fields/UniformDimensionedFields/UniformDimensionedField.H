@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,6 +83,19 @@ public:
 
         //- Construct from Istream
         UniformDimensionedField(const IOobject& io);
+
+        //- Return wrapped pointer to a new regIOobject from an IOobject.
+        //- Assumes IOobject contains header information and io.db is polyMesh
+        static refPtr<regIOobject> New(const IOobject& io)
+        {
+            return refPtr<regIOobject>(new UniformDimensionedField<Type>(io));
+        }
+
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
 
 
     //- Destructor

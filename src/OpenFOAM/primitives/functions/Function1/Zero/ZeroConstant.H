@@ -90,6 +90,9 @@ public:
         //- Construct from entry name and dictionary
         ZeroConstant(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        ZeroConstant(const IOobject& io, const dictionary& dict);
+
 
     //- Destructor
     virtual ~ZeroConstant() = default;
@@ -104,7 +107,7 @@ public:
         virtual inline Type integrate(const scalar x1, const scalar x2) const;
 
         //- Write as primitive (inline) format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 };
 
 

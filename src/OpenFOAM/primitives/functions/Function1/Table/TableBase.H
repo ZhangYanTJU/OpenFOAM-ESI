@@ -103,6 +103,9 @@ public:
         //- Construct from dictionary - note table is not populated
         TableBase(const word& name, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        TableBase(const IOobject& io, const dictionary& dict);
+
         //- Copy constructor. Note: steals interpolator, tableSamples
         explicit TableBase(const TableBase<Type>& tbl);
 
@@ -138,7 +141,7 @@ public:
         virtual tmp<Field<Type>> y() const;
 
         //- Write all table data in dictionary format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 
         //- Write keywords only in dictionary format.
         //  Used for non-inline table types

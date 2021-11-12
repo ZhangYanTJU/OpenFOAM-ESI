@@ -44,6 +44,19 @@ Foam::Function1Types::Square<Type>::Square
 
 
 template<class Type>
+Foam::Function1Types::Square<Type>::Square
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Sine<Type>(io, dict),
+    mark_(dict.getOrDefaultCompat<scalar>("mark", {{"markSpace", 2006}}, 1)),
+    space_(dict.getOrDefault<scalar>("space", 1))
+{}
+
+
+template<class Type>
 Foam::Function1Types::Square<Type>::Square(const Square<Type>& rhs)
 :
     Sine<Type>(rhs),
@@ -64,7 +77,7 @@ void Foam::Function1Types::Square<Type>::writeEntries(Ostream& os) const
 
 
 template<class Type>
-void Foam::Function1Types::Square<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::Square<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os.endEntry();
@@ -72,6 +85,8 @@ void Foam::Function1Types::Square<Type>::writeData(Ostream& os) const
     os.beginBlock(word(this->name() + "Coeffs"));
     writeEntries(os);
     os.endBlock();
+
+    return os.good();
 }
 
 

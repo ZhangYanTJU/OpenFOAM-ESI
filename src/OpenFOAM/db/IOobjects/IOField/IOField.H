@@ -84,6 +84,12 @@ public:
         //- Construct by copying/moving tmp content
         IOField(const IOobject& io, const tmp<Field<Type>>& tfld);
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
+
 
     //- Destructor
     virtual ~IOField() = default;

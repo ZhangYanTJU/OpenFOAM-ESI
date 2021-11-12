@@ -81,6 +81,9 @@ public:
         //- Construct from entry name and dictionary
         OneConstant(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        OneConstant(const IOobject& io, const dictionary& dict);
+
         //- Construct and return a clone
         virtual tmp<Function1<Type>> clone() const
         {
@@ -111,7 +114,7 @@ public:
         ) const;
 
         //- Write as primitive (inline) format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 };
 
 

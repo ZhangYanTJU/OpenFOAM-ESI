@@ -43,6 +43,8 @@ SourceFiles
 #define function1Base_H
 
 #include "dictionary.H"
+#include "regIOobject.H"
+#include "Time.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,7 +52,7 @@ namespace Foam
 {
 
 // Forward Declarations
-class Time;
+//class Time;
 
 /*---------------------------------------------------------------------------*\
                      Class function1Base Declaration
@@ -58,15 +60,10 @@ class Time;
 
 class function1Base
 :
+    public regIOobject,
     public refCount
 {
 protected:
-
-    // Protected Data
-
-        //- Name of entry
-        const word name_;
-
 
     // Protected Member Functions
 
@@ -87,20 +84,15 @@ public:
         //- Copy construct
         explicit function1Base(const function1Base& rhs);
 
+        //- Construct from IOobject
+        function1Base(const IOobject& io);
+
+        //- Construct from IOobject and dictionary (unused)
+        function1Base(const IOobject& io, const dictionary& dict);
+
 
     //- Destructor
     virtual ~function1Base() = default;
-
-
-    // Member Functions
-
-    // Access
-
-        //- The name of the entry
-        const word& name() const
-        {
-            return name_;
-        }
 
 
     // Manipulation

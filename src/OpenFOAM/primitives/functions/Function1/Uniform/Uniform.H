@@ -83,6 +83,9 @@ public:
 
         //- Construct from entry name and dictionary
         Uniform(const word& entryName, const dictionary& dict);
+
+        //- Construct from IOobject and dictionary
+        Uniform(const IOobject& io, const dictionary& dict);
 };
 
 

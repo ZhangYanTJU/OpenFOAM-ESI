@@ -65,6 +65,7 @@ public:
             GeoMesh<faMesh>(mesh)
         {}
 
+
     // Member Functions
 
         //- Return size. Number of internal edges

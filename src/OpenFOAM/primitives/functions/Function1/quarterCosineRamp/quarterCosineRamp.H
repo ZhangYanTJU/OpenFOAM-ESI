@@ -70,6 +70,9 @@ public:
         //- Construct from entry name and dictionary
         quarterCosineRamp(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        quarterCosineRamp(const IOobject& io, const dictionary& dict);
+
 
     //- Destructor
     virtual ~quarterCosineRamp() = default;

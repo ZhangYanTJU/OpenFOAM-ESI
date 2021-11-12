@@ -92,6 +92,39 @@ Foam::Function1Types::TableBase<Type>::TableBase
 
 
 template<class Type>
+Foam::Function1Types::TableBase<Type>::TableBase
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1<Type>(io, dict),
+    bounding_
+    (
+        bounds::repeatableBoundingNames.getOrDefault
+        (
+            "outOfBounds",
+            dict,
+            bounds::repeatableBounding::CLAMP,
+            true  // Failsafe behaviour
+        )
+    ),
+    interpolationScheme_
+    (
+        dict.getOrDefault<word>
+        (
+            "interpolationScheme",
+            "linear",
+            keyType::LITERAL
+        )
+    ),
+    table_(),
+    tableSamplesPtr_(nullptr),
+    interpolatorPtr_(nullptr)
+{}
+
+
+template<class Type>
 Foam::Function1Types::TableBase<Type>::TableBase(const TableBase<Type>& tbl)
 :
     Function1<Type>(tbl),
@@ -372,11 +405,12 @@ void Foam::Function1Types::TableBase<Type>::writeEntries(Ostream& os) const
 
 
 template<class Type>
-void Foam::Function1Types::TableBase<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::TableBase<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os  << nl << indent << table_ << token::END_STATEMENT << nl;
     writeEntries(os);
+    return os.good();
 }
 
 

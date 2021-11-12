@@ -56,6 +56,13 @@ class polyBoundaryMeshEntries
     public regIOobject,
     public PtrList<entry>
 {
+
+    // Private Member Functions
+
+        //- No copy construct
+        polyBoundaryMeshEntries(const polyBoundaryMeshEntries&) = delete;
+
+
 public:
 
     //- Runtime type information
@@ -80,6 +87,13 @@ public:
             {
                 readStream(typeName) >> *this;
             }
+        }
+
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
         }
 
 

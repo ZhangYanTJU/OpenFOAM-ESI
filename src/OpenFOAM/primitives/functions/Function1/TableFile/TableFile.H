@@ -103,6 +103,9 @@ public:
         //- Construct from entry name and "file" found in dictionary
         TableFile(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        TableFile(const IOobject& io, const dictionary& dict);
+
         //- Copy construct
         explicit TableFile(const TableFile<Type>& tbl);
 
@@ -120,7 +123,7 @@ public:
     // Member Functions
 
         //- Write in dictionary format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 };
 
 

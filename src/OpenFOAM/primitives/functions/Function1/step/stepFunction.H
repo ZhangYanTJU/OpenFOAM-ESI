@@ -69,6 +69,13 @@ public:
         //- Construct from entry name and dictionary
         stepFunction(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        stepFunction
+        (
+            const IOobject& io,
+            const dictionary& dict
+        );
+
 
     //- Destructor
     virtual ~stepFunction() = default;

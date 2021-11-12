@@ -91,6 +91,13 @@ public:
         //- Construct from mesh
         SLGThermo(const fvMesh& mesh, fluidThermo& thermo);
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~SLGThermo();

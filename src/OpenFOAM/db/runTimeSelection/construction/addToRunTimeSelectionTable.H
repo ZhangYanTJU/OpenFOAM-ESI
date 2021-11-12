@@ -86,6 +86,15 @@ Note
         ##lookup##_##other##_(#lookup,#other,ver)
 
 
+//- Add to construction table with typeName as the key, using factory New
+#define addToRunTimeFactorySelectionTable\
+(baseType,thisType,factoryType,argNames)                                       \
+                                                                               \
+    /* Add factoryType factory method to the table */                          \
+    baseType::add##argNames##ConstructorToTable<thisType,factoryType>          \
+        add##thisType##factoryType##argNames##ConstructorTo##baseType##Table_
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Add to construction table with typeName as the key.

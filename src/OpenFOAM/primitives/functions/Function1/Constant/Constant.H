@@ -100,6 +100,9 @@ public:
         //- Construct from entry name and dictionary
         Constant(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        Constant(const IOobject& io, const dictionary& dict);
+
         //- Construct from entry name and Istream
         //  Reads the constant value without the Function1 type
         //  for backward compatibility
@@ -131,7 +134,7 @@ public:
         virtual tmp<Field<Type>> value(const scalarField& x) const;
 
         //- Write as primitive (inline) format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 };
 
 

@@ -30,7 +30,7 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::Function1Types::LimitRange<Type>::read(const dictionary& coeffs)
+void Foam::Function1Types::LimitRange<Type>::readDict(const dictionary& coeffs)
 {
     min_ = coeffs.get<scalar>("min");
     max_ = coeffs.get<scalar>("max");
@@ -47,7 +47,20 @@ Foam::Function1Types::LimitRange<Type>::LimitRange
 :
     Function1<Type>(entryName)
 {
-    read(dict);
+    readDict(dict);
+}
+
+
+template<class Type>
+Foam::Function1Types::LimitRange<Type>::LimitRange
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1<Type>(io, dict)
+{
+    readDict(dict);
 }
 
 
@@ -73,7 +86,7 @@ void Foam::Function1Types::LimitRange<Type>::writeEntries(Ostream& os) const
 
 
 template<class Type>
-void Foam::Function1Types::LimitRange<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::LimitRange<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os  << token::END_STATEMENT << nl;
@@ -81,6 +94,8 @@ void Foam::Function1Types::LimitRange<Type>::writeData(Ostream& os) const
     os.beginBlock(word(this->name() + "Coeffs"));
     writeEntries(os);
     os.endBlock();
+
+    return os.good();
 }
 
 

@@ -123,6 +123,13 @@ public:
             PtrList<coordinateSystem>&& content
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     // Selectors
 

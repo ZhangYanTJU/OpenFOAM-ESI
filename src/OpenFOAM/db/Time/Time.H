@@ -226,6 +226,9 @@ public:
         //- The default control dictionary name (normally "controlDict")
         static word controlDictName;
 
+        //- Default null Time - does not load any dictionary
+        static const Time null;
+
 
     //- Runtime type information
     TypeName("time");

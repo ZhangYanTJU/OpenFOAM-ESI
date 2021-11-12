@@ -89,6 +89,64 @@ Foam::Function1Types::Table<Type>::Table
 
 
 template<class Type>
+Foam::Function1Types::Table<Type>::Table
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    TableBase<Type>(io, dict),
+    fName_()
+{
+    const entry* eptr = dict.findEntry(io.name(), keyType::LITERAL);
+
+    if (eptr && eptr->isStream())
+    {
+        // Primitive (inline) format. Eg,
+        // key table ((0 0) (10 1));
+
+        ITstream& is = eptr->stream();
+        if (is.peek().isWord())
+        {
+            is.skip();  // Discard leading 'table'
+        }
+        is >> this->table_;
+        dict.checkITstream(is, io.name());
+    }
+    else if (dict.readIfPresent("file", fName_))
+    {
+        // Dictionary format - "file" lookup. Eg,
+        // key { type table; file "name"; }
+
+        fileName expandedFile(fName_);
+        expandedFile.expand();
+
+        autoPtr<ISstream> isPtr(fileHandler().NewIFstream(expandedFile));
+        if (isPtr && isPtr->good())
+        {
+            *isPtr >> this->table_;
+        }
+        else
+        {
+            FatalIOErrorInFunction(dict)
+                << "Cannot open file: " << expandedFile << nl
+                << exit(FatalIOError);
+        }
+    }
+    else
+    {
+        // Dictionary format - "values" lookup. Eg,
+        //
+        // key { type table; values ((0 0) (10 1)); }
+
+        dict.readEntry("values", this->table_);
+    }
+
+    TableBase<Type>::check();
+}
+
+
+template<class Type>
 Foam::Function1Types::Table<Type>::Table(const Table<Type>& tbl)
 :
     TableBase<Type>(tbl),
@@ -99,7 +157,7 @@ Foam::Function1Types::Table<Type>::Table(const Table<Type>& tbl)
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::Function1Types::Table<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::Table<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os.endEntry();
@@ -120,6 +178,8 @@ void Foam::Function1Types::Table<Type>::writeData(Ostream& os) const
     }
 
     os.endBlock();
+
+    return os.good();
 }
 
 

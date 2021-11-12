@@ -110,6 +110,13 @@ public:
         template<class... Args>
         static const Type& New(const Mesh& mesh, Args&&... args);
 
+        //- Return a clone. Not applicable for singleton
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~MeshObject() = default;

@@ -157,6 +157,13 @@ public:
             const bool correctFixedFluxBCs = true
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     ~BlendedInterfacialModel();

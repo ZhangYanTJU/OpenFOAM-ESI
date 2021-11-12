@@ -107,9 +107,6 @@ class CSV
             const dictionary& dict
         );
 
-        //- Read csv data table
-        void read();
-
         //- Read component values from the split string
         Type readValue(const List<string>& strings) const;
 
@@ -133,6 +130,14 @@ public:
             const fileName& fName = fileName::null
         );
 
+        //- Construct from IOobject and dictionary
+        CSV
+        (
+            const IOobject& io,
+            const dictionary& dict,
+            const fileName& fName = fileName::null
+        );
+
         //- Copy construct
         explicit CSV(const CSV<Type>& csv);
 
@@ -152,8 +157,11 @@ public:
         //- Return const access to the file name
         virtual const fileName& fName() const;
 
+        //- Read csv data table
+        virtual bool read();
+
         //- Write in dictionary format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 
         //- Write coefficient entries in dictionary format
         void writeEntries(Ostream& os) const;

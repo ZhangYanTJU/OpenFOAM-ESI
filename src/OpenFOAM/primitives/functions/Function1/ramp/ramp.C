@@ -30,7 +30,7 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-void Foam::Function1Types::ramp::read(const dictionary& coeffs)
+void Foam::Function1Types::ramp::readDict(const dictionary& coeffs)
 {
     start_ = coeffs.getOrDefault<scalar>("start", 0);
     coeffs.readEntry("duration", duration_);
@@ -45,7 +45,19 @@ Foam::Function1Types::ramp::ramp
 :
     Function1<scalar>(entryName, dict)
 {
-    read(dict);
+    readDict(dict);
+}
+
+
+Foam::Function1Types::ramp::ramp
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1<scalar>(io, dict)
+{
+    readDict(dict);
 }
 
 
@@ -65,7 +77,7 @@ void Foam::Function1Types::ramp::convertTimeBase(const Time& t)
 }
 
 
-void Foam::Function1Types::ramp::writeData(Ostream& os) const
+bool Foam::Function1Types::ramp::writeData(Ostream& os) const
 {
     Function1<scalar>::writeData(os);
     os  << token::END_STATEMENT << nl;
@@ -73,6 +85,8 @@ void Foam::Function1Types::ramp::writeData(Ostream& os) const
     os.beginBlock(word(this->name() + "Coeffs"));
     writeEntries(os);
     os.endBlock();
+
+    return os.good();
 }
 
 

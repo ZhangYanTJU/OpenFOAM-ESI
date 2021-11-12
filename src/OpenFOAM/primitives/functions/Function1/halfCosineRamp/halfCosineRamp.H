@@ -70,6 +70,9 @@ public:
         //- Construct from entry name and dictionary
         halfCosineRamp(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        halfCosineRamp(const IOobject& io, const dictionary& dict);
+
 
     //- Destructor
     virtual ~halfCosineRamp() = default;

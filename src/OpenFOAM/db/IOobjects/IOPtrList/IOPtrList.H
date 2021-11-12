@@ -83,6 +83,12 @@ public:
         //- Construct by transferring the PtrList content
         IOPtrList(const IOobject& io, PtrList<T>&& content);
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
+
 
     //- Destructor
     virtual ~IOPtrList() = default;

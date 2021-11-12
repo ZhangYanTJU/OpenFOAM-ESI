@@ -137,6 +137,13 @@ public:
             Sine<Type>(entryName, dict)
         {}
 
+
+        //- Construct from IOobject and dictionary
+        Cosine(const IOobject& io, const dictionary& dict)
+        :
+            Sine<Type>(io, dict)
+        {}
+
         //- Copy construct
         explicit Cosine(const Cosine<Type>& rhs)
         :

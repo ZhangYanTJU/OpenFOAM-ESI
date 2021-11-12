@@ -105,7 +105,7 @@ class Scale
     // Private Member Functions
 
         //- Read the coefficients from the given dictionary
-        void read(const dictionary& coeffs);
+        void readDict(const dictionary& coeffs);
 
 
 public:
@@ -129,6 +129,13 @@ public:
             const dictionary& dict
         );
 
+        //- Construct from IOobject and dictionary
+        Scale
+        (
+            const IOobject& io,
+            const dictionary& dict
+        );
+
         //- Copy construct
         explicit Scale(const Scale<Type>& rhs);
 
@@ -143,7 +150,7 @@ public:
         virtual inline Type value(const scalar t) const;
 
         //- Write in dictionary format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 
         //- Write coefficient entries in dictionary format
         void writeEntries(Ostream& os) const;

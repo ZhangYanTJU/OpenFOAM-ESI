@@ -40,4 +40,15 @@ Foam::Function1Types::Uniform<Type>::Uniform
 {}
 
 
+template<class Type>
+Foam::Function1Types::Uniform<Type>::Uniform
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Constant<Type>(io, dict)
+{}
+
+
 // ************************************************************************* //

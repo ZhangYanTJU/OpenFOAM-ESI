@@ -50,4 +50,14 @@ Foam::Function1Types::quarterCosineRamp::quarterCosineRamp
 {}
 
 
+Foam::Function1Types::quarterCosineRamp::quarterCosineRamp
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    ramp(io, dict)
+{}
+
+
 // ************************************************************************* //

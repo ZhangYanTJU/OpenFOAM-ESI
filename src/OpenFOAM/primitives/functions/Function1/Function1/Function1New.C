@@ -209,4 +209,177 @@ Foam::Function1<Type>::NewIfPresent
 }
 
 
+template<class Type>
+Foam::refPtr<Foam::Function1<Type>>
+Foam::Function1<Type>::New
+(
+    HashPtrTable<Function1<Type>>& cache,
+
+    const word& entryName,
+    const dictionary& dict,
+    enum keyType::option matchOpt,
+    const bool mandatory
+)
+{
+    // Use the dictionary to find the keyword (allowing wildcards).
+    // Alternative would be to have
+    // a HashTable where the key type uses a wildcard match
+
+
+    refPtr<Function1<Type>> fref;  // return value
+
+    // Try for direct cache hit
+    fref.cref(cache.get(entryName));
+
+    if (fref)
+    {
+        return fref;
+    }
+
+
+    // Lookup from dictionary
+    const entry* eptr = dict.findEntry(entryName, matchOpt);
+
+    if (eptr)
+    {
+        // Use keyword (potentially a wildcard) instead of entry name
+        const auto& kw = eptr->keyword();
+
+        // Try for a cache hit
+        fref.cref(cache.get(kw));
+
+        if (!fref)
+        {
+            // Create new entry
+            auto fauto
+            (
+                Function1<Type>::New
+                (
+                    kw,
+                    eptr,  // Already resolved
+                    dict,
+                    word::null,
+                    mandatory
+                )
+            );
+
+            if (fauto)
+            {
+                // Cache the newly created function
+                fref.cref(fauto.get());
+                cache.set(kw, fauto);
+            }
+        }
+    }
+
+    if (mandatory && !fref)
+    {
+        FatalIOErrorInFunction(dict)
+            << "No match for " << entryName << nl
+            << exit(FatalIOError);
+    }
+
+    return fref;
+}
+
+
+template<class Type>
+Foam::refPtr<Foam::Function1<Type>>
+Foam::Function1<Type>::New
+(
+    const IOobject& io,
+    const dictionary& dict,
+    enum keyType::option matchOpt,
+    const bool mandatory
+)
+{
+    // Use the dictionary to find the keyword (allowing wildcards).
+    // Alternative would be to have
+    // a HashTable where the key type uses a wildcard match
+
+
+    refPtr<Function1<Type>> fref;  // return value
+
+    // Lookup from dictionary
+    const entry* eptr = dict.findEntry(io.name(), matchOpt);
+
+    const dictionary* coeffs = (eptr ? eptr->dictPtr() : nullptr);
+
+    word modelType;
+
+    if (coeffs)
+    {
+        // Dictionary entry
+
+        DebugInFunction
+            << "For " << io.name() << " with dictionary entries: "
+            << flatOutput(coeffs->toc()) << nl;
+
+        coeffs->readEntry
+        (
+            "type",
+            modelType,
+            keyType::LITERAL,
+            modelType.empty()  // "type" entry is mandatory if no 'redirect'
+        );
+
+        auto* ctorPtr = IOobjectConstructorTable(modelType);
+
+        if (ctorPtr)
+        {
+            fref = ctorPtr(io, *coeffs);
+        }
+
+        // Fallthrough
+    }
+    else if (eptr)
+    {
+        // Use keyword (potentially a wildcard) instead of entry name
+        //const auto& kw = eptr->keyword();
+
+        ITstream& is = eptr->stream();
+
+        if (is.peek().isWord())
+        {
+            modelType = is.peek().wordToken();
+        }
+//        else
+//        {
+//            // A value - compatibility for reading constant
+//
+//            const Type constValue = pTraits<Type>(is);
+//
+//            return autoPtr<Function1<Type>>
+//            (
+//                new Function1Types::Constant<Type>(io.name(), constValue)
+//            );
+//        }
+
+        Pout<< "io:" << io.name()
+            << " kw:" << eptr->keyword()
+            << " modelType:" << modelType
+            << endl;
+
+        auto* ctorPtr = IOobjectConstructorTable(modelType);
+
+        if (ctorPtr)
+        {
+            fref = ctorPtr(io, *coeffs);
+        }
+    }
+
+    if (mandatory && !fref)
+    {
+        FatalIOErrorInFunction(dict)
+            << "Unknown Function1 type "
+            << modelType << " for " << io.name()
+            << "\n\nValid Function1 types :\n"
+            << IOobjectConstructorTablePtr_->sortedToc() << nl
+            << exit(FatalIOError);
+    }
+
+    return fref;
+}
+
+
 // ************************************************************************* //

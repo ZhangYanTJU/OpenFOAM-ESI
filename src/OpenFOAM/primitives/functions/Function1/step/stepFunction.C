@@ -34,6 +34,9 @@ namespace Foam
 namespace Function1Types
 {
     makeScalarFunction1(stepFunction);
+
+    // IOobject version
+    makeConcreteIOobjectFunction1(stepFunction, scalar);
 }
 }
 
@@ -47,6 +50,16 @@ Foam::Function1Types::stepFunction::stepFunction
 )
 :
     ramp(entryName, dict)
+{}
+
+
+Foam::Function1Types::stepFunction::stepFunction
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    ramp(io, dict)
 {}
 
 

@@ -214,6 +214,24 @@ const Foam::objectRegistry& Foam::objectRegistry::subRegistry
 }
 
 
+const Foam::objectRegistry& Foam::objectRegistry::findSubRegistry
+(
+    const fileName& path,
+    const bool forceCreate
+) const
+{
+    const wordList names(path.components());
+
+    refPtr<objectRegistry> subObr(*this);
+
+    for (const word& name : names)
+    {
+        subObr = subObr().subRegistry(name, forceCreate);
+    }
+    return subObr();
+}
+
+
 Foam::label Foam::objectRegistry::getEvent() const
 {
     label curEvent = event_++;

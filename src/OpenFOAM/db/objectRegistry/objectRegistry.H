@@ -132,7 +132,7 @@ class objectRegistry
 
 
         //- No copy construct
-        objectRegistry(const objectRegistry&) = delete;
+        //objectRegistry(const objectRegistry&) = delete;
 
         //- No copy assignment
         void operator=(const objectRegistry&) = delete;
@@ -158,6 +158,15 @@ public:
     TypeName("objectRegistry");
 
 
+    // Static Member Functions
+
+        //- Return nullObject reference field
+        inline static const objectRegistry& null()
+        {
+            return NullObjectRef<objectRegistry>();
+        }
+
+
     // Constructors
 
         //- Construct the time objectRegistry,
@@ -167,6 +176,15 @@ public:
         //- Construct sub-registry given an IObject to describe the registry,
         //- with estimated table capacity (default: 128)
         explicit objectRegistry(const IOobject& io, const label nObjects=128);
+
+        //- Default copy construct
+        explicit objectRegistry(const objectRegistry&) = default;
+
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
 
 
     //- Destructor, with checkOut() for all objects that are ownedByRegistry
@@ -340,6 +358,16 @@ public:
             const word& name,
             const bool forceCreate = false,
             const bool recursive = false
+        ) const;
+
+        //- Lookup and return a const sub-objectRegistry using a relative
+        //  path (with '/' separator)
+        //
+        //  \param forceCreate create it if it does not exist.
+        const objectRegistry& findSubRegistry
+        (
+            const fileName& relativePath,
+            const bool forceCreate = false
         ) const;
 
 

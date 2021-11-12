@@ -102,7 +102,7 @@ Type Foam::Function1Types::CSV<Type>::readValue
 
 
 template<class Type>
-void Foam::Function1Types::CSV<Type>::read()
+bool Foam::Function1Types::CSV<Type>::read()
 {
     fileName expandedFile(fName_);
     autoPtr<ISstream> isPtr(fileHandler().NewIFstream(expandedFile.expand()));
@@ -200,6 +200,8 @@ void Foam::Function1Types::CSV<Type>::read()
     }
 
     this->table_.transfer(values);
+
+    return true;
 }
 
 
@@ -214,6 +216,28 @@ Foam::Function1Types::CSV<Type>::CSV
 )
 :
     TableBase<Type>(entryName, dict),
+    nHeaderLine_(dict.get<label>("nHeaderLine")),
+    refColumn_(dict.get<label>("refColumn")),
+    componentColumns_(getComponentColumns("componentColumns", dict)),
+    separator_(dict.getOrDefault<string>("separator", ",")[0]),
+    mergeSeparators_(dict.get<bool>("mergeSeparators")),
+    fName_(fName.empty() ? dict.get<fileName>("file") : fName)
+{
+    read();
+
+    TableBase<Type>::check();
+}
+
+
+template<class Type>
+Foam::Function1Types::CSV<Type>::CSV
+(
+    const IOobject& io,
+    const dictionary& dict,
+    const fileName& fName
+)
+:
+    TableBase<Type>(io.name(), dict),
     nHeaderLine_(dict.get<label>("nHeaderLine")),
     refColumn_(dict.get<label>("refColumn")),
     componentColumns_(getComponentColumns("componentColumns", dict)),
@@ -271,7 +295,7 @@ void Foam::Function1Types::CSV<Type>::writeEntries(Ostream& os) const
 
 
 template<class Type>
-void Foam::Function1Types::CSV<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::CSV<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os.endEntry();
@@ -279,6 +303,8 @@ void Foam::Function1Types::CSV<Type>::writeData(Ostream& os) const
     os.beginBlock(word(this->name() + "Coeffs"));
     writeEntries(os);
     os.endBlock();
+
+    return os.good();
 }
 
 

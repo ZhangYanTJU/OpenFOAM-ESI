@@ -81,4 +81,46 @@ namespace Foam
 }
 
 
+// Construct from IOobject
+
+#define makeIOobjectFunction1s(Type)                                           \
+    defineTemplateRunTimeSelectionTable                                        \
+    (                                                                          \
+        Function1<Type>,                                                       \
+        IOobject                                                               \
+    );                                                                         \
+    makeIOobjectFunction1Type(Constant, Type);                                 \
+    makeIOobjectFunction1Type(Uniform, Type);                                  \
+    makeIOobjectFunction1Type(ZeroConstant, Type);                             \
+    makeIOobjectFunction1Type(OneConstant, Type);                              \
+    makeIOobjectFunction1Type(Polynomial, Type);                               \
+    makeIOobjectFunction1Type(Cosine, Type);                                   \
+    makeIOobjectFunction1Type(Sine, Type);                                     \
+    makeIOobjectFunction1Type(Square, Type);                                   \
+    makeIOobjectFunction1Type(CSV, Type);                                      \
+    makeIOobjectFunction1Type(Table, Type);                                    \
+    makeIOobjectFunction1Type(TableFile, Type);                                \
+    makeIOobjectFunction1Type(Scale, Type);                                    \
+    makeIOobjectFunction1Type(LimitRange, Type);
+
+
+namespace Foam
+{
+    // Add IOobject selection table for label. To be populated.
+    defineTemplateRunTimeSelectionTable
+    (
+        Function1<label>,
+        IOobject
+    );
+
+    makeIOobjectFunction1s(scalar);
+    makeIOobjectFunction1s(vector);
+    makeIOobjectFunction1s(sphericalTensor);
+    makeIOobjectFunction1s(symmTensor);
+    makeIOobjectFunction1s(tensor);
+
+    // Tbd: makeIOobjectFieldFunction1s
+}
+
+
 // ************************************************************************* //

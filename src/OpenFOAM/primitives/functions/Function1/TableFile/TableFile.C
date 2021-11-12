@@ -61,6 +61,36 @@ Foam::Function1Types::TableFile<Type>::TableFile
 
 
 template<class Type>
+Foam::Function1Types::TableFile<Type>::TableFile
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    TableBase<Type>(io, dict),
+    fName_()
+{
+    dict.readEntry("file", fName_);
+
+    fileName expandedFile(fName_);
+
+    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(expandedFile.expand()));
+    ISstream& is = *isPtr;
+
+    if (!is.good())
+    {
+        FatalIOErrorInFunction(is)
+            << "Cannot open file." << nl
+            << exit(FatalIOError);
+    }
+
+    is  >> this->table_;
+
+    TableBase<Type>::check();
+}
+
+
+template<class Type>
 Foam::Function1Types::TableFile<Type>::TableFile(const TableFile<Type>& tbl)
 :
     TableBase<Type>(tbl),
@@ -71,7 +101,7 @@ Foam::Function1Types::TableFile<Type>::TableFile(const TableFile<Type>& tbl)
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::Function1Types::TableFile<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::TableFile<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os.endEntry();
@@ -85,6 +115,8 @@ void Foam::Function1Types::TableFile<Type>::writeData(Ostream& os) const
     os.writeEntry("file", fName_);
 
     os.endBlock();
+
+    return os.good();
 }
 
 

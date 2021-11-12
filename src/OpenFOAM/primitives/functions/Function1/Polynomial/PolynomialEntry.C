@@ -103,6 +103,45 @@ Foam::Function1Types::Polynomial<Type>::Polynomial
 template<class Type>
 Foam::Function1Types::Polynomial<Type>::Polynomial
 (
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1<Type>(io.name(), dict),
+    coeffs_(),
+    canIntegrate_(true)
+{
+    const entry* eptr = dict.findEntry(io.name(), keyType::LITERAL);
+
+    if (eptr && eptr->isStream())
+    {
+        // Primitive (inline) format. Eg,
+        // key polynomial ((0 0) (10 1));
+
+        ITstream& is = eptr->stream();
+        if (is.peek().isWord())
+        {
+            is.skip();  // Discard leading 'polynomial'
+        }
+        is >> this->coeffs_;
+        dict.checkITstream(is, io.name());
+    }
+    else
+    {
+        // Dictionary format - "values" lookup. Eg,
+        //
+        // key { type polynomial; coeffs ((0 0) (10 1)); }
+
+        dict.readEntry("coeffs", this->coeffs_);
+    }
+
+    this->checkCoefficients();
+}
+
+
+template<class Type>
+Foam::Function1Types::Polynomial<Type>::Polynomial
+(
     const word& entryName,
     const List<Tuple2<Type, Type>>& coeffs
 )
@@ -197,11 +236,13 @@ Type Foam::Function1Types::Polynomial<Type>::integrate
 
 
 template<class Type>
-void Foam::Function1Types::Polynomial<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::Polynomial<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
 
     os  << nl << indent << coeffs_ << token::END_STATEMENT << nl;
+
+    return os.good();
 }
 
 

@@ -31,7 +31,7 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::Function1Types::Scale<Type>::read(const dictionary& coeffs)
+void Foam::Function1Types::Scale<Type>::readDict(const dictionary& coeffs)
 {
     scale_ = Function1<scalar>::New("scale", coeffs);
     value_ = Function1<Type>::New("value", coeffs);
@@ -47,7 +47,20 @@ Foam::Function1Types::Scale<Type>::Scale
 :
     Function1<Type>(entryName)
 {
-    read(dict);
+    readDict(dict);
+}
+
+
+template<class Type>
+Foam::Function1Types::Scale<Type>::Scale
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    Function1<Type>(io, dict)
+{
+    readDict(dict);
 }
 
 
@@ -71,7 +84,7 @@ void Foam::Function1Types::Scale<Type>::writeEntries(Ostream& os) const
 
 
 template<class Type>
-void Foam::Function1Types::Scale<Type>::writeData(Ostream& os) const
+bool Foam::Function1Types::Scale<Type>::writeData(Ostream& os) const
 {
     Function1<Type>::writeData(os);
     os  << token::END_STATEMENT << nl;
@@ -79,6 +92,8 @@ void Foam::Function1Types::Scale<Type>::writeData(Ostream& os) const
     os.beginBlock(word(this->name() + "Coeffs"));
     writeEntries(os);
     os.endBlock();
+
+    return os.good();
 }
 
 

@@ -50,4 +50,14 @@ Foam::Function1Types::quadraticRamp::quadraticRamp
 {}
 
 
+Foam::Function1Types::quadraticRamp::quadraticRamp
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    ramp(io, dict)
+{}
+
+
 // ************************************************************************* //

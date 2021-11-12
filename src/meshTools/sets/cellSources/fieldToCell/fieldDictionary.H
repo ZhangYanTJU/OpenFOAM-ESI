@@ -72,6 +72,15 @@ public:
             close();
         }
 
+        //- Construct as copy
+        explicit fieldDictionary(const fieldDictionary&) = default;
+
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
+
 
     // Member Functions
 

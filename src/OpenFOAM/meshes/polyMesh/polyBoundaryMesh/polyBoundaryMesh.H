@@ -135,6 +135,13 @@ public:
             const polyPatchList& ppl
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     ~polyBoundaryMesh() = default;

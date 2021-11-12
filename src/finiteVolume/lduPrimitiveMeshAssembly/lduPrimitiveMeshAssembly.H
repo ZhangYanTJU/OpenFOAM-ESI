@@ -122,6 +122,13 @@ public:
             const lduMesh&
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~lduPrimitiveMeshAssembly() = default;

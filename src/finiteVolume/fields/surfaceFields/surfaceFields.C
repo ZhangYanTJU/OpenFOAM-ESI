@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,13 +27,12 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "surfaceFields.H"
+#include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTemplate2TypeNameAndDebug
 (
@@ -67,8 +67,15 @@ defineTemplateTypeNameAndDebug(surfaceSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(surfaceSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(surfaceTensorField, 0);
 
+addToRunTimeSelectionTable(regIOobject, surfaceScalarField, IOobject);
+addToRunTimeSelectionTable(regIOobject, surfaceVectorField, IOobject);
+addToRunTimeSelectionTable(regIOobject, surfaceSphericalTensorField, IOobject);
+addToRunTimeSelectionTable(regIOobject, surfaceSymmTensorField, IOobject);
+addToRunTimeSelectionTable(regIOobject, surfaceTensorField, IOobject);
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

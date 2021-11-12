@@ -138,6 +138,13 @@ public:
             const surfaceScalarField& phi
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~PDRDragModel();

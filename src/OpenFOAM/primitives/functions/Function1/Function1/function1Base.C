@@ -32,8 +32,19 @@ License
 
 Foam::function1Base::function1Base(const word& entryName)
 :
-    refCount(),
-    name_(entryName)
+    regIOobject
+    (
+        IOobject
+        (
+            entryName,
+            "constant",         // instance
+            Time::null,         // objectRegistry
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false               // registerObject
+        )
+    ),
+    refCount()
 {}
 
 
@@ -43,16 +54,42 @@ Foam::function1Base::function1Base
     const dictionary& dict
 )
 :
-    refCount(),
-    name_(entryName)
+    regIOobject
+    (
+        IOobject
+        (
+            entryName,
+            "constant",         // instance
+            Time::null,         // objectRegistry
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false               // registerObject
+        )
+    ),
+    refCount()
 {}
 
 
 Foam::function1Base::function1Base(const function1Base& rhs)
 :
-    refCount(),
-    name_(rhs.name_)
+    regIOobject(rhs),
+    refCount()
 {}
+
+
+Foam::function1Base::function1Base(const IOobject& io)
+:
+    regIOobject(io),
+    refCount()
+{}
+
+
+Foam::function1Base::function1Base(const IOobject& io, const dictionary& dict)
+:
+    regIOobject(io),
+    refCount()
+{}
+
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

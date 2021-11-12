@@ -74,6 +74,15 @@ public:
         //- Construct, moving mapDistribute contents
         IOmapDistribute(const IOobject& io, mapDistribute&& map);
 
+        //- Default copy construct
+        IOmapDistribute(const IOmapDistribute&) = default;
+
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            return regIOobject::DeepClone(*this);
+        }
+
 
     //- Destructor
     virtual ~IOmapDistribute() = default;

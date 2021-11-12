@@ -50,4 +50,14 @@ Foam::Function1Types::linearRamp::linearRamp
 {}
 
 
+Foam::Function1Types::linearRamp::linearRamp
+(
+    const IOobject& io,
+    const dictionary& dict
+)
+:
+    ramp(io, dict)
+{}
+
+
 // ************************************************************************* //

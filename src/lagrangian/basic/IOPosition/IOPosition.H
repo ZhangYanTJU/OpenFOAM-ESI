@@ -83,6 +83,13 @@ public:
             cloud::geometryType geomType = cloud::geometryType::COORDINATES
         );
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     // Member functions
 

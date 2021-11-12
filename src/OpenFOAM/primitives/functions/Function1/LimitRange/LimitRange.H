@@ -118,7 +118,7 @@ class LimitRange
     // Private Member Functions
 
         //- Read the coefficients from the given dictionary
-        void read(const dictionary& coeffs);
+        void readDict(const dictionary& coeffs);
 
 
 public:
@@ -138,6 +138,9 @@ public:
         //- Construct from entry name and dictionary
         LimitRange(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        LimitRange(const IOobject& io, const dictionary& dict);
+
         //- Copy construct
         explicit LimitRange(const LimitRange<Type>& rhs);
 
@@ -155,7 +158,7 @@ public:
         virtual inline Type integrate(const scalar x1, const scalar x2) const;
 
         //- Write in dictionary format
-        virtual void writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 
         //- Write coefficient entries in dictionary format
         void writeEntries(Ostream& os) const;

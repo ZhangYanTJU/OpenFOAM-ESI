@@ -85,6 +85,13 @@ public:
         //- Construct for named driver
         fvExprDriverWriter(const word& name, fvExprDriver& driver);
 
+        //- Return a clone
+        virtual refPtr<regIOobject> deepClone() const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
 
     //- Destructor
     virtual ~fvExprDriverWriter() = default;

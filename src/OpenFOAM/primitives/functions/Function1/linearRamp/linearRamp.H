@@ -70,6 +70,9 @@ public:
         //- Construct from entry name and dictionary
         linearRamp(const word& entryName, const dictionary& dict);
 
+        //- Construct from IOobject and dictionary
+        linearRamp(const IOobject& io, const dictionary& dict);
+
 
     //- Destructor
     virtual ~linearRamp() = default;

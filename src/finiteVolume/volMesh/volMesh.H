@@ -83,6 +83,18 @@ public:
         {
             return mesh_.C();
         }
+
+        //- Return mesh given objectRegistry. Reverse of thisDb. Returns
+        //  null if objectRegistry does not hold Mesh
+        static refPtr<fvMesh> mesh(const objectRegistry& db)
+        {
+            const auto* meshPtr = isA<fvMesh>(db);
+            if (meshPtr)
+            {
+                return *meshPtr;
+            }
+            return nullptr;
+        }
 };
 
 

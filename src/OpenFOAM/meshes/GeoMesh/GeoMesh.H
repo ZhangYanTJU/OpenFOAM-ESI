@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,7 +68,7 @@ public:
     // Constructors
 
         //- Construct from mesh reference
-        explicit GeoMesh(const MESH& mesh)
+        explicit GeoMesh(const Mesh& mesh)
         :
             mesh_(mesh)
         {}
@@ -75,23 +76,32 @@ public:
 
     // Member Functions
 
-        //- Return true if thisDb() is a valid DB - here = false
-        bool hasDb() const
+        //- Return true if thisDb() is a valid DB
+        bool hasDb() const noexcept
         {
             return true;
         }
 
         //- Return the object registry
-        const objectRegistry& thisDb() const
+        const objectRegistry& thisDb() const noexcept
         {
             return mesh_;
+        }
+
+        //- Return mesh given objectRegistry (reverse of thisDb).
+        //  \return null if objectRegistry does not hold Mesh
+        static refPtr<Mesh> mesh(const objectRegistry& db)
+        {
+            refPtr<Mesh> wrapped;
+            wrapped.cref(dynamic_cast<const Mesh*>(&db));
+            return wrapped;
         }
 
 
     // Member Operators
 
         //- Return reference to the underlying mesh
-        const MESH& operator()() const
+        const Mesh& operator()() const noexcept
         {
             return mesh_;
         }

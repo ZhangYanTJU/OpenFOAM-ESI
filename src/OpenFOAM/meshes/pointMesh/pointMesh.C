@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,11 +91,22 @@ Foam::pointMesh::pointMesh(const polyMesh& pMesh)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::refPtr<Foam::pointMesh> Foam::pointMesh::mesh(const objectRegistry& db)
+{
+    const auto* polyPtr = isA<polyMesh>(db);
+    if (polyPtr)
+    {
+        return pointMesh::New(*polyPtr);
+    }
+    return nullptr;
+}
+
+
 bool Foam::pointMesh::movePoints()
 {
     if (debug)
     {
-        Pout<< "pointMesh::movePoints(const pointField&): "
+        Pout<< "pointMesh::movePoints(): "
             << "Moving points." << endl;
     }
 

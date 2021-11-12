@@ -87,6 +87,18 @@ bool Foam::JobInfo::constructed(false);
 
 #include "debug.C"
 
+//MEJ
+#include "Time.H"
+const Foam::Time Foam::Time::null
+(
+    fileName("."),  // root-path
+    fileName("."),  // case-name
+    false,          // No enableFunctionObjects
+    false           // No enableLibs
+);
+
+//MEJ
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Read file modification checking switches
 
