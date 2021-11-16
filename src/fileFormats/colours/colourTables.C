@@ -118,6 +118,7 @@ const Foam::colourTable& Foam::colourTable::ref(const word& tableName)
     {
         FatalErrorInFunction
             << "No such colourTable: " << tableName
+            << ". Available tables are: " << tables_.sortedToc()
             << exit(FatalError);
     }
 
