@@ -24,35 +24,37 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::timeVaryingAdsorptionFvPatchScalarField
+    Foam::speciesSorptionFvPatchScalarField
 
 Group
     grpGenericBoundaryConditions
 
 Description
-    This boundary condition provides a time-varying fixed-value condition
-    for a given scalar field to model time-dependent adsorption processes:
+    This boundary condition provides a first order zero gradient condition
+    for a given scalar field to model time-dependent adsorption-desoprtion
 
     \f[
-        \frac{d c}{d t} = k (c_{p_{max}} - c)
+        \frac{d c}{d t} = kasb (c_{eq} - c_{abs})
+    \f]
+
+
+    where
+    \vartable
+      c_{eq}       | Equilibrium concentration
+      c_{abs}      | Absorbed at wall
+      kasb         | Adsorption rate constant [1/s]
+    \endvartable
+
+    \f[
+        c_{eq} = max* (kl_*co_{int}/(1 + kl_*co_{int}));
     \f]
 
     where
     \vartable
-      c            | Adsorbed substance on patch at time t
-      k            | Adsorption rate constant
-      c_{p_{max}}  | Maximum substance that can be adsorbed on patch
+      max          | MAximum concentration
+      kl           | Langmuir constant
+      co_{int}     | Local cell value concentration
     \endvartable
-
-    References:
-    \verbatim
-        Pseudo-first order adsorption model (tag:ANK):
-            Adelodun, A. A., Ngila, J. C., Kim, D. G., & Jo, Y. M. (2016).
-            Isotherm, thermodynamic and kinetic studies of selective
-            CO2 adsorption on chemically modified carbon surfaces.
-            Aerosol and Air Quality Research, 16(12), 3312-3329.
-            DOI:10.4209/aaqr.2016.01.0014
-    \endverbatim
 
 Usage
     Example of the boundary condition specification:
@@ -60,9 +62,10 @@ Usage
     <patchName>
     {
         // Mandatory entries
-        type        timeVaryingAdsorption;
-        k           <scalar>;
+        type        speciesSorption;
+        kbas        <scalar>;
         max         <scalar>;
+        model       Langmuir;
 
         // Inherited entries
         ...
@@ -71,25 +74,25 @@ Usage
 
     where the entries mean:
     \table
-      Property | Description                      | Type   | Reqd   | Deflt
-      type     | Type name: timeVaryingAdsorption | word   | yes    | -
-      k        | Adsorption rate constant         | scalar | yes    | -
-      max      | Maximum level of adsorption of a given substance on patch <!--
-               -->                                | scalar | yes    | -
+      Property | Description                        | Type   | Reqd   | Deflt
+      type     | Type name: speciesSorption | word  | yes    | -
+      kbas     | Adsorption rate constant           | scalar | yes    | -
+      kl       | Langmuir constant                  | scalar | yes    | -
+      max      | Maximum concentation at wall       | scalar | yes    | -
+      model    | Equilibrium model                  | word   | yes
     \endtable
 
-    The inherited entries are elaborated in:
-      - \link fixedValueFvPatchFields.H \endlink
 
 SourceFiles
-    timeVaryingAdsorptionFvPatchScalarField.C
+    speciesSorptionFvPatchScalarField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef timeVaryingAdsorptionFvPatchScalarField_H
-#define timeVaryingAdsorptionFvPatchScalarField_H
+#ifndef speciesSorptionFvPatchScalarField_H
+#define speciesSorptionFvPatchScalarField_H
 
-#include "fixedValueFvPatchFields.H"
+#include "boundarySourcePatch.H"
+#include "zeroGradientFvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -97,57 +100,74 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-             Class timeVaryingAdsorptionFvPatchScalarField Declaration
+             Class speciesSorptionFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
-class timeVaryingAdsorptionFvPatchScalarField
+class speciesSorptionFvPatchScalarField
 :
-    public fixedValueFvPatchScalarField
+    public zeroGradientFvPatchField<scalar>,
+    public boundarySourcePatch
 {
 public:
 
     // Public Enumeration
 
-        //- Enumeration defining the available ddt schemes
-        enum ddtSchemeType
+        //- Options for the slow sorption model
+        enum equilibriumModelType : char
         {
-            tsEuler,
-            tsCrankNicolson,
-            tsBackward
+            LANGMUIR = 0
         };
+
+
+        //- Names for slowSorptionModelType
+        static const Enum<equilibriumModelType> equilibriumModelTypeNames;
 
 
 private:
 
     // Private Data
 
-        //- Time scheme type names
-        static const Enum<ddtSchemeType> ddtSchemeTypeNames_;
+         //- Equilibrium model
+        enum equilibriumModelType equilibriumModel_;
 
-        //- Adsorption rate constant
-        scalar k_;
+        //- Adsorption rate constant  [1/sec]
+        scalar kabs_;
 
-        //- Maximum level of adsorption of a given substance on patch
+        //- Langmuir adsorption constant
+        scalar kl_;
+
+        //- Maximum level of adsorption of a given substance on patch [mol/Kg]
         scalar max_;
+
+        //- Source on cells next to patch [mol/sec]
+        scalarField dfldp_;
+
+        //- Absorbed mass
+        scalarField mass_;
+
+    // Private Member Functions
+
+        //- Calculate the mole fraction fields
+        tmp<scalarField> calcMoleFractions();
 
 
 public:
 
     //- Runtime type information
-    TypeName("timeVaryingAdsorption");
+    TypeName("speciesSorption");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        timeVaryingAdsorptionFvPatchScalarField
+        speciesSorptionFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        timeVaryingAdsorptionFvPatchScalarField
+        speciesSorptionFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
@@ -155,19 +175,19 @@ public:
         );
 
         //- Construct by mapping given
-        //- timeVaryingAdsorptionFvPatchScalarField onto a new patch
-        timeVaryingAdsorptionFvPatchScalarField
+        //- speciesSorptionFvPatchScalarField onto a new patch
+        speciesSorptionFvPatchScalarField
         (
-            const timeVaryingAdsorptionFvPatchScalarField&,
+            const speciesSorptionFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Construct as copy
-        timeVaryingAdsorptionFvPatchScalarField
+        speciesSorptionFvPatchScalarField
         (
-            const timeVaryingAdsorptionFvPatchScalarField&
+            const speciesSorptionFvPatchScalarField&
         );
 
         //- Construct and return a clone
@@ -175,14 +195,14 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new timeVaryingAdsorptionFvPatchScalarField(*this)
+                new speciesSorptionFvPatchScalarField(*this)
             );
         }
 
         //- Construct as copy setting internal field reference
-        timeVaryingAdsorptionFvPatchScalarField
+        speciesSorptionFvPatchScalarField
         (
-            const timeVaryingAdsorptionFvPatchScalarField&,
+            const speciesSorptionFvPatchScalarField&,
             const DimensionedField<scalar, volMesh>&
         );
 
@@ -194,7 +214,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new timeVaryingAdsorptionFvPatchScalarField(*this, iF)
+                new speciesSorptionFvPatchScalarField(*this, iF)
             );
         }
 
@@ -215,6 +235,9 @@ public:
                 const fvPatchScalarField&,
                 const labelList&
             );
+
+            //- Source of cells next to the patch
+            virtual tmp<scalarField> patchSource() const;
 
 
         // Evaluation

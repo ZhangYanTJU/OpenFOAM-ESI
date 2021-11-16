@@ -165,7 +165,6 @@ $(derivedFvPatchFields)/cylindricalInletVelocity/cylindricalInletVelocityFvPatch
 $(derivedFvPatchFields)/fan/fanFvPatchFields.C
 $(derivedFvPatchFields)/fanPressure/fanPressureFvPatchScalarField.C
 $(derivedFvPatchFields)/fixedFluxPressure/fixedFluxPressureFvPatchScalarField.C
-$(derivedFvPatchFields)/fastSorption/fastSorptionFvPatchScalarField.C
 $(derivedFvPatchFields)/fixedFluxExtrapolatedPressure/fixedFluxExtrapolatedPressureFvPatchScalarField.C
 $(derivedFvPatchFields)/fixedInternalValueFvPatchField/fixedInternalValueFvPatchFields.C
 $(derivedFvPatchFields)/fixedJump/fixedJumpFvPatchFields.C
@@ -209,13 +208,11 @@ $(derivedFvPatchFields)/rotatingTotalPressure/rotatingTotalPressureFvPatchScalar
 $(derivedFvPatchFields)/rotatingWallVelocity/rotatingWallVelocityFvPatchVectorField.C
 $(derivedFvPatchFields)/scaledFixedValue/scaledFixedValueFvPatchFields.C
 $(derivedFvPatchFields)/slip/slipFvPatchFields.C
-$(derivedFvPatchFields)/slowSorption/slowSorptionFvPatchScalarField.C
 $(derivedFvPatchFields)/supersonicFreestream/supersonicFreestreamFvPatchVectorField.C
 $(derivedFvPatchFields)/surfaceNormalFixedValue/surfaceNormalFixedValueFvPatchVectorField.C
 $(derivedFvPatchFields)/swirlFlowRateInletVelocity/swirlFlowRateInletVelocityFvPatchVectorField.C
 $(derivedFvPatchFields)/swirlInletVelocity/swirlInletVelocityFvPatchVectorField.C
 $(derivedFvPatchFields)/syringePressure/syringePressureFvPatchScalarField.C
-$(derivedFvPatchFields)/timeVaryingAdsorption/timeVaryingAdsorptionFvPatchScalarField.C
 $(derivedFvPatchFields)/timeVaryingMappedFixedValue/timeVaryingMappedFixedValueFvPatchFields.C
 $(derivedFvPatchFields)/totalPressure/totalPressureFvPatchScalarField.C
 $(derivedFvPatchFields)/totalTemperature/totalTemperatureFvPatchScalarField.C
