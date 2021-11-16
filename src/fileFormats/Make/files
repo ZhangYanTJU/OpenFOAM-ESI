@@ -29,6 +29,14 @@ abaqus/ABAQUSCore.C
 nastran/NASCore.C
 obj/OBJstream.C
 fire/FIRECore.C
+
+glTF/glTFAccessor.C
+glTF/glTFAnimation.C
+glTF/glTFBufferView.C
+glTF/glTFMesh.C
+glTF/glTFObject.C
+glTF/glTFScene.C
+
 starcd/STARCDCore.C
 stl/STLCore.C
 stl/STLReader.C
@@ -76,5 +84,6 @@ $(setWriters)/vtk/vtkSetWriterRunTime.C
 $(setWriters)/xmgrace/xmgraceSetWriterRunTime.C
 $(setWriters)/csv/csvSetWriterRunTime.C
 $(setWriters)/nastran/nastranSetWriterRunTime.C
+$(setWriters)/glTF/gltfSetWriterRunTime.C
 
 LIB = $(FOAM_LIBBIN)/libfileFormats
