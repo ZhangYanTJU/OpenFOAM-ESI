@@ -577,7 +577,7 @@ namespace Foam
 
         // interfaceOxideRate model definitions
 
-        //From pure phase (tabulated) to solid phase (const)
+        // From pure phase (tabulated) to solid phase (const)
         makeInterfacePureType
         (
             interfaceOxideRate,
@@ -585,6 +585,21 @@ namespace Foam
             rhoThermo,
             pureMixture,
             tabulatedThermoPhysics,
+            heSolidThermo,
+            solidThermo,
+            pureMixture,
+            hConstSolidThermoPhysics
+        );
+
+
+        // From pure phase (tabulated) to solid phase (const)
+        makeInterfacePureType
+        (
+            interfaceOxideRate,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            icoPoly8HThermoPhysics,
             heSolidThermo,
             solidThermo,
             pureMixture,
@@ -603,6 +618,34 @@ namespace Foam
             rhoThermo,
             pureMixture,
             constRhoHThermoPhysics
+        );
+
+        // From pure phase (rho const) to phase (rho const)
+        makeInterfacePureType
+        (
+            interfaceOxideRate,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            icoPoly8HThermoPhysics,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            constRhoHThermoPhysics
+        );
+
+        // From pure phase (tabulated) to pure phase (rho const)
+        makeInterfacePureType
+        (
+            interfaceOxideRate,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            hConstSolidThermoPhysics
         );
 
 }
