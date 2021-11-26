@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,13 +29,6 @@ License
 #include "faceCorrectedSnGrad.H"
 #include "volPointInterpolation.H"
 #include "triangle.H"
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class Type>
-Foam::fv::faceCorrectedSnGrad<Type>::~faceCorrectedSnGrad()
-{}
-
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -89,18 +83,18 @@ Foam::fv::faceCorrectedSnGrad<Type>::fullGradCorrection
 
         const face& fi = faces[facei];
 
-        vector nf(Sf[facei]/magSf[facei]);
+        const vector nf(Sf[facei]/magSf[facei]);
 
-        for (label pi=0; pi<fi.size(); pi++)
+        for (label pi = 0; pi < fi.size(); ++pi)
         {
             // Next point index
-            label pj = (pi+1)%fi.size();
+            const label pj = (pi+1)%fi.size();
 
             // Edge normal in plane of face
-            vector edgen(nf^(points[fi[pj]] - points[fi[pi]]));
+            const vector edgen(nf^(points[fi[pj]] - points[fi[pi]]));
 
             // Edge centre field value
-            Type pvfe(0.5*(pvf[fi[pj]] + pvf[fi[pi]]));
+            const Type pvfe(0.5*(pvf[fi[pj]] + pvf[fi[pi]]));
 
             // Integrate face gradient
             fgrad += edgen*pvfe;
@@ -152,7 +146,7 @@ Foam::fv::faceCorrectedSnGrad<Type>::correction
     );
     GeometricField<Type, fvsPatchField, surfaceMesh>& ssf = tssf.ref();
 
-    for (direction cmpt = 0; cmpt < pTraits<Type>::nComponents; cmpt++)
+    for (direction cmpt = 0; cmpt < pTraits<Type>::nComponents; ++cmpt)
     {
         ssf.replace
         (
