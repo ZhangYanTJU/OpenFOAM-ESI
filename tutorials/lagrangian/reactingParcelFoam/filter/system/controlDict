@@ -52,6 +52,7 @@ maxDeltaT       1;
 
 functions
 {
+    #include "sample"
     #include "dataCloud"
     #include "vtkCloud"
     #include "vtkWrite"

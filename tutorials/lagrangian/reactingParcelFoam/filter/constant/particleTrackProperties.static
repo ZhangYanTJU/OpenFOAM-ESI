@@ -26,22 +26,22 @@ setFormat       gltf;
 
 formatOptions
 {
-    animate         yes;
+    animate         no;
     colour          yes;
 
-    animationInfo
+    fieldInfo
     {
-        colour          field;
-        colourField     d;
-        //min             0;
-        //max             0.002;
+        d
+        {
+            colourMap       rainbow;
+            min             0;
+            max             0.001;
 
-        //alpha           uniform;
-        //alphaValue      1;
-
-        alpha           field;
-        alphaField      d;
-        normalise       yes;
+            alpha           field; // uniform | field;
+            //alphaValue      0.1; // uniform alpha value
+            alphaField      d;
+            normalise       yes;
+        }
     }
 }
 
