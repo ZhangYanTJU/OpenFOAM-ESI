@@ -246,8 +246,8 @@ patchSource() const
 
     if (debug)
     {
-         Info<< " Mass rate max/min [1/sec]: "
-            << gMin(dfldp) << " - " << gMax(dfldp) << " - " << endl;
+        Info<< " Mass rate max/min [1/sec]: "
+            << gMin(dfldp) << " - " << gMax(dfldp) << endl;
     }
     // [mol/Kg/sec]*[g/mol]
     return tmp<scalarField>(new scalarField(dfldp));
@@ -287,7 +287,7 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
-        Info<< "  Absorption rate: [mol/Kg/sec] "
+        Info<< "  Absorption rate max/min [mol/Kg/sec]: "
             << gMin(dfldp_) << " - " << gMax(dfldp_) << endl;
     }
 
