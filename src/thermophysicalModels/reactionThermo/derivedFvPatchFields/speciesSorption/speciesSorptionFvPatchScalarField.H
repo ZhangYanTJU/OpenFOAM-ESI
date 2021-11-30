@@ -139,7 +139,7 @@ private:
         //- Maximum level of adsorption of a given substance on patch [mol/Kg]
         scalar max_;
 
-        //- Source on cells next to patch [mol/sec]
+        //- Source on cells next to patch [mol/Kg/sec]
         scalarField dfldp_;
 
         //- Absorbed mass

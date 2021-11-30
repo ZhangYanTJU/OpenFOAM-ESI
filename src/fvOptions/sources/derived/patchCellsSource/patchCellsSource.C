@@ -147,6 +147,12 @@ void Foam::fv::patchCellsSource::addSup
     eqn += mDot;
 
     curTimeIndex_ = mesh_.time().timeIndex();
+
+    if (debug)
+    {
+        Info<< " Mass rate max/min [Kg/m3/sec]: "
+            << gMin(mDot) << " - " << gMax(mDot) << endl;
+    }
 }
 
 

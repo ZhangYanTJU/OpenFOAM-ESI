@@ -240,8 +240,17 @@ patchSource() const
         thermo.composition().species()[this->internalField().name()];
 
     const scalar Wi(thermo.composition().W(speicesId));
+
+    // [mol/Kg/sec]*[g/mol] = [1/sec]
+    const scalarField dfldp(-dfldp_*Wi*1e-3);
+
+    if (debug)
+    {
+         Info<< " Mass rate max/min [1/sec]: "
+            << gMin(dfldp) << " - " << gMax(dfldp) << " - " << endl;
+    }
     // [mol/Kg/sec]*[g/mol]
-    return tmp<scalarField>(new scalarField(-dfldp_*Wi*1e-3));
+    return tmp<scalarField>(new scalarField(dfldp));
 }
 
 
@@ -280,9 +289,6 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
     {
         Info<< "  Absorption rate: [mol/Kg/sec] "
             << gMin(dfldp_) << " - " << gMax(dfldp_) << endl;
-
-        Info<< " Absorbed mass max/min: "
-            << gMin(mass_) << " - " << gMax(mass_) << endl;
     }
 
     zeroGradientFvPatchScalarField::updateCoeffs();
