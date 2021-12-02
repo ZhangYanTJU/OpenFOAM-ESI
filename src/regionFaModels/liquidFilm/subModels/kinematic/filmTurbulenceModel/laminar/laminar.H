@@ -57,11 +57,6 @@ class laminar
 :
     public filmTurbulenceModel
 {
-    // Private Data
-
-        //- Surface roughness coefficient
-        //scalar Cf_;
-
 
     // Private Member Functions
 

@@ -52,7 +52,6 @@ laminar::laminar
 )
 :
     filmTurbulenceModel(type(), film, dict)
-//     Cf_(dict_.get<scalar>("Cf"))
 {}
 
 
@@ -109,20 +108,6 @@ tmp<faVectorMatrix> laminar::wallFriction(areaVectorField& U) const
        - fam::Sp(wf(), U) + wf()*Uw() // wall contribution
     );
 }
-
-
-// tmp<faVectorMatrix> laminar::primaryRegionFriction(areaVectorField& U) const
-// {
-//     tmp<areaVectorField> Up = film_.Up();
-//
-//     // employ simple coeff-based model
-//     const dimensionedScalar Cf("Cf", dimVelocity, Cf_);
-//
-//     return
-//     (
-//        - fam::Sp(Cf, U) + Cf*Up()     // surface contribution
-//     );
-// }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
