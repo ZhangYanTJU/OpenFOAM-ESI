@@ -56,7 +56,7 @@ Description
     <                                                                          \
         argNames##ConstructorPtr,                                              \
         ::Foam::word,                                                          \
-        ::Foam::string::hasher                                                 \
+        ::Foam::Hash<::Foam::word>                                             \
     > argNames##ConstructorTable;                                              \
                                                                                \
     /* Construct from argList function pointer table pointer */                \
