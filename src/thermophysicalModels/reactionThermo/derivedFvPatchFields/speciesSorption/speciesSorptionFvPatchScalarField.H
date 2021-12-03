@@ -62,13 +62,14 @@ Usage
     <patchName>
     {
         // Mandatory entries
-        type        speciesSorption;
-        kbas        <scalar>;
-        max         <scalar>;
-        model       Langmuir;
-
-        // Inherited entries
-        ...
+        type                    speciesSorption;
+        kbas                    <scalar>;
+        max                     <scalar>;
+        kl                      <scalar>;
+        thickness               <Function1>;
+        rhoS                    <scalar>;
+        equilibriumModel        Langmuir;
+        kinematicModel      PseudoFirstOrder;
     }
     \endverbatim
 
@@ -79,7 +80,10 @@ Usage
       kbas     | Adsorption rate constant           | scalar | yes    | -
       kl       | Langmuir constant                  | scalar | yes    | -
       max      | Maximum concentation at wall       | scalar | yes    | -
-      model    | Equilibrium model                  | word   | yes
+      thickness| wall thickness                     | Function1 | yes    | -
+      rhoS     | Solid density                      | scalar | yes    | -
+      equilibriumModel    | Equilibrium model       | word   | yes
+      kinematicModel      | kinematic model         | word   | yes
     \endtable
 
 
@@ -93,6 +97,7 @@ SourceFiles
 
 #include "boundarySourcePatch.H"
 #include "zeroGradientFvPatchFields.H"
+#include "PatchFunction1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -112,31 +117,43 @@ public:
 
     // Public Enumeration
 
-        //- Options for the slow sorption model
+        //- Options for the equilibrum model
         enum equilibriumModelType : char
         {
             LANGMUIR = 0
         };
 
+        //- Options for the kinematic model
+        enum kineticModelType : char
+        {
+            PseudoFirstOrder = 0
+        };
 
-        //- Names for slowSorptionModelType
+
+        //- Names for equilibriumModelType
         static const Enum<equilibriumModelType> equilibriumModelTypeNames;
+
+        //- Names for kineticModelType
+        static const Enum<kineticModelType> kinematicModelTypeNames;
 
 
 private:
 
     // Private Data
 
-         //- Equilibrium model
+        //- Equilibrium model
         enum equilibriumModelType equilibriumModel_;
+
+        //- Kinematic model
+        enum kineticModelType kinematicModel_;
 
         //- Adsorption rate constant  [1/sec]
         scalar kabs_;
 
-        //- Langmuir adsorption constant
+        //- Langmuir adsorption constant [1/mol]
         scalar kl_;
 
-        //- Maximum level of adsorption of a given substance on patch [mol/Kg]
+        //- Maximum density on patch [mol/Kg]
         scalar max_;
 
         //- Source on cells next to patch [mol/Kg/sec]
@@ -145,10 +162,20 @@ private:
         //- Absorbed mass
         scalarField mass_;
 
+        //- Solid thickness along the patch
+        autoPtr<PatchFunction1<scalar>> thickness_;
+
+        //- Solid density
+        scalar rhoS_;
+
+
     // Private Member Functions
 
         //- Calculate the mole fraction fields
         tmp<scalarField> calcMoleFractions();
+
+        //- Lookup (or create) field for output
+        volScalarField& field(const word&, const dimensionSet&);
 
 
 public:

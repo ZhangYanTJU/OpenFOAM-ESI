@@ -129,7 +129,6 @@ void Foam::fv::patchCellsSource::addSup
     {
         if (isA<boundarySourcePatch>(psib[patchi]))
         {
-
             const boundarySourcePatch& pp =
                 refCast<const boundarySourcePatch>(psib[patchi]);
 
@@ -140,7 +139,7 @@ void Foam::fv::patchCellsSource::addSup
             forAll(fc, faceI)
             {
                 label cellI = fc[faceI];
-                mDot[cellI] += tsb()[faceI]*rho[cellI];
+                mDot[cellI] += tsb()[faceI];
             }
         }
     }
@@ -150,7 +149,7 @@ void Foam::fv::patchCellsSource::addSup
 
     if (debug)
     {
-        Info<< " Mass rate max/min [Kg/m3/sec]: "
+        Info<< " Field mass rate min/max [Kg/m3/sec]: "
             << gMin(mDot) << " - " << gMax(mDot) << endl;
     }
 }

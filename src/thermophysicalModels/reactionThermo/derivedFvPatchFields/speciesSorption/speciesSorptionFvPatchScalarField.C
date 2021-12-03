@@ -42,6 +42,15 @@ Foam::speciesSorptionFvPatchScalarField::equilibriumModelTypeNames
 });
 
 
+const Foam::Enum
+<
+    Foam::speciesSorptionFvPatchScalarField::kineticModelType
+>
+Foam::speciesSorptionFvPatchScalarField::kinematicModelTypeNames
+({
+    { kineticModelType::PseudoFirstOrder, "PseudoFirstOrder" }
+});
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
@@ -93,6 +102,38 @@ Foam::speciesSorptionFvPatchScalarField::calcMoleFractions()
 }
 
 
+Foam::volScalarField&
+Foam::speciesSorptionFvPatchScalarField::field
+(
+    const word& fieldName,
+    const dimensionSet& dim
+)
+{
+    const fvMesh& mesh = this->internalField().mesh();
+    volScalarField* ptr = mesh.getObjectPtr<volScalarField>(fieldName);
+
+    if (!ptr)
+    {
+        ptr = new volScalarField
+        (
+            IOobject
+            (
+                fieldName,
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::AUTO_WRITE
+            ),
+            mesh,
+            dimensionedScalar(dim, Zero)
+        );
+
+        ptr->store();
+    }
+
+    return *ptr;
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
@@ -103,11 +144,14 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
 :
     zeroGradientFvPatchScalarField(p, iF),
     equilibriumModel_(equilibriumModelType::LANGMUIR),
+    kinematicModel_(kineticModelType::PseudoFirstOrder),
     kabs_(scalar(1)),
     kl_(0),
     max_(scalar(1)),
     dfldp_(p.size(), 0),
-    mass_(p.size(), 0)
+    mass_(p.size(), 0),
+    thickness_(nullptr),
+    rhoS_(0)
 {}
 
 
@@ -119,7 +163,8 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
 )
 :
     zeroGradientFvPatchScalarField(p, iF, dict),
-    equilibriumModel_(equilibriumModelTypeNames.get("model", dict)),
+    equilibriumModel_(equilibriumModelTypeNames.get("equilibriumModel", dict)),
+    kinematicModel_(kinematicModelTypeNames.get("kinematicModel", dict)),
     kabs_(dict.getCheck<scalar>("kabs", scalarMinMax::ge(0))),
     kl_(dict.getCheck<scalar>("kl", scalarMinMax::ge(0))),
     max_(dict.getCheck<scalar>("max", scalarMinMax::ge(0))),
@@ -134,7 +179,9 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
         dict.found("mass")
       ? scalarField("mass", dict, p.size())
       : scalarField(p.size(), 0)
-    )
+    ),
+    thickness_(PatchFunction1<scalar>::New(p.patch(), "thickness", dict)),
+    rhoS_(dict.get<scalar>("rhoS"))
 {
     if (dict.found("value"))
     {
@@ -160,11 +207,14 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
 :
     zeroGradientFvPatchScalarField(ptf, p, iF, mapper),
     equilibriumModel_(ptf.equilibriumModel_),
+    kinematicModel_(ptf.kinematicModel_),
     kabs_(ptf.kabs_),
     kl_(ptf.kl_),
     max_(ptf.max_),
     dfldp_(ptf.dfldp_, mapper),
-    mass_(ptf.mass_, mapper)
+    mass_(ptf.mass_, mapper),
+    thickness_(ptf.thickness_.clone(patch().patch())),
+    rhoS_(ptf.rhoS_)
 {}
 
 
@@ -175,11 +225,14 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
 :
     zeroGradientFvPatchScalarField(ptf),
     equilibriumModel_(ptf.equilibriumModel_),
+    kinematicModel_(ptf.kinematicModel_),
     kabs_(ptf.kabs_),
     kl_(ptf.kl_),
     max_(ptf.max_),
     dfldp_(ptf.dfldp_),
-    mass_(ptf.mass_)
+    mass_(ptf.mass_),
+    thickness_(ptf.thickness_.clone(patch().patch())),
+    rhoS_(ptf.rhoS_)
 {}
 
 
@@ -191,11 +244,14 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
 :
     zeroGradientFvPatchScalarField(ptf, iF),
     equilibriumModel_(ptf.equilibriumModel_),
+    kinematicModel_(ptf.kinematicModel_),
     kabs_(ptf.kabs_),
     kl_(ptf.kl_),
     max_(ptf.max_),
     dfldp_(ptf.dfldp_),
-    mass_(ptf.mass_)
+    mass_(ptf.mass_),
+    thickness_(ptf.thickness_.clone(patch().patch())),
+    rhoS_(ptf.rhoS_)
 {}
 
 
@@ -209,6 +265,10 @@ void Foam::speciesSorptionFvPatchScalarField::autoMap
     zeroGradientFvPatchScalarField::autoMap(m);
     dfldp_.autoMap(m);
     mass_.autoMap(m);
+    if (thickness_)
+    {
+        thickness_->autoMap(m);
+    }
 }
 
 
@@ -225,6 +285,10 @@ void Foam::speciesSorptionFvPatchScalarField::rmap
 
     dfldp_.rmap(tiptf.dfldp_, addr);
     mass_.rmap(tiptf.mass_, addr);
+    if (thickness_)
+    {
+        thickness_->rmap(tiptf.thickness_(), addr);
+    }
 }
 
 
@@ -241,15 +305,33 @@ patchSource() const
 
     const scalar Wi(thermo.composition().W(speicesId));
 
-    // [mol/Kg/sec]*[g/mol] = [1/sec]
-    const scalarField dfldp(-dfldp_*Wi*1e-3);
+    const scalar t = db().time().timeOutputValue();
+
+    const scalarField h(thickness_->value(t));
+
+    const scalarField AbyV(this->patch().magSf());
+
+    // Solid mass [Kg]
+    const scalarField mass(h*AbyV*rhoS_);
+
+    scalarField Vol(this->patch().size());
+
+    forAll(AbyV, facei)
+    {
+        const label faceCelli = this->patch().faceCells()[facei];
+        Vol[facei] = this->internalField().mesh().V()[faceCelli];
+    }
+
+    // The moles absorbed by the solid
+    // dfldp[mol/Kg/sec]* mass[Kg]* Wi[Kg/mol] / Vol[m3]= [Kg/sec/m3]
+    const scalarField dfldp(-dfldp_*mass*Wi*1e-3/Vol);
 
     if (debug)
     {
-        Info<< " Mass rate max/min [1/sec]: "
+        Info<< " Patch mass rate min/max [Kg/m3/sec]: "
             << gMin(dfldp) << " - " << gMax(dfldp) << endl;
     }
-    // [mol/Kg/sec]*[g/mol]
+
     return tmp<scalarField>(new scalarField(dfldp));
 }
 
@@ -281,13 +363,33 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
     }
 
     // source [mol/Kg/sec]
-    dfldp_ = kabs_*(max(cEq - mass_, 0.0));
+    dfldp_ = Zero;
+
+    switch (kinematicModel_)
+    {
+        case kineticModelType::PseudoFirstOrder:
+        {
+            dfldp_ = kabs_*(max(cEq - mass_, 0.0));
+        }
+        default:
+            break;
+    }
 
     mass_ += dfldp_*dt;
 
+    scalarField& pMass =
+        field
+        (
+            "absorbedMass" + this->internalField().name(),
+            dimensionSet(dimMoles/dimMass)
+        ).boundaryFieldRef()[patch().index()];
+
+    pMass = mass_;
+
+
     if (debug)
     {
-        Info<< "  Absorption rate max/min [mol/Kg/sec]: "
+        Info<< "  Absorption rate min/max [mol/Kg/sec]: "
             << gMin(dfldp_) << " - " << gMax(dfldp_) << endl;
     }
 
@@ -299,12 +401,24 @@ void Foam::speciesSorptionFvPatchScalarField::write(Ostream& os) const
 {
     fvPatchScalarField::write(os);
 
-    os.writeEntry("model", equilibriumModelTypeNames[equilibriumModel_]);
+    os.writeEntry
+    (
+        "equilibriumModel", equilibriumModelTypeNames[equilibriumModel_]
+    );
+    os.writeEntry
+    (
+        "kinematicModel", kinematicModelTypeNames[kinematicModel_]
+    );
     os.writeEntry("kabs", kabs_);
     os.writeEntry("kl", kl_);
     os.writeEntry("max", max_);
     dfldp_.writeEntry("dfldp", os);
     mass_.writeEntry("mass", os);
+    os.writeEntry("rhoS", rhoS_);
+    if (thickness_)
+    {
+        thickness_->writeData(os) ;
+    }
 
     writeEntry("value", os);
 }
