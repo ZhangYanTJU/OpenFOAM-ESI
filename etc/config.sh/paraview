@@ -118,7 +118,7 @@ case "$ParaView_VERSION" in
         ;;
 
     ([0-9]*)
-        # Extract API from VERSION
+        # Extract API (major.minor) from VERSION
         pv_api=$(echo "$ParaView_VERSION" | \
             sed -ne 's/^[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*$/\1/p')
         ;;
@@ -131,6 +131,7 @@ case "$ParaView_VERSION" in
     if [ -r "$ParaView_DIR" ]
     then
         export PATH="$ParaView_DIR/bin:$PATH"
+        unset pv_libdirs
 
         # QT libraries as required, and Qt5_DIR for the root directory.
         # Another possibility: "qtpaths --qt-version"
@@ -146,7 +147,7 @@ case "$ParaView_VERSION" in
             do
                 if [ -d "$qtDir/$libDir" ]
                 then
-                    export LD_LIBRARY_PATH="$qtDir/$libDir:$LD_LIBRARY_PATH"
+                    pv_libdirs="$qtDir/$libDir"
                     break
                 fi
             done
@@ -161,11 +162,11 @@ case "$ParaView_VERSION" in
             if [ -d "$ParaView_DIR/$pvLibDir" ]
             then
                 case "$pv_api" in
-                (5.[0-4]*)
+                (5.[0-4])
                     libDir="$pvLibDir"   # Needs lib/paraview-X.X (not lib)
                     ;;
                 esac
-                export LD_LIBRARY_PATH="$ParaView_DIR/$libDir:$LD_LIBRARY_PATH"
+                pv_libdirs="$ParaView_DIR/$libDir:${pv_libdirs}"
                 break
             fi
             unset pvLibDir
@@ -178,6 +179,16 @@ case "$ParaView_VERSION" in
             export PV_PLUGIN_PATH="$pv_plugin_dir"
         else
             pv_plugin_dir="${pv_plugin_dir} (missing)"  # For message
+        fi
+
+        # Any extra library directories
+        if [ -n "$pv_libdirs" ]
+        then
+            case "$WM_ARCH" in
+            (darwin*)
+                export DYLD_LIBRARY_PATH="${pv_libdirs}:$DYLD_LIBRARY_PATH" ;;
+            (*) export LD_LIBRARY_PATH="${pv_libdirs}:$LD_LIBRARY_PATH" ;;
+            esac
         fi
 
         if [ -n "$FOAM_VERBOSE" ] && [ -n "$PS1" ]
@@ -208,6 +219,6 @@ then
 fi
 
 unset archDir libDir
-unset pv_api pv_plugin_dir pvLibDir pvPython qtDir
+unset pv_api pv_plugin_dir pv_libdirs pvLibDir pvPython qtDir
 
 #------------------------------------------------------------------------------

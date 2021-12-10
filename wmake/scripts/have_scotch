@@ -5,7 +5,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2018-2020 OpenCFD Ltd.
+#     Copyright (C) 2018-2021 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -70,6 +70,10 @@
 # when MPI_ARCH_PATH=/usr/lib64/openmpi
 # and mpicc --showme:compile -> -I/usr/include/openmpi-x86_64
 #
+# NB: for RedHat (8+) /usr/include/scotch.h is a wrapper that includes
+#    /usr/include/scotch-64.h  (LP64 mode)
+# or /usr/include/scotch-32.h  (ILP32 mode)
+# In either case, int is 32 bits
 #
 # openSUSE
 # --------
@@ -90,7 +94,7 @@
 no_scotch()
 {
     unset HAVE_SCOTCH SCOTCH_ARCH_PATH SCOTCH_INC_DIR SCOTCH_LIB_DIR
-    unset SCOTCH_VERSION
+    unset SCOTCH_VERSION SCOTCH_LIBNAME_SUFFIX
     unset HAVE_PTSCOTCH PTSCOTCH_ARCH_PATH PTSCOTCH_INC_DIR PTSCOTCH_LIB_DIR
 }
 
@@ -161,6 +165,36 @@ search_scotch()
         return 2
     }
 
+    # ----------------------------------
+    # Extract 'typedef int64_t SCOTCH_Num' etc from header file
+    # - ensure consistent size between OpenFOAM and scotch header
+    # - for some systems, scotch.h includes scotch-64.h (for example).
+
+    local label
+    for hdr in \
+        "$header" \
+        "${header%/*}"/scotch-64.h \
+        "${header%/*}"/scotch-32.h \
+    ;
+    do
+        if [ -f "$hdr" ]
+        then
+            label=$(sed -ne \
+                's/^.*typedef *\([^ ]*\) *SCOTCH_Num.*/\1/p' \
+                "$hdr")
+
+            if [ -n "$label" ]
+            then
+                header="$hdr"  # Appears successful
+                break
+            fi
+        fi
+    done
+    : "${label:=unknown}"  # Safety
+
+    # Transform (int32_t | int64_t) -> (int32 | int64)
+    case "$label" in (int32_t | int64_t) label="${label%_t}" ;; esac
+
     # Library
     [ -n "$library" ] \
     || library=$(findLibrary -prefix="$prefix" -name="$libName" -local="$localDir") \
@@ -170,16 +204,6 @@ search_scotch()
     }
 
     # ----------------------------------
-
-    local label
-
-    # Ensure consistent sizes between OpenFOAM and scotch header
-    # extract 'typedef int64_t SCOTCH_Num' or equivalent
-    label=$(sed -ne \
-        's/^.*typedef *\([^ ]*\) *SCOTCH_Num.*/\1/p' \
-        "$header")
-    : "${label:=unknown}"
-
 
     # No SCOTCH_VERSION set? Try to obtain from header
     # extract #define SCOTCH_VERSION, SCOTCH_RELEASE, SCOTCH_PATCHLEVEL
@@ -198,7 +222,8 @@ search_scotch()
     : "${SCOTCH_VERSION:=scotch}"  # Failsafe value
 
     case "$WM_LABEL_SIZE:$label" in
-    (32:int32_t | 32:int | 64:int64_t | 64:long)
+    ( 32:int32 | 32:int \
+    | 64:int64 | 64:long )
         ;;
 
     (*)
@@ -212,7 +237,7 @@ search_scotch()
     esac
 
     # OK
-    echo "scotch (label=$label) - $prefix"
+    echo "scotch ($label) - $prefix"
     export HAVE_SCOTCH=true
     export SCOTCH_ARCH_PATH="$prefix"
     export SCOTCH_INC_DIR="${header%/*}"     # Basename
