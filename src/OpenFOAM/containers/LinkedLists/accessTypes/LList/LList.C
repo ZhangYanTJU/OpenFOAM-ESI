@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,7 +80,7 @@ void Foam::LList<LListBase, T>::clear()
     const label len = this->size();
     for (label i=0; i<len; ++i)
     {
-        this->removeHead();
+        this->deleteHead();
     }
 
     LListBase::clear();

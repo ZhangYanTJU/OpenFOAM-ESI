@@ -87,13 +87,37 @@ class namedDictionary
 {
 public:
 
+    // Generated Methods
+
+        //- Default construct
+        namedDictionary() = default;
+
+        //- Copy contruct
+        namedDictionary(const namedDictionary&) = default;
+
+        //- Move contruct
+        namedDictionary(namedDictionary&&) = default;
+
+        //- Copy assignment
+        namedDictionary& operator=(const namedDictionary&) = default;
+
+        //- Move assignment
+        // namedDictionary& operator=(namedDictionary&&) = default;
+
+        void operator=(namedDictionary&& rhs)
+        {
+            InfoErr<< "copy " << rhs.first() << " " << Foam::name(&rhs)
+                << endl;
+
+            this->first() = rhs.first();
+            this->second() = rhs.second();
+        }
+
+
     // Constructors
 
         //- Inherit constructors
         using Tuple2<keyType, dictionary>::Tuple2;
-
-        //- Default construct
-        namedDictionary();
 
         //- Construct from Istream
         explicit namedDictionary(Istream& is);

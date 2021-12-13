@@ -865,6 +865,14 @@ void Foam::dictionary::clear()
 
 void Foam::dictionary::transfer(dictionary& dict)
 {
+    InfoErr
+        << "transfer : " << Foam::name(&dict)
+        << dict
+        << " " << dict.name() << "toc: " << dict.toc()
+        << " into " << Foam::name(this)
+        << *this
+        << " " << this->name() << "toc: " << dict.toc() << nl;
+
     // Changing parents probably doesn't make much sense,
     // but what about the names?
     name() = dict.name();

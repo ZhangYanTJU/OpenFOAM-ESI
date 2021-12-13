@@ -237,8 +237,14 @@ int main(int argc, char *argv[])
 
     IOdictionary topoSetDict(dictIO);
 
+    SLList<namedDictionary> actionEntries1(topoSetDict.lookup("actions"));
+
     // Read set construct info from dictionary
-    List<namedDictionary> actionEntries(topoSetDict.lookup("actions"));
+    // List<namedDictionary> actionEntries(topoSetDict.lookup("actions"));
+
+    List<namedDictionary> actionEntries;
+
+    InfoErr<< "start time loop" << endl;
 
     forAll(timeDirs, timeI)
     {

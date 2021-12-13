@@ -247,10 +247,17 @@ public:
         }
 
 
+        //- Remove head, no return value
+        void deleteHead()
+        {
+            auto* p = LListBase::removeHead();
+            delete p;
+        }
+
         //- Remove and return head
         T removeHead()
         {
-            auto p = LListBase::removeHead();
+            auto* p = LListBase::removeHead();
             T obj(std::move(link::ref(p)));
             delete p;
             return obj;
@@ -259,7 +266,7 @@ public:
         //- Remove and return element
         T remove(link* item)
         {
-            auto p = LListBase::remove(item);
+            auto* p = LListBase::remove(item);
             T obj(std::move(link::ref(p)));
             delete p;
             return obj;
@@ -268,7 +275,7 @@ public:
         //- Remove and return element specified by iterator
         T remove(iterator& iter)
         {
-            auto p = LListBase::remove(iter);
+            auto* p = LListBase::remove(iter);
             T obj(std::move(link::ref(p)));
             delete p;
             return obj;
