@@ -53,7 +53,7 @@ namespace Foam
 
 class coupledFvPatch
 :
-    public lduInterface,
+//    public lduInterface,
     public fvPatch
 {
     // Private data

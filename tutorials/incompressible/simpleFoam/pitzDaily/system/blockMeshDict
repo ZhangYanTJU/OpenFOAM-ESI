@@ -95,6 +95,7 @@ boundary
     inlet
     {
         type patch;
+        coupled true;
         faces
         (
             (0 1 12 11)

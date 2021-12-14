@@ -458,6 +458,8 @@ $(GAMGInterfaces)/GAMGInterface/GAMGInterfaceNew.C
 $(GAMGInterfaces)/processorGAMGInterface/processorGAMGInterface.C
 $(GAMGInterfaces)/processorCyclicGAMGInterface/processorCyclicGAMGInterface.C
 $(GAMGInterfaces)/cyclicGAMGInterface/cyclicGAMGInterface.C
+$(GAMGInterfaces)/primitiveGAMGInterface/primitiveGAMGInterface.C
+
 
 GAMGInterfaceFields = $(GAMG)/interfaceFields
 $(GAMGInterfaceFields)/GAMGInterfaceField/GAMGInterfaceField.C

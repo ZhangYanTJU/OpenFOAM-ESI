@@ -707,6 +707,8 @@ const Foam::lduAddressing& Foam::fvMesh::lduAddr() const
 
 Foam::lduInterfacePtrsList Foam::fvMesh::interfaces() const
 {
+DebugVar("here");
+
     return boundary().interfaces();
 }
 

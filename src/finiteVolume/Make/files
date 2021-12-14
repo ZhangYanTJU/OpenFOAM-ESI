@@ -1,3 +1,8 @@
+fvPatches = fvMesh/fvPatches
+$(fvPatches)/fvPatch/fvPatch.C
+$(fvPatches)/fvPatch/fvPatchNew.C
+
+
 fvMesh/fvMeshGeometry.C
 fvMesh/fvMesh.C
 
@@ -20,10 +25,6 @@ fvMesh/simplifiedFvMesh/hexCellFvMesh/hexCellFvMesh.C
 
 fvBoundaryMesh = fvMesh/fvBoundaryMesh
 $(fvBoundaryMesh)/fvBoundaryMesh.C
-
-fvPatches = fvMesh/fvPatches
-$(fvPatches)/fvPatch/fvPatch.C
-$(fvPatches)/fvPatch/fvPatchNew.C
 
 basicFvPatches = $(fvPatches)/basic
 $(basicFvPatches)/coupled/coupledFvPatch.C

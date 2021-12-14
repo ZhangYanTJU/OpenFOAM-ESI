@@ -26,6 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fvsPatchFields.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,6 +52,31 @@ makeFvsPatchField(fvsPatchVectorField)
 makeFvsPatchField(fvsPatchSphericalTensorField)
 makeFvsPatchField(fvsPatchSymmTensorField)
 makeFvsPatchField(fvsPatchTensorField)
+
+//- If running with coupled basic patch make sure PatchField<Type>::New
+//- works. TBD: avoid fvsPatchField but go through to SlicedPatchField?
+//- (see SlicedGeometricField::slicedBoundaryField)
+addNamedToRunTimeSelectionTable
+(
+    fvsPatchScalarField, fvsPatchScalarField, patch, patch
+);
+addNamedToRunTimeSelectionTable
+(
+    fvsPatchVectorField, fvsPatchVectorField, patch, patch
+);
+addNamedToRunTimeSelectionTable
+(
+    fvsPatchSphericalTensorField, fvsPatchSphericalTensorField, patch, patch
+);
+addNamedToRunTimeSelectionTable
+(
+    fvsPatchSymmTensorField, fvsPatchSymmTensorField, patch, patch
+);
+addNamedToRunTimeSelectionTable
+(
+    fvsPatchTensorField, fvsPatchTensorField, patch, patch
+);
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

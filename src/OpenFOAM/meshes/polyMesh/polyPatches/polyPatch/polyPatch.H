@@ -79,6 +79,10 @@ class polyPatch
         //- Reference to boundary mesh
         const polyBoundaryMesh& boundaryMesh_;
 
+        //- Whether supports lduInterface (usually overriden by 'proper'
+        //  constraint coupled patches)
+        bool coupled_;
+
         //- Demand-driven: face-cell addressing
         mutable labelList::subList* faceCellsPtr_;
 
@@ -377,7 +381,14 @@ public:
         //  points correspondence)
         virtual bool coupled() const
         {
-            return false;
+            return coupled_;
+        }
+
+        //- Return true if this patch is geometrically coupled (i.e. faces and
+        //  points correspondence)
+        virtual void coupled(const bool coupled)
+        {
+            coupled_ = coupled;
         }
 
         //- Return true if the given type is a constraint type

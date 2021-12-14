@@ -97,6 +97,7 @@ Foam::polyPatch::polyPatch
     ),
     start_(start),
     boundaryMesh_(bm),
+    coupled_(false),
     faceCellsPtr_(nullptr),
     mePtr_(nullptr)
 {
@@ -126,6 +127,7 @@ Foam::polyPatch::polyPatch
     ),
     start_(start),
     boundaryMesh_(bm),
+    coupled_(false),
     faceCellsPtr_(nullptr),
     mePtr_(nullptr)
 {}
@@ -153,6 +155,7 @@ Foam::polyPatch::polyPatch
     ),
     start_(dict.get<label>("startFace")),
     boundaryMesh_(bm),
+    coupled_(dict.getOrDefault<bool>("coupled", false)),
     faceCellsPtr_(nullptr),
     mePtr_(nullptr)
 {
@@ -160,6 +163,10 @@ Foam::polyPatch::polyPatch
     {
         inGroups().appendUniq(patchType);
     }
+
+DebugVar(name);
+DebugVar(coupled_);
+
 }
 
 
@@ -182,6 +189,7 @@ Foam::polyPatch::polyPatch
     ),
     start_(pp.start()),
     boundaryMesh_(bm),
+    coupled_(pp.coupled()),
     faceCellsPtr_(nullptr),
     mePtr_(nullptr)
 {}
@@ -209,6 +217,7 @@ Foam::polyPatch::polyPatch
     ),
     start_(newStart),
     boundaryMesh_(bm),
+    coupled_(pp.coupled()),
     faceCellsPtr_(nullptr),
     mePtr_(nullptr)
 {}
@@ -236,6 +245,7 @@ Foam::polyPatch::polyPatch
     ),
     start_(newStart),
     boundaryMesh_(bm),
+    coupled_(pp.coupled()),
     faceCellsPtr_(nullptr),
     mePtr_(nullptr)
 {}
@@ -247,6 +257,7 @@ Foam::polyPatch::polyPatch(const polyPatch& p)
     primitivePatch(p),
     start_(p.start_),
     boundaryMesh_(p.boundaryMesh_),
+    coupled_(p.coupled()),
     faceCellsPtr_(nullptr),
     mePtr_(nullptr)
 {}
@@ -416,6 +427,7 @@ void Foam::polyPatch::write(Ostream& os) const
     patchIdentifier::write(os);
     os.writeEntry("nFaces", size());
     os.writeEntry("startFace", start());
+    os.writeEntryIfDifferent<bool>("coupled", false, coupled_);
 }
 
 

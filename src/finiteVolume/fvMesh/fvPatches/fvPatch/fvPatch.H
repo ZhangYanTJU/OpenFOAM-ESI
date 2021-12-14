@@ -49,6 +49,7 @@ SourceFiles
 #include "fvPatchFieldsFwd.H"
 #include "autoPtr.H"
 #include "runTimeSelectionTables.H"
+#include "lduInterface.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,6 +65,8 @@ class surfaceInterpolation;
 \*---------------------------------------------------------------------------*/
 
 class fvPatch
+:
+    public lduInterface
 {
     // Private Data
 
@@ -215,6 +218,43 @@ public:
 
             //- Return faceCells
             virtual const labelUList& faceCells() const;
+
+
+        // Interface transfer functions
+
+            //- Return the values of the given internal data adjacent to
+            //- the interface as a field using faceCell mapping
+            virtual tmp<labelField> interfaceInternalField
+            (
+                const labelUList& internalData,
+                const labelUList& faceCells
+            ) const
+            {
+                return tmp<labelField>
+                (
+                    new labelField(internalData, faceCells)
+                );
+            }
+
+            //- Return the values of the given internal data adjacent to
+            //  the interface as a field
+            virtual tmp<labelField> interfaceInternalField
+            (
+                const labelUList& internalData
+            ) const
+            {
+                return interfaceInternalField(internalData, faceCells());
+            }
+
+            //- Transfer and return internal field adjacent to the interface
+            virtual tmp<labelField> internalFieldTransfer
+            (
+                const Pstream::commsTypes commsType,
+                const labelUList& iF
+            ) const
+            {
+                return interfaceInternalField(iF);
+            }
 
 
         // Access functions for geometrical data

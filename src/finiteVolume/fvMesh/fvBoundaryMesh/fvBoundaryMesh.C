@@ -150,14 +150,19 @@ Foam::lduInterfacePtrsList Foam::fvBoundaryMesh::interfaces() const
 {
     const fvPatchList& patches = *this;
 
+DebugVar(patches.size());
     lduInterfacePtrsList list(patches.size());
 
     forAll(list, patchi)
     {
         const lduInterface* lduPtr = isA<lduInterface>(patches[patchi]);
 
-        if (lduPtr)
+        if (lduPtr && patches[patchi].coupled())
         {
+Pout<< "** fvBoundaryMesh : adding patch " << patches[patchi].name()
+    << " at index:" << patchi
+    << endl;
+
             list.set(patchi, lduPtr);
         }
     }
