@@ -150,7 +150,7 @@ private:
         //- Adsorption rate constant  [1/sec]
         scalar kabs_;
 
-        //- Langmuir adsorption constant [1/mol]
+        //- Langmuir adsorption constant [1/Pa]
         scalar kl_;
 
         //- Maximum density on patch [mol/Kg]
@@ -167,6 +167,9 @@ private:
 
         //- Solid density
         scalar rhoS_;
+
+        //- Pressure field name
+        word pName_;
 
 
     // Private Member Functions

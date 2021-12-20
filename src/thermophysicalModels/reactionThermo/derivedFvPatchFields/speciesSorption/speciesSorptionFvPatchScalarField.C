@@ -151,7 +151,8 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
     dfldp_(p.size(), 0),
     mass_(p.size(), 0),
     thickness_(nullptr),
-    rhoS_(0)
+    rhoS_(0),
+    pName_("p")
 {}
 
 
@@ -181,7 +182,8 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
       : scalarField(p.size(), 0)
     ),
     thickness_(PatchFunction1<scalar>::New(p.patch(), "thickness", dict)),
-    rhoS_(dict.get<scalar>("rhoS"))
+    rhoS_(dict.get<scalar>("rhoS")),
+    pName_(dict.getOrDefault<word>("p", "p"))
 {
     if (dict.found("value"))
     {
@@ -214,7 +216,8 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
     dfldp_(ptf.dfldp_, mapper),
     mass_(ptf.mass_, mapper),
     thickness_(ptf.thickness_.clone(patch().patch())),
-    rhoS_(ptf.rhoS_)
+    rhoS_(ptf.rhoS_),
+    pName_(ptf.pName_)
 {}
 
 
@@ -232,7 +235,8 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
     dfldp_(ptf.dfldp_),
     mass_(ptf.mass_),
     thickness_(ptf.thickness_.clone(patch().patch())),
-    rhoS_(ptf.rhoS_)
+    rhoS_(ptf.rhoS_),
+    pName_(ptf.pName_)
 {}
 
 
@@ -251,7 +255,8 @@ Foam::speciesSorptionFvPatchScalarField::speciesSorptionFvPatchScalarField
     dfldp_(ptf.dfldp_),
     mass_(ptf.mass_),
     thickness_(ptf.thickness_.clone(patch().patch())),
-    rhoS_(ptf.rhoS_)
+    rhoS_(ptf.rhoS_),
+    pName_(ptf.pName_)
 {}
 
 
@@ -348,6 +353,9 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
     // mole fraction
     tmp<scalarField> co = calcMoleFractions();
 
+    const fvPatchField<scalar>& pp =
+        patch().lookupPatchField<volScalarField, scalar>(pName_);
+
     // equilibrium in mol/Kg
     scalarField cEq(patch().size(), 0);
 
@@ -355,7 +363,7 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
     {
         case equilibriumModelType::LANGMUIR:
         {
-            cEq = max_*(kl_*co()/(1 + kl_*co()));
+            cEq = max_*(kl_*co()*pp/(1 + kl_*co()*pp));
             break;
         }
         default:
@@ -369,13 +377,15 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
     {
         case kineticModelType::PseudoFirstOrder:
         {
-            dfldp_ = kabs_*(max(cEq - mass_, 0.0));
+            dfldp_ = kabs_*(cEq - mass_);
         }
         default:
             break;
     }
 
     mass_ += dfldp_*dt;
+
+    mass_ = max(mass_, 0.0);
 
     scalarField& pMass =
         field
@@ -415,6 +425,7 @@ void Foam::speciesSorptionFvPatchScalarField::write(Ostream& os) const
     dfldp_.writeEntry("dfldp", os);
     mass_.writeEntry("mass", os);
     os.writeEntry("rhoS", rhoS_);
+    os.writeEntryIfDifferent<word>("p", "p", pName_);
     if (thickness_)
     {
         thickness_->writeData(os) ;
