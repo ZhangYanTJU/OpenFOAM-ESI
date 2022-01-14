@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -455,15 +455,20 @@ bool Foam::functionObjects::comfort::execute()
     tmp<volScalarField> DR =
         correctUnit*(factor12 - T)*pow(Umag - Umin, 0.62)*(pre*Umag*TI + C1);
 
+    // Calculate the operative temperature
+    tmp<volScalarField> Top = 0.5*(T + Trad);
+
     // Workaround
     word fieldNamePMV = "PMV";
     word fieldNamePPD = "PPD";
     word fieldNameDR = "DR";
+    word fieldNameTop = "Top";
 
     return
         store(fieldNamePMV, PMV)
      && store(fieldNamePPD, PPD)
-     && store(fieldNameDR, DR);
+     && store(fieldNameDR, DR)
+     && store(fieldNameDR, Top);
 }
 
 bool Foam::functionObjects::comfort::write()
@@ -471,7 +476,8 @@ bool Foam::functionObjects::comfort::write()
     return
         writeObject("PMV")
      && writeObject("PPD")
-     && writeObject("DR");
+     && writeObject("DR")
+     && writeObject("Top");
 }
 
 
