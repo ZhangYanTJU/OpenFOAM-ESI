@@ -2680,31 +2680,16 @@ Foam::label Foam::meshRefinement::findRegions
                 forAll(allLeakPaths, segmenti)
                 {
                     // Collect data from all processors
-                    List<pointList> gatheredPts(Pstream::nProcs());
-                    gatheredPts[Pstream::myProcNo()] =
-                        std::move(segmentPoints[segmenti]);
-                    Pstream::gatherList(gatheredPts);
-
-                    List<scalarList> gatheredDist(Pstream::nProcs());
-                    gatheredDist[Pstream::myProcNo()] =
-                        std::move(segmentDist[segmenti]);
-                    Pstream::gatherList(gatheredDist);
-
-                    // Combine processor lists into one big list.
                     pointList allPts
                     (
-                        ListListOps::combine<pointList>
-                        (
-                            gatheredPts, accessOp<pointList>()
-                        )
+                        globalIndex::gatherOp(segmentPoints[segmenti])
                     );
                     scalarList allDist
                     (
-                        ListListOps::combine<scalarList>
-                        (
-                            gatheredDist, accessOp<scalarList>()
-                        )
+                        globalIndex::gatherOp(segmentDist[segmenti])
                     );
+                    segmentPoints[segmenti].clear();
+                    segmentDist[segmenti].clear();
 
                     // Sort according to curveDist
                     labelList indexSet(Foam::sortedOrder(allDist));

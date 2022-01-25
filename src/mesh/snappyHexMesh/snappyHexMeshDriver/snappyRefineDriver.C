@@ -2427,19 +2427,7 @@ Foam::label Foam::snappyRefineDriver::directionalSmooth
             }
 
             // Collect data from all processors
-            scalarList allSeedPointDist;
-            {
-                List<scalarList> gatheredDist(Pstream::nProcs());
-                gatheredDist[Pstream::myProcNo()] = seedPointDist;
-                Pstream::gatherList(gatheredDist);
-
-                // Combine processor lists into one big list.
-                allSeedPointDist =
-                    ListListOps::combine<scalarList>
-                    (
-                        gatheredDist, accessOp<scalarList>()
-                    );
-            }
+            scalarList allSeedPointDist(globalIndex::gatherOp(seedPointDist));
 
             // Pre-set the points not to smooth (after expansion)
             bitSet isFrozenPoint(baseMesh.nPoints(), true);

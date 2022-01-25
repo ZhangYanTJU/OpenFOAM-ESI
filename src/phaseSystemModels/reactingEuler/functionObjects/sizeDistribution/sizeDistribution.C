@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2019 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,7 @@ License
 
 #include "sizeDistribution.H"
 #include "sizeGroup.H"
+#include "globalIndex.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -217,33 +218,13 @@ Foam::scalar Foam::functionObjects::sizeDistribution::volume() const
 }
 
 
-void Foam::functionObjects::sizeDistribution::combineFields(scalarField& field)
-{
-    List<scalarField> allValues(Pstream::nProcs());
-
-    allValues[Pstream::myProcNo()] = field;
-
-    Pstream::gatherList(allValues);
-
-    if (Pstream::master())
-    {
-        field =
-            ListListOps::combine<scalarField>
-            (
-                allValues,
-                accessOp<scalarField>()
-            );
-    }
-}
-
-
 Foam::tmp<Foam::scalarField>
 Foam::functionObjects::sizeDistribution::filterField
 (
     const scalarField& field
 ) const
 {
-    return tmp<scalarField>(new scalarField(field, cellId_));
+    return tmp<scalarField>::New(field, cellId_);
 }
 
 
@@ -419,8 +400,7 @@ bool Foam::functionObjects::sizeDistribution::write()
 
     Log << type() << " " << name() << " write" << nl;
 
-    scalarField V(filterField(mesh().V()));
-    combineFields(V);
+    scalarField V(globalIndex::gatherOp(filterField(mesh().V()).cref()));
 
     sumN_ = 0;
     sumV_ = 0;
@@ -432,12 +412,9 @@ bool Foam::functionObjects::sizeDistribution::write()
         const volScalarField& alpha = fi.VelocityGroup().phase();
 
         scalarField Ni(fi*alpha/fi.x());
-        scalarField values(filterField(Ni));
-        scalarField V(filterField(mesh().V()));
+        scalarField values(globalIndex::gatherOp(filterField(Ni).cref()));
 
         // Combine onto master
-        combineFields(values);
-        combineFields(V);
 
         if (Pstream::master())
         {

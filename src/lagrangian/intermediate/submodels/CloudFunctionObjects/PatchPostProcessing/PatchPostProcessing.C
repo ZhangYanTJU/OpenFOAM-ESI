@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,9 +28,9 @@ License
 
 #include "PatchPostProcessing.H"
 #include "Pstream.H"
+#include "globalIndex.H"
 #include "stringListOps.H"
 #include "ListOps.H"
-#include "ListListOps.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -51,13 +51,8 @@ void Foam::PatchPostProcessing<CloudType>::write()
 {
     forAll(patchData_, i)
     {
-        List<List<scalar>> procTimes(Pstream::nProcs());
-        procTimes[Pstream::myProcNo()] = times_[i];
-        Pstream::gatherList(procTimes);
-
-        List<List<string>> procData(Pstream::nProcs());
-        procData[Pstream::myProcNo()] = patchData_[i];
-        Pstream::gatherList(procData);
+        List<scalar> globalTimes(globalIndex::gatherOp(times_[i]));
+        List<string> globalData(globalIndex::gatherOp(patchData_[i]));
 
         if (Pstream::master())
         {
@@ -76,32 +71,16 @@ void Foam::PatchPostProcessing<CloudType>::write()
                 mesh.time().writeCompression()
             );
 
-            List<string> globalData;
-            globalData = ListListOps::combine<List<string>>
-            (
-                procData,
-                accessOp<List<string>>()
-            );
-
-            List<scalar> globalTimes;
-            globalTimes = ListListOps::combine<List<scalar>>
-            (
-                procTimes,
-                accessOp<List<scalar>>()
-            );
-
-            labelList indices(sortedOrder(globalTimes));
-
             string header("# Time currentProc " + header_);
             patchOutFile<< header.c_str() << nl;
 
-            forAll(globalTimes, i)
-            {
-                label dataI = indices[i];
+            const labelList indices(sortedOrder(globalTimes));
 
+            for (const label datai : indices)
+            {
                 patchOutFile
-                    << globalTimes[dataI] << ' '
-                    << globalData[dataI].c_str()
+                    << globalTimes[datai] << ' '
+                    << globalData[datai].c_str()
                     << nl;
             }
         }

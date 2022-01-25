@@ -205,9 +205,6 @@ protected:
         //- Calculate and return volume of the evaluated cell zone
         scalar volume() const;
 
-        //- Combine fields from all processor domains into single field
-        void combineFields(scalarField& field);
-
         //- Filter field according to cellIds
         tmp<scalarField> filterField(const scalarField& field) const;
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -106,28 +106,15 @@ void Foam::FacePostProcessing<CloudType>::write()
 
     List<scalarField> zoneMassTotal(mass_.size());
     List<scalarField> zoneMassFlowRate(massFlowRate_.size());
+
     forAll(faceZoneIDs_, zoneI)
     {
         const word& zoneName = fzm[faceZoneIDs_[zoneI]].name();
 
-        scalarListList allProcMass(Pstream::nProcs());
-        allProcMass[proci] = massTotal_[zoneI];
-        Pstream::gatherList(allProcMass);
-        zoneMassTotal[zoneI] =
-            ListListOps::combine<scalarList>
-            (
-                allProcMass, accessOp<scalarList>()
-            );
-        const scalar sumMassTotal = sum(zoneMassTotal[zoneI]);
+        zoneMassTotal[zoneI] = globalIndex::gatherOp(massTotal_[zoneI]);
+        zoneMassFlowRate[zoneI] = globalIndex::gatherOp(massFlowRate_[zoneI]);
 
-        scalarListList allProcMassFlowRate(Pstream::nProcs());
-        allProcMassFlowRate[proci] = massFlowRate_[zoneI];
-        Pstream::gatherList(allProcMassFlowRate);
-        zoneMassFlowRate[zoneI] =
-            ListListOps::combine<scalarList>
-            (
-                allProcMassFlowRate, accessOp<scalarList>()
-            );
+        const scalar sumMassTotal = sum(zoneMassTotal[zoneI]);
         const scalar sumMassFlowRate = sum(zoneMassFlowRate[zoneI]);
 
         Info<< "    " << zoneName
@@ -163,38 +150,24 @@ void Foam::FacePostProcessing<CloudType>::write()
                     uniqueMeshPointLabels
                 );
 
-            pointField uniquePoints(mesh.points(), uniqueMeshPointLabels);
-            List<pointField> allProcPoints(Pstream::nProcs());
-            allProcPoints[proci] = uniquePoints;
-            Pstream::gatherList(allProcPoints);
+            pointField allPoints
+            (
+                globalIndex::gatherOp
+                (
+                    UIndirectList<point>(mesh.points(), uniqueMeshPointLabels)
+                )
+            );
 
             faceList faces(fZone().localFaces());
             forAll(faces, i)
             {
                 inplaceRenumber(pointToGlobal, faces[i]);
             }
-            List<faceList> allProcFaces(Pstream::nProcs());
-            allProcFaces[proci] = faces;
-            Pstream::gatherList(allProcFaces);
+
+            faceList allFaces(globalIndex::gatherOp(faces));
 
             if (Pstream::master())
             {
-                pointField allPoints
-                (
-                    ListListOps::combine<pointField>
-                    (
-                        allProcPoints, accessOp<pointField>()
-                    )
-                );
-
-                faceList allFaces
-                (
-                    ListListOps::combine<faceList>
-                    (
-                        allProcFaces, accessOp<faceList>()
-                    )
-                );
-
                 auto writer = surfaceWriter::New
                 (
                     surfaceFormat_,

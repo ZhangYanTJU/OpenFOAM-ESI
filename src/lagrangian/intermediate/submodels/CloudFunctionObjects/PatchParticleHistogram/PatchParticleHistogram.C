@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,9 +27,9 @@ License
 
 #include "PatchParticleHistogram.H"
 #include "Pstream.H"
+#include "globalIndex.H"
 #include "stringListOps.H"
 #include "ListOps.H"
-#include "ListListOps.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -50,17 +50,9 @@ void Foam::PatchParticleHistogram<CloudType>::write()
 {
     forAll(times_, i)
     {
-        List<List<scalar>> procTimes(Pstream::nProcs());
-        procTimes[Pstream::myProcNo()] = times_[i];
-        Pstream::gatherList(procTimes);
-
-        List<List<scalar>> procDiameters(Pstream::nProcs());
-        procDiameters[Pstream::myProcNo()] = patchDiameters_[i];
-        Pstream::gatherList(procDiameters);
-
-        List<List<scalar>> procParticles(Pstream::nProcs());
-        procParticles[Pstream::myProcNo()] = patchParticles_[i];
-        Pstream::gatherList(procParticles);
+        List<scalar> globalTimes(globalIndex::gatherOp(times_[i]));
+        List<scalar> globalDiameters(globalIndex::gatherOp(patchDiameters_[i]));
+        List<scalar> globalParticles(globalIndex::gatherOp(patchParticles_[i]));
 
         if (Pstream::master())
         {
@@ -76,27 +68,6 @@ void Foam::PatchParticleHistogram<CloudType>::write()
                 IOstream::ASCII,
                 IOstream::currentVersion,
                 mesh.time().writeCompression()
-            );
-
-            List<scalar> globalTimes;
-            globalTimes = ListListOps::combine<List<scalar>>
-            (
-                procTimes,
-                accessOp<List<scalar>>()
-            );
-
-            List<scalar> globalDiameters;
-            globalDiameters = ListListOps::combine<List<scalar>>
-            (
-                procDiameters,
-                accessOp<List<scalar>>()
-            );
-
-            List<scalar> globalParticles;
-            globalParticles = ListListOps::combine<List<scalar>>
-            (
-                procParticles,
-                accessOp<List<scalar>>()
             );
 
             // Compute histogram
