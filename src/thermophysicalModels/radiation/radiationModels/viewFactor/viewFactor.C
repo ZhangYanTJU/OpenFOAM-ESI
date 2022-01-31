@@ -78,6 +78,7 @@ void Foam::radiation::viewFactor::initialise()
     DebugInFunction
         << "Total number of clusters : " << totalNCoarseFaces_ << endl;
 
+
     useDirect_ = coeffs_.getOrDefault<bool>("useDirectSolver", true);
 
     map_.reset
@@ -386,6 +387,7 @@ void Foam::radiation::viewFactor::initialise()
         {
             scalar maxDelta = 0;
             scalar totalDelta = 0;
+
             forAll (myF, i)
             {
                 scalar sumF = 0.0;
@@ -418,6 +420,7 @@ void Foam::radiation::viewFactor::initialise()
         List<labelListList> globalFaceFacesProc(Pstream::nProcs());
         globalFaceFacesProc[Pstream::myProcNo()] = globalFaceFaces_();
         Pstream::gatherList(globalFaceFacesProc);
+
 
         List<scalarListList> F(Pstream::nProcs());
         F[Pstream::myProcNo()] = FmyProc_();
@@ -805,7 +808,6 @@ void Foam::radiation::viewFactor::calculate()
 
             scalarField source(nLocalCoarseFaces_, 0);
 
-
             // Local diag and source
             forAll(source, i)
             {
@@ -1035,6 +1037,7 @@ void Foam::radiation::viewFactor::calculate()
                     iterCounter_ ++;
                 }
             }
+
             // Broadcast qBandI and fill qr
             Pstream::broadcast(qBandI);
 
