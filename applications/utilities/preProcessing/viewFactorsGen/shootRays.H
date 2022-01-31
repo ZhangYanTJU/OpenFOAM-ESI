@@ -4,7 +4,7 @@
 // Maximum length for dynamicList
 const label maxDynListLength
 (
-    viewFactorDict.getOrDefault<label>("maxDynListLength", 100000)
+    viewFactorDict.getOrDefault<label>("maxDynListLength", 1000000)
 );
 
 for (const int proci : Pstream::allProcs())
