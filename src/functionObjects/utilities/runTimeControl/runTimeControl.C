@@ -100,6 +100,8 @@ bool Foam::functionObjects::runTimeControls::runTimeControl::read
 
     if (fvMeshFunctionObject::read(dict))
     {
+        Info<< type() << " " << name() << ":" << nl;
+
         const dictionary& conditionsDict = dict.subDict("conditions");
         const wordList conditionNames(conditionsDict.toc());
         conditions_.setSize(conditionNames.size());
@@ -129,9 +131,7 @@ bool Foam::functionObjects::runTimeControls::runTimeControl::read
         // Check that some conditions are set
         if (conditions_.empty())
         {
-            Info<< type() << " " << name() << " output:" << nl
-                << "    No conditions present" << nl
-                << endl;
+            Info<< "    No conditions present" << endl;
         }
         else
         {
@@ -148,11 +148,11 @@ bool Foam::functionObjects::runTimeControls::runTimeControl::read
 
             if (!check)
             {
-                Info<< type() << " " << name() << " output:" << nl
-                    << "    All conditions are inactive" << nl
-                    << endl;
+                Info<< "    All conditions are inactive" << endl;
             }
         }
+
+        Info<< endl;
 
         // Set the action to perform when all conditions are satisfied
         // - set to end for backwards compatibility with v1806
