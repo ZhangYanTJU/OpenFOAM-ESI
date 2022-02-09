@@ -151,8 +151,14 @@ public:
             const volScalarField& Tf
         ) const;
 
-        //- Mass diffusivity of the local thermo
-        virtual tmp<volScalarField> D
+        //- Specie mass diffusivity for pure mixture
+        virtual tmp<volScalarField> Dfrom
+        (
+            const word& speciesName
+        ) const;
+
+        //- Specie mass diffusivity for specie in a multicomponent
+        virtual tmp<volScalarField> Dto
         (
             const word& speciesName
         ) const;

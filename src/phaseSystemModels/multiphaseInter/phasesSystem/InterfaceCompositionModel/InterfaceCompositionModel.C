@@ -214,12 +214,58 @@ Foam::InterfaceCompositionModel<Thermo, OtherThermo>::InterfaceCompositionModel
 
 template<class Thermo, class OtherThermo>
 Foam::tmp<Foam::volScalarField>
-Foam::InterfaceCompositionModel<Thermo, OtherThermo>::D
+Foam::InterfaceCompositionModel<Thermo, OtherThermo>::Dto
 (
     const word& speciesName
 ) const
 {
-    const typename Thermo::thermoType& fromThermo =
+    const typename OtherThermo::thermoType& toThermoTYpe =
+        getLocalThermo
+        (
+            speciesName,
+            toThermo_
+        );
+
+    const volScalarField& p(toThermo_.p());
+
+    const volScalarField& T(toThermo_.T());
+
+    auto tmpD = tmp<volScalarField>::New
+    (
+        IOobject
+        (
+            IOobject::groupName("D", pair_.name()),
+            p.time().timeName(),
+            p.mesh()
+        ),
+        p.mesh(),
+        dimensionedScalar(dimArea/dimTime, Zero)
+    );
+
+    auto& D = tmpD.ref();
+
+    forAll(p, cellI)
+    {
+        D[cellI] =
+            toThermoTYpe.alphah(p[cellI], T[cellI])
+           /toThermoTYpe.rho(p[cellI], T[cellI]);
+    }
+
+    D /= Le_;
+    D.correctBoundaryConditions();
+
+    return tmpD;
+}
+
+
+template<class Thermo, class OtherThermo>
+Foam::tmp<Foam::volScalarField>
+Foam::InterfaceCompositionModel<Thermo, OtherThermo>::Dfrom
+(
+    const word& speciesName
+) const
+{
+    const typename Thermo::thermoType& toThermoType =
         getLocalThermo
         (
             speciesName,
@@ -247,8 +293,8 @@ Foam::InterfaceCompositionModel<Thermo, OtherThermo>::D
     forAll(p, cellI)
     {
         D[cellI] =
-            fromThermo.alphah(p[cellI], T[cellI])
-           /fromThermo.rho(p[cellI], T[cellI]);
+            toThermoType.alphah(p[cellI], T[cellI])
+           /toThermoType.rho(p[cellI], T[cellI]);
     }
 
     D /= Le_;

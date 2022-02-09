@@ -129,6 +129,8 @@
         )
     );
 
+    fluid.setTurbulence(turbulence());
+
     // Creating radiation model
     autoPtr<radiation::radiationModel> radiation
     (

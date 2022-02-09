@@ -53,7 +53,8 @@ MultiComponentPhaseModel
 :
     BasePhaseModel(fluid, phaseName),
     species_(),
-    inertIndex_(-1)
+    inertIndex_(-1),
+    addDiffusion_(false)
 {
     thermoPtr_.reset
     (
@@ -75,6 +76,9 @@ MultiComponentPhaseModel
     species_ = thermoPtr_->composition().species();
 
     inertIndex_ = species_[thermoPtr_().template get<word>("inertSpecie")];
+
+    addDiffusion_ =
+        thermoPtr_().template getOrDefault<bool>("addDiffusion", false);
 
     X_.setSize(thermoPtr_->composition().species().size());
 
@@ -396,8 +400,25 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
                     zeroField()
                 );
             }
+
+            if (addDiffusion_)
+            {
+                const volScalarField& alpha = *this;
+                fvScalarMatrix YiDiffEqn
+                (
+                    fvm::ddt(Yi) - fvc::ddt(Yi)
+                  - fvm::laplacian(alpha*this->fluid().turbulence()->nut(), Yi)
+                );
+
+                YiDiffEqn.solve(mesh.solver("diffusion" + Yi.name()));
+
+                phiYiCorr += YiDiffEqn.flux();
+            }
+
             Yt += Yi;
         }
+
+
     }
 
     X_[inertIndex_] = scalar(1) - Yt;

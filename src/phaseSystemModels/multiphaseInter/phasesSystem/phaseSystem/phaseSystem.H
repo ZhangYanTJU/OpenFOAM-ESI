@@ -48,6 +48,8 @@ SourceFiles
 #include "compressibleTransportModel.H"
 #include "localMin.H"
 
+#include "compressibleTurbulenceModel.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -144,6 +146,9 @@ protected:
 
         //- Turbulent Prandt number
         dimensionedScalar Prt_;
+
+        //- Turbulence model
+        compressibleTurbulenceModel* turb_;
 
 
         // Sub Models
@@ -267,6 +272,19 @@ public:
     //- Destructor
     virtual ~phaseSystem();
 
+    // Turbulence
+
+
+        //- Set turbulence model
+        void setTurbulence(compressibleTurbulenceModel& turb)
+        {
+            turb_ = &turb;
+        }
+
+        compressibleTurbulenceModel* turbulence() const
+        {
+            return turb_;
+        }
 
     // Energy related thermo functionaliy functions
 
@@ -629,15 +647,21 @@ public:
 
     // Help functions for the interfaces
 
-        //- Interface normal surface vector
+        //- Interface normal volume vector
         tmp<surfaceVectorField> nHatfv
         (
             const volScalarField& alpha1,
             const volScalarField& alpha2
         ) const;
 
+        //- Interface normal volField vector
+        tmp<volVectorField> nVolHatfv
+        (
+            const volScalarField& alpha1,
+            const volScalarField& alpha2
+        ) const;
 
-        //- Interface normal volume vector
+        //- Interface normal surface vector
         tmp<surfaceScalarField> nHatf
         (
             const volScalarField& alpha1,

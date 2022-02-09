@@ -1188,6 +1188,30 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::nearInterface() const
 }
 
 
+Foam::tmp<Foam::volVectorField> Foam::phaseSystem::nVolHatfv
+(
+    const volScalarField& alpha1,
+    const volScalarField& alpha2
+) const
+{
+
+    volVectorField gradAlphaf
+    (
+        (alpha2)*(fvc::grad(alpha1))
+      - (alpha1)*(fvc::grad(alpha2))
+    );
+
+    const dimensionedScalar deltaN
+    (
+        "deltaN",
+        1e-8/cbrt(average(mesh_.V()))
+    );
+
+    // Face unit interface normal
+    return gradAlphaf/(mag(gradAlphaf) + deltaN);
+}
+
+
 Foam::tmp<Foam::surfaceVectorField> Foam::phaseSystem::nHatfv
 (
     const volScalarField& alpha1,
