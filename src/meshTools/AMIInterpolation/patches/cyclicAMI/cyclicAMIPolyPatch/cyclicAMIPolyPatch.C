@@ -435,7 +435,15 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
 
     // Construct/apply AMI interpolation to determine addressing and weights
     AMIPtr_->upToDate() = false;
-    AMIPtr_->calculate(patch0, nbrPatch0, surfPtr());
+    AMIPtr_->calculate
+    (
+        boundaryMesh().mesh(),
+        index(),
+        patch0,
+        nbr.index(),
+        nbrPatch0,
+        surfPtr()
+    );
 
     if (debug)
     {

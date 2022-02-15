@@ -293,6 +293,7 @@ $(AMI)/GAMG/interfaceFields/cyclicACMIGAMGInterfaceField/cyclicACMIGAMGInterface
 
 $(AMI)/triangle2D/triangle2D.C
 $(AMI)/AMIInterpolation/faceAreaWeightAMI2D/faceAreaWeightAMI2D.C
+$(AMI)/AMIInterpolation/lowWeightCorrection/lowWeightCorrection.C
 
 
 AMICycPatches=$(AMI)/patches/cyclicAMI

@@ -222,6 +222,18 @@ inline const Foam::scalarField& Foam::AMIInterpolation::tgtWeightsSum() const
 }
 
 
+inline const Foam::pointListList& Foam::AMIInterpolation::tgtCentroids() const
+{
+    return tgtCentroids_;
+}
+
+
+inline Foam::pointListList& Foam::AMIInterpolation::tgtCentroids()
+{
+    return tgtCentroids_;
+}
+
+
 inline Foam::scalarField& Foam::AMIInterpolation::tgtWeightsSum()
 {
     return tgtWeightsSum_;

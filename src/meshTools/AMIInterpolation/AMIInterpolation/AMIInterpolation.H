@@ -73,6 +73,8 @@ SourceFiles
 namespace Foam
 {
 
+class polyMesh;
+
 /*---------------------------------------------------------------------------*\
                       Class AMIInterpolation Declaration
 \*---------------------------------------------------------------------------*/
@@ -196,15 +198,6 @@ protected:
                 const searchableSurface& surf,
                 pointField& pts
             ) const;
-
-
-        // Access
-
-            //- Return the orginal src patch with optionally updated points
-            inline const primitivePatch& srcPatch0() const;
-
-            //- Return the orginal tgt patch with optionally updated points
-            inline const primitivePatch& tgtPatch0() const;
 
 
         // Evaluation
@@ -350,6 +343,15 @@ public:
 
         // Access
 
+            //- Return the orginal src patch with optionally updated points
+            inline const primitivePatch& srcPatch0() const;
+
+            //- Return the orginal tgt patch with optionally updated points
+            inline const primitivePatch& tgtPatch0() const;
+
+
+        // Access
+
             //- Access to the up-to-date flag
             inline bool upToDate() const;
 
@@ -446,6 +448,12 @@ public:
                 //- patch weights (i.e. the sum before normalisation)
                 inline const scalarField& tgtWeightsSum() const;
 
+                //- Return const access to target patch face centroids
+                inline const pointListList& tgtCentroids() const;
+
+                //- Return access to target patch face centroids
+                inline pointListList& tgtCentroids();
+
                 //- Return access to normalisation factor of target
                 //- patch weights (i.e. the sum before normalisation)
                 inline scalarField& tgtWeightsSum();
@@ -462,6 +470,17 @@ public:
             virtual bool calculate
             (
                 const primitivePatch& srcPatch,
+                const primitivePatch& tgtPatch,
+                const autoPtr<searchableSurface>& surfPtr = nullptr
+            );
+
+            //- Update addressing, weights and (optional) centroids
+            virtual bool calculate
+            (
+                const polyMesh& mesh,
+                const label srcPatchi,
+                const primitivePatch& srcPatch,
+                const label tgtPatchi,
                 const primitivePatch& tgtPatch,
                 const autoPtr<searchableSurface>& surfPtr = nullptr
             );

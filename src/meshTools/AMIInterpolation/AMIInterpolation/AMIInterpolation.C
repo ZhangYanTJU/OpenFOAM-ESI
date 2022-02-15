@@ -798,6 +798,20 @@ bool Foam::AMIInterpolation::calculate
 }
 
 
+bool Foam::AMIInterpolation::calculate
+(
+    const polyMesh& mesh,
+    const label srcPatchi,
+    const primitivePatch& srcPatch,
+    const label tgtPatchi,
+    const primitivePatch& tgtPatch,
+    const autoPtr<searchableSurface>& surfPtr
+)
+{
+    return calculate(srcPatch, tgtPatch, surfPtr);
+}
+
+
 void Foam::AMIInterpolation::reset
 (
     autoPtr<mapDistribute>&& srcToTgtMap,
