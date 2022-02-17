@@ -76,6 +76,8 @@ protected:
         //- Add diffusion transport on Yi's Eq
         bool addDiffusion_;
 
+        //- Schmidt number
+        scalar Sct_;
 
     // Protected functions
 

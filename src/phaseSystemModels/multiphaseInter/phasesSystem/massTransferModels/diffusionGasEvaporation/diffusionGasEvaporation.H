@@ -29,53 +29,30 @@ Class
 Description
     Gas diffusion based evaporation/condensation mass transfer model.
 
+    THE evaporation rate is given by:
 
     \f[
-        Flux = C \sqrt{\frac{M}{2 \pi R T_{activate}}}(p - p_{sat})
+        \hat{m_{i}} =
+            - C \rho_{g} D_{v,i}
+            \frac
+            {
+                \frac{dY_{v,i}}{dn}
+            }
+            {
+                1 - \; \sum_{1}^{Nv}Y_{g,j}
+            }
     \f]
 
         where:
         \vartable
-            Flux    | mass flux rate [kg/s/m2]
-            M       | molecular weight
-            T_{activate} | saturation temperature
-            C       | accommodation coefficient
-            R       | universal gas constant
-            p_{sat} | saturation pressure
-            p       | vapor partial pressure
+            \hat{m_{i}}         | mass flux rate [kg/s/m2]
+            \rho_{g}            | gas phase density
+            D_{v,i}             | diffusion coefficient
+            C                   | model coefficient
+            \frac{dY_{v,i}}{dn} | normal derivative of evaporated component
+            Y_{g,j}             | mass fraction at the surface
         \endvartable
 
-    The Clapeyron-Clausius equation relates the pressure to the temperature
-    for the saturation condition:
-
-    \f[
-        \frac{dp}{dT} = - \frac{L}{T (\nu_v - \nu_l)}
-    \f]
-
-        where:
-        \vartable
-            L       | latent heat
-            \nu_v   | inverse of the vapor density
-            \nu_l   | inverse of the liquid density
-         \endvartable
-
-
-    Using the above relations:
-
-    \f[
-        Flux =
-           2 \frac{C}{2 - C}
-           \sqrt{\frac{M}{2 \pi R {T_activate}^3}} L (\rho_{v})
-           (T - T_{activate})
-    \f]
-
-    This assumes liquid and vapour are in equilibrium, then the accommodation
-    coefficient are equivalent for the interface. This relation is known as the
-    Hertz-Knudsen-Schrage.
-
-    Based on the reference:
-    - Van P. Carey, Liquid-Vapor Phase Change Phenomena, ISBN 0-89116836,
-      1992, pp. 112-121.
 
 
 Usage
@@ -88,9 +65,15 @@ Usage
         {
             type                diffusionGasEvaporation;
             species             vapour.gas;
-            C                   0.1;
-            isoAlpha            0.1;
-            Tactivate           373;
+            C                   1;
+            isoAlpha            0.2;
+            saturationPressure
+            {
+                type    Antoine;
+                A       3.55;
+                B       643;
+                C       -198;
+            }
         }
     );
     \endverbatim
@@ -98,12 +81,12 @@ Usage
     where:
     \table
         Property    | Description             | Required    | Default value
-        C           | Coefficient (C > 0 for evaporation, C < 0 for
-            condensation) | yes
+        C           | Coefficient             | no          | 1
         includeVolChange    | Volumen change  | no          | yes
         isoAlpha    | iso-alpha for interface | no          | 0.5
-        Tactivate   | Saturation temperature  | yes
-        species     | Specie name on the other phase | no   | none
+        Tactivate   | Saturation temperature  | no          | 0
+        species     | Specie name on the other phase | yes
+        saturationPressure | saturation model | yes
     \endtable
 
 SourceFiles

@@ -178,7 +178,7 @@ Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
     tmp<volScalarField> pSat = saturationModel_->pSat(T);
 
     const volScalarField XvSat(pSat()/this->toThermo_.p());
-//DebugVar((XvSat))
+
     const dimensionedScalar Wv("Wv", dimMass/dimMoles, vapourThermo.W());
     const volScalarField YvSat
     (
@@ -187,7 +187,7 @@ Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
            Wv/(XvSat*Wv + (1-XvSat)*this->toThermo_.W())
         )
     );
-// DebugVar((YvSat))
+
 	const volScalarField Ygm(from*YvSat + to*Yv);
 
     const phaseSystem& fluid = this->fluid();
@@ -200,21 +200,6 @@ Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
        -pos(T - Tactivate_)
        *C_*rhog*Dvg*gradYgm*interfaceArea_
        /(1 - YvSat);
-
-    if (mesh.time().outputTime())
-    {
-        volScalarField YgmDebug("Ygm", Ygm);
-        YgmDebug.write();
-
-        volScalarField gradYgmD("gradYgm", gradYgm);
-        gradYgmD.write();
-
-        volVectorField nHatIntD("nHatInt", nHatInt());
-        nHatIntD.write();
-
-        volScalarField mDotcD("mDotc", mDotc_);
-        mDotcD.write();
-    }
 
     return tmp<volScalarField>(new volScalarField(mDotc_));
 }

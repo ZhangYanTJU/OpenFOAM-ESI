@@ -80,6 +80,8 @@ MultiComponentPhaseModel
     addDiffusion_ =
         thermoPtr_().template getOrDefault<bool>("addDiffusion", false);
 
+    Sct_ = thermoPtr_().template getOrDefault<scalar>("Sct", 1.0);
+
     X_.setSize(thermoPtr_->composition().species().size());
 
     // Initiate X's using Y's to set BC's
@@ -407,7 +409,11 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
                 fvScalarMatrix YiDiffEqn
                 (
                     fvm::ddt(Yi) - fvc::ddt(Yi)
-                  - fvm::laplacian(alpha*this->fluid().turbulence()->nut(), Yi)
+                  - fvm::laplacian
+                    (
+                        alpha*this->fluid().turbulence()->nut()/Sct_,
+                        Yi
+                    )
                 );
 
                 YiDiffEqn.solve(mesh.solver("diffusion" + Yi.name()));
