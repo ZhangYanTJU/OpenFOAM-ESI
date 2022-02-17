@@ -58,7 +58,7 @@ Description
         -combineZones '((zoneA "zoneB.*")(none otherZone))
     This can be combined with e.g. 'cellZones' or 'cellZonesOnly'. The
     addZones option supplies the destination region name as first element in
-    the list. The combineZones option synthesises the region name e.g. 
+    the list. The combineZones option synthesises the region name e.g.
         zoneA_zoneB0_zoneB1
 
     - cellZonesOnly does not do a walk and uses the cellZones only. Use
@@ -1629,6 +1629,7 @@ int main(int argc, char *argv[])
         "Split mesh into multiple regions (detected by walking across faces)"
     );
     #include "addRegionOption.H"
+
     #include "addOverwriteOption.H"
     argList::addBoolOption
     (
@@ -1719,6 +1720,12 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createNamedMesh.H"
 
+
+    // Note: could try to read multiple meshes and merge into one before
+    // operation but this would give problems with unique prefixes:
+    //  - patches get renamed. So patchFields would need to be renamed.
+    //  - what about e.g. 'samplePatch' in mapped patches?
+
     const word oldInstance = mesh.pointsInstance();
 
     word blockedFacesName;
@@ -1747,9 +1754,7 @@ int main(int argc, char *argv[])
     if (args.found("autoPatch"))
     {
         const wordRes patchNames(args.getList<wordRe>("autoPatch"));
-        //v2112: matchPatchIDs = mesh.boundaryMesh().indices(patchNames);
-        //v2106:
-        matchPatchIDs = mesh.boundaryMesh().patchSet(patchNames).sortedToc();
+        matchPatchIDs = mesh.boundaryMesh().indices(patchNames);
         args.readIfPresent("AMIMethod", AMIMethod);
     }
 
@@ -1855,8 +1860,8 @@ int main(int argc, char *argv[])
             << " This requires all"
             << " cells to be in one and only one cellZone." << nl << endl;
 
-        // Collect sets of zones into clusters. If no cluster is just an identity
-        // list (cluster 0 is cellZone 0 etc.)
+        // Collect sets of zones into clusters. If no cluster is just an
+        // identity list (cluster 0 is cellZone 0 etc.)
         wordList clusterNames;
         labelListList clusterToZones;
         labelList zoneToCluster;
@@ -2032,7 +2037,7 @@ int main(int argc, char *argv[])
             {
                 label ownCluster = clusterID[mesh.faceOwner()[facei]];
                 label neiCluster = clusterID[mesh.faceNeighbour()[facei]];
-                
+
                 if (ownCluster != neiCluster)
                 {
                     blockedFace[facei] = true;
