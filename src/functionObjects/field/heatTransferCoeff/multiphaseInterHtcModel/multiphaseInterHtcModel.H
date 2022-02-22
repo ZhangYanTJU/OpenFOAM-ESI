@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,107 +24,96 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::surfaceTensionModel
+    Foam::multiphaseInterHtcModel
 
 Description
+    A heat transfer coefficient for multiphase inter solvers
+    (i.e. icoReactingMultiphaseFoam)
 
 SourceFiles
-    surfaceTensionModel.C
+    multiphaseInterHtcModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef surfaceTensionModel_H
-#define surfaceTensionModel_H
+#ifndef multiphaseInterHtcModel_H
+#define multiphaseInterHtcModel_H
+
+#include "HashSet.H"
+#include "volFields.H"
+#include "fieldExpression.H"
+#include "runTimeSelectionTables.H"
+#include "heatTransferCoeffModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "volFields.H"
-#include "dictionary.H"
-#include "runTimeSelectionTables.H"
-
 namespace Foam
 {
-
-// Forward Declarations
-class phasePair;
-
-namespace multiphaseInter
+namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-             Class surfaceTensionModel Declaration
+                   Class multiphaseInterHtcModel Declaration
 \*---------------------------------------------------------------------------*/
 
-class surfaceTensionModel
+class multiphaseInterHtcModel
 :
-    public regIOobject
+    public fieldExpression
 {
+    // Private Data
+
+        //- Heat transfer coefficient model
+        autoPtr<heatTransferCoeffModel> htcModelPtr_;
+
+
 protected:
 
-    // Protected Data
+    // Protected Member Functions
 
-        //- Phase pair
-        const phasePair& pair_;
+        //- Calculate the heat transfer coefficient field
+        //  \return true on success
+        virtual bool calc();
+
+        //- Calculate heat flux
+        tmp<FieldField<Field, scalar>> q() const;
+
+        //- No copy construct
+        multiphaseInterHtcModel(const multiphaseInterHtcModel&) = delete;
+
+        //- No copy assignment
+        void operator=(const multiphaseInterHtcModel&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("surfaceTensionModel");
-
-
-    // Declare runtime construction
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        surfaceTensionModel,
-        dictionary,
-        (
-            const dictionary& dict,
-            const phasePair& pair,
-            const bool registerObject
-        ),
-        (dict, pair, registerObject)
-    );
+    TypeName("multiphaseInterHtcModel");
 
 
     // Constructors
 
-        //- Construct from a dictionary and a phase pair
-        surfaceTensionModel
+        //- Construct from components
+        multiphaseInterHtcModel
         (
-            const dictionary& dict,
-            const phasePair& pair,
-            const bool registerObject
+            const word& name,
+            const Time& runTime,
+            const dictionary& dict
         );
 
 
     //- Destructor
-    virtual ~surfaceTensionModel() = default;
-
-
-    // Selectors
-
-        static autoPtr<surfaceTensionModel> New
-        (
-            const dictionary& dict,
-            const phasePair& pair
-        );
+    virtual ~multiphaseInterHtcModel() = default;
 
 
     // Member Functions
 
-        //- Surface tension
-        virtual tmp<volScalarField> sigma() const = 0;
-
-        //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const;
+        //- Read the heatTransferCoeff data
+        virtual bool read(const dictionary& dict);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace multiphaseInter
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

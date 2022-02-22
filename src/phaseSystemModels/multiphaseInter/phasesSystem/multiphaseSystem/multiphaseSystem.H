@@ -37,7 +37,7 @@ SourceFiles
 #ifndef multiphaseSystem_H
 #define multiphaseSystem_H
 
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 #include "UPtrList.H"
 #include "phasePairKey.H"
 
@@ -52,7 +52,7 @@ namespace Foam
 
 class multiphaseSystem
 :
-    public phaseSystem
+    public multiphaseInterSystem
 {
 protected:
 

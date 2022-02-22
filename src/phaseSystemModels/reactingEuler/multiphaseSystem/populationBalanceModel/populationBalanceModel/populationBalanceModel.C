@@ -1209,7 +1209,7 @@ Foam::diameterModels::populationBalanceModel::sigmaWithContinuousPhase
 ) const
 {
     return
-        fluid_.lookupSubModel<surfaceTensionModel>
+        fluid_.lookupSubModel<multiphaseEuler::surfaceTensionModel>
         (
             phasePair(dispersedPhase, continuousPhase_)
         ).sigma();

@@ -49,6 +49,10 @@ namespace Foam
 // Forward Declarations
 class phasePair;
 
+namespace multiphaseEuler
+{
+
+
 /*---------------------------------------------------------------------------*\
                            Class surfaceTensionModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -128,6 +132,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace multiphaseEuler
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

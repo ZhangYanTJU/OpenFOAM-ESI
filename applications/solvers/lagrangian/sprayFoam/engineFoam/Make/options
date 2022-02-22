@@ -8,6 +8,7 @@ EXE_INC = \
     -I${LIB_SRC}/sampling/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
+    -I$(LIB_SRC)/derivedFvPatchFluidThermo/lnInclude \
     -I$(LIB_SRC)/lagrangian/basic/lnInclude \
     -I$(LIB_SRC)/lagrangian/intermediate/lnInclude \
     -I$(LIB_SRC)/lagrangian/spray/lnInclude \
@@ -35,6 +36,7 @@ EXE_LIBS = \
     -lsampling \
     -lturbulenceModels \
     -lcompressibleTurbulenceModels \
+    -lderivedFvPatchFluidThermo \
     -llagrangian \
     -llagrangianIntermediate \
     -llagrangianTurbulence \

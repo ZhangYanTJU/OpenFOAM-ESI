@@ -90,14 +90,11 @@ wmake $targetType combustionModels
 
 wmakeLnInclude -u regionFaModels
 wmakeLnInclude -u faOptions
-regionModels/Allwmake $targetType $*
 
 wmake $targetType fvOptions
-wmake $targetType faOptions
+
 wmake $targetType fvMotionSolver
 wmake $targetType regionFaModels
-
-lagrangian/Allwmake $targetType $*
 
 wmake $targetType overset
 
@@ -111,8 +108,17 @@ wmake $targetType engine
 
 conversion/Allwmake $targetType $*
 
-functionObjects/Allwmake $targetType $*
 phaseSystemModels/Allwmake $targetType $*
+functionObjects/Allwmake $targetType $*
+
+wmake $targetType derivedFvPatchFluidThermo
+
+regionModels/Allwmake $targetType $*
+
+lagrangian/Allwmake $targetType $*
+wmake $targetType functionObjects/lagrangian
+
+wmake $targetType faOptions
 
 wmake $targetType lumpedPointMotion
 wmake $targetType sixDoFRigidBodyMotion

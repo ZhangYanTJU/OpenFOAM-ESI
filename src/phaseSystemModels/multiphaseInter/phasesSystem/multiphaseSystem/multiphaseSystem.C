@@ -60,7 +60,7 @@ Foam::multiphaseSystem::multiphaseSystem
      const fvMesh& mesh
 )
 :
-    phaseSystem(mesh),
+    multiphaseInterSystem(mesh),
     cAlphas_(),
     ddtAlphaMax_(0.0),
     limitedPhiAlphas_(phaseModels_.size()),

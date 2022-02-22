@@ -27,7 +27,7 @@ License
 
 #include "StaticPhaseModel.H"
 
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 
 #include "fvcDdt.H"
 #include "fvcDiv.H"
@@ -39,7 +39,7 @@ License
 template<class BasePhaseModel>
 Foam::StaticPhaseModel<BasePhaseModel>::StaticPhaseModel
 (
-    const phaseSystem& fluid,
+    const multiphaseInterSystem& fluid,
     const word& phaseName
 )
 :

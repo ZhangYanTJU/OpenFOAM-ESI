@@ -60,9 +60,12 @@ namespace Foam
 
 class blendingMethod;
 template<class modelType> class BlendedInterfacialModel;
-class surfaceTensionModel;
 class aspectRatioModel;
 
+namespace multiphaseEuler
+{
+    class surfaceTensionModel;
+}
 /*---------------------------------------------------------------------------*\
                          Class phaseSystem Declaration
 \*---------------------------------------------------------------------------*/
@@ -104,7 +107,7 @@ protected:
         typedef
             HashTable
             <
-                autoPtr<surfaceTensionModel>,
+                autoPtr<multiphaseEuler::surfaceTensionModel>,
                 phasePairKey,
                 phasePairKey::hash
             >

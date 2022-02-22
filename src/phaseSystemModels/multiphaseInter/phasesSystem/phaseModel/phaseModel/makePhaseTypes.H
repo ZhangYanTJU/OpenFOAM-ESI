@@ -51,7 +51,7 @@ License
         (                                                                   \
             phaseModel,                                                     \
             Name,                                                           \
-            phaseSystem,                                                    \
+            multiphaseInterSystem,                                          \
             Name                                                            \
         );                                                                  \
     }

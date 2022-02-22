@@ -16,7 +16,8 @@ EXE_INC = \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
     -I$(LIB_SRC)/regionModels/regionModel/lnInclude \
     -I$(LIB_SRC)/regionModels/pyrolysisModels/lnInclude \
-    -I$(LIB_SRC)/regionModels/surfaceFilmModels/lnInclude
+    -I$(LIB_SRC)/regionModels/surfaceFilmModels/lnInclude \
+    -I$(LIB_SRC)/derivedFvPatchFluidThermo/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \
@@ -28,4 +29,5 @@ LIB_LIBS = \
     -lreactionThermophysicalModels \
     -lSLGThermo \
     -lturbulenceModels \
-    -lcompressibleTurbulenceModels
+    -lcompressibleTurbulenceModels \
+    -lderivedFvPatchFluidThermo

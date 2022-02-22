@@ -5,5 +5,4 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 wmake $targetType phasesSystem
 wmake $targetType compressibleMultiPhaseTurbulenceModels
-
 #------------------------------------------------------------------------------

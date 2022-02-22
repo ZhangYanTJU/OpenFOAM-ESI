@@ -11,6 +11,7 @@ EXE_INC = \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
+    -I$(LIB_SRC)/derivedFvPatchFluidThermo/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/phaseCompressible/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/phaseIncompressible/lnInclude
 
@@ -23,4 +24,5 @@ LIB_LIBS = \
     -linterfaceProperties \
     -lturbulenceModels \
     -lincompressibleTurbulenceModels \
-    -lcompressibleTurbulenceModels
+    -lcompressibleTurbulenceModels \
+    -lderivedFvPatchFluidThermo

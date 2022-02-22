@@ -33,16 +33,20 @@ License
 
 namespace Foam
 {
+namespace multiphaseEuler
+{
     defineTypeNameAndDebug(surfaceTensionModel, 0);
     defineRunTimeSelectionTable(surfaceTensionModel, dictionary);
 }
+}
 
-const Foam::dimensionSet Foam::surfaceTensionModel::dimSigma(1, 0, -2, 0, 0);
+const Foam::dimensionSet
+Foam::multiphaseEuler::surfaceTensionModel::dimSigma(1, 0, -2, 0, 0);
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::surfaceTensionModel::surfaceTensionModel
+Foam::multiphaseEuler::surfaceTensionModel::surfaceTensionModel
 (
     const dictionary& dict,
     const phasePair& pair,
@@ -67,8 +71,8 @@ Foam::surfaceTensionModel::surfaceTensionModel
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::surfaceTensionModel>
-Foam::surfaceTensionModel::New
+Foam::autoPtr<Foam::multiphaseEuler::surfaceTensionModel>
+Foam::multiphaseEuler::surfaceTensionModel::New
 (
     const dictionary& dict,
     const phasePair& pair
@@ -98,7 +102,7 @@ Foam::surfaceTensionModel::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::surfaceTensionModel::writeData(Ostream& os) const
+bool Foam::multiphaseEuler::surfaceTensionModel::writeData(Ostream& os) const
 {
     return os.good();
 }

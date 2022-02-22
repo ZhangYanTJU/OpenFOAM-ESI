@@ -7,6 +7,7 @@ EXE_INC = \
     -I$(LIB_SRC)/thermophysicalModels/radiation/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
+    -I$(LIB_SRC)/derivedFvPatchFluidThermo/lnInclude \
     -I$(LIB_SRC)/regionFaModels\lnInclude
 
 EXE_LIBS = \
@@ -20,5 +21,6 @@ EXE_LIBS = \
     -lradiationModels \
     -lturbulenceModels \
     -lcompressibleTurbulenceModels \
+    -lderivedFvPatchFluidThermo \
     -latmosphericModels \
     -lregionFaModels

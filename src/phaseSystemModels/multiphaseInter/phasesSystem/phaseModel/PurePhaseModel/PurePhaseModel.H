@@ -47,7 +47,7 @@ SourceFiles
 namespace Foam
 {
 
-class phaseSystem;
+class multiphaseInterSystem;
 
 /*---------------------------------------------------------------------------*\
                            Class PurePhaseModel Declaration
@@ -75,7 +75,7 @@ public:
 
         PurePhaseModel
         (
-            const phaseSystem& fluid,
+            const multiphaseInterSystem& fluid,
             const word& phaseName
         );
 

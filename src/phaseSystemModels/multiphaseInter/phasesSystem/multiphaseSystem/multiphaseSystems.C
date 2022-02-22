@@ -27,7 +27,7 @@ License
 
 #include "addToRunTimeSelectionTable.H"
 
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 #include "multiphaseSystem.H"
 #include "MassTransferPhaseSystem.H"
 

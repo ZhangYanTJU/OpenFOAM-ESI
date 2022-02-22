@@ -71,7 +71,7 @@ public:
 
         StaticPhaseModel
         (
-            const phaseSystem& fluid,
+            const multiphaseInterSystem& fluid,
             const word& phaseName
         );
 

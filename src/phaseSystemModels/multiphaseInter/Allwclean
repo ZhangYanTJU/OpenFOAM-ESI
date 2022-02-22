@@ -4,5 +4,4 @@ cd "${0%/*}" || exit    # Run from this directory
 
 wclean libso phasesSystem
 wclean libso compressibleMultiPhaseTurbulenceModels
-
 #------------------------------------------------------------------------------

@@ -34,6 +34,7 @@ License
 #include "wallPolyPatch.H"
 #include "turbulentFluidThermoModel.H"
 #include "addToRunTimeSelectionTable.H"
+#include "multiphaseInterSystem.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -235,6 +236,20 @@ bool Foam::functionObjects::wallHeatFlux::execute()
             lookupObject<solidThermo>(solidThermo::dictName);
 
         calcHeatFlux(thermo.alpha(), thermo.he(), wallHeatFlux);
+    }
+    else if
+    (
+        foundObject<multiphaseInterSystem>
+            (multiphaseInterSystem::phasePropertiesName)
+    )
+    {
+        const multiphaseInterSystem& thermo =
+            lookupObject<multiphaseInterSystem>
+            (
+                multiphaseInterSystem::phasePropertiesName
+            );
+
+        calcHeatFlux(thermo.kappaEff()(), thermo.T(), wallHeatFlux);
     }
     else
     {

@@ -27,7 +27,7 @@ License
 
 #include "MovingPhaseModel.H"
 
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 
 #include "fixedValueFvPatchFields.H"
 #include "slipFvPatchFields.H"
@@ -46,7 +46,7 @@ License
 template<class BasePhaseModel>
 Foam::MovingPhaseModel<BasePhaseModel>::MovingPhaseModel
 (
-    const phaseSystem& fluid,
+    const multiphaseInterSystem& fluid,
     const word& phaseName
 )
 :

@@ -9,7 +9,8 @@ EXE_INC = \
     -I$(LIB_SRC)/transportModels/twoPhaseMixture/lnInclude \
     -I$(LIB_SRC)/transportModels/interfaceProperties/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
-    -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude
+    -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
+    -I$(LIB_SRC)/derivedFvPatchFluidThermo/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \
@@ -21,4 +22,5 @@ EXE_LIBS = \
     -lspecie \
     -linterfaceProperties \
     -lturbulenceModels \
-    -lcompressibleTurbulenceModels
+    -lcompressibleTurbulenceModels \
+    -lderivedFvPatchFluidThermo

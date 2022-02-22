@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,14 +35,19 @@ namespace Foam
 namespace multiphaseInter
 {
     defineTypeNameAndDebug(surfaceTensionModel, 0);
-    defineRunTimeSelectionTable(surfaceTensionModel, dictionary);
+    defineRunTimeSelectionTable
+    (
+        surfaceTensionModel,
+        dictionary
+    );
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::multiphaseInter::surfaceTensionModel::surfaceTensionModel
+Foam::multiphaseInter::surfaceTensionModel::
+surfaceTensionModel
 (
     const dictionary& dict,
     const phasePair& pair,
@@ -98,7 +103,8 @@ Foam::multiphaseInter::surfaceTensionModel::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::multiphaseInter::surfaceTensionModel::writeData(Ostream& os) const
+bool Foam::multiphaseInter::surfaceTensionModel::
+writeData(Ostream& os) const
 {
     return os.good();
 }

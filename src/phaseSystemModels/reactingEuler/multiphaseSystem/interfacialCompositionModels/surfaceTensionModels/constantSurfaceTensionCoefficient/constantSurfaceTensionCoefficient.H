@@ -43,6 +43,8 @@ SourceFiles
 
 namespace Foam
 {
+namespace multiphaseEuler
+{
 namespace surfaceTensionModels
 {
 
@@ -91,6 +93,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace surfaceTensionModels
+} // End namespace multiphaseEuler
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

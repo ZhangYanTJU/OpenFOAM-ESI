@@ -170,7 +170,7 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::EoH2() const
 Foam::tmp<Foam::volScalarField> Foam::phasePair::sigma() const
 {
     return
-        phase1().fluid().lookupSubModel<surfaceTensionModel>
+        phase1().fluid().lookupSubModel<multiphaseEuler::surfaceTensionModel>
         (
             phasePair(phase1(), phase2())
         ).sigma();

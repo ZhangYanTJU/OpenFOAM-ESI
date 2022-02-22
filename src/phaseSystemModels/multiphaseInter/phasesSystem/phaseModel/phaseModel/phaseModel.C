@@ -26,21 +26,21 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "phaseModel.H"
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(phaseModel, 0);
-    defineRunTimeSelectionTable(phaseModel, phaseSystem);
+    defineRunTimeSelectionTable(phaseModel, multiphaseInterSystem);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::phaseModel::phaseModel
 (
-    const phaseSystem& fluid,
+    const multiphaseInterSystem& fluid,
     const word& phaseName
 )
 :
@@ -67,7 +67,7 @@ Foam::phaseModel::phaseModel
 Foam::autoPtr<Foam::phaseModel>
 Foam::phaseModel::New
 (
-    const phaseSystem& fluid,
+    const multiphaseInterSystem& fluid,
     const word& phaseName
 )
 {
@@ -78,7 +78,7 @@ Foam::phaseModel::New
     Info<< "Selecting phaseModel for "
         << phaseName << ": " << modelType << endl;
 
-    auto* ctorPtr = phaseSystemConstructorTable(modelType);
+    auto* ctorPtr = multiphaseInterSystemConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -87,7 +87,7 @@ Foam::phaseModel::New
             dict,
             "phaseModel",
             modelType,
-            *phaseSystemConstructorTablePtr_
+            *multiphaseInterSystemConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 
@@ -97,7 +97,7 @@ Foam::phaseModel::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::phaseSystem& Foam::phaseModel::fluid() const
+const Foam::multiphaseInterSystem& Foam::phaseModel::fluid() const
 {
     return fluid_;
 }

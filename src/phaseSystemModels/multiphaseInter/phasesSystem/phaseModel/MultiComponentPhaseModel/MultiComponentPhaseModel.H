@@ -89,7 +89,7 @@ public:
 
         MultiComponentPhaseModel
         (
-            const phaseSystem& fluid,
+            const multiphaseInterSystem& fluid,
             const word& phaseName
         );
 

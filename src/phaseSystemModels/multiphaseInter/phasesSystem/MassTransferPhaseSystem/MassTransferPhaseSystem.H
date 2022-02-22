@@ -37,7 +37,7 @@ SourceFiles
 #ifndef MassTransferPhaseSystem_H
 #define MassTransferPhaseSystem_H
 
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 #include "HashPtrTable.H"
 #include "interfaceCompositionModel.H"
 

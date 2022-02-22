@@ -27,7 +27,7 @@ License
 
 #include "MultiComponentPhaseModel.H"
 
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 #include "multiphaseSystem.H"
 #include "fvmDdt.H"
 #include "fvmDiv.H"
@@ -47,7 +47,7 @@ template<class BasePhaseModel, class phaseThermo>
 Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::
 MultiComponentPhaseModel
 (
-    const phaseSystem& fluid,
+    const multiphaseInterSystem& fluid,
     const word& phaseName
 )
 :
@@ -221,7 +221,7 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
 
     surfaceScalarField phir(0.0*phi);
 
-    forAllConstIter(phaseSystem::phaseModelTable,this->fluid().phases(),iter2)
+    forAllConstIter(multiphaseInterSystem::phaseModelTable,this->fluid().phases(),iter2)
     {
         const volScalarField& alpha2 = iter2()();
         if (&alpha2 == &alpha1)
@@ -272,7 +272,7 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
 
             forAllConstIter
             (
-                phaseSystem::phaseModelTable, this->fluid().phases(), iter2
+                multiphaseInterSystem::phaseModelTable, this->fluid().phases(), iter2
             )
             {
                 //const volScalarField& alpha2 = iter2()().oldTime();

@@ -326,9 +326,14 @@ Foam::phaseSystem::sigma(const phasePairKey& key) const
     {
         return volScalarField::New
         (
-            surfaceTensionModel::typeName + ":sigma",
+            multiphaseEuler::surfaceTensionModel::typeName + ":sigma",
             this->mesh_,
-            dimensionedScalar("zero", surfaceTensionModel::dimSigma, 0)
+            dimensionedScalar
+            (
+                "zero",
+                multiphaseEuler::surfaceTensionModel::dimSigma,
+                0
+            )
         );
     }
 }

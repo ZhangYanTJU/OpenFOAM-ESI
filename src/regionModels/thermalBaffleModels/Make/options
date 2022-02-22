@@ -9,7 +9,8 @@ EXE_INC = \
     -I$(LIB_SRC)/thermophysicalModels/radiation/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
-    -I$(LIB_SRC)/mesh/extrudeModel/lnInclude
+    -I$(LIB_SRC)/mesh/extrudeModel/lnInclude \
+    -I$(LIB_SRC)/derivedFvPatchFluidThermo/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \
@@ -20,4 +21,5 @@ LIB_LIBS = \
     -lturbulenceModels \
     -lcompressibleTurbulenceModels \
     -lradiationModels \
-    -ldynamicMesh
+    -ldynamicMesh \
+    -lderivedFvPatchFluidThermo

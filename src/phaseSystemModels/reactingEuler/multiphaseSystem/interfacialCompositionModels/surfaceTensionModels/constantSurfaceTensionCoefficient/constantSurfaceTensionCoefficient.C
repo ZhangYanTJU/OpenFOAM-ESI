@@ -33,6 +33,8 @@ License
 
 namespace Foam
 {
+namespace multiphaseEuler
+{
 namespace surfaceTensionModels
 {
     defineTypeNameAndDebug(constantSurfaceTensionCoefficient, 0);
@@ -44,12 +46,12 @@ namespace surfaceTensionModels
     );
 }
 }
-
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::
-constantSurfaceTensionCoefficient
+Foam::multiphaseEuler::surfaceTensionModels::
+constantSurfaceTensionCoefficient::constantSurfaceTensionCoefficient
 (
     const dictionary& dict,
     const phasePair& pair,
@@ -63,15 +65,16 @@ constantSurfaceTensionCoefficient
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::
-~constantSurfaceTensionCoefficient()
+Foam::multiphaseEuler::surfaceTensionModels::
+constantSurfaceTensionCoefficient::~constantSurfaceTensionCoefficient()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::surfaceTensionModels::constantSurfaceTensionCoefficient::sigma() const
+Foam::multiphaseEuler::surfaceTensionModels::
+constantSurfaceTensionCoefficient::sigma() const
 {
     const fvMesh& mesh(this->pair_.phase1().mesh());
 
