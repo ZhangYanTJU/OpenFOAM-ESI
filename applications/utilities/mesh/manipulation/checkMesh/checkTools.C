@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2021 OpenCFD Ltd.
+    Copyright (C) 2015-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,7 +41,7 @@ License
 #include "faceSet.H"
 #include "cellSet.H"
 #include "Time.H"
-#include "writer.H"
+#include "coordSetWriter.H"
 #include "surfaceWriter.H"
 #include "syncTools.H"
 #include "globalIndex.H"
@@ -417,14 +417,14 @@ void Foam::mergeAndWrite
 
 void Foam::mergeAndWrite
 (
-    const writer<scalar>& writer,
+    coordSetWriter& writer,
     const pointSet& set
 )
 {
     const polyMesh& mesh = refCast<const polyMesh>(set.db());
 
-    pointField mergedPts;
-    labelList mergedIDs;
+    labelField mergedIDs(set.sortedToc());
+    pointField mergedPts(mesh.points(), mergedIDs);
 
     if (Pstream::parRun())
     {
@@ -432,91 +432,36 @@ void Foam::mergeAndWrite
         // (mesh.globalData().mergePoints etc) since this might
         // hide any synchronisation problem
 
-        globalIndex globalNumbering(mesh.nPoints());
+        const globalIndex globalPointNumbering(mesh.nPoints());
 
-        mergedPts.setSize(returnReduce(set.size(), sumOp<label>()));
-        mergedIDs.setSize(mergedPts.size());
-
-        labelList setPointIDs(set.sortedToc());
-
-        // Get renumbered local data
-        pointField myPoints(mesh.points(), setPointIDs);
-        labelList myIDs(globalNumbering.toGlobal(setPointIDs));
-
-        if (Pstream::master())
-        {
-            // Insert master data first
-            label pOffset = 0;
-            SubList<point>(mergedPts, myPoints.size(), pOffset) = myPoints;
-            SubList<label>(mergedIDs, myIDs.size(), pOffset) = myIDs;
-            pOffset += myPoints.size();
-
-            // Receive slave ones
-            for (const int slave : Pstream::subProcs())
-            {
-                IPstream fromSlave(Pstream::commsTypes::scheduled, slave);
-
-                pointField slavePts(fromSlave);
-                labelList slaveIDs(fromSlave);
-
-                SubList<point>(mergedPts, slavePts.size(), pOffset) = slavePts;
-                SubList<label>(mergedIDs, slaveIDs.size(), pOffset) = slaveIDs;
-                pOffset += slaveIDs.size();
-            }
-        }
-        else
-        {
-            // Construct processor stream with estimate of size. Could
-            // be improved.
-            OPstream toMaster
-            (
-                Pstream::commsTypes::scheduled,
-                Pstream::masterNo(),
-                myPoints.byteSize() + myIDs.byteSize()
-            );
-            toMaster << myPoints << myIDs;
-        }
-    }
-    else
-    {
-        mergedIDs = set.sortedToc();
-        mergedPts = pointField(mesh.points(), mergedIDs);
+        // Renumber local ids -> global ids
+        globalPointNumbering.inplaceToGlobal(mergedIDs);
+        globalIndex globIdx(mergedIDs.size(), globalIndex::gatherOnly{});
+        globIdx.gatherInplace(mergedIDs);
+        globIdx.gatherInplace(mergedPts);
     }
 
 
-    // Write with scalar pointID
+    // Write with pointID
     if (Pstream::master())
     {
-        scalarField scalarPointIDs(mergedIDs.size());
-        forAll(mergedIDs, i)
-        {
-            scalarPointIDs[i] = 1.0*mergedIDs[i];
-        }
+        coordSet coords(set.name(), "distance", mergedPts, mag(mergedPts));
 
-        coordSet points(set.name(), "distance", mergedPts, mag(mergedPts));
+        // Output. E.g. pointSet p0 -> postProcessing/<time>/p0.vtk
 
-        List<const scalarField*> flds(1, &scalarPointIDs);
-
-        wordList fldNames(1, "pointID");
-
-        // Output e.g. pointSet p0 to
-        // postProcessing/<time>/p0.vtk
-        fileName outputDir
+        fileName outputPath
         (
             set.time().globalPath()
           / functionObject::outputPrefix
           / mesh.pointsInstance()
-          // set.name()
+          / set.name()
         );
-        outputDir.clean();  // Remove unneeded ".."
-        mkDir(outputDir);
+        outputPath.clean();  // Remove unneeded ".."
 
-        fileName outputFile(outputDir/writer.getFileName(points, wordList()));
-        //fileName outputFile(outputDir/set.name());
-
-        OFstream os(outputFile);
-
-        writer.write(points, fldNames, flds, os);
+        writer.open(coords, outputPath);
+        writer.nFields(1);
+        writer.write("pointID", mergedIDs);
+        writer.close(true);
     }
 }
 

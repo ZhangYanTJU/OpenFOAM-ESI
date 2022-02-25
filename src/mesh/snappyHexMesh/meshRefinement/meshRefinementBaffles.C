@@ -4168,7 +4168,7 @@ void Foam::meshRefinement::baffleAndSplitMesh
     const pointField& locationsInMesh,
     const wordList& zonesInMesh,
     const pointField& locationsOutsideMesh,
-    const writer<scalar>& leakPathFormatter
+    coordSetWriter& leakPathFormatter
 )
 {
     // Introduce baffles
@@ -4348,7 +4348,7 @@ void Foam::meshRefinement::mergeFreeStandingBaffles
     const labelList& globalToSlavePatch,
     const pointField& locationsInMesh,
     const pointField& locationsOutsideMesh,
-    const writer<scalar>& leakPathFormatter
+    coordSetWriter& leakPathFormatter
 )
 {
     // Merge baffles
@@ -4441,7 +4441,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::splitMesh
     const pointField& locationsInMesh,
     const wordList& zonesInMesh,
     const pointField& locationsOutsideMesh,
-    const writer<scalar>& leakPathFormatter
+    coordSetWriter& leakPathFormatter
 )
 {
     // Determine patches to put intersections into

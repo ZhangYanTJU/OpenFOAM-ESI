@@ -2549,7 +2549,7 @@ Foam::label Foam::meshRefinement::findRegions
     const pointField& locationsInMesh,
     const pointField& locationsOutsideMesh,
     const bool exitIfLeakPath,
-    const writer<scalar>& leakPathFormatter,
+    coordSetWriter& leakPathFormatter,
     const label nRegions,
     labelList& cellRegion,
     const boolList& blockedFace
@@ -2606,18 +2606,13 @@ Foam::label Foam::meshRefinement::findRegions
             {
                 const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
-                fileName outputDir;
-                if (Pstream::master())
-                {
-                    outputDir =
-                    (
-                        mesh.time().globalPath()
-                      / functionObject::outputPrefix
-                      / mesh.pointsInstance()
-                    );
-                    outputDir.clean();  // Remove unneeded ".."
-                    mkDir(outputDir);
-                }
+                fileName outputDir
+                (
+                    mesh.time().globalPath()
+                  / functionObject::outputPrefix
+                  / mesh.pointsInstance()
+                );
+                outputDir.clean();  // Remove unneeded ".."
 
 
                 // Write the leak path
@@ -2671,7 +2666,7 @@ Foam::label Foam::meshRefinement::findRegions
                         label& n = nElemsPerSegment[segmenti];
 
                         points[n] = leakPath[elemi];
-                        dist[n] = leakPath.curveDist()[elemi];
+                        dist[n] = leakPath.distance()[elemi];
                         n++;
                     }
                 }
@@ -2706,7 +2701,7 @@ Foam::label Foam::meshRefinement::findRegions
                         )
                     );
 
-                    // Sort according to curveDist
+                    // Sort according to distance
                     labelList indexSet(Foam::sortedOrder(allDist));
 
                     allLeakPaths.set
@@ -2726,61 +2721,46 @@ Foam::label Foam::meshRefinement::findRegions
                 fileName fName;
                 if (Pstream::master())
                 {
-                    List<List<scalarField>> allLeakData(1);
-                    List<scalarField>& varData = allLeakData[0];
-                    varData.setSize(allLeakPaths.size());
+                    List<scalarField> allLeakData(allLeakPaths.size());
                     forAll(allLeakPaths, segmenti)
                     {
-                        varData[segmenti] = allLeakPaths[segmenti].curveDist();
+                        allLeakData[segmenti] =
+                            allLeakPaths[segmenti].distance();
                     }
 
-                    const wordList valueSetNames(1, "leakPath");
+                    leakPathFormatter.nFields(1);
 
-                    fName =
-                        outputDir
-                       /leakPathFormatter.getFileName
-                        (
-                            allLeakPaths[0],
-                            valueSetNames
-                        );
+                    leakPathFormatter.open
+                    (
+                        allLeakPaths,
+                        (outputDir / allLeakPaths[0].name())
+                    );
 
-                    // Note scope to force writing to finish before
-                    // FatalError exit
-                    OFstream ofs(fName);
-                    if (ofs.opened())
-                    {
-                        leakPathFormatter.write
-                        (
-                            true,                // write tracks
-                            List<scalarField>(), // times
-                            allLeakPaths,
-                            valueSetNames,
-                            allLeakData,
-                            ofs
-                        );
-                    }
+                    fName = leakPathFormatter.write("leakPath", allLeakData);
+
+                    // Force writing to finish before FatalError exit
+                    leakPathFormatter.close(true);
                 }
 
-                Pstream::scatter(fName);
+                /// No need to scatter name (only written on master anyhow)
+                /// Pstream::scatter(fName);
+
+                auto& err =
+                (
+                    exitIfLeakPath
+                  ? FatalErrorInFunction
+                  : WarningInFunction
+                );
+
+                err << "Location in mesh " << locationsInMesh[index]
+                    << " is inside same mesh region " << regioni
+                    << " as one of the locations outside mesh "
+                    << locationsOutsideMesh << nl
+                    << "    Dumped leak path to " << fName << endl;
 
                 if (exitIfLeakPath)
                 {
-                    FatalErrorInFunction
-                        << "Location in mesh " << locationsInMesh[index]
-                        << " is inside same mesh region " << regioni
-                        << " as one of the locations outside mesh "
-                        << locationsOutsideMesh
-                        << nl << "    Dumped leak path to " << fName
-                        << exit(FatalError);
-                }
-                else
-                {
-                    WarningInFunction
-                        << "Location in mesh " << locationsInMesh[index]
-                        << " is inside same mesh region " << regioni
-                        << " as one of the locations outside mesh "
-                        << locationsOutsideMesh
-                        << nl << "Dumped leak path to " << fName << endl;
+                    FatalError << exit(FatalError);
                 }
             }
         }
@@ -2814,7 +2794,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::splitMeshRegions
     const pointField& locationsInMesh,
     const pointField& locationsOutsideMesh,
     const bool exitIfLeakPath,
-    const writer<scalar>& leakPathFormatter
+    coordSetWriter& leakPathFormatter
 )
 {
     // Force calculation of face decomposition (used in findCell)

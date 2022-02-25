@@ -59,7 +59,7 @@ SourceFiles
 #include "surfaceZonesInfo.H"
 #include "volumeType.H"
 #include "DynamicField.H"
-#include "writer.H"
+#include "coordSetWriter.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -1217,7 +1217,7 @@ public:
                 const pointField& locationsInMesh,
                 const wordList& regionsInMesh,
                 const pointField& locationsOutsideMesh,
-                const writer<scalar>& leakPathFormatter
+                coordSetWriter& leakPathFormatter
             );
 
             //- Merge free-standing baffles
@@ -1234,7 +1234,7 @@ public:
                 const labelList& globalToSlavePatch,
                 const pointField& locationsInMesh,
                 const pointField& locationsOutsideMesh,
-                const writer<scalar>& leakPathFormatter
+                coordSetWriter& leakPathFormatter
             );
 
             //- Split off (with optional buffer layers) unreachable areas
@@ -1249,7 +1249,7 @@ public:
                 const pointField& locationsInMesh,
                 const wordList& regionsInMesh,
                 const pointField& locationsOutsideMesh,
-                const writer<scalar>& leakPathFormatter
+                coordSetWriter& leakPathFormatter
             );
 
             //- Remove cells from limitRegions if level -1
@@ -1418,7 +1418,7 @@ public:
                 const pointField& locationsInMesh,
                 const pointField& locationsOutsideMesh,
                 const bool exitIfLeakPath,
-                const writer<scalar>& leakPathFormatter,
+                coordSetWriter& leakPathFormatter,
                 const label nRegions,
                 labelList& cellRegion,
                 const boolList& blockedFace
@@ -1433,7 +1433,7 @@ public:
                 const pointField& locationsInMesh,
                 const pointField& locationsOutsideMesh,
                 const bool exitIfLeakPath,
-                const writer<scalar>& leakPathFormatter
+                coordSetWriter& leakPathFormatter
             );
 
             //- Remove cells. Put exposedFaces into exposedPatchIDs.
