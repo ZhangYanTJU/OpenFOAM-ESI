@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1194,11 +1194,20 @@ Foam::tmp<Foam::volVectorField> Foam::phaseSystem::nVolHatfv
     const volScalarField& alpha2
 ) const
 {
-
-    volVectorField gradAlphaf
+    const volScalarField alpha1m
     (
-        (alpha2)*(fvc::grad(alpha1))
-      - (alpha1)*(fvc::grad(alpha2))
+        min(max(alpha1, scalar(0)), scalar(1))
+    );
+
+    const volScalarField alpha2m
+    (
+        min(max(alpha2, scalar(0)), scalar(1))
+    );
+
+    const volVectorField gradAlphaf
+    (
+        alpha2m*(fvc::grad(alpha1m))
+      - alpha1m*(fvc::grad(alpha2m))
     );
 
     const dimensionedScalar deltaN
@@ -1218,11 +1227,20 @@ Foam::tmp<Foam::surfaceVectorField> Foam::phaseSystem::nHatfv
     const volScalarField& alpha2
 ) const
 {
-
-    surfaceVectorField gradAlphaf
+    const volScalarField alpha1m
     (
-        fvc::interpolate(alpha2)*fvc::interpolate(fvc::grad(alpha1))
-      - fvc::interpolate(alpha1)*fvc::interpolate(fvc::grad(alpha2))
+        min(max(alpha1, scalar(0)), scalar(1))
+    );
+
+    const volScalarField alpha2m
+    (
+        min(max(alpha2, scalar(0)), scalar(1))
+    );
+
+    const surfaceVectorField gradAlphaf
+    (
+        fvc::interpolate(alpha2m)*fvc::interpolate(fvc::grad(alpha1m))
+      - fvc::interpolate(alpha1m)*fvc::interpolate(fvc::grad(alpha2m))
     );
 
     const dimensionedScalar deltaN

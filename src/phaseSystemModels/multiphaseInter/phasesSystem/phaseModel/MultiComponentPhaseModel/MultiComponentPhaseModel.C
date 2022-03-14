@@ -411,14 +411,16 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
                     fvm::ddt(Yi) - fvc::ddt(Yi)
                   - fvm::laplacian
                     (
-                        alpha*this->fluid().turbulence()->nut()/Sct_,
+                        alpha
+                       *(
+                           this->fluid().turbulence()->nut()/Sct_
+                         + this->fluid().turbulence()->nu()
+                        ),
                         Yi
                     )
                 );
 
                 YiDiffEqn.solve(mesh.solver("diffusion" + Yi.name()));
-
-                phiYiCorr += YiDiffEqn.flux();
             }
 
             Yt += Yi;
