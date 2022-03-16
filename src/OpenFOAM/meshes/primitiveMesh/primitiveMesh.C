@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,17 +145,15 @@ bool Foam::primitiveMesh::calcPointOrder
     // from 0 inside oldToNew. (shifted up later on)
 
     label nBoundaryPoints = 0;
-    for (label facei = nInternalFaces; facei < faces.size(); facei++)
+    for (label facei = nInternalFaces; facei < faces.size(); ++facei)
     {
         const face& f = faces[facei];
 
-        forAll(f, fp)
+        for (label pointi : f)
         {
-            label pointi = f[fp];
-
             if (oldToNew[pointi] == -1)
             {
-                oldToNew[pointi] = nBoundaryPoints++;
+                oldToNew[pointi] = ++nBoundaryPoints;
             }
         }
     }
@@ -184,17 +183,15 @@ bool Foam::primitiveMesh::calcPointOrder
     {
         const face& f = faces[facei];
 
-        forAll(f, fp)
+        for (label pointi : f)
         {
-            label pointi = f[fp];
-
             if (oldToNew[pointi] == -1)
             {
                 if (pointi >= nInternalPoints)
                 {
                     ordered = false;
                 }
-                oldToNew[pointi] = internalPointi++;
+                oldToNew[pointi] = ++internalPointi;
             }
         }
     }
@@ -318,35 +315,17 @@ void Foam::primitiveMesh::resetGeometry
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::primitiveMesh::movePoints
+void Foam::primitiveMesh::movePoints
 (
     const pointField& newPoints,
     const pointField& oldPoints
 )
 {
-    if (newPoints.size() <  nPoints() || oldPoints.size() < nPoints())
-    {
-        FatalErrorInFunction
-            << "Cannot move points: size of given point list smaller "
-            << "than the number of active points"
-            << abort(FatalError);
-    }
-
-    // Create swept volumes
-    const faceList& fcs = faces();
-
-    auto tsweptVols = tmp<scalarField>::New(fcs.size());
-    auto& sweptVols = tsweptVols.ref();
-
-    forAll(fcs, facei)
-    {
-        sweptVols[facei] = fcs[facei].sweptVol(oldPoints, newPoints);
-    }
+    // Note: the following clearout is now handled by the fvGeometryScheme
+    // triggered by the call to updateGeom() in polyMesh::movePoints
 
     // Force recalculation of all geometric data with new points
-    clearGeom();
-
-    return tsweptVols;
+    //clearGeom();
 }
 
 
@@ -359,7 +338,6 @@ const Foam::cellShapeList& Foam::primitiveMesh::cellShapes() const
 
     return *cellShapesPtr_;
 }
-
 
 
 void Foam::primitiveMesh::updateGeom()
