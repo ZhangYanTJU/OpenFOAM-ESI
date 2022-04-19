@@ -428,7 +428,7 @@ void Foam::speciesSorptionFvPatchScalarField::write(Ostream& os) const
     os.writeEntryIfDifferent<word>("p", "p", pName_);
     if (thickness_)
     {
-        thickness_->writeData(os) ;
+        thickness_->writeData(os);
     }
 
     writeEntry("value", os);

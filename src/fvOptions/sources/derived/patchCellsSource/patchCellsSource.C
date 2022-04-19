@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,9 +53,10 @@ Foam::fv::patchCellsSource::patchCellsSource
 )
 :
     fv::option(sourceName, modelType, dict, mesh),
+    curTimeIndex_(-1),
     UName_(coeffs_.getOrDefault<word>("U", "none")),
     hName_(coeffs_.getOrDefault<word>("he", "none")),
-    speciesName_(coeffs_.get<word>("species"))
+    speciesName_(coeffs_.getOrDefault<word>("species", "none"))
 {
     label nFields = 0;
     if (UName_ != "none")
@@ -66,21 +67,33 @@ Foam::fv::patchCellsSource::patchCellsSource
     {
         nFields++;
     }
-
-    fieldNames_.resize(nFields+1);
-    fieldNames_[0] = speciesName_;
-
-    nFields = 0;
-    if (UName_ != "none")
+    if (speciesName_ != "none")
     {
         nFields++;
-        fieldNames_[nFields] = UName_;
+    }
+
+    if (nFields > 1)
+    {
+        FatalErrorInFunction
+            << "patchCellsSource : "
+            << " cannot be used for more than one field."
+            << exit(FatalError);
+    }
+
+    fieldNames_.resize(1);
+    if (speciesName_ != "none")
+    {
+        fieldNames_[0] = speciesName_;
+    }
+
+    if (UName_ != "none")
+    {
+        fieldNames_[0] = UName_;
     }
 
     if (hName_ != "none")
     {
-        nFields++;
-        fieldNames_[nFields] = hName_;
+        fieldNames_[0] = hName_;
     }
 
     fv::option::resetApplied();
@@ -107,9 +120,22 @@ void Foam::fv::patchCellsSource::addSup
         return;
     }
 
-    const volScalarField& psi = eqn.psi();
+    volScalarField* psiPtr;
 
-    const volScalarField::Boundary& psib = psi.boundaryField();
+    // If source applied to he we need to loop over T for BC's
+    if (hName_ != "none")
+    {
+        psiPtr = mesh_.getObjectPtr<volScalarField>("T");
+    }
+    else
+    {
+        auto* psi =
+            mesh_.getObjectPtr<volScalarField>(eqn.psi().name());
+
+        psiPtr = psi;
+    }
+
+    const volScalarField::Boundary& psib = psiPtr->boundaryField();
 
     volScalarField mDot
     (
@@ -149,8 +175,8 @@ void Foam::fv::patchCellsSource::addSup
 
     if (debug)
     {
-        Info<< " Field mass rate min/max [Kg/m3/sec]: "
-            << gMin(mDot) << " - " << gMax(mDot) << endl;
+         Info<< " Field source rate min/max : "
+             << gMin(mDot) << " / " << gMax(mDot) << endl;
     }
 }
 

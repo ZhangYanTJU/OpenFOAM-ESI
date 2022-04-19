@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,80 +24,69 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::speciesSorptionFvPatchScalarField
+    Foam::enthalpySorptionFvPatchScalarField
 
 Group
     grpGenericBoundaryConditions
 
 Description
-    This boundary condition provides a first order zero gradient condition
-    for a given scalar field to model time-dependent adsorption-desoprtion
+    This is a temperature BC which works in conjunction with speciesSorption
+    for a species.
 
-    \f[
-        \frac{d c}{d t} = kasb (c_{eq} - c_{abs})
-    \f]
+    This boundary condition substract or adds enthalpy associated with the
+    adsorption provided by the BC speciesSorption.
 
+    It can handle two enthalpy models:
+    1) Estimate
+    2) Calculated
 
-    where
-    \vartable
-      c_{eq}       | Equilibrium concentration
-      c_{abs}      | Absorbed at wall
-      kasb         | Adsorption rate constant [1/s]
-    \endvartable
+    On top of this the enthalphy associated with the sensible enthalphy
+    corresponding with the species can be added/
 
-    \f[
-        c_{eq} = max* (kl_*co_{int}/(1 + kl_*co_{int}));
-    \f]
-
-    where
-    \vartable
-      max          | MAximum concentration
-      kl           | Langmuir constant
-      co_{int}     | Local cell value concentration
-    \endvartable
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        // Mandatory entries
-        type                    speciesSorption;
-        kbas                    <scalar>;
-        max                     <scalar>;
-        kl                      <scalar>;
-        thickness               <Function1>;
-        rhoS                    <scalar>;
-        equilibriumModel        Langmuir;
-        kinematicModel      PseudoFirstOrder;
+        type                enthalpySorption;
+        enthalpyModel       calculated; //estimated;
+        enthalpyTable
+        {
+            type            table;
+            values          ((0 0)(1 50));
+        }
+        C                   2;
+        species             O2;
+        includeHs           true;
+        value               $internalField;
     }
     \endverbatim
 
     where the entries mean:
     \table
       Property | Description                        | Type   | Reqd   | Deflt
-      type     | Type name: speciesSorption | word  | yes    | -
-      kbas     | Adsorption rate constant           | scalar | yes    | -
-      kl       | Langmuir constant                  | scalar | yes    | -
-      max      | Maximum concentation at wall       | scalar | yes    | -
-      thickness| wall thickness                     | Function1 | yes    | -
-      rhoS     | Solid density                      | scalar | yes    | -
-      equilibriumModel    | Equilibrium model       | word   | yes
-      kinematicModel      | kinematic model         | word   | yes
+      type     | Type name: enthalpySorption        | word   | yes    | -
+      C        | Estimate enthalphy model  constant | scalar | yes    | -
+      species  | Species associated with this BC    | word   | yes    | -
+      includeHs| Include sensible enthalpy          | bool   | no     | true
+      enthalpyModel| Adsorption enthalphy model     | word   | yes    | -
+      enthalpyTable| Calculated enthalphy model table | Function1 | no
+
     \endtable
 
 
 SourceFiles
-    speciesSorptionFvPatchScalarField.C
+    enthalpySorptionFvPatchScalarField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef speciesSorptionFvPatchScalarField_H
-#define speciesSorptionFvPatchScalarField_H
+#ifndef enthalpySorptionFvPatchScalarField_H
+#define enthalpySorptionFvPatchScalarField_H
 
 #include "boundarySourcePatch.H"
 #include "zeroGradientFvPatchFields.H"
-#include "PatchFunction1.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -105,99 +94,87 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-             Class speciesSorptionFvPatchScalarField Declaration
+             Class enthalpySorptionFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
-class speciesSorptionFvPatchScalarField
+class enthalpySorptionFvPatchScalarField
 :
     public zeroGradientFvPatchField<scalar>,
     public boundarySourcePatch
 {
-public:
+private:
 
-    // Public Enumeration
+    // Private Enumeration
 
-        //- Options for the equilibrum model
-        enum equilibriumModelType : char
+
+        //- Options for the enthalpy model
+        enum enthalpyModelType
         {
-            LANGMUIR = 0
+            estimated,
+            calculated
         };
 
-        //- Options for the kinematic model
-        enum kineticModelType : char
-        {
-            PseudoFirstOrder = 0
-        };
-
-
-        //- Names for equilibriumModelType
-        static const Enum<equilibriumModelType> equilibriumModelTypeNames;
 
         //- Names for kineticModelType
-        static const Enum<kineticModelType> kinematicModelTypeNames;
+        static const Enum<enthalpyModelType> enthalpyModelTypeNames;
 
 
 private:
 
     // Private Data
 
-        //- Equilibrium model
-        enum equilibriumModelType equilibriumModel_;
 
-        //- Kinematic model
-        enum kineticModelType kinematicModel_;
+        //- Enthalpy model
+        enum enthalpyModelType enthalpyModel_;
 
-        //- Adsorption rate constant  [1/sec]
-        scalar kabs_;
+        //- Estimated enthalpy model constant
+        scalar C_;
 
-        //- Langmuir adsorption constant [1/Pa]
-        scalar kl_;
+        //- Load enthalpy Table for calculated model
+        autoPtr<Function1<scalar>> enthalpyMassLoad_;
 
-        //- Maximum density on patch [mol/Kg]
-        scalar max_;
+        //- Species field name
+        word speciesName_;
 
-        //- Source on cells next to patch [mol/Kg/sec]
-        scalarField dfldp_;
+        //- Enthalpy on cells next to patch [J/Kg]
+        scalarField dhdt_;
 
-        //- Absorbed mass
-        scalarField mass_;
-
-        //- Solid thickness along the patch
-        autoPtr<PatchFunction1<scalar>> thickness_;
-
-        //- Solid density
-        scalar rhoS_;
+        //- Include sensible enthalpy of the species
+        bool includeHs_;
 
         //- Pressure field name
         word pName_;
+
+        //- Temperature field name
+        word TName_;
 
 
     // Private Member Functions
 
         //- Calculate the mole fraction fields
-        tmp<scalarField> calcMoleFractions();
+        //tmp<scalarField> calcMoleFractions();
 
         //- Lookup (or create) field for output
-        volScalarField& field(const word&, const dimensionSet&);
+        //volScalarField& field(const word&, const dimensionSet&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("speciesSorption");
+    TypeName("enthalpySorption");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        speciesSorptionFvPatchScalarField
+        enthalpySorptionFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        speciesSorptionFvPatchScalarField
+        enthalpySorptionFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
@@ -205,19 +182,19 @@ public:
         );
 
         //- Construct by mapping given
-        //- speciesSorptionFvPatchScalarField onto a new patch
-        speciesSorptionFvPatchScalarField
+        //- enthalpySorptionFvPatchScalarField onto a new patch
+        enthalpySorptionFvPatchScalarField
         (
-            const speciesSorptionFvPatchScalarField&,
+            const enthalpySorptionFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Construct as copy
-        speciesSorptionFvPatchScalarField
+        enthalpySorptionFvPatchScalarField
         (
-            const speciesSorptionFvPatchScalarField&
+            const enthalpySorptionFvPatchScalarField&
         );
 
         //- Construct and return a clone
@@ -225,14 +202,14 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new speciesSorptionFvPatchScalarField(*this)
+                new enthalpySorptionFvPatchScalarField(*this)
             );
         }
 
         //- Construct as copy setting internal field reference
-        speciesSorptionFvPatchScalarField
+        enthalpySorptionFvPatchScalarField
         (
-            const speciesSorptionFvPatchScalarField&,
+            const enthalpySorptionFvPatchScalarField&,
             const DimensionedField<scalar, volMesh>&
         );
 
@@ -244,7 +221,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new speciesSorptionFvPatchScalarField(*this, iF)
+                new enthalpySorptionFvPatchScalarField(*this, iF)
             );
         }
 
@@ -268,7 +245,6 @@ public:
 
             //- Source of cells next to the patch
             virtual tmp<scalarField> patchSource() const;
-
 
 
         // Evaluation
