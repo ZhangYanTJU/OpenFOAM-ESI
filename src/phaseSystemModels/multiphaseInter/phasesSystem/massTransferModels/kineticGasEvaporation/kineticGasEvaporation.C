@@ -206,7 +206,7 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
     );
 
     word speciesName = IOobject::member(this->transferSpecie());
-    tmp<volScalarField> L = this->L(speciesName, T);
+    tmp<volScalarField> L = mag(this->L(speciesName, T));
 
     updateInterface(T);
 

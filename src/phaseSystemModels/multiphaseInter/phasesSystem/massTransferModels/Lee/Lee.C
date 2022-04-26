@@ -78,7 +78,7 @@ Foam::meltingEvaporationModels::Lee<Thermo, OtherThermo>::Kexp
         {
             return
             (
-               coeff*pos(Tactivate_ - refValue)
+                coeff*pos(Tactivate_ - refValue)
             );
         }
     }
@@ -152,7 +152,7 @@ Foam::meltingEvaporationModels::Lee<Thermo, OtherThermo>::KSu
         {
             return
             (
-                -coeff*pos(refValue - Tactivate_)
+                 -coeff*pos(refValue - Tactivate_)
             );
         }
         else

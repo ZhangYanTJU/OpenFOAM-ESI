@@ -20,7 +20,7 @@ thermoType
     mixture         pureMixture;
     transport       const;
     thermo          hConst;
-    equationOfState Boussinesq;
+    equationOfState rhoConst;
     specie          specie;
     energy          sensibleEnthalpy;
 }
@@ -41,7 +41,7 @@ mixture
     thermodynamics
     {
         Cp              381;
-        Hf              0;
+        Hf              8.016e4;
     }
     transport
     {
