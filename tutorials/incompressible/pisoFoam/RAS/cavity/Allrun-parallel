@@ -13,4 +13,6 @@ runParallel topoSet
 
 runParallel $(getApplication)
 
+runApplication reconstructPar
+
 #------------------------------------------------------------------------------

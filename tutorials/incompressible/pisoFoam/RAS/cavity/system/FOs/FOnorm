@@ -1,0 +1,68 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2112                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+normU_L1
+{
+    // Mandatory entries
+    type            norm;
+    libs            (fieldFunctionObjects);
+    field           U;
+    norm            L1;
+
+    // Inherited entries
+    result          normU_L1;
+    region          region0;
+    enabled         true;
+    log             true;
+    timeStart       0;
+    timeEnd         1000;
+    executeControl  writeTime;
+    writeControl    writeTime;
+}
+
+normU_L2
+{
+    $normU_L1;
+    norm            L2;
+    result          normU_L2;
+}
+
+normU_Lp
+{
+    $normU_L1;
+    norm            Lp;
+    p               3;
+    result          normU_Lp;
+}
+
+normU_max
+{
+    $normU_L1;
+    norm            max;
+    result          normU_max;
+}
+
+normU_composite
+{
+    $normU_L1;
+    norm            composite;
+    divisor         constant 2;
+    result          normU_composite;
+}
+
+normk_field
+{
+    $normU_L1;
+    field           k;
+    norm            divisorField;
+    divisorField    p;
+    result          normk_field;
+}
+
+
+// ************************************************************************* //
