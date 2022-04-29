@@ -291,21 +291,16 @@ void Foam::functionObjects::forces::addToPatchFields
 {
     const auto& coordSys = coordSysPtr_();
 
-    const vectorField fNLocal(coordSys.localVector(fN));
-    const vectorField fTLocal(coordSys.localVector(fT));
-    const vectorField fLocal(fNLocal + fTLocal);
+    sumPatchForcesN_ += sum(fN);
+    sumPatchForcesT_ += sum(fT);
+    force_.boundaryFieldRef()[patchi] += fN + fT;
 
-    sumPatchForcesN_ += sum(fNLocal);
-    sumPatchForcesT_ += sum(fTLocal);
-    force_.boundaryFieldRef()[patchi] += fLocal;
+    const vectorField mN(Md^fN);
+    const vectorField mT(Md^fT);
 
-    const vectorField dNMoment(Md^fNLocal);
-    const vectorField dTMoment(Md^fTLocal);
-    const vectorField dMoment(dNMoment + dTMoment);
-
-    sumPatchMomentsN_ += sum(dNMoment);
-    sumPatchMomentsT_ += sum(dTMoment);
-    moment_.boundaryFieldRef()[patchi] += dMoment;
+    sumPatchMomentsN_ += sum(mN);
+    sumPatchMomentsT_ += sum(mT);
+    moment_.boundaryFieldRef()[patchi] += mN + mT;
 }
 
 
@@ -322,13 +317,12 @@ void Foam::functionObjects::forces::addToInternalField
     {
         const label celli = cellIDs[i];
 
-        const vector fLocal(coordSys.localVector(f[i]));
-        sumInternalForces_ += fLocal;
-        force_[celli] += fLocal;
+        sumInternalForces_ += f[i];
+        force_[celli] += f[i];
 
-        const vector dMoment(Md[i]^fLocal);
-        sumInternalMoments_ += dMoment;
-        moment_[celli] = dMoment;
+        const vector m(Md[i]^f[i]);
+        sumInternalMoments_ += m;
+        moment_[celli] = m;
     }
 }
 
@@ -379,8 +373,23 @@ void Foam::functionObjects::forces::writeIntegratedDataFileHeader
 
 void Foam::functionObjects::forces::writeIntegratedDataFiles()
 {
-    writeIntegratedDataFile(sumPatchForcesN_, sumPatchForcesT_, sumInternalForces_, forceFilePtr_());
-    writeIntegratedDataFile(sumPatchMomentsN_, sumPatchMomentsT_, sumInternalMoments_, momentFilePtr_());
+    const auto& coordSys = coordSysPtr_();
+
+    writeIntegratedDataFile
+    (
+        coordSys.localVector(sumPatchForcesN_),
+        coordSys.localVector(sumPatchForcesT_),
+        coordSys.localVector(sumInternalForces_),
+        forceFilePtr_()
+    );
+
+    writeIntegratedDataFile
+    (
+        coordSys.localVector(sumPatchMomentsN_),
+        coordSys.localVector(sumPatchMomentsT_),
+        coordSys.localVector(sumInternalMoments_),
+        momentFilePtr_()
+    );
 }
 
 
@@ -760,15 +769,15 @@ void Foam::functionObjects::forces::calcForcesMoments()
 
 Foam::vector Foam::functionObjects::forces::forceEff() const
 {
-    //return sum(sumPatchForcesN_ + sumPatchForcesT_ + sumInternalForces_);
-    return sum(force_).value();
+    //return sum(force_).value();
+    return sumPatchForcesN_ + sumPatchForcesT_ + sumInternalForces_;
 }
 
 
 Foam::vector Foam::functionObjects::forces::momentEff() const
 {
-    //return sum(sumPatchMomentsN_ + sumPatchMomentsT_ + sumInternalMoments_);
-    return sum(moment_).value();
+    //return sum(moment_).value();
+    return sumPatchMomentsN_ + sumPatchMomentsT_ + sumInternalMoments_;
 }
 
 
@@ -778,15 +787,26 @@ bool Foam::functionObjects::forces::execute()
 
     Log << type() << " " << name() << " write:" << nl;
 
-    logIntegratedData("forces", sumPatchForcesN_, sumPatchForcesT_, sumInternalForces_);
-    logIntegratedData("moments", sumPatchMomentsN_, sumPatchMomentsT_, sumInternalMoments_);
+    const auto& coordSys = coordSysPtr_();
 
-    setResult("normalForce", sumPatchForcesN_);
-    setResult("tangentialForce", sumPatchForcesT_);
-    setResult("cellForce", sumInternalForces_);
-    setResult("normalMoment", sumPatchMomentsN_);
-    setResult("tangentialMoment", sumPatchMomentsT_);
-    setResult("cellMoment", sumInternalMoments_);
+    const auto localFn(coordSys.localVector(sumPatchForcesN_));
+    const auto localFt(coordSys.localVector(sumPatchForcesT_));
+    const auto localFi(coordSys.localVector(sumInternalForces_));
+
+    logIntegratedData("forces", localFn, localFt, localFi);
+
+    const auto localMn(coordSys.localVector(sumPatchMomentsN_));
+    const auto localMt(coordSys.localVector(sumPatchMomentsT_));
+    const auto localMi(coordSys.localVector(sumInternalMoments_));
+
+    logIntegratedData("moments", localMn, localMt, localMi);
+
+    setResult("normalForce", localFn);
+    setResult("tangentialForce", localFt);
+    setResult("internalForce", localFi);
+    setResult("normalMoment", localMn);
+    setResult("tangentialMoment", localMt);
+    setResult("internalMoment", localMi);
 
     return true;
 }

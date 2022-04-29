@@ -28,14 +28,16 @@ License
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-void Foam::binModel::decomposePatchValues
+bool Foam::binModel::decomposePatchValues
 (
     List<List<Type>>& data,
     const label bini,
     const Type& v,
     const vector& n
 ) const
-{}
+{
+    return decomposePatchValues_;
+}
 
 
 template<class Type>

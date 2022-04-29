@@ -41,7 +41,7 @@ namespace Foam
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<>
-void Foam::binModel::decomposePatchValues
+bool Foam::binModel::decomposePatchValues
 (
     List<List<vector>>& data,
     const label bini,
@@ -49,11 +49,24 @@ void Foam::binModel::decomposePatchValues
     const vector& n
 ) const
 {
-    if (decomposePatchValues_)
+    if (!decomposePatchValues_)
     {
-        data[1][bini] += n*(v & n);
-        data[2][bini] += v - n*(v & n);
+        return false;
     }
+
+    #ifdef FULLDEBUG
+    if (data.size() != 3)
+    {
+        FatalErrorInFunction
+            << "Inconsistent data list size - expect size 3"
+            << abort(FatalError);
+    }
+    #endif
+
+    data[1][bini] += n*(v & n);
+    data[2][bini] += v - n*(v & n);
+
+    return true;
 }
 
 

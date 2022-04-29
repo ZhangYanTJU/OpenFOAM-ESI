@@ -159,9 +159,6 @@ Foam::labelList Foam::binModels::uniformBin::binAddr(const vectorField& d) const
 
 void Foam::binModels::uniformBin::setBinsAddressing()
 {
-    cellToBin_.setSize(mesh_.nCells());
-    cellToBin_ = -1;
-
     faceToBin_.setSize(mesh_.nBoundaryFaces());
     faceToBin_ = -1;
 
@@ -173,6 +170,9 @@ void Foam::binModels::uniformBin::setBinsAddressing()
         SubList<label>(faceToBin_, pp.size(), i0) =
             binAddr(coordSysPtr_->localPosition(pp.faceCentres()));
     }
+
+    cellToBin_.setSize(mesh_.nCells());
+    cellToBin_ = -1;
 
     for (const label zonei : cellZoneIDs_)
     {

@@ -117,7 +117,7 @@ protected:
         //- Helper function to decompose patch values into normal and tangential
         //- components
         template<class Type>
-        void decomposePatchValues
+        bool decomposePatchValues
         (
             List<List<Type>>& data,
             const label bini,
@@ -217,7 +217,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<>
-void binModel::decomposePatchValues
+bool binModel::decomposePatchValues
 (
     List<List<vector>>& data,
     const label bini,

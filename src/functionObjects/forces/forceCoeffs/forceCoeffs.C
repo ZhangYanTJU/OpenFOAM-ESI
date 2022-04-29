@@ -59,8 +59,8 @@ Foam::functionObjects::forceCoeffs::coeffsSelection()
         coeffs.insert("Cl", coeffDesc("Lift force coefficient", "Cl", 2, 1));
 
         coeffs.insert("CmRoll", coeffDesc("Roll moment coefficient", "CmRoll", 0, -1));
-        coeffs.insert("CmYaw", coeffDesc("Yaw moment coefficient", "CmYaw", 1, -1));
-        coeffs.insert("CmPitch", coeffDesc("Pitch moment coefficient", "CmPitch", 2, -1));
+        coeffs.insert("CmPitch", coeffDesc("Pitch moment coefficient", "CmPitch", 1, -1));
+        coeffs.insert("CmYaw", coeffDesc("Yaw moment coefficient", "CmYaw", 2, -1));
     }
 
     return coeffs;
@@ -100,14 +100,16 @@ void Foam::functionObjects::forceCoeffs::calcForceCoeffs()
         scalar(1)/(Aref_*pDyn + SMALL)
     );
 
+    const auto& coordSys = coordSysPtr_();
+
     // Calculate force coefficients
     forceCoeff_ = forceScaling*force_;
 
     Cf_.reset
     (
-        forceScaling.value()*sumPatchForcesN_,
-        forceScaling.value()*sumPatchForcesT_,
-        forceScaling.value()*sumInternalForces_
+        forceScaling.value()*coordSys.localVector(sumPatchForcesN_),
+        forceScaling.value()*coordSys.localVector(sumPatchForcesT_),
+        forceScaling.value()*coordSys.localVector(sumInternalForces_)
     );
 }
 
@@ -122,14 +124,16 @@ void Foam::functionObjects::forceCoeffs::calcMomentCoeffs()
         scalar(1)/(Aref_*pDyn*lRef_ + SMALL)
     );
 
+    const auto& coordSys = coordSysPtr_();
+
     // Calculate moment coefficients
     momentCoeff_ = momentScaling*moment_;
 
     Cm_.reset
     (
-        momentScaling.value()*sumPatchMomentsN_,
-        momentScaling.value()*sumPatchMomentsT_,
-        momentScaling.value()*sumInternalMoments_
+        momentScaling.value()*coordSys.localVector(sumPatchMomentsN_),
+        momentScaling.value()*coordSys.localVector(sumPatchMomentsT_),
+        momentScaling.value()*coordSys.localVector(sumInternalMoments_)
     );
 }
 
@@ -391,6 +395,7 @@ bool Foam::functionObjects::forceCoeffs::execute()
             << nl;
     };
 
+    // Vectors or x:pressure, y:viscous, z:internal
     const vector Cft = Cf_.total();
     const vector Cmt = Cm_.total();
 
@@ -403,6 +408,8 @@ bool Foam::functionObjects::forceCoeffs::execute()
 
         if (coeff.c1_ == -1)
         {
+// MOMENT VALUES ARE WRONG!!!!
+
             const vector Cmi = Cm_[coeff.c0_];
 
             if (log && coeff.active_)
@@ -410,7 +417,7 @@ bool Foam::functionObjects::forceCoeffs::execute()
                 logValues(coeff.name_, Cmi, Info);
             }
 
-            setResult(coeff.name_, Cft[coeff.c0_]);
+            setResult(coeff.name_, Cmt[coeff.c0_]);
             setResult(coeff.name_ & "pressure", Cmi.x());
             setResult(coeff.name_ & "viscous", Cmi.y());
             setResult(coeff.name_ & "internal", Cmi.z());
@@ -425,6 +432,8 @@ bool Foam::functionObjects::forceCoeffs::execute()
 
                 if (coeff.splitFrontRear_)
                 {
+// FRONT/REAR VALUES ARE WRONG!!!!
+
                     const vector Cmi = Cm_[coeff.c1_];
 
                     logValues(coeff.frontName(), 0.5*Cfi + Cmi, Info);

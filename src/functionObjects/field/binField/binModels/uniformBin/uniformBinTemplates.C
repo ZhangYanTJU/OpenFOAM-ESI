@@ -78,6 +78,10 @@ void Foam::binModels::uniformBin::writeFileHeader
                 writeTabbed(os, in + "normal");
                 writeTabbed(os, in + "tangential");
             }
+            else
+            {
+                writeTabbed(os, in + "patch");
+            }
         }
     }
     else
@@ -92,6 +96,10 @@ void Foam::binModels::uniformBin::writeFileHeader
             {
                 writeTabbed(os, in + writeComponents<Type>("normal"));
                 writeTabbed(os, in + writeComponents<Type>("tangential"));
+            }
+            else
+            {
+                writeTabbed(os, in + writeComponents<Type>("patch"));
             }
         }
     }
@@ -121,38 +129,25 @@ bool Foam::binModels::uniformBin::processField(const label fieldi)
     const VolFieldType& fld = *fieldPtr;
 
     // Total number of fields
-    label nField = 1;
+    //
+    // 0: internal
+    // 1: patch total
+    //
+    // OR
+    //
+    // 0: internal
+    // 1: patch normal
+    // 2: patch tangential
+    label nField = 2;
     if (decomposePatchValues_)
     {
-        // Add Normal, tangential
-        nField += 2;
+        nField += 1;
     }
 
     List<List<Type>> data(nField);
     for (auto& binList : data)
     {
         binList.setSize(nBin_, Zero);
-    }
-
-    forAllIters(patchSet_, iter)
-    {
-        const label patchi = iter();
-        const polyPatch& pp = mesh_.boundaryMesh()[patchi];
-        const vectorField np(mesh_.boundary()[patchi].nf());
-
-        forAll(pp, facei)
-        {
-            label localFacei = pp.start() - mesh_.nInternalFaces() + facei;
-            label bini = faceToBin_[localFacei];
-
-            if (bini != -1)
-            {
-                const Type& v = fld.boundaryField()[patchi][facei];
-                data[0][bini] += v;
-
-                decomposePatchValues(data, bini, v, np[facei]);
-            }
-        }
     }
 
     for (const label zonei : cellZoneIDs_)
@@ -170,7 +165,33 @@ bool Foam::binModels::uniformBin::processField(const label fieldi)
         }
     }
 
-    writeBinnedData(data, filePtrs_[fieldi]);
+    forAllIters(patchSet_, iter)
+    {
+        const label patchi = iter();
+        const polyPatch& pp = mesh_.boundaryMesh()[patchi];
+        const vectorField np(mesh_.boundary()[patchi].nf());
+
+        forAll(pp, facei)
+        {
+            label localFacei = pp.start() - mesh_.nInternalFaces() + facei;
+            label bini = faceToBin_[localFacei];
+
+            if (bini != -1)
+            {
+                const Type& v = fld.boundaryField()[patchi][facei];
+
+                if (!decomposePatchValues(data, bini, v, np[facei]))
+                {
+                    data[1][bini] += v;
+                }
+            }
+        }
+    }
+
+    if (Pstream::master())
+    {
+        writeBinnedData(data, filePtrs_[fieldi]);
+    }
 
     return true;
 }
