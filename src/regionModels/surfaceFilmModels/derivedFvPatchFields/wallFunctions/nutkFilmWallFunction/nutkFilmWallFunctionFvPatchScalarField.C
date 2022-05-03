@@ -92,7 +92,8 @@ tmp<scalarField> nutkFilmWallFunctionFvPatchScalarField::calcUTau
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
     const scalarField& nuw = tnuw();
 
-    const scalar Cmu25 = pow(Cmu_, 0.25);
+    const scalar Cmu25 = pow(wallCoeffs_.Cmu(), 0.25);
+    const scalar kappa = wallCoeffs_.kappa();
 
     forAll(uTau, facei)
     {
@@ -108,7 +109,7 @@ tmp<scalarField> nutkFilmWallFunctionFvPatchScalarField::calcUTau
         if (yPlus > yPlusCrit_)
         {
             scalar expTerm = exp(min(50.0, B_*mStar));
-            scalar powTerm = pow(yPlus, mStar/kappa_);
+            scalar powTerm = pow(yPlus, mStar/kappa);
             factor = mStar/(expTerm*powTerm - 1.0 + ROOTVSMALL);
         }
         else
@@ -163,8 +164,6 @@ void nutkFilmWallFunctionFvPatchScalarField::writeLocalEntries
     );
     os.writeEntry("B", B_);
     os.writeEntry("yPlusCrit", yPlusCrit_);
-    os.writeEntry("Cmu", Cmu_);
-    os.writeEntry("kappa", kappa_);
 }
 
 
@@ -266,7 +265,7 @@ tmp<scalarField> nutkFilmWallFunctionFvPatchScalarField::yPlus() const
 
 void nutkFilmWallFunctionFvPatchScalarField::write(Ostream& os) const
 {
-    fvPatchField<scalar>::write(os);
+    nutWallFunctionFvPatchScalarField::write(os);
     writeLocalEntries(os);
     writeEntry("value", os);
 }
