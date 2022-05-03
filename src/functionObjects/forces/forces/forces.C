@@ -457,7 +457,7 @@ Foam::functionObjects::forces::forces
     (
         IOobject
         (
-            scopedName("force"),
+            IOobject::scopedName(this->name(), "force"),
             time_.timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -470,7 +470,7 @@ Foam::functionObjects::forces::forces
     (
         IOobject
         (
-            scopedName("moment"),
+            IOobject::scopedName(this->name(), "moment"),
             time_.timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -523,7 +523,7 @@ Foam::functionObjects::forces::forces
     (
         IOobject
         (
-            scopedName("force"),
+            IOobject::scopedName(this->name(), "force"),
             time_.timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -536,7 +536,7 @@ Foam::functionObjects::forces::forces
     (
         IOobject
         (
-            scopedName("moment"),
+            IOobject::scopedName(this->name(), "moment"),
             time_.timeName(),
             mesh_,
             IOobject::NO_READ,
