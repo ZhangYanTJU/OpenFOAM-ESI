@@ -147,32 +147,34 @@ bool Foam::binModel::read(const dictionary& dict)
     patchSet_ = mesh_.boundaryMesh().patchSet(dict.get<wordRes>("patches"));
     fieldNames_ = dict.get<wordHashSet>("fields").sortedToc();
 
-    DynamicList<label> zoneIDs;
-    DynamicList<wordRe> czUnmatched;
-    for (const auto& cz : dict.get<wordRes>("cellZones"))
+    if (dict.found("cellZones"))
     {
-        labelList czi = mesh_.cellZones().indices(cz);
-
-        if (czi.empty())
+        DynamicList<label> zoneIDs;
+        DynamicList<wordRe> czUnmatched;
+        for (const auto& cz : dict.get<wordRes>("cellZones"))
         {
-            czUnmatched.append(cz);
+            labelList czi = mesh_.cellZones().indices(cz);
+
+            if (czi.empty())
+            {
+                czUnmatched.append(cz);
+            }
+            else
+            {
+                zoneIDs.append(czi);
+            }
         }
-        else
+
+        if (czUnmatched.size())
         {
-            zoneIDs.append(czi);
+            WarningInFunction
+                << "Unable to find zone(s): " << czUnmatched << nl
+                << "Valid cellZones are : " << mesh_.cellZones().sortedNames()
+                << endl;
         }
 
+        cellZoneIDs_.transfer(zoneIDs);
     }
-
-    if (czUnmatched.size())
-    {
-        WarningInFunction
-            << "Unable to find zone(s): " << czUnmatched << nl
-            << "Valid cellZones are : " << mesh_.cellZones().sortedNames()
-            << endl;
-    }
-
-    cellZoneIDs_.transfer(zoneIDs);
 
     decomposePatchValues_ = dict.get<bool>("decomposePatchValues");
 
