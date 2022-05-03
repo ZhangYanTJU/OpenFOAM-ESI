@@ -289,8 +289,6 @@ void Foam::functionObjects::forces::addToPatchFields
     const vectorField& fT
 )
 {
-    const auto& coordSys = coordSysPtr_();
-
     sumPatchForcesN_ += sum(fN);
     sumPatchForcesT_ += sum(fT);
     force_.boundaryFieldRef()[patchi] += fN + fT;
@@ -311,8 +309,6 @@ void Foam::functionObjects::forces::addToInternalField
     const vectorField& f
 )
 {
-    const auto& coordSys = coordSysPtr_();
-
     forAll(cellIDs, i)
     {
         const label celli = cellIDs[i];
