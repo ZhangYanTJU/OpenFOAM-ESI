@@ -202,8 +202,6 @@ bool Foam::binModels::singleDirectionUniformBin::processField
             {
                 data[1][bini] += v;
             }
-
-            decomposePatchValues(data, bini, v, np[facei]);
         }
     }
 
