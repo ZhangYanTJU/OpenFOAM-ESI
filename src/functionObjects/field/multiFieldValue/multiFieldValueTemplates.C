@@ -34,7 +34,7 @@ template<class Type>
 bool Foam::functionObjects::fieldValues::multiFieldValue::applyOperation
 (
     const word& resultType,
-    const wordList& names,
+    const wordList& foNames,
     const wordList& entryNames
 )
 {
@@ -45,10 +45,10 @@ bool Foam::functionObjects::fieldValues::multiFieldValue::applyOperation
 
     Type result = Zero;
 
-    Field<Type> values(names.size());
+    Field<Type> values(foNames.size());
     forAll(values, i)
     {
-        values[i] = this->getObjectResult<Type>(names[i], entryNames[i]);
+        values[i] = this->getObjectResult<Type>(foNames[i], entryNames[i]);
     }
 
     const word& opName = operationTypeNames_[operation_];

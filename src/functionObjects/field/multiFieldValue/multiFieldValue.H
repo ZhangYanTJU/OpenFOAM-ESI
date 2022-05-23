@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,10 +30,9 @@ Group
     grpFieldFunctionObjects
 
 Description
-    Computes a selected operation between multiple \c fieldValue function
-    objects.
+    Computes a selected operation between multiple function objects
 
-    The operation is applied to all results of each \c fieldValue object.
+    The operation is applied to all results of each object.
 
 Note
     Each object must generate the same number and type of results.
@@ -56,10 +55,14 @@ Usage
             region1
             {
                 ...
+                // Optional
+                resultFields        (field1 field2);
             }
             region2
             {
                 ...
+                // Optional
+                resultFields        (field1 field2);
             }
 
             ...
@@ -67,6 +70,8 @@ Usage
             regionN
             {
                 ...
+                // Optional
+                resultFields        (field1 field2);
             }
         }
 
@@ -81,7 +86,7 @@ Usage
       type         | Type name: multiFieldValue          | word |  yes  | -
       libs         | Library name: fieldFunctionObjects  | word |  yes  | -
       operation    | Operation type to apply to values   | word |  yes  | -
-      functions    | List of fieldValue function objects | dict |  yes  | -
+      functions    | List of function objects            | dict |  yes  | -
     \endtable
 
     Options for the \c operation entry:
@@ -93,6 +98,9 @@ Usage
        average       | average
     \endplaintable
 
+    The \c resultFields entry can be used to set the name of the function object
+    result fields to process. If omitted, all available values are employed.
+
     The inherited entries are elaborated in:
      - \link fieldValue.H \endlink
 
@@ -100,7 +108,6 @@ Usage
 
 See also
     - Foam::functionObject
-    - Foam::functionObjects::fieldValue
     - ExtendedCodeGuide::functionObjects::field::multiFieldValue
 
 SourceFiles
@@ -114,7 +121,6 @@ SourceFiles
 
 #include "stateFunctionObject.H"
 #include "writeFile.H"
-#include "fieldValue.H"
 #include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -162,7 +168,10 @@ private:
         operationType operation_;
 
         //- List of fieldValue function objects
-        PtrList<fieldValue> functions_;
+        PtrList<functionObject> functions_;
+
+        //- List of result fields per function object
+        List<wordList> resultFields_;
 
 
     // Private Member Functions
@@ -183,7 +192,13 @@ protected:
     // Protected Member Functions
 
         //- Output file header information
-        virtual void writeFileHeader(Ostream& os) const;
+        virtual void writeFileHeader
+        (
+            const wordList& foNames,
+            const List<wordList>& entries,
+            const List<wordList>& types,
+            Ostream& os
+        ) const;
 
 
 public:
