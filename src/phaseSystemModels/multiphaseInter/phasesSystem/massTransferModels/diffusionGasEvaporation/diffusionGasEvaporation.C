@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,12 +25,11 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "kineticGasEvaporation.H"
+#include "diffusionGasEvaporation.H"
 #include "constants.H"
 #include "cutCellIso.H"
 #include "volPointInterpolation.H"
-#include "wallPolyPatch.H"
-#include "fvcSmooth.H"
+#include "fvcGrad.H"
 
 using namespace Foam::constant;
 
@@ -38,7 +37,7 @@ using namespace Foam::constant;
 // * * * * * * * * * * *  Private Member Functions * * * * * * * * * * * * * //
 
 template<class Thermo, class OtherThermo>
-void Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
+void Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
 ::updateInterface(const volScalarField& T)
 {
     const fvMesh& mesh = this->mesh_;
@@ -68,8 +67,8 @@ void Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo, class OtherThermo>
-Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
-::kineticGasEvaporation
+Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
+::diffusionGasEvaporation
 (
     const dictionary& dict,
     const phasePair& pair
@@ -77,8 +76,7 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
 :
     InterfaceCompositionModel<Thermo, OtherThermo>(dict, pair),
     C_("C", dimless, dict),
-    Tactivate_("Tactivate", dimTemperature, dict),
-    Mv_("Mv", dimMass/dimMoles, -1, dict),
+    Tactivate_("Tactivate", dimTemperature, 0, dict),
     interfaceArea_
     (
         IOobject
@@ -91,19 +89,6 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
         ),
         this->mesh_,
         dimensionedScalar(dimless/dimLength, Zero)
-    ),
-    htc_
-    (
-        IOobject
-        (
-            "htc",
-            this->mesh_.time().timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        this->mesh_,
-        dimensionedScalar(dimMass/dimArea/dimTemperature/dimTime, Zero)
     ),
     mDotc_
     (
@@ -118,62 +103,51 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
         this->mesh_,
         dimensionedScalar(dimDensity/dimTime, Zero)
     ),
-    isoAlpha_(dict.getOrDefault<scalar>("isoAlpha", 0.5))
-{
-    word speciesName = IOobject::member(this->transferSpecie());
-
-    // Get the "to" thermo
-    const typename OtherThermo::thermoType& toThermo =
-        this->getLocalThermo
+    isoAlpha_(dict.getOrDefault<scalar>("isoAlpha", 0.5)),
+    saturationModel_
+    (
+        saturationModel::New
         (
-            speciesName,
-            this->toThermo_
-        );
-
-    // Convert from g/mol to Kg/mol
-    Mv_.value() = toThermo.W()*1e-3;
-
-    if (Mv_.value() == -1)
-    {
-        FatalErrorInFunction
-            << " Please provide the molar weight (Mv) of vapour [g/mol] "
-            << abort(FatalError);
-    }
-}
+            dict.subDict("saturationPressure"),
+            this->mesh_
+        )
+    )
+{}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class Thermo, class OtherThermo>
 Foam::tmp<Foam::volScalarField>
-Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
+Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
 ::Kexp(const volScalarField& T)
 {
 
     const fvMesh& mesh = this->mesh_;
 
-    const dimensionedScalar HerztKnudsConst
-    (
-        sqrt
-        (
-            2.0*mathematical::pi
-          * pow3(Tactivate_)
-          * constant::physicoChemical::R/Mv_
-        )
-    );
-
     word speciesName = IOobject::member(this->transferSpecie());
-    tmp<volScalarField> L = mag(this->L(speciesName, T));
+
+    const typename OtherThermo::thermoType& vapourThermo =
+        this->getLocalThermo
+        (
+            speciesName,
+            this->toThermo_
+        );
+
+    const volScalarField& from = this->pair().from();
+    const volScalarField& to = this->pair().to();
+
+    const volScalarField& Yv = this->toThermo_.composition().Y(speciesName);
 
     updateInterface(T);
 
-    tmp<volScalarField> tRhov
+    tmp<volScalarField> tRhog
     (
         new volScalarField
         (
             IOobject
             (
-                "tRhov",
+                "tRhog",
                 mesh.time().timeName(),
                 mesh
             ),
@@ -181,40 +155,69 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
             dimensionedScalar(dimDensity, Zero)
         )
     );
-    volScalarField& rhov = tRhov.ref();
+    volScalarField& rhog = tRhog.ref();
+    rhog = this->pair().to().rho();
 
-    tmp<volScalarField> tdeltaT
+    tmp<volScalarField> tDvg
     (
         new volScalarField
         (
             IOobject
             (
-                "tdeltaT",
+                "tDvg",
                 mesh.time().timeName(),
                 mesh
             ),
             mesh,
-            dimensionedScalar(dimTemperature, Zero)
+            dimensionedScalar(sqr(dimLength)/dimTime, Zero)
         )
     );
-    volScalarField& deltaT = tdeltaT.ref();
+    volScalarField& Dvg = tDvg.ref();
+    Dvg = this->Dto(speciesName);
 
-    dimensionedScalar T0("T0", dimTemperature, Zero);
+    tmp<volScalarField> pSat = saturationModel_->pSat(T);
 
-    if (sign(C_.value()) > 0)
+    const volScalarField XvSat(pSat()/this->toThermo_.p());
+
+    const dimensionedScalar Wv("Wv", dimMass/dimMoles, vapourThermo.W());
+    const volScalarField YvSat
+    (
+        XvSat
+       *(
+           Wv/(XvSat*Wv + (1-XvSat)*this->toThermo_.W())
+        )
+    );
+
+	const volScalarField Ygm(max(from*YvSat + to*Yv, Zero));
+
+    const multiphaseInterSystem& fluid = this->fluid();
+
+    tmp<volVectorField> nHatInt(fluid.nVolHatfv(to, from));
+
+    const volScalarField gradYgm(fvc::grad(Ygm) & nHatInt());
+
+    mDotc_ =
+       -pos(T - Tactivate_)
+       *C_*rhog*Dvg*gradYgm*interfaceArea_
+       /(1 - YvSat);
+
+    if (mesh.time().outputTime() && debug)
     {
-        rhov = this->pair().to().rho();
-        deltaT = max(T - Tactivate_, T0);
-    }
-    else
-    {
-        rhov = this->pair().from().rho();
-        deltaT = max(Tactivate_ - T, T0);
-    }
+        volScalarField pSat("pSat", saturationModel_->pSat(T));
+        pSat.write();
 
-    htc_ = 2*mag(C_)/(2-mag(C_))*(L()*rhov/HerztKnudsConst);
+        volScalarField YvSat1("YvSat", YvSat);
+        YvSat1.write();
 
-    mDotc_ = htc_*deltaT*interfaceArea_;
+        volScalarField YgmDebug("Ygm", Ygm);
+        YgmDebug.write();
+
+        volScalarField gradYgmD("gradYgm", gradYgm);
+        gradYgmD.write();
+
+        volVectorField nHatIntD("nHatInt", nHatInt());
+        nHatIntD.write();
+    }
 
     return tmp<volScalarField>(new volScalarField(mDotc_));
 }
@@ -222,58 +225,25 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
 
 template<class Thermo, class OtherThermo>
 Foam::tmp<Foam::volScalarField>
-Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>::KSp
+Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>::KSp
 (
     label variable,
     const volScalarField& refValue
 )
 {
-    if (this->modelVariable_ == variable)
-    {
-        const volScalarField coeff(htc_*interfaceArea_);
-
-        if (sign(C_.value()) > 0)
-        {
-            return(coeff*pos(refValue - Tactivate_));
-        }
-        else
-        {
-            return(coeff*pos(Tactivate_ - refValue));
-        }
-    }
-    else
-    {
-        return tmp<volScalarField> ();
-    }
+    return nullptr;
 }
 
 
 template<class Thermo, class OtherThermo>
 Foam::tmp<Foam::volScalarField>
-Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>::KSu
+Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>::KSu
 (
     label variable,
     const volScalarField& refValue
 )
 {
-    if (this->modelVariable_ == variable)
-    {
-        const volScalarField coeff(htc_*interfaceArea_*Tactivate_);
-
-        if (sign(C_.value()) > 0)
-        {
-            return(-coeff*pos(refValue - Tactivate_));
-        }
-        else
-        {
-            return(coeff*pos(Tactivate_ - refValue));
-        }
-    }
-    else
-    {
-        return tmp<volScalarField> ();
-    }
+    return nullptr;
 }
 
-
-// ************************************************************************* //
+//************************************************************************ //

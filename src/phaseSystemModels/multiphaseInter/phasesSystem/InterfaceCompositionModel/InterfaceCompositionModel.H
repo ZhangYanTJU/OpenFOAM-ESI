@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -151,10 +151,16 @@ public:
             const volScalarField& Tf
         ) const;
 
-        //- Mass diffusivity of the local thermo
-        virtual tmp<volScalarField> D
+        //- Specie mass diffusivity for pure mixture
+        virtual tmp<volScalarField> Dfrom
         (
             const word& speciesName
+        ) const;
+
+        //- Specie mass diffusivity for specie in a multicomponent
+        virtual tmp<volScalarField> Dto
+        (
+             const word& speciesName
         ) const;
 
         //- Latent heat (to - from)(thermo - otherThermo)

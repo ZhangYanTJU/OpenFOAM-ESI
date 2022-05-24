@@ -125,6 +125,13 @@ const Foam::phasePair& Foam::interfaceCompositionModel::pair() const
 }
 
 
+const Foam::multiphaseInterSystem& Foam::interfaceCompositionModel::
+fluid() const
+{
+    return pair().to().fluid();
+}
+
+
 const Foam::word& Foam::interfaceCompositionModel::variable() const
 {
     return modelVariableNames_[modelVariable_];

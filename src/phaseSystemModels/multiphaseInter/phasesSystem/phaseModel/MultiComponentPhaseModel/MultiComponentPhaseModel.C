@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,7 +53,8 @@ MultiComponentPhaseModel
 :
     BasePhaseModel(fluid, phaseName),
     species_(),
-    inertIndex_(-1)
+    inertIndex_(-1),
+    addDiffusion_(false)
 {
     thermoPtr_.reset
     (
@@ -75,6 +76,11 @@ MultiComponentPhaseModel
     species_ = thermoPtr_->composition().species();
 
     inertIndex_ = species_[thermoPtr_().template get<word>("inertSpecie")];
+
+    addDiffusion_ =
+        thermoPtr_().template getOrDefault<bool>("addDiffusion", false);
+
+    Sct_ = thermoPtr_().template getOrDefault<scalar>("Sct", 1.0);
 
     X_.setSize(thermoPtr_->composition().species().size());
 
@@ -396,6 +402,23 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
                     zeroField()
                 );
             }
+
+            if (addDiffusion_)
+            {
+                const volScalarField& alpha = *this;
+                fvScalarMatrix YiDiffEqn
+                (
+                    fvm::ddt(Yi) - fvc::ddt(Yi)
+                  - fvm::laplacian
+                    (
+                        alpha*this->fluid().turbulence()->nut()/Sct_,
+                        Yi
+                    )
+                );
+
+                YiDiffEqn.solve(mesh.solver("diffusion" + Yi.name()));
+            }
+
             Yt += Yi;
         }
     }

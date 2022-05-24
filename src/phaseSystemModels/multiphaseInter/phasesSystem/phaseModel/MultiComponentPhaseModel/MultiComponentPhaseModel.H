@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,6 +72,12 @@ protected:
 
         //- Ptr list of volumetric fractions for species
         PtrList<volScalarField> X_;
+
+        //- Add diffusion transport on Yi's Eq
+        bool addDiffusion_;
+
+        //- Schmidt number
+        scalar Sct_;
 
 
     // Protected functions
