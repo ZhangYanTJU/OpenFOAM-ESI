@@ -91,12 +91,12 @@ wmake $targetType combustionModels
 wmakeLnInclude -u regionFaModels
 wmakeLnInclude -u faOptions
 
+wmakeLnInclude -u overset
+wmake $targetType overset
+
 wmake $targetType fvOptions
 
 wmake $targetType fvMotionSolver
-wmake $targetType regionFaModels
-
-wmake $targetType overset
 
 # snappyHexMesh uses overset voxelMesh
 mesh/Allwmake $targetType $*
@@ -115,10 +115,12 @@ wmake $targetType derivedFvPatchFluidThermo
 
 regionModels/Allwmake $targetType $*
 
+wmake $targetType faOptions
+wmake $targetType regionFaModels
+
 lagrangian/Allwmake $targetType $*
 wmake $targetType functionObjects/lagrangian
 
-wmake $targetType faOptions
 
 wmake $targetType lumpedPointMotion
 wmake $targetType sixDoFRigidBodyMotion
