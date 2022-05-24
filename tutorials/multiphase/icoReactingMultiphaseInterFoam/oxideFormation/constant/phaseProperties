@@ -33,30 +33,9 @@ gas
     type            pureMovingPhaseModel;
 }
 
-surfaceTension
-(
-    (gas and liquid)
-    {
-        type            constant;
-        sigma           0.0;
-    }
-
-    (oxide and liquid)
-    {
-        type            constant;
-        sigma           0.0;
-    }
-
-    (oxide and gas)
-    {
-        type            constant;
-        sigma           0.0;
-    }
-);
-
-
 massTransferModel
 (
+
     (liquid to oxide)
     {
         type                interfaceOxideRate;
@@ -67,6 +46,7 @@ massTransferModel
         isoAlpha            0.9;
         includeVolChange    false;
    }
+
 );
 
 
