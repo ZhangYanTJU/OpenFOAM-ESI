@@ -50,17 +50,28 @@ namespace functionObjects
 Foam::HashTable<Foam::functionObjects::forceCoeffs::coeffDesc>&
 Foam::functionObjects::forceCoeffs::coeffsSelection()
 {
-    static HashTable<coeffDesc> coeffs;
+    static HashTable<coeffDesc> coeffs(16);
 
     if (coeffs.empty())
     {
-        coeffs.insert("Cd", coeffDesc("Drag force coefficient", "Cd", 0, 0));
-        coeffs.insert("Cs", coeffDesc("Side force coefficient", "Cs", 1, 2));
-        coeffs.insert("Cl", coeffDesc("Lift force coefficient", "Cl", 2, 1));
+        coeffs.insert("Cd", coeffDesc("Drag force", "Cd", 0, 0));
+        coeffs.insert("Cs", coeffDesc("Side force", "Cs", 1, 2));
+        coeffs.insert("Cl", coeffDesc("Lift force", "Cl", 2, 1));
 
-        coeffs.insert("CmRoll", coeffDesc("Roll moment coefficient", "CmRoll", 0, -1));
-        coeffs.insert("CmPitch", coeffDesc("Pitch moment coefficient", "CmPitch", 1, -1));
-        coeffs.insert("CmYaw", coeffDesc("Yaw moment coefficient", "CmYaw", 2, -1));
+        // Add front/rear options
+        const auto frontRearCoeffs(coeffs);
+        forAllConstIters(frontRearCoeffs, iter)
+        {
+            const auto& fr = iter.val();
+            coeffs.insert(fr.frontName(), fr.front());
+            coeffs.insert(fr.rearName(), fr.rear());
+        }
+
+        // Add moments
+        coeffs.insert("CmRoll", coeffDesc("Roll moment", "CmRoll", 0, -1));
+        coeffs.insert("CmPitch", coeffDesc("Pitch moment", "CmPitch", 1, -1));
+        coeffs.insert("CmYaw", coeffDesc("Yaw moment", "CmYaw", 2, -1));
+
     }
 
     return coeffs;
@@ -172,26 +183,13 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedDataFileHeader
 
     const auto& allCoeffs = coeffsSelection();
 
-    forAllIters(allCoeffs, iter)
+    for (const auto& iter : allCoeffs.sorted())
     {
-        const auto& coeff = iter();
+        const auto& coeff = iter.val();
 
         if (!coeff.active_) continue;
 
-        if (coeff.c1_ == -1)
-        {
-            writeTabbed(os, coeff.name_);
-        }
-        else
-        {
-            writeTabbed(os, coeff.name_);
-
-            if (coeff.splitFrontRear_)
-            {
-                writeTabbed(os, coeff.frontName());
-                writeTabbed(os, coeff.rearName());
-            }
-        }
+        writeTabbed(os, coeff.name_);
     }
 
     os  << endl;
@@ -204,31 +202,17 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedDataFile()
 
     writeCurrentTime(os);
 
-    const vector Cft = Cf_.total();
-    const vector Cmt = Cm_.total();
-
     const auto& allCoeffs = coeffsSelection();
 
-    forAllIters(allCoeffs, iter)
+    for (const auto& iter : allCoeffs.sorted())
     {
-        const auto& coeff = iter();
+        const auto& coeff = iter.val();
 
         if (!coeff.active_) continue;
 
-        if (coeff.c1_ == -1)
-        {
-            os  << tab << Cmt[coeff.c0_];
-        }
-        else
-        {
-            os  << tab << Cft[coeff.c0_];
+        const vector coeffValue = coeff.value(Cf_, Cm_);
 
-            if (coeff.splitFrontRear_)
-            {
-                os  << tab << 0.5*Cft[coeff.c0_] + Cmt[coeff.c1_];
-                os  << tab << 0.5*Cft[coeff.c0_] - Cmt[coeff.c1_];
-            }
-        }
+        os  << tab << (coeffValue.x() + coeffValue.y() + coeffValue.z());
     }
 
     coeffFilePtr_() << endl;
@@ -330,38 +314,40 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
 
     if (!dict.found("coefficients"))
     {
-        Info<< "Selecting all coefficients" << nl;
+        Info<< "    Selecting all coefficients" << nl;
 
         auto& allCoeffs = coeffsSelection();
 
-        forAllIters(allCoeffs, iter)
+        for (auto& iter : allCoeffs.sorted())
         {
-            iter().active_ = true;
-            iter().splitFrontRear_ = true;
-            Info<< "- " << iter() << nl;
+            auto& coeff = iter.val();
+            coeff.active_ = true;
+            Info<< "    - " << coeff << nl;
         }
     }
     else
     {
         wordHashSet coeffs(dict.get<wordHashSet>("coefficients"));
-        bool splitFrontRear = dict.get<bool>("splitFrontRear");
 
         auto& allCoeffs = coeffsSelection();
 
-        Info<< "Selecting coefficients:" << nl;
+        Info<< "    Selecting coefficients:" << nl;
 
-        forAllIters(coeffs, iter)
+        for (const word& key : coeffs)
         {
-            auto& coeff = allCoeffs[iter()];
-            coeff.active_ = true;
-            coeff.splitFrontRear_ = splitFrontRear;
-            Info<< "- " << coeff << nl;
-        }
-    }
+            auto coeffIter = allCoeffs.find(key);
 
-    if (writeFields_)
-    {
-        Info<< "    Fields will be written" << endl;
+            if (!coeffIter.good())
+            {
+                FatalIOErrorInFunction(dict)
+                    << "Unknown coefficient type " << key
+                    << " . Valid entries are : " << allCoeffs.sortedToc()
+                    << exit(FatalIOError);
+            }
+            auto& coeff = coeffIter.val(); //allCoeffs[key];
+            coeff.active_ = true;
+            Info<< "    - " << coeff << nl;
+        }
     }
 
     Info<< endl;
@@ -379,7 +365,13 @@ bool Foam::functionObjects::forceCoeffs::execute()
 
     reset();
 
-    Log << type() << " " << name() << " write:" << nl;
+    Log << type() << " " << name() << " write:" << nl
+        << "    " << "Coefficient"
+        << tab << "Total"
+        << tab << "Pressure"
+        << tab << "Viscous"
+        << tab << "Internal"
+        << nl;
 
     calcForceCoeffs();
 
@@ -388,66 +380,33 @@ bool Foam::functionObjects::forceCoeffs::execute()
     auto logValues = [](const word& name, const vector& coeff, Ostream& os)
     {
         os  << "    " << name << ":"
-            << tab << "total:" << coeff.x() + coeff.y() + coeff.z()
-            << tab << "pressure:" << coeff.x()
-            << tab << "viscous:" << coeff.y()
-            << tab << "internal:" << coeff.z()
+            << tab << coeff.x() + coeff.y() + coeff.z()
+            << tab << coeff.x()
+            << tab << coeff.y()
+            << tab << coeff.z()
             << nl;
     };
-
-    // Vectors or x:pressure, y:viscous, z:internal
-    const vector Cft = Cf_.total();
-    const vector Cmt = Cm_.total();
 
     const auto& allCoeffs = coeffsSelection();
 
     // Always setting all results
-    forAllIters(allCoeffs, iter)
+    for (const auto& iter : allCoeffs.sorted())
     {
-        const auto& coeff = iter();
+        const word& coeffName = iter.key();
+        const auto& coeff = iter.val();
 
-        if (coeff.c1_ == -1)
+        // Vectors for x:pressure, y:viscous, z:internal
+        const vector coeffValue = coeff.value(Cf_, Cm_);
+
+        if (log && coeff.active_)
         {
-// MOMENT VALUES ARE WRONG!!!!
-
-            const vector Cmi = Cm_[coeff.c0_];
-
-            if (log && coeff.active_)
-            {
-                logValues(coeff.name_, Cmi, Info);
-            }
-
-            setResult(coeff.name_, Cmt[coeff.c0_]);
-            setResult(coeff.name_ & "pressure", Cmi.x());
-            setResult(coeff.name_ & "viscous", Cmi.y());
-            setResult(coeff.name_ & "internal", Cmi.z());
+            logValues(coeffName, coeffValue, Info);
         }
-        else
-        {
-            const vector Cfi = Cf_[coeff.c0_];
 
-            if (log && coeff.active_)
-            {
-                logValues(coeff.name_, Cfi, Info);
-
-                if (coeff.splitFrontRear_)
-                {
-// FRONT/REAR VALUES ARE WRONG!!!!
-
-                    const vector Cmi = Cm_[coeff.c1_];
-
-                    logValues(coeff.frontName(), 0.5*Cfi + Cmi, Info);
-                    logValues(coeff.rearName(), 0.5*Cfi - Cmi, Info);
-                }
-            }
-
-            setResult(coeff.name_, Cft[coeff.c0_]);
-            setResult(coeff.name_ & "pressure", Cfi.x());
-            setResult(coeff.name_ & "viscous", Cfi.y());
-            setResult(coeff.name_ & "internal", Cfi.z());
-            setResult(coeff.frontName(), 0.5*Cft[coeff.c0_] + Cmt[coeff.c1_]);
-            setResult(coeff.rearName(), 0.5*Cft[coeff.c0_] - Cmt[coeff.c1_]);
-        }
+        setResult(coeffName, coeffValue.x() + coeffValue.y() + coeffValue.z());
+        setResult(coeffName & "pressure", coeffValue.x());
+        setResult(coeffName & "viscous", coeffValue.y());
+        setResult(coeffName & "internal", coeffValue.z());
     }
 
     Log  << endl;

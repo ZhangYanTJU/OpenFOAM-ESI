@@ -291,44 +291,6 @@ class forceCoeffs
 {
 public:
 
-    struct coeffDesc
-    {
-        string desc_;
-        word name_;
-        label c0_;
-        label c1_;
-        bool active_;
-        bool splitFrontRear_;
-
-        coeffDesc
-        (
-            const string& description,
-            const word& name,
-            const label c0,
-            const label c1 = -1
-        )
-        :
-            desc_(description),
-            name_(name),
-            c0_(c0),
-            c1_(c1),
-            active_(false),
-            splitFrontRear_(false)
-        {}
-
-        const word frontName() const
-        {
-            return name_ + "(f)";
-        }
-
-        const word rearName() const
-        {
-            return name_ + "(r)";
-        }
-    };
-
-    static HashTable<coeffDesc>& coeffsSelection();
-
     class forceComponents
     {
         vector pressure_;
@@ -344,41 +306,13 @@ public:
             viscous_(Zero),
             internal_(Zero)
         {}
-/*
-        forceComponents
-        (
-            const vector& pressure,
-            const vector& viscous,
-            const vector& internal
-        )
-        :
-            pressure_(pressure),
-            viscous_(viscous),
-            internal_(internal)
-        {}
 
-        const vector& pressure() const
-        {
-            return pressure_;
-        }
-
-        const vector& viscous() const
-        {
-            return viscous_;
-        }
-
-        const vector& internal() const
-        {
-            return internal_;
-        }
-*/
-
-        const vector total() const
+        const vector total() const noexcept
         {
             return pressure_ + viscous_ + internal_;
         }
 
-        void reset()
+        void reset() noexcept
         {
             pressure_ = Zero;
             viscous_ = Zero;
@@ -390,7 +324,7 @@ public:
             const vector& pressure,
             const vector& viscous,
             const vector& internal
-        )
+        ) noexcept
         {
             pressure_ = pressure;
             viscous_ = viscous;
@@ -403,6 +337,101 @@ public:
         }
     };
 
+    // Coefficients description
+    struct coeffDesc
+    {
+        enum splitType
+        {
+            stFront,
+            stRear,
+            stNone
+        };
+
+        string desc_;
+        word name_;
+        label c0_;
+        label c1_;
+        bool active_;
+        splitType splitType_;
+
+        coeffDesc
+        (
+            const string& description,
+            const word& name,
+            const label c0,
+            const label c1 = -1
+        )
+        :
+            desc_(description),
+            name_(name),
+            c0_(c0),
+            c1_(c1),
+            active_(false),
+            splitType_(stNone)
+        {}
+
+        const word frontName() const noexcept
+        {
+            return name_ + "(f)";
+        }
+
+        const word rearName() const noexcept
+        {
+            return name_ + "(r)";
+        }
+
+        vector value(const forceComponents& f, const forceComponents& m) const
+        {
+            if (c1_ == -1)
+            {
+                return m[c0_];
+            }
+            else
+            {
+                switch (splitType_)
+                {
+                    case stFront:
+                    {
+                        return 0.5*f[c0_] + m[c1_];
+                    }
+                    case stRear:
+                    {
+                        return 0.5*f[c0_] - m[c1_];
+                    }
+                    case stNone:
+                    {
+                        return f[c0_];
+                    }
+                }
+            }
+
+            FatalErrorInFunction
+                << "Cannot determine value"
+                << abort(FatalError);
+
+            return vector::zero;
+        }
+
+        coeffDesc front() const
+        {
+            coeffDesc coeff(*this);
+            coeff.name_ = coeff.frontName();
+            coeff.desc_ = coeff.desc_ + " front";
+            coeff.splitType_ = stFront;
+            return coeff;
+        }
+
+        coeffDesc rear() const
+        {
+            coeffDesc coeff(*this);
+            coeff.name_ = coeff.rearName();
+            coeff.desc_ = coeff.desc_ + " rear";
+            coeff.splitType_ = stRear;
+            return coeff;
+        }
+    };
+
+    static HashTable<coeffDesc>& coeffsSelection();
 
 private:
 
@@ -525,10 +554,6 @@ public:
 Ostream& operator<<(Ostream& os, const forceCoeffs::coeffDesc& coeff)
 {
     os  << coeff.desc_.c_str() << ": " << coeff.name_;
-    if (coeff.splitFrontRear_)
-    {
-        os  << " " << coeff.frontName() << " " << coeff.rearName();
-    }
 
     return os;
 }
