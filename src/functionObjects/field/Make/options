@@ -45,4 +45,6 @@ LIB_LIBS = \
     -lturbulenceModelSchemes \
     -lchemistryModel \
     -lreactionThermophysicalModels \
-    -lpairPatchAgglomeration
+    -lpairPatchAgglomeration \
+    -lreactingMultiphaseSystem \
+    -lincompressibleMultiphaseSystems
