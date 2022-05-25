@@ -271,6 +271,7 @@ bool Foam::binModels::uniformBin::read(const dictionary& dict)
             }
         }
     }
+    Info<< endl;
 
     initialise();
 

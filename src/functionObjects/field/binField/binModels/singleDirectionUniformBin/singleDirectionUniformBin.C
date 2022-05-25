@@ -161,6 +161,7 @@ bool Foam::binModels::singleDirectionUniformBin::read(const dictionary& dict)
 
         Info<< "    - direction     : " << binDir_ << endl;
     }
+    Info<< endl;
 
     initialise();
 
