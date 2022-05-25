@@ -341,6 +341,13 @@ patchSource() const
 }
 
 
+Foam::tmp<Foam::scalarField> Foam::speciesSorptionFvPatchScalarField::
+mass() const
+{
+    return tmp<scalarField>(new scalarField(mass_));
+}
+
+
 void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
 {
     if (updated())
@@ -383,6 +390,7 @@ void Foam::speciesSorptionFvPatchScalarField::updateCoeffs()
             break;
     }
 
+    // mass [mol/Kg]
     mass_ += dfldp_*dt;
 
     mass_ = max(mass_, 0.0);

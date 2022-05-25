@@ -159,7 +159,7 @@ private:
         //- Source on cells next to patch [mol/Kg/sec]
         scalarField dfldp_;
 
-        //- Absorbed mass
+        //- Absorbed mass per Kg of absorbent [mol/Kg]
         scalarField mass_;
 
         //- Solid thickness along the patch
@@ -266,8 +266,11 @@ public:
                 const labelList&
             );
 
-            //- Source of cells next to the patch
-            virtual tmp<scalarField> patchSource() const;
+        //- Source of cells next to the patch
+        virtual tmp<scalarField> patchSource() const;
+
+        //- Access to mass
+        tmp<scalarField> mass() const;
 
 
 

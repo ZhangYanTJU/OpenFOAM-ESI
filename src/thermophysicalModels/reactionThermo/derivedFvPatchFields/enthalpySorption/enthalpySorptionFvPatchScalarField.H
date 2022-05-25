@@ -37,11 +37,12 @@ Description
     adsorption provided by the BC speciesSorption.
 
     It can handle two enthalpy models:
+
     1) Estimate
     2) Calculated
 
     On top of this the enthalphy associated with the sensible enthalphy
-    corresponding with the species can be added/
+    corresponding with the species transport can be added using includeHs
 
 
 Usage
@@ -72,6 +73,7 @@ Usage
       includeHs| Include sensible enthalpy          | bool   | no     | true
       enthalpyModel| Adsorption enthalphy model     | word   | yes    | -
       enthalpyTable| Calculated enthalphy model table | Function1 | no
+      Hvap         | Evaporation heat for species   | scalar | no
 
     \endtable
 
@@ -136,7 +138,7 @@ private:
         //- Species field name
         word speciesName_;
 
-        //- Enthalpy on cells next to patch [J/Kg]
+        //- Enthalpy change on cells next to patch [J/Kg]
         scalarField dhdt_;
 
         //- Include sensible enthalpy of the species
@@ -148,14 +150,8 @@ private:
         //- Temperature field name
         word TName_;
 
-
-    // Private Member Functions
-
-        //- Calculate the mole fraction fields
-        //tmp<scalarField> calcMoleFractions();
-
-        //- Lookup (or create) field for output
-        //volScalarField& field(const word&, const dimensionSet&);
+        //- Heat of evaporation of species
+        scalar Hvap_;
 
 
 public:

@@ -60,7 +60,8 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
     dhdt_(p.size(), Zero),
     includeHs_(false),
     pName_("p"),
-    TName_("T")
+    TName_("T"),
+    Hvap_(Zero)
 {}
 
 
@@ -84,7 +85,8 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
     ),
     includeHs_(dict.getOrDefault<bool>("includeHs", "true")),
     pName_(dict.getOrDefault<word>("p", "p")),
-    TName_(dict.getOrDefault<word>("T", "T"))
+    TName_(dict.getOrDefault<word>("T", "T")),
+    Hvap_(dict.getCheck<scalar>("Hvap", scalarMinMax::ge(0)))
 {
     switch (enthalpyModel_)
     {
@@ -95,7 +97,6 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
         }
         case enthalpyModelType::estimated:
         {
-             DebugVar("here")
              break;
         }
     }
@@ -130,7 +131,8 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
     dhdt_(ptf.dhdt_),
     includeHs_(ptf.includeHs_),
     pName_(ptf.pName_),
-    TName_(ptf.TName_)
+    TName_(ptf.TName_),
+    Hvap_(ptf.Hvap_)
 {}
 
 
@@ -147,7 +149,8 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
     dhdt_(ptf.dhdt_),
     includeHs_(ptf.includeHs_),
     pName_(ptf.pName_),
-    TName_(ptf.TName_)
+    TName_(ptf.TName_),
+    Hvap_(ptf.Hvap_)
 {}
 
 
@@ -164,7 +167,8 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
     dhdt_(ptf.dhdt_),
     includeHs_(ptf.includeHs_),
     pName_(ptf.pName_),
-    TName_(ptf.TName_)
+    TName_(ptf.TName_),
+    Hvap_(ptf.Hvap_)
 {}
 
 
@@ -269,41 +273,22 @@ void Foam::enthalpySorptionFvPatchScalarField::updateCoeffs()
             )
         );
 
-    const auto& thermo = db().lookupObject<rhoReactionThermo>
-    (
-        basicThermo::dictName
-    );
-
     switch (enthalpyModel_)
     {
         case enthalpyModelType::estimated:
         {
-            const basicSpecieMixture& composition = thermo.composition();
-
-            const label speicesId =
-                thermo.composition().species()[speciesName_];
-
-            const scalar Hc(composition.Hc(speicesId));
-
-            dhdt_ = -C_*Hc;
+            dhdt_ = -C_*Hvap_;
             break;
         }
         case enthalpyModelType::calculated:
         {
-            scalarField Vol(this->patch().size());
-
-            forAll(Vol, facei)
-            {
-                const label faceCelli = this->patch().faceCells()[facei];
-                Vol[facei] = this->internalField().mesh().V()[faceCelli];
-            }
-            // mass rate [Kg/sec/m3] * [m3] = [Kg/sec]
-            tmp<scalarField> tmassb(Yp.patchSource()*Vol);
+            // mass [mol/Kg]
+            tmp<scalarField> tmassb(Yp.mass());
             const scalarField& massb = tmassb.ref();
-
-            forAll(Vol, faceI)
+            forAll(massb, faceI)
             {
-                label mFaceI = massb[faceI];
+                scalar mFaceI = massb[faceI];
+
                 dhdt_[faceI] = enthalpyMassLoad_->value(mFaceI);
             }
             break;
@@ -314,7 +299,7 @@ void Foam::enthalpySorptionFvPatchScalarField::updateCoeffs()
 
     if (debug)
     {
-        Info<< "  Absorption rate min/max [J/Kg]: "
+        Info<< "  Enthalpy change min/max [J/Kg]: "
             << gMin(dhdt_) << " - " << gMax(dhdt_) << endl;
     }
 
@@ -335,6 +320,8 @@ void Foam::enthalpySorptionFvPatchScalarField::write(Ostream& os) const
 
     os.writeEntryIfDifferent<word>("p", "p", pName_);
     os.writeEntryIfDifferent<word>("T", "T", TName_);
+
+    os.writeEntry("Hvap", Hvap_);
 
     os.writeEntryIfDifferent<bool>("includeHs", true, includeHs_);
 
