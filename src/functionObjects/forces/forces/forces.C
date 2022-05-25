@@ -818,12 +818,12 @@ bool Foam::functionObjects::forces::write()
         writeIntegratedDataFiles();
 
         Log << endl;
+    }
 
-        if (writeFields_)
-        {
-            force_.write();
-            moment_.write();
-        }
+    if (writeFields_)
+    {
+        force_.write();
+        moment_.write();
     }
 
     return true;
