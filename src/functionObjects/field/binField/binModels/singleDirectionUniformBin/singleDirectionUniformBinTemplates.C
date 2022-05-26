@@ -251,7 +251,7 @@ void Foam::binModels::singleDirectionUniformBin::writeBinnedData
         }
     }
 
-    os  << nl;
+    os  << endl;
 }
 
 
