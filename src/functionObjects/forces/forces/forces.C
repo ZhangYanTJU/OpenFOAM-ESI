@@ -645,6 +645,9 @@ bool Foam::functionObjects::forces::read(const dictionary& dict)
         Info<< "    Fields will be written" << endl;
     }
 
+    force_.rename(scopedName("force")); /** DISCARD **/
+    moment_.rename(scopedName("moment")); /** DISCARD **/
+
     return true;
 }
 
