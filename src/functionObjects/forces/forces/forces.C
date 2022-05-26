@@ -470,7 +470,7 @@ Foam::functionObjects::forces::forces
             time_.timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimForce*dimLength, Zero)
@@ -536,7 +536,7 @@ Foam::functionObjects::forces::forces
             time_.timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh_,
         dimensionedVector(dimForce*dimLength, Zero)
