@@ -45,16 +45,12 @@ Description
     - the global Cartesian coordinate system (default)
     - a user-defined Cartesian coordinate system
 
-    Forces and moments can also be equidistant-spatially 'binned'
-    over given patches. See the following link for the details:
-     - \link binModel.H \endlink
-
     Operands:
     \table
       Operand       | Type           | Location
       input         | -              | -
-      output file   | dat | $FOAM_CASE/postProcessing/\<FO\>/\<time\>/\<file\>s
-      output field  | volVectorField | $FOAM_CASE/\<time\>/\<outField\>s
+      output file   | dat            | postProcessing/\<FO\>/\<time\>/\<file\>s
+      output field  | volVectorField | \<time\>/\<outField\>s
     \endtable
 
     where \c \<file\>s:
@@ -63,36 +59,33 @@ Description
       moment.dat       | Moments
     \endverbatim
 
-    If a bin model is activated, additional \c \<file\>s are output:
-    \verbatim
-      forceBin.dat     | Force bins
-      momentBin.dat    | Moment bins
-    \endverbatim
-
     where \c \<outField\>s:
     \verbatim
-      force            | Force field
-      moment           | Moment field
+      <namePrefix>:force   | Force field
+      <namePrefix>:moment  | Moment field
     \endverbatim
 
 Usage
     Minimal example by using \c system/controlDict.functions:
     \verbatim
-    forces1
+    <namePrefix>
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type                forces;
         libs                (forces);
+        patches             (<wordRes>);
 
-        // Mandatory entries (runtime modifiable)
-        patches             (<patch1> ... <patchN>); // (wall1 "(wall2|wall3)");
+        // Optional entries
+        directForceDensity  <bool>;
+        porosity            <bool>;
+        writeFields         <bool>;
+        useNamePrefix       <bool>;
 
-        // Optional entries (runtime modifiable)
-        directForceDensity  false;
-        porosity            false;
-        writeFields         false;
+        // Conditional mandatory entries
 
-        // Conditional mandatory entries (runtime modifiable)
+            // if directForceDensity == true
+            fD              <word>;
+
 
             // Cartesian coordinate system specification when
             // evaluating forces and moments, either of the below
@@ -119,67 +112,55 @@ Usage
                 }
             }
 
-        // Conditional optional entries (runtime modifiable)
-
-            // if directForceDensity == true
-            fD              <fDName>;
+        // Conditional optional entries
 
             // if directForceDensity == false
-            p               <pName>;
-            U               <UName>;
-            rho             <rhoName>;
-            rhoInf          1; // enabled if rho=rhoInf
-            pRef            0;
+            p               <word>;
+            U               <word>;
+            rho             <word>;
+            rhoInf          <scalar>; // enabled if rho=rhoInf
+            pRef            <scalar>;
 
-        // Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property   | Description               | Type     | Rqd | Dflt
-      type       | Type name: forces         | word     | yes | -
-      libs       | Library name: forces      | word     | yes | -
-      patches    | Names of operand patches  | wordList | yes | -
+      Property   | Description               | Type | Reqd    | Deflt
+      type       | Type name: forces         | word | yes     | -
+      libs       | Library name: forces      | word | yes     | -
+      patches    | Names of operand patches  | wordRes | yes  | -
       directForceDensity | Flag to directly supply force density <!--
-                            --> - see below  | bool     | no  | false
+                 -->                         | bool | no      | false
       porosity   | Flag to include porosity contributions | bool | no | false
       writeFields | Flag to write force and moment fields | bool | no | false
-      CofR    | Centre of rotation          | vector | cndtnl     | -
-      origin  | Origin of coordinate system | vector | cndtnl     | -
-      e3      | e3 coordinate axis          | vector | cndtnl     | -
-      e1      | e1 coordinate axis          | vector | cndtnl     | -
+      useNamePrefix | Flag to include prefix for field names | bool | no | false
+      CofR    | Centre of rotation          | vector | cndtnl   | -
+      origin  | Origin of coordinate system | vector | cndtnl   | -
+      e3      | e3 coordinate axis          | vector | cndtnl   | -
+      e1      | e1 coordinate axis          | vector | cndtnl   | -
       coordinateSystem | Coordinate system specifier | dictionary | cndtnl | -
-      fD      | Name of force density field | word   | cndtnl-no  | fD
-      p       | Name of pressure field      | word   | cndtnl-no  | p
-      U       | Name of velocity field      | word   | cndtnl-no  | U
-      rho     | Name of density field       | word   | cndtnl-no  | rho
-      rhoInf  | Value of reference density  | scalar | cndtnl-yes | -
-      pRef    | Value of reference pressure | scalar | cndtnl-no  | 0
+      fD      | Name of force density field | word   | cndtnl   | -
+      p       | Name of pressure field      | word   | cndtnl   | p
+      U       | Name of velocity field      | word   | cndtnl   | U
+      rho     | Name of density field       | word   | cndtnl   | rho
+      rhoInf  | Value of reference density  | scalar | cndtnl   | -
+      pRef    | Value of reference pressure | scalar | cndtnl   | 0
     \endtable
 
     The inherited entries are elaborated in:
-     - \link functionObject.H \endlink
-     - \link writeFile.H \endlink
-     - \link binModel.H \endlink
-     - \link coordinateSystem.H \endlink
+      - \link functionObject.H \endlink
+      - \link writeFile.H \endlink
+      - \link coordinateSystem.H \endlink
 
 Note
   - For incompressible cases, set \c rho to \c rhoInf.
     You will then be required to provide a \c rhoInf
     value corresponding to the constant freestream density.
   - \c writeControl and \c writeInterval entries of function
-    object do control when to output force and moment files.
-  - \c writeControl and \c writeInterval entries of \c controlDict
-    do control when to output force and moment fields.
-  - Binning is not supported for force and moment fields.
-
-See also
-  - Foam::functionObject
-  - Foam::functionObjects::fvMeshFunctionObject
-  - Foam::functionObjects::writeFile
-  - Foam::binModel
+    object do control when to output force and moment files and fields.
 
 SourceFiles
     forces.C
