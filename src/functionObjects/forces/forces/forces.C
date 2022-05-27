@@ -817,15 +817,17 @@ bool Foam::functionObjects::forces::write()
 
         createIntegratedDataFiles();
         writeIntegratedDataFiles();
-
-        Log << endl;
     }
 
     if (writeFields_)
     {
+        Log << "    writing force and moment fields." << endl;
+
         force_.write();
         moment_.write();
     }
+
+    Log << endl;
 
     return true;
 }
