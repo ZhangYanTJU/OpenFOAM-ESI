@@ -431,7 +431,8 @@ public:
         }
     };
 
-    static HashTable<coeffDesc>& coeffsSelection();
+    HashTable<coeffDesc> coeffsSelection() const;
+
 
 private:
 
@@ -442,6 +443,8 @@ private:
 
         volVectorField forceCoeff_;
         volVectorField momentCoeff_;
+
+        HashTable<coeffDesc> coeffs_;
 
 
         // File streams

@@ -47,32 +47,28 @@ namespace functionObjects
 }
 }
 
-Foam::HashTable<Foam::functionObjects::forceCoeffs::coeffDesc>&
-Foam::functionObjects::forceCoeffs::coeffsSelection()
+Foam::HashTable<Foam::functionObjects::forceCoeffs::coeffDesc>
+Foam::functionObjects::forceCoeffs::coeffsSelection() const
 {
-    static HashTable<coeffDesc> coeffs(16);
+    HashTable<coeffDesc> coeffs(16);
 
-    if (coeffs.empty())
+    coeffs.insert("Cd", coeffDesc("Drag force", "Cd", 0, 0));
+    coeffs.insert("Cs", coeffDesc("Side force", "Cs", 1, 2));
+    coeffs.insert("Cl", coeffDesc("Lift force", "Cl", 2, 1));
+
+    // Add front/rear options
+    const auto frontRearCoeffs(coeffs);
+    forAllConstIters(frontRearCoeffs, iter)
     {
-        coeffs.insert("Cd", coeffDesc("Drag force", "Cd", 0, 0));
-        coeffs.insert("Cs", coeffDesc("Side force", "Cs", 1, 2));
-        coeffs.insert("Cl", coeffDesc("Lift force", "Cl", 2, 1));
-
-        // Add front/rear options
-        const auto frontRearCoeffs(coeffs);
-        forAllConstIters(frontRearCoeffs, iter)
-        {
-            const auto& fr = iter.val();
-            coeffs.insert(fr.frontName(), fr.front());
-            coeffs.insert(fr.rearName(), fr.rear());
-        }
-
-        // Add moments
-        coeffs.insert("CmRoll", coeffDesc("Roll moment", "CmRoll", 0, -1));
-        coeffs.insert("CmPitch", coeffDesc("Pitch moment", "CmPitch", 1, -1));
-        coeffs.insert("CmYaw", coeffDesc("Yaw moment", "CmYaw", 2, -1));
-
+        const auto& fr = iter.val();
+        coeffs.insert(fr.frontName(), fr.front());
+        coeffs.insert(fr.rearName(), fr.rear());
     }
+
+    // Add moments
+    coeffs.insert("CmRoll", coeffDesc("Roll moment", "CmRoll", 0, -1));
+    coeffs.insert("CmPitch", coeffDesc("Pitch moment", "CmPitch", 1, -1));
+    coeffs.insert("CmYaw", coeffDesc("Yaw moment", "CmYaw", 2, -1));
 
     return coeffs;
 }
@@ -181,9 +177,7 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedDataFileHeader
     writeHeader(os, "");
     writeCommented(os, "Time");
 
-    const auto& allCoeffs = coeffsSelection();
-
-    for (const auto& iter : allCoeffs.sorted())
+    for (const auto& iter : coeffs_.sorted())
     {
         const auto& coeff = iter.val();
 
@@ -202,9 +196,7 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedDataFile()
 
     writeCurrentTime(os);
 
-    const auto& allCoeffs = coeffsSelection();
-
-    for (const auto& iter : allCoeffs.sorted())
+    for (const auto& iter : coeffs_.sorted())
     {
         const auto& coeff = iter.val();
 
@@ -316,9 +308,9 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
     {
         Info<< "    Selecting all coefficients" << nl;
 
-        auto& allCoeffs = coeffsSelection();
+        coeffs_ = coeffsSelection();
 
-        for (auto& iter : allCoeffs.sorted())
+        for (auto& iter : coeffs_.sorted())
         {
             auto& coeff = iter.val();
             coeff.active_ = true;
@@ -327,24 +319,24 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
     }
     else
     {
-        wordHashSet coeffs(dict.get<wordHashSet>("coefficients"));
+        const wordHashSet coeffs(dict.get<wordHashSet>("coefficients"));
 
-        auto& allCoeffs = coeffsSelection();
+        coeffs_ = coeffsSelection();
 
         Info<< "    Selecting coefficients:" << nl;
 
         for (const word& key : coeffs)
         {
-            auto coeffIter = allCoeffs.find(key);
+            auto coeffIter = coeffs_.find(key);
 
             if (!coeffIter.good())
             {
                 FatalIOErrorInFunction(dict)
                     << "Unknown coefficient type " << key
-                    << " . Valid entries are : " << allCoeffs.sortedToc()
+                    << " . Valid entries are : " << coeffs_.sortedToc()
                     << exit(FatalIOError);
             }
-            auto& coeff = coeffIter.val(); //allCoeffs[key];
+            auto& coeff = coeffIter.val();
             coeff.active_ = true;
             Info<< "    - " << coeff << nl;
         }
@@ -390,10 +382,8 @@ bool Foam::functionObjects::forceCoeffs::execute()
             << nl;
     };
 
-    const auto& allCoeffs = coeffsSelection();
-
     // Always setting all results
-    for (const auto& iter : allCoeffs.sorted())
+    for (const auto& iter : coeffs_.sorted())
     {
         const word& coeffName = iter.key();
         const auto& coeff = iter.val();
