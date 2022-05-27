@@ -399,13 +399,13 @@ void Foam::functionObjects::forces::writeIntegratedDataFile
 {
     writeCurrentTime(os);
 
-    os  << tab << (norm + tan + internal)
-        << tab << norm
-        << tab << tan;
+    writeValue(os, norm + tan + internal);
+    writeValue(os, norm);
+    writeValue(os, tan);
 
     if (porosity_)
     {
-        os  << tab << internal;
+        writeValue(os, internal);
     }
 
     os  << endl;
