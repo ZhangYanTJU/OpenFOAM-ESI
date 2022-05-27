@@ -242,7 +242,6 @@ protected:
             vector sumInternalMoments_;
 
 
-
         // File streams
 
             //- File stream for forces
@@ -308,71 +307,72 @@ protected:
         void reset();
 
 
-        // Evaluate
+    // Evaluation
 
-            //- Return the effective stress (viscous + turbulent)
-            tmp<volSymmTensorField> devRhoReff() const;
+        //- Return the effective stress (viscous + turbulent)
+        tmp<volSymmTensorField> devRhoReff() const;
 
-            //- Return dynamic viscosity field
-            tmp<volScalarField> mu() const;
+        //- Return dynamic viscosity field
+        tmp<volScalarField> mu() const;
 
-            //- Return rho if specified otherwise rhoRef
-            tmp<volScalarField> rho() const;
+        //- Return rho if specified otherwise rhoRef
+        tmp<volScalarField> rho() const;
 
-            //- Return rhoRef if the pressure field is
-            //- dynamic (i.e. p/rho), otherwise return 1
-            scalar rho(const volScalarField& p) const;
+        //- Return rhoRef if the pressure field is
+        //- dynamic (i.e. p/rho), otherwise return 1
+        scalar rho(const volScalarField& p) const;
 
-            //- Add patch contributions to force and moment fields
-            void addToPatchFields
-            (
-                const label patchi,
-                const vectorField& Md,
-                const vectorField& fN,
-                const vectorField& fT
-            );
+        //- Add patch contributions to force and moment fields
+        void addToPatchFields
+        (
+            const label patchi,
+            const vectorField& Md,
+            const vectorField& fN,
+            const vectorField& fT
+        );
 
-            //- Add cell contributions to force and
-            //- moment fields, and include porosity effects
-            void addToInternalField
-            (
-                const labelList& cellIDs,
-                const vectorField& Md,
-                const vectorField& f
-            );
+        //- Add cell contributions to force and
+        //- moment fields, and include porosity effects
+        void addToInternalField
+        (
+            const labelList& cellIDs,
+            const vectorField& Md,
+            const vectorField& f
+        );
 
 
-        // Write
-            //- Create the integrated-data files
-            void createIntegratedDataFiles();
+    // I-O
+        //- Create the integrated-data files
+        void createIntegratedDataFiles();
 
-            //- Write header for an integrated-data file
-            void writeIntegratedDataFileHeader
-            (
-                const word& header,
-                OFstream& os
-            ) const;
+        //- Write header for an integrated-data file
+        void writeIntegratedDataFileHeader
+        (
+            const word& header,
+            OFstream& os
+        ) const;
 
-            //- Write integrated data to files
-            void writeIntegratedDataFiles();
+        //- Write integrated data to files
+        void writeIntegratedDataFiles();
 
-            //- Write integrated data to a file
-            void writeIntegratedDataFile
-            (
-                const vector& norm,
-                const vector& tan,
-                const vector& internal,
-                OFstream& os
-            ) const;
+        //- Write integrated data to a file
+        void writeIntegratedDataFile
+        (
+            const vector& norm,
+            const vector& tan,
+            const vector& internal,
+            OFstream& os
+        ) const;
 
-            //- Write integrated data to stream
-            void logIntegratedData
-            (
-                const string& descriptor,
-                const vector& norm,
-                const vector& tan,
-                const vector& internal
-            ) const;
+        //- Write integrated data to stream
+        void logIntegratedData
+        (
+            const string& descriptor,
+            const vector& norm,
+            const vector& tan,
+            const vector& internal
+        ) const;
+
 
 public:
 
@@ -381,9 +381,6 @@ public:
 
 
     // Constructors
-
-        //- No default construct
-        forces() = delete;
 
         //- Construct from Time and dictionary
         forces

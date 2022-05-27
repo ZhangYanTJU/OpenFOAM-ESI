@@ -575,7 +575,7 @@ Foam::functionObjects::forces::forces
 
 bool Foam::functionObjects::forces::read(const dictionary& dict)
 {
-    if (!(fvMeshFunctionObject::read(dict) && writeFile::read(dict)))
+    if (!fvMeshFunctionObject::read(dict) || !writeFile::read(dict))
     {
         return false;
     }
@@ -768,14 +768,12 @@ void Foam::functionObjects::forces::calcForcesMoments()
 
 Foam::vector Foam::functionObjects::forces::forceEff() const
 {
-    //return sum(force_).value();
     return sumPatchForcesN_ + sumPatchForcesT_ + sumInternalForces_;
 }
 
 
 Foam::vector Foam::functionObjects::forces::momentEff() const
 {
-    //return sum(moment_).value();
     return sumPatchMomentsN_ + sumPatchMomentsT_ + sumInternalMoments_;
 }
 
