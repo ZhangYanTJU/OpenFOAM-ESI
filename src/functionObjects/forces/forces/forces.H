@@ -223,16 +223,16 @@ protected:
             //- Moments
             volVectorField moment_;
 
-            //- Sum of patch normal forces
+            //- Sum of patch pressure forces
             vector sumPatchForcesN_;
 
-            //- Sum of patch tangential forces
+            //- Sum of patch viscous forces
             vector sumPatchForcesT_;
 
-            //- Sum of patch normal moments
+            //- Sum of patch pressure moments
             vector sumPatchMomentsN_;
 
-            //- Sum of patch tangential moments
+            //- Sum of patch viscous moments
             vector sumPatchMomentsT_;
 
             //- Sum of internal forces

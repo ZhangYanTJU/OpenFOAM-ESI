@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2021 OpenCFD Ltd.
+    Copyright (C) 2015-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -800,11 +800,11 @@ bool Foam::functionObjects::forces::execute()
 
     logIntegratedData("moments", localMn, localMt, localMi);
 
-    setResult("normalForce", localFn);
-    setResult("tangentialForce", localFt);
+    setResult("pressureForce", localFn);
+    setResult("viscousForce", localFt);
     setResult("internalForce", localFi);
-    setResult("normalMoment", localMn);
-    setResult("tangentialMoment", localMt);
+    setResult("pressureMoment", localMn);
+    setResult("viscousMoment", localMt);
     setResult("internalMoment", localMi);
 
     return true;
