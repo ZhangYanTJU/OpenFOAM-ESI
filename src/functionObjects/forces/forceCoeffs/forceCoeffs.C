@@ -350,6 +350,9 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
         }
     }
 
+    forceCoeff_.rename(scopedName("forceCoeff")); /** DISCARD **/
+    momentCoeff_.rename(scopedName("momentCoeff")); /** DISCARD **/
+
     Info<< endl;
 
     return true;
