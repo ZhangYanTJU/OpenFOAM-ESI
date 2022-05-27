@@ -243,11 +243,11 @@ void Foam::binModels::singleDirectionUniformBin::writeBinnedData
             total += data[i][bini];
         }
 
-        os  << tab << total;
+        writeValue(os, total);
 
         for (label i = 0; i < data.size(); ++i)
         {
-            os  << tab << data[i][bini];
+            writeValue(os, data[i][bini]);
         }
     }
 
