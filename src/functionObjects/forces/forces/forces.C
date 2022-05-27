@@ -348,7 +348,7 @@ void Foam::functionObjects::forces::writeIntegratedDataFileHeader
     const auto& coordSys = coordSysPtr_();
     const auto vecDesc = [](const word& root)->string
     {
-        return "(" + root + "_x " + root + "_y " + root + "_z)";
+        return root + "_x " + root + "_y " + root + "_z";
     };
     writeHeader(os, header);
     writeHeaderValue(os, "CofR", coordSys.origin());
