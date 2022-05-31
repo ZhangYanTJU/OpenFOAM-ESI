@@ -6,7 +6,6 @@ cd "${0%/*}" || exit    # Run from this directory
 wclean libso saturationModels
 
 wclean libso multiphaseSystem
-wclean libso functionObjects
 
 wclean libso twoPhaseSystem
 wclean libso twoPhaseCompressibleTurbulenceModels
