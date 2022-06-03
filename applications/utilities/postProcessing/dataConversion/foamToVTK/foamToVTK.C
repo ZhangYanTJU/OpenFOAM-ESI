@@ -678,7 +678,7 @@ int main(int argc, char *argv[])
     {
         for
         (
-            const word& opt
+            const char * const opt
           : { "cellSet", "cellZone", "faceSet", "pointSet" }
         )
         {
