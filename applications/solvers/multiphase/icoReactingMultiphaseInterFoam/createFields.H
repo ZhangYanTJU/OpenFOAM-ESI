@@ -63,9 +63,10 @@
 
 
     Info<< "Creating multiphaseSystem\n" << endl;
-    autoPtr<multiphaseSystem> fluidPtr = multiphaseSystem::New(mesh);
+    autoPtr<multiphaseInter::multiphaseSystem> fluidPtr =
+        multiphaseInter::multiphaseSystem::New(mesh);
 
-    multiphaseSystem& fluid = fluidPtr();
+    multiphaseInter::multiphaseSystem& fluid = fluidPtr();
 
     if (!fluid.incompressible())
     {
@@ -118,9 +119,12 @@
     surfaceScalarField& rhoPhi = fluid.rhoPhi();
 
     // Construct incompressible turbulence model
-    autoPtr<CompressibleTurbulenceModel<multiphaseSystem>> turbulence
+    autoPtr
+    <
+        CompressibleTurbulenceModel<multiphaseInter::multiphaseSystem>
+    > turbulence
     (
-        CompressibleTurbulenceModel<multiphaseSystem>::New
+        CompressibleTurbulenceModel<multiphaseInter::multiphaseSystem>::New
         (
             rho,
             U,
