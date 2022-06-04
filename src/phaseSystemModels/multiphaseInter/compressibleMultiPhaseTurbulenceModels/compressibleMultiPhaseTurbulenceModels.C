@@ -37,6 +37,8 @@ License
 #include "RASModel.H"
 #include "LESModel.H"
 
+using namespace Foam::multiphaseInter;
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 defineTurbulenceModelTypes

@@ -46,6 +46,8 @@ SourceFiles
 namespace Foam
 {
 
+using namespace multiphaseInter;
+
 /*---------------------------------------------------------------------------*\
                  Class MassTransferPhaseSystem Declaration
 \*---------------------------------------------------------------------------*/
@@ -144,7 +146,7 @@ public:
         //- Calculate mass transfer for species
         virtual void massSpeciesTransfer
         (
-            const phaseModel& phase,
+            const Foam::phaseModel& phase,
             volScalarField::Internal& Su,
             volScalarField::Internal& Sp,
             const word speciesName

@@ -54,6 +54,9 @@ namespace Foam
 class phaseModel;
 class phasePair;
 
+namespace multiphaseInter
+{
+
 /*---------------------------------------------------------------------------*\
                   Class interfaceCompositionModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -222,6 +225,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+} // End multiphaseInter
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

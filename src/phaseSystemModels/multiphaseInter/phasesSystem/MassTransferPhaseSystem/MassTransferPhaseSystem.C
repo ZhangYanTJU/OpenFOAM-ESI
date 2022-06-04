@@ -33,6 +33,8 @@ License
 #include "volFields.H"
 #include "fundamentalConstants.H"
 
+using namespace Foam::multiphaseInter;
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasePhaseSystem>

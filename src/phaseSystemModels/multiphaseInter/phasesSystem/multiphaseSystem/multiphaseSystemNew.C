@@ -29,7 +29,8 @@ License
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::multiphaseSystem> Foam::multiphaseSystem::New
+Foam::autoPtr<Foam::multiphaseInter::multiphaseSystem>
+Foam::multiphaseInter::multiphaseSystem::New
 (
     const fvMesh& mesh
 )
@@ -64,7 +65,7 @@ Foam::autoPtr<Foam::multiphaseSystem> Foam::multiphaseSystem::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<multiphaseSystem>(ctorPtr(mesh));
+    return autoPtr<multiphaseInter::multiphaseSystem>(ctorPtr(mesh));
 }
 
 

@@ -45,6 +45,8 @@ SourceFiles
 namespace Foam
 {
 
+using namespace multiphaseInter;
+
 // Forward Declarations
 class phaseModel;
 class phasePair;
@@ -132,7 +134,7 @@ public:
     InterfaceCompositionModel(const dictionary& dict, const phasePair& pair);
 
     //- Destructor
-    ~InterfaceCompositionModel() = default;
+    virtual ~InterfaceCompositionModel() = default;
 
 
     // Member Functions

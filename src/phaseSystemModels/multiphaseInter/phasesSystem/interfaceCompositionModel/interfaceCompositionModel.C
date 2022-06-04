@@ -33,13 +33,18 @@ License
 
 namespace Foam
 {
+namespace multiphaseInter
+{
     defineTypeNameAndDebug(interfaceCompositionModel, 0);
     defineRunTimeSelectionTable(interfaceCompositionModel, dictionary);
 }
+}
 
-
-const Foam::Enum<Foam::interfaceCompositionModel::modelVariable>
-Foam::interfaceCompositionModel::modelVariableNames_
+const Foam::Enum
+<
+    Foam::multiphaseInter::interfaceCompositionModel::modelVariable
+>
+Foam::multiphaseInter::interfaceCompositionModel::modelVariableNames_
 {
     { modelVariable::T, "temperature" },
     { modelVariable::P, "pressure" },
@@ -50,7 +55,7 @@ Foam::interfaceCompositionModel::modelVariableNames_
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::interfaceCompositionModel::interfaceCompositionModel
+Foam::multiphaseInter::interfaceCompositionModel::interfaceCompositionModel
 (
     const dictionary& dict,
     const phasePair& pair
@@ -74,8 +79,8 @@ Foam::interfaceCompositionModel::interfaceCompositionModel
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::interfaceCompositionModel>
-Foam::interfaceCompositionModel::New
+Foam::autoPtr<Foam::multiphaseInter::interfaceCompositionModel>
+Foam::multiphaseInter::interfaceCompositionModel::New
 (
     const dictionary& dict,
     const phasePair& pair
@@ -113,38 +118,42 @@ Foam::interfaceCompositionModel::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::word Foam::interfaceCompositionModel::transferSpecie() const
+const Foam::word Foam::multiphaseInter::interfaceCompositionModel
+::transferSpecie() const
 {
     return speciesName_;
 }
 
 
-const Foam::phasePair& Foam::interfaceCompositionModel::pair() const
+const Foam::phasePair& Foam::multiphaseInter::interfaceCompositionModel
+::pair() const
 {
     return pair_;
 }
 
 
-const Foam::multiphaseInterSystem& Foam::interfaceCompositionModel::
-fluid() const
+const Foam::multiphaseInterSystem& Foam::multiphaseInter
+::interfaceCompositionModel::fluid() const
 {
     return pair().to().fluid();
 }
 
 
-const Foam::word& Foam::interfaceCompositionModel::variable() const
+const Foam::word& Foam::multiphaseInter::interfaceCompositionModel
+::variable() const
 {
     return modelVariableNames_[modelVariable_];
 }
 
 
-bool Foam::interfaceCompositionModel::includeDivU() const noexcept
+bool Foam::multiphaseInter::interfaceCompositionModel::includeDivU()
+const noexcept
 {
     return true;
 }
 
 
-bool Foam::interfaceCompositionModel::includeVolChange()
+bool Foam::multiphaseInter::interfaceCompositionModel::includeVolChange()
 {
     return includeVolChange_;
 }

@@ -45,7 +45,8 @@ SourceFiles
 
 namespace Foam
 {
-
+namespace multiphaseInter
+{
 /*---------------------------------------------------------------------------*\
                       Class multiphaseSystem Declaration
 \*---------------------------------------------------------------------------*/
@@ -170,6 +171,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+} // End namespace multiphaseInter
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

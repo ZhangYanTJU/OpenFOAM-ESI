@@ -33,6 +33,8 @@ License
 #include "rhoThermo.H"
 #include "zeroGradientFvPatchFields.H"
 
+using namespace Foam::multiphaseInter;
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Thermo, class OtherThermo>

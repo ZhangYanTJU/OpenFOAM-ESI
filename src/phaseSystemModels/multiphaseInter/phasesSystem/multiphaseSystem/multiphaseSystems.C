@@ -36,7 +36,8 @@ License
 namespace Foam
 {
     typedef
-        MassTransferPhaseSystem<multiphaseSystem> massTransferMultiphaseSystem;
+        MassTransferPhaseSystem
+        <multiphaseInter::multiphaseSystem> massTransferMultiphaseSystem;
 
     addNamedToRunTimeSelectionTable
     (
