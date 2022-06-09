@@ -74,7 +74,7 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
 :
     zeroGradientFvPatchScalarField(p, iF, dict),
     enthalpyModel_(enthalpyModelTypeNames.get("enthalpyModel", dict)),
-    C_(dict.getCheck<scalar>("C", scalarMinMax::ge(0))),
+    C_(dict.getCheckOrDefault<scalar>("C", 0, scalarMinMax::ge(0))),
     enthalpyMassLoad_(),
     speciesName_(dict.get<word>("species")),
     dhdt_
@@ -86,7 +86,7 @@ Foam::enthalpySorptionFvPatchScalarField::enthalpySorptionFvPatchScalarField
     includeHs_(dict.getOrDefault<bool>("includeHs", "true")),
     pName_(dict.getOrDefault<word>("p", "p")),
     TName_(dict.getOrDefault<word>("T", "T")),
-    Hvap_(dict.getCheck<scalar>("Hvap", scalarMinMax::ge(0)))
+    Hvap_(dict.getCheckOrDefault<scalar>("Hvap", 0, scalarMinMax::ge(0)))
 {
     switch (enthalpyModel_)
     {
