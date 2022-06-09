@@ -69,7 +69,7 @@ Usage
         thickness               <Function1>;
         rhoS                    <scalar>;
         equilibriumModel        Langmuir;
-        kinematicModel      PseudoFirstOrder;
+        kinematicModel          PseudoFirstOrder;
     }
     \endverbatim
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,6 +31,8 @@ Group
 
 Description
     Source defined by a boundary condition applied to cell next to patches.
+    This fvOption needs to be used with a boundarySourcePatch type of
+    BC (i.e speciesSorption and enthalpySorption)
 
 Usage
     Minimal example by using \c constant/fvOptions:

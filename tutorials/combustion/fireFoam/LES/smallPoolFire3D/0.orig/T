@@ -29,7 +29,22 @@ boundaryField
 
     base
     {
-        type            zeroGradient;
+        type                enthalpySorption;
+        enthalpyModel       calculated;
+        enthalpyTable
+        {
+            type            table;
+            values
+            (
+                (0    0)
+                (1e-2 1e4)
+                (4e-2 2e4)
+            );
+        }
+        Hvap		        1e6;
+        species             O2;
+        includeHs           true;
+        value               $internalField;
     }
 
     inlet
