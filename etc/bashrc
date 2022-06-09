@@ -70,6 +70,7 @@ export WM_COMPILER_TYPE=system
 #   Gcc<digits> | Clang<digits>
 export WM_COMPILER=Gcc
 
+
 # [WM_PRECISION_OPTION] - Floating-point precision:
 # = DP | SP | SPDP
 export WM_PRECISION_OPTION=DP
@@ -96,7 +97,7 @@ export WM_COMPILE_OPTION=Opt
 #   HPMPI | CRAY-MPICH | FJMPI | QSMPI | SGIMPI | INTELMPI | USERMPI
 # Specify SYSTEMOPENMPI1, SYSTEMOPENMPI2 for internal tracking (if desired)
 # Can also use INTELMPI-xyz etc and define your own wmake rule
-export WM_MPLIB=SYSTEMOPENMPI
+export WM_MPLIB=OPENMPI
 
 
 #------------------------------------------------------------------------------
