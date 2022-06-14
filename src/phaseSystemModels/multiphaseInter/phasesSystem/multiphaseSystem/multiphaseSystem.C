@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,19 +48,21 @@ License
 
 namespace Foam
 {
+namespace multiphaseInter
+{
     defineTypeNameAndDebug(multiphaseSystem, 0);
     defineRunTimeSelectionTable(multiphaseSystem, dictionary);
 }
-
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::multiphaseSystem::multiphaseSystem
+Foam::multiphaseInter::multiphaseSystem::multiphaseSystem
 (
      const fvMesh& mesh
 )
 :
-    phaseSystem(mesh),
+    multiphaseInterSystem(mesh),
     cAlphas_(),
     ddtAlphaMax_(0.0),
     limitedPhiAlphas_(phaseModels_.size()),
@@ -119,13 +121,13 @@ Foam::multiphaseSystem::multiphaseSystem
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::multiphaseSystem::calculateSuSp()
+void Foam::multiphaseInter::multiphaseSystem::calculateSuSp()
 {
     this->alphaTransfer(Su_, Sp_);
 }
 
 
-void Foam::multiphaseSystem::solve()
+void Foam::multiphaseInter::multiphaseSystem::solve()
 {
     const dictionary& alphaControls = mesh_.solverDict("alpha");
     label nAlphaSubCycles(alphaControls.get<label>("nAlphaSubCycles"));
@@ -167,7 +169,7 @@ void Foam::multiphaseSystem::solve()
 
 }
 
-void Foam::multiphaseSystem::solveAlphas()
+void Foam::multiphaseInter::multiphaseSystem::solveAlphas()
 {
 
     const dictionary& alphaControls = mesh_.solverDict("alpha");
@@ -431,37 +433,43 @@ void Foam::multiphaseSystem::solveAlphas()
 }
 
 
-const Foam::UPtrList<Foam::phaseModel>& Foam::multiphaseSystem::phases() const
+const Foam::UPtrList<Foam::phaseModel>&
+Foam::multiphaseInter::multiphaseSystem::phases() const
 {
     return phases_;
 }
 
 
-Foam::UPtrList<Foam::phaseModel>& Foam::multiphaseSystem::phases()
+Foam::UPtrList<Foam::phaseModel>&
+Foam::multiphaseInter::multiphaseSystem::phases()
 {
     return phases_;
 }
 
 
-const Foam::phaseModel& Foam::multiphaseSystem::phase(const label i) const
+const Foam::phaseModel&
+Foam::multiphaseInter::multiphaseSystem::phase(const label i) const
 {
     return phases_[i];
 }
 
 
-Foam::phaseModel& Foam::multiphaseSystem::phase(const label i)
+Foam::phaseModel&
+Foam::multiphaseInter::multiphaseSystem::phase(const label i)
 {
     return phases_[i];
 }
 
 
-Foam::dimensionedScalar Foam::multiphaseSystem::ddtAlphaMax() const
+Foam::dimensionedScalar
+Foam::multiphaseInter::multiphaseSystem::ddtAlphaMax() const
 {
     return ddtAlphaMax_;
 }
 
 
-Foam::scalar Foam::multiphaseSystem::maxDiffNo() const
+Foam::scalar
+Foam::multiphaseInter::multiphaseSystem::maxDiffNo() const
 {
     auto iter = phaseModels_.cbegin();
 
@@ -476,26 +484,28 @@ Foam::scalar Foam::multiphaseSystem::maxDiffNo() const
 }
 
 
-const Foam::multiphaseSystem::compressionFluxTable&
-Foam::multiphaseSystem::limitedPhiAlphas() const
+const Foam::multiphaseInter::multiphaseSystem::compressionFluxTable&
+Foam::multiphaseInter::multiphaseSystem::limitedPhiAlphas() const
 {
     return limitedPhiAlphas_;
 }
 
 
-Foam::multiphaseSystem::SuSpTable& Foam::multiphaseSystem::Su()
+Foam::multiphaseInter::multiphaseSystem::SuSpTable&
+Foam::multiphaseInter::multiphaseSystem::Su()
 {
     return Su_;
 }
 
 
-Foam::multiphaseSystem::SuSpTable& Foam::multiphaseSystem::Sp()
+Foam::multiphaseInter::multiphaseSystem::SuSpTable&
+Foam::multiphaseInter::multiphaseSystem::Sp()
 {
     return Sp_;
 }
 
 
-bool Foam::multiphaseSystem::read()
+bool Foam::multiphaseInter::multiphaseSystem::read()
 {
     return true;
 }

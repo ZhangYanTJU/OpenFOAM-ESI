@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +27,7 @@ License
 
 #include "StaticPhaseModel.H"
 
-#include "phaseSystem.H"
+#include "multiphaseInterSystem.H"
 
 #include "fvcDdt.H"
 #include "fvcDiv.H"
@@ -39,7 +39,7 @@ License
 template<class BasePhaseModel>
 Foam::StaticPhaseModel<BasePhaseModel>::StaticPhaseModel
 (
-    const phaseSystem& fluid,
+    const multiphaseInterSystem& fluid,
     const word& phaseName
 )
 :
