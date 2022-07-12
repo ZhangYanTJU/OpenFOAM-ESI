@@ -505,11 +505,30 @@ void Foam::faPatch::makeDeltaCoeffs(scalarField& dc) const
 
 void Foam::faPatch::makeCorrectionVectors(vectorField& k) const
 {
-    vectorField unitDelta(delta()/mag(delta()));
-    vectorField edgeNormMag(edgeNormals()/mag(edgeNormals()));
-    scalarField dn(edgeNormals() & delta());
+    vectorField unitDelta(delta());
+    for (vector& n : unitDelta)
+    {
+        n.normalise();
+    }
 
-    k = edgeNormMag - (scalar(1)/(unitDelta & edgeNormMag))*unitDelta;
+    vectorField edgeNormMag(edgeNormals());
+    for (vector& n : edgeNormMag)
+    {
+        n.normalise();
+    }
+
+    forAll(k, i)
+    {
+        const scalar beta = (unitDelta[i] & edgeNormMag[i]);
+
+        if (beta < ROOTVSMALL)
+        {
+            // Too small - do not change k
+            continue;
+        }
+
+        k[i] = edgeNormMag[i] - (scalar(1)/beta)*unitDelta[i];
+    }
 }
 
 

@@ -467,7 +467,7 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
     const edgeList& edges = mesh().edges();
     const pointField& points = mesh().points();
 
-    scalarField deltaCoeffs(owner.size());
+    scalarField deltaCoeffs(owner.size(), 1);
 
     vectorField& CorrVecsIn = CorrVecs.primitiveFieldRef();
 
@@ -488,8 +488,16 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
         // Edge normal - area tangent
         edgeNormal = normalised(lengths[edgeI]);
 
+        const scalar beta = (unitDelta & edgeNormal);
+
+        if (beta < ROOTVSMALL)
+        {
+            // Too small - non-orthogonality corrector remains zero
+            continue;
+        }
+
         // Delta coeffs
-        deltaCoeffs[edgeI] = 1.0/(unitDelta & edgeNormal);
+        deltaCoeffs[edgeI] = scalar(1)/beta;
 
         // Edge correction vector
         CorrVecsIn[edgeI] =
