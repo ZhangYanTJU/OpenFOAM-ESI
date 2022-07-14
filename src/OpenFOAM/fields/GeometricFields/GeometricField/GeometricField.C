@@ -545,7 +545,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 (
     const IOobject& io,
     const Mesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const bool readOldTime
 )
 :
     Internal(io, mesh, dimless, false),
@@ -564,6 +565,11 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
             << "   number of field elements = " << this->size()
             << " number of mesh elements = " << GeoMesh::size(this->mesh())
             << exit(FatalIOError);
+    }
+
+    if (readOldTime)
+    {
+        readOldTimeIfPresent();
     }
 
     DebugInFunction
@@ -623,7 +629,8 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 (
     const IOobject& io,
-    const GeometricField<Type, PatchField, GeoMesh>& gf
+    const GeometricField<Type, PatchField, GeoMesh>& gf,
+    const bool readOldTime
 )
 :
     Internal(io, gf),
@@ -636,7 +643,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
         << "Copy construct, resetting IO params" << nl
         << this->info() << endl;
 
-    if (!readIfPresent() && gf.field0Ptr_)
+    if (!readIfPresent() && gf.field0Ptr_ && readOldTime)
     {
         field0Ptr_ = new GeometricField<Type, PatchField, GeoMesh>
         (

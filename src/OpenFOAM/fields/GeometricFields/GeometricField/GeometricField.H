@@ -296,7 +296,8 @@ public:
         (
             const IOobject& io,
             const Mesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            const bool readOldTime = false
         );
 
         //- Copy construct
@@ -315,7 +316,8 @@ public:
         GeometricField
         (
             const IOobject& io,
-            const GeometricField<Type, PatchField, GeoMesh>& gf
+            const GeometricField<Type, PatchField, GeoMesh>& gf,
+            const bool readOldTime = true
         );
 
         //- Construct from tmp\<GeometricField\> resetting IO parameters
