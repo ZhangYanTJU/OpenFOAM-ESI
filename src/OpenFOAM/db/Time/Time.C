@@ -967,6 +967,34 @@ bool Foam::Time::end() const
 }
 
 
+bool Foam::Time::reverseRun() const
+{
+    // Must not solve for the 0 time step
+    bool isRunning = value() > (endTime_ + 0.5*deltaT_);
+
+    return isRunning;
+}
+
+
+bool Foam::Time::reverseLoop()
+{
+    const bool isRunning = reverseRun();
+
+    if (isRunning)
+    {
+        operator--();
+    }
+
+    return isRunning;
+}
+
+
+bool Foam::Time::reverseEnd() const
+{
+    return value() < (endTime_ - 0.5*deltaT_);
+}
+
+
 bool Foam::Time::stopAt(const stopAtControls stopCtrl) const
 {
     if (stopCtrl == stopAtControls::saUnknown)
@@ -1362,6 +1390,244 @@ Foam::Time& Foam::Time::operator++()
 Foam::Time& Foam::Time::operator++(int)
 {
     return operator++();
+}
+
+
+Foam::Time&
+Foam::Time::operator-=(const dimensionedScalar& deltaT)
+{
+    return operator-=(deltaT.value());
+}
+
+
+Foam::Time& Foam::Time::operator-=(const scalar deltaT)
+{
+    setDeltaT(deltaT);
+    return operator--();
+}
+
+
+Foam::Time& Foam::Time::operator--()
+{
+    deltaT0_ = deltaTSave_;
+    deltaTSave_ = deltaT_;
+
+    // Save old time value and name
+    const scalar oldTimeValue = timeToUserTime(value());
+    const word oldTimeName = dimensionedScalar::name();
+
+    // Decrease time
+    setTime(value() - deltaT_, timeIndex_ - 1);
+
+    if (!subCycling_)
+    {
+        // If the time is very close to zero reset to zero
+        if (mag(value()) < 10*SMALL*deltaT_)
+        {
+            setTime(0.0, timeIndex_);
+        }
+
+        if (sigStopAtWriteNow_.active() || sigWriteNow_.active())
+        {
+            // A signal might have been sent on one processor only
+            // Reduce so all decide the same.
+
+            label flag = 0;
+            if (sigStopAtWriteNow_.active() && stopAt_ == saWriteNow)
+            {
+                flag += 1;
+            }
+            if (sigWriteNow_.active() && writeOnce_)
+            {
+                flag += 2;
+            }
+            reduce(flag, maxOp<label>());
+
+            if (flag & 1)
+            {
+                stopAt_ = saWriteNow;
+            }
+            if (flag & 2)
+            {
+                writeOnce_ = true;
+            }
+        }
+
+        writeTime_ = false;
+
+        switch (writeControl_)
+        {
+            case wcNone:
+            case wcUnknown:
+            break;
+
+            case wcTimeStep:
+                // Avoid writing just because timIndex_ is zero
+                writeTime_ = 
+                    !(timeIndex_ % label(writeInterval_)) && timeIndex_;
+            break;
+
+            case wcRunTime:
+            case wcAdjustableRunTime:
+            {
+                const label writeIndex = label
+                (
+                    ((value() - startTime_) - 0.5*deltaT_)
+                  / writeInterval_
+                );
+
+                if (writeIndex < writeTimeIndex_)
+                {
+                    writeTime_ = true;
+                    writeTimeIndex_ = writeIndex;
+                }
+            }
+            break;
+
+            case wcCpuTime:
+            {
+                const label writeIndex = label
+                (
+                    returnReduce(elapsedCpuTime(), maxOp<double>())
+                  / writeInterval_
+                );
+                if (writeIndex > writeTimeIndex_)
+                {
+                    writeTime_ = true;
+                    writeTimeIndex_ = writeIndex;
+                }
+            }
+            break;
+
+            case wcClockTime:
+            {
+                const label writeIndex = label
+                (
+                    returnReduce(elapsedClockTime(), maxOp<double>())
+                  / writeInterval_
+                );
+                if (writeIndex > writeTimeIndex_)
+                {
+                    writeTime_ = true;
+                    writeTimeIndex_ = writeIndex;
+                }
+            }
+            break;
+        }
+
+
+        // Check if endTime needs adjustment to stop at the next
+        // reverseRun()/reverseEnd()
+        if (!reverseEnd())
+        {
+            if (stopAt_ == saNoWriteNow)
+            {
+                endTime_ = value();
+            }
+            else if (stopAt_ == saWriteNow)
+            {
+                endTime_ = value();
+                writeTime_ = true;
+            }
+            else if (stopAt_ == saNextWrite && writeTime_ == true)
+            {
+                endTime_ = value();
+            }
+        }
+
+        // Override writeTime if one-shot writing
+        if (writeOnce_)
+        {
+            writeTime_ = true;
+            writeOnce_ = false;
+        }
+
+        // Adjust the precision of the time directory name if necessary
+        if (writeTime_)
+        {
+            // Tolerance used when testing time equivalence
+            const scalar timeTol =
+                max(min(pow(10.0, -precision_), 0.1*deltaT_), SMALL);
+
+            // User-time equivalent of deltaT
+            const scalar userDeltaT = timeToUserTime(deltaT_);
+
+            // Time value obtained by reading timeName
+            scalar timeNameValue = -VGREAT;
+
+            // Check that new time representation differs from old one
+            // reinterpretation of the word
+            if
+            (
+                readScalar(dimensionedScalar::name(), timeNameValue)
+             && (mag(-timeNameValue + oldTimeValue - userDeltaT) > timeTol)
+            )
+            {
+                int oldPrecision = precision_;
+                while
+                (
+                    precision_ < maxPrecision_
+                 && readScalar(dimensionedScalar::name(), timeNameValue)
+                 && (mag(-timeNameValue + oldTimeValue - userDeltaT) > timeTol)
+                )
+                {
+                    precision_++;
+                    setTime(value(), timeIndex());
+                }
+
+                if (precision_ != oldPrecision)
+                {
+                    WarningInFunction
+                        << "Increased the timePrecision from " << oldPrecision
+                        << " to " << precision_
+                        << " to distinguish between timeNames at time "
+                        << dimensionedScalar::name()
+                        << endl;
+
+                    if (precision_ == maxPrecision_)
+                    {
+                        // Reached maxPrecision limit
+                        WarningInFunction
+                            << "Current time name " << dimensionedScalar::name()
+                            << nl
+                            << "    The maximum time precision has been reached"
+                               " which might result in overwriting previous"
+                               " results."
+                            << endl;
+                    }
+
+                    // Check if round-off error caused time-reversal
+                    scalar oldTimeNameValue = -VGREAT;
+                    if
+                    (
+                        readScalar(oldTimeName, oldTimeNameValue)
+                     && (
+                            sign(timeNameValue - oldTimeNameValue)
+                         != sign(deltaT_)
+                        )
+                    )
+                    {
+                        WarningInFunction
+                            << "Current time name " << dimensionedScalar::name()
+                            << " is set to an instance prior to the "
+                               "previous one "
+                            << oldTimeName << nl
+                            << "    This might result in temporal "
+                               "discontinuities."
+                            << endl;
+                    }
+                }
+            }
+        }
+    }
+
+    return *this;
+}
+
+
+Foam::Time& Foam::Time::operator--(int)
+{
+    return operator--();
 }
 
 

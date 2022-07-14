@@ -7,6 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2022      PCOpt/NTUA
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -571,6 +572,43 @@ public:
             //      not yield the same result
             virtual bool end() const;
 
+            //- Return true if run should continue.
+            //  Does not invoke any functionObject methods
+            //  \note
+            //  For correct behaviour, the following style of time-loop
+            //  is recommended:
+            //  \code
+            //      while (runTime.reverseRun())
+            //      {
+            //          --runTime;
+            //          solve;
+            //          runTime.write();
+            //      }
+            //  \endcode
+            virtual bool reverseRun() const;
+
+            //- Return true if run should continue and if so decrease time
+            //  Does not invoke any functionObject methods
+            //  \note
+            //  For correct behaviour, the following style of time-loop
+            //  is recommended:
+            //  \code
+            //      while (runTime.reverseLoop())
+            //      {
+            //          solve;
+            //          runTime.write();
+            //      }
+            //  \endcode
+            virtual bool reverseLoop();
+
+            //- Return true if end of run,
+            //  does not invoke any functionObject methods
+            //  \note
+            //      The rounding heuristics near endTime mean that
+            //      \code reverseRun() \endcode and \code !reverseEnd() \endcode
+            //      may not yield the same result
+            virtual bool reverseEnd() const;
+
 
         // Edit
 
@@ -653,6 +691,20 @@ public:
 
         //- Postfix increment, this is identical to the prefix increment
         virtual Time& operator++(int);
+
+        //- Set deltaT to that specified and decrease time via operator--()
+        virtual Time& operator-=(const dimensionedScalar& deltaT);
+
+        //- Set deltaT to that specified and decrease time via operator--()
+        virtual Time& operator-=(const scalar deltaT);
+
+        //- prefix decrease,
+        //  also invokes the functionobjectlist::start() or
+        //  functionobjectlist::execute() method, depending on the time-index
+        virtual Time& operator--();
+
+        //- Postfix decrease, this is identical to the decrease increment
+        virtual Time& operator--(int);
 };
 
 
