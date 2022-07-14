@@ -1,3 +1,12 @@
+/* COMPRESSION PARAMETERS */
+storage/primalStorage/storageParameters/storageParameters/storageParameters.C
+storage/primalStorage/storageParameters/shortParameters/shortParameters.C
+
+/* COMPRESSED GEOMETRIC FIELD */
+compressedGeometricField = OpenFOAM/fields/compressedGeometricField
+$(compressedGeometricField)/compressedGeometricField/compressedGeometricFields.C
+$(compressedGeometricField)/shortGeometricField/shortGeometricFields.C
+
 /* TURBULENCE MODEL VARIABLE REFS */
 turbulenceModels/turbulenceModelVariables/RAS/RASModelVariables/RASModelVariables.C
 turbulenceModels/turbulenceModelVariables/RAS/laminar/laminar.C
@@ -11,12 +20,29 @@ solvers/variablesSet/variablesSet/variablesSet.C
 solvers/variablesSet/incompressible/incompressibleVars.C
 solvers/variablesSet/incompressibleAdjointMeanFlow/incompressibleAdjointMeanFlowVars.C
 solvers/variablesSet/incompressibleAdjoint/incompressibleAdjointVars.C
+solvers/variablesSet/compressedIncompressible/compressedIncompressibleVars/compressedIncompressibleVars.C
+solvers/variablesSet/compressedIncompressible/shortIncompressibleVars/shortIncompressibleVars.C
+solvers/variablesSet/compressedIncompressible/fullIncompressibleVars/fullIncompressibleVars.C
+solvers/variablesSet/checkPoint/checkPoint.C
 
 /* SOLVER CONTROL */
 solvers/solverControl/solverControl/solverControl.C
 solvers/solverControl/SIMPLEControl/SIMPLEControl/SIMPLEControl.C
 solvers/solverControl/SIMPLEControl/singleRun/SIMPLEControlSingleRun.C
 solvers/solverControl/SIMPLEControl/optimisation/SIMPLEControlOpt.C
+solvers/solverControl/PISOControl/PISOControl/PISOControl.C
+solvers/solverControl/PISOControl/optimisation/PISOControlOpt.C
+solvers/solverControl/PIMPLEControl/PIMPLEControl/PIMPLEControl.C
+solvers/solverControl/PIMPLEControl/optimisation/PIMPLEControlOpt.C
+
+/* STORAGE MANAGMENT */                                                                                                                                                                                   
+storage/primalStorage/primalStorage/primalStorage.C                                                                                                                                                       
+storage/primalStorage/fullStorage/fullStorage.C                                                                                                                                                           
+storage/primalStorage/none/noneStorage.C
+storage/primalStorage/binomialCheckPointing/binomialCheckPointing.C
+compressedFullStorage = storage/primalStorage/compressedFullStorage
+$(compressedFullStorage)/compressedFullStorage/compressedFullStorage.C
+$(compressedFullStorage)/shortFullStorage/shortFullStorage.C
 
 /* SOLVERS */
 solvers/solver/solver.C
@@ -24,9 +50,13 @@ solvers/primalSolvers/primalSolver/primalSolver.C
 solvers/primalSolvers/incompressible/incompressiblePrimalSolver/incompressiblePrimalSolver.C
 solvers/primalSolvers/incompressible/simple/simple.C
 solvers/primalSolvers/incompressible/RASTurbulenceModel/RASTurbulenceModel.C
+solvers/primalSolvers/incompressible/piso/piso.C
+solvers/primalSolvers/incompressible/pimple/pimple.C
 solvers/adjointSolvers/adjointSolver/adjointSolver.C
 solvers/adjointSolvers/incompressible/incompressibleAdjointSolver/incompressibleAdjointSolver.C
 solvers/adjointSolvers/incompressible/adjointSimple/adjointSimple.C
+solvers/adjointSolvers/incompressible/adjointPiso/adjointPiso.C
+solvers/adjointSolvers/incompressible/adjointPimple/adjointPimple.C
 
 /* ADJOINT SOLVER MANAGER */
 solvers/adjointSolverManager/adjointSolverManager.C
@@ -183,5 +213,7 @@ $(incoOptType)/shapeOptimisation/shapeOptimisationIncompressible.C
 optimisation/optimisationManager/optimisationManager/optimisationManager.C
 optimisation/optimisationManager/singleRun/singleRun.C
 optimisation/optimisationManager/steadyOptimisation/steadyOptimisation.C
+optimisation/optimisationManager/unsteadyOptimisation/unsteadyTimeManipulation/unsteadyTimeManipulation.C
+optimisation/optimisationManager/unsteadyOptimisation/unsteadyOptimisation.C
 
 LIB = $(FOAM_LIBBIN)/libadjointOptimisation

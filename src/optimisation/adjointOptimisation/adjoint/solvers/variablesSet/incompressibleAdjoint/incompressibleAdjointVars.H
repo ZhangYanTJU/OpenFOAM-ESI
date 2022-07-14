@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -64,6 +64,9 @@ protected:
         //- Adjoint to the turbulence model
         autoPtr<incompressibleAdjoint::adjointRASModel> adjointTurbulence_;
 
+        //- Should the solver fields be written
+        bool writeFields_;
+
 
     // Protected Member Functions
 
@@ -111,11 +114,17 @@ public:
             inline autoPtr<incompressibleAdjoint::adjointRASModel>&
                 adjointTurbulence();
 
+            //- Restore field values to the initial ones
+            void restoreInitValues();
+
             //- Reset mean fields to zero
             void resetMeanFields();
 
-            //- Compute mean fields on the fly
+            //- Compute mean fields on the fly: steady runs
             void computeMeanFields();
+
+            //- Compute mean fields on the fly: unsteady runs
+            void computeMeanUnsteadyFields(const scalar endTime);
 
             //- Nullify all adjoint fields
             virtual void nullify();
@@ -123,6 +132,12 @@ public:
             //- Update primal based quantities of the adjoint boundary
             //  conditions
             virtual void updatePrimalBasedQuantities();
+
+            //- Write all adjoint fields
+            virtual void write();
+
+            //- Set writeOption of all adjoint fields
+            void setWriteOption(IOobject::writeOption w);
 };
 
 

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2e22 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -68,8 +68,37 @@ protected:
         PtrList<primalSolver> primalSolvers_;
         PtrList<adjointSolverManager> adjointSolverManagers_;
         const word managerType_;
+
         autoPtr<incompressible::optimisationType> optType_;
 
+        Switch shouldUpdateDesignVariables_;
+
+
+    // Protected Member Functions
+
+        virtual void resetTime();
+
+        //- Update design variables
+        virtual void moveDesignVariables();
+
+        //- Update design variables. Multiplication with line search step
+        //- happens inside the update(direction) function
+        virtual void moveDesignVariables
+        (
+            scalarField& direction
+        );
+
+        //- Update design variables using a line-search
+        void lineSearchUpdate();
+
+        //- Update design variables using a fixed step
+        void fixedStepUpdate();
+
+        //- Actions performed after lineSearch has converged
+        void postUpdate();
+
+        //- Initialization. Construct primal and adjoint solvers
+        virtual void initialize();
 
 private:
 
@@ -145,7 +174,7 @@ public:
         //- Update design variables.
         //  Might employ a line search to find a correction satisfying the step
         //  convergence criteria
-        virtual void updateDesignVariables() = 0;
+        virtual void updateDesignVariables();
 
         //- Solve all primal equations
         virtual void solvePrimalEquations();
@@ -155,6 +184,9 @@ public:
 
         //- Compute all adjoint sensitivities
         virtual void computeSensitivities();
+
+        //- Clear all adjoint sensitivities
+        virtual void clearSensitivities();
 
         //- Solve all primal equations
         virtual void updatePrimalBasedQuantities();

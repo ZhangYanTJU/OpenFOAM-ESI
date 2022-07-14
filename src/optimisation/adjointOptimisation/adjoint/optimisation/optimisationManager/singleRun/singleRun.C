@@ -45,7 +45,9 @@ Foam::singleRun::singleRun(fvMesh& mesh)
 :
     optimisationManager(mesh),
     cycles_(Zero)
-{}
+{
+    initialize();
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

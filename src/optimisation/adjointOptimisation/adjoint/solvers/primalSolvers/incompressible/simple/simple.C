@@ -53,20 +53,6 @@ Foam::incompressibleVars& Foam::simple::allocateVars()
 }
 
 
-void Foam::simple::addExtraSchemes()
-{
-    if (incoVars_.useSolverNameForFields())
-    {
-        WarningInFunction
-            << "useSolverNameForFields is set to true for primalSolver "
-            << solverName() << nl << tab
-            << "Appending variable names with the solver name" << nl << tab
-            << "Please adjust the necessary entries in fvSchemes and fvSolution"
-            << nl << endl;
-    }
-}
-
-
 void Foam::simple::continuityErrors()
 {
     surfaceScalarField& phi = incoVars_.phiInst();
@@ -92,10 +78,11 @@ Foam::simple::simple
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    Switch useCustomReadTime
 )
 :
-    incompressiblePrimalSolver(mesh, managerType, dict),
+    incompressiblePrimalSolver(mesh, managerType, dict, useCustomReadTime),
     solverControl_(SIMPLEControl::New(mesh, managerType, *this)),
     incoVars_(allocateVars()),
     MRF_(mesh, word(useSolverNameForFields() ? solverName() : word::null)),

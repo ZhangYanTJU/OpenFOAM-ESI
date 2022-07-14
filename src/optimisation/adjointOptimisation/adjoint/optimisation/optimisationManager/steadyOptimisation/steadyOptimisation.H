@@ -114,10 +114,6 @@ public:
 
         //- Whether to update the design variables
         virtual bool update();
-
-        //- Do a line search to find a correction satisfying the step
-        //- convergence criteria
-        virtual void updateDesignVariables();
 };
 
 

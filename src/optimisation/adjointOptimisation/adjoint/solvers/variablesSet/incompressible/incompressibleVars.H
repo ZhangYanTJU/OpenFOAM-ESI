@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -72,10 +72,12 @@ protected:
         autoPtr<incompressible::RASModelVariables> RASModelVariables_;
         //autoPtr<volScalarField> TPtr_;
 
-        //- Keep a copy of the initial field values if necessary
-        autoPtr<volScalarField> pInitPtr_;
-        autoPtr<volVectorField> UInitPtr_;
-        autoPtr<surfaceScalarField> phiInitPtr_;
+        //- Keep a copy of the initial values if necessary.
+        //  If oldTimes are present, keep them in separate GeometricFields to
+        //  avoid been overwritten upon calling GeometricField::storeOldTimes
+        PtrList<volScalarField> pInitPtr_;
+        PtrList<volVectorField> UInitPtr_;
+        PtrList<surfaceScalarField> phiInitPtr_;
 
         //- Manage mean fields. Turbulent mean fields are managed
         //- in RASModelVariables
@@ -87,6 +89,17 @@ protected:
         //  Useful for cases in which information has been lost on boundary
         //  (e.g. averaging, redistribution)
         bool correctBoundaryConditions_;
+
+        //- Names of the primal fields that are allocated.
+        //  The size of the list is properly adjusted
+        wordList allocatedFieldNames_;
+
+        //- Return the vector of solved-for directions in mesh.
+        //  1 indicates valid direction and 0 an invalid direction.
+        const Vector<label> solDirs_;
+
+        //- Should the solver fields be written
+        bool writeFields_;
 
 
     // Protected Member Functions
@@ -112,6 +125,10 @@ protected:
         //- No copy assignment
         void operator=(const incompressibleVars&);
 
+        //- Function to fill the wordList containing the names of the primal
+        //- fields that are allocated.
+        void storeAllocatedFieldNames();
+
 
 public:
 
@@ -127,7 +144,8 @@ public:
         incompressibleVars
         (
             fvMesh& mesh,
-            solverControl& SolverControl
+            solverControl& SolverControl,
+            scalar readTime = -1
         );
 
         //- Copy constructor
@@ -230,6 +248,9 @@ public:
             //- Compute mean fields on the fly
             void computeMeanFields();
 
+            //- Compute mean fields on the fly: unsteady runs
+            void computeMeanUnsteadyFields();
+
             //- correct boundaryconditions for all volFields
             void correctBoundaryConditions();
 
@@ -250,9 +271,33 @@ public:
             //- Transfer the fields of another variablesSet to this
             virtual void transfer(variablesSet& vars);
 
+            //- Update nut
+            virtual void validateTurbulence();
+
             //- Write dummy turbulent fields to allow for continuation in
             //- multi-point, turbulent runs
             bool write() const;
+
+            //- Return const reference to the fvMesh
+            fvMesh& mesh() const;
+
+            //- Return const reference to the solverDict
+            const solverControl& solverControlReference() const;
+
+            //- const reference to the wordList containing the names of
+            //- the primal fields that are allocated.
+            const wordList& allocatedFieldNames() const override;
+
+            //- const reference to the solution directions
+            //- of the solver.
+            const Vector<label>& solDirs() const;
+
+            //- Set averaging start time in solverControl.
+            //  Required by unsteady runs
+            void adjustAverageStartTime(const scalar& offset) override;
+
+            //- Set writeOption of all primal fields
+            void setWriteOption(IOobject::writeOption w);
 };
 
 

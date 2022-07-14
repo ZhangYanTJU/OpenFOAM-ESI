@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -66,6 +66,7 @@ protected:
         const word primalSolverName_;
         PtrList<objective> objectives_;
         autoPtr<OFstream> weigthedObjectiveFile_;
+        bool hasIntegrationTimes_;
 
 
 private:
@@ -130,6 +131,12 @@ public:
 
         virtual bool readDict(const dictionary& dict);
 
+        //- Boolean defining if all objectives have defined their integration
+        //  window.
+        //  false if at least one of the objectives has an undefined
+        //  integration window
+        bool hasIntegrationTimes() const;
+
         //- Update objective function related values
         void updateNormalizationFactor();
 
@@ -144,6 +151,12 @@ public:
 
         //- Print to screen
         scalar print();
+
+        //- Set write option for objectives (files in the optimisation folder)
+        void setWrite(const bool shouldWrite);
+
+        //- Set write option for the localIOdictionary base of the objectives
+        void setWriteOption(IOobject::writeOption w);
 
         //- Write objective function history
         virtual bool writeObjectives
@@ -172,7 +185,7 @@ public:
         const word& primalSolverName() const;
 
         //- Check integration times for unsteady runs
-        void checkIntegrationTimes() const;
+        void checkIntegrationTimes();
 
         //- Add contribution to adjoint momentum PDEs
         virtual void addUaEqnSource(fvVectorMatrix& UaEqn) = 0;

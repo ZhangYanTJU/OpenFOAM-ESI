@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -27,6 +27,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "Ostream.H"
 #include "adjointSolverManager.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -34,6 +35,27 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(adjointSolverManager, 0);
+}
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::adjointSolverManager::checkIntegrationTimes() const
+{
+    forAll(adjointSolvers_, i)
+    {
+        const objectiveManager& objManager =
+            adjointSolvers_[i].getObjectiveManager();
+        if (!objManager.hasIntegrationTimes())
+        {
+            FatalErrorInFunction
+                << "The integration window of at least one of the objectives "
+                << "of adjointSolver '"<< adjointSolvers_[i].solverName()
+                << "' is undefined." << endl
+//              << "Either define the integration window "
+//              << "for all objectives or use FFT to one of them."
+                << exit(FatalError);
+        }
+    }
 }
 
 
@@ -62,6 +84,7 @@ Foam::adjointSolverManager::adjointSolverManager
     mesh_(mesh),
     dict_(dict),
     managerName_(dict.dictName()),
+    managerType_(managerType),
     primalSolverName_(dict.get<word>("primalSolver")),
     adjointSolvers_(0),
     objectiveSolverIDs_(0),
@@ -69,7 +92,8 @@ Foam::adjointSolverManager::adjointSolverManager
     operatingPointWeight_
     (
         dict.getOrDefault<scalar>("operatingPointWeight", 1)
-    )
+    ),
+    nActiveAdjointSolvers_(0)
 {
     dictionary& adjointSolversDict =
         const_cast<dictionary&>(dict.subDict("adjointSolvers"));
@@ -99,7 +123,10 @@ Foam::adjointSolverManager::adjointSolverManager
                 primalSolverName_
             )
         );
-
+        if (adjointSolvers_[namei].active())
+        {
+            nActiveAdjointSolvers_++;
+        }
         if (adjointSolvers_[namei].isConstraint())
         {
             constraintSolverIDs_[nConstraints++] = namei;
@@ -115,6 +142,9 @@ Foam::adjointSolverManager::adjointSolverManager
     Info<< "Found " << nConstraints
         << " adjoint solvers acting as constraints" << endl;
 
+    Info<< "Found " << nActiveAdjointSolvers_
+        << " active adjoint solvers" << endl;
+
     // Having more than one non-aggregated objectives per operating point
     // is needlessly expensive. Issue a warning
     if (objectiveSolverIDs_.size() > 1)
@@ -122,8 +152,9 @@ Foam::adjointSolverManager::adjointSolverManager
         WarningInFunction
             << "Number of adjoint solvers corresponding to objectives "
             << "is greater than 1 (" << objectiveSolverIDs_.size() << ")" << nl
-            << "Consider aggregating your objectives to one" << endl;
+            << "Consider aggregating your objectives to one" << nl << endl;
     }
+    checkIntegrationTimes();
 }
 
 
@@ -163,6 +194,24 @@ const Foam::dictionary& Foam::adjointSolverManager::dict() const
 }
 
 
+void Foam::adjointSolverManager::setWrite(const bool shouldWrite)
+{
+    forAll(adjointSolvers_, i)
+    {
+        adjointSolvers_[i].getObjectiveManager().setWrite(shouldWrite);
+    }
+}
+
+
+void Foam::adjointSolverManager::setWriteOption(IOobject::writeOption w)
+{
+    forAll(adjointSolvers_, i)
+    {
+        adjointSolvers_[i].getObjectiveManager().setWriteOption(w);
+    }
+}
+
+
 const Foam::PtrList<Foam::adjointSolver>&
 Foam::adjointSolverManager::adjointSolvers() const
 {
@@ -177,9 +226,48 @@ Foam::adjointSolverManager::adjointSolvers()
 }
 
 
+Foam::wordList Foam::adjointSolverManager::adjointSolversNames() const
+{
+    wordList names(adjointSolvers_.size());
+    forAll(adjointSolvers_, sI)
+    {
+        names[sI]  = adjointSolvers_[sI].name();
+    }
+    return names;
+}
+
+
 Foam::scalar Foam::adjointSolverManager::operatingPointWeight() const
 {
     return operatingPointWeight_;
+}
+
+
+Foam::label Foam::adjointSolverManager::nActiveAdjointSolvers() const
+{
+    return nActiveAdjointSolvers_;
+}
+
+
+Foam::label Foam::adjointSolverManager::nActiveAdjointSolvers
+(
+    const dictionary& dict
+)
+{
+    const dictionary& adjointSolversDict = dict.subDict("adjointSolvers");
+    const wordList adjSolverNames = adjointSolversDict.toc();
+    label n(0);
+    Switch active(true);
+    forAll(adjSolverNames, namei)
+    {
+        active = adjointSolversDict.subDict(adjSolverNames[namei]).
+            getOrDefault<bool>("active", true);
+        if (active)
+        {
+            n++;
+        }
+    }
+    return n;
 }
 
 
@@ -312,6 +400,15 @@ void Foam::adjointSolverManager::updatePrimalBasedQuantities(const word& name)
         {
             solver.updatePrimalBasedQuantities();
         }
+    }
+}
+
+
+void Foam::adjointSolverManager::postLineSearch()
+{
+    for (adjointSolver& solver : adjointSolvers_)
+    {
+        solver.postLineSearch();
     }
 }
 

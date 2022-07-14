@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -131,6 +131,7 @@ objective::objective
     computeMeanFields_(false), // is reset in derived classes
     nullified_(false),
     normalize_(dict.getOrDefault<bool>("normalize", false)),
+    shouldWrite_(true),
 
     J_(Zero),
     JMean_(this->getOrDefault<scalar>("JMean", Zero)),
@@ -172,14 +173,22 @@ objective::objective
     {
         integrationStartTimePtr_.reset
         (
-            new scalar(dict.get<scalar>("integrationStartTime"))
+            new scalar
+            (
+                dict.get<scalar>("integrationStartTime") +
+                mesh_.time().value()
+            )
         );
     }
     if (dict.found("integrationEndTime"))
     {
         integrationEndTimePtr_.reset
         (
-            new scalar(dict.get<scalar>("integrationEndTime"))
+            new scalar
+            (
+                dict.get<scalar>("integrationEndTime") +
+                mesh_.time().value()
+            )
         );
     }
 
@@ -299,17 +308,22 @@ void objective::accumulateJMean(solverControl& solverControl)
 }
 
 
+void objective::resetJMean()
+{
+    JMean_ = 0;
+}
+
+
 void objective::accumulateJMean()
 {
     if (hasIntegrationStartTime() && hasIntegrationEndTime())
     {
-        const scalar time = mesh_.time().value();
         if (isWithinIntegrationTime())
         {
-            const scalar dt = mesh_.time().deltaT().value();
-            const scalar elapsedTime = time - integrationStartTimePtr_();
-            const scalar denom = elapsedTime + dt;
-            JMean_ = (JMean_*elapsedTime + J_*dt)/denom;
+            const scalar dt = mesh_.time().deltaTValue();
+            const scalar elapsedTime
+                = mesh_.time().value() - integrationStartTimePtr_();
+            JMean_ = (JMean_*elapsedTime + J_*dt)/(elapsedTime + dt);
         }
     }
     else
@@ -384,10 +398,11 @@ bool objective::isWithinIntegrationTime() const
     if (hasIntegrationStartTime() && hasIntegrationEndTime())
     {
         const scalar time = mesh_.time().value();
+        const scalar dt = mesh_.time().deltaTValue();
         return
             (
-                time >= integrationStartTimePtr_()
-             && time <= integrationEndTimePtr_()
+                time >= (integrationStartTimePtr_() - 0.1*dt)
+             && time <= (integrationEndTimePtr_()   + 1.1*dt)
             );
     }
     else
@@ -413,6 +428,8 @@ void objective::incrementIntegrationTimes(const scalar timeSpan)
             << "Unallocated integration start or end time"
             << exit(FatalError);
     }
+    // Set nullified_ to false for the next optimization cycle
+    nullified_ = false;
 }
 
 
@@ -659,7 +676,7 @@ void objective::nullify()
 
 bool objective::write(const bool valid) const
 {
-    if (Pstream::master())
+    if (Pstream::master() && shouldWrite_)
     {
         // File is opened only upon invocation of the write function
         // in order to avoid various instantiations of the same objective
@@ -732,7 +749,7 @@ void objective::writeInstantaneousSeparator() const
 
 void objective::writeMeanValue() const
 {
-    if (Pstream::master())
+    if (Pstream::master() && shouldWrite_)
     {
         // Write mean value if necessary
         // Covers both steady and unsteady runs
@@ -742,8 +759,8 @@ void objective::writeMeanValue() const
          || (hasIntegrationStartTime() && hasIntegrationEndTime())
         )
         {
-            // File is opened only upon invocation of the write function
-            // in order to avoid various instantiations of the same objective
+            // File is opened only upon invocation of the write function in
+            // order to avoid various instantiations of the same objective
             // opening the same file
             if (!meanValueFilePtr_)
             {

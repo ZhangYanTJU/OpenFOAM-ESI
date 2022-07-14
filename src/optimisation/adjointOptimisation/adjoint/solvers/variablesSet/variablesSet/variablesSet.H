@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -84,6 +84,10 @@ private:
             const bool useSolverNameForFields
         );
 
+        //- Demo scalarList for virtual function storageMetrics()
+        scalarList demoScalarList_;
+        wordList demoWordList_;
+
 
 protected:
 
@@ -100,12 +104,6 @@ protected:
 
 
     // Protected Member Functions
-
-        template<class Type, template<class> class PatchField, class GeoMesh>
-        autoPtr<GeometricField<Type, PatchField, GeoMesh>> allocateRenamedField
-        (
-            const autoPtr<GeometricField<Type, PatchField, GeoMesh>>& bf
-        );
 
         //- Swap autoPtrs and rename managed fields
         template<class Type, template<class> class PatchField, class GeoMesh>
@@ -154,6 +152,27 @@ public:
             bool useSolverNameForFields() const;
 
         // Set functions. Static in order to be used by other classes as well
+
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+            allocateRenamedField
+            (
+                const refPtr<GeometricField<Type, PatchField, GeoMesh>>& bf
+            );
+
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+            allocateRenamedField
+            (
+                const autoPtr<GeometricField<Type, PatchField, GeoMesh>>& bf
+            );
+
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+            allocateRenamedField
+            (
+                const GeometricField<Type, PatchField, GeoMesh>& bf
+            );
 
             //- Read vol fields
             template<class Type>
@@ -221,8 +240,70 @@ public:
                 GeometricField<Type, PatchField, GeoMesh>& fieldPtr
             );
 
+            //- Write field and old times, if present
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static void writeField
+            (
+                GeometricField<Type, PatchField, GeoMesh>& fieldPtr
+            );
+
+            //- Set initial field
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static void setInitField
+            (
+                PtrList<GeometricField<Type, PatchField, GeoMesh>>& fieldInit,
+                GeometricField<Type, PatchField, GeoMesh>& field
+            );
+
+            //- Reset field to its initial state
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static void restoreFieldInitialization
+            (
+                PtrList<GeometricField<Type, PatchField, GeoMesh>>& exact,
+                GeometricField<Type, PatchField, GeoMesh>& field
+            );
+
+            //- Reset field and old values to zero
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static void resetAdjointField
+            (
+                GeometricField<Type, PatchField, GeoMesh>& field
+            );
+
+            //- Set mean field
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static void setMeanField
+            (
+                refPtr<GeometricField<Type, PatchField, GeoMesh>>& meanFieldPtr,
+                const GeometricField<Type, PatchField, GeoMesh>& field,
+                const fvMesh& mesh
+            );
+
+            //- Set mean field
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            static void setMeanField
+            (
+                autoPtr<GeometricField<Type, PatchField, GeoMesh>>& meanFieldPtr,
+                const GeometricField<Type, PatchField, GeoMesh>& field,
+                const fvMesh& mesh
+            );
+
             //- Transfer the fields of another variablesSet to this
             virtual void transfer(variablesSet& vars);
+
+            //- Update nut
+            virtual void validateTurbulence();
+
+            //- Function to return the compression metrics (initial size,
+            //- compressed size, etc)
+            virtual const scalarList& storageMetrics() const;
+
+            //- Function to return the names of all the primal fields that are
+            //- allocated
+            virtual const wordList& allocatedFieldNames() const;
+
+            //- Does nothing in base
+            virtual void adjustAverageStartTime(const scalar& offset);
 };
 
 

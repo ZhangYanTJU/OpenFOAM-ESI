@@ -46,10 +46,12 @@ Foam::primalSolver::primalSolver
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    Switch useCustomReadTime
 )
 :
-    solver(mesh, managerType, dict)
+    solver(mesh, managerType, dict),
+    primalStorage_(nullptr)
 {}
 
 
@@ -59,7 +61,8 @@ Foam::autoPtr<Foam::primalSolver> Foam::primalSolver::New
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    Switch useCustomReadTime
 )
 {
     const word solverType(dict.get<word>("type"));
@@ -77,7 +80,11 @@ Foam::autoPtr<Foam::primalSolver> Foam::primalSolver::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<primalSolver>(ctorPtr(mesh, managerType, dict));
+    return
+        autoPtr<primalSolver>
+        (
+            ctorPtr(mesh, managerType, dict, useCustomReadTime)
+        );
 }
 
 
@@ -91,6 +98,12 @@ bool Foam::primalSolver::readDict(const dictionary& dict)
     }
 
     return false;
+}
+
+
+Foam::autoPtr<Foam::primalStorage>& Foam::primalSolver::getPrimalStorage()
+{
+    return primalStorage_;
 }
 
 

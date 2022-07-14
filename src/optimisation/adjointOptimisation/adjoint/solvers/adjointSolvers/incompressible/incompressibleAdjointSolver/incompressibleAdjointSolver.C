@@ -47,6 +47,22 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::incompressibleAdjointSolver::addExtraSchemes()
+{
+    if (vars_().useSolverNameForFields())
+    {
+        WarningInFunction
+            << "useSolverNameForFields is set to true for adjointSolver "
+            << solverName() << nl << tab
+            << "Appending variable names with the solver name" << nl << tab
+            << "Please adjust the necessary entries in fvSchemes and fvSolution"
+            << nl << endl;
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::incompressibleAdjointSolver::incompressibleAdjointSolver

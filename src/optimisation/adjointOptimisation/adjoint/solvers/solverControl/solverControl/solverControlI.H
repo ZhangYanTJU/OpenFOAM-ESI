@@ -78,9 +78,34 @@ inline Foam::label Foam::solverControl::averageStartIter() const
 }
 
 
+inline Foam::scalar& Foam::solverControl::averageStartTime()
+{
+    return averageStartTime_;
+}
+
+
+inline Foam::scalar Foam::solverControl::averageStartTime() const
+{
+    return averageStartTime_;
+}
+
+
 inline bool Foam::solverControl::doAverageIter() const
 {
     if (average_ && iter_ >= averageStartIter_)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+inline bool Foam::solverControl::doAverageTime() const
+{
+    if (average_ && solver_.mesh().time().value() >= averageStartTime_)
     {
         return true;
     }
@@ -107,6 +132,12 @@ inline bool Foam::solverControl::useAveragedFields() const
 inline bool Foam::solverControl::average() const
 {
     return average_;
+}
+
+
+inline const Foam::solver& Foam::solverControl::getSolver() const
+{
+    return solver_;
 }
 
 

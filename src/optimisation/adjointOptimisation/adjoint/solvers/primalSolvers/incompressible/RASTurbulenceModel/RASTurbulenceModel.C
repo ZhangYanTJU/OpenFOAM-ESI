@@ -61,10 +61,11 @@ Foam::RASTurbulenceModel::RASTurbulenceModel
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    Switch useCustomReadTime
 )
 :
-    incompressiblePrimalSolver(mesh, managerType, dict),
+    incompressiblePrimalSolver(mesh, managerType, dict, useCustomReadTime),
     solverControl_(SIMPLEControl::New(mesh, managerType, *this)),
     incoVars_(allocateVars())
 {

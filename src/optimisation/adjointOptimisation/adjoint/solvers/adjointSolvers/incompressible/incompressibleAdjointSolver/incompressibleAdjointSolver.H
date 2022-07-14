@@ -80,6 +80,15 @@ protected:
         autoPtr<ATCModel> ATCModel_;
 
 
+    // Protected Member Functions
+
+        //- In case variable names are different than the base ones,
+        //- add extra schemes and relaxation factors to the appropriate dicts
+        //  Note: 160813: Changes in the baseline solution and fvSchemes classes
+        //  have to be made in order to add schemes in the dict at run time.
+        //  Not supported for now
+        void addExtraSchemes();
+
 public:
 
 

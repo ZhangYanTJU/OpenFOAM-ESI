@@ -98,7 +98,8 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            Switch useCustomReadTime = false
         );
 
 

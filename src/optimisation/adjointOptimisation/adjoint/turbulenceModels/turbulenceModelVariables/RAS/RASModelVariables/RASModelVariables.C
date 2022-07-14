@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -29,6 +29,7 @@ License
 
 #include "RASModelVariables.H"
 #include "addToRunTimeSelectionTable.H"
+#include "variablesSet.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,26 +54,17 @@ void RASModelVariables::allocateInitValues()
 
         if (hasTMVar1())
         {
-            TMVar1InitPtr_.reset
-            (
-                new volScalarField(TMVar1Inst().name()+"Init", TMVar1Inst())
-            );
+            variablesSet::setInitField(TMVar1InitPtr_, TMVar1Inst());
         }
 
         if (hasTMVar2())
         {
-            TMVar2InitPtr_.reset
-            (
-                new volScalarField(TMVar2Inst().name()+"Init", TMVar2Inst())
-            );
+            variablesSet::setInitField(TMVar2InitPtr_, TMVar2Inst());
         }
 
         if (hasNut())
         {
-            nutInitPtr_.reset
-            (
-                new volScalarField(nutRefInst().name()+"Init", nutRefInst())
-            );
+            variablesSet::setInitField(nutInitPtr_, nutRefInst());
         }
     }
 }
@@ -86,59 +78,17 @@ void RASModelVariables::allocateMeanFields()
 
         if (hasTMVar1())
         {
-            TMVar1MeanPtr_.reset
-            (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        TMVar1Inst().name()+"Mean",
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::AUTO_WRITE
-                    ),
-                    TMVar1Inst()
-                )
-            );
+            variablesSet::setMeanField(TMVar1MeanPtr_, TMVar1Inst(), mesh_);
         }
 
         if (hasTMVar2())
         {
-            TMVar2MeanPtr_.reset
-            (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        TMVar2Inst().name()+"Mean",
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::AUTO_WRITE
-                    ),
-                    TMVar2Inst()
-                )
-            );
+            variablesSet::setMeanField(TMVar2MeanPtr_, TMVar2Inst(), mesh_);
         }
 
         if (hasNut())
         {
-            nutMeanPtr_.reset
-            (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        nutRefInst().name()+"Mean",
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::AUTO_WRITE
-                    ),
-                    nutRefInst()
-                )
-            );
+            variablesSet::setMeanField(nutMeanPtr_, nutRefInst(), mesh_);
         }
     }
 }
@@ -197,9 +147,9 @@ RASModelVariables::RASModelVariables
     nutPtr_(nullptr),
     distPtr_(nullptr),
 
-    TMVar1InitPtr_(nullptr),
-    TMVar2InitPtr_(nullptr),
-    nutInitPtr_(nullptr),
+    TMVar1InitPtr_(0),
+    TMVar2InitPtr_(0),
+    nutInitPtr_(0),
 
     TMVar1MeanPtr_(nullptr),
     TMVar2MeanPtr_(nullptr),
@@ -218,20 +168,56 @@ RASModelVariables::RASModelVariables
     TMVar1BaseName_(rmv.TMVar1BaseName_),
     TMVar2BaseName_(rmv.TMVar2BaseName_),
     nutBaseName_(rmv.nutBaseName_),
-
-    TMVar1Ptr_(cloneRefPtr(rmv.TMVar1Ptr_)),
-    TMVar2Ptr_(cloneRefPtr(rmv.TMVar2Ptr_)),
-    nutPtr_(cloneRefPtr(rmv.nutPtr_)),
-    distPtr_(cloneRefPtr(rmv.distPtr_)),
-
-    TMVar1InitPtr_(nullptr),
-    TMVar2InitPtr_(nullptr),
-    nutInitPtr_(nullptr),
-
-    TMVar1MeanPtr_(nullptr),
-    TMVar2MeanPtr_(nullptr),
-    nutMeanPtr_(nullptr)
-{}
+    TMVar1InitPtr_(rmv.TMVar1InitPtr_.size()),
+    TMVar2InitPtr_(rmv.TMVar2InitPtr_.size()),
+    nutInitPtr_(rmv.nutInitPtr_.size()),
+    TMVar1MeanPtr_
+    (
+        variablesSet::allocateRenamedField(rmv.TMVar1MeanPtr_)
+    ),
+    TMVar2MeanPtr_
+    (
+        variablesSet::allocateRenamedField(rmv.TMVar2MeanPtr_)
+    ),
+    nutMeanPtr_
+    (
+        variablesSet::allocateRenamedField(rmv.nutMeanPtr_)
+    )
+{
+    forAll(TMVar1InitPtr_, i)
+    {
+        if (rmv.TMVar1InitPtr_.get(i))
+        {
+            TMVar1InitPtr_.set
+            (
+                i,
+                variablesSet::allocateRenamedField(rmv.TMVar1InitPtr_[i])
+            );
+        }
+    }
+    forAll(TMVar2InitPtr_, i)
+    {
+        if (rmv.TMVar2InitPtr_.get(i))
+        {
+            TMVar2InitPtr_.set
+            (
+                i,
+                variablesSet::allocateRenamedField(rmv.TMVar2InitPtr_[i])
+            );
+        }
+    }
+    forAll(nutInitPtr_, i)
+    {
+        if (rmv.nutInitPtr_.get(i))
+        {
+            nutInitPtr_.set
+            (
+                i,
+                variablesSet::allocateRenamedField(rmv.nutInitPtr_[i])
+            );
+        }
+    }
+}
 
 
 autoPtr<RASModelVariables> RASModelVariables::clone() const
@@ -352,15 +338,27 @@ void RASModelVariables::restoreInitValues()
     {
         if (hasTMVar1())
         {
-            TMVar1Inst() == TMVar1InitPtr_();
+            variablesSet::restoreFieldInitialization
+            (
+                TMVar1InitPtr_,
+                TMVar1Inst()
+            );
         }
         if (hasTMVar2())
         {
-            TMVar2Inst() == TMVar2InitPtr_();
+            variablesSet::restoreFieldInitialization
+            (
+                TMVar2InitPtr_,
+                TMVar2Inst()
+            );
         }
         if (hasNut())
         {
-            nutRefInst() == nutInitPtr_();
+            variablesSet::restoreFieldInitialization
+            (
+                nutInitPtr_,
+                nutRefInst()
+            );
         }
     }
 }
@@ -415,6 +413,33 @@ void RASModelVariables::computeMeanFields()
         {
             nutMeanPtr_.ref() ==
                 (nutMeanPtr_()*mult + nutRefInst()*oneOverItP1);
+        }
+    }
+}
+
+
+void RASModelVariables::computeMeanUnsteadyFields()
+{
+    if (solverControl_.doAverageTime())
+    {
+        const scalar dt = mesh_.time().deltaTValue();
+        const scalar elapsedTime
+            = mesh_.time().value() - solverControl_.averageStartTime();
+        scalar oneOverItP1 = dt/(elapsedTime + dt);
+        scalar mult = elapsedTime/(elapsedTime + dt);
+        if (hasTMVar1())
+        {
+            TMVar1MeanPtr_.ref() ==
+                TMVar1MeanPtr_()*mult + TMVar1Inst()*oneOverItP1;
+        }
+        if (hasTMVar2())
+        {
+            TMVar2MeanPtr_.ref() ==
+                TMVar2MeanPtr_()*mult + TMVar2Inst()*oneOverItP1;
+        }
+        if (hasNut())
+        {
+            nutMeanPtr_.ref() == nutMeanPtr_()*mult + nutRefInst()*oneOverItP1;
         }
     }
 }
@@ -495,6 +520,38 @@ void RASModelVariables::transfer(RASModelVariables& rmv)
     if (rmv.hasDist() && hasDist())
     {
         copyAndRename(d(), rmv.d());
+    }
+}
+
+
+void RASModelVariables::setWriteOption(IOobject::writeOption w)
+{
+    if (hasTMVar1())
+    {
+        TMVar1Inst().writeOpt() = w;
+    }
+    if (hasTMVar2())
+    {
+        TMVar2Inst().writeOpt() = w;
+    }
+    if (hasNut())
+    {
+        nutRefInst().writeOpt() = w;
+    }
+    if (solverControl_.doAverageTime())
+    {
+        if (hasTMVar1())
+        {
+            TMVar1MeanPtr_->writeOpt() = w;
+        }
+        if (hasTMVar2())
+        {
+            TMVar2MeanPtr_->writeOpt() = w;
+        }
+        if (hasNut())
+        {
+            nutMeanPtr_->writeOpt() = w;
+        }
     }
 }
 

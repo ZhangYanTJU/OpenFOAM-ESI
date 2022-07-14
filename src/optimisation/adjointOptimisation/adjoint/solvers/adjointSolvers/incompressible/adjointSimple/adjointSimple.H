@@ -103,13 +103,6 @@ protected:
         //- for convenience in the rest of the class.
         incompressibleAdjointVars& allocateVars();
 
-        //- In case variable names are different than the base ones,
-        //- add extra schemes and relaxation factors to the appropriate dicts
-        //  Note: 160813: Changes in the baseline solution and fvSchemes classes
-        //  have to be made in order to add schemes in the dict at run time.
-        //  Not supported for now
-        void addExtraSchemes();
-
         //- Compute continuity errors
         void continuityErrors();
 

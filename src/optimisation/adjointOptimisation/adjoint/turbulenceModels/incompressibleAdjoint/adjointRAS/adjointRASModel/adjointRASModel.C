@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -61,6 +61,24 @@ void adjointRASModel::printCoeffs()
 }
 
 
+void adjointRASModel::restoreInitValues()
+{
+    const solverControl& solControl = adjointVars_.getSolverControl();
+    if (solControl.storeInitValues())
+    {
+        if (adjointTMVariable1Ptr_.valid())
+        {
+            variablesSet::resetAdjointField(adjointTMVariable1Ptr_.ref());
+        }
+
+        if (adjointTMVariable2Ptr_.valid())
+        {
+            variablesSet::resetAdjointField(adjointTMVariable2Ptr_.ref());
+        }
+    }
+}
+
+
 void adjointRASModel::setMeanFields()
 {
     const solverControl& solControl = adjointVars_.getSolverControl();
@@ -68,39 +86,21 @@ void adjointRASModel::setMeanFields()
     {
         if (adjointTMVariable1Ptr_)
         {
-            adjointTMVariable1MeanPtr_.reset
+            variablesSet::setMeanField
             (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        getAdjointTMVariable1Inst().name() + "Mean",
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::AUTO_WRITE
-                    ),
-                    getAdjointTMVariable1Inst()
-                )
+                adjointTMVariable1MeanPtr_,
+                getAdjointTMVariable1Inst(),
+                mesh_
             );
         }
 
         if (adjointTMVariable2Ptr_)
         {
-            adjointTMVariable2MeanPtr_.reset
+            variablesSet::setMeanField
             (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        getAdjointTMVariable2Inst().name() + "Mean",
-                        mesh_.time().timeName(),
-                        mesh_,
-                        IOobject::READ_IF_PRESENT,
-                        IOobject::AUTO_WRITE
-                    ),
-                    getAdjointTMVariable2Inst()
-                )
+                adjointTMVariable2MeanPtr_,
+                getAdjointTMVariable2Inst(),
+                mesh_
             );
         }
     }
@@ -466,9 +466,89 @@ void adjointRASModel::computeMeanFields()
 }
 
 
+void adjointRASModel::computeMeanUnsteadyFields(const scalar endTime)
+{
+    const solverControl& solControl = adjointVars_.getSolverControl();
+    if (solControl.doAverageTime())
+    {
+        const scalar dt = mesh_.time().deltaTValue();
+        const scalar elapsedTime = endTime - mesh_.time().value();
+        scalar oneOverItP1 = dt / (elapsedTime + dt);
+        scalar mult = elapsedTime / (elapsedTime + dt);
+        DebugInfo << "Mean = Mean*" << mult << " + Inst*" << oneOverItP1 << endl;
+        if (adjointTMVariable1MeanPtr_.valid())
+        {
+            adjointTMVariable1MeanPtr_() ==
+                adjointTMVariable1MeanPtr_()*mult
+              + getAdjointTMVariable1Inst()*oneOverItP1;
+        }
+        if (adjointTMVariable2MeanPtr_.valid())
+        {
+            adjointTMVariable2MeanPtr_() ==
+                adjointTMVariable2MeanPtr_()*mult
+              + getAdjointTMVariable2Inst()*oneOverItP1;
+        }
+    }
+}
+
+
 bool adjointRASModel::includeDistance() const
 {
     return includeDistance_;
+}
+
+
+void adjointRASModel::writeFields()
+{
+    // Write instantaneous fields
+    if (adjointTMVariable1Ptr_.valid())
+    {
+        variablesSet::writeField(getAdjointTMVariable1Inst());
+    }
+    if (adjointTMVariable2Ptr_.valid())
+    {
+        variablesSet::writeField(getAdjointTMVariable2Inst());
+    }
+    // Write mean fields
+    const solverControl& solControl = adjointVars_.getSolverControl();
+    if (solControl.average())
+    {
+        if (adjointTMVariable1MeanPtr_.valid())
+        {
+            variablesSet::writeField(adjointTMVariable1MeanPtr_());
+        }
+        if (adjointTMVariable2MeanPtr_.valid())
+        {
+            variablesSet::writeField(adjointTMVariable2MeanPtr_());
+        }
+    }
+}
+
+
+void adjointRASModel::setWriteOption(IOobject::writeOption w)
+{
+    // Instantaneous fields
+    if (adjointTMVariable1Ptr_.valid())
+    {
+        getAdjointTMVariable1Inst().writeOpt() = w;
+    }
+    if (adjointTMVariable2Ptr_.valid())
+    {
+        getAdjointTMVariable2Inst().writeOpt() = w;
+    }
+    // Mean fields
+    const solverControl& solControl = adjointVars_.getSolverControl();
+    if (solControl.average())
+    {
+        if (adjointTMVariable1MeanPtr_.valid())
+        {
+            adjointTMVariable1MeanPtr_->writeOpt() = w;
+        }
+        if (adjointTMVariable2MeanPtr_.valid())
+        {
+            adjointTMVariable2MeanPtr_->writeOpt() = w;
+        }
+    }
 }
 
 

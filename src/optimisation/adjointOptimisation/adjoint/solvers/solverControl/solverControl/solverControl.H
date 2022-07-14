@@ -76,6 +76,9 @@ protected:
             //- Averaging start index
             label averageStartIter_;
 
+            //- Averaging start time
+            scalar averageStartTime_;
+
             // Non run-time modifiable entries
 
                 //- Whether to re-initialize the solution based on the initial
@@ -151,17 +154,30 @@ public:
             //- Return iteration index
             inline label averageStartIter() const;
 
+            //- Return averaging start time reference for unsteady runs
+            inline scalar& averageStartTime();
+
+            //- Return const averaging start time reference for unsteady runs
+            inline scalar averageStartTime() const;
+
             //- Whether or not to add fields of the current iteration to the
             //- average fields
             inline bool doAverageIter() const;
 
+            //- Whether or not to add fields of the current time to the
+            //- average fields
+            inline bool doAverageTime() const;
+
             //- Use averaged fields?
             //- For solving the adjoint equations or computing sensitivities
             //- based on averaged fields
-            inline bool useAveragedFields() const;
+            virtual inline bool useAveragedFields() const;
 
             //- Whether averaging is enabled or not
             inline bool average() const;
+
+        //- Return reference to the underlaying solver
+        inline const solver& getSolver() const;
 };
 
 

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -77,6 +77,8 @@ protected:
 
         const word managerName_;
 
+        const word managerType_;
+
         const word primalSolverName_;
 
         PtrList<adjointSolver> adjointSolvers_;
@@ -87,6 +89,13 @@ protected:
 
         scalar operatingPointWeight_;
 
+        label nActiveAdjointSolvers_;
+
+
+    // Protected Member Functions
+
+        //- Check integration times for unsteady runs
+        void checkIntegrationTimes() const;
 
 public:
 
@@ -125,14 +134,32 @@ public:
             //- Const access to the construction dictionary
             const dictionary& dict() const;
 
+            //- Should the objectives be written to file upon calling the
+            //  corresponding write() function?
+            void setWrite(const bool shouldWrite);
+
+            //- Should the localIOdictionary be written?
+            void setWriteOption(IOobject::writeOption w);
+
             //- Const access to adjoint solvers
             const PtrList<adjointSolver>& adjointSolvers() const;
 
             //- Non-const access to adjoint solvers
             PtrList<adjointSolver>& adjointSolvers();
 
+            //- Return the names of all adjointSolvers
+            wordList adjointSolversNames() const;
+
             //- Const access to adjoint solvers
             scalar operatingPointWeight() const;
+
+            //- Return number of active adjoint solvers, either corresponding
+            //  to objectives or constraints
+            label nActiveAdjointSolvers() const;
+
+            //- Static function returning the number of active adjoint
+            //  solvers reading dict
+            static label nActiveAdjointSolvers(const dictionary& dict);
 
             //- Number of adjoint solvers corresponding to constraints
             label nConstraints() const;
@@ -172,6 +199,9 @@ public:
             //- Update fields related to primal solution.
             //  For instance, primal fields of adjoint turbulence models
             void updatePrimalBasedQuantities(const word& name);
+
+            //- Actions to be executed after the convergence of lineSearch
+            void postLineSearch();
 
 
         // IO

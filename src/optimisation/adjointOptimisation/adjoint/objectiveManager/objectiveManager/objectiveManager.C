@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -67,7 +67,8 @@ objectiveManager::objectiveManager
     adjointSolverName_(adjointSolverName),
     primalSolverName_(primalSolverName),
     objectives_(0),
-    weigthedObjectiveFile_(nullptr)
+    weigthedObjectiveFile_(nullptr),
+    hasIntegrationTimes_(true)
 {
     // Construct objectives
     //~~~~~~~~~~~~~~~~~~~~~
@@ -182,6 +183,12 @@ bool objectiveManager::readDict(const dictionary& dict)
 }
 
 
+bool objectiveManager::hasIntegrationTimes() const
+{
+    return hasIntegrationTimes_;
+}
+
+
 void objectiveManager::updateNormalizationFactor()
 {
     // Update normalization factors for all objectives
@@ -252,6 +259,24 @@ scalar objectiveManager::print()
 }
 
 
+void objectiveManager::setWrite(const bool shouldWrite)
+{
+    for (objective& obj : objectives_)
+    {
+        obj.setWrite(shouldWrite);
+    }
+}
+
+
+void objectiveManager::setWriteOption(IOobject::writeOption w)
+{
+    for (objective& obj : objectives_)
+    {
+        obj.setWriteOption(w);
+    }
+}
+
+
 bool objectiveManager::writeObjectives
 (
     const scalar weightedObjective,
@@ -261,8 +286,8 @@ bool objectiveManager::writeObjectives
     for (const objective& obj : objectives_)
     {
         // Write objective function to file
-        obj.write();
-        obj.writeMeanValue();
+            obj.write();
+            obj.writeMeanValue();
     }
 
     if (weigthedObjectiveFile_.valid())
@@ -317,16 +342,13 @@ const word& objectiveManager::primalSolverName() const
 }
 
 
-void objectiveManager::checkIntegrationTimes() const
+void objectiveManager::checkIntegrationTimes()
 {
     for (const objective& obj : objectives_)
     {
         if (!obj.hasIntegrationStartTime() || !obj.hasIntegrationEndTime())
         {
-            FatalErrorInFunction()
-                << "Objective function " << obj.objectiveName()
-                << " does not have a defined integration start or end time "
-                << exit(FatalError);
+            hasIntegrationTimes_ = false;
         }
     }
 }

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -38,28 +38,137 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::optimisationManager::optimisationManager(fvMesh& mesh)
-:
-    IOdictionary
-    (
-        IOobject
-        (
-            "optimisationDict",
-            mesh.time().system(),
-            mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE,
-            true
-        )
-    ),
-    mesh_(mesh),
-    time_(const_cast<Time&>(mesh.time())),
-    primalSolvers_(),
-    adjointSolverManagers_(),
-    managerType_(get<word>("optimisationManager")),
-    optType_(nullptr)
+void Foam::optimisationManager::resetTime()
+{
+    // Does nothing in base
+}
+
+
+void Foam::optimisationManager::lineSearchUpdate()
+{
+    // Compute direction of update
+    tmp<scalarField> tdirection = optType_->computeDirection();
+    scalarField& direction = tdirection.ref();
+
+    // Grab reference to line search
+    autoPtr<lineSearch>& lineSrch = optType_->getLineSearch();
+
+    // Store starting point
+    optType_->storeDesignVariables();
+
+    // Compute merit function before update
+    scalar meritFunction = optType_->computeMeritFunction();
+    lineSrch->setOldMeritValue(meritFunction);
+
+    // Get merit function derivative
+    const scalar dirDerivative =
+        optType_->meritFunctionDirectionalDerivative();
+    lineSrch->setDeriv(dirDerivative);
+    lineSrch->setDirection(direction);
+
+    // Reset initial step.
+    // Might be interpolated from previous optimisation cycles
+    lineSrch->reset();
+
+    // Perform line search
+    for (label iter = 0; iter < lineSrch->maxIters(); ++iter)
+    {
+        Info<< "\n- - - - - - - - - - - - - - -"  << endl;
+        Info<< "Line search iteration "   << iter << endl;
+        Info<< "- - - - - - - - - - - - - - -\n"  << endl;
+
+        // Update design variables. Multiplication with line search step
+        // happens inside the update(direction) function
+        moveDesignVariables(direction);
+
+        // Solve all primal equations
+        solvePrimalEquations();
+
+        // Compute and set new merit function
+        meritFunction = optType_->computeMeritFunction();
+        lineSrch->setNewMeritValue(meritFunction);
+
+        if (lineSrch->converged())
+        {
+            // If line search criteria have been met, proceed
+            Info<< "Line search converged in " << iter + 1
+                << " iterations." << endl;
+            scalarField scaledCorrection(lineSrch->step()*direction);
+            optType_->updateOldCorrection(scaledCorrection);
+            optType_->write();
+            lineSrch()++;
+            postUpdate();
+            break;
+        }
+        else
+        {
+            // If maximum number of iteration has been reached, continue
+            if (iter == lineSrch->maxIters() - 1)
+            {
+                Info<< "Line search reached max. number of iterations.\n"
+                    << "Proceeding to the next optimisation cycle" << endl;
+                scalarField scaledCorrection(lineSrch->step()*direction);
+                optType_->updateOldCorrection(scaledCorrection);
+                optType_->write();
+                lineSrch()++;
+                postUpdate();
+            }
+            // Reset to initial design variables and update step
+            else
+            {
+                resetTime();
+                optType_->resetDesignVariables();
+                lineSrch->updateStep();
+            }
+        }
+    }
+}
+
+
+void Foam::optimisationManager::fixedStepUpdate()
+{
+    moveDesignVariables();
+
+    // Solve primal equations
+    solvePrimalEquations();
+    postUpdate();
+}
+
+
+void Foam::optimisationManager::postUpdate()
+{
+    for (primalSolver& solver : primalSolvers_)
+    {
+        solver.postLineSearch();
+    }
+
+    for (adjointSolverManager& manager : adjointSolverManagers_)
+    {
+        manager.postLineSearch();
+    }
+}
+
+
+void Foam::optimisationManager::moveDesignVariables()
+{
+    // Update design variables
+    optType_->update();
+}
+
+
+void Foam::optimisationManager::moveDesignVariables
+(
+    scalarField& direction
+)
+{
+    // Update design variables
+    optType_->update(direction);
+}
+
+
+void Foam::optimisationManager::initialize()
 {
     dictionary& primalSolversDict = subDict("primalSolvers");
     const wordList& primalSolverNames = primalSolversDict.toc();
@@ -79,7 +188,7 @@ Foam::optimisationManager::optimisationManager(fvMesh& mesh)
             solveri,
             primalSolver::New
             (
-                mesh,
+                mesh_,
                 managerType_,
                 solverDict
             )
@@ -100,7 +209,7 @@ Foam::optimisationManager::optimisationManager(fvMesh& mesh)
             manageri,
             new adjointSolverManager
             (
-                mesh,
+                mesh_,
                 managerType_,
                 adjointManagersDict.subDict(adjointManagerNames[manageri]),
                 overrideUseSolverName
@@ -145,6 +254,33 @@ Foam::optimisationManager::optimisationManager(fvMesh& mesh)
             }
         }
     }
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::optimisationManager::optimisationManager(fvMesh& mesh)
+:
+    IOdictionary
+    (
+        IOobject
+        (
+            "optimisationDict",
+            mesh.time().system(),
+            mesh,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::NO_WRITE,
+            true
+        )
+    ),
+    mesh_(mesh),
+    time_(const_cast<Time&>(mesh.time())),
+    primalSolvers_(),
+    adjointSolverManagers_(),
+    managerType_(get<word>("optimisationManager")),
+    optType_(nullptr),
+    shouldUpdateDesignVariables_(true)
+{
 }
 
 
@@ -215,6 +351,24 @@ bool Foam::optimisationManager::read()
 }
 
 
+void Foam::optimisationManager::updateDesignVariables()
+{
+    // Update design variables using either a line-search scheme or
+    // a fixed-step update
+    if (optType_->getLineSearch())
+    {
+        lineSearchUpdate();
+    }
+    else
+    {
+        fixedStepUpdate();
+    }
+
+    // Reset adjoint sensitivities in all adjoint solver managers
+    clearSensitivities();
+}
+
+
 Foam::PtrList<Foam::primalSolver>& Foam::optimisationManager::primalSolvers()
 {
     return primalSolvers_;
@@ -230,10 +384,9 @@ Foam::optimisationManager::adjointSolverManagers()
 
 void Foam::optimisationManager::solvePrimalEquations()
 {
-    // Solve all primal equations
-    forAll(primalSolvers_, psI)
+    for (primalSolver& solver : primalSolvers_)
     {
-        primalSolvers_[psI].solve();
+        solver.solve();
     }
 }
 
@@ -241,9 +394,9 @@ void Foam::optimisationManager::solvePrimalEquations()
 void Foam::optimisationManager::solveAdjointEquations()
 {
     // Solve all adjoint solver equations
-    forAll(adjointSolverManagers_, amI)
+    for (adjointSolverManager& manager : adjointSolverManagers_)
     {
-        adjointSolverManagers_[amI].solveAdjointEquations();
+        manager.solveAdjointEquations();
     }
 }
 
@@ -254,6 +407,15 @@ void Foam::optimisationManager::computeSensitivities()
     forAll(adjointSolverManagers_, amI)
     {
         adjointSolverManagers_[amI].computeAllSensitivities();
+    }
+}
+
+
+void Foam::optimisationManager::clearSensitivities()
+{
+    for (adjointSolverManager& adjSolvManager : adjointSolverManagers_)
+    {
+        adjSolvManager.clearSensitivities();
     }
 }
 

@@ -46,6 +46,7 @@ bool Foam::solverControl::read()
     // Manage averaging
     dictionary averagingDict = solutionDict().subOrEmptyDict("averaging");
     averageStartIter_ = averagingDict.getOrDefault<label>("startIter", -1);
+    averageStartTime_ = averagingDict.getOrDefault<scalar>("startTime", -1);
 
     return true;
 }
@@ -60,6 +61,7 @@ Foam::solverControl::solverControl(const solver& solver)
     iter_(0),
     averageIter_(solver.getOrDefault<label>("averageIter", 0)),
     averageStartIter_(-1),
+    averageStartTime_(-1),
     // Non run-time modifiable options read in the constructor only
     storeInitValues_
     (

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -73,6 +73,7 @@ protected:
         bool computeMeanFields_;
         bool nullified_;
         bool normalize_;
+        bool shouldWrite_;
 
         //- Objective function value and weight
         scalar J_;
@@ -253,6 +254,9 @@ public:
         //  For unsteady runs
         void accumulateJMean();
 
+        //- Nullify JMean. To be used in unsteady optimization.
+        void resetJMean();
+
         //- Return the objective function weight
         scalar weight() const;
 
@@ -391,6 +395,15 @@ public:
 
         //- Return the objective name
         inline const word& objectiveName() const;
+
+        //- Should the objective be written to file upon calling write()?
+        inline bool shouldWrite() const;
+
+        //- Set the shouldWrite_ flag (files in the optimisation folder)
+        inline void setWrite(const bool shouldWrite);
+
+        //- Set the write option of the base localIOdictionary
+        inline void setWriteOption(IOobject::writeOption w);
 
         // Inline functions for checking whether pointers are set or not
         inline bool hasdJdb() const;

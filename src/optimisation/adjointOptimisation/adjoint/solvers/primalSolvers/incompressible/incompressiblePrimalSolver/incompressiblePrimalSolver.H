@@ -77,6 +77,14 @@ protected:
         label phiReconstructionIters_;
 
 
+    //- Protected Member Functions
+
+        //- In case variable names are different than the base ones,
+        //- add extra schemes and relaxation factors to the appropriate dicts
+        //  Note: Not supported for now
+        void addExtraSchemes();
+
+
 public:
 
 
@@ -96,9 +104,10 @@ public:
             (
                 fvMesh& mesh,
                 const word& managerType,
-                const dictionary& dict
+                const dictionary& dict,
+                Switch useCustomReadTime
             ),
-            (mesh, managerType, dict)
+            (mesh, managerType, dict, useCustomReadTime)
         );
 
 
@@ -109,7 +118,8 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            Switch useCustomReadTime = false
         );
 
 
@@ -120,7 +130,8 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            Switch useCustomReadTime = false
         );
 
 

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -76,7 +76,7 @@ GeometricField<Type, PatchField, GeoMesh>* variablesSet::allocateNamedField
     DebugInfo
         << bField << endl;
 
-    return (new fieldType(io, mesh, dict));
+    return (new fieldType(io, mesh, dict, true));
 }
 
 
@@ -162,31 +162,6 @@ bool variablesSet::readFieldOK
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type, template<class> class PatchField, class GeoMesh>
-autoPtr<GeometricField<Type, PatchField, GeoMesh>>
-variablesSet::allocateRenamedField
-(
-    const autoPtr<GeometricField<Type, PatchField, GeoMesh>>& bf
-)
-{
-    typedef GeometricField<Type, PatchField, GeoMesh> fieldType;
-    autoPtr<fieldType> returnField(nullptr);
-    if (bf.valid())
-    {
-        const word timeName = bf().mesh().time().timeName();
-        returnField.reset
-        (
-            new fieldType
-            (
-                bf().name() + timeName,
-                bf()
-            )
-        );
-    }
-    return returnField;
-}
-
-
-template<class Type, template<class> class PatchField, class GeoMesh>
 void variablesSet::swapAndRename
 (
     autoPtr<GeometricField<Type, PatchField, GeoMesh>>& p1,
@@ -216,6 +191,53 @@ void variablesSet::swapAndRename
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+variablesSet::allocateRenamedField
+(
+    const refPtr<GeometricField<Type, PatchField, GeoMesh>>& bf
+)
+{
+    typedef GeometricField<Type, PatchField, GeoMesh> fieldType;
+    autoPtr<fieldType> returnField(nullptr);
+    if (bf.valid())
+    {
+        returnField = allocateRenamedField(bf());
+    }
+    return returnField;
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+variablesSet::allocateRenamedField
+(
+    const autoPtr<GeometricField<Type, PatchField, GeoMesh>>& bf
+)
+{
+    typedef GeometricField<Type, PatchField, GeoMesh> fieldType;
+    autoPtr<fieldType> returnField(nullptr);
+    if (bf.valid())
+    {
+        returnField = allocateRenamedField(bf());
+    }
+    return returnField;
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+variablesSet::allocateRenamedField
+(
+    const GeometricField<Type, PatchField, GeoMesh>& bf
+)
+{
+    typedef GeometricField<Type, PatchField, GeoMesh> fieldType;
+    const word timeName = bf.mesh().time().timeName();
+    return autoPtr<fieldType>::New(bf.name() + timeName, bf);
+}
+
 
 template<class Type>
 void variablesSet::setField
@@ -355,6 +377,155 @@ void variablesSet::nullifyField
         fieldType& oldTime = field.oldTime();
         variablesSet::nullifyField(oldTime);
     }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void variablesSet::writeField
+(
+    GeometricField<Type, PatchField, GeoMesh>& field
+)
+{
+    field.write();
+    for (label i = 0; i<field.nOldTimes() - 1; ++i)
+    {
+        writeField(field.oldTime());
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void variablesSet::setInitField
+(
+    PtrList<GeometricField<Type, PatchField, GeoMesh>>& fieldInit,
+    GeometricField<Type, PatchField, GeoMesh>& field
+)
+{
+    // Store fields at the current and (nOldTimes - 1) time-steps
+    // since the last oldTime value is not for restarts
+    // Avoiding the storage to a new GeometricField with its oldTimes set
+    // due to the overwriting of the latter when time advances
+    typedef GeometricField<Type, PatchField, GeoMesh> fieldType;
+    fieldInit.setSize(max(field.nOldTimes(), 1));
+    fieldInit.set(0, new fieldType(field.name() + "Init" + name(0), field));
+    GeometricField<Type, PatchField, GeoMesh>* oldField = &field;
+    for (label i = 1; i < fieldInit.size(); ++i)
+    {
+        oldField = &oldField->oldTime();
+        fieldInit.set
+        (
+            i,
+            new fieldType(field.name() + "Init" + name(i), *oldField)
+        );
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void variablesSet::restoreFieldInitialization
+(
+    PtrList<GeometricField<Type, PatchField, GeoMesh>>& exact,
+    GeometricField<Type, PatchField, GeoMesh>& field
+)
+{
+    if (!exact.size())
+    {
+        FatalErrorInFunction
+            << "DataList to be used for restoring primal "
+            << "fields is not set" << endl
+            << exit(FatalError);
+    }
+    // Restore GeometricField together with its oldTimes
+    field == exact[0];
+    label nI(1);
+    GeometricField<Type, PatchField, GeoMesh>* oldField = &field;
+    // Restore old times stored in exact
+    while (nI < exact.size())
+    {
+        oldField = &oldField->oldTime();
+        *oldField == exact[nI];
+        ++nI;
+    }
+    // Covers the rare case of not having read the _0 fields (to be stored in
+    // exact) but there is the need of re-setting the oldTimes
+    while (nI < field.nOldTimes())
+    {
+        oldField = &oldField->oldTime();
+        *oldField == exact[0];
+        nI++;
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void variablesSet::resetAdjointField
+(
+    GeometricField<Type, PatchField, GeoMesh>& field
+)
+{
+    dimensioned<Type> zero(field.dimensions(), Zero);
+    field == zero;
+    // Restore oldTimes to zero too
+    GeometricField<Type, PatchField, GeoMesh>* oldField = &field;
+    for (label i = 0; i < field.nOldTimes(); ++i)
+    {
+        oldField = &oldField->oldTime();
+        *oldField == zero;
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void variablesSet::setMeanField
+(
+    refPtr<GeometricField<Type, PatchField, GeoMesh>>& meanFieldPtr,
+    const GeometricField<Type, PatchField, GeoMesh>& field,
+    const fvMesh& mesh
+)
+{
+    meanFieldPtr.reset
+    (
+        new GeometricField<Type, PatchField, GeoMesh>
+        (
+            IOobject
+            (
+                field.name() + "Mean",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
+            ),
+            field,
+            false
+        )
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void variablesSet::setMeanField
+(
+    autoPtr<GeometricField<Type, PatchField, GeoMesh>>& meanFieldPtr,
+    const GeometricField<Type, PatchField, GeoMesh>& field,
+    const fvMesh& mesh
+)
+{
+    meanFieldPtr.reset
+    (
+        new GeometricField<Type, PatchField, GeoMesh>
+        (
+            IOobject
+            (
+                field.name()+"Mean",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
+            ),
+            field,
+            false
+        )
+    );
 }
 
 

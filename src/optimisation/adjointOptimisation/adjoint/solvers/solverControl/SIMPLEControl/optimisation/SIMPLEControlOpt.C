@@ -36,7 +36,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(SIMPLEControlOpt, 1);
-    addToRunTimeSelectionTable( SIMPLEControl, SIMPLEControlOpt, dictionary);
+    addToRunTimeSelectionTable(SIMPLEControl, SIMPLEControlOpt, dictionary);
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //

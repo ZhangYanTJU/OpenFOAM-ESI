@@ -199,6 +199,32 @@ void variablesSet::transfer(variablesSet& vars)
 }
 
 
+void variablesSet::validateTurbulence()
+{
+    // Does nothing in base
+}
+
+
+const scalarList& variablesSet::storageMetrics() const
+{
+    NotImplemented
+    return demoScalarList_;
+}
+
+
+const wordList& variablesSet::allocatedFieldNames() const
+{
+    NotImplemented
+    return demoWordList_;
+}
+
+
+void variablesSet::adjustAverageStartTime(const scalar& offset)
+{
+    // Does nothing in base
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

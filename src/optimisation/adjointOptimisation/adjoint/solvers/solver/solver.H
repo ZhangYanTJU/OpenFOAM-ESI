@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -164,6 +164,9 @@ public:
 
             //- Functions to be called after loop
             virtual void postLoop();
+
+            //- Functions to be called after lineSearch has converged
+            virtual void postLineSearch();
 
             //- Update source term related to optimisationType
             void updateOptTypeSource

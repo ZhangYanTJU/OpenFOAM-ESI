@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -40,6 +40,7 @@ Description
 #include "fvMesh.H"
 #include "solver.H"
 #include "runTimeSelectionTables.H"
+#include "primalStorage.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,6 +66,16 @@ private:
         void operator=(const primalSolver&) = delete;
 
 
+protected:
+
+    // Protected Member Variables
+
+        //- Primal storage strategy
+        //  For stroring the primal history, to be later used by the
+        //  unsteady adjoint solvers
+        autoPtr<primalStorage> primalStorage_;
+
+
 public:
 
 
@@ -84,9 +95,10 @@ public:
             (
                 fvMesh& mesh,
                 const word& managerType,
-                const dictionary& dict
+                const dictionary& dict,
+                Switch useCustomReadTime
             ),
-            (mesh, managerType, dict)
+            (mesh, managerType, dict, useCustomReadTime)
         );
 
 
@@ -97,7 +109,8 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            Switch useCustomReadTime = false
         );
 
 
@@ -108,7 +121,8 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            Switch useCustomReadTime = false
         );
 
 
@@ -119,6 +133,9 @@ public:
     // Member Functions
 
         virtual bool readDict(const dictionary& dict);
+
+        //- Reference to the primal storage method
+        autoPtr<primalStorage>& getPrimalStorage();
 
 
         // Evolution

@@ -66,102 +66,13 @@ void Foam::steadyOptimisation::updateOptTypeSource()
 }
 
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-void Foam::steadyOptimisation::lineSearchUpdate()
-{
-    // Compute direction of update
-    tmp<scalarField> tdirection = optType_->computeDirection();
-    scalarField& direction = tdirection.ref();
-
-    // Grab reference to line search
-    autoPtr<lineSearch>& lineSrch = optType_->getLineSearch();
-
-    // Store starting point
-    optType_->storeDesignVariables();
-
-    // Compute merit function before update
-    scalar meritFunction = optType_->computeMeritFunction();
-    lineSrch->setOldMeritValue(meritFunction);
-
-    // Get merit function derivative
-    const scalar dirDerivative =
-        optType_->meritFunctionDirectionalDerivative();
-    lineSrch->setDeriv(dirDerivative);
-    lineSrch->setDirection(direction);
-
-    // Reset initial step.
-    // Might be interpolated from previous optimisation cycles
-    lineSrch->reset();
-
-    // Perform line search
-    for (label iter = 0; iter < lineSrch->maxIters(); ++iter)
-    {
-        Info<< "\n- - - - - - - - - - - - - - -"  << endl;
-        Info<< "Line search iteration "   << iter << endl;
-        Info<< "- - - - - - - - - - - - - - -\n"  << endl;
-
-        // Update design variables. Multiplication with line search step
-        // happens inside the update(direction) function
-        optType_->update(direction);
-
-        // Solve all primal equations
-        solvePrimalEquations();
-
-        // Compute and set new merit function
-        meritFunction = optType_->computeMeritFunction();
-        lineSrch->setNewMeritValue(meritFunction);
-
-        if (lineSrch->converged())
-        {
-            // If line search criteria have been met, proceed
-            Info<< "Line search converged in " << iter + 1
-                << " iterations." << endl;
-            scalarField scaledCorrection(lineSrch->step()*direction);
-            optType_->updateOldCorrection(scaledCorrection);
-            optType_->write();
-            lineSrch()++;
-            break;
-        }
-        else
-        {
-            // If maximum number of iteration has been reached, continue
-            if (iter == lineSrch->maxIters() - 1)
-            {
-                Info<< "Line search reached max. number of iterations.\n"
-                    << "Proceeding to the next optimisation cycle" << endl;
-                scalarField scaledCorrection(lineSrch->step()*direction);
-                optType_->updateOldCorrection(scaledCorrection);
-                optType_->write();
-                lineSrch()++;
-            }
-            // Reset to initial design variables and update step
-            else
-            {
-                optType_->resetDesignVariables();
-                lineSrch->updateStep();
-            }
-        }
-    }
-}
-
-
-void Foam::steadyOptimisation::fixedStepUpdate()
-{
-    // Update design variables
-    optType_->update();
-
-    // Solve primal equations
-    solvePrimalEquations();
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::steadyOptimisation::steadyOptimisation(fvMesh& mesh)
 :
     optimisationManager(mesh)
 {
+    initialize();
     optType_.reset
     (
         incompressible::optimisationType::New
@@ -218,27 +129,6 @@ bool Foam::steadyOptimisation::end()
 bool Foam::steadyOptimisation::update()
 {
     return (time_.timeIndex() != 1 && !end());
-}
-
-
-void Foam::steadyOptimisation::updateDesignVariables()
-{
-    // Update design variables using either a line-search scheme or
-    // a fixed-step update
-    if (optType_->getLineSearch())
-    {
-        lineSearchUpdate();
-    }
-    else
-    {
-        fixedStepUpdate();
-    }
-
-    // Reset adjoint sensitivities in all adjoint solver managers
-    for (adjointSolverManager& adjSolverManager : adjointSolverManagers_)
-    {
-        adjSolverManager.clearSensitivities();
-    }
 }
 
 

@@ -48,6 +48,21 @@ namespace Foam
     );
 }
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::incompressiblePrimalSolver::addExtraSchemes()
+{
+    if (vars_().useSolverNameForFields())
+    {
+        WarningInFunction
+            << "useSolverNameForFields is set to true for primalSolver "
+            << solverName() << nl << tab
+            << "Appending variable names with the solver name" << nl << tab
+            << "Please adjust the necessary entries in fvSchemes and fvSolution"
+            << nl << endl;
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -55,10 +70,11 @@ Foam::incompressiblePrimalSolver::incompressiblePrimalSolver
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    Switch useCustomReadTime
 )
 :
-    primalSolver(mesh, managerType, dict),
+    primalSolver(mesh, managerType, dict, useCustomReadTime),
     phiReconstructionTol_
     (
         dict.subOrEmptyDict("fieldReconstruction").
@@ -79,7 +95,8 @@ Foam::incompressiblePrimalSolver::New
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    Switch useCustomReadTime
 )
 {
     const word solverType(dict.get<word>("solver"));
@@ -99,7 +116,7 @@ Foam::incompressiblePrimalSolver::New
     return
         autoPtr<incompressiblePrimalSolver>
         (
-            ctorPtr(mesh, managerType, dict)
+            ctorPtr(mesh, managerType, dict, useCustomReadTime)
         );
 }
 

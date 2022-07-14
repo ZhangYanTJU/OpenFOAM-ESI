@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -103,12 +103,11 @@ void incompressibleVars::setInitFields()
     // are allocated automatically in RASModelVariables
     if (solverControl_.storeInitValues())
     {
-        pInitPtr_.reset(new volScalarField(pInst().name() + "Init", pInst()));
-        UInitPtr_.reset(new volVectorField(UInst().name() + "Init", UInst()));
-        phiInitPtr_.reset
-        (
-            new surfaceScalarField(phiInst().name() + "Init", phiInst())
-        );
+        DebugInfo
+            << "Allocating Initial Primal Fields" << endl;
+        setInitField(pInitPtr_, pInst());
+        setInitField(UInitPtr_, UInst());
+        setInitField(phiInitPtr_, phiInst());
     }
 }
 
@@ -121,52 +120,9 @@ void incompressibleVars::setMeanFields()
     if (solverControl_.average())
     {
         Info<< "Allocating Mean Primal Fields" << endl;
-        pMeanPtr_.reset
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    pInst().name()+"Mean",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                pInst()
-            )
-        );
-        UMeanPtr_.reset
-        (
-            new volVectorField
-            (
-                IOobject
-                (
-                    UInst().name()+"Mean",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                UInst()
-            )
-        );
-        phiMeanPtr_.reset
-        (
-            new surfaceScalarField
-            (
-                IOobject
-                (
-                    phiInst().name()+"Mean",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                phiInst()
-            )
-        );
-
+        setMeanField(pMeanPtr_, pInst(), mesh_);
+        setMeanField(UMeanPtr_, UInst(), mesh_);
+        setMeanField(phiMeanPtr_, phiInst(), mesh_);
         // Correct boundary conditions if necessary
         if (correctBoundaryConditions_)
         {
@@ -230,7 +186,8 @@ void incompressibleVars::correctTurbulentBoundaryConditions()
 incompressibleVars::incompressibleVars
 (
     fvMesh& mesh,
-    solverControl& SolverControl
+    solverControl& SolverControl,
+    scalar readTime
 )
 :
     variablesSet(mesh, SolverControl.solverDict()),
@@ -242,9 +199,9 @@ incompressibleVars::incompressibleVars
     turbulence_(nullptr),
     RASModelVariables_(nullptr),
 
-    pInitPtr_(nullptr),
-    UInitPtr_(nullptr),
-    phiInitPtr_(nullptr),
+    pInitPtr_(),
+    UInitPtr_(),
+    phiInitPtr_(),
 
     pMeanPtr_(nullptr),
     UMeanPtr_(nullptr),
@@ -254,11 +211,43 @@ incompressibleVars::incompressibleVars
     (
         SolverControl.solverDict().subOrEmptyDict("fieldReconstruction").
             getOrDefault<bool>("reconstruct", false)
+    ),
+    solDirs_((mesh.solutionD() + Vector<label>::one)/2),
+    writeFields_
+    (
+        SolverControl.solverDict().getOrDefault<bool>("writeFields", true)
     )
 {
+    // Necessary for continuation of unsteady solvers. For steady solvers
+    // should have no effect
+    Time& time = const_cast<Time&>(mesh_.time());
+    const dimensionedScalar startTime = mesh_.time();
+    const label startTimeIndex = mesh_.time().timeIndex();
+    if (readTime != -1)
+    {
+        // Set time to readTime. Time-index remains unchanged, since
+        // it does not influence fields reading
+        DebugInfo
+            << "Initializing primal fields begin: time changes to "
+            << ::Foam::name(readTime) << endl;
+        time.setTime(readTime, startTimeIndex);
+    }
     setFields();
     setInitFields();
     setMeanFields();
+    storeAllocatedFieldNames();
+    if (readTime != -1)
+    {
+        DebugInfo
+            << "Initializing primal fields end: time changes to "
+            << ::Foam::name(startTime.value()) << endl;
+        // Restore time
+        time.setTime(startTime, startTimeIndex);
+    }
+    if (!writeFields_)
+    {
+        setWriteOption(IOobject::NO_WRITE);
+    }
 }
 
 
@@ -276,18 +265,32 @@ incompressibleVars::incompressibleVars
     turbulence_(nullptr),
     RASModelVariables_(vs.RASModelVariables_.clone()),
 
-    pInitPtr_(allocateRenamedField(vs.pInitPtr_)),
-    UInitPtr_(allocateRenamedField(vs.UInitPtr_)),
-    phiInitPtr_(allocateRenamedField(vs.phiInitPtr_)),
+    pInitPtr_(vs.pInitPtr_.size()),
+    UInitPtr_(vs.UInitPtr_.size()),
+    phiInitPtr_(vs.phiInitPtr_.size()),
 
     pMeanPtr_(allocateRenamedField(vs.pMeanPtr_)),
-    UMeanPtr_(allocateRenamedField(UMeanPtr_)),
+    UMeanPtr_(allocateRenamedField(vs.UMeanPtr_)),
     phiMeanPtr_(allocateRenamedField(vs.phiMeanPtr_)),
 
-    correctBoundaryConditions_(vs.correctBoundaryConditions_)
+    correctBoundaryConditions_(vs.correctBoundaryConditions_),
+    allocatedFieldNames_(vs.allocatedFieldNames_),
+    solDirs_(vs.solDirs_)
 {
     DebugInfo
         << "Calling incompressibleVars copy constructor" << endl;
+    forAll(pInitPtr_, i)
+    {
+        pInitPtr_.set(i, allocateRenamedField(vs.pInitPtr_[i]));
+    }
+    forAll(UInitPtr_, i)
+    {
+        UInitPtr_.set(i, allocateRenamedField(vs.UInitPtr_[i]));
+    }
+    forAll(phiInitPtr_, i)
+    {
+        phiInitPtr_.set(i, allocateRenamedField(vs.phiInitPtr_[i]));
+    }
 }
 
 
@@ -301,6 +304,23 @@ autoPtr<variablesSet> incompressibleVars::clone() const
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void incompressibleVars::storeAllocatedFieldNames()
+{
+    allocatedFieldNames_.setSize(3);
+    allocatedFieldNames_[0] = pInst().name();
+    allocatedFieldNames_[1] = phiInst().name();
+    allocatedFieldNames_[2] = UInst().name();
+    if (RASModelVariables_().hasTMVar1())
+    {
+        allocatedFieldNames_.append(RASModelVariables_().TMVar1Inst().name());
+    }
+    if (RASModelVariables_().hasTMVar2())
+    {
+        allocatedFieldNames_.append(RASModelVariables_().TMVar2Inst().name());
+    }
+}
+
 
 const volScalarField& incompressibleVars::p() const
 {
@@ -366,6 +386,7 @@ const surfaceScalarField& incompressibleVars::phi() const
     }
 }
 
+
 surfaceScalarField& incompressibleVars::phi()
 {
     if (solverControl_.useAveragedFields())
@@ -384,9 +405,9 @@ void incompressibleVars::restoreInitValues()
     if (solverControl_.storeInitValues())
     {
         Info<< "Restoring field values to initial ones" << endl;
-        pInst() == pInitPtr_();
-        UInst() == UInitPtr_();
-        phiInst() == phiInitPtr_();
+        variablesSet::restoreFieldInitialization(pInitPtr_, pInst());
+        variablesSet::restoreFieldInitialization(phiInitPtr_, phiInst());
+        variablesSet::restoreFieldInitialization(UInitPtr_, UInst());
         RASModelVariables_().restoreInitValues();
     }
 }
@@ -428,10 +449,28 @@ void incompressibleVars::computeMeanFields()
 }
 
 
+void incompressibleVars::computeMeanUnsteadyFields()
+{
+    if (solverControl_.doAverageTime())
+    {
+        Info<< "Averaging fields" << endl;
+        const scalar dt = mesh_.time().deltaTValue();
+        const scalar elapsedTime
+            = mesh_.time().value() - solverControl_.averageStartTime();
+        scalar oneOverItP1 = dt/(elapsedTime + dt);
+        scalar mult = elapsedTime/(elapsedTime + dt);
+        pMeanPtr_() == pMeanPtr_()*mult + pInst()*oneOverItP1;
+        UMeanPtr_() == UMeanPtr_()*mult + UInst()*oneOverItP1;
+        phiMeanPtr_() == phiMeanPtr_()*mult + phiInst()*oneOverItP1;
+        RASModelVariables_().computeMeanUnsteadyFields();
+    }
+}
+
+
 void incompressibleVars::correctBoundaryConditions()
 {
     correctNonTurbulentBoundaryConditions();
-    RASModelVariables_().correctBoundaryConditions(turbulence_());
+    correctTurbulentBoundaryConditions();
 }
 
 
@@ -458,6 +497,16 @@ void incompressibleVars::transfer(variablesSet& vars)
     // Transfer turbulent fields. Copies fields since original fields are
     // not owned by RASModelVariables but from the turbulence model
     RASModelVariables_->transfer(incoVars.RASModelVariables()());
+}
+
+
+void incompressibleVars::validateTurbulence()
+{
+    // Update nut
+    if (RASModelVariables_().hasNut())
+    {
+        turbulence()->validate();
+    }
 }
 
 
@@ -498,6 +547,56 @@ bool incompressibleVars::write() const
     }
 
     return false;
+}
+
+
+fvMesh& incompressibleVars::mesh() const
+{
+    return mesh_;
+}
+
+
+const solverControl& incompressibleVars::solverControlReference() const
+{
+    return solverControl_;
+}
+
+
+const wordList& incompressibleVars::allocatedFieldNames() const
+{
+    return allocatedFieldNames_;
+}
+
+
+const Vector<label>& incompressibleVars::solDirs() const
+{
+    return solDirs_;
+}
+
+
+void incompressibleVars::adjustAverageStartTime(const scalar& offset)
+{
+    solverControl_.averageStartTime() += offset;
+}
+
+
+void incompressibleVars::setWriteOption(IOobject::writeOption w)
+{
+    if (!writeFields_)
+    {
+        w = IOobject::NO_WRITE;
+    }
+    pInst().writeOpt() = w;
+    phiInst().writeOpt() = w;
+    UInst().writeOpt() = w;
+    if (solverControl_.doAverageTime())
+    {
+        pMeanPtr_->writeOpt() = w;
+        phiMeanPtr_->writeOpt() = w;
+        UMeanPtr_->writeOpt() = w;
+    }
+    incompressible::RASModelVariables& rasVars = RASModelVariables_();
+    rasVars.setWriteOption(w);
 }
 
 

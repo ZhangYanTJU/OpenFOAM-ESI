@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -57,6 +57,7 @@ void incompressibleAdjointMeanFlowVars::setFields()
     mesh_.setFluxRequired(paPtr_->name());
 }
 
+
 void incompressibleAdjointMeanFlowVars::setMeanFields()
 {
     // Allocate mean fields
@@ -65,51 +66,9 @@ void incompressibleAdjointMeanFlowVars::setMeanFields()
     if (solverControl_.average())
     {
         Info<< "Allocating Mean Adjoint Fields" << endl;
-        paMeanPtr_.reset
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    paInst().name() + "Mean",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                paInst()
-            )
-        );
-        UaMeanPtr_.reset
-        (
-            new volVectorField
-            (
-                IOobject
-                (
-                    UaInst().name() + "Mean",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                UaInst()
-            )
-        );
-        phiaMeanPtr_.reset
-        (
-            new surfaceScalarField
-            (
-                IOobject
-                (
-                    phiaInst().name() + "Mean",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                phiaInst()
-            )
-        );
+        variablesSet::setMeanField(paMeanPtr_, paInst(), mesh_);
+        variablesSet::setMeanField(UaMeanPtr_, UaInst(), mesh_);
+        variablesSet::setMeanField(phiaMeanPtr_, phiaInst(), mesh_);
     }
 }
 
@@ -236,9 +195,40 @@ const solverControl& incompressibleAdjointMeanFlowVars::getSolverControl() const
 
 void incompressibleAdjointMeanFlowVars::nullify()
 {
+    // Nullify instantaneous fields
     variablesSet::nullifyField(paPtr_());
     variablesSet::nullifyField(UaPtr_());
     variablesSet::nullifyField(phiaPtr_());
+}
+
+
+void incompressibleAdjointMeanFlowVars::write()
+{
+    //  Write instantaneous fields
+    variablesSet::writeField(paPtr_());
+    variablesSet::writeField(UaPtr_());
+    variablesSet::writeField(phiaPtr_());
+    //  Write mean fields
+    if (solverControl_.average())
+    {
+        variablesSet::writeField(paMeanPtr_());
+        variablesSet::writeField(UaMeanPtr_());
+        variablesSet::writeField(phiaMeanPtr_());
+    }
+}
+
+
+void incompressibleAdjointMeanFlowVars::setWriteOption(IOobject::writeOption w)
+{
+    paPtr_().writeOpt() = w;
+    UaPtr_().writeOpt() = w;
+    phiaPtr_().writeOpt() = w;
+    if (solverControl_.doAverageTime())
+    {
+        paMeanPtr_->writeOpt() = w;
+        UaMeanPtr_->writeOpt() = w;
+        phiaMeanPtr_->writeOpt() = w;
+    }
 }
 
 

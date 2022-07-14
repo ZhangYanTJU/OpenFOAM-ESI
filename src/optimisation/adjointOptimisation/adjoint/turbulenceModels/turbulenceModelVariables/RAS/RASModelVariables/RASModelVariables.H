@@ -76,11 +76,12 @@ protected:
         refPtr<volScalarField> nutPtr_;
         refPtr<volScalarField> distPtr_;
 
-        // Initial values (demand-driven)
-        // For finite differences and optimisation runs
-        refPtr<volScalarField> TMVar1InitPtr_;
-        refPtr<volScalarField> TMVar2InitPtr_;
-        refPtr<volScalarField> nutInitPtr_;
+        //- Keep a copy of the initial values if necessary.
+        //  If oldTimes are present, keep them in separate GeometricFields to
+        //  avoid been overwritten upon calling GeometricField::storeOldTimes
+        PtrList<volScalarField> TMVar1InitPtr_;
+        PtrList<volScalarField> TMVar2InitPtr_;
+        PtrList<volScalarField> nutInitPtr_;
 
         // Mean values (demand-driven)
         refPtr<volScalarField> TMVar1MeanPtr_;
@@ -233,6 +234,10 @@ public:
         //- Compute mean fields on the fly
         virtual void computeMeanFields();
 
+        //- Compute mean fields on the fly - unsteady runs
+        void computeMeanUnsteadyFields();
+
+
         //- Return stress tensor based on the mean flow variables
         tmp<volSymmTensorField> devReff
         (
@@ -250,6 +255,9 @@ public:
         //  Copies values since the ownership of the original fields is held
         //  by the turbulence model
         virtual void transfer(RASModelVariables& rmv);
+
+        //- Set writeOption of all GeometricFields
+        void setWriteOption(IOobject::writeOption w);
 };
 
 

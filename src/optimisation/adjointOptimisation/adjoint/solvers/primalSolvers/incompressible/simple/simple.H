@@ -93,11 +93,6 @@ protected:
         //- convenience in the rest of the class.
         incompressibleVars& allocateVars();
 
-        //- In case variable names are different than the base ones,
-        //- add extra schemes and relaxation factors to the appropriate dicts
-        //  Note: Not supported for now
-        void addExtraSchemes();
-
         //- Compute continuity errors
         void continuityErrors();
 
@@ -117,7 +112,8 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            Switch useCustomReadTime = false
         );
 
 

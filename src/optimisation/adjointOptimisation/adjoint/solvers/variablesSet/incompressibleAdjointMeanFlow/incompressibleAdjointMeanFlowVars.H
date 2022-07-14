@@ -183,6 +183,12 @@ public:
 
             //- Nullify all adjoint fields
             virtual void nullify();
+
+            //- Write all adjoint fields
+            virtual void write();
+
+            //- Set writeOption of all adjoint fields
+            void setWriteOption(IOobject::writeOption w);
 };
 
 

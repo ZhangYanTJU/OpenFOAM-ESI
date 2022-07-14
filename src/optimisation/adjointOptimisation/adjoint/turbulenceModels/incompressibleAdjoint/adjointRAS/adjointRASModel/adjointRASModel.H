@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -328,17 +328,29 @@ public:
         //- Set flag of changed primal solution to true
         void setChangedPrimalSolution();
 
+        //- Restore field values to the initial ones
+        void restoreInitValues();
+
         //- Reset mean fields to zero
         void resetMeanFields();
 
-        //- Average adjoint fields on the fly
+        //- Compute mean fields on the fly: steady runs
         void computeMeanFields();
+
+        //- Compute mean fields on the fly: unsteady runs
+        void computeMeanUnsteadyFields(const scalar endTime);
 
         //- Should the adjoint to the eikonal equation be computed
         bool includeDistance() const;
 
         //- Nullify all adjoint turbulence model fields and their old times
         virtual void nullify() = 0;
+
+        //- Write all adjoint turbulence model fields
+        virtual void writeFields();
+
+        //- Set writeOption of all adjoint turbulence model fields
+        void setWriteOption(IOobject::writeOption w);
 };
 
 

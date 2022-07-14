@@ -36,6 +36,24 @@ inline const Foam::word& Foam::objective::objectiveName() const
 }
 
 
+inline bool Foam::objective::shouldWrite() const
+{
+    return shouldWrite_;
+}
+
+
+inline void Foam::objective::setWrite(const bool shouldWrite)
+{
+    shouldWrite_ = shouldWrite;
+}
+
+
+inline void Foam::objective::setWriteOption(IOobject::writeOption w)
+{
+    IOobject::writeOpt() = w;
+}
+
+
 inline bool Foam::objective::hasdJdb() const
 {
     return bool(dJdbPtr_);

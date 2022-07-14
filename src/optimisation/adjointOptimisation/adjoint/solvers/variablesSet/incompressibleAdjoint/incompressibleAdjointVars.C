@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2022 PCOpt/NTUA
+    Copyright (C) 2013-2022 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -61,11 +61,33 @@ incompressibleAdjointVars::incompressibleAdjointVars
             *this,
             objManager
         )
+    ),
+    writeFields_
+    (
+        SolverControl.solverDict().getOrDefault<bool>("writeFields", true)
     )
-{}
+{
+    if (!writeFields_)
+    {
+        setWriteOption(IOobject::NO_WRITE);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void incompressibleAdjointVars::restoreInitValues()
+{
+    if (solverControl_.storeInitValues())
+    {
+        Info<< "Restoring field values to initial ones" << endl;
+        variablesSet::resetAdjointField(paInst());
+        variablesSet::resetAdjointField(UaInst());
+        variablesSet::resetAdjointField(phiaInst());
+        adjointTurbulence_().restoreInitValues();
+    }
+}
+
 
 void incompressibleAdjointVars::resetMeanFields()
 {
@@ -103,6 +125,26 @@ void incompressibleAdjointVars::computeMeanFields()
 }
 
 
+void incompressibleAdjointVars::computeMeanUnsteadyFields
+(
+    const scalar endTime
+)
+{
+    if (solverControl_.doAverageTime())
+    {
+        Info<< "Averaging fields" << endl;
+        const scalar dt = mesh_.time().deltaTValue();
+        const scalar elapsedTime = endTime - mesh_.time().value();
+        scalar oneOverItP1 = dt/(elapsedTime + dt);
+        scalar mult = elapsedTime/(elapsedTime + dt);
+        paMeanPtr_() == paMeanPtr_()*mult + paInst()*oneOverItP1;
+        UaMeanPtr_() == UaMeanPtr_()*mult + UaInst()*oneOverItP1;
+        phiaMeanPtr_() == phiaMeanPtr_()*mult + phiaInst()*oneOverItP1;
+        adjointTurbulence_().computeMeanUnsteadyFields(endTime);
+    }
+}
+
+
 void incompressibleAdjointVars::nullify()
 {
     incompressibleAdjointMeanFlowVars::nullify();
@@ -134,6 +176,28 @@ void incompressibleAdjointVars::updatePrimalBasedQuantities()
         }
     }
     */
+}
+
+
+void incompressibleAdjointVars::write()
+{
+    if (writeFields_)
+    {
+        incompressibleAdjointMeanFlowVars::write();
+        adjointTurbulence_->writeFields();
+    }
+}
+
+
+void incompressibleAdjointVars::setWriteOption(IOobject::writeOption w)
+{
+    if (!writeFields_)
+    {
+        w = IOobject::NO_WRITE;
+    }
+
+    incompressibleAdjointMeanFlowVars::setWriteOption(w);
+    adjointTurbulence_->setWriteOption(w);
 }
 
 

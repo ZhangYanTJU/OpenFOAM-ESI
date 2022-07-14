@@ -1,0 +1,130 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2019-2022 PCOpt/NTUA
+    Copyright (C) 2022      FOSS GP
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::noneStorage
+
+Description
+    A primalStorage instance doing nothing. Used, for instance, with steady
+    state simulations
+
+SourceFiles
+    noneStorage.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef noneStorage_H
+#define noneStorage_H
+
+#include "primalStorage.H"
+#include "runTimeSelectionTables.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+/*---------------------------------------------------------------------------*\
+                        Class noneStorage Declaration
+\*---------------------------------------------------------------------------*/
+
+class noneStorage
+:
+    public primalStorage
+{
+private:
+
+    // Private Member Functions
+
+        //- Disallow default bitwise copy construct
+        noneStorage(const noneStorage&) = delete;
+
+        //- Disallow default bitwise assignment
+        void operator=(const noneStorage&) = delete;
+
+
+public:
+
+    TypeName("none");
+
+    // Declare run-time constructor selection table
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            noneStorage,
+            dictionary,
+            (
+                primalSolver& primalSolverObj,
+                const dictionary storageDict
+            ),
+            (primalSolverObj, storageDict)
+        );
+
+
+    // Constructors
+
+        //- Construct from components
+        noneStorage
+        (
+            primalSolver& primalSolverObj,
+            const dictionary storageDict
+        );
+
+
+    // Selectors
+
+        //- Return a reference to the selected turbulence model
+        static autoPtr<noneStorage> New
+        (
+            primalSolver& primalSolverObj,
+            const dictionary storageDict
+        );
+
+
+    //- Destructor
+    virtual ~noneStorage() = default;
+
+
+    // Member functions
+
+        virtual void scratch() override;
+
+        virtual void storeVariables() override;
+
+        virtual void retrieveVariables() override;
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //
