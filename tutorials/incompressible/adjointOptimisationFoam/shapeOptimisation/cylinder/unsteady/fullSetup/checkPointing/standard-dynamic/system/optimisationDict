@@ -1,0 +1,120 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      optimisationDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+optimisationManager unsteadyOptimisation;
+
+primalSolvers
+{
+    p1
+    {
+        active              true;
+        type                incompressible;
+        solver              piso;
+        solutionControls
+        {
+            nCorrectors                 6;
+            nNonOrthogonalCorrectors    0;
+            pRefCell                    0;
+            pRefValue                   0;
+        }
+        storage
+        {
+            type binomialCheckPointing;
+            storageParameters
+            {
+                algorithm       short;
+                // Each checkPoint stores both the flow fields of the
+                // corresponding time-step and the oldTimes of the fields
+                nCheckPoints    300;
+            }
+        }
+    }
+}
+
+adjointManagers
+{
+    am1
+    {
+        primalSolver    p1;
+        adjointSolvers
+        {
+            as1
+            {
+                active                  true;
+                type                    incompressible;
+                solver                  adjointPiso;
+                computeSensitivities    true;
+                useSolverNameForFields  false;
+                objectives
+                {
+                    type            incompressible;
+                    objectiveNames
+                    {
+                        force
+                        {
+                            weight                  1;
+                            type                    force;
+                            patches                 ( cylinder );
+                            direction               ( 1 0 0 );
+                            Aref                    0.0001;
+                            rhoInf                  1.225;
+                            UInf                    0.09;
+                            integrationStartTime    1.364;
+                            integrationEndTime      2.046;
+                        }
+                    }
+                }
+                ATCModel
+                {
+                    ATCModel        standard;
+                }
+                solutionControls
+                {
+                    printMaxMags                true;
+                    nCorrectors                 6;
+                    nNonOrthogonalCorrectors    0;
+                    pRefCell                    0;
+                    pRefValue                   0;
+                }
+            }
+        }
+    }
+}
+
+optimisation
+{
+    optimisationType
+    {
+        type             shapeOptimisation;
+        writeEachMesh    true;
+    }
+    sensitivities
+    {
+        type            volumetricBSplinesFI;
+        patches         (cylinder);
+    }
+    updateMethod
+    {
+        method          steepestDescent;
+    }
+    meshMovement
+    {
+        type                   volumetricBSplines;
+        maxAllowedDisplacement 1.e-3;
+    }
+}
+
+// ************************************************************************* //

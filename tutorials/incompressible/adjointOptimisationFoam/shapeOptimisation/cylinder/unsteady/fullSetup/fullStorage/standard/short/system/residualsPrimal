@@ -1,0 +1,8 @@
+residualsPrimal
+{
+    type    solverInfo;
+    libs    ("libutilityFunctionObjects");
+    fields  ("U.*" "p.*");
+    writeResidualFields no;
+    writeControl    outputTime;
+}

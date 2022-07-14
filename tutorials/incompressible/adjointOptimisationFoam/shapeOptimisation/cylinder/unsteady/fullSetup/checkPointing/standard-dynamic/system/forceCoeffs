@@ -1,0 +1,24 @@
+forceCoeffs
+{
+    type              forceCoeffs;
+    libs              (forces);
+    writeControl      writeTime;
+
+    patches (cylinder);
+
+    rho   rhoInf;
+    rhoInf    1;
+
+    pName       "p.*";
+    UName       "U.*";
+    rhoName     rhoInf;
+    log         false;
+    rhoInf      1.225;
+    CofR        ( 0 0 0 );
+    liftDir     ( 0. 1. 0.);
+    dragDir     ( 1. 0. 0.);
+    pitchAxis   ( 0 0 1 );
+    magUInf     0.090;
+    lRef        1;
+    Aref        0.0001;
+}

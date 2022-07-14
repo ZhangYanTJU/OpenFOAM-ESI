@@ -1,0 +1,57 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application         potentialFoam;
+
+startFrom           latestTime;
+
+startTime           0;
+
+stopAt              endTime;
+
+endTime             2.046;
+
+nOptimisationCycles 4;
+
+deltaT              1.e-3;
+
+writeControl        timeStep;
+
+// Intentionally high to get results to files only at the end of each
+// optimisation cycle
+writeInterval       50000000;
+
+purgeWrite          0;
+
+writeFormat         ascii;
+
+writePrecision      16;
+
+writeCompression    yes;
+
+timeFormat          general;
+
+timePrecision       6;
+
+runTimeModifiable   yes;
+
+adjustTimeStep      no;
+
+maxCo          0.7;
+
+maxDeltaT      1.0;
+
+// ************************************************************************* //

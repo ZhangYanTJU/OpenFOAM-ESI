@@ -1,0 +1,23 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+resourcesDir=$FOAM_TUTORIALS/incompressible/adjointOptimisationFoam/resources
+
+cp -rf $resourcesDir/setup/cylinderUnsteady/0 .
+
+runApplication blockMesh
+
+runApplication mirrorMesh -overwrite
+
+# Remove empty patch after mirroring
+foamDictionary constant/polyMesh/boundary -entry entry0.down -remove
+
+runApplication transformPoints -scale 0.01
+
+runApplication decomposePar
+
+runParallel adjointOptimisationFoam 
+
+#------------------------------------------------------------------------------

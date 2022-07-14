@@ -1,0 +1,9 @@
+residualsAdjoint
+{
+    timeStart 5001;
+    type    solverInfo;
+    libs    ("libutilityFunctionObjects");
+    fields  ("Ua.*" "pa.*");
+    writeResidualFields no;
+    writeControl    outputTime;
+}
