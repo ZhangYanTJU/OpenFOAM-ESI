@@ -35,7 +35,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(departureDiameterModel, 0);
-        defineRunTimeSelectionTable(departureDiameterModel, dictionary);
+        defineRunTimeSelectionTable(departureDiameterModel, reactingEuler);
     }
 }
 
@@ -52,7 +52,7 @@ Foam::wallBoilingModels::departureDiameterModel::New
 
     Info<< "Selecting departureDiameterModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -61,7 +61,7 @@ Foam::wallBoilingModels::departureDiameterModel::New
             dict,
             "departureDiameterModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

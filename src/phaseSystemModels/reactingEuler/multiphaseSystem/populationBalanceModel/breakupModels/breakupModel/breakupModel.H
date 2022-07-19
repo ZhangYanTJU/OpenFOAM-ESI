@@ -81,7 +81,7 @@ public:
         (
             autoPtr,
             breakupModel,
-            dictionary,
+            reactingEuler,
             (
                 const populationBalanceModel& popBal,
                 const dictionary& dict

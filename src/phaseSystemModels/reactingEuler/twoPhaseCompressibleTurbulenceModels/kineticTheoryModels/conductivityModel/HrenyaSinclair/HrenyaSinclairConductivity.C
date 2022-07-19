@@ -43,7 +43,7 @@ namespace conductivityModels
     (
         conductivityModel,
         HrenyaSinclair,
-        dictionary
+        reactingEuler
     );
 }
 }

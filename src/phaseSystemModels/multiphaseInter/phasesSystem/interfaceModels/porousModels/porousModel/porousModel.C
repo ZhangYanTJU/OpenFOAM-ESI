@@ -33,7 +33,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(porousModel, 0);
-    defineRunTimeSelectionTable(porousModel, dictionary);
+    defineRunTimeSelectionTable(porousModel, multiphaseInter);
 }
 
 
@@ -74,7 +74,7 @@ Foam::porousModel::New
     Info<< "Selecting porousModel for "
         <<  ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = multiphaseInterConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -83,7 +83,7 @@ Foam::porousModel::New
             dict,
             "porousModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *multiphaseInterConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

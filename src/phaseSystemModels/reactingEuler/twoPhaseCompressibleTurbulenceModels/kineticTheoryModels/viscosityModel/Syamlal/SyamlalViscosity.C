@@ -38,7 +38,7 @@ namespace kineticTheoryModels
 namespace viscosityModels
 {
     defineTypeNameAndDebug(Syamlal, 0);
-    addToRunTimeSelectionTable(viscosityModel, Syamlal, dictionary);
+    addToRunTimeSelectionTable(viscosityModel, Syamlal, reactingEuler);
 }
 }
 }

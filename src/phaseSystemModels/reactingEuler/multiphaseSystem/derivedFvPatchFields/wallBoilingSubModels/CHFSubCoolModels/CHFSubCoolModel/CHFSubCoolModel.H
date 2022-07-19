@@ -68,7 +68,7 @@ public:
     (
         autoPtr,
         CHFSubCoolModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

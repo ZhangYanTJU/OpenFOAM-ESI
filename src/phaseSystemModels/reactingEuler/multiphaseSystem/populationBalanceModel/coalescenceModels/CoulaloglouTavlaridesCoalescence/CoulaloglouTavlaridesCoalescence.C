@@ -43,7 +43,7 @@ namespace coalescenceModels
     (
         coalescenceModel,
         CoulaloglouTavlaridesCoalescence,
-        dictionary
+        reactingEuler
     );
 }
 }

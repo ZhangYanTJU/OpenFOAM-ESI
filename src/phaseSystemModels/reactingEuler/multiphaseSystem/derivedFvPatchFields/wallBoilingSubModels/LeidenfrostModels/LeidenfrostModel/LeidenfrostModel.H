@@ -67,7 +67,7 @@ public:
     (
         autoPtr,
         LeidenfrostModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

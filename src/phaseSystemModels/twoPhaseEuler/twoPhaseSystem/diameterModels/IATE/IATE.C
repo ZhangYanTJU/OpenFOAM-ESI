@@ -51,7 +51,7 @@ namespace diameterModels
     (
         diameterModel,
         IATE,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

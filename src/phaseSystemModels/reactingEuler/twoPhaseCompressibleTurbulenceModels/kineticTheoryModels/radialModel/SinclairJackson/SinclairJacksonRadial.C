@@ -42,7 +42,7 @@ namespace radialModels
     (
         radialModel,
         SinclairJackson,
-        dictionary
+        reactingEuler
     );
 }
 }

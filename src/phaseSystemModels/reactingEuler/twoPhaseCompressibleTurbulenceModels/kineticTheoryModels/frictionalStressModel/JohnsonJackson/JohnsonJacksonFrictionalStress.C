@@ -44,7 +44,7 @@ namespace frictionalStressModels
     (
         frictionalStressModel,
         JohnsonJackson,
-        dictionary
+        reactingEuler
     );
 }
 }

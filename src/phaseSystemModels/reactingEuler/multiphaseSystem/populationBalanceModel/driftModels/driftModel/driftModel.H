@@ -72,7 +72,7 @@ public:
         (
             autoPtr,
             driftModel,
-            dictionary,
+            reactingEuler,
             (
                 const populationBalanceModel& popBal,
                 const dictionary& dict

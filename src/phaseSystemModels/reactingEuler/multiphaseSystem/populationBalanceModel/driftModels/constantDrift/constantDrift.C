@@ -38,7 +38,7 @@ namespace diameterModels
 namespace driftModels
 {
     defineTypeNameAndDebug(constantDrift, 0);
-    addToRunTimeSelectionTable(driftModel, constantDrift, dictionary);
+    addToRunTimeSelectionTable(driftModel, constantDrift, reactingEuler);
 }
 }
 }

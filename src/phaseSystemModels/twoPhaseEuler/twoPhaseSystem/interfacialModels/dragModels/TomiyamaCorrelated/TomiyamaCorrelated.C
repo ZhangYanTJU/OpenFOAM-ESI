@@ -36,7 +36,7 @@ namespace Foam
 namespace dragModels
 {
     defineTypeNameAndDebug(TomiyamaCorrelated, 0);
-    addToRunTimeSelectionTable(dragModel, TomiyamaCorrelated, dictionary);
+    addToRunTimeSelectionTable(dragModel, TomiyamaCorrelated, twoPhaseEuler);
 }
 }
 

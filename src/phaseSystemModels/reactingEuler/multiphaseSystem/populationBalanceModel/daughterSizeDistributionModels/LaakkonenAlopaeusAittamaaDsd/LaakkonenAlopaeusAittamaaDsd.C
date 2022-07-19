@@ -42,7 +42,7 @@ namespace daughterSizeDistributionModels
     (
         daughterSizeDistributionModel,
         LaakkonenAlopaeusAittamaaDsd,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -34,7 +34,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(filmBoilingModel, 0);
-        defineRunTimeSelectionTable(filmBoilingModel, dictionary);
+        defineRunTimeSelectionTable(filmBoilingModel, reactingEuler);
     }
 }
 
@@ -51,7 +51,7 @@ Foam::wallBoilingModels::filmBoilingModel::New
 
     Info<< "Selecting filmBoilingModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -60,7 +60,7 @@ Foam::wallBoilingModels::filmBoilingModel::New
             dict,
             "filmBoilingModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

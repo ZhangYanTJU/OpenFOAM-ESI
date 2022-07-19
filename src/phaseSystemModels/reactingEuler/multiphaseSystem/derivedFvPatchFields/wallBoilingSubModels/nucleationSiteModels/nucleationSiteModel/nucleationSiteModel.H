@@ -69,7 +69,7 @@ public:
     (
         autoPtr,
         nucleationSiteModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

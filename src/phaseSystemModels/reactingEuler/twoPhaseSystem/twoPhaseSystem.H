@@ -96,7 +96,7 @@ public:
         (
             autoPtr,
             twoPhaseSystem,
-            dictionary,
+            reactingEuler,
             (
                 const fvMesh& mesh
             ),

@@ -40,7 +40,7 @@ namespace virtualMassModels
     (
         virtualMassModel,
         constantVirtualMassCoefficient,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

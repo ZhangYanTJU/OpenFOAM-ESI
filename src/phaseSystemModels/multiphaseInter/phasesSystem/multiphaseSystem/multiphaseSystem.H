@@ -106,7 +106,7 @@ public:
         (
             autoPtr,
             multiphaseSystem,
-            dictionary,
+            multiphaseInter,
             (
                 const fvMesh& mesh
             ),

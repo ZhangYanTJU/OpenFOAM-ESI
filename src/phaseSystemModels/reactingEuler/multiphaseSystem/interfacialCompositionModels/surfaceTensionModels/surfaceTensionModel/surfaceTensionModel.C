@@ -36,7 +36,7 @@ namespace Foam
 namespace reactingMultiphaseEuler
 {
     defineTypeNameAndDebug(surfaceTensionModel, 0);
-    defineRunTimeSelectionTable(surfaceTensionModel, dictionary);
+    defineRunTimeSelectionTable(surfaceTensionModel, reactingEuler);
 }
 }
 
@@ -83,7 +83,7 @@ Foam::reactingMultiphaseEuler::surfaceTensionModel::New
     Info<< "Selecting surfaceTensionModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -92,7 +92,7 @@ Foam::reactingMultiphaseEuler::surfaceTensionModel::New
             dict,
             "surfaceTensionModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

@@ -41,7 +41,7 @@ namespace TDNBModels
     (
         TDNBModel,
         Shirai,
-        dictionary
+        reactingEuler
     );
 }
 }

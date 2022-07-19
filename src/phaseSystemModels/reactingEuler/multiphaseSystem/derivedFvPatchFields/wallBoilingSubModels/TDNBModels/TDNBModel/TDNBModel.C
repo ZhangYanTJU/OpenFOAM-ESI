@@ -34,7 +34,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(TDNBModel, 0);
-        defineRunTimeSelectionTable(TDNBModel, dictionary);
+        defineRunTimeSelectionTable(TDNBModel, reactingEuler);
     }
 }
 
@@ -51,7 +51,7 @@ Foam::wallBoilingModels::TDNBModel::New
 
     Info<< "Selecting TDNBModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -60,7 +60,7 @@ Foam::wallBoilingModels::TDNBModel::New
             dict,
             "TDNBModelType",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

@@ -65,7 +65,7 @@ public:
     (
         autoPtr,
         nucleateFluxModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

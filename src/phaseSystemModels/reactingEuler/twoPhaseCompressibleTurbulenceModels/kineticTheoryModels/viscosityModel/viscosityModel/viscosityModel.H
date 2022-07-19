@@ -72,7 +72,7 @@ public:
     (
         autoPtr,
         viscosityModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

@@ -36,7 +36,7 @@ namespace Foam
 namespace liftModels
 {
     defineTypeNameAndDebug(constantLiftCoefficient, 0);
-    addToRunTimeSelectionTable(liftModel, constantLiftCoefficient, dictionary);
+    addToRunTimeSelectionTable(liftModel, constantLiftCoefficient, twoPhaseEuler);
 }
 }
 

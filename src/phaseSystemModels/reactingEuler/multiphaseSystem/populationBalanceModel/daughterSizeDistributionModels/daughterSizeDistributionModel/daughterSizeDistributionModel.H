@@ -78,7 +78,7 @@ public:
         (
             autoPtr,
             daughterSizeDistributionModel,
-            dictionary,
+            reactingEuler,
             (
                 const breakupModel& breakup,
                 const dictionary& dict

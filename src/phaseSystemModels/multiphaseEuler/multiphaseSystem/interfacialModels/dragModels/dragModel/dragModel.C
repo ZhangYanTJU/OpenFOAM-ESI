@@ -35,7 +35,7 @@ namespace Foam
 namespace multiphaseEuler
 {
     defineTypeNameAndDebug(dragModel, 0);
-    defineRunTimeSelectionTable(dragModel, dictionary);
+    defineRunTimeSelectionTable(dragModel, multiphaseEuler);
 }
 }
 
@@ -74,7 +74,7 @@ Foam::multiphaseEuler::dragModel::New
         << ": "
         << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = multiphaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -83,7 +83,7 @@ Foam::multiphaseEuler::dragModel::New
             dict,
             "dragModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *multiphaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

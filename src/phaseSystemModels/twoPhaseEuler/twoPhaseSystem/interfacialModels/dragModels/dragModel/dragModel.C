@@ -36,7 +36,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(dragModel, 0);
-    defineRunTimeSelectionTable(dragModel, dictionary);
+    defineRunTimeSelectionTable(dragModel, twoPhaseEuler);
 }
 
 const Foam::dimensionSet Foam::dragModel::dimK(1, -3, -1, 0, 0);
@@ -111,7 +111,7 @@ Foam::dragModel::New
     Info<< "Selecting dragModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -120,7 +120,7 @@ Foam::dragModel::New
             dict,
             "dragModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

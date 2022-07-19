@@ -34,7 +34,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(MHFModel, 0);
-        defineRunTimeSelectionTable(MHFModel, dictionary);
+        defineRunTimeSelectionTable(MHFModel, reactingEuler);
     }
 }
 
@@ -51,7 +51,7 @@ Foam::wallBoilingModels::MHFModel::New
 
     Info<< "Selecting MHFModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -60,7 +60,7 @@ Foam::wallBoilingModels::MHFModel::New
             dict,
             "MHFModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

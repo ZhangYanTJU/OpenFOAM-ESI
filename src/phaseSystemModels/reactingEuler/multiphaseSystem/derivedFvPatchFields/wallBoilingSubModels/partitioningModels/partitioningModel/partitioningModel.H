@@ -66,7 +66,7 @@ public:
     (
         autoPtr,
         partitioningModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

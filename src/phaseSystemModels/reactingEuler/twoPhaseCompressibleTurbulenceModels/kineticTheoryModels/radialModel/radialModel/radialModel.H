@@ -70,7 +70,7 @@ public:
     (
         autoPtr,
         radialModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

@@ -40,7 +40,7 @@ namespace wallLubricationModels
     (
         wallLubricationModel,
         TomiyamaWallLubrication,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

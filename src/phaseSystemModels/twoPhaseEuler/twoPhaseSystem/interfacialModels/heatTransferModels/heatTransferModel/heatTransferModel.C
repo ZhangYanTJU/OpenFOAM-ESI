@@ -34,7 +34,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(heatTransferModel, 0);
-    defineRunTimeSelectionTable(heatTransferModel, dictionary);
+    defineRunTimeSelectionTable(heatTransferModel, twoPhaseEuler);
 }
 
 const Foam::dimensionSet Foam::heatTransferModel::dimK(1, -1, -3, -1, 0);
@@ -73,7 +73,7 @@ Foam::heatTransferModel::New
     Info<< "Selecting heatTransferModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -82,7 +82,7 @@ Foam::heatTransferModel::New
             dict,
             "heatTransferModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

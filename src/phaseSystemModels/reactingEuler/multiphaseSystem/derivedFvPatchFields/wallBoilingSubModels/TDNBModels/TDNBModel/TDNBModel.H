@@ -67,7 +67,7 @@ public:
     (
         autoPtr,
         TDNBModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

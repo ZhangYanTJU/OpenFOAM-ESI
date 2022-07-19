@@ -39,7 +39,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(liftModel, 0);
     defineBlendedInterfacialModelTypeNameAndDebug(liftModel, 0);
-    defineRunTimeSelectionTable(liftModel, dictionary);
+    defineRunTimeSelectionTable(liftModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::liftModel::dimF(1, -2, -2, 0, 0);
@@ -71,7 +71,7 @@ Foam::liftModel::New
     Info<< "Selecting liftModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -80,7 +80,7 @@ Foam::liftModel::New
             dict,
             "liftModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

@@ -44,7 +44,7 @@ namespace CHFModels
     (
         MHFModel,
         Jeschar,
-        dictionary
+        reactingEuler
     );
 }
 }

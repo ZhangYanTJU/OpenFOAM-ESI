@@ -40,7 +40,7 @@ namespace porousModels
     (
         porousModel,
         VollerPrakash,
-        dictionary
+        multiphaseInter
     );
 }
 }

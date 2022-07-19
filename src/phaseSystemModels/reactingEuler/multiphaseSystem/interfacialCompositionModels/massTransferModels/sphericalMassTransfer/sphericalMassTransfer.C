@@ -40,7 +40,7 @@ namespace massTransferModels
     (
         massTransferModel,
         sphericalMassTransfer,
-        dictionary
+        reactingEuler
     );
 }
 }

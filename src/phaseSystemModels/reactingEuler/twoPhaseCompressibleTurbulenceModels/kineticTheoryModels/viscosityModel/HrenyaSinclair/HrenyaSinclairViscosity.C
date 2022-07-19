@@ -43,7 +43,7 @@ namespace viscosityModels
     (
         viscosityModel,
         HrenyaSinclair,
-        dictionary
+        reactingEuler
     );
 }
 }

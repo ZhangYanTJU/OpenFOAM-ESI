@@ -67,7 +67,7 @@ public:
     (
         autoPtr,
         filmBoilingModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

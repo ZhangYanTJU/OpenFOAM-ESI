@@ -35,7 +35,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(departureFrequencyModel, 0);
-        defineRunTimeSelectionTable(departureFrequencyModel, dictionary);
+        defineRunTimeSelectionTable(departureFrequencyModel, reactingEuler);
     }
 }
 
@@ -52,7 +52,7 @@ Foam::wallBoilingModels::departureFrequencyModel::New
 
     Info<< "Selecting departureFrequencyModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -61,7 +61,7 @@ Foam::wallBoilingModels::departureFrequencyModel::New
             dict,
             "departureFrequencyModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

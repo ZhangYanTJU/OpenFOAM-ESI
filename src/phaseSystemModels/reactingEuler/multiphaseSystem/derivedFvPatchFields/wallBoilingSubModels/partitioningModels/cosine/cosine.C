@@ -42,7 +42,7 @@ namespace partitioningModels
     (
         partitioningModel,
         cosine,
-        dictionary
+        reactingEuler
     );
 }
 }

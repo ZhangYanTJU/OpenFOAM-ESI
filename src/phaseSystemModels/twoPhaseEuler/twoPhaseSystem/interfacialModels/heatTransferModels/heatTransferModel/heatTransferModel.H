@@ -78,7 +78,7 @@ public:
         (
             autoPtr,
             heatTransferModel,
-            dictionary,
+            twoPhaseEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair

@@ -35,7 +35,7 @@ namespace Foam
 namespace multiphaseInter
 {
     defineTypeNameAndDebug(surfaceTensionModel, 0);
-    defineRunTimeSelectionTable(surfaceTensionModel, dictionary);
+    defineRunTimeSelectionTable(surfaceTensionModel, multiphaseInter);
 }
 }
 
@@ -79,7 +79,7 @@ Foam::multiphaseInter::surfaceTensionModel::New
     Info<< "Selecting surfaceTensionModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = multiphaseInterConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -88,7 +88,7 @@ Foam::multiphaseInter::surfaceTensionModel::New
             dict,
             "surfaceTensionModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *multiphaseInterConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

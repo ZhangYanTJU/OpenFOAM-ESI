@@ -68,7 +68,7 @@ public:
     (
         autoPtr,
         CHFModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

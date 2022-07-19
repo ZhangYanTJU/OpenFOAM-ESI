@@ -35,7 +35,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(interfaceCompositionModel, 0);
-    defineRunTimeSelectionTable(interfaceCompositionModel, dictionary);
+    defineRunTimeSelectionTable(interfaceCompositionModel, reactingEuler);
 }
 
 
@@ -74,7 +74,7 @@ Foam::interfaceCompositionModel::New
     Info<< "Selecting interfaceCompositionModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -83,7 +83,7 @@ Foam::interfaceCompositionModel::New
             dict,
             "interfaceCompositionModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

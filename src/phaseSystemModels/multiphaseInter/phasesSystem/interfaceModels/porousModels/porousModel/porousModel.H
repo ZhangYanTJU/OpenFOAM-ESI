@@ -75,7 +75,7 @@ public:
     (
         autoPtr,
         porousModel,
-        dictionary,
+        multiphaseInter,
         (
             const dictionary& dict,
             const fvMesh& mesh

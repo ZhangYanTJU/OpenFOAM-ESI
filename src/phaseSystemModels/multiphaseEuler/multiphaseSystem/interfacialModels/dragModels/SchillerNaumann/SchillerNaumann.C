@@ -43,7 +43,7 @@ namespace dragModels
     (
         dragModel,
         SchillerNaumann,
-        dictionary
+        multiphaseEuler
     );
 }
 }

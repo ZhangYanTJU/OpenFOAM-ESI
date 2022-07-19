@@ -46,7 +46,7 @@ namespace coalescenceModels
     (
         coalescenceModel,
         Luo,
-        dictionary
+        reactingEuler
     );
 }
 }

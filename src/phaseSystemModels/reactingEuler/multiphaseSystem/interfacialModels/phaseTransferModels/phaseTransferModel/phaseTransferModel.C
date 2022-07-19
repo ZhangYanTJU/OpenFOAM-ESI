@@ -36,7 +36,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(phaseTransferModel, 0);
     defineBlendedInterfacialModelTypeNameAndDebug(phaseTransferModel, 0);
-    defineRunTimeSelectionTable(phaseTransferModel, dictionary);
+    defineRunTimeSelectionTable(phaseTransferModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::phaseTransferModel::dimDmdt =
@@ -69,7 +69,7 @@ Foam::phaseTransferModel::New
     Info<< "Selecting phaseTransferModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -78,7 +78,7 @@ Foam::phaseTransferModel::New
             dict,
             "phaseTransferModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

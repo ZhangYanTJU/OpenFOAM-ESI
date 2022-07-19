@@ -36,7 +36,7 @@ namespace kineticTheoryModels
 {
     defineTypeNameAndDebug(granularPressureModel, 0);
 
-    defineRunTimeSelectionTable(granularPressureModel, dictionary);
+    defineRunTimeSelectionTable(granularPressureModel, twoPhaseEuler);
 }
 }
 
@@ -64,7 +64,7 @@ Foam::kineticTheoryModels::granularPressureModel::New
 
     Info<< "Selecting granularPressureModel " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -73,7 +73,7 @@ Foam::kineticTheoryModels::granularPressureModel::New
             dict,
             "granularPressureModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

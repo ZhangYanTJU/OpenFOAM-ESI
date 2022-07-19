@@ -38,7 +38,7 @@ namespace Foam
 namespace phaseTransferModels
 {
     defineTypeNameAndDebug(deposition, 0);
-    addToRunTimeSelectionTable(phaseTransferModel, deposition, dictionary);
+    addToRunTimeSelectionTable(phaseTransferModel, deposition, reactingEuler);
 }
 }
 

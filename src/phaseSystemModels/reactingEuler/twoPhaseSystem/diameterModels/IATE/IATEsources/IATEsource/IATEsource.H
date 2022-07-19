@@ -77,7 +77,7 @@ public:
         (
             autoPtr,
             IATEsource,
-            dictionary,
+            reactingEuler,
             (
                 const IATE& iate,
                 const dictionary& dict

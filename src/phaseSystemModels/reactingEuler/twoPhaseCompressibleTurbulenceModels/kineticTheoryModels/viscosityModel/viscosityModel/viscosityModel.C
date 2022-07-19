@@ -35,7 +35,7 @@ namespace Foam
 namespace kineticTheoryModels
 {
     defineTypeNameAndDebug(viscosityModel, 0);
-    defineRunTimeSelectionTable(viscosityModel, dictionary);
+    defineRunTimeSelectionTable(viscosityModel, reactingEuler);
 }
 }
 
@@ -63,7 +63,7 @@ Foam::kineticTheoryModels::viscosityModel::New
 
     Info<< "Selecting viscosityModel " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -72,7 +72,7 @@ Foam::kineticTheoryModels::viscosityModel::New
             dict,
             "viscosityModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

@@ -33,7 +33,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(blendingMethod, 0);
-    defineRunTimeSelectionTable(blendingMethod, dictionary);
+    defineRunTimeSelectionTable(blendingMethod, twoPhaseEuler);
 }
 
 
@@ -60,7 +60,7 @@ Foam::blendingMethod::New
     Info<< "Selecting " << dict.dictName() << " blending method: "
         << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -69,7 +69,7 @@ Foam::blendingMethod::New
             dict,
             "blendingMethod",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

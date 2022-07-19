@@ -40,7 +40,7 @@ namespace swarmCorrections
     (
         swarmCorrection,
         TomiyamaSwarm,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

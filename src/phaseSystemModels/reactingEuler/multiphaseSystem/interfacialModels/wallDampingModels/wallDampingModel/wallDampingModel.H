@@ -78,7 +78,7 @@ public:
         (
             autoPtr,
             wallDampingModel,
-            dictionary,
+            reactingEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair

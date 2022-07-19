@@ -42,7 +42,7 @@ namespace radialModels
     (
         radialModel,
         CarnahanStarling,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

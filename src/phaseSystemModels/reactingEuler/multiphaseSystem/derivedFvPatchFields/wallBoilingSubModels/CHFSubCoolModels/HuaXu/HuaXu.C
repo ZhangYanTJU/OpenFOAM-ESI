@@ -44,7 +44,7 @@ namespace CHFModels
     (
         CHFSubCoolModel,
         HuaXu,
-        dictionary
+        reactingEuler
     );
 }
 }

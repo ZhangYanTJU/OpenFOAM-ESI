@@ -36,7 +36,7 @@ namespace Foam
 namespace dragModels
 {
     defineTypeNameAndDebug(Lain, 0);
-    addToRunTimeSelectionTable(dragModel, Lain, dictionary);
+    addToRunTimeSelectionTable(dragModel, Lain, twoPhaseEuler);
 }
 }
 

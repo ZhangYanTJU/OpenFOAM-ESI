@@ -44,7 +44,7 @@ namespace coalescenceModels
     (
         coalescenceModel,
         LehrMilliesMewesCoalescence,
-        dictionary
+        reactingEuler
     );
 }
 }

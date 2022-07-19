@@ -43,7 +43,7 @@ namespace turbulentDispersionModels
     (
         turbulentDispersionModel,
         Gosman,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

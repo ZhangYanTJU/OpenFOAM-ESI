@@ -113,7 +113,7 @@ public:
         (
             autoPtr,
             interfaceCompositionModel,
-            dictionary,
+            multiphaseInter,
             (
                 const dictionary& dict,
                 const phasePair& pair

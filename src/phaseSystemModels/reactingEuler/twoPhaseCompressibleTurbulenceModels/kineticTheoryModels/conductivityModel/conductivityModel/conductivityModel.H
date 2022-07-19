@@ -70,7 +70,7 @@ public:
     (
         autoPtr,
         conductivityModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

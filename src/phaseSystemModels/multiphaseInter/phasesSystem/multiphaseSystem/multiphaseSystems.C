@@ -43,7 +43,7 @@ namespace Foam
     (
         multiphaseSystem,
         massTransferMultiphaseSystem,
-        dictionary,
+        multiphaseInter,
         massTransferMultiphaseSystem
     );
 

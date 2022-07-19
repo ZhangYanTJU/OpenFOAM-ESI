@@ -76,7 +76,7 @@ public:
         (
             autoPtr,
             IATEsource,
-            dictionary,
+            twoPhaseEuler,
             (
                 const IATE& iate,
                 const dictionary& dict

@@ -42,7 +42,7 @@ namespace partitioningModels
     (
         partitioningModel,
         linear,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -39,7 +39,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(wallLubricationModel, 0);
     defineBlendedInterfacialModelTypeNameAndDebug(wallLubricationModel, 0);
-    defineRunTimeSelectionTable(wallLubricationModel, dictionary);
+    defineRunTimeSelectionTable(wallLubricationModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::wallLubricationModel::dimF(1, -2, -2, 0, 0);
@@ -97,7 +97,7 @@ Foam::wallLubricationModel::New
     Info<< "Selecting wallLubricationModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -106,7 +106,7 @@ Foam::wallLubricationModel::New
             dict,
             "wallLubricationModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

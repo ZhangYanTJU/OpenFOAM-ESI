@@ -42,7 +42,7 @@ namespace daughterSizeDistributionModels
     (
         daughterSizeDistributionModel,
         uniformBinary,
-        dictionary
+        reactingEuler
     );
 }
 }

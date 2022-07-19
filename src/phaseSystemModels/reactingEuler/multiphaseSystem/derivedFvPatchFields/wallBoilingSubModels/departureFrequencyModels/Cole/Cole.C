@@ -46,7 +46,7 @@ namespace departureFrequencyModels
     (
         departureFrequencyModel,
         Cole,
-        dictionary
+        reactingEuler
     );
 }
 }

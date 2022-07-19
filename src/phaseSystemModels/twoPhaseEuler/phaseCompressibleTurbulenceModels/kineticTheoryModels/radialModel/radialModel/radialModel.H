@@ -70,7 +70,7 @@ public:
     (
         autoPtr,
         radialModel,
-        dictionary,
+        twoPhaseEuler,
         (
             const dictionary& dict
         ),

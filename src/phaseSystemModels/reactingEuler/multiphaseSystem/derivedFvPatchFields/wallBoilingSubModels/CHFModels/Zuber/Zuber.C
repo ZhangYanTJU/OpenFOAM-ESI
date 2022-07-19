@@ -44,7 +44,7 @@ namespace CHFModels
     (
         CHFModel,
         Zuber,
-        dictionary
+        reactingEuler
     );
 }
 }

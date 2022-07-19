@@ -35,7 +35,7 @@ namespace Foam
 namespace kineticTheoryModels
 {
     defineTypeNameAndDebug(conductivityModel, 0);
-    defineRunTimeSelectionTable(conductivityModel, dictionary);
+    defineRunTimeSelectionTable(conductivityModel, reactingEuler);
 }
 }
 
@@ -63,7 +63,7 @@ Foam::kineticTheoryModels::conductivityModel::New
 
     Info<< "Selecting conductivityModel " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -72,7 +72,7 @@ Foam::kineticTheoryModels::conductivityModel::New
             dict,
             "conductivityModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

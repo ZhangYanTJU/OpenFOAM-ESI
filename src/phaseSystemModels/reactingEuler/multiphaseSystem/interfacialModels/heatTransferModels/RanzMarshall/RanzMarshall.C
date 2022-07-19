@@ -36,7 +36,7 @@ namespace Foam
 namespace heatTransferModels
 {
     defineTypeNameAndDebug(RanzMarshall, 0);
-    addToRunTimeSelectionTable(heatTransferModel, RanzMarshall, dictionary);
+    addToRunTimeSelectionTable(heatTransferModel, RanzMarshall, reactingEuler);
 }
 }
 

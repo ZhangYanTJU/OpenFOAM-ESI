@@ -35,7 +35,7 @@ namespace Foam
 namespace diameterModels
 {
     defineTypeNameAndDebug(coalescenceModel, 0);
-    defineRunTimeSelectionTable(coalescenceModel, dictionary);
+    defineRunTimeSelectionTable(coalescenceModel, reactingEuler);
 }
 }
 
@@ -50,7 +50,7 @@ Foam::diameterModels::coalescenceModel::New
     const dictionary& dict
 )
 {
-    auto* ctorPtr = dictionaryConstructorTable(type);
+    auto* ctorPtr = reactingEulerConstructorTable(type);
 
     if (!ctorPtr)
     {
@@ -59,7 +59,7 @@ Foam::diameterModels::coalescenceModel::New
             dict,
             "coalescenceModel",
             type,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

@@ -40,7 +40,7 @@ namespace wallLubricationModels
     (
         wallLubricationModel,
         Frank,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

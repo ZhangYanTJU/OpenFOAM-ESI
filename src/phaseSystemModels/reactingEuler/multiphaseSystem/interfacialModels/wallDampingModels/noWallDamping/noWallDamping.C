@@ -40,7 +40,7 @@ namespace wallDampingModels
     (
         wallDampingModel,
         noWallDamping,
-        dictionary
+        reactingEuler
     );
 }
 }

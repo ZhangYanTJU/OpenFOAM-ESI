@@ -40,7 +40,7 @@ namespace heatTransferModels
     (
         heatTransferModel,
         constantNuHeatTransfer,
-        dictionary
+        reactingEuler
     );
 }
 }

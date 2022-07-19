@@ -35,7 +35,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(partitioningModel, 0);
-        defineRunTimeSelectionTable(partitioningModel, dictionary);
+        defineRunTimeSelectionTable(partitioningModel, reactingEuler);
     }
 }
 
@@ -53,7 +53,7 @@ Foam::wallBoilingModels::partitioningModel::New
     Info<< "Selecting partitioningModel: "
         << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -62,7 +62,7 @@ Foam::wallBoilingModels::partitioningModel::New
             dict,
             "partitioningModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

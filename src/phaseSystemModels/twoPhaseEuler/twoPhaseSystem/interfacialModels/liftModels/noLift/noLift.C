@@ -36,7 +36,7 @@ namespace Foam
 namespace liftModels
 {
     defineTypeNameAndDebug(noLift, 0);
-    addToRunTimeSelectionTable(liftModel, noLift, dictionary);
+    addToRunTimeSelectionTable(liftModel, noLift, twoPhaseEuler);
 }
 }
 

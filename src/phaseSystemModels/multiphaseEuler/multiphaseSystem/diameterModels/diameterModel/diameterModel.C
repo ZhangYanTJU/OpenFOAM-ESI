@@ -35,7 +35,7 @@ namespace Foam
 namespace multiphaseEuler
 {
     defineTypeNameAndDebug(diameterModel, 0);
-    defineRunTimeSelectionTable(diameterModel, dictionary);
+    defineRunTimeSelectionTable(diameterModel, multiphaseEuler);
 }
 }
 
@@ -69,7 +69,7 @@ Foam::multiphaseEuler::diameterModel::New
         << ": "
         << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = multiphaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -78,7 +78,7 @@ Foam::multiphaseEuler::diameterModel::New
             dict,
             "diameterModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *multiphaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

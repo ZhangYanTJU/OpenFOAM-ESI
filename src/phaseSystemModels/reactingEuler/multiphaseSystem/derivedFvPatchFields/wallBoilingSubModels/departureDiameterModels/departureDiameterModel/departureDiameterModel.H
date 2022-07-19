@@ -68,7 +68,7 @@ public:
     (
         autoPtr,
         departureDiameterModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

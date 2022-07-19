@@ -269,7 +269,7 @@ public:
     (                                                                          \
         interfaceCompositionModel,                                             \
         Type##Thermo##OtherThermo,                                             \
-        dictionary                                                             \
+        multiphaseInter                                                        \
     )
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

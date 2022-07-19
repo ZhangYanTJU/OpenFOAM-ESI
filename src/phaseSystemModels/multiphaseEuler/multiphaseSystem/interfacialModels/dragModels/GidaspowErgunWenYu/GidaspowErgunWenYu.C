@@ -43,7 +43,7 @@ namespace dragModels
     (
         dragModel,
         GidaspowErgunWenYu,
-        dictionary
+        multiphaseEuler
     );
 }
 }

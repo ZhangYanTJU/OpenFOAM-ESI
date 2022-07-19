@@ -36,7 +36,7 @@ namespace Foam
 namespace swarmCorrections
 {
     defineTypeNameAndDebug(noSwarm, 0);
-    addToRunTimeSelectionTable(swarmCorrection, noSwarm, dictionary);
+    addToRunTimeSelectionTable(swarmCorrection, noSwarm, reactingEuler);
 }
 }
 

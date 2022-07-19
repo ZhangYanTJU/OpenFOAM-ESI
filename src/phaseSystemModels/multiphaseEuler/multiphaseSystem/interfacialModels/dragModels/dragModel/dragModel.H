@@ -76,7 +76,7 @@ public:
         (
             autoPtr,
             dragModel,
-            dictionary,
+            multiphaseEuler,
             (
                 const dictionary& interfaceDict,
                 const phaseModel& phase1,

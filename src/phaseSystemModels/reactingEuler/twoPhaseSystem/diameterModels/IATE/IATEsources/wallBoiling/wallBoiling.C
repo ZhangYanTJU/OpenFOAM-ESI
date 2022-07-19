@@ -40,7 +40,7 @@ namespace diameterModels
 namespace IATEsources
 {
     defineTypeNameAndDebug(wallBoiling, 0);
-    addToRunTimeSelectionTable(IATEsource, wallBoiling, dictionary);
+    addToRunTimeSelectionTable(IATEsource, wallBoiling, reactingEuler);
 }
 }
 }

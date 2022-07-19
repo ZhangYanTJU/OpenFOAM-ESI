@@ -40,7 +40,7 @@ namespace wallLubricationModels
     (
         wallLubricationModel,
         noWallLubrication,
-        dictionary
+        reactingEuler
     );
 }
 }

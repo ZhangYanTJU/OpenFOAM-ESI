@@ -42,7 +42,7 @@ namespace surfaceTensionModels
     (
         surfaceTensionModel,
         constantSurfaceTensionCoefficient,
-        dictionary
+        multiphaseInter
     );
 }
 }

@@ -42,7 +42,7 @@ namespace nucleationModels
     (
         nucleationModel,
         constantNucleation,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -77,7 +77,7 @@ public:
         (
             autoPtr,
             heatTransferModel,
-            dictionary,
+            multiphaseEuler,
             (
                 const dictionary& dict,
                 const volScalarField& alpha1,

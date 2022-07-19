@@ -36,7 +36,7 @@ namespace Foam
 namespace liftModels
 {
     defineTypeNameAndDebug(wallDamped, 0);
-    addToRunTimeSelectionTable(liftModel, wallDamped, dictionary);
+    addToRunTimeSelectionTable(liftModel, wallDamped, reactingEuler);
 }
 }
 

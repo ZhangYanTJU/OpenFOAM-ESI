@@ -40,7 +40,7 @@ namespace blendingMethods
     (
         blendingMethod,
         linear,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

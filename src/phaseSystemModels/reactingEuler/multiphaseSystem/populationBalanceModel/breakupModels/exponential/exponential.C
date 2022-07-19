@@ -38,7 +38,7 @@ namespace diameterModels
 namespace breakupModels
 {
     defineTypeNameAndDebug(exponential, 0);
-    addToRunTimeSelectionTable(breakupModel, exponential, dictionary);
+    addToRunTimeSelectionTable(breakupModel, exponential, reactingEuler);
 }
 }
 }

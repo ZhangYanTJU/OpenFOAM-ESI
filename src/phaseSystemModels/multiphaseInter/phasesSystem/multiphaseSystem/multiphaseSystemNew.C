@@ -52,7 +52,7 @@ Foam::multiphaseInter::multiphaseSystem::New
 
     Info<< "Selecting multiphaseSystem " << systemType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(systemType);
+    auto* ctorPtr = multiphaseInterConstructorTable(systemType);
 
     if (!ctorPtr)
     {
@@ -61,7 +61,7 @@ Foam::multiphaseInter::multiphaseSystem::New
             dict,
             "multiphaseSystem",
             systemType,
-            *dictionaryConstructorTablePtr_
+            *multiphaseInterConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

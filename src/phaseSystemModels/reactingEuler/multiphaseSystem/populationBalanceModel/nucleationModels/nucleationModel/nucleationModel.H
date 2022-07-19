@@ -72,7 +72,7 @@ public:
         (
             autoPtr,
             nucleationModel,
-            dictionary,
+            reactingEuler,
             (
                 const populationBalanceModel& popBal,
                 const dictionary& dict

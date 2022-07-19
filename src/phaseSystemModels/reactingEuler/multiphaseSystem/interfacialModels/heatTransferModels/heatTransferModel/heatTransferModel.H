@@ -78,7 +78,7 @@ public:
         (
             autoPtr,
             heatTransferModel,
-            dictionary,
+            reactingEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair

@@ -72,7 +72,7 @@ public:
     (
         autoPtr,
         frictionalStressModel,
-        dictionary,
+        twoPhaseEuler,
         (
             const dictionary& dict
         ),
