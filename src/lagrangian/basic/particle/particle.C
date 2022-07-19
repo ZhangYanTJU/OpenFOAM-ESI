@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2017, 2020 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2011-2017, 2020-2021 OpenFOAM Foundation
+    Copyright (C) 2018-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -433,9 +433,11 @@ void Foam::particle::locate
     // Perturbing displacement to avoid zero in case position is the
     // cellCentre
     const vector displacement =
+    (
         position
       - mesh_.cellCentres()[celli_]
-      + vector(VSMALL, VSMALL, VSMALL);
+      + vector(VSMALL, VSMALL, VSMALL)
+    );
 
     // Loop all cell tets to find the one containing the position. Track
     // through each tet from the cell centre. If a tet contains the position
@@ -443,13 +445,13 @@ void Foam::particle::locate
     const Foam::cell& c = mesh_.cells()[celli_];
     scalar minF = VGREAT;
     label minTetFacei = -1, minTetPti = -1;
-    forAll(c, cellTetFacei)
+    for (const label meshFacei : c)
     {
-        const Foam::face& f = mesh_.faces()[c[cellTetFacei]];
+        const Foam::face& f = mesh_.faces()[meshFacei];
         for (label tetPti = 1; tetPti < f.size() - 1; ++tetPti)
         {
             coordinates_ = barycentric(1, 0, 0, 0);
-            tetFacei_ = c[cellTetFacei];
+            tetFacei_ = meshFacei;
             tetPti_ = tetPti;
             facei_ = -1;
 
@@ -525,8 +527,8 @@ Foam::particle::particle
     tetFacei_(tetFacei),
     tetPti_(tetPti),
     facei_(-1),
-    stepFraction_(1.0),
-    behind_(0.0),
+    stepFraction_(1),
+    behind_(0),
     nBehind_(0),
     origProc_(Pstream::myProcNo()),
     origId_(getNewParticleID())
@@ -546,8 +548,8 @@ Foam::particle::particle
     tetFacei_(-1),
     tetPti_(-1),
     facei_(-1),
-    stepFraction_(1.0),
-    behind_(0.0),
+    stepFraction_(1),
+    behind_(0),
     nBehind_(0),
     origProc_(Pstream::myProcNo()),
     origId_(getNewParticleID())
@@ -579,8 +581,8 @@ Foam::particle::particle
     tetFacei_(tetFacei),
     tetPti_(tetPti),
     facei_(-1),
-    stepFraction_(1.0),
-    behind_(0.0),
+    stepFraction_(1),
+    behind_(0),
     nBehind_(0),
     origProc_(Pstream::myProcNo()),
     origId_(getNewParticleID())
@@ -743,15 +745,15 @@ Foam::scalar Foam::particle::trackToStationaryTri
 
     if (debug)
     {
-        Pout<< "Local displacement = " << Tx1 << "/" << detA << endl;
+        Pout<< "Local displacement = " << Tx1 << '/' << detA << endl;
     }
 
     // Calculate the hit fraction
     label iH = -1;
-    scalar muH = detA <= 0 ? VGREAT : 1/detA;
+    scalar muH = detA > VSMALL ? 1/detA : VGREAT;
     for (label i = 0; i < 4; ++ i)
     {
-        if (Tx1[i] < - detA*SMALL)
+        if (Tx1[i] < - VSMALL && Tx1[i] < - mag(detA)*SMALL)
         {
             scalar mu = - y0[i]/Tx1[i];
 
@@ -768,6 +770,15 @@ Foam::scalar Foam::particle::trackToStationaryTri
                 muH = mu;
             }
         }
+    }
+
+    // If there has been no hit on a degenerate or inverted tet then the
+    // displacement must be within the round off error. Advance the step
+    // fraction without moving and return.
+    if (iH == -1 && muH == VGREAT)
+    {
+        stepFraction_ += fraction;
+        return 0;
     }
 
     // Set the new coordinates
@@ -903,7 +914,7 @@ Foam::scalar Foam::particle::trackToMovingTri
 
     // Calculate the hit fraction
     label iH = -1;
-    scalar muH = detA[0] <= 0 ? VGREAT : 1/detA[0];
+    scalar muH = detA[0] > VSMALL ? 1/detA[0] : VGREAT;
     for (label i = 0; i < 4; ++i)
     {
         const Roots<3> mu = hitEqn[i].roots();
@@ -913,7 +924,8 @@ Foam::scalar Foam::particle::trackToMovingTri
             if
             (
                 mu.type(j) == roots::real
-             && hitEqn[i].derivative(mu[j]) < - detA[0]*SMALL
+             && hitEqn[i].derivative(mu[j]) < - VSMALL
+             && hitEqn[i].derivative(mu[j]) < - mag(detA[0])*SMALL
             )
             {
                 if (debug)
@@ -928,7 +940,7 @@ Foam::scalar Foam::particle::trackToMovingTri
                     const scalar detAH = detAEqn.value(mu[j]);
 
                     Pout<< "Hit on tet face " << i << " at local coordinate "
-                        << (std::isnormal(detAH) ? name(yH/detAH) : "???")
+                        << (mag(detAH) > VSMALL ? name(yH/detAH) : "???")
                         << ", " << mu[j]*detA[0]*100 << "% of the "
                         << "way along the track" << endl;
 
@@ -944,6 +956,15 @@ Foam::scalar Foam::particle::trackToMovingTri
                 }
             }
         }
+    }
+
+    // If there has been no hit on a degenerate or inverted tet then the
+    // displacement must be within the round off error. Advance the step
+    // fraction without moving and return.
+    if (iH == -1 && muH == VGREAT)
+    {
+        stepFraction_ += fraction;
+        return 0;
     }
 
     // Set the new coordinates
@@ -962,7 +983,7 @@ Foam::scalar Foam::particle::trackToMovingTri
     // distance and therefore can be of the static mesh type. This has not yet
     // been implemented.
     const scalar detAH = detAEqn.value(muH);
-    if (!std::isnormal(detAH))
+    if (mag(detAH) < VSMALL)
     {
         FatalErrorInFunction
             << "A moving tet collapsed onto a particle. This is not supported. "
@@ -1038,7 +1059,7 @@ Foam::scalar Foam::particle::trackToTri
     label& tetTriI
 )
 {
-    if ((mesh_.moving() && (stepFraction_ != 1 || fraction != 0)))
+    if (mesh_.moving() && (stepFraction_ != 1 || fraction != 0))
     {
         return trackToMovingTri(displacement, fraction, tetTriI);
     }
