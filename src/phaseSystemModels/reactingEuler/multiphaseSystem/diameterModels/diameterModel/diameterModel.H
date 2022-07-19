@@ -74,7 +74,7 @@ public:
         (
             autoPtr,
             diameterModel,
-            dictionary,
+            reactingEuler,
             (
                 const dictionary& dict,
                 const phaseModel& phase

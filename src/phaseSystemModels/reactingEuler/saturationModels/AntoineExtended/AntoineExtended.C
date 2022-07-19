@@ -39,7 +39,7 @@ namespace saturationModels
     (
         saturationModel,
         AntoineExtended,
-        dictionary
+        reactingEuler
     );
 }
 }

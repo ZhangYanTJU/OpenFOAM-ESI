@@ -33,7 +33,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(saturationModel, 0);
-    defineRunTimeSelectionTable(saturationModel, dictionary);
+    defineRunTimeSelectionTable(saturationModel, reactingEuler);
 }
 
 
@@ -66,7 +66,7 @@ Foam::saturationModel::New
 
     Info<< "Selecting saturationModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -75,7 +75,7 @@ Foam::saturationModel::New
             dict,
             "saturationModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

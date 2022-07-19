@@ -36,7 +36,7 @@ namespace Foam
 namespace diameterModels
 {
     defineTypeNameAndDebug(daughterSizeDistributionModel, 0);
-    defineRunTimeSelectionTable(daughterSizeDistributionModel, dictionary);
+    defineRunTimeSelectionTable(daughterSizeDistributionModel, reactingEuler);
 }
 }
 
@@ -55,7 +55,7 @@ Foam::diameterModels::daughterSizeDistributionModel::New
         dict.get<word>("daughterSizeDistributionModel")
     );
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -64,7 +64,7 @@ Foam::diameterModels::daughterSizeDistributionModel::New
             dict,
             "daughterSizeDistributionModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

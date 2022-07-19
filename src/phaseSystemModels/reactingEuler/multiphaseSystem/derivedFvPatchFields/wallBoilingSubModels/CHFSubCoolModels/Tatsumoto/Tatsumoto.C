@@ -44,7 +44,7 @@ namespace CHFModels
     (
         CHFSubCoolModel,
         Tatsumoto,
-        dictionary
+        reactingEuler
     );
 }
 }

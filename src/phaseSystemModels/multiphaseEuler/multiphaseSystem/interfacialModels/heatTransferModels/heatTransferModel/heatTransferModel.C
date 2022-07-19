@@ -35,7 +35,7 @@ namespace Foam
 namespace multiphaseEuler
 {
     defineTypeNameAndDebug(heatTransferModel, 0);
-    defineRunTimeSelectionTable(heatTransferModel, dictionary);
+    defineRunTimeSelectionTable(heatTransferModel, multiphaseEuler);
 }
 }
 
@@ -78,7 +78,7 @@ Foam::multiphaseEuler::heatTransferModel::New
         << ": "
         << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = multiphaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -87,7 +87,7 @@ Foam::multiphaseEuler::heatTransferModel::New
             dict,
             "heatTransferModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *multiphaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

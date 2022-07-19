@@ -36,7 +36,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(massTransferModel, 0);
     defineBlendedInterfacialModelTypeNameAndDebug(massTransferModel, 0);
-    defineRunTimeSelectionTable(massTransferModel, dictionary);
+    defineRunTimeSelectionTable(massTransferModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::massTransferModel::dimK(0, -2, 0, 0, 0);
@@ -68,7 +68,7 @@ Foam::massTransferModel::New
     Info<< "Selecting massTransferModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -77,7 +77,7 @@ Foam::massTransferModel::New
             dict,
             "massTransferModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

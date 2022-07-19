@@ -34,7 +34,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(wallDampingModel, 0);
-    defineRunTimeSelectionTable(wallDampingModel, dictionary);
+    defineRunTimeSelectionTable(wallDampingModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::wallDampingModel::dimF(1, -2, -2, 0, 0);
@@ -67,7 +67,7 @@ Foam::wallDampingModel::New
     Info<< "Selecting wallDampingModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -76,7 +76,7 @@ Foam::wallDampingModel::New
             dict,
             "wallDampingModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

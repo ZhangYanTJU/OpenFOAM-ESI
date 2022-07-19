@@ -36,7 +36,7 @@ namespace Foam
 namespace multiphaseInter
 {
     defineTypeNameAndDebug(interfaceCompositionModel, 0);
-    defineRunTimeSelectionTable(interfaceCompositionModel, dictionary);
+    defineRunTimeSelectionTable(interfaceCompositionModel, multiphaseInter);
 }
 }
 
@@ -99,7 +99,7 @@ Foam::multiphaseInter::interfaceCompositionModel::New
     Info<< "Selecting interfaceCompositionModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = multiphaseInterConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -108,7 +108,7 @@ Foam::multiphaseInter::interfaceCompositionModel::New
             dict,
             "interfaceCompositionModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *multiphaseInterConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

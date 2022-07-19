@@ -34,7 +34,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(aspectRatioModel, 0);
-    defineRunTimeSelectionTable(aspectRatioModel, dictionary);
+    defineRunTimeSelectionTable(aspectRatioModel, twoPhaseEuler);
 }
 
 
@@ -64,7 +64,7 @@ Foam::aspectRatioModel::New
     Info<< "Selecting aspectRatioModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -73,7 +73,7 @@ Foam::aspectRatioModel::New
             dict,
             "aspectRatioModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

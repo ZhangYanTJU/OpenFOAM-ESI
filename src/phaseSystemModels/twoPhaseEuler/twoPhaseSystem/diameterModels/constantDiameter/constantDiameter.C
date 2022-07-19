@@ -40,7 +40,7 @@ namespace diameterModels
     (
         diameterModel,
         constant,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

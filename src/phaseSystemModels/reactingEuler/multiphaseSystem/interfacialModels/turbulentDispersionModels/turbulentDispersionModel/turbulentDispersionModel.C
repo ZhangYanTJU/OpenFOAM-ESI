@@ -40,7 +40,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(turbulentDispersionModel, 0);
     defineBlendedInterfacialModelTypeNameAndDebug(turbulentDispersionModel, 0);
-    defineRunTimeSelectionTable(turbulentDispersionModel, dictionary);
+    defineRunTimeSelectionTable(turbulentDispersionModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::turbulentDispersionModel::dimD(1, -1, -2, 0, 0);
@@ -73,7 +73,7 @@ Foam::turbulentDispersionModel::New
     Info<< "Selecting turbulentDispersionModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -82,7 +82,7 @@ Foam::turbulentDispersionModel::New
             dict,
             "turbulentDispersionModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

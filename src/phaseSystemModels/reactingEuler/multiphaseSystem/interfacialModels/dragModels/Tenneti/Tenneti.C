@@ -37,7 +37,7 @@ namespace Foam
 namespace dragModels
 {
     defineTypeNameAndDebug(Tenneti, 0);
-    addToRunTimeSelectionTable(dragModel, Tenneti, dictionary);
+    addToRunTimeSelectionTable(dragModel, Tenneti, reactingEuler);
 }
 }
 

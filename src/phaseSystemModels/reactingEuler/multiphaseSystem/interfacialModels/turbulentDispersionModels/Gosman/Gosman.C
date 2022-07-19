@@ -42,7 +42,7 @@ namespace turbulentDispersionModels
     (
         turbulentDispersionModel,
         Gosman,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -83,7 +83,7 @@ public:
         (
             autoPtr,
             interfaceCompositionModel,
-            dictionary,
+            reactingEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair

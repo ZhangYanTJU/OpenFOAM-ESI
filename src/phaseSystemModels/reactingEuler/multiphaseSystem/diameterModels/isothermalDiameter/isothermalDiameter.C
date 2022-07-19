@@ -41,7 +41,7 @@ namespace diameterModels
     (
         diameterModel,
         isothermal,
-        dictionary
+        reactingEuler
     );
 }
 }

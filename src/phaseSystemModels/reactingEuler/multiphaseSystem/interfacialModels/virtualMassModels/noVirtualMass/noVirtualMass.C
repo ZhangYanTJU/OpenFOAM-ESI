@@ -36,7 +36,7 @@ namespace Foam
 namespace virtualMassModels
 {
     defineTypeNameAndDebug(noVirtualMass, 0);
-    addToRunTimeSelectionTable(virtualMassModel, noVirtualMass, dictionary);
+    addToRunTimeSelectionTable(virtualMassModel, noVirtualMass, reactingEuler);
 }
 }
 

@@ -81,7 +81,7 @@ public:
         (
             autoPtr,
             dragModel,
-            dictionary,
+            twoPhaseEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair,

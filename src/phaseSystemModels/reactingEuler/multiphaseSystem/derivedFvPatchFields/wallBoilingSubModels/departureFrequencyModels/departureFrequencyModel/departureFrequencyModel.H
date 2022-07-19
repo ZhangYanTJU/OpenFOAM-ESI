@@ -68,7 +68,7 @@ public:
     (
         autoPtr,
         departureFrequencyModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

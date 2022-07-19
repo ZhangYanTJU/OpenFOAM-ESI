@@ -37,7 +37,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(virtualMassModel, 0);
     defineBlendedInterfacialModelTypeNameAndDebug(virtualMassModel, 0);
-    defineRunTimeSelectionTable(virtualMassModel, dictionary);
+    defineRunTimeSelectionTable(virtualMassModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::virtualMassModel::dimK(dimDensity);
@@ -82,7 +82,7 @@ Foam::virtualMassModel::New
     Info<< "Selecting virtualMassModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -91,7 +91,7 @@ Foam::virtualMassModel::New
             dict,
             "virtualMassModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

@@ -55,7 +55,7 @@ namespace Foam
     (
         twoPhaseSystem,
         basicTwoPhaseSystem,
-        dictionary,
+        reactingEuler,
         basicTwoPhaseSystem
     );
 
@@ -76,7 +76,7 @@ namespace Foam
     (
         twoPhaseSystem,
         interfaceCompositionPhaseChangeTwoPhaseSystem,
-        dictionary,
+        reactingEuler,
         interfaceCompositionPhaseChangeTwoPhaseSystem
     );
 
@@ -97,7 +97,7 @@ namespace Foam
     (
         twoPhaseSystem,
         thermalPhaseChangeTwoPhaseSystem,
-        dictionary,
+        reactingEuler,
         thermalPhaseChangeTwoPhaseSystem
     );
 
@@ -118,7 +118,7 @@ namespace Foam
     (
         twoPhaseSystem,
         populationBalanceTwoPhaseSystem,
-        dictionary,
+        reactingEuler,
         populationBalanceTwoPhaseSystem
     );
 
@@ -142,7 +142,7 @@ namespace Foam
         (
             twoPhaseSystem,
             thermalPhaseChangePopulationBalanceTwoPhaseSystem,
-            dictionary,
+            reactingEuler,
             thermalPhaseChangePopulationBalanceTwoPhaseSystem
         );
 }

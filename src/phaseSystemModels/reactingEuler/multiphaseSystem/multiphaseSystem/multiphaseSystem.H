@@ -134,7 +134,7 @@ public:
         (
             autoPtr,
             multiphaseSystem,
-            dictionary,
+            reactingEuler,
             (
                 const fvMesh& mesh
             ),

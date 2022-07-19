@@ -74,7 +74,7 @@ public:
         (
             autoPtr,
             binaryBreakupModel,
-            dictionary,
+            reactingEuler,
             (
                 const populationBalanceModel& popBal,
                 const dictionary& dict

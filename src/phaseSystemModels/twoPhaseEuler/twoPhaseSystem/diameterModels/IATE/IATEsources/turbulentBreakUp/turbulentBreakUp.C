@@ -37,7 +37,7 @@ namespace diameterModels
 namespace IATEsources
 {
     defineTypeNameAndDebug(turbulentBreakUp, 0);
-    addToRunTimeSelectionTable(IATEsource, turbulentBreakUp, dictionary);
+    addToRunTimeSelectionTable(IATEsource, turbulentBreakUp, twoPhaseEuler);
 }
 }
 }

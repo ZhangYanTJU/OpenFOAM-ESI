@@ -39,7 +39,7 @@ namespace saturationModels
     (
         saturationModel,
         constantSaturationConditions,
-        dictionary
+        reactingEuler
     );
 }
 }

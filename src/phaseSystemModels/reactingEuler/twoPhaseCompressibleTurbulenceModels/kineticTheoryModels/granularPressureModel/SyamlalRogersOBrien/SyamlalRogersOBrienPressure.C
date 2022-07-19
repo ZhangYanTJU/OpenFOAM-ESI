@@ -42,7 +42,7 @@ namespace granularPressureModels
     (
         granularPressureModel,
         SyamlalRogersOBrien,
-        dictionary
+        reactingEuler
     );
 }
 }

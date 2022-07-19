@@ -34,7 +34,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(nucleateFluxModel, 0);
-        defineRunTimeSelectionTable(nucleateFluxModel, dictionary);
+        defineRunTimeSelectionTable(nucleateFluxModel, reactingEuler);
     }
 }
 
@@ -50,7 +50,7 @@ Foam::wallBoilingModels::nucleateFluxModel::New
 
     Info<< "Selecting nucleateFluxModel: " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto cstrIter = reactingEulerConstructorTablePtr_->cfind(modelType);
 
     if (!cstrIter.found())
     {
@@ -59,7 +59,7 @@ Foam::wallBoilingModels::nucleateFluxModel::New
             dict,
             "nucleateFluxModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

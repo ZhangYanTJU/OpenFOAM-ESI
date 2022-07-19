@@ -37,7 +37,7 @@ namespace Foam
 namespace liftModels
 {
     defineTypeNameAndDebug(Moraga, 0);
-    addToRunTimeSelectionTable(liftModel, Moraga, dictionary);
+    addToRunTimeSelectionTable(liftModel, Moraga, reactingEuler);
 }
 }
 

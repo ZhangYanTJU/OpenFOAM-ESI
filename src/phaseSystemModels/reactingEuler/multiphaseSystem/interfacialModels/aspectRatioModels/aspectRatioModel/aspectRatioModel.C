@@ -34,7 +34,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(aspectRatioModel, 0);
-    defineRunTimeSelectionTable(aspectRatioModel, dictionary);
+    defineRunTimeSelectionTable(aspectRatioModel, reactingEuler);
 }
 
 
@@ -64,7 +64,7 @@ Foam::aspectRatioModel::New
     Info<< "Selecting aspectRatioModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -73,7 +73,7 @@ Foam::aspectRatioModel::New
             dict,
             "swarmCorrection",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

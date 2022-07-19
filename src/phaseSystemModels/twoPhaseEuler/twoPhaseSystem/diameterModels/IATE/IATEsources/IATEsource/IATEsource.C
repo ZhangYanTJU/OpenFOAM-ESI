@@ -39,7 +39,7 @@ namespace Foam
 namespace diameterModels
 {
     defineTypeNameAndDebug(IATEsource, 0);
-    defineRunTimeSelectionTable(IATEsource, dictionary);
+    defineRunTimeSelectionTable(IATEsource, twoPhaseEuler);
 }
 }
 
@@ -54,7 +54,7 @@ Foam::diameterModels::IATEsource::New
     const dictionary& dict
 )
 {
-    auto* ctorPtr = dictionaryConstructorTable(type);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(type);
 
     if (!ctorPtr)
     {
@@ -63,7 +63,7 @@ Foam::diameterModels::IATEsource::New
             dict,
             "IATEsource",
             type,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

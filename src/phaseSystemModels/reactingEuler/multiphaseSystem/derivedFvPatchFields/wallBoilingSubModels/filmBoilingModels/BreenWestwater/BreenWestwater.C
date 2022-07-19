@@ -44,7 +44,7 @@ namespace filmBoilingModels
     (
         filmBoilingModel,
         BreenWestwater,
-        dictionary
+        reactingEuler
     );
 }
 }

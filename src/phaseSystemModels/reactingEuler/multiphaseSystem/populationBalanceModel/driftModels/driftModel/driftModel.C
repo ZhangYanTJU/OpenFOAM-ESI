@@ -36,7 +36,7 @@ namespace Foam
 namespace diameterModels
 {
     defineTypeNameAndDebug(driftModel, 0);
-    defineRunTimeSelectionTable(driftModel, dictionary);
+    defineRunTimeSelectionTable(driftModel, reactingEuler);
 }
 }
 
@@ -51,7 +51,7 @@ Foam::diameterModels::driftModel::New
     const dictionary& dict
 )
 {
-    auto* ctorPtr = dictionaryConstructorTable(type);
+    auto* ctorPtr = reactingEulerConstructorTable(type);
 
     if (!ctorPtr)
     {
@@ -60,7 +60,7 @@ Foam::diameterModels::driftModel::New
             dict,
             "driftModel",
             type,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

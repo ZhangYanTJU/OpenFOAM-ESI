@@ -77,7 +77,7 @@ public:
         (
             autoPtr,
             virtualMassModel,
-            dictionary,
+            reactingEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair,

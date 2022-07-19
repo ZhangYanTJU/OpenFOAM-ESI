@@ -40,7 +40,7 @@ namespace diameterModels
 namespace driftModels
 {
     defineTypeNameAndDebug(phaseChange, 0);
-    addToRunTimeSelectionTable(driftModel, phaseChange, dictionary);
+    addToRunTimeSelectionTable(driftModel, phaseChange, reactingEuler);
 }
 }
 }

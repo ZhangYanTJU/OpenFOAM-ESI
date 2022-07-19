@@ -40,7 +40,7 @@ namespace turbulentDispersionModels
     (
         turbulentDispersionModel,
         noTurbulentDispersion,
-        dictionary
+        reactingEuler
     );
 }
 }

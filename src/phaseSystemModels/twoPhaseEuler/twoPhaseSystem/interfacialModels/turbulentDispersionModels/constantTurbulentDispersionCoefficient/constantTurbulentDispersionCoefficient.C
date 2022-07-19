@@ -41,7 +41,7 @@ namespace turbulentDispersionModels
     (
         turbulentDispersionModel,
         constantTurbulentDispersionCoefficient,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

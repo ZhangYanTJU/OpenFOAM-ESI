@@ -34,7 +34,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(CHFSubCoolModel, 0);
-        defineRunTimeSelectionTable(CHFSubCoolModel, dictionary);
+        defineRunTimeSelectionTable(CHFSubCoolModel, reactingEuler);
     }
 }
 
@@ -51,7 +51,7 @@ Foam::wallBoilingModels::CHFSubCoolModel::New
 
     Info<< "Selecting CHFSubCoolModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -60,7 +60,7 @@ Foam::wallBoilingModels::CHFSubCoolModel::New
             dict,
             "CHFSubCoolModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

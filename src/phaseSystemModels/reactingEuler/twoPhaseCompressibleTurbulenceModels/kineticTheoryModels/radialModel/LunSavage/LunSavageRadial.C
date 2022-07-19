@@ -42,7 +42,7 @@ namespace radialModels
     (
         radialModel,
         LunSavage,
-        dictionary
+        reactingEuler
     );
 }
 }

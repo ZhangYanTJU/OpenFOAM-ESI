@@ -36,7 +36,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(heatTransferModel, 0);
     defineBlendedInterfacialModelTypeNameAndDebug(heatTransferModel, 0);
-    defineRunTimeSelectionTable(heatTransferModel, dictionary);
+    defineRunTimeSelectionTable(heatTransferModel, reactingEuler);
 }
 
 const Foam::dimensionSet Foam::heatTransferModel::dimK(1, -1, -3, -1, 0);
@@ -79,7 +79,7 @@ Foam::heatTransferModel::New
     Info<< "Selecting heatTransferModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -88,7 +88,7 @@ Foam::heatTransferModel::New
             dict,
             "heatTransferModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

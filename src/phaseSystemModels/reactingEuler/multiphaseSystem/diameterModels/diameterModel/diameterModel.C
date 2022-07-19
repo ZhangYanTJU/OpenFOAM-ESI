@@ -33,7 +33,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(diameterModel, 0);
-    defineRunTimeSelectionTable(diameterModel, dictionary);
+    defineRunTimeSelectionTable(diameterModel, reactingEuler);
 }
 
 
@@ -66,7 +66,7 @@ Foam::diameterModel::New
         << ": "
         << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -75,7 +75,7 @@ Foam::diameterModel::New
             dict,
             "diameterModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

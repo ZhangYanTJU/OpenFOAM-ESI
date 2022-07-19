@@ -47,7 +47,7 @@ namespace departureDiameterModels
     (
         departureDiameterModel,
         KocamustafaogullariIshii,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -34,7 +34,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(swarmCorrection, 0);
-    defineRunTimeSelectionTable(swarmCorrection, dictionary);
+    defineRunTimeSelectionTable(swarmCorrection, reactingEuler);
 }
 
 
@@ -64,7 +64,7 @@ Foam::swarmCorrection::New
     Info<< "Selecting swarmCorrection for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -73,7 +73,7 @@ Foam::swarmCorrection::New
             dict,
             "swarmCorrection",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

@@ -78,7 +78,7 @@ public:
         (
             autoPtr,
             wallLubricationModel,
-            dictionary,
+            twoPhaseEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair

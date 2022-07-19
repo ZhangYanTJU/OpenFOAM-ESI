@@ -75,7 +75,7 @@ public:
         (
             autoPtr,
             massTransferModel,
-            dictionary,
+            reactingEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair

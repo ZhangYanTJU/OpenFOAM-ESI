@@ -40,7 +40,7 @@ namespace aspectRatioModels
     (
         aspectRatioModel,
         constantAspectRatio,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

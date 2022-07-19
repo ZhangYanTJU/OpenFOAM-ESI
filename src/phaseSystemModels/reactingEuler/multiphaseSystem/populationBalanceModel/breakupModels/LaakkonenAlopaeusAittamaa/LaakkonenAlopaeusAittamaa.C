@@ -43,7 +43,7 @@ namespace breakupModels
     (
         breakupModel,
         LaakkonenAlopaeusAittamaa,
-        dictionary
+        reactingEuler
     );
 }
 }

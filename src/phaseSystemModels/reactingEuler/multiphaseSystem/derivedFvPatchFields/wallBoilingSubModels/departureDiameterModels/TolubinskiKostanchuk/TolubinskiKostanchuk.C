@@ -42,7 +42,7 @@ namespace departureDiameterModels
     (
         departureDiameterModel,
         TolubinskiKostanchuk,
-        dictionary
+        reactingEuler
     );
 }
 }

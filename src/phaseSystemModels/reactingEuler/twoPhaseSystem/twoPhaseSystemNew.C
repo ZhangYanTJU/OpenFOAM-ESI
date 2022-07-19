@@ -53,7 +53,7 @@ Foam::twoPhaseSystem::New
 
     Info<< "Selecting twoPhaseSystem " << systemType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(systemType);
+    auto* ctorPtr = reactingEulerConstructorTable(systemType);
 
     if (!ctorPtr)
     {
@@ -62,7 +62,7 @@ Foam::twoPhaseSystem::New
             dict,
             "twoPhaseSystem",
             systemType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

@@ -35,7 +35,7 @@ namespace Foam
 namespace diameterModels
 {
     defineTypeNameAndDebug(breakupModel, 0);
-    defineRunTimeSelectionTable(breakupModel, dictionary);
+    defineRunTimeSelectionTable(breakupModel, reactingEuler);
 }
 }
 
@@ -50,7 +50,7 @@ Foam::diameterModels::breakupModel::New
     const dictionary& dict
 )
 {
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -59,7 +59,7 @@ Foam::diameterModels::breakupModel::New
             dict,
             "breakupModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

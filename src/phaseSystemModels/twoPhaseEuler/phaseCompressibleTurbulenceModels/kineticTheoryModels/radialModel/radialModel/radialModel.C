@@ -36,7 +36,7 @@ namespace kineticTheoryModels
 {
     defineTypeNameAndDebug(radialModel, 0);
 
-    defineRunTimeSelectionTable(radialModel, dictionary);
+    defineRunTimeSelectionTable(radialModel, twoPhaseEuler);
 }
 }
 
@@ -64,7 +64,7 @@ Foam::kineticTheoryModels::radialModel::New
 
     Info<< "Selecting radialModel " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -73,7 +73,7 @@ Foam::kineticTheoryModels::radialModel::New
             dict,
             "radialModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

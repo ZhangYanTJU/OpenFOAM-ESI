@@ -37,7 +37,7 @@ namespace Foam
 namespace liftModels
 {
     defineTypeNameAndDebug(LegendreMagnaudet, 0);
-    addToRunTimeSelectionTable(liftModel, LegendreMagnaudet, dictionary);
+    addToRunTimeSelectionTable(liftModel, LegendreMagnaudet, reactingEuler);
 }
 }
 

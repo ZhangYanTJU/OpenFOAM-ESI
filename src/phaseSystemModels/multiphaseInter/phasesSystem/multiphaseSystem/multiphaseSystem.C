@@ -51,7 +51,7 @@ namespace Foam
 namespace multiphaseInter
 {
     defineTypeNameAndDebug(multiphaseSystem, 0);
-    defineRunTimeSelectionTable(multiphaseSystem, dictionary);
+    defineRunTimeSelectionTable(multiphaseSystem, multiphaseInter);
 }
 }
 

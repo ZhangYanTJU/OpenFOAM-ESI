@@ -45,7 +45,7 @@ namespace binaryBreakupModels
     (
         binaryBreakupModel,
         LuoSvendsen,
-        dictionary
+        reactingEuler
     );
 }
 }

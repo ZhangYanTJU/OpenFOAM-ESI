@@ -70,7 +70,7 @@ public:
     (
         autoPtr,
         granularPressureModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

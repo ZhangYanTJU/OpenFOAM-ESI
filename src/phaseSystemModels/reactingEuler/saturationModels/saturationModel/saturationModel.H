@@ -75,9 +75,10 @@ public:
     (
         autoPtr,
         saturationModel,
-        dictionary,
+        reactingEuler,
         (
-            const dictionary& dict, const objectRegistry& db
+            const dictionary& dict,
+            const objectRegistry& db
         ),
         (dict, db)
     );

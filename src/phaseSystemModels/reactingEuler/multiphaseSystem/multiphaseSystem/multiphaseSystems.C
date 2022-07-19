@@ -55,7 +55,7 @@ namespace Foam
     (
         multiphaseSystem,
         basicMultiphaseSystem,
-        dictionary,
+        reactingEuler,
         basicMultiphaseSystem
     );
 
@@ -76,7 +76,7 @@ namespace Foam
     (
         multiphaseSystem,
         interfaceCompositionPhaseChangeMultiphaseSystem,
-        dictionary,
+        reactingEuler,
         interfaceCompositionPhaseChangeMultiphaseSystem
     );
 
@@ -97,7 +97,7 @@ namespace Foam
     (
         multiphaseSystem,
         thermalPhaseChangeMultiphaseSystem,
-        dictionary,
+        reactingEuler,
         thermalPhaseChangeMultiphaseSystem
     );
 
@@ -118,7 +118,7 @@ namespace Foam
     (
         multiphaseSystem,
         populationBalanceMultiphaseSystem,
-        dictionary,
+        reactingEuler,
         populationBalanceMultiphaseSystem
     );
 
@@ -142,7 +142,7 @@ namespace Foam
     (
         multiphaseSystem,
         thermalPhaseChangePopulationBalanceMultiphaseSystem,
-        dictionary,
+        reactingEuler,
         thermalPhaseChangePopulationBalanceMultiphaseSystem
     );
 }

@@ -42,7 +42,7 @@ namespace nucleationSiteModels
     (
         nucleationSiteModel,
         LemmertChawla,
-        dictionary
+        reactingEuler
     );
 }
 }

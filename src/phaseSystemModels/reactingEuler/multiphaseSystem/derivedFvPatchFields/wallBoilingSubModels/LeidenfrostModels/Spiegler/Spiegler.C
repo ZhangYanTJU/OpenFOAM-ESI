@@ -42,7 +42,7 @@ namespace LeidenfrostModels
     (
         LeidenfrostModel,
         Spiegler,
-        dictionary
+        reactingEuler
     );
 }
 }

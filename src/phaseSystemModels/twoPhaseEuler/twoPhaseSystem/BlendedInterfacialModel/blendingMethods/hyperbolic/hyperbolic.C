@@ -40,7 +40,7 @@ namespace blendingMethods
     (
         blendingMethod,
         hyperbolic,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

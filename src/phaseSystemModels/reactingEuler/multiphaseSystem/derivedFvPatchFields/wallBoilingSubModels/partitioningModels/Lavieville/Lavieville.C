@@ -42,7 +42,7 @@ namespace partitioningModels
     (
         partitioningModel,
         Lavieville,
-        dictionary
+        reactingEuler
     );
 }
 }

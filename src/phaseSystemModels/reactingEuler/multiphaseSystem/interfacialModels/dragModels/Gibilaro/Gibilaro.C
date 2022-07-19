@@ -36,7 +36,7 @@ namespace Foam
 namespace dragModels
 {
     defineTypeNameAndDebug(Gibilaro, 0);
-    addToRunTimeSelectionTable(dragModel, Gibilaro, dictionary);
+    addToRunTimeSelectionTable(dragModel, Gibilaro, reactingEuler);
 }
 }
 

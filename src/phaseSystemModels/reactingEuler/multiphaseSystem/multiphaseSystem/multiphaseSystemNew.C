@@ -52,7 +52,7 @@ Foam::autoPtr<Foam::multiphaseSystem> Foam::multiphaseSystem::New
 
     Info<< "Selecting multiphaseSystem " << systemType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(systemType);
+    auto* ctorPtr = reactingEulerConstructorTable(systemType);
 
     if (!ctorPtr)
     {
@@ -61,7 +61,7 @@ Foam::autoPtr<Foam::multiphaseSystem> Foam::multiphaseSystem::New
             dict,
             "multiphaseSystem",
             systemType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

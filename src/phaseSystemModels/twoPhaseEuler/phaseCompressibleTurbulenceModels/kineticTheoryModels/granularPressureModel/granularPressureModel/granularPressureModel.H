@@ -70,7 +70,7 @@ public:
     (
         autoPtr,
         granularPressureModel,
-        dictionary,
+        twoPhaseEuler,
         (
             const dictionary& dict
         ),

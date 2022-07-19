@@ -37,7 +37,7 @@ namespace diameterModels
 namespace coalescenceModels
 {
     defineTypeNameAndDebug(hydrodynamic, 0);
-    addToRunTimeSelectionTable(coalescenceModel, hydrodynamic, dictionary);
+    addToRunTimeSelectionTable(coalescenceModel, hydrodynamic, reactingEuler);
 }
 }
 }

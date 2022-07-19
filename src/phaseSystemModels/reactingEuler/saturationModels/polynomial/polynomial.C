@@ -35,7 +35,7 @@ namespace Foam
 namespace saturationModels
 {
     defineTypeNameAndDebug(polynomial, 0);
-    addToRunTimeSelectionTable(saturationModel, polynomial, dictionary);
+    addToRunTimeSelectionTable(saturationModel, polynomial, reactingEuler);
 }
 }
 

@@ -44,7 +44,7 @@ namespace diameterModels
     (
         diameterModel,
         velocityGroup,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -41,7 +41,7 @@ namespace blendingMethods
     (
         blendingMethod,
         noBlending,
-        dictionary
+        reactingEuler
     );
 }
 }

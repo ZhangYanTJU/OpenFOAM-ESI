@@ -36,7 +36,7 @@ namespace Foam
 namespace massTransferModels
 {
     defineTypeNameAndDebug(Frossling, 0);
-    addToRunTimeSelectionTable(massTransferModel, Frossling, dictionary);
+    addToRunTimeSelectionTable(massTransferModel, Frossling, reactingEuler);
 }
 }
 

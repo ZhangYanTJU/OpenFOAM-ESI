@@ -63,7 +63,7 @@ public:
     (
         autoPtr,
         blendingMethod,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict,
             const wordList& phaseNames

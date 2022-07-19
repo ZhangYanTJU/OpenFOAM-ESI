@@ -35,7 +35,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(virtualMassModel, 0);
-    defineRunTimeSelectionTable(virtualMassModel, dictionary);
+    defineRunTimeSelectionTable(virtualMassModel, twoPhaseEuler);
 }
 
 const Foam::dimensionSet Foam::virtualMassModel::dimK(dimDensity);
@@ -80,7 +80,7 @@ Foam::virtualMassModel::New
     Info<< "Selecting virtualMassModel for "
         << pair << ": " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -89,7 +89,7 @@ Foam::virtualMassModel::New
             dict,
             "virtualMassModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

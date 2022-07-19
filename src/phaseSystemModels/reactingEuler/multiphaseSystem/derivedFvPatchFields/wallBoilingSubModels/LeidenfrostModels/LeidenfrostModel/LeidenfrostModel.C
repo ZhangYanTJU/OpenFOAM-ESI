@@ -34,7 +34,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(LeidenfrostModel, 0);
-        defineRunTimeSelectionTable(LeidenfrostModel, dictionary);
+        defineRunTimeSelectionTable(LeidenfrostModel, reactingEuler);
     }
 }
 
@@ -51,7 +51,7 @@ Foam::wallBoilingModels::LeidenfrostModel::New
 
     Info<< "Selecting LeidenfrostModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -60,7 +60,7 @@ Foam::wallBoilingModels::LeidenfrostModel::New
             dict,
             "LeidenfrostModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

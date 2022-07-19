@@ -75,7 +75,7 @@ public:
         (
             autoPtr,
             turbulentDispersionModel,
-            dictionary,
+            twoPhaseEuler,
             (
                 const dictionary& dict,
                 const phasePair& pair

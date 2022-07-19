@@ -41,7 +41,7 @@ namespace coalescenceModels
     (
         coalescenceModel,
         constantCoalescence,
-        dictionary
+        reactingEuler
     );
 }
 }

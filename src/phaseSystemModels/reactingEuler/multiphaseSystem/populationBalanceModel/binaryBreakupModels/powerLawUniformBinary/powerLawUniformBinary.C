@@ -42,7 +42,7 @@ namespace binaryBreakupModels
     (
         binaryBreakupModel,
         powerLawUniformBinary,
-        dictionary
+        reactingEuler
     );
 }
 }

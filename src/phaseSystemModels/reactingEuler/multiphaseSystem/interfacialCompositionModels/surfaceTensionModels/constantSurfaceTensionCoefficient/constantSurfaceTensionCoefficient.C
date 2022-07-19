@@ -43,7 +43,7 @@ namespace surfaceTensionModels
     (
         surfaceTensionModel,
         constantSurfaceTensionCoefficient,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -36,7 +36,7 @@ namespace Foam
 namespace dragModels
 {
     defineTypeNameAndDebug(SchillerNaumann, 0);
-    addToRunTimeSelectionTable(dragModel, SchillerNaumann, dictionary);
+    addToRunTimeSelectionTable(dragModel, SchillerNaumann, reactingEuler);
 }
 }
 

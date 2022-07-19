@@ -40,7 +40,7 @@ namespace aspectRatioModels
     (
         aspectRatioModel,
         Wellek,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

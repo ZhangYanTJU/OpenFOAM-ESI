@@ -41,7 +41,7 @@ namespace IATEsources
     (
         IATEsource,
         wakeEntrainmentCoalescence,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

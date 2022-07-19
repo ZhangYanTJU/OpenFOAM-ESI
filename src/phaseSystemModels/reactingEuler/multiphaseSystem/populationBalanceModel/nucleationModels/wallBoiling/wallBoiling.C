@@ -43,7 +43,7 @@ namespace nucleationModels
     (
         nucleationModel,
         wallBoiling,
-        dictionary
+        reactingEuler
     );
 }
 }

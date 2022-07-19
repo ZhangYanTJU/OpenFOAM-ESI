@@ -42,7 +42,7 @@ namespace diameterModels
 namespace IATEsources
 {
     defineTypeNameAndDebug(phaseChange, 0);
-    addToRunTimeSelectionTable(IATEsource, phaseChange, dictionary);
+    addToRunTimeSelectionTable(IATEsource, phaseChange, reactingEuler);
 }
 }
 }

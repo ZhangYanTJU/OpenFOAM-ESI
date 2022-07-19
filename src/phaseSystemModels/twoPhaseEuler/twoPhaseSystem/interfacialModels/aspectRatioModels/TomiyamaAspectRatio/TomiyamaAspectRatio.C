@@ -40,7 +40,7 @@ namespace aspectRatioModels
     (
         aspectRatioModel,
         TomiyamaAspectRatio,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

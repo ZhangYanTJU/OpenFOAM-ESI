@@ -36,7 +36,7 @@ namespace Foam
 namespace liftModels
 {
     defineTypeNameAndDebug(TomiyamaLift, 0);
-    addToRunTimeSelectionTable(liftModel, TomiyamaLift, dictionary);
+    addToRunTimeSelectionTable(liftModel, TomiyamaLift, twoPhaseEuler);
 }
 }
 

@@ -44,7 +44,7 @@ namespace coalescenceModels
     (
         coalescenceModel,
         PrinceBlanch,
-        dictionary
+        reactingEuler
     );
 }
 }

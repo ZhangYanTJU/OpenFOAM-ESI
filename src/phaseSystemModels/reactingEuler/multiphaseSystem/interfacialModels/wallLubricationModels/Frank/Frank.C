@@ -41,7 +41,7 @@ namespace wallLubricationModels
     (
         wallLubricationModel,
         Frank,
-        dictionary
+        reactingEuler
     );
 }
 }

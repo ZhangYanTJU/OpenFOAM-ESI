@@ -35,7 +35,7 @@ namespace Foam
 namespace kineticTheoryModels
 {
     defineTypeNameAndDebug(noneViscosity, 0);
-    addToRunTimeSelectionTable(viscosityModel, noneViscosity, dictionary);
+    addToRunTimeSelectionTable(viscosityModel, noneViscosity, twoPhaseEuler);
 }
 }
 

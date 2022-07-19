@@ -72,7 +72,7 @@ public:
     (
         autoPtr,
         viscosityModel,
-        dictionary,
+        twoPhaseEuler,
         (
             const dictionary& dict
         ),

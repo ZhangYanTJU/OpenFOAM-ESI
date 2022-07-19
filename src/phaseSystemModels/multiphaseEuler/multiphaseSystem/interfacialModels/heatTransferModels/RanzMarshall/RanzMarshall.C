@@ -43,7 +43,7 @@ namespace heatTransferModels
     (
         heatTransferModel,
         RanzMarshall,
-        dictionary
+        multiphaseEuler
     );
 }
 }

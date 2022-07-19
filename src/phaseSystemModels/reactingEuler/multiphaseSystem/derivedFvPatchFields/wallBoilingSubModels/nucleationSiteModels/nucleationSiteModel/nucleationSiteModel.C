@@ -35,7 +35,7 @@ namespace Foam
     namespace wallBoilingModels
     {
         defineTypeNameAndDebug(nucleationSiteModel, 0);
-        defineRunTimeSelectionTable(nucleationSiteModel, dictionary);
+        defineRunTimeSelectionTable(nucleationSiteModel, reactingEuler);
     }
 }
 
@@ -52,7 +52,7 @@ Foam::wallBoilingModels::nucleationSiteModel::New
 
     Info<< "Selecting nucleationSiteModel: " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = reactingEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -61,7 +61,7 @@ Foam::wallBoilingModels::nucleationSiteModel::New
             dict,
             "nucleationSiteModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *reactingEulerConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 

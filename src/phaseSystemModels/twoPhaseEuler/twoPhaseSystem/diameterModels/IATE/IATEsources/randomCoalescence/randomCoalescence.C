@@ -37,7 +37,7 @@ namespace diameterModels
 namespace IATEsources
 {
     defineTypeNameAndDebug(randomCoalescence, 0);
-    addToRunTimeSelectionTable(IATEsource, randomCoalescence, dictionary);
+    addToRunTimeSelectionTable(IATEsource, randomCoalescence, twoPhaseEuler);
 }
 }
 }

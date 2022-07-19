@@ -42,7 +42,7 @@ namespace IATEsources
     (
         IATEsource,
         wakeEntrainmentCoalescence,
-        dictionary
+        reactingEuler
     );
 }
 }

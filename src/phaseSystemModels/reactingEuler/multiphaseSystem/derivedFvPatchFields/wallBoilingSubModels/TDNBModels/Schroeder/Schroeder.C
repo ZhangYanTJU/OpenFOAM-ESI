@@ -44,7 +44,7 @@ namespace TDNBModels
     (
         TDNBModel,
         Schroeder,
-        dictionary
+        reactingEuler
     );
 }
 }

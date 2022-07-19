@@ -40,7 +40,7 @@ namespace diameterModels
     (
         diameterModel,
         isothermal,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

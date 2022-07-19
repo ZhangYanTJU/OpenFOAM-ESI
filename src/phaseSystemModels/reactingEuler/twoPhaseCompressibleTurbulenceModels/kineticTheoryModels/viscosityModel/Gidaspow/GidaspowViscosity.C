@@ -38,7 +38,7 @@ namespace kineticTheoryModels
 namespace viscosityModels
 {
     defineTypeNameAndDebug(Gidaspow, 0);
-    addToRunTimeSelectionTable(viscosityModel, Gidaspow, dictionary);
+    addToRunTimeSelectionTable(viscosityModel, Gidaspow, reactingEuler);
 }
 }
 }

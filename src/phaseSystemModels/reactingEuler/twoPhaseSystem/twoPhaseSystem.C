@@ -49,7 +49,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(twoPhaseSystem, 0);
-    defineRunTimeSelectionTable(twoPhaseSystem, dictionary);
+    defineRunTimeSelectionTable(twoPhaseSystem, reactingEuler);
 }
 
 

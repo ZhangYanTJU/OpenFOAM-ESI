@@ -40,7 +40,7 @@ namespace aspectRatioModels
     (
         aspectRatioModel,
         VakhrushevEfremov,
-        dictionary
+        reactingEuler
     );
 }
 }

@@ -74,7 +74,7 @@ public:
     (
         autoPtr,
         aspectRatioModel,
-        dictionary,
+        twoPhaseEuler,
         (
             const dictionary& dict,
             const phasePair& pair

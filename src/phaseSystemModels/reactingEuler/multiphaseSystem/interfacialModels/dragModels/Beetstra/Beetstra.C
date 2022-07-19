@@ -36,7 +36,7 @@ namespace Foam
 namespace dragModels
 {
     defineTypeNameAndDebug(Beetstra, 0);
-    addToRunTimeSelectionTable(dragModel, Beetstra, dictionary);
+    addToRunTimeSelectionTable(dragModel, Beetstra, reactingEuler);
 }
 }
 

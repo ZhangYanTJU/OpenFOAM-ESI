@@ -36,7 +36,7 @@ namespace kineticTheoryModels
 {
     defineTypeNameAndDebug(frictionalStressModel, 0);
 
-    defineRunTimeSelectionTable(frictionalStressModel, dictionary);
+    defineRunTimeSelectionTable(frictionalStressModel, twoPhaseEuler);
 }
 }
 
@@ -64,7 +64,7 @@ Foam::kineticTheoryModels::frictionalStressModel::New
 
     Info<< "Selecting frictionalStressModel " << modelType << endl;
 
-    auto* ctorPtr = dictionaryConstructorTable(modelType);
+    auto* ctorPtr = twoPhaseEulerConstructorTable(modelType);
 
     if (!ctorPtr)
     {
@@ -73,7 +73,7 @@ Foam::kineticTheoryModels::frictionalStressModel::New
             dict,
             "frictionalStressModel",
             modelType,
-            *dictionaryConstructorTablePtr_
+            *twoPhaseEulerConstructorTablePtr_
         ) << exit(FatalIOError);
     }
 

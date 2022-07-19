@@ -44,7 +44,7 @@ namespace frictionalStressModels
     (
         frictionalStressModel,
         JohnsonJacksonSchaeffer,
-        dictionary
+        twoPhaseEuler
     );
 }
 }

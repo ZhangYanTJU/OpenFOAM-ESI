@@ -44,7 +44,7 @@ namespace nucleateFluxModels
     (
         nucleateFluxModel,
         exponential,
-        dictionary
+        reactingEuler
     );
 }
 }

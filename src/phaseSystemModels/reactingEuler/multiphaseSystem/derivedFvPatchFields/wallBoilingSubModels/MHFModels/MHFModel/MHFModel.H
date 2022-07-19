@@ -67,7 +67,7 @@ public:
     (
         autoPtr,
         MHFModel,
-        dictionary,
+        reactingEuler,
         (
             const dictionary& dict
         ),

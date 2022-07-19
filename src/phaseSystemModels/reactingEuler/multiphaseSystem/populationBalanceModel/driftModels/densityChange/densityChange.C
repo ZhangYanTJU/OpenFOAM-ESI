@@ -40,7 +40,7 @@ namespace diameterModels
 namespace driftModels
 {
     defineTypeNameAndDebug(densityChangeDrift, 0);
-    addToRunTimeSelectionTable(driftModel, densityChangeDrift, dictionary);
+    addToRunTimeSelectionTable(driftModel, densityChangeDrift, reactingEuler);
 }
 }
 }

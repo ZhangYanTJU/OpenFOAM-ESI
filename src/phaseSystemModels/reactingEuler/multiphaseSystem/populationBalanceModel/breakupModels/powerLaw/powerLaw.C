@@ -38,7 +38,7 @@ namespace diameterModels
 namespace breakupModels
 {
     defineTypeNameAndDebug(powerLaw, 0);
-    addToRunTimeSelectionTable(breakupModel, powerLaw, dictionary);
+    addToRunTimeSelectionTable(breakupModel, powerLaw, reactingEuler);
 }
 }
 }
