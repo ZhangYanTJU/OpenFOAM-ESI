@@ -45,7 +45,7 @@ void Foam::ParticleCollector<CloudType>::makeLogFile
 )
 {
     // Create the output file if not already created
-    if (log_)
+    if (logToFile_)
     {
         DebugInfo<< "Creating output file" << endl;
 
@@ -521,7 +521,7 @@ Foam::ParticleCollector<CloudType>::ParticleCollector
     parcelType_(this->coeffDict().getOrDefault("parcelType", -1)),
     removeCollected_(this->coeffDict().getBool("removeCollected")),
     resetOnWrite_(this->coeffDict().getBool("resetOnWrite")),
-    log_(this->coeffDict().getBool("log")),
+    logToFile_(this->coeffDict().getBool("log")),
     points_(),
     faces_(),
     faceTris_(),
@@ -606,7 +606,7 @@ Foam::ParticleCollector<CloudType>::ParticleCollector
     parcelType_(pc.parcelType_),
     removeCollected_(pc.removeCollected_),
     resetOnWrite_(pc.resetOnWrite_),
-    log_(pc.log_),
+    logToFile_(pc.logToFile_),
     points_(pc.points_),
     faces_(pc.faces_),
     faceTris_(pc.faceTris_),
