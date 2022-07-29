@@ -302,6 +302,12 @@ protected:
 
 public:
 
+    // Public Data
+
+        //- Flag to write log into Info
+        bool log;
+
+
     // Constructors
 
         //- Construct given carrier gas fields
@@ -356,6 +362,9 @@ public:
     // Member Functions
 
         // Access
+
+            //- Return the log stream
+            inline Ostream& logStream() const;
 
             //- Return a reference to the cloud copy
             inline const KinematicCloud& cloudCopy() const;

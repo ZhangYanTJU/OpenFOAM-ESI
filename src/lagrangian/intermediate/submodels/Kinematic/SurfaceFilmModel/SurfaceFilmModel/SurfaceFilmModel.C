@@ -353,8 +353,10 @@ void Foam::SurfaceFilmModel<CloudType>::setParcelProperties
 
 
 template<class CloudType>
-void Foam::SurfaceFilmModel<CloudType>::info(Ostream& os)
+void Foam::SurfaceFilmModel<CloudType>::info()
 {
+    CloudSubModelBase<CloudType>::info();
+
     label nTrans0 =
         this->template getModelProperty<label>("nParcelsTransferred");
 
@@ -374,7 +376,7 @@ void Foam::SurfaceFilmModel<CloudType>::info(Ostream& os)
         massTransferred0 + returnReduce(totalMassTransferred_, sumOp<scalar>());
 
 
-    os  << "    Surface film:" << nl
+    Log_<< "    Surface film:" << nl
         << "      - parcels absorbed            = " << nTransTotal << nl
         << "      - mass absorbed               = " << massTransferredTotal << nl
         << "      - parcels ejected             = " << nInjectTotal << endl;

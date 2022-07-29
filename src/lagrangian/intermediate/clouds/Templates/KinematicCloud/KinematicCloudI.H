@@ -31,6 +31,18 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
+inline Foam::Ostream& Foam::KinematicCloud<CloudType>::logStream() const
+{
+    if (log)
+    {
+        return Info();
+    }
+
+    return Snull;
+}
+
+
+template<class CloudType>
 inline const Foam::KinematicCloud<CloudType>&
 Foam::KinematicCloud<CloudType>::cloudCopy() const
 {
