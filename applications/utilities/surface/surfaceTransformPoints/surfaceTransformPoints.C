@@ -82,12 +82,20 @@ int main(int argc, char *argv[])
         "vector",
         "Translate by specified <vector> - eg, '(1 0 0)' before rotations"
     );
+    argList::addBoolOption
+    (
+        "auto-centre",
+        "Use bounding box centre as centre for rotations"
+    );
     argList::addOption
     (
-        "origin",
+        "centre",
         "point",
-        "Use specified <point> as origin for rotations"
+        "Use specified <point> as centre for rotations"
     );
+    argList::addOptionCompat("auto-centre", {"auto-origin", 2206});
+    argList::addOptionCompat("centre", {"origin", 2206});
+
     argList::addOption
     (
         "rotate",
@@ -165,17 +173,23 @@ int main(int argc, char *argv[])
     if (args.readIfPresent("translate", v))
     {
         Info<< "Translating points by " << v << endl;
-
         points += v;
     }
 
-    vector origin;
-    const bool useOrigin = args.readIfPresent("origin", origin);
-    if (useOrigin)
+    vector rotationCentre;
+    bool useRotationCentre = args.readIfPresent("centre", rotationCentre);
+    if (args.found("auto-centre") && !useRotationCentre)
     {
-        Info<< "Set origin for rotations to " << origin << endl;
-        points -= origin;
+        useRotationCentre = true;
+        rotationCentre = boundBox(points).centre();
     }
+
+    if (useRotationCentre)
+    {
+        Info<< "Set centre of rotation to " << rotationCentre << endl;
+        points -= rotationCentre;
+    }
+
 
     if (args.found("rotate"))
     {
@@ -235,6 +249,13 @@ int main(int argc, char *argv[])
         points = transform(rot, points);
     }
 
+    if (useRotationCentre)
+    {
+        Info<< "Unset centre of rotation from " << rotationCentre << endl;
+        points += rotationCentre;
+    }
+
+
     List<scalar> scaling;
     if (args.readListIfPresent("scale", scaling))
     {
@@ -265,11 +286,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (useOrigin)
-    {
-        Info<< "Unset origin for rotations from " << origin << endl;
-        points += origin;
-    }
 
     surf1.movePoints(points);
     surf1.write(outFileName);
