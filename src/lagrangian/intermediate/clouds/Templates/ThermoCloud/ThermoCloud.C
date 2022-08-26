@@ -30,6 +30,7 @@ License
 #include "ThermoParcel.H"
 
 #include "HeatTransferModel.H"
+#include "integrationScheme.H"
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
@@ -130,9 +131,9 @@ template<class CloudType>
 Foam::ThermoCloud<CloudType>::ThermoCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
-    const dimensionedVector& g,
     const SLGThermo& thermo,
     bool readFields
 )
@@ -146,7 +147,6 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
         thermo.thermo().mu(),
         false
     ),
-    thermoCloud(),
     cloudCopyPtr_(nullptr),
     constProps_(this->particleProperties()),
     thermo_(thermo),
@@ -217,7 +217,6 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
 )
 :
     CloudType(c, name),
-    thermoCloud(),
     cloudCopyPtr_(nullptr),
     constProps_(c.constProps_),
     thermo_(c.thermo_),
@@ -327,7 +326,6 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
 )
 :
     CloudType(mesh, name, c),
-    thermoCloud(),
     cloudCopyPtr_(nullptr),
     constProps_(),
     thermo_(c.thermo()),

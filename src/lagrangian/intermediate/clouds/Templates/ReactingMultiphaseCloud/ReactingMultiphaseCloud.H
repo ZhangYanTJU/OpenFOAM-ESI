@@ -46,7 +46,11 @@ SourceFiles
 #ifndef ReactingMultiphaseCloud_H
 #define ReactingMultiphaseCloud_H
 
-#include "reactingMultiphaseCloud.H"
+#include "className.H"
+#include "autoPtr.H"
+#include "Cloud.H"
+#include "volFields.H"
+#include "fvMatricesFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,11 +59,15 @@ namespace Foam
 
 // Forward declaration of classes
 
+class SLGThermo;
+
 template<class CloudType>
 class DevolatilisationModel;
 
 template<class CloudType>
 class SurfaceReactionModel;
+
+TemplateName(ReactingMultiphaseCloud);
 
 /*---------------------------------------------------------------------------*\
                    Class ReactingMultiphaseCloud Declaration
@@ -69,7 +77,7 @@ template<class CloudType>
 class ReactingMultiphaseCloud
 :
     public CloudType,
-    public reactingMultiphaseCloud
+    public ReactingMultiphaseCloudName
 {
 public:
 
@@ -159,13 +167,12 @@ public:
         ReactingMultiphaseCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
-            const dimensionedVector& g,
             const SLGThermo& thermo,
             bool readFields = true
         );
-
 
         //- Copy constructor with new name
         ReactingMultiphaseCloud
@@ -202,7 +209,7 @@ public:
 
 
     //- Destructor
-    virtual ~ReactingMultiphaseCloud();
+    virtual ~ReactingMultiphaseCloud() = default;
 
 
     // Member Functions

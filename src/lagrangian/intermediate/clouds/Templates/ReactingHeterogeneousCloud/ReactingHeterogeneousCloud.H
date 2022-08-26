@@ -44,7 +44,11 @@ SourceFiles
 #ifndef ReactingHeterogeneousCloud_H
 #define ReactingHeterogeneousCloud_H
 
-#include "reactingHeterogeneousCloud.H"
+#include "className.H"
+#include "autoPtr.H"
+#include "Cloud.H"
+#include "volFields.H"
+#include "fvMatricesFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,19 +56,23 @@ namespace Foam
 {
 
 // Forward declaration of classes
+
+class SLGThermo;
+
 template<class CloudType>
 class HeterogeneousReactingModel;
 
+TemplateName(ReactingHeterogeneousCloud);
 
 /*---------------------------------------------------------------------------*\
-                      Class ReactingHeterogeneousCloud Declaration
+                 Class ReactingHeterogeneousCloud Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class CloudType>
 class ReactingHeterogeneousCloud
 :
     public CloudType,
-    public reactingHeterogeneousCloud
+    public ReactingHeterogeneousCloudName
 {
 public:
 
@@ -136,9 +144,9 @@ public:
         ReactingHeterogeneousCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
-            const dimensionedVector& g,
             const SLGThermo& thermo,
             bool readFields = true
         );

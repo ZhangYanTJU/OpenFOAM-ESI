@@ -78,9 +78,9 @@ template<class CloudType>
 Foam::ReactingMultiphaseCloud<CloudType>::ReactingMultiphaseCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
-    const dimensionedVector& g,
     const SLGThermo& thermo,
     bool readFields
 )
@@ -119,7 +119,6 @@ Foam::ReactingMultiphaseCloud<CloudType>::ReactingMultiphaseCloud
 )
 :
     CloudType(c, name),
-    reactingMultiphaseCloud(),
     cloudCopyPtr_(nullptr),
     constProps_(c.constProps_),
     devolatilisationModel_(c.devolatilisationModel_->clone()),
@@ -138,20 +137,12 @@ Foam::ReactingMultiphaseCloud<CloudType>::ReactingMultiphaseCloud
 )
 :
     CloudType(mesh, name, c),
-    reactingMultiphaseCloud(),
     cloudCopyPtr_(nullptr),
     constProps_(),
     devolatilisationModel_(nullptr),
     surfaceReactionModel_(nullptr),
     dMassDevolatilisation_(0.0),
     dMassSurfaceReaction_(0.0)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class CloudType>
-Foam::ReactingMultiphaseCloud<CloudType>::~ReactingMultiphaseCloud()
 {}
 
 

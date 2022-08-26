@@ -27,6 +27,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "physicoChemicalConstants.H"
+#include "SLGThermo.H"
+#include "fvMatrices.H"
+#include "fvmSup.H"
 
 using namespace Foam::constant;
 

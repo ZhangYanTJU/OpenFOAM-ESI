@@ -31,6 +31,7 @@ License
 #include "DampingModel.H"
 #include "IsotropyModel.H"
 #include "TimeScaleModel.H"
+#include "SLGThermo.H"
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
@@ -70,10 +71,10 @@ template<class CloudType>
 Foam::MPPICCloud<CloudType>::MPPICCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
     const volScalarField& mu,
-    const dimensionedVector& g,
     bool readFields
 )
 :
@@ -105,6 +106,29 @@ Foam::MPPICCloud<CloudType>::MPPICCloud
 template<class CloudType>
 Foam::MPPICCloud<CloudType>::MPPICCloud
 (
+    const word& cloudName,
+    const dimensionedVector& g,
+    const volScalarField& rho,
+    const volVectorField& U,
+    const SLGThermo& thermo,
+    bool readFields
+)
+:
+    MPPICCloud<CloudType>
+    (
+        cloudName,
+        g,
+        rho,
+        U,
+        thermo.thermo().mu(),
+        readFields
+    )
+{}
+
+
+template<class CloudType>
+Foam::MPPICCloud<CloudType>::MPPICCloud
+(
     MPPICCloud<CloudType>& c,
     const word& name
 )
@@ -128,13 +152,6 @@ Foam::MPPICCloud<CloudType>::MPPICCloud
     packingModel_(nullptr),
     dampingModel_(nullptr),
     isotropyModel_(nullptr)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class CloudType>
-Foam::MPPICCloud<CloudType>::~MPPICCloud()
 {}
 
 

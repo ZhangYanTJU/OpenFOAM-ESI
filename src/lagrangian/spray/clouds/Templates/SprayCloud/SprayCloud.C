@@ -26,6 +26,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "SprayCloud.H"
+#include "volFields.H"
+#include "liquidMixtureProperties.H"
 #include "AtomizationModel.H"
 #include "BreakupModel.H"
 
@@ -73,15 +75,14 @@ template<class CloudType>
 Foam::SprayCloud<CloudType>::SprayCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
-    const dimensionedVector& g,
     const SLGThermo& thermo,
     bool readFields
 )
 :
     CloudType(cloudName, rho, U, g, thermo, false),
-    sprayCloud(),
     cloudCopyPtr_(nullptr),
     averageParcelMass_(0.0),
     atomizationModel_(nullptr),
@@ -117,7 +118,6 @@ Foam::SprayCloud<CloudType>::SprayCloud
 )
 :
     CloudType(c, name),
-    sprayCloud(),
     cloudCopyPtr_(nullptr),
     averageParcelMass_(c.averageParcelMass_),
     atomizationModel_(c.atomizationModel_->clone()),
@@ -134,18 +134,10 @@ Foam::SprayCloud<CloudType>::SprayCloud
 )
 :
     CloudType(mesh, name, c),
-    sprayCloud(),
     cloudCopyPtr_(nullptr),
     averageParcelMass_(0.0),
     atomizationModel_(nullptr),
     breakupModel_(nullptr)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class CloudType>
-Foam::SprayCloud<CloudType>::~SprayCloud()
 {}
 
 

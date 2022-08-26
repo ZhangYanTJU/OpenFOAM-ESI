@@ -58,6 +58,8 @@ namespace Foam
 template<class CloudType>
 class CollisionModel;
 
+TemplateName(CollidingCloud);
+
 /*---------------------------------------------------------------------------*\
                        Class CollidingCloud Declaration
 \*---------------------------------------------------------------------------*/
@@ -65,7 +67,8 @@ class CollisionModel;
 template<class CloudType>
 class CollidingCloud
 :
-    public CloudType
+    public CloudType,
+    public CollidingCloudName
 {
 public:
 
@@ -109,8 +112,7 @@ protected:
         // References to the cloud sub-models
 
             //- Collision model
-            autoPtr<CollisionModel<CollidingCloud<CloudType>>>
-                collisionModel_;
+            autoPtr<CollisionModel<CollidingCloud<CloudType>>> collisionModel_;
 
 
         // Initialisation
@@ -142,10 +144,10 @@ public:
         CollidingCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
             const volScalarField& mu,
-            const dimensionedVector& g,
             bool readFields = true
         );
 
@@ -184,7 +186,7 @@ public:
 
 
     //- Destructor
-    virtual ~CollidingCloud();
+    virtual ~CollidingCloud() = default;
 
 
     // Member Functions

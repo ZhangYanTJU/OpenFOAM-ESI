@@ -61,9 +61,9 @@ template<class CloudType>
 Foam::ReactingHeterogeneousCloud<CloudType>::ReactingHeterogeneousCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
-    const dimensionedVector& g,
     const SLGThermo& thermo,
     bool readFields
 )
@@ -93,7 +93,6 @@ Foam::ReactingHeterogeneousCloud<CloudType>::ReactingHeterogeneousCloud
 )
 :
     CloudType(c, name),
-    reactingHeterogeneousCloud(),
     cloudCopyPtr_(nullptr),
     heterogeneousReactionModel_(c.heterogeneousReactionModel_->clone())
 {}
@@ -108,7 +107,6 @@ Foam::ReactingHeterogeneousCloud<CloudType>::ReactingHeterogeneousCloud
 )
 :
     CloudType(mesh, name, c),
-    reactingHeterogeneousCloud(),
     cloudCopyPtr_(nullptr),
     heterogeneousReactionModel_(c.heterogeneousReactionModel_->clone())
 {}
