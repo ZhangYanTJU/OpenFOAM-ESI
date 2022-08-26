@@ -85,8 +85,7 @@ Foam::ReactingMultiphaseCloud<CloudType>::ReactingMultiphaseCloud
     bool readFields
 )
 :
-    CloudType(cloudName, rho, U, g, thermo, false),
-    reactingMultiphaseCloud(),
+    CloudType(cloudName, g, rho, U, thermo, false),
     cloudCopyPtr_(nullptr),
     constProps_(this->particleProperties()),
     devolatilisationModel_(nullptr),

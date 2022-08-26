@@ -98,8 +98,7 @@ Foam::ReactingCloud<CloudType>::ReactingCloud
     bool readFields
 )
 :
-    CloudType(cloudName, rho, U, g, thermo, false),
-    reactingCloud(),
+    CloudType(cloudName, g, rho, U, thermo, false),
     cloudCopyPtr_(nullptr),
     constProps_(this->particleProperties()),
     compositionModel_(nullptr),

@@ -140,10 +140,10 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
     CloudType
     (
         cloudName,
+        g,
         rho,
         U,
         thermo.thermo().mu(),
-        g,
         false
     ),
     thermoCloud(),

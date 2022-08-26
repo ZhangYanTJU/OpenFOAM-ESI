@@ -68,8 +68,7 @@ Foam::ReactingHeterogeneousCloud<CloudType>::ReactingHeterogeneousCloud
     bool readFields
 )
 :
-    CloudType(cloudName, rho, U, g, thermo, false),
-    reactingHeterogeneousCloud(),
+    CloudType(cloudName, g, rho, U, thermo, false),
     cloudCopyPtr_(nullptr),
     heterogeneousReactionModel_(nullptr)
 {

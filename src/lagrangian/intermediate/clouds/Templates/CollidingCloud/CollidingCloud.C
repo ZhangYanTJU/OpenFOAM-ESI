@@ -95,7 +95,7 @@ Foam::CollidingCloud<CloudType>::CollidingCloud
     bool readFields
 )
 :
-    CloudType(cloudName, rho, U, mu, g, false),
+    CloudType(cloudName, g, rho, U, mu, false),
     constProps_(this->particleProperties()),
     collisionModel_(nullptr)
 {
