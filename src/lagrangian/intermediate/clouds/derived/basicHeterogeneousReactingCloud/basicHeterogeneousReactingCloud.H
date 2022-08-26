@@ -27,35 +27,39 @@ Class
     Foam::basicHeterogeneousReactingCloud
 
 Description
-    Cloud class to introduce heterogeneou reacting parcels
+    Cloud class to introduce heterogeneous reacting parcels
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicHeterogeneousReactingCloud_H
-#define basicHeterogeneousReactingCloud_H
+#ifndef Foam_basicHeterogeneousReactingCloud_H
+#define Foam_basicHeterogeneousReactingCloud_H
 
-#include "Cloud.H"
+#include "BaseCloud.H"
 #include "KinematicCloud.H"
 #include "ThermoCloud.H"
 #include "ReactingCloud.H"
 #include "ReactingHeterogeneousCloud.H"
+#include "ParcelCloudModel.H"
 #include "basicHeterogeneousReactingParcel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef ReactingHeterogeneousCloud
+    typedef ParcelCloudModel
     <
-        ReactingCloud
+        ReactingHeterogeneousCloud
         <
-            ThermoCloud
+            ReactingCloud
             <
-                KinematicCloud
+                ThermoCloud
                 <
-                    Cloud
+                    KinematicCloud
                     <
-                        basicHeterogeneousReactingParcel
+                        BaseCloud
+                        <
+                            basicHeterogeneousReactingParcel
+                        >
                     >
                 >
             >

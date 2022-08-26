@@ -31,28 +31,32 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicReactingCloud_H
-#define basicReactingCloud_H
+#ifndef Foam_basicReactingCloud_H
+#define Foam_basicReactingCloud_H
 
-#include "Cloud.H"
+#include "BaseCloud.H"
 #include "KinematicCloud.H"
 #include "ThermoCloud.H"
 #include "ReactingCloud.H"
+#include "ParcelCloudModel.H"
 #include "basicReactingParcel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef ReactingCloud
+    typedef ParcelCloudModel
     <
-        ThermoCloud
+        ReactingCloud
         <
-            KinematicCloud
+            ThermoCloud
             <
-                Cloud
+                KinematicCloud
                 <
-                    basicReactingParcel
+                    BaseCloud
+                    <
+                        basicReactingParcel
+                    >
                 >
             >
         >
