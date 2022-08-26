@@ -27,8 +27,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "AveragingMethod.H"
-#include "runTimeSelectionTables.H"
 #include "pointMesh.H"
+#include "polyMeshTetDecomposition.H"
+#include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 

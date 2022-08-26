@@ -28,7 +28,7 @@ License
 
 #include "cloudInfo.H"
 #include "cloud.H"
-#include "kinematicCloud.H"
+#include "parcelCloudModel.H"
 #include "dictionary.H"
 #include "mathematicalConstants.H"
 #include "PstreamReduceOps.H"
@@ -147,7 +147,7 @@ bool Foam::functionObjects::cloudInfo::performAction(unsigned request)
 
         const word& cloudName = names()[cloudi];
 
-        const auto* kinCloudPtr = obr_.cfindObject<kinematicCloud>(cloudName);
+        const auto* kinCloudPtr = obr_.cfindObject<parcelCloudModel>(cloudName);
 
         if (!kinCloudPtr)
         {

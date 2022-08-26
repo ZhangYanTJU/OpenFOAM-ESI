@@ -167,13 +167,19 @@ public:
 
 #define makePairModel(CloudType)                                               \
                                                                                \
-    defineNamedTemplateTypeNameAndDebug(Foam::PairModel<Foam::CloudType>, 0); \
+    typedef Foam::CloudType::collidingCloudType collidingCloudType;            \
+                                                                               \
+    defineNamedTemplateTypeNameAndDebug                                        \
+    (                                                                          \
+        Foam::PairModel<collidingCloudType>,                                   \
+        0                                                                      \
+    );                                                                         \
                                                                                \
     namespace Foam                                                             \
     {                                                                          \
         defineTemplateRunTimeSelectionTable                                    \
         (                                                                      \
-            PairModel<Foam::CloudType>,                                        \
+            PairModel<collidingCloudType>,                                     \
             dictionary                                                         \
         );                                                                     \
     }
@@ -181,10 +187,12 @@ public:
 
 #define makePairModelType(SS, CloudType)                                       \
                                                                                \
-    defineNamedTemplateTypeNameAndDebug(Foam::SS<Foam::CloudType>, 0);         \
+    typedef Foam::CloudType::collidingCloudType collidingCloudType;            \
                                                                                \
-    Foam::PairModel<Foam::CloudType>::                                         \
-        adddictionaryConstructorToTable<Foam::SS<Foam::CloudType>>             \
+    defineNamedTemplateTypeNameAndDebug(Foam::SS<collidingCloudType>, 0);      \
+                                                                               \
+    Foam::PairModel<collidingCloudType>::                                      \
+        adddictionaryConstructorToTable<Foam::SS<collidingCloudType>>          \
         add##SS##CloudType##ConstructorToTable_;
 
 

@@ -80,7 +80,7 @@ public:
 
 
     //- Destructor
-    virtual ~cloudScatter();
+    virtual ~cloudScatter() = default;
 
 
     // Member Operators

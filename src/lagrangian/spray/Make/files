@@ -1,4 +1,5 @@
-clouds/baseClasses/sprayCloud/sprayCloud.C
+clouds/Templates/SprayCloud/SprayCloudName.C
+clouds/derived/basicSprayCloud/basicSprayCloud.C
 
 SPRAYPARCEL=parcels/derived/basicSprayParcel
 $(SPRAYPARCEL)/defineBasicSprayParcel.C

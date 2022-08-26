@@ -61,8 +61,9 @@ void Foam::HeatTransferCoeff<CloudType>::postEvolve
 )
 {
     auto& c = this->owner();
-    const auto& tc =
-        static_cast<const ThermoCloud<KinematicCloud<Cloud<parcelType>>>&>(c);
+
+    typedef ThermoCloud<typename CloudType::kinematicCloudType> thermoCloudType;
+    const auto& tc = static_cast<const thermoCloudType&>(c);
 
     if (!c.template foundObject<IOField<scalar>>("htc"))
     {

@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "SuppressionCollision.H"
-#include "kinematicCloud.H"
+#include "baseCloudInterface.H"
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
@@ -38,11 +38,11 @@ void Foam::SuppressionCollision<CloudType>::collide
     const scalar dt
 )
 {
-    const kinematicCloud& sc =
+    const auto& sc =
         this->owner().mesh().template
-        lookupObject<kinematicCloud>(suppressionCloud_);
+        lookupObject<baseCloudInterface>(suppressionCloud_);
 
-    volScalarField vDotSweep(sc.vDotSweep());
+    const volScalarField vDotSweep(sc.vDotSweep());
 
     dimensionedScalar Dt("dt", dimTime, dt);
     volScalarField P(type() + ":p", 1.0 - exp(-vDotSweep*Dt));

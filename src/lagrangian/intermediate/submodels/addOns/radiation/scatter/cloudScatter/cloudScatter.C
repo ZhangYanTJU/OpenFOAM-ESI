@@ -27,7 +27,7 @@ License
 
 #include "cloudScatter.H"
 #include "addToRunTimeSelectionTable.H"
-#include "thermoCloud.H"
+#include "baseCloudInterface.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -61,43 +61,34 @@ Foam::radiation::cloudScatter::cloudScatter
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::radiation::cloudScatter::~cloudScatter()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::cloudScatter::sigmaEff() const
 {
-    tmp<volScalarField> tsigma
+    auto tsigma = tmp<volScalarField>::New
     (
-        new volScalarField
+        IOobject
         (
-            IOobject
-            (
-                "sigma",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            "sigma",
+            mesh_.time().timeName(),
             mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 
-    forAll(cloudNames_, i)
+    for (const word& name : cloudNames_)
     {
-        const thermoCloud& tc
+        const auto& pcm
         (
-            mesh_.objectRegistry::lookupObject<thermoCloud>(cloudNames_[i])
+            mesh_.objectRegistry::lookupObject<baseCloudInterface>(name)
         );
 
-        tsigma.ref() += tc.sigmap();
+        tsigma.ref() += pcm.sigmap();
     }
 
     return 3.0*tsigma;
