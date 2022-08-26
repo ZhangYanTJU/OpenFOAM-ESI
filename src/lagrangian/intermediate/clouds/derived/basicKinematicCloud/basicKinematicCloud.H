@@ -31,22 +31,26 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicKinematicCloud_H
-#define basicKinematicCloud_H
+#ifndef Foam_basicKinematicCloud_H
+#define Foam_basicKinematicCloud_H
 
-#include "Cloud.H"
+#include "BaseCloud.H"
 #include "KinematicCloud.H"
+#include "ParcelCloudModel.H"
 #include "basicKinematicParcel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef KinematicCloud
+    typedef ParcelCloudModel
     <
-        Cloud
+        KinematicCloud
         <
-            basicKinematicParcel
+            BaseCloud
+            <
+                basicKinematicParcel
+            >
         >
     > basicKinematicCloud;
 }

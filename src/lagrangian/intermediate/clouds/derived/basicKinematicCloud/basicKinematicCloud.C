@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2011-2016 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,44 +23,31 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::basicThermoCloud
-
-Description
-    Cloud class to introduce thermodynamic parcels
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_basicThermoCloud_H
-#define Foam_basicThermoCloud_H
-
-#include "BaseCloud.H"
-#include "KinematicCloud.H"
-#include "ThermoCloud.H"
-#include "ParcelCloudModel.H"
-#include "basicThermoParcel.H"
+#include "basicKinematicCloud.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef ParcelCloudModel
-    <
-        ThermoCloud
-        <
-            KinematicCloud
-            <
-                BaseCloud
-                <
-                    basicThermoParcel
-                >
-            >
-        >
-    > basicThermoCloud;
+    addNamedToRunTimeSelectionTable
+    (
+        parcelCloudModel,
+        basicKinematicCloud,
+        components,
+        basicKinematicCloud
+    );
+
+    addNamedToRunTimeSelectionTable
+    (
+        parcelCloudModel,
+        basicKinematicCloud,
+        thermo,
+        basicKinematicCloud
+    );
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
 
 // ************************************************************************* //

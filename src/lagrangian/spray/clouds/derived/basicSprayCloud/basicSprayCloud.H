@@ -31,31 +31,35 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSprayCloud_H
-#define basicSprayCloud_H
+#ifndef Foam_basicSprayCloud_H
+#define Foam_basicSprayCloud_H
 
-#include "Cloud.H"
+#include "BaseCloud.H"
 #include "KinematicCloud.H"
 #include "ThermoCloud.H"
 #include "ReactingCloud.H"
 #include "SprayCloud.H"
+#include "ParcelCloudModel.H"
 #include "basicSprayParcel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef SprayCloud
+    typedef ParcelCloudModel
     <
-        ReactingCloud
+        SprayCloud
         <
-            ThermoCloud
+            ReactingCloud
             <
-                KinematicCloud
+                ThermoCloud
                 <
-                    Cloud
+                    KinematicCloud
                     <
-                        basicSprayParcel
+                        BaseCloud
+                        <
+                            basicSprayParcel
+                        >
                     >
                 >
             >
