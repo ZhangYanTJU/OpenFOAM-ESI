@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,8 +61,9 @@ void Foam::HeatTransferCoeff<CloudType>::postEvolve
 )
 {
     auto& c = this->owner();
-    const auto& tc =
-        static_cast<const ThermoCloud<KinematicCloud<Cloud<parcelType>>>&>(c);
+
+    typedef ThermoCloud<typename CloudType::kinematicCloudType> thermoCloudType;
+    const auto& tc = static_cast<const thermoCloudType&>(c);
 
     if (!c.template foundObject<IOField<scalar>>("htc"))
     {
@@ -102,7 +103,6 @@ void Foam::HeatTransferCoeff<CloudType>::postEvolve
 
         htc[parceli++] = heatTransfer.htc(p.d(), Re, Pr, kappas, 0);
     }
-
 
     if (c.size() && c.time().writeTime())
     {

@@ -76,7 +76,7 @@ public:
 
 
     //- Destructor
-    virtual ~cloudAbsorptionEmission();
+    virtual ~cloudAbsorptionEmission() = default;
 
 
     // Member Operators

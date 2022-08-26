@@ -26,7 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "cloudAbsorptionEmission.H"
-#include "thermoCloud.H"
+#include "baseCloudInterface.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -61,43 +61,34 @@ Foam::radiation::cloudAbsorptionEmission::cloudAbsorptionEmission
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::radiation::cloudAbsorptionEmission::~cloudAbsorptionEmission()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::cloudAbsorptionEmission::aDisp(const label) const
 {
-    tmp<volScalarField> ta
+    auto ta = tmp<volScalarField>::New
     (
-        new volScalarField
+        IOobject
         (
-            IOobject
-            (
-                "a",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            "a",
+            mesh_.time().timeName(),
             mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 
-    forAll(cloudNames_, i)
+    for (const word& name : cloudNames_)
     {
-        const thermoCloud& tc
+        const auto& pcm
         (
-            mesh_.objectRegistry::lookupObject<thermoCloud>(cloudNames_[i])
+            mesh_.objectRegistry::lookupObject<baseCloudInterface>(name)
         );
 
-        ta.ref() += tc.ap();
+        ta.ref() += pcm.ap();
     }
 
     return ta;
@@ -127,32 +118,29 @@ Foam::radiation::cloudAbsorptionEmission::eDisp(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::cloudAbsorptionEmission::EDisp(const label bandI) const
 {
-    tmp<volScalarField> tE
+    auto tE = tmp<volScalarField>::New
     (
-        new volScalarField
+        IOobject
         (
-            IOobject
-            (
-                "E",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            "E",
+            mesh_.time().timeName(),
             mesh_,
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        mesh_,
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 
-    forAll(cloudNames_, i)
+    for (const word& name : cloudNames_)
     {
-        const thermoCloud& tc
+        const auto& pcm
         (
-            mesh_.objectRegistry::lookupObject<thermoCloud>(cloudNames_[i])
+            mesh_.objectRegistry::lookupObject<baseCloudInterface>(name)
         );
 
-        tE.ref() += tc.Ep();
+        tE.ref() += pcm.Ep();
     }
 
     // Total emission is 4 times the projected emission

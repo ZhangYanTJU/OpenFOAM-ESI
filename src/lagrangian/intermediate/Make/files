@@ -2,17 +2,26 @@ PARCELS=parcels
 BASEPARCELS=$(PARCELS)/baseClasses
 DERIVEDPARCELS=$(PARCELS)/derived
 
+
 CLOUDS=clouds
-BASECLOUDS=$(CLOUDS)/baseClasses
+TEMPLATECLOUDS=$(CLOUDS)/Templates
+$(TEMPLATECLOUDS)/KinematicCloud/KinematicCloudName.C
+$(TEMPLATECLOUDS)/ThermoCloud/ThermoCloudName.C
+$(TEMPLATECLOUDS)/ReactingCloud/ReactingCloudName.C
+$(TEMPLATECLOUDS)/ReactingMultiphaseCloud/ReactingMultiphaseCloudName.C
+$(TEMPLATECLOUDS)/ReactingHeterogeneousCloud/ReactingHeterogeneousCloudName.C
+$(TEMPLATECLOUDS)/CollidingCloud/CollidingCloudName.C
+$(TEMPLATECLOUDS)/MPPICCloud/MPPICCloudName.C
+
+
 DERIVEDCLOUDS=$(CLOUDS)/derived
-
-
-/* Cloud base classes */
-$(BASECLOUDS)/kinematicCloud/kinematicCloud.C
-$(BASECLOUDS)/thermoCloud/thermoCloud.C
-$(BASECLOUDS)/reactingCloud/reactingCloud.C
-$(BASECLOUDS)/reactingMultiphaseCloud/reactingMultiphaseCloud.C
-$(BASECLOUDS)/reactingHeterogeneousCloud/reactingHeterogeneousCloud.C
+$(DERIVEDCLOUDS)/basicKinematicCloud/basicKinematicCloud.C
+$(DERIVEDCLOUDS)/basicThermoCloud/basicThermoCloud.C
+$(DERIVEDCLOUDS)/basicReactingCloud/basicReactingCloud.C
+$(DERIVEDCLOUDS)/basicReactingMultiphaseCloud/basicReactingMultiphaseCloud.C
+$(DERIVEDCLOUDS)/basicHeterogeneousReactingCloud/basicHeterogeneousReactingCloud.C
+$(DERIVEDCLOUDS)/basicKinematicCollidingCloud/basicKinematicCollidingCloud.C
+$(DERIVEDCLOUDS)/basicKinematicMPPICCloud/basicKinematicMPPICCloud.C
 
 
 /* kinematic parcel sub-models */
@@ -45,7 +54,7 @@ $(REACTINGMPPARCEL)/defineBasicReactingMultiphaseParcel.C
 $(REACTINGMPPARCEL)/makeBasicReactingMultiphaseParcelSubmodels.C
 
 
-/* heterogeous reacting parcel sub-models */
+/* heterogeneous reacting parcel sub-models */
 REACTINGHETERMPPARCEL=$(DERIVEDPARCELS)/basicHeterogeneousReactingParcel
 $(REACTINGHETERMPPARCEL)/defineBasicHeterogeneousReactingParcel.C
 $(REACTINGHETERMPPARCEL)/makeBasicHeterogeneousReactingParcelSubmodels.C

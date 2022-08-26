@@ -48,6 +48,7 @@ SourceFiles
 #include "particle.H"
 #include "SLGThermo.H"
 #include "demandDrivenEntry.H"
+#include "interpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
