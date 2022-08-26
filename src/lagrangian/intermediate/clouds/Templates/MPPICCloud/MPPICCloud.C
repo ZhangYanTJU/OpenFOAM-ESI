@@ -77,7 +77,7 @@ Foam::MPPICCloud<CloudType>::MPPICCloud
     bool readFields
 )
 :
-    CloudType(cloudName, rho, U, mu, g, false),
+    CloudType(cloudName, g, rho, U, mu, false),
     packingModel_(nullptr),
     dampingModel_(nullptr),
     isotropyModel_(nullptr)

@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,68 +25,15 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "coalCloudList.H"
+#include "parcelCloudModel.H"
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::coalCloudList::coalCloudList
-(
-    const volScalarField& rho,
-    const volVectorField& U,
-    const dimensionedVector& g,
-    const SLGThermo& slgThermo
-)
-:
-    PtrList<coalCloud>(),
-    mesh_(rho.mesh())
+namespace Foam
 {
-    IOdictionary props
-    (
-        IOobject
-        (
-            "coalCloudList",
-            mesh_.time().constant(),
-            mesh_,
-            IOobject::MUST_READ
-        )
-    );
-
-    const wordHashSet cloudNames(props.get<wordList>("clouds"));
-
-    setSize(cloudNames.size());
-
-    label i = 0;
-    for (const word& name : cloudNames)
-    {
-        Info<< "creating cloud: " << name << endl;
-
-        set
-        (
-            i++,
-            new coalCloud
-            (
-                name,
-                g,
-                rho,
-                U,
-                slgThermo
-            )
-        );
-
-        Info<< endl;
-    }
+    defineTypeNameAndDebug(parcelCloudModel, 0);
+    defineRunTimeSelectionTable(parcelCloudModel, components);
+    defineRunTimeSelectionTable(parcelCloudModel, thermo);
 }
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::coalCloudList::evolve()
-{
-    forAll(*this, i)
-    {
-        operator[](i).evolve();
-    }
-}
-
 
 // ************************************************************************* //

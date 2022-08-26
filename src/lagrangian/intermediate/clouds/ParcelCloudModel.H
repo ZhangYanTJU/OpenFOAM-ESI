@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2020-2021 OpenFOAM Foundation
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,48 +25,70 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::coalCloud
+    Foam::ParcelCloudModel
 
 Description
-    Cloud class to introduce coal parcels
+    Outermost template for parcel clouds. Adds the parcelCloudModel
+    virtualisation layer and forwards the methods required by that layer.
+
+SourceFiles
+    ParcelCloudModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coalCloud_H
-#define coalCloud_H
+#ifndef Foam_ParcelCloudModel_H
+#define Foam_ParcelCloudModel_H
 
-#include "BaseCloud.H"
-#include "KinematicCloud.H"
-#include "ThermoCloud.H"
-#include "ReactingCloud.H"
-#include "ReactingMultiphaseCloud.H"
-#include "ParcelCloudModel.H"
-#include "coalParcel.H"
+#include "parcelCloudModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef ParcelCloudModel
-    <
-        ReactingMultiphaseCloud
-        <
-            ReactingCloud
-            <
-                ThermoCloud
-                <
-                    KinematicCloud
-                    <
-                        BaseCloud
-                        <
-                            coalParcel
-                        >
-                    >
-                >
-            >
-        >
-    > coalCloud;
-}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class CloudType>
+class ParcelCloudModel
+:
+    public parcelCloudModel,
+    public CloudType
+{
+public:
+
+    // Constructors
+
+        //- Inherit base constructors
+        using CloudType::CloudType;
+
+
+    // Member Functions
+
+        //- Evolve the cloud
+        virtual void evolveME() final
+        {
+            // CloudType::evolve();
+            if (this->solution().canEvolve())
+            {
+                typedef typename CloudType::particleType parcelType;
+
+                typename parcelType::trackingData td(*this);
+
+                this->solve(*this, td);
+            }
+        }
+
+        //- Call this before a topology change. Stores the particles global
+        //- positions in the database for use during mapping.
+        virtual void storeGlobalPositionsME() const final
+        {
+            CloudType::storeGlobalPositions();
+        }
+};
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
