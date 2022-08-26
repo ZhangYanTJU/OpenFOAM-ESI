@@ -59,7 +59,6 @@ SourceFiles
 
 #include "particle.H"
 #include "Cloud.H"
-#include "kinematicCloud.H"
 #include "IOdictionary.H"
 #include "autoPtr.H"
 #include "Random.H"
@@ -79,6 +78,8 @@ namespace Foam
 // Forward declaration of classes
 
 class integrationScheme;
+
+class SLGThermo;
 
 template<class CloudType>
 class InjectionModelList;
@@ -105,6 +106,8 @@ template<class CloudType>
 class IsotropyModel;
 
 
+TemplateName(KinematicCloud);
+
 /*---------------------------------------------------------------------------*\
                        Class KinematicCloud Declaration
 \*---------------------------------------------------------------------------*/
@@ -113,7 +116,7 @@ template<class CloudType>
 class KinematicCloud
 :
     public CloudType,
-    public kinematicCloud
+    public KinematicCloudName
 {
 public:
 
@@ -309,15 +312,24 @@ public:
 
 
     // Constructors
+        KinematicCloud
+        (
+            const word& cloudName,
+            const dimensionedVector& g,
+            const volScalarField& rho,
+            const volVectorField& U,
+            const volScalarField& mu,
+            bool readFields = true
+        );
 
         //- Construct given carrier gas fields
         KinematicCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
-            const volScalarField& mu,
-            const dimensionedVector& g,
+            const SLGThermo& thermo,
             bool readFields = true
         );
 
@@ -539,19 +551,15 @@ public:
                     inline tmp<volScalarField::Internal> UCoeff() const;
 
                     //- Return tmp momentum source term (compressible)
-                    inline tmp<fvVectorMatrix> SU
-                    (
-                        volVectorField& U,
-                        bool incompressible = false
-                    ) const;
+                    inline tmp<fvVectorMatrix> SU(volVectorField& U) const;
 
 
         // Check
 
             //- Total number of parcels
-            virtual label nParcels() const
+            label nParcels() const
             {
-                return CloudType::nParcels();
+                return this->size();
             }
 
             //- Total mass in system

@@ -41,7 +41,6 @@ SourceFiles
 #ifndef MPPICCloud_H
 #define MPPICCloud_H
 
-#include "particle.H"
 #include "Cloud.H"
 #include "IOdictionary.H"
 #include "autoPtr.H"
@@ -55,6 +54,8 @@ namespace Foam
 
 // Forward declaration of classes
 
+class SLGThermo;
+
 template<class CloudType>
 class PackingModel;
 
@@ -64,6 +65,8 @@ class DampingModel;
 template<class CloudType>
 class IsotropyModel;
 
+TemplateName(MPPICCloud);
+
 /*---------------------------------------------------------------------------*\
                        Class MPPICCloud Declaration
 \*---------------------------------------------------------------------------*/
@@ -71,7 +74,8 @@ class IsotropyModel;
 template<class CloudType>
 class MPPICCloud
 :
-    public CloudType
+    public CloudType,
+    public MPPICCloudName
 {
 public:
 
@@ -114,12 +118,10 @@ protected:
             autoPtr<PackingModel<MPPICCloud<CloudType>>> packingModel_;
 
             //- Damping model
-            autoPtr<DampingModel<MPPICCloud<CloudType>>>
-                dampingModel_;
+            autoPtr<DampingModel<MPPICCloud<CloudType>>> dampingModel_;
 
             //- Exchange model
-            autoPtr<IsotropyModel<MPPICCloud<CloudType>>>
-                isotropyModel_;
+            autoPtr<IsotropyModel<MPPICCloud<CloudType>>> isotropyModel_;
 
 
         // Initialisation
@@ -136,10 +138,21 @@ public:
         MPPICCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
             const volScalarField& mu,
+            bool readFields = true
+        );
+
+        //- Construct given carrier gas fields
+        MPPICCloud
+        (
+            const word& cloudName,
             const dimensionedVector& g,
+            const volScalarField& rho,
+            const volVectorField& U,
+            const SLGThermo& thermo,
             bool readFields = true
         );
 
@@ -178,7 +191,7 @@ public:
 
 
     //- Destructor
-    virtual ~MPPICCloud();
+    virtual ~MPPICCloud() = default;
 
 
     // Member Functions

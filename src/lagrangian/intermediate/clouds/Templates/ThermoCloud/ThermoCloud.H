@@ -45,9 +45,9 @@ SourceFiles
 #ifndef ThermoCloud_H
 #define ThermoCloud_H
 
-#include "KinematicCloud.H"
-#include "thermoCloud.H"
-#include "SLGThermo.H"
+#include "volFields.H"
+#include "Cloud.H"
+#include "fvMatricesFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,9 +55,14 @@ namespace Foam
 {
 
 // Forward declaration of classes
+class SLGThermo;
+class integrationScheme;
 
 template<class CloudType>
 class HeatTransferModel;
+
+TemplateName(ThermoCloud);
+
 
 /*---------------------------------------------------------------------------*\
                         Class ThermoCloud Declaration
@@ -67,7 +72,7 @@ template<class CloudType>
 class ThermoCloud
 :
     public CloudType,
-    public thermoCloud
+    public ThermoCloudName
 {
 public:
 
@@ -179,9 +184,9 @@ public:
         ThermoCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
-            const dimensionedVector& g,
             const SLGThermo& thermo,
             bool readFields = true
         );

@@ -38,8 +38,10 @@ Description
 #ifndef Foam_SprayCloud_H
 #define Foam_SprayCloud_H
 
-#include "sprayCloud.H"
-#include "SortList.H"
+#include "dimensionedTypes.H"
+#include "autoPtr.H"
+#include "volFieldsFwd.H"
+#include "Cloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,20 +49,25 @@ namespace Foam
 {
 
 // Forward Declarations
+class fvMesh;
+class SLGThermo;
+
 template<class CloudType> class AtomizationModel;
 template<class CloudType> class BreakupModel;
 template<class CloudType> class SprayCloud;
 
+TemplateName(SprayCloud);
+
 
 /*---------------------------------------------------------------------------*\
-                      Class SprayCloud Declaration
+                         Class SprayCloud Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class CloudType>
 class SprayCloud
 :
     public CloudType,
-    public sprayCloud
+    public SprayCloudName
 {
 public:
 
@@ -132,9 +139,9 @@ public:
         SprayCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
-            const dimensionedVector& g,
             const SLGThermo& thermo,
             bool readFields = true
         );
@@ -171,7 +178,7 @@ public:
 
 
     //- Destructor
-    virtual ~SprayCloud();
+    virtual ~SprayCloud() = default;
 
 
     // Member Functions

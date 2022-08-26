@@ -26,6 +26,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "SortList.H"
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>

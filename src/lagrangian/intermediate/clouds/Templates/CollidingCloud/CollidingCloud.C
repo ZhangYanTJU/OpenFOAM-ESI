@@ -28,6 +28,7 @@ License
 #include "CollidingCloud.H"
 #include "CollisionModel.H"
 #include "NoCollision.H"
+#include "subCycleTime.H"
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
 
@@ -88,10 +89,10 @@ template<class CloudType>
 Foam::CollidingCloud<CloudType>::CollidingCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
     const volScalarField& mu,
-    const dimensionedVector& g,
     bool readFields
 )
 :
@@ -145,13 +146,6 @@ Foam::CollidingCloud<CloudType>::CollidingCloud
 :
     CloudType(mesh, name, c),
     collisionModel_(nullptr)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class CloudType>
-Foam::CollidingCloud<CloudType>::~CollidingCloud()
 {}
 
 

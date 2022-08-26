@@ -46,7 +46,11 @@ SourceFiles
 #ifndef ReactingCloud_H
 #define ReactingCloud_H
 
-#include "reactingCloud.H"
+#include "className.H"
+#include "autoPtr.H"
+#include "Cloud.H"
+#include "volFields.H"
+#include "fvMatricesFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,11 +59,15 @@ namespace Foam
 
 // Forward declaration of classes
 
+class SLGThermo;
+
 template<class CloudType>
 class CompositionModel;
 
 template<class CloudType>
 class PhaseChangeModel;
+
+TemplateName(ReactingCloud);
 
 /*---------------------------------------------------------------------------*\
                       Class ReactingCloud Declaration
@@ -69,7 +77,7 @@ template<class CloudType>
 class ReactingCloud
 :
     public CloudType,
-    public reactingCloud
+    public ReactingCloudName
 {
 public:
 
@@ -160,9 +168,9 @@ public:
         ReactingCloud
         (
             const word& cloudName,
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
-            const dimensionedVector& g,
             const SLGThermo& thermo,
             bool readFields = true
         );
@@ -236,16 +244,14 @@ public:
                 //- Mass
 
                     //- Return reference to mass source for field i
-                    inline volScalarField::Internal&
-                        rhoTrans(const label i);
+                    inline volScalarField::Internal& rhoTrans(const label i);
 
                     //- Return const access to mass source fields
                     inline const PtrList<volScalarField::Internal>&
                         rhoTrans() const;
 
                     //- Return reference to mass source fields
-                    inline PtrList<volScalarField::Internal>&
-                        rhoTrans();
+                    inline PtrList<volScalarField::Internal>& rhoTrans();
 
                     //- Return mass source term for specie i - specie eqn
                     inline tmp<fvScalarMatrix> SYi
@@ -255,8 +261,10 @@ public:
                     ) const;
 
                     //- Return tmp mass source for field i - fully explicit
-                    inline tmp<volScalarField::Internal>
-                        Srho(const label i) const;
+                    inline tmp<volScalarField::Internal> Srho
+                    (
+                        const label i
+                    ) const;
 
                     //- Return tmp total mass source for carrier phase
                     //  - fully explicit

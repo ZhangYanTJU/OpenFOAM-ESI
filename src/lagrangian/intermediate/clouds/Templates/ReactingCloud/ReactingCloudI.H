@@ -25,6 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "fvmSup.H"
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>

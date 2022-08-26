@@ -91,9 +91,9 @@ template<class CloudType>
 Foam::ReactingCloud<CloudType>::ReactingCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
-    const dimensionedVector& g,
     const SLGThermo& thermo,
     bool readFields
 )
@@ -154,7 +154,6 @@ Foam::ReactingCloud<CloudType>::ReactingCloud
 )
 :
     CloudType(c, name),
-    reactingCloud(),
     cloudCopyPtr_(nullptr),
     constProps_(c.constProps_),
     compositionModel_(c.compositionModel_->clone()),
@@ -194,7 +193,6 @@ Foam::ReactingCloud<CloudType>::ReactingCloud
 )
 :
     CloudType(mesh, name, c),
-    reactingCloud(),
     cloudCopyPtr_(nullptr),
     constProps_(),
     compositionModel_(c.compositionModel_->clone()),

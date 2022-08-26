@@ -30,6 +30,7 @@ License
 #include "integrationScheme.H"
 #include "interpolation.H"
 #include "subCycleTime.H"
+#include "SLGThermo.H"
 
 #include "InjectionModelList.H"
 #include "DispersionModel.H"
@@ -342,15 +343,14 @@ template<class CloudType>
 Foam::KinematicCloud<CloudType>::KinematicCloud
 (
     const word& cloudName,
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
     const volScalarField& mu,
-    const dimensionedVector& g,
     bool readFields
 )
 :
-    CloudType(rho.mesh(), cloudName, false),
-    kinematicCloud(),
+    CloudType(cloudName, g, rho, U, mu, false),
     cloudCopyPtr_(nullptr),
     mesh_(rho.mesh()),
     particleProperties_
@@ -483,12 +483,34 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
 template<class CloudType>
 Foam::KinematicCloud<CloudType>::KinematicCloud
 (
+    const word& cloudName,
+    const dimensionedVector& g,
+    const volScalarField& rho,
+    const volVectorField& U,
+    const SLGThermo& thermo,
+    bool readFields
+)
+:
+    KinematicCloud<CloudType>
+    (
+        cloudName,
+        g,
+        rho,
+        U,
+        thermo.thermo().mu(),
+        readFields
+    )
+{}
+
+
+template<class CloudType>
+Foam::KinematicCloud<CloudType>::KinematicCloud
+(
     KinematicCloud<CloudType>& c,
     const word& name
 )
 :
     CloudType(c.mesh_, name, c),
-    kinematicCloud(),
     cloudCopyPtr_(nullptr),
     mesh_(c.mesh_),
     particleProperties_(c.particleProperties_),
@@ -561,8 +583,7 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
     const KinematicCloud<CloudType>& c
 )
 :
-    CloudType(mesh, name, IDLList<parcelType>()),
-    kinematicCloud(),
+    CloudType(mesh, name, c),
     cloudCopyPtr_(nullptr),
     mesh_(mesh),
     particleProperties_
