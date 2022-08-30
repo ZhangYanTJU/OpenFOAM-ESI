@@ -12,6 +12,7 @@ $(TEMPLATECLOUDS)/ReactingMultiphaseCloud/ReactingMultiphaseCloudName.C
 $(TEMPLATECLOUDS)/ReactingHeterogeneousCloud/ReactingHeterogeneousCloudName.C
 $(TEMPLATECLOUDS)/CollidingCloud/CollidingCloudName.C
 $(TEMPLATECLOUDS)/MPPICCloud/MPPICCloudName.C
+$(TEMPLATECLOUDS)/SprayCloud/SprayCloudName.C
 
 
 DERIVEDCLOUDS=$(CLOUDS)/derived
@@ -22,6 +23,7 @@ $(DERIVEDCLOUDS)/basicReactingMultiphaseCloud/basicReactingMultiphaseCloud.C
 $(DERIVEDCLOUDS)/basicHeterogeneousReactingCloud/basicHeterogeneousReactingCloud.C
 $(DERIVEDCLOUDS)/basicKinematicCollidingCloud/basicKinematicCollidingCloud.C
 $(DERIVEDCLOUDS)/basicKinematicMPPICCloud/basicKinematicMPPICCloud.C
+$(DERIVEDCLOUDS)/basicSprayCloud/basicSprayCloud.C
 
 
 /* kinematic parcel sub-models */
@@ -64,6 +66,11 @@ $(REACTINGHETERMPPARCEL)/makeBasicHeterogeneousReactingParcelSubmodels.C
 KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/basicKinematicMPPICParcel
 $(KINEMATICMPPICPARCEL)/defineBasicKinematicMPPICParcel.C
 $(KINEMATICMPPICPARCEL)/makeBasicKinematicMPPICParcelSubmodels.C
+
+/* spray parcel sub-models */
+SPRAYPARCEL=$(DERIVEDPARCELS)/basicSprayParcel
+$(SPRAYPARCEL)/defineBasicSprayParcel.C
+$(SPRAYPARCEL)/makeBasicSprayParcelSubmodels.C
 
 
 /* bolt-on models */

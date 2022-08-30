@@ -22,4 +22,7 @@ $(KINEMATICMPPICPARCEL)/makeBasicKinematicMPPICParcelSubmodels.C
 HETEROGENEOUSREACTINGPARCEL=$(DERIVEDPARCELS)/basicHeterogeneousReactingParcel
 $(HETEROGENEOUSREACTINGPARCEL)/makeBasicHeterogeneousParcelSubmodels.C
 
+SPRAYPARCEL=$(DERIVEDPARCELS)/basicSprayParcel
+$(SPRAYPARCEL)/makeBasicSprayParcelSubmodels.C
+
 LIB = $(FOAM_LIBBIN)/liblagrangianTurbulence

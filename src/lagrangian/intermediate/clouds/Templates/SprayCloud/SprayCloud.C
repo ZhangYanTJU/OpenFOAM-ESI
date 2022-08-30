@@ -82,7 +82,7 @@ Foam::SprayCloud<CloudType>::SprayCloud
     bool readFields
 )
 :
-    CloudType(cloudName, rho, U, g, thermo, false),
+    CloudType(cloudName, g, rho, U, thermo, false),
     cloudCopyPtr_(nullptr),
     averageParcelMass_(0.0),
     atomizationModel_(nullptr),
