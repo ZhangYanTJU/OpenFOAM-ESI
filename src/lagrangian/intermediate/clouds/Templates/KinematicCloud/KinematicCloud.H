@@ -521,18 +521,16 @@ public:
                 // Momentum
 
                     //- Return reference to momentum source
-                    inline volVectorField::Internal& UTrans();
+                    inline volVectorField::Internal& UTransRef();
 
                     //- Return const reference to momentum source
-                    inline const volVectorField::Internal&
-                        UTrans() const;
+                    inline tmp<volVectorField::Internal> UTrans() const;
 
                      //- Return coefficient for carrier phase U equation
-                    inline volScalarField::Internal& UCoeff();
+                    inline volScalarField::Internal& UCoeffRef();
 
                     //- Return const coefficient for carrier phase U equation
-                    inline const volScalarField::Internal&
-                        UCoeff() const;
+                    inline tmp<volScalarField::Internal> UCoeff() const;
 
                     //- Return tmp momentum source term (compressible)
                     inline tmp<fvVectorMatrix> SU

@@ -415,9 +415,9 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::calc
             }
             */
 
-            cloud.UTrans()[this->cell()] += dm*U0;
+            cloud.UTransRef()[this->cell()] += dm*U0;
 
-            cloud.hsTrans()[this->cell()] +=
+            cloud.hsTransRef()[this->cell()] +=
                 dm*HsEff(cloud, td, pc, T0, idG, idL, idS);
 
             cloud.phaseChange().addToPhaseChangeMass(np0*mass1);
@@ -530,8 +530,8 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::calc
             label gid = composition.localToCarrierId(GAS, i);
             scalar hs = composition.carrier().Hs(gid, pc, T0);
             cloud.rhoTrans(gid)[this->cell()] += dm;
-            cloud.UTrans()[this->cell()] += dm*U0;
-            cloud.hsTrans()[this->cell()] += dm*hs;
+            cloud.UTransRef()[this->cell()] += dm*U0;
+            cloud.hsTransRef()[this->cell()] += dm*hs;
         }
         forAll(YLiquid_, i)
         {
@@ -539,8 +539,8 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::calc
             label gid = composition.localToCarrierId(LIQ, i);
             scalar hs = composition.carrier().Hs(gid, pc, T0);
             cloud.rhoTrans(gid)[this->cell()] += dm;
-            cloud.UTrans()[this->cell()] += dm*U0;
-            cloud.hsTrans()[this->cell()] += dm*hs;
+            cloud.UTransRef()[this->cell()] += dm*U0;
+            cloud.hsTransRef()[this->cell()] += dm*hs;
         }
 
         // No mapping between solid components and carrier phase
@@ -561,17 +561,17 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::calc
             scalar dm = np0*dMassSRCarrier[i];
             scalar hs = composition.carrier().Hs(i, pc, T0);
             cloud.rhoTrans(i)[this->cell()] += dm;
-            cloud.UTrans()[this->cell()] += dm*U0;
-            cloud.hsTrans()[this->cell()] += dm*hs;
+            cloud.UTransRef()[this->cell()] += dm*U0;
+            cloud.hsTransRef()[this->cell()] += dm*hs;
         }
 
         // Update momentum transfer
-        cloud.UTrans()[this->cell()] += np0*dUTrans;
-        cloud.UCoeff()[this->cell()] += np0*Spu;
+        cloud.UTransRef()[this->cell()] += np0*dUTrans;
+        cloud.UCoeffRef()[this->cell()] += np0*Spu;
 
         // Update sensible enthalpy transfer
-        cloud.hsTrans()[this->cell()] += np0*dhsTrans;
-        cloud.hsCoeff()[this->cell()] += np0*Sph;
+        cloud.hsTransRef()[this->cell()] += np0*dhsTrans;
+        cloud.hsCoeffRef()[this->cell()] += np0*Sph;
 
         // Update radiation fields
         if (cloud.radiation())

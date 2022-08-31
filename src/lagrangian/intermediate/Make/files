@@ -130,4 +130,10 @@ conversion/ensight/ensightOutputCloud.C
 conversion/vtk/foamVtkLagrangianWriter.C
 
 
+clouds/baseCloudInterface.C
+clouds/parcelCloudModel.C
+clouds/parcelCloudModelNew.C
+clouds/parcelCloudModelList/parcelCloudModelList.C
+
+
 LIB = $(FOAM_LIBBIN)/liblagrangianIntermediate

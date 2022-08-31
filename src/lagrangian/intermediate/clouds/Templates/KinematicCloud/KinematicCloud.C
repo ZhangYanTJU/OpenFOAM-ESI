@@ -682,8 +682,8 @@ void Foam::KinematicCloud<CloudType>::restoreState()
 template<class CloudType>
 void Foam::KinematicCloud<CloudType>::resetSourceTerms()
 {
-    UTrans().field() = Zero;
-    UCoeff().field() = 0.0;
+    UTransRef().field() = Zero;
+    UCoeffRef().field() = 0.0;
 }
 
 
@@ -720,8 +720,8 @@ void Foam::KinematicCloud<CloudType>::relaxSources
     const KinematicCloud<CloudType>& cloudOldTime
 )
 {
-    this->relax(UTrans_(), cloudOldTime.UTrans(), "U");
-    this->relax(UCoeff_(), cloudOldTime.UCoeff(), "U");
+    this->relax(UTransRef(), cloudOldTime.UTrans_(), "U");
+    this->relax(UCoeffRef(), cloudOldTime.UCoeff_(), "U");
 }
 
 

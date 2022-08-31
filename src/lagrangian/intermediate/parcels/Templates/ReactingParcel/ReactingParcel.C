@@ -291,7 +291,7 @@ void Foam::ReactingParcel<ParcelType>::cellValueSourceCorrection
     td.rhoc() += addedMass/cloud.pMesh().cellVolumes()[this->cell()];
 
     const scalar massCellNew = massCell + addedMass;
-    td.Uc() = (td.Uc()*massCell + cloud.UTrans()[this->cell()])/massCellNew;
+    td.Uc() = (td.Uc()*massCell + cloud.UTransRef()[this->cell()])/massCellNew;
 
     scalar CpEff = 0.0;
     forAll(cloud.rhoTrans(), i)
@@ -303,7 +303,7 @@ void Foam::ReactingParcel<ParcelType>::cellValueSourceCorrection
     const scalar Cpc = td.CpInterp().psi()[this->cell()];
     td.Cpc() = (massCell*Cpc + addedMass*CpEff)/massCellNew;
 
-    td.Tc() += cloud.hsTrans()[this->cell()]/(td.Cpc()*massCellNew);
+    td.Tc() += cloud.hsTransRef()[this->cell()]/(td.Cpc()*massCellNew);
 
     if (td.Tc() < cloud.constProps().TMin())
     {
@@ -579,9 +579,9 @@ void Foam::ReactingParcel<ParcelType>::calc
                 scalar hs = composition.carrier().Hs(gid, td.pc(), T0);
 
                 cloud.rhoTrans(gid)[this->cell()] += dmi;
-                cloud.hsTrans()[this->cell()] += dmi*hs;
+                cloud.hsTransRef()[this->cell()] += dmi*hs;
             }
-            cloud.UTrans()[this->cell()] += dm*U0;
+            cloud.UTransRef()[this->cell()] += dm*U0;
 
             cloud.phaseChange().addToPhaseChangeMass(np0*mass1);
         }
@@ -640,17 +640,17 @@ void Foam::ReactingParcel<ParcelType>::calc
             scalar hs = composition.carrier().Hs(gid, td.pc(), T0);
 
             cloud.rhoTrans(gid)[this->cell()] += dm;
-            cloud.UTrans()[this->cell()] += dm*U0;
-            cloud.hsTrans()[this->cell()] += dm*hs;
+            cloud.UTransRef()[this->cell()] += dm*U0;
+            cloud.hsTransRef()[this->cell()] += dm*hs;
         }
 
         // Update momentum transfer
-        cloud.UTrans()[this->cell()] += np0*dUTrans;
-        cloud.UCoeff()[this->cell()] += np0*Spu;
+        cloud.UTransRef()[this->cell()] += np0*dUTrans;
+        cloud.UCoeffRef()[this->cell()] += np0*Spu;
 
         // Update sensible enthalpy transfer
-        cloud.hsTrans()[this->cell()] += np0*dhsTrans;
-        cloud.hsCoeff()[this->cell()] += np0*Sph;
+        cloud.hsTransRef()[this->cell()] += np0*dhsTrans;
+        cloud.hsCoeffRef()[this->cell()] += np0*Sph;
 
         // Update radiation fields
         if (cloud.radiation())

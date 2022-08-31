@@ -122,7 +122,7 @@ void Foam::KinematicParcel<ParcelType>::cellValueSourceCorrection
     const scalar dt
 )
 {
-    td.Uc() += cloud.UTrans()[this->cell()]/massCell(td);
+    td.Uc() += cloud.UTransRef()[this->cell()]/massCell(td);
 }
 
 
@@ -171,10 +171,10 @@ void Foam::KinematicParcel<ParcelType>::calc
     if (cloud.solution().coupled())
     {
         // Update momentum transfer
-        cloud.UTrans()[this->cell()] += np0*dUTrans;
+        cloud.UTransRef()[this->cell()] += np0*dUTrans;
 
         // Update momentum transfer coefficient
-        cloud.UCoeff()[this->cell()] += np0*Spu;
+        cloud.UCoeffRef()[this->cell()] += np0*Spu;
     }
 }
 

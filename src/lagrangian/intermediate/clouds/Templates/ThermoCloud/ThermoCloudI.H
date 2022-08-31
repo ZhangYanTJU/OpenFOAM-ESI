@@ -192,14 +192,14 @@ Foam::ThermoCloud<CloudType>::radAreaPT4() const
 
 template<class CloudType>
 inline Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
-Foam::ThermoCloud<CloudType>::hsTrans()
+Foam::ThermoCloud<CloudType>::hsTransRef()
 {
     return *hsTrans_;
 }
 
 
 template<class CloudType>
-inline const Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
+inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::ThermoCloud<CloudType>::hsTrans() const
 {
     return *hsTrans_;
@@ -208,14 +208,14 @@ Foam::ThermoCloud<CloudType>::hsTrans() const
 
 template<class CloudType>
 inline Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
-Foam::ThermoCloud<CloudType>::hsCoeff()
+Foam::ThermoCloud<CloudType>::hsCoeffRef()
 {
     return *hsCoeff_;
 }
 
 
 template<class CloudType>
-inline const Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
+inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::ThermoCloud<CloudType>::hsCoeff() const
 {
     return *hsCoeff_;
