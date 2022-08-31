@@ -436,14 +436,14 @@ Foam::KinematicCloud<CloudType>::cellLengthScale() const
 
 template<class CloudType>
 inline Foam::DimensionedField<Foam::vector, Foam::volMesh>&
-Foam::KinematicCloud<CloudType>::UTrans()
+Foam::KinematicCloud<CloudType>::UTransRef()
 {
     return *UTrans_;
 }
 
 
 template<class CloudType>
-inline const Foam::DimensionedField<Foam::vector, Foam::volMesh>&
+inline Foam::tmp<Foam::DimensionedField<Foam::vector, Foam::volMesh>>
 Foam::KinematicCloud<CloudType>::UTrans() const
 {
     return *UTrans_;
@@ -452,14 +452,14 @@ Foam::KinematicCloud<CloudType>::UTrans() const
 
 template<class CloudType>
 inline Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
-Foam::KinematicCloud<CloudType>::UCoeff()
+Foam::KinematicCloud<CloudType>::UCoeffRef()
 {
     return *UCoeff_;
 }
 
 
 template<class CloudType>
-inline const Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
+inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::KinematicCloud<CloudType>::UCoeff() const
 {
     return *UCoeff_;

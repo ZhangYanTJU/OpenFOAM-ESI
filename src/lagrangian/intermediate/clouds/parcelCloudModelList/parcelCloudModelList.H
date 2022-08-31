@@ -25,10 +25,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coalCloudList_H
-#define coalCloudList_H
+#ifndef Foam_parcelCloudModelList_H
+#define Foam_parcelCloudModelList_H
 
-#include "coalCloud.H"
+#include "parcelCloudModel.H"
 #include "volFieldsFwd.H"
 #include "fvMatricesFwd.H"
 
@@ -38,12 +38,12 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class coalCloudList Declaration
+                   Class parcelCloudModelList Declaration
 \*---------------------------------------------------------------------------*/
 
-class coalCloudList
+class parcelCloudModelList
 :
-    public PtrList<coalCloud>
+    public PtrList<parcelCloudModel>
 {
 private:
 
@@ -53,13 +53,22 @@ private:
 
 public:
 
-    // Constructor
+    // Constructors
 
-        coalCloudList
+        parcelCloudModelList
         (
+            const dimensionedVector& g,
             const volScalarField& rho,
             const volVectorField& U,
+            const volScalarField& mu
+        );
+
+
+        parcelCloudModelList
+        (
             const dimensionedVector& g,
+            const volScalarField& rho,
+            const volVectorField& U,
             const SLGThermo& slgThermo
         );
 
@@ -74,39 +83,29 @@ public:
 
         // Source terms
 
-            //- Return const reference to momentum source
+            //- Return momentum transfer [kg m/s]
             inline tmp<volVectorField::Internal> UTrans() const;
 
-            //- Return tmp momentum source term
+            //- Return momentum source term [kg m/s^2]
             inline tmp<fvVectorMatrix> SU(volVectorField& U) const;
 
-            //- Sensible enthalpy transfer [J/kg]
+
+            //- Return sensible enthalpy transfer [J]
             inline tmp<volScalarField::Internal> hsTrans() const;
 
-            //- Return sensible enthalpy source term [J/kg/m3/s]
+            //- Return sensible enthalpy source term [J/s]
             inline tmp<fvScalarMatrix> Sh(volScalarField& hs) const;
 
 
-            //- Return mass source term for specie i - specie eqn
+            //- Return mass source term for specie [kg/s]
             inline tmp<fvScalarMatrix> SYi
             (
-                const label i,
+                const label speciei,
                 volScalarField& Yi
             ) const;
 
-            //- Return total mass transfer [kg/m3]
-            inline tmp<volScalarField::Internal> rhoTrans() const;
-
-            //- Return tmp total mass source for carrier phase
-            //  - fully explicit
+            //- Return total mass source term [kg/m^3/s]
             inline tmp<volScalarField::Internal> Srho() const;
-
-            //- Return tmp total mass source for carrier phase specie i
-            //  - fully explicit
-            inline tmp<volScalarField::Internal> Srho
-            (
-                const label i
-            ) const;
 
             //- Return total mass source term [kg/m3/s]
             inline tmp<fvScalarMatrix> Srho(volScalarField& rho) const;
@@ -119,7 +118,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "coalCloudListI.H"
+#include "parcelCloudModelListI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

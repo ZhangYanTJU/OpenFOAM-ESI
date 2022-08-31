@@ -137,7 +137,29 @@ public:
 
             // Momentum
 
-                //- Return momentum source term (compressible)
+                //- Momentum transfer [kg m/s]
+                virtual tmp<volVectorField::Internal> UTrans() const
+                {
+                    return volVectorField::Internal::New
+                    (
+                        IOobject::scopedName(this->name(), ":UTrans"),
+                        mesh_,
+                        dimensionedVector(dimMass*dimVelocity, Zero)
+                    );
+                }
+
+                //- Momentum transfer coefficient [kg]
+                virtual tmp<volScalarField::Internal> UCoeff() const
+                {
+                    return volScalarField::Internal::New
+                    (
+                        IOobject::scopedName(this->name(), "UCoeff"),
+                        mesh_,
+                        dimensionedScalar(dimMass, Zero)
+                    );
+                }
+
+                //- Return momentum source term [kg m/s^2]
                 virtual tmp<fvVectorMatrix> SU(volVectorField& U) const
                 {
                     return tmp<fvVectorMatrix>::New(U, dimMass*dimAcceleration);
@@ -145,6 +167,28 @@ public:
 
 
             // Energy
+
+                //- Return sensible enthalpy transfer [J]
+                virtual tmp<volScalarField::Internal> hsTrans() const
+                {
+                    return volScalarField::Internal::New
+                    (
+                        IOobject::scopedName(this->name(), "hsTrans"),
+                        mesh_,
+                        dimensionedScalar(dimEnergy, Zero)
+                    );
+                }
+
+                //- Return sensible enthalpy transfer coefficient [J/K]
+                virtual tmp<volScalarField::Internal> hsCoeff() const
+                {
+                    return volScalarField::Internal::New
+                    (
+                        IOobject::scopedName(this->name(), "hsCoeff"),
+                        mesh_,
+                        dimensionedScalar(dimEnergy/dimTemperature, Zero)
+                    );
+                }
 
                 //- Return sensible enthalpy source term [J/s]
                 virtual tmp<fvScalarMatrix> Sh(volScalarField& hs) const
@@ -155,7 +199,7 @@ public:
 
             // Radiation - overrides thermoCloud virtual abstract members
 
-                //- Return equivalent particulate emission
+                //- Return equivalent particulate emission [kg/m/s^3]
                 virtual tmp<volScalarField> Ep() const
                 {
                     return volScalarField::New
@@ -166,7 +210,7 @@ public:
                     );
                 }
 
-                //- Return equivalent particulate absorption
+                //- Return equivalent particulate absorption [1/m]
                 virtual tmp<volScalarField> ap() const
                 {
                     return volScalarField::New
@@ -177,7 +221,7 @@ public:
                     );
                 }
 
-                //- Return equivalent particulate scattering factor
+                //- Return equivalent particulate scattering factor [1/m]
                 virtual tmp<volScalarField> sigmap() const
                 {
                     return volScalarField::New
@@ -188,34 +232,20 @@ public:
                     );
                 }
 
+
             // Mass
 
-                //- Return mass source term for specie i - specie eqn
+                //- Return mass source term for specie [kg/s]
                 virtual tmp<fvScalarMatrix> SYi
                 (
-                    const label i,
+                    const label speciei,
                     volScalarField& Yi
                 ) const
                 {
                     return tmp<fvScalarMatrix>::New(Yi, dimMass/dimTime);
                 }
 
-                //- Return mass source for field i - fully explicit
-                virtual tmp<volScalarField::Internal>
-                Srho
-                (
-                    const label i
-                ) const
-                {
-                    return volScalarField::Internal::New
-                    (
-                        IOobject::scopedName(this->name(), "Srho_i"),
-                        mesh_,
-                        dimensionedScalar(dimDensity/dimTime, Zero)
-                    );
-                }
-
-                //- Return total mass source term
+                //- Return total mass source term [kg/m^3/s]
                 virtual tmp<volScalarField::Internal> Srho() const
                 {
                     return volScalarField::Internal::New
@@ -226,12 +256,11 @@ public:
                     );
                 }
 
-                //- Return total mass source term [kg/m3/s]
+                //- Return total mass source term [kg/s]
                 virtual tmp<fvScalarMatrix> Srho(volScalarField& rho) const
                 {
                     return tmp<fvScalarMatrix>::New(rho, dimMass/dimTime);
                 }
-
 };
 
 

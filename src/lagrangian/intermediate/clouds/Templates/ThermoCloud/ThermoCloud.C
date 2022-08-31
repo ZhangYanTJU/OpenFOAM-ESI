@@ -417,8 +417,8 @@ void Foam::ThermoCloud<CloudType>::relaxSources
 {
     CloudType::relaxSources(cloudOldTime);
 
-    this->relax(hsTrans_(), cloudOldTime.hsTrans(), "h");
-    this->relax(hsCoeff_(), cloudOldTime.hsCoeff(), "h");
+    this->relax(hsTrans_(), cloudOldTime.hsTrans_(), "h");
+    this->relax(hsCoeff_(), cloudOldTime.hsCoeff_(), "h");
 
     if (radiation_)
     {

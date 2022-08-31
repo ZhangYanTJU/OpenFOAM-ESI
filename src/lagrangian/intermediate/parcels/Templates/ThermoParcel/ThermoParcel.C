@@ -74,13 +74,13 @@ void Foam::ThermoParcel<ParcelType>::cellValueSourceCorrection
     const label celli = this->cell();
     const scalar massCell = this->massCell(td);
 
-    td.Uc() += cloud.UTrans()[celli]/massCell;
+    td.Uc() += cloud.UTransRef()[celli]/massCell;
 
 //    tetIndices tetIs = this->currentTetIndices();
 //    Tc_ = td.TInterp().interpolate(this->coordinates(), tetIs);
 
     const scalar CpMean = td.CpInterp().psi()[celli];
-    td.Tc() += cloud.hsTrans()[celli]/(CpMean*massCell);
+    td.Tc() += cloud.hsTransRef()[celli]/(CpMean*massCell);
 
     if (td.Tc() < cloud.constProps().TMin())
     {
@@ -224,16 +224,16 @@ void Foam::ThermoParcel<ParcelType>::calc
     if (cloud.solution().coupled())
     {
         // Update momentum transfer
-        cloud.UTrans()[this->cell()] += np0*dUTrans;
+        cloud.UTransRef()[this->cell()] += np0*dUTrans;
 
         // Update momentum transfer coefficient
-        cloud.UCoeff()[this->cell()] += np0*Spu;
+        cloud.UCoeffRef()[this->cell()] += np0*Spu;
 
         // Update sensible enthalpy transfer
-        cloud.hsTrans()[this->cell()] += np0*dhsTrans;
+        cloud.hsTransRef()[this->cell()] += np0*dhsTrans;
 
         // Update sensible enthalpy coefficient
-        cloud.hsCoeff()[this->cell()] += np0*Sph;
+        cloud.hsCoeffRef()[this->cell()] += np0*Sph;
 
         // Update radiation fields
         if (cloud.radiation())

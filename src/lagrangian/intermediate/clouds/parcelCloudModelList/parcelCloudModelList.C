@@ -26,26 +26,26 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "coalCloudList.H"
+#include "parcelCloudModelList.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::coalCloudList::coalCloudList
+Foam::parcelCloudModelList::parcelCloudModelList
 (
+    const dimensionedVector& g,
     const volScalarField& rho,
     const volVectorField& U,
-    const dimensionedVector& g,
-    const SLGThermo& slgThermo
+    const volScalarField& mu
 )
 :
-    PtrList<coalCloud>(),
+    PtrList<parcelCloudModel>(),
     mesh_(rho.mesh())
 {
     IOdictionary props
     (
         IOobject
         (
-            "coalCloudList",
+            "parcelCloudModelList",
             mesh_.time().constant(),
             mesh_,
             IOobject::MUST_READ
@@ -57,14 +57,63 @@ Foam::coalCloudList::coalCloudList
     setSize(cloudNames.size());
 
     label i = 0;
-    for (const word& name : cloudNames)
+    for (const auto& name : cloudNames)
     {
         Info<< "creating cloud: " << name << endl;
 
         set
         (
             i++,
-            new coalCloud
+            parcelCloudModel::New
+            (
+                name,
+                g,
+                rho,
+                U,
+                mu
+            )
+        );
+
+        Info<< endl;
+    }
+}
+
+
+Foam::parcelCloudModelList::parcelCloudModelList
+(
+    const dimensionedVector& g,
+    const volScalarField& rho,
+    const volVectorField& U,
+    const SLGThermo& slgThermo
+)
+:
+    PtrList<parcelCloudModel>(),
+    mesh_(rho.mesh())
+{
+    IOdictionary props
+    (
+        IOobject
+        (
+            "parcelCloudModelList",
+            mesh_.time().constant(),
+            mesh_,
+            IOobject::MUST_READ
+        )
+    );
+
+    const wordHashSet cloudNames(props.get<wordList>("clouds"));
+
+    setSize(cloudNames.size());
+
+    label i = 0;
+    for (const auto& name : cloudNames)
+    {
+        Info<< "creating cloud: " << name << endl;
+
+        set
+        (
+            i++,
+            parcelCloudModel::New
             (
                 name,
                 g,
@@ -81,11 +130,11 @@ Foam::coalCloudList::coalCloudList
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::coalCloudList::evolve()
+void Foam::parcelCloudModelList::evolve()
 {
-    forAll(*this, i)
+    for (auto& c : *this)
     {
-        operator[](i).evolve();
+        c.evolveME();
     }
 }
 

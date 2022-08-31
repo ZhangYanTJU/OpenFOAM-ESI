@@ -113,37 +113,23 @@ public:
 
             // Momentum
 
-                // //- Return reference to momentum source
-                // virtual volVectorField::Internal& UTrans() = 0;
+                //- Return momentum source
+                virtual tmp<volVectorField::Internal> UTrans() const = 0;
 
-                // //- Return const reference to momentum source
-                // virtual const volVectorField::Internal& UTrans() const = 0;
+                //- Return coefficient for carrier phase U equation
+                virtual tmp<volScalarField::Internal> UCoeff() const = 0;
 
-                // //- Return coefficient for carrier phase U equation
-                // virtual volScalarField::Internal& UCoeff() = 0;
-
-                // //- Return const coefficient for carrier phase U equation
-                // virtual const volScalarField::Internal& UCoeff() const = 0;
-
-                //- Return momentum source term (compressible)
+                //- Return momentum source term
                 virtual tmp<fvVectorMatrix> SU(volVectorField& U) const = 0;
 
 
             // Energy
 
-                // //- Sensible enthalpy transfer [J/kg]
-                // virtual volScalarField::Internal& hsTrans() = 0;
+                //- Sensible enthalpy transfer [J/kg]
+                virtual tmp<volScalarField::Internal> hsTrans() const = 0;
 
-                // //- Sensible enthalpy transfer [J/kg]
-                // virtual const volScalarField::Internal&
-                //     hsTrans() const = 0;
-
-                // //- Return coefficient for carrier phase hs equation
-                // virtual volScalarField::Internal& hsCoeff() = 0;
-
-                // //- Return const coefficient for carrier phase hs equation
-                // virtual const volScalarField::Internal&
-                //     hsCoeff() const = 0;
+                //- Return coefficient for carrier phase hs equation
+                virtual tmp<volScalarField::Internal> hsCoeff() const = 0;
 
                 //- Return sensible enthalpy source term [J/s]
                 virtual tmp<fvScalarMatrix> Sh(volScalarField& hs) const = 0;
@@ -166,14 +152,8 @@ public:
                 //- Return mass source term for specie i - specie eqn
                 virtual tmp<fvScalarMatrix> SYi
                 (
-                    const label i,
+                    const label speciei,
                     volScalarField& Yi
-                ) const = 0;
-
-                //- Return mass source for field i - fully explicit
-                virtual tmp<volScalarField::Internal> Srho
-                (
-                    const label i
                 ) const = 0;
 
                 //- Return total mass source for carrier phase
