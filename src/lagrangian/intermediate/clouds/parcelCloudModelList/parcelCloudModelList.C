@@ -28,6 +28,43 @@ License
 
 #include "parcelCloudModelList.H"
 
+template<class ... Args>
+void Foam::parcelCloudModelList::initialise(const Args& ... args)
+{
+    IOdictionary props
+    (
+        IOobject
+        (
+            "cloudProperties",
+            mesh_.time().constant(),
+            mesh_,
+            IOobject::MUST_READ
+        )
+    );
+
+    wordHashSet cloudTypes;
+    if (props.readIfPresent("cloudTypes", cloudTypes))
+    {
+        setSize(cloudTypes.size());
+
+        label i = 0;
+        for (const auto& name : cloudTypes)
+        {
+            Info<< "creating cloud: " << name << endl;
+
+            set(i++, parcelCloudModel::New(name, args ...));
+
+            Info<< endl;
+        }
+    }
+    else
+    {
+        setSize(1);
+        set(0, parcelCloudModel::New("cloud", args ...));
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::parcelCloudModelList::parcelCloudModelList
@@ -41,41 +78,7 @@ Foam::parcelCloudModelList::parcelCloudModelList
     PtrList<parcelCloudModel>(),
     mesh_(rho.mesh())
 {
-    IOdictionary props
-    (
-        IOobject
-        (
-            "parcelCloudModelList",
-            mesh_.time().constant(),
-            mesh_,
-            IOobject::MUST_READ
-        )
-    );
-
-    const wordHashSet cloudNames(props.get<wordList>("clouds"));
-
-    setSize(cloudNames.size());
-
-    label i = 0;
-    for (const auto& name : cloudNames)
-    {
-        Info<< "creating cloud: " << name << endl;
-
-        set
-        (
-            i++,
-            parcelCloudModel::New
-            (
-                name,
-                g,
-                rho,
-                U,
-                mu
-            )
-        );
-
-        Info<< endl;
-    }
+    initialise(g, rho, U, mu);
 }
 
 
@@ -90,51 +93,35 @@ Foam::parcelCloudModelList::parcelCloudModelList
     PtrList<parcelCloudModel>(),
     mesh_(rho.mesh())
 {
-    IOdictionary props
-    (
-        IOobject
-        (
-            "parcelCloudModelList",
-            mesh_.time().constant(),
-            mesh_,
-            IOobject::MUST_READ
-        )
-    );
-
-    const wordHashSet cloudNames(props.get<wordList>("clouds"));
-
-    setSize(cloudNames.size());
-
-    label i = 0;
-    for (const auto& name : cloudNames)
-    {
-        Info<< "creating cloud: " << name << endl;
-
-        set
-        (
-            i++,
-            parcelCloudModel::New
-            (
-                name,
-                g,
-                rho,
-                U,
-                slgThermo
-            )
-        );
-
-        Info<< endl;
-    }
+    initialise(g, rho, U, slgThermo);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::parcelCloudModelList::info()
+{
+    for (auto& c : *this)
+    {
+        c.info();
+    }
+}
+
 
 void Foam::parcelCloudModelList::evolve()
 {
     for (auto& c : *this)
     {
         c.evolveME();
+    }
+}
+
+
+void Foam::parcelCloudModelList::storeGlobalPositions()
+{
+    for (auto& c : *this)
+    {
+        c.storeGlobalPositionsME();
     }
 }
 
