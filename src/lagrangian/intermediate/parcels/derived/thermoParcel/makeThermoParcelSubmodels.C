@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2020-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,26 +24,48 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    C-preprocessor cloud macros
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef cloud_macros_H
-#define cloud_macros_H
+#include "thermoCloud.H"
+
+#include "makeThermoParcelCloudFunctionObjects.H"
+
+// Kinematic
+#include "makeThermoParcelForces.H" // thermo variant
+#include "makeParcelDispersionModels.H"
+#include "makeParcelInjectionModels.H"
+#include "makeParcelPatchInteractionModels.H"
+#include "makeParcelStochasticCollisionModels.H"
+#include "makeThermoParcelSurfaceFilmModels.H" // thermo variant
+
+// Thermodynamic
+#include "makeParcelHeatTransferModels.H"
+
+// MPPIC sub-models
+#include "makeMPPICParcelDampingModels.H"
+#include "makeMPPICParcelIsotropyModels.H"
+#include "makeMPPICParcelPackingModels.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "macros.H"
+makeThermoParcelCloudFunctionObjects(thermoCloud);
 
-#define CLOUD_TYPE2(x) x ## Cloud
-#define CLOUD_TYPE(x) CLOUD_TYPE2(x)
+// Kinematic sub-models
+makeThermoParcelForces(thermoCloud);
+makeParcelDispersionModels(thermoCloud);
+makeParcelInjectionModels(thermoCloud);
+makeParcelPatchInteractionModels(thermoCloud);
+makeParcelStochasticCollisionModels(thermoCloud);
+makeParcelSurfaceFilmModels(thermoCloud);
 
-#define CLOUD_INCLUDE_FILE2(x) STRINGIFY(x ## Cloud.H)
-#define CLOUD_INCLUDE_FILE(x) CLOUD_INCLUDE_FILE2(x)
+// Thermo sub-models
+makeParcelHeatTransferModels(thermoCloud);
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#endif
+// MPPIC sub-models
+makeMPPICParcelDampingModels(thermoCloud);
+makeMPPICParcelIsotropyModels(thermoCloud);
+makeMPPICParcelPackingModels(thermoCloud);
+
 
 // ************************************************************************* //

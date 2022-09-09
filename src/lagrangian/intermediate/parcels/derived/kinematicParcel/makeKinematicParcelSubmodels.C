@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,26 +24,41 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    C-preprocessor cloud macros
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef cloud_macros_H
-#define cloud_macros_H
+#include "kinematicCloud.H"
+
+#include "makeParcelCloudFunctionObjects.H"
+
+// Kinematic
+#include "makeParcelForces.H"
+#include "makeParcelDispersionModels.H"
+#include "makeParcelInjectionModels.H"
+#include "makeParcelPatchInteractionModels.H"
+#include "makeParcelStochasticCollisionModels.H"
+#include "makeParcelSurfaceFilmModels.H"
+
+// MPPIC sub-models
+#include "makeMPPICParcelDampingModels.H"
+#include "makeMPPICParcelIsotropyModels.H"
+#include "makeMPPICParcelPackingModels.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "macros.H"
+makeParcelCloudFunctionObjects(kinematicCloud);
 
-#define CLOUD_TYPE2(x) x ## Cloud
-#define CLOUD_TYPE(x) CLOUD_TYPE2(x)
+// Kinematic sub-models
+makeParcelForces(kinematicCloud);
+makeParcelDispersionModels(kinematicCloud);
+makeParcelInjectionModels(kinematicCloud);
+makeParcelPatchInteractionModels(kinematicCloud);
+makeParcelStochasticCollisionModels(kinematicCloud);
+makeParcelSurfaceFilmModels(kinematicCloud);
 
-#define CLOUD_INCLUDE_FILE2(x) STRINGIFY(x ## Cloud.H)
-#define CLOUD_INCLUDE_FILE(x) CLOUD_INCLUDE_FILE2(x)
+// MPPIC sub-models
+makeMPPICParcelDampingModels(kinematicCloud);
+makeMPPICParcelIsotropyModels(kinematicCloud);
+makeMPPICParcelPackingModels(kinematicCloud);
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
 
 // ************************************************************************* //

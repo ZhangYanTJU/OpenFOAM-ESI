@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,23 +24,36 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::reactingParcel
+
 Description
-    C-preprocessor cloud macros
+    Definition of reacting parcel
+
+SourceFiles
+    reactingParcel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cloud_macros_H
-#define cloud_macros_H
+#ifndef reactingParcel_H
+#define reactingParcel_H
+
+#include "contiguous.H"
+#include "particle.H"
+#include "KinematicParcel.H"
+#include "ThermoParcel.H"
+#include "ReactingParcel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "macros.H"
+namespace Foam
+{
+    typedef ReactingParcel<ThermoParcel<KinematicParcel<particle>>>
+        reactingParcel;
 
-#define CLOUD_TYPE2(x) x ## Cloud
-#define CLOUD_TYPE(x) CLOUD_TYPE2(x)
-
-#define CLOUD_INCLUDE_FILE2(x) STRINGIFY(x ## Cloud.H)
-#define CLOUD_INCLUDE_FILE(x) CLOUD_INCLUDE_FILE2(x)
+    //- Non-contiguous data for reactingParcel
+    template<> struct is_contiguous<reactingParcel> : std::false_type {};
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

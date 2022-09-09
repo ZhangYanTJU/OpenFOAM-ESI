@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2011-2013 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,26 +23,23 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    C-preprocessor cloud macros
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef cloud_macros_H
-#define cloud_macros_H
+#include "reactingCloud.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "macros.H"
+namespace Foam
+{
+    addNamedToRunTimeSelectionTable
+    (
+        parcelCloudModel,
+        reactingCloud,
+        thermo,
+        reactingCloud
+    );
+}
 
-#define CLOUD_TYPE2(x) x ## Cloud
-#define CLOUD_TYPE(x) CLOUD_TYPE2(x)
-
-#define CLOUD_INCLUDE_FILE2(x) STRINGIFY(x ## Cloud.H)
-#define CLOUD_INCLUDE_FILE(x) CLOUD_INCLUDE_FILE2(x)
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
 
 // ************************************************************************* //

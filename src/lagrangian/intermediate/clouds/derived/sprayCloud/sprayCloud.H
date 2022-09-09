@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2011-2017 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,23 +23,49 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::sprayCloud
+
 Description
-    C-preprocessor cloud macros
+    Cloud class to introduce reacting spray parcels
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cloud_macros_H
-#define cloud_macros_H
+#ifndef Foam_sprayCloud_H
+#define Foam_sprayCloud_H
+
+#include "BaseCloud.H"
+#include "KinematicCloud.H"
+#include "ThermoCloud.H"
+#include "ReactingCloud.H"
+#include "SprayCloud.H"
+#include "ParcelCloudModel.H"
+#include "sprayParcel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "macros.H"
-
-#define CLOUD_TYPE2(x) x ## Cloud
-#define CLOUD_TYPE(x) CLOUD_TYPE2(x)
-
-#define CLOUD_INCLUDE_FILE2(x) STRINGIFY(x ## Cloud.H)
-#define CLOUD_INCLUDE_FILE(x) CLOUD_INCLUDE_FILE2(x)
+namespace Foam
+{
+    typedef ParcelCloudModel
+    <
+        SprayCloud
+        <
+            ReactingCloud
+            <
+                ThermoCloud
+                <
+                    KinematicCloud
+                    <
+                        BaseCloud
+                        <
+                            sprayParcel
+                        >
+                    >
+                >
+            >
+        >
+    > sprayCloud;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

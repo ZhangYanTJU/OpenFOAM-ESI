@@ -16,61 +16,61 @@ $(TEMPLATECLOUDS)/SprayCloud/SprayCloudName.C
 
 
 DERIVEDCLOUDS=$(CLOUDS)/derived
-$(DERIVEDCLOUDS)/basicKinematicCloud/basicKinematicCloud.C
-$(DERIVEDCLOUDS)/basicThermoCloud/basicThermoCloud.C
-$(DERIVEDCLOUDS)/basicReactingCloud/basicReactingCloud.C
-$(DERIVEDCLOUDS)/basicReactingMultiphaseCloud/basicReactingMultiphaseCloud.C
-$(DERIVEDCLOUDS)/basicHeterogeneousReactingCloud/basicHeterogeneousReactingCloud.C
-$(DERIVEDCLOUDS)/basicKinematicCollidingCloud/basicKinematicCollidingCloud.C
-$(DERIVEDCLOUDS)/basicKinematicMPPICCloud/basicKinematicMPPICCloud.C
-$(DERIVEDCLOUDS)/basicSprayCloud/basicSprayCloud.C
+$(DERIVEDCLOUDS)/kinematicCloud/kinematicCloud.C
+$(DERIVEDCLOUDS)/thermoCloud/thermoCloud.C
+$(DERIVEDCLOUDS)/reactingCloud/reactingCloud.C
+$(DERIVEDCLOUDS)/reactingMultiphaseCloud/reactingMultiphaseCloud.C
+$(DERIVEDCLOUDS)/heterogeneousReactingCloud/heterogeneousReactingCloud.C
+$(DERIVEDCLOUDS)/kinematicCollidingCloud/kinematicCollidingCloud.C
+$(DERIVEDCLOUDS)/kinematicMPPICCloud/kinematicMPPICCloud.C
+$(DERIVEDCLOUDS)/sprayCloud/sprayCloud.C
 
 
 /* kinematic parcel sub-models */
-KINEMATICPARCEL=$(DERIVEDPARCELS)/basicKinematicParcel
-$(KINEMATICPARCEL)/defineBasicKinematicParcel.C
-$(KINEMATICPARCEL)/makeBasicKinematicParcelSubmodels.C
+KINEMATICPARCEL=$(DERIVEDPARCELS)/kinematicParcel
+$(KINEMATICPARCEL)/defineKinematicParcel.C
+$(KINEMATICPARCEL)/makeKinematicParcelSubmodels.C
 
 
 /* kinematic colliding parcel sub-models */
-KINEMATICCOLLIDINGPARCEL=$(DERIVEDPARCELS)/basicKinematicCollidingParcel
-$(KINEMATICCOLLIDINGPARCEL)/defineBasicKinematicCollidingParcel.C
-$(KINEMATICCOLLIDINGPARCEL)/makeBasicKinematicCollidingParcelSubmodels.C
+KINEMATICCOLLIDINGPARCEL=$(DERIVEDPARCELS)/kinematicCollidingParcel
+$(KINEMATICCOLLIDINGPARCEL)/defineKinematicCollidingParcel.C
+$(KINEMATICCOLLIDINGPARCEL)/makeKinematicCollidingParcelSubmodels.C
 
 
 /* thermo parcel sub-models */
-THERMOPARCEL=$(DERIVEDPARCELS)/basicThermoParcel
-$(THERMOPARCEL)/defineBasicThermoParcel.C
-$(THERMOPARCEL)/makeBasicThermoParcelSubmodels.C
+THERMOPARCEL=$(DERIVEDPARCELS)/thermoParcel
+$(THERMOPARCEL)/defineThermoParcel.C
+$(THERMOPARCEL)/makeThermoParcelSubmodels.C
 
 
 /* reacting parcel sub-models */
-REACTINGPARCEL=$(DERIVEDPARCELS)/basicReactingParcel
-$(REACTINGPARCEL)/defineBasicReactingParcel.C
-$(REACTINGPARCEL)/makeBasicReactingParcelSubmodels.C
+REACTINGPARCEL=$(DERIVEDPARCELS)/reactingParcel
+$(REACTINGPARCEL)/defineReactingParcel.C
+$(REACTINGPARCEL)/makeReactingParcelSubmodels.C
 
 
 /* reacting multiphase parcel sub-models */
-REACTINGMPPARCEL=$(DERIVEDPARCELS)/basicReactingMultiphaseParcel
-$(REACTINGMPPARCEL)/defineBasicReactingMultiphaseParcel.C
-$(REACTINGMPPARCEL)/makeBasicReactingMultiphaseParcelSubmodels.C
+REACTINGMPPARCEL=$(DERIVEDPARCELS)/reactingMultiphaseParcel
+$(REACTINGMPPARCEL)/defineReactingMultiphaseParcel.C
+$(REACTINGMPPARCEL)/makeReactingMultiphaseParcelSubmodels.C
 
 
 /* heterogeneous reacting parcel sub-models */
-REACTINGHETERMPPARCEL=$(DERIVEDPARCELS)/basicHeterogeneousReactingParcel
-$(REACTINGHETERMPPARCEL)/defineBasicHeterogeneousReactingParcel.C
-$(REACTINGHETERMPPARCEL)/makeBasicHeterogeneousReactingParcelSubmodels.C
+REACTINGHETERMPPARCEL=$(DERIVEDPARCELS)/heterogeneousReactingParcel
+$(REACTINGHETERMPPARCEL)/defineHeterogeneousReactingParcel.C
+$(REACTINGHETERMPPARCEL)/makeHeterogeneousReactingParcelSubmodels.C
 
 
 /* kinematic MPPIC parcel sub-models */
-KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/basicKinematicMPPICParcel
-$(KINEMATICMPPICPARCEL)/defineBasicKinematicMPPICParcel.C
-$(KINEMATICMPPICPARCEL)/makeBasicKinematicMPPICParcelSubmodels.C
+KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/kinematicMPPICParcel
+$(KINEMATICMPPICPARCEL)/defineKinematicMPPICParcel.C
+$(KINEMATICMPPICPARCEL)/makeKinematicMPPICParcelSubmodels.C
 
 /* spray parcel sub-models */
-SPRAYPARCEL=$(DERIVEDPARCELS)/basicSprayParcel
-$(SPRAYPARCEL)/defineBasicSprayParcel.C
-$(SPRAYPARCEL)/makeBasicSprayParcelSubmodels.C
+SPRAYPARCEL=$(DERIVEDPARCELS)/sprayParcel
+$(SPRAYPARCEL)/defineSprayParcel.C
+$(SPRAYPARCEL)/makeSprayParcelSubmodels.C
 
 
 /* bolt-on models */
