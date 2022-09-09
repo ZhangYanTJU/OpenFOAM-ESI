@@ -50,6 +50,27 @@ Foam::parcelCloudModelList::UTrans() const
 }
 
 
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::parcelCloudModelList::UCeoff() const
+{
+    auto tfld = volScalarField::Internal::New
+    (
+        "UCoeffEff",
+        mesh_,
+        dimensionedScalar(dimMass, Zero)
+    );
+
+    auto& fld = tfld.ref();
+
+    for (const auto& c : *this)
+    {
+        fld += c.UCoeff();
+    }
+
+    return tfld;
+}
+
+
 Foam::tmp<Foam::fvVectorMatrix> Foam::parcelCloudModelList::SU
 (
     volVectorField& U
@@ -88,6 +109,26 @@ Foam::parcelCloudModelList::hsTrans() const
 }
 
 
+Foam::tmp<Foam::volScalarField::Internal>
+Foam::parcelCloudModelList::hsCoeff() const
+{
+    auto tfld = volScalarField::Internal::New
+    (
+        "hsCoeffEff",
+        mesh_,
+        dimensionedScalar(dimEnergy/dimTemperature, Zero)
+    );
+
+    auto& fld = tfld.ref();
+
+    for (const auto& c : *this)
+    {
+        fld += c.hsCoeff();
+    }
+
+    return tfld;
+}
+
 Foam::tmp<Foam::fvScalarMatrix> Foam::parcelCloudModelList::Sh
 (
     volScalarField& hs
@@ -102,6 +143,66 @@ Foam::tmp<Foam::fvScalarMatrix> Foam::parcelCloudModelList::Sh
     }
 
     return tfvm;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::parcelCloudModelList::Ep() const
+{
+    auto tfld = volScalarField::New
+    (
+        "EpEff",
+        mesh_,
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
+    );
+
+    auto& fld = tfld.ref();
+
+    for (const auto& c : *this)
+    {
+        fld += c.Ep();
+    }
+
+    return tfld;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::parcelCloudModelList::ap() const
+{
+    auto tfld = volScalarField::New
+    (
+        "apEff",
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
+    );
+
+    auto& fld = tfld.ref();
+
+    for (const auto& c : *this)
+    {
+        fld += c.ap();
+    }
+
+    return tfld;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::parcelCloudModelList::sigmap() const
+{
+    auto tfld = volScalarField::New
+    (
+        "sigmapEff",
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
+    );
+
+    auto& fld = tfld.ref();
+
+    for (const auto& c : *this)
+    {
+        fld += c.sigmap();
+    }
+
+    return tfld;
 }
 
 

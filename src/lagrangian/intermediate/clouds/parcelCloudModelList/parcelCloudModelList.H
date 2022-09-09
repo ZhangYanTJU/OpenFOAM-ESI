@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2012-2016 OpenFOAM Foundation
+    Copyright (C) 2012-2021 OpenFOAM Foundation
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,6 +51,12 @@ private:
     //- Reference to the mesh
     const fvMesh& mesh_;
 
+    // Private Member Functions
+
+        //- Initialise the clouds
+        template<class ... Args>
+        void initialise(const Args& ... args);
+
 
 public:
 
@@ -77,25 +84,50 @@ public:
 
         // Evolution
 
+            void info();
+
             //- Evolve the cloud collection
             void evolve();
+
+            void storeGlobalPositions();
 
 
         // Source terms
 
+            // Momentum
+
             //- Return momentum transfer [kg m/s]
             inline tmp<volVectorField::Internal> UTrans() const;
+
+            //- Momentum transfer coefficient [kg]
+            inline tmp<volScalarField::Internal> UCeoff() const;
 
             //- Return momentum source term [kg m/s^2]
             inline tmp<fvVectorMatrix> SU(volVectorField& U) const;
 
 
+            // Energy
+
             //- Return sensible enthalpy transfer [J]
             inline tmp<volScalarField::Internal> hsTrans() const;
+
+            //- Return sensible enthalpy transfer coefficient [J/K]
+            inline tmp<volScalarField::Internal> hsCoeff() const;
 
             //- Return sensible enthalpy source term [J/s]
             inline tmp<fvScalarMatrix> Sh(volScalarField& hs) const;
 
+            //- Return equivalent particulate emission [kg/m/s^3]
+            inline tmp<volScalarField> Ep() const;
+
+            //- Return equivalent particulate absorption [1/m]
+            inline tmp<volScalarField> ap() const;
+
+            //- Return equivalent particulate scattering factor [1/m]
+            inline tmp<volScalarField> sigmap() const;
+
+
+            // Mass
 
             //- Return mass source term for specie [kg/s]
             inline tmp<fvScalarMatrix> SYi
