@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,23 +24,50 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::sprayParcel
+
 Description
-    C-preprocessor cloud macros
+    Definition of spray parcel
+
+SourceFiles
+    sprayParcel.C
+    sprayParcelIO.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cloud_macros_H
-#define cloud_macros_H
+#ifndef sprayParcel_H
+#define sprayParcel_H
+
+#include "contiguous.H"
+#include "particle.H"
+#include "KinematicParcel.H"
+#include "ThermoParcel.H"
+#include "ReactingParcel.H"
+#include "SprayParcel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "macros.H"
+namespace Foam
+{
+    typedef SprayParcel
+    <
+        ReactingParcel
+        <
+            ThermoParcel
+            <
+                KinematicParcel
+                <
+                    particle
+                >
+            >
+        >
+    > sprayParcel;
 
-#define CLOUD_TYPE2(x) x ## Cloud
-#define CLOUD_TYPE(x) CLOUD_TYPE2(x)
+    //- Non-contiguous data for sprayParcel
+    template<> struct is_contiguous<sprayParcel> : std::false_type {};
+}
 
-#define CLOUD_INCLUDE_FILE2(x) STRINGIFY(x ## Cloud.H)
-#define CLOUD_INCLUDE_FILE(x) CLOUD_INCLUDE_FILE2(x)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
