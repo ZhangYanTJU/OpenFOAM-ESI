@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2011-2014 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,17 +25,14 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicHeterogeneousReactingCloud.H"
-
+#include "kinematicCloud.H"
 #include "makeParcelTurbulenceDispersionModels.H"
-#include "makeThermoParcelTurbulenceForces.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    makeThermoParcelTurbulenceForces(basicHeterogeneousReactingCloud);
-    makeParcelTurbulenceDispersionModels(basicHeterogeneousReactingCloud);
+    makeParcelTurbulenceDispersionModels(kinematicCloud);
 }
 
 

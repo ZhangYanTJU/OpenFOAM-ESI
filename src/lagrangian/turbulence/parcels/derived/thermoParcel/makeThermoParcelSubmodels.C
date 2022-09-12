@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicReactingCloud.H"
+#include "thermoCloud.H"
 
 #include "makeParcelTurbulenceDispersionModels.H"
 #include "makeThermoParcelTurbulenceForces.H"
@@ -34,8 +34,8 @@ License
 
 namespace Foam
 {
-    makeThermoParcelTurbulenceForces(basicReactingCloud);
-    makeParcelTurbulenceDispersionModels(basicReactingCloud);
+    makeThermoParcelTurbulenceForces(thermoCloud);
+    makeParcelTurbulenceDispersionModels(thermoCloud);
 }
 
 
