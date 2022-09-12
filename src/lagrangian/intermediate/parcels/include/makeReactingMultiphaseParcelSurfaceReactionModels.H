@@ -31,13 +31,27 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "NoSurfaceReaction.H"
+#include "COxidationDiffusionLimitedRate.H"
+#include "COxidationIntrinsicRate.H"
+#include "COxidationKineticDiffusionLimitedRate.H"
+#include "COxidationHurtMitchell.H"
+#include "COxidationMurphyShaddix.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define makeReactingMultiphaseParcelSurfaceReactionModels(CloudType)           \
                                                                                \
     makeSurfaceReactionModel(CloudType);                                       \
-    makeSurfaceReactionModelType(NoSurfaceReaction, CloudType);
+    makeSurfaceReactionModelType(NoSurfaceReaction, CloudType);                \
+    makeSurfaceReactionModelType(COxidationDiffusionLimitedRate, CloudType);   \
+    makeSurfaceReactionModelType                                               \
+    (                                                                          \
+        COxidationKineticDiffusionLimitedRate,                                 \
+        CloudType                                                              \
+    );                                                                         \
+    makeSurfaceReactionModelType(COxidationIntrinsicRate, CloudType);          \
+    makeSurfaceReactionModelType(COxidationHurtMitchell, CloudType);           \
+    makeSurfaceReactionModelType(COxidationMurphyShaddix, CloudType);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
