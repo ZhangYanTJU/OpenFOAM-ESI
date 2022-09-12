@@ -52,7 +52,7 @@ Description
 #include "CorrectPhi.H"
 #include "fvcSmooth.H"
 
-#include "basicKinematicCloud.H"
+#include "kinematicCloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -111,12 +111,12 @@ int main(int argc, char *argv[])
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        Info<< "Evolving " << kinematicCloud.name() << endl;
+        Info<< "Evolving " << kCloud.name() << endl;
 
-        kinematicCloud.evolve();
+        kCloud.evolve();
 
         // Update continuous phase volume fraction field
-        alphac = max(1.0 - kinematicCloud.theta(), alphacMin);
+        alphac = max(1.0 - kCloud.theta(), alphacMin);
         alphac.correctBoundaryConditions();
 
          Info<< "Continuous phase-1 volume fraction = "
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
         alphaPhic = alphacf*phi;
         alphacRho = alphac*rho;
 
-        fvVectorMatrix cloudSU(kinematicCloud.SU(U));
+        fvVectorMatrix cloudSU(kCloud.SU(U));
         volVectorField cloudVolSUSu
         (
             IOobject

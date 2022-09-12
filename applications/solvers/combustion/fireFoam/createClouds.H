@@ -1,9 +1,9 @@
 Info<< "\nConstructing reacting cloud" << endl;
-basicReactingCloud parcels
+reactingCloud parcels
 (
     "reactingCloud1",
+    g,
     rho,
     U,
-    g,
     slgThermo
 );

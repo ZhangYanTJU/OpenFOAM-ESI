@@ -43,11 +43,11 @@ Description
 #include "pimpleControl.H"
 
 #ifdef MPPIC
-    #include "basicKinematicCloud.H"
-    #define basicKinematicTypeCloud basicKinematicCloud
+    #include "kinematicCloud.H"
+    #define kinematicTypeCloud kinematicCloud
 #else
-    #include "basicKinematicCollidingCloud.H"
-    #define basicKinematicTypeCloud basicKinematicCollidingCloud
+    #include "kinematicCollidingCloud.H"
+    #define kinematicTypeCloud kinematicCollidingCloud
 #endif
 
 int main(int argc, char *argv[])
@@ -91,16 +91,16 @@ int main(int argc, char *argv[])
         continuousPhaseTransport.correct();
         muc = rhoc*continuousPhaseTransport.nu();
 
-        Info<< "Evolving " << kinematicCloud.name() << endl;
-        kinematicCloud.evolve();
+        Info<< "Evolving " << kCloud.name() << endl;
+        kCloud.evolve();
 
         // Update continuous phase volume fraction field
-        alphac = max(1.0 - kinematicCloud.theta(), alphacMin);
+        alphac = max(1.0 - kCloud.theta(), alphacMin);
         alphac.correctBoundaryConditions();
         alphacf = fvc::interpolate(alphac);
         alphaPhic = alphacf*phic;
 
-        fvVectorMatrix cloudSU(kinematicCloud.SU(Uc));
+        fvVectorMatrix cloudSU(kCloud.SU(Uc));
         volVectorField cloudVolSUSu
         (
             IOobject

@@ -39,7 +39,7 @@ Description
 #include "fvCFD.H"
 #include "psiThermo.H"
 #include "turbulentFluidThermoModel.H"
-#include "basicKinematicCloud.H"
+#include "kinematicCloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        Info<< "Evolving " << kinematicCloud.name() << endl;
-        kinematicCloud.evolve();
+        Info<< "Evolving " << kCloud.name() << endl;
+        kCloud.evolve();
 
         runTime.write();
 

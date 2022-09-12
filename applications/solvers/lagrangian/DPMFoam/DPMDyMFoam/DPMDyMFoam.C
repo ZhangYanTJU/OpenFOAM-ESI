@@ -42,11 +42,11 @@ Description
 #include "CorrectPhi.H"
 
 #ifdef MPPIC
-    #include "basicKinematicCloud.H"
-    #define basicKinematicTypeCloud basicKinematicCloud
+    #include "kinematicCloud.H"
+    #define kinematicTypeCloud kinematicCloud
 #else
-    #include "basicKinematicCollidingCloud.H"
-    #define basicKinematicTypeCloud basicKinematicCollidingCloud
+    #include "kinematicCollidingCloud.H"
+    #define kinematicTypeCloud kinematicCollidingCloud
 #endif
 
 int main(int argc, char *argv[])
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         // Store the particle positions
-        kinematicCloud.storeGlobalPositions();
+        kCloud.storeGlobalPositions();
 
         mesh.update();
 
@@ -111,15 +111,15 @@ int main(int argc, char *argv[])
         continuousPhaseTransport.correct();
         muc = rhoc*continuousPhaseTransport.nu();
 
-        kinematicCloud.evolve();
+        kCloud.evolve();
 
         // Update continuous phase volume fraction field
-        alphac = max(1.0 - kinematicCloud.theta(), alphacMin);
+        alphac = max(1.0 - kCloud.theta(), alphacMin);
         alphac.correctBoundaryConditions();
         alphacf = fvc::interpolate(alphac);
         alphaPhic = alphacf*phic;
 
-        fvVectorMatrix cloudSU(kinematicCloud.SU(Uc));
+        fvVectorMatrix cloudSU(kCloud.SU(Uc));
         volVectorField cloudVolSUSu
         (
             IOobject

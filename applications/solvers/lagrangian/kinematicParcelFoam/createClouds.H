@@ -4,13 +4,12 @@ const word kinematicCloudName
 );
 
 Info<< "Constructing kinematicCloud " << kinematicCloudName << endl;
-
-basicKinematicCloud parcels
+kinematicCloud parcels
 (
     kinematicCloudName,
+    g,
     rhoInf,
     U,
-    muc,
-    g
+    muc
 );
 

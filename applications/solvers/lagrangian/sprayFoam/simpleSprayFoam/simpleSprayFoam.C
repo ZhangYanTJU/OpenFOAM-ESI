@@ -35,7 +35,7 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#define CLOUD_BASE_TYPE Spray
+#define CLOUD_BASE_TYPE spray
 #define CLOUD_BASE_TYPE_NAME "spray"
 
 #include "simpleReactingParcelFoam.C"

@@ -60,8 +60,7 @@ int main(int argc, char *argv[])
     argList::addNote
     (
         "Transient solver for compressible, turbulent flow"
-        " with reacting, multiphase particle clouds"
-        " and surface film modelling."
+        " with lagrangian parcel clouds and surface film modelling."
     );
 
     #define CREATE_MESH createMeshesPostProcess.H
@@ -74,7 +73,6 @@ int main(int argc, char *argv[])
     #include "createDyMControls.H"
     #include "createFields.H"
     #include "createFieldRefs.H"
-    #include "createRegionControls.H"
     #include "initContinuityErrs.H"
     #include "createRhoUfIfPresent.H"
 
@@ -98,7 +96,7 @@ int main(int argc, char *argv[])
         // so that it can be mapped and used in correctPhi
         // to ensure the corrected phi has the same divergence
         autoPtr<volScalarField> divrhoU;
-        if (solvePrimaryRegion && correctPhi)
+        if (pimple.solveFlow() && correctPhi)
         {
             divrhoU.reset
             (
@@ -126,7 +124,7 @@ int main(int argc, char *argv[])
 
         // Store momentum to set rhoUf for introduced faces.
         autoPtr<volVectorField> rhoU;
-        if (solvePrimaryRegion && rhoUf.valid())
+        if (pimple.solveFlow() && rhoUf.valid())
         {
             rhoU.reset(new volVectorField("rhoU", rho*U));
         }
@@ -137,7 +135,7 @@ int main(int argc, char *argv[])
         // Do any mesh changes
         mesh.update();
 
-        if (solvePrimaryRegion && mesh.changing())
+        if (pimple.solveFlow() && mesh.changing())
         {
             gh = (g & mesh.C()) - ghRef;
             ghf = (g & mesh.Cf()) - ghRef;
@@ -165,7 +163,7 @@ int main(int argc, char *argv[])
         parcels.evolve();
         surfaceFilm.evolve();
 
-        if (solvePrimaryRegion)
+        if (pimple.solveFlow())
         {
             if (pimple.nCorrPIMPLE() <= 1)
             {

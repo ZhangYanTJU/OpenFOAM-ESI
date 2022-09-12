@@ -147,13 +147,13 @@ volScalarField alphacRho(alphac*rho);
 alphacRho.oldTime();
 
 Info<< "Constructing kinematicCloud " << endl;
-basicKinematicCloud kinematicCloud
+kinematicCloud kCloud
 (
     "kinematicCloud",
+    g,
     rho,
     U,
-    mu,
-    g
+    mu
 );
 
 // Particle fraction upper limit
@@ -161,13 +161,13 @@ scalar alphacMin
 (
     1.0
   - (
-        kinematicCloud.particleProperties().subDict("constantProperties")
+        kCloud.particleProperties().subDict("constantProperties")
        .get<scalar>("alphaMax")
     )
 );
 
 // Update alphac from the particle locations
-alphac = max(1.0 - kinematicCloud.theta(), alphacMin);
+alphac = max(1.0 - kCloud.theta(), alphacMin);
 alphac.correctBoundaryConditions();
 
 surfaceScalarField alphacf("alphacf", fvc::interpolate(alphac));

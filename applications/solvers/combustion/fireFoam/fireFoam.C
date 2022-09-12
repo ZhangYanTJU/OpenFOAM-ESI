@@ -37,7 +37,7 @@ Description
 
 #include "fvCFD.H"
 #include "turbulentFluidThermoModel.H"
-#include "basicReactingCloud.H"
+#include "reactingCloud.H"
 #include "surfaceFilmModel.H"
 #include "pyrolysisModelCollection.H"
 #include "radiationModel.H"
