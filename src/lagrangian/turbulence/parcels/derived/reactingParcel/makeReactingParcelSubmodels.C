@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2020 OpenFOAM Foundation
+    Copyright (C) 2011-2014 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicSprayCloud.H"
+#include "reactingCloud.H"
 
 #include "makeParcelTurbulenceDispersionModels.H"
 #include "makeThermoParcelTurbulenceForces.H"
@@ -34,8 +34,8 @@ License
 
 namespace Foam
 {
-    makeThermoParcelTurbulenceForces(basicSprayCloud);
-    makeParcelTurbulenceDispersionModels(basicSprayCloud);
+    makeThermoParcelTurbulenceForces(reactingCloud);
+    makeParcelTurbulenceDispersionModels(reactingCloud);
 }
 
 

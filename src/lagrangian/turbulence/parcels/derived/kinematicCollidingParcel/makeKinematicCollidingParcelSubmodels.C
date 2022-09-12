@@ -25,17 +25,14 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicReactingMultiphaseCloud.H"
-
+#include "kinematicCollidingCloud.H"
 #include "makeParcelTurbulenceDispersionModels.H"
-#include "makeThermoParcelTurbulenceForces.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    makeThermoParcelTurbulenceForces(basicReactingMultiphaseCloud);
-    makeParcelTurbulenceDispersionModels(basicReactingMultiphaseCloud);
+    makeParcelTurbulenceDispersionModels(kinematicCollidingCloud);
 }
 
 

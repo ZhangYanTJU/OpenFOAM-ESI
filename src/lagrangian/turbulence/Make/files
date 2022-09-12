@@ -1,28 +1,28 @@
 PARCELS=parcels
 DERIVEDPARCELS=$(PARCELS)/derived
 
-KINEMATICPARCEL=$(DERIVEDPARCELS)/basicKinematicParcel
-$(KINEMATICPARCEL)/makeBasicKinematicParcelSubmodels.C
+KINEMATICPARCEL=$(DERIVEDPARCELS)/kinematicParcel
+$(KINEMATICPARCEL)/makeKinematicParcelSubmodels.C
 
-KINEMATICCOLLIDINGPARCEL=$(DERIVEDPARCELS)/basicKinematicCollidingParcel
-$(KINEMATICCOLLIDINGPARCEL)/makeBasicKinematicCollidingParcelSubmodels.C
+KINEMATICCOLLIDINGPARCEL=$(DERIVEDPARCELS)/kinematicCollidingParcel
+$(KINEMATICCOLLIDINGPARCEL)/makeKinematicCollidingParcelSubmodels.C
 
-THERMOPARCEL=$(DERIVEDPARCELS)/basicThermoParcel
-$(THERMOPARCEL)/makeBasicThermoParcelSubmodels.C
+THERMOPARCEL=$(DERIVEDPARCELS)/thermoParcel
+$(THERMOPARCEL)/makeThermoParcelSubmodels.C
 
-REACTINGPARCEL=$(DERIVEDPARCELS)/basicReactingParcel
-$(REACTINGPARCEL)/makeBasicReactingParcelSubmodels.C
+REACTINGPARCEL=$(DERIVEDPARCELS)/reactingParcel
+$(REACTINGPARCEL)/makeReactingParcelSubmodels.C
 
-REACTINGMPPARCEL=$(DERIVEDPARCELS)/basicReactingMultiphaseParcel
-$(REACTINGMPPARCEL)/makeBasicReactingMultiphaseParcelSubmodels.C
+REACTINGMPPARCEL=$(DERIVEDPARCELS)/reactingMultiphaseParcel
+$(REACTINGMPPARCEL)/makeReactingMultiphaseParcelSubmodels.C
 
-KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/basicKinematicMPPICParcel
-$(KINEMATICMPPICPARCEL)/makeBasicKinematicMPPICParcelSubmodels.C
+KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/kinematicMPPICParcel
+$(KINEMATICMPPICPARCEL)/makeKinematicMPPICParcelSubmodels.C
 
-HETEROGENEOUSREACTINGPARCEL=$(DERIVEDPARCELS)/basicHeterogeneousReactingParcel
-$(HETEROGENEOUSREACTINGPARCEL)/makeBasicHeterogeneousParcelSubmodels.C
+HETEROGENEOUSREACTINGPARCEL=$(DERIVEDPARCELS)/heterogeneousReactingParcel
+$(HETEROGENEOUSREACTINGPARCEL)/makeHeterogeneousParcelSubmodels.C
 
-SPRAYPARCEL=$(DERIVEDPARCELS)/basicSprayParcel
-$(SPRAYPARCEL)/makeBasicSprayParcelSubmodels.C
+SPRAYPARCEL=$(DERIVEDPARCELS)/sprayParcel
+$(SPRAYPARCEL)/makeSprayParcelSubmodels.C
 
 LIB = $(FOAM_LIBBIN)/liblagrangianTurbulence

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2014 OpenFOAM Foundation
+    Copyright (C) 2011-2015 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,17 +25,14 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicThermoCloud.H"
-
+#include "kinematicMPPICCloud.H"
 #include "makeParcelTurbulenceDispersionModels.H"
-#include "makeThermoParcelTurbulenceForces.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    makeThermoParcelTurbulenceForces(basicThermoCloud);
-    makeParcelTurbulenceDispersionModels(basicThermoCloud);
+    makeParcelTurbulenceDispersionModels(kinematicMPPICCloud);
 }
 
 
