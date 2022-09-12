@@ -40,7 +40,7 @@ Description
 #include "singlePhaseTransportModel.H"
 #include "turbulentTransportModel.H"
 #include "surfaceFilmModel.H"
-#include "basicKinematicCloud.H"
+#include "kinematicCloud.H"
 #include "fvOptions.H"
 #include "pimpleControl.H"
 #include "CorrectPhi.H"
@@ -67,7 +67,6 @@ int main(int argc, char *argv[])
     #include "createDyMControls.H"
     #include "createFields.H"
     #include "createFieldRefs.H"
-    #include "createRegionControls.H"
     #include "createUfIfPresent.H"
 
     turbulence->validate();
@@ -95,7 +94,7 @@ int main(int argc, char *argv[])
         // Do any mesh changes
         mesh.update();
 
-        if (solvePrimaryRegion && mesh.changing())
+        if (pimple.solveFlow() && mesh.changing())
         {
             MRF.update();
 
@@ -120,7 +119,7 @@ int main(int argc, char *argv[])
         parcels.evolve();
         surfaceFilm.evolve();
 
-        if (solvePrimaryRegion)
+        if (pimple.solveFlow())
         {
             // --- PIMPLE loop
             while (pimple.loop())

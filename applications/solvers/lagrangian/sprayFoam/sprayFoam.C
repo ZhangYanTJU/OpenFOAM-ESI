@@ -37,7 +37,7 @@ Description
 
 #include "fvCFD.H"
 #include "turbulentFluidThermoModel.H"
-#include "basicSprayCloud.H"
+#include "sprayCloud.H"
 #include "psiReactionThermo.H"
 #include "CombustionModel.H"
 #include "radiationModel.H"

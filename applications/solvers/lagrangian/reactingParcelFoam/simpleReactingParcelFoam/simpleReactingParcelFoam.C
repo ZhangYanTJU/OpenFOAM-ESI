@@ -45,13 +45,13 @@ Description
 #include "cloudMacros.H"
 
 #ifndef CLOUD_BASE_TYPE
-    #define CLOUD_BASE_TYPE ReactingMultiphase
+    #define CLOUD_BASE_TYPE reactingMultiphase
     //#define CLOUD_BASE_TYPE_NAME "reactingMultiphase" Backwards compat
     #define CLOUD_BASE_TYPE_NAME "reacting"
 #endif
 
 #include CLOUD_INCLUDE_FILE(CLOUD_BASE_TYPE)
-#define basicReactingTypeCloud CLOUD_TYPE(CLOUD_BASE_TYPE)
+#define reactingTypeCloud CLOUD_TYPE(CLOUD_BASE_TYPE)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

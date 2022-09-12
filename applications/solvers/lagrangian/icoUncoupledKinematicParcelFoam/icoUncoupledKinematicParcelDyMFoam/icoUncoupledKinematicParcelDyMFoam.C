@@ -41,7 +41,7 @@ Description
 #include "dynamicFvMesh.H"
 #include "singlePhaseTransportModel.H"
 #include "turbulentTransportModel.H"
-#include "basicKinematicCollidingCloud.H"
+#include "kinematicCollidingCloud.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -76,19 +76,19 @@ int main(int argc, char *argv[])
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        kinematicCloud.storeGlobalPositions();
+        kCloud.storeGlobalPositions();
 
         mesh.update();
 
         U.correctBoundaryConditions();
 
-        Info<< "Evolving " << kinematicCloud.name() << endl;
+        Info<< "Evolving " << kCloud.name() << endl;
 
         laminarTransport.correct();
 
         mu = laminarTransport.nu()*rhoInfValue;
 
-        kinematicCloud.evolve();
+        kCloud.evolve();
 
         runTime.write();
 

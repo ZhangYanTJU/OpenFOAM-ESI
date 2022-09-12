@@ -6,7 +6,7 @@
       + MRF.DDt(U)
       + turbulence->divDevReff(U)
      ==
-        parcels.SU(U, true)
+        scalar(1)/rhoInfValue*parcels.SU(U)
       + fvOptions(U)
     );
 

@@ -37,8 +37,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#define CLOUD_BASE_TYPE HeterogeneousReacting
-#define CLOUD_BASE_TYPE_NAME "HeterogeneousReacting"
+#define CLOUD_BASE_TYPE heterogeneousReacting
+#define CLOUD_BASE_TYPE_NAME "heterogeneousReacting"
 
 #include "reactingParcelFoam.C"
 

@@ -37,7 +37,7 @@ Description
 
 #include "fvCFD.H"
 #include "turbulentFluidThermoModel.H"
-#include "coalCloud.H"
+#include "reactingMultiphaseCloud.H"
 #include "rhoReactionThermo.H"
 #include "CombustionModel.H"
 #include "radiationModel.H"

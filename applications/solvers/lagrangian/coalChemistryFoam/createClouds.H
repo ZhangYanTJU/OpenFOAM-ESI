@@ -1,19 +1,19 @@
 Info<< "\nConstructing coal cloud" << endl;
-coalCloud coalParcels
+reactingMultiphaseCloud coalParcels
 (
     "coalCloud1",
+    g,
     rho,
     U,
-    g,
     slgThermo
 );
 
 Info<< "\nConstructing limestone cloud" << endl;
-basicThermoCloud limestoneParcels
+thermoCloud limestoneParcels
 (
     "limestoneCloud1",
+    g,
     rho,
     U,
-    g,
     slgThermo
 );

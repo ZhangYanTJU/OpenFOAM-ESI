@@ -34,7 +34,6 @@ EXE_LIBS = \
     -lthermoTools \
     -llagrangian \
     -llagrangianIntermediate \
-    -llagrangianSpray \
     -llagrangianTurbulence \
     -lspecie \
     -lcompressibleTransportModels \

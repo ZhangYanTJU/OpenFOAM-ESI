@@ -1,9 +1,9 @@
 Info<< "\nConstructing coal cloud" << endl;
-coalCloud parcels
+reactingMultiphaseCloud parcels
 (
     "reactingCloud1",
+    g,
     rho,
     U,
-    g,
     slgThermo
 );

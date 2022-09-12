@@ -53,12 +53,12 @@ Description
 #include "cloudMacros.H"
 
 #ifndef CLOUD_BASE_TYPE
-    #define CLOUD_BASE_TYPE ReactingMultiphase
+    #define CLOUD_BASE_TYPE reactingMultiphase
     #define CLOUD_BASE_TYPE_NAME "reacting"
 #endif
 
 #include CLOUD_INCLUDE_FILE(CLOUD_BASE_TYPE)
-#define basicReactingTypeCloud CLOUD_TYPE(CLOUD_BASE_TYPE)
+#define reactingTypeCloud CLOUD_TYPE(CLOUD_BASE_TYPE)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -81,7 +81,6 @@ int main(int argc, char *argv[])
     #include "createDyMControls.H"
     #include "createFields.H"
     #include "createFieldRefs.H"
-    #include "createRegionControls.H"
     #include "initContinuityErrs.H"
     #include "createRhoUfIfPresent.H"
 
@@ -105,7 +104,7 @@ int main(int argc, char *argv[])
         // so that it can be mapped and used in correctPhi
         // to ensure the corrected phi has the same divergence
         autoPtr<volScalarField> divrhoU;
-        if (solvePrimaryRegion && correctPhi)
+        if (pimple.solveFlow() && correctPhi)
         {
             divrhoU.reset
             (
@@ -133,7 +132,7 @@ int main(int argc, char *argv[])
 
         // Store momentum to set rhoUf for introduced faces.
         autoPtr<volVectorField> rhoU;
-        if (solvePrimaryRegion && rhoUf.valid())
+        if (pimple.solveFlow() && rhoUf.valid())
         {
             rhoU.reset(new volVectorField("rhoU", rho*U));
         }
@@ -144,7 +143,7 @@ int main(int argc, char *argv[])
         // Do any mesh changes
         mesh.update();
 
-        if (solvePrimaryRegion && mesh.changing())
+        if (pimple.solveFlow() && mesh.changing())
         {
             gh = (g & mesh.C()) - ghRef;
             ghf = (g & mesh.Cf()) - ghRef;
@@ -172,7 +171,7 @@ int main(int argc, char *argv[])
         parcels.evolve();
         surfaceFilm.evolve();
 
-        if (solvePrimaryRegion)
+        if (pimple.solveFlow())
         {
             if (pimple.nCorrPIMPLE() <= 1)
             {

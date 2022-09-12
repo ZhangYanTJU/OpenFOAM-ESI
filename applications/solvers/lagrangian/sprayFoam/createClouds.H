@@ -1,9 +1,9 @@
 Info<< "\nConstructing reacting cloud" << endl;
-basicSprayCloud parcels
+sprayCloud parcels
 (
     "sprayCloud",
+    g,
     rho,
     U,
-    g,
     slgThermo
 );

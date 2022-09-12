@@ -55,11 +55,11 @@ const word kinematicCloudName
 );
 
 Info<< "Constructing kinematicCloud " << kinematicCloudName << endl;
-basicKinematicCloud kinematicCloud
+kinematicCloud kCloud
 (
     kinematicCloudName,
+    g,
     rho,
     U,
-    thermo.mu(),
-    g
+    thermo.mu()
 );

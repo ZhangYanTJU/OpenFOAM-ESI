@@ -63,13 +63,13 @@ const word kinematicCloudName
 );
 
 Info<< "Constructing kinematicCloud " << kinematicCloudName << endl;
-basicKinematicCollidingCloud kinematicCloud
+kinematicCollidingCloud kCloud
 (
     kinematicCloudName,
+    g,
     rhoInf,
     U,
-    mu,
-    g
+    mu
 );
 
 IOobject Hheader

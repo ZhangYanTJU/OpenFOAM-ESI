@@ -92,10 +92,10 @@ Foam::functionObjects::icoUncoupledKinematicCloud::icoUncoupledKinematicCloud
     kinematicCloud_
     (
         kinematicCloudName_,
+        g_,
         rho_,
         U_,
-        mu_,
-        g_
+        mu_
     )
 {}
 

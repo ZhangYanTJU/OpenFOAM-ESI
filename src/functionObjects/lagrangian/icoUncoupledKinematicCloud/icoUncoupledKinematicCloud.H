@@ -76,7 +76,7 @@ SourceFiles
 #define functionObjects_icoUncoupledKinematicCloud_H
 
 #include "fvMeshFunctionObject.H"
-#include "basicKinematicCollidingCloud.H"
+#include "kinematicCollidingCloud.H"
 #include "volFields.H"
 #include "uniformDimensionedFields.H"
 
@@ -122,7 +122,7 @@ class icoUncoupledKinematicCloud
         word kinematicCloudName_;
 
         //- The kinematic cloud
-        basicKinematicCollidingCloud kinematicCloud_;
+        kinematicCollidingCloud kinematicCloud_;
 
 
     // Private member functions
