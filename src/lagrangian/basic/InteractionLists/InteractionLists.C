@@ -74,19 +74,7 @@ void Foam::InteractionLists<ParticleType>::buildInteractionLists()
         extendedProcBbsOrigProc
     );
 
-    treeBoundBoxList cellBbs(mesh_.nCells());
-
-    forAll(cellBbs, celli)
-    {
-        cellBbs[celli] = treeBoundBox
-        (
-            mesh_.cells()[celli].points
-            (
-                mesh_.faces(),
-                mesh_.points()
-            )
-        );
-    }
+    treeBoundBoxList cellBbs(treeDataCell::boxes(mesh_));
 
     const globalIndexAndTransform& globalTransforms =
         mesh_.globalData().globalTransforms();

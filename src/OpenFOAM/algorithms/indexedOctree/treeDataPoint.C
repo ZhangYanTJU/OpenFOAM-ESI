@@ -33,7 +33,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(treeDataPoint, 0);
+    defineTypeName(treeDataPoint);
 }
 
 
@@ -72,29 +72,13 @@ Foam::treeDataPoint::treeDataPoint
 {}
 
 
-Foam::treeDataPoint::findNearestOp::findNearestOp
-(
-    const indexedOctree<treeDataPoint>& tree
-)
-:
-    tree_(tree)
-{}
-
-
-Foam::treeDataPoint::findIntersectOp::findIntersectOp
-(
-    const indexedOctree<treeDataPoint>& tree
-)
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::pointField Foam::treeDataPoint::shapePoints() const
+Foam::tmp<Foam::pointField> Foam::treeDataPoint::shapePoints() const
 {
     if (useSubset_)
     {
-        return pointField(points_, pointLabels_);
+        return tmp<pointField>::New(points_, pointLabels_);
     }
 
     return points_;
@@ -114,10 +98,10 @@ Foam::volumeType Foam::treeDataPoint::getVolumeType
 bool Foam::treeDataPoint::overlaps
 (
     const label index,
-    const treeBoundBox& cubeBb
+    const treeBoundBox& searchBox
 ) const
 {
-    return cubeBb.contains(shapePoint(index));
+    return searchBox.contains(shapePoint(index));
 }
 
 
@@ -132,7 +116,25 @@ bool Foam::treeDataPoint::overlaps
 }
 
 
-void Foam::treeDataPoint::findNearestOp::operator()
+// * * * * * * * * * * * * * * * * Searching * * * * * * * * * * * * * * * * //
+
+Foam::treeDataPoint::findNearestOp::findNearestOp
+(
+    const indexedOctree<treeDataPoint>& tree
+)
+:
+    tree_(tree)
+{}
+
+
+Foam::treeDataPoint::findIntersectOp::findIntersectOp
+(
+    const indexedOctree<treeDataPoint>& tree
+)
+{}
+
+
+void Foam::treeDataPoint::findNearest
 (
     const labelUList& indices,
     const point& sample,
@@ -142,11 +144,9 @@ void Foam::treeDataPoint::findNearestOp::operator()
     point& nearestPoint
 ) const
 {
-    const treeDataPoint& shape = tree_.shapes();
-
     for (const label index : indices)
     {
-        const point& pt = shape.shapePoint(index);
+        const point& pt = shapePoint(index);
 
         const scalar distSqr = sample.distSqr(pt);
 
@@ -163,6 +163,27 @@ void Foam::treeDataPoint::findNearestOp::operator()
 void Foam::treeDataPoint::findNearestOp::operator()
 (
     const labelUList& indices,
+    const point& sample,
+
+    scalar& nearestDistSqr,
+    label& minIndex,
+    point& nearestPoint
+) const
+{
+    tree_.shapes().findNearest
+    (
+        indices,
+        sample,
+        nearestDistSqr,
+        minIndex,
+        nearestPoint
+    );
+}
+
+
+void Foam::treeDataPoint::findNearestOp::operator()
+(
+    const labelUList& indices,
     const linePointRef& ln,
 
     treeBoundBox& tightest,
@@ -173,6 +194,8 @@ void Foam::treeDataPoint::findNearestOp::operator()
 {
     const treeDataPoint& shape = tree_.shapes();
 
+    const treeBoundBox lnBb(ln.box());
+
     // Best so far
     scalar nearestDistSqr = GREAT;
     if (minIndex >= 0)
@@ -182,12 +205,12 @@ void Foam::treeDataPoint::findNearestOp::operator()
 
     for (const label index : indices)
     {
-        const point& shapePt = shape.shapePoint(index);
+        const point& pt = shape.shapePoint(index);
 
-        if (tightest.contains(shapePt))
+        if (tightest.contains(pt))
         {
             // Nearest point on line
-            pointHit pHit = ln.nearestDist(shapePt);
+            pointHit pHit = ln.nearestDist(pt);
             const scalar distSqr = sqr(pHit.distance());
 
             if (distSqr < nearestDistSqr)
@@ -195,22 +218,10 @@ void Foam::treeDataPoint::findNearestOp::operator()
                 nearestDistSqr = distSqr;
                 minIndex = index;
                 linePoint = pHit.point();
-                nearestPoint = shapePt;
+                nearestPoint = pt;
 
-                {
-                    point& minPt = tightest.min();
-                    minPt = min(ln.start(), ln.end());
-                    minPt.x() -= pHit.distance();
-                    minPt.y() -= pHit.distance();
-                    minPt.z() -= pHit.distance();
-                }
-                {
-                    point& maxPt = tightest.max();
-                    maxPt = max(ln.start(), ln.end());
-                    maxPt.x() += pHit.distance();
-                    maxPt.y() += pHit.distance();
-                    maxPt.z() += pHit.distance();
-                }
+                tightest = lnBb;
+                tightest.grow(pHit.distance());
             }
         }
     }

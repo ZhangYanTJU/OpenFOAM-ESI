@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,16 +64,19 @@ class treeDataPoint
 {
     // Private Data
 
+        //- Reference to the underlying point field
         const pointField& points_;
 
         //- Subset of points to work on (or empty)
         const labelList pointLabels_;
 
+        //- Use subset of points (pointLabels)
         const bool useSubset_;
+
 
 public:
 
-
+    //- Forward to treeDataPoint findNearest operations
     class findNearestOp
     {
         const indexedOctree<treeDataPoint>& tree_;
@@ -105,6 +108,7 @@ public:
     };
 
 
+    //- Forward to treeDataPoint findIntersect operations (not possible)
     class findIntersectOp
     {
     public:
@@ -123,11 +127,11 @@ public:
     };
 
 
-    // Declare name of the class and its debug switch
-    ClassName("treeDataPoint");
+    // Declare name of the class
+    ClassNameNoDebug("treeDataPoint");
 
 
-    // Constructors
+    // Constructors (non-caching)
 
         //- Construct from pointField
         //  \note Holds reference to the points!
@@ -154,108 +158,91 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- An empty effective point field?
-            inline bool empty() const
-            {
-                return
-                (
-                    useSubset_
-                  ? pointLabels_.empty()
-                  : points_.empty()
-                );
-            }
+        //- The original point field
+        const pointField& points() const noexcept { return points_; }
 
-            //- The effective point field size
-            inline label size() const
-            {
-                return
-                (
-                    useSubset_
-                  ? pointLabels_.size()
-                  : points_.size()
-                );
-            }
+        //- The subset of point ids to use
+        const labelList& pointLabels() const noexcept { return pointLabels_; }
 
-            //- The original point field
-            inline const pointField& points() const
-            {
-                return points_;
-            }
+        //- Use a subset of points
+        bool useSubset() const noexcept { return useSubset_; }
 
-            //- The original point ids
-            inline const labelList& pointLabels() const
-            {
-                return pointLabels_;
-            }
+        //- Is the effective point field empty?
+        bool empty() const noexcept
+        {
+            return useSubset_ ? pointLabels_.empty() : points_.empty();
+        }
 
-            //- Use a subset of points
-            inline bool useSubset() const
-            {
-                return useSubset_;
-            }
+        //- The size of the effective point field
+        label size() const noexcept
+        {
+            return useSubset_ ? pointLabels_.size() : points_.size();
+        }
 
-            //- The original (non-subset) point label
-            inline label pointLabel(const label index) const
-            {
-                return
-                (
-                    useSubset_ && index >= 0
-                  ? pointLabels_[index]
-                  : index
-                );
-            }
+        //- Map to the original (non-subset) point label
+        label pointLabel(const label index) const
+        {
+            return useSubset_ && index >= 0 ? pointLabels_[index] : index;
+        }
 
-            //- Point at specified index
-            inline const point& shapePoint(const label index) const
-            {
-                return
-                (
-                    useSubset_
-                  ? points_[pointLabels_[index]]
-                  : points_[index]
-                );
-            }
+        //- Point at specified index
+        const point& shapePoint(const label index) const
+        {
+            return points_[pointLabel(index)];
+        }
 
-            //- Representative point cloud for all shapes inside
-            //- (one point per shape)
-            pointField shapePoints() const;
-
-
-        // Search
-
-            //- Get type (inside,outside,mixed,unknown) of point w.r.t. surface.
-            //  Only makes sense for closed surfaces.
-            volumeType getVolumeType
-            (
-                const indexedOctree<treeDataPoint>& os,
-                const point& sample
-            ) const;
-
-            //- Does (bb of) shape at index overlap bb
-            bool overlaps
-            (
-                const label index,
-                const treeBoundBox& sampleBb
-            ) const;
-
-            //- Does shape at index overlap the sphere
-            bool overlaps
-            (
-                const label index,
-                const point& centre,
-                const scalar radiusSqr
-            ) const;
+        //- Representative point cloud for all shapes inside
+        //- (one point per shape)
+        tmp<pointField> shapePoints() const;
 
 
     // Member Operators
 
         //- The point at the specified index
-        inline const point& operator[](const label index) const
+        const point& operator[](const label index) const
         {
             return shapePoint(index);
         }
+
+
+    // Search
+
+        //- Get type (inside,outside,mixed,unknown) of point w.r.t. surface.
+        //  Only makes sense for closed surfaces.
+        volumeType getVolumeType
+        (
+            const indexedOctree<treeDataPoint>& os,
+            const point& sample
+        ) const;
+
+        //- Does (bb of) shape at index searchBox
+        bool overlaps
+        (
+            const label index,
+            const treeBoundBox& searchBox
+        ) const;
+
+        //- Does shape at index overlap the sphere
+        bool overlaps
+        (
+            const label index,
+            const point& centre,
+            const scalar radiusSqr
+        ) const;
+
+        //- Calculates nearest (to sample) point in shape.
+        //  Returns actual point and distance (squared)
+        void findNearest
+        (
+            const labelUList& indices,
+            const point& sample,
+
+            scalar& nearestDistSqr,
+            label& nearestIndex,
+            point& nearestPoint
+        ) const;
 };
 
 

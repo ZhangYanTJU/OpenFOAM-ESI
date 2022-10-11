@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,100 +62,114 @@ template<class Type> class dynamicIndexedOctree;
 
 class dynamicTreeDataPoint
 {
-    // Private data
+    // Private Data
 
+        //- The point field
         const DynamicList<point>& points_;
+
 
 public:
 
-    // Declare name of the class and its debug switch
-    ClassName("dynamicTreeDataPoint");
+    // Declare name of the class
+    ClassNameNoDebug("dynamicTreeDataPoint");
 
 
-    // Constructors
+    // Constructors (non-caching)
 
         //- Construct from List. Holds reference!
-        dynamicTreeDataPoint(const DynamicList<point>& points);
+        explicit dynamicTreeDataPoint(const DynamicList<point>& points);
 
 
     // Member Functions
 
-        // Access
+    // Access
 
-            inline label size() const
-            {
-                return points_.size();
-            }
+        //- The original point field
+        const DynamicList<point>& points() const noexcept { return points_; }
 
-            //- Get representative point cloud for all shapes inside
-            //  (one point per shape)
-            const DynamicList<point>& shapePoints() const;
+        //- Is the effective point field empty?
+        bool empty() const noexcept { return points_.empty(); }
+
+        //- The size of the effective point field
+        label size() const noexcept { return points_.size(); }
+
+        //- Point at specified index
+        const point& shapePoint(const label index) const
+        {
+            return points_[index];
+        }
+
+        //- Representative point cloud for all shapes inside
+        //- (one point per shape)
+        const DynamicList<point>& shapePoints() const noexcept
+        {
+            return points_;
+        }
 
 
-        // Search
+    // Search
 
-            //- Get type (inside,outside,mixed,unknown) of point w.r.t. surface.
-            //  Only makes sense for closed surfaces.
-            volumeType getVolumeType
-            (
-                const dynamicIndexedOctree<dynamicTreeDataPoint>&,
-                const point&
-            ) const;
+        //- Get type (inside,outside,mixed,unknown) of point w.r.t. surface.
+        //  Only makes sense for closed surfaces.
+        volumeType getVolumeType
+        (
+            const dynamicIndexedOctree<dynamicTreeDataPoint>&,
+            const point&
+        ) const;
 
-            //- Does (bb of) shape at index overlap bb
-            bool overlaps
-            (
-                const label index,
-                const treeBoundBox& sampleBb
-            ) const;
+        //- Does (bb of) shape at index overlap bb
+        bool overlaps
+        (
+            const label index,
+            const treeBoundBox& searchBox
+        ) const;
 
-            //- Check if any point on shape is inside sphere.
-            bool overlaps
-            (
-                const label index,
-                const point& centre,
-                const scalar radiusSqr
-            ) const;
+        //- Check if any point on shape is inside sphere.
+        bool overlaps
+        (
+            const label index,
+            const point& centre,
+            const scalar radiusSqr
+        ) const;
 
-            //- Calculates nearest (to sample) point in shape.
-            //  Returns actual point and distance (squared)
-            void findNearest
-            (
-                const labelUList& indices,
-                const point& sample,
+        //- Calculates nearest (to sample) point in shape.
+        //  Returns actual point and distance (squared)
+        void findNearest
+        (
+            const labelUList& indices,
+            const point& sample,
 
-                scalar& nearestDistSqr,
-                label& nearestIndex,
-                point& nearestPoint
-            ) const;
+            scalar& nearestDistSqr,
+            label& nearestIndex,
+            point& nearestPoint
+        ) const;
 
-            //- Calculates nearest (to line) point in shape.
-            //  Returns point and distance (squared)
-            void findNearest
-            (
-                const labelUList& indices,
-                const linePointRef& ln,
+        //- Calculates nearest (to line) point in shape.
+        //  Returns point and distance (squared)
+        void findNearest
+        (
+            const labelUList& indices,
+            const linePointRef& ln,
 
-                treeBoundBox& tightest,
-                label& minIndex,
-                point& linePoint,
-                point& nearestPoint
-            ) const;
+            treeBoundBox& tightest,
+            label& minIndex,
+            point& linePoint,
+            point& nearestPoint
+        ) const;
 
-            //- Calculate intersection of shape with ray. Sets result
-            //  accordingly
-            bool intersects
-            (
-                const label index,
-                const point& start,
-                const point& end,
-                point& result
-            ) const
-            {
-                NotImplemented;
-                return false;
-            }
-
+        //- Calculate intersection of shape with ray.
+        //  Sets result accordingly
+        bool intersects
+        (
+            const label index,
+            const point& start,
+            const point& end,
+            point& result
+        ) const
+        {
+            NotImplemented;
+            return false;
+        }
 };
 
 

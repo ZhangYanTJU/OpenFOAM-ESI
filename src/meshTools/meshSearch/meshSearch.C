@@ -161,10 +161,8 @@ bool Foam::meshSearch::findNearer
 {
     bool nearer = false;
 
-    forAll(indices, i)
+    for (const label pointi : indices)
     {
-        label pointi = indices[i];
-
         scalar distSqr = magSqr(points[pointi] - sample);
 
         if (distSqr < nearestDistSqr)
@@ -628,9 +626,10 @@ Foam::meshSearch::boundaryTree() const
     if (!boundaryTreePtr_)
     {
         // All boundary faces (not just walls)
-        labelList bndFaces
+        const labelRange bndFaces
         (
-            identity(mesh_.nBoundaryFaces(), mesh_.nInternalFaces())
+            mesh_.nInternalFaces(),
+            mesh_.nBoundaryFaces()
         );
 
         boundaryTreePtr_.reset

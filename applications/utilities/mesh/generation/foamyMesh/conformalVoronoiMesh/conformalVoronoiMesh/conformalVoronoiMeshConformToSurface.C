@@ -1812,14 +1812,11 @@ Foam::conformalVoronoiMesh::nearestFeatureEdgeLocations
     labelList elems
         = edgeLocationTreePtr_().findSphere(pt, exclusionRangeSqr);
 
-    DynamicList<pointIndexHit> dynPointHit;
+    DynamicList<pointIndexHit> dynPointHit(elems.size());
 
-    forAll(elems, elemI)
+    for (const label index : elems)
     {
-        label index = elems[elemI];
-
-        const Foam::point& pointi
-            = edgeLocationTreePtr_().shapes().shapePoints()[index];
+        const auto& pointi = edgeLocationTreePtr_().shapes().shapePoint(index);
 
         pointIndexHit nearHit(true, pointi, index);
 
