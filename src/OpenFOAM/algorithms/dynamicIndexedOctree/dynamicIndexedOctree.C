@@ -39,105 +39,6 @@ Foam::scalar Foam::dynamicIndexedOctree<Type>::perturbTol_ = 10*SMALL;
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-bool Foam::dynamicIndexedOctree<Type>::overlaps
-(
-    const point& p0,
-    const point& p1,
-    const scalar nearestDistSqr,
-    const point& sample
-)
-{
-    // Find out where sample is in relation to bb.
-    // Find nearest point on bb.
-    scalar distSqr = 0;
-
-    for (direction dir = 0; dir < vector::nComponents; dir++)
-    {
-        scalar d0 = p0[dir] - sample[dir];
-        scalar d1 = p1[dir] - sample[dir];
-
-        if ((d0 > 0) != (d1 > 0))
-        {
-            // sample inside both extrema. This component does not add any
-            // distance.
-        }
-        else if (mag(d0) < mag(d1))
-        {
-            distSqr += d0*d0;
-        }
-        else
-        {
-            distSqr += d1*d1;
-        }
-
-        if (distSqr > nearestDistSqr)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
-template<class Type>
-bool Foam::dynamicIndexedOctree<Type>::overlaps
-(
-    const treeBoundBox& parentBb,
-    const direction octant,
-    const scalar nearestDistSqr,
-    const point& sample
-)
-{
-    //- Accelerated version of
-    //     treeBoundBox subBb(parentBb.subBbox(mid, octant))
-    //     overlaps
-    //     (
-    //          subBb.min(),
-    //          subBb.max(),
-    //          nearestDistSqr,
-    //          sample
-    //     )
-
-    const point& min = parentBb.min();
-    const point& max = parentBb.max();
-
-    point other;
-
-    if (octant & treeBoundBox::RIGHTHALF)
-    {
-        other.x() = max.x();
-    }
-    else
-    {
-        other.x() = min.x();
-    }
-
-    if (octant & treeBoundBox::TOPHALF)
-    {
-        other.y() = max.y();
-    }
-    else
-    {
-        other.y() = min.y();
-    }
-
-    if (octant & treeBoundBox::FRONTHALF)
-    {
-        other.z() = max.z();
-    }
-    else
-    {
-        other.z() = min.z();
-    }
-
-    const point mid(0.5*(min+max));
-
-    return overlaps(mid, other, nearestDistSqr, sample);
-}
-
-
-template<class Type>
 void Foam::dynamicIndexedOctree<Type>::divide
 (
     const autoPtr<DynamicList<label>>& indices,
@@ -483,14 +384,10 @@ void Foam::dynamicIndexedOctree<Type>::findNearest
     const node& nod = nodes_[nodeI];
 
     // Determine order to walk through octants
-    FixedList<direction, 8> octantOrder;
-    nod.bb_.searchOrder(sample, octantOrder);
-
     // Go into all suboctants (one containing sample first) and update nearest.
-    for (direction i = 0; i < 8; i++)
-    {
-        direction octant = octantOrder[i];
 
+    for (const direction octant : nod.bb_.searchOrder(sample))
+    {
         labelBits index = nod.subNodes_[octant];
 
         if (isNode(index))
@@ -499,7 +396,7 @@ void Foam::dynamicIndexedOctree<Type>::findNearest
 
             const treeBoundBox& subBb = nodes_[subNodeI].bb_;
 
-            if (overlaps(subBb.min(), subBb.max(), nearestDistSqr, sample))
+            if (subBb.overlaps(sample, nearestDistSqr))
             {
                 findNearest
                 (
@@ -514,16 +411,7 @@ void Foam::dynamicIndexedOctree<Type>::findNearest
         }
         else if (isContent(index))
         {
-            if
-            (
-                overlaps
-                (
-                    nod.bb_,
-                    octant,
-                    nearestDistSqr,
-                    sample
-                )
-            )
+            if (nod.bb_.subOverlaps(octant, sample, nearestDistSqr))
             {
                 shapes_.findNearest
                 (
@@ -556,14 +444,10 @@ void Foam::dynamicIndexedOctree<Type>::findNearest
     const treeBoundBox& nodeBb = nod.bb_;
 
     // Determine order to walk through octants
-    FixedList<direction, 8> octantOrder;
-    nod.bb_.searchOrder(ln.centre(), octantOrder);
-
     // Go into all suboctants (one containing sample first) and update nearest.
-    for (direction i = 0; i < 8; i++)
-    {
-        direction octant = octantOrder[i];
 
+    for (const direction octant : nod.bb_.searchOrder(ln.centre()))
+    {
         labelBits index = nod.subNodes_[octant];
 
         if (isNode(index))
@@ -586,9 +470,7 @@ void Foam::dynamicIndexedOctree<Type>::findNearest
         }
         else if (isContent(index))
         {
-            const treeBoundBox subBb(nodeBb.subBbox(octant));
-
-            if (subBb.overlaps(tightest))
+            if (nodeBb.subOverlaps(octant, tightest))
             {
                 shapes_.findNearest
                 (
@@ -734,72 +616,72 @@ Foam::point Foam::dynamicIndexedOctree<Type>::pushPoint
             << abort(FatalError);
     }
 
-    if (faceID & treeBoundBox::LEFTBIT)
     {
-        if (pushInside)
+        constexpr direction dir(0);  // vector::X
+
+        if (faceID & treeBoundBox::LEFTBIT)
         {
-            perturbedPt[0] = bb.min()[0] + (perturbVec[0] + ROOTVSMALL);
+            perturbedPt[dir] =
+            (
+                pushInside
+              ? (bb.min()[dir] + (perturbVec[dir] + ROOTVSMALL))
+              : (bb.min()[dir] - (perturbVec[dir] + ROOTVSMALL))
+            );
         }
-        else
+        else if (faceID & treeBoundBox::RIGHTBIT)
         {
-            perturbedPt[0] = bb.min()[0] - (perturbVec[0] + ROOTVSMALL);
-        }
-    }
-    else if (faceID & treeBoundBox::RIGHTBIT)
-    {
-        if (pushInside)
-        {
-            perturbedPt[0] = bb.max()[0] - (perturbVec[0] + ROOTVSMALL);
-        }
-        else
-        {
-            perturbedPt[0] = bb.max()[0] + (perturbVec[0] + ROOTVSMALL);
+            perturbedPt[dir] =
+            (
+                pushInside
+              ? (bb.max()[dir] - (perturbVec[dir] + ROOTVSMALL))
+              : (bb.max()[dir] + (perturbVec[dir] + ROOTVSMALL))
+            );
         }
     }
 
-    if (faceID & treeBoundBox::BOTTOMBIT)
     {
-        if (pushInside)
+        constexpr direction dir(1);  // vector::Y
+
+        if (faceID & treeBoundBox::BOTTOMBIT)
         {
-            perturbedPt[1] = bb.min()[1] + (perturbVec[1] + ROOTVSMALL);
+            perturbedPt[dir] =
+            (
+                pushInside
+              ? (bb.min()[dir] + (perturbVec[dir] + ROOTVSMALL))
+              : (bb.min()[dir] - (perturbVec[dir] + ROOTVSMALL))
+            );
         }
-        else
+        else if (faceID & treeBoundBox::TOPBIT)
         {
-            perturbedPt[1] = bb.min()[1] - (perturbVec[1] + ROOTVSMALL);
-        }
-    }
-    else if (faceID & treeBoundBox::TOPBIT)
-    {
-        if (pushInside)
-        {
-            perturbedPt[1] = bb.max()[1] - (perturbVec[1] + ROOTVSMALL);
-        }
-        else
-        {
-            perturbedPt[1] = bb.max()[1] + (perturbVec[1] + ROOTVSMALL);
+            perturbedPt[dir] =
+            (
+                pushInside
+              ? (bb.max()[dir] - (perturbVec[dir] + ROOTVSMALL))
+              : (bb.max()[dir] + (perturbVec[dir] + ROOTVSMALL))
+            );
         }
     }
 
-    if (faceID & treeBoundBox::BACKBIT)
     {
-        if (pushInside)
+        constexpr direction dir(2);  // vector::Z
+
+        if (faceID & treeBoundBox::BACKBIT)
         {
-            perturbedPt[2] = bb.min()[2] + (perturbVec[2] + ROOTVSMALL);
+            perturbedPt[dir] =
+            (
+                pushInside
+              ? (bb.min()[dir] + (perturbVec[dir] + ROOTVSMALL))
+              : (bb.min()[dir] - (perturbVec[dir] + ROOTVSMALL))
+            );
         }
-        else
+        else if (faceID & treeBoundBox::FRONTBIT)
         {
-            perturbedPt[2] = bb.min()[2] - (perturbVec[2] + ROOTVSMALL);
-        }
-    }
-    else if (faceID & treeBoundBox::FRONTBIT)
-    {
-        if (pushInside)
-        {
-            perturbedPt[2] = bb.max()[2] - (perturbVec[2] + ROOTVSMALL);
-        }
-        else
-        {
-            perturbedPt[2] = bb.max()[2] + (perturbVec[2] + ROOTVSMALL);
+            perturbedPt[dir] =
+            (
+                pushInside
+              ? (bb.max()[dir] - (perturbVec[dir] + ROOTVSMALL))
+              : (bb.max()[dir] + (perturbVec[dir] + ROOTVSMALL))
+            );
         }
     }
 
@@ -1809,9 +1691,7 @@ void Foam::dynamicIndexedOctree<Type>::findBox
         }
         else if (isContent(index))
         {
-            const treeBoundBox subBb(nodeBb.subBbox(octant));
-
-            if (subBb.overlaps(searchBox))
+            if (nodeBb.subOverlaps(octant, searchBox))
             {
                 const labelList& indices = *(contents_[getContent(index)]);
 
@@ -1857,9 +1737,7 @@ void Foam::dynamicIndexedOctree<Type>::findSphere
         }
         else if (isContent(index))
         {
-            const treeBoundBox subBb(nodeBb.subBbox(octant));
-
-            if (subBb.overlaps(centre, radiusSqr))
+            if (nodeBb.subOverlaps(octant, centre, radiusSqr))
             {
                 const labelList& indices = *(contents_[getContent(index)]);
 

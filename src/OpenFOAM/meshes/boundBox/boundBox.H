@@ -55,6 +55,7 @@ namespace Foam
 // Forward Declarations
 class boundBox;
 class plane;
+class Random;
 template<class T> class MinMax;
 
 Istream& operator>>(Istream& is, boundBox& bb);
@@ -72,16 +73,41 @@ class boundBox
         //- Minimum and maximum points describing the bounding box
         point min_, max_;
 
+
+protected:
+
+    // Protected Member Functions
+
+        //- Test for overlap of box and box (inclusive check)
+        inline static bool box_box_overlaps
+        (
+            const point& minA,  // boxA (min)
+            const point& maxA,  // boxA (max)
+            const point& minB,  // boxB (min)
+            const point& maxB   // boxB (max)
+        );
+
+        //- Test for overlap of box and boundingSphere (centre + sqr(radius))
+        //  Note: ordering of corners is irrelevant
+        inline static bool box_sphere_overlaps
+        (
+            const point& corner0,   // box corner
+            const point& corner1,   // box corner
+            const point& centre,    // sphere centre
+            const scalar radiusSqr  // sqr(radius)
+        );
+
+
 public:
 
     // Static Data Members
 
-        //- Bits used for (x/y/z) direction encoding.
+        //- Bits used for (x/y/z) directional encoding.
         enum directionBit : direction
         {
-            XDIR = 0x1,  //!< 1: x-direction (vector component 0)
-            YDIR = 0x2,  //!< 2: y-direction (vector component 1)
-            ZDIR = 0x4   //!< 4: z-direction (vector component 2)
+            XDIR = 1,  //!< 1: x-direction. Same as (1 << vector::X)
+            YDIR = 2,  //!< 2: y-direction. Same as (1 << vector::Y)
+            ZDIR = 4   //!< 4: z-direction. Same as (1 << vector::Z)
         };
 
         //- A large boundBox: min/max == -/+ ROOTVGREAT
@@ -205,6 +231,12 @@ public:
             //- Average length/height/width dimension
             inline scalar avgDim() const;
 
+            //- Direction (X/Y/Z) of the smallest span (for empty box: 0)
+            inline direction minDir() const;
+
+            //- Direction (X/Y/Z) of the largest span (for empty box: 0)
+            inline direction maxDir() const;
+
             //- Count the number of positive, non-zero dimensions.
             //  \return
             //   - -1 : if any dimensions are negative
@@ -287,6 +319,15 @@ public:
 
             //- Expand box by factor*mag(span) in all dimensions
             inline void inflate(const scalar factor);
+
+            //- Expand box slightly by expanding all dimensions with
+            //- factor*span*(random 0-1) and guarantees
+            //- factor*mag(span) minimum width in any direction
+            void inflate(Random& rndGen, const scalar factor);
+
+            //- As per two parameter version but with additional
+            //- grow() by given amount in each dimension
+            void inflate(Random& r, const scalar factor, const scalar delta);
 
 
         // Parallel

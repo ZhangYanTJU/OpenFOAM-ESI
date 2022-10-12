@@ -30,6 +30,7 @@ License
 #include "PstreamReduceOps.H"
 #include "plane.H"
 #include "triangle.H"
+#include "Random.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -278,6 +279,35 @@ Foam::point Foam::boundBox::nearest(const point& p) const
         Foam::min(Foam::max(p.y(), min_.y()), max_.y()),
         Foam::min(Foam::max(p.z(), min_.z()), max_.z())
     );
+}
+
+
+void Foam::boundBox::inflate(Random& rndGen, const scalar factor)
+{
+    vector newSpan(span());
+
+    // Make 3D
+    const scalar minSpan = factor * Foam::mag(newSpan);
+
+    for (direction dir = 0; dir < vector::nComponents; ++dir)
+    {
+        newSpan[dir] = Foam::max(newSpan[dir], minSpan);
+    }
+
+    min_ -= cmptMultiply(factor*rndGen.sample01<vector>(), newSpan);
+    max_ += cmptMultiply(factor*rndGen.sample01<vector>(), newSpan);
+}
+
+
+void Foam::boundBox::inflate
+(
+    Random& rndGen,
+    const scalar factor,
+    const scalar delta
+)
+{
+    inflate(rndGen, factor);
+    grow(delta);
 }
 
 
