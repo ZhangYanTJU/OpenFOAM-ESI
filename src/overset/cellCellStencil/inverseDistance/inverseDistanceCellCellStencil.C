@@ -192,8 +192,7 @@ void Foam::cellCellStencils::inverseDistance::markBoundaries
 
                 // Mark in voxel mesh
                 boundBox faceBb(pp.points(), pp[i], false);
-                faceBb.min() -= smallVec;
-                faceBb.max() += smallVec;
+                faceBb.grow(smallVec);
 
                 if (bb.overlaps(faceBb))
                 {
@@ -220,8 +219,7 @@ void Foam::cellCellStencils::inverseDistance::markBoundaries
 
                 // Mark in voxel mesh
                 boundBox faceBb(pp.points(), pp[i], false);
-                faceBb.min() -= smallVec;
-                faceBb.max() += smallVec;
+                faceBb.grow(smallVec);
 
                 if (bb.overlaps(faceBb))
                 {
@@ -324,8 +322,7 @@ void Foam::cellCellStencils::inverseDistance::markPatchesAsHoles
             {
                 label celli = tgtCellMap[tgtCelli];
                 treeBoundBox cBb(cellBb(mesh_, celli));
-                cBb.min() -= smallVec_;
-                cBb.max() += smallVec_;
+                cBb.grow(smallVec_);
 
                 if
                 (
@@ -394,8 +391,8 @@ void Foam::cellCellStencils::inverseDistance::markPatchesAsHoles
                 {
                     label celli = tgtCellMap[tgtCelli];
                     treeBoundBox cBb(cellBb(mesh_, celli));
-                    cBb.min() -= smallVec_;
-                    cBb.max() += smallVec_;
+                    cBb.grow(smallVec_);
+
                     if
                     (
                         overlaps
@@ -549,8 +546,7 @@ void Foam::cellCellStencils::inverseDistance::markDonors
         if (srcOverlapProcs.size())
         {
             treeBoundBox subBb(cellBb(mesh_, celli));
-            subBb.min() -= smallVec_;
-            subBb.max() += smallVec_;
+            subBb.grow(smallVec_);
 
             forAll(srcOverlapProcs, i)
             {

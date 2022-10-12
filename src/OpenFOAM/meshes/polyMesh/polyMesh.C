@@ -939,9 +939,7 @@ Foam::polyMesh::cellTree() const
 
         Random rndGen(261782);
 
-        overallBb = overallBb.extend(rndGen, 1e-4);
-        overallBb.min() -= point::uniform(ROOTVSMALL);
-        overallBb.max() += point::uniform(ROOTVSMALL);
+        overallBb = overallBb.extend(rndGen, 1e-4, ROOTVSMALL);
 
         cellTreePtr_.reset
         (

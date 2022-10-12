@@ -100,8 +100,7 @@ Foam::searchableExtrudedCircle::searchableExtrudedCircle
 
     // Slightly extended bb. Slightly off-centred just so on symmetric
     // geometry there are less face/edge aligned items.
-    bb.min() -= point::uniform(ROOTVSMALL);
-    bb.max() += point::uniform(ROOTVSMALL);
+    bb.grow(ROOTVSMALL);
 
     edgeTree_.reset
     (

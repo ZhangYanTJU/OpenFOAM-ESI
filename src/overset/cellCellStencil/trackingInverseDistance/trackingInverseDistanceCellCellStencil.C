@@ -90,8 +90,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::markBoundaries
 
                 // Mark in voxel mesh
                 boundBox faceBb(pp.points(), pp[i], false);
-                faceBb.min() -= smallVec;
-                faceBb.max() += smallVec;
+                faceBb.grow(smallVec);
 
                 if (bb.overlaps(faceBb))
                 {
@@ -126,8 +125,8 @@ bool Foam::cellCellStencils::trackingInverseDistance::markBoundaries
 
                 // Mark in voxel mesh
                 boundBox faceBb(pp.points(), pp[i], false);
-                faceBb.min() -= smallVec;
-                faceBb.max() += smallVec;
+                faceBb.grow(smallVec);
+
                 if (!bb.contains(faceCentres[i]))
                 {
                     if (!hasWarned)
@@ -226,8 +225,7 @@ void Foam::cellCellStencils::trackingInverseDistance::markPatchesAsHoles
             {
                 label celli = tgtCellMap[tgtCelli];
                 boundBox cBb(allPoints, allCellPoints[celli], false);
-                cBb.min() -= smallVec_;
-                cBb.max() += smallVec_;
+                cBb.grow(smallVec_);
 
                 if
                 (
@@ -295,8 +293,7 @@ void Foam::cellCellStencils::trackingInverseDistance::markPatchesAsHoles
                 {
                     label celli = tgtCellMap[tgtCelli];
                     boundBox cBb(allPoints, allCellPoints[celli], false);
-                    cBb.min() -= smallVec_;
-                    cBb.max() += smallVec_;
+                    cBb.grow(smallVec_);
 
                     if
                     (
@@ -405,8 +402,7 @@ void Foam::cellCellStencils::trackingInverseDistance::markDonors
         if (srcOverlapProcs.size())
         {
             treeBoundBox subBb(cellBb(mesh_, celli));
-            subBb.min() -= smallVec_;
-            subBb.max() += smallVec_;
+            subBb.grow(smallVec_);
 
             forAll(srcOverlapProcs, i)
             {

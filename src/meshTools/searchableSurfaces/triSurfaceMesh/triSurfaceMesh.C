@@ -800,9 +800,7 @@ Foam::triSurfaceMesh::edgeTree() const
             // Slightly extended bb. Slightly off-centred just so on symmetric
             // geometry there are less face/edge aligned items.
 
-            bb = bb.extend(rndGen, 1e-4);
-            bb.min() -= point::uniform(ROOTVSMALL);
-            bb.max() += point::uniform(ROOTVSMALL);
+            bb = bb.extend(rndGen, 1e-4, ROOTVSMALL);
         }
 
 

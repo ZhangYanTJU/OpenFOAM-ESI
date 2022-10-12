@@ -88,9 +88,7 @@ void Foam::patchProbes::findElements(const fvMesh& mesh)
         }
 
         Random rndGen(123456);
-        overallBb = overallBb.extend(rndGen, 1e-4);
-        overallBb.min() -= point::uniform(ROOTVSMALL);
-        overallBb.max() += point::uniform(ROOTVSMALL);
+        overallBb = overallBb.extend(rndGen, 1e-4, ROOTVSMALL);
 
 
         const indexedOctree<treeDataFace> boundaryTree

@@ -615,9 +615,7 @@ const Foam::treeBoundBox& Foam::meshSearch::dataBoundBox() const
         treeBoundBox& overallBb = overallBbPtr_();
 
         // Extend slightly and make 3D
-        overallBb = overallBb.extend(rndGen, 1e-4);
-        overallBb.min() -= point::uniform(ROOTVSMALL);
-        overallBb.max() += point::uniform(ROOTVSMALL);
+        overallBb = overallBb.extend(rndGen, 1e-4, ROOTVSMALL);
     }
 
     return *overallBbPtr_;

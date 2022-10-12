@@ -111,11 +111,10 @@ void Foam::patchSeedSet::calcSamples
                 treeBoundBox(pp.points(), pp.meshPoints()).extend
                 (
                     rndGen,
-                    1e-4
+                    1e-4,
+                    ROOTVSMALL
                 )
             );
-            patchBb.min() -= point::uniform(ROOTVSMALL);
-            patchBb.max() += point::uniform(ROOTVSMALL);
 
             indexedOctree<treeDataFace> boundaryTree
             (
