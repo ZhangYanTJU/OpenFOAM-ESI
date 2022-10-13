@@ -810,8 +810,8 @@ Foam::triSurfaceMesh::edgeTree() const
                 << "calculating edge tree for bb:" << bb << endl;
         }
 
-        scalar oldTol = indexedOctree<treeDataEdge>::perturbTol();
-        indexedOctree<treeDataEdge>::perturbTol() = tolerance();
+        const scalar oldTol =
+            indexedOctree<treeDataEdge>::perturbTol(tolerance());
 
         edgeTree_.reset
         (
@@ -831,7 +831,7 @@ Foam::triSurfaceMesh::edgeTree() const
             )
         );
 
-        indexedOctree<treeDataEdge>::perturbTol() = oldTol;
+        indexedOctree<treeDataEdge>::perturbTol(oldTol);
 
         if (debug)
         {
@@ -1230,8 +1230,8 @@ void Foam::triSurfaceMesh::getVolumeType
     List<volumeType>& volType
 ) const
 {
-    const scalar oldTol = indexedOctree<treeDataTriSurface>::perturbTol();
-    indexedOctree<treeDataTriSurface>::perturbTol() = tolerance();
+    const scalar oldTol =
+        indexedOctree<treeDataTriSurface>::perturbTol(tolerance());
 
     if (debug)
     {
@@ -1267,7 +1267,8 @@ void Foam::triSurfaceMesh::getVolumeType
         }
     }
 
-    indexedOctree<treeDataTriSurface>::perturbTol() = oldTol;
+    indexedOctree<treeDataTriSurface>::perturbTol(oldTol);
+
     if (debug)
     {
         Pout<< "triSurfaceMesh::getVolumeType :"
