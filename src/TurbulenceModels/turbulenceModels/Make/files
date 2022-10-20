@@ -25,6 +25,10 @@ $(LESfilters)/anisotropicFilter/anisotropicFilter.C
 DES/DESModel/DESModelBase.C
 
 
+/* Base class for RAS models */
+RAS/RASModel/RASModelBase.C
+
+
 /* Turbulence BCs */
 derivedFvPatchFields/fixedShearStress/fixedShearStressFvPatchVectorField.C
 derivedFvPatchFields/porousBafflePressure/porousBafflePressureFvPatchField.C

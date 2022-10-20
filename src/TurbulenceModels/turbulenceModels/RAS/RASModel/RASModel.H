@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,6 +39,7 @@ SourceFiles
 #define RASModel_H
 
 #include "TurbulenceModel.H"
+#include "RASModelBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,6 +53,7 @@ namespace Foam
 template<class BasicTurbulenceModel>
 class RASModel
 :
+    public RASModelBase,
     public BasicTurbulenceModel
 {
 
