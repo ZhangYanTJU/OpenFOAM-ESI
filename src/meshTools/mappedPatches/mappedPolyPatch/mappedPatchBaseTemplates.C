@@ -70,14 +70,15 @@ void Foam::mappedPatchBase::distribute
         }
         default:
         {
+            const auto& map = this->map();
             mapDistributeBase::distribute
             (
                 Pstream::defaultCommsType,
-                map().schedule(),
-                map().constructSize(),
-                map().subMap(),
+                map.schedule(),
+                map.constructSize(),
+                map.subMap(),
                 false,
-                map().constructMap(),
+                map.constructMap(),
                 false,
                 lst,
                 Type(Zero),
@@ -139,14 +140,15 @@ void Foam::mappedPatchBase::reverseDistribute
         default:
         {
             label cSize = sampleSize();
+            const auto& map = this->map();
             mapDistributeBase::distribute
             (
                 Pstream::defaultCommsType,
-                map().schedule(),
+                map.schedule(),
                 cSize,
-                map().constructMap(),
+                map.constructMap(),
                 false,
-                map().subMap(),
+                map.subMap(),
                 false,
                 lst,
                 Type(Zero),
