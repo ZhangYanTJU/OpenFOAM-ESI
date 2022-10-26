@@ -1,0 +1,4 @@
+smoothSurfaceData.C
+/* smoothSurfaceData-orig.C */
+
+EXE = $(FOAM_USER_APPBIN)/smoothSurfaceData
