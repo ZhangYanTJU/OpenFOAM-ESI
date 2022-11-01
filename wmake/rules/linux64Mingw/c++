@@ -32,13 +32,11 @@ LINKLIBSO   = $(CC) $(c++FLAGS) -shared \
     -Wl,--enable-runtime-pseudo-reloc \
     -Wl,--enable-auto-import \
     -Wl,--enable-auto-image-base \
-    -Wl,--strip-all \
-    $(FOAM_EXTRA_LDFLAGS)
+    -Wl,--strip-all
 
 LINKEXE     = $(CC) $(c++FLAGS) \
     -Wl,--enable-auto-import \
     -Wl,--strip-all \
-    -Wl,--force-exe-suffix \
-    $(FOAM_EXTRA_LDFLAGS)
+    -Wl,--force-exe-suffix
 
 #------------------------------------------------------------------------------
