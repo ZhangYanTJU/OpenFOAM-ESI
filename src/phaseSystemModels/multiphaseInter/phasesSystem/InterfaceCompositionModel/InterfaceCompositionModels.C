@@ -126,6 +126,57 @@ namespace Foam
             constIncompressibleGasHThermoPhysics
         );
 
+        makeInterfaceContSpecieMixtureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics,
+            heRhoThermo,
+            rhoReactionThermo,
+            multiComponentMixture,
+            tabulatedThermoPhysics
+        );
+
+        makeInterfaceContSpecieMixtureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            constRhoHThermoPhysics,
+            heRhoThermo,
+            rhoReactionThermo,
+            multiComponentMixture,
+            tabulatedThermoPhysics
+        );
+
+        makeInterfaceContSpecieMixtureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics,
+            heRhoThermo,
+            rhoReactionThermo,
+            multiComponentMixture,
+            icoPoly8HThermoPhysics
+        );
+
+        makeInterfaceContSpecieMixtureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            constRhoHThermoPhysics,
+            heRhoThermo,
+            rhoReactionThermo,
+            multiComponentMixture,
+            icoPoly8HThermoPhysics
+        );
 
         // From pure liquid (rhoConst) to pure gas (incompressible ideal gas)
         makeInterfacePureType
@@ -182,6 +233,58 @@ namespace Foam
             rhoThermo,
             pureMixture,
             constRhoHThermoPhysics
+        );
+
+        makeInterfacePureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics
+        );
+
+        makeInterfacePureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            icoPoly8HThermoPhysics
+        );
+
+        makeInterfacePureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            constRhoHThermoPhysics,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            tabulatedThermoPhysics
+        );
+
+        makeInterfacePureType
+        (
+            kineticGasEvaporation,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            constRhoHThermoPhysics,
+            heRhoThermo,
+            rhoThermo,
+            pureMixture,
+            icoPoly8HThermoPhysics
         );
 
 
