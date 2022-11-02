@@ -168,7 +168,8 @@ public:
             //- Return neighbour field.  Dummy
             virtual tmp<Field<Type> > patchNeighbourField() const;
 
-            //- Adjust psi for mass correction
+            //- Adjust psi for mass correction. Requires storeFringeCoefficients
+            //  to have been called before
             void adjustPsi
             (
                 Field<scalar>& psi,
@@ -179,7 +180,8 @@ public:
             //- Store fringe coefficients and faces
             void storeFringeCoefficients(const fvMatrix<Type>& matrix);
 
-            //- Calculate patch flux (helper function)
+            //- Calculate patch flux (helper function). Requires
+            //  storeFringeCoefficients to have been called before
             void fringeFlux
             (
                  const fvMatrix<Type>& m,
