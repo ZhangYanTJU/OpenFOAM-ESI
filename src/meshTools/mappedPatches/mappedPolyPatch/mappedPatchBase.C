@@ -1058,6 +1058,8 @@ void Foam::mappedPatchBase::calcMapping() const
             }
         }
     }
+
+    updateTime_.setUpToDate();
 }
 
 
@@ -1223,7 +1225,20 @@ Foam::mappedPatchBase::mappedPatchBase(const polyPatch& pp)
     AMIReverse_(false),
     AMIPtr_(new faceAreaWeightAMI(true, AMIReverse_)),
     surfPtr_(nullptr),
-    surfDict_(fileName("surface"))
+    surfDict_(fileName("surface")),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {}
 
 
@@ -1257,7 +1272,20 @@ Foam::mappedPatchBase::mappedPatchBase
     AMIReverse_(false),
     AMIPtr_(new faceAreaWeightAMI(true, AMIReverse_)),
     surfPtr_(nullptr),
-    surfDict_(fileName("surface"))
+    surfDict_(fileName("surface")),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {}
 
 
@@ -1291,7 +1319,20 @@ Foam::mappedPatchBase::mappedPatchBase
     AMIReverse_(false),
     AMIPtr_(new faceAreaWeightAMI(true, AMIReverse_)),
     surfPtr_(nullptr),
-    surfDict_(fileName("surface"))
+    surfDict_(fileName("surface")),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {}
 
 
@@ -1325,7 +1366,20 @@ Foam::mappedPatchBase::mappedPatchBase
     AMIReverse_(false),
     AMIPtr_(new faceAreaWeightAMI(true, AMIReverse_)),
     surfPtr_(nullptr),
-    surfDict_(fileName("surface"))
+    surfDict_(fileName("surface")),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {}
 
 
@@ -1364,7 +1418,20 @@ Foam::mappedPatchBase::mappedPatchBase
         )
     ),
     surfPtr_(nullptr),
-    surfDict_(dict.subOrEmptyDict("surface"))
+    surfDict_(dict.subOrEmptyDict("surface")),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {
     if (!coupleGroup_.valid())
     {
@@ -1454,7 +1521,20 @@ Foam::mappedPatchBase::mappedPatchBase
         )
     ),
     surfPtr_(nullptr),
-    surfDict_(dict.subOrEmptyDict("surface"))
+    surfDict_(dict.subOrEmptyDict("surface")),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {
     if (mode != NEARESTPATCHFACE && mode != NEARESTPATCHFACEAMI)
     {
@@ -1507,7 +1587,20 @@ Foam::mappedPatchBase::mappedPatchBase
     AMIReverse_(mpb.AMIReverse_),
     AMIPtr_(mpb.AMIPtr_->clone()),
     surfPtr_(nullptr),
-    surfDict_(mpb.surfDict_)
+    surfDict_(mpb.surfDict_),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {}
 
 
@@ -1545,7 +1638,20 @@ Foam::mappedPatchBase::mappedPatchBase
     AMIReverse_(mpb.AMIReverse_),
     AMIPtr_(mpb.AMIPtr_->clone()),
     surfPtr_(nullptr),
-    surfDict_(mpb.surfDict_)
+    surfDict_(mpb.surfDict_),
+    updateTime_
+    (
+        IOobject
+        (
+            "updateTime",
+            patch_.boundaryMesh().mesh().pointsInstance(),
+            patch_.boundaryMesh().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        dimensionedScalar("time", dimTime, -GREAT)
+    )
 {}
 
 

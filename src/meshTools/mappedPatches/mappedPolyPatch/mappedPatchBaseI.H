@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020, 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -167,13 +167,15 @@ inline bool Foam::mappedPatchBase::sameRegion() const
 inline const Foam::mapDistribute& Foam::mappedPatchBase::map() const
 {
     const polyMesh& thisMesh = patch_.boundaryMesh().mesh();
-    bool topoChange =
-        (sameWorld() && sampleMesh().topoChanging())
-     || thisMesh.topoChanging();
 
-    if (topoChange)
+    if (!thisMesh.upToDatePoints(updateTime_))
     {
         mapPtr_.reset(nullptr);
+
+        if (AMIPtr_)
+        {
+            AMIPtr_->upToDate() = false;
+        }
     }
 
     if (!mapPtr_)
@@ -191,12 +193,16 @@ inline const Foam::AMIPatchToPatchInterpolation& Foam::mappedPatchBase::AMI
 ) const
 {
     const polyMesh& thisMesh = patch_.boundaryMesh().mesh();
-    bool topoChange =
-        (sameWorld() && sampleMesh().topoChanging())
-     || thisMesh.topoChanging();
 
-    if (topoChange || forceUpdate)
+    if (forceUpdate)
     {
+        AMIPtr_->upToDate() = false;
+    }
+
+    if (!thisMesh.upToDatePoints(updateTime_))
+    {
+        mapPtr_.reset(nullptr);
+
         AMIPtr_->upToDate() = false;
     }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020, 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,6 +96,7 @@ SourceFiles
 #include "pointIndexHit.H"
 #include "AMIPatchToPatchInterpolation.H"
 #include "coupleGroupIdentifier.H"
+#include "uniformDimensionedFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -290,6 +291,9 @@ protected:
 
             //- Dictionary storing projection surface description
             dictionary surfDict_;
+
+            //- Update time, e.g. for topo-changes
+            mutable uniformDimensionedScalarField updateTime_;
 
 
     // Protected Member Functions
