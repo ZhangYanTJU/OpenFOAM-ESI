@@ -1,0 +1,11 @@
+LINK_LIBS   = $(c++DBUG)
+
+LINKLIBSO   = $(CC) $(c++FLAGS) -shared \
+    $(FOAM_EXTRA_LDFLAGS)  ${ROCM4FOAM}/lib/libroctx64.so 
+
+LINKEXE     = $(CC) $(c++FLAGS) \
+    -fuse-ld=ld  -Xlinker --add-needed \
+    $(FOAM_EXTRA_LDFLAGS) ${ROCM4FOAM}/lib/libroctx64.so   
+
+
+
