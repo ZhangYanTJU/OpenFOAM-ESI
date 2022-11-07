@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-include $(GENERAL_RULES)/Clang/c
+include $(GENERAL_RULES)/AMDClang/c
 
 cARCH       = -m64
 
@@ -12,6 +12,6 @@ cFLAGS      = \
 
 ctoo        = $(WM_SCHEDULER) $(cc) $(cFLAGS) -c $< -o $@
 
-include $(GENERAL_RULES)/Clang/link-c
+include $(GENERAL_RULES)/AMDClang/link-c
 
 #------------------------------------------------------------------------------
