@@ -155,6 +155,35 @@ inline Foam::RectangularMatrix<Type>::RectangularMatrix
 
 
 template<class Type>
+inline Foam::RectangularMatrix<Type>::RectangularMatrix
+(
+    const Tensor<Type>& t
+)
+:
+    RectangularMatrix<Type>(3, 3)
+{
+    std::copy(t.cbegin(), t.cend(), this->begin());
+}
+
+
+template<class Type>
+inline Foam::RectangularMatrix<Type>::RectangularMatrix
+(
+    const SymmTensor<Type>& st
+)
+:
+    RectangularMatrix<Type>(3, 3, Zero)
+{
+    this->operator()(0,0) = st.xx();
+    this->operator()(0,1) = st.xy();
+    this->operator()(0,2) = st.xz();
+    this->operator()(1,1) = st.yy();
+    this->operator()(1,2) = st.yz();
+    this->operator()(2,2) = st.zz();
+}
+
+
+template<class Type>
 inline Foam::RectangularMatrix<Type>::RectangularMatrix(Istream& is)
 :
     Matrix<RectangularMatrix<Type>, Type>(is)

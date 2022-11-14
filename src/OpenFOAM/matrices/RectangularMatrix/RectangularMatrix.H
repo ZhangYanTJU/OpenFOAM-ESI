@@ -126,6 +126,12 @@ public:
         //- Construct as copy of a square matrix
         inline RectangularMatrix(const SquareMatrix<Type>& mat);
 
+        //- Construct as copy of a Tensor
+        inline explicit RectangularMatrix(const Tensor<Type>& t);
+
+        //- Construct as copy of a SymmTensor
+        inline explicit RectangularMatrix(const SymmTensor<Type>& st);
+
         //- Construct from Istream
         inline explicit RectangularMatrix(Istream& is);
 
