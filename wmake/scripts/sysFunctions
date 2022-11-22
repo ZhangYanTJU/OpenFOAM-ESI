@@ -5,7 +5,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2018-2020 OpenCFD Ltd.
+#     Copyright (C) 2018-2022 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -212,7 +212,7 @@ then
     findLibrary()
     {
         local prefixDir localDir searchDir searchName
-        local file ext
+        local file found ext zshsplit
 
         searchDir=true
 
@@ -264,6 +264,13 @@ then
 
             ## echo "search: $# $@" 1>&2
 
+            # Split extLibraries on space, but zsh does not like that
+            if [ -n "$ZSH_VERSION" ]
+            then
+                case "$-" in (*y*) zshsplit=y;; esac
+                setopt shwordsplit
+            fi
+
             for searchDir in "$@"
             do
                 [ -n "$searchDir" ] || continue
@@ -272,14 +279,21 @@ then
                     file="$prefixDir/$searchDir/$searchName$ext"
                     if [ -f "$file" ] && [ -r "$file" ]
                     then
-                        echo "$file"  # Found
-                        return 0
+                        found="$file"  # Found
+                        break 2
                     fi
                 done
             done
 
         else
             # Directed search
+
+            # Split extLibraries on space, but zsh does not like that
+            if [ -n "$ZSH_VERSION" ]
+            then
+                case "$-" in (*y*) zshsplit=y;; esac
+                setopt shwordsplit
+            fi
 
             for file
             do
@@ -288,11 +302,25 @@ then
                 do
                     if [ -f "$file$ext" ] && [ -r "$file$ext" ]
                     then
-                        echo "$file$ext"  # Found
-                        return 0
+                        found="$file$ext"  # Found
+                        break 2
                     fi
                 done
             done
+        fi
+
+        # Restore word splitting (zsh)
+
+        # Restore case "$-" in (*y*) zshsplit=y;; esac
+        if [ -n "$ZSH_VERSION" ] && [ -z "$zshsplit" ]
+        then
+            unsetopt shwordsplit
+        fi
+
+        if [ -n "$found" ]
+        then
+            echo "$found"
+            return 0
         fi
 
         return 2
