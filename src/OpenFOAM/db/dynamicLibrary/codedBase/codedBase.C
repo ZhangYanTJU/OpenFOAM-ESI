@@ -254,9 +254,21 @@ void Foam::codedBase::createLibrary
         UPstream::barrier(UPstream::worldComm);
     }
 
-    // Broadcast distributed...
+    const fileName libPath = dynCode.libPath();
 
-    dynamicCode::waitForFile(dynCode.libPath(), context.dict());
+    // Broadcast to distributed masters
+    if (fileHandler().distributed())
+    {
+        fileHandler().broadcastCopy
+        (
+            UPstream::worldComm,
+            UPstream::master(fileHandler().comm()),
+            libPath,
+            libPath
+        );
+    }
+
+    dynamicCode::waitForFile(libPath, context.dict());
 }
 
 

@@ -196,7 +196,17 @@ Foam::functionEntries::codeStream::getFunction
     //  (flag set by regIOobject::read, baseIOdictionary constructor)
     if (!masterOnly && returnReduceOr(lib == nullptr))
     {
-        // Broadcast distributed...
+        // Broadcast to distributed masters
+        if (fileHandler().distributed())
+        {
+            fileHandler().broadcastCopy
+            (
+                UPstream::worldComm,
+                UPstream::master(fileHandler().comm()),
+                libPath,
+                libPath
+            );
+        }
 
         dynamicCode::waitForFile(libPath, context.dict());
     }
