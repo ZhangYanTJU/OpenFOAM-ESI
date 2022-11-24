@@ -432,6 +432,7 @@ protected:
             const bool checkGlobal,
             const bool isFile,
             const IOobject& io,
+            const dirIndexList& pDirs,
             const bool search,
             pathType& searchType,
             word& processorsDir,

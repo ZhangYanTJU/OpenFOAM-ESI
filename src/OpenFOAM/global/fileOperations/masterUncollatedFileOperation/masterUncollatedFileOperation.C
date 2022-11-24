@@ -169,6 +169,7 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
     const bool checkGlobal,
     const bool isFile,
     const IOobject& io,
+    const dirIndexList& pDirs,
     const bool search,
     pathType& searchType,
     word& procsDir,
@@ -207,9 +208,7 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
         // 2. Check processors/
         if (io.time().processorCase())
         {
-            refPtr<dirIndexList> pDirs(lookupProcessorsPath(io.objectPath()));
-
-            for (const dirIndex& dirIdx : pDirs())
+            for (const dirIndex& dirIdx : pDirs)
             {
                 const fileName& pDir = dirIdx.first();
                 fileName objPath =
@@ -277,12 +276,7 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
             if (newInstancePath.size() && newInstancePath != io.instance())
             {
                 // 1. Try processors equivalent
-                refPtr<dirIndexList> pDirs
-                (
-                    lookupProcessorsPath(io.objectPath())
-                );
-
-                for (const dirIndex& dirIdx : pDirs())
+                for (const dirIndex& dirIdx : pDirs)
                 {
                     const fileName& pDir = dirIdx.first();
 
@@ -1123,11 +1117,13 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
 
     // Now that we have an IOobject path use it to detect & cache
     // processor directory naming
-    (void)lookupProcessorsPath(io.objectPath());
+    const refPtr<dirIndexList> pDirs(lookupProcessorsPath(io.objectPath()));
 
     // Trigger caching of times
-    (void)findTimes(io.time().path(), io.time().constant());
-
+    if (cacheLevel() > 0)
+    {
+        (void)findTimes(io.time().path(), io.time().constant());
+    }
 
     // Determine master filePath and scatter
 
@@ -1139,6 +1135,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
     if (Pstream::master(comm_))
     {
         const bool oldParRun(Pstream::parRun(false));
+        const int oldCache = fileOperation::cacheLevel(0);
 
         // All masters search locally. Note that global objects might
         // fail (except on master). This gets handled later on (in PARENTOBJECT)
@@ -1148,12 +1145,14 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
                 checkGlobal,
                 true,
                 io,
+                pDirs,
                 search,
                 searchType,
                 procsDir,
                 newInstancePath
             );
 
+        fileOperation::cacheLevel(oldCache);
         Pstream::parRun(oldParRun);
 
         if (debug)
@@ -1273,7 +1272,13 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
 
     // Now that we have an IOobject path use it to detect & cache
     // processor directory naming
-    (void)lookupProcessorsPath(io.objectPath());
+    const refPtr<dirIndexList> pDirs(lookupProcessorsPath(io.objectPath()));
+
+    // Trigger caching of times
+    if (cacheLevel() > 0)
+    {
+        (void)findTimes(io.time().path(), io.time().constant());
+    }
 
     // Determine master dirPath and broadcast
 
@@ -1286,18 +1291,21 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
     if (Pstream::master(comm_))
     {
         const bool oldParRun(Pstream::parRun(false));
+        const int oldCache = fileOperation::cacheLevel(0);
 
         objPath = filePathInfo
         (
             checkGlobal,
             false,
             io,
+            pDirs,
             search,
             searchType,
             procsDir,
             newInstancePath
         );
 
+        fileOperation::cacheLevel(oldCache);
         Pstream::parRun(oldParRun);
 
         if (debug)
@@ -1477,7 +1485,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
     //         parent directory in case of parallel)
 
 
-    refPtr<dirIndexList> pDirs(lookupProcessorsPath(io.objectPath()));
+    const refPtr<dirIndexList> pDirs(lookupProcessorsPath(io.objectPath()));
 
     word foundInstance;
 
@@ -1485,10 +1493,13 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
     if (Pstream::master(UPstream::worldComm))
     {
         const bool oldParRun(Pstream::parRun(false));
+        const int oldCache = fileOperation::cacheLevel(0);
+
         if (exists(pDirs, io))
         {
             foundInstance = io.instance();
         }
+        fileOperation::cacheLevel(oldCache);
         Pstream::parRun(oldParRun);
     }
 
@@ -1521,6 +1532,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
     if (Pstream::master(UPstream::worldComm))
     {
         const bool oldParRun(Pstream::parRun(false));
+        const int oldCache = fileOperation::cacheLevel(0);
 
         label instIndex = ts.size()-1;
 
@@ -1631,6 +1643,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
             }
         }
 
+        fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);  // Restore parallel state
     }
 
@@ -1704,6 +1717,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
         // Avoid fileOperation::readObjects from triggering parallel ops
         // (through call to filePath which triggers parallel )
         const bool oldParRun = UPstream::parRun(false);
+        const int oldCache = fileOperation::cacheLevel(0);
 
         //- Use non-time searching version
         objectNames = fileOperation::readObjects
@@ -1747,6 +1761,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
             }
         }
 
+        fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);  // Restore parallel state
     }
 
@@ -2176,11 +2191,13 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
         {
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
+            const int oldCache = fileOperation::cacheLevel(0);
 
             auto& is = io.readStream(typeName);
             ok = io.readData(is);
             io.close();
 
+            fileOperation::cacheLevel(oldCache);
             UPstream::parRun(oldParRun);  // Restore parallel state
         }
 
@@ -2308,22 +2325,36 @@ Foam::instantList Foam::fileOperations::masterUncollatedFileOperation::findTimes
         {
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
+            const int oldCache = fileOperation::cacheLevel(0);
 
             times = fileOperation::findTimes(directory, constantName);
 
+            fileOperation::cacheLevel(oldCache);
             UPstream::parRun(oldParRun);  // Restore parallel state
         }
 
         Pstream::broadcast(times, UPstream::worldComm);
 
-        // Note: do we also cache if no times have been found since it might
-        //       indicate a directory that is being filled later on ...
+        if (debug)
+        {
+            Pout<< "masterUncollatedFileOperation::findTimes :"
+                << " Found times:" << flatOutput(times) << nl
+                << "    for directory:" << directory << endl;
+        }
 
-        auto* tPtr = new DynamicList<instant>(std::move(times));
+        // Caching
+        // - cache values even if no times were found since it might
+        //   indicate a directory that is being filled later on ...
+        if (cacheLevel() > 0)
+        {
+            auto* tPtr = new DynamicList<instant>(std::move(times));
+            times_.set(directory, tPtr);
 
-        times_.set(directory, tPtr);
+            return *tPtr;
+        }
 
-        return *tPtr;
+        // Times found (not cached)
+        return times;
     }
 }
 
