@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -133,6 +133,15 @@ bool Foam::functionEntries::includeEntry::execute
     Istream& is
 )
 {
+    const dictionary& top = parentDict.topDict();
+    const auto* rioPtr = dynamic_cast<const regIOobject*>(&top);
+    const label oldComm
+    (
+        rioPtr && rioPtr->global()
+      ? fileHandler().comm(UPstream::worldComm)
+      : fileHandler().comm()
+    );
+
     const fileName rawName(is);
     const fileName fName(resolveFile(is.name().path(), rawName, parentDict));
 
@@ -148,19 +157,18 @@ bool Foam::functionEntries::includeEntry::execute
         }
 
         // Add watch on included file
-        const dictionary& top = parentDict.topDict();
-        if (isA<regIOobject>(top))
+        if (rioPtr)
         {
-            regIOobject& rio = const_cast<regIOobject&>
-            (
-                dynamic_cast<const regIOobject&>(top)
-            );
-            rio.addWatch(fName);
+            const_cast<regIOobject&>(*rioPtr).addWatch(fName);
         }
 
         parentDict.read(ifs);
+
+        fileHandler().comm(oldComm);
         return true;
     }
+
+    fileHandler().comm(oldComm);
 
     if (!mandatory)
     {
@@ -185,6 +193,15 @@ bool Foam::functionEntries::includeEntry::execute
     Istream& is
 )
 {
+    const dictionary& top = parentDict.topDict();
+    const auto* rioPtr = dynamic_cast<const regIOobject*>(&top);
+    const label oldComm
+    (
+        rioPtr && rioPtr->global()
+      ? fileHandler().comm(UPstream::worldComm)
+      : fileHandler().comm()
+    );
+
     const fileName rawName(is);
     const fileName fName(resolveFile(is.name().path(), rawName, parentDict));
 
@@ -200,19 +217,18 @@ bool Foam::functionEntries::includeEntry::execute
         }
 
         // Add watch on included file
-        const dictionary& top = parentDict.topDict();
-        if (isA<regIOobject>(top))
+        if (rioPtr)
         {
-            regIOobject& rio = const_cast<regIOobject&>
-            (
-                dynamic_cast<const regIOobject&>(top)
-            );
-            rio.addWatch(fName);
+            const_cast<regIOobject&>(*rioPtr).addWatch(fName);
         }
 
         entry.read(parentDict, ifs);
+
+        fileHandler().comm(oldComm);
         return true;
     }
+
+    fileHandler().comm(oldComm);
 
     if (!mandatory)
     {

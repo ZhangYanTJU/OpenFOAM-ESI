@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,8 @@ License
 #include "IFstream.H"
 #include "IOstreams.H"
 #include "fileOperation.H"
+#include "regIOobject.H"
+#include "UPstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -113,6 +115,16 @@ bool Foam::functionEntries::includeEtcEntry::execute
     Istream& is
 )
 {
+    const dictionary& top = parentDict.topDict();
+    const regIOobject* rioPtr = dynamic_cast<const regIOobject*>(&top);
+
+    const label oldComm
+    (
+        rioPtr && rioPtr->global()
+      ? fileHandler().comm(UPstream::worldComm)
+      : fileHandler().comm()
+    );
+
     const fileName rawName(is);
     const fileName fName(resolveEtcFile(rawName, parentDict));
 
@@ -127,8 +139,12 @@ bool Foam::functionEntries::includeEtcEntry::execute
             Info<< fName << nl;
         }
         parentDict.read(ifs);
+
+        fileHandler().comm(oldComm);
         return true;
     }
+
+    fileHandler().comm(oldComm);
 
     if (!mandatory)
     {
@@ -153,6 +169,15 @@ bool Foam::functionEntries::includeEtcEntry::execute
     Istream& is
 )
 {
+    const dictionary& top = parentDict.topDict();
+    const regIOobject* rioPtr = dynamic_cast<const regIOobject*>(&top);
+    const label oldComm
+    (
+        rioPtr && rioPtr->global()
+      ? fileHandler().comm(UPstream::worldComm)
+      : fileHandler().comm()
+    );
+
     const fileName rawName(is);
     const fileName fName(resolveEtcFile(rawName, parentDict));
 
@@ -167,8 +192,12 @@ bool Foam::functionEntries::includeEtcEntry::execute
             Info<< fName << nl;
         }
         entry.read(parentDict, ifs);
+
+        fileHandler().comm(oldComm);
         return true;
     }
+
+    fileHandler().comm(oldComm);
 
     if (!mandatory)
     {

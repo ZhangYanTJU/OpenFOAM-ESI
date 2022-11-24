@@ -397,7 +397,15 @@ void Foam::Time::setMonitoring(const bool forceProfiling)
     if (runTimeModifiable_)
     {
         // Monitor all files that controlDict depends on
-        fileHandler().addWatches(controlDict_, controlDict_.files());
+        auto& watchFiles = controlDict_.files();
+
+        // Files might have been set during token reading so only on master
+        // processor. Make sure we add them to all processors (though they
+        // are checked only on master - we just need to keep the state
+        // synchronised)
+        Pstream::broadcast(watchFiles, UPstream::worldComm);
+
+        fileHandler().addWatches(controlDict_, watchFiles);
     }
 
     // Clear dependent files - not needed now
