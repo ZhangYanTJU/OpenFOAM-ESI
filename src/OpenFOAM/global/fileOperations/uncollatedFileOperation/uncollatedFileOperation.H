@@ -90,8 +90,8 @@ protected:
 
 public:
 
-        //- Runtime type information
-        TypeName("uncollated");
+    //- Runtime type information
+    TypeName("uncollated");
 
 
     // Constructors

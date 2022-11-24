@@ -42,6 +42,12 @@ namespace fileOperations
 {
     defineTypeNameAndDebug(uncollatedFileOperation, 0);
     addToRunTimeSelectionTable(fileOperation, uncollatedFileOperation, word);
+    addToRunTimeSelectionTable
+    (
+        fileOperation,
+        uncollatedFileOperation,
+        comm
+    );
 
     // Mark as not needing threaded mpi
     addNamedToRunTimeSelectionTable
@@ -159,7 +165,7 @@ Foam::fileName Foam::fileOperations::uncollatedFileOperation::filePathInfo
         }
     }
 
-    return fileName::null;
+    return fileName();
 }
 
 
@@ -172,6 +178,46 @@ Foam::fileOperations::uncollatedFileOperation::lookupProcessorsPath
     // No additional parallel synchronisation
     return fileOperation::lookupAndCacheProcessorsPath(fName, false);
 }
+
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Construction helper
+static Tuple2<label, labelList> getCommPattern()
+{
+    // With useHost == false
+
+    Tuple2<label, labelList> commAndIORanks;
+
+    if (fileOperation::getGlobalIORanks(false).empty())
+    {
+        // No specified IO ranks
+        // Master of communicator is the one that writes
+        commAndIORanks.first() =
+            UPstream::allocateCommunicator
+            (
+                UPstream::worldComm,
+                labelList(Foam::one{}, Pstream::myProcNo(UPstream::worldComm))
+            );
+    }
+    else
+    {
+        // Group by IO ranks
+        commAndIORanks.first() =
+            UPstream::allocateCommunicator
+            (
+                UPstream::worldComm,
+                fileOperation::getGlobalSubRanks(false)
+            );
+    }
+
+    return commAndIORanks;
+}
+
+} // End namespace Foam
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -193,8 +239,11 @@ Foam::fileOperations::uncollatedFileOperation::uncollatedFileOperation
     bool verbose
 )
 :
-    fileOperation(UPstream::worldComm),
-    managedComm_(-1)  // worldComm is externally managed
+    fileOperation
+    (
+        getCommPattern()
+    ),
+    managedComm_(comm_)
 {
     init(verbose);
 }
@@ -233,6 +282,9 @@ Foam::fileOperations::uncollatedFileOperation::uncollatedFileOperation
 
 Foam::fileOperations::uncollatedFileOperation::~uncollatedFileOperation()
 {
+    // Wait for any outstanding file operations
+    flush();
+
     if (managedComm_ >= 0 && managedComm_ != UPstream::worldComm)
     {
         UPstream::freeCommunicator(managedComm_);

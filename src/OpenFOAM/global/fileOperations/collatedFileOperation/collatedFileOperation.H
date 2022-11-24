@@ -106,8 +106,8 @@ protected:
 
 public:
 
-        //- Runtime type information
-        TypeName("collated");
+    //- Runtime type information
+    TypeName("collated");
 
 
     // Static Data
@@ -164,6 +164,7 @@ public:
                 IOstreamOption streamOpt = IOstreamOption(),
                 const bool valid = true
             ) const;
+
 
         // Other
 

@@ -92,17 +92,20 @@ void Foam::masterOFstream::commit()
 {
     if (Pstream::parRun())
     {
-        List<fileName> filePaths(Pstream::nProcs());
-        filePaths[Pstream::myProcNo()] = pathName_;
-        Pstream::gatherList(filePaths);
+        List<fileName> filePaths(Pstream::nProcs(comm_));
+        filePaths[Pstream::myProcNo(comm_)] = pathName_;
+        Pstream::gatherList(filePaths, UPstream::msgType(), comm_);
 
-        bool uniform = fileOperation::uniformFile(filePaths);
+        bool uniform =
+        (
+            Pstream::master(comm_) && fileOperation::uniformFile(filePaths)
+        );
 
-        Pstream::broadcast(uniform);
+        Pstream::broadcast(uniform, comm_);
 
         if (uniform)
         {
-            if (Pstream::master() && valid_)
+            if (Pstream::master(comm_) && valid_)
             {
                 checkWrite(pathName_, this->str());
             }
@@ -111,13 +114,13 @@ void Foam::masterOFstream::commit()
             return;
         }
 
-        boolList procValid(UPstream::listGatherValues<bool>(valid_));
+        boolList procValid(UPstream::listGatherValues<bool>(valid_, comm_));
 
         // Different files
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs(comm_, Pstream::commsTypes::nonBlocking);
 
         // Send my buffer to master
-        if (!Pstream::master())
+        if (!Pstream::master(comm_))
         {
             UOPstream os(Pstream::masterNo(), pBufs);
             string s(this->str());
@@ -129,7 +132,7 @@ void Foam::masterOFstream::commit()
         labelList recvSizes;
         pBufs.finishedGathers(recvSizes);
 
-        if (Pstream::master())
+        if (Pstream::master(comm_))
         {
             // Write master data
             if (procValid[Pstream::masterNo()])
@@ -145,7 +148,7 @@ void Foam::masterOFstream::commit()
                 *std::max_element(recvSizes.cbegin(), recvSizes.cend())
             );
 
-            for (const int proci : Pstream::subProcs())
+            for (const int proci : Pstream::subProcs(comm_))
             {
                 UIPstream is(proci, pBufs);
 
@@ -175,6 +178,7 @@ void Foam::masterOFstream::commit()
 Foam::masterOFstream::masterOFstream
 (
     IOstreamOption::atomicType atomic,
+    const label comm,
     const fileName& pathName,
     IOstreamOption streamOpt,
     IOstreamOption::appendType append,
@@ -186,7 +190,8 @@ Foam::masterOFstream::masterOFstream
     atomic_(atomic),
     compression_(streamOpt.compression()),
     append_(append),
-    valid_(valid)
+    valid_(valid),
+    comm_(comm)
 {}
 
 

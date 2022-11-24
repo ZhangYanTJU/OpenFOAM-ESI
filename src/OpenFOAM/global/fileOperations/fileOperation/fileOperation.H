@@ -109,6 +109,12 @@ public:
 
 protected:
 
+    // Protected Static Data
+
+        //- Cache level (eg, for caching time directories). Default: 1
+        static int cacheLevel_;
+
+
     // Protected Data
 
         //- Communicator to use
@@ -230,6 +236,20 @@ public:
             (verbose)
         );
 
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            fileOperation,
+            comm,
+            (
+                const label comm,
+                const labelUList& ioRanks,
+                const bool distributedRoots,
+                bool verbose
+            ),
+            (comm, ioRanks, distributedRoots, verbose)
+        );
+
 
     // Selectors
 
@@ -241,12 +261,37 @@ public:
             bool verbose = false
         );
 
+        //- Select fileHandler-type.
+        //- Uses defaultFileHandler if the handlerType is empty.
+        static autoPtr<fileOperation> New
+        (
+            const word& handlerType,
+            const label comm,
+            const labelUList& ioRanks,
+            const bool distributedRoots,
+            bool verbose
+        );
+
 
     //- Destructor
     virtual ~fileOperation() = default;
 
 
    // Static Functions
+
+        //- Return cache level
+        static int cacheLevel() noexcept
+        {
+            return cacheLevel_;
+        }
+
+        //- Set cache level (0 = off). \return the previous value
+        static int cacheLevel(int level) noexcept
+        {
+            int old(cacheLevel_);
+            cacheLevel_ = level;
+            return old;
+        }
 
         //- Sort directory entries according to time value,
         //  with "constant" appearing first (if it exists)
@@ -264,6 +309,8 @@ public:
 
 
     // Member Functions
+
+    // Characteristics
 
         //- Communicator to use
         label comm() const noexcept
@@ -301,6 +348,8 @@ public:
             return ioRanks_;
         }
 
+
+    // Member Functions
 
         // OSSpecific equivalents
 
@@ -592,6 +641,8 @@ public:
             }
 
             //- Set number of processor directories/results.
+            //  Used to cache format of e.g. processorsDDD.
+            //  Returns old number of processors.
             //  Only used in decomposePar
             virtual label nProcs(const label numProcs);
 
@@ -630,6 +681,9 @@ public:
 
             //- Forcibly wait until all output done. Flush any cached data
             virtual void flush() const;
+
+            //- Forcibly parallel sync
+            virtual void sync();
 
             //- Generate path (like io.path) from root+casename with any
             //  'processorXXX' replaced by procDir (usually 'processsors')

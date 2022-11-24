@@ -53,6 +53,12 @@ namespace fileOperations
         masterUncollatedFileOperation,
         word
     );
+    addToRunTimeSelectionTable
+    (
+        fileOperation,
+        masterUncollatedFileOperation,
+        comm
+    );
 
     float masterUncollatedFileOperation::maxMasterFileBufferSize
     (
@@ -79,6 +85,59 @@ namespace fileOperations
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+void Foam::fileOperations::masterUncollatedFileOperation::printRanks() const
+{
+    const label np = Pstream::nProcs(comm_);
+
+    // Information about the ranks
+    stringList hosts(np);
+    if (Pstream::master(comm_))
+    {
+        hosts[Pstream::myProcNo(comm_)] = hostName();
+    }
+    Pstream::gatherList(hosts, UPstream::msgType(), comm_);
+
+    DynamicList<label> offsetMaster;
+
+    // Could probably also use Pstream::master(UPstream::worldComm)
+    // since that is what Info has too
+
+    if (Pstream::master(comm_))
+    {
+        offsetMaster.reserve(np);
+
+        forAll(hosts, ranki)
+        {
+            if (!hosts[ranki].empty())
+            {
+                offsetMaster.append(ranki);
+            }
+        }
+
+        // End of range is nProcs
+        offsetMaster.append(np);
+    }
+
+    if (offsetMaster.size() > 2)
+    {
+        DetailInfo
+            << "I/O on :" << nl << '(' << nl;
+
+        for (label group = 1; group < offsetMaster.size(); ++group)
+        {
+            const label beg = offsetMaster[group-1];
+            const label end = offsetMaster[group];
+
+            DetailInfo
+                << "    (" << hosts[beg].c_str() << ' '
+                << (end-beg) << ')' << nl;
+        }
+        DetailInfo
+            << ')' << nl;
+    }
+}
+
+
 Foam::word
 Foam::fileOperations::masterUncollatedFileOperation::findInstancePath
 (
@@ -100,7 +159,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstancePath
         }
     }
 
-    return word::null;
+    return word();
 }
 
 
@@ -116,8 +175,8 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
     word& newInstancePath
 ) const
 {
-    procsDir = word::null;
-    newInstancePath = word::null;
+    procsDir.clear();
+    newInstancePath.clear();
 
     if (io.instance().isAbsolute())
     {
@@ -131,7 +190,7 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
         else
         {
             searchType = fileOperation::NOTFOUND;
-            return fileName::null;
+            return fileName();
         }
     }
     else
@@ -274,10 +333,11 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
                 }
             }
         }
-
-        searchType = fileOperation::NOTFOUND;
-        return fileName::null;
     }
+
+    // Nothing found
+    searchType = fileOperation::NOTFOUND;
+    return fileName();
 }
 
 
@@ -317,7 +377,7 @@ Foam::fileOperations::masterUncollatedFileOperation::localObjectPath
             // Uncollated type, e.g. processor1
             const word procName
             (
-                "processor" + Foam::name(Pstream::myProcNo(Pstream::worldComm))
+                "processor" + Foam::name(Pstream::myProcNo(UPstream::worldComm))
             );
             return
                 processorsPath
@@ -374,7 +434,7 @@ Foam::fileOperations::masterUncollatedFileOperation::localObjectPath
             const word procName
             (
                 "processor"
-               +Foam::name(Pstream::myProcNo(Pstream::worldComm))
+              + Foam::name(Pstream::myProcNo(UPstream::worldComm))
             );
             return
                 processorsPath
@@ -411,14 +471,14 @@ Foam::fileOperations::masterUncollatedFileOperation::localObjectPath
 
         case fileOperation::NOTFOUND:
         {
-            return fileName::null;
+            return fileName();
         }
         break;
 
         default:
         {
             NotImplemented;
-            return fileName::null;
+            return fileName();
         }
     }
 }
@@ -437,6 +497,8 @@ void Foam::fileOperations::masterUncollatedFileOperation::readAndSend
     {
         FatalIOErrorInFunction(filePath)
             << "Cannot open file " << filePath
+            //<< " using communicator " << pBufs.comm()
+            //<< " ioRanks:" << UPstream::procID(pBufs.comm())
             << exit(FatalIOError);
     }
 
@@ -522,6 +584,8 @@ Foam::fileOperations::masterUncollatedFileOperation::read
                 {
                     FatalIOErrorInFunction(filePaths[0])
                         << "cannot find file " << io.objectPath()
+                        << " fileHandler : comm:" << comm
+                        << " ioRanks:" << UPstream::procID(comm)
                         << exit(FatalIOError);
                 }
 
@@ -554,6 +618,8 @@ Foam::fileOperations::masterUncollatedFileOperation::read
                 {
                     FatalIOErrorInFunction(filePaths[0])
                         << "cannot find file " << io.objectPath()
+                        << " fileHandler : comm:" << comm
+                        << " ioRanks:" << UPstream::procID(comm)
                         << exit(FatalIOError);
                 }
 
@@ -565,7 +631,10 @@ Foam::fileOperations::masterUncollatedFileOperation::read
                 {
                     FatalIOErrorInFunction(*isPtr)
                         << "problem while reading header for object "
-                        << io.name() << exit(FatalIOError);
+                        << io.name()
+                        << " fileHandler : comm:" << comm
+                        << " ioRanks:" << UPstream::procID(comm)
+                        << exit(FatalIOError);
                 }
             }
 
@@ -631,7 +700,10 @@ Foam::fileOperations::masterUncollatedFileOperation::read
             {
                 FatalIOErrorInFunction(*isPtr)
                     << "problem while reading header for object "
-                    << io.name() << exit(FatalIOError);
+                    << io.name()
+                    << " fileHandler : comm:" << comm
+                    << " ioRanks:" << UPstream::procID(comm)
+                    << exit(FatalIOError);
             }
         }
         else
@@ -639,7 +711,6 @@ Foam::fileOperations::masterUncollatedFileOperation::read
             isPtr.reset(new dummyISstream());
         }
     }
-
 
     return isPtr;
 }
@@ -891,7 +962,7 @@ time_t Foam::fileOperations::masterUncollatedFileOperation::lastModified
         fName,
         lastModifiedOp(followLink),
         Pstream::msgType(),
-        comm_
+        UPstream::worldComm
     );
 }
 
@@ -907,7 +978,7 @@ double Foam::fileOperations::masterUncollatedFileOperation::highResLastModified
         fName,
         highResLastModifiedOp(followLink),
         Pstream::msgType(),
-        comm_
+        UPstream::worldComm
     );
 }
 
@@ -1045,7 +1116,9 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
     {
         Pout<< "masterUncollatedFileOperation::filePath :"
             << " objectPath:" << io.objectPath()
-            << " checkGlobal:" << checkGlobal << endl;
+            << " checkGlobal:" << checkGlobal
+            << " parRun:" << Pstream::parRun()
+            << " localmaster:" << Pstream::master(comm_) << endl;
     }
 
     // Now that we have an IOobject path use it to detect & cache
@@ -1093,10 +1166,11 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
         }
     }
 
-    // Scatter the information about where the master found the object
+    // Broadcast information about where the master found the object
     // Note: use the worldComm to make sure all processors decide
     //       the same type. Only procsDir is allowed to differ; searchType
     //       and instance have to be same
+    if (UPstream::parRun())
     {
         int masterType(searchType);
         Pstream::broadcasts(UPstream::worldComm, masterType, newInstancePath);
@@ -1172,7 +1246,8 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
     if (debug)
     {
         Pout<< "masterUncollatedFileOperation::filePath :"
-            << " Returning from file searching:" << endl
+            << " Returning from file searching using type "
+            << fileOperation::pathTypeNames_[searchType] << endl
             << "    objectPath:" << io.objectPath() << endl
             << "    filePath  :" << objPath << endl << endl;
     }
@@ -1191,7 +1266,9 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
     {
         Pout<< "masterUncollatedFileOperation::dirPath :"
             << " objectPath:" << io.objectPath()
-            << " checkGlobal:" << checkGlobal << endl;
+            << " checkGlobal:" << checkGlobal
+            << " parRun:" << Pstream::parRun()
+            << " localmaster:" << Pstream::master(comm_) << endl;
     }
 
     // Now that we have an IOobject path use it to detect & cache
@@ -1205,6 +1282,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
     word procsDir;
     word newInstancePath;
 
+    // Local IO node searches for file
     if (Pstream::master(comm_))
     {
         const bool oldParRun(Pstream::parRun(false));
@@ -1221,14 +1299,29 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
         );
 
         Pstream::parRun(oldParRun);
+
+        if (debug)
+        {
+            Pout<< "masterUncollatedFileOperation::dirPath :"
+                << " master objPath:" << objPath
+                << " searchType:" << fileOperation::pathTypeNames_[searchType]
+                << " procsDir:" << procsDir << " instance:" << newInstancePath
+                << endl;
+        }
     }
 
+
+    // Broadcast information about where the master found the object
+    // Note: use the worldComm to make sure all processors decide
+    //       the same type. Only procsDir is allowed to differ; searchType
+    //       and instance have to be same
+    if (UPstream::parRun())
     {
         int masterType(searchType);
-        // Future?: comm_,
         Pstream::broadcasts(UPstream::worldComm, masterType, newInstancePath);
         searchType = pathType(masterType);
     }
+
 
     if
     (
@@ -1245,6 +1338,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
     }
     else
     {
+        // Broadcast local processors dir amongst all local nodes
         Pstream::broadcast(procsDir, comm_);
 
         // Use the master type to determine if additional information is
@@ -1299,7 +1393,8 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
     if (debug)
     {
         Pout<< "masterUncollatedFileOperation::dirPath :"
-            << " Returning from file searching:" << endl
+            << " Returning from directory searching using type "
+            << fileOperation::pathTypeNames_[searchType] << endl
             << "    objectPath:" << io.objectPath() << endl
             << "    filePath  :" << objPath << endl << endl;
     }
@@ -1397,9 +1492,10 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
         Pstream::parRun(oldParRun);
     }
 
+
     // Do parallel early exit to avoid calling time.times()
-    // Pstream::broadcast(foundInstance, comm_);
     Pstream::broadcast(foundInstance, UPstream::worldComm);
+
     if (!foundInstance.empty())
     {
         io.instance() = foundInstance;
@@ -1538,8 +1634,8 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
         UPstream::parRun(oldParRun);  // Restore parallel state
     }
 
-    // Pstream::broadcast(foundInstance, comm_);
     Pstream::broadcast(foundInstance, UPstream::worldComm);
+
     io.instance() = foundInstance;
 
 
@@ -1598,12 +1694,12 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
     }
 
     fileNameList objectNames;
-    newInstance = word::null;
+    newInstance.clear();
 
     // Note: readObjects uses WORLD to make sure order of objects is the
     //       same everywhere
 
-    if (Pstream::master())  // comm_))
+    if (Pstream::master(UPstream::worldComm))
     {
         // Avoid fileOperation::readObjects from triggering parallel ops
         // (through call to filePath which triggers parallel )
@@ -1654,7 +1750,6 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
         UPstream::parRun(oldParRun);  // Restore parallel state
     }
 
-    // Future? comm_
     Pstream::broadcasts(UPstream::worldComm, newInstance, objectNames);
 
     if (debug)
@@ -1684,17 +1779,27 @@ bool Foam::fileOperations::masterUncollatedFileOperation::readHeader
             << "    filePath  :" << fName << endl;
     }
 
-    // Get filePaths on world master
-    fileNameList filePaths(Pstream::nProcs(Pstream::worldComm));
-    filePaths[Pstream::myProcNo(Pstream::worldComm)] = fName;
-    Pstream::gatherList(filePaths, Pstream::msgType(), Pstream::worldComm);
+    // We assume if filePath is the same
+    //  - headerClassName
+    //  - note
+    // are also the same, independent of where the file came from.
 
-    bool uniform = fileOperation::uniformFile(filePaths);
+    // Get filePaths on world master
+    fileNameList filePaths(Pstream::nProcs(UPstream::worldComm));
+    filePaths[Pstream::myProcNo(UPstream::worldComm)] = fName;
+    Pstream::gatherList(filePaths, Pstream::msgType(), UPstream::worldComm);
+
+    bool uniform
+    (
+        Pstream::master(UPstream::worldComm)
+     && fileOperation::uniformFile(filePaths)
+    );
+
     Pstream::broadcast(uniform, UPstream::worldComm);
 
     if (uniform)
     {
-        if (Pstream::master(Pstream::worldComm))
+        if (Pstream::master(UPstream::worldComm))
         {
             if (!fName.empty())
             {
@@ -1718,9 +1823,10 @@ bool Foam::fileOperations::masterUncollatedFileOperation::readHeader
     }
     else
     {
-        if (Pstream::nProcs(comm_) != Pstream::nProcs(Pstream::worldComm))
+        if (Pstream::nProcs(comm_) != Pstream::nProcs(UPstream::worldComm))
         {
-            // Re-gather file paths on local master
+            // Assume if different nprocs the communicators are also
+            // different. Re-gather file paths on local master
             filePaths.resize(Pstream::nProcs(comm_));
             filePaths[Pstream::myProcNo(comm_)] = fName;
             Pstream::gatherList(filePaths, Pstream::msgType(), comm_);
@@ -1794,7 +1900,8 @@ bool Foam::fileOperations::masterUncollatedFileOperation::readHeader
     if (debug)
     {
         Pout<< "masterUncollatedFileOperation::readHeader :" << " ok:" << ok
-            << " class:" << io.headerClassName() << endl;
+            << " class:" << io.headerClassName()
+            << " for file:" << fName << endl;;
     }
     return ok;
 }
@@ -1814,6 +1921,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
         Pout<< "masterUncollatedFileOperation::readStream :"
             << " object : " << io.name()
             << " global : " << io.global()
+            << " globalObject : " << io.globalObject()
             << " fName : " << fName << " valid:" << valid << endl;
     }
 
@@ -1824,7 +1932,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
 
     // Detect collated format. This could be done on the local communicator
     // but we do it on the master node only for now.
-    if (UPstream::master()) // comm_))
+    if (UPstream::master(UPstream::worldComm))
     {
         if (!fName.empty())
         {
@@ -1867,7 +1975,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
         }
     }
 
-    Pstream::broadcast(isCollated);  //, comm_);
+    Pstream::broadcast(isCollated, UPstream::worldComm);
 
     if (isCollated)
     {
@@ -1900,6 +2008,8 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
                 FatalIOErrorInFunction(*isPtr)
                     << "Could not detect processor number"
                     << " from objectPath:" << io.objectPath()
+                    << " fileHandler : comm:" << comm_
+                    << " ioRanks:" << ioRanks_
                     << exit(FatalIOError);
             }
 
@@ -1950,7 +2060,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
             // Get size of file to determine communications type
             bool bigSize = false;
 
-            if (Pstream::master())   //, comm_))
+            if (Pstream::master(UPstream::worldComm))
             {
                 // TBD: handle multiple masters?
                 bigSize =
@@ -1961,7 +2071,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
             }
             // Reduce (not broadcast)
             // - if we have multiple master files (FUTURE)
-            Pstream::reduceOr(bigSize);  //, comm_);
+            Pstream::reduceOr(bigSize);
 
             const UPstream::commsTypes myCommsType
             (
@@ -1990,20 +2100,32 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
                 << " starting separated input from " << fName << endl;
         }
 
-        if (io.global())
+        if (io.global() || io.globalObject())
         {
             // Use worldComm. Note: should not really need to gather filePaths
             // since we enforce sending from master anyway ...
-            fileNameList filePaths(Pstream::nProcs());
-            filePaths[Pstream::myProcNo()] = fName;
-            Pstream::gatherList(filePaths);
+            fileNameList filePaths(Pstream::nProcs(UPstream::worldComm));
+            filePaths[Pstream::myProcNo(UPstream::worldComm)] = fName;
+            Pstream::gatherList
+            (
+                filePaths,
+                Pstream::msgType(),
+                UPstream::worldComm
+            );
 
-            boolList procValid(UPstream::listGatherValues<bool>(valid));
+            boolList procValid
+            (
+                UPstream::listGatherValues<bool>
+                (
+                    valid,
+                    UPstream::worldComm
+                )
+            );
             // NB: local proc validity information required on sub-ranks too!
-            procValid.resize(Pstream::nProcs());
-            procValid[Pstream::myProcNo()] = valid;
+            procValid.resize(Pstream::nProcs(UPstream::worldComm));
+            procValid[Pstream::myProcNo(UPstream::worldComm)] = valid;
 
-            return read(io, Pstream::worldComm, true, filePaths, procValid);
+            return read(io, UPstream::worldComm, true, filePaths, procValid);
         }
         else
         {
@@ -2036,12 +2158,17 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
 {
     bool ok = true;
 
-    if (io.globalObject())
+    if (io.global() || io.globalObject())
     {
         if (debug)
         {
             Pout<< "masterUncollatedFileOperation::read :"
-                << " Reading global object " << io.name() << endl;
+                << " Reading global object " << io.name()
+                << " worldComm:" << UPstream::worldComm
+                << " Pstream::myProcNo:"
+                << Pstream::myProcNo(UPstream::worldComm)
+                << " amMaster:" << Pstream::master(UPstream::worldComm)
+                << endl;
         }
 
         bool ok = false;
@@ -2050,7 +2177,8 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
 
-            ok = io.readData(io.readStream(typeName));
+            auto& is = io.readStream(typeName);
+            ok = io.readData(is);
             io.close();
 
             UPstream::parRun(oldParRun);  // Restore parallel state
@@ -2100,6 +2228,14 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
 
         ok = io.readData(io.readStream(typeName));
         io.close();
+    }
+
+    if (debug)
+    {
+        Pout<< "masterUncollatedFileOperation::read :"
+            << " Read object:" << io.name()
+            << " isGlobal:" << (io.global() || io.globalObject())
+            << " status:" << ok << endl;
     }
 
     return ok;
@@ -2160,14 +2296,15 @@ Foam::instantList Foam::fileOperations::masterUncollatedFileOperation::findTimes
         if (debug)
         {
             Pout<< "masterUncollatedFileOperation::findTimes :"
-                << " Found " << iter.val()->size() << " cached times" << endl;
+                << " Found " << iter.val()->size() << " cached times" << nl
+                << "    for directory:" << directory << endl;
         }
         return *(iter.val());
     }
     else
     {
         instantList times;
-        if (Pstream::master())  // comm_))
+        if (Pstream::master(UPstream::worldComm))
         {
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
@@ -2176,14 +2313,8 @@ Foam::instantList Foam::fileOperations::masterUncollatedFileOperation::findTimes
 
             UPstream::parRun(oldParRun);  // Restore parallel state
         }
-        Pstream::broadcast(times);    //, comm_);
 
-        if (debug)
-        {
-            Pout<< "masterUncollatedFileOperation::findTimes :"
-                << " Caching times:" << times << nl
-                << "    for directory:" << directory << endl;
-        }
+        Pstream::broadcast(times, UPstream::worldComm);
 
         // Note: do we also cache if no times have been found since it might
         //       indicate a directory that is being filled later on ...
@@ -2210,7 +2341,7 @@ void Foam::fileOperations::masterUncollatedFileOperation::setTime
     // Mutable access to instant list for modification and sorting
     // - cannot use auto type deduction here
 
-    HashPtrTable<DynamicList<instant>>::iterator iter = times_.find(tm.path());
+    auto iter = times_.find(tm.path());
 
     if (iter.found())
     {
@@ -2277,19 +2408,15 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
         // Insert logic of filePath. We assume that if a file is absolute
         // on the master it is absolute also on the sub-ranks etc.
 
-        fileNameList filePaths(Pstream::nProcs(Pstream::worldComm));
-        filePaths[Pstream::myProcNo(Pstream::worldComm)] = filePath;
-        Pstream::gatherList(filePaths, Pstream::msgType(), Pstream::worldComm);
+        fileNameList filePaths(Pstream::nProcs(comm_));
+        filePaths[Pstream::myProcNo(comm_)] = filePath;
+        Pstream::gatherList(filePaths, Pstream::msgType(), comm_);
 
-        PstreamBuffers pBufs
-        (
-            Pstream::commsTypes::nonBlocking,
-            Pstream::msgType(),
-            Pstream::worldComm
-        );
+        PstreamBuffers pBufs(comm_, Pstream::commsTypes::nonBlocking);
 
-        if (Pstream::master(Pstream::worldComm))
+        if (Pstream::master(comm_))
         {
+            // Same filename on the IO node -> same file
             const bool uniform = fileOperation::uniformFile(filePaths);
 
             if (uniform)
@@ -2303,14 +2430,21 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
                 readAndSend
                 (
                     filePath,
-                    identity(Pstream::nProcs(Pstream::worldComm)-1, 1),
+                    identity(Pstream::nProcs(comm_)-1, 1),
                     pBufs
                 );
             }
             else
             {
-                for (const int proci : Pstream::subProcs(Pstream::worldComm))
+                for (const int proci : Pstream::subProcs(comm_))
                 {
+                    if (debug)
+                    {
+                        Pout<< "masterUncollatedFileOperation::NewIFstream :"
+                            << " Opening local file " << filePath
+                            << " for rank " << proci << endl;
+                    }
+
                     readAndSend
                     (
                         filePaths[proci],
@@ -2325,7 +2459,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
         labelList recvSizes;
         pBufs.finishedSends(recvSizes);
 
-        if (Pstream::master(Pstream::worldComm))
+        if (Pstream::master(comm_))
         {
             // Read myself
             isPtr.reset(new IFstream(filePaths[Pstream::masterNo()]));
@@ -2382,6 +2516,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewOFstream
     (
         new masterOFstream
         (
+            comm_,
             pathName,
             streamOpt,
             IOstreamOption::NON_APPEND,
@@ -2405,6 +2540,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewOFstream
         new masterOFstream
         (
             atomic,
+            comm_,
             pathName,
             streamOpt,
             IOstreamOption::NON_APPEND,
@@ -2421,17 +2557,92 @@ void Foam::fileOperations::masterUncollatedFileOperation::flush() const
 }
 
 
+void Foam::fileOperations::masterUncollatedFileOperation::sync()
+{
+    if (debug)
+    {
+        Pout<< "masterUncollatedFileOperation::sync :"
+            << " syncing information across processors" << endl;
+    }
+
+    fileOperation::sync();
+
+
+    wordList timeNames;
+    List<DynamicList<instant>> instants;
+
+    if (Pstream::master(UPstream::worldComm))
+    {
+        timeNames.resize(times_.size());
+        instants.resize(times_.size());
+
+        // Flatten into two lists to preserve key/val pairing
+        label i = 0;
+        forAllConstIters(times_, iter)
+        {
+            timeNames[i] = iter.key();
+            instants[i] = std::move(*(iter.val()));
+            ++i;
+        }
+    }
+
+    Pstream::broadcasts(UPstream::worldComm, timeNames, instants);
+
+    times_.clear();
+    forAll(timeNames, i)
+    {
+        fileName dir(timeNames[i]);
+        if (Pstream::parRun() && !Pstream::master(UPstream::worldComm))
+        {
+            // Replace processor0 ending with processorDDD
+            fileName path;
+            fileName pDir;
+            fileName local;
+            procRangeType group;
+            label numProcs;
+            const label proci = splitProcessorPath
+            (
+                dir,
+                path,
+                pDir,
+                local,
+                group,
+                numProcs
+            );
+
+            //Pout<< "**sync : From dir : " << dir << nl
+            //    << "    path : " << path << nl
+            //    << "    pDir : " << pDir << nl
+            //    << "    local: " << local << nl
+            //    << "    proci: " << proci << nl
+            //    << endl;
+
+            if (proci != -1 && proci != Pstream::myProcNo(UPstream::worldComm))
+            {
+                dir =
+                    path/"processor"
+                  + Foam::name(Pstream::myProcNo(UPstream::worldComm));
+            }
+        }
+
+        auto ptr = autoPtr<DynamicList<instant>>::New(std::move(instants[i]));
+        times_.insert(dir, ptr);
+    }
+}
+
+
 Foam::label Foam::fileOperations::masterUncollatedFileOperation::addWatch
 (
     const fileName& fName
 ) const
 {
     label watchFd = -1;
-    if (Pstream::master())      // comm_))
+    if (!UPstream::parRun() || Pstream::master(UPstream::worldComm))
     {
         watchFd = monitor().addWatch(fName);
     }
-    Pstream::broadcast(watchFd);  //, comm_);
+
+    Pstream::broadcast(watchFd, UPstream::worldComm);
     return watchFd;
 }
 
@@ -2442,11 +2653,12 @@ bool Foam::fileOperations::masterUncollatedFileOperation::removeWatch
 ) const
 {
     bool ok = false;
-    if (Pstream::master())  // comm_))
+    if (!UPstream::parRun() || Pstream::master(UPstream::worldComm))
     {
         ok = monitor().removeWatch(watchIndex);
     }
-    Pstream::broadcast(ok);   //, comm_);
+
+    Pstream::broadcast(ok, UPstream::worldComm);
     return ok;
 }
 
@@ -2459,7 +2671,7 @@ Foam::label Foam::fileOperations::masterUncollatedFileOperation::findWatch
 {
     label index = -1;
 
-    if (Pstream::master())  // comm_))
+    if (!UPstream::parRun() || Pstream::master(UPstream::worldComm))
     {
         forAll(watchIndices, i)
         {
@@ -2470,7 +2682,8 @@ Foam::label Foam::fileOperations::masterUncollatedFileOperation::findWatch
             }
         }
     }
-    Pstream::broadcast(index);  //, comm_);
+
+    Pstream::broadcast(index, UPstream::worldComm);
     return index;
 }
 
@@ -2518,11 +2731,12 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::getFile
 ) const
 {
     fileName fName;
-    if (Pstream::master())  // comm_))
+    if (!UPstream::parRun() || Pstream::master(UPstream::worldComm))
     {
         fName = monitor().getFile(watchIndex);
     }
-    Pstream::broadcast(fName);  //, comm_);
+
+    Pstream::broadcast(fName, UPstream::worldComm);
     return fName;
 }
 
@@ -2533,7 +2747,7 @@ void Foam::fileOperations::masterUncollatedFileOperation::updateStates
     const bool syncPar
 ) const
 {
-    if (Pstream::master())  // comm_))
+    if (!UPstream::parRun() || Pstream::master(UPstream::worldComm))
     {
         monitor().updateStates(true, false);
     }
@@ -2547,11 +2761,12 @@ Foam::fileOperations::masterUncollatedFileOperation::getState
 ) const
 {
     unsigned int state = fileMonitor::UNMODIFIED;
-    if (Pstream::master())  // comm_))
+    if (!UPstream::parRun() || Pstream::master(UPstream::worldComm))
     {
         state = monitor().getState(watchFd);
     }
-    Pstream::broadcast(state);  //, comm_);
+
+    Pstream::broadcast(state, UPstream::worldComm);
     return fileMonitor::fileState(state);
 }
 
@@ -2561,7 +2776,7 @@ void Foam::fileOperations::masterUncollatedFileOperation::setUnmodified
     const label watchFd
 ) const
 {
-    if (Pstream::master())  // comm_))
+    if (!UPstream::parRun() || Pstream::master(UPstream::worldComm))
     {
         monitor().setUnmodified(watchFd);
     }

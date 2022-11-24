@@ -50,6 +50,12 @@ namespace fileOperations
         collatedFileOperation,
         word
     );
+    addToRunTimeSelectionTable
+    (
+        fileOperation,
+        collatedFileOperation,
+        comm
+    );
 
     float collatedFileOperation::maxThreadFileBufferSize
     (
@@ -107,45 +113,10 @@ void Foam::fileOperations::collatedFileOperation::printBanner
 
     if (printRanks)
     {
-        // Information about the ranks
-        stringList hosts(Pstream::nProcs());
-        if (Pstream::master(comm_))
-        {
-            hosts[Pstream::myProcNo()] = hostName();
-        }
-        Pstream::gatherList(hosts);
-
-        DynamicList<label> offsetMaster(Pstream::nProcs());
-
-        forAll(hosts, ranki)
-        {
-            if (!hosts[ranki].empty())
-            {
-                offsetMaster.append(ranki);
-            }
-        }
-
-        if (offsetMaster.size() > 1)
-        {
-            DetailInfo
-                << "IO nodes:" << nl << '(' << nl;
-
-            offsetMaster.append(Pstream::nProcs());
-
-            for (label group = 1; group < offsetMaster.size(); ++group)
-            {
-                const label beg = offsetMaster[group-1];
-                const label end = offsetMaster[group];
-
-                DetailInfo
-                    << "    (" << hosts[beg].c_str() << ' '
-                    << (end-beg) << ')' << nl;
-            }
-            DetailInfo
-                << ')' << nl;
-        }
+        masterUncollatedFileOperation::printRanks();
     }
 
+    //- fileModificationChecking already set by base class (masterUncollated)
     // if (IOobject::fileModificationChecking == IOobject::timeStampMaster)
     // {
     //     WarningInFunction
@@ -169,10 +140,10 @@ const
     {
         return Pstream::master(comm_);
     }
-    else if (ioRanks_.size())
+    else if (ioRanks().size())
     {
         // Found myself in IO rank
-        return ioRanks_.found(proci);
+        return ioRanks().found(proci);
     }
     else
     {
@@ -436,6 +407,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
         // Note: currently still NON_ATOMIC (Dec-2022)
         masterOFstream os
         (
+            comm_,
             pathName,
             streamOpt,
             IOstreamOption::NON_APPEND,
@@ -467,7 +439,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
         mkDir(path);
         fileName pathName(path/io.name());
 
-        if (io.global())
+        if (io.global() || io.globalObject())
         {
             if (debug)
             {
@@ -480,6 +452,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
             // Note: currently still NON_ATOMIC (Dec-2022)
             masterOFstream os
             (
+                comm_,
                 pathName,
                 streamOpt,
                 IOstreamOption::NON_APPEND,
@@ -596,9 +569,10 @@ Foam::word Foam::fileOperations::collatedFileOperation::processorsDir
     {
         const List<int>& procs(UPstream::procID(comm_));
 
-        word procDir(processorsBaseDir+Foam::name(Pstream::nProcs()));
+        //word procDir(processorsBaseDir+Foam::name(Pstream::nProcs()));
+        word procDir(processorsBaseDir+Foam::name(nProcs_));
 
-        if (procs.size() != Pstream::nProcs())
+        if (procs.size() != nProcs_)
         {
             procDir +=
               + "_"
@@ -612,7 +586,7 @@ Foam::word Foam::fileOperations::collatedFileOperation::processorsDir
     {
         word procDir(processorsBaseDir+Foam::name(nProcs_));
 
-        if (ioRanks_.size())
+        if (ioRanks().size())
         {
             // Detect current processor number
             label proci = detectProcessorPath(fName);
@@ -622,7 +596,7 @@ Foam::word Foam::fileOperations::collatedFileOperation::processorsDir
                 // Find lowest io rank
                 label minProc = 0;
                 label maxProc = nProcs_-1;
-                for (const label ranki : ioRanks_)
+                for (const label ranki : ioRanks())
                 {
                     if (ranki >= nProcs_)
                     {

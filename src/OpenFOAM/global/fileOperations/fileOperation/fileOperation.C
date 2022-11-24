@@ -47,6 +47,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(fileOperation, 0);
     defineRunTimeSelectionTable(fileOperation, word);
+    defineRunTimeSelectionTable(fileOperation, comm);
 
     word fileOperation::defaultFileHandler
     (
@@ -83,6 +84,9 @@ Foam::fileOperation::pathTypeNames_
 Foam::word Foam::fileOperation::processorsBaseDir = "processors";
 
 Foam::autoPtr<Foam::fileOperation> Foam::fileOperation::fileHandlerPtr_;
+
+//- Caching (e.g. of time directories) - enabled by default
+int Foam::fileOperation::cacheLevel_(1);
 
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
@@ -728,11 +732,14 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
     {
         const fileName procPath(path/pDir);
 
-        const auto iter = procsDirs_.cfind(procPath);
-
-        if (iter.found())
+        if (cacheLevel() > 0)
         {
-            return iter.val();
+            const auto iter = procsDirs_.cfind(procPath);
+
+            if (iter.found())
+            {
+                return iter.val();
+            }
         }
 
         DynamicList<dirIndex> procDirs;
@@ -762,7 +769,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
             // Parallel and non-distributed
             // Read on master only and send to subProcs
 
-            if (Pstream::master(comm_))
+            if (Pstream::master(UPstream::worldComm))
             {
                 dirEntries = Foam::readDir(path, fileName::Type::DIRECTORY);
 
@@ -771,7 +778,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
                     << " names to sub-processes" << endl;
             }
 
-            Pstream::broadcast(dirEntries, comm_);
+            Pstream::broadcast(dirEntries, UPstream::worldComm);
         }
         else
         {
@@ -932,7 +939,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
             // Serial: use the number of decompositions (if found)
             if (nProcs)
             {
-                const_cast<fileOperation&>(*this).setNProcs(nProcs);
+                const_cast<fileOperation&>(*this).nProcs(nProcs);
             }
         }
 
@@ -941,10 +948,17 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
 
         if (procDirsStatus & 2u)
         {
-            procsDirs_.insert(procPath, procDirs);
+            if (cacheLevel() > 0)
+            {
+                procsDirs_.insert(procPath, procDirs);
 
-            // Make sure to return a reference
-            return procsDirs_[procPath];
+                // Make sure to return a reference
+                return procsDirs_[procPath];
+            }
+            else
+            {
+                return refPtr<dirIndexList>::New(procDirs);
+            }
         }
     }
 
@@ -1067,6 +1081,63 @@ Foam::fileOperation::New
     }
 
     return autoPtr<fileOperation>(ctorPtr(verbose));
+}
+
+
+Foam::autoPtr<Foam::fileOperation>
+Foam::fileOperation::New
+(
+    const word& handlerType,
+    const label comm,
+    const labelUList& ioRanks,
+    const bool distributedRoots,
+    bool verbose
+)
+{
+    if (handlerType.empty())
+    {
+        if (fileOperation::defaultFileHandler.empty())
+        {
+            FatalErrorInFunction
+                << "defaultFileHandler name is undefined" << nl
+                << abort(FatalError);
+        }
+
+        return fileOperation::New
+        (
+            fileOperation::defaultFileHandler,
+            comm,
+            ioRanks,
+            distributedRoots,
+            verbose
+        );
+    }
+
+    DebugInFunction
+        << "Constructing fileHandler" << endl;
+
+    auto* ctorPtr = commConstructorTable(handlerType);
+
+    if (!ctorPtr)
+    {
+        FatalErrorInLookup
+        (
+            "fileHandler",
+            handlerType,
+            *commConstructorTablePtr_
+        ) << abort(FatalError);
+    }
+
+    return autoPtr<fileOperation>
+    (
+        ctorPtr
+        (
+            comm,
+            ioRanks,
+            distributedRoots,
+            verbose
+        )
+    );
 }
 
 
@@ -1613,6 +1684,23 @@ void Foam::fileOperation::flush() const
             << endl;
     }
     procsDirs_.clear();
+}
+
+
+void Foam::fileOperation::sync()
+{
+    if (debug)
+    {
+        Pout<< "fileOperation::sync : parallel synchronisation"
+            << endl;
+    }
+
+    Pstream::broadcasts
+    (
+        UPstream::worldComm,
+        nProcs_,
+        procsDirs_
+    );
 }
 
 

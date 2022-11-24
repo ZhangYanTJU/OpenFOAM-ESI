@@ -470,6 +470,8 @@ protected:
         //  without parent searchign and instance searching
         bool exists(const dirIndexList&, IOobject& io) const;
 
+        //- Helper: output which ranks are IO
+        void printRanks() const;
 
 public:
 
@@ -777,6 +779,9 @@ public:
 
             //- Forcibly wait until all output done. Flush any cached data
             virtual void flush() const;
+
+            //- Forcibly parallel sync
+            virtual void sync();
 
             //- Return cached times
             const HashPtrTable<DynamicList<instant>>& times() const noexcept

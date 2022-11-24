@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "hostCollatedFileOperation.H"
+#include "hostUncollatedFileOperation.H"
 #include "addToRunTimeSelectionTable.H"
 
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
@@ -35,17 +34,17 @@ namespace Foam
 {
 namespace fileOperations
 {
-    defineTypeNameAndDebug(hostCollatedFileOperation, 0);
+    defineTypeNameAndDebug(hostUncollatedFileOperation, 0);
     addToRunTimeSelectionTable
     (
         fileOperation,
-        hostCollatedFileOperation,
+        hostUncollatedFileOperation,
         word
     );
     addToRunTimeSelectionTable
     (
         fileOperation,
-        hostCollatedFileOperation,
+        hostUncollatedFileOperation,
         comm
     );
 
@@ -54,9 +53,9 @@ namespace fileOperations
     addNamedToRunTimeSelectionTable
     (
         fileOperationInitialise,
-        hostCollatedFileOperationInitialise,
+        hostUncollatedFileOperationInitialise,
         word,
-        hostCollated
+        hostUncollated
     );
 }
 }
@@ -64,23 +63,29 @@ namespace fileOperations
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-void Foam::fileOperations::hostCollatedFileOperation::init(bool verbose)
+void Foam::fileOperations::hostUncollatedFileOperation::init(bool verbose)
 {
     verbose = (verbose && Foam::infoDetailLevel > 0);
 
     if (verbose)
     {
-        this->printBanner(ioRanks_.size());
+        DetailInfo
+            << "I/O    : " << this->type() << nl;
+
+        if (ioRanks().size())
+        {
+            masterUncollatedFileOperation::printRanks();
+        }
     }
 }
 
 
-Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
+Foam::fileOperations::hostUncollatedFileOperation::hostUncollatedFileOperation
 (
     bool verbose
 )
 :
-    collatedFileOperation
+    masterUncollatedFileOperation
     (
         UPstream::allocateCommunicator
         (
@@ -97,14 +102,14 @@ Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
 }
 
 
-Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
+Foam::fileOperations::hostUncollatedFileOperation::hostUncollatedFileOperation
 (
     const Tuple2<label, labelList>& commAndIORanks,
     const bool distributedRoots,
     bool verbose
 )
 :
-    collatedFileOperation
+    masterUncollatedFileOperation
     (
         commAndIORanks,
         distributedRoots,
@@ -112,14 +117,12 @@ Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
     ),
     managedComm_(-1)  // Externally managed
 {
-    if (verbose && Foam::infoDetailLevel > 0)
-    {
-        this->printBanner(ioRanks_.size());
-    }
+    init(verbose);
 }
 
 
-Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
+Foam::fileOperations::hostUncollatedFileOperation::
+hostUncollatedFileOperation
 (
     const label comm,
     const labelUList& ioRanks,
@@ -127,29 +130,24 @@ Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
     bool verbose
 )
 :
-    collatedFileOperation
-    (
-        comm,
-        ioRanks,
-        distributedRoots,
-        false  // verbose
-    ),
-    managedComm_(-1)  // Externally managed
+    masterUncollatedFileOperation(comm, ioRanks, distributedRoots, false),
+    managedComm_(comm_)
 {
-    if (verbose && Foam::infoDetailLevel > 0)
-    {
-        this->printBanner(ioRanks_.size());
-    }
+    init(verbose);
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::fileOperations::hostCollatedFileOperation::~hostCollatedFileOperation()
+Foam::fileOperations::hostUncollatedFileOperation::
+~hostUncollatedFileOperation()
 {
-    if (managedComm_ >= 0 && managedComm_ != UPstream::worldComm)
+    // Wait for any outstanding file operations
+    flush();
+
+    if (myComm_ != -1 && myComm_ != UPstream::worldComm)
     {
-        UPstream::freeCommunicator(managedComm_);
+        UPstream::freeCommunicator(comm_);
     }
 }
 
