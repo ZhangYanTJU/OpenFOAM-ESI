@@ -2766,30 +2766,42 @@ void Foam::fileOperations::masterUncollatedFileOperation::addWatches
 {
     const labelList& watchIndices = rio.watchIndices();
 
+    // Do on master and distribute effect to subprocs such that after
+    // all have consistent numbering & files
+
     DynamicList<label> newWatchIndices;
-    labelHashSet removedWatches(watchIndices);
-
-    for (const fileName& f : files)
+    if (UPstream::master())
     {
-        const label index = findWatch(watchIndices, f);
+        // Switch off comms inside findWatch/addWatch etc.
+        const bool oldParRun = UPstream::parRun(false);
 
-        if (index == -1)
-        {
-            newWatchIndices.append(addWatch(f));
-        }
-        else
-        {
-            // Existing watch
-            newWatchIndices.append(watchIndices[index]);
-            removedWatches.erase(index);
-        }
-    }
+        labelHashSet removedWatches(watchIndices);
 
-    // Remove any unused watches
-    for (const label index : removedWatches)
-    {
-        removeWatch(watchIndices[index]);
+        for (const fileName& f : files)
+        {
+            const label index = findWatch(watchIndices, f);
+
+            if (index == -1)
+            {
+                newWatchIndices.push_back(addWatch(f));
+            }
+            else
+            {
+                // Existing watch
+                newWatchIndices.push_back(watchIndices[index]);
+                removedWatches.erase(index);
+            }
+        }
+
+        // Remove any unused watches
+        for (const label index : removedWatches)
+        {
+            removeWatch(watchIndices[index]);
+        }
+
+        UPstream::parRun(oldParRun);
     }
+    Pstream::broadcast(newWatchIndices);
 
     rio.watchIndices() = newWatchIndices;
 }
