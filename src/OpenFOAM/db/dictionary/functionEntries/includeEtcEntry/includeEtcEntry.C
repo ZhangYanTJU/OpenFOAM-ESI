@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,12 +27,14 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "includeEtcEntry.H"
-#include "addToMemberFunctionSelectionTable.H"
 #include "etcFiles.H"
 #include "stringOps.H"
 #include "IFstream.H"
 #include "IOstreams.H"
+#include "UPstream.H"
 #include "fileOperation.H"
+#include "regIOobject.H"
+#include "addToMemberFunctionSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -113,6 +115,15 @@ bool Foam::functionEntries::includeEtcEntry::execute
     Istream& is
 )
 {
+    const regIOobject* rioPtr = isA<regIOobject>(parentDict.topDict());
+
+    const label oldComm
+    (
+        rioPtr && rioPtr->global()
+      ? fileHandler().comm(UPstream::worldComm)
+      : fileHandler().comm()
+    );
+
     const fileName rawName(is);
     const fileName fName(resolveEtcFile(rawName, parentDict));
 
@@ -127,8 +138,12 @@ bool Foam::functionEntries::includeEtcEntry::execute
             Info<< fName << nl;
         }
         parentDict.read(ifs);
+
+        fileHandler().comm(oldComm);
         return true;
     }
+
+    fileHandler().comm(oldComm);
 
     if (!mandatory)
     {
@@ -153,6 +168,15 @@ bool Foam::functionEntries::includeEtcEntry::execute
     Istream& is
 )
 {
+    const regIOobject* rioPtr = isA<regIOobject>(parentDict.topDict());
+
+    const label oldComm
+    (
+        rioPtr && rioPtr->global()
+      ? fileHandler().comm(UPstream::worldComm)
+      : fileHandler().comm()
+    );
+
     const fileName rawName(is);
     const fileName fName(resolveEtcFile(rawName, parentDict));
 
@@ -167,8 +191,12 @@ bool Foam::functionEntries::includeEtcEntry::execute
             Info<< fName << nl;
         }
         entry.read(parentDict, ifs);
+
+        fileHandler().comm(oldComm);
         return true;
     }
+
+    fileHandler().comm(oldComm);
 
     if (!mandatory)
     {
