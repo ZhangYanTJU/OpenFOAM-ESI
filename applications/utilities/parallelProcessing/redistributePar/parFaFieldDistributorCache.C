@@ -64,6 +64,7 @@ void Foam::parFaFieldDistributorCache::read
     const bool decompose,  // i.e. read from undecomposed case
 
     const boolList& areaMeshOnProc,
+    refPtr<fileOperation>& readHandler,
     const fileName& areaMeshInstance,
     faMesh& mesh
 )
@@ -76,9 +77,15 @@ void Foam::parFaFieldDistributorCache::read
     // Missing an area mesh somewhere?
     if (areaMeshOnProc.found(false))
     {
+        const bool oldParRun = UPstream::parRun(false);
+        const int oldCache = fileOperation::cacheLevel(0);
+
         // A zero-sized mesh with boundaries.
         // This is used to create zero-sized fields.
         subsetterPtr.reset(new faMeshSubset(mesh, zero{}));
+
+        fileOperation::cacheLevel(oldCache);
+        UPstream::parRun(oldParRun);  // Restore parallel state
 
         // Deregister from polyMesh ...
         auto& obr = const_cast<objectRegistry&>
@@ -92,14 +99,26 @@ void Foam::parFaFieldDistributorCache::read
         obr.checkOut("faSolution");
     }
 
-
     // Get original objects (before incrementing time!)
-    if (Pstream::master() && decompose)
+    if (UPstream::master() && decompose)
     {
         runTime.caseName() = baseRunTime.caseName();
         runTime.processorCase(false);
     }
-    IOobjectList objects(mesh.mesh(), runTime.timeName());
+
+    IOobjectList objects;   //(mesh.mesh(), runTime.timeName());
+
+    if (readHandler)
+    {
+        auto oldHandler = fileOperation::fileHandler(readHandler);
+        const auto oldComm = UPstream::commWorld(fileHandler().comm());
+
+        objects = IOobjectList(mesh.mesh(), runTime.timeName());
+        readHandler = fileOperation::fileHandler(oldHandler);
+        UPstream::commWorld(oldComm);
+    }
+
+
     if (Pstream::master() && decompose)
     {
         runTime.caseName() = proc0CaseName;
@@ -116,11 +135,13 @@ void Foam::parFaFieldDistributorCache::read
         runTime.processorCase(false);
     }
 
+
     #undef  doFieldReading
     #define doFieldReading(Storage)                                   \
     fieldsDistributor::readFields                                     \
     (                                                                 \
-        areaMeshOnProc, mesh, subsetterPtr, objects, Storage,         \
+        areaMeshOnProc, readHandler, mesh, subsetterPtr, objects,     \
+        Storage,                                                      \
         true  /* (deregister field) */                                \
     );
 

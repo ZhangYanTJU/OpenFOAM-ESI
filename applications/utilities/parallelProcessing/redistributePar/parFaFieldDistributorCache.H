@@ -105,6 +105,7 @@ public:
             const bool decompose,  // i.e. read from undecomposed case
 
             const boolList& areaMeshOnProc,
+            refPtr<fileOperation>& readHandler,
             const fileName& areaMeshInstance,
             faMesh& mesh
         );
