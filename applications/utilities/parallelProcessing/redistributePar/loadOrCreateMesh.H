@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,6 +48,9 @@ namespace Foam
 // Forward Declarations
 class faMesh;
 
+//- Check for availability of given file
+bool checkFileExistence(const fileName& fName);
+
 //- Check for availability of specified mesh file (default: "faces")
 boolList haveMeshFile
 (
@@ -64,11 +67,13 @@ void removeProcAddressing(const faMesh& mesh);
 //- Remove procAddressing
 void removeProcAddressing(const polyMesh& mesh);
 
-//- Remove empty directory
-void removeEmptyDir(const fileName& path);
-
-//- Remove empty directories from bottom up
-void removeEmptyDirs(const fileName& path);
+//- Determine master faces instance
+void masterMeshInstance
+(
+    const IOobject& io,
+    fileName& facesInstance,
+    fileName& pointsInstance
+);
 
 }
 
