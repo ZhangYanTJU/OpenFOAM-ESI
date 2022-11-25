@@ -193,9 +193,21 @@ Foam::fileOperations::uncollatedFileOperation::uncollatedFileOperation
     bool verbose
 )
 :
-    fileOperation(Pstream::worldComm)
+    fileOperation(UPstream::worldComm),
+    managedComm_(-1)  // worldComm is externally managed
 {
     init(verbose);
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::fileOperations::uncollatedFileOperation::~uncollatedFileOperation()
+{
+    if (managedComm_ >= 0 && managedComm_ != UPstream::worldComm)
+    {
+        UPstream::freeCommunicator(managedComm_);
+    }
 }
 
 
