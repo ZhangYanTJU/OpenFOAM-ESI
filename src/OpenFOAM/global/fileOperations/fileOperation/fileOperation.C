@@ -37,6 +37,7 @@ License
 #include "registerSwitch.H"
 #include "Time.H"
 #include "ITstream.H"
+#include <algorithm>
 #include <cerrno>
 #include <cinttypes>
 
@@ -221,7 +222,11 @@ void sortProcessorDirs(Foam::UList<Foam::fileOperation::dirIndex>& dirs)
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-Foam::labelList Foam::fileOperation::ioRanks()
+Foam::labelList Foam::fileOperation::getGlobalIORanks
+(
+    const bitSet& useProc,
+    const bool useHost
+)
 {
     labelList ranks;
 
@@ -229,6 +234,278 @@ Foam::labelList Foam::fileOperation::ioRanks()
     if (!is.empty())
     {
         is >> ranks;
+    }
+
+    const label np = Pstream::nProcs(UPstream::worldComm);
+
+    bool needFilter = false;
+
+    if (ranks.size())
+    {
+        if (!ranks.found(0))
+        {
+            // Could also add silently, using append
+            FatalErrorInFunction
+                << "Rank 0 (master) should be in the IO ranks. Currently:" << nl
+                << "    " << flatOutput(ranks) << nl
+                << exit(FatalError);
+        }
+
+        // Cannot trust in user input.
+        // Sort and eliminate any duplicates
+
+        std::sort(ranks.begin(), ranks.end());
+
+        auto last = std::unique(ranks.begin(), ranks.end());
+
+        ranks.resize(static_cast<label>(last - ranks.begin()));
+
+        needFilter =
+        (
+            !useProc.empty()
+         && (useProc.size() != np || !useProc.all())
+        );
+
+        // Could also test everything first in the hope of
+        // avoiding unneeded work
+        //
+        /// if
+        /// (
+        ///     !useProc.empty()
+        ///  && (useProc.size() != np || !useProc.all())
+        /// )
+        /// {
+        ///     needFilter = false;
+        ///     for (const label ranki : ranks)
+        ///     {
+        ///         if (!useProc.test(ranki))
+        ///         {
+        ///             needFilter = true;
+        ///             break
+        ///         }
+        ///     }
+        /// }
+    }
+    else if (useHost)
+    {
+        // Use hostname
+        // Lowest rank per hostname is the IO rank
+
+        const label myProci = Pstream::myProcNo(UPstream::worldComm);
+
+        stringList hostNames(np);
+
+        // Most efficient to apply subset filter now,
+        // by simply not populating that hostName
+        if
+        (
+            // Always include master
+            Pstream::master(UPstream::worldComm)
+
+            // No filtering, or is included in subset
+         || (useProc.empty() || useProc.test(myProci))
+        )
+        {
+            hostNames[myProci] = hostName();
+        }
+
+        Pstream::gatherList
+        (
+            hostNames,
+            UPstream::msgType(),
+            UPstream::worldComm
+        );
+
+        if (Pstream::master(UPstream::worldComm))
+        {
+            DynamicList<label> hostRanks(np);
+
+            hostRanks.append(0);  // Always include master
+            label previ = 0;
+
+            for (label proci = 1; proci < hostNames.size(); ++proci)
+            {
+                if
+                (
+                    hostNames[proci].size()
+                 && hostNames[proci] != hostNames[previ]
+                )
+                {
+                    hostRanks.append(proci);
+                    previ = proci;
+                }
+            }
+
+            ranks.transfer(hostRanks);
+        }
+
+        Pstream::broadcast(ranks, UPstream::worldComm);
+    }
+
+
+    if (needFilter && ranks.size())
+    {
+        // The ranks are already sorted, no duplicate values
+        bitSet newRanks(ranks.last());
+
+        const label nRanks = ranks.size();
+
+        // Always include proc0
+        newRanks.set(0);
+
+        for
+        (
+            label idx = (ranks[0] == 0 ? 1 : 0);
+            idx < nRanks;
+            ++idx
+        )
+        {
+            label ranki = ranks[idx];
+
+            if (useProc.test(ranki))
+            {
+                // IO rank is also in processor subset
+                newRanks.set(ranki);
+            }
+            else
+            {
+                // IO rank not in processor subset.
+                // Find the next rank of this range that is
+
+                ranki = useProc.find_next(ranki);
+
+                if (ranki == -1)
+                {
+                    // No more processors for this IO group
+                    break;
+                }
+
+                // End of search, or in range
+                if ((idx == nRanks-1) || (ranki < ranks[idx+1]))
+                {
+                    newRanks.set(ranki);
+                }
+            }
+        }
+
+        ranks = newRanks.sortedToc();
+    }
+
+    return ranks;
+}
+
+
+Foam::labelList Foam::fileOperation::getGlobalSubRanks
+(
+    const bitSet& useProc,
+    const bool useHost
+)
+{
+    // Get IO ranks first
+    labelList ranks(fileOperation::getGlobalIORanks(useProc, useHost));
+
+    const label np = Pstream::nProcs(UPstream::worldComm);
+
+    const bool needFilter =
+    (
+        !useProc.empty()
+     && (useProc.size() != np || !useProc.all())
+    );
+
+
+    // Fast path - no IO ranks.
+    if (ranks.empty())
+    {
+        if (needFilter)
+        {
+            // Subset of ranks involved
+            return useProc.sortedToc();
+        }
+
+        // All ranks are involved
+        return identity(np);
+    }
+
+
+    // Build sub-ranks: the lowest numbered rank is the IO rank
+
+    // Note: the IO ranks have already been filtered/adjusted
+    //       to only include ranks that are also in useProc
+
+    const label myProci = Pstream::myProcNo(UPstream::worldComm);
+
+    if (needFilter && !useProc.test(myProci))
+    {
+        // I am not involved with any IO
+        return labelList();
+    }
+
+
+    labelRange subRange(0, np);
+
+    // Linear search for enclosing range
+    {
+        const label nIOranks = ranks.size();
+
+        // Starting with proc = 0, silently adds master (0) into IO ranks
+        label begIdx = 0;
+
+        for (label i = 0; i < nIOranks && (ranks[i] <= myProci); ++i)
+        {
+            begIdx = i;
+        }
+
+        // One-beyond end of our range (ie, where the next IO range begins)
+        const label begProc = ranks[begIdx];
+        const label endProc = (begIdx+1 < nIOranks) ? ranks[begIdx+1] : np;
+
+        subRange.reset(begProc, (endProc-begProc));
+    }
+
+    #if 0
+    // Use bitSet during search
+    {
+        // IO ranks are sorted, so last element is a good sizing estimate
+        const bitSet isIOrank(ranks.last(), ranks);
+
+        // Build sub-ranks: the lowest numbered rank is the IO rank
+        label begProc = 0;
+
+        for (label proci = myProci; proci >= 0; --proci)
+        {
+            if (isIOrank.test(proci))
+            {
+                // Found the lower rank used for IO
+                begProc = proci;
+                break;
+            }
+        }
+
+        // Find one-beyond end of our range (ie, where the next IO range begins)
+        label endProc = isIOrank.find_next(begProc);
+        if (endProc == -1) endProc = np;
+
+        subRange.reset(begProc, (endProc-begProc));
+    }
+    #endif
+
+    if (needFilter)
+    {
+        DynamicList<label> subRanks(subRange.size());
+
+        for (label proci : subRange)
+        {
+            if (useProc.test(proci))
+            {
+                subRanks.append(proci);
+            }
+        }
+
+        ranks.transfer(subRanks);
+    }
+    else
+    {
+        ranks = identity(subRange);
     }
 
     return ranks;
@@ -730,12 +1007,28 @@ bool Foam::fileOperation::exists(IOobject& io) const
 
 Foam::fileOperation::fileOperation
 (
+    const Tuple2<label, labelList>& commAndIORanks,
+    const bool distributedRoots
+)
+:
+    comm_(commAndIORanks.first()),
+    nProcs_(Pstream::nProcs(UPstream::worldComm)),
+    distributed_(distributedRoots),
+    ioRanks_(commAndIORanks.second())
+{}
+
+
+Foam::fileOperation::fileOperation
+(
     const label comm,
+    const labelUList& ioRanks,
     const bool distributedRoots
 )
 :
     comm_(comm),
-    distributed_(distributedRoots)
+    nProcs_(Pstream::nProcs(UPstream::worldComm)),
+    distributed_(distributedRoots),
+    ioRanks_(ioRanks)
 {}
 
 
@@ -778,14 +1071,6 @@ Foam::fileOperation::New
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::fileOperation::distributed(bool on) const noexcept
-{
-    bool old(distributed_);
-    distributed_ = on;
-    return old;
-}
-
 
 Foam::fileName Foam::fileOperation::objectPath
 (
@@ -1257,8 +1542,18 @@ Foam::fileNameList Foam::fileOperation::readObjects
 }
 
 
-void Foam::fileOperation::setNProcs(const label nProcs)
-{}
+Foam::label Foam::fileOperation::nProcs(const label numProcs)
+{
+    if (debug)
+    {
+        Pout<< "fileOperation::nProcs :"
+            << " Setting number of processors to " << numProcs << endl;
+    }
+
+    label old(nProcs_);
+    nProcs_ = numProcs;
+    return old;
+}
 
 
 Foam::label Foam::fileOperation::nProcs

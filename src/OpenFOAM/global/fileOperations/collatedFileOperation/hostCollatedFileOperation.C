@@ -28,7 +28,6 @@ License
 
 #include "hostCollatedFileOperation.H"
 #include "addToRunTimeSelectionTable.H"
-#include "bitSet.H"
 
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
@@ -57,70 +56,6 @@ namespace fileOperations
 }
 
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-Foam::labelList Foam::fileOperations::hostCollatedFileOperation::subRanks
-(
-    const label n
-)
-{
-    DynamicList<label> subRanks(64);
-
-    labelList mainRanks(fileOperation::ioRanks());
-    if (!mainRanks.empty())
-    {
-        if (!mainRanks.found(0))
-        {
-            FatalErrorInFunction
-                << "Rank 0 (master) should be in the IO ranks. Currently "
-                << mainRanks << nl
-                << exit(FatalError);
-        }
-
-        // The lowest numbered rank is the IO rank
-        const bitSet isIOrank(n, mainRanks);
-
-        for (label proci = Pstream::myProcNo(); proci >= 0; --proci)
-        {
-            if (isIOrank[proci])
-            {
-                // Found my master. Collect all processors with same master
-                subRanks.append(proci);
-                for
-                (
-                    label rank = proci+1;
-                    rank < n && !isIOrank[rank];
-                    ++rank
-                )
-                {
-                    subRanks.append(rank);
-                }
-                break;
-            }
-        }
-    }
-    else
-    {
-        // Normal operation: one lowest rank per hostname is the writer
-        const string myHostName(hostName());
-
-        stringList hosts(Pstream::nProcs());
-        hosts[Pstream::myProcNo()] = myHostName;
-        Pstream::allGatherList(hosts);
-
-        // Collect procs with same hostname
-        forAll(hosts, proci)
-        {
-            if (hosts[proci] == myHostName)
-            {
-                subRanks.append(proci);
-            }
-        }
-    }
-    return subRanks;
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 void Foam::fileOperations::hostCollatedFileOperation::init(bool verbose)
@@ -144,15 +79,61 @@ Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
         UPstream::allocateCommunicator
         (
             UPstream::worldComm,
-            subRanks(Pstream::nProcs())
+            fileOperation::getGlobalSubRanks(true)  // Host
         ),
-        (Pstream::parRun() ? labelList() : ioRanks()), // processor dirs
-        typeName,
-        false // verbose
+        fileOperation::getGlobalIORanks(true),  // Host
+        false,  // distributedRoots
+        false   // verbose
     ),
     managedComm_(comm_)
 {
     init(verbose);
+}
+
+
+Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
+(
+    const Tuple2<label, labelList>& commAndIORanks,
+    const bool distributedRoots,
+    bool verbose
+)
+:
+    collatedFileOperation
+    (
+        commAndIORanks,
+        distributedRoots,
+        false   // verbose
+    ),
+    managedComm_(-1)  // Externally managed
+{
+    if (verbose && Foam::infoDetailLevel > 0)
+    {
+        this->printBanner(ioRanks_.size());
+    }
+}
+
+
+Foam::fileOperations::hostCollatedFileOperation::hostCollatedFileOperation
+(
+    const label comm,
+    const labelUList& ioRanks,
+    const bool distributedRoots,
+    bool verbose
+)
+:
+    collatedFileOperation
+    (
+        comm,
+        ioRanks,
+        distributedRoots,
+        false  // verbose
+    ),
+    managedComm_(-1)  // Externally managed
+{
+    if (verbose && Foam::infoDetailLevel > 0)
+    {
+        this->printBanner(ioRanks_.size());
+    }
 }
 
 

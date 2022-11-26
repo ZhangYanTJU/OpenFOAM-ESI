@@ -43,11 +43,12 @@ Description
 
 #include "ISstream.H"
 #include "Ostream.H"
-#include "autoPtr.H"
+#include "fileMonitor.H"
 #include "fileNameList.H"
 #include "instantList.H"
-#include "fileMonitor.H"
+#include "autoPtr.H"
 #include "refPtr.H"
+#include "bitSet.H"
 #include "Enum.H"
 #include "Tuple2.H"
 
@@ -111,10 +112,19 @@ protected:
     // Protected Data
 
         //- Communicator to use
-        const label comm_;
+        mutable label comm_;
+
+        //- Overall number of processors.
+        //  Used to synthesise processor directory naming:
+        //  - parallel: Pstream::nProcs()
+        //  - non-parallel: detected from processor dir naming ('processorsNN')
+        label nProcs_;
 
         //- Distributed roots (parallel run)
         mutable bool distributed_;
+
+        //- Ranks (in comm_) of IO handlers
+        const labelList ioRanks_;
 
         //- Detected processors directories
         mutable HashTable<dirIndexList> procsDirs_;
@@ -127,9 +137,6 @@ protected:
 
         //- Get or create fileMonitor singleton
         fileMonitor& monitor() const;
-
-        //- Retrieve list of IO ranks from FOAM_IORANKS env variable
-        static labelList ioRanks();
 
         //- Merge two times
         static void mergeTimes
@@ -189,12 +196,22 @@ public:
 
     // Constructors
 
-        //- Construct from communicator, optionally with distributed roots
+        //- Construct from communicator,
+        //- optionally with specified io-ranks and/or distributed roots
         explicit fileOperation
         (
             const label comm,
+            const labelUList& ioRanks = labelUList::null(),
             const bool distributedRoots = false
         );
+
+        //- Construct from communicator with specified io-ranks
+        explicit fileOperation
+        (
+            const Tuple2<label, labelList>& commAndIORanks,
+            const bool distributedRoots = false
+        );
+
 
         //- Clone fileHandler
         /// virtual autoPtr<fileOperation> clone() const = 0;
@@ -248,15 +265,41 @@ public:
 
     // Member Functions
 
+        //- Communicator to use
+        label comm() const noexcept
+        {
+            return comm_;
+        }
+
+        //- Set communicator to use [mutable]. Negative values are a no-op.
+        //  \return old value
+        label comm(label communicator) const noexcept
+        {
+            label old(comm_);
+            if (communicator > 0) comm_ = communicator;
+            return old;
+        }
+
         //- Distributed roots (parallel run)
         bool distributed() const noexcept
         {
             return distributed_;
         }
 
-        //- Set distributed roots on/off (mutable)
+        //- Set distributed roots on/off [mutable]
         //  \return old value
-        bool distributed(bool on) const noexcept;
+        bool distributed(bool on) const noexcept
+        {
+            bool old(distributed_);
+            distributed_ = on;
+            return old;
+        }
+
+        //- Retrieve list of IO ranks (in the local communicator)
+        virtual const labelList& ioRanks() const
+        {
+            return ioRanks_;
+        }
 
 
         // OSSpecific equivalents
@@ -541,12 +584,26 @@ public:
                 return processorsBaseDir;
             }
 
-            //- Set number of processor directories/results. Only used in
-            //  decomposePar
-            virtual void setNProcs(const label nProcs);
+            //- Overall number of processors,
+            //- eg, detected from directories/results.
+            virtual label nProcs() const
+            {
+                return nProcs_;
+            }
 
-            //- Get number of processor directories/results. Used for e.g.
-            //  reconstructPar, argList checking
+            //- Set number of processor directories/results.
+            //  Only used in decomposePar
+            virtual label nProcs(const label numProcs);
+
+            //- Set number of processor directories/results.
+            //  Only used in decomposePar
+            virtual label setNProcs(const label numProcs)
+            {
+                 return nProcs(numProcs);
+            }
+
+            //- Get number of processor directories/results.
+            //  Used for e.g. reconstructPar, argList checking
             virtual label nProcs
             (
                 const fileName& dir,
@@ -613,6 +670,40 @@ public:
 
             //- Detect processor number from '/aa/bb/processorDDD/cc'
             static label detectProcessorPath(const fileName& objPath);
+
+
+    // Rank selection/sub-selection
+
+        //- Get the list of global IO ranks from FOAM_IORANKS env variable,
+        //- subsetted by a list of processor ranks,
+        //- with optional fallback by hostname
+        static labelList getGlobalIORanks
+        (
+            const bitSet& useProc = bitSet::null(),
+            const bool useHost = false
+        );
+
+        //- Get the list of global IO ranks from FOAM_IORANKS env variable,
+        //- no subsetting, with optional fallback by hostname
+        static labelList getGlobalIORanks(const bool useHost)
+        {
+            return fileOperation::getGlobalIORanks(bitSet::null(), useHost);
+        }
+
+        //- Get the list of global ranks that share the same IO rank
+        //- as myProcNo, subjected to subsetting by a list of processor ranks
+        static labelList getGlobalSubRanks
+        (
+            const bitSet& useProc = bitSet::null(),
+            const bool useHost = false
+        );
+
+        //- Get the list of global ranks that share the same IO rank.
+        //- as myProcNo.  Uses getGlobalIORanks
+        static labelList getGlobalSubRanks(const bool useHost)
+        {
+            return fileOperation::getGlobalSubRanks(bitSet::null(), useHost);
+        }
 };
 
 

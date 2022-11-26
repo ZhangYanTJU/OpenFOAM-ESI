@@ -256,6 +256,38 @@ bool Foam::fileOperations::collatedFileOperation::appendObject
 }
 
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Construction helper
+static Tuple2<label, labelList> getCommPattern()
+{
+    // With useHost == false
+
+    Tuple2<label, labelList> commAndIORanks;
+
+    commAndIORanks.first() = UPstream::worldComm;
+    commAndIORanks.second() = fileOperation::getGlobalIORanks(false);
+
+    if (!commAndIORanks.second().empty())
+    {
+        // Needs its own communicator
+        commAndIORanks.first() =
+            UPstream::allocateCommunicator
+            (
+                UPstream::worldComm,
+                fileOperation::getGlobalSubRanks(false)
+            );
+    }
+
+    return commAndIORanks;
+}
+
+} // End namespace Foam
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 void Foam::fileOperations::collatedFileOperation::init(bool verbose)
@@ -276,21 +308,32 @@ Foam::fileOperations::collatedFileOperation::collatedFileOperation
 :
     masterUncollatedFileOperation
     (
-        (
-            ioRanks().size()
-          ? UPstream::allocateCommunicator
-            (
-                UPstream::worldComm,
-                subRanks(Pstream::nProcs())
-            )
-          : UPstream::worldComm
-        ),
-        false
+        getCommPattern(),
+        false,  // distributedRoots
+        false   // verbose
     ),
-    managedComm_(comm_),
-    writer_(mag(maxThreadFileBufferSize), comm_),
-    nProcs_(Pstream::nProcs()),
-    ioRanks_(ioRanks())
+    managedComm_(comm_),  // [sic] Managed here, or is worldComm
+    writer_(mag(maxThreadFileBufferSize), comm_)
+{
+    init(verbose);
+}
+
+
+Foam::fileOperations::collatedFileOperation::collatedFileOperation
+(
+    const Tuple2<label, labelList>& commAndIORanks,
+    const bool distributedRoots,
+    bool verbose
+)
+:
+    masterUncollatedFileOperation
+    (
+        commAndIORanks,
+        distributedRoots,
+        false   // verbose
+    ),
+    managedComm_(-1),  // Externally managed
+    writer_(mag(maxThreadFileBufferSize), comm_)
 {
     init(verbose);
 }
@@ -299,16 +342,20 @@ Foam::fileOperations::collatedFileOperation::collatedFileOperation
 Foam::fileOperations::collatedFileOperation::collatedFileOperation
 (
     const label comm,
-    const labelList& ioRanks,
-    const word& typeName,
+    const labelUList& ioRanks,
+    const bool distributedRoots,
     bool verbose
 )
 :
-    masterUncollatedFileOperation(comm, false),
+    masterUncollatedFileOperation
+    (
+        comm,
+        ioRanks,
+        distributedRoots,
+        false   // verbose
+    ),
     managedComm_(-1),  // Externally managed
-    writer_(mag(maxThreadFileBufferSize), comm),
-    nProcs_(Pstream::nProcs()),
-    ioRanks_(ioRanks)
+    writer_(mag(maxThreadFileBufferSize), comm_)
 {
     init(verbose);
 }
@@ -610,18 +657,6 @@ Foam::word Foam::fileOperations::collatedFileOperation::processorsDir
 ) const
 {
     return processorsDir(io.objectPath());
-}
-
-
-void Foam::fileOperations::collatedFileOperation::setNProcs(const label nProcs)
-{
-    nProcs_ = nProcs;
-
-    if (debug)
-    {
-        Pout<< "collatedFileOperation::setNProcs :"
-            << " Setting number of processors to " << nProcs_ << endl;
-    }
 }
 
 

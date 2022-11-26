@@ -99,6 +99,23 @@ public:
         //- Default construct
         explicit uncollatedFileOperation(bool verbose);
 
+        //- Construct from communicator with specified io-ranks
+        uncollatedFileOperation
+        (
+            const Tuple2<label, labelList>& commAndIORanks,
+            const bool distributedRoots,
+            bool verbose
+        );
+
+        //- Construct from communicator with specified io-ranks
+        uncollatedFileOperation
+        (
+            const label comm,
+            const labelUList& ioRanks,
+            const bool distributedRoots,
+            bool verbose
+        );
+
 
     //- Destructor
     virtual ~uncollatedFileOperation();

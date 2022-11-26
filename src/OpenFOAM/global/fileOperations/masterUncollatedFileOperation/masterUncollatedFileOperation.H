@@ -391,9 +391,6 @@ protected:
 
     // Private Member Functions
 
-        //- Get the list of processors that are part of this communicator
-        static labelList subRanks(const label n);
-
         template<class Type>
         Type scatterList(const UList<Type>&, const int, const label comm) const;
 
@@ -493,8 +490,22 @@ public:
         //- Default construct
         explicit masterUncollatedFileOperation(bool verbose);
 
-        //- Construct from communicator
-        masterUncollatedFileOperation(const label comm, bool verbose);
+        //- Construct from communicator with specified io-ranks
+        masterUncollatedFileOperation
+        (
+            const Tuple2<label, labelList>& commAndIORanks,
+            const bool distributedRoots,
+            bool verbose
+        );
+
+        //- Construct from communicator with specified io-ranks
+        masterUncollatedFileOperation
+        (
+            const label comm,
+            const labelUList& ioRanks,
+            const bool distributedRoots,
+            bool verbose
+        );
 
 
     //- Destructor

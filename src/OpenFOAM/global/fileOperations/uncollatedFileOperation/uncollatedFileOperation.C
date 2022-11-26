@@ -200,6 +200,35 @@ Foam::fileOperations::uncollatedFileOperation::uncollatedFileOperation
 }
 
 
+Foam::fileOperations::uncollatedFileOperation::uncollatedFileOperation
+(
+    const Tuple2<label, labelList>& commAndIORanks,
+    const bool distributedRoots,
+    bool verbose
+)
+:
+    fileOperation(commAndIORanks, distributedRoots),
+    managedComm_(-1)  // Externally managed
+{
+    init(verbose);
+}
+
+
+Foam::fileOperations::uncollatedFileOperation::uncollatedFileOperation
+(
+    const label comm,
+    const labelUList& ioRanks,
+    const bool distributedRoots,
+    bool verbose
+)
+:
+    fileOperation(comm, ioRanks, distributedRoots),
+    managedComm_(-1)  // Externally managed
+{
+    init(verbose);
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::fileOperations::uncollatedFileOperation::~uncollatedFileOperation()

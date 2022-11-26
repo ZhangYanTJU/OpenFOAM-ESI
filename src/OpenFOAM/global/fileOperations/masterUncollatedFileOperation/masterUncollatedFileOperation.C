@@ -39,7 +39,6 @@ License
 #include "dummyISstream.H"
 #include "SubList.H"
 #include "unthreadedInitialise.H"
-#include "bitSet.H"
 
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
@@ -79,55 +78,6 @@ namespace fileOperations
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-Foam::labelList Foam::fileOperations::masterUncollatedFileOperation::subRanks
-(
-    const label n
-)
-{
-    labelList mainRanks(fileOperation::ioRanks());
-
-    if (mainRanks.empty())
-    {
-        return identity(n);
-    }
-    else
-    {
-        DynamicList<label> subRanks(n);
-
-        if (!mainRanks.found(0))
-        {
-            FatalErrorInFunction
-                << "Rank 0 (master) should be in the IO ranks. Currently "
-                << mainRanks << nl
-                << exit(FatalError);
-        }
-
-        // The lowest numbered rank is the IO rank
-        const bitSet isIOrank(n, mainRanks);
-
-        for (label proci = Pstream::myProcNo(); proci >= 0; --proci)
-        {
-            if (isIOrank[proci])
-            {
-                // Found my master. Collect all processors with same master
-                subRanks.append(proci);
-                for
-                (
-                    label rank = proci+1;
-                    rank < n && !isIOrank[rank];
-                    ++rank
-                )
-                {
-                    subRanks.append(rank);
-                }
-                break;
-            }
-        }
-        return subRanks;
-    }
-}
-
 
 Foam::word
 Foam::fileOperations::masterUncollatedFileOperation::findInstancePath
@@ -558,7 +508,7 @@ Foam::fileOperations::masterUncollatedFileOperation::read
 {
     autoPtr<ISstream> isPtr;
 
-    // const bool uniform = uniformFile(filePaths);
+    // const bool uniform = fileOperation::uniformFile(filePaths);
 
     PstreamBuffers pBufs(comm, UPstream::commsTypes::nonBlocking);
 
@@ -742,8 +692,9 @@ masterUncollatedFileOperation
         UPstream::allocateCommunicator
         (
             UPstream::worldComm,
-            subRanks(Pstream::nProcs())
-        )
+            fileOperation::getGlobalSubRanks(false)
+        ),
+        fileOperation::getGlobalIORanks(false)
     ),
     managedComm_(comm_)
 {
@@ -754,11 +705,28 @@ masterUncollatedFileOperation
 Foam::fileOperations::masterUncollatedFileOperation::
 masterUncollatedFileOperation
 (
-    const label comm,
+    const Tuple2<label, labelList>& commAndIORanks,
+    const bool distributedRoots,
     bool verbose
 )
 :
-    fileOperation(comm),
+    fileOperation(commAndIORanks, distributedRoots),
+    managedComm_(-1)  // Externally managed
+{
+    init(verbose);
+}
+
+
+Foam::fileOperations::masterUncollatedFileOperation::
+masterUncollatedFileOperation
+(
+    const label comm,
+    const labelUList& ioRanks,
+    const bool distributedRoots,
+    bool verbose
+)
+:
+    fileOperation(comm, ioRanks, distributedRoots),
     managedComm_(-1)  // Externally managed
 {
     init(verbose);
@@ -1720,7 +1688,8 @@ bool Foam::fileOperations::masterUncollatedFileOperation::readHeader
     fileNameList filePaths(Pstream::nProcs(Pstream::worldComm));
     filePaths[Pstream::myProcNo(Pstream::worldComm)] = fName;
     Pstream::gatherList(filePaths, Pstream::msgType(), Pstream::worldComm);
-    bool uniform = uniformFile(filePaths);
+
+    bool uniform = fileOperation::uniformFile(filePaths);
     Pstream::broadcast(uniform, UPstream::worldComm);
 
     if (uniform)
@@ -2049,7 +2018,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
             procValid[Pstream::myProcNo(comm_)] = valid;
 
             // Uniform in local comm
-            const bool uniform = uniformFile(filePaths);
+            const bool uniform = fileOperation::uniformFile(filePaths);
 
             return read(io, comm_, uniform, filePaths, procValid);
         }
@@ -2321,7 +2290,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
 
         if (Pstream::master(Pstream::worldComm))
         {
-            const bool uniform = uniformFile(filePaths);
+            const bool uniform = fileOperation::uniformFile(filePaths);
 
             if (uniform)
             {

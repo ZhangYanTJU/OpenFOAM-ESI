@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,8 +46,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fileOperations_collatedFileOperation_H
-#define fileOperations_collatedFileOperation_H
+#ifndef Foam_fileOperations_collatedFileOperation_H
+#define Foam_fileOperations_collatedFileOperation_H
 
 #include "masterUncollatedFileOperation.H"
 #include "OFstreamCollator.H"
@@ -84,14 +84,6 @@ protected:
 
         //- Threaded writer
         mutable OFstreamCollator writer_;
-
-        // For non-parallel operation
-
-            //- Number of processors (overall)
-            label nProcs_;
-
-            //- Ranks of IO handlers
-            const labelList ioRanks_;
 
 
     // Protected Member Functions
@@ -131,12 +123,20 @@ public:
         //- Default construct
         explicit collatedFileOperation(bool verbose);
 
-        //- Construct from user communicator
+        //- Construct from communicator with specified io-ranks
+        collatedFileOperation
+        (
+            const Tuple2<label, labelList>& commAndIORanks,
+            const bool distributedRoots,
+            bool verbose
+        );
+
+        //- Construct from communicator with specified io-ranks
         collatedFileOperation
         (
             const label comm,
-            const labelList& ioRanks,
-            const word& typeName,
+            const labelUList& ioRanks,
+            const bool distributedRoots,
             bool verbose
         );
 
@@ -175,10 +175,6 @@ public:
 
             //- Actual name of processors dir
             virtual word processorsDir(const fileName&) const;
-
-            //- Set number of processor directories/results.
-            //- Only used in decomposePar
-            virtual void setNProcs(const label nProcs);
 };
 
 
