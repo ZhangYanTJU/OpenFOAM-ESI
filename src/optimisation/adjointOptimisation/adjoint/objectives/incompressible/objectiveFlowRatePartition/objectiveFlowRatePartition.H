@@ -66,9 +66,6 @@ class objectiveFlowRatePartition
         scalar inletFlowRate_;
         scalarList flowRateDifference_;
 
-        //- Find the inlet and outlet patches
-        void initializeInlet();
-        void initializeOutlet();
 
 public:
 
