@@ -41,7 +41,7 @@ namespace objectives
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-defineTypeNameAndDebug(objectiveUniformityCellZone, 1);
+defineTypeNameAndDebug(objectiveUniformityCellZone, 0);
 addToRunTimeSelectionTable
 (
     objectiveIncompressible,

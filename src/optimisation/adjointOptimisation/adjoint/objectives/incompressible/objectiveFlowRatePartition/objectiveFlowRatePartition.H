@@ -29,7 +29,7 @@ Class
     Foam::objectives::objectiveFlowRatePartition
 
 Description
-    Split inlet flow rate to given percentages at the prescribed outlet patces.
+    Split inlet flow rate to given percentages at the prescribed outlet patches.
 
 SourceFiles
     objectiveFlowRatePartition.C
@@ -86,7 +86,7 @@ public:
 
 
     //- Destructor
-    ~objectiveFlowRatePartition() = default;
+    virtual ~objectiveFlowRatePartition() = default;
 
 
     // Member Functions
