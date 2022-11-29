@@ -410,7 +410,7 @@ tmp<volVectorField> adjointRASModel::nutJacobianU
 ) const
 {
     // Deliberately returning a null pointer in the base class
-    return tmp<volVectorField>(nullptr);
+    return nullptr;
 }
 
 
