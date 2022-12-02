@@ -50,20 +50,17 @@ edgeIntegrate
 {
     const faMesh& mesh = ssf.mesh();
 
-    tmp<GeometricField<Type, faPatchField, areaMesh>> tvf
+    auto tvf = tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        new GeometricField<Type, faPatchField, areaMesh>
+        IOobject
         (
-            IOobject
-            (
-                "edgeIntegrate("+ssf.name()+')',
-                ssf.instance(),
-                ssf.db()
-            ),
-            mesh,
-            dimensioned<Type>(ssf.dimensions()/dimArea, Zero),
-            zeroGradientFaPatchField<Type>::typeName
-        )
+            "edgeIntegrate("+ssf.name()+')',
+            ssf.instance(),
+            ssf.db()
+        ),
+        mesh,
+        dimensioned<Type>(ssf.dimensions()/dimArea, Zero),
+        zeroGradientFaPatchField<Type>::typeName
     );
     GeometricField<Type, faPatchField, areaMesh>& vf = tvf.ref();
 
@@ -122,20 +119,17 @@ edgeSum
 {
     const faMesh& mesh = ssf.mesh();
 
-    tmp<GeometricField<Type, faPatchField, areaMesh>> tvf
+    auto tvf = tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        new GeometricField<Type, faPatchField, areaMesh>
+        IOobject
         (
-            IOobject
-            (
-                "edgeSum("+ssf.name()+')',
-                ssf.instance(),
-                ssf.db()
-            ),
-            mesh,
-            dimensioned<Type>(ssf.dimensions(), Zero),
-            zeroGradientFaPatchField<Type>::typeName
-        )
+            "edgeSum("+ssf.name()+')',
+            ssf.instance(),
+            ssf.db()
+        ),
+        mesh,
+        dimensioned<Type>(ssf.dimensions(), Zero),
+        zeroGradientFaPatchField<Type>::typeName
     );
     GeometricField<Type, faPatchField, areaMesh>& vf = tvf.ref();
 

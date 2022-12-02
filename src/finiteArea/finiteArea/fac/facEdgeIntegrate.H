@@ -35,7 +35,6 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-
 #ifndef facEdgeIntegrate_H
 #define facEdgeIntegrate_H
 

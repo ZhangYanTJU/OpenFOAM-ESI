@@ -142,10 +142,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const noexcept
-        {
-            return faMesh_;
-        }
+        const faMesh& mesh() const noexcept { return faMesh_; }
 
         //- Return reference to PN geodesic distance
         const edgeScalarField& lPN() const;

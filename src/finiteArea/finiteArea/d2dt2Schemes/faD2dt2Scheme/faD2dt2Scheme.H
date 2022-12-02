@@ -49,6 +49,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 template<class Type>
 class faMatrix;
 
@@ -71,8 +72,9 @@ class faD2dt2Scheme
 {
 protected:
 
-    // Protected data
+    // Protected Data
 
+        //- Reference to the mesh
         const faMesh& mesh_;
 
 
@@ -138,10 +140,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         virtual tmp<GeometricField<Type, faPatchField, areaMesh>> facD2dt2
         (

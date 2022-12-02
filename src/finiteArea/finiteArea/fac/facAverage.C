@@ -50,23 +50,19 @@ average
 {
     const faMesh& mesh = ssf.mesh();
 
-    tmp<GeometricField<Type, faPatchField, areaMesh>> taverage
+    auto taverage = tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        new GeometricField<Type, faPatchField, areaMesh>
+        IOobject
         (
-            IOobject
-            (
-                "average("+ssf.name()+')',
-                ssf.instance(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            ssf.dimensions()
-        )
+            "average("+ssf.name()+')',
+            ssf.instance(),
+            mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        ssf.dimensions()
     );
-
     GeometricField<Type, faPatchField, areaMesh>& av = taverage.ref();
 
     av.ref() =

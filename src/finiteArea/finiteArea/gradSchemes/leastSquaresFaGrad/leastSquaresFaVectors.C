@@ -117,10 +117,10 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
 
     forAll(owner, facei)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
-        vector d = C[nei] - C[own];
+        vector d(C[nei] - C[own]);
 
         // Do not allow any mag(val) < SMALL
         if (mag(d) < SMALL)
@@ -128,7 +128,7 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
             d = vector::uniform(SMALL);
         }
 
-        symmTensor wdd = (1.0/magSqr(d))*sqr(d);
+        const symmTensor wdd((1.0/magSqr(d))*sqr(d));
 
         dd[own] += wdd;
         dd[nei] += wdd;
@@ -164,10 +164,10 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
     // Revisit all faces and calculate the lsP and lsN vectors
     forAll(owner, facei)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
-        vector d = C[nei] - C[own];
+        vector d(C[nei] - C[own]);
 
         // Do not allow any mag(val) < SMALL
         if (mag(d) < SMALL)
@@ -175,7 +175,7 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
             d = vector::uniform(SMALL);
         }
 
-        scalar magSfByMagSqrd = 1.0/magSqr(d);
+        const scalar magSfByMagSqrd = 1.0/magSqr(d);
 
         lsP[facei] = magSfByMagSqrd*(invDd[own] & d);
         lsN[facei] = -magSfByMagSqrd*(invDd[nei] & d);

@@ -31,6 +31,7 @@ License
 #include "edgeFields.H"
 #include "demandDrivenData.H"
 #include "faPatchFields.H"
+#include "unitConversion.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -170,20 +171,20 @@ bool Foam::edgeInterpolation::movePoints() const
 }
 
 
-const Foam::vector& Foam::edgeInterpolation::skewCorr(const label edgeI) const
+const Foam::vector& Foam::edgeInterpolation::skewCorr(const label edgei) const
 {
     #ifdef FA_SKEW_CORRECTION
 
     return
         (
             skewCorrectionVectorsPtr_
-          ? (*skewCorrectionVectorsPtr_)[edgeI]
+          ? (*skewCorrectionVectorsPtr_)[edgei]
           : pTraits<vector>::zero
         );
 
     #else
 
-    return (*skewCorrectionVectorsPtr_)[edgeI];
+    return (*skewCorrectionVectorsPtr_)[edgei];
 
     #endif
 }
@@ -227,44 +228,44 @@ void Foam::edgeInterpolation::makeLPN() const
     // Calculate skewness correction vectors if necessary
     (void) skew();
 
-    forAll(owner, edgeI)
+    forAll(owner, edgei)
     {
-        const vector& skewCorrEdge = skewCorr(edgeI);
+        const vector& skewCorrEdge = skewCorr(edgei);
 
         scalar lPE =
             mag
             (
-                edgeCentres[edgeI]
+                edgeCentres[edgei]
               - skewCorrEdge
-              - faceCentres[owner[edgeI]]
+              - faceCentres[owner[edgei]]
             );
 
         scalar lEN =
             mag
             (
-                faceCentres[neighbour[edgeI]]
-              - edgeCentres[edgeI]
+                faceCentres[neighbour[edgei]]
+              - edgeCentres[edgei]
               + skewCorrEdge
             );
 
-        lPNIn[edgeI] = (lPE + lEN);
+        lPNIn[edgei] = (lPE + lEN);
 
         // Do not allow any mag(val) < SMALL
-        if (mag(lPNIn[edgeI]) < SMALL)
+        if (mag(lPNIn[edgei]) < SMALL)
         {
-            lPNIn[edgeI] = SMALL;
+            lPNIn[edgei] = SMALL;
         }
     }
 
 
-    forAll(lPN.boundaryField(), patchI)
+    forAll(lPN.boundaryField(), patchi)
     {
-        mesh().boundary()[patchI].makeDeltaCoeffs
+        mesh().boundary()[patchi].makeDeltaCoeffs
         (
-            lPN.boundaryFieldRef()[patchI]
+            lPN.boundaryFieldRef()[patchi]
         );
 
-        lPN.boundaryFieldRef()[patchI] = 1.0/lPN.boundaryField()[patchI];
+        lPN.boundaryFieldRef()[patchi] = 1.0/lPN.boundaryField()[patchi];
     }
 
 
@@ -313,23 +314,23 @@ void Foam::edgeInterpolation::makeWeights() const
     // Calculate skewness correction vectors if necessary
     (void) skew();
 
-    forAll(owner, edgeI)
+    forAll(owner, edgei)
     {
-        const vector& skewCorrEdge = skewCorr(edgeI);
+        const vector& skewCorrEdge = skewCorr(edgei);
 
         scalar lPE =
             mag
             (
-                edgeCentres[edgeI]
+                edgeCentres[edgei]
               - skewCorrEdge
-              - faceCentres[owner[edgeI]]
+              - faceCentres[owner[edgei]]
             );
 
         scalar lEN =
             mag
             (
-                faceCentres[neighbour[edgeI]]
-              - edgeCentres[edgeI]
+                faceCentres[neighbour[edgei]]
+              - edgeCentres[edgei]
               + skewCorrEdge
             );
 
@@ -337,15 +338,15 @@ void Foam::edgeInterpolation::makeWeights() const
         const scalar lPN = lPE + lEN;
         if (mag(lPN) > SMALL)
         {
-            weightsIn[edgeI] = lEN/lPN;
+            weightsIn[edgei] = lEN/lPN;
         }
     }
 
-    forAll(mesh().boundary(), patchI)
+    forAll(mesh().boundary(), patchi)
     {
-        mesh().boundary()[patchI].makeWeights
+        mesh().boundary()[patchi].makeWeights
         (
-            weights.boundaryFieldRef()[patchI]
+            weights.boundaryFieldRef()[patchi]
         );
     }
 
@@ -400,36 +401,36 @@ void Foam::edgeInterpolation::makeDeltaCoeffs() const
     // Calculate skewness correction vectors if necessary
     (void) skew();
 
-    forAll(owner, edgeI)
+    forAll(owner, edgei)
     {
         // Edge normal - area normal
         vector edgeNormal =
-            normalised(lengths[edgeI] ^ edges[edgeI].vec(points));
+            normalised(lengths[edgei] ^ edges[edgei].vec(points));
 
         // Unit delta vector
         vector unitDelta =
-            faceCentres[neighbour[edgeI]]
-          - faceCentres[owner[edgeI]];
+            faceCentres[neighbour[edgei]]
+          - faceCentres[owner[edgei]];
 
         unitDelta.removeCollinear(edgeNormal);
         unitDelta.normalise();
 
 
-        const vector& skewCorrEdge = skewCorr(edgeI);
+        const vector& skewCorrEdge = skewCorr(edgei);
 
         scalar lPE =
             mag
             (
-                edgeCentres[edgeI]
+                edgeCentres[edgei]
               - skewCorrEdge
-              - faceCentres[owner[edgeI]]
+              - faceCentres[owner[edgei]]
             );
 
         scalar lEN =
             mag
             (
-                faceCentres[neighbour[edgeI]]
-              - edgeCentres[edgeI]
+                faceCentres[neighbour[edgei]]
+              - edgeCentres[edgei]
               + skewCorrEdge
             );
 
@@ -437,22 +438,22 @@ void Foam::edgeInterpolation::makeDeltaCoeffs() const
 
 
         // Edge normal - area tangent
-        edgeNormal = normalised(lengths[edgeI]);
+        edgeNormal = normalised(lengths[edgei]);
 
         // Do not allow any mag(val) < SMALL
         const scalar alpha = lPN*(unitDelta & edgeNormal);
         if (mag(alpha) > SMALL)
         {
-            dc[edgeI] = scalar(1)/max(alpha, 0.05*lPN);
+            dc[edgei] = scalar(1)/max(alpha, 0.05*lPN);
         }
     }
 
 
-    forAll(deltaCoeffs.boundaryField(), patchI)
+    forAll(deltaCoeffs.boundaryField(), patchi)
     {
-        mesh().boundary()[patchI].makeDeltaCoeffs
+        mesh().boundary()[patchi].makeDeltaCoeffs
         (
-            deltaCoeffs.boundaryFieldRef()[patchI]
+            deltaCoeffs.boundaryFieldRef()[patchi]
         );
     }
 }
@@ -500,65 +501,67 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
 
     vectorField& CorrVecsIn = CorrVecs.primitiveFieldRef();
 
-    forAll(owner, edgeI)
+    forAll(owner, edgei)
     {
         // Edge normal - area normal
         vector edgeNormal =
-            normalised(lengths[edgeI] ^ edges[edgeI].vec(points));
+            normalised(lengths[edgei] ^ edges[edgei].vec(points));
 
         // Unit delta vector
         vector unitDelta =
-            faceCentres[neighbour[edgeI]]
-          - faceCentres[owner[edgeI]];
+            faceCentres[neighbour[edgei]]
+          - faceCentres[owner[edgei]];
 
         unitDelta.removeCollinear(edgeNormal);
         unitDelta.normalise();
 
         // Edge normal - area tangent
-        edgeNormal = normalised(lengths[edgeI]);
+        edgeNormal = normalised(lengths[edgei]);
 
         // Do not allow any mag(val) < SMALL
         const scalar alpha = unitDelta & edgeNormal;
         if (mag(alpha) > SMALL)
         {
-            deltaCoeffs[edgeI] = scalar(1)/alpha;
+            deltaCoeffs[edgei] = scalar(1)/alpha;
         }
 
         // Edge correction vector
-        CorrVecsIn[edgeI] =
+        CorrVecsIn[edgei] =
             edgeNormal
-          - deltaCoeffs[edgeI]*unitDelta;
+          - deltaCoeffs[edgei]*unitDelta;
     }
 
 
     edgeVectorField::Boundary& CorrVecsbf = CorrVecs.boundaryFieldRef();
 
-    forAll(CorrVecs.boundaryField(), patchI)
+    forAll(CorrVecs.boundaryField(), patchi)
     {
-        mesh().boundary()[patchI].makeCorrectionVectors(CorrVecsbf[patchI]);
+        mesh().boundary()[patchi].makeCorrectionVectors(CorrVecsbf[patchi]);
     }
 
-    scalar NonOrthogCoeff = 0.0;
+
+    constexpr scalar maxNonOrthoRatio = 0.1;
+    scalar nonOrthoCoeff = 0;
 
     if (owner.size() > 0)
     {
         scalarField sinAlpha(deltaCoeffs*mag(CorrVecs.internalField()));
 
-        forAll(sinAlpha, edgeI)
+        forAll(sinAlpha, edgei)
         {
-            sinAlpha[edgeI] = max(-1, min(sinAlpha[edgeI], 1));
+            sinAlpha[edgei] = max(-1, min(sinAlpha[edgei], 1));
         }
 
-        NonOrthogCoeff = max(Foam::asin(sinAlpha)*180.0/M_PI);
+        nonOrthoCoeff = max(Foam::asin(sinAlpha)*radToDeg());
     }
 
-    reduce(NonOrthogCoeff, maxOp<scalar>());
+    reduce(nonOrthoCoeff, maxOp<scalar>());
 
     DebugInFunction
-        << "non-orthogonality coefficient = " << NonOrthogCoeff << " deg."
+        << "non-orthogonality coefficient = " << nonOrthoCoeff << " deg."
         << endl;
 
-    if (NonOrthogCoeff < 0.1)
+    if (nonOrthoCoeff < maxNonOrthoRatio)
     {
         nonOrthCorrectionVectorsPtr_.reset(nullptr);
     }
@@ -610,15 +613,15 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
     const edgeList& edges = mesh().edges();
 
 
-    forAll(neighbour, edgeI)
+    forAll(neighbour, edgei)
     {
-        const vector& P = C[owner[edgeI]];
-        const vector& N = C[neighbour[edgeI]];
-        const vector& S = points[edges[edgeI].start()];
+        const vector& P = C[owner[edgei]];
+        const vector& N = C[neighbour[edgei]];
+        const vector& S = points[edges[edgei].start()];
 
         // (T:Eq. 5.4)
         const vector d(N - P);
-        const vector e(edges[edgeI].vec(points));
+        const vector e(edges[edgei].vec(points));
         const vector de(d^e);
         const scalar alpha = magSqr(de);
 
@@ -632,36 +635,36 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
         // (T:Eq. 5.3)
         const vector E(S + beta*e);
 
-        skewCorrVecs[edgeI] = Ce[edgeI] - E;
+        skewCorrVecs[edgei] = Ce[edgei] - E;
     }
 
 
     edgeVectorField::Boundary& bSkewCorrVecs =
         skewCorrVecs.boundaryFieldRef();
 
-    forAll(skewCorrVecs.boundaryField(), patchI)
+    forAll(skewCorrVecs.boundaryField(), patchi)
     {
-        faePatchVectorField& patchSkewCorrVecs = bSkewCorrVecs[patchI];
+        faePatchVectorField& patchSkewCorrVecs = bSkewCorrVecs[patchi];
 
         if (patchSkewCorrVecs.coupled())
         {
             const labelUList& edgeFaces =
-                mesh().boundary()[patchI].edgeFaces();
+                mesh().boundary()[patchi].edgeFaces();
 
             const edgeList::subList patchEdges =
-                mesh().boundary()[patchI].patchSlice(edges);
+                mesh().boundary()[patchi].patchSlice(edges);
 
-            vectorField ngbC(C.boundaryField()[patchI].patchNeighbourField());
+            vectorField ngbC(C.boundaryField()[patchi].patchNeighbourField());
 
-            forAll(patchSkewCorrVecs, edgeI)
+            forAll(patchSkewCorrVecs, edgei)
             {
-                const vector& P = C[edgeFaces[edgeI]];
-                const vector& N = ngbC[edgeI];
-                const vector& S = points[patchEdges[edgeI].start()];
+                const vector& P = C[edgeFaces[edgei]];
+                const vector& N = ngbC[edgei];
+                const vector& S = points[patchEdges[edgei].start()];
 
                 // (T:Eq. 5.4)
                 const vector d(N - P);
-                const vector e(patchEdges[edgeI].vec(points));
+                const vector e(patchEdges[edgei].vec(points));
                 const vector de(d^e);
                 const scalar alpha = magSqr(de);
 
@@ -674,8 +677,8 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
 
                 const vector E(S + beta*e);
 
-                patchSkewCorrVecs[edgeI] =
-                    Ce.boundaryField()[patchI][edgeI] - E;
+                patchSkewCorrVecs[edgei] =
+                    Ce.boundaryField()[patchi][edgei] - E;
             }
         }
     }
@@ -685,22 +688,22 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
     constexpr scalar maxSkewRatio = 0.1;
     scalar skewCoeff = 0;
 
-    forAll(own, edgeI)
+    forAll(own, edgei)
     {
-        const scalar magSkew = mag(skewCorrVecs[edgeI]);
+        const scalar magSkew = mag(skewCorrVecs[edgei]);
 
         const scalar lPN =
             mag
             (
-                Ce[edgeI]
-              - skewCorrVecs[edgeI]
-              - C[owner[edgeI]]
+                Ce[edgei]
+              - skewCorrVecs[edgei]
+              - C[owner[edgei]]
             )
           + mag
             (
-                C[neighbour[edgeI]]
-              - Ce[edgeI]
-              + skewCorrVecs[edgeI]
+                C[neighbour[edgei]]
+              - Ce[edgei]
+              + skewCorrVecs[edgei]
             );
 
         const scalar ratio = magSkew/lPN;

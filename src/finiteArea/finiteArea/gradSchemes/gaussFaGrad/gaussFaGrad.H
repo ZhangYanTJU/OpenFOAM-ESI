@@ -62,8 +62,9 @@ class gaussGrad
 :
     public fa::gradScheme<Type>
 {
-    // Private data
+    // Private Data
 
+        //- Edge-interpolation scheme
         tmp<edgeInterpolationScheme<Type>> tinterpScheme_;
 
 

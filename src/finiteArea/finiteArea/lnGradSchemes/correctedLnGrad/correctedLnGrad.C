@@ -59,19 +59,16 @@ correctedLnGrad<Type>::correction
 {
     const faMesh& mesh = this->mesh();
 
-    tmp<GeometricField<Type, faePatchField, edgeMesh>> tssf
+    auto tssf = tmp<GeometricField<Type, faePatchField, edgeMesh>>::New
     (
-        new GeometricField<Type, faePatchField, edgeMesh>
+        IOobject
         (
-            IOobject
-            (
-                "lnGradCorr("+vf.name()+')',
-                vf.instance(),
-                vf.db()
-            ),
-            mesh,
-            vf.dimensions()*mesh.deltaCoeffs().dimensions()
-        )
+            "lnGradCorr("+vf.name()+')',
+            vf.instance(),
+            vf.db()
+        ),
+        mesh,
+        vf.dimensions()*mesh.deltaCoeffs().dimensions()
     );
     GeometricField<Type, faePatchField, edgeMesh>& ssf = tssf.ref();
 

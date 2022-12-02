@@ -63,22 +63,19 @@ leastSquaresFaGrad<Type>::grad
 
     const faMesh& mesh = vsf.mesh();
 
-    tmp<GeometricField<GradType, faPatchField, areaMesh>> tlsGrad
+    auto tlsGrad = tmp<GeometricField<GradType, faPatchField, areaMesh>>::New
     (
-        new GeometricField<GradType, faPatchField, areaMesh>
+        IOobject
         (
-            IOobject
-            (
-                "grad(" + vsf.name() + ')',
-                vsf.instance(),
-                vsf.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensioned<GradType>(vsf.dimensions()/dimLength, Zero),
-            zeroGradientFaPatchField<GradType>::typeName
-        )
+            "grad(" + vsf.name() + ')',
+            vsf.instance(),
+            vsf.db(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        dimensioned<GradType>(vsf.dimensions()/dimLength, Zero),
+        zeroGradientFaPatchField<GradType>::typeName
     );
     GeometricField<GradType, faPatchField, areaMesh>& lsGrad = tlsGrad.ref();
 
@@ -93,10 +90,10 @@ leastSquaresFaGrad<Type>::grad
 
     forAll(own, edgei)
     {
-        label ownEdgeI = own[edgei];
-        label neiEdgeI = nei[edgei];
+        const label ownEdgeI = own[edgei];
+        const label neiEdgeI = nei[edgei];
 
-        Type deltaVsf = vsf[neiEdgeI] - vsf[ownEdgeI];
+        const Type deltaVsf(vsf[neiEdgeI] - vsf[ownEdgeI]);
 
         lsGrad[ownEdgeI] += ownLs[edgei]*deltaVsf;
         lsGrad[neiEdgeI] -= neiLs[edgei]*deltaVsf;
@@ -112,7 +109,7 @@ leastSquaresFaGrad<Type>::grad
 
         if (vsf.boundaryField()[patchi].coupled())
         {
-            Field<Type> neiVsf
+            const Field<Type> neiVsf
             (
                 vsf.boundaryField()[patchi].patchNeighbourField()
             );

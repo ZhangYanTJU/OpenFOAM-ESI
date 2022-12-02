@@ -97,19 +97,19 @@ tmp<areaVectorField> edgeLimitedGrad<scalar>::grad
     // create limiter
     scalarField limiter(vsf.internalField().size(), 1.0);
 
-    scalar rk = (1.0/k_ - 1.0);
+    const scalar rk = (1.0/k_ - 1.0);
 
     forAll(owner, edgei)
     {
-        label own = owner[edgei];
-        label nei = neighbour[edgei];
+        const label own = owner[edgei];
+        const label nei = neighbour[edgei];
 
-        scalar vsfOwn = vsf[own];
-        scalar vsfNei = vsf[nei];
+        const scalar vsfOwn = vsf[own];
+        const scalar vsfNei = vsf[nei];
 
         scalar maxEdge = max(vsfOwn, vsfNei);
         scalar minEdge = min(vsfOwn, vsfNei);
-        scalar maxMinEdge = rk*(maxEdge - minEdge);
+        const scalar maxMinEdge = rk*(maxEdge - minEdge);
         maxEdge += maxMinEdge;
         minEdge -= maxMinEdge;
 
@@ -145,14 +145,14 @@ tmp<areaVectorField> edgeLimitedGrad<scalar>::grad
 
             forAll(pOwner, pEdgei)
             {
-                label own = pOwner[pEdgei];
+                const label own = pOwner[pEdgei];
 
-                scalar vsfOwn = vsf[own];
-                scalar vsfNei = psfNei[pEdgei];
+                const scalar vsfOwn = vsf[own];
+                const scalar vsfNei = psfNei[pEdgei];
 
                 scalar maxEdge = max(vsfOwn, vsfNei);
                 scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
+                const scalar maxMinEdge = rk*(maxEdge - minEdge);
                 maxEdge += maxMinEdge;
                 minEdge -= maxMinEdge;
 
@@ -168,14 +168,14 @@ tmp<areaVectorField> edgeLimitedGrad<scalar>::grad
         {
             forAll(pOwner, pEdgei)
             {
-                label own = pOwner[pEdgei];
+                const label own = pOwner[pEdgei];
 
-                scalar vsfOwn = vsf[own];
-                scalar vsfNei = psf[pEdgei];
+                const scalar vsfOwn = vsf[own];
+                const scalar vsfNei = psf[pEdgei];
 
                 scalar maxEdge = max(vsfOwn, vsfNei);
                 scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
+                const scalar maxMinEdge = rk*(maxEdge - minEdge);
                 maxEdge += maxMinEdge;
                 minEdge -= maxMinEdge;
 
@@ -231,25 +231,25 @@ tmp<areaTensorField> edgeLimitedGrad<vector>::grad
     // create limiter
     scalarField limiter(vvf.internalField().size(), 1.0);
 
-    scalar rk = (1.0/k_ - 1.0);
+    const scalar rk = (1.0/k_ - 1.0);
 
     forAll(owner, edgei)
     {
-        label own = owner[edgei];
-        label nei = neighbour[edgei];
+        const label own = owner[edgei];
+        const label nei = neighbour[edgei];
 
-        vector vvfOwn = vvf[own];
-        vector vvfNei = vvf[nei];
+        const vector vvfOwn(vvf[own]);
+        const vector vvfNei(vvf[nei]);
 
         // owner side
-        vector gradf = (Cf[edgei] - C[own]) & g[own];
+        vector gradf((Cf[edgei] - C[own]) & g[own]);
 
         scalar vsfOwn = gradf & vvfOwn;
         scalar vsfNei = gradf & vvfNei;
 
         scalar maxEdge = max(vsfOwn, vsfNei);
         scalar minEdge = min(vsfOwn, vsfNei);
-        scalar maxMinEdge = rk*(maxEdge - minEdge);
+        const scalar maxMinEdge = rk*(maxEdge - minEdge);
         maxEdge += maxMinEdge;
         minEdge -= maxMinEdge;
 
@@ -294,19 +294,19 @@ tmp<areaTensorField> edgeLimitedGrad<vector>::grad
 
             forAll(pOwner, pEdgei)
             {
-                label own = pOwner[pEdgei];
+                const label own = pOwner[pEdgei];
 
-                vector vvfOwn = vvf[own];
-                vector vvfNei = psfNei[pEdgei];
+                const vector vvfOwn(vvf[own]);
+                const vector vvfNei(psfNei[pEdgei]);
 
-                vector gradf = (pCf[pEdgei] - C[own]) & g[own];
+                const vector gradf((pCf[pEdgei] - C[own]) & g[own]);
 
-                scalar vsfOwn = gradf & vvfOwn;
-                scalar vsfNei = gradf & vvfNei;
+                const scalar vsfOwn = gradf & vvfOwn;
+                const scalar vsfNei = gradf & vvfNei;
 
                 scalar maxEdge = max(vsfOwn, vsfNei);
                 scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
+                const scalar maxMinEdge = rk*(maxEdge - minEdge);
                 maxEdge += maxMinEdge;
                 minEdge -= maxMinEdge;
 
@@ -322,19 +322,19 @@ tmp<areaTensorField> edgeLimitedGrad<vector>::grad
         {
             forAll(pOwner, pEdgei)
             {
-                label own = pOwner[pEdgei];
+                const label own = pOwner[pEdgei];
 
-                vector vvfOwn = vvf[own];
-                vector vvfNei = psf[pEdgei];
+                const vector vvfOwn(vvf[own]);
+                const vector vvfNei(psf[pEdgei]);
 
-                vector gradf = (pCf[pEdgei] - C[own]) & g[own];
+                const vector gradf((pCf[pEdgei] - C[own]) & g[own]);
 
-                scalar vsfOwn = gradf & vvfOwn;
-                scalar vsfNei = gradf & vvfNei;
+                const scalar vsfOwn = gradf & vvfOwn;
+                const scalar vsfNei = gradf & vvfNei;
 
                 scalar maxEdge = max(vsfOwn, vsfNei);
                 scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
+                const scalar maxMinEdge = rk*(maxEdge - minEdge);
                 maxEdge += maxMinEdge;
                 minEdge -= maxMinEdge;
 

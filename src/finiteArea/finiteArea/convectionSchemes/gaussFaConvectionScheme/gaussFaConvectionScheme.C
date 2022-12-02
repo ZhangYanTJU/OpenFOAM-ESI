@@ -64,13 +64,10 @@ gaussConvectionScheme<Type>::famDiv
     tmp<edgeScalarField> tweights = tinterpScheme_().weights(vf);
     const edgeScalarField& weights = tweights();
 
-    tmp<faMatrix<Type>> tfam
+    auto tfam = tmp<faMatrix<Type>>::New
     (
-        new faMatrix<Type>
-        (
-            vf,
-            faceFlux.dimensions()*vf.dimensions()
-        )
+        vf,
+        faceFlux.dimensions()*vf.dimensions()
     );
     faMatrix<Type>& fam = tfam.ref();
 

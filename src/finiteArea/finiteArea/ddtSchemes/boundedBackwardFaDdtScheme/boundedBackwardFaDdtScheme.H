@@ -76,10 +76,8 @@ class boundedBackwardFaDdtScheme
             {
                 return GREAT;
             }
-            else
-            {
-                return deltaT0_();
-            }
+
+            return deltaT0_();
         }
 
 
@@ -114,7 +112,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
+        const faMesh& mesh() const noexcept
         {
             return fa::faDdtScheme<scalar>::mesh();
         }

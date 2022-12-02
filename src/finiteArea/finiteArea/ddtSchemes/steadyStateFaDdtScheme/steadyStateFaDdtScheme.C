@@ -180,16 +180,11 @@ steadyStateFaDdtScheme<Type>::famDdt
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    tmp<faMatrix<Type>> tfam
+    return tmp<faMatrix<Type>>::New
     (
-        new faMatrix<Type>
-        (
-            vf,
-            vf.dimensions()*dimArea/dimTime
-        )
+        vf,
+        vf.dimensions()*dimArea/dimTime
     );
-
-    return tfam;
 }
 
 
@@ -201,16 +196,11 @@ steadyStateFaDdtScheme<Type>::famDdt
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    tmp<faMatrix<Type>> tfam
+    return tmp<faMatrix<Type>>::New
     (
-        new faMatrix<Type>
-        (
-            vf,
-            rho.dimensions()*vf.dimensions()*dimArea/dimTime
-        )
+        vf,
+        rho.dimensions()*vf.dimensions()*dimArea/dimTime
     );
-
-    return tfam;
 }
 
 
@@ -222,16 +212,11 @@ steadyStateFaDdtScheme<Type>::famDdt
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    tmp<faMatrix<Type>> tfam
+    return tmp<faMatrix<Type>>::New
     (
-        new faMatrix<Type>
-        (
-            vf,
-            rho.dimensions()*vf.dimensions()*dimArea/dimTime
-        )
+        vf,
+        rho.dimensions()*vf.dimensions()*dimArea/dimTime
     );
-
-    return tfam;
 }
 
 

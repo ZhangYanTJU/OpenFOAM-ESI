@@ -48,6 +48,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class faMesh;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -64,7 +65,7 @@ class lnGradScheme
 :
     public refCount
 {
-    // Private data
+    // Private Data
 
         //- Hold reference to mesh
         const faMesh& mesh_;
@@ -116,10 +117,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         //- Return the lnGrad of the given cell field
         //  with the given weighting factors
@@ -138,10 +136,7 @@ public:
         ) const = 0;
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
-        {
-            return false;
-        }
+        virtual bool corrected() const noexcept { return false; }
 
         //- Return the explicit correction to the lnGrad
         //  for the given field

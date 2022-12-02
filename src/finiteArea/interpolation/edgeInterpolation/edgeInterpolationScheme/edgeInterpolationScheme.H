@@ -48,6 +48,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class faMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -59,9 +60,9 @@ class edgeInterpolationScheme
 :
     public refCount
 {
-    // Private data
+    // Private Data
 
-        //- Hold reference to mesh
+        //- Reference to the mesh
         const faMesh& mesh_;
 
 
@@ -136,10 +137,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
 
         //- Return the face-interpolate of the given cell field

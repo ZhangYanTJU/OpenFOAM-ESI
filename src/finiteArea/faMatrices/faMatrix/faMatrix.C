@@ -49,7 +49,7 @@ void Foam::faMatrix<Type>::addToInternalField
     {
         FatalErrorInFunction
             << "addressing (" << addr.size()
-            << ") and field (" << pf.size() << ") are different sizes" << endl
+            << ") and field (" << pf.size() << ") are different sizes"
             << abort(FatalError);
     }
 
@@ -87,7 +87,7 @@ void Foam::faMatrix<Type>::subtractFromInternalField
     {
         FatalErrorInFunction
             << "addressing (" << addr.size()
-            << ") and field (" << pf.size() << ") are different sizes" << endl
+            << ") and field (" << pf.size() << ") are different sizes"
             << abort(FatalError);
     }
 

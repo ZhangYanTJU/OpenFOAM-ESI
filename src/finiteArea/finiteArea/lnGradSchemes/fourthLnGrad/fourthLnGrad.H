@@ -102,10 +102,7 @@ public:
         }
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
-        {
-            return true;
-        }
+        virtual bool corrected() const noexcept { return true; }
 
         //- Return the explicit correction to the fourthLnGrad
         //  for the given field

@@ -102,7 +102,7 @@ public:
         }
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
+        virtual bool corrected() const noexcept
         {
             return !this->mesh().orthogonal();
         }

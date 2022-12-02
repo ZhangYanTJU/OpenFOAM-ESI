@@ -54,7 +54,11 @@ namespace Foam
 
 class GammaWeight
 {
-    scalar k_;
+    // Private Data
+
+        //- Model coefficient [0,1]
+        scalar k_;
+
 
 public:
 
@@ -72,7 +76,7 @@ public:
 
         // Rescale k_ to be >= 0 and <= 0.5 (TVD conformant)
         // and avoid the /0 when k_ = 0
-        k_ = max(k_/2.0, SMALL);
+        k_ = max(0.5*k_, SMALL);
     }
 
 
@@ -87,10 +91,7 @@ public:
         const vector& d
     ) const
     {
-        scalar magd = mag(d);
-        vector dHat = d/mag(d);
-
-        scalar gradf = (phiN - phiP)/magd;
+        const vector dHat(normalised(d));
 
         scalar gradcf;
         scalar udWeight;
@@ -109,8 +110,10 @@ public:
         // Stabilise for division
         gradcf = stabilise(gradcf, SMALL);
 
-        scalar phict = 1 - 0.5*gradf/gradcf;
-        scalar limiter = min(max(phict/k_, 0), 1);
+        const scalar gradf = (phiN - phiP)/mag(d);
+
+        const scalar phict = 1 - 0.5*gradf/gradcf;
+        const scalar limiter = min(max(phict/k_, 0), 1);
 
         return limiter*cdWeight + (1 - limiter)*udWeight;
     }

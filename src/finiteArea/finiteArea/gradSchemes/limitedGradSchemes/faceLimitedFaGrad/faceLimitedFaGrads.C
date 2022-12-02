@@ -121,11 +121,11 @@ tmp<areaVectorField> faceLimitedGrad<scalar>::grad
 
     forAll(owner, facei)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
-        scalar vsfOwn = vsf[own];
-        scalar vsfNei = vsf[nei];
+        const scalar vsfOwn = vsf[own];
+        const scalar vsfNei = vsf[nei];
 
         maxVsf[own] = max(maxVsf[own], vsfNei);
         minVsf[own] = min(minVsf[own], vsfNei);
@@ -149,8 +149,8 @@ tmp<areaVectorField> faceLimitedGrad<scalar>::grad
 
             forAll(pOwner, pFacei)
             {
-                label own = pOwner[pFacei];
-                scalar vsfNei = psfNei[pFacei];
+                const label own = pOwner[pFacei];
+                const scalar vsfNei = psfNei[pFacei];
 
                 maxVsf[own] = max(maxVsf[own], vsfNei);
                 minVsf[own] = min(minVsf[own], vsfNei);
@@ -160,8 +160,8 @@ tmp<areaVectorField> faceLimitedGrad<scalar>::grad
         {
             forAll(pOwner, pFacei)
             {
-                label own = pOwner[pFacei];
-                scalar vsfNei = psf[pFacei];
+                const label own = pOwner[pFacei];
+                const scalar vsfNei = psf[pFacei];
 
                 maxVsf[own] = max(maxVsf[own], vsfNei);
                 minVsf[own] = min(minVsf[own], vsfNei);
@@ -174,7 +174,7 @@ tmp<areaVectorField> faceLimitedGrad<scalar>::grad
 
     if (k_ < 1.0)
     {
-        scalarField maxMinVsf((1.0/k_ - 1.0)*(maxVsf - minVsf));
+        const scalarField maxMinVsf((1.0/k_ - 1.0)*(maxVsf - minVsf));
         maxVsf += maxMinVsf;
         minVsf -= maxMinVsf;
     }
@@ -185,8 +185,8 @@ tmp<areaVectorField> faceLimitedGrad<scalar>::grad
 
     forAll(owner, facei)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
         // owner side
         limitEdge
@@ -214,7 +214,7 @@ tmp<areaVectorField> faceLimitedGrad<scalar>::grad
 
         forAll(pOwner, pFacei)
         {
-            label own = pOwner[pFacei];
+            const label own = pOwner[pFacei];
 
             limitEdge
             (
@@ -270,8 +270,8 @@ tmp<areaTensorField> faceLimitedGrad<vector>::grad
 
     forAll(owner, facei)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
         const vector& vsfOwn = vsf[own];
         const vector& vsfNei = vsf[nei];
@@ -293,11 +293,11 @@ tmp<areaTensorField> faceLimitedGrad<vector>::grad
 
         if (psf.coupled())
         {
-            vectorField psfNei(psf.patchNeighbourField());
+            const vectorField psfNei(psf.patchNeighbourField());
 
             forAll(pOwner, pFacei)
             {
-                label own = pOwner[pFacei];
+                const label own = pOwner[pFacei];
                 const vector& vsfNei = psfNei[pFacei];
 
                 maxVsf[own] = max(maxVsf[own], vsfNei);
@@ -308,7 +308,7 @@ tmp<areaTensorField> faceLimitedGrad<vector>::grad
         {
             forAll(pOwner, pFacei)
             {
-                label own = pOwner[pFacei];
+                const label own = pOwner[pFacei];
                 const vector& vsfNei = psf[pFacei];
 
                 maxVsf[own] = max(maxVsf[own], vsfNei);
@@ -322,7 +322,7 @@ tmp<areaTensorField> faceLimitedGrad<vector>::grad
 
     if (k_ < 1.0)
     {
-        vectorField maxMinVsf((1.0/k_ - 1.0)*(maxVsf - minVsf));
+        const vectorField maxMinVsf((1.0/k_ - 1.0)*(maxVsf - minVsf));
         maxVsf += maxMinVsf;
         minVsf -= maxMinVsf;
 
@@ -336,8 +336,8 @@ tmp<areaTensorField> faceLimitedGrad<vector>::grad
 
     forAll(owner, facei)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
         // owner side
         limitEdge
@@ -365,7 +365,7 @@ tmp<areaTensorField> faceLimitedGrad<vector>::grad
 
         forAll(pOwner, pFacei)
         {
-            label own = pOwner[pFacei];
+            const label own = pOwner[pFacei];
 
             limitEdge
             (

@@ -101,10 +101,7 @@ public:
         }
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
-        {
-            return false;
-        }
+        virtual bool corrected() const noexcept { return false; }
 
         //- Return the explicit correction to the uncorrectedLnGrad
         //- for the given field

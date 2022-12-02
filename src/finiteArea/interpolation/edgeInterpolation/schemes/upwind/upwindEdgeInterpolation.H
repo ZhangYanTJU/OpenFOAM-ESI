@@ -55,8 +55,9 @@ class upwindEdgeInterpolation
 :
     virtual public edgeInterpolationScheme<Type>
 {
-    // Private data
+    // Private Data
 
+        //- Face flux
         const edgeScalarField& faceFlux_;
 
 

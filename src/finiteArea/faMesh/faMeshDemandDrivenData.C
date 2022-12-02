@@ -1852,14 +1852,14 @@ void Foam::faMesh::calcPointAreaNormalsByQuadricsFit(vectorField& result) const
     }
 
 
-    forAll(boundary(), patchI)
+    forAll(boundary(), patchi)
     {
-        const faPatch& fap = boundary()[patchI];
+        const faPatch& fap = boundary()[patchi];
 
         if (Pstream::parRun() && isA<processorFaPatch>(fap))
         {
             const processorFaPatch& procPatch =
-                refCast<const processorFaPatch>(boundary()[patchI]);
+                refCast<const processorFaPatch>(boundary()[patchi]);
 
             const labelList& patchPointLabels = procPatch.pointLabels();
 

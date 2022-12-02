@@ -56,8 +56,9 @@ class blendedEdgeInterpolation
     public linearEdgeInterpolation<Type>,
     public upwindEdgeInterpolation<Type>
 {
-    // Private data
+    // Private Data
 
+        //- Blending factor
         const scalar blendingFactor_;
 
 

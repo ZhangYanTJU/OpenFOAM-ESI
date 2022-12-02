@@ -106,22 +106,18 @@ lnGradScheme<Type>::lnGrad
 {
     const faMesh& mesh = vf.mesh();
 
-    // construct GeometricField<Type, faePatchField, edgeMesh>
-    tmp<GeometricField<Type, faePatchField, edgeMesh>> tssf
+    auto tssf = tmp<GeometricField<Type, faePatchField, edgeMesh>>::New
     (
-        new GeometricField<Type, faePatchField, edgeMesh>
+        IOobject
         (
-            IOobject
-            (
-                lnGradName + "("+vf.name()+')',
-                vf.instance(),
-                vf.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            vf.dimensions()*tdeltaCoeffs().dimensions()
-        )
+            lnGradName + "("+vf.name()+')',
+            vf.instance(),
+            vf.db(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        vf.dimensions()*tdeltaCoeffs().dimensions()
     );
     GeometricField<Type, faePatchField, edgeMesh>& ssf = tssf.ref();
 
@@ -132,17 +128,17 @@ lnGradScheme<Type>::lnGrad
     const labelUList& owner = mesh.owner();
     const labelUList& neighbour = mesh.neighbour();
 
-    forAll(owner, faceI)
+    forAll(owner, facei)
     {
-        ssf[faceI] =
-            deltaCoeffs[faceI]*(vf[neighbour[faceI]] - vf[owner[faceI]]);
+        ssf[facei] =
+            deltaCoeffs[facei]*(vf[neighbour[facei]] - vf[owner[facei]]);
     }
 
     auto& ssfb = ssf.boundaryFieldRef();
 
-    forAll(vf.boundaryField(), patchI)
+    forAll(vf.boundaryField(), patchi)
     {
-        ssfb[patchI] = vf.boundaryField()[patchI].snGrad();
+        ssfb[patchi] = vf.boundaryField()[patchi].snGrad();
     }
 
     return tssf;

@@ -62,9 +62,9 @@ Foam::tmp<Foam::edgeScalarField> Foam::faNVDscheme<Type,NVDweight>::weights
 {
     const faMesh& mesh = this->mesh();
 
-    tmp<edgeScalarField> tWeightingFactors
+    auto tWeightingFactors = tmp<edgeScalarField>::New
     (
-        new edgeScalarField(mesh.edgeInterpolation::weights())
+        mesh.edgeInterpolation::weights()
     );
     edgeScalarField& weightingFactors = tWeightingFactors.ref();
 
@@ -73,7 +73,8 @@ Foam::tmp<Foam::edgeScalarField> Foam::faNVDscheme<Type,NVDweight>::weights
     tmp<areaScalarField> tvf = limiter(phi);
     const areaScalarField& vf = tvf();
 
-    const areaVectorField gradc(fac::grad(vf));
+    tmp<areaVectorField> tgradc = fac::grad(vf);
+    const areaVectorField& gradc = tgradc.cref();
 
 //     edgeVectorField d
 //     (
@@ -130,70 +131,70 @@ Foam::tmp<Foam::edgeScalarField> Foam::faNVDscheme<Type,NVDweight>::weights
 
     auto& bWeights = weightingFactors.boundaryFieldRef();
 
-    forAll(bWeights, patchI)
+    forAll(bWeights, patchi)
     {
-        if (bWeights[patchI].coupled())
+        if (bWeights[patchi].coupled())
         {
-            scalarField& pWeights = bWeights[patchI];
+            scalarField& pWeights = bWeights[patchi];
 
-            const scalarField& pEdgeFlux = edgeFlux_.boundaryField()[patchI];
+            const scalarField& pEdgeFlux = edgeFlux_.boundaryField()[patchi];
 
-            scalarField pVfP(vf.boundaryField()[patchI].patchInternalField());
+            scalarField pVfP(vf.boundaryField()[patchi].patchInternalField());
 
-            scalarField pVfN(vf.boundaryField()[patchI].patchNeighbourField());
+            scalarField pVfN(vf.boundaryField()[patchi].patchNeighbourField());
 
             vectorField pGradcP
             (
-                gradc.boundaryField()[patchI].patchInternalField()
+                gradc.boundaryField()[patchi].patchInternalField()
             );
 
             vectorField pGradcN
             (
-                gradc.boundaryField()[patchI].patchNeighbourField()
+                gradc.boundaryField()[patchi].patchNeighbourField()
             );
 
             vectorField CP
             (
-                mesh.areaCentres().boundaryField()[patchI].patchInternalField()
+                mesh.areaCentres().boundaryField()[patchi].patchInternalField()
             );
 
             vectorField CN
             (
-                mesh.areaCentres().boundaryField()[patchI]
+                mesh.areaCentres().boundaryField()[patchi]
                 .patchNeighbourField()
             );
 
             vectorField nP
             (
-                mesh.faceAreaNormals().boundaryField()[patchI]
+                mesh.faceAreaNormals().boundaryField()[patchi]
                .patchInternalField()
             );
 
             vectorField nN
             (
-                mesh.faceAreaNormals().boundaryField()[patchI]
+                mesh.faceAreaNormals().boundaryField()[patchi]
                .patchNeighbourField()
             );
 
             scalarField pLPN
             (
-                mesh.edgeInterpolation::lPN().boundaryField()[patchI]
+                mesh.edgeInterpolation::lPN().boundaryField()[patchi]
             );
 
-            forAll(pWeights, edgeI)
+            forAll(pWeights, edgei)
             {
-                vector d(CN[edgeI] - CP[edgeI]);
+                vector d(CN[edgei] - CP[edgei]);
 
-                if (pEdgeFlux[edgeI] > 0)
+                if (pEdgeFlux[edgei] > 0)
                 {
-                    d.removeCollinear(nP[edgeI]);
+                    d.removeCollinear(nP[edgei]);
                 }
                 else
                 {
-                    d.removeCollinear(nN[edgeI]);
+                    d.removeCollinear(nN[edgei]);
                 }
                 d.normalise();
-                d *= pLPN[edgeI];
+                d *= pLPN[edgei];
 
                 // Do not allow any mag(val) < SMALL
                 if (mag(d) < SMALL)
@@ -201,15 +202,15 @@ Foam::tmp<Foam::edgeScalarField> Foam::faNVDscheme<Type,NVDweight>::weights
                     d = vector::uniform(SMALL);
                 }
 
-                pWeights[edgeI] =
+                pWeights[edgei] =
                     this->weight
                     (
-                        pWeights[edgeI],
-                        pEdgeFlux[edgeI],
-                        pVfP[edgeI],
-                        pVfN[edgeI],
-                        pGradcP[edgeI],
-                        pGradcN[edgeI],
+                        pWeights[edgei],
+                        pEdgeFlux[edgei],
+                        pVfP[edgei],
+                        pVfN[edgei],
+                        pGradcP[edgei],
+                        pGradcN[edgei],
                         d
                     );
             }

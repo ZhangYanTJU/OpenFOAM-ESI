@@ -49,6 +49,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class faMesh;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -65,8 +66,9 @@ class gradScheme
 :
     public refCount
 {
-    // Private data
+    // Private Data
 
+        //- Reference to the mesh
         const faMesh& mesh_;
 
 
@@ -119,10 +121,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         //- Calculate and return the grad of the given field
         virtual tmp

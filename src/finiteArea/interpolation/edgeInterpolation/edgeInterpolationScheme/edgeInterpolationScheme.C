@@ -163,19 +163,16 @@ Foam::edgeInterpolationScheme<Type>::interpolate
     const labelUList& P = mesh.owner();
     const labelUList& N = mesh.neighbour();
 
-    tmp<GeometricField<Type, faePatchField, edgeMesh>> tsf
+    auto tsf = tmp<GeometricField<Type, faePatchField, edgeMesh>>::New
     (
-        new GeometricField<Type, faePatchField, edgeMesh>
+        IOobject
         (
-            IOobject
-            (
-                "interpolate("+vf.name()+')',
-                vf.instance(),
-                vf.db()
-            ),
-            mesh,
-            vf.dimensions()
-        )
+            "interpolate("+vf.name()+')',
+            vf.instance(),
+            vf.db()
+        ),
+        mesh,
+        vf.dimensions()
     );
     GeometricField<Type, faePatchField, edgeMesh>& sf = tsf.ref();
 
@@ -208,8 +205,8 @@ Foam::edgeInterpolationScheme<Type>::interpolate
 
         if (vf.boundaryField()[pi].coupled())
         {
-            label size = vf.boundaryField()[pi].patch().size();
-            label start = vf.boundaryField()[pi].patch().start();
+            const label size = vf.boundaryField()[pi].patch().size();
+            const label start = vf.boundaryField()[pi].patch().start();
 
             Field<Type> pOwnVf = vf.boundaryField()[pi].patchInternalField();
             Field<Type> pNgbVf = vf.boundaryField()[pi].patchNeighbourField();
@@ -233,10 +230,6 @@ Foam::edgeInterpolationScheme<Type>::interpolate
                       + pY[i]*transform(TN, pNgbVf[i])
                     );
             }
-
-//             sf.boundaryFieldRef()[pi] =
-//                 pLambda*vf.boundaryField()[pi].patchInternalField()
-//               + pY*vf.boundaryField()[pi].patchNeighbourField();
         }
         else
         {
@@ -279,19 +272,16 @@ Foam::edgeInterpolationScheme<Type>::interpolate
     const labelUList& P = mesh.owner();
     const labelUList& N = mesh.neighbour();
 
-    tmp<GeometricField<Type, faePatchField, edgeMesh>> tsf
+    auto tsf = tmp<GeometricField<Type, faePatchField, edgeMesh>>::New
     (
-        new GeometricField<Type, faePatchField, edgeMesh>
+        IOobject
         (
-            IOobject
-            (
-                "interpolate("+vf.name()+')',
-                vf.instance(),
-                vf.db()
-            ),
-            mesh,
-            vf.dimensions()
-        )
+            "interpolate("+vf.name()+')',
+            vf.instance(),
+            vf.db()
+        ),
+        mesh,
+        vf.dimensions()
     );
     GeometricField<Type, faePatchField, edgeMesh>& sf = tsf.ref();
 
@@ -325,8 +315,8 @@ Foam::edgeInterpolationScheme<Type>::interpolate
 
         if (vf.boundaryField()[pi].coupled())
         {
-            label size = vfb[pi].patch().size();
-            label start = vfb[pi].patch().start();
+            const label size = vfb[pi].patch().size();
+            const label start = vfb[pi].patch().start();
 
             Field<Type> pOwnVf(vfb[pi].patchInternalField());
             Field<Type> pNgbVf(vfb[pi].patchNeighbourField());
@@ -350,10 +340,6 @@ Foam::edgeInterpolationScheme<Type>::interpolate
                       + (1 - pLambda[i])*transform(TN, pNgbVf[i])
                     );
             }
-
-//             tsf().boundaryFieldRef()[pi] =
-//                 pLambda*vf.boundaryField()[pi].patchInternalField()
-//              + (1 - pLambda)*vf.boundaryField()[pi].patchNeighbourField();
         }
         else
         {
@@ -395,19 +381,16 @@ Foam::edgeInterpolationScheme<Type>::euclidianInterpolate
     const labelUList& P = mesh.owner();
     const labelUList& N = mesh.neighbour();
 
-    tmp<GeometricField<Type, faePatchField, edgeMesh>> tsf
+    auto tsf = tmp<GeometricField<Type, faePatchField, edgeMesh>>::New
     (
-        new GeometricField<Type, faePatchField, edgeMesh>
+        IOobject
         (
-            IOobject
-            (
-                "interpolate("+vf.name()+')',
-                vf.instance(),
-                vf.db()
-            ),
-            mesh,
-            vf.dimensions()
-        )
+            "interpolate("+vf.name()+')',
+            vf.instance(),
+            vf.db()
+        ),
+        mesh,
+        vf.dimensions()
     );
     GeometricField<Type, faePatchField, edgeMesh>& sf = tsf.ref();
 

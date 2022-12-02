@@ -24,9 +24,6 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    Abstract base class for finite area d2dt2 schemes.
-
 \*---------------------------------------------------------------------------*/
 
 #include "fa.H"

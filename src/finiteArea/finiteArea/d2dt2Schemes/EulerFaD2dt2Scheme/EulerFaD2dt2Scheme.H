@@ -98,7 +98,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
+        const faMesh& mesh() const noexcept
         {
             return fa::faD2dt2Scheme<Type>::mesh();
         }

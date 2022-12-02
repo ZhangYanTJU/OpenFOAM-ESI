@@ -62,30 +62,27 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt
 {
     // No change compared to backward
 
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt("+dt.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_();
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_();
 
-    scalar coefft   = 1 + deltaT/(deltaT + deltaT0);
-    scalar coefft00 = deltaT*deltaT/(deltaT0*(deltaT + deltaT0));
-    scalar coefft0  = coefft + coefft00;
+    const scalar coefft   = 1 + deltaT/(deltaT + deltaT0);
+    const scalar coefft00 = deltaT*deltaT/(deltaT0*(deltaT + deltaT0));
+    const scalar coefft0  = coefft + coefft00;
 
     if (mesh().moving())
     {
-        tmp<areaScalarField> tdtdt
+        auto tdtdt = tmp<areaScalarField>::New
         (
-            new areaScalarField
-            (
-                ddtIOobject,
-                mesh(),
-                dimensionedScalar(dt.dimensions()/dimTime, Zero)
-            )
+            ddtIOobject,
+            mesh(),
+            dimensionedScalar(dt.dimensions()/dimTime, Zero)
         );
 
         tdtdt.ref().primitiveFieldRef() = rDeltaT.value()*dt.value()*
@@ -113,28 +110,25 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
 {
     // No change compared to backward
 
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt("+dt.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_();
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_();
 
-    scalar coefft   = 1 + deltaT/(deltaT + deltaT0);
-    scalar coefft00 = deltaT*deltaT/(deltaT0*(deltaT + deltaT0));
-    scalar coefft0  = coefft + coefft00;
+    const scalar coefft   = 1 + deltaT/(deltaT + deltaT0);
+    const scalar coefft00 = deltaT*deltaT/(deltaT0*(deltaT + deltaT0));
+    const scalar coefft0  = coefft + coefft00;
 
-    tmp<areaScalarField> tdtdt0
+    auto tdtdt0 = tmp<areaScalarField>::New
     (
-        new areaScalarField
-        (
-            ddtIOobject,
-            mesh(),
-            -rDeltaT*(coefft0 - coefft00)*dt
-        )
+        ddtIOobject,
+        mesh(),
+       -rDeltaT*(coefft0 - coefft00)*dt
     );
 
     if (mesh().moving())
@@ -154,20 +148,20 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt
     const areaScalarField& vf
 )
 {
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt("+vf.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    areaScalarField phict
+    const areaScalarField phict
     (
         mag
         (
@@ -180,62 +174,59 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt
                 vf.oldTime()
               - vf.oldTime().oldTime()
             )
-          + dimensionedScalar("small", vf.dimensions(), SMALL)
+          + dimensionedScalar(vf.dimensions(), SMALL)
         )
     );
 
-    areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
+    const areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
 
-    areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
-    areaScalarField coefft00(limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0)));
-    areaScalarField coefft0(coefft + coefft00);
+    const areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
+    const areaScalarField coefft00
+    (
+        limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0))
+    );
+    const areaScalarField coefft0(coefft + coefft00);
 
     if (mesh().moving())
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            mesh(),
+            rDeltaT.dimensions()*vf.dimensions(),
+            rDeltaT.value()*
             (
-                ddtIOobject,
-                mesh(),
-                rDeltaT.dimensions()*vf.dimensions(),
-                rDeltaT.value()*
+                coefft*vf.primitiveField() -
                 (
-                    coefft*vf.primitiveField() -
-                    (
-                        coefft0.primitiveField()
-                        *vf.oldTime().primitiveField()*mesh().S0()
-                      - coefft00.primitiveField()
-                        *vf.oldTime().oldTime().primitiveField()
-                       *mesh().S00()
-                    )/mesh().S()
-                ),
-                rDeltaT.value()*
+                    coefft0.primitiveField()
+                    *vf.oldTime().primitiveField()*mesh().S0()
+                  - coefft00.primitiveField()
+                    *vf.oldTime().oldTime().primitiveField()
+                    *mesh().S00()
+                )/mesh().S()
+            ),
+            rDeltaT.value()*
+            (
+                coefft.boundaryField()*vf.boundaryField() -
                 (
-                    coefft.boundaryField()*vf.boundaryField() -
-                    (
-                        coefft0.boundaryField()*
-                        vf.oldTime().boundaryField()
-                      - coefft00.boundaryField()*
-                        vf.oldTime().oldTime().boundaryField()
-                    )
+                    coefft0.boundaryField()*
+                    vf.oldTime().boundaryField()
+                  - coefft00.boundaryField()*
+                    vf.oldTime().oldTime().boundaryField()
                 )
             )
         );
     }
     else
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            rDeltaT*
             (
-                ddtIOobject,
-                rDeltaT*
-                (
-                    coefft*vf
-                  - coefft0*vf.oldTime()
-                  + coefft00*vf.oldTime().oldTime()
-                )
+                coefft*vf
+              - coefft0*vf.oldTime()
+              + coefft00*vf.oldTime().oldTime()
             )
         );
     }
@@ -247,20 +238,20 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
     const areaScalarField& vf
 )
 {
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt0("+vf.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    areaScalarField phict
+    const areaScalarField phict
     (
         mag
         (
@@ -273,59 +264,56 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
                 vf.oldTime()
               - vf.oldTime().oldTime()
             )
-          + dimensionedScalar("small", vf.dimensions(), SMALL)
+          + dimensionedScalar(vf.dimensions(), SMALL)
         )
     );
 
-    areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
+    const areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
 
-    areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
-    areaScalarField coefft00(limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0)));
-    areaScalarField coefft0(coefft + coefft00);
+    const areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
+    const areaScalarField coefft00
+    (
+        limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0))
+    );
+    const areaScalarField coefft0(coefft + coefft00);
 
     if (mesh().moving())
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            mesh(),
+            rDeltaT.dimensions()*vf.dimensions(),
+            rDeltaT.value()*
             (
-                ddtIOobject,
-                mesh(),
-                rDeltaT.dimensions()*vf.dimensions(),
-                rDeltaT.value()*
-                (
-                  - (
-                        coefft0.primitiveField()*
-                        vf.oldTime().primitiveField()*mesh().S0()
-                      - coefft00.primitiveField()*
-                        vf.oldTime().oldTime().primitiveField()
-                       *mesh().S00()
-                    )/mesh().S()
-                ),
-                rDeltaT.value()*
-                (
-                  - (
-                        coefft0.boundaryField()*
-                        vf.oldTime().boundaryField()
-                      - coefft00.boundaryField()*
-                        vf.oldTime().oldTime().boundaryField()
-                    )
+              - (
+                    coefft0.primitiveField()*
+                    vf.oldTime().primitiveField()*mesh().S0()
+                  - coefft00.primitiveField()*
+                    vf.oldTime().oldTime().primitiveField()
+                    *mesh().S00()
+                )/mesh().S()
+            ),
+            rDeltaT.value()*
+            (
+              - (
+                    coefft0.boundaryField()*
+                    vf.oldTime().boundaryField()
+                  - coefft00.boundaryField()*
+                    vf.oldTime().oldTime().boundaryField()
                 )
             )
         );
     }
     else
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            rDeltaT*
             (
-                ddtIOobject,
-                rDeltaT*
-                (
-                  - coefft0*vf.oldTime()
-                  + coefft00*vf.oldTime().oldTime()
-                )
+              - coefft0*vf.oldTime()
+              + coefft00*vf.oldTime().oldTime()
             )
         );
     }
@@ -338,20 +326,20 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt
     const areaScalarField& vf
 )
 {
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt("+rho.name()+','+vf.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    areaScalarField phict
+    const areaScalarField phict
     (
         mag
         (
@@ -368,62 +356,60 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt
         )
     );
 
-    areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
+    const areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
 
-    areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
-    areaScalarField coefft00(limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0)));
-    areaScalarField coefft0(coefft + coefft00);
+    const areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
+    const areaScalarField coefft00
+    (
+        limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0))
+    );
+    const areaScalarField coefft0(coefft + coefft00);
 
     if (mesh().moving())
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            mesh(),
+            rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
+            rDeltaT.value()*rho.value()*
             (
-                ddtIOobject,
-                mesh(),
-                rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
-                rDeltaT.value()*rho.value()*
+                coefft*vf.primitiveField() -
                 (
-                    coefft*vf.primitiveField() -
-                    (
-                        coefft0.primitiveField()*
-                        vf.oldTime().primitiveField()*mesh().S0()
-                      - coefft00.primitiveField()*
-                        vf.oldTime().oldTime().primitiveField()
-                       *mesh().S00()
-                    )/mesh().S()
-                ),
-                rDeltaT.value()*rho.value()*
+                    coefft0.primitiveField()*
+                    vf.oldTime().primitiveField()*mesh().S0()
+                  - coefft00.primitiveField()*
+                    vf.oldTime().oldTime().primitiveField()
+                    *mesh().S00()
+                )/mesh().S()
+            ),
+            rDeltaT.value()*rho.value()*
+            (
+                coefft.boundaryField()*vf.boundaryField() -
                 (
-                    coefft.boundaryField()*vf.boundaryField() -
-                    (
-                        coefft0.boundaryField()*
-                        vf.oldTime().boundaryField()
-                      - coefft00.boundaryField()*
-                        vf.oldTime().oldTime().boundaryField()
-                    )
+                    coefft0.boundaryField()*
+                    vf.oldTime().boundaryField()
+                  - coefft00.boundaryField()*
+                    vf.oldTime().oldTime().boundaryField()
                 )
             )
         );
     }
     else
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            rDeltaT*rho*
             (
-                ddtIOobject,
-                rDeltaT*rho*
-                (
-                    coefft*vf
-                  - coefft0*vf.oldTime()
-                 + coefft00*vf.oldTime().oldTime()
-                )
+                coefft*vf
+              - coefft0*vf.oldTime()
+              + coefft00*vf.oldTime().oldTime()
             )
         );
     }
 }
+
 
 tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
 (
@@ -431,20 +417,20 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
     const areaScalarField& vf
 )
 {
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt0("+rho.name()+','+vf.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    areaScalarField phict
+    const areaScalarField phict
     (
         mag
         (
@@ -457,59 +443,56 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
                 vf.oldTime()
               - vf.oldTime().oldTime()
             )
-          + dimensionedScalar("small", vf.dimensions(), SMALL)
+          + dimensionedScalar(vf.dimensions(), SMALL)
         )
     );
 
-    areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
+    const areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
 
-    areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
-    areaScalarField coefft00(limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0)));
-    areaScalarField coefft0(coefft + coefft00);
+    const areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
+    const areaScalarField coefft00
+    (
+        limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0))
+    );
+    const areaScalarField coefft0(coefft + coefft00);
 
     if (mesh().moving())
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            mesh(),
+            rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
+            rDeltaT.value()*rho.value()*
             (
-                ddtIOobject,
-                mesh(),
-                rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
-                rDeltaT.value()*rho.value()*
-                (
-                   -(
-                        coefft0.primitiveField()*
-                        vf.oldTime().primitiveField()*mesh().S0()
-                      - coefft00.primitiveField()*
-                        vf.oldTime().oldTime().primitiveField()
-                       *mesh().S00()
-                    )/mesh().S()
-                ),
-                rDeltaT.value()*rho.value()*
-                (
-                   -(
-                        coefft0.boundaryField()*
-                        vf.oldTime().boundaryField()
-                      - coefft00.boundaryField()*
-                        vf.oldTime().oldTime().boundaryField()
-                    )
+              -(
+                    coefft0.primitiveField()*
+                    vf.oldTime().primitiveField()*mesh().S0()
+                  - coefft00.primitiveField()*
+                    vf.oldTime().oldTime().primitiveField()
+                    *mesh().S00()
+                )/mesh().S()
+            ),
+            rDeltaT.value()*rho.value()*
+            (
+              -(
+                    coefft0.boundaryField()*
+                    vf.oldTime().boundaryField()
+                  - coefft00.boundaryField()*
+                    vf.oldTime().oldTime().boundaryField()
                 )
             )
         );
     }
     else
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            rDeltaT*rho*
             (
-                ddtIOobject,
-                rDeltaT*rho*
-                (
-                  - coefft0*vf.oldTime()
-                 + coefft00*vf.oldTime().oldTime()
-                )
+              - coefft0*vf.oldTime()
+              + coefft00*vf.oldTime().oldTime()
             )
         );
     }
@@ -522,20 +505,20 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt
     const areaScalarField& vf
 )
 {
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt("+rho.name()+','+vf.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    areaScalarField phict
+    const areaScalarField phict
     (
         mag
         (
@@ -548,65 +531,62 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt
                 rho.oldTime()*vf.oldTime()
               - rho.oldTime().oldTime()*vf.oldTime().oldTime()
             )
-          + dimensionedScalar("small", rho.dimensions()*vf.dimensions(), SMALL)
+          + dimensionedScalar(rho.dimensions()*vf.dimensions(), SMALL)
         )
     );
 
-    areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
+    const areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
 
-    areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
-    areaScalarField coefft00(limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0)));
-    areaScalarField coefft0(coefft + coefft00);
+    const areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
+    const areaScalarField coefft00
+    (
+        limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0))
+    );
+    const areaScalarField coefft0(coefft + coefft00);
 
     if (mesh().moving())
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            mesh(),
+            rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
+            rDeltaT.value()*
             (
-                ddtIOobject,
-                mesh(),
-                rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
-                rDeltaT.value()*
+                coefft*rho.primitiveField()*vf.primitiveField() -
                 (
-                    coefft*rho.primitiveField()*vf.primitiveField() -
-                    (
-                        coefft0.primitiveField()*
-                        rho.oldTime().primitiveField()*
-                        vf.oldTime().primitiveField()*mesh().S0()
-                      - coefft00.primitiveField()*
-                        rho.oldTime().oldTime().primitiveField()
-                       *vf.oldTime().oldTime().primitiveField()*mesh().S00()
-                    )/mesh().S()
-                ),
-                rDeltaT.value()*
+                    coefft0.primitiveField()*
+                    rho.oldTime().primitiveField()*
+                    vf.oldTime().primitiveField()*mesh().S0()
+                  - coefft00.primitiveField()*
+                    rho.oldTime().oldTime().primitiveField()
+                    *vf.oldTime().oldTime().primitiveField()*mesh().S00()
+                )/mesh().S()
+            ),
+            rDeltaT.value()*
+            (
+                coefft.boundaryField()*vf.boundaryField() -
                 (
-                    coefft.boundaryField()*vf.boundaryField() -
-                    (
-                        coefft0.boundaryField()*
-                        rho.oldTime().boundaryField()*
-                        vf.oldTime().boundaryField()
-                      - coefft00.boundaryField()*
-                        rho.oldTime().oldTime().boundaryField()*
-                        vf.oldTime().oldTime().boundaryField()
-                    )
+                    coefft0.boundaryField()*
+                    rho.oldTime().boundaryField()*
+                    vf.oldTime().boundaryField()
+                  - coefft00.boundaryField()*
+                    rho.oldTime().oldTime().boundaryField()*
+                    vf.oldTime().oldTime().boundaryField()
                 )
             )
         );
     }
     else
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            rDeltaT*
             (
-                ddtIOobject,
-                rDeltaT*
-                (
-                    coefft*rho*vf
-                  - coefft0*rho.oldTime()*vf.oldTime()
-                  + coefft00*rho.oldTime().oldTime()*vf.oldTime().oldTime()
-                )
+                coefft*rho*vf
+              - coefft0*rho.oldTime()*vf.oldTime()
+              + coefft00*rho.oldTime().oldTime()*vf.oldTime().oldTime()
             )
         );
     }
@@ -619,20 +599,20 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
     const areaScalarField& vf
 )
 {
-    dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
+    const dimensionedScalar rDeltaT(1.0/mesh().time().deltaT());
 
     const IOobject ddtIOobject
     (
         this->fieldIOobject("ddt0("+rho.name()+','+vf.name()+')')
     );
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    areaScalarField phict
+    const areaScalarField phict
     (
         mag
         (
@@ -645,62 +625,59 @@ tmp<areaScalarField> boundedBackwardFaDdtScheme::facDdt0
                 rho.oldTime()*vf.oldTime()
               - rho.oldTime().oldTime()*vf.oldTime().oldTime()
             )
-          + dimensionedScalar("small", rho.dimensions()*vf.dimensions(), SMALL)
+          + dimensionedScalar(rho.dimensions()*vf.dimensions(), SMALL)
         )
     );
 
-    areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
+    const areaScalarField limiter(pos(phict) - pos(phict - scalar(1)));
 
-    areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
-    areaScalarField coefft00(limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0)));
-    areaScalarField coefft0(coefft + coefft00);
+    const areaScalarField coefft(scalar(1) + limiter*deltaT/(deltaT + deltaT0));
+    const areaScalarField coefft00
+    (
+        limiter*sqr(deltaT)/(deltaT0*(deltaT + deltaT0))
+    );
+    const areaScalarField coefft0(coefft + coefft00);
 
     if (mesh().moving())
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            mesh(),
+            rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
+            rDeltaT.value()*
             (
-                ddtIOobject,
-                mesh(),
-                rDeltaT.dimensions()*rho.dimensions()*vf.dimensions(),
-                rDeltaT.value()*
-                (
-                  - (
-                        coefft0.primitiveField()*
-                        rho.oldTime().primitiveField()*
-                        vf.oldTime().primitiveField()*mesh().S0()
-                      - coefft00.primitiveField()*
-                        rho.oldTime().oldTime().primitiveField()*
-                        vf.oldTime().oldTime().primitiveField()*mesh().S00()
-                    )/mesh().S()
-                ),
-                rDeltaT.value()*
-                (
-                  - (
-                        coefft0.boundaryField()*
-                        rho.oldTime().boundaryField()*
-                        vf.oldTime().boundaryField()
-                      - coefft00.boundaryField()*
-                        rho.oldTime().oldTime().boundaryField()*
-                        vf.oldTime().oldTime().boundaryField()
-                    )
+              - (
+                    coefft0.primitiveField()*
+                    rho.oldTime().primitiveField()*
+                    vf.oldTime().primitiveField()*mesh().S0()
+                  - coefft00.primitiveField()*
+                    rho.oldTime().oldTime().primitiveField()*
+                    vf.oldTime().oldTime().primitiveField()*mesh().S00()
+                )/mesh().S()
+            ),
+            rDeltaT.value()*
+            (
+              - (
+                    coefft0.boundaryField()*
+                    rho.oldTime().boundaryField()*
+                    vf.oldTime().boundaryField()
+                  - coefft00.boundaryField()*
+                    rho.oldTime().oldTime().boundaryField()*
+                    vf.oldTime().oldTime().boundaryField()
                 )
             )
         );
     }
     else
     {
-        return tmp<areaScalarField>
+        return tmp<areaScalarField>::New
         (
-            new areaScalarField
+            ddtIOobject,
+            rDeltaT*
             (
-                ddtIOobject,
-                rDeltaT*
-                (
-                  - coefft0*rho.oldTime()*vf.oldTime()
-                  + coefft00*rho.oldTime().oldTime()*vf.oldTime().oldTime()
-                )
+              - coefft0*rho.oldTime()*vf.oldTime()
+              + coefft00*rho.oldTime().oldTime()*vf.oldTime().oldTime()
             )
         );
     }
@@ -712,26 +689,22 @@ tmp<faScalarMatrix> boundedBackwardFaDdtScheme::famDdt
     const areaScalarField& vf
 )
 {
-    tmp<faScalarMatrix> tfam
+    auto tfam = tmp<faScalarMatrix>::New
     (
-        new faScalarMatrix
-        (
-            vf,
-            vf.dimensions()*dimArea/dimTime
-        )
+        vf,
+        vf.dimensions()*dimArea/dimTime
     );
-
     faScalarMatrix& fam = tfam.ref();
 
-    scalar rDeltaT = 1.0/deltaT_();
+    const scalar rDeltaT = 1.0/deltaT_();
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    scalarField phict
+    const scalarField phict
     (
         mag
         (
@@ -748,11 +721,14 @@ tmp<faScalarMatrix> boundedBackwardFaDdtScheme::famDdt
         )
     );
 
-    scalarField limiter(pos(phict) - pos(phict - 1.0));
+    const scalarField limiter(pos(phict) - pos(phict - 1.0));
 
-    scalarField coefft(1.0 + limiter*deltaT/(deltaT + deltaT0));
-    scalarField coefft00(limiter*deltaT*deltaT/(deltaT0*(deltaT + deltaT0)));
-    scalarField coefft0(coefft + coefft00);
+    const scalarField coefft(1.0 + limiter*deltaT/(deltaT + deltaT0));
+    const scalarField coefft00
+    (
+        limiter*deltaT*deltaT/(deltaT0*(deltaT + deltaT0))
+    );
+    const scalarField coefft0(coefft + coefft00);
 
     fam.diag() = (coefft*rDeltaT)*mesh().S();
 
@@ -784,25 +760,22 @@ tmp<faScalarMatrix> boundedBackwardFaDdtScheme::famDdt
     const areaScalarField& vf
 )
 {
-    tmp<faScalarMatrix> tfam
+    auto tfam = tmp<faScalarMatrix>::New
     (
-        new faScalarMatrix
-        (
-            vf,
-            rho.dimensions()*vf.dimensions()*dimArea/dimTime
-        )
+        vf,
+        rho.dimensions()*vf.dimensions()*dimArea/dimTime
     );
     faScalarMatrix& fam = tfam.ref();
 
-    scalar rDeltaT = 1.0/deltaT_();
+    const scalar rDeltaT = 1.0/deltaT_();
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    scalarField phict
+    const scalarField phict
     (
         mag
         (
@@ -819,11 +792,14 @@ tmp<faScalarMatrix> boundedBackwardFaDdtScheme::famDdt
         )
     );
 
-    scalarField limiter(pos(phict) - pos(phict - 1.0));
+    const scalarField limiter(pos(phict) - pos(phict - 1.0));
 
-    scalarField coefft(1.0 + limiter*deltaT/(deltaT + deltaT0));
-    scalarField coefft00(limiter*deltaT*deltaT/(deltaT0*(deltaT + deltaT0)));
-    scalarField coefft0(coefft + coefft00);
+    const scalarField coefft(1.0 + limiter*deltaT/(deltaT + deltaT0));
+    const scalarField coefft00
+    (
+        limiter*deltaT*deltaT/(deltaT0*(deltaT + deltaT0))
+    );
+    const scalarField coefft0(coefft + coefft00);
 
     fam.diag() = (coefft*rDeltaT*rho.value())*mesh().S();
 
@@ -855,25 +831,22 @@ tmp<faScalarMatrix> boundedBackwardFaDdtScheme::famDdt
     const areaScalarField& vf
 )
 {
-    tmp<faScalarMatrix> tfam
+    auto tfam = tmp<faScalarMatrix>::New
     (
-        new faScalarMatrix
-        (
-            vf,
-            rho.dimensions()*vf.dimensions()*dimArea/dimTime
-        )
+        vf,
+        rho.dimensions()*vf.dimensions()*dimArea/dimTime
     );
     faScalarMatrix& fam = tfam.ref();
 
-    scalar rDeltaT = 1.0/deltaT_();
+    const scalar rDeltaT = 1.0/deltaT_();
 
-    scalar deltaT = deltaT_();
-    scalar deltaT0 = deltaT0_(vf);
+    const scalar deltaT = deltaT_();
+    const scalar deltaT0 = deltaT0_(vf);
 
     // Calculate unboundedness indicator
     // Note: all times moved by one because access to internal field
     // copies current field into the old-time level.
-    scalarField phict
+    const scalarField phict
     (
         mag
         (
@@ -894,11 +867,14 @@ tmp<faScalarMatrix> boundedBackwardFaDdtScheme::famDdt
         )
     );
 
-    scalarField limiter(pos(phict) - pos(phict - 1.0));
+    const scalarField limiter(pos(phict) - pos(phict - 1.0));
 
-    scalarField coefft(1.0 + limiter*deltaT/(deltaT + deltaT0));
-    scalarField coefft00(limiter*deltaT*deltaT/(deltaT0*(deltaT + deltaT0)));
-    scalarField coefft0(coefft + coefft00);
+    const scalarField coefft(1.0 + limiter*deltaT/(deltaT + deltaT0));
+    const scalarField coefft00
+    (
+        limiter*deltaT*deltaT/(deltaT0*(deltaT + deltaT0))
+    );
+    const scalarField coefft0(coefft + coefft00);
 
     fam.diag() = (coefft*rDeltaT)*rho.primitiveField()*mesh().S();
 

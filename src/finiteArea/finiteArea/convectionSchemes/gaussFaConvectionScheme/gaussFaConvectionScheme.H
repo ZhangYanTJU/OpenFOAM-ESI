@@ -60,8 +60,9 @@ class gaussConvectionScheme
 :
     public fa::convectionScheme<Type>
 {
-    // Private data
+    // Private Data
 
+        //- Edge-interpolation scheme
         tmp<edgeInterpolationScheme<Type>> tinterpScheme_;
 
 

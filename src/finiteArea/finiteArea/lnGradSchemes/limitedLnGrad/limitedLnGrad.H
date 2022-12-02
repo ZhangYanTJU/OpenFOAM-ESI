@@ -68,7 +68,7 @@ class limitedLnGrad
 :
     public lnGradScheme<Type>
 {
-    // Private data
+    // Private Data
 
         //- Limiter.  0 = no limiting, 1 = full limiting
         scalar limitCoeff_;
@@ -128,7 +128,7 @@ public:
         }
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
+        virtual bool corrected() const noexcept
         {
             return !this->mesh().orthogonal();
         }

@@ -60,6 +60,7 @@ class skewCorrectedEdgeInterpolation
 {
     // Private Data
 
+        //- Edge-interpolation scheme
         tmp<edgeInterpolationScheme<Type>> tScheme_;
 
 
@@ -132,9 +133,8 @@ public:
 
             const edgeVectorField& scv = mesh.skewCorrectionVectors();
 
-            tmp<GeometricField<Type, faePatchField, edgeMesh>> tsfCorr
-            (
-                new GeometricField<Type, faePatchField, edgeMesh>
+            auto tsfCorr =
+                tmp<GeometricField<Type, faePatchField, edgeMesh>>::New
                 (
                     IOobject
                     (
@@ -144,9 +144,7 @@ public:
                     ),
                     mesh,
                     dimensioned<Type>(vf.dimensions(), Zero)
-                )
-            );
-
+                );
             GeometricField<Type, faePatchField, edgeMesh>& corr = tsfCorr.ref();
 
             for (direction cmpt=0; cmpt<pTraits<Type>::nComponents; ++cmpt)

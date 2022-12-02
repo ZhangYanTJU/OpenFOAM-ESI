@@ -48,6 +48,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 template<class Type>
 class faMatrix;
 
@@ -67,8 +68,9 @@ class convectionScheme
 :
     public refCount
 {
-    // Private data
+    // Private Data
 
+        //- Reference to the mesh
         const faMesh& mesh_;
 
 
@@ -129,11 +131,8 @@ public:
 
     // Member Functions
 
-        //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        //- Return const reference to mesh
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         virtual tmp<GeometricField<Type, faePatchField, edgeMesh>> flux
         (

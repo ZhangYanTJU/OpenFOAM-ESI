@@ -60,23 +60,20 @@ fourthLnGrad<Type>::correction
 {
     const faMesh& mesh = this->mesh();
 
-    tmp<GeometricField<Type, faePatchField, edgeMesh>> tcorr
+    auto tcorr = tmp<GeometricField<Type, faePatchField, edgeMesh>>::New
     (
-        new GeometricField<Type, faePatchField, edgeMesh>
+        IOobject
         (
-            IOobject
-            (
-                "lnGradCorr("+vf.name()+')',
-                vf.instance(),
-                vf.db()
-            ),
-            mesh,
-            vf.dimensions()*this->mesh().deltaCoeffs().dimensions()
-        )
+            "lnGradCorr("+vf.name()+')',
+            vf.instance(),
+            vf.db()
+        ),
+        mesh,
+        vf.dimensions()*this->mesh().deltaCoeffs().dimensions()
     );
     GeometricField<Type, faePatchField, edgeMesh>& corr = tcorr.ref();
 
-    edgeVectorField m(mesh.Le()/mesh.magLe());
+    const edgeVectorField m(mesh.Le()/mesh.magLe());
 
     for (direction cmpt = 0; cmpt < pTraits<Type>::nComponents; ++cmpt)
     {
