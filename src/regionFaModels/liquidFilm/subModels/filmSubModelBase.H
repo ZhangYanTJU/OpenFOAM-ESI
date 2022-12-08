@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef filmSubModelBase_H
-#define filmSubModelBase_H
+#ifndef areaSurfaceFilmModels_filmSubModelBase_H
+#define areaSurfaceFilmModels_filmSubModelBase_H
 
 #include "liquidFilmBase.H"
 #include "subModelBase.H"
@@ -100,19 +100,19 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Flag to indicate when to write a property
-            virtual bool writeTime() const;
+        //- Flag to indicate when to write a property
+        virtual bool writeTime() const;
 
-            //- Return const access to the film surface film model
-            inline const liquidFilmBase& film() const;
+        //- Return const access to the film surface film model
+        inline const liquidFilmBase& film() const;
 
-            //- Return the reference to the film surface film model
-            inline liquidFilmBase& film();
+        //- Return the reference to the film surface film model
+        inline liquidFilmBase& film();
 
-            template<class FilmType>
-            inline const FilmType& filmType() const;
+        template<class FilmType>
+        inline const FilmType& filmType() const;
 };
 
 

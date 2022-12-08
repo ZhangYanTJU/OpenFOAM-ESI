@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,20 +27,23 @@ Class
     Foam::regionFaModels::KirchhoffShell
 
 Description
+    Vibration-shell finite-area model.
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional entries
-        ...
-
         // Mandatory entries
         vibrationShellModel   KirchhoffShell;
-        f0                    0.04;
-        f1                    0.0;
-        f2                    0.0;
+        f0                    <scalar>;
+        f1                    <scalar>;
+        f2                    <scalar>;
+
+        // Inherited entries
+        ...
+        nNonOrthCorr          <int>;    // read from another dict
+        nSubCycles            <int>;
     }
     \endverbatim
 
@@ -175,28 +178,28 @@ public:
 
     // Member Functions
 
-        // Fields
+    // Fields
 
-            //- Return stiffness
-            const tmp<areaScalarField> D() const;
+        //- Return stiffness
+        const tmp<areaScalarField> D() const;
 
-            //- Return density [Kg/m3]
-            const tmp<areaScalarField> rho() const;
-
-
-        // Evolution
-
-            //- Pre-evolve  thermal baffle
-            virtual void preEvolveRegion();
-
-            //- Evolve the thermal baffle
-            virtual void evolveRegion();
+        //- Return density [Kg/m3]
+        const tmp<areaScalarField> rho() const;
 
 
-       // IO
+    // Evolution
 
-            //- Provide some feedback
-            virtual void info();
+        //- Pre-evolve  thermal baffle
+        virtual void preEvolveRegion();
+
+        //- Evolve the thermal baffle
+        virtual void evolveRegion();
+
+
+    // IO
+
+        //- Provide some feedback
+        virtual void info();
 };
 
 

@@ -31,7 +31,6 @@ License
 #include "gravityMeshObject.H"
 #include "volFields.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -91,9 +90,7 @@ liquidFilmModel::liquidFilmModel
 )
 :
     liquidFilmBase(modelType, mesh, dict),
-
     thermo_(dict.subDict("thermo")),
-
     rho_
     (
         IOobject
@@ -221,7 +218,6 @@ liquidFilmModel::liquidFilmModel
         dimensionedScalar(dimMass, Zero),
         calculatedFvPatchField<scalar>::typeName
     ),
-
     cloudDiameterTrans_
     (
         IOobject
@@ -236,78 +232,21 @@ liquidFilmModel::liquidFilmModel
         dimensionedScalar(dimLength, Zero),
         calculatedFvPatchField<scalar>::typeName
     ),
-
-    turbulence_(filmTurbulenceModel::New(*this, dict)),
-
+    turbulencePtr_(filmTurbulenceModel::New(*this, dict)),
     availableMass_(regionMesh().faces().size(), Zero),
-
     injection_(*this, dict),
-
     forces_(*this, dict)
 {
     if (dict.readIfPresent("T0", Tref_))
     {
         Tf_ = dimensionedScalar("T0", dimTemperature, dict);
     }
+
     correctThermoFields();
 }
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-const areaScalarField& liquidFilmModel::mu() const
-{
-     return mu_;
-}
-
-
-const areaScalarField& liquidFilmModel::rho() const
-{
-     return rho_;
-}
-
-
-const areaScalarField& liquidFilmModel::sigma() const
-{
-     return sigma_;
-}
-
-
-const areaScalarField& liquidFilmModel::Tf() const
-{
-     return Tf_;
-}
-
-
-const areaScalarField& liquidFilmModel::Cp() const
-{
-     return Cp_;
-}
-
-
-const liquidMixtureProperties& liquidFilmModel::thermo() const
-{
-    return thermo_;
-}
-
-
-scalar liquidFilmModel::Tref() const
-{
-    return Tref_;
-}
-
-
-const volScalarField& liquidFilmModel::cloudMassTrans() const
-{
-    return cloudMassTrans_;
-}
-
-
-const volScalarField& liquidFilmModel::cloudDiameterTrans() const
-{
-    return cloudDiameterTrans_;
-}
-
 
 void liquidFilmModel::preEvolveRegion()
 {

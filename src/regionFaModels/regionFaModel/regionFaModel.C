@@ -89,19 +89,19 @@ void Foam::regionModels::regionFaModel::initialise()
 
 bool Foam::regionModels::regionFaModel::init(const dictionary& dict)
 {
-    if (active_)
+    if (!active_)
     {
-        if (const dictionary* dictptr = dict.findDict(modelName_ + "Coeffs"))
-        {
-            coeffs_ <<= *dictptr;
-        }
-
-        infoOutput_.readIfPresent("infoOutput", dict);
-
-        return true;
+        return false;
     }
 
-    return false;
+    if (const dictionary* dictptr = dict.findDict(modelName_ + "Coeffs"))
+    {
+        coeffs_ <<= *dictptr;
+    }
+
+    infoOutput_.readIfPresent("infoOutput", dict);
+
+    return true;
 }
 
 

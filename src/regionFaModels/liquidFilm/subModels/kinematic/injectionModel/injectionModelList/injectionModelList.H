@@ -29,13 +29,41 @@ Class
 Description
     List container for film injection models
 
+Usage
+    Example of the model specification:
+    \verbatim
+    {
+        // Mandatory entries
+        injectionModels
+        (
+            <injectionModel1>
+            <injectionModel2>
+            ...
+        );
+
+        <injectionModel1>Coeffs
+        {
+            ...
+        }
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property        | Description                   | Type  | Reqd | Deflt
+      injectionModels | List of injection models      | list  | yes  | -
+    \endtable
+
 SourceFiles
     injectionModelList.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef injectionModelList_H
-#define injectionModelList_H
+#ifndef areaSurfaceFilmModels_injectionModelList_H
+#define areaSurfaceFilmModels_injectionModelList_H
 
 #include "PtrList.H"
 #include "injectionModel.H"
@@ -96,21 +124,21 @@ public:
 
     // Member Functions
 
-        // Evolution
+    // Evaluation
 
-            //- Correct
-            virtual void correct
-            (
-                scalarField& availableMass,
-                volScalarField& massToInject,
-                volScalarField& diameterToInject
-            );
+        //- Correct
+        virtual void correct
+        (
+            scalarField& availableMass,
+            volScalarField& massToInject,
+            volScalarField& diameterToInject
+        );
 
 
-        // I-O
+    // I-O
 
-            //- Provide some info
-            virtual void info(Ostream& os);
+        //- Provide some info
+        virtual void info(Ostream& os);
 };
 
 

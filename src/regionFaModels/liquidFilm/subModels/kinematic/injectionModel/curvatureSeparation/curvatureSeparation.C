@@ -59,18 +59,21 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
     const scalarField& calcCosAngle
 ) const
 {
-    const dimensionedScalar smallU(dimVelocity, ROOTVSMALL);
-    const areaVectorField UHat(U/(mag(U) + smallU));
-    tmp<areaScalarField> tinvR1
-    (
-        new areaScalarField("invR1", UHat & (UHat & -gradNHat_))
-    );
+    areaVectorField UHat(U);
+    for (vector& u : UHat)
+    {
+        u.normalise();
+    }
 
+    tmp<areaTensorField> tgradNHat =
+        fac::grad(film().regionMesh().faceAreaNormals());
+
+    auto tinvR1 = tmp<areaScalarField>::New(UHat & (UHat & -tgradNHat));
     scalarField& invR1 = tinvR1.ref().primitiveFieldRef();
 
     // apply defined patch radii
     const scalar rMin = 1e-6;
-    const scalar definedInvR1 = 1.0/max(rMin, definedPatchRadii_);
+    const scalar definedInvR1 = scalar(1)/max(rMin, definedPatchRadii_);
 
     if (definedPatchRadii_ > 0)
     {
@@ -78,12 +81,12 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
     }
 
     // filter out large radii
-    const scalar rMax = 1e6;
-    forAll(invR1, i)
+    const scalar invRmax = 1/1e6;
+    for (scalar& r : invR1)
     {
-        if ((mag(invR1[i]) < 1/rMax))
+        if (mag(r) < invRmax)
         {
-            invR1[i] = -1.0;
+            r = -scalar(1);
         }
     }
 
@@ -97,8 +100,11 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
 ) const
 {
     const areaVectorField& U = film().Uf();
-    const dimensionedScalar smallU(dimVelocity, ROOTVSMALL);
-    const areaVectorField UHat(U/(mag(U) + smallU));
+    areaVectorField UHat(U);
+    for (vector& u : UHat)
+    {
+        u.normalise();
+    }
 
     const faMesh& mesh = film().regionMesh();
     const labelUList& own = mesh.edgeOwner();
@@ -130,7 +136,7 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
 
     cosAngle *= pos(invR1);
 
-    // checks
+
     if (debug && mesh.time().writeTime())
     {
         areaScalarField volCosAngle
@@ -140,7 +146,9 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
                 "cosAngle",
                 film().primaryMesh().time().timeName(),
                 film().primaryMesh(),
-                IOobject::NO_READ
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             film().regionMesh(),
             dimensionedScalar(dimless, Zero)
@@ -248,6 +256,7 @@ void curvatureSeparation::correct
 
     addToInjectedMass(sum(massToInject));
 
+
     if (debug && mesh.time().writeTime())
     {
         areaScalarField volFnet
@@ -257,7 +266,9 @@ void curvatureSeparation::correct
                 "Fnet",
                 film().primaryMesh().time().timeName(),
                 film().primaryMesh(),
-                IOobject::NO_READ
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             mesh,
             dimensionedScalar(dimForce, Zero)
@@ -272,7 +283,9 @@ void curvatureSeparation::correct
                 "separated",
                 film().primaryMesh().time().timeName(),
                 film().primaryMesh(),
-                IOobject::NO_READ
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             mesh,
             dimensionedScalar(dimMass, Zero)
@@ -287,7 +300,9 @@ void curvatureSeparation::correct
                 "massToInject",
                 film().primaryMesh().time().timeName(),
                 film().primaryMesh(),
-                IOobject::NO_READ
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             mesh,
             dimensionedScalar(dimMass, Zero)
@@ -302,7 +317,9 @@ void curvatureSeparation::correct
                 "InvR1",
                 film().primaryMesh().time().timeName(),
                 film().primaryMesh(),
-                IOobject::NO_READ
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             mesh,
             dimensionedScalar(inv(dimLength), Zero)

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,11 +92,6 @@ tmp<areaScalarField> thermalShell::qr()
 
 void thermalShell::solveEnergy()
 {
-    if (debug)
-    {
-        InfoInFunction << endl;
-    }
-
     const areaScalarField rhoCph(Cp()*rho()*h_);
 
     faScalarMatrix TEqn
@@ -184,73 +179,64 @@ void thermalShell::evolveRegion()
 
 const tmp<areaScalarField> thermalShell::Cp() const
 {
-    return tmp<areaScalarField>
+    return tmp<areaScalarField>::New
     (
-        new areaScalarField
+        IOobject
         (
-            IOobject
-            (
-                "Cps",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            regionMesh(),
-            dimensionedScalar(dimEnergy/dimTemperature/dimMass, thermo_.Cp()),
-            zeroGradientFaPatchScalarField::typeName
-        )
+            "Cps",
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        regionMesh(),
+        dimensionedScalar(dimEnergy/dimTemperature/dimMass, thermo_.Cp()),
+        zeroGradientFaPatchScalarField::typeName
     );
 }
 
 
 const tmp<areaScalarField> thermalShell::rho() const
 {
-    return tmp<areaScalarField>
+    return tmp<areaScalarField>::New
     (
-        new areaScalarField
+        IOobject
         (
-            IOobject
-            (
-                "rhos",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            regionMesh(),
-            dimensionedScalar(dimDensity, thermo_.rho()),
-            zeroGradientFaPatchScalarField::typeName
-        )
+            "rhos",
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        regionMesh(),
+        dimensionedScalar(dimDensity, thermo_.rho()),
+        zeroGradientFaPatchScalarField::typeName
     );
 }
 
 
 const tmp<areaScalarField> thermalShell::kappa() const
 {
-    return tmp<areaScalarField>
+    return tmp<areaScalarField>::New
     (
-        new areaScalarField
+        IOobject
         (
-            IOobject
-            (
-                "kappas",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            regionMesh(),
-            dimensionedScalar
-            (
-                dimPower/dimLength/dimTemperature,
-                thermo_.kappa()
-            ),
-            zeroGradientFaPatchScalarField::typeName
-        )
+            "kappas",
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        regionMesh(),
+        dimensionedScalar
+        (
+            dimPower/dimLength/dimTemperature,
+            thermo_.kappa()
+        ),
+        zeroGradientFaPatchScalarField::typeName
     );
 }
 

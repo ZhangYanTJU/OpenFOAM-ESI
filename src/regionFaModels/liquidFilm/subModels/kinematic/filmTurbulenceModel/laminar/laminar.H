@@ -34,10 +34,10 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef regionFaModels_surfaceFilmModels_laminar_H
-#define regionFaModels_surfaceFilmModels_laminar_H
+#ifndef areaSurfaceFilmModels_surfaceFilmModels_laminar_H
+#define areaSurfaceFilmModels_surfaceFilmModels_laminar_H
 
-#include "liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.H"
+#include "filmTurbulenceModel.H"
 #include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -58,6 +58,9 @@ class laminar
     public filmTurbulenceModel
 {
     // Private Member Functions
+
+        //- Return wall-friction system
+        tmp<faVectorMatrix> wallFriction(areaVectorField& U) const;
 
         //- No copy construct
         laminar(const laminar&) = delete;
@@ -84,16 +87,16 @@ public:
 
     // Member Functions
 
-        // Turbulence
+    // Turbulence
 
         //- Return the source for the film momentum equation
         virtual tmp<faVectorMatrix> Su(areaVectorField& U) const;
 
 
-        // Evaluation
+    // Evaluation
 
-            //- Correct/update the model
-            virtual void correct();
+        //- Correct/update the model
+        virtual void correct();
 };
 
 

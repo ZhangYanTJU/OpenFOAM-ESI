@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef force_H
-#define force_H
+#ifndef areaSurfaceFilmModels_force_H
+#define areaSurfaceFilmModels_force_H
 
 #include "filmSubModelBase.H"
 #include "runTimeSelectionTables.H"
@@ -87,6 +87,7 @@ public:
              (film, dict)
          );
 
+
     // Constructors
 
         //- Construct null
@@ -118,10 +119,10 @@ public:
 
     // Member Functions
 
-        // Evolution
+    // Evaluation
 
-            //- Correct
-            virtual tmp<faVectorMatrix> correct(areaVectorField& U) = 0;
+        //- Correct
+        virtual tmp<faVectorMatrix> correct(areaVectorField& U) = 0;
 };
 
 

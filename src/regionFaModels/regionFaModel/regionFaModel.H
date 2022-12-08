@@ -34,25 +34,26 @@ Usage
     \verbatim
     <patchName>
     {
-        // Mandatory entries (runtime modifiable)
-        region          <regionName>;
-        active          true;
+        // Mandatory entries
+        region          <word>;
+        active          <bool>;
 
-        // Optional entries (runtime modifiable)
-        infoOutput      false;
         <model>Coeffs
         {
             // subdictionary entries
         }
 
-        // Mandatory/Optional (derived) entries
+        // Optional entries
+        infoOutput      <bool>;
+
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property   | Description                         | Type  | Reqd | Dflt
+      Property   | Description                         | Type  | Reqd | Deflt
       region     | Name of operand region              | word  | yes  | -
       active     | Flag to activate the model          | bool  | yes  | -
       infoOutput | Flag to activate information output | bool  | no   | false

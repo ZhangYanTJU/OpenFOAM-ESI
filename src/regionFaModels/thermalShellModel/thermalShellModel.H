@@ -34,16 +34,13 @@ Usage
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional entries
-        ...
-
         // Mandatory entries
-        T                     <Tname>;
+        T                     <word>;
 
         // Optional entries
-        thermalShellModel     <thermalShellModelName>;
+        thermalShellModel     <word>;
 
-        // Derived entries
+        // Inherited entries
         ...
     }
     \endverbatim
@@ -53,7 +50,7 @@ Usage
       Property   | Description                       | Type  | Reqd | Deflt
       T          | Name of operand temperature field | word  | yes  | -
       thermalShellModel | Name of thermal-shell model <!--
-                        -->                      | word | no | thermalShell
+                        -->                      | word | choice | -
     \endtable
 
     The inherited entries are elaborated in:
@@ -162,31 +159,22 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return primary region temperature
-            const volScalarField& Tp() const noexcept
-            {
-                return Tp_;
-            }
+        //- Return primary region temperature
+        const volScalarField& Tp() const noexcept { return Tp_; }
 
-            //- Return shell temperature
-            const areaScalarField& T() const noexcept
-            {
-                return T_;
-            }
+        //- Return shell temperature
+        const areaScalarField& T() const noexcept { return T_; }
 
-            //- Return faOptions
-            Foam::fa::options& faOptions() noexcept
-            {
-                return faOptions_;
-            }
+        //- Return faOptions
+        Foam::fa::options& faOptions() noexcept { return faOptions_; }
 
 
-        // Evolution
+    // Evolution
 
-            //- Pre-evolve region
-            virtual void preEvolveRegion();
+        //- Pre-evolve region
+        virtual void preEvolveRegion();
 };
 
 

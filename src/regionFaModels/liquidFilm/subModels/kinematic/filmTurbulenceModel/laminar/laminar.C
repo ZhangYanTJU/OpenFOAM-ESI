@@ -28,7 +28,6 @@ License
 #include "laminar.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -42,6 +41,22 @@ namespace areaSurfaceFilmModels
 
 defineTypeNameAndDebug(laminar, 0);
 addToRunTimeSelectionTable(filmTurbulenceModel, laminar, dictionary);
+
+
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
+
+tmp<faVectorMatrix> laminar::wallFriction(areaVectorField& U) const
+{
+    // Local references to film fields
+    tmp<areaVectorField> Uw = film_.Uw();
+    tmp<areaScalarField> wf = Cw();
+
+    return
+    (
+       - fam::Sp(wf(), U) + wf()*Uw() // wall contribution
+    );
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -64,19 +79,6 @@ void laminar::correct()
 tmp<faVectorMatrix> laminar::Su(areaVectorField& U) const
 {
     return primaryRegionFriction(U) + wallFriction(U);
-}
-
-
-tmp<faVectorMatrix> laminar::wallFriction(areaVectorField& U) const
-{
-    // local references to film fields
-    tmp<areaVectorField> Uw = film_.Uw();
-    tmp<areaScalarField> wf = Cw();
-
-    return
-    (
-       - fam::Sp(wf(), U) + wf()*Uw() // wall contribution
-    );
 }
 
 

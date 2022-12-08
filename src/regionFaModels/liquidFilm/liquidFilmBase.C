@@ -60,7 +60,6 @@ liquidFilmBase::liquidFilmBase
 )
 :
     regionFaModel(mesh, liquidFilmName, modelType, dict, true),
-
     momentumPredictor_
     (
         this->solution().subDict("PIMPLE").get<bool>("momentumPredictor")
@@ -74,17 +73,11 @@ liquidFilmBase::liquidFilmBase
     (
         this->solution().subDict("PIMPLE").get<label>("nFilmCorr")
     ),
-
     h0_("h0", dimLength, 1e-7, dict),
-
     deltaWet_("deltaWet", dimLength, 1e-4, dict),
-
     UName_(dict.get<word>("U")),
-
-    pName_(dict.lookupOrDefault<word>("p",  word::null)),
-
+    pName_(dict.getOrDefault<word>("p",  word::null)),
     pRef_(dict.get<scalar>("pRef")),
-
     h_
     (
         IOobject
@@ -97,7 +90,6 @@ liquidFilmBase::liquidFilmBase
         ),
         regionMesh()
     ),
-
     Uf_
     (
         IOobject
@@ -148,7 +140,6 @@ liquidFilmBase::liquidFilmBase
         ),
         fac::interpolate(Uf_) & regionMesh().Le()
     ),
-
     phi2s_
     (
         IOobject
@@ -161,8 +152,6 @@ liquidFilmBase::liquidFilmBase
         ),
         fac::interpolate(h_*Uf_) & regionMesh().Le()
     ),
-
-
     gn_
     (
         IOobject
@@ -176,9 +165,7 @@ liquidFilmBase::liquidFilmBase
         regionMesh(),
         dimensionedScalar(dimAcceleration, Zero)
     ),
-
     g_(meshObjects::gravity::New(primaryMesh().time())),
-
     massSource_
     (
         IOobject
@@ -191,7 +178,6 @@ liquidFilmBase::liquidFilmBase
         dimensionedScalar(dimMass, Zero),
         calculatedFvPatchField<scalar>::typeName
     ),
-
     momentumSource_
     (
         IOobject
@@ -204,7 +190,6 @@ liquidFilmBase::liquidFilmBase
         dimensionedVector(dimPressure, Zero),
         calculatedFvPatchField<vector>::typeName
     ),
-
     pnSource_
     (
         IOobject
@@ -219,7 +204,6 @@ liquidFilmBase::liquidFilmBase
     ),
 
     addedMassTotal_(0),
-
     faOptions_(Foam::fa::options::New(primaryMesh()))
 {
     const areaVectorField& ns = regionMesh().faceAreaNormals();
@@ -243,18 +227,15 @@ liquidFilmBase::~liquidFilmBase()
 
 scalar liquidFilmBase::CourantNumber() const
 {
-    scalar CoNum = 0.0;
-    scalar velMag = 0.0;
-
-    edgeScalarField SfUfbyDelta
+    const edgeScalarField SfUfbyDelta
     (
         regionMesh().edgeInterpolation::deltaCoeffs()*mag(phif_)
     );
 
-    CoNum =
+    scalar CoNum =
         max(SfUfbyDelta/regionMesh().magLe()).value()*time().deltaT().value();
 
-    velMag = max(mag(phif_)/regionMesh().magLe()).value();
+    scalar velMag = max(mag(phif_)/regionMesh().magLe()).value();
 
     reduce(CoNum, maxOp<scalar>());
     reduce(velMag, maxOp<scalar>());
@@ -268,19 +249,16 @@ scalar liquidFilmBase::CourantNumber() const
 
 Foam::tmp<Foam::areaVectorField> liquidFilmBase::Uw() const
 {
-    tmp<areaVectorField> tUw
+    auto tUw = tmp<areaVectorField>::New
     (
-        new areaVectorField
+        IOobject
         (
-            IOobject
-            (
-                "tUw",
-                primaryMesh().time().timeName(),
-                primaryMesh()
-            ),
-            regionMesh(),
-            dimensionedVector(dimVelocity, Zero)
-        )
+            "tUw",
+            primaryMesh().time().timeName(),
+            primaryMesh()
+        ),
+        regionMesh(),
+        dimensionedVector(dimVelocity, Zero)
     );
     auto& Uw = tUw.ref();
 
@@ -323,19 +301,16 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Uw() const
 
 Foam::tmp<Foam::areaVectorField> liquidFilmBase::Us() const
 {
-    tmp<areaVectorField> tUs
+    auto tUs = tmp<areaVectorField>::New
     (
-        new areaVectorField
+        IOobject
         (
-            IOobject
-            (
-                "tUs",
-                primaryMesh().time().timeName(),
-                primaryMesh()
-            ),
-            regionMesh(),
-            dimensionedVector(dimVelocity, Zero)
-        )
+            "tUs",
+            primaryMesh().time().timeName(),
+            primaryMesh()
+        ),
+        regionMesh(),
+        dimensionedVector(dimVelocity, Zero)
     );
 
     // Uf quadratic profile
@@ -347,22 +322,18 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Us() const
 
 Foam::tmp<Foam::areaVectorField> liquidFilmBase::Up() const
 {
-    const volVectorField& Uprimary =
-        primaryMesh().lookupObject<volVectorField>(UName_);
+    const auto& Uprimary = primaryMesh().lookupObject<volVectorField>(UName_);
 
-    tmp<areaVectorField> tUp
+    auto tUp = tmp<areaVectorField>::New
     (
-        new areaVectorField
+        IOobject
         (
-            IOobject
-            (
-                "tUp",
-                primaryMesh().time().timeName(),
-                primaryMesh()
-            ),
-            regionMesh(),
-            dimensionedVector(dimVelocity, Zero)
-        )
+            "tUp",
+            primaryMesh().time().timeName(),
+            primaryMesh()
+        ),
+        regionMesh(),
+        dimensionedVector(dimVelocity, Zero)
     );
     areaVectorField& Up = tUp.ref();
 
@@ -398,19 +369,16 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Up() const
 
 tmp<areaScalarField> liquidFilmBase::pg() const
 {
-    tmp<areaScalarField> tpg
+    auto tpg = tmp<areaScalarField>::New
     (
-        new areaScalarField
+        IOobject
         (
-            IOobject
-            (
-                "tpg",
-                primaryMesh().time().timeName(),
-                primaryMesh()
-            ),
-            regionMesh(),
-            dimensionedScalar(dimPressure, Zero)
-        )
+            "tpg",
+            primaryMesh().time().timeName(),
+            primaryMesh()
+        ),
+        regionMesh(),
+        dimensionedScalar(dimPressure, Zero)
     );
     auto& pfg = tpg.ref();
 
@@ -421,8 +389,6 @@ tmp<areaScalarField> liquidFilmBase::pg() const
             primaryMesh().lookupObject<volScalarField>(pName_),
             pfg.primitiveFieldRef()
         );
-
-        //pfg -= pRef_;
     }
 
     return tpg;
@@ -431,19 +397,16 @@ tmp<areaScalarField> liquidFilmBase::pg() const
 
 tmp<areaScalarField> liquidFilmBase::alpha() const
 {
-    tmp<areaScalarField> talpha
+    auto talpha = tmp<areaScalarField>::New
     (
-        new areaScalarField
+        IOobject
         (
-            IOobject
-            (
-                "talpha",
-                primaryMesh().time().timeName(),
-                primaryMesh()
-            ),
-            regionMesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+            "talpha",
+            primaryMesh().time().timeName(),
+            primaryMesh()
+        ),
+        regionMesh(),
+        dimensionedScalar(dimless, Zero)
     );
     auto& alpha = talpha.ref();
 
@@ -489,72 +452,6 @@ void liquidFilmBase::postEvolveRegion()
     momentumSource_.boundaryFieldRef() = Zero;
 
     regionFaModel::postEvolveRegion();
-}
-
-
-Foam::fa::options& liquidFilmBase::faOptions()
-{
-     return faOptions_;
-}
-
-
-const areaVectorField& liquidFilmBase::Uf() const
-{
-     return Uf_;
-}
-
-
-const areaScalarField& liquidFilmBase::gn() const
-{
-     return gn_;
-}
-
-
-const uniformDimensionedVectorField& liquidFilmBase::g() const
-{
-    return g_;
-}
-
-
-const areaScalarField& liquidFilmBase::h() const
-{
-     return h_;
-}
-
-
-const edgeScalarField& liquidFilmBase::phif() const
-{
-    return phif_;
-}
-
-
-const edgeScalarField& liquidFilmBase::phi2s() const
-{
-    return phi2s_;
-}
-
-
-const dimensionedScalar& liquidFilmBase::h0() const
-{
-     return h0_;
-}
-
-
-const regionFaModel& liquidFilmBase::region() const
-{
-    return *this;
-}
-
-
-scalar liquidFilmBase::pRef()
-{
-    return pRef_;
-}
-
-
-word liquidFilmBase::UName() const
-{
-    return UName_;
 }
 
 

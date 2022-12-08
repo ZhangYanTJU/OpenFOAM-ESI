@@ -27,7 +27,44 @@ Class
     Foam::regionModels::liquidFilmBase
 
 Description
-    Base class for thermal 2D shells
+    Base class for liquid-film models.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        // Mandatory entries
+        U                       <word>;
+        pRef                    <scalar>;
+
+        // Optional entries
+        h0                      <scalar>;
+        deltaWet                <scalar>;
+        p                       <word>;
+
+        // Inherited entries
+        ...
+        momentumPredictor       <int>;
+        nOuterCorr              <label>;
+        nCorr                   <label>;
+        nFilmCorr               <label>;
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                      | Type  | Reqd | Deflt
+      U          | Name of velocity field           | word  | yes  | -
+      pRef       | Reference absolute pressure     | scalar | yes  | -
+      h0         | Smallest film thickness         | scalar | no   | 1e-7
+      deltaWet   | Film thickness beyond which face is assumed to be wet <!--
+                 -->                               | scalar | no   | 1e-4
+      p          | Name of pressure field           | word  | no   | null
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link regionFaModel.H \endlink
 
 SourceFiles
     liquidFilmBase.C
@@ -55,7 +92,7 @@ namespace areaSurfaceFilmModels
 {
 
 /*---------------------------------------------------------------------------*\
-                         Class liquidFilmBase Declaration
+                       Class liquidFilmBase Declaration
 \*---------------------------------------------------------------------------*/
 
 class liquidFilmBase
@@ -68,13 +105,13 @@ protected:
 
         // Solution parameters
 
-            //- Momentum predictor
+            //- Flat to enable momentum predictor
             Switch momentumPredictor_;
 
             //- Number of outer correctors
             label nOuterCorr_;
 
-            //- Number of PISO-like correctors
+            //- Number of PISO-like inner correctors
             label nCorr_;
 
             //- Number of film thickness correctors
@@ -83,10 +120,10 @@ protected:
             //- Cumulative continuity error
             scalar cumulativeContErr_;
 
-            //- Smallest numerical thickness
+            //- Smallest film thickness
             dimensionedScalar h0_;
 
-            //- Delta wet for sub-models
+            //- Film thickness beyond which face is assumed to be wet
             dimensionedScalar deltaWet_;
 
 
@@ -102,7 +139,7 @@ protected:
 
         // Fields
 
-            //- Film hight
+            //- Film height
             areaScalarField h_;
 
             //- Film velocity
@@ -170,7 +207,6 @@ public:
 
     // Constructors
 
-
         //- Construct from type name and mesh and dict
         liquidFilmBase
         (
@@ -206,115 +242,109 @@ public:
         virtual scalar CourantNumber() const;
 
 
-        // Helper functions
+    // Helper functions
 
-            //- Wall velocity
-            tmp<areaVectorField> Uw() const;
+        //- Return wall velocity
+        tmp<areaVectorField> Uw() const;
 
-            //- Film surface film velocity
-            tmp<areaVectorField> Us() const;
+        //- Return film-surface velocity
+        tmp<areaVectorField> Us() const;
 
-            //- Primary region velocity at film hight. Assume the film to be
-            // in the viscous sub-layer
-            tmp<areaVectorField> Up() const;
+        //- Return primary region velocity at film height
+        //  Assuming the film to be within the viscous sub-layer
+        tmp<areaVectorField> Up() const;
 
-            //- Map primary static pressure
-            tmp<areaScalarField> pg() const;
+        //- Return primary static pressure
+        tmp<areaScalarField> pg() const;
 
-            //- Wet indicator using h0
-            tmp<areaScalarField> alpha() const;
-
-
-        // Access functions
-
-            //- Return faOptions
-            Foam::fa::options& faOptions();
-
-            //- Access const reference Uf
-            const areaVectorField& Uf() const;
-
-            //- Access const reference gn
-            const areaScalarField& gn() const;
-
-            //- Gravity
-            const uniformDimensionedVectorField& g() const;
-
-            //- Access const reference h
-            const areaScalarField& h() const;
-
-            //- Access to momentum flux
-            const edgeScalarField& phif() const;
-
-            //- Access continuity flux
-            const edgeScalarField& phi2s() const;
+        //- Return wet indicator using h0
+        tmp<areaScalarField> alpha() const;
 
 
-            //- Return h0
-            const dimensionedScalar& h0() const;
+    // Access
 
-            //- Access to this region
-            const regionFaModel& region() const;
+        //- Return faOptions
+        Foam::fa::options& faOptions() { return faOptions_; }
 
-            //- Access to pRef
-            scalar pRef();
+        //- Return const reference to Uf
+        const areaVectorField& Uf() const noexcept { return Uf_; }
 
-            //- Name of the U field
-            word UName() const;
+        //- Return const reference to gn
+        const areaScalarField& gn() const noexcept { return gn_; }
 
+        //- Return gravity
+        const uniformDimensionedVectorField& g() const noexcept { return g_; }
 
-            // Transfer fields - to the primary region (lagragian injection)
+        //- Return const reference to h
+        const areaScalarField& h() const noexcept { return h_; }
 
-                //- Return mass transfer source - Eulerian phase only
-                //virtual tmp<volScalarField> primaryMassTrans() const = 0;
+        //- Return const reference to phif
+        const edgeScalarField& phif() const noexcept { return phif_; }
 
-                //- Return the film mass available for transfer to cloud
-                virtual const volScalarField& cloudMassTrans() const = 0;
+        //- Return const reference to phi2s
+        const edgeScalarField& phi2s() const noexcept { return phi2s_; }
 
-                //- Return the parcel diameters originating from film to cloud
-                virtual const volScalarField& cloudDiameterTrans() const = 0;
+        //- Return const reference to h0
+        const dimensionedScalar& h0() const noexcept { return h0_; }
 
+        //- Return const reference to this region
+        const regionFaModel& region() const noexcept { return *this; }
 
+        //- Return pRef
+        scalar pRef() const noexcept { return pRef_; }
 
-        // Evolution
-
-            //- Pre-evolve film
-            virtual void preEvolveRegion();
-
-            //- Post-evolve film
-            virtual void postEvolveRegion();
-
-
-        // Thermo variables
-
-            //- Access const reference mu
-            virtual const areaScalarField& mu() const = 0;
-
-            //- Access const reference rho
-            virtual const areaScalarField& rho() const = 0;
-
-            //- Access const reference sigma
-            virtual const areaScalarField& sigma() const = 0;
-
-            //- Access const reference Tf
-            virtual const areaScalarField& Tf() const = 0;
-
-            //- Access const reference Cp
-            virtual const areaScalarField& Cp() const = 0;
+        //- Return UName
+        word UName() const noexcept { return UName_; }
 
 
-        // External hook to add sources and mass exchange variables
+        // Transfer fields - to the primary region (lagragian injection)
+
+            //- Return the film mass available for transfer to cloud
+            virtual const volScalarField& cloudMassTrans() const = 0;
+
+            //- Return the parcel diameters originating from film to cloud
+            virtual const volScalarField& cloudDiameterTrans() const = 0;
 
 
-            //- Add sources
-            virtual void addSources
-            (
-                const label patchi,            // patchi on primary region
-                const label facei,             // facei of patchi
-                const scalar massSource,       // [kg]
-                const vector& momentumSource,  // [kg.m/s] (tang'l momentum)
-                const scalar pressureSource,   // [kg.m/s] (normal momentum)
-                const scalar energySource = 0  // [J]
-            );
+    // Evolution
+
+        //- Pre-evolve film
+        virtual void preEvolveRegion();
+
+        //- Post-evolve film
+        virtual void postEvolveRegion();
+
+
+    // Thermo variables
+
+        //- Access const reference mu
+        virtual const areaScalarField& mu() const = 0;
+
+        //- Access const reference rho
+        virtual const areaScalarField& rho() const = 0;
+
+        //- Access const reference sigma
+        virtual const areaScalarField& sigma() const = 0;
+
+        //- Access const reference Tf
+        virtual const areaScalarField& Tf() const = 0;
+
+        //- Access const reference Cp
+        virtual const areaScalarField& Cp() const = 0;
+
+
+    // External hook to add sources and mass exchange variables
+
+        //- Add sources
+        virtual void addSources
+        (
+            const label patchi,            // patchi on primary region
+            const label facei,             // facei of patchi
+            const scalar massSource,       // [kg]
+            const vector& momentumSource,  // [kg.m/s] (tang'l momentum)
+            const scalar pressureSource,   // [kg.m/s] (normal momentum)
+            const scalar energySource = 0  // [J]
+        );
 };
 
 

@@ -27,17 +27,44 @@ Class
     Foam::regionFaModels::liquidFilmModel
 
 Description
-    Thin Model Film model.
+    Thin film model.
 
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        // Mandatory entries
+        thermo                  <dict>;
+
+        // Optional entries
+        T0                      <scalar>;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                      | Type  | Reqd   | Deflt
+      thermo     | Liquid thermodynamics properties | dict  | yes    | -
+      T0         | Reference temperature [K]       | scalar | choice | -
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link liquidFilmBase.H \endlink
+      - \link filmTurbulenceModel.H \endlink
+      - \link injectionModelList.H \endlink
+      - \link forceList.H \endlink
 
 SourceFiles
     liquidFilmModel.C
-    kinematicThinFilmI.H
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef liquidFilmModel_H
-#define liquidFilmModel_H
+#ifndef areaSurfaceFilmModels_liquidFilmModel_H
+#define areaSurfaceFilmModels_liquidFilmModel_H
 
 #include "volFieldsFwd.H"
 #include "liquidFilmBase.H"
@@ -58,7 +85,7 @@ namespace areaSurfaceFilmModels
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class liquidFilmModel Declaration
+                      Class liquidFilmModel Declaration
 \*---------------------------------------------------------------------------*/
 
 class liquidFilmModel
@@ -72,7 +99,7 @@ protected:
         //- Liquid thermo
         liquidMixtureProperties thermo_;
 
-        //- Reference tempararure
+        //- Reference temperature
         scalar Tref_;
 
 
@@ -84,16 +111,16 @@ protected:
         //- Dynamic viscosity [Pa.s]
         areaScalarField mu_;
 
-        //- Film temperature
+        //- Film temperature [K]
         areaScalarField Tf_;
 
-        //- Film Heat capacity
+        //- Film heat capacity [J/K]
         areaScalarField Cp_;
 
-        //- Surface tension [m/s2]
+        //- Surface tension [kg/s^2]
         areaScalarField sigma_;
 
-        //- Film rho*height
+        //- Film rho*height [m.kg/m^3]
         areaScalarField hRho_;
 
 
@@ -118,25 +145,19 @@ protected:
         volScalarField cloudDiameterTrans_;
 
 
-    // General properties
+    // Submodels
 
         //- Turbulence model
-        autoPtr<filmTurbulenceModel> turbulence_;
+        autoPtr<filmTurbulenceModel> turbulencePtr_;
 
+        //- Available mass for transfer via sub-models
+        scalarField availableMass_;
 
-        // Sub-models
+        //- Cloud injection
+        injectionModelList injection_;
 
-            //- Available mass for transfer via sub-models
-            scalarField availableMass_;
-
-            //- Cloud injection
-            injectionModelList injection_;
-
-            //- Transfer with the continuous phase
-            //transferModelList transfer_;
-
-            //- List of film forces
-            forceList forces_;
+        //- List of film forces
+        forceList forces_;
 
 
 public:
@@ -168,58 +189,67 @@ public:
 
     // Member Functions
 
-        // Helpers
+    // Helpers
 
-            //- Correct thermo
-            void correctThermoFields();
-
-
-        // Access
-
-            //- Access const reference mu
-            const areaScalarField& mu() const;
-
-            //- Access const reference rho
-            const areaScalarField& rho() const;
-
-            //- Access const reference sigma
-            const areaScalarField& sigma() const;
-
-            //- Access const reference Tf
-            const areaScalarField& Tf() const;
-
-            //- Access const reference Cp
-            const areaScalarField& Cp() const;
-
-            //- Access to thermo
-            const liquidMixtureProperties& thermo() const;
-
-            //- Access to reference temperature
-            scalar Tref() const;
+        //- Correct thermo
+        void correctThermoFields();
 
 
-        // Transfer fields - to the primary region (lagragian injection)
+    // Access
 
-            //- Return the film mass available for transfer to cloud
-            virtual const volScalarField& cloudMassTrans() const;
+        //- Return const reference mu
+        const areaScalarField& mu() const noexcept { return mu_; }
 
-            //- Return the parcel diameters originating from film to cloud
-            virtual const volScalarField& cloudDiameterTrans() const;
+        //- Return const reference rho
+        const areaScalarField& rho() const noexcept { return rho_; }
+
+        //- Return const reference sigma
+        const areaScalarField& sigma() const noexcept { return sigma_; }
+
+        //- Return const reference Tf
+        const areaScalarField& Tf() const noexcept { return Tf_; }
+
+        //- Return const reference Cp
+        const areaScalarField& Cp() const noexcept { return Cp_; }
+
+        //- Return const reference thermo
+        const liquidMixtureProperties& thermo() const noexcept
+        {
+            return thermo_;
+        }
+
+        //- Return reference temperature
+        scalar Tref() const noexcept { return Tref_; }
 
 
-        // Evolution
+    // Transfer fields - to the primary region (lagragian injection)
 
-            //- Pre-evolve film
-            virtual void preEvolveRegion();
+        //- Return the film mass available for transfer to cloud
+        virtual const volScalarField& cloudMassTrans() const noexcept
+        {
+            return cloudMassTrans_;
+        }
 
-            //- Post-evolve film
-            virtual void postEvolveRegion();
+        //- Return the parcel diameters originating from film to cloud
+        virtual const volScalarField& cloudDiameterTrans() const noexcept
+        {
+            return cloudDiameterTrans_;
+        }
 
 
-        // I-O
+    // Evolution
 
-            //- Provide some feedback
-            virtual void info();
+        //- Pre-evolve film
+        virtual void preEvolveRegion();
+
+        //- Post-evolve film
+        virtual void postEvolveRegion();
+
+
+    // I-O
+
+        //- Provide some feedback
+        virtual void info();
 };
 
 

@@ -94,26 +94,19 @@ filmTurbulenceModel::filmTurbulenceModel
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-const liquidFilmBase& filmTurbulenceModel::film() const
-{
-    return film_;
-}
-
-
 tmp<areaScalarField> filmTurbulenceModel::Cw() const
 {
-    auto tCw =
-        tmp<areaScalarField>::New
+    auto tCw = tmp<areaScalarField>::New
+    (
+        IOobject
         (
-            IOobject
-            (
-                "tCw",
-                film_.primaryMesh().time().timeName(),
-                film_.primaryMesh()
-            ),
-            film_.regionMesh(),
-            dimensionedScalar(dimVelocity)
-        );
+            "tCw",
+            film_.primaryMesh().time().timeName(),
+            film_.primaryMesh()
+        ),
+        film_.regionMesh(),
+        dimensionedScalar(dimVelocity)
+    );
     auto& Cw = tCw.ref();
 
 
@@ -195,9 +188,9 @@ tmp<faVectorMatrix> filmTurbulenceModel::primaryRegionFriction
     areaVectorField& U
 ) const
 {
-    tmp<faVectorMatrix> tshearStress
+    auto tshearStress = tmp<faVectorMatrix>::New
     (
-        new faVectorMatrix(U, sqr(U.dimensions())*sqr(dimLength))
+        U, sqr(U.dimensions())*sqr(dimLength)
     );
 
     switch (shearMethod_)

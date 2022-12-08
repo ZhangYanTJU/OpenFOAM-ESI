@@ -42,8 +42,8 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
-    baffle_(nullptr),
+    mixedFvPatchScalarField(p, iF),
+    bafflePtr_(nullptr),
     dict_()
 {
     refValue() = Zero;
@@ -60,14 +60,14 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    mixedFvPatchField<scalar>
+    mixedFvPatchScalarField
     (
         ptf,
         p,
         iF,
         mapper
     ),
-    baffle_(nullptr),
+    bafflePtr_(nullptr),
     dict_(ptf.dict_)
 {}
 
@@ -79,8 +79,8 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const dictionary& dict
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
-    baffle_(nullptr),
+    mixedFvPatchScalarField(p, iF),
+    bafflePtr_(nullptr),
     dict_
     (
         // Copy dictionary, but without "heavy" data chunks
@@ -113,9 +113,9 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
         valueFraction() = 1;
     }
 
-    if (!baffle_)
+    if (!bafflePtr_)
     {
-        baffle_.reset(baffleType::New(p.boundaryMesh().mesh(), dict_));
+        bafflePtr_.reset(baffleType::New(p.boundaryMesh().mesh(), dict_));
     }
 }
 
@@ -126,8 +126,8 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(ptf, iF),
-    baffle_(nullptr),
+    mixedFvPatchScalarField(ptf, iF),
+    bafflePtr_(nullptr),
     dict_(ptf.dict_)
 {}
 
@@ -144,28 +144,33 @@ void vibrationShellFvPatchScalarField::updateCoeffs()
     const auto& transportProperties =
         db().lookupObject<IOdictionary>("transportProperties");
 
-    dimensionedScalar rho("rho", dimDensity, transportProperties);
+    const dimensionedScalar rho("rho", dimDensity, transportProperties);
 
-    baffle_->evolve();
+    bafflePtr_->evolve();
 
     // rho * acceleration
 
     refGrad() = Zero;  // safety (for any unmapped values)
 
-    baffle_->vsm().mapToVolumePatch(baffle_->a(), refGrad(), patch().index());
+    bafflePtr_->vsm().mapToVolumePatch
+    (
+        bafflePtr_->a(),
+        refGrad(),
+        patch().index()
+    );
 
     refGrad() *= rho.value();
 
     refValue() = Zero;
     valueFraction() = Zero;
 
-    mixedFvPatchField<scalar>::updateCoeffs();
+    mixedFvPatchScalarField::updateCoeffs();
 }
 
 
 void vibrationShellFvPatchScalarField::write(Ostream& os) const
 {
-    mixedFvPatchField<scalar>::write(os);
+    mixedFvPatchScalarField::write(os);
     dict_.write(os, false);
 }
 

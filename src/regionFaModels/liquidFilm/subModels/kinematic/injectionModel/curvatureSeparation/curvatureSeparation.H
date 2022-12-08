@@ -38,17 +38,53 @@ Description
     If F_sum < 0, the film separates. Similarly, if F_sum > 0 the film will
     remain attached.
 
-    Based on description given by
-        Owen and D. J. Ryley. The flow of thin liquid films around corners.
-        International Journal of Multiphase Flow, 11(1):51-62, 1985.
+    Reference:
+    \verbatim
+        Owen, I., & Ryley, D. J. (1985).
+        The flow of thin liquid films around corners.
+        International journal of multiphase flow, 11(1), 51-62.
+    \endverbatim
+
+Usage
+    Example of the model specification:
+    \verbatim
+    injectionModels
+    (
+        curvatureSeparation
+    );
+
+    curvatureSeparationCoeffs
+    {
+        // Optional entries
+        deltaByR1Min        <scalar>;
+        definedPatchRadii   <scalar>;
+        fThreshold          <scalar>;
+        minInvR1            <scalar>;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property       | Description                    | Type  | Reqd | Deflt
+      deltaByR1Min   | Minimum gravity driven film thickness | scalar | no | 0
+      definedPatchRadii | Patch radius            i   | scalar | no | 0
+      fThreshold     | Threshold force for separation | scalar | no | 1e-8
+      minInvR1       | Minimum inv R1 for separation  | scalar | no | 5
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link injectionModel.H \endlink
 
 SourceFiles
     curvatureSeparation.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef curvatureSeparation_H
-#define curvatureSeparation_H
+#ifndef areaSurfaceFilmModels_curvatureSeparation_H
+#define areaSurfaceFilmModels_curvatureSeparation_H
 
 #include "injectionModel.H"
 #include "faCFD.H"
@@ -86,8 +122,7 @@ protected:
         //- Minimum gravity driven film thickness (non-dimensionalised delta/R1)
         scalar deltaByR1Min_;
 
-        //- List of radii for patches - if patch not defined, radius
-        //- calculated based on mesh geometry
+        //- Patch radius
         scalar definedPatchRadii_;
 
         //- Threshold force for separation
@@ -133,15 +168,15 @@ public:
 
     // Member Functions
 
-        // Evolution
+    // Evaluation
 
-            //- Correct
-            virtual void correct
-            (
-                scalarField& availableMass,
-                scalarField& massToInject,
-                scalarField& diameterToInject
-            );
+        //- Correct
+        virtual void correct
+        (
+            scalarField& availableMass,
+            scalarField& massToInject,
+            scalarField& diameterToInject
+        );
 };
 
 

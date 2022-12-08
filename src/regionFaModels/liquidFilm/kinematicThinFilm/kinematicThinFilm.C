@@ -75,10 +75,7 @@ void kinematicThinFilm::preEvolveRegion()
 
 void kinematicThinFilm::evolveRegion()
 {
-    if (debug)
-    {
-        InfoInFunction << endl;
-    }
+    DebugInFunction << endl;
 
     const areaVectorField& ns = regionMesh().faceAreaNormals();
 
@@ -86,7 +83,7 @@ void kinematicThinFilm::evolveRegion()
 
     phi2s_ = fac::interpolate(h_)*phif_;
 
-    for (int oCorr=1; oCorr<=nOuterCorr_; oCorr++)
+    for (int oCorr=1; oCorr<=nOuterCorr_; ++oCorr)
     {
         pf_.storePrevIter();
 
@@ -96,7 +93,7 @@ void kinematicThinFilm::evolveRegion()
           + fam::div(phi2s_, Uf_)
           ==
             gs*h_
-          + turbulence_->Su(Uf_)
+          + turbulencePtr_->Su(Uf_)
           + faOptions()(h_, Uf_, sqr(dimVelocity))
           + forces_.correct(Uf_)
           + USp_
@@ -108,25 +105,27 @@ void kinematicThinFilm::evolveRegion()
 
         if (momentumPredictor_)
         {
-            solve(UsEqn == - fac::grad(pf_*h_)/rho_ + pf_*fac::grad(h_)/rho_);
+            solve(UsEqn == -fac::grad(pf_*h_)/rho_ + pf_*fac::grad(h_)/rho_);
         }
 
-        for (int corr=1; corr<=nCorr_; corr++)
+        for (int corr=1; corr<=nCorr_; ++corr)
         {
-            areaScalarField UsA(UsEqn.A());
+            tmp<areaScalarField> tUsA = UsEqn.A();
 
-            Uf_ = UsEqn.H()/UsA;
+            Uf_ = UsEqn.H()/tUsA();
             Uf_.correctBoundaryConditions();
             faOptions().correct(Uf_);
 
+            const areaScalarField invRhoUsA(scalar(1)/(rho_*tUsA));
+
             phif_ =
                 (fac::interpolate(Uf_) & regionMesh().Le())
-                - fac::interpolate(1.0/(rho_*UsA))
+                - fac::interpolate(invRhoUsA)
                 * fac::lnGrad(pf_*h_)*regionMesh().magLe()
-                + fac::interpolate(pf_/(rho_*UsA))
+                + fac::interpolate(pf_*invRhoUsA)
                 * fac::lnGrad(h_)*regionMesh().magLe();
 
-            for (int nFilm=1; nFilm<=nFilmCorr_; nFilm++)
+            for (int nFilm=1; nFilm<=nFilmCorr_; ++nFilm)
             {
                 faScalarMatrix hEqn
                 (
@@ -155,8 +154,8 @@ void kinematicThinFilm::evolveRegion()
             pf_.correctBoundaryConditions();
             pf_.relax();
 
-            Uf_ -= (1.0/(rho_*UsA))*fac::grad(pf_*h_)
-                - (pf_/(rho_*UsA))*fac::grad(h_);
+            Uf_ -= invRhoUsA*fac::grad(pf_*h_)
+                - (pf_*invRhoUsA)*fac::grad(h_);
             Uf_.correctBoundaryConditions();
             faOptions().correct(Uf_);
         }
@@ -176,7 +175,7 @@ void kinematicThinFilm::postEvolveRegion()
     correctThermoFields();
 
     // Correct turbulence
-    turbulence_->correct();
+    turbulencePtr_->correct();
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

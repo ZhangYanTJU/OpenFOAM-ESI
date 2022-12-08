@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef injectionModel_H
-#define injectionModel_H
+#ifndef areaSurfaceFilmModels_injectionModel_H
+#define areaSurfaceFilmModels_injectionModel_H
 
 #include "filmSubModelBase.H"
 #include "runTimeSelectionTables.H"

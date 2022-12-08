@@ -29,14 +29,77 @@ Class
 Description
     Base class for film turbulence models
 
+Usage
+    Example of the model specification:
+    \verbatim
+    {
+        // Mandatory entries
+        turbulence          <model>;
+
+        <model>Coeffs
+        {
+            // Mandatory entries
+            friction        <word>;
+            shearStress     <word>;
+
+            // Optional entries
+            rho             <word>;
+
+            // Conditional entries
+
+                // if rho=rhoInf
+                rhoInf          <scalar>;
+
+                // if friction=DarcyWeisbach
+                DarcyWeisbach   <scalar>;
+
+                // if friction=ManningStrickler
+                n               <scalar>;
+
+                // if shearStress=simple
+                Cf              <scalar>;
+        }
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property     | Description                   | Type  | Reqd | Deflt
+      turbulence   | Model name                    | word  | yes  | -
+      friction     | Friction model                | word  | yes  | -
+      shearStress  | Shear-stress model            | word  | yes  | -
+      rho          | Name of density field         | word  | no   | rho
+      rhoInf       | Reference density          | scalar | choice | -
+      DarcyWeisbach | Friction-model constant   | scalar | choice | -
+      n             | Friction-model constant   | scalar | choice | -
+      Cf          | Skin-friction coefficient   | scalar | choice | -
+    \endtable
+
+    Options for the \c friction entry:
+    \verbatim
+      quadraticProfile    | Quadratic-profile model
+      linearProfile       | Linear-profile model
+      DarcyWeisbach       | Darcy-Weisbach model
+      ManningStrickler    | Manning-Strickler model
+    \endverbatim
+
+    Options for the \c shearStress entry:
+    \verbatim
+      simple              | Skin-friction coefficient model
+      wallFunction        | Wall-function model
+    \endverbatim
+
 SourceFiles
     filmTurbulenceModel.C
     filmTurbulenceModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef regionFaModels_filmTurbulenceModel_H
-#define regionFaModels_filmTurbulenceModel_H
+#ifndef areaSurfaceFilmModels_filmTurbulenceModel_H
+#define areaSurfaceFilmModels_filmTurbulenceModel_H
 
 #include "areaFieldsFwd.H"
 #include "runTimeSelectionTables.H"
@@ -106,13 +169,13 @@ protected:
         //- Model dictionary
         const dictionary dict_;
 
-        //- Method used
+        //- Friction model
         const frictionMethodType method_;
 
-        //- Shear method used
+        //- Shear-stress model
         const shearMethodType shearMethod_;
 
-        //- Name of density field (optional)
+        //- Name of density field
         word rhoName_;
 
         //- Reference density needed for incompressible calculations
@@ -167,37 +230,37 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return film
-            const liquidFilmBase& film() const;
-
-
-        // Turbulence
-
-            //- Return the effective viscous stress (laminar + turbulent)
-            tmp<volSymmTensorField> devRhoReff() const;
-
-            //- Return primary region friction
-            tmp<faVectorMatrix> primaryRegionFriction
-            (
-                areaVectorField& U
-            ) const;
-
-            //- Return rho if specified otherwise rhoRef
-            tmp<volScalarField> rho() const;
-
-            //- Return the wall film surface friction
-            virtual tmp<areaScalarField> Cw() const;
+        //- Return const reference to film
+        const liquidFilmBase& film() const { return film_; }
 
 
-        // Evaluation
+    // Turbulence
 
-            //- Correct/update the model
-            virtual void correct() = 0;
+        //- Return the effective viscous stress (laminar + turbulent)
+        tmp<volSymmTensorField> devRhoReff() const;
 
-            //- Return the source for the film momentum equation
-            virtual tmp<faVectorMatrix> Su(areaVectorField& U) const = 0;
+        //- Return primary region friction
+        tmp<faVectorMatrix> primaryRegionFriction
+        (
+            areaVectorField& U
+        ) const;
+
+        //- Return rho if specified otherwise rhoRef
+        tmp<volScalarField> rho() const;
+
+        //- Return the wall film surface friction
+        virtual tmp<areaScalarField> Cw() const;
+
+
+    // Evaluation
+
+        //- Correct/update the model
+        virtual void correct() = 0;
+
+        //- Return the source for the film momentum equation
+        virtual tmp<faVectorMatrix> Su(areaVectorField& U) const = 0;
 };
 
 

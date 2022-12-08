@@ -81,10 +81,7 @@ forceList::~forceList()
 
 tmp<faVectorMatrix> forceList::correct(areaVectorField& U)
 {
-    tmp<faVectorMatrix> tResult
-    (
-        new faVectorMatrix(U, dimForce/dimDensity)
-    );
+    auto tResult = tmp<faVectorMatrix>::New(U, dimForce/dimDensity);
     faVectorMatrix& result = tResult.ref();
 
     forAll(*this, i)
@@ -94,6 +91,7 @@ tmp<faVectorMatrix> forceList::correct(areaVectorField& U)
 
     return tResult;
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

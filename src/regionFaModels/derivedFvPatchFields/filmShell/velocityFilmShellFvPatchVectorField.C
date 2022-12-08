@@ -42,8 +42,8 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    mixedFvPatchField<vector>(p, iF),
-    baffle_(nullptr),
+    mixedFvPatchVectorField(p, iF),
+    bafflePtr_(nullptr),
     dict_(),
     curTimeIndex_(-1),
     zeroWallVelocity_(true)
@@ -62,14 +62,14 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const fvPatchFieldMapper& mapper
 )
 :
-    mixedFvPatchField<vector>
+    mixedFvPatchVectorField
     (
         ptf,
         p,
         iF,
         mapper
     ),
-    baffle_(nullptr),
+    bafflePtr_(nullptr),
     dict_(ptf.dict_),
     curTimeIndex_(-1),
     zeroWallVelocity_(true)
@@ -83,8 +83,8 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const dictionary& dict
 )
 :
-    mixedFvPatchField<vector>(p, iF),
-    baffle_(nullptr),
+    mixedFvPatchVectorField(p, iF),
+    bafflePtr_(nullptr),
     dict_
     (
         // Copy dictionary, but without "heavy" data chunks
@@ -119,9 +119,9 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
         valueFraction() = 1;
     }
 
-    if (!baffle_)
+    if (!bafflePtr_)
     {
-        baffle_.reset(baffleType::New(p.boundaryMesh().mesh(), dict_));
+        bafflePtr_.reset(baffleType::New(p.boundaryMesh().mesh(), dict_));
     }
 }
 
@@ -132,8 +132,8 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    mixedFvPatchField<vector>(ptf, iF),
-    baffle_(nullptr),
+    mixedFvPatchVectorField(ptf, iF),
+    bafflePtr_(nullptr),
     dict_(ptf.dict_),
     curTimeIndex_(-1),
     zeroWallVelocity_(true)
@@ -142,7 +142,6 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 void velocityFilmShellFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())
@@ -150,14 +149,19 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
         return;
     }
 
-    // Execute the change to the openFraction only once per time-step
+    // Execute the change only once per time-step
     if (curTimeIndex_ != this->db().time().timeIndex())
     {
-        baffle_->evolve();
+        bafflePtr_->evolve();
 
         vectorField& pfld = *this;
 
-        baffle_->vsm().mapToVolumePatch(baffle_->Us(), pfld, patch().index());
+        bafflePtr_->vsm().mapToVolumePatch
+        (
+            bafflePtr_->Us(),
+            pfld,
+            patch().index()
+        );
 
         refGrad() = Zero;
         valueFraction() = 1;
@@ -174,7 +178,7 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
         curTimeIndex_ = this->db().time().timeIndex();
     }
 
-    mixedFvPatchField<vector>::updateCoeffs();
+    mixedFvPatchVectorField::updateCoeffs();
 }
 
 

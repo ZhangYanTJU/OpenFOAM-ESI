@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,33 +37,34 @@ Usage
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional (inherited) entries
-        ...
-
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         thermalShellModel   thermalShell;
         thermo
         {
             // subdictionary entries
         }
 
-        // Mandatory/Optional (derived) entries
+        // Optional entries
+        qr                  <word>;
+        thickness           <scalar>;
+
+        // Inherited entries
         ...
+        nNonOrthCorr        <int>;    // read from another dict
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property   | Description                      | Type  | Reqd | Dflt
-      thermalShellModel | Type name: thermalShell   | word  | yes  | -
+      Property   | Description                      | Type  | Reqd   | Deflt
+      thermalShellModel | Type name: thermalShell   | word  | yes    | -
       thermo     | Solid thermal properties         | dictionary | yes | -
+      qr         | Name of radiative heat flux field | word | no     | none
+      thickness  | Uniform film thickness [m]       | scalar | choice | -
     \endtable
 
     The inherited entries are elaborated in:
       - \link thermalShellModel.H \endlink
-
-See also
-  - Foam::regionModels::thermalShellModels::thermalShellModel
 
 SourceFiles
     thermalShell.C
@@ -122,16 +123,16 @@ protected:
 
         // Source term fields
 
-            //- External surface energy source  / [J/m2/s]
+            //- External surface energy source [J/m2/s]
             areaScalarField qs_;
 
-            //- Thickness
+            //- Film thickness [m]
             areaScalarField h_;
 
             //- Name of the primary region radiative flux
             const word qrName_;
 
-            //- Uniform thickness
+            //- Uniform film thickness [m]
             scalar thickness_;
 
 
@@ -172,31 +173,31 @@ public:
 
     // Member Functions
 
-        // Fields
+    // Fields
 
-            //- Return the film specific heat capacity [J/kg/K]
-            const tmp<areaScalarField> Cp() const;
+        //- Return the film specific heat capacity [J/kg/K]
+        const tmp<areaScalarField> Cp() const;
 
-            //- Return density [Kg/m3]
-            const tmp<areaScalarField> rho() const;
+        //- Return density [kg/m^3]
+        const tmp<areaScalarField> rho() const;
 
-            //- Return thermal conductivity [W/m/K]
-            const tmp<areaScalarField> kappa() const;
-
-
-        // Evolution
-
-            //- Pre-evolve  thermal baffle
-            virtual void preEvolveRegion();
-
-            //- Evolve the thermal baffle
-            virtual void evolveRegion();
+        //- Return thermal conductivity [W/m/K]
+        const tmp<areaScalarField> kappa() const;
 
 
-       // IO
+    // Evolution
 
-            //- Provide some feedback
-            virtual void info();
+        //- Pre-evolve  thermal baffle
+        virtual void preEvolveRegion();
+
+        //- Evolve the thermal baffle
+        virtual void evolveRegion();
+
+
+    // IO
+
+        //- Provide some feedback
+        virtual void info();
 };
 
 

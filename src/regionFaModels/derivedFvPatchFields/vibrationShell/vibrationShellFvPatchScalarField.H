@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,23 +30,25 @@ Group
     grpVibrationBoundaryConditions
 
 Description
+    This boundary condition provides a coupled acoustic pressure condition
+    between a primary region (3D mesh) and a vibration shell model (2D mesh).
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <masterPatchName>
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type                vibrationShell;
 
-        // Mandatory/Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property | Description                      | Type  | Reqd | Dflt
+      Property | Description                      | Type  | Reqd | Deflt
       type     | Type name: vibrationShell        | word  | yes  | -
     \endtable
 
@@ -59,8 +61,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef vibrationShellFvPatchScalarField_H
-#define vibrationShellFvPatchScalarField_H
+#ifndef Foam_vibrationShellFvPatchScalarField_H
+#define Foam_vibrationShellFvPatchScalarField_H
 
 #include "autoPtr.H"
 #include "vibrationShellModel.H"
@@ -77,7 +79,7 @@ namespace Foam
 
 class vibrationShellFvPatchScalarField
 :
-    public mixedFvPatchField<scalar>
+    public mixedFvPatchScalarField
 {
     // Typedefs
 
@@ -87,8 +89,8 @@ class vibrationShellFvPatchScalarField
 
     // Private Data
 
-        //- The vibration shell
-        autoPtr<baffleType> baffle_;
+        //- The vibration shell model
+        autoPtr<baffleType> bafflePtr_;
 
         //- Dictionary
         dictionary dict_;

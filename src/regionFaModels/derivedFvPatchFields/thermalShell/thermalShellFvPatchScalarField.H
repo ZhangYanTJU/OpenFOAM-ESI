@@ -41,17 +41,17 @@ Usage
     \verbatim
     <masterPatchName>
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type                compressible::thermalShell;
 
-        // Mandatory/Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property | Description                           | Type  | Reqd | Dflt
+      Property | Description                           | Type  | Reqd | Deflt
       type     | Type name: compressible::thermalShell | word  | yes  | -
     \endtable
 
@@ -88,7 +88,7 @@ namespace compressible
 
 class thermalShellFvPatchScalarField
 :
-    public fixedValueFvPatchField<scalar>
+    public fixedValueFvPatchScalarField
 {
     // Typedefs
 
@@ -99,7 +99,7 @@ class thermalShellFvPatchScalarField
     // Private Data
 
         //- The thermal baffle
-        autoPtr<baffleType> baffle_;
+        autoPtr<baffleType> bafflePtr_;
 
         //- Dictionary
         dictionary dict_;

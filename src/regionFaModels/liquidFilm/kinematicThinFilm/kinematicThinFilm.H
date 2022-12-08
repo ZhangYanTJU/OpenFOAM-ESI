@@ -29,14 +29,34 @@ Class
 Description
     Thin film model.
 
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    {
+        // Mandatory entries
+        liquidFilmModel         kinematicThinFilm;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                        | Type  | Reqd | Deflt
+      liquidFilmModel  | Type name: kinematicThinFilm | dict  | yes  | -
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link liquidFilmModel.H \endlink
+
 SourceFiles
     kinematicThinFilm.C
-    kinematicThinFilmI.H
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kinematicThinFilm_H
-#define kinematicThinFilm_H
+#ifndef areaSurfaceFilmModels_kinematicThinFilm_H
+#define areaSurfaceFilmModels_kinematicThinFilm_H
 
 #include "volFieldsFwd.H"
 #include "liquidFilmModel.H"
@@ -89,16 +109,16 @@ public:
 
     // Member Functions
 
-        // Evolution
+    // Evolution
 
-            //- Pre-evolve film
-            virtual void preEvolveRegion();
+        //- Pre-evolve film
+        virtual void preEvolveRegion();
 
-            //- Evolve the film
-            virtual void evolveRegion();
+        //- Evolve the film
+        virtual void evolveRegion();
 
-            //- Post-evolve film
-            virtual void postEvolveRegion();
+        //- Post-evolve film
+        virtual void postEvolveRegion();
 };
 
 

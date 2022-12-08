@@ -56,19 +56,16 @@ bool KirchhoffShell::init(const dictionary& dict)
 
 void KirchhoffShell::solveDisplacement()
 {
-    if (debug)
-    {
-        InfoInFunction << endl;
-    }
+    DebugInFunction << endl;
 
     const Time& time = primaryMesh().time();
 
-    areaScalarField solidMass(rho()*h_);
-    areaScalarField solidD(D()/solidMass);
+    const areaScalarField solidMass(rho()*h_);
+    const areaScalarField solidD(D()/solidMass);
 
     // Save old times
-    areaScalarField w0(w_.oldTime());
-    areaScalarField w00(w_.oldTime().oldTime());
+    const areaScalarField w0(w_.oldTime());
+    const areaScalarField w00(w_.oldTime().oldTime());
 
     if (nSubCycles_ > 1)
     {
@@ -77,7 +74,7 @@ void KirchhoffShell::solveDisplacement()
         w_.oldTime().oldTime() = w00_;
         laplaceW_.oldTime() = laplaceW0_;
         laplace2W_.oldTime() = laplace2W0_;
-     }
+    }
 
     for
     (
@@ -89,7 +86,6 @@ void KirchhoffShell::solveDisplacement()
        !(++wSubCycle).end();
     )
     {
-
         laplaceW_ = fac::laplacian(w_);
         laplace2W_ = fac::laplacian(laplaceW_);
 
@@ -282,23 +278,20 @@ const tmp<areaScalarField> KirchhoffShell::D() const
 
 const tmp<areaScalarField> KirchhoffShell::rho() const
 {
-    return tmp<areaScalarField>
+    return tmp<areaScalarField>::New
     (
-        new areaScalarField
+        IOobject
         (
-            IOobject
-            (
-                "rhos",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            regionMesh(),
-            dimensionedScalar("rho", dimDensity, solid().rho()),
-            zeroGradientFaPatchScalarField::typeName
-        )
+            "rhos",
+            primaryMesh().time().timeName(),
+            primaryMesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        regionMesh(),
+        dimensionedScalar(dimDensity, solid().rho()),
+        zeroGradientFaPatchScalarField::typeName
     );
 }
 

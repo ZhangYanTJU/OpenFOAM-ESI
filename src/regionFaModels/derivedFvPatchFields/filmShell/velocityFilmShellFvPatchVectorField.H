@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,25 +30,30 @@ Group
     grpLiquidFilmBoundaryConditions
 
 Description
+    This boundary condition provides a coupled velocity condition between
+    a primary region (3D mesh) and a liquid-film model (2D mesh).
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
+        // Mandatory entries
         type                velocityFilmShell;
+        liquidFilmModel     <word>;
 
-        active              true;
-        infoOutput          true;
+        // Optional entries
+        zeroWallVelocity    <bool>;
 
-        U                   U;
-        pRef                1e5;
-        T0                  300;
-
-        deltaWet            1e-4;
-        h0                  1e-8;
-
-        zeroWallVelocity    true;
+        // Inherited entries
+        ...
+        active              <bool>;
+        infoOutput          <bool>;
+        U                   <word>;
+        pRef                <scalar>;
+        T0                  <scalar>;
+        deltaWet            <scalar>;
+        h0                  <scalar>;
 
         thermo
         {
@@ -56,7 +61,6 @@ Usage
         }
 
         turbulence          laminar;
-
         laminarCoeffs
         {
             friction        ManningStrickler;   // Wall friction model
@@ -77,8 +81,6 @@ Usage
         }
 
         region              film;
-        liquidFilmModel     kinematicThinFilm;
-
         value               uniform (0 0 0);
     }
     \endverbatim
@@ -87,28 +89,32 @@ Usage
     \table
       Property    | Description                        | Type | Reqd | Deflt
       type        | Type name: velocityFilmShell       | word | yes  | -
+      liquidFilmModel     | Film model               | word   | yes  | -
+      zeroWallVelocity    | Flag to fix zero U for primary flow <!--
+                  -->                                  | bool | no   | true
       U           | Name of the primary U              | word | yes  | -
       pRef        | Reference pressure for thermo    | scalar | yes  | -
       T0          | Film initial temperature         | scalar | no   | READ
       thermo      | Flow thermo                     | wordRes | yes  | -
-      zeroWallVelocity    | Flag to fix zero U for primary flow <!--
-                  -->                                  | bool | no   | true
       turbulence  | Type of film turbulence model      | word | yes  | -
       injectionModels   | Lagrangian injection         |      | no   | -
       forces      | Film force models               | wordRes | no   | -
       deltaWet    | Wet film thickness               | scalar | no   | 1e-4
       h0          | Numerical minimum thickness      | scalar | no   | 1e-7
       region      | Name of the 2D region            | word   | yes  | -
-      liquidFilmModel     | Film model               | word   | yes  | -
     \endtable
+
+    The inherited entries are elaborated in:
+      - \link liquidFilmBase.H \endlink
+      - \link mixedFvPatchFields.H \endlink
 
 SourceFiles
     velocityFilmShellFvPatchVectorField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef velocityFilmShellFvPatchVectorField_H
-#define velocityFilmShellFvPatchVectorField_H
+#ifndef Foam_velocityFilmShellFvPatchVectorField_H
+#define Foam_velocityFilmShellFvPatchVectorField_H
 
 #include "autoPtr.H"
 #include "liquidFilmBase.H"
@@ -125,7 +131,7 @@ namespace Foam
 
 class velocityFilmShellFvPatchVectorField
 :
-    public mixedFvPatchField<vector>
+    public mixedFvPatchVectorField
 {
     // Typedefs
 
@@ -135,8 +141,8 @@ class velocityFilmShellFvPatchVectorField
 
     // Private Data
 
-        //- The liquid film
-        autoPtr<baffleType> baffle_;
+        //- The liquid film model
+        autoPtr<baffleType> bafflePtr_;
 
         //- Dictionary
         mutable dictionary dict_;
@@ -144,7 +150,7 @@ class velocityFilmShellFvPatchVectorField
         //- Time index to evolve the film
         label curTimeIndex_;
 
-        //- Zero wall velocity. Fix U to zero or to film U
+        //- Flag to set velocity to zero or film velocity
         bool zeroWallVelocity_;
 
 
