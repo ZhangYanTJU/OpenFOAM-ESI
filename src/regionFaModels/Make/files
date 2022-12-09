@@ -1,13 +1,13 @@
 /* Region models */
 regionFaModel/regionFaModel.C
-thermalShellModel/thermalShellModel.C
-thermalShellModel/thermalShellModelNew.C
-vibrationShellModel/vibrationShellModel.C
-vibrationShellModel/vibrationShellModelNew.C
+thermalShellModels/thermalShellModel/thermalShellModel.C
+thermalShellModels/thermalShellModel/thermalShellModelNew.C
+vibrationShellModels/vibrationShellModel/vibrationShellModel.C
+vibrationShellModels/vibrationShellModel/vibrationShellModelNew.C
 
 /* Shell models */
-thermalShell/thermalShell.C
-KirchhoffShell/KirchhoffShell.C
+thermalShellModels/thermalShell/thermalShell.C
+vibrationShellModels/KirchhoffShell/KirchhoffShell.C
 
 /* Boundary conditions */
 derivedFvPatchFields/thermalShell/thermalShellFvPatchScalarField.C
@@ -15,31 +15,32 @@ derivedFvPatchFields/vibrationShell/vibrationShellFvPatchScalarField.C
 
 /* Sub-Model */
 
-liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.C
-liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModelNew.C
-liquidFilm/subModels/kinematic/filmTurbulenceModel/laminar/laminar.C
+kinematic = liquidFilmModels/subModels/kinematic
+$(kinematic)/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.C
+$(kinematic)/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModelNew.C
+$(kinematic)/filmTurbulenceModel/laminar/laminar.C
 
-liquidFilm/subModels/kinematic/injectionModel/injectionModelList/injectionModelList.C
-liquidFilm/subModels/kinematic/injectionModel/injectionModel/injectionModel.C
-liquidFilm/subModels/kinematic/injectionModel/injectionModel/injectionModelNew.C
+$(kinematic)/injectionModel/injectionModelList/injectionModelList.C
+$(kinematic)/injectionModel/injectionModel/injectionModel.C
+$(kinematic)/injectionModel/injectionModel/injectionModelNew.C
 
-liquidFilm/subModels/kinematic/injectionModel/curvatureSeparation/curvatureSeparation.C
-liquidFilm/subModels/kinematic/injectionModel/BrunDrippingInjection/BrunDrippingInjection.C
+$(kinematic)/injectionModel/curvatureSeparation/curvatureSeparation.C
+$(kinematic)/injectionModel/BrunDrippingInjection/BrunDrippingInjection.C
 
-liquidFilm/subModels/kinematic/force/forceList/forceList.C
-liquidFilm/subModels/kinematic/force/force/force.C
-liquidFilm/subModels/kinematic/force/force/forceNew.C
-liquidFilm/subModels/kinematic/force/contactAngleForces/contactAngleForce/contactAngleForce.C
-liquidFilm/subModels/kinematic/force/contactAngleForces/dynamicContactAngleForce/dynamicContactAngleForce.C
+$(kinematic)/force/forceList/forceList.C
+$(kinematic)/force/force/force.C
+$(kinematic)/force/force/forceNew.C
+$(kinematic)/force/contactAngleForces/contactAngleForce/contactAngleForce.C
+$(kinematic)/force/contactAngleForces/dynamicContactAngleForce/dynamicContactAngleForce.C
 
-liquidFilm/subModels/filmSubModelBase.C
+liquidFilmModels/subModels/filmSubModelBase.C
 
-liquidFilm/liquidFilmBase.C
-liquidFilm/liquidFilmBaseNew.C
+liquidFilmModels/liquidFilmBase.C
+liquidFilmModels/liquidFilmBaseNew.C
 
-liquidFilm/liquidFilmModel/liquidFilmModel.C
-liquidFilm/kinematicThinFilm/kinematicThinFilm.C
-derivedFvPatchFields/filmShell/velocityFilmShellFvPatchVectorField.C
+liquidFilmModels/liquidFilmModel/liquidFilmModel.C
+liquidFilmModels/kinematicThinFilm/kinematicThinFilm.C
+derivedFvPatchFields/velocityFilmShell/velocityFilmShellFvPatchVectorField.C
 
 functionObjects/setTimeStep/setTimeStepFaRegionsFunctionObject.C
 
