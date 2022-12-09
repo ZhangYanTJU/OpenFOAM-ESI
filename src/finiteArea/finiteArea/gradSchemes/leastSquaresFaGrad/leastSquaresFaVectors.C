@@ -142,25 +142,11 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
         // cause problems with fixedGradient.  HJ, 4/Oct/2010
         const vectorField pd(p.delta());
 
-        if (p.coupled())
+        forAll(pd, patchFacei)
         {
-            forAll(pd, patchFacei)
-            {
-                const vector& d = pd[patchFacei];
+            const vector& d = pd[patchFacei];
 
-                dd[edgeFaces[patchFacei]] +=
-                    (1.0/magSqr(d))*sqr(d);
-            }
-        }
-        else
-        {
-            forAll(pd, patchFacei)
-            {
-                const vector& d = pd[patchFacei];
-
-                dd[edgeFaces[patchFacei]] +=
-                    (1.0/magSqr(d))*sqr(d);
-            }
+            dd[edgeFaces[patchFacei]] += (1.0/magSqr(d))*sqr(d);
         }
     }
 
@@ -201,27 +187,12 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
         // Build the d-vectors
         const vectorField pd(p.delta());
 
-        if (p.coupled())
+        forAll(pd, patchFacei)
         {
-            forAll(pd, patchFacei)
-            {
-                const vector& d = pd[patchFacei];
+            const vector& d = pd[patchFacei];
 
-                patchLsP[patchFacei] =
-                    (1.0/magSqr(d))
-                   *(invDd[edgeFaces[patchFacei]] & d);
-            }
-        }
-        else
-        {
-            forAll(pd, patchFacei)
-            {
-                const vector& d = pd[patchFacei];
-
-                patchLsP[patchFacei] =
-                    (1.0/magSqr(d))
-                   *(invDd[edgeFaces[patchFacei]] & d);
-            }
+            patchLsP[patchFacei] =
+                (1.0/magSqr(d))*(invDd[edgeFaces[patchFacei]] & d);
         }
     }
 

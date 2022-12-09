@@ -86,14 +86,8 @@ public:
 
         // Turbulence
 
-            //- Wall friction
-            tmp<faVectorMatrix> wallFriction(areaVectorField& U) const;
-
-            //- Return the film turbulence viscosity
-            virtual tmp<areaScalarField> mut() const;
-
-            //- Return the source for the film momentum equation
-            virtual tmp<faVectorMatrix> Su(areaVectorField& U) const;
+        //- Return the source for the film momentum equation
+        virtual tmp<faVectorMatrix> Su(areaVectorField& U) const;
 
 
         // Evaluation

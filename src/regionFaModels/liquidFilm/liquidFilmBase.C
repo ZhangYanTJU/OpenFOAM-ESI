@@ -218,19 +218,6 @@ liquidFilmBase::liquidFilmBase
         calculatedFvPatchField<scalar>::typeName
     ),
 
-    energySource_
-    (
-        IOobject
-        (
-            "energySource",
-            primaryMesh().time().timeName(),
-            primaryMesh()
-        ),
-        primaryMesh(),
-        dimensionedScalar(dimEnergy, Zero),
-        calculatedFvPatchField<scalar>::typeName
-    ),
-
     addedMassTotal_(0),
 
     faOptions_(Foam::fa::options::New(primaryMesh()))

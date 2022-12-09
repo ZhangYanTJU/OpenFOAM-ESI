@@ -104,6 +104,8 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
     const labelUList& own = mesh.edgeOwner();
     const labelUList& nbr = mesh.edgeNeighbour();
 
+    const vector gHat(normalised(film().g().value()));
+
     scalarField phiMax(mesh.nFaces(), -GREAT);
     scalarField cosAngle(UHat.size(), Zero);
 
@@ -117,12 +119,12 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
         if (phi[edgei] > phiMax[cellO])
         {
             phiMax[cellO] = phi[edgei];
-            cosAngle[cellO] = -gHat_ & UHat[cellN];
+            cosAngle[cellO] = -gHat & UHat[cellN];
         }
         if (-phi[edgei] > phiMax[cellN])
         {
             phiMax[cellN] = -phi[edgei];
-            cosAngle[cellN] = -gHat_ & UHat[cellO];
+            cosAngle[cellN] = -gHat & UHat[cellO];
         }
     }
 
@@ -161,14 +163,11 @@ curvatureSeparation::curvatureSeparation
 )
 :
     injectionModel(type(), film, dict),
-    gradNHat_(fac::grad(film.regionMesh().faceAreaNormals())),
     deltaByR1Min_(coeffDict_.getOrDefault<scalar>("deltaByR1Min", 0)),
     definedPatchRadii_
     (
         coeffDict_.getOrDefault<scalar>("definedPatchRadii", 0)
     ),
-    magG_(mag(film.g().value())),
-    gHat_(Zero),
     fThreshold_
     (
         coeffDict_.getOrDefault<scalar>("fThreshold", 1e-8)
@@ -178,14 +177,14 @@ curvatureSeparation::curvatureSeparation
         coeffDict_.getOrDefault<scalar>("minInvR1", 5)
     )
 {
-    if (magG_ < ROOTVSMALL)
+    const scalar magG = mag(film.g().value());
+
+    if (magG < ROOTVSMALL)
     {
         FatalErrorInFunction
             << "Acceleration due to gravity must be non-zero"
             << exit(FatalError);
     }
-
-    gHat_ = film.g().value()/magG_;
 }
 
 
@@ -210,6 +209,7 @@ void curvatureSeparation::correct
     const scalarField cosAngle(calcCosAngle(phi));
     const scalarField invR1(calcInvR1(U, cosAngle));
 
+    const scalar magG = mag(film().g().value());
 
     // calculate force balance
     scalarField Fnet(mesh.nFaces(), Zero);
@@ -227,7 +227,7 @@ void curvatureSeparation::correct
 
             // body force
             const scalar Fb =
-               - 0.5*rho[i]*magG_*invR1[i]*(sqr(R1) - sqr(R2))*cosAngle[i];
+               - 0.5*rho[i]*magG*invR1[i]*(sqr(R1) - sqr(R2))*cosAngle[i];
 
             // surface force
             const scalar Fs = sigma[i]/R2;

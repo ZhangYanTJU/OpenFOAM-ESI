@@ -83,21 +83,12 @@ protected:
 
     // Protected Data
 
-        //- Gradient of surface normals
-        areaTensorField gradNHat_;
-
         //- Minimum gravity driven film thickness (non-dimensionalised delta/R1)
         scalar deltaByR1Min_;
 
         //- List of radii for patches - if patch not defined, radius
         //- calculated based on mesh geometry
         scalar definedPatchRadii_;
-
-        //- Magnitude of gravity vector
-        scalar magG_;
-
-        //- Direction of gravity vector
-        vector gHat_;
 
         //- Threshold force for separation
         scalar fThreshold_;

@@ -57,26 +57,6 @@ laminar::laminar
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-tmp<areaScalarField> laminar::mut() const
-{
-    auto tmut = tmp<areaScalarField>::New
-    (
-        IOobject
-        (
-            "mut",
-            film().primaryMesh().time().timeName(),
-            film().primaryMesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        film().regionMesh(),
-        dimensionedScalar(dimMass/dimLength/dimTime)
-    );
-
-    return tmut;
-}
-
-
 void laminar::correct()
 {}
 

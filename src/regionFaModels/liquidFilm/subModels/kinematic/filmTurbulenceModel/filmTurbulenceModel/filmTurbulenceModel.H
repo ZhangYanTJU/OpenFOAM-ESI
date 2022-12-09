@@ -190,9 +190,6 @@ public:
             //- Return the wall film surface friction
             virtual tmp<areaScalarField> Cw() const;
 
-            //- Return the film turbulence viscosity
-            virtual tmp<areaScalarField> mut() const = 0;
-
 
         // Evaluation
 
