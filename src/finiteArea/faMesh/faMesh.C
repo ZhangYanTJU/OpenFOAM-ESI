@@ -234,17 +234,17 @@ void Foam::faMesh::clearGeomNotAreas() const
     polyPatchFacesPtr_.reset(nullptr);
     polyPatchIdsPtr_.reset(nullptr);
     bndConnectPtr_.reset(nullptr);
-    deleteDemandDrivenData(SPtr_);
-    deleteDemandDrivenData(patchStartsPtr_);
-    deleteDemandDrivenData(LePtr_);
-    deleteDemandDrivenData(magLePtr_);
-    deleteDemandDrivenData(faceCentresPtr_);
-    deleteDemandDrivenData(edgeCentresPtr_);
-    deleteDemandDrivenData(faceAreaNormalsPtr_);
-    deleteDemandDrivenData(edgeAreaNormalsPtr_);
+    Sptr_.reset(nullptr);
+    patchStartsPtr_.reset(nullptr);
+    LePtr_.reset(nullptr);
+    magLePtr_.reset(nullptr);
+    faceCentresPtr_.reset(nullptr);
+    edgeCentresPtr_.reset(nullptr);
+    faceAreaNormalsPtr_.reset(nullptr);
+    edgeAreaNormalsPtr_.reset(nullptr);
     pointAreaNormalsPtr_.reset(nullptr);
-    deleteDemandDrivenData(faceCurvaturesPtr_);
-    deleteDemandDrivenData(edgeTransformTensorsPtr_);
+    faceCurvaturesPtr_.reset(nullptr);
+    edgeTransformTensorsPtr_.reset(nullptr);
 }
 
 
@@ -253,9 +253,9 @@ void Foam::faMesh::clearGeom() const
     DebugInFunction << "Clearing geometry" << endl;
 
     clearGeomNotAreas();
-    deleteDemandDrivenData(S0Ptr_);
-    deleteDemandDrivenData(S00Ptr_);
-    deleteDemandDrivenData(correctPatchPointNormalsPtr_);
+    S0ptr_.reset(nullptr);
+    S00ptr_.reset(nullptr);
+    correctPatchPointNormalsPtr_.reset(nullptr);
 }
 
 
@@ -263,7 +263,7 @@ void Foam::faMesh::clearAddressing() const
 {
     DebugInFunction << "Clearing addressing" << endl;
 
-    deleteDemandDrivenData(lduPtr_);
+    lduPtr_.reset(nullptr);
 }
 
 
@@ -377,9 +377,9 @@ Foam::faMesh::faMesh
     bndConnectPtr_(nullptr),
     lduPtr_(nullptr),
 
-    SPtr_(nullptr),
-    S0Ptr_(nullptr),
-    S00Ptr_(nullptr),
+    Sptr_(nullptr),
+    S0ptr_(nullptr),
+    S00ptr_(nullptr),
     patchStartsPtr_(nullptr),
     LePtr_(nullptr),
     magLePtr_(nullptr),
@@ -408,19 +408,22 @@ Foam::faMesh::faMesh
 
     if (doInit && fileHandler().isFile(pMesh.time().timePath()/"S0"))
     {
-        S0Ptr_ = new DimensionedField<scalar, areaMesh>
+        S0ptr_.reset
         (
-            IOobject
+            new DimensionedField<scalar, areaMesh>
             (
-                "S0",
-                time().timeName(),
-                faMesh::meshSubDir,
-                mesh(),
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            ),
-            *this
-        );
+                IOobject
+                (
+                    "S0",
+                    time().timeName(),
+                    faMesh::meshSubDir,
+                    mesh(),
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                *this
+            )
+       );
     }
 }
 
@@ -483,9 +486,9 @@ Foam::faMesh::faMesh
     bndConnectPtr_(nullptr),
     lduPtr_(nullptr),
 
-    SPtr_(nullptr),
-    S0Ptr_(nullptr),
-    S00Ptr_(nullptr),
+    Sptr_(nullptr),
+    S0ptr_(nullptr),
+    S00ptr_(nullptr),
     patchStartsPtr_(nullptr),
     LePtr_(nullptr),
     magLePtr_(nullptr),
@@ -564,9 +567,9 @@ Foam::faMesh::faMesh
     bndConnectPtr_(nullptr),
     lduPtr_(nullptr),
 
-    SPtr_(nullptr),
-    S0Ptr_(nullptr),
-    S00Ptr_(nullptr),
+    Sptr_(nullptr),
+    S0ptr_(nullptr),
+    S00ptr_(nullptr),
     patchStartsPtr_(nullptr),
     LePtr_(nullptr),
     magLePtr_(nullptr),
@@ -655,18 +658,21 @@ Foam::faMesh::faMesh
 
     if (doInit && fileHandler().isFile(pMesh.time().timePath()/"S0"))
     {
-        S0Ptr_ = new DimensionedField<scalar, areaMesh>
+        S0ptr_.reset
         (
-            IOobject
+            new DimensionedField<scalar, areaMesh>
             (
-                "S0",
-                time().timeName(),
-                faMesh::meshSubDir,
-                mesh(),
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            ),
-            *this
+                IOobject
+                (
+                    "S0",
+                    time().timeName(),
+                    faMesh::meshSubDir,
+                    mesh(),
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                *this
+            )
         );
     }
 }
@@ -813,51 +819,54 @@ const Foam::edgeVectorField& Foam::faMesh::edgeCentres() const
 const Foam::DimensionedField<Foam::scalar, Foam::areaMesh>&
 Foam::faMesh::S() const
 {
-    if (!SPtr_)
+    if (!Sptr_)
     {
         calcS();
     }
 
-    return *SPtr_;
+    return *Sptr_;
 }
 
 
 const Foam::DimensionedField<Foam::scalar, Foam::areaMesh>&
 Foam::faMesh::S0() const
 {
-    if (!S0Ptr_)
+    if (!S0ptr_)
     {
         FatalErrorInFunction
             << "S0 is not available"
             << abort(FatalError);
     }
 
-    return *S0Ptr_;
+    return *S0ptr_;
 }
 
 
 const Foam::DimensionedField<Foam::scalar, Foam::areaMesh>&
 Foam::faMesh::S00() const
 {
-    if (!S00Ptr_)
+    if (!S00ptr_)
     {
-        S00Ptr_ = new DimensionedField<scalar, areaMesh>
+        S00ptr_.reset
         (
-            IOobject
+            new DimensionedField<scalar, areaMesh>
             (
-                "S00",
-                time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            S0()
+                IOobject
+                (
+                    "S00",
+                    time().timeName(),
+                    mesh(),
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE
+                ),
+                S0()
+            )
         );
 
-        S0Ptr_->writeOpt(IOobject::AUTO_WRITE);
+        S0ptr_->writeOpt(IOobject::AUTO_WRITE);
     }
 
-    return *S00Ptr_;
+    return *S00ptr_;
 }
 
 
@@ -954,33 +963,36 @@ bool Foam::faMesh::movePoints()
     // Grab old time areas if the time has been incremented
     if (curTimeIndex_ < time().timeIndex())
     {
-        if (S00Ptr_ && S0Ptr_)
+        if (S00ptr_ && S0ptr_)
         {
             DebugInfo<< "Copy old-old S" << endl;
-            *S00Ptr_ = *S0Ptr_;
+            *S00ptr_ = *S0ptr_;
         }
 
-        if (S0Ptr_)
+        if (S0ptr_)
         {
             DebugInfo<< "Copy old S" << endl;
-            *S0Ptr_ = S();
+            *S0ptr_ = S();
         }
         else
         {
             DebugInfo<< "Creating old cell volumes." << endl;
 
-            S0Ptr_ = new DimensionedField<scalar, areaMesh>
+            S0ptr_.reset
             (
-                IOobject
+                new DimensionedField<scalar, areaMesh>
                 (
-                    "S0",
-                    time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                S()
+                    IOobject
+                    (
+                        "S0",
+                        time().timeName(),
+                        mesh(),
+                        IOobject::NO_READ,
+                        IOobject::NO_WRITE,
+                        IOobject::NO_REGISTER
+                    ),
+                    S()
+                )
             );
         }
 
@@ -1026,7 +1038,10 @@ Foam::boolList& Foam::faMesh::correctPatchPointNormals() const
 {
     if (!correctPatchPointNormalsPtr_)
     {
-        correctPatchPointNormalsPtr_ = new boolList(boundary().size(), false);
+        correctPatchPointNormalsPtr_.reset
+        (
+            new boolList(boundary().size(), false)
+        );
     }
 
     return *correctPatchPointNormalsPtr_;

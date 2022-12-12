@@ -172,11 +172,11 @@ void Foam::faMesh::mapFields(const faMeshMapper& mapper) const
 
 void Foam::faMesh::mapOldAreas(const faMeshMapper& mapper) const
 {
-    if (S0Ptr_)
+    if (S0ptr_)
     {
         DebugInFunction << "Mapping old face areas." << endl;
 
-        scalarField& S0 = *S0Ptr_;
+        scalarField& S0 = *S0ptr_;
 
         scalarField savedS0(S0);
         S0.setSize(nFaces());
@@ -197,11 +197,11 @@ void Foam::faMesh::mapOldAreas(const faMeshMapper& mapper) const
         }
     }
 
-    if (S00Ptr_)
+    if (S00ptr_)
     {
         DebugInFunction << "Mapping old-old face areas." << endl;
 
-        scalarField& S00 = *S00Ptr_;
+        scalarField& S00 = *S00ptr_;
 
         scalarField savedS00(S00);
         S00.setSize(nFaces());

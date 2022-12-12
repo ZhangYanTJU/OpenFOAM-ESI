@@ -71,19 +71,19 @@ class edgeInterpolation
         // Demand-driven data
 
             //- Geodesic distance between centroids of neighbour finite areas
-            mutable edgeScalarField* lPN_;
+            mutable unique_ptr<edgeScalarField> lPNptr_;
 
             //- Central-differencing weighting factors
-            mutable edgeScalarField* weightingFactors_;
+            mutable unique_ptr<edgeScalarField> weightsPtr_;
 
             //- Face-gradient difference factors
-            mutable edgeScalarField* differenceFactors_;
+            mutable unique_ptr<edgeScalarField> deltaCoeffsPtr_;
 
             //- Non-orthogonality correction vectors
-            mutable edgeVectorField* correctionVectors_;
+            mutable unique_ptr<edgeVectorField> nonOrthCorrectionVectorsPtr_;
 
             //- Skew correction vectors
-            mutable edgeVectorField* skewCorrectionVectors_;
+            mutable unique_ptr<edgeVectorField> skewCorrectionVectorsPtr_;
 
             //- Is mesh orthogonal
             mutable bool orthogonal_;
@@ -120,7 +120,7 @@ protected:
         // Storage Management
 
             //- Clear all geometry and addressing
-            void clearOut();
+            void clearOut() const;
 
 
 public:
@@ -157,7 +157,7 @@ public:
         const edgeScalarField& deltaCoeffs() const;
 
         //- Return reference to non-orthogonality correction vectors array
-        const edgeVectorField& correctionVectors() const;
+        const edgeVectorField& nonOrthCorrectionVector() const;
 
         //- Return reference to skew vectors array
         const edgeVectorField& skewCorrectionVectors() const;
@@ -178,7 +178,7 @@ public:
     // Storage Management
 
         //- True if weights exist
-        bool hasWeights() const noexcept { return bool(weightingFactors_); }
+        bool hasWeights() const noexcept { return bool(weightsPtr_); }
 };
 
 

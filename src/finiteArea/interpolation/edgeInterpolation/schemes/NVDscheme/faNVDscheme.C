@@ -84,7 +84,7 @@ Foam::tmp<Foam::edgeScalarField> Foam::faNVDscheme<Type,NVDweight>::weights
 //     if (!mesh.orthogonal())
 //     {
 //         d -=
-//             mesh.edgeInterpolation::correctionVectors()
+//             mesh.edgeInterpolation::nonOrthCorrectionVector()
 //            /mesh.edgeInterpolation::deltaCoeffs();
 //     }
 

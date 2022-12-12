@@ -80,7 +80,7 @@ correctedLnGrad<Type>::correction
         ssf.replace
         (
             cmpt,
-            mesh.correctionVectors()
+            mesh.nonOrthCorrectionVector()
           & linearEdgeInterpolation
             <
                 typename

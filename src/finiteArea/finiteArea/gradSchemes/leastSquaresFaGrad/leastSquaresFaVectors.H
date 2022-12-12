@@ -61,8 +61,8 @@ class leastSquaresFaVectors
     // Private data
 
         //- Least-squares gradient vectors
-        mutable edgeVectorField* pVectorsPtr_;
-        mutable edgeVectorField* nVectorsPtr_;
+        mutable std::unique_ptr<edgeVectorField> pVectorsPtr_;
+        mutable std::unique_ptr<edgeVectorField> nVectorsPtr_;
 
 
     // Private member functions

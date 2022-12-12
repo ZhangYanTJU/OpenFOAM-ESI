@@ -85,9 +85,9 @@ Foam::wordList Foam::faPatch::constraintTypes()
 
 void Foam::faPatch::clearOut()
 {
-    deleteDemandDrivenData(edgeFacesPtr_);
-    deleteDemandDrivenData(pointLabelsPtr_);
-    deleteDemandDrivenData(pointEdgesPtr_);
+    edgeFacesPtr_.reset(nullptr);
+    pointLabelsPtr_.reset(nullptr);
+    pointEdgesPtr_.reset(nullptr);
 }
 
 
@@ -321,7 +321,7 @@ void Foam::faPatch::calcPointLabels() const
     }
 
     // Transfer to plain list (reuse storage)
-    pointLabelsPtr_ = new labelList(std::move(dynEdgePoints));
+    pointLabelsPtr_.reset(new labelList(std::move(dynEdgePoints)));
     /// const labelList& edgePoints = *pointLabelsPtr_;
     ///
     /// // Cannot use invertManyToMany - we have non-local edge numbering
@@ -370,7 +370,7 @@ void Foam::faPatch::calcPointEdges() const
     }
 
     // Flatten to regular list
-    pointEdgesPtr_ = new labelListList(edgePoints.size());
+    pointEdgesPtr_.reset(new labelListList(edgePoints.size()));
     auto& pEdges = *pointEdgesPtr_;
 
     forAll(pEdges, pointi)
@@ -430,9 +430,12 @@ const Foam::labelUList& Foam::faPatch::edgeFaces() const
 {
     if (!edgeFacesPtr_)
     {
-        edgeFacesPtr_ = new labelList::subList
+        edgeFacesPtr_.reset
         (
-            patchSlice(boundaryMesh().mesh().edgeOwner())
+            new labelList::subList
+            (
+                patchSlice(boundaryMesh().mesh().edgeOwner())
+            )
         );
     }
 

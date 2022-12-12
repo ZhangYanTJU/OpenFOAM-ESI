@@ -54,8 +54,8 @@ Foam::leastSquaresFaVectors::leastSquaresFaVectors(const faMesh& mesh)
 
 Foam::leastSquaresFaVectors::~leastSquaresFaVectors()
 {
-    deleteDemandDrivenData(pVectorsPtr_);
-    deleteDemandDrivenData(nVectorsPtr_);
+    pVectorsPtr_.reset(nullptr);
+    nVectorsPtr_.reset(nullptr);
 }
 
 
@@ -66,35 +66,41 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
     DebugInFunction
         << "Constructing finite area least square gradient vectors" << nl;
 
-    pVectorsPtr_ = new edgeVectorField
+    pVectorsPtr_.reset
     (
-        IOobject
+        new edgeVectorField
         (
-            "LeastSquaresP",
-            mesh().pointsInstance(),
-            mesh().thisDb(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            false
-        ),
-        mesh(),
-        dimensionedVector(dimless/dimLength, Zero)
+            IOobject
+            (
+                "LeastSquaresP",
+                mesh().pointsInstance(),
+                mesh().thisDb(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh(),
+            dimensionedVector(dimless/dimLength, Zero)
+        )
     );
     edgeVectorField& lsP = *pVectorsPtr_;
 
-    nVectorsPtr_ = new edgeVectorField
+    nVectorsPtr_.reset
     (
-        IOobject
+        new edgeVectorField
         (
-            "LeastSquaresN",
-            mesh().pointsInstance(),
-            mesh().thisDb(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            false
-        ),
-        mesh(),
-        dimensionedVector(dimless/dimLength, Zero)
+            IOobject
+            (
+                "LeastSquaresN",
+                mesh().pointsInstance(),
+                mesh().thisDb(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh(),
+            dimensionedVector(dimless/dimLength, Zero)
+        )
     );
     edgeVectorField& lsN = *nVectorsPtr_;
 
@@ -228,8 +234,8 @@ bool Foam::leastSquaresFaVectors::movePoints()
     DebugInFunction
         << "Clearing least square data" << nl;
 
-    deleteDemandDrivenData(pVectorsPtr_);
-    deleteDemandDrivenData(nVectorsPtr_);
+    pVectorsPtr_.reset(nullptr);
+    nVectorsPtr_.reset(nullptr);
 
     return true;
 }

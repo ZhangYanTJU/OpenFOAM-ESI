@@ -221,7 +221,7 @@ void Foam::faMesh::calcLduAddressing() const
             << abort(FatalError);
     }
 
-    lduPtr_ = new faMeshLduAddressing(*this);
+    lduPtr_.reset(new faMeshLduAddressing(*this));
 }
 
 
@@ -237,7 +237,7 @@ void Foam::faMesh::calcPatchStarts() const
             << abort(FatalError);
     }
 
-    patchStartsPtr_ = new labelList(boundary().patchStarts());
+    patchStartsPtr_.reset(new labelList(boundary().patchStarts()));
 }
 
 
@@ -618,7 +618,8 @@ void Foam::faMesh::calcLe() const
             << abort(FatalError);
     }
 
-    LePtr_ =
+    LePtr_.reset
+    (
         new edgeVectorField
         (
             IOobject
@@ -631,8 +632,8 @@ void Foam::faMesh::calcLe() const
             *this,
             dimLength
             // -> calculatedType()
-        );
-
+        )
+    );
     edgeVectorField& Le = *LePtr_;
 
     // Need face centres
@@ -767,7 +768,8 @@ void Foam::faMesh::calcMagLe() const
             << abort(FatalError);
     }
 
-    magLePtr_ =
+    magLePtr_.reset
+    (
         new edgeScalarField
         (
             IOobject
@@ -779,8 +781,8 @@ void Foam::faMesh::calcMagLe() const
             ),
             *this,
             dimLength
-        );
-
+        )
+    );
     edgeScalarField& magLe = *magLePtr_;
 
     const pointField& localPoints = points();
@@ -840,7 +842,8 @@ void Foam::faMesh::calcFaceCentres() const
             << abort(FatalError);
     }
 
-    faceCentresPtr_ =
+    faceCentresPtr_.reset
+    (
         new areaVectorField
         (
             IOobject
@@ -853,8 +856,8 @@ void Foam::faMesh::calcFaceCentres() const
             *this,
             dimLength
             // -> calculatedType()
-        );
-
+        )
+    );
     areaVectorField& centres = *faceCentresPtr_;
 
     // Need local points
@@ -913,7 +916,8 @@ void Foam::faMesh::calcEdgeCentres() const
             << abort(FatalError);
     }
 
-    edgeCentresPtr_ =
+    edgeCentresPtr_.reset
+    (
         new edgeVectorField
         (
             IOobject
@@ -926,8 +930,8 @@ void Foam::faMesh::calcEdgeCentres() const
             *this,
             dimLength
             // -> calculatedType()
-        );
-
+        )
+    );
     edgeVectorField& centres = *edgeCentresPtr_;
 
     // Need local points
@@ -968,27 +972,30 @@ void Foam::faMesh::calcS() const
     DebugInFunction
         << "Calculating areas" << endl;
 
-    if (SPtr_)
+    if (Sptr_)
     {
         FatalErrorInFunction
             << "S() already allocated"
             << abort(FatalError);
     }
 
-    SPtr_ = new DimensionedField<scalar, areaMesh>
+    Sptr_.reset
     (
-        IOobject
+        new DimensionedField<scalar, areaMesh>
         (
-            "S",
-            time().timeName(),
-            mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        *this,
-        dimArea
+            IOobject
+            (
+                "S",
+                time().timeName(),
+                mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            *this,
+            dimArea
+        )
     );
-    auto& areas = *SPtr_;
+    auto& areas = *Sptr_;
 
 
     // No access to fvMesh::magSf(), only polyMesh::faceAreas()
@@ -1046,7 +1053,8 @@ void Foam::faMesh::calcFaceAreaNormals() const
             << abort(FatalError);
     }
 
-    faceAreaNormalsPtr_ =
+    faceAreaNormalsPtr_.reset
+    (
         new areaVectorField
         (
             IOobject
@@ -1058,8 +1066,8 @@ void Foam::faMesh::calcFaceAreaNormals() const
             ),
             *this,
             dimless
-        );
-
+        )
+    );
     areaVectorField& faceNormals = *faceAreaNormalsPtr_;
 
     const pointField& localPoints = points();
@@ -1125,7 +1133,8 @@ void Foam::faMesh::calcEdgeAreaNormals() const
             << abort(FatalError);
     }
 
-    edgeAreaNormalsPtr_ =
+    edgeAreaNormalsPtr_.reset
+    (
         new edgeVectorField
         (
             IOobject
@@ -1137,7 +1146,8 @@ void Foam::faMesh::calcEdgeAreaNormals() const
             ),
             *this,
             dimless
-        );
+        )
+    );
     edgeVectorField& edgeAreaNormals = *edgeAreaNormalsPtr_;
 
 
@@ -1247,7 +1257,8 @@ void Foam::faMesh::calcFaceCurvatures() const
             << abort(FatalError);
     }
 
-    faceCurvaturesPtr_ =
+    faceCurvaturesPtr_.reset
+    (
         new areaScalarField
         (
             IOobject
@@ -1259,8 +1270,8 @@ void Foam::faMesh::calcFaceCurvatures() const
             ),
             *this,
             dimless/dimLength
-        );
-
+        )
+    );
     areaScalarField& faceCurvatures = *faceCurvaturesPtr_;
 
 
@@ -1286,7 +1297,7 @@ void Foam::faMesh::calcEdgeTransformTensors() const
             << abort(FatalError);
     }
 
-    edgeTransformTensorsPtr_ = new FieldField<Field, tensor>(nEdges_);
+    edgeTransformTensorsPtr_.reset(new FieldField<Field, tensor>(nEdges_));
     auto& edgeTransformTensors = *edgeTransformTensorsPtr_;
 
     // Initialize all transformation tensors

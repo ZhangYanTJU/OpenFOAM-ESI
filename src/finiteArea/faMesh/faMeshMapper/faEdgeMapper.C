@@ -43,13 +43,13 @@ void Foam::faEdgeMapper::calcAddressing() const
     hasUnmapped_ = false;
 
     // Dummy mapping: take value from edge 0
-    directAddrPtr_ = new labelList(size(), Zero);
+    directAddrPtr_.reset(new labelList(size(), Zero));
 }
 
 
 void Foam::faEdgeMapper::clearOut()
 {
-    deleteDemandDrivenData(directAddrPtr_);
+    directAddrPtr_.reset(nullptr);
     hasUnmapped_ = false;
 }
 

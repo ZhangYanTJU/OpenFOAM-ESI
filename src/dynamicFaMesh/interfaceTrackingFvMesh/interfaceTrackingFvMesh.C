@@ -208,19 +208,22 @@ void Foam::interfaceTrackingFvMesh::makeUs() const
         }
     }
 
-    UsPtr_ = new areaVectorField
+    UsPtr_.reset
     (
-        IOobject
+        new areaVectorField
         (
-            "Us",
-            mesh().time().timeName(),
-            mesh(),
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        aMesh(),
-        dimensioned<vector>(dimVelocity, Zero),
-        patchFieldTypes
+            IOobject
+            (
+                "Us",
+                mesh().time().timeName(),
+                mesh(),
+                IOobject::NO_READ,
+                IOobject::AUTO_WRITE
+            ),
+            aMesh(),
+            dimensioned<vector>(dimVelocity, Zero),
+            patchFieldTypes
+        )
     );
 
     for (const word& patchName : fixedFreeSurfacePatches_)
@@ -266,18 +269,21 @@ void Foam::interfaceTrackingFvMesh::makeFsNetPhi() const
             << abort(FatalError);
     }
 
-    fsNetPhiPtr_ = new areaScalarField
+    fsNetPhiPtr_.reset
     (
-        IOobject
+        new areaScalarField
         (
-            "fsNetPhi",
-            mesh().time().timeName(),
-            mesh(),
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        aMesh(),
-        dimensionedScalar(dimVelocity*dimArea, Zero)
+            IOobject
+            (
+                "fsNetPhi",
+                mesh().time().timeName(),
+                mesh(),
+                IOobject::NO_READ,
+                IOobject::AUTO_WRITE
+            ),
+            aMesh(),
+            dimensionedScalar(dimVelocity*dimArea, Zero)
+        )
     );
 }
 
@@ -305,7 +311,8 @@ void Foam::interfaceTrackingFvMesh::makeControlPoints()
     if (controlPointsHeader.typeHeaderOk<vectorIOField>())
     {
         Info<< "Reading control points" << endl;
-        controlPointsPtr_ =
+        controlPointsPtr_.reset
+        (
             new vectorIOField
             (
                 IOobject
@@ -316,12 +323,14 @@ void Foam::interfaceTrackingFvMesh::makeControlPoints()
                     IOobject::MUST_READ,
                     IOobject::AUTO_WRITE
                 )
-            );
+            )
+        );
     }
     else
     {
         Info<< "Creating new control points" << endl;
-        controlPointsPtr_ =
+        controlPointsPtr_.reset
+        (
             new vectorIOField
             (
                 IOobject
@@ -333,7 +342,8 @@ void Foam::interfaceTrackingFvMesh::makeControlPoints()
                     IOobject::AUTO_WRITE
                 ),
                 aMesh().areaCentres().internalField()
-            );
+            )
+        );
 
         initializeControlPointsPosition();
     }
@@ -352,10 +362,13 @@ void Foam::interfaceTrackingFvMesh::makeMotionPointsMask()
             << abort(FatalError);
     }
 
-    motionPointsMaskPtr_ = new labelList
+    motionPointsMaskPtr_.reset
     (
-        mesh().boundaryMesh()[fsPatchIndex()].nPoints(),
-        1
+        new labelList
+        (
+            mesh().boundaryMesh()[fsPatchIndex()].nPoints(),
+            1
+        )
     );
 
     // Mark free surface boundary points
@@ -414,19 +427,23 @@ void Foam::interfaceTrackingFvMesh::makeDirections()
             << abort(FatalError);
     }
 
-    pointsDisplacementDirPtr_ =
+    pointsDisplacementDirPtr_.reset
+    (
         new vectorField
         (
             mesh().boundaryMesh()[fsPatchIndex()].nPoints(),
             Zero
-        );
+        )
+    );
 
-    facesDisplacementDirPtr_ =
+    facesDisplacementDirPtr_.reset
+    (
         new vectorField
         (
             mesh().boundaryMesh()[fsPatchIndex()].size(),
             Zero
-        );
+        )
+    );
 
     if (!normalMotionDir())
     {
@@ -457,17 +474,20 @@ void Foam::interfaceTrackingFvMesh::makePhis()
             << abort(FatalError);
     }
 
-    phisPtr_ = new edgeScalarField
+    phisPtr_.reset
     (
-        IOobject
+        new edgeScalarField
         (
-            "phis",
-            mesh().time().timeName(),
-            mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        linearEdgeInterpolate(Us()) & aMesh().Le()
+            IOobject
+            (
+                "phis",
+                mesh().time().timeName(),
+                mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            linearEdgeInterpolate(Us()) & aMesh().Le()
+        )
     );
 }
 
@@ -484,21 +504,23 @@ void Foam::interfaceTrackingFvMesh::makeSurfactConc() const
             << abort(FatalError);
     }
 
-    surfactConcPtr_ = new areaScalarField
+    surfactConcPtr_.reset
     (
-        IOobject
+        new areaScalarField
         (
-            "Cs",
-            mesh().time().timeName
+            IOobject
             (
-                mesh().time().startTime().value()
+                "Cs",
+                mesh().time().timeName
+                (
+                    mesh().time().startTime().value()
+                ),
+                mesh(),
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
             ),
-            // mesh().time().timeName(),
-            mesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        aMesh()
+            aMesh()
+        )
     );
 }
 
@@ -515,21 +537,23 @@ void Foam::interfaceTrackingFvMesh::makeBulkSurfactConc() const
             << abort(FatalError);
     }
 
-    bulkSurfactConcPtr_ = new volScalarField
+    bulkSurfactConcPtr_.reset
     (
-        IOobject
+        new volScalarField
         (
-            "C",
-            mesh().time().timeName
+            IOobject
             (
-                mesh().time().startTime().value()
+                "C",
+                mesh().time().timeName
+                (
+                    mesh().time().startTime().value()
+                ),
+                mesh(),
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
             ),
-            // mesh().time().timeName(),
-            mesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh()
+            mesh()
+        )
     );
     volScalarField& bulkSurfactConc = *bulkSurfactConcPtr_;
 
@@ -554,17 +578,20 @@ void Foam::interfaceTrackingFvMesh::makeSurfaceTension() const
             << abort(FatalError);
     }
 
-    surfaceTensionPtr_ = new areaScalarField
+    surfaceTensionPtr_.reset
     (
-        IOobject
+        new areaScalarField
         (
-            "surfaceTension",
-            mesh().time().timeName(),
-            mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        sigma() + surfactant().dSigma(surfactantConcentration())/rho_
+            IOobject
+            (
+                "surfaceTension",
+                mesh().time().timeName(),
+                mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            sigma() + surfactant().dSigma(surfactantConcentration())/rho_
+        )
     );
 }
 
@@ -584,7 +611,7 @@ void Foam::interfaceTrackingFvMesh::makeSurfactant() const
     const dictionary& surfactProp =
         motion().subDict("surfactantProperties");
 
-    surfactantPtr_ = new surfactantProperties(surfactProp);
+    surfactantPtr_.reset(new surfactantProperties(surfactProp));
 }
 
 
@@ -613,7 +640,8 @@ void Foam::interfaceTrackingFvMesh::makeContactAngle()
     {
         Info<< "Reading contact angle field" << endl;
 
-        contactAnglePtr_ =
+        contactAnglePtr_.reset
+        (
             new areaScalarField
             (
                 IOobject
@@ -625,7 +653,8 @@ void Foam::interfaceTrackingFvMesh::makeContactAngle()
                     IOobject::AUTO_WRITE
                 ),
                 aMesh()
-            );
+            )
+        );
     }
 }
 
@@ -1643,18 +1672,18 @@ Foam::interfaceTrackingFvMesh::interfaceTrackingFvMesh
 
 Foam::interfaceTrackingFvMesh::~interfaceTrackingFvMesh()
 {
-    deleteDemandDrivenData(UsPtr_);
-    deleteDemandDrivenData(controlPointsPtr_);
-    deleteDemandDrivenData(motionPointsMaskPtr_);
-    deleteDemandDrivenData(pointsDisplacementDirPtr_);
-    deleteDemandDrivenData(facesDisplacementDirPtr_);
-    deleteDemandDrivenData(fsNetPhiPtr_);
-    deleteDemandDrivenData(phisPtr_);
-    deleteDemandDrivenData(surfactConcPtr_);
-    deleteDemandDrivenData(bulkSurfactConcPtr_);
-    deleteDemandDrivenData(surfaceTensionPtr_);
-    deleteDemandDrivenData(surfactantPtr_);
-    deleteDemandDrivenData(contactAnglePtr_);
+    UsPtr_.reset(nullptr);
+    controlPointsPtr_.reset(nullptr);
+    motionPointsMaskPtr_.reset(nullptr);
+    pointsDisplacementDirPtr_.reset(nullptr);
+    facesDisplacementDirPtr_.reset(nullptr);
+    fsNetPhiPtr_.reset(nullptr);
+    phisPtr_.reset(nullptr);
+    surfactConcPtr_.reset(nullptr);
+    bulkSurfactConcPtr_.reset(nullptr);
+    surfaceTensionPtr_.reset(nullptr);
+    surfactantPtr_.reset(nullptr);
+    contactAnglePtr_.reset(nullptr);
 }
 
 
