@@ -28,6 +28,7 @@ License
 
 #include "fa.H"
 #include "HashTable.H"
+#include "IOobject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -38,6 +39,24 @@ namespace Foam
 
 namespace fa
 {
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+template<class Type>
+IOobject faDdtScheme<Type>::fieldIOobject(const word& fldName) const
+{
+    const auto& pMesh = mesh().mesh();
+
+    return IOobject
+    (
+        fldName,
+        pMesh.time().timeName(),
+        pMesh,
+        IOobject::NO_READ,
+        IOobject::NO_WRITE
+    );
+}
+
 
 // * * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * //
 

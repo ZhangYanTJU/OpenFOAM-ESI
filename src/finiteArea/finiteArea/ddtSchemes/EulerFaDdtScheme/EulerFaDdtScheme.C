@@ -50,13 +50,9 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+dt.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt("+dt.name()+')')
     );
 
     if (mesh().moving())
@@ -97,13 +93,9 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+dt.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt("+dt.name()+')')
     );
 
     tmp<GeometricField<Type, faPatchField, areaMesh>> tdtdt0
@@ -135,13 +127,9 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt("+vf.name()+')')
     );
 
     if (mesh().moving())
@@ -188,13 +176,9 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt0("+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt0("+vf.name()+')')
     );
 
     if (mesh().moving())
@@ -235,13 +219,9 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+rho.name()+','+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt("+rho.name()+','+vf.name()+')')
     );
 
     if (mesh().moving())
@@ -288,13 +268,9 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt0("+rho.name()+','+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt0("+rho.name()+','+vf.name()+')')
     );
 
     if (mesh().moving())
@@ -337,13 +313,9 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+rho.name()+','+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt("+rho.name()+','+vf.name()+')')
     );
 
     if (mesh().moving())
@@ -394,13 +366,9 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt0("+rho.name()+','+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("ddt0("+rho.name()+','+vf.name()+')')
     );
 
     if (mesh().moving())
@@ -437,6 +405,7 @@ EulerFaDdtScheme<Type>::facDdt0
         );
     }
 }
+
 
 template<class Type>
 tmp<faMatrix<Type>>

@@ -77,7 +77,7 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
                 mesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh(),
             dimensionedVector(dimless/dimLength, Zero)
@@ -96,7 +96,7 @@ void Foam::leastSquaresFaVectors::makeLeastSquaresVectors() const
                 mesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh(),
             dimensionedVector(dimless/dimLength, Zero)

@@ -50,12 +50,7 @@ steadyStateFaDdtScheme<Type>::facDdt
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt("+dt.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt("+dt.name()+')'),
         mesh(),
         dimensioned<Type>(dt.dimensions()/dimTime, Zero)
     );
@@ -71,12 +66,7 @@ steadyStateFaDdtScheme<Type>::facDdt0
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt("+dt.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt("+dt.name()+')'),
         mesh(),
         dimensioned<Type>(dt.dimensions()/dimTime, Zero)
     );
@@ -92,12 +82,7 @@ steadyStateFaDdtScheme<Type>::facDdt
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt("+vf.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt("+vf.name()+')'),
         mesh(),
         dimensioned<Type>(vf.dimensions()/dimTime, Zero)
     );
@@ -113,12 +98,7 @@ steadyStateFaDdtScheme<Type>::facDdt0
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt0("+vf.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt0("+vf.name()+')'),
         mesh(),
         dimensioned<Type>(vf.dimensions()/dimTime, Zero)
     );
@@ -135,16 +115,12 @@ steadyStateFaDdtScheme<Type>::facDdt
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt("+rho.name()+','+vf.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt("+rho.name()+','+vf.name()+')'),
         mesh(),
         dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
     );
 }
+
 
 template<class Type>
 tmp<GeometricField<Type, faPatchField, areaMesh>>
@@ -156,12 +132,7 @@ steadyStateFaDdtScheme<Type>::facDdt0
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt0("+rho.name()+','+vf.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt0("+rho.name()+','+vf.name()+')'),
         mesh(),
         dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
     );
@@ -178,12 +149,7 @@ steadyStateFaDdtScheme<Type>::facDdt
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt("+rho.name()+','+vf.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt("+rho.name()+','+vf.name()+')'),
         mesh(),
         dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
     );
@@ -200,16 +166,12 @@ steadyStateFaDdtScheme<Type>::facDdt0
 {
     return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
     (
-        IOobject
-        (
-            "ddt0("+rho.name()+','+vf.name()+')',
-            mesh()().time().timeName(),
-            mesh()()
-        ),
+        this->fieldIOobject("ddt0("+rho.name()+','+vf.name()+')'),
         mesh(),
         dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
     );
 }
+
 
 template<class Type>
 tmp<faMatrix<Type>>

@@ -195,6 +195,8 @@ void Foam::edgeInterpolation::makeLPN() const
         << "Constructing geodesic distance between points P and N"
         << endl;
 
+    const polyMesh& pMesh = mesh().mesh();
+
     lPNptr_.reset
     (
         new edgeScalarField
@@ -202,14 +204,14 @@ void Foam::edgeInterpolation::makeLPN() const
             IOobject
             (
                 "lPN",
-                faMesh_.time().constant(),
-                faMesh_(),
+                pMesh.pointsInstance(),
+                pMesh,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh(),
-            dimLength
+            dimensionedScalar(dimLength, Zero)
         )
     );
     edgeScalarField& lPN = *lPNptr_;
@@ -278,6 +280,8 @@ void Foam::edgeInterpolation::makeWeights() const
         << "Constructing weighting factors for edge interpolation"
         << endl;
 
+    const polyMesh& pMesh = mesh().mesh();
+
     weightsPtr_.reset
     (
         new edgeScalarField
@@ -285,11 +289,11 @@ void Foam::edgeInterpolation::makeWeights() const
             IOobject
             (
                 "weights",
-                mesh()().pointsInstance(),
-                mesh()(),
+                pMesh.pointsInstance(),
+                pMesh,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh(),
             dimensionedScalar(dimless, 1)
@@ -361,6 +365,8 @@ void Foam::edgeInterpolation::makeDeltaCoeffs() const
     // needed to make sure deltaCoeffs are calculated for parallel runs.
     weights();
 
+    const polyMesh& pMesh = mesh().mesh();
+
     deltaCoeffsPtr_.reset
     (
         new edgeScalarField
@@ -368,11 +374,11 @@ void Foam::edgeInterpolation::makeDeltaCoeffs() const
             IOobject
             (
                 "deltaCoeffs",
-                mesh()().pointsInstance(),
-                mesh()(),
+                pMesh.pointsInstance(),
+                pMesh,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh(),
             dimensionedScalar(dimless/dimLength, SMALL)
@@ -458,6 +464,8 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
         << "Constructing non-orthogonal correction vectors"
         << endl;
 
+    const polyMesh& pMesh = mesh().mesh();
+
     nonOrthCorrectionVectorsPtr_.reset
     (
         new edgeVectorField
@@ -465,14 +473,14 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
             IOobject
             (
                 "nonOrthCorrectionVectors",
-                mesh()().pointsInstance(),
-                mesh()(),
+                pMesh.pointsInstance(),
+                pMesh,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh(),
-            dimless
+            dimensionedVector(dimless, Zero)
         )
     );
     edgeVectorField& CorrVecs = *nonOrthCorrectionVectorsPtr_;
@@ -570,6 +578,8 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
         << "Constructing skew correction vectors"
         << endl;
 
+    const polyMesh& pMesh = mesh().mesh();
+
     skewCorrectionVectorsPtr_.reset
     (
         new edgeVectorField
@@ -577,14 +587,14 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
             IOobject
             (
                 "skewCorrectionVectors",
-                mesh()().pointsInstance(),
-                mesh()(),
+                pMesh.pointsInstance(),
+                pMesh,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh(),
-            dimless
+            dimensionedVector(dimless, Zero)
         )
     );
     edgeVectorField& skewCorrVecs = *skewCorrectionVectorsPtr_;

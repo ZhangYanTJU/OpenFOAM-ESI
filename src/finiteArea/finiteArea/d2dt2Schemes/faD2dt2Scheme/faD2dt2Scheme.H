@@ -53,6 +53,7 @@ template<class Type>
 class faMatrix;
 
 class faMesh;
+class IOobject;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -68,7 +69,6 @@ class faD2dt2Scheme
 :
     public refCount
 {
-
 protected:
 
     // Protected data
@@ -76,7 +76,10 @@ protected:
         const faMesh& mesh_;
 
 
-    // Private Member Functions
+    // Protected Member Functions
+
+        //- Helper to construct IOobject for field and current time
+        IOobject fieldIOobject(const word& fldName) const;
 
         //- No copy construct
         faD2dt2Scheme(const faD2dt2Scheme&) = delete;

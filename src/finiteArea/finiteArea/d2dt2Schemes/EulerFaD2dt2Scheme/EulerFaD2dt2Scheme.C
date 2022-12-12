@@ -72,13 +72,9 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     scalar coefft   = (deltaT + deltaT0)/(2*deltaT);
     scalar coefft00 = (deltaT + deltaT0)/(2*deltaT0);
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+dt.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("d2dt2("+dt.name()+')')
     );
 
     if (mesh().moving())
@@ -131,13 +127,9 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("d2dt2("+vf.name()+')')
     );
 
     scalar deltaT = deltaT_();
@@ -209,13 +201,9 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+rho.name()+','+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("d2dt2("+rho.name()+','+vf.name()+')')
     );
 
     scalar deltaT = deltaT_();
@@ -294,13 +282,9 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+rho.name()+','+vf.name()+')',
-        mesh()().time().timeName(),
-        mesh()(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        this->fieldIOobject("d2dt2("+rho.name()+','+vf.name()+')')
     );
 
     scalar deltaT = deltaT_();
