@@ -423,6 +423,12 @@ public:
         //  Uses myProcNo for the initial local check.
         inline label whichProcID(const label i) const;
 
+            //- Which processor does global id come from?
+            //  Does an initial check for isLocal first (assumed to occur
+            //  reasonably frequently) followed by a binary search.
+            //- Fatal for out of range ids (eg, negative or >= totalSize()
+            inline label whichProcID(const label myProcNo, const label i) const;
+
 
     // Iteration
 

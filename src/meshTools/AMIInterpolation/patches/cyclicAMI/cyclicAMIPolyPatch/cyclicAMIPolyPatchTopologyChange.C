@@ -302,6 +302,7 @@ void Foam::cyclicAMIPolyPatch::setAMIFaces()
     const labelListList& tgtToSrcAddr0 = AMIPtr_->tgtAddress();
     const pointListList& srcCtr0 = AMIPtr_->srcCentroids();
     const scalarListList& srcToTgtWght0 = AMIPtr_->srcWeights();
+    const label singlePatchProc = AMIPtr_->singlePatchProc();
 
     // New addressing on new mesh (extended by polyTopoChange)
     labelListList srcToTgtAddr1(size(), labelList());
@@ -316,12 +317,12 @@ void Foam::cyclicAMIPolyPatch::setAMIFaces()
        // Parallel running
 
         // Global index based on old patch sizes (when AMI was computed)
-        globalIndex globalSrcFaces0(srcToTgtAddr0.size());
-        globalIndex globalTgtFaces0(tgtToSrcAddr0.size());
+        globalIndex globalSrcFaces0(srcToTgtAddr0.size(), AMIPtr_().comm());
+        globalIndex globalTgtFaces0(tgtToSrcAddr0.size(), AMIPtr_().comm());
 
         // Global index based on new patch sizes
-        globalIndex globalSrcFaces1(size());
-        globalIndex globalTgtFaces1(nbr.size());
+        globalIndex globalSrcFaces1(size(), AMIPtr_().comm());
+        globalIndex globalTgtFaces1(nbr.size(), AMIPtr_().comm());
 
 
         // Gather source side info
@@ -623,7 +624,8 @@ void Foam::cyclicAMIPolyPatch::setAMIFaces()
         std::move(srcToTgtAddr1),
         std::move(newSrcToTgtWeights),
         std::move(tgtToSrcAddr1),
-        std::move(newTgtToSrcWeights)
+        std::move(newTgtToSrcWeights),
+        singlePatchProc
     );
 
     // Need to set areas, e.g. for agglomeration to (re-)normalisation weights

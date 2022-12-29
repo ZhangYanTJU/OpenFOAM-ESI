@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -409,12 +409,16 @@ void Foam::GAMGAgglomeration::agglomerateLduAddressing
 
     if (debug & 2)
     {
+        const auto& coarseAddr = meshLevels_[fineLevelIndex].lduAddr();
+
         Pout<< "GAMGAgglomeration :"
             << " agglomerated level " << fineLevelIndex
             << " from nCells:" << fineMeshAddr.size()
             << " nFaces:" << upperAddr.size()
             << " to nCells:" << nCoarseCells
-            << " nFaces:" << nCoarseFaces
+            << " nFaces:" << nCoarseFaces << nl
+            << "    lower:" << flatOutput(coarseAddr.lowerAddr()) << nl
+            << "    upper:" << flatOutput(coarseAddr.upperAddr()) << nl
             << endl;
     }
 }
@@ -430,12 +434,28 @@ void Foam::GAMGAgglomeration::procAgglomerateLduAddressing
     const label levelIndex
 )
 {
-    const lduMesh& myMesh = meshLevels_[levelIndex-1];
+    // - Assemble all the procIDs in meshComm onto a single master
+    //   (procIDs[0]). This constructs a new communicator ('comm') first.
+    // - The master communicates with neighbouring masters using
+    //   allMeshComm
 
+    const lduMesh& myMesh = meshLevels_[levelIndex-1];
+    const label nOldInterfaces = myMesh.interfaces().size();
 
     procAgglomMap_.set(levelIndex, new labelList(procAgglomMap));
     agglomProcIDs_.set(levelIndex, new labelList(procIDs));
     procCommunicator_[levelIndex] = allMeshComm;
+
+    procAgglomCommunicator_.set
+    (
+        levelIndex,
+        new UPstream::communicator
+        (
+            meshComm,
+            procIDs
+        )
+    );
+    const label comm = agglomCommunicator(levelIndex);
 
     // These could only be set on the master procs but it is
     // quite convenient to also have them on the slaves
@@ -447,7 +467,7 @@ void Foam::GAMGAgglomeration::procAgglomerateLduAddressing
 
     // Collect meshes
     PtrList<lduPrimitiveMesh> otherMeshes;
-    lduPrimitiveMesh::gather(meshComm, myMesh, procIDs, otherMeshes);
+    lduPrimitiveMesh::gather(comm, myMesh, otherMeshes);
 
     if (Pstream::myProcNo(meshComm) == procIDs[0])
     {
@@ -472,6 +492,41 @@ void Foam::GAMGAgglomeration::procAgglomerateLduAddressing
                 procBoundaryMap_[levelIndex],
                 procBoundaryFaceMap_[levelIndex]
             )
+        );
+    }
+
+
+    // Scatter the procBoundaryMap back to the originating processor
+    // so it knows which proc boundaries are to be kept. This is used
+    // so we only send over interfaceFields on kept processors (see
+    // GAMGSolver::procAgglomerateMatrix)
+    // TBD: using sub-communicator here (instead of explicit procIDs). Should
+    //      use sub-communicators more in other places.
+    {
+        const CompactListList<label> data
+        (
+            CompactListList<label>::pack<labelList>
+            (
+                procBoundaryMap_[levelIndex]
+            )
+        );
+
+        // Make space
+        procBoundaryMap_[levelIndex].setSize(procIDs.size());
+        labelList& bMap = procBoundaryMap_[levelIndex][Pstream::myProcNo(comm)];
+        bMap.setSize(nOldInterfaces);
+
+        // Scatter relevant section to originating processor
+        UPstream::scatter
+        (
+            data.values().cdata(),
+            data.localSizes(),
+            data.offsets(),
+
+
+            bMap.data(),
+            bMap.size(),
+            comm
         );
     }
 

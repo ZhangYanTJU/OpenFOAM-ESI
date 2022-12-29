@@ -713,12 +713,14 @@ bool Foam::faceAreaWeightAMI::calculate
 
     if (distributed())
     {
+        const label myRank = UPstream::myProcNo(comm_);
+
         const primitivePatch& srcPatch0 = this->srcPatch0();
         const primitivePatch& tgtPatch0 = this->tgtPatch0();
 
         // Create global indexing for each original patch
-        globalIndex globalSrcFaces(srcPatch0.size());
-        globalIndex globalTgtFaces(tgtPatch0.size());
+        globalIndex globalSrcFaces(srcPatch0.size(), comm_);
+        globalIndex globalTgtFaces(tgtPatch0.size(), comm_);
 
         for (labelList& addressing : srcAddress_)
         {
@@ -730,7 +732,7 @@ bool Foam::faceAreaWeightAMI::calculate
 
         for (labelList& addressing : tgtAddress_)
         {
-            globalSrcFaces.inplaceToGlobal(addressing);
+            globalSrcFaces.inplaceToGlobal(myRank, addressing);
         }
 
         // Send data back to originating procs. Note that contributions
@@ -748,7 +750,9 @@ bool Foam::faceAreaWeightAMI::calculate
             tgtAddress_,
             labelList(),
             ListOps::appendEqOp<label>(),
-            flipOp()                    // flip operation
+            flipOp(),                   // flip operation
+            UPstream::msgType(),
+            comm_
         );
 
         mapDistributeBase::distribute
@@ -763,7 +767,9 @@ bool Foam::faceAreaWeightAMI::calculate
             tgtWeights_,
             scalarList(),
             ListOps::appendEqOp<scalar>(),
-            flipOp()
+            flipOp(),
+            UPstream::msgType(),
+            comm_
         );
 
         // Note: using patch face areas calculated by the AMI method
@@ -773,13 +779,27 @@ bool Foam::faceAreaWeightAMI::calculate
         List<Map<label>> cMapSrc;
         srcMapPtr_.reset
         (
-            new mapDistribute(globalSrcFaces, tgtAddress_, cMapSrc)
+            new mapDistribute
+            (
+                globalSrcFaces,
+                tgtAddress_,
+                cMapSrc,
+                UPstream::msgType(),
+                comm_
+            )
         );
 
         List<Map<label>> cMapTgt;
         tgtMapPtr_.reset
         (
-            new mapDistribute(globalTgtFaces, srcAddress_, cMapTgt)
+            new mapDistribute
+            (
+                globalTgtFaces,
+                srcAddress_,
+                cMapTgt,
+                UPstream::msgType(),
+                comm_
+            )
         );
     }
 

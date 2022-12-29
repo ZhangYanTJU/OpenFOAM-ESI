@@ -198,6 +198,12 @@ class mapDistribute
             const TransformOp& top
         ) const;
 
+        //- Helper: convert mapDistribute to mapDistributeBase
+        static UPtrList<const mapDistributeBase> extractBase
+        (
+            const UPtrList<const mapDistribute>& maps
+        );
+
 
 public:
 
@@ -391,6 +397,27 @@ public:
             List<Map<label>>& compactMap,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
+        );
+
+        //- Construct from multiple maps and processor collation
+        //  Assumes all local data first. Sorts contributions of maps
+        //  in processor order i.e.  constructed map has all local data first.
+        //  Returns
+        //  - startOfLocal : per input map the start of the local data. Extends
+        //                   one beyond number of maps so overall local size
+        //                   is startOfLocal.last()
+        //  - compactMaps  : per input map from slot position in the input map
+        //                   to new slot position. (note there is no information
+        //                   returned about which processor it is from)
+        mapDistribute
+        (
+            const UPtrList<const mapDistribute>& maps,
+            const labelList& localRanks,
+            const label newComm,
+            const labelListList& newToOldRanks, // from rank in newComm to
+                                                // ranks in (old)comm
+            labelList& startOfLocal,            // per map start of local data
+            List<Map<label>>& compactMaps       // per map old slot to new slot
         );
 
         //- Construct from Istream

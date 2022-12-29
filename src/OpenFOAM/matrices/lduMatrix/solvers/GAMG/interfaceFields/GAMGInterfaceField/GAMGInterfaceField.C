@@ -35,6 +35,7 @@ namespace Foam
     defineTypeNameAndDebug(GAMGInterfaceField, 0);
     defineRunTimeSelectionTable(GAMGInterfaceField, lduInterface);
     defineRunTimeSelectionTable(GAMGInterfaceField, lduInterfaceField);
+    defineRunTimeSelectionTable(GAMGInterfaceField, Istream);
 }
 
 // ************************************************************************* //

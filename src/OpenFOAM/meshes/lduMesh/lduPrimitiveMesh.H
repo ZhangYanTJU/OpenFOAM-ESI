@@ -82,6 +82,17 @@ class lduPrimitiveMesh
         //- Get size of all meshes
         static label totalSize(const PtrList<lduPrimitiveMesh>&);
 
+        label findConnectedInterface
+        (
+            const lduMesh& myMesh,
+            const PtrList<lduPrimitiveMesh>& otherMeshes,
+            const labelPairList& procAndInterfaces,
+
+            const label nbrProci,
+            const label myRank
+        ) const;
+
+
         //- No copy construct
         lduPrimitiveMesh(const lduPrimitiveMesh&) = delete;
 
@@ -277,13 +288,12 @@ public:
                 const label meshI
             );
 
-            //- Gather meshes from other processors onto procIDs[0].
-            //  Received meshes get GAMGInterface and communicator comm
+            //- Gather meshes from other processors using agglomComm.
+            //  Received meshes get GAMGInterface.
             static void gather
             (
-                const label comm,
+                const label agglomComm,
                 const lduMesh& mesh,
-                const labelList& procIDs,
                 PtrList<lduPrimitiveMesh>& otherMeshes
             );
 

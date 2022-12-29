@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,6 +47,12 @@ namespace Foam
         cyclicGAMGInterfaceField,
         lduInterfaceField
     );
+    addToRunTimeSelectionTable
+    (
+        GAMGInterfaceField,
+        cyclicGAMGInterfaceField,
+        Istream
+    );
 
     // Add under name cyclicSlip
     addNamedToRunTimeSelectionTable
@@ -61,6 +67,13 @@ namespace Foam
         GAMGInterfaceField,
         cyclicGAMGInterfaceField,
         lduInterfaceField,
+        cyclicSlip
+    );
+    addNamedToRunTimeSelectionTable
+    (
+        GAMGInterfaceField,
+        cyclicGAMGInterfaceField,
+        Istream,
         cyclicSlip
     );
 }
@@ -101,6 +114,38 @@ Foam::cyclicGAMGInterfaceField::cyclicGAMGInterfaceField
 {}
 
 
+Foam::cyclicGAMGInterfaceField::cyclicGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    Istream& is
+)
+:
+    GAMGInterfaceField(GAMGCp, is),
+    cyclicInterface_(refCast<const cyclicGAMGInterface>(GAMGCp)),
+    doTransform_(readBool(is)),
+    rank_(readLabel(is))
+{}
+
+
+Foam::cyclicGAMGInterfaceField::cyclicGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    const lduInterfaceField& local,
+    const UPtrList<lduInterfaceField>& other
+)
+:
+    GAMGInterfaceField(GAMGCp, local),
+    cyclicInterface_(refCast<const cyclicGAMGInterface>(GAMGCp)),
+    doTransform_(false),
+    rank_(0)
+{
+    const auto& p = refCast<const cyclicLduInterfaceField>(local);
+
+    doTransform_ = p.doTransform();
+    rank_ = p.rank();
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::cyclicGAMGInterfaceField::updateInterfaceMatrix
@@ -130,6 +175,14 @@ void Foam::cyclicGAMGInterfaceField::updateInterfaceMatrix
     const labelList& faceCells = lduAddr.patchAddr(patchId);
 
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+}
+
+
+void Foam::cyclicGAMGInterfaceField::write(Ostream& os) const
+{
+    //GAMGInterfaceField::write(os);
+    os  << token::SPACE << doTransform()
+        << token::SPACE << rank();
 }
 
 

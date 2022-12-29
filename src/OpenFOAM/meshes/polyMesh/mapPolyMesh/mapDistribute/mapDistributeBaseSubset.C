@@ -329,6 +329,104 @@ Foam::label Foam::mapDistributeBase::renumberMap
 }
 
 
+Foam::label Foam::mapDistributeBase::renumberMap
+(
+    labelList& map,
+    const label localSize,
+    const label offset,
+    const Map<label>& cMap,
+    const bool hasFlip
+)
+{
+    label maxIndex = -1;
+
+    // Transcribe the map
+    if (hasFlip)
+    {
+        for (label& val : map)
+        {
+            // Unflip indexed value
+            const label index = mag(val)-1;
+            if (index < localSize)
+            {
+                // Local element
+                if (val < 0)
+                {
+                    val -= offset;
+                }
+                else
+                {
+                    val += offset;
+                }
+            }
+            else
+            {
+                // Remote element
+                if (val < 0)
+                {
+                    val = -cMap[index]-1;
+                }
+                else
+                {
+                    val = cMap[index]+1;
+                }
+            }
+            maxIndex = max(maxIndex, mag(val)-1);
+        }
+    }
+    else
+    {
+        for (label& val : map)
+        {
+            // Get indexed value (no flipping)
+            if (val < localSize)
+            {
+                val += offset;
+            }
+            else
+            {
+                val = cMap[val];
+            }
+            maxIndex = max(maxIndex, val);
+        }
+    }
+
+    return (maxIndex+1);
+}
+
+
+Foam::label Foam::mapDistributeBase::renumberMap
+(
+    labelListList& mapElements,
+    const label localSize,
+    const label offset,
+    const Map<label>& cMap,
+    const bool hasFlip
+)
+{
+    label maxIndex = -1;
+
+    // Transcribe the map
+    for (labelList& map : mapElements)
+    {
+        maxIndex = max
+        (
+            maxIndex,
+            renumberMap
+            (
+                map,
+                localSize,
+                offset,
+                cMap,
+                hasFlip
+            )
+        );
+    }
+
+    return (maxIndex+1);
+}
+
+
 void Foam::mapDistributeBase::renumberVisitOrder
 (
     const labelUList& origElements,

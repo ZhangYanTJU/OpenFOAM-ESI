@@ -197,6 +197,26 @@ public:
             Istream& is
         );
 
+        //- Construct by assembling and return a clone.
+        virtual autoPtr<GAMGInterface> clone
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            const labelList& interfaceMap,  // current to fine interface
+            const labelUList& faceCells,
+            const labelUList& faceRestrictAddresssing,
+            const labelUList& faceOffsets,
+            const lduInterfacePtrsList& allInterfaces,
+            const label coarseComm,
+            const label myProcNo,
+            const labelList& procAgglomMap
+        ) const
+        {
+            NotImplemented;
+            return nullptr;
+        }
+
+
 
     // Member Functions
 

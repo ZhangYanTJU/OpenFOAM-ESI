@@ -84,6 +84,8 @@ Foam::lduSchedule Foam::lduPrimitiveMesh::nonBlockingSchedule
     // (where interfaces are defined) but must retain the full list length
     // for later (external) bookkeeping
 
+    schedule.setSize(patchEvali);
+
     return schedule;
 }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -104,6 +104,18 @@ public:
             (GAMGCp, doTransform, rank)
         );
 
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            GAMGInterfaceField,
+            Istream,
+            (
+                const GAMGInterface& GAMGCp,
+                Istream& is
+            ),
+            (GAMGCp, is)
+        );
+
 
     // Selectors
 
@@ -122,6 +134,15 @@ public:
             const GAMGInterface& GAMGCp,
             const bool doTransform,
             const int rank
+        );
+
+        //- Return a pointer to a new interface created on freestore given
+        //  the fine interface and stream
+        static autoPtr<GAMGInterfaceField> New
+        (
+            const word& patchFieldType,
+            const GAMGInterface& GAMGCp,
+            Istream& is
         );
 
 
@@ -150,6 +171,28 @@ public:
             interface_(GAMGCp)
         {}
 
+        //- Construct from GAMG interface and fine level interface field
+        GAMGInterfaceField
+        (
+            const GAMGInterface& GAMGCp,
+            Istream& is
+        )
+        :
+            lduInterfaceField(GAMGCp),
+            interface_(GAMGCp)
+        {}
+
+        //- Construct by assembling and return a clone.
+        virtual autoPtr<GAMGInterfaceField> clone
+        (
+            const GAMGInterface& GAMGCp,
+            const UPtrList<lduInterfaceField>& other // other
+        ) const = 0;
+
+
+    //- Destructor
+    virtual ~GAMGInterfaceField() = default;
+
 
     // Member Functions
 
@@ -161,6 +204,11 @@ public:
                 return interface_;
             }
 
+
+        // I/O
+
+            //- Write to stream
+            virtual void write(Ostream&) const = 0;
 };
 
 

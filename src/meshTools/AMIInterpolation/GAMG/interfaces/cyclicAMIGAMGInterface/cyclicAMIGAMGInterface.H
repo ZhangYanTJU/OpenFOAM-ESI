@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,9 +57,13 @@ class cyclicAMIGAMGInterface
 {
     // Private data
 
-        //- Reference for the cyclicLduInterface from which this is
-        //  agglomerated
-        const cyclicAMILduInterface& fineCyclicAMIInterface_;
+        label neighbPatchID_;
+
+        bool owner_;
+
+        tensorField forwardT_;
+
+        tensorField reverseT_;
 
         //- AMI interface
         autoPtr<AMIPatchToPatchInterpolation> amiPtr_;
@@ -94,9 +99,68 @@ public:
             const label coarseComm
         );
 
+        //- Construct from Istream
+        cyclicAMIGAMGInterface
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            Istream& is
+        );
+
+        //- Construct from fine level interface,
+        //- local and neighbour restrict addressing
+        cyclicAMIGAMGInterface
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            const lduInterface& fineInterface,
+            const labelList& interfaceMap,
+            const labelUList& faceCells,
+            const labelUList& faceRestrictAddresssing,
+            const labelUList& faceOffsets,
+            const lduInterfacePtrsList& allInterfaces,
+            const label coarseComm,
+            const label myProcNo,
+            const labelList& procAgglomMap
+        );
+
+        //- Construct by assembling and returning a clone.
+        virtual autoPtr<GAMGInterface> clone
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            const labelList& interfaceMap,
+            const labelUList& faceCells,
+            const labelUList& faceRestrictAddresssing,
+            const labelUList& faceOffsets,
+            const lduInterfacePtrsList& allInterfaces,
+            const label coarseComm,
+            const label myProcNo,
+            const labelList& procAgglomMap
+        ) const
+        {
+            return autoPtr<GAMGInterface>
+            (
+                new cyclicAMIGAMGInterface
+                (
+                    index,
+                    coarseInterfaces,
+                    *this,
+                    interfaceMap,
+                    faceCells,
+                    faceRestrictAddresssing,
+                    faceOffsets,
+                    allInterfaces,
+                    coarseComm,
+                    myProcNo,
+                    procAgglomMap
+                )
+            );
+        }
+
 
     //- Destructor
-    virtual ~cyclicAMIGAMGInterface();
+    virtual ~cyclicAMIGAMGInterface() = default;
 
 
     // Member Functions
@@ -116,12 +180,12 @@ public:
             //- Return neighbour processor number
             virtual label neighbPatchID() const
             {
-                return fineCyclicAMIInterface_.neighbPatchID();
+                return neighbPatchID_;
             }
 
             virtual bool owner() const
             {
-                return fineCyclicAMIInterface_.owner();
+                return owner_;
             }
 
             virtual const cyclicAMIGAMGInterface& neighbPatch() const
@@ -140,25 +204,20 @@ public:
             //- Return face transformation tensor
             virtual const tensorField& forwardT() const
             {
-                return fineCyclicAMIInterface_.forwardT();
+                return forwardT_;
             }
 
             //- Return neighbour-cell transformation tensor
             virtual const tensorField& reverseT() const
             {
-                return fineCyclicAMIInterface_.reverseT();
+                return reverseT_;
             }
 
 
         // I/O
 
             //- Write to stream
-            virtual void write(Ostream&) const
-            {
-                //TBD. How to serialise the AMI such that we can stream
-                // cyclicAMIGAMGInterface.
-                NotImplemented;
-            }
+            virtual void write(Ostream&) const;
 };
 
 

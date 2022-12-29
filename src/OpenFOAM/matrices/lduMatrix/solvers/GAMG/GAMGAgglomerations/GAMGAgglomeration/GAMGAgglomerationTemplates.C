@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -172,6 +173,58 @@ void Foam::GAMGAgglomeration::prolongField
         {
             ff[i] = cf[fineToCoarse[i]];
         }
+    }
+}
+
+
+template<class Type>
+const Foam::Field<Type>& Foam::GAMGAgglomeration::prolongField
+(
+    Field<Type>& ff,
+    Field<Type>& allCf,      // work storage
+    const Field<Type>& cf,
+    const label levelIndex
+) const
+{
+    const labelList& fineToCoarse = restrictAddressing_[levelIndex];
+
+    const label coarseLevelIndex = levelIndex+1;
+
+    if (hasProcMesh(coarseLevelIndex))
+    {
+        const label coarseComm =
+            UPstream::parent(procCommunicator_[coarseLevelIndex]);
+
+        const List<label>& procIDs = agglomProcIDs(coarseLevelIndex);
+        const labelList& offsets = cellOffsets(coarseLevelIndex);
+
+        const label localSize = nCells_[levelIndex];
+        allCf.resize_nocopy(localSize);
+
+        globalIndex::scatter
+        (
+            offsets,
+            coarseComm,
+            procIDs,
+            cf,
+            allCf,
+            UPstream::msgType(),
+            Pstream::commsTypes::nonBlocking    //Pstream::commsTypes::scheduled
+        );
+
+        forAll(fineToCoarse, i)
+        {
+            ff[i] = allCf[fineToCoarse[i]];
+        }
+        return allCf;
+    }
+    else
+    {
+        forAll(fineToCoarse, i)
+        {
+            ff[i] = cf[fineToCoarse[i]];
+        }
+        return cf;
     }
 }
 
