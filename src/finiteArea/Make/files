@@ -53,7 +53,6 @@ $(basicFaPatchFields)/transform/transformFaPatchScalarField.C
 constraintFaPatchFields = $(faPatchFields)/constraint
 $(constraintFaPatchFields)/empty/emptyFaPatchFields.C
 $(constraintFaPatchFields)/processor/processorFaPatchFields.C
-$(constraintFaPatchFields)/processor/processorFaPatchScalarField.C
 $(constraintFaPatchFields)/wedge/wedgeFaPatchFields.C
 $(constraintFaPatchFields)/wedge/wedgeFaPatchScalarField.C
 $(constraintFaPatchFields)/cyclic/cyclicFaPatchFields.C
