@@ -1,14 +1,9 @@
 # ----------------------------------------------------------------------------
-# CGAL on Darwin
-# CGAL (library version) without mpfr
+# CGAL on Darwin - without mpfr
+# older CGAL (library version)
+# newer CGAL (header version)
 
-CGAL_INC  = \
-    $(foreach dir,$(BOOST_INC_DIR),-I$(dir)) \
-    $(foreach dir,$(CGAL_INC_DIR),-I$(dir))
-
-CGAL_LIBS = \
-    $(foreach dir,$(BOOST_LIB_DIR),-L$(dir)) \
-    $(foreach dir,$(CGAL_LIB_DIR),-L$(dir)) \
-    -lCGAL
+# include $(GENERAL_RULES)/cgal-no-mpfr
+include $(GENERAL_RULES)/cgal-header-no-mpfr
 
 # ----------------------------------------------------------------------------
