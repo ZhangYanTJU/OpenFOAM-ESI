@@ -160,6 +160,7 @@ SourceFiles
 
 #include "fvMeshFunctionObject.H"
 #include "volFields.H"
+#include "fvOptionList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -177,6 +178,9 @@ class electricPotential
     public fvMeshFunctionObject
 {
     // Private Data
+
+        //- Run-time selectable finite volume options, e.g. sources, constraints
+        fv::optionList fvOptions_;
 
         //- Dictionary of phase data
         dictionary phasesDict_;

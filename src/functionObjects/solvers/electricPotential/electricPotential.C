@@ -170,6 +170,7 @@ Foam::functionObjects::electricPotential::electricPotential
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
+    fvOptions_(mesh_),
     phasesDict_(dict.subOrEmptyDict("phases")),
     phaseNames_(),
     phases_(),
@@ -228,6 +229,14 @@ bool Foam::functionObjects::electricPotential::read(const dictionary& dict)
     if (fvMeshFunctionObject::read(dict))
     {
         Log << type() << " read: " << name() << endl;
+
+        {
+            const dictionary* dictptr = dict.findDict("fvOptions");
+            if (dictptr)
+            {
+                fvOptions_.reset(*dictptr);
+            }
+        }
 
         dict.readIfPresent("sigma", sigma_);
         dict.readIfPresent("epsilonr", epsilonr_);
@@ -327,9 +336,13 @@ bool Foam::functionObjects::electricPotential::execute()
         fvScalarMatrix eVEqn
         (
           - fvm::laplacian(sigma, eV)
+         ==
+            fvOptions_(eV)
         );
 
         eVEqn.relax();
+
+        fvOptions_.constrain(eVEqn);
 
         eVEqn.solve();
     }
