@@ -161,6 +161,27 @@ public:
 };
 
 
+// * * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * //
+
+template<>
+tmp<Field<label>> transformFvPatchField<label>::valueInternalCoeffs
+(
+    const tmp<scalarField>&
+) const;
+
+template<>
+tmp<Field<label>> transformFvPatchField<label>::valueBoundaryCoeffs
+(
+    const tmp<scalarField>&
+) const;
+
+template<>
+tmp<Field<label>> transformFvPatchField<label>::gradientInternalCoeffs() const;
+
+template<>
+tmp<Field<label>> transformFvPatchField<label>::gradientBoundaryCoeffs() const;
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

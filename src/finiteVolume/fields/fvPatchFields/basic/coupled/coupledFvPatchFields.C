@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,17 +30,86 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
+    makePatchFieldTypeNames(coupled);
+    makePatchFieldTypeName(label, coupled);
+}
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-makePatchFieldTypeNames(coupled);
+// * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFvPatchField<Foam::label>::snGrad
+(
+    const scalarField& deltaCoeffs
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
 
-} // End namespace Foam
+
+template<>
+void Foam::coupledFvPatchField<Foam::label>::evaluate(const Pstream::commsTypes)
+{
+    if (!this->updated())
+    {
+        this->updateCoeffs();
+    }
+
+    // TBD: Treat like zero-gradient
+    fvPatchField<label>::operator=(this->patchInternalField());
+    fvPatchField<label>::evaluate();
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFvPatchField<Foam::label>::valueInternalCoeffs
+(
+    const tmp<scalarField>&
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), label(1));
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFvPatchField<Foam::label>::valueBoundaryCoeffs
+(
+    const tmp<scalarField>&
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFvPatchField<Foam::label>::gradientInternalCoeffs
+(
+    const scalarField&
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFvPatchField<Foam::label>::gradientInternalCoeffs() const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
 
 // ************************************************************************* //

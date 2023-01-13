@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,40 @@ License
 // No run-time selection
 
 // * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::basicSymmetryFvPatchField<Foam::label>::snGrad() const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
+
+template<>
+void Foam::basicSymmetryFvPatchField<Foam::label>::evaluate
+(
+    const Pstream::commsTypes
+)
+{
+    if (!this->updated())
+    {
+        this->updateCoeffs();
+    }
+
+    // TBD: Treat like zero-gradient
+    fvPatchField<label>::operator=(this->patchInternalField());
+    fvPatchField<label>::evaluate();
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::basicSymmetryFvPatchField<Foam::label>::snGradTransformDiag() const
+{
+    // dummy
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
 
 
 // ************************************************************************* //

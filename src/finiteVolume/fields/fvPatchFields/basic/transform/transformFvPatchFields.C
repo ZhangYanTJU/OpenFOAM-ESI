@@ -34,6 +34,51 @@ License
 namespace Foam
 {
     makePatchFieldTypeNames(transform);
+    makePatchFieldTypeName(label, transform);
+}
+
+
+// * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::transformFvPatchField<Foam::label>::valueInternalCoeffs
+(
+    const tmp<scalarField>&
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), label(1));
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::transformFvPatchField<Foam::label>::valueBoundaryCoeffs
+(
+    const tmp<scalarField>&
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::transformFvPatchField<Foam::label>::gradientInternalCoeffs() const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::transformFvPatchField<Foam::label>::gradientBoundaryCoeffs() const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
 }
 
 

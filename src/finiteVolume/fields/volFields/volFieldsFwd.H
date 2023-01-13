@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,6 +79,7 @@ using VolumeInternalField = DimensionedField<Type, volMesh>;
 
 // Typedefs
 
+typedef GeometricField<label, fvPatchField, volMesh> volLabelField;
 typedef GeometricField<scalar, fvPatchField, volMesh> volScalarField;
 typedef GeometricField<vector, fvPatchField, volMesh> volVectorField;
 typedef GeometricField<sphericalTensor, fvPatchField, volMesh>

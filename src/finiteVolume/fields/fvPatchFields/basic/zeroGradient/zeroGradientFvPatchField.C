@@ -28,7 +28,6 @@ License
 #include "zeroGradientFvPatchField.H"
 #include "fvPatchFieldMapper.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>

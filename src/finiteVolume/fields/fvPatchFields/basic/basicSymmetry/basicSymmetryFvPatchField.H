@@ -137,6 +137,19 @@ public:
 };
 
 
+// * * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * //
+
+template<>
+tmp<Field<label>> basicSymmetryFvPatchField<label>::snGrad() const;
+
+template<>
+void basicSymmetryFvPatchField<label>::evaluate(const Pstream::commsTypes);
+
+template<>
+tmp<Field<label>>
+basicSymmetryFvPatchField<label>::snGradTransformDiag() const;
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

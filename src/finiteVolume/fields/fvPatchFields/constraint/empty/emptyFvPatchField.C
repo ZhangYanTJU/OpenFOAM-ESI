@@ -37,7 +37,7 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    fvPatchField<Type>(p, iF, Field<Type>(0))
+    fvPatchField<Type>(p, iF, Field<Type>())
 {}
 
 
@@ -50,7 +50,7 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     const fvPatchFieldMapper&
 )
 :
-    fvPatchField<Type>(p, iF, Field<Type>(0))
+    fvPatchField<Type>(p, iF, Field<Type>())
 {
     if (!isType<emptyFvPatch>(p))
     {
@@ -72,7 +72,7 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     const dictionary& dict
 )
 :
-    fvPatchField<Type>(p, iF, Field<Type>(0))
+    fvPatchField<Type>(p, iF, Field<Type>())
 {
     if (!isType<emptyFvPatch>(p))
     {
@@ -97,7 +97,7 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     (
         ptf.patch(),
         ptf.internalField(),
-        Field<Type>(0)
+        Field<Type>()
     )
 {}
 
@@ -109,7 +109,7 @@ Foam::emptyFvPatchField<Type>::emptyFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    fvPatchField<Type>(ptf.patch(), iF, Field<Type>(0))
+    fvPatchField<Type>(ptf.patch(), iF, Field<Type>())
 {}
 
 
