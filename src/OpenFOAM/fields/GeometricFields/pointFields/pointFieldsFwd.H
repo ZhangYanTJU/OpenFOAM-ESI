@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -80,6 +80,7 @@ using PointInternalField = DimensionedField<Type, pointMesh>;
 
 // Typedefs
 
+typedef GeometricField<label, pointPatchField, pointMesh> pointLabelField;
 typedef GeometricField<scalar, pointPatchField, pointMesh> pointScalarField;
 typedef GeometricField<vector, pointPatchField, pointMesh> pointVectorField;
 typedef GeometricField<sphericalTensor, pointPatchField, pointMesh>

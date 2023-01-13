@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,11 +26,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef valuePointPatchFields_H
-#define valuePointPatchFields_H
+#ifndef Foam_valuePointPatchFields_H
+#define Foam_valuePointPatchFields_H
 
 #include "valuePointPatchField.H"
-#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,6 +39,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makePointPatchFieldTypedefs(value);
+makePointPatchFieldTypedef(label, value);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,12 +26,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coupledPointPatchFields_H
-#define coupledPointPatchFields_H
+#ifndef Foam_coupledPointPatchFields_H
+#define Foam_coupledPointPatchFields_H
 
 #include "coupledPointPatchField.H"
-#include "coupledPointPatch.H"
-#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -40,6 +39,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makePointPatchFieldTypedefs(coupled);
+makePointPatchFieldTypedef(label, coupled);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

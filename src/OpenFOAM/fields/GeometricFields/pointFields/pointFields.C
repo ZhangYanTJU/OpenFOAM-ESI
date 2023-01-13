@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,12 +34,14 @@ License
 namespace Foam
 {
 
+defineTemplateTypeNameAndDebug(pointLabelField::Internal, 0);
 defineTemplateTypeNameAndDebug(pointScalarField::Internal, 0);
 defineTemplateTypeNameAndDebug(pointVectorField::Internal, 0);
 defineTemplateTypeNameAndDebug(pointSphericalTensorField::Internal, 0);
 defineTemplateTypeNameAndDebug(pointSymmTensorField::Internal, 0);
 defineTemplateTypeNameAndDebug(pointTensorField::Internal, 0);
 
+defineTemplateTypeNameAndDebug(pointLabelField, 0);
 defineTemplateTypeNameAndDebug(pointScalarField, 0);
 defineTemplateTypeNameAndDebug(pointVectorField, 0);
 defineTemplateTypeNameAndDebug(pointSphericalTensorField, 0);

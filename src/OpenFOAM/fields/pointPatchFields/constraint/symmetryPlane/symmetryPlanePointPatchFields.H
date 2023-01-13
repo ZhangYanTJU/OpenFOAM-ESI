@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,11 +26,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef symmetryPlanePointPatchFields_H
-#define symmetryPlanePointPatchFields_H
+#ifndef Foam_symmetryPlanePointPatchFields_H
+#define Foam_symmetryPlanePointPatchFields_H
 
 #include "symmetryPlanePointPatchField.H"
-#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,6 +39,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makePointPatchFieldTypedefs(symmetryPlane);
+makePointPatchFieldTypedef(label, symmetryPlane);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

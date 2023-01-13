@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +29,6 @@ License
 #include "basicSymmetryPointPatchField.H"
 #include "transformField.H"
 #include "symmTransformField.H"
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -87,15 +87,17 @@ void Foam::basicSymmetryPointPatchField<Type>::evaluate
     const Pstream::commsTypes
 )
 {
-    const vectorField& nHat = this->patch().pointNormals();
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        return;
+    }
 
-    tmp<Field<Type>> tvalues =
-    (
-        (
-            this->patchInternalField()
-          + transform(I - 2.0*sqr(nHat), this->patchInternalField())
-        )/2.0
-    );
+    Field<Type> pif(this->patchInternalField());
+
+    symmTensorField rot(I - 2.0*sqr(this->patch().pointNormals()));
+
+    tmp<Field<Type>> tvalues = (pif + transform(rot, pif))/2.0;
 
     // Get internal field to insert values into
     Field<Type>& iF = const_cast<Field<Type>&>(this->primitiveField());

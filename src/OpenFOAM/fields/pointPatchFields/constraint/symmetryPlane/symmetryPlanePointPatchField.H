@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef symmetryPlanePointPatchField_H
-#define symmetryPlanePointPatchField_H
+#ifndef Foam_symmetryPlanePointPatchField_H
+#define Foam_symmetryPlanePointPatchField_H
 
 #include "basicSymmetryPointPatchField.H"
 #include "symmetryPlanePointPatch.H"
@@ -54,7 +55,7 @@ class symmetryPlanePointPatchField
 :
     public basicSymmetryPointPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the symmetryPlane patch
         const symmetryPlanePointPatch& symmetryPlanePatch_;

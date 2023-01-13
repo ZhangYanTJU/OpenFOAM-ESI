@@ -31,8 +31,6 @@ License
 #include "pointPatchField.H"
 #include "pointPatchFieldsFwd.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #endif
 
 // ************************************************************************* //

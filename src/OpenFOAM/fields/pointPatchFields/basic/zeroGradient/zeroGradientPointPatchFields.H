@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,11 +26,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef zeroGradientPointPatchFields_H
-#define zeroGradientPointPatchFields_H
+#ifndef Foam_zeroGradientPointPatchFields_H
+#define Foam_zeroGradientPointPatchFields_H
 
 #include "zeroGradientPointPatchField.H"
-#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,6 +39,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makePointPatchFieldTypedefs(zeroGradient);
+makePointPatchFieldTypedef(label, zeroGradient);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

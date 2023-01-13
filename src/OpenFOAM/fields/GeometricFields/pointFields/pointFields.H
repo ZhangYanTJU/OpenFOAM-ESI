@@ -33,8 +33,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointFields_H
-#define pointFields_H
+#ifndef Foam_pointFields_H
+#define Foam_pointFields_H
 
 #include "GeometricFields.H"
 #include "pointMesh.H"
