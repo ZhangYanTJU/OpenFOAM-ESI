@@ -57,6 +57,7 @@ defineTemplateTypeNameAndDebug(pointTensorField, 0);
 
 const Foam::wordList Foam::fieldTypes::point
 ({
+    "pointLabelField",
     "pointScalarField",
     "pointVectorField",
     "pointSphericalTensorField",

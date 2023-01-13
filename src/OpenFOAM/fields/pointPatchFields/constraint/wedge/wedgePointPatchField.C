@@ -28,7 +28,6 @@ License
 #include "wedgePointPatchField.H"
 #include "transformField.H"
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -101,12 +100,18 @@ Foam::wedgePointPatchField<Type>::wedgePointPatchField
 template<class Type>
 void Foam::wedgePointPatchField<Type>::evaluate(const Pstream::commsTypes)
 {
+    // label, scalar, sphericalTensor are rotationally invariant
+    if (pTraits<Type>::rank == 0 || std::is_same<sphericalTensor, Type>::value)
+    {
+        return;
+    }
+
     // In order to ensure that the wedge patch is always flat, take the
     // normal vector from the first point
-    const vector& nHat = this->patch().pointNormals()[0];
 
-    tmp<Field<Type>> tvalues =
-        transform(I - nHat*nHat, this->patchInternalField());
+    symmTensor rot(I - sqr(this->patch().pointNormals()[0]));
+
+    tmp<Field<Type>> tvalues = transform(rot, this->patchInternalField());
 
     // Get internal field to insert values into
     Field<Type>& iF = const_cast<Field<Type>&>(this->primitiveField());
