@@ -243,12 +243,14 @@ Foam::exprMixedFvPatchField<Type>::exprMixedFvPatchField
 
         Field<Type>::operator=
         (
-            this->valueFraction()*this->refValue()
-          +
-            (1.0 - this->valueFraction())*
+            lerp
             (
-                this->patchInternalField()
-              + this->refGrad()/this->patch().deltaCoeffs()
+                (
+                    this->patchInternalField()
+                  + this->refGrad()/this->patch().deltaCoeffs()
+                ),
+                this->refValue(),
+                this->valueFraction()
             )
         );
 
