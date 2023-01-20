@@ -77,7 +77,8 @@ PIMPLE
     nCorrectors     2;
     nNonOrthogonalCorrectors 0;
     momentumPredictor yes;
-    solvePrimaryRegion no;
+
+    solveFlow       no;
 }
 
 relaxationFactors
