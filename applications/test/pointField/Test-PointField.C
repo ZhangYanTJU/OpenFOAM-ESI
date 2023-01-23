@@ -39,7 +39,6 @@ Description
 
 int main(int argc, char *argv[])
 {
-
     #include "setRootCase.H"
 
     #include "createTime.H"
@@ -47,11 +46,42 @@ int main(int argc, char *argv[])
 
     const pointMesh& pMesh = pointMesh::New(mesh);
 
+    #if 1
+    pointLabelField state
+    (
+        IOobject
+        (
+            "test-state",
+            runTime.timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        pMesh
+    );
+    #else
+    pointLabelField state
+    (
+        IOobject
+        (
+            "test-state",
+            runTime.timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        pMesh,
+        dimensioned<label>(dimLength, 1),
+        pointPatchLabelField::calculatedType()
+    );
+    state.write();
+    #endif
+
     pointVectorField U
     (
         IOobject
         (
-            "U",
+            "test-U",
             runTime.timeName(),
             mesh,
             IOobject::NO_READ,
@@ -61,6 +91,8 @@ int main(int argc, char *argv[])
         dimensionedVector(dimLength, Zero),
         pointPatchVectorField::calculatedType()
     );
+
+    U.write();
 
     pointVectorField V(U + 2*U);
 

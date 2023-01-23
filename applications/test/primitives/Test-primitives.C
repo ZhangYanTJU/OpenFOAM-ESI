@@ -225,54 +225,12 @@ int main(int argc, char *argv[])
     }
 
     {
-        const lerpOp1<vector> half(0.5);
-
-        const vector a(vector::uniform(20));
-        const vector b(vector::uniform(100));
-
-        Info<< "lerp half: "
-            << a << " : " << b << " => " << half(a, b) << nl;
-    }
-
-    {
         const labelVector a(labelVector::uniform(10000));
         const labelVector b(labelVector::uniform(1));
 
-        Info<< "lerp (labelVector) = "
+        Info<<"lerp (labelVector) = "
             << lerp(a, b, 0.1) << nl;
     }
-
-    {
-        const scalar a(0);
-        const scalar b(100);
-
-        Info<< "lerp of " << a << " : " << b << nl;
-
-        for (const double t : { 0.0, 0.5, 1.0, -0.5, 1.5 })
-        {
-            Info<< "    " << t << " = " << lerp(a, b, t) << nl;
-        }
-    }
-
-
-    // No yet
-    #if 0
-    {
-        const label a(10000);
-        const label b(1);
-
-        Info<<"lerp (label) = "
-            << label(lerp(a, b, 0.1)) << nl;
-    }
-
-    {
-        const bool a(true);
-        const bool b(false);
-
-        Info<<"lerp (bool) = "
-            << (lerp(a, b, 0.5)) << nl;
-    }
-    #endif
 
     {
         const sphericalTensor a(10), b(20);
@@ -280,17 +238,7 @@ int main(int argc, char *argv[])
         Info<<"lerp exact: "
             << (a == lerp(a, b, 0.0f)) << " "
             << (b == lerp(a, b, 1.0f)) << nl;
-//        Info<< "lerp: "
-//            << lerp(vector::uniform(0), vector::uniform(100), 0.5) << nl;
-    }
-
-    {
-        const tensor a(tensor::uniform(1e24));
-        const tensor b(tensor::uniform(0));
-
-        Info<<"lerp exact: "
-            << (a == lerp(a, b, 0.0f)) << " "
-            << (b == lerp(a, b, 1.0f)) << nl;
+//
 //        Info<< "lerp: "
 //            << lerp(vector::uniform(0), vector::uniform(100), 0.5) << nl;
     }

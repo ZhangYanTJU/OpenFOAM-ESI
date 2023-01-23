@@ -87,6 +87,7 @@ void GeometricField<scalar, fvPatchField, volMesh>::replace
 
 const Foam::wordList Foam::fieldTypes::internal
 ({
+    "volLabelField::Internal",
     "volScalarField::Internal",
     "volVectorField::Internal",
     "volSphericalTensorField::Internal",
@@ -97,6 +98,7 @@ const Foam::wordList Foam::fieldTypes::internal
 
 const Foam::wordList Foam::fieldTypes::volume
 ({
+    "volLabelField",
     "volScalarField",
     "volVectorField",
     "volSphericalTensorField",
