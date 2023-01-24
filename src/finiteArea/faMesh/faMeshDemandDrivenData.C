@@ -603,6 +603,12 @@ void Foam::faMesh::calcAreaCentres() const
             }
         }
     }
+
+    // Parallel consistency, exchange on processor patches
+    if (UPstream::parRun())
+    {
+        centres.boundaryFieldRef().evaluateCoupled<processorFaPatch>();
+    }
 }
 
 
@@ -749,6 +755,12 @@ void Foam::faMesh::calcFaceAreaNormals() const
     forAll(boundary(), patchI)
     {
         faceNormals.boundaryFieldRef()[patchI] = edgeNormalsBoundary[patchI];
+    }
+
+    // Parallel consistency, exchange on processor patches
+    if (UPstream::parRun())
+    {
+        faceNormals.boundaryFieldRef().evaluateCoupled<processorFaPatch>();
     }
 }
 
