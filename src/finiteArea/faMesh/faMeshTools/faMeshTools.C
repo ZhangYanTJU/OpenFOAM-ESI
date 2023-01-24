@@ -61,6 +61,17 @@ void Foam::faMeshTools::forceDemandDriven(faMesh& mesh)
     (void)mesh.pointAreaNormals();
     (void)mesh.faceCurvatures();
     (void)mesh.edgeTransformTensors();
+
+    // TBD
+    // As per faMesh::init()
+//    if (UPstream::parRun())
+//    {
+//         const_cast<areaVectorField&>(mesh.areaCentres()).boundaryFieldRef()
+//             .evaluateCoupled<processorFaPatch>();
+//
+//         const_cast<areaVectorField&>(mesh.faceAreaNormals()).boundaryFieldRef()
+//             .evaluateCoupled<processorFaPatch>();
+//    }
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -455,6 +455,8 @@ Foam::tmp<Foam::vectorField> Foam::faMesh::calcRawEdgeNormals(int order) const
     // Processor-processor first (for convenience)
     if (order >= 1)
     {
+        PtrList<vectorField> nbrEdgeNormals(boundary().size());
+
         const label startOfRequests = UPstream::nRequests();
 
         forAll(boundary(), patchi)
@@ -465,13 +467,36 @@ Foam::tmp<Foam::vectorField> Foam::faMesh::calcRawEdgeNormals(int order) const
 
             if (fapp)
             {
+                const label nbrProci = fapp->neighbProcNo();
+
                 if (UPstream::parRun())
                 {
-                    // Send accumulated weighted edge normals
-                    fapp->send<vector>
+                    // My edge normals
+                    vectorField::subList edgeNorms
+                        = fap.patchSlice(edgeNormals);
+
+                    nbrEdgeNormals.set
+                    (
+                        patchi,
+                        new vectorField(edgeNorms.size())
+                    );
+
+                    // Recv accumulated weighted edge normals
+                    UIPstream::read
                     (
                         UPstream::commsTypes::nonBlocking,
-                        fap.patchSlice(edgeNormals)
+                        nbrProci,
+                        nbrEdgeNormals[patchi].data_bytes(),
+                        nbrEdgeNormals[patchi].size_bytes()
+                    );
+
+                    // Send accumulated weighted edge normals
+                    UOPstream::write
+                    (
+                        UPstream::commsTypes::nonBlocking,
+                        nbrProci,
+                        edgeNorms.cdata_bytes(),
+                        edgeNorms.size_bytes()
                     );
                 }
             }
@@ -513,23 +538,16 @@ Foam::tmp<Foam::vectorField> Foam::faMesh::calcRawEdgeNormals(int order) const
         // Receive values
         if (UPstream::parRun())
         {
-            for (const faPatch& fap : boundary())
+            forAll(nbrEdgeNormals, patchi)
             {
-                const auto* fapp = isA<processorFaPatch>(fap);
-
-                if (fapp)
+                if (nbrEdgeNormals.set(patchi))
                 {
-                    // Receive weighted edge normals
+                    const vectorField& nbrNorms = nbrEdgeNormals[patchi];
+
+                    const faPatch& fap = boundary()[patchi];
+
                     vectorField::subList edgeNorms
                         = fap.patchSlice(edgeNormals);
-
-                    vectorField nbrNorms(edgeNorms.size());
-
-                    fapp->receive<vector>
-                    (
-                        UPstream::commsTypes::nonBlocking,
-                        nbrNorms
-                    );
 
                     forAll(edgeNorms, patchEdgei)
                     {
@@ -596,7 +614,7 @@ Foam::tmp<Foam::vectorField> Foam::faMesh::calcRawEdgeNormals(int order) const
         edgeNormals[edgei].normalise();
 
         // Do not allow any mag(val) < SMALL
-        if (mag(edgeNormals[edgei]) < SMALL)
+        if (edgeNormals[edgei].magSqr() < ROOTSMALL)
         {
             edgeNormals[edgei] = vector::uniform(SMALL);
         }
@@ -632,7 +650,6 @@ void Foam::faMesh::calcLe() const
             dimLength
             // -> calculatedType()
         );
-
     edgeVectorField& Le = *LePtr_;
 
     // Need face centres
@@ -642,64 +659,9 @@ void Foam::faMesh::calcLe() const
     const pointField& localPoints = points();
 
 
-    if (faMesh::geometryOrder() < 2)
+    // The edgeAreaNormals _may_ use communication (depends on geometryOrder)
+
     {
-        // The edge normals with flat boundary addressing
-        // (which _may_ use communication)
-        vectorField edgeNormals
-        (
-            calcRawEdgeNormals(faMesh::geometryOrder())
-        );
-
-
-        // Calculate the Le vectors.
-        // Can do inplace (overwrite with the edgeNormals)
-
-        vectorField& leVectors = edgeNormals;
-        forAll(leVectors, edgei)
-        {
-            leVectors[edgei] = calcLeVector
-            (
-                fCentres[edgeOwner()[edgei]],
-                edges_[edgei].line(localPoints),
-                edgeNormals[edgei]
-            );
-
-            // Do not allow any mag(val) < SMALL
-            if (mag(leVectors[edgei]) < SMALL)
-            {
-                leVectors[edgei] = vector::uniform(SMALL);
-            }
-        }
-
-        // Copy internal field
-        Le.primitiveFieldRef() =
-            vectorField::subList(leVectors, nInternalEdges_);
-
-
-        // Transcribe boundary field
-        auto& bfld = Le.boundaryFieldRef();
-
-        forAll(boundary(), patchi)
-        {
-            const faPatch& fap = boundary()[patchi];
-            bfld[patchi] = fap.patchRawSlice(leVectors);
-
-            for (auto& patchEdge : bfld[patchi])
-            {
-                // Do not allow any mag(val) < SMALL
-                if (mag(patchEdge) < SMALL)
-                {
-                    patchEdge = vector::uniform(SMALL);
-                }
-            }
-        }
-    }
-    else
-    {
-        // Using edgeAreaNormals,
-        // which _may_ use pointAreaNormals (communication!)
-
         const edgeVectorField& edgeNormals = edgeAreaNormals();
 
         // Internal (edge vector)
@@ -715,7 +677,7 @@ void Foam::faMesh::calcLe() const
                 );
 
                 // Do not allow any mag(val) < SMALL
-                if (mag(fld[edgei]) < SMALL)
+                if (fld[edgei].magSqr() < ROOTSMALL)
                 {
                     fld[edgei] = vector::uniform(SMALL);
                 }
@@ -743,7 +705,7 @@ void Foam::faMesh::calcLe() const
                 );
 
                 // Do not allow any mag(val) < SMALL
-                if (mag(pfld[patchEdgei]) < SMALL)
+                if (pfld[patchEdgei].magSqr() < ROOTSMALL)
                 {
                     pfld[patchEdgei] = vector::uniform(SMALL);
                 }
@@ -898,6 +860,8 @@ void Foam::faMesh::calcFaceCentres() const
             }
         }
     }
+
+    // No update needed on processor patches (same edge centre from both sides)
 }
 
 
@@ -1092,7 +1056,7 @@ void Foam::faMesh::calcFaceAreaNormals() const
         for (auto& f : fld)
         {
             // Do not allow any mag(val) < SMALL
-            if (mag(f) < SMALL)
+            if (f.magSqr() < ROOTSMALL)
             {
                 f = vector::uniform(SMALL);
             }
@@ -1109,6 +1073,12 @@ void Foam::faMesh::calcFaceAreaNormals() const
             faceNormals.boundaryFieldRef()[patchi]
                 = edgeNormalsBoundary[patchi];
         }
+    }
+
+    // Parallel consistency, exchange on processor patches
+    if (UPstream::parRun())
+    {
+        faceNormals.boundaryFieldRef().evaluateCoupled<processorFaPatch>();
     }
 }
 
@@ -1141,17 +1111,16 @@ void Foam::faMesh::calcEdgeAreaNormals() const
     edgeVectorField& edgeAreaNormals = *edgeAreaNormalsPtr_;
 
 
-    if (faMesh::geometryOrder() == 1)
+    if (faMesh::geometryOrder() < 2)
     {
         // The edge normals with flat boundary addressing
-        // (uses communication)
-
+        // (which _may_ use communication)
         vectorField edgeNormals
         (
             calcRawEdgeNormals(faMesh::geometryOrder())
         );
 
-        // Copy internal internal field
+        // Copy internal field
         edgeAreaNormals.primitiveFieldRef()
             = vectorField::subList(edgeNormals, nInternalEdges_);
 
@@ -1193,7 +1162,7 @@ void Foam::faMesh::calcEdgeAreaNormals() const
             fld[edgei].normalise();
 
             // Do not allow any mag(val) < SMALL
-            if (mag(fld[edgei]) < SMALL)
+            if (fld[edgei].magSqr() < ROOTSMALL)
             {
                 fld[edgei] = vector::uniform(SMALL);
             }
@@ -1225,7 +1194,7 @@ void Foam::faMesh::calcEdgeAreaNormals() const
                 pfld[patchEdgei].normalise();
 
                 // Do not allow any mag(val) < SMALL
-                if (mag(pfld[patchEdgei]) < SMALL)
+                if (pfld[patchEdgei].magSqr() < ROOTSMALL)
                 {
                     pfld[patchEdgei] = vector::uniform(SMALL);
                 }

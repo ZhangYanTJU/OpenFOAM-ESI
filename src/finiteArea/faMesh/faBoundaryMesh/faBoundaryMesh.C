@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -180,10 +180,13 @@ Foam::faBoundaryMesh::faBoundaryMesh
 
 void Foam::faBoundaryMesh::calcGeometry()
 {
-    // processorFaPatch geometry triggers calculation of pointNormals.
+    // processorFaPatch geometry triggers calculation of
+    // point normals and/or edge normals
+    //
     // This uses parallel comms and hence will not be trigggered
     // on processors that do not have a processorFaPatch so instead
     // force construction.
+    (void)mesh_.edgeAreaNormals();
     (void)mesh_.pointAreaNormals();
 
     PstreamBuffers pBufs(Pstream::defaultCommsType);
@@ -773,10 +776,13 @@ bool Foam::faBoundaryMesh::checkDefinition(const bool report) const
 
 void Foam::faBoundaryMesh::movePoints(const pointField& p)
 {
-    // processorFaPatch geometry triggers calculation of pointNormals.
+    // processorFaPatch geometry triggers calculation of
+    // point normals and/or edge normals
+    //
     // This uses parallel comms and hence will not be trigggered
     // on processors that do not have a processorFaPatch so instead
     // force construction.
+    (void)mesh_.edgeAreaNormals();
     (void)mesh_.pointAreaNormals();
 
     PstreamBuffers pBufs(Pstream::defaultCommsType);
