@@ -43,6 +43,7 @@ SourceFiles
 
 #include "IOobject.H"
 #include "OSspecific.H"
+#include "DynamicList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -94,11 +95,14 @@ private:
         //- Is this object owned by the registry
         bool ownedByRegistry_;
 
-        //- List of modification watch indices
-        mutable labelList watchIndices_;
-
-        //- eventNo of last update
+        //- The eventNo of last update
         label eventNo_;
+
+        //- List of additional files to watch
+        mutable DynamicList<fileName> watchFiles_;
+
+        //- List of modification watch indices
+        mutable DynamicList<label> watchIndices_;
 
         //- Dictionary for any meta-data
         autoPtr<dictionary> metaDataPtr_;

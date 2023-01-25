@@ -52,7 +52,6 @@ Foam::regIOobject::regIOobject(const IOobject& io, const bool isTimeObject)
     IOobject(io),
     registered_(false),
     ownedByRegistry_(false),
-    watchIndices_(),
     eventNo_(isTimeObject ? 0 : db().getEvent()), // No event for top-level Time
     metaDataPtr_(nullptr),
     isPtr_(nullptr)
@@ -70,8 +69,9 @@ Foam::regIOobject::regIOobject(const regIOobject& rio)
     IOobject(rio),
     registered_(false),
     ownedByRegistry_(false),
-    watchIndices_(rio.watchIndices_),
     eventNo_(db().getEvent()),
+    watchFiles_(rio.watchFiles_),
+    watchIndices_(rio.watchIndices_),
     metaDataPtr_(rio.metaDataPtr_.clone()),
     isPtr_(nullptr)
 {
@@ -84,7 +84,6 @@ Foam::regIOobject::regIOobject(const regIOobject& rio, bool registerCopy)
     IOobject(rio),
     registered_(false),
     ownedByRegistry_(false),
-    watchIndices_(),
     eventNo_(db().getEvent()),
     metaDataPtr_(rio.metaDataPtr_.clone()),
     isPtr_(nullptr)
@@ -111,7 +110,6 @@ Foam::regIOobject::regIOobject
     IOobject(newName, rio.instance(), rio.local(), rio.db()),
     registered_(false),
     ownedByRegistry_(false),
-    watchIndices_(),
     eventNo_(db().getEvent()),
     metaDataPtr_(rio.metaDataPtr_.clone()),
     isPtr_(nullptr)
@@ -135,7 +133,6 @@ Foam::regIOobject::regIOobject
     IOobject(io),
     registered_(false),
     ownedByRegistry_(false),
-    watchIndices_(),
     eventNo_(db().getEvent()),
     metaDataPtr_(rio.metaDataPtr_.clone()),
     isPtr_(nullptr)
@@ -234,6 +231,7 @@ bool Foam::regIOobject::checkOut()
         fileHandler().removeWatch(watchIndices_[i]);
     }
     watchIndices_.clear();
+    watchFiles_.clear();
 
     if (registered_)
     {
@@ -253,17 +251,23 @@ Foam::label Foam::regIOobject::addWatch(const fileName& f)
     if
     (
         registered_
-     && readOpt() == IOobject::MUST_READ_IF_MODIFIED
+     && readOpt() == IOobjectOption::READ_MODIFIED
      && time().runTimeModifiable()
     )
     {
-        index = fileHandler().findWatch(watchIndices_, f);
+        //- 1. Directly add to fileHandler
+        //index = fileHandler().findWatch(watchIndices_, f);
+        //
+        //if (index == -1)
+        //{
+        //    index = watchIndices_.size();
+        //    watchIndices_.push_back(fileHandler().addWatch(f));
+        //}
 
-        if (index == -1)
-        {
-            index = watchIndices_.size();
-            watchIndices_.append(fileHandler().addWatch(f));
-        }
+        //- 2. Delay adding; add to list and handle in addWatch() later on
+        //     Note: what do we return?
+        index = watchFiles_.size();
+        watchFiles_.push_back(f);
     }
 
     return index;
@@ -275,7 +279,7 @@ void Foam::regIOobject::addWatch()
     if
     (
         registered_
-     && readOpt() == IOobject::MUST_READ_IF_MODIFIED
+     && readOpt() == IOobjectOption::READ_MODIFIED
      && time().runTimeModifiable()
     )
     {
@@ -307,37 +311,80 @@ void Foam::regIOobject::addWatch()
             )
         );
 
-        if (masterOnly && Pstream::parRun())
+        if (masterOnly && UPstream::parRun())
         {
-            // Get master watched files
-            fileNameList watchFiles;
-            if (Pstream::master())
+            // Get all files watched on master, and broadcast at once
+            fileNameList filesToWatch;
+            if (UPstream::master())
             {
-                watchFiles.resize(watchIndices_.size());
+                const bool oldParRun = UPstream::parRun(false);
+
+                filesToWatch.resize(watchIndices_.size());
                 forAll(watchIndices_, i)
                 {
-                    watchFiles[i] = fileHandler().getFile(watchIndices_[i]);
+                    filesToWatch[i] = fileHandler().getFile(watchIndices_[i]);
                 }
-            }
-            Pstream::broadcast(watchFiles);
 
-            if (!Pstream::master())
+                UPstream::parRun(oldParRun);
+            }
+            Pstream::broadcast(filesToWatch);
+
+
+            // Add master files in same order
+            if (!UPstream::master())
             {
-                // unregister current ones
+                const bool oldParRun = UPstream::parRun(false);
+
+                // Unregister current watched indices
                 forAllReverse(watchIndices_, i)
                 {
                     fileHandler().removeWatch(watchIndices_[i]);
                 }
 
+                // Insert the ones from master, in master order
                 watchIndices_.clear();
-                forAll(watchFiles, i)
+                for (const auto& file : filesToWatch)
                 {
-                    watchIndices_.append(fileHandler().addWatch(watchFiles[i]));
+                    watchIndices_.push_back(fileHandler().addWatch(file));
                 }
-            }
-        }
 
-        watchIndices_.append(fileHandler().addWatch(f));
+                UPstream::parRun(oldParRun);
+            }
+
+
+            // Files that were explicitly added via addWatch(const fileName&)
+            // (e.g. through #include)
+            for (const auto& file : watchFiles_)
+            {
+                watchIndices_.push_back(fileHandler().addWatch(file));
+            }
+
+            // Append the local file
+            watchIndices_.push_back(fileHandler().addWatch(f));
+        }
+        else
+        {
+            DynamicList<fileName> filesToWatch
+            (
+                watchIndices_.size()+watchFiles_.size()+1
+            );
+
+            // Get existing watched files from fileHandler
+            for (const label index : watchIndices_)
+            {
+                filesToWatch.push_back(fileHandler().getFile(index));
+            }
+
+            // The files explicitly added from addWatch(const fileName&)
+            // (e.g. through #include)
+            filesToWatch.push_back(std::move(watchFiles_));
+
+            // The local file
+            filesToWatch.push_back(f);
+
+            // Re-do all watches
+            fileHandler().addWatches(*this, filesToWatch);
+        }
     }
 }
 
