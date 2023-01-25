@@ -105,7 +105,7 @@ bool Foam::regIOobject::writeObject
     );
 
     bool osGood = false;
-    if (!masterOnly || Pstream::master())
+    if (!masterOnly || UPstream::master())
     {
         osGood = fileHandler().writeObject(*this, streamOpt, writeOnProc);
     }
