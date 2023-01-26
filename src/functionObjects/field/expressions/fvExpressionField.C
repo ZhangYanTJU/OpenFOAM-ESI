@@ -393,7 +393,7 @@ bool Foam::functionObjects::fvExpressionField::read(const dictionary& dict)
     }
 
     autowrite_ = dict.getOrDefault("autowrite", false);
-    store_ = dict.getOrDefault("autowrite", true);
+    store_ = dict.getOrDefault("store", true);
 
     // "dimensions" is optional
     dimensions_.clear();
