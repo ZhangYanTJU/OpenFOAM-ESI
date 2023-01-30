@@ -31,7 +31,7 @@ License
 #include "IFstream.H"
 #include "globalIndex.H"
 #include "mapDistribute.H"
-
+#include "DynamicList.H"
 
 
 
@@ -79,11 +79,11 @@ namespace Foam {
         //Check if any meta argument is changed using the new syntax.
         //If they are, we cannot infer an additional level of decomposition,
         //as it may interfere with the indices.
-        std::vector<string> domainChanges = metaParser::getEntries(coeffsDict, "domains");
-        std::vector<string> methodChanges = metaParser::getEntries(coeffsDict, "method");
-        std::vector<string> weightChanges = metaParser::getEntries(coeffsDict, "weight");
+        List<string> domainChanges = metaParser::getEntries(coeffsDict, "domains");
+        List<string> methodChanges = metaParser::getEntries(coeffsDict, "method");
+        List<string> weightChanges = metaParser::getEntries(coeffsDict, "weight");
         //We can parse weightMode without brackets too
-        std::vector<string> weightModeChanges = metaParser::getEntries(coeffsDict, "weightsInitialization", true);
+        List<string> weightModeChanges = metaParser::getEntries(coeffsDict, "weightsInitialization", true);
 
         bool bChangesDomains = !domainChanges.empty();
         bool bChangesArguments =        bChangesDomains
@@ -521,9 +521,9 @@ namespace Foam {
 
 
 
-    std::vector<string> multiNodeDecomp::metaParser::getEntries(const dictionary& dict, const string& argument, bool allowWithoutBrackets) {
+    List<string> multiNodeDecomp::metaParser::getEntries(const dictionary& dict, const string& argument, bool allowWithoutBrackets) {
         string argumentBracket = argument + "[";
-        std::vector<string> Result;
+        DynamicList<string, 4> Result;
         for(auto& dEntry : dict) {
             if(dEntry.keyword().starts_with(argumentBracket) || (allowWithoutBrackets && dEntry.keyword() == argument))
                 Result.push_back(dEntry.keyword());
@@ -531,7 +531,7 @@ namespace Foam {
         return Result;
     }
 
-    std::vector<std::pair<label, label>> multiNodeDecomp::metaParser::parseRanges(const string& key) {
+    List<Pair<label>> multiNodeDecomp::metaParser::parseRanges(const string& key) {
         
         // First, discard the argument and process the indices only.
         // The current syntax is argument[...]
@@ -548,7 +548,7 @@ namespace Foam {
 
         // All checks print an error message if failed, explaining why.
 
-        std::vector<std::pair<label,label>> Result;
+        DynamicList<Pair<label>, 4> Result;
         label nCurPtr = 0, nIndicesLength = indices.size();
         // As long as there are more ranges to parse.
         while(nCurPtr != nIndicesLength) {
@@ -561,7 +561,7 @@ namespace Foam {
                     << exit(FatalError);
             
             // Then, find the matching close bracket.
-            int nEndIndex = indices.find(']', nCurPtr);
+            label nEndIndex = indices.find(']', nCurPtr);
             if(nEndIndex == nIndicesLength) {
                 FatalError
                     << "Error when parsing indices "
@@ -623,9 +623,9 @@ namespace Foam {
                     << nLeft << "). Aborting\n"
                     << exit(FatalError);
             }
-            // Move the pointer after the closing bracket and append to the result vector.
+            // Move the pointer after the closing bracket and append to the result list.
             nCurPtr = nEndIndex + 1;
-            Result.emplace_back(nLeft,nRight);
+            Result.push_back({nLeft,nRight});
         }
         return Result;        
     }
@@ -656,7 +656,7 @@ namespace Foam {
 
 
     void multiNodeDecomp::nodeMetadata::updateProcessorWeights() {
-        int nDom = nDomains();
+        label nDom = nDomains();
         word methodCoeffsName = coeffsDict->get<word>("method") + "Coeffs";
         // If processorWeights were set by the user, we do not modify them.
         if(
@@ -735,18 +735,19 @@ namespace Foam {
         }
     }
     void multiNodeDecomp::nodeMetadata::updateNodes(const string& key, const std::function<void(nodeMetadata*)>& update) {
-        std::vector<std::pair<label, label>> indicesList = metaParser::parseRanges(key);
+        List<Pair<label>> indicesList = metaParser::parseRanges(key);
         updateNodes(indicesList, update);
     }
 
     // Parse the indices, and apply the update function to all matching nodes.
     // nCurPtr is used to indicate the index we are now parsing (instead of sending substrings of indices)
-    void multiNodeDecomp::nodeMetadata::updateNodes(const std::vector<std::pair<label,label>>& indices, const std::function<void(nodeMetadata*)>& update, label nCurIdx) {
+    void multiNodeDecomp::nodeMetadata::updateNodes(const List<Pair<label>>& indices, const std::function<void(nodeMetadata*)>& update, label nCurIdx) {
         if(nCurIdx == label(indices.size())) update(this);
         else {
             // Otherwise, call recursively.
             label nLeft, nRight, nChildren = children.size();
-            std::tie(nLeft, nRight) = indices[nCurIdx];
+            nLeft = indices[nCurIdx].first();
+            nRight = indices[nCurIdx].second();
             
             // [0,-1] means the entire range.
             
@@ -772,7 +773,7 @@ namespace Foam {
         }
     }
 
-    void multiNodeDecomp::nodeMetadata::setLeveledDictionaries(const List<const dictionary*>& dictionaries, int nLevel) {
+    void multiNodeDecomp::nodeMetadata::setLeveledDictionaries(const List<const dictionary*>& dictionaries, label nLevel) {
         // Set the dictionary to this level, and to non-leaf children.
         setDict(*dictionaries[nLevel]);
         forAll(children, i) {

@@ -42,6 +42,7 @@ SourceFiles
 #define multiNodeDecomp_H
 
 #include "decompositionMethod.H"
+// #include "List.H"
 
 namespace Foam
 {
@@ -69,7 +70,7 @@ class multiNodeDecomp
         //  argument - the argument we're looking for.
         //  allowWithoutBrackets - set to true if the argument can be detected without brackets
         //  For example, domains should not be allowed without brackets, but weightsInitialization can.
-        static std::vector<string> getEntries(const dictionary& dict, const string& argument, bool allowWithoutBrackets = false);
+        static List<string> getEntries(const dictionary& dict, const string& argument, bool allowWithoutBrackets = false);
 
         // Given a key string of an entry returned from getEntries,
         // Parse and return all ranges described in the key.
@@ -84,7 +85,7 @@ class multiNodeDecomp
         //  i.e. if two ranges are returned, we will traverse each child of the root in the first range, and recursively
         //  each child in the second range, thus updating nodes at the third level.
 
-        static std::vector<std::pair<label, label>> parseRanges(const string& key);
+        static List<Pair<label>> parseRanges(const string& key);
 
     };
     enum WeightsInitialization {
@@ -313,17 +314,17 @@ class multiNodeDecomp
         // Internal implementation of updateNodes.
         // The list of ranges are constructed by passing the key argument to the meta parser.
         // nCurIdx is an internal variable that indicates our location inside the indices array.
-        void updateNodes(const std::vector<std::pair<label,label>>& indices, const std::function<void(nodeMetadata*)>& update, label nCurIdx = 0);
+        void updateNodes(const List<Pair<label>>& indices, const std::function<void(nodeMetadata*)>& update, label nCurIdx = 0);
 
         // This function is used inside the public setLeveledDictionaries function.
-        void setLeveledDictionaries(const List<const dictionary*>& dictionaries, int nLevel);
+        void setLeveledDictionaries(const List<const dictionary*>& dictionaries, label nLevel);
 
         // Parse the range of indices starting at the (string) index nStartIndex.
         // Input: The indices string, and the starting position of the range
         // (i.e, the position of the opening bracket)
         // Returns a pair representing the range if succeeded,
         // or crashes the program with an appropriate error message if failed to parse.
-        std::pair<label, label> parseRange(const string& indices, label nStartIndex) const;
+        Pair<label> parseRange(const string& indices, label nStartIndex) const;
 
     };
 
