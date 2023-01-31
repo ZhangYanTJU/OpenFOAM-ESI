@@ -20,7 +20,7 @@ solvers
 
 PIMPLE
 {
-    solvePrimaryRegion no;
+    solveFlow    no;
 }
 
 relaxationFactors
