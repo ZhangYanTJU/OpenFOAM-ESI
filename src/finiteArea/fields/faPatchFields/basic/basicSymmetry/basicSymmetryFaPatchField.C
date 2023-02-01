@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,13 +96,23 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::basicSymmetryFaPatchField<Type>::snGrad() const
 {
-    const vectorField nHat(this->patch().edgeNormals());
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        return tmp<Field<Type>>::New(this->size(), Zero);
+    }
+    else
+    {
+        symmTensorField rot(I - 2.0*sqr(this->patch().edgeNormals()));
 
-    return
-    (
-        transform(I - 2.0*sqr(nHat), this->patchInternalField())
-      - this->patchInternalField()
-    )*(this->patch().deltaCoeffs()/2.0);
+        Field<Type> pif(this->patchInternalField());
+
+        return
+        (
+            (transform(rot, pif) - pif)
+          * (this->patch().deltaCoeffs()/2.0)
+        );
+    }
 }
 
 
@@ -113,14 +124,19 @@ void Foam::basicSymmetryFaPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    const vectorField nHat(this->patch().edgeNormals());
-    Field<Type>::operator=
-    (
-        (
-            this->patchInternalField()
-          + transform(I - 2.0*sqr(nHat), this->patchInternalField())
-        )/2.0
-    );
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        Field<Type>::operator=(this->patchInternalField());
+    }
+    else
+    {
+        symmTensorField rot(I - 2.0*sqr(this->patch().edgeNormals()));
+
+        Field<Type> pif(this->patchInternalField());
+
+        Field<Type>::operator=((pif + transform(rot, pif))/2.0);
+    }
 
     transformFaPatchField<Type>::evaluate();
 }

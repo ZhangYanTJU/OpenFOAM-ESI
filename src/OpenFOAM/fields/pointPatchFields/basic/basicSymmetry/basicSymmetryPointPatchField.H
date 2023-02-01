@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSymmetryPointPatchField_H
-#define basicSymmetryPointPatchField_H
+#ifndef Foam_basicSymmetryPointPatchField_H
+#define Foam_basicSymmetryPointPatchField_H
 
 #include "pointPatchField.H"
 #include "symmetryPointPatch.H"
@@ -54,7 +54,6 @@ class basicSymmetryPointPatchField
 :
     public pointPatchField<Type>
 {
-
 public:
 
     // Constructors

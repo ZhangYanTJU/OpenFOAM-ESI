@@ -142,10 +142,7 @@ public:
             //- Return gradient at boundary
             virtual tmp<Field<Type>> snGrad() const
             {
-                return tmp<Field<Type>>
-                (
-                    new Field<Type>(this->size(), Zero)
-                );
+                return tmp<Field<Type>>::New(this->size(), Zero);
             }
 
             //- Evaluate the patch field

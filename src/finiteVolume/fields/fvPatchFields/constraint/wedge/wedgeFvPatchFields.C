@@ -37,29 +37,4 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
-
-template<>
-Foam::tmp<Foam::scalarField>
-Foam::wedgeFvPatchField<Foam::scalar>::snGrad() const
-{
-    return tmp<scalarField>::New(size(), Zero);
-}
-
-
-template<>
-void Foam::wedgeFvPatchField<Foam::scalar>::evaluate
-(
-    const Pstream::commsTypes
-)
-{
-    if (!updated())
-    {
-        updateCoeffs();
-    }
-
-    this->operator==(patchInternalField());
-}
-
-
 // ************************************************************************* //

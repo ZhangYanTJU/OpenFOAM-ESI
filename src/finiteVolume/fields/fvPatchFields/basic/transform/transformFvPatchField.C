@@ -97,6 +97,12 @@ Foam::transformFvPatchField<Type>::valueInternalCoeffs
     const tmp<scalarField>&
 ) const
 {
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        return tmp<Field<Type>>::New(this->size(), pTraits<Type>::one);
+    }
+
     return pTraits<Type>::one - snGradTransformDiag();
 }
 
@@ -122,6 +128,12 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::transformFvPatchField<Type>::gradientInternalCoeffs() const
 {
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        return tmp<Field<Type>>::New(this->size(), Zero);
+    }
+
     return -this->patch().deltaCoeffs()*snGradTransformDiag();
 }
 

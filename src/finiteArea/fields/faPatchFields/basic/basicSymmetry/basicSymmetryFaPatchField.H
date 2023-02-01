@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSymmetryFaPatchField_H
-#define basicSymmetryFaPatchField_H
+#ifndef Foam_basicSymmetryFaPatchField_H
+#define Foam_basicSymmetryFaPatchField_H
 
 #include "transformFaPatchField.H"
 #include "symmetryFaPatch.H"
@@ -58,7 +58,6 @@ class basicSymmetryFaPatchField
 :
     public transformFaPatchField<Type>
 {
-
 public:
 
     // Constructors
@@ -132,8 +131,6 @@ public:
             virtual tmp<Field<Type>> snGrad() const;
 
             //- Evaluate the patch field
-            //  Default argument needed to allow call in constructors
-            //  HJ, 30/Jun/2009
             virtual void evaluate
             (
                 const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
@@ -142,18 +139,6 @@ public:
             //- Return face-gradient transform diagonal
             virtual tmp<Field<Type>> snGradTransformDiag() const;
 };
-
-
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> basicSymmetryFaPatchField<scalar>::snGrad() const;
-
-template<>
-void basicSymmetryFaPatchField<scalar>::evaluate
-(
-    const Pstream::commsTypes commsType
-);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

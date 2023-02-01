@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSymmetryFvPatchField_H
-#define basicSymmetryFvPatchField_H
+#ifndef Foam_basicSymmetryFvPatchField_H
+#define Foam_basicSymmetryFvPatchField_H
 
 #include "transformFvPatchField.H"
 #include "symmetryFvPatch.H"
@@ -57,7 +57,6 @@ class basicSymmetryFvPatchField
 :
     public transformFvPatchField<Type>
 {
-
 public:
 
     // Constructors
@@ -136,18 +135,6 @@ public:
         //- Return face-gradient transform diagonal
         virtual tmp<Field<Type>> snGradTransformDiag() const;
 };
-
-
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> basicSymmetryFvPatchField<scalar>::snGrad() const;
-
-template<>
-void basicSymmetryFvPatchField<scalar>::evaluate
-(
-    const Pstream::commsTypes commsType
-);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef transformFaPatchField_H
-#define transformFaPatchField_H
+#ifndef Foam_transformFaPatchField_H
+#define Foam_transformFaPatchField_H
 
 #include "faPatchField.H"
 #include "areaFaMesh.H"
@@ -142,16 +142,10 @@ public:
             virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-    // Member operators
+    // Member Operators
 
         virtual void operator=(const faPatchField<Type>&);
 };
-
-
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> transformFaPatchField<scalar>::gradientInternalCoeffs() const;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "symmetryPlaneFvPatchField.H"
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -119,13 +119,23 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::symmetryPlaneFvPatchField<Type>::snGrad() const
 {
-    vector nHat(symmetryPlanePatch_.n());
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        return tmp<Field<Type>>::New(this->size(), Zero);
+    }
+    else
+    {
+        symmTensor rot(I - 2.0*sqr(symmetryPlanePatch_.n()));
 
-    const Field<Type> iF(this->patchInternalField());
+        Field<Type> pif(this->patchInternalField());
 
-    return
-        (transform(I - 2.0*sqr(nHat), iF) - iF)
-       *(this->patch().deltaCoeffs()/2.0);
+        return
+        (
+            (transform(rot, pif) - pif)
+          * (this->patch().deltaCoeffs()/2.0)
+        );
+    }
 }
 
 
@@ -137,14 +147,19 @@ void Foam::symmetryPlaneFvPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    vector nHat(symmetryPlanePatch_.n());
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        Field<Type>::operator=(this->patchInternalField());
+    }
+    else
+    {
+        symmTensor rot(I - 2.0*sqr(symmetryPlanePatch_.n()));
 
-    const Field<Type> iF(this->patchInternalField());
+        Field<Type> pif(this->patchInternalField());
 
-    Field<Type>::operator=
-    (
-        (iF + transform(I - 2.0*sqr(nHat), iF))/2.0
-    );
+        Field<Type>::operator=((pif + transform(rot, pif))/2.0);
+    }
 
     transformFvPatchField<Type>::evaluate();
 }
@@ -156,12 +171,7 @@ Foam::symmetryPlaneFvPatchField<Type>::snGradTransformDiag() const
 {
     vector nHat(symmetryPlanePatch_.n());
 
-    const vector diag
-    (
-        mag(nHat.component(vector::X)),
-        mag(nHat.component(vector::Y)),
-        mag(nHat.component(vector::Z))
-    );
+    const vector diag(mag(nHat.x()), mag(nHat.y()), mag(nHat.z()));
 
     return tmp<Field<Type>>
     (

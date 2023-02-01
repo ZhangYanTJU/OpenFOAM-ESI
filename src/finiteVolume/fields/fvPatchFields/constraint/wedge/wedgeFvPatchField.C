@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -119,12 +120,22 @@ Foam::wedgeFvPatchField<Type>::wedgeFvPatchField
 template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::wedgeFvPatchField<Type>::snGrad() const
 {
-    const Field<Type> pif(this->patchInternalField());
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        return tmp<Field<Type>>::New(this->size(), Zero);
+    }
+    else
+    {
+        const Field<Type> pif(this->patchInternalField());
 
-    return
-    (
-        transform(refCast<const wedgeFvPatch>(this->patch()).cellT(), pif) - pif
-    )*(0.5*this->patch().deltaCoeffs());
+        return
+        (
+            transform
+            (
+                refCast<const wedgeFvPatch>(this->patch()).cellT(), pif) - pif
+        )*(0.5*this->patch().deltaCoeffs());
+    }
 }
 
 
@@ -136,14 +147,22 @@ void Foam::wedgeFvPatchField<Type>::evaluate(const Pstream::commsTypes)
         this->updateCoeffs();
     }
 
-    fvPatchField<Type>::operator==
-    (
-        transform
+    if (pTraits<Type>::rank == 0)
+    {
+        // Transform-invariant types
+        this->operator==(this->patchInternalField());
+    }
+    else
+    {
+        fvPatchField<Type>::operator==
         (
-            refCast<const wedgeFvPatch>(this->patch()).faceT(),
-            this->patchInternalField()
-        )
-    );
+            transform
+            (
+                refCast<const wedgeFvPatch>(this->patch()).faceT(),
+                this->patchInternalField()
+            )
+        );
+    }
 }
 
 

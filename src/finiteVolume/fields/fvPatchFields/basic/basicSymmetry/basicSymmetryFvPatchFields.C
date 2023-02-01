@@ -25,35 +25,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicSymmetryFvPatchField.H"
+#include "basicSymmetryFvPatchFields.H"
+#include "addToRunTimeSelectionTable.H"
 #include "volFields.H"
 
 // No run-time selection
 
 // * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
-
-template<>
-Foam::tmp<Foam::scalarField>
-Foam::basicSymmetryFvPatchField<Foam::scalar>::snGrad() const
-{
-    return tmp<scalarField>::New(size(), Zero);
-}
-
-
-template<>
-void Foam::basicSymmetryFvPatchField<Foam::scalar>::evaluate
-(
-    const Pstream::commsTypes
-)
-{
-    if (!updated())
-    {
-        updateCoeffs();
-    }
-
-    scalarField::operator=(patchInternalField());
-    transformFvPatchField<scalar>::evaluate();
-}
 
 
 // ************************************************************************* //

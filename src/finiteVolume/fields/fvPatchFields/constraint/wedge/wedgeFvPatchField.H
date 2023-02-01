@@ -50,8 +50,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wedgeFvPatchField_H
-#define wedgeFvPatchField_H
+#ifndef Foam_wedgeFvPatchField_H
+#define Foam_wedgeFvPatchField_H
 
 #include "transformFvPatchField.H"
 #include "wedgeFvPatch.H"
@@ -70,7 +70,6 @@ class wedgeFvPatchField
 :
     public transformFvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -152,18 +151,6 @@ public:
         //- Return face-gradient transform diagonal
         virtual tmp<Field<Type>> snGradTransformDiag() const;
 };
-
-
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> wedgeFvPatchField<scalar>::snGrad() const;
-
-template<>
-void wedgeFvPatchField<scalar>::evaluate
-(
-    const Pstream::commsTypes commsType
-);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

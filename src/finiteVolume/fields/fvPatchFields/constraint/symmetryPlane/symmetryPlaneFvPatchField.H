@@ -159,18 +159,6 @@ public:
 };
 
 
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> symmetryPlaneFvPatchField<scalar>::snGrad() const;
-
-template<>
-void symmetryPlaneFvPatchField<scalar>::evaluate
-(
-    const Pstream::commsTypes commsType
-);
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

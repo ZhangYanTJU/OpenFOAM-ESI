@@ -56,7 +56,6 @@ class transformFvPatchField
 :
     public fvPatchField<Type>
 {
-
 public:
 
     //- Runtime type information
@@ -156,22 +155,10 @@ public:
             virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-    // Member operators
+    // Member Operators
 
         virtual void operator=(const fvPatchField<Type>&);
 };
-
-
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> transformFvPatchField<scalar>::valueInternalCoeffs
-(
-    const tmp<scalarField>&
-) const;
-
-template<>
-tmp<scalarField> transformFvPatchField<scalar>::gradientInternalCoeffs() const;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -139,18 +139,6 @@ public:
 };
 
 
-// * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * * //
-
-template<>
-tmp<scalarField> wedgeFaPatchField<scalar>::snGrad() const;
-
-template<>
-void wedgeFaPatchField<scalar>::evaluate
-(
-    const Pstream::commsTypes commsType
-);
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

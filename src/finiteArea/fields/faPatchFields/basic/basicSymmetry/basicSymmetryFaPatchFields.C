@@ -32,28 +32,4 @@ License
 
 // * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
 
-template<>
-Foam::tmp<Foam::scalarField>
-Foam::basicSymmetryFaPatchField<Foam::scalar>::snGrad() const
-{
-    return tmp<scalarField>::New(size(), Zero);
-}
-
-
-template<>
-void Foam::basicSymmetryFaPatchField<Foam::scalar>::evaluate
-(
-    const Pstream::commsTypes
-)
-{
-    if (!updated())
-    {
-        updateCoeffs();
-    }
-
-    scalarField::operator=(patchInternalField());
-    transformFaPatchField<scalar>::evaluate();
-}
-
-
 // ************************************************************************* //
