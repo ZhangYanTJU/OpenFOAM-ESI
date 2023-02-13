@@ -27,7 +27,30 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "PstreamBuffers.H"
-#include "bitSet.H"
+#include "debug.H"
+#include "registerSwitch.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+int Foam::PstreamBuffers::algorithm
+(
+    // Not really the most creative name...
+    Foam::debug::optimisationSwitch("pbufs.algorithm", 1)
+);
+registerOptSwitch
+(
+    "pbufs.algorithm",
+    int,
+    Foam::PstreamBuffers::algorithm
+);
+
+
+// Simple enumerations
+// -------------------
+// static constexpr int pbufs_algorithm_PEX_allToAll = -1;
+static constexpr int pbufs_algorithm_PEX_hybrid = 0;
+// static constexpr int pbufs_algorithm_NBX = 1;
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -43,15 +66,68 @@ void Foam::PstreamBuffers::finalExchange
 
     if (commsType_ == UPstream::commsTypes::nonBlocking)
     {
-        // Dense storage uses all-to-all
-        Pstream::exchangeSizes(sendBuffers_, recvSizes, comm_);
+        // Use PEX algorithm, if requested or with data chunking
+        if
+        (
+            (algorithm <= pbufs_algorithm_PEX_hybrid)
+         || (UPstream::maxCommsSize > 0)
+        )
+        {
+            // Like Pstream::exchangeSizes
 
-        Pstream::exchange<DynamicList<char>, char>
+            labelList sendSizes(nProcs_);
+            forAll(sendBuffers_, proci)
+            {
+                sendSizes[proci] = sendBuffers_[proci].size();
+            }
+            recvSizes.resize_nocopy(nProcs_);
+
+            if
+            (
+                (algorithm == pbufs_algorithm_PEX_hybrid)
+             ||
+                (
+                    UPstream::nProcsNonblockingExchange > 1
+                 && UPstream::nProcsNonblockingExchange <= nProcs_
+                )
+            )
+            {
+                // Use algorithm NBX: Nonblocking Consensus Exchange
+
+                UPstream::allToAllConsensus
+                (
+                    sendSizes,
+                    recvSizes,
+                    (tag_ + 314159),  // some unique tag?
+                    comm_
+                );
+            }
+            else
+            {
+                UPstream::allToAll(sendSizes, recvSizes, comm_);
+            }
+
+            Pstream::exchange<DynamicList<char>, char>
+            (
+                sendBuffers_,
+                recvSizes,
+                recvBuffers_,
+                tag_,
+                comm_,
+                wait
+            );
+
+            return;
+        }
+
+        // No data chunking, use NBX (nonblocking exchange)
+
+        PstreamDetail::exchangeConsensus<DynamicList<char>, char>
         (
             sendBuffers_,
-            recvSizes,
             recvBuffers_,
-            tag_,
+            recvSizes,
+            (tag_ + 271828),  // some unique tag?
             comm_,
             wait
         );
@@ -59,48 +135,10 @@ void Foam::PstreamBuffers::finalExchange
 }
 
 
-void Foam::PstreamBuffers::finalExchange
-(
-    const labelUList& sendProcs,
-    const labelUList& recvProcs,
-    const bool wait,
-    labelList& recvSizes
-)
-{
-    // Could also check that it is not called twice
-    // but that is used for overlapping send/recv (eg, overset)
-    finishedSendsCalled_ = true;
-
-    if (commsType_ == UPstream::commsTypes::nonBlocking)
-    {
-        Pstream::exchangeSizes
-        (
-            sendProcs,
-            recvProcs,
-            sendBuffers_,
-            recvSizes,
-            tag_,
-            comm_
-        );
-
-        Pstream::exchange<DynamicList<char>, char>
-        (
-            sendBuffers_,
-            recvSizes,
-            recvBuffers_,
-            tag_,
-            comm_,
-            wait
-        );
-    }
-}
-
-
-void Foam::PstreamBuffers::finalExchangeGatherScatter
+void Foam::PstreamBuffers::finalGatherScatter
 (
     const bool isGather,
     const bool wait,
-    const bool needSizes,
     labelList& recvSizes
 )
 {
@@ -165,7 +203,6 @@ void Foam::PstreamBuffers::finalExchangeGatherScatter
             recvSizes = Zero;
             recvSizes[0] = myRecv;
         }
-
 
         Pstream::exchange<DynamicList<char>, char>
         (
@@ -378,7 +415,7 @@ Foam::label Foam::PstreamBuffers::recvDataCount(const label proci) const
 
 Foam::labelList Foam::PstreamBuffers::recvDataCounts() const
 {
-    labelList counts(recvPositions_.size(), Zero);
+    labelList counts(nProcs_, Zero);
 
     if (finishedSendsCalled_)
     {
@@ -404,17 +441,20 @@ Foam::labelList Foam::PstreamBuffers::recvDataCounts() const
 }
 
 
-Foam::label Foam::PstreamBuffers::maxNonLocalRecvCount(const label proci) const
+Foam::label Foam::PstreamBuffers::maxNonLocalRecvCount
+(
+    const label excludeProci
+) const
 {
     label maxLen = 0;
 
     if (finishedSendsCalled_)
     {
-        forAll(recvBuffers_, idx)
+        forAll(recvBuffers_, proci)
         {
-            const label len(recvBuffers_[idx].size() - recvPositions_[idx]);
-            if (idx != proci)
+            if (excludeProci != proci)
             {
+                label len(recvBuffers_[proci].size() - recvPositions_[proci]);
                 maxLen = max(maxLen, len);
             }
         }
@@ -494,6 +534,9 @@ void Foam::PstreamBuffers::finishedSends
     const bool wait
 )
 {
+    // Resize for copying back
+    recvSizes.resize_nocopy(sendBuffers_.size());
+
     finalExchange(wait, recvSizes);
 
     if (commsType_ != UPstream::commsTypes::nonBlocking)
@@ -510,142 +553,71 @@ void Foam::PstreamBuffers::finishedSends
 }
 
 
-void Foam::PstreamBuffers::finishedSends
+void Foam::PstreamBuffers::finishedNeighbourSends
 (
-    const labelUList& sendProcs,
-    const labelUList& recvProcs,
+    const labelUList& neighProcs,
+    labelList& recvSizes,
+    const bool wait
+)
+{
+    // Resize for copying back
+    recvSizes.resize_nocopy(sendBuffers_.size());
+
+    // Prune send buffers that are not neighbours
+    {
+        labelHashSet isNeighbour(neighProcs);
+
+        // Prune send buffers that are not neighbours
+        forAll(sendBuffers_, proci)
+        {
+            if (!isNeighbour.contains(proci))
+            {
+                sendBuffers_[proci].clear();
+            }
+        }
+    }
+
+    finalExchange(wait, recvSizes);
+}
+
+
+void Foam::PstreamBuffers::finishedNeighbourSends
+(
+    const labelUList& neighProcs,
     const bool wait
 )
 {
     labelList recvSizes;
-    finalExchange(sendProcs, recvProcs, wait, recvSizes);
-}
 
-
-void Foam::PstreamBuffers::finishedSends
-(
-    const labelUList& sendProcs,
-    const labelUList& recvProcs,
-    labelList& recvSizes,
-    const bool wait
-)
-{
-    finalExchange(sendProcs, recvProcs, wait, recvSizes);
-
-    if (commsType_ != UPstream::commsTypes::nonBlocking)
+    // Prune send buffers that are not neighbours
     {
-        FatalErrorInFunction
-            << "Obtaining sizes not supported in "
-            << UPstream::commsTypeNames[commsType_] << endl
-            << " since transfers already in progress. Use non-blocking instead."
-            << exit(FatalError);
+        labelHashSet isNeighbour(neighProcs);
 
-        // Note: maybe possible only if using different tag from write started
-        // by ~UOPstream. Needs some work.
-    }
-}
-
-
-bool Foam::PstreamBuffers::finishedSends
-(
-    bitSet& sendConnections,
-    DynamicList<label>& sendProcs,
-    DynamicList<label>& recvProcs,
-    const bool wait
-)
-{
-    bool changed = (sendConnections.size() != nProcs());
-
-    if (changed)
-    {
-        sendConnections.resize(nProcs());
-    }
-
-    // Update send connections
-    // - reasonable to assume there are no self-sends on UPstream::myProcNo
-    forAll(sendBuffers_, proci)
-    {
-        // ie, sendDataCount(proci) != 0
-        if (sendConnections.set(proci, !sendBuffers_[proci].empty()))
-        {
-            // The state changed
-            changed = true;
-        }
-    }
-
-    UPstream::reduceOr(changed, comm_);
-
-    if (changed)
-    {
-        // Create send/recv topology
-
-        // The send ranks
-        sendProcs.clear();
+        // Prune send buffers that are not neighbours
         forAll(sendBuffers_, proci)
         {
-            // ie, sendDataCount(proci) != 0
-            if (!sendBuffers_[proci].empty())
+            if (!isNeighbour.contains(proci))
             {
-                sendProcs.push_back(proci);
-            }
-        }
-
-        labelList recvSizes;
-        finishedSends(recvSizes, wait);  // All-to-all
-
-        // The recv ranks
-        recvProcs.clear();
-        forAll(recvSizes, proci)
-        {
-            if (recvSizes[proci] > 0)
-            {
-                recvProcs.push_back(proci);
+                sendBuffers_[proci].clear();
             }
         }
     }
-    else
-    {
-        // Use existing send/recv ranks
 
-        finishedSends(sendProcs, recvProcs, wait);
-    }
-
-    return changed;
-}
-
-
-void Foam::PstreamBuffers::finishedNeighbourSends
-(
-    const labelUList& neighProcs,
-    labelList& recvSizes,
-    const bool wait
-)
-{
-    finishedSends(neighProcs, neighProcs, recvSizes, wait);
-}
-
-
-void Foam::PstreamBuffers::finishedNeighbourSends
-(
-    const labelUList& neighProcs,
-    const bool wait
-)
-{
-    finishedSends(neighProcs, neighProcs, wait);
+    finalExchange(wait, recvSizes);
 }
 
 
 void Foam::PstreamBuffers::finishedGathers(const bool wait)
 {
     labelList recvSizes;
-    finalExchangeGatherScatter(true, wait, false, recvSizes);
+    finalGatherScatter(true, wait, recvSizes);
 }
 
 
 void Foam::PstreamBuffers::finishedScatters(const bool wait)
 {
     labelList recvSizes;
-    finalExchangeGatherScatter(false, wait, false, recvSizes);
+    finalGatherScatter(false, wait, recvSizes);
 }
 
 
@@ -655,7 +627,10 @@ void Foam::PstreamBuffers::finishedGathers
     const bool wait
 )
 {
-    finalExchangeGatherScatter(true, wait, true, recvSizes);
+    // Future: resize for copying back (currently does not matter)
+    // recvSizes.resize_nocopy(sendBuffers_.size());
+
+    finalGatherScatter(true, wait, recvSizes);
 
     if (commsType_ != UPstream::commsTypes::nonBlocking)
     {
@@ -677,7 +652,10 @@ void Foam::PstreamBuffers::finishedScatters
     const bool wait
 )
 {
-    finalExchangeGatherScatter(false, wait, true, recvSizes);
+    // Future: resize for copying back (currently does not matter)
+    // recvSizes.resize_nocopy(sendBuffers_.size());
+
+    finalGatherScatter(false, wait, recvSizes);
 
     if (commsType_ != UPstream::commsTypes::nonBlocking)
     {

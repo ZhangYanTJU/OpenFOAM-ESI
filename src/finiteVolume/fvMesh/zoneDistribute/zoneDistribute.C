@@ -109,22 +109,22 @@ void Foam::zoneDistribute::setUpCommforZone
             }
         }
 
-        // Stream the send data into PstreamBuffers,
-        // which we also use to track the current topology.
-
+        // Stream the send data into PstreamBuffers
         pBufs_.clear();
 
-        for (const int proci : UPstream::allProcs())
+        for (const int proci : pBufs_.allProcs())
         {
-            if (proci != UPstream::myProcNo() && !needed[proci].empty())
+            const auto& indices = needed[proci];
+
+            if (proci != UPstream::myProcNo() && !indices.empty())
             {
                 // Serialize as List
                 UOPstream toProc(proci, pBufs_);
-                toProc << needed[proci].sortedToc();
+                toProc << indices.sortedToc();
             }
         }
 
-        pBufs_.finishedSends(sendConnections_, sendProcs_, recvProcs_);
+        pBufs_.finishedSends();
 
         for (const int proci : pBufs_.allProcs())
         {

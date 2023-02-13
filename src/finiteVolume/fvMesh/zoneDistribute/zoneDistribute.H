@@ -93,15 +93,6 @@ class zoneDistribute
         //- Global cell/face index to send for processor-to-processor comms
         List<labelList> send_;
 
-        //- Parallel [cache]: send connectivity (true/false)
-        bitSet sendConnections_;
-
-        //- Parallel [cache]: send data to these ranks
-        DynamicList<label> sendProcs_;
-
-        //- Parallel [cache]: recv data from these ranks
-        DynamicList<label> recvProcs_;
-
         //- Persistent set of exchange buffers
         PstreamBuffers pBufs_;
 
