@@ -9,6 +9,7 @@ $(TEMPLATECLOUDS)/KinematicCloud/KinematicCloudName.C
 $(TEMPLATECLOUDS)/ThermoCloud/ThermoCloudName.C
 $(TEMPLATECLOUDS)/ReactingCloud/ReactingCloudName.C
 $(TEMPLATECLOUDS)/ReactingMultiphaseCloud/ReactingMultiphaseCloudName.C
+$(TEMPLATECLOUDS)/ChargeCloud/ChargeCloudName.C
 $(TEMPLATECLOUDS)/ReactingHeterogeneousCloud/ReactingHeterogeneousCloudName.C
 $(TEMPLATECLOUDS)/CollidingCloud/CollidingCloudName.C
 $(TEMPLATECLOUDS)/MPPICCloud/MPPICCloudName.C
@@ -20,6 +21,7 @@ $(DERIVEDCLOUDS)/kinematicCloud/kinematicCloud.C
 $(DERIVEDCLOUDS)/thermoCloud/thermoCloud.C
 $(DERIVEDCLOUDS)/reactingCloud/reactingCloud.C
 $(DERIVEDCLOUDS)/reactingMultiphaseCloud/reactingMultiphaseCloud.C
+$(DERIVEDCLOUDS)/chargeCloud/chargeCloud.C
 $(DERIVEDCLOUDS)/heterogeneousReactingCloud/heterogeneousReactingCloud.C
 $(DERIVEDCLOUDS)/kinematicCollidingCloud/kinematicCollidingCloud.C
 $(DERIVEDCLOUDS)/kinematicMPPICCloud/kinematicMPPICCloud.C
@@ -56,11 +58,15 @@ $(REACTINGMPPARCEL)/defineReactingMultiphaseParcel.C
 $(REACTINGMPPARCEL)/makeReactingMultiphaseParcelSubmodels.C
 
 
+/* charge parcel sub-models */
+CHARGEPARCEL=$(DERIVEDPARCELS)/chargeParcel
+$(CHARGEPARCEL)/defineChargeParcel.C
+$(CHARGEPARCEL)/makeChargeParcelSubmodels.C
+
 /* heterogeneous reacting parcel sub-models */
 REACTINGHETERMPPARCEL=$(DERIVEDPARCELS)/heterogeneousReactingParcel
 $(REACTINGHETERMPPARCEL)/defineHeterogeneousReactingParcel.C
 $(REACTINGHETERMPPARCEL)/makeHeterogeneousReactingParcelSubmodels.C
-
 
 /* kinematic MPPIC parcel sub-models */
 KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/kinematicMPPICParcel
@@ -101,6 +107,11 @@ REACTINGMPINJECTION=submodels/ReactingMultiphase/InjectionModel
 $(REACTINGMPINJECTION)/ReactingMultiphaseLookupTableInjection/reactingMultiphaseParcelInjectionData.C
 $(REACTINGMPINJECTION)/ReactingMultiphaseLookupTableInjection/reactingMultiphaseParcelInjectionDataIO.C
 $(REACTINGMPINJECTION)/ReactingMultiphaseLookupTableInjection/reactingMultiphaseParcelInjectionDataIOList.C
+
+CHARGEINJECTION=submodels/Charge/InjectionModel
+$(CHARGEINJECTION)/ChargeLookupTableInjection/chargeParcelInjectionData.C
+$(CHARGEINJECTION)/ChargeLookupTableInjection/chargeParcelInjectionDataIO.C
+$(CHARGEINJECTION)/ChargeLookupTableInjection/chargeParcelInjectionDataIOList.C
 
 MPPICPARTICLESTRESS=submodels/MPPIC/ParticleStressModels
 $(MPPICPARTICLESTRESS)/ParticleStressModel/ParticleStressModel.C
