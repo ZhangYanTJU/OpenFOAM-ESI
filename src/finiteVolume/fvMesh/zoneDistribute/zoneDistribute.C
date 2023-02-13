@@ -109,9 +109,7 @@ void Foam::zoneDistribute::setUpCommforZone
             }
         }
 
-        // Stream the send data into PstreamBuffers,
-        // which we also use to track the current topology.
-
+        // Stream the send data into PstreamBuffers
         pBufs_.clear();
 
         for (const int proci : pBufs_.allProcs())
@@ -126,7 +124,7 @@ void Foam::zoneDistribute::setUpCommforZone
             }
         }
 
-        pBufs_.finishedSends(sendConnections_, sendProcs_, recvProcs_);
+        pBufs_.finishedSends();
 
         for (const int proci : pBufs_.allProcs())
         {

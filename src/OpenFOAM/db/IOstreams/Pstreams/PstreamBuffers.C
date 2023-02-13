@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "PstreamBuffers.H"
-#include "bitSet.H"
 #include "debug.H"
 #include "registerSwitch.H"
 
@@ -36,7 +35,7 @@ License
 int Foam::PstreamBuffers::algorithm
 (
     // Not really the most creative name...
-    Foam::debug::optimisationSwitch("pbufs.algorithm", -1)
+    Foam::debug::optimisationSwitch("pbufs.algorithm", 0)
 );
 registerOptSwitch
 (
@@ -134,8 +133,7 @@ void Foam::PstreamBuffers::finalExchange
 
 void Foam::PstreamBuffers::finalExchange
 (
-    const labelUList& sendProcs,
-    const labelUList& recvProcs,
+    const labelUList& neighProcs,
     const bool wait,
     labelList& recvSizes
 )
@@ -155,7 +153,7 @@ void Foam::PstreamBuffers::finalExchange
             // Preserve self-send, even if not described by neighbourhood
             recvSizes[UPstream::myProcNo(comm_)] = 1;
 
-            for (const label proci : sendProcs)
+            for (const label proci : neighProcs)
             {
                 recvSizes[proci] = 1;  // Connected
             }
@@ -172,8 +170,7 @@ void Foam::PstreamBuffers::finalExchange
         // PEX stage 1: exchange sizes (limited neighbourhood)
         Pstream::exchangeSizes
         (
-            sendProcs,
-            recvProcs,
+            neighProcs,
             sendBuffers_,
             recvSizes,
             tag_,
@@ -626,7 +623,7 @@ void Foam::PstreamBuffers::finishedNeighbourSends
     const bool wait
 )
 {
-    finalExchange(neighProcs, neighProcs, wait, recvSizes);
+    finalExchange(neighProcs, wait, recvSizes);
 }
 
 
@@ -637,71 +634,7 @@ void Foam::PstreamBuffers::finishedNeighbourSends
 )
 {
     labelList recvSizes;
-    finalExchange(neighProcs, neighProcs, wait, recvSizes);
-}
-
-
-bool Foam::PstreamBuffers::finishedSends
-(
-    bitSet& sendConnections,
-    DynamicList<label>& sendProcs,
-    DynamicList<label>& recvProcs,
-    const bool wait
-)
-{
-    bool changed = (sendConnections.size() != nProcs());
-
-    if (changed)
-    {
-        sendConnections.resize(nProcs());
-    }
-
-    // Update send connections
-    forAll(sendBuffers_, proci)
-    {
-        if (sendConnections.set(proci, !sendBuffers_[proci].empty()))
-        {
-            // The state changed
-            changed = true;
-        }
-    }
-
-    UPstream::reduceOr(changed, comm_);
-
-    if (changed)
-    {
-        // Update send/recv topology
-        labelList recvSizes;
-        finishedSends(recvSizes, wait);  // eg, using all-to-all
-
-        // The send ranks
-        sendProcs.clear();
-        forAll(sendBuffers_, proci)
-        {
-            if (!sendBuffers_[proci].empty())
-            {
-                sendProcs.push_back(proci);
-            }
-        }
-
-        // The recv ranks
-        recvProcs.clear();
-        forAll(recvSizes, proci)
-        {
-            if (recvSizes[proci] > 0)
-            {
-                recvProcs.push_back(proci);
-            }
-        }
-    }
-    else
-    {
-        // Use existing send/recv ranks
-        labelList recvSizes;
-        finalExchange(sendProcs, recvProcs, wait, recvSizes);
-    }
-
-    return changed;
+    finalExchange(neighProcs, wait, recvSizes);
 }
 
 

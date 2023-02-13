@@ -108,9 +108,6 @@ SourceFiles
 namespace Foam
 {
 
-// Forward Declarations
-class bitSet;
-
 /*---------------------------------------------------------------------------*\
                        Class PstreamBuffers Declaration
 \*---------------------------------------------------------------------------*/
@@ -168,8 +165,7 @@ class PstreamBuffers
         //  (nonBlocking comms).
         void finalExchange
         (
-            const labelUList& sendProcs,
-            const labelUList& recvProcs,
+            const labelUList& neighProcs,
             const bool wait,
             labelList& recvSizes
         );
@@ -432,25 +428,6 @@ public:
         (
             const labelUList& neighProcs,
             labelList& recvSizes,
-            const bool wait = true
-        );
-
-        //- A caching version that uses a limited send/recv connectivity.
-        //
-        //  Non-blocking mode: populates receive buffers.
-        //  \param sendConnections on/off for sending ranks
-        //  \param sendProcs ranks used for sends
-        //  \param recvProcs ranks used for recvs
-        //  \param wait wait for requests to complete (in nonBlocking mode)
-        //
-        //  \return True if the send/recv connectivity changed
-        //
-        //  \warning currently only valid for nonBlocking comms.
-        bool finishedSends
-        (
-            bitSet& sendConnections,
-            DynamicList<label>& sendProcs,
-            DynamicList<label>& recvProcs,
             const bool wait = true
         );
 

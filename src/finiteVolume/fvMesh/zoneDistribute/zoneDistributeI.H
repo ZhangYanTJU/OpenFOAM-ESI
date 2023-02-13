@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019-2020 DLR
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -161,18 +161,6 @@ Foam::Map<Type> Foam::zoneDistribute::getDatafromOtherProc
 
     if (UPstream::parRun())
     {
-        if (sendConnections_.empty())
-        {
-            WarningInFunction
-                << "The send/recv connections not initialized - "
-                << "likely that setUpCommforZone() was not called"
-                << endl;
-            // But don't exit/abort for now
-        }
-
-        // Stream the send data into PstreamBuffers,
-        // which we also use to track the current topology.
-
         pBufs_.clear();
 
         for (const int proci : pBufs_.allProcs())
@@ -198,7 +186,7 @@ Foam::Map<Type> Foam::zoneDistribute::getDatafromOtherProc
             }
         }
 
-        pBufs_.finishedSends(sendConnections_, sendProcs_, recvProcs_);
+        pBufs_.finishedSends();
 
         for (const int proci : pBufs_.allProcs())
         {
