@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019-2020 DLR
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -161,6 +161,8 @@ Foam::Map<Type> Foam::zoneDistribute::getDatafromOtherProc
 
     if (UPstream::parRun())
     {
+        #ifdef Foam_PstreamBuffers_dense
+
         if (sendConnections_.empty())
         {
             WarningInFunction
@@ -208,6 +210,48 @@ Foam::Map<Type> Foam::zoneDistribute::getDatafromOtherProc
                 neiValues += tmpValues;
             }
         }
+
+        #else
+
+        pBufs_.clear();
+
+        forAllConstIters(send_, iter)
+        {
+            const label proci = iter.key();
+            const auto& indices = iter.val();
+
+            if (proci != UPstream::myProcNo() && !indices.empty())
+            {
+                // Serialize as Map
+                Map<Type> sendValues(2*indices.size());
+
+                for (const label sendIdx : indices)
+                {
+                    sendValues.insert
+                    (
+                        sendIdx,
+                        getLocalValue(phi, globalNumbering_.toLocal(sendIdx))
+                    );
+                }
+
+                UOPstream toProc(proci, pBufs_);
+                toProc << sendValues;
+            }
+        }
+
+        pBufs_.finishedSends();
+
+        for (const int proci : pBufs_.allProcs())
+        {
+            if (proci != UPstream::myProcNo() && pBufs_.recvDataCount(proci))
+            {
+                UIPstream fromProc(proci, pBufs_);
+                Map<Type> tmpValues(fromProc);
+
+                neiValues += tmpValues;
+            }
+        }
+        #endif
     }
 
     return neiValues;

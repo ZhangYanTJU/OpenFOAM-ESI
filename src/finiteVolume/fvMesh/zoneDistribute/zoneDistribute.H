@@ -90,6 +90,8 @@ class zoneDistribute
         //- Global number into index of cells/faces
         const globalIndex& globalNumbering_;
 
+    #ifdef Foam_PstreamBuffers_dense
+
         //- Global cell/face index to send for processor-to-processor comms
         List<labelList> send_;
 
@@ -101,6 +103,14 @@ class zoneDistribute
 
         //- Parallel [cache]: recv data from these ranks
         DynamicList<label> recvProcs_;
+
+    #else
+
+        //- Per proc the global cell/face index to send for
+        //- processor-to-processor comms
+        Map<labelHashSet> send_;
+
+    #endif
 
         //- Persistent set of exchange buffers
         PstreamBuffers pBufs_;

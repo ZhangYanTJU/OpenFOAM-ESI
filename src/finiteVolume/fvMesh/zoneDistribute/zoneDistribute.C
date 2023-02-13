@@ -43,7 +43,12 @@ Foam::zoneDistribute::zoneDistribute(const fvMesh& mesh)
     MeshObject<fvMesh, Foam::TopologicalMeshObject, zoneDistribute>(mesh),
     stencil_(zoneCPCStencil::New(mesh)),
     globalNumbering_(stencil_.globalNumbering()),
+    #ifdef Foam_PstreamBuffers_dense
     send_(UPstream::nProcs()),
+    #else
+    // Default map sizing (as per PstreamBuffers)
+    send_(),
+    #endif
     pBufs_(UPstream::commsTypes::nonBlocking)
 {
     // Don't clear storage on persistent buffer
@@ -90,6 +95,7 @@ void Foam::zoneDistribute::setUpCommforZone
 
     if (UPstream::parRun())
     {
+        #ifdef Foam_PstreamBuffers_dense
         List<labelHashSet> needed(UPstream::nProcs());
 
         // Bin according to originating (sending) processor
@@ -136,6 +142,61 @@ void Foam::zoneDistribute::setUpCommforZone
                 fromProc >> send_[proci];
             }
         }
+        #else
+
+        forAllIters(send_, iter)
+        {
+            iter.val().clear();
+        }
+
+        // Bin according to originating (sending) processor
+        for (const label celli : stencil.needsComm())
+        {
+            if (zone[celli])
+            {
+                for (const label gblIdx : stencil_[celli])
+                {
+                    const label proci = globalNumbering_.whichProcID(gblIdx);
+
+                    if (proci != Pstream::myProcNo())
+                    {
+                        send_(proci).insert(gblIdx);
+                    }
+                }
+            }
+        }
+
+        // Stream the send data into PstreamBuffers,
+
+        pBufs_.clear();
+
+        forAllIters(send_, iter)
+        {
+            const label proci = iter.key();
+            auto& indices = iter.val();
+
+            if (proci != UPstream::myProcNo() && !indices.empty())
+            {
+                // Serialize as List
+                UOPstream toProc(proci, pBufs_);
+                toProc << indices;
+            }
+
+            // Clear out old contents
+            indices.clear();
+        }
+
+        pBufs_.finishedSends();
+
+        for (const int proci : pBufs_.allProcs())
+        {
+            if (proci != UPstream::myProcNo() && pBufs_.recvDataCount(proci))
+            {
+                UIPstream fromProc(proci, pBufs_);
+                fromProc >> send_(proci);
+            }
+        }
+        #endif
     }
 }
 

@@ -100,8 +100,17 @@ SourceFiles
 #define Foam_PstreamBuffers_H
 
 #include "DynamicList.H"
+#include "Map.H"
 #include "UPstream.H"
 #include "IOstream.H"
+
+// Transitional
+#define Foam_PstreamBuffers_map_storage
+// #define Foam_PstreamBuffers_dense
+
+#ifdef Foam_PstreamBuffers_dense
+#undef Foam_PstreamBuffers_map_storage
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -109,7 +118,9 @@ namespace Foam
 {
 
 // Forward Declarations
+#ifdef Foam_PstreamBuffers_dense
 class bitSet;
+#endif
 
 /*---------------------------------------------------------------------------*\
                        Class PstreamBuffers Declaration
@@ -143,6 +154,19 @@ class PstreamBuffers
 
     // Buffer storage
 
+    #ifdef Foam_PstreamBuffers_map_storage
+
+        //- Send buffers (sparse)
+        Map<DynamicList<char>> sendBuffers_;
+
+        //- Receive buffers (sparse)
+        Map<DynamicList<char>> recvBuffers_;
+
+        //- Current read positions within recvBuffers_ (sparse)
+        Map<label> recvPositions_;
+
+    #else
+
         //- Send buffers. Size is nProcs()
         List<DynamicList<char>> sendBuffers_;
 
@@ -152,6 +176,8 @@ class PstreamBuffers
         //- Current read positions within recvBuffers_. Size is nProcs()
         labelList recvPositions_;
 
+    #endif
+
 
     // Private Member Functions
 
@@ -160,12 +186,17 @@ class PstreamBuffers
         void finalExchange
         (
             const bool wait,
+            #ifdef Foam_PstreamBuffers_map_storage
+            Map<label>& recvSizes
+            #else
             labelList& recvSizes
+            #endif
         );
 
         //- Mark sends as done.
         //  Only exchange sizes using the sendProcs/recvProcs subset
         //  (nonBlocking comms).
+        #ifdef Foam_PstreamBuffers_dense
         void finalExchange
         (
             const labelUList& sendProcs,
@@ -173,6 +204,7 @@ class PstreamBuffers
             const bool wait,
             labelList& recvSizes
         );
+        #endif
 
         //- For all-to-one or one-to-all
         void finalExchangeGatherScatter
@@ -180,7 +212,11 @@ class PstreamBuffers
             const bool isGather,
             const bool wait,
             const bool needSizes,   // If recvSizes needed or scratch
+            #ifdef Foam_PstreamBuffers_map_storage
+            Map<label>& recvSizes
+            #else
             labelList& recvSizes
+            #endif
         );
 
 
@@ -340,7 +376,7 @@ public:
 
         //- Maximum receive size, excluding the specified processor rank
         //- Must call finishedSends() or other finished.. method first!
-        label maxNonLocalRecvCount(const label proci) const;
+        label maxNonLocalRecvCount(const label excludeProci) const;
 
         //- Number of unconsumed receive bytes for the specified processor.
         //- Must call finishedSends() or other finished.. method first!
@@ -392,7 +428,15 @@ public:
         //  \param wait wait for requests to complete (in nonBlocking mode)
         //
         //  \warning currently only valid for nonBlocking comms.
-        void finishedSends(labelList& recvSizes, const bool wait = true);
+        void finishedSends
+        (
+            #ifdef Foam_PstreamBuffers_map_storage
+            Map<label>& recvSizes,
+            #else
+            labelList& recvSizes,
+            #endif
+            const bool wait = true
+        );
 
 
     // Functions with restricted neighbours
@@ -406,12 +450,14 @@ public:
         //  \param wait wait for requests to complete (in nonBlocking mode)
         //
         //  \warning currently only valid for nonBlocking comms.
+        #ifdef Foam_PstreamBuffers_dense
         void finishedSends
         (
             const labelUList& sendProcs,
             const labelUList& recvProcs,
             const bool wait = true
         );
+        #endif
 
         //- Mark sends as done using subset of send/recv ranks
         //- to exchange data on. Recovers the sizes (bytes) received.
@@ -424,6 +470,7 @@ public:
         //  \param wait wait for requests to complete (in nonBlocking mode)
         //
         //  \warning currently only valid for nonBlocking comms.
+        #ifdef Foam_PstreamBuffers_dense
         void finishedSends
         (
             const labelUList& sendProcs,
@@ -431,6 +478,7 @@ public:
             labelList& recvSizes,
             const bool wait = true
         );
+        #endif
 
         //- A caching version that uses a limited send/recv connectivity.
         //
@@ -443,6 +491,7 @@ public:
         //  \return True if the send/recv connectivity changed
         //
         //  \warning currently only valid for nonBlocking comms.
+        #ifdef Foam_PstreamBuffers_dense
         bool finishedSends
         (
             bitSet& sendConnections,
@@ -450,6 +499,7 @@ public:
             DynamicList<label>& recvProcs,
             const bool wait = true
         );
+        #endif
 
         //- Mark sends as done using subset of send/recv ranks
         //- and recover the sizes (bytes) received.
@@ -480,7 +530,11 @@ public:
         void finishedNeighbourSends
         (
             const labelUList& neighProcs,
+            #ifdef Foam_PstreamBuffers_map_storage
+            Map<label>& recvSizes,
+            #else
             labelList& recvSizes,
+            #endif
             const bool wait = true
         );
 
@@ -505,7 +559,15 @@ public:
         //  \param wait wait for requests to complete (in nonBlocking mode)
         //
         //  \warning currently only valid for nonBlocking comms.
-        void finishedGathers(labelList& recvSizes, const bool wait = true);
+        void finishedGathers
+        (
+            #ifdef Foam_PstreamBuffers_map_storage
+            Map<label>& recvSizes,
+            #else
+            labelList& recvSizes,
+            #endif
+            const bool wait = true
+        );
 
         //- Mark all sends to sub-procs as done.
         //
@@ -525,7 +587,15 @@ public:
         //  \param wait wait for requests to complete (in nonBlocking mode)
         //
         //  \warning currently only valid for nonBlocking comms.
-        void finishedScatters(labelList& recvSizes, const bool wait = true);
+        void finishedScatters
+        (
+            #ifdef Foam_PstreamBuffers_map_storage
+            Map<label>& recvSizes,
+            #else
+            labelList& recvSizes,
+            #endif
+            const bool wait = true
+        );
 };
 
 
