@@ -39,42 +39,79 @@ Note
 #include "contiguous.H"
 #include "PstreamReduceOps.H"
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * Details * * * * * * * * * * * * * * * * //
 
+namespace Foam
+{
+namespace PstreamDetail
+{
+
+//- Exchange \em contiguous data using non-blocking consensus exchange.
+//- Sends sendBufs, receives into recvBufs, optionally \em tracking the
+//- receive sizes.
+//  Data provided and received as container all of which have been
+//  properly sized before calling
+//
+//  No internal guards or resizing.
+//- Non-blocking consensus exchange
+//
+//  \param sendBufs  The send buffers (size: numProcs)
+//  \param [out] recvBufs  The recv buffers (size: numProcs)
+//  \param [out] recvSizes The recv sizes (size: 0 or numProcs)
+//     The recv sizes are returned in the list, but only if it has a non-zero
+//     length.
+//  \param tag   The message tag
+//  \param comm  The communicator
+//  \param wait  Wait for the receives to complete
 template<class Container, class Type>
-void Foam::Pstream::exchangeConsensus
+void exchangeConsensus
 (
     const UList<Container>& sendBufs,
-    List<Container>& recvBufs,
+    UList<Container>& recvBufs,
+    labelUList& recvSizes,
     const int tag,
-    const label comm
+    const label comm,
+    const bool wait
 )
 {
     static_assert(is_contiguous<Type>::value, "Contiguous data only!");
 
+    const label startOfRequests = UPstream::nRequests();
     const label myProci = UPstream::myProcNo(comm);
     const label numProc = UPstream::nProcs(comm);
 
-    if (sendBufs.size() != numProc)
+    // #ifdef FULLDEBUG
+    if (sendBufs.size() > numProc)
     {
         FatalErrorInFunction
-            << "Size of list " << sendBufs.size()
-            << " does not equal the number of processors " << numProc
+            << "Send buffers size:" << sendBufs.size()
+            << " greater than number of processors " << numProc
             << Foam::abort(FatalError);
     }
+    if (recvBufs.size() < numProc)
+    {
+        FatalErrorInFunction
+            << "Recv buffers size:" << recvBufs.size()
+            << " less number of processors " << numProc
+            << Foam::abort(FatalError);
+    }
+    // #endif
 
-    // Initial: resize and clear everything
-    recvBufs.resize_nocopy(sendBufs.size());
-
+    // Initial: clear all receive information
     for (auto& buf : recvBufs)
     {
         buf.clear();
     }
+    recvSizes = Zero;
 
     if (!UPstream::parRun() || numProc < 2)
     {
         // Do myself
         recvBufs[myProci] = sendBufs[myProci];
+        if (myProci < recvSizes.size())
+        {
+            recvSizes[myProci] = recvBufs.size();
+        }
         return;
     }
 
@@ -83,16 +120,8 @@ void Foam::Pstream::exchangeConsensus
 
     DynamicList<UPstream::Request> requests(sendBufs.size());
 
-    //// profilingPstream::beginTiming();
 
-    // If there are synchronisation problems,
-    // a beginning barrier can help, but should not be necessary
-    // when unique message tags are being used.
-
-    //// UPstream::barrier(comm);
-
-
-    // Start nonblocking synchronous send to process dest
+    // Start nonblocking synchronous send to processor dest
     for (label proci = 0; proci < numProc; ++proci)
     {
         const auto& sendData = sendBufs[proci];
@@ -104,12 +133,16 @@ void Foam::Pstream::exchangeConsensus
         else if (proci == myProci)
         {
             // Do myself
-            recvBufs[proci] = sendBufs[proci];
+            recvBufs[proci] = sendData;
+            if (proci < recvSizes.size())
+            {
+                recvSizes[proci] = sendData.size();
+            }
         }
         else
         {
-            // Has data to send
-
+            // Has data to send.
+            // Use local bookkeeping for MPI send requests
             UOPstream::write
             (
                 requests.emplace_back(),
@@ -145,14 +178,20 @@ void Foam::Pstream::exchangeConsensus
             // - receive into dest buffer location
 
             const label proci = probed.first;
-            const label nRecv = (probed.second / sizeof(Type));
+            const label count = (probed.second / sizeof(Type));
 
             auto& recvData = recvBufs[proci];
-            recvData.resize_nocopy(nRecv);
+            recvData.resize_nocopy(count);
 
+            if (proci < recvSizes.size())
+            {
+                recvSizes[proci] = count;
+            }
+
+            // Use internal stack bookkeeping for MPI recv requests
             UIPstream::read
             (
-                UPstream::commsTypes::scheduled,
+                UPstream::commsTypes::nonBlocking,
                 proci,
                 recvData.data_bytes(),
                 recvData.size_bytes(),
@@ -181,7 +220,55 @@ void Foam::Pstream::exchangeConsensus
         }
     }
 
-    //// profilingPstream::addAllToAllTime();
+
+    // Wait for all to finish
+    // ~~~~~~~~~~~~~~~~~~~~~~
+
+    if (wait)
+    {
+        UPstream::waitRequests(startOfRequests);
+    }
+}
+
+} // namespace PstreamDetail
+} // namespace Foam
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Container, class Type>
+void Foam::Pstream::exchangeConsensus
+(
+    const UList<Container>& sendBufs,
+    List<Container>& recvBufs,
+    const int tag,
+    const label comm
+)
+{
+    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+
+    if (sendBufs.size() != UPstream::nProcs(comm))
+    {
+        FatalErrorInFunction
+            << "Send buffers size:" << sendBufs.size()
+            << " not equal the number of processors "
+            << UPstream::nProcs(comm)
+            << Foam::abort(FatalError);
+    }
+
+    // Initial: resize and clear everything
+    recvBufs.resize_nocopy(sendBufs.size());
+    labelList dummyRecvSizes;
+
+    PstreamDetail::exchangeConsensus
+    (
+        sendBufs,
+        recvBufs,
+        dummyRecvSizes,
+        tag,
+        comm,
+        true   // wait
+    );
 }
 
 
