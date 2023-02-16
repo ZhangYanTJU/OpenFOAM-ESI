@@ -1,0 +1,206 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2023 OpenCFD Ltd.
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::uniformMixedFvPatchField
+
+Group
+    grpGenericBoundaryConditions
+
+Description
+    This boundary condition provides 'mixed' type boundary condition
+    that mix a \em uniform fixed value and a \em uniform patch-normal
+    gradient condition. The term "uniform" is a legacy name since the
+    prescribed values were previously spatially uniform across that patch.
+
+    In the meantime, a PatchFunction1 is used, which can have both
+    spatial and temporal dependencies.
+
+Usage
+    \table
+        Property     | Description                      | Required | Default
+        uniformValue | uniform value                    | partly | 0
+        uniformGradient | uniform gradient              | partly | 0
+        uniformValueFraction | uniform valueFraction    | partly | depends
+    \endtable
+
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        type            uniformMixed;
+        uniformValue    constant 0.2;
+        uniformGradient constant 0.2;
+        uniformValueFraction
+        {
+            type  sine;
+            ...
+        }
+    }
+    \endverbatim
+
+Note
+
+See also
+    Foam::Function1Types
+    Foam::mixedFvPatchField
+
+SourceFiles
+    uniformMixedFvPatchField.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef Foam_uniformMixedFvPatchField_H
+#define Foam_uniformMixedFvPatchField_H
+
+#include "mixedFvPatchField.H"
+#include "PatchFunction1.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+/*---------------------------------------------------------------------------*\
+                  Class uniformMixedFvPatchField Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class Type>
+class uniformMixedFvPatchField
+:
+    public mixedFvPatchField<Type>
+{
+    // Private Data
+
+        //- Function providing the value
+        autoPtr<PatchFunction1<Type>> refValueFunc_;
+
+        //- Function providing the gradient
+        autoPtr<PatchFunction1<Type>> refGradFunc_;
+
+        //- Function providing the value-fraction
+        autoPtr<PatchFunction1<scalar>> valueFractionFunc_;
+
+
+public:
+
+    //- Runtime type information
+    TypeName("uniformMixed");
+
+
+    // Constructors
+
+        //- Construct from patch and internal field
+        uniformMixedFvPatchField
+        (
+            const fvPatch&,
+            const DimensionedField<Type, volMesh>&
+        );
+
+        //- Construct from patch and internal field and patch field
+        uniformMixedFvPatchField
+        (
+            const fvPatch&,
+            const DimensionedField<Type, volMesh>&,
+            const Field<Type>& fld
+        );
+
+        //- Construct from patch, internal field and dictionary
+        uniformMixedFvPatchField
+        (
+            const fvPatch&,
+            const DimensionedField<Type, volMesh>&,
+            const dictionary&
+        );
+
+        //- Construct by mapping onto a new patch
+        uniformMixedFvPatchField
+        (
+            const uniformMixedFvPatchField<Type>&,
+            const fvPatch&,
+            const DimensionedField<Type, volMesh>&,
+            const fvPatchFieldMapper&
+        );
+
+        //- Construct as copy
+        uniformMixedFvPatchField
+        (
+            const uniformMixedFvPatchField<Type>&
+        );
+
+        //- Construct and return a clone
+        virtual tmp<fvPatchField<Type>> clone() const
+        {
+            return tmp<fvPatchField<Type>>
+            (
+                new uniformMixedFvPatchField<Type>(*this)
+            );
+        }
+
+        //- Construct as copy setting internal field reference
+        uniformMixedFvPatchField
+        (
+            const uniformMixedFvPatchField<Type>&,
+            const DimensionedField<Type, volMesh>&
+        );
+
+        //- Construct and return a clone setting internal field reference
+        virtual tmp<fvPatchField<Type>> clone
+        (
+            const DimensionedField<Type, volMesh>& iF
+        ) const
+        {
+            return tmp<fvPatchField<Type>>
+            (
+                new uniformMixedFvPatchField<Type>(*this, iF)
+            );
+        }
+
+
+    // Member Functions
+
+        //- Update the coefficients associated with the patch field
+        virtual void updateCoeffs();
+
+        //- Write
+        virtual void write(Ostream& os) const;
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "uniformMixedFvPatchField.C"
+#endif
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //
