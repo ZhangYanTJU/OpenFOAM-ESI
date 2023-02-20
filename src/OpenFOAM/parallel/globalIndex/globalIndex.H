@@ -489,12 +489,12 @@ public:
 
         //- Collect indirect data in processor order on master
         //  Handles contiguous/non-contiguous data, skips empty fields.
-        template<class Type, class Addr>
+        template<class ProcIDsContainer, class Type, class Addr>
         static void gather
         (
             const labelUList& offsets,  //!< offsets (master only)
             const label comm,           //!< communicator
-            const UList<int>& procIDs,
+            const ProcIDsContainer& procIDs,
             const IndirectListBase<Type, Addr>& fld,
             List<Type>& allFld,         //! output field (master only)
             const int tag = UPstream::msgType(),
