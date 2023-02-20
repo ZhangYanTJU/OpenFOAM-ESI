@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -395,12 +395,12 @@ public:
 
             //- Collect indirect data in processor order on master
             //  Offsets needed on master only.
-            template<class Type, class Addr>
+            template<class ProcIDsContainer, class Type, class Addr>
             static void gather
             (
                 const labelUList& offsets,
                 const label comm,       //!< communicator
-                const UList<int>& procIDs,
+                const ProcIDsContainer& procIDs,
                 const IndirectListBase<Type, Addr>& fld,
                 List<Type>& allFld,
                 const int tag = UPstream::msgType(),

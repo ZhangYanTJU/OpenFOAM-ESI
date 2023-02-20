@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -225,12 +225,12 @@ void Foam::globalIndex::gather
 }
 
 
-template<class Type, class Addr>
+template<class ProcIDsContainer, class Type, class Addr>
 void Foam::globalIndex::gather
 (
     const labelUList& off,
     const label comm,
-    const UList<int>& procIDs,
+    const ProcIDsContainer& procIDs,
     const IndirectListBase<Type, Addr>& fld,
     List<Type>& allFld,
     const int tag,
@@ -302,7 +302,7 @@ void Foam::globalIndex::gather
     gather
     (
         comm,
-        UPstream::procID(comm),
+        UPstream::allProcs(comm),   // All communicator ranks
         fld,
         allFld,
         tag,
@@ -325,7 +325,7 @@ void Foam::globalIndex::gather
     (
         offsets_,
         comm,
-        UPstream::procID(comm),
+        UPstream::allProcs(comm),   // All communicator ranks
         fld,
         allFld,
         tag,
@@ -370,7 +370,7 @@ void Foam::globalIndex::gather
     gather
     (
         comm,
-        UPstream::procID(comm),
+        UPstream::allProcs(comm),   // All communicator ranks
         fld,
         allFld,
         tag,
@@ -658,7 +658,7 @@ void Foam::globalIndex::scatter
     (
         offsets_,
         comm,
-        UPstream::procID(comm),
+        UPstream::allProcs(comm),   // All communicator ranks
         allFld,
         fld,
         tag,
