@@ -27,7 +27,7 @@ License
 
 #include "chargeCloud.H"
 
-#include "makeReactingParcelCloudFunctionObjects.H"
+#include "makeChargeParcelCloudFunctionObjects.H"
 
 // Kinematic
 #include "makeChargeParcelForces.H"
@@ -55,7 +55,7 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makeReactingParcelCloudFunctionObjects(chargeCloud);
+makeChargeParcelCloudFunctionObjects(chargeCloud);
 
 // Kinematic sub-models
 makeChargeParcelForces(chargeCloud);
