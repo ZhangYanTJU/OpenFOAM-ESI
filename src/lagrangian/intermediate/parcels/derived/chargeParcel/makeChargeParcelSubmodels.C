@@ -30,7 +30,7 @@ License
 #include "makeReactingParcelCloudFunctionObjects.H"
 
 // Kinematic
-#include "makeThermoParcelForces.H" // thermo variant
+#include "makeChargeParcelForces.H"
 #include "makeParcelDispersionModels.H"
 #include "makeChargeParcelInjectionModels.H"
 #include "makeParcelPatchInteractionModels.H"
@@ -58,7 +58,7 @@ License
 makeReactingParcelCloudFunctionObjects(chargeCloud);
 
 // Kinematic sub-models
-makeThermoParcelForces(chargeCloud);
+makeChargeParcelForces(chargeCloud);
 makeParcelDispersionModels(chargeCloud);
 makeChargeParcelInjectionModels(chargeCloud);
 makeParcelPatchInteractionModels(chargeCloud);
