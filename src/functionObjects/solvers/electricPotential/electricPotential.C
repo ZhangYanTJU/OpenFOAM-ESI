@@ -83,7 +83,7 @@ Foam::functionObjects::electricPotential::sigma() const
         mesh_.time(),
         IOobject::NO_READ,
         IOobject::NO_WRITE,
-        false
+        IOobject::NO_REGISTER
     );
 
     if (phases_.size())
@@ -130,7 +130,7 @@ Foam::functionObjects::electricPotential::epsilonm() const
         mesh_.time(),
         IOobject::NO_READ,
         IOobject::NO_WRITE,
-        false
+        IOobject::NO_REGISTER
     );
 
     if (phases_.size())
@@ -226,96 +226,96 @@ Foam::functionObjects::electricPotential::electricPotential
 
 bool Foam::functionObjects::electricPotential::read(const dictionary& dict)
 {
-    if (fvMeshFunctionObject::read(dict))
+    if (!fvMeshFunctionObject::read(dict))
     {
-        Log << type() << " read: " << name() << endl;
+        return false;
+    }
 
+    Log << type() << " read: " << name() << endl;
+
+    {
+        const dictionary* dictptr = dict.findDict("fvOptions");
+        if (dictptr)
         {
-            const dictionary* dictptr = dict.findDict("fvOptions");
-            if (dictptr)
-            {
-                fvOptions_.reset(*dictptr);
-            }
+            fvOptions_.reset(*dictptr);
+        }
+    }
+
+    dict.readIfPresent("sigma", sigma_);
+    dict.readIfPresent("epsilonr", epsilonr_);
+    dict.readIfPresent("nCorr", nCorr_);
+    dict.readIfPresent("writeDerivedFields", writeDerivedFields_);
+
+    // If flow is multiphase
+    if (!phasesDict_.empty())
+    {
+        phaseNames_.setSize(phasesDict_.size());
+        phases_.setSize(phasesDict_.size());
+        sigmas_.setSize(phasesDict_.size());
+
+        if (writeDerivedFields_)
+        {
+            epsilonrs_.setSize(phasesDict_.size());
         }
 
-        dict.readIfPresent("sigma", sigma_);
-        dict.readIfPresent("epsilonr", epsilonr_);
-        dict.readIfPresent("nCorr", nCorr_);
-        dict.readIfPresent("writeDerivedFields", writeDerivedFields_);
-
-        // If flow is multiphase
-        if (!phasesDict_.empty())
+        label phasei = 0;
+        for (const entry& dEntry : phasesDict_)
         {
-            phaseNames_.setSize(phasesDict_.size());
-            phases_.setSize(phasesDict_.size());
-            sigmas_.setSize(phasesDict_.size());
+            const word& key = dEntry.keyword();
+
+            if (!dEntry.isDict())
+            {
+                FatalIOErrorInFunction(phasesDict_)
+                    << "Entry " << key << " is not a dictionary" << nl
+                    << exit(FatalIOError);
+            }
+
+            const dictionary& subDict = dEntry.dict();
+
+            phaseNames_[phasei] = key;
+
+            sigmas_.set
+            (
+                phasei,
+                new dimensionedScalar
+                (
+                    sqr(dimCurrent)*pow3(dimTime)/(dimMass*pow3(dimLength)),
+                    subDict.getCheck<scalar>
+                    (
+                        "sigma",
+                        scalarMinMax::ge(SMALL)
+                    )
+                )
+            );
 
             if (writeDerivedFields_)
             {
-                epsilonrs_.setSize(phasesDict_.size());
-            }
-
-            label phasei = 0;
-            for (const entry& dEntry : phasesDict_)
-            {
-                const word& key = dEntry.keyword();
-
-                if (!dEntry.isDict())
-                {
-                    FatalIOErrorInFunction(phasesDict_)
-                        << "Entry " << key << " is not a dictionary" << nl
-                        << exit(FatalIOError);
-                }
-
-                const dictionary& subDict = dEntry.dict();
-
-                phaseNames_[phasei] = key;
-
-                sigmas_.set
+                epsilonrs_.set
                 (
                     phasei,
                     new dimensionedScalar
                     (
-                        sqr(dimCurrent)*pow3(dimTime)/(dimMass*pow3(dimLength)),
+                        dimless,
                         subDict.getCheck<scalar>
                         (
-                            "sigma",
+                            "epsilonr",
                             scalarMinMax::ge(SMALL)
                         )
                     )
                 );
-
-                if (writeDerivedFields_)
-                {
-                    epsilonrs_.set
-                    (
-                        phasei,
-                        new dimensionedScalar
-                        (
-                            dimless,
-                            subDict.getCheck<scalar>
-                            (
-                                "epsilonr",
-                                scalarMinMax::ge(SMALL)
-                            )
-                        )
-                    );
-                }
-
-                ++phasei;
             }
 
-            forAll(phaseNames_, i)
-            {
-                phases_.set
-                (
-                    i,
-                    mesh_.getObjectPtr<volScalarField>(phaseNames_[i])
-                );
-            }
+            ++phasei;
         }
 
-        return true;
+        forAll(phaseNames_, i)
+        {
+            phases_.set
+            (
+                i,
+                mesh_.getObjectPtr<volScalarField>(phaseNames_[i])
+            );
+        }
     }
 
     return false;
@@ -373,7 +373,7 @@ bool Foam::functionObjects::electricPotential::write()
                 mesh_.time(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             -fvc::grad(eV),
             calculatedFvPatchField<vector>::typeName
@@ -396,7 +396,7 @@ bool Foam::functionObjects::electricPotential::write()
                 mesh_.time(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             -tsigma*fvc::grad(eV),
             calculatedFvPatchField<vector>::typeName
@@ -419,7 +419,7 @@ bool Foam::functionObjects::electricPotential::write()
                 mesh_.time(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             fvc::div(tepsilonm*E),
             calculatedFvPatchField<scalar>::typeName
