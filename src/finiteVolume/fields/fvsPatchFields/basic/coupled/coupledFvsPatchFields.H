@@ -25,8 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coupledFvsPatchFields_H
-#define coupledFvsPatchFields_H
+#ifndef Foam_coupledFvsPatchFields_H
+#define Foam_coupledFvsPatchFields_H
 
 #include "coupledFvsPatchField.H"
 #include "fieldTypes.H"
@@ -39,6 +39,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makeFvsPatchTypeFieldTypedefs(coupled);
+makeFvsPatchFieldTypedef(label, coupled);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

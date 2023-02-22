@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,12 +33,14 @@ License
 namespace Foam
 {
 
+defineTemplateTypeNameAndDebug(surfaceLabelField::Internal, 0);
 defineTemplateTypeNameAndDebug(surfaceScalarField::Internal, 0);
 defineTemplateTypeNameAndDebug(surfaceVectorField::Internal, 0);
 defineTemplateTypeNameAndDebug(surfaceSphericalTensorField::Internal, 0);
 defineTemplateTypeNameAndDebug(surfaceSymmTensorField::Internal, 0);
 defineTemplateTypeNameAndDebug(surfaceTensorField::Internal, 0);
 
+defineTemplateTypeNameAndDebug(surfaceLabelField, 0);
 defineTemplateTypeNameAndDebug(surfaceScalarField, 0);
 defineTemplateTypeNameAndDebug(surfaceVectorField, 0);
 defineTemplateTypeNameAndDebug(surfaceSphericalTensorField, 0);

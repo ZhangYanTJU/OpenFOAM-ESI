@@ -37,6 +37,7 @@ namespace Foam
     defineTemplateRunTimeSelectionTable(PatchTypeField, patchMapper);         \
     defineTemplateRunTimeSelectionTable(PatchTypeField, dictionary);
 
+makeFvsPatchField(fvsPatchLabelField);
 makeFvsPatchField(fvsPatchScalarField);
 makeFvsPatchField(fvsPatchVectorField);
 makeFvsPatchField(fvsPatchSphericalTensorField);

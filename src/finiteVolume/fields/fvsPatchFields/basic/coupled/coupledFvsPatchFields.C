@@ -29,17 +29,12 @@ License
 #include "fvsPatchFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-makeFvsPatchFieldsTypeName(coupled);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
+    makeFvsPatchFieldsTypeName(coupled);
+    makeFvsPatchFieldTypeName(label, coupled);
+}
 
 // ************************************************************************* //

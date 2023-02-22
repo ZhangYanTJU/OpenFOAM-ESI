@@ -44,6 +44,7 @@ namespace Foam
 
 template<class Type> class fvsPatchField;
 
+typedef fvsPatchField<label> fvsPatchLabelField;
 typedef fvsPatchField<scalar> fvsPatchScalarField;
 typedef fvsPatchField<vector> fvsPatchVectorField;
 typedef fvsPatchField<sphericalTensor> fvsPatchSphericalTensorField;

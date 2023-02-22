@@ -63,6 +63,7 @@ using SurfaceField = GeometricField<Type, fvsPatchField, surfaceMesh>;
 
 // Typedefs
 
+typedef GeometricField<label, fvsPatchField, surfaceMesh> surfaceLabelField;
 typedef GeometricField<scalar, fvsPatchField, surfaceMesh> surfaceScalarField;
 typedef GeometricField<vector, fvsPatchField, surfaceMesh> surfaceVectorField;
 typedef GeometricField<sphericalTensor, fvsPatchField, surfaceMesh>

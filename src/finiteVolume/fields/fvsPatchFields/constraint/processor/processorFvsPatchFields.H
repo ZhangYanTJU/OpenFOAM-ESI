@@ -25,8 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorFvsPatchFields_H
-#define processorFvsPatchFields_H
+#ifndef Foam_processorFvsPatchFields_H
+#define Foam_processorFvsPatchFields_H
 
 #include "processorFvsPatchField.H"
 #include "fieldTypes.H"
@@ -39,6 +39,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makeFvsPatchTypeFieldTypedefs(processor);
+makeFvsPatchFieldTypedef(label, processor);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

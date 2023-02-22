@@ -36,8 +36,6 @@ Description
 #include "fvsPatchField.H"
 #include "fvsPatchFieldsFwd.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #endif
 
 // ************************************************************************* //
