@@ -33,9 +33,8 @@ License
 
 namespace Foam
 {
-
-makeFaePatchFieldsTypeName(coupled);
-
-} // End namespace Foam
+    makeFaePatchFieldsTypeName(coupled);
+    makeFaePatchFieldTypeName(label, coupled);
+}
 
 // ************************************************************************* //

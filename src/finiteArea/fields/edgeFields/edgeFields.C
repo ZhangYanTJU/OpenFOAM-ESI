@@ -33,12 +33,14 @@ License
 namespace Foam
 {
 
+defineTemplateTypeNameAndDebug(edgeLabelField::Internal, 0);
 defineTemplateTypeNameAndDebug(edgeScalarField::Internal, 0);
 defineTemplateTypeNameAndDebug(edgeVectorField::Internal, 0);
 defineTemplateTypeNameAndDebug(edgeSphericalTensorField::Internal, 0);
 defineTemplateTypeNameAndDebug(edgeSymmTensorField::Internal, 0);
 defineTemplateTypeNameAndDebug(edgeTensorField::Internal, 0);
 
+defineTemplateTypeNameAndDebug(edgeLabelField, 0);
 defineTemplateTypeNameAndDebug(edgeScalarField, 0);
 defineTemplateTypeNameAndDebug(edgeVectorField, 0);
 defineTemplateTypeNameAndDebug(edgeSphericalTensorField, 0);

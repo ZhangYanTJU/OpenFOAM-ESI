@@ -60,6 +60,7 @@ template<class Type> class faePatchField;
 
 // Typedefs
 
+typedef GeometricField<label, faePatchField, edgeMesh> edgeLabelField;
 typedef GeometricField<scalar, faePatchField, edgeMesh> edgeScalarField;
 typedef GeometricField<vector, faePatchField, edgeMesh> edgeVectorField;
 typedef GeometricField<sphericalTensor, faePatchField, edgeMesh>
