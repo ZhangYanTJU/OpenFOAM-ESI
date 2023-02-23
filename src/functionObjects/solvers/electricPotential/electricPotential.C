@@ -210,8 +210,10 @@ Foam::functionObjects::electricPotential::electricPotential
             IOobject::scopedName(typeName, "V")
         )
     ),
+    erhoName_(),
     nCorr_(1),
-    writeDerivedFields_(false)
+    writeDerivedFields_(false),
+    spaceChargeDensity_(false)
 {
     read(dict);
 
@@ -245,6 +247,11 @@ bool Foam::functionObjects::electricPotential::read(const dictionary& dict)
     dict.readIfPresent("epsilonr", epsilonr_);
     dict.readIfPresent("nCorr", nCorr_);
     dict.readIfPresent("writeDerivedFields", writeDerivedFields_);
+
+    if (dict.readIfPresent("spaceChargeDensity", spaceChargeDensity_))
+    {
+        dict.readEntry("erho", erhoName_);
+    }
 
     // If flow is multiphase
     if (!phasesDict_.empty())
@@ -329,6 +336,9 @@ bool Foam::functionObjects::electricPotential::execute()
     tmp<volScalarField> tsigma = this->sigma();
     const volScalarField& sigma = tsigma();
 
+    tmp<volScalarField> tepsilon = this->epsilonm();
+    const auto& epsilon = tepsilon();
+
     volScalarField& eV = getOrReadField(fieldName_);
 
     for (label i = 1; i <= nCorr_; ++i)
@@ -339,6 +349,13 @@ bool Foam::functionObjects::electricPotential::execute()
          ==
             fvOptions_(eV)
         );
+
+        if (spaceChargeDensity_)
+        {
+            volScalarField& erho = getOrReadField(erhoName_);
+
+            eVEqn += erho/epsilon;
+        }
 
         eVEqn.relax();
 

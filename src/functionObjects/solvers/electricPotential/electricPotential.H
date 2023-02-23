@@ -37,7 +37,7 @@ Description
     The steady-state equation of the charge conservation:
 
     \f[
-        \nabla \cdot \left( \sigma \nabla V \right) = 0
+        \nabla \cdot \left(\sigma \nabla V \right) = 0
     \f]
 
     where
@@ -121,6 +121,8 @@ Usage
         nCorr                 <label>;
         writeDerivedFields    <bool>;
         fieldName             <word>;
+        spaceChargeDensity    <bool>;
+        erhoName              <word>;
 
         // Inherited entries
         ...
@@ -137,6 +139,9 @@ Usage
       nCorr     | Number of corrector iterations     | label | no   | 1
       writeDerivedFields | Flag to write extra fields | bool | no   | false
       fieldName | Name of operand field   | word | no | electricPotential:V
+      spaceChargeDensity | Flag to include space charge density | bool | no <!--
+                -->                                                 | false
+      erhoName  | Name of space charge density field  | word | no   | -
     \endtable
 
     The inherited entries are elaborated in:
@@ -206,12 +211,18 @@ class electricPotential
         //- Name of the operand field
         word fieldName_;
 
+        //- Name of the space charge density field
+        word erhoName_;
+
         //- Number of corrector iterations
         label nCorr_;
 
         //- Flag to write derived fields of
         //- electric field, current density and free-charge density
         bool writeDerivedFields_;
+
+        //- Flag to add the space charge density to the rhs of the potential eq
+        bool spaceChargeDensity_;
 
 
     // Private Member Functions
