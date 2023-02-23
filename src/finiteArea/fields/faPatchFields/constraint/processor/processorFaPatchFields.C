@@ -30,17 +30,12 @@ License
 #include "areaFaMesh.H"
 #include "areaFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-makeFaPatchFields(processor);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
+    makeFaPatchFields(processor);
+    makeFaPatchFieldType(label, processor);
+}
 
 // ************************************************************************* //

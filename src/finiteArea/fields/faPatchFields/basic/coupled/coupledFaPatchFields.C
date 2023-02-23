@@ -29,17 +29,70 @@ License
 #include "coupledFaPatchFields.H"
 #include "areaFields.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
+    makeFaPatchFieldsTypeName(coupled);
+    makeFaPatchFieldTypeName(label, coupled);
+}
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Specialisations * * * * * * * * * * * * * * //
 
-makeFaPatchFieldsTypeName(coupled);
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFaPatchField<Foam::label>::snGrad() const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace Foam
+template<>
+void Foam::coupledFaPatchField<Foam::label>::evaluate(const Pstream::commsTypes)
+{
+    if (!this->updated())
+    {
+        this->updateCoeffs();
+    }
+
+    // TBD: Treat like zero-gradient
+    faPatchField<label>::operator=(this->patchInternalField());
+    faPatchField<label>::evaluate();
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFaPatchField<Foam::label>::valueInternalCoeffs
+(
+    const tmp<scalarField>&
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), label(1));
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFaPatchField<Foam::label>::valueBoundaryCoeffs
+(
+    const tmp<scalarField>&
+) const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
+
+template<>
+Foam::tmp<Foam::Field<Foam::label>>
+Foam::coupledFaPatchField<Foam::label>::gradientInternalCoeffs() const
+{
+    // TBD: Treat like zero-gradient
+    return tmp<Field<label>>::New(this->size(), Zero);
+}
+
 
 // ************************************************************************* //

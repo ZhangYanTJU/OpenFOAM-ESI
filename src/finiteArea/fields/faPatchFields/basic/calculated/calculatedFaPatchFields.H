@@ -38,6 +38,7 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makeFaPatchTypeFieldTypedefs(calculated);
+makeFaPatchFieldTypedef(label, calculated);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

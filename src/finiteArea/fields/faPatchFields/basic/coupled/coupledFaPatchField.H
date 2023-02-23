@@ -212,6 +212,27 @@ public:
 };
 
 
+// * * * * * * * * * * * * Template Specialisations  * * * * * * * * * * * * //
+
+template<>
+tmp<Field<label>> coupledFaPatchField<label>::snGrad() const;
+
+template<>
+void coupledFaPatchField<label>::evaluate(const Pstream::commsTypes);
+
+template<>
+tmp<Field<label>>
+coupledFaPatchField<label>::valueInternalCoeffs(const tmp<scalarField>&) const;
+
+template<>
+tmp<Field<label>>
+coupledFaPatchField<label>::valueBoundaryCoeffs(const tmp<scalarField>&) const;
+
+template<>
+tmp<Field<label>>
+coupledFaPatchField<label>::gradientInternalCoeffs() const;
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
