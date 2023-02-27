@@ -29,6 +29,7 @@ License
 #include "primitiveMesh.H"
 #include "cell.H"
 #include "bitSet.H"
+#include "DynamicList.H"
 #include "ListOps.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -58,12 +59,84 @@ void Foam::primitiveMesh::calcPointCells() const
             << "pointCells already calculated"
             << abort(FatalError);
     }
-    else
+    else if (hasCellPoints())
     {
         // Invert cellPoints
-        (void)cellPoints();
         pcPtr_ = new labelListList(nPoints());
         invertManyToMany(nPoints(), cellPoints(), *pcPtr_);
+    }
+    else
+    {
+        // Calculate point-cell topology
+
+        const cellList& cellLst = cells();
+        const faceList& faceLst = faces();
+
+        // For tracking (only use each point id once)
+        bitSet usedPoints(nPoints());
+
+        // Vertex labels for the current cell
+        DynamicList<label> vertices(256);
+
+        const label loopLen = nCells();
+
+        // Step 1: count number of cells per point
+
+        labelList pointCount(nPoints(), Zero);
+
+        for (label celli = 0; celli < loopLen; ++celli)
+        {
+            // Clear any previous contents
+            usedPoints.unset(vertices);
+            vertices.clear();
+
+            for (const label facei : cellLst[celli])
+            {
+                for (const label pointi : faceLst[facei])
+                {
+                    // Only once for each point id
+                    if (usedPoints.set(pointi))
+                    {
+                        vertices.push_back(pointi);
+                        ++pointCount[pointi];
+                    }
+                }
+            }
+        }
+
+
+        // Step 2: set sizing, reset counters
+
+        pcPtr_ = new labelListList(nPoints());
+        auto& pointCellAddr = *pcPtr_;
+
+        forAll(pointCellAddr, pointi)
+        {
+            pointCellAddr[pointi].resize_nocopy(pointCount[pointi]);
+            pointCount[pointi] = 0;
+        }
+
+
+        // Step 3: fill in values. Logic as per step 1
+        for (label celli = 0; celli < loopLen; ++celli)
+        {
+            // Clear any previous contents
+            usedPoints.unset(vertices);
+            vertices.clear();
+
+            for (const label facei : cellLst[celli])
+            {
+                for (const label pointi : faceLst[facei])
+                {
+                    // Only once for each point id
+                    if (usedPoints.set(pointi))
+                    {
+                        vertices.push_back(pointi);
+                        pointCellAddr[pointi][pointCount[pointi]++] = celli;
+                    }
+                }
+            }
+        }
     }
 }
 

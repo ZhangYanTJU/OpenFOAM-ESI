@@ -29,6 +29,7 @@ License
 #include "primitiveMesh.H"
 #include "cell.H"
 #include "bitSet.H"
+#include "DynamicList.H"
 #include "ListOps.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -67,52 +68,40 @@ void Foam::primitiveMesh::calcCellPoints() const
     {
         // Calculate cell-point topology
 
-        const cellList& cL = cells();
-        const faceList& fL = faces();
-
         cpPtr_ = new labelListList(nCells());
-        labelListList& cellPoints = *cpPtr_;
+        auto& cellPointAddr = *cpPtr_;
 
-        // Mark points we have found as to not count them twice for the same cell
-        Foam::bitSet foundPoint(nPoints(), false);
+        const cellList& cellLst = cells();
+        const faceList& faceLst = faces();
 
-        forAll (cL, cellIdx)
+        // For tracking (only use each point id once)
+        bitSet usedPoints(nPoints());
+
+        // Vertex labels for the current cell
+        DynamicList<label> vertices(256);
+
+
+        const label loopLen = nCells();
+
+        for (label celli = 0; celli < loopLen; ++celli)
         {
-            // List of faces on the cell
-            const Foam::labelList& cellFaces = cL[cellIdx];
-            // List that will contain the cell's points
-            Foam::labelList& neiPoints = cellPoints[cellIdx];
+            // Clear any previous contents
+            usedPoints.unset(vertices);
+            vertices.clear();
 
-            // Over-Estimate number of neighbour points
-            int pointCnt = 0;
-            for (label faceIdx : cellFaces)
+            for (const label facei : cellLst[celli])
             {
-                pointCnt += fL[faceIdx].size();
-            }
-            neiPoints.resize(pointCnt);
-
-            // Find the neighbour points
-            pointCnt = 0;
-            for (label faceIdx : cellFaces)
-            {
-                for (label pointIdx : fL[faceIdx])
+                for (const label pointi : faceLst[facei])
                 {
-                    // This check guarantees every point is added exactly once
-                    if (foundPoint[pointIdx]) continue;
-
-                    foundPoint[pointIdx] = true;
-                    neiPoints[pointCnt++] = pointIdx;
+                    // Only once for each point id
+                    if (usedPoints.set(pointi))
+                    {
+                        vertices.push_back(pointi);
+                    }
                 }
             }
 
-            // Resize to actual value
-            neiPoints.resize(pointCnt);
-
-            // Clear bitSet before next iteration
-            for (label pointIdx : neiPoints)
-            {
-                foundPoint[pointIdx] = false;
-            }
+            cellPointAddr[celli] = vertices;  // unsorted
         }
     }
 }
