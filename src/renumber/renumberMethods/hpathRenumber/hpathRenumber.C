@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 Alon Zameret
+    Copyright (C) 2023 Alon Zameret, Noam Manaker Morag
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,10 +28,8 @@ License
 #include "hpathRenumber.H"
 #include "addToRunTimeSelectionTable.H"
 
-#include <queue>
-#include <stack>
+#include "CircularBuffer.H"
 #include <iomanip>
-#include <numeric>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -50,52 +48,6 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Local Details * * * * * * * * * * * * * * //
 
-namespace
-{
-
-// This class supports marking and unmarking small sets of indices quickly
-// Used for efficient construction of Mesh Graph in getMeshGraph()
-
-class dynamicMarker
-{
-    std::vector<bool> bMarker;
-    std::stack<int> nMarkedStack;
-
-public:
-
-    // Create a new dynamicMarker of size n.
-    // All items will begin unmarked
-    dynamicMarker(int n)
-    {
-        bMarker.assign(n, false);
-    }
-
-    // Mark the i'th element (0 <= i < n),
-    // return false if it was already marked.
-    bool mark(int i)
-    {
-        if (bMarker[i]) return false;
-        bMarker[i] = true;
-        nMarkedStack.push(i);
-        return true;
-    }
-
-    // Clear ALL marked elements
-    // When we want to clear all marks, we unmark every item in the stack
-    // This takes amortized-time O(1), because we can only pop as many items
-    // as we have pushed
-    void clear()
-    {
-        while (!nMarkedStack.empty())
-        {
-            bMarker[nMarkedStack.top()] = false;
-            nMarkedStack.pop();
-        }
-    }
-};
-
-} // End anonymous namespace
-
 
 /*---------------------------------------------------------------------------*\
                  Class hpathRenumber::hpathFinder Declaration
@@ -111,49 +63,42 @@ class hpathRenumber::hpathFinder
 
         // The input mesh
         const Foam::polyMesh& mesh;
-        const int nCellCount;
 
         // Counter for the number of renumbered cells
-        int nFoundCellCount;
+        label nFoundCellCount;
 
         // Marks cells that have been added to the renumbering as 'true'
-        std::vector<bool> bIsRenumbered;
+        Foam::bitSet bIsRenumbered;
 
         // For every data structure, I explain what it is used for and which
         // method is used to compute it
 
-        // For every point a list of cells it is part of - getPointCellLists()
-        std::vector<std::vector<int>> nPntCellList;
-
-        // For every cell a list of points on it - getPointCellLists()
-        std::vector<std::vector<int>> nCellPntList;
-
         // For every cell, a list of all its point-neighbouring cells - getMeshGraph()
-        std::vector<std::vector<int>> nMeshGraph;
+        Foam::labelListList nMeshGraph;
 
         // For each cell its 'layer index': - getLayers()
         //      - cells in the same layer will have the same layer index
-        std::vector<int> nCellLayerIndex;
+        Foam::labelList nCellLayerIndex;
 
         // For each cell its 'connected component index': - getConnectedComponents()
         //      - cells in the same connected component will have the same connected component index
-        std::vector<int> nCellConnnectedComponentIndex;
+        Foam::labelList nCellConnnectedComponentIndex;
 
         // For each cell its face-neighbours in the connected component - getConnnectedComponentGraph()
-        std::vector<std::vector<int>> nConnnectedComponentGraph;
+        Foam::labelListList nConnnectedComponentGraph;
 
         // Marks cells that have already been by BFS - getStartingCellInConnnectedComponent()
-        std::vector<bool> bBFSFoundCell;
+        Foam::bitSet bBFSFoundCell;
 
         // For each cell its point distance from the connected components start cell   - reorderDistFromStart()
-        std::vector<int> nCellPointDistFromStart;
-        std::vector<int> nCellFaceDistFromStart;
+        Foam::labelList nCellPointDistFromStart;
+        Foam::labelList nCellFaceDistFromStart;
 
         // For each cell its DFS depth within the connected component     - findPath()
-        std::vector<int> nDFSCellDepth;
+        Foam::labelList nDFSCellDepth;
 
         // For each cell its DFS parent within the connected component    - findPath()
-        std::vector<int> nDFSParentCell;
+        Foam::labelList nDFSParentCell;
 
 
     public: // Public methods
@@ -184,53 +129,48 @@ class hpathRenumber::hpathFinder
         // Given a cell and a face index, find its neighbour through the face
         // - If facing the boundary, returns -1
         // - Otherwise, returns FaceOwner/FaceNeighbour[nFaceIdx], the one that's different from nCellIdx
-        int getNei(int nCellIdx, int nFaceIdx) const;
+        label getNei(label nCellIdx, label nFaceIdx) const;
 
         // Creates the 'Mesh-Graph': for every cell, a list of cells that are point-neighbours with it in the mesh
         //  - Cells are point-neighbours if they have a common point
         void getMeshGraph();
 
-        // Finds:
-        //  - for each cell in the mesh a list of all points on it
-        //  - for every point in the mesh a list of all cells it is part of
-        void getPointCellLists();
-
         // Separates the mesh into layers: each cell has its layer saved in nCellLayerIndex
         // Also returns for every layer a list of all cells in it
-        void getLayerSeparation(std::vector<std::vector<int>>& nCellsByLayer);
+        void getLayerSeparation(Foam::DynamicList<Foam::DynamicList<label>>& nCellsByLayer);
 
         // For every connected component, find the deepest cell and choose it as a starting cell
         // Returns a list with one starting cell per connected component
-        void getStartingCells(std::vector<int>& nStartingCells) const;
+        void getStartingCells(Foam::DynamicList<label>& nStartingCells) const;
 
         // Once the starting cells have been found, this method does the actual layer separation
-        void getLayers(const std::vector<int>& nStartingCellList, std::vector<std::vector<int>>& nCellsByLayer);
+        void getLayers(const Foam::labelList& nStartingCellList, Foam::DynamicList<Foam::DynamicList<label>>& nCellsByLayer);
 
         // Renumber all cells in a layer
-        void solveLayer(std::vector<int> nCellsInLayer, Foam::labelList& cellOrder);
+        void solveLayer(Foam::labelList nCellsInLayer, Foam::labelList& cellOrder);
 
         // Seperates cells into face-connected components
         // This is done using a general DFS algorithm
-        void getConnectedComponents(const std::vector<int>& nCellList, std::vector<std::vector<int>>& nCellsByConnnectedComponent);
+        void getConnectedComponents(const Foam::labelList& nCellList, Foam::DynamicList<Foam::DynamicList<label>>& nCellsByConnnectedComponent);
 
         // Find an approximate H-path through a connected component
-        void solveConnectedComponent(const std::vector<int>& nCellsInConnectedComponent, Foam::labelList& cellOrder);
+        void solveConnectedComponent(const Foam::labelList& nCellsInConnectedComponent, Foam::labelList& cellOrder);
 
         // Finds for each cell in the connected component a list of its face-neighbours within the component
-        void getConnnectedComponentGraph(const std::vector<int>& nCellsInConnectedComponent);
+        void getConnnectedComponentGraph(const Foam::labelList& nCellsInConnectedComponent);
 
         // Finds a starting cell within the connected component
-        int getStartingCellInConnnectedComponent(const std::vector<int>& nCellsInConnectedComponent);
+        label getStartingCellInConnnectedComponent(const Foam::labelList& nCellsInConnectedComponent);
 
         // This method reorders the cells in the given connected component based on their distance from nStartCell
-        void reorderDistFromStart(int nStartCell, const std::vector<int>& nCellsInConnectedComponent);
+        void reorderDistFromStart(label nStartCell, const Foam::labelList& nCellsInConnectedComponent);
 
         // Finds an H-path within the connected component and returns it in nResultHpath
         // H-path is guaranteed to start at nStartCell
-        void findPath(int nStartCell, Foam::labelList& cellOrder);
+        void findPath(label nStartCell, Foam::labelList& cellOrder);
 
         // Resets data structures for the cells that weren't found
-        void resetCells(std::vector<int>& nCellList);
+        void resetCells(Foam::labelList& nCellList);
 };
 
 } // End namespace Foam
@@ -281,8 +221,7 @@ Foam::labelList Foam::hpathRenumber::renumber
 // Public methods
 Foam::hpathRenumber::hpathFinder::hpathFinder(const polyMesh& mesh)
 :
-    mesh(mesh),
-    nCellCount(mesh.nCells())
+    mesh(mesh)
 {}
 
 
@@ -294,46 +233,33 @@ void Foam::hpathRenumber::hpathFinder::getRenumbering
 {
     // Find a renumbering for the entire mesh
 
-    cellOrder.resize(nCellCount);
+    cellOrder.resize(mesh.nCells());
     // Counter for how many cells we have added to the renumbering so far
     nFoundCellCount = 0;
 
     // Initialize the data structures:
-<<<<<<< HEAD
-    std::cout << "Initializing Data Structures" << std::endl;
-    initialize();
-    
-=======
     Info<< "Initializing Data Structures" << endl;
     initialize();
 
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Compute a graph to represent the mesh:
     //      - Cells in the mesh will be connected in the graph if they have a *common point*
     getMeshGraph();
 
-    std::vector<std::vector<int>> nCellsByLayer;
-<<<<<<< HEAD
-    if (bApplyLayerSeparation) {
-        getLayerSeparation(nCellsByLayer);
-    }
-    else {
-=======
+    Foam::DynamicList<Foam::DynamicList<label>> nCellsByLayer;
     if (bApplyLayerSeparation)
     {
         getLayerSeparation(nCellsByLayer);
     }
     else
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         // If there is no layer separation, set the entire mesh as one 'layer'
-        nCellsByLayer.emplace_back(nCellCount,-1);
-        std::iota(nCellsByLayer[0].begin(), nCellsByLayer[0].end(), 0);
+        Foam::DynamicList<label> nAllCells(Foam::identity(mesh.nCells()));
+        nCellsByLayer.append(nAllCells);
     }
 
     std::cout << "Beginning Hpath Computation" << std::endl;
     // Find H-path for each layer separately
-    for (const std::vector<int>& nCellsInLayer : nCellsByLayer)
+    for (const Foam::labelList& nCellsInLayer : nCellsByLayer)
     {
         // solveLayer() will find a renumbering for all the cells in the layer
         // Path will be appended into cellOrder
@@ -342,95 +268,72 @@ void Foam::hpathRenumber::hpathFinder::getRenumbering
 }
 
 
-<<<<<<< HEAD
-float Foam::hpathRenumber::hpathFinder::getAccuracy(const Foam::labelList& cellOrder) const {
-=======
 float Foam::hpathRenumber::hpathFinder::getAccuracy
 (
     const Foam::labelList& cellOrder
 ) const
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Finding the number of "hits"
     // - A hit is a pair of consecutive cells in the renumbering that are also face-neighbours in the mesh
     // - Cells are face-neighbours if they have a common face
-    int nHitCnt = 0;
-    for (int nPathIdx = 0; nPathIdx < int(cellOrder.size()) - 1; nPathIdx++)
+    label nHitCnt = 0;
+    for (label nPathIdx = 0; nPathIdx < label(cellOrder.size()) - 1; nPathIdx++)
     {
-        int nCurrCellIdx = cellOrder[nPathIdx];
-        int nNextCellIdx = cellOrder[nPathIdx+1];
+        label nCurrCellIdx = cellOrder[nPathIdx];
+        label nNextCellIdx = cellOrder[nPathIdx+1];
 
         // For every pair of consecutive cells, we search for a common face between them
-        for (int nFaceIdx : mesh.cells()[nCurrCellIdx])
+        for (label nFaceIdx : mesh.cells()[nCurrCellIdx])
         {
-            int nNeiIdx = getNei(nCurrCellIdx, nFaceIdx);
+            label nNeiIdx = getNei(nCurrCellIdx, nFaceIdx);
             // If there is a common face between them, we add a hit!
-<<<<<<< HEAD
-            if (nNeiIdx == nNextCellIdx) {
-=======
             if (nNeiIdx == nNextCellIdx)
             {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
                 nHitCnt++;
                 break;
             }
         }
     }
     // The accuracy is the percentage of consecutive cells that were hits
-    return 100.0f * float(nHitCnt) / float(int(cellOrder.size()) - 1);
+    return 100.0f * float(nHitCnt) / float(label(cellOrder.size()) - 1);
 }
 
-<<<<<<< HEAD
-// Private methods
-
-void Foam::hpathRenumber::hpathFinder::initialize() {
-    
-=======
 
 // Private methods
 void Foam::hpathRenumber::hpathFinder::initialize()
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Data structure to keep track of cells already in the renumbering
-    bIsRenumbered.assign(nCellCount, false);
+    bIsRenumbered = Foam::bitSet(mesh.nCells(), false);
 
-    // List used to seperate cells int layers
+    // List used to seperate cells into layers
     // Saves for every cell its layer index
-    nCellLayerIndex.assign(nCellCount, -1);
+    nCellLayerIndex = Foam::labelList(mesh.nCells(), -1);
 
     // List used to seperate cells within the same layer into seperate connected components
     // Saves for every cell its connected component index
-    nCellConnnectedComponentIndex.assign(nCellCount, -1);
+    nCellConnnectedComponentIndex = Foam::labelList(mesh.nCells(), -1);
 
     // Marks cells that have already been by BFS
-    bBFSFoundCell.assign(nCellCount, false);
+    bBFSFoundCell = Foam::bitSet(mesh.nCells(), false);
     // Saves for every cell its face-neighbours within the same connected component
-    nConnnectedComponentGraph.assign(nCellCount, std::vector<int>());
+    nConnnectedComponentGraph = Foam::labelListList(mesh.nCells());
 
     // Saves for every cell within a layer its point-distance from the starting cell of that layer
-    nCellPointDistFromStart.assign(nCellCount, -1);
+    nCellPointDistFromStart = Foam::labelList(mesh.nCells(), -1);
     // Saves for every cell within a layer its face-distance from the starting cell of that layer
-    nCellFaceDistFromStart.assign(nCellCount, -1);
+    nCellFaceDistFromStart = Foam::labelList(mesh.nCells(), -1);
 
     // For each cell its DFS depth within the connected component
-    nDFSCellDepth.assign(nCellCount, -1);
+    nDFSCellDepth = Foam::labelList(mesh.nCells(), -1);
     // For each cell its DFS parent within the connected component
-    nDFSParentCell.assign(nCellCount, -1);
+    nDFSParentCell = Foam::labelList(mesh.nCells(), -1);
 
     // Now we can find the Mesh-Graph
-    nMeshGraph.assign(nCellCount, std::vector<int>());
+    nMeshGraph = Foam::labelListList(mesh.nCells());
 }
 
 
-<<<<<<< HEAD
-int Foam::hpathRenumber::hpathFinder::getNei(int nCell, int nFaceIdx) const {
-    // If the face has no neighbor, return -1
-    if(nFaceIdx >= mesh.faceNeighbour().size()) 
-        return -1;
-    
-    // Otherwise, the face connects 2 cells: the owner and the neighbor. One of these should be nCell
-=======
-int Foam::hpathRenumber::hpathFinder::getNei(int nCell, int nFaceIdx) const
+Foam::label Foam::hpathRenumber::hpathFinder::getNei(label nCell, label nFaceIdx) const
 {
     // If the face has no neighbor, return -1
     if (nFaceIdx >= mesh.faceNeighbour().size())
@@ -440,104 +343,55 @@ int Foam::hpathRenumber::hpathFinder::getNei(int nCell, int nFaceIdx) const
 
     // Otherwise, the face connects 2 cells: the owner and the neighbor.
     // One of these should be nCell
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-    int nOwner = mesh.faceOwner()[nFaceIdx];
-    int nNei = mesh.faceNeighbour()[nFaceIdx];
+    label nOwner = mesh.faceOwner()[nFaceIdx];
+    label nNei = mesh.faceNeighbour()[nFaceIdx];
 
     // Find which of these two cells is the input cell, return the other one
     return (nOwner == nCell) ? nNei : nOwner;
 }
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::getMeshGraph() {
-
-=======
 
 void Foam::hpathRenumber::hpathFinder::getMeshGraph()
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-    // First, we need to compute:
-    //      1) For every point a list of cells it is part of  - nPntCellList
-    //      2) For every cell a list of points on it          - nCellPntList
-    getPointCellLists();
+    // The purpose of the bitSet is to avoid adding the same cell as a neighbour more than once
+    Foam::bitSet foundCells(mesh.nCells(), false);
 
-    // The purpose of the dynamic marker is to avoid checking the same cell many times in one iteration
-    dynamicMarker bCellMarker(nCellCount);
-<<<<<<< HEAD
-    for (int nCellIdx = 0; nCellIdx < nCellCount; nCellIdx++) {
-        for (int nPntIdx : nCellPntList[nCellIdx]) {
-            for (int nNeiCell : nPntCellList[nPntIdx]) {
-=======
-    for (int nCellIdx = 0; nCellIdx < nCellCount; nCellIdx++)
+    for (label nCellIdx = 0; nCellIdx < mesh.nCells(); nCellIdx++)
     {
-        for (int nPntIdx : nCellPntList[nCellIdx])
+        // Dynamic list of point-neighbours of the current cell
+        DynamicList<label> nNeiList;
+
+        for (label nPntIdx : mesh.cellPoints()[nCellIdx])
         {
-            for (int nNeiCell : nPntCellList[nPntIdx])
+            for (label nNeiCell : mesh.pointCells()[nPntIdx])
             {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
                 if (nNeiCell == nCellIdx) continue;
-                if (!bCellMarker.mark(nNeiCell)) continue;
+                if (foundCells[nNeiCell]) continue;
 
                 // We have found a cell with a common point to the current cell
                 // Therefore, we can now add it as a neighbour in the Mesh-Graph
-                nMeshGraph[nCellIdx].push_back(nNeiCell);
+                nNeiList.append(nNeiCell);
+
+                foundCells[nNeiCell] = true;
             }
         }
-        bCellMarker.clear();
-    }
-}
 
-
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::getPointCellLists() {
-
-=======
-void Foam::hpathRenumber::hpathFinder::getPointCellLists()
-{
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-    // Find:
-    //  - For each cell in the mesh a list of all points on it
-    nCellPntList.assign(mesh.nCells(),  std::vector<int>());
-    //  - For every point in the mesh a list of all cells it is part of
-    nPntCellList.assign(mesh.nPoints(), std::vector<int>());
-
-    // The purpose of the dynamic marker is to avoid pushing the same point many times in one iteration
-    dynamicMarker bPointMarker(mesh.nPoints());
-    for (int nCellIdx = 0; nCellIdx < mesh.nCells(); nCellIdx++)
-    {
-<<<<<<< HEAD
-        for(int nFaceIdx : mesh.cells()[nCellIdx]) {
-            for(int nPntIdx : mesh.faces()[nFaceIdx]) {
-                // If we already found nPntIdx for this cell, continue
-                if (!bPointMarker.mark(nPntIdx)) continue;
-                
-=======
-        for (int nFaceIdx : mesh.cells()[nCellIdx])
+        // Convert from DynamicList to labelList
+        nMeshGraph[nCellIdx] = nNeiList;
+        
+        // Clear the bitSet before next iteration
+        for (label neiCell : nMeshGraph[nCellIdx])
         {
-            for (int nPntIdx : mesh.faces()[nFaceIdx])
-            {
-                // If we already found nPntIdx for this cell, continue
-                if (!bPointMarker.mark(nPntIdx)) continue;
-
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-                // nPntIdx is on nCellIdx, so we push them to each-others lists
-                nCellPntList[nCellIdx].push_back(nPntIdx);
-                nPntCellList[nPntIdx].push_back(nCellIdx);
-            }
+            foundCells[neiCell] = false;
         }
-        // Clear the marked points for the next cell
-        bPointMarker.clear();
     }
 }
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::getLayerSeparation(std::vector<std::vector<int>>& nCellsByLayer)
-=======
+
 void Foam::hpathRenumber::hpathFinder::getLayerSeparation
 (
-    std::vector<std::vector<int>>& nCellsByLayer
+    Foam::DynamicList<Foam::DynamicList<label>>& nCellsByLayer
 )
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
 {
     // We want to separate the mesh into layers:
     //      1) The mesh is separated into connected components                                          - getConnectedComponents()
@@ -547,58 +401,37 @@ void Foam::hpathRenumber::hpathFinder::getLayerSeparation
     std::cout << "Finding Layer Separation" << std::endl;
 
     // Step 1: Finding connected components
-    std::vector<int> nAllCells(nCellCount);
-    std::iota(nAllCells.begin(), nAllCells.end(), 0);
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-    std::vector<std::vector<int>> nCellsByConnnectedComponent;
+    Foam::labelList nAllCells(Foam::identity(mesh.nCells()));
+    Foam::DynamicList<Foam::DynamicList<label>> nCellsByConnnectedComponent;
     getConnectedComponents(nAllCells, nCellsByConnnectedComponent);
 
     // Step 2: Finding starting cells
     // Finds for each connected component its deepest cell and returns them
     // The starting cells are returned through nStartingCellList
     // There will be exactly one starting cell per connected component
-    std::vector<int> nStartingCellList;
+    Foam::DynamicList<label> nStartingCellList;
     getStartingCells(nStartingCellList);
 
     // Step 3: Layer separation
     // Layer separation is done in each connected component from the starting cell outwards
     getLayers(nStartingCellList, nCellsByLayer);
-<<<<<<< HEAD
-    
-    int nLayerCnt = nCellsByLayer.size();
-    std::cout << "Mesh Separated into " << nLayerCnt << " layers" << std::endl;
-    
-=======
 
-    int nLayerCnt = nCellsByLayer.size();
+    label nLayerCnt = nCellsByLayer.size();
     std::cout << "Mesh Separated into " << nLayerCnt << " layers" << std::endl;
 
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Reset connected component index list for solveLayer() to use
-    nCellConnnectedComponentIndex.assign(nCellCount, -1);
+    nCellConnnectedComponentIndex = Foam::labelList(mesh.nCells(), -1);
 }
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::getStartingCells(std::vector<int>& nStartingCells) const {
-
-    // The starting cell in each connected component should be the 'deepest' cell in that connected component
-    // A cells 'depth' is its point-distance from any boundary cell
-    
-=======
 
 void Foam::hpathRenumber::hpathFinder::getStartingCells
 (
-    std::vector<int>& nStartingCells)
+    Foam::DynamicList<label>& nStartingCells)
 const
 {
     // The starting cell in each connected component should be the 'deepest' cell in that connected component
     // A cells 'depth' is its point-distance from any boundary cell
 
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // The Algorithm:
     //      1) Find all boundary points
     //      2) Find all boundary cells
@@ -607,72 +440,54 @@ const
     //      5) Return through nStartingCells a list containing the deepest cell from each connected component
 
     // nCellDepthList will contain for each cell its depth within its ConnectedComponent
-    std::vector<int> nCellDepthList(nCellCount, -1);
+    Foam::labelList nCellDepthList(mesh.nCells(), -1);
 
     // Step 1: Finding all boundary points
     //      - A boundary point is a point on a boundary face
-    std::vector<int> bIsBoundaryPts(mesh.nPoints(), false);
+    Foam::bitSet bIsBoundaryPts(mesh.nPoints(), false);
 
     // Iterate over boundary faces and mark their points as boundary
     //  - Ignore boundary faces of type "empty"
     const polyBoundaryMesh& bndMesh = mesh.boundaryMesh();
-    for (int nBndType = 0; nBndType < bndMesh.size(); ++nBndType)
+    for (label nBndType = 0; nBndType < bndMesh.size(); ++nBndType)
     {
         // If boundary is of type "empty" - skip it
         if (bndMesh[nBndType].type().compare("empty") == 0) continue;
 
         labelRange range = bndMesh.patchRanges()[nBndType];
         // For every face in range set all of its points as boundary
-<<<<<<< HEAD
-        for (int nFaceIdx = range.min(); nFaceIdx <= range.max(); ++nFaceIdx) {
-            for(int nPointIdx : mesh.faces()[nFaceIdx]) {
-=======
-        for (int nFaceIdx = range.min(); nFaceIdx <= range.max(); ++nFaceIdx)
+        for (label nFaceIdx = range.min(); nFaceIdx <= range.max(); ++nFaceIdx)
         {
-            for (int nPointIdx : mesh.faces()[nFaceIdx])
+            for (label nPointIdx : mesh.faces()[nFaceIdx])
             {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
                 bIsBoundaryPts[nPointIdx] = true;
             }
         }
     }
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Step 2: Finding all boundary cells
     //      - A boundary cell is a cell containing at least one boundary point
-    std::vector<bool> bIsBoundaryCells(nCellCount, false);
+    Foam::bitSet bIsBoundaryCells(mesh.nCells(), false);
 
     // For every boundary point: mark all cells that have it as boundary cells
-    for (int nPntIdx = 0; nPntIdx < mesh.nPoints(); nPntIdx++)
+    for (label nPntIdx = 0; nPntIdx < mesh.nPoints(); nPntIdx++)
     {
         if (!bIsBoundaryPts[nPntIdx]) continue;
         // Here we make use of the nPntCellList we found when computing the Mesh-Graph
-        for (int nCellIdx : nPntCellList[nPntIdx])
-<<<<<<< HEAD
-            bIsBoundaryCells[nCellIdx] = true;
-=======
+        for (label nCellIdx : mesh.pointCells()[nPntIdx])
         {
             bIsBoundaryCells[nCellIdx] = true;
         }
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     }
 
     // Step 3: Separate the boundary cells based on which connected component they are a part of
     //      - Find for each connected component a list of all its boundary cells
-    int nConnnectedComponentCnt = *std::max_element(nCellConnnectedComponentIndex.begin(), nCellConnnectedComponentIndex.end()) + 1;
-    std::vector<std::vector<int>> nBoundaryCellsByConnnectedComponent(nConnnectedComponentCnt, std::vector<int>());
-    for (int nCellIdx = 0; nCellIdx < nCellCount; nCellIdx++)
+    label nConnnectedComponentCnt = *std::max_element(nCellConnnectedComponentIndex.begin(), nCellConnnectedComponentIndex.end()) + 1;
+    Foam::List<Foam::DynamicList<label>> nBoundaryCellsByConnnectedComponent(nConnnectedComponentCnt);
+    for (label nCellIdx = 0; nCellIdx < mesh.nCells(); nCellIdx++)
     {
-<<<<<<< HEAD
-        if (bIsBoundaryCells[nCellIdx]) {
-=======
         if (bIsBoundaryCells[nCellIdx])
         {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-            nBoundaryCellsByConnnectedComponent[nCellConnnectedComponentIndex[nCellIdx]].push_back(nCellIdx);
+            nBoundaryCellsByConnnectedComponent[nCellConnnectedComponentIndex[nCellIdx]].append(nCellIdx);
         }
     }
 
@@ -680,84 +495,56 @@ const
     //      - Find each cells distance from the boundary by running a BFS algorithm from the boundary in each connected component
     //      - Along the way, find the deepest cell in each connected component and push them to the list
 
-<<<<<<< HEAD
-    for (std::vector<int>& nBndCells : nBoundaryCellsByConnnectedComponent) {
-        
-=======
-    for (std::vector<int>& nBndCells : nBoundaryCellsByConnnectedComponent)
+    for (Foam::labelList& nBndCells : nBoundaryCellsByConnnectedComponent)
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         // We want to find the maximum depth cell within the connected component
-        int nMaxDepthCell = nBndCells[0];
+        label nMaxDepthCell = nBndCells[0];
 
         // Run a BFS algorithm from the boundary:
         //      - All boundary cells are pushed to the queue with depth 0
-        std::queue<int> nBfsQueue;
-<<<<<<< HEAD
-        for (int nCellIdx : nBndCells) {
-=======
-        for (int nCellIdx : nBndCells)
+        Foam::CircularBuffer<label> nBfsQueue;
+        for (label nCellIdx : nBndCells)
         {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
             nCellDepthList[nCellIdx] = 0;
-            nBfsQueue.push(nCellIdx);
+            nBfsQueue.push_back(nCellIdx);
         }
 
-<<<<<<< HEAD
-        while (!nBfsQueue.empty()) {
-            int nCurrCell = nBfsQueue.front();
-            nBfsQueue.pop();
-            
-            // Check if current cell is the deeper than the maximum depth cell found so far. If it is, we update nMaxDepthCell
-            if (nCellDepthList[nCurrCell] > nCellDepthList[nMaxDepthCell])
-                nMaxDepthCell = nCurrCell;
-=======
         while (!nBfsQueue.empty())
         {
-            int nCurrCell = nBfsQueue.front();
-            nBfsQueue.pop();
+            label nCurrCell = nBfsQueue.first();
+            nBfsQueue.pop_front();
 
             // Check if current cell is the deeper than the maximum depth cell found so far. If it is, we update nMaxDepthCell
             if (nCellDepthList[nCurrCell] > nCellDepthList[nMaxDepthCell])
             {
                 nMaxDepthCell = nCurrCell;
             }
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
 
             // The BFS algorithm needs to be based on point-neghbours, meaning by using the Mesh-Graph
             // Note that while cells in different connected components are never face-neighbours, but they may be point-neighbours (neighbours in the Mesh-Graph)
             // Therefore, when pushing all point-neighbouring cells we need to check that they are in the same connected component
-<<<<<<< HEAD
-            for (int nNeiCell : nMeshGraph[nCurrCell]) {
-=======
-            for (int nNeiCell : nMeshGraph[nCurrCell])
+            for (label nNeiCell : nMeshGraph[nCurrCell])
             {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
                 if (nCellDepthList[nNeiCell] != -1) continue;
                 if (nCellConnnectedComponentIndex[nNeiCell] != nCellConnnectedComponentIndex[nCurrCell]) continue;
 
                 nCellDepthList[nNeiCell] = nCellDepthList[nCurrCell] + 1;
-                nBfsQueue.push(nNeiCell);
+                nBfsQueue.push_back(nNeiCell);
             }
         }
 
         // Finally, we can push the maximum depth cell we found
-        nStartingCells.push_back(nMaxDepthCell);
+        nStartingCells.append(nMaxDepthCell);
     }
 }
 
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::getLayers(const std::vector<int>& nStartingCells, std::vector<std::vector<int>>& nCellsByLayer) {
-
-=======
 void Foam::hpathRenumber::hpathFinder::getLayers
 (
-    const std::vector<int>& nStartingCells,
-    std::vector<std::vector<int>>& nCellsByLayer
+    const Foam::labelList& nStartingCells,
+    Foam::DynamicList<Foam::DynamicList<label>>& nCellsByLayer
 )
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Separates all cells in the mesh to layers
     // In each connected component:
     //      1) The starting cell is set as 'Layer 0'
@@ -766,86 +553,52 @@ void Foam::hpathRenumber::hpathFinder::getLayers
     //      4) Repeat step (3) with increasing layer indices until all cells have been found
     // In this way, cells in each component are grouped in layers by their MINIMUM point-distance to their starting cell
 
-<<<<<<< HEAD
-    // Note: In reality, the same BFS is run for all components at once. Because components are connected, this is equivalent 
-=======
     // Note: In reality, the same BFS is run for all components at once. Because components are connected, this is equivalent
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
 
     // Now we run BFS from starting cells
-    std::queue<int> nBfsQueue;
+    Foam::CircularBuffer<label> nBfsQueue;
 
     // Push all starting cells to queue
-<<<<<<< HEAD
-    for (int nCellIdx : nStartingCells) {
-=======
-    for (int nCellIdx : nStartingCells)
+    for (label nCellIdx : nStartingCells)
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         nCellLayerIndex[nCellIdx] = 0;
-        nBfsQueue.push(nCellIdx);
+        nBfsQueue.push_back(nCellIdx);
     }
 
     // BFS algorithm will find for each cell its minimum distance in the Mesh-Graph from the corresponding starting cell
-<<<<<<< HEAD
-    while(!nBfsQueue.empty())
-    {
-        int nCurrCell = nBfsQueue.front();
-        nBfsQueue.pop();
-        
-        int nLayer = nCellLayerIndex[nCurrCell];
-        if (int(nCellsByLayer.size()) <= nCellLayerIndex[nCurrCell])
-            nCellsByLayer.emplace_back();
-        nCellsByLayer[nLayer].push_back(nCurrCell);
-
-        for(int nNeiCell : nMeshGraph[nCurrCell]) {
-=======
     while (!nBfsQueue.empty())
     {
-        int nCurrCell = nBfsQueue.front();
-        nBfsQueue.pop();
+        label nCurrCell = nBfsQueue.first();
+        nBfsQueue.pop_front();
 
-        int nLayer = nCellLayerIndex[nCurrCell];
-        if (int(nCellsByLayer.size()) <= nCellLayerIndex[nCurrCell])
+        label nLayer = nCellLayerIndex[nCurrCell];
+        if (label(nCellsByLayer.size()) <= nCellLayerIndex[nCurrCell])
         {
-            nCellsByLayer.emplace_back();
+            nCellsByLayer.append(Foam::labelList());
         }
-        nCellsByLayer[nLayer].push_back(nCurrCell);
+        nCellsByLayer[nLayer].append(nCurrCell);
 
-        for (int nNeiCell : nMeshGraph[nCurrCell])
+        for (label nNeiCell : nMeshGraph[nCurrCell])
         {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
             // If neighbour is in a different connected component, ignore it
             if (nCellConnnectedComponentIndex[nNeiCell] != nCellConnnectedComponentIndex[nCurrCell]) continue;
             // If neighbour hasn't been visited yet, set it's layer and push it:
             if (nCellLayerIndex[nNeiCell] != -1) continue;
-<<<<<<< HEAD
-            
-=======
-
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
             nCellLayerIndex[nNeiCell] = nCellLayerIndex[nCurrCell] + 1;
-            nBfsQueue.push(nNeiCell);
+            nBfsQueue.push_back(nNeiCell);
         }
     }
 }
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::solveLayer(std::vector<int> nCellsInLayer, Foam::labelList& cellOrder) {
-
-    // Note: this method assumes all cells in the nCellsInLayer have the same 'layer index' in nCellLayerIndex
-    
-=======
 
 void Foam::hpathRenumber::hpathFinder::solveLayer
 (
-    std::vector<int> nCellsInLayer,
+    Foam::labelList nCellsInLayer,
     Foam::labelList& cellOrder
 )
 {
     // Note: this method assumes all cells in the nCellsInLayer have the same 'layer index' in nCellLayerIndex
 
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // General rundown of the algorithm:
     //      1) Cells are separated into connected components
     //      2) Each connected component is solved separately and its path is added to the renumbering
@@ -855,37 +608,27 @@ void Foam::hpathRenumber::hpathFinder::solveLayer
     {
         // Step 1: separate the cells into connected components
         //      - Connected components need to be connected by FACES (not points)
-        std::vector<std::vector<int>> nCellsByConnnectedComponent;
+        Foam::DynamicList<Foam::DynamicList<label>> nCellsByConnnectedComponent;
         getConnectedComponents(nCellsInLayer, nCellsByConnnectedComponent);
 
-        int nOrigFoundCellCount = nFoundCellCount;
+        label nOrigFoundCellCount = nFoundCellCount;
 
         // Step 2: For each connected component we call getHpathinConnnectedComponent()
-        for (std::vector<int>& nCellsInConnectedComponent : nCellsByConnnectedComponent)
+        for (const Foam::labelList& nCellsInConnectedComponent : nCellsByConnnectedComponent)
         {
             solveConnectedComponent(nCellsInConnectedComponent, cellOrder);
         }
-<<<<<<< HEAD
-        
-=======
-
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         // Find how many cells were still not found
-        int nRemainingCellCount = nCellsInLayer.size() - (nFoundCellCount - nOrigFoundCellCount);
+        label nRemainingCellCount = nCellsInLayer.size() - (nFoundCellCount - nOrigFoundCellCount);
         if (nRemainingCellCount == 0) break;
 
         // Step 3: Find all the cells in the layer that were not found yet
-        std::vector<int> nRemainingCells(nRemainingCellCount);
-        int nIndex = 0;
-<<<<<<< HEAD
-        for (int nCellIdx : nCellsInLayer) {
-            if (!bIsRenumbered[nCellIdx]) {
-=======
-        for (int nCellIdx : nCellsInLayer)
+        Foam::labelList nRemainingCells(nRemainingCellCount);
+        label nIndex = 0;
+        for (label nCellIdx : nCellsInLayer)
         {
             if (!bIsRenumbered[nCellIdx])
             {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
                 nRemainingCells[nIndex++] = nCellIdx;
             }
         }
@@ -896,17 +639,12 @@ void Foam::hpathRenumber::hpathFinder::solveLayer
 }
 
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::getConnectedComponents(const std::vector<int>& nCellList, std::vector<std::vector<int>>& nCellsByConnnectedComponent) {
-    
-=======
 void Foam::hpathRenumber::hpathFinder::getConnectedComponents
 (
-    const std::vector<int>& nCellList,
-    std::vector<std::vector<int>>& nCellsByConnnectedComponent
+    const Foam::labelList& nCellList,
+    Foam::DynamicList<Foam::DynamicList<label>>& nCellsByConnnectedComponent
 )
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // This function separates cells in a certain layer into connected components
     // Each connected component will get a unique index
     //      - nCellsByConnnectedComponent[i] will contain a list of all cells with connected component index 'i'
@@ -921,14 +659,10 @@ void Foam::hpathRenumber::hpathFinder::getConnectedComponents
     //   - This is because the Mesh-Graph is POINT-connected, but we are searching for FACE-connected components
 
     // The index of the current connected component
-    int nConnnectedComponentIndex = -1;
+    label nConnnectedComponentIndex = -1;
 
-<<<<<<< HEAD
-    for (int nCellIdx : nCellList) {
-=======
-    for (int nCellIdx : nCellList)
+    for (label nCellIdx : nCellList)
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         if (nCellConnnectedComponentIndex[nCellIdx] != -1) continue;
 
         // This cell hasn't been found yet
@@ -936,74 +670,55 @@ void Foam::hpathRenumber::hpathFinder::getConnectedComponents
         // We increment nConnnectedComponentIndex, it is now the index of this new connected component
         nConnnectedComponentIndex++;
         nCellConnnectedComponentIndex[nCellIdx] = nConnnectedComponentIndex;
-        nCellsByConnnectedComponent.emplace_back();
+        nCellsByConnnectedComponent.append(Foam::labelList());
 
-        std::stack<int> nDfsStack;
-        nDfsStack.push(nCellIdx);
-<<<<<<< HEAD
-        
-        while(!nDfsStack.empty()) {
-=======
+        Foam::CircularBuffer<label> nDfsStack;
+        nDfsStack.push_back(nCellIdx);
 
         while(!nDfsStack.empty())
         {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-            int nCurrCell = nDfsStack.top();
-            nDfsStack.pop();
+            label nCurrCell = nDfsStack.last();
+            nDfsStack.pop_back();
 
-            nCellsByConnnectedComponent[nConnnectedComponentIndex].push_back(nCurrCell);
+            nCellsByConnnectedComponent[nConnnectedComponentIndex].append(nCurrCell);
 
             // We push all face-neighbouring cells that:
             //      1) Are in the same layer
             //      2) Haven't been found yet
-<<<<<<< HEAD
-            for (int nFaceIdx : mesh.cells()[nCurrCell]) {
-=======
-            for (int nFaceIdx : mesh.cells()[nCurrCell])
+            for (label nFaceIdx : mesh.cells()[nCurrCell])
             {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-                int nNeiCell = getNei(nCurrCell, nFaceIdx);
+                label nNeiCell = getNei(nCurrCell, nFaceIdx);
                 if (nNeiCell < 0) continue;
                 if (nCellLayerIndex[nNeiCell] != nCellLayerIndex[nCurrCell]) continue;
                 if (nCellConnnectedComponentIndex[nNeiCell] != -1) continue;
 
                 nCellConnnectedComponentIndex[nNeiCell] = nConnnectedComponentIndex;
-                nDfsStack.push(nNeiCell);
+                nDfsStack.push_back(nNeiCell);
             }
         }
     }
 }
 
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::solveConnectedComponent(const std::vector<int>& nCellsInConnectedComponent, Foam::labelList& cellOrder) {
-
-=======
 void Foam::hpathRenumber::hpathFinder::solveConnectedComponent
 (
-    const std::vector<int>& nCellsInConnectedComponent,
+    const Foam::labelList& nCellsInConnectedComponent,
     Foam::labelList& cellOrder
 )
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // For small cases, find path manually (1-2 cells)
     if (nCellsInConnectedComponent.size() <= 2) {
-        for (int nCellIdx : nCellsInConnectedComponent) {
+        for (label nCellIdx : nCellsInConnectedComponent) {
             cellOrder[nFoundCellCount++] = nCellIdx;
             bIsRenumbered[nCellIdx] = true;
         }
         return;
     }
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Get a graph representing the connected component
     getConnnectedComponentGraph(nCellsInConnectedComponent);
 
     // Get the starting cell
-    int nStartCell = getStartingCellInConnnectedComponent(nCellsInConnectedComponent);
+    label nStartCell = getStartingCellInConnnectedComponent(nCellsInConnectedComponent);
 
     // Reorder each cells neighbours in the ConnnectedComponent-Graph in descending order by distance from start cell
     reorderDistFromStart(nStartCell, nCellsInConnectedComponent);
@@ -1013,26 +728,20 @@ void Foam::hpathRenumber::hpathFinder::solveConnectedComponent
 }
 
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::getConnnectedComponentGraph(const std::vector<int>& nCellsInConnectedComponent) {
-
-=======
 void Foam::hpathRenumber::hpathFinder::getConnnectedComponentGraph
 (
-    const std::vector<int>& nCellsInConnectedComponent
+    const Foam::labelList& nCellsInConnectedComponent
 )
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // This method computes the ConnnectedComponent-Graph
     // Cells are connected in the ConnnectedComponent-Graph if:
     //      a) They are in the same layer
     //      b) They are face-connected in the mesh (different from Mesh-Graph - there it was point-connected)
     //          - note that this implies that they are also in the same connected component (hence the name)
 
-    for (int nCellIdx : nCellsInConnectedComponent)
+    for (label nCellIdx : nCellsInConnectedComponent)
     {
-        // Necessary if this being called recursively
-        nConnnectedComponentGraph[nCellIdx].clear();
+        Foam::DynamicList<label> nNeiList;
 
         // For every face on the cell, find its neighbour through that face (if there is one)
         // If that neighbour:
@@ -1040,28 +749,26 @@ void Foam::hpathRenumber::hpathFinder::getConnnectedComponentGraph
         //      2) Is in the same layer
         //      3) Is in the same connected component
         // Then we add it as a neighbour in the ConnectedComponent-Graph
-        for (int nFaceIdx : mesh.cells()[nCellIdx])
+        for (label nFaceIdx : mesh.cells()[nCellIdx])
         {
-            int nNeiCell = getNei(nCellIdx, nFaceIdx);
+            label nNeiCell = getNei(nCellIdx, nFaceIdx);
             if (nNeiCell < 0) continue;
             if (bIsRenumbered[nNeiCell]) continue;
             if (nCellLayerIndex[nNeiCell] != nCellLayerIndex[nCellIdx]) continue;
 
-            nConnnectedComponentGraph[nCellIdx].push_back(nNeiCell);
+            nNeiList.append(nNeiCell);
         }
+
+        nConnnectedComponentGraph[nCellIdx] = nNeiList;
     }
 }
 
 
-<<<<<<< HEAD
-int Foam::hpathRenumber::hpathFinder::getStartingCellInConnnectedComponent(const std::vector<int>& nCellsInConnectedComponent) {
-=======
-int Foam::hpathRenumber::hpathFinder::getStartingCellInConnnectedComponent
+Foam::label Foam::hpathRenumber::hpathFinder::getStartingCellInConnnectedComponent
 (
-    const std::vector<int>& nCellsInConnectedComponent
+    const Foam::labelList& nCellsInConnectedComponent
 )
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
 
     // Strategy for choosing a starting cell in the connected component:
     //      1) Start from an arbitrary cell within the connected component
@@ -1072,36 +779,28 @@ int Foam::hpathRenumber::hpathFinder::getStartingCellInConnnectedComponent
     //      - In these cases, by starting from the farthest cell we guarantee it will be at one of the edges of the path
 
     // It does not matter which cell we start from, so arbitrarly start from first cell in the connected component
-    int nCellIdx = nCellsInConnectedComponent[0];
+    label nCellIdx = nCellsInConnectedComponent[0];
 
     // Find farthest cell from nCellIdx
     // This is done using a standard BFS algorithm
-    std::queue<int> nBfsQueue;
+    Foam::CircularBuffer<label> nBfsQueue;
 
     bBFSFoundCell[nCellIdx] = true;
-    nBfsQueue.push(nCellIdx);
+    nBfsQueue.push_back(nCellIdx);
 
-    int nCurrCell = -1;
+    label nCurrCell = -1;
 
-<<<<<<< HEAD
-    while(!nBfsQueue.empty()) {
-=======
     while(!nBfsQueue.empty())
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-        nCurrCell = nBfsQueue.front();
-        nBfsQueue.pop();
+        nCurrCell = nBfsQueue.first();
+        nBfsQueue.pop_front();
 
         // Push all cells that have not yet been found by the BFS
-<<<<<<< HEAD
-        for (int nNeiCell : nConnnectedComponentGraph[nCurrCell]) {
-=======
-        for (int nNeiCell : nConnnectedComponentGraph[nCurrCell])
+        for (label nNeiCell : nConnnectedComponentGraph[nCurrCell])
         {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
             if (bBFSFoundCell[nNeiCell]) continue;
             bBFSFoundCell[nNeiCell] = true;
-            nBfsQueue.push(nNeiCell);
+            nBfsQueue.push_back(nNeiCell);
         }
     }
 
@@ -1110,17 +809,12 @@ int Foam::hpathRenumber::hpathFinder::getStartingCellInConnnectedComponent
 }
 
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::reorderDistFromStart(int nStartCell, const std::vector<int>& nCellsInConnectedComponent) {
-
-=======
 void Foam::hpathRenumber::hpathFinder::reorderDistFromStart
 (
-    int nStartCell,
-    const std::vector<int>& nCellsInConnectedComponent
+    label nStartCell,
+    const Foam::labelList& nCellsInConnectedComponent
 )
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // findPath() tends to find much better results when each cell's neighbours are ordered in a specific way based on their face/point-distance to the starting cell
 
     // First, this method finds for each cell in the connected component its face-distance from the start cell
@@ -1129,85 +823,56 @@ void Foam::hpathRenumber::hpathFinder::reorderDistFromStart
 
     //  - Both of these are done using a BFS algorithm: the first using face-neigbours and the second using point-neighbours
 
-    std::queue<int> nBfsQueue;
+    Foam::CircularBuffer<label> nBfsQueue;
 
     // Find the face-distance of all cells in the connected component from the starting cell
     nCellFaceDistFromStart[nStartCell] = 0;
     // Push starting cell to queue
-    nBfsQueue.push(nStartCell);
+    nBfsQueue.push_back(nStartCell);
 
-<<<<<<< HEAD
-    while (!nBfsQueue.empty()) {
-=======
     while (!nBfsQueue.empty())
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-        int nCurrCell = nBfsQueue.front();
-        nBfsQueue.pop();
+        label nCurrCell = nBfsQueue.first();
+        nBfsQueue.pop_front();
 
         // Push all face-neighbours that haven't already had their face distance found
         // Face-neighbours are saved in the ConnnectedComponent-Graph
-<<<<<<< HEAD
-        for (int nNeiCell : nConnnectedComponentGraph[nCurrCell]) {
-=======
-        for (int nNeiCell : nConnnectedComponentGraph[nCurrCell])
+        for (label nNeiCell : nConnnectedComponentGraph[nCurrCell])
         {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
             if (nCellFaceDistFromStart[nNeiCell] != -1) continue;
 
             nCellFaceDistFromStart[nNeiCell] = nCellFaceDistFromStart[nCurrCell] + 1;
-            nBfsQueue.push(nNeiCell);
+            nBfsQueue.push_back(nNeiCell);
         }
     }
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Find the *point*-distance of all cells in the connected component from the starting cell
     nCellPointDistFromStart[nStartCell] = 0;
     // Push starting cell to queue
-    nBfsQueue.push(nStartCell);
+    nBfsQueue.push_back(nStartCell);
 
-<<<<<<< HEAD
-    while (!nBfsQueue.empty()) {
-=======
     while (!nBfsQueue.empty())
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
-        int nCurrCell = nBfsQueue.front();
-        nBfsQueue.pop();
+        label nCurrCell = nBfsQueue.first();
+        nBfsQueue.pop_front();
 
         // Push all the point-neighbour that:
         //      1) Haven't already been pushed by the BFS previously
         //      2) Are in the same layer as the Starting Cell
         //      3) Are in the same connected component as the Starting Cell
         // Point neighbours are saved in the Mesh-Graph
-<<<<<<< HEAD
-        for (int nNeiCell : nMeshGraph[nCurrCell]) {
-=======
-        for (int nNeiCell : nMeshGraph[nCurrCell])
+        for (label nNeiCell : nMeshGraph[nCurrCell])
         {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
             if (bIsRenumbered[nNeiCell]) continue;
             if (nCellPointDistFromStart[nNeiCell] != -1) continue;
             if (nCellLayerIndex[nNeiCell] != nCellLayerIndex[nStartCell]) continue;
             if (nCellConnnectedComponentIndex[nNeiCell] != nCellConnnectedComponentIndex[nStartCell]) continue;
 
             nCellPointDistFromStart[nNeiCell] = nCellPointDistFromStart[nCurrCell] + 1;
-            nBfsQueue.push(nNeiCell);
+            nBfsQueue.push_back(nNeiCell);
         }
     }
-<<<<<<< HEAD
-    
-    for (int nCellIdx : nCellsInConnectedComponent) {
-        // Sorting of neighbours is done in two levels:
-        //      1) Neigbours are sorted *descending*-order based on their *point*-distance from the starting cell
-        //      2) Neigbours with the same *point*-distance are sorted in *ascending*-order based on their *face*-distance from the starting cell
-        std::sort(nConnnectedComponentGraph[nCellIdx].begin(), nConnnectedComponentGraph[nCellIdx].end(), [this](int i, int j) {
-=======
 
-    for (int nCellIdx : nCellsInConnectedComponent)
+    for (label nCellIdx : nCellsInConnectedComponent)
     {
         // Sorting of neighbours is done in two levels:
         //      1) Neigbours are sorted *descending*-order based on their *point*-distance from the starting cell
@@ -1216,57 +881,40 @@ void Foam::hpathRenumber::hpathFinder::reorderDistFromStart
         (
             nConnnectedComponentGraph[nCellIdx].begin(),
             nConnnectedComponentGraph[nCellIdx].end(),
-            [this](int i, int j) {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
+            [this](label i, label j) {
             if (nCellPointDistFromStart[i] != nCellPointDistFromStart[j])
                 return nCellPointDistFromStart[i] > nCellPointDistFromStart[j];
             else
                 return nCellFaceDistFromStart[i] < nCellFaceDistFromStart[j];
-<<<<<<< HEAD
-        });
-=======
             }
         );
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     }
 }
 
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::findPath(int nStartCell, Foam::labelList& cellOrder) {
-
-=======
 void Foam::hpathRenumber::hpathFinder::findPath
 (
-    int nStartCell, Foam::labelList& cellOrder
+    label nStartCell, Foam::labelList& cellOrder
 )
 {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
     // Tries to find the furthest cell from the starting cell within the ConnectedComponent-Graph
     // This is done using a DFS algorithm:
     //      - Run DFS from starting cell
     //      - Return path to deepest cell found by DFS
 
     // Run a standard DFS algorithm from starting cell
-    std::stack<int> nDfsStack;
-    nDfsStack.push(nStartCell);
+    Foam::CircularBuffer<label> nDfsStack;
+    nDfsStack.push_back(nStartCell);
     nDFSParentCell[nStartCell] = nStartCell;
 
     // Used for finding and returning the best path
-    int nBestCell = nStartCell;
+    label nBestCell = nStartCell;
 
-<<<<<<< HEAD
-    while(!nDfsStack.empty()) {
-        int nCurrCell = nDfsStack.top();
-        nDfsStack.pop();
-        
-=======
     while (!nDfsStack.empty())
     {
-        int nCurrCell = nDfsStack.top();
-        nDfsStack.pop();
+        label nCurrCell = nDfsStack.last();
+        nDfsStack.pop_back();
 
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         // If the cell has already been popped previously, we can skip it
         if (nDFSCellDepth[nCurrCell] != -1) continue;
 
@@ -1278,37 +926,25 @@ void Foam::hpathRenumber::hpathFinder::findPath
             nBestCell = nCurrCell;
         }
 
-<<<<<<< HEAD
-        // Cells will be popped from the stack in reverse order from how we pushed them 
-=======
         // Cells will be popped from the stack in reverse order from how we pushed them
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         // By iterating over the neighbors in reverse order, cells will be popped in the correct order
-        for (int nNeiIdx = nConnnectedComponentGraph[nCurrCell].size() - 1; nNeiIdx >= 0; nNeiIdx--)
+        for (label nNeiIdx = nConnnectedComponentGraph[nCurrCell].size() - 1; nNeiIdx >= 0; nNeiIdx--)
         {
-            int nNeiCell = nConnnectedComponentGraph[nCurrCell][nNeiIdx];
-<<<<<<< HEAD
-            if (nDFSCellDepth[nNeiCell] == -1) {
-=======
+            label nNeiCell = nConnnectedComponentGraph[nCurrCell][nNeiIdx];
             if (nDFSCellDepth[nNeiCell] == -1)
             {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
                 // Notice we only update the nCellDepth value of a cell when we POP it from the stack
                 // This means some cells may be pushed many times, but they will only be popped once
                 nDFSParentCell[nNeiCell] = nCurrCell;
-                nDfsStack.push(nNeiCell);
+                nDfsStack.push_back(nNeiCell);
             }
         }
     }
 
-    int nCellIdx = nBestCell;
-    int nPrevCell = -1;
-<<<<<<< HEAD
-    while(nCellIdx != nPrevCell) {
-=======
+    label nCellIdx = nBestCell;
+    label nPrevCell = -1;
     while (nCellIdx != nPrevCell)
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         cellOrder[nFoundCellCount++] = nCellIdx;
         bIsRenumbered[nCellIdx] = true;
 
@@ -1319,20 +955,14 @@ void Foam::hpathRenumber::hpathFinder::findPath
 }
 
 
-<<<<<<< HEAD
-void Foam::hpathRenumber::hpathFinder::resetCells(std::vector<int>& nCellList) {
-    // Reset the data structures for the cells that were not found in the renumbering
-    for (int nCellIdx : nCellList) {
-=======
 void Foam::hpathRenumber::hpathFinder::resetCells
 (
-    std::vector<int>& nCellList
+    Foam::labelList& nCellList
 )
 {
     // Reset the data structures for the cells that were not found in the renumbering
-    for (int nCellIdx : nCellList)
+    for (label nCellIdx : nCellList)
     {
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
         nCellConnnectedComponentIndex[nCellIdx] = -1;
         nCellPointDistFromStart[nCellIdx] = -1;
         nCellFaceDistFromStart[nCellIdx] = -1;
@@ -1342,8 +972,5 @@ void Foam::hpathRenumber::hpathFinder::resetCells
     }
 }
 
-<<<<<<< HEAD
-=======
 
 // ************************************************************************* //
->>>>>>> 69df0ad468d9546727669151caaddbff149e8079
