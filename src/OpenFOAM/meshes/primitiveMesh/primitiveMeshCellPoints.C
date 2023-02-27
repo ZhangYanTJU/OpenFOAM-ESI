@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,11 +57,63 @@ void Foam::primitiveMesh::calcCellPoints() const
             << "cellPoints already calculated"
             << abort(FatalError);
     }
-    else
+    else if (hasPointCells())
     {
         // Invert pointCells
         cpPtr_ = new labelListList(nCells());
         invertManyToMany(nCells(), pointCells(), *cpPtr_);
+    }
+    else
+    {
+        // Calculate cell-point topology
+
+        const cellList& cL = cells();
+        const faceList& fL = faces();
+
+        cpPtr_ = new labelListList(nCells());
+        labelListList& cellPoints = *cpPtr_;
+
+        // Mark points we have found as to not count them twice for the same cell
+        Foam::bitSet foundPoint(nPoints(), false);
+
+        forAll (cL, cellIdx)
+        {
+            // List of faces on the cell
+            const Foam::labelList& cellFaces = cL[cellIdx];
+            // List that will contain the cell's points
+            Foam::labelList& neiPoints = cellPoints[cellIdx];
+
+            // Over-Estimate number of neighbour points
+            int pointCnt = 0;
+            for (label faceIdx : cellFaces)
+            {
+                pointCnt += fL[faceIdx].size();
+            }
+            neiPoints.resize(pointCnt);
+
+            // Find the neighbour points
+            pointCnt = 0;
+            for (label faceIdx : cellFaces)
+            {
+                for (label pointIdx : fL[faceIdx])
+                {
+                    // This check guarantees every point is added exactly once
+                    if (foundPoint[pointIdx]) continue;
+
+                    foundPoint[pointIdx] = true;
+                    neiPoints[pointCnt++] = pointIdx;
+                }
+            }
+
+            // Resize to actual value
+            neiPoints.resize(pointCnt);
+
+            // Clear bitSet before next iteration
+            for (label pointIdx : neiPoints)
+            {
+                foundPoint[pointIdx] = false;
+            }
+        }
     }
 }
 

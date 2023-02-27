@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +35,6 @@ License
 
 void Foam::primitiveMesh::calcPointCells() const
 {
-    // Loop through cells and mark up points
-
     if (debug)
     {
         Pout<< "primitiveMesh::calcPointCells() : "
@@ -61,48 +60,10 @@ void Foam::primitiveMesh::calcPointCells() const
     }
     else
     {
-        const cellList& cf = cells();
-
-        // Count number of cells per point
-
-        labelList npc(nPoints(), Zero);
-
-        forAll(cf, celli)
-        {
-            const labelList curPoints = cf[celli].labels(faces());
-
-            forAll(curPoints, pointi)
-            {
-                label ptI = curPoints[pointi];
-
-                npc[ptI]++;
-            }
-        }
-
-
-        // Size and fill cells per point
-
-        pcPtr_ = new labelListList(npc.size());
-        labelListList& pointCellAddr = *pcPtr_;
-
-        forAll(pointCellAddr, pointi)
-        {
-            pointCellAddr[pointi].setSize(npc[pointi]);
-        }
-        npc = 0;
-
-
-        forAll(cf, celli)
-        {
-            const labelList curPoints = cf[celli].labels(faces());
-
-            forAll(curPoints, pointi)
-            {
-                label ptI = curPoints[pointi];
-
-                pointCellAddr[ptI][npc[ptI]++] = celli;
-            }
-        }
+        // Invert cellPoints
+        (void)cellPoints();
+        pcPtr_ = new labelListList(nPoints());
+        invertManyToMany(nPoints(), cellPoints(), *pcPtr_);
     }
 }
 
