@@ -65,6 +65,46 @@ void Foam::primitiveMesh::calcPointCells() const
         pcPtr_ = new labelListList(nPoints());
         invertManyToMany(nPoints(), cellPoints(), *pcPtr_);
     }
+    else if (hasPointFaces())
+    {
+        // Calculate point-cell from point-face information
+
+        const labelList& own = faceOwner();
+        const labelList& nei = faceNeighbour();
+        const labelListList& pFaces = pointFaces();
+
+        const label loopLen = nPoints();
+
+        pcPtr_ = new labelListList(nPoints());
+        auto& pointCellAddr = *pcPtr_;
+
+        DynamicList<label> storage(256);
+
+        for (label pointi = 0; pointi < loopLen; ++pointi)
+        {
+            // Clear any previous contents
+            storage.clear();
+
+            for (const label facei : pFaces[pointi])
+            {
+                // Owner cell
+                storage.push_back(own[facei]);
+
+                // Neighbour cell
+                if (facei < nInternalFaces())
+                {
+                    storage.push_back(nei[facei]);
+                }
+            }
+
+            // Sort + unique to eliminate duplicates
+            std::sort(storage.begin(), storage.end());
+            auto last = std::unique(storage.begin(), storage.end());
+            storage.resize(label(last - storage.begin()));
+
+            pointCellAddr[pointi] = storage;
+        }
+    }
     else
     {
         // Calculate point-cell topology
