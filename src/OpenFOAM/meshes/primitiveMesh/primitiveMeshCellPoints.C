@@ -75,9 +75,6 @@ void Foam::primitiveMesh::calcCellPoints() const
         const faceList& faceLst = faces();
 
         // Vertex labels for the current cell
-        // Note: since the number of points per cell is relatively small,
-        // using a bitSet to track does not help much.
-        // Using a labelHashSet to track has too many allocations.
         DynamicList<label> vertices(256);
 
 
@@ -92,15 +89,16 @@ void Foam::primitiveMesh::calcCellPoints() const
             {
                 for (const label pointi : faceLst[facei])
                 {
-                    // Only once for each point id
-                    if (!vertices.contains(pointi))
-                    {
-                        vertices.push_back(pointi);
-                    }
+                    vertices.push_back(pointi);
                 }
             }
 
-            cellPointAddr[celli] = vertices;  // unsorted
+            // Sort + unique to eliminate duplicates
+            std::sort(vertices.begin(), vertices.end());
+            auto last = std::unique(vertices.begin(), vertices.end());
+            vertices.resize(label(last - vertices.begin()));
+
+            cellPointAddr[celli] = vertices;
         }
     }
 }
