@@ -72,11 +72,12 @@ void Foam::primitiveMesh::calcPointCells() const
         const cellList& cellLst = cells();
         const faceList& faceLst = faces();
 
-        // For tracking (only use each point id once)
-        bitSet usedPoints(nPoints());
-
         // Vertex labels for the current cell
+        // Note: since the number of points per cell is relatively small,
+        // using a bitSet to track does not help much.
+        // Using a labelHashSet to track has too many allocations.
         DynamicList<label> vertices(256);
+
 
         const label loopLen = nCells();
 
@@ -87,7 +88,6 @@ void Foam::primitiveMesh::calcPointCells() const
         for (label celli = 0; celli < loopLen; ++celli)
         {
             // Clear any previous contents
-            usedPoints.unset(vertices);
             vertices.clear();
 
             for (const label facei : cellLst[celli])
@@ -95,7 +95,7 @@ void Foam::primitiveMesh::calcPointCells() const
                 for (const label pointi : faceLst[facei])
                 {
                     // Only once for each point id
-                    if (usedPoints.set(pointi))
+                    if (!vertices.contains(pointi))
                     {
                         vertices.push_back(pointi);
                         ++pointCount[pointi];
@@ -121,7 +121,6 @@ void Foam::primitiveMesh::calcPointCells() const
         for (label celli = 0; celli < loopLen; ++celli)
         {
             // Clear any previous contents
-            usedPoints.unset(vertices);
             vertices.clear();
 
             for (const label facei : cellLst[celli])
@@ -129,7 +128,7 @@ void Foam::primitiveMesh::calcPointCells() const
                 for (const label pointi : faceLst[facei])
                 {
                     // Only once for each point id
-                    if (usedPoints.set(pointi))
+                    if (!vertices.contains(pointi))
                     {
                         vertices.push_back(pointi);
                         pointCellAddr[pointi][pointCount[pointi]++] = celli;
