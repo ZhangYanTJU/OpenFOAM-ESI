@@ -158,7 +158,7 @@ Foam::tokenList Foam::functionEntries::evalEntry::evaluate
     OTstream toks;
     result.writeValue(toks);
 
-    return std::move(toks);
+    return tokenList(std::move(toks.tokens()));
 }
 
 
