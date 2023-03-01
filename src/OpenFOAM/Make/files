@@ -316,6 +316,9 @@ primitiveEntry = $(dictionary)/primitiveEntry
 $(primitiveEntry)/primitiveEntry.C
 $(primitiveEntry)/primitiveEntryIO.C
 
+formattingEntry = $(dictionary)/formattingEntry
+$(formattingEntry)/formattingEntry.C
+
 dictionaryEntry = $(dictionary)/dictionaryEntry
 $(dictionaryEntry)/dictionaryEntry.C
 $(dictionaryEntry)/dictionaryEntryIO.C

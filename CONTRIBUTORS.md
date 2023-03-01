@@ -33,6 +33,7 @@ It is likely incomplete...
 - Alexander Kabat vel Job
 - Thilo Knacke
 - Shannon Leakey
+- Sergey Lesnik
 - Tommaso Lucchini
 - Graham Macpherson
 - Alexey Matveichev
@@ -59,6 +60,7 @@ It is likely incomplete...
 - Vuko Vukcevic
 - Yi Wang
 - Norbert Weber
+- Gregor Weiss
 - Volker Weissmann
 - Henry Weller
 - Niklas Wikstrom
