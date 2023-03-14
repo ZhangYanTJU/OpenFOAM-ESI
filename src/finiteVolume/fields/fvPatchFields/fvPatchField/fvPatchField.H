@@ -102,7 +102,8 @@ class fvPatchFieldBase
         word patchType_;
 
 
-protected:
+//protected:
+public:
 
     // Protected Member Functions
 

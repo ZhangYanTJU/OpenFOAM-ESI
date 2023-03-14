@@ -76,6 +76,112 @@ void GeometricField<scalar, fvPatchField, volMesh>::replace
     *this == gsf;
 }
 
+
+template<>
+bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool doExit
+) const
+{
+    if (!this->size())
+    {
+        return true;
+    }
+
+    if (GeometricField<scalar, fvPatchField, volMesh>::debug)
+    {
+        const auto& fvp0 = this->operator[](0);
+        PoutInFunction
+            << "Checking boundary consistency for field "
+            << fvp0.internalField().name()
+            << endl;
+    }
+
+    // Store old value
+    List<Field<scalar>> oldBfld(this->size());
+    boolList oldUpdated(this->size());
+    boolList oldManipulated(this->size());
+
+    forAll(*this, patchi)
+    {
+        if (this->set(patchi) && this->operator[](patchi).size())
+        {
+            const auto& fvp = this->operator[](patchi);
+            oldUpdated[patchi] = fvp.updated();
+            oldManipulated[patchi] = fvp.manipulatedMatrix();
+            oldBfld[patchi] = fvp;
+        }
+    }
+
+    // Re-evaluate
+    const_cast<GeometricBoundaryField<scalar, fvPatchField, volMesh>&>
+    (
+        *this
+    ).evaluate();
+
+    // Check
+    bool ok = true;
+    forAll(*this, patchi)
+    {
+        if (this->set(patchi) && this->operator[](patchi).size())
+        {
+            const auto& pfld = this->operator[](patchi);
+            const auto& oldPfld = oldBfld[patchi];
+
+            //if (pfld != oldBfld[patchi])
+            forAll(pfld, facei)
+            {
+                if (mag(pfld[facei]-oldPfld[facei]) > tol)
+                {
+                    ok = false;
+
+                    if (doExit)
+                    {
+                        FatalErrorInFunction << "Field "
+                            << pfld.internalField().name()
+                            << " is not evaluated?"
+                            << " On patch " << pfld.patch().name()
+                            << " : average of field = "
+                            << average(oldBfld[patchi])
+                            << ". Average of evaluated field = "
+                            << average(pfld)
+                            << exit(FatalError);
+                    }
+                }
+            }
+        }
+    }
+
+    // Restore bfld, updated
+    forAll(*this, patchi)
+    {
+        if (this->set(patchi) && this->operator[](patchi).size())
+        {
+            auto& fvp = const_cast<fvPatchField<scalar>&>
+            (
+                this->operator[](patchi)
+            );
+            fvp.setUpdated(oldUpdated[patchi]);
+            fvp.setManipulated(oldManipulated[patchi]);
+            Field<scalar>& vals = fvp;
+            vals = std::move(oldBfld[patchi]);
+        }
+    }
+
+    if (GeometricField<scalar, fvPatchField, volMesh>::debug)
+    {
+        const auto& fvp0 = this->operator[](0);
+        PoutInFunction
+            << "Result of checking for field "
+            << fvp0.internalField().name()
+            << " : " << ok
+            << endl;
+    }
+
+    return ok;
+}
+
 } // End namespace Foam
 
 

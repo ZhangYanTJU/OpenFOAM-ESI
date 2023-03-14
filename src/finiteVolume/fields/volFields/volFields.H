@@ -64,6 +64,41 @@ void GeometricField<scalar, fvPatchField, volMesh>::replace
     const GeometricField<scalar, fvPatchField, volMesh>& sf
 );
 
+template<>
+bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool doExit
+) const;
+
+//template<>
+//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
+//(
+//    const scalar tol,
+//    const bool doExit
+//) const;
+//
+//template<>
+//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
+//(
+//    const scalar tol,
+//    const bool doExit
+//) const;
+//
+//template<>
+//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
+//(
+//    const scalar tol,
+//    const bool doExit
+//) const;
+//
+//template<>
+//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
+//(
+//    const scalar tol,
+//    const bool doExit
+//) const;
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

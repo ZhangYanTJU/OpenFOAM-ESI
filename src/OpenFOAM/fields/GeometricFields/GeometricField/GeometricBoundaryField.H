@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -193,6 +193,11 @@ public:
 
         //- Write dictionary entries of the individual boundary fields.
         void writeEntries(Ostream& os) const;
+
+        //- Helper: check if field has been evaluated. If not:
+        //      exit = true  : FatalError
+        //      exit = false : return bool
+        bool check(const scalar tol = Zero, const bool exit = true) const;
 
 
     // Member Operators

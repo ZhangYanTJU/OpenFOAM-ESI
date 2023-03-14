@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -674,6 +674,76 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::writeEntries
         os << pfld;
         os.endBlock();
     }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::check
+(
+    const scalar tol,
+    const bool doExit
+) const
+{
+//    // Store old value
+//    List<Field<Type>> oldBfld(this->size());
+//
+//    forAll(*this, patchi)
+//    {
+//        if (this->set(patchi))
+//        {
+//            oldBfld[patchi] = this->operator[](patchi);
+//        }
+//    }
+//
+//    // Re-evaluate
+//    const_cast<GeometricBoundaryField<Type, PatchField, GeoMesh>&>
+//    (
+//        *this
+//    ).evaluate();
+
+    // Check
+    bool ok = true;
+//    forAll(*this, patchi)
+//    {
+//        if (this->set(patchi))
+//        {
+//            const auto& pfld = this->operator[](patchi);
+//            const auto& oldPfld = oldBfld[patchi];
+//
+//            //if (pfld != oldBfld[patchi])
+//            forAll(pfld, facei)
+//            {
+//                if (mag(pfld[facei]-oldPfld[facei]) > tol)
+//                {
+//                    ok = false;
+//
+//                    if (doExit)
+//                    {
+//                        FatalErrorInFunction << "Field "
+//                            << pfld.internalField().name()
+//                            << " is not evaluated?"
+//                            << " On patch " << pfld.patch().name()
+//                            << " : average of field = "
+//                            << average(oldBfld[patchi])
+//                            << ". Average of evaluated field = "
+//                            << average(pfld)
+//                            << exit(FatalError);
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    // Restore bfld
+//    forAll(*this, patchi)
+//    {
+//        if (this->set(patchi))
+//        {
+//            const Field<Type>& vals = this->operator[](patchi);
+//            const_cast<Field<Type>&>(vals) = std::move(oldBfld[patchi]);
+//        }
+//    }
+    return ok;
 }
 
 

@@ -887,6 +887,16 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::clone() const
 template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricField<Type, PatchField, GeoMesh>::~GeometricField()
 {
+    /*
+    if (debug)
+    {
+        // Problem: temporary fields might have their internal field
+        // already stolen so boundary fields will not be able to access the
+        // internal field anymore
+        boundaryField_.check();
+    }
+    */
+
     deleteDemandDrivenData(field0Ptr_);
     deleteDemandDrivenData(fieldPrevIterPtr_);
 }
