@@ -54,7 +54,10 @@ Foam::IOPosition<CloudType>::IOPosition
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-bool Foam::IOPosition<CloudType>::write(const bool valid) const
+bool Foam::IOPosition<CloudType>::write
+(
+    const bool /* writeOnProc */
+) const
 {
     return regIOobject::write(cloud_.size());
 }

@@ -59,7 +59,7 @@ Foam::IOField<Type>::IOField(const IOobject& io)
 
 
 template<class Type>
-Foam::IOField<Type>::IOField(const IOobject& io, const bool valid)
+Foam::IOField<Type>::IOField(const IOobject& io, const bool readOnProc)
 :
     regIOobject(io)
 {
@@ -68,9 +68,9 @@ Foam::IOField<Type>::IOField(const IOobject& io, const bool valid)
 
     if (isReadRequired())
     {
-        Istream& is = readStream(typeName, valid);
+        Istream& is = readStream(typeName, readOnProc);
 
-        if (valid)
+        if (readOnProc)
         {
             is >> *this;
         }
@@ -78,11 +78,11 @@ Foam::IOField<Type>::IOField(const IOobject& io, const bool valid)
     }
     else if (isReadOptional())
     {
-        bool haveFile = headerOk();
+        const bool haveFile = headerOk();
 
-        Istream& is = readStream(typeName, haveFile && valid);
+        Istream& is = readStream(typeName, readOnProc && haveFile);
 
-        if (valid && haveFile)
+        if (readOnProc && haveFile)
         {
             is >> *this;
         }

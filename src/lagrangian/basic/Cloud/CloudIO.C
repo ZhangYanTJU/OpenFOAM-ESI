@@ -134,15 +134,15 @@ void Foam::Cloud<ParticleType>::initCloud(const bool checkClass)
 
     IOPosition<Cloud<ParticleType>> ioP(*this, geometryType_);
 
-    const bool valid = ioP.headerOk();
-    Istream& is = ioP.readStream(checkClass ? typeName : "", valid);
-    if (valid)
+    const bool readOnProc = ioP.headerOk();
+    Istream& is = ioP.readStream(checkClass ? typeName : "", readOnProc);
+    if (readOnProc)
     {
         ioP.readData(is, *this);
         ioP.close();
     }
 
-    if (!valid && debug)
+    if (!readOnProc && debug)
     {
         Pout<< "Cannot read particle positions file:" << nl
             << "    " << ioP.objectPath() << nl
@@ -329,7 +329,7 @@ template<class ParticleType>
 bool Foam::Cloud<ParticleType>::writeObject
 (
     IOstreamOption streamOpt,
-    const bool
+    const bool /* writeOnProc */
 ) const
 {
     writeCloudUniformProperties();

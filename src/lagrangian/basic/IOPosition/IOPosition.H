@@ -91,7 +91,7 @@ public:
 
         virtual void readData(Istream&, CloudType&);
 
-        virtual bool write(const bool valid = true) const;
+        virtual bool write(const bool writeOnProc = true) const;
 
         virtual bool writeData(Ostream& os) const;
 };

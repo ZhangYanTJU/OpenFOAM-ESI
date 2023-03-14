@@ -80,7 +80,7 @@ public:
         explicit IOField(const IOobject& io);
 
         //- Construct from IOobject, with local processor conditional reading
-        IOField(const IOobject& io, const bool valid);
+        IOField(const IOobject& io, const bool readOnProc);
 
         //- Construct from IOobject and zero size (if not read)
         IOField(const IOobject& io, Foam::zero);
