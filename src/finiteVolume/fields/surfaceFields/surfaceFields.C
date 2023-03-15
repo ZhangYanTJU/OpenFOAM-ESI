@@ -45,6 +45,37 @@ defineTemplateTypeNameAndDebug(surfaceSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(surfaceSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(surfaceTensorField, 0);
 
+defineTemplateDebugSwitchWithName
+(
+    surfaceScalarField::Boundary,
+    "surfaceScalarField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    surfaceVectorField::Boundary,
+    "surfaceVectorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    surfaceSphericalTensorField::Boundary,
+    "surfaceSphericalTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    surfaceSymmTensorField::Boundary,
+    "surfaceSymmTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    surfaceTensorField::Boundary,
+    "surfaceTensorField::Boundary",
+    0
+);
+
 } // End namespace Foam
 
 

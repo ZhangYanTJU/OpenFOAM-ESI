@@ -103,16 +103,6 @@ protected:
         //  Useful when initially constructed without a dictionary
         virtual void readDict(const dictionary& dict);
 
-        //- Set updated state
-        void setUpdated(bool state) noexcept
-        {
-            updated_ = state;
-        }
-
-        //- Set matrix manipulated state. Currently a no-op for faPatchField.
-        void setManipulated(bool state) noexcept
-        {}
-
 
 public:
 
@@ -224,11 +214,10 @@ public:
             return updated_;
         }
 
-        //- True if the matrix has already been manipulated.
-        //- Currently ignored (always false) for faPatchField
-        bool manipulatedMatrix() const noexcept
+        //- Set updated state
+        void setUpdated(bool state) noexcept
         {
-            return false;
+            updated_ = state;
         }
 
 

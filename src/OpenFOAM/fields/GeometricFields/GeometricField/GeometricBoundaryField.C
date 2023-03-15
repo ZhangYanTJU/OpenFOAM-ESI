@@ -34,6 +34,149 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+template<class CheckPatchFieldType>
+bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
+(
+    const scalar tol,
+    const bool doExit
+) const
+{
+    if (!this->size())
+    {
+        return true;
+    }
+
+    if (debug&2)
+    {
+        const auto& pfld0 = this->operator[](0);
+        PoutInFunction
+            << " Checking boundary consistency for field "
+            << pfld0.internalField().name()
+            << endl;
+    }
+
+    auto& bfld = const_cast<GeometricBoundaryField<Type, PatchField, GeoMesh>&>
+    (
+        *this
+    );
+
+
+    // Store old value
+    List<Field<Type>> oldBfld(this->size());
+    boolList oldUpdated(this->size());
+    //Note: areaFields (finiteArea) do not have manipulatedMatrix() flag. TBD.
+    //boolList oldManipulated(this->size());
+
+    for (auto& pfld : bfld)
+    {
+        if (isA<CheckPatchFieldType>(pfld))
+        {
+            const label patchi = pfld.patch().index();
+            oldUpdated[patchi] = pfld.updated();
+            oldBfld[patchi] = pfld;
+            //oldManipulated[patchi] = pfld.manipulatedMatrix();
+        }
+    }
+
+
+    // Re-evaluate
+    {
+        const label startOfRequests = UPstream::nRequests();
+
+        for (auto& pfld : bfld)
+        {
+            if (isA<CheckPatchFieldType>(pfld))
+            {
+                pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
+            }
+        }
+
+        // Wait for outstanding requests
+        UPstream::waitRequests(startOfRequests);
+
+        for (auto& pfld : bfld)
+        {
+            if (isA<CheckPatchFieldType>(pfld))
+            {
+                pfld.evaluate(UPstream::commsTypes::nonBlocking);
+            }
+        }
+    }
+
+
+    // Check
+    bool ok = true;
+    for (auto& pfld : bfld)
+    {
+        if (isA<CheckPatchFieldType>(pfld))
+        {
+            const label patchi = pfld.patch().index();
+            const auto& oldPfld = oldBfld[patchi];
+
+            //if (pfld != oldBfld[patchi])
+            forAll(pfld, facei)
+            {
+                if (mag(pfld[facei]-oldPfld[facei]) > tol)
+                {
+                    ok = false;
+
+                    if (doExit)
+                    {
+                        FatalErrorInFunction << "Field "
+                            << pfld.internalField().name()
+                            << " is not evaluated?"
+                            << " On patch " << pfld.patch().name()
+                            << " type " << pfld.type()
+                            << " : average of field = "
+                            << average(oldBfld[patchi])
+                            << ". Average of evaluated field = "
+                            << average(pfld)
+                            << exit(FatalError);
+                    }
+                    else
+                    {
+                        WarningInFunction << "Field "
+                            << pfld.internalField().name()
+                            << " is not evaluated?"
+                            << " On patch " << pfld.patch().name()
+                            << " type " << pfld.type()
+                            << " : average of field = "
+                            << average(oldBfld[patchi])
+                            << ". Average of evaluated field = "
+                            << average(pfld)
+                            << endl;
+                    }
+                }
+            }
+        }
+    }
+
+    // Restore bfld, updated
+    for (auto& pfld : bfld)
+    {
+        if (isA<CheckPatchFieldType>(pfld))
+        {
+            const label patchi = pfld.patch().index();
+            pfld.setUpdated(oldUpdated[patchi]);
+            Field<Type>& vals = pfld;
+            vals = std::move(oldBfld[patchi]);
+            //pfld.setManipulated(oldManipulated[patchi]);
+        }
+    }
+
+    if (debug&2)
+    {
+        const auto& pfld0 = this->operator[](0);
+        PoutInFunction
+            << " Result of checking for field "
+            << pfld0.internalField().name() << " : " << ok << endl;
+    }
+
+    return ok;
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
 (
     const DimensionedField<Type, GeoMesh>& field,

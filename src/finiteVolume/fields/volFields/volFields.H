@@ -68,36 +68,32 @@ template<>
 bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
 (
     const scalar tol,
-    const bool doExit
+    const bool exitIfBad
 ) const;
-
-//template<>
-//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
-//(
-//    const scalar tol,
-//    const bool doExit
-//) const;
-//
-//template<>
-//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
-//(
-//    const scalar tol,
-//    const bool doExit
-//) const;
-//
-//template<>
-//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
-//(
-//    const scalar tol,
-//    const bool doExit
-//) const;
-//
-//template<>
-//void GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
-//(
-//    const scalar tol,
-//    const bool doExit
-//) const;
+template<>
+bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const;
+template<>
+bool GeometricBoundaryField<sphericalTensor, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const;
+template<>
+bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const;
+template<>
+bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "volFields.H"
+#include "coupledFvPatchField.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -44,6 +45,37 @@ defineTemplateTypeNameAndDebug(volVectorField, 0);
 defineTemplateTypeNameAndDebug(volSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(volSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(volTensorField, 0);
+
+defineTemplateDebugSwitchWithName
+(
+    volScalarField::Boundary,
+    "volScalarField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volVectorField::Boundary,
+    "volVectorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volSphericalTensorField::Boundary,
+    "volSphericalTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volSymmTensorField::Boundary,
+    "volSymmTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volTensorField::Boundary,
+    "volTensorField::Boundary",
+    0
+);
 
 } // End namespace Foam
 
@@ -81,105 +113,54 @@ template<>
 bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
 (
     const scalar tol,
-    const bool doExit
+    const bool exitIfBad
 ) const
 {
-    if (!this->size())
-    {
-        return true;
-    }
+    return checkConsistency<coupledFvPatchField<scalar>>(tol, exitIfBad);
+}
 
-    if (GeometricField<scalar, fvPatchField, volMesh>::debug)
-    {
-        const auto& fvp0 = this->operator[](0);
-        PoutInFunction
-            << "Checking boundary consistency for field "
-            << fvp0.internalField().name()
-            << endl;
-    }
+template<>
+bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFvPatchField<vector>>(tol, exitIfBad);
+}
 
-    // Store old value
-    List<Field<scalar>> oldBfld(this->size());
-    boolList oldUpdated(this->size());
-    boolList oldManipulated(this->size());
-
-    forAll(*this, patchi)
-    {
-        if (this->set(patchi) && this->operator[](patchi).size())
-        {
-            const auto& fvp = this->operator[](patchi);
-            oldUpdated[patchi] = fvp.updated();
-            oldManipulated[patchi] = fvp.manipulatedMatrix();
-            oldBfld[patchi] = fvp;
-        }
-    }
-
-    // Re-evaluate
-    const_cast<GeometricBoundaryField<scalar, fvPatchField, volMesh>&>
+template<>
+bool GeometricBoundaryField<sphericalTensor, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFvPatchField<sphericalTensor>>
     (
-        *this
-    ).evaluate();
+        tol,
+        exitIfBad
+    );
+}
 
-    // Check
-    bool ok = true;
-    forAll(*this, patchi)
-    {
-        if (this->set(patchi) && this->operator[](patchi).size())
-        {
-            const auto& pfld = this->operator[](patchi);
-            const auto& oldPfld = oldBfld[patchi];
+template<>
+bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFvPatchField<symmTensor>>(tol, exitIfBad);
+}
 
-            //if (pfld != oldBfld[patchi])
-            forAll(pfld, facei)
-            {
-                if (mag(pfld[facei]-oldPfld[facei]) > tol)
-                {
-                    ok = false;
-
-                    if (doExit)
-                    {
-                        FatalErrorInFunction << "Field "
-                            << pfld.internalField().name()
-                            << " is not evaluated?"
-                            << " On patch " << pfld.patch().name()
-                            << " : average of field = "
-                            << average(oldBfld[patchi])
-                            << ". Average of evaluated field = "
-                            << average(pfld)
-                            << exit(FatalError);
-                    }
-                }
-            }
-        }
-    }
-
-    // Restore bfld, updated
-    forAll(*this, patchi)
-    {
-        if (this->set(patchi) && this->operator[](patchi).size())
-        {
-            auto& fvp = const_cast<fvPatchField<scalar>&>
-            (
-                this->operator[](patchi)
-            );
-            fvp.setUpdated(oldUpdated[patchi]);
-            fvp.setManipulated(oldManipulated[patchi]);
-            Field<scalar>& vals = fvp;
-            vals = std::move(oldBfld[patchi]);
-        }
-    }
-
-    if (GeometricField<scalar, fvPatchField, volMesh>::debug)
-    {
-        const auto& fvp0 = this->operator[](0);
-        PoutInFunction
-            << "Result of checking for field "
-            << fvp0.internalField().name()
-            << " : " << ok
-            << endl;
-    }
-
-    return ok;
+template<>
+bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFvPatchField<tensor>>(tol, exitIfBad);
 }
 
 } // End namespace Foam

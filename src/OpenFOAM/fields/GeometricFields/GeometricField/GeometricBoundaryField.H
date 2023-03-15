@@ -86,7 +86,20 @@ private:
         const BoundaryMesh& bmesh_;
 
 
+    // Private Member Functions
+
+        //- Helper: check if patchfields have been evaluated. If not:
+        //      exit = true  : FatalError
+        //      exit = false : return bool
+        template<class CheckPatchField>
+        bool checkConsistency(const scalar tol, const bool exitIfBad) const;
+
+
 public:
+
+    //- Runtime type information
+    static int debug;
+
 
     // Constructors
 
@@ -195,9 +208,9 @@ public:
         void writeEntries(Ostream& os) const;
 
         //- Helper: check if field has been evaluated. If not:
-        //      exit = true  : FatalError
-        //      exit = false : return bool
-        bool check(const scalar tol = Zero, const bool exit = true) const;
+        //      exitIfBad = true  : FatalError
+        //      exitIfBad = false : return bool
+        bool check(const scalar tol = Zero, const bool exitIfBad = true) const;
 
 
     // Member Operators

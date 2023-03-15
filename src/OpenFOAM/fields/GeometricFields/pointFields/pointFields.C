@@ -45,6 +45,38 @@ defineTemplateTypeNameAndDebug(pointSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(pointSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(pointTensorField, 0);
 
+
+defineTemplateDebugSwitchWithName
+(
+    pointScalarField::Boundary,
+    "pointScalarField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    pointVectorField::Boundary,
+    "pointVectorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    pointSphericalTensorField::Boundary,
+    "pointSphericalTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    pointSymmTensorField::Boundary,
+    "pointSymmTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    pointTensorField::Boundary,
+    "pointTensorField::Boundary",
+    0
+);
+
 } // End namespace Foam
 
 

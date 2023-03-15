@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,7 @@ License
 
 #include "faMesh.H"
 #include "areaFields.H"
+#include "coupledFaPatchField.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -45,6 +46,37 @@ defineTemplateTypeNameAndDebug(areaVectorField, 0);
 defineTemplateTypeNameAndDebug(areaSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(areaSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(areaTensorField, 0);
+
+defineTemplateDebugSwitchWithName
+(
+    areaScalarField::Boundary,
+    "areaScalarField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    areaVectorField::Boundary,
+    "areaVectorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    areaSphericalTensorField::Boundary,
+    "areaSphericalTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    areaSymmTensorField::Boundary,
+    "areaSymmTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    areaTensorField::Boundary,
+    "areaTensorField::Boundary",
+    0
+);
 
 } // End namespace Foam
 
@@ -74,6 +106,60 @@ void GeometricField<scalar, faPatchField, areaMesh>::replace
 )
 {
     *this == gsf;
+}
+
+template<>
+bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFaPatchField<scalar>>(tol, exitIfBad);
+}
+
+template<>
+bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFaPatchField<vector>>(tol, exitIfBad);
+}
+
+template<>
+bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFaPatchField<sphericalTensor>>
+    (
+        tol,
+        exitIfBad
+    );
+}
+
+template<>
+bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFaPatchField<symmTensor>>(tol, exitIfBad);
+}
+
+template<>
+bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check
+(
+    const scalar tol,
+    const bool exitIfBad
+) const
+{
+    return checkConsistency<coupledFaPatchField<tensor>>(tol, exitIfBad);
 }
 
 } // End namespace Foam

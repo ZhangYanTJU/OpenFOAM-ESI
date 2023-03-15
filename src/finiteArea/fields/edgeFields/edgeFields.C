@@ -45,6 +45,37 @@ defineTemplateTypeNameAndDebug(edgeSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(edgeSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(edgeTensorField, 0);
 
+defineTemplateDebugSwitchWithName
+(
+    edgeScalarField::Boundary,
+    "edgeScalarField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeVectorField::Boundary,
+    "edgeVectorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeSphericalTensorField::Boundary,
+    "edgeSphericalTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeSymmTensorField::Boundary,
+    "edgeSymmTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeTensorField::Boundary,
+    "edgeTensorField::Boundary",
+    0
+);
+
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
