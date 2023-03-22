@@ -76,6 +76,27 @@ defineTemplateDebugSwitchWithName
     0
 );
 
+template<> scalar edgeScalarField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeVectorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeSphericalTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeSymmTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

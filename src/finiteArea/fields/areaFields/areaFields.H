@@ -71,35 +71,16 @@ void GeometricField<scalar, faPatchField, areaMesh>::replace
 );
 
 template<>
-bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check() const;
 template<>
-bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check() const;
 template<>
 bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+() const;
 template<>
-bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check() const;
 template<>
-bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check() const;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -65,35 +65,16 @@ void GeometricField<scalar, fvPatchField, volMesh>::replace
 );
 
 template<>
-bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check() const;
 template<>
-bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check() const;
 template<>
 bool GeometricBoundaryField<sphericalTensor, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+() const;
 template<>
-bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::check() const;
 template<>
-bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const;
+bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::check() const;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

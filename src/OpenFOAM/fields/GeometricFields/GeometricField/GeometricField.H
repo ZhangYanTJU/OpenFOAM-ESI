@@ -635,6 +635,10 @@ public:
         //- Correct boundary field
         void correctBoundaryConditions();
 
+        //- Correct boundary conditions after a purely local operation. Is
+        //  dummy for e.g. processor boundary conditions
+        void correctLocalBoundaryConditions();
+
         //- Does the field need a reference level for solution
         bool needReference() const;
 

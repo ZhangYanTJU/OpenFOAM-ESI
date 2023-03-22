@@ -254,13 +254,6 @@ public:
             //- Update the coefficients associated with the patch field
             virtual void updateWeightedCoeffs(const scalarField& weights);
 
-            //- Initialise the evaluation of the patch field
-            virtual void initEvaluate
-            (
-                const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
-            );
-
             //- Manipulate matrix
             virtual void manipulateMatrix(fvMatrix<scalar>& matrix);
 

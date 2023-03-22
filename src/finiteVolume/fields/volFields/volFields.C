@@ -28,6 +28,7 @@ License
 
 #include "volFields.H"
 #include "coupledFvPatchField.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -77,6 +78,70 @@ defineTemplateDebugSwitchWithName
     0
 );
 
+template<> scalar volScalarField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("volScalarField::Boundary::tolerance", 0)
+);
+registerOptSwitch
+(
+    "volScalarField::Boundary::tolerance",
+    scalar,
+    Foam::volScalarField::Boundary::tolerance
+);
+
+template<> scalar volVectorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("volScalarField::Boundary::tolerance", 0)
+);
+registerOptSwitch
+(
+    "volVectorField::Boundary::tolerance",
+    scalar,
+    Foam::volVectorField::Boundary::tolerance
+);
+
+template<> scalar volSphericalTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch
+    (
+        "volSphericalTensorField::Boundary::tolerance",
+        0
+    )
+);
+registerOptSwitch
+(
+    "volSphericalTensorField::Boundary::tolerance",
+    scalar,
+    Foam::volSphericalTensorField::Boundary::tolerance
+);
+
+template<> scalar volSymmTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch
+    (
+        "volSymmTensorField::Boundary::tolerance",
+        0
+    )
+);
+registerOptSwitch
+(
+    "volSymmTensorField::Boundary::tolerance",
+    scalar,
+    Foam::volSymmTensorField::Boundary::tolerance
+);
+
+template<> scalar volTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("volTensorField::Boundary::tolerance", 0)
+);
+registerOptSwitch
+(
+    "volTensorField::Boundary::tolerance",
+    scalar,
+    Foam::volTensorField::Boundary::tolerance
+);
+
+
 } // End namespace Foam
 
 
@@ -110,57 +175,56 @@ void GeometricField<scalar, fvPatchField, volMesh>::replace
 
 
 template<>
-bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check() const
 {
-    return checkConsistency<coupledFvPatchField<scalar>>(tol, exitIfBad);
+    return checkConsistency<coupledFvPatchField<scalar>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
 }
 
 template<>
-bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check() const
 {
-    return checkConsistency<coupledFvPatchField<vector>>(tol, exitIfBad);
+    return checkConsistency<coupledFvPatchField<vector>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
 }
 
 template<>
 bool GeometricBoundaryField<sphericalTensor, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+() const
 {
     return checkConsistency<coupledFvPatchField<sphericalTensor>>
     (
-        tol,
-        exitIfBad
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
     );
 }
 
 template<>
 bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+() const
 {
-    return checkConsistency<coupledFvPatchField<symmTensor>>(tol, exitIfBad);
+    return checkConsistency<coupledFvPatchField<symmTensor>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
 }
 
 template<>
 bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+() const
 {
-    return checkConsistency<coupledFvPatchField<tensor>>(tol, exitIfBad);
+    return checkConsistency<coupledFvPatchField<tensor>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
 }
 
 } // End namespace Foam

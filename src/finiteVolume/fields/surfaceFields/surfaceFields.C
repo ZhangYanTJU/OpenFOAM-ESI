@@ -76,6 +76,27 @@ defineTemplateDebugSwitchWithName
     0
 );
 
+template<> scalar surfaceScalarField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar surfaceVectorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar surfaceSphericalTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar surfaceSymmTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar surfaceTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+
 } // End namespace Foam
 
 

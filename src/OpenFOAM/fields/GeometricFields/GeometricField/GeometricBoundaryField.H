@@ -97,8 +97,11 @@ private:
 
 public:
 
-    //- Runtime type information
+    //- Static public data
     static int debug;
+
+    //- User-defined tolerance (for consistency checks)
+    static scalar tolerance;
 
 
     // Constructors
@@ -183,6 +186,9 @@ public:
         //- Evaluate boundary conditions
         void evaluate();
 
+        //- Evaluate boundary conditions after change in local values
+        void evaluateLocal();
+
         //- Evaluate boundary conditions on a subset of coupled patches
         template<class CoupledPatchType>
         void evaluateCoupled();
@@ -207,10 +213,8 @@ public:
         //- Write dictionary entries of the individual boundary fields.
         void writeEntries(Ostream& os) const;
 
-        //- Helper: check if field has been evaluated. If not:
-        //      exitIfBad = true  : FatalError
-        //      exitIfBad = false : return bool
-        bool check(const scalar tol = Zero, const bool exitIfBad = true) const;
+        //- Helper: check if field has been evaluated. See instantiations.
+        bool check() const;
 
 
     // Member Operators

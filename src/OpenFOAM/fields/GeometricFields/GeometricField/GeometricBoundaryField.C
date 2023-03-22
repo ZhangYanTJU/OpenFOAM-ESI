@@ -636,8 +636,73 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate()
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
+{
+    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
+    ///{
+    ///    InfoInFunction << nl;
+    ///}
+
+    const UPstream::commsTypes commsType = UPstream::defaultCommsType;
+    const label startOfRequests = UPstream::nRequests();
+
+    if
+    (
+        commsType == UPstream::commsTypes::blocking
+     || commsType == UPstream::commsTypes::nonBlocking
+    )
+    {
+        for (auto& pfld : *this)
+        {
+            pfld.initEvaluateLocal(commsType);
+        }
+
+        // Wait for outstanding requests
+        if (commsType == Pstream::commsTypes::nonBlocking)
+        {
+            UPstream::waitRequests(startOfRequests);
+        }
+
+        for (auto& pfld : *this)
+        {
+            pfld.evaluateLocal(commsType);
+        }
+    }
+    else if (commsType == UPstream::commsTypes::scheduled)
+    {
+        const lduSchedule& patchSchedule =
+            bmesh_.mesh().globalData().patchSchedule();
+
+        for (const auto& schedEval : patchSchedule)
+        {
+            const label patchi = schedEval.patch;
+            auto& pfld = (*this)[patchi];
+
+            if (schedEval.init)
+            {
+                pfld.initEvaluateLocal(commsType);
+            }
+            else
+            {
+                pfld.evaluateLocal(commsType);
+            }
+        }
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Unsupported communications type "
+            << UPstream::commsTypeNames[commsType]
+            << exit(FatalError);
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 template<class CoupledPatchType>
-void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateCoupled()
+void
+Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
+::evaluateCoupled()
 {
     ///if (GeometricField<Type, PatchField, GeoMesh::debug)
     ///{
@@ -823,70 +888,11 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::writeEntries
 template<class Type, template<class> class PatchField, class GeoMesh>
 bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::check
 (
-    const scalar tol,
-    const bool doExit
 ) const
 {
-//    // Store old value
-//    List<Field<Type>> oldBfld(this->size());
-//
-//    forAll(*this, patchi)
-//    {
-//        if (this->set(patchi))
-//        {
-//            oldBfld[patchi] = this->operator[](patchi);
-//        }
-//    }
-//
-//    // Re-evaluate
-//    const_cast<GeometricBoundaryField<Type, PatchField, GeoMesh>&>
-//    (
-//        *this
-//    ).evaluate();
-
-    // Check
-    bool ok = true;
-//    forAll(*this, patchi)
-//    {
-//        if (this->set(patchi))
-//        {
-//            const auto& pfld = this->operator[](patchi);
-//            const auto& oldPfld = oldBfld[patchi];
-//
-//            //if (pfld != oldBfld[patchi])
-//            forAll(pfld, facei)
-//            {
-//                if (mag(pfld[facei]-oldPfld[facei]) > tol)
-//                {
-//                    ok = false;
-//
-//                    if (doExit)
-//                    {
-//                        FatalErrorInFunction << "Field "
-//                            << pfld.internalField().name()
-//                            << " is not evaluated?"
-//                            << " On patch " << pfld.patch().name()
-//                            << " : average of field = "
-//                            << average(oldBfld[patchi])
-//                            << ". Average of evaluated field = "
-//                            << average(pfld)
-//                            << exit(FatalError);
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    // Restore bfld
-//    forAll(*this, patchi)
-//    {
-//        if (this->set(patchi))
-//        {
-//            const Field<Type>& vals = this->operator[](patchi);
-//            const_cast<Field<Type>&>(vals) = std::move(oldBfld[patchi]);
-//        }
-//    }
-    return ok;
+    // Dummy op - template specialisations provide logic (usually call
+    // to checkConsistency)
+    return true;
 }
 
 

@@ -192,6 +192,24 @@ public:
         //- Evaluate the patch field
         virtual void evaluate(const Pstream::commsTypes commsType);
 
+        //- Initialise the evaluation of the patch field after a local
+        //  operation. Dummy since operating on a copy
+        virtual void initEvaluateLocal
+        (
+            const Pstream::commsTypes commsType =
+                Pstream::commsTypes::blocking
+        )
+        {}
+
+        //- Evaluate the patch field after a local operation (e.g. *=).
+        //  Dummy since operating on a copy
+        virtual void evaluateLocal
+        (
+            const Pstream::commsTypes commsType =
+                Pstream::commsTypes::blocking
+        )
+        {}
+
         //- Return patch-normal gradient
         virtual tmp<Field<Type>> snGrad() const;
 

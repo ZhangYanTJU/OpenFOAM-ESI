@@ -493,6 +493,23 @@ public:
             )
             {}
 
+            //- Initialise the evaluation of the patch field after a local
+            //  operation
+            virtual void initEvaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
+
+            //- Evaluate the patch field after a local operation (e.g. *=)
+            virtual void evaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
+
 
         //- Write
         virtual void write(Ostream& os) const;

@@ -438,22 +438,6 @@ Foam::scalarField& Foam::omegaWallFunctionFvPatchScalarField::omega
 }
 
 
-void Foam::omegaWallFunctionFvPatchScalarField::initEvaluate
-(
-    const Pstream::commsTypes commsType
-)
-{
-    // Trigger updateCoeffs (modifies cell values) from initEvaluate so
-    // gets executed before any coupled patches start exchanging
-    if (!updated())
-    {
-        updateCoeffs();
-    }
-
-    fvPatchField<scalar>::initEvaluate(commsType);
-}
-
-
 void Foam::omegaWallFunctionFvPatchScalarField::updateCoeffs()
 {
     if (updated())

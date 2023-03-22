@@ -29,6 +29,7 @@ License
 #include "faMesh.H"
 #include "areaFields.H"
 #include "coupledFaPatchField.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -78,6 +79,57 @@ defineTemplateDebugSwitchWithName
     0
 );
 
+template<> scalar areaScalarField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+registerOptSwitch
+(
+    "tolerance",
+    scalar,
+    Foam::areaScalarField::Boundary::tolerance
+);
+template<> scalar areaVectorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+registerOptSwitch
+(
+    "tolerance",
+    scalar,
+    Foam::areaVectorField::Boundary::tolerance
+);
+template<> scalar areaSphericalTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+registerOptSwitch
+(
+    "tolerance",
+    scalar,
+    Foam::areaSphericalTensorField::Boundary::tolerance
+);
+template<> scalar areaSymmTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+registerOptSwitch
+(
+    "tolerance",
+    scalar,
+    Foam::areaSymmTensorField::Boundary::tolerance
+);
+template<> scalar areaTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+registerOptSwitch
+(
+    "tolerance",
+    scalar,
+    Foam::areaTensorField::Boundary::tolerance
+);
+
 } // End namespace Foam
 
 
@@ -109,57 +161,54 @@ void GeometricField<scalar, faPatchField, areaMesh>::replace
 }
 
 template<>
-bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check() const
 {
-    return checkConsistency<coupledFaPatchField<scalar>>(tol, exitIfBad);
-}
-
-template<>
-bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
-{
-    return checkConsistency<coupledFaPatchField<vector>>(tol, exitIfBad);
-}
-
-template<>
-bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
-{
-    return checkConsistency<coupledFaPatchField<sphericalTensor>>
+    return checkConsistency<coupledFaPatchField<scalar>>
     (
-        tol,
-        exitIfBad
+        Foam::areaScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
     );
 }
 
 template<>
-bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check() const
 {
-    return checkConsistency<coupledFaPatchField<symmTensor>>(tol, exitIfBad);
+    return checkConsistency<coupledFaPatchField<vector>>
+    (
+        Foam::areaScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
 }
 
 template<>
-bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check
-(
-    const scalar tol,
-    const bool exitIfBad
-) const
+bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::check
+() const
 {
-    return checkConsistency<coupledFaPatchField<tensor>>(tol, exitIfBad);
+    return checkConsistency<coupledFaPatchField<sphericalTensor>>
+    (
+        Foam::areaScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
+}
+
+template<>
+bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check() const
+{
+    return checkConsistency<coupledFaPatchField<symmTensor>>
+    (
+        Foam::areaScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
+}
+
+template<>
+bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check() const
+{
+    return checkConsistency<coupledFaPatchField<tensor>>
+    (
+        Foam::areaScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
 }
 
 } // End namespace Foam

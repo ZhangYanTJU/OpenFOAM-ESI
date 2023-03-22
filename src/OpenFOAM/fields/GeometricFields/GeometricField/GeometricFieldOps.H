@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,6 +86,11 @@ void assign
             op
         );
     }
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Tout, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -127,6 +132,11 @@ void assign
             bop
         );
     }
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Tout, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -166,6 +176,11 @@ void ternary
             b.boundaryField()[i],
             bop
         );
+    }
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<T, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
     }
 }
 
@@ -212,6 +227,11 @@ void ternarySelect
             b.boundaryField()[i],
             flip
         );
+    }
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<T, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
     }
 }
 

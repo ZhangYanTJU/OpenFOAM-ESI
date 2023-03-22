@@ -1108,6 +1108,16 @@ correctBoundaryConditions()
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::
+correctLocalBoundaryConditions()
+{
+    this->setUpToDate();
+    storeOldTimes();
+    boundaryField_.evaluateLocal();
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 bool Foam::GeometricField<Type, PatchField, GeoMesh>::needReference() const
 {
     // Search all boundary conditions, if any are
