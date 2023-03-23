@@ -113,39 +113,49 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
             const label patchi = pfld.patch().index();
             const auto& oldPfld = oldBfld[patchi];
 
-            //if (pfld != oldBfld[patchi])
             forAll(pfld, facei)
             {
                 if (mag(pfld[facei]-oldPfld[facei]) > tol)
                 {
                     ok = false;
+                    break;
+                }
+            }
 
-                    if (doExit)
-                    {
-                        FatalErrorInFunction << "Field "
-                            << pfld.internalField().name()
-                            << " is not evaluated?"
-                            << " On patch " << pfld.patch().name()
-                            << " type " << pfld.type()
-                            << " : average of field = "
-                            << average(oldBfld[patchi])
-                            << ". Average of evaluated field = "
-                            << average(pfld)
-                            << exit(FatalError);
-                    }
-                    else
-                    {
-                        WarningInFunction << "Field "
-                            << pfld.internalField().name()
-                            << " is not evaluated?"
-                            << " On patch " << pfld.patch().name()
-                            << " type " << pfld.type()
-                            << " : average of field = "
-                            << average(oldBfld[patchi])
-                            << ". Average of evaluated field = "
-                            << average(pfld)
-                            << endl;
-                    }
+            if (!ok)
+            {
+                if (doExit)
+                {
+                    FatalErrorInFunction << "Field "
+                        << pfld.internalField().name()
+                        << " is not evaluated?"
+                        << " On patch " << pfld.patch().name()
+                        << " type " << pfld.type()
+                        << " : average of field = "
+                        << average(oldPfld)
+                        << ". Average of evaluated field = "
+                        << average(pfld)
+                        << ". Difference:" << average(pfld-oldPfld)
+                        << ". Tolerance:" << tol
+                        << exit(FatalError);
+                }
+                else
+                {
+                    WarningInFunction << "Field "
+                        << pfld.internalField().name()
+                        << " is not evaluated?"
+                        << " On patch " << pfld.patch().name()
+                        << " type " << pfld.type()
+                        << " : average of field = "
+                        << average(oldPfld)
+                        << ". Average of evaluated field = "
+                        << average(pfld)
+                        << ". Difference:" << average(pfld-oldPfld)
+                        << ". Tolerance:" << tol
+                        << endl;
+
+                    // Skip other patches
+                    break;
                 }
             }
         }

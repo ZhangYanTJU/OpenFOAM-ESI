@@ -268,7 +268,14 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField
     const Field<Type>& iField
 ) const
 {
-    // Bypass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
+    DebugPout<< "cyclicAMIFvPatchField::patchNeighbourField() :"
+        << " field:" << this->internalField().name()
+        << " patch:" << this->patch().name()
+        << endl;
+
+    const Field<Type>& iField = this->primitiveField();
+
+    // By pass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
     // neighbPatch()
     const cyclicAMIFvPatch& neighbPatch = cyclicAMIPatch_.neighbPatch();
     const labelUList& nbrFaceCells = neighbPatch.faceCells();
@@ -500,6 +507,16 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
+    DebugPout<< "cyclicAMIFvPatchField::updateInterfaceMatrix() :"
+        << " field:" << this->internalField().name()
+        << " patch:" << this->patch().name()
+        << endl;
+
+    const labelUList& nbrFaceCells =
+        lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
+
+    solveScalarField pnf(psiInternal, nbrFaceCells);
+
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
     const auto& AMI =
@@ -618,7 +635,13 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
-    const labelUList& faceCells = lduAddr.patchAddr(patchId);
+    DebugPout<< "cyclicAMIFvPatchField::updateInterfaceMatrix() :"
+        << " field:" << this->internalField().name()
+        << " patch:" << this->patch().name()
+        << endl;
+
+    const labelUList& nbrFaceCells =
+        lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
 
     const auto& AMI = this->ownerAMI();
 

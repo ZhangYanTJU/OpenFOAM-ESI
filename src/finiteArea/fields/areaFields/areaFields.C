@@ -81,51 +81,63 @@ defineTemplateDebugSwitchWithName
 
 template<> scalar areaScalarField::Boundary::tolerance
 (
-    debug::floatOptimisationSwitch("tolerance", 0)
+    debug::floatOptimisationSwitch("areaScalarField::Boundary::tolerance", 0)
 );
 registerOptSwitch
 (
-    "tolerance",
+    "areaScalarField::Boundary::tolerance",
     scalar,
     Foam::areaScalarField::Boundary::tolerance
 );
+
 template<> scalar areaVectorField::Boundary::tolerance
 (
-    debug::floatOptimisationSwitch("tolerance", 0)
+    debug::floatOptimisationSwitch("areaVectorField::Boundary::tolerance", 0)
 );
 registerOptSwitch
 (
-    "tolerance",
+    "areaVectorField::Boundary::tolerance",
     scalar,
     Foam::areaVectorField::Boundary::tolerance
 );
+
 template<> scalar areaSphericalTensorField::Boundary::tolerance
 (
-    debug::floatOptimisationSwitch("tolerance", 0)
+    debug::floatOptimisationSwitch
+    (
+        "areaSphericalTensorField::Boundary::tolerance",
+        0
+    )
 );
 registerOptSwitch
 (
-    "tolerance",
+    "areaSphericalTensorField::Boundary::tolerance",
     scalar,
     Foam::areaSphericalTensorField::Boundary::tolerance
 );
+
 template<> scalar areaSymmTensorField::Boundary::tolerance
 (
-    debug::floatOptimisationSwitch("tolerance", 0)
+    debug::floatOptimisationSwitch
+    (
+        "areaSymmTensorField::Boundary::tolerance",
+        0
+    )
 );
 registerOptSwitch
 (
-    "tolerance",
+    "areaSymmTensorField::Boundary::tolerance",
     scalar,
     Foam::areaSymmTensorField::Boundary::tolerance
 );
+
 template<> scalar areaTensorField::Boundary::tolerance
 (
-    debug::floatOptimisationSwitch("tolerance", 0)
+    debug::floatOptimisationSwitch("areaTensorField::Boundary::tolerance", 0)
 );
 registerOptSwitch
 (
-    "tolerance",
+    "areaTensorField::Boundary::tolerance",
     scalar,
     Foam::areaTensorField::Boundary::tolerance
 );
