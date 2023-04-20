@@ -7,6 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
     Copyright (C) 2019 OpenCFD Ltd.
+    Contributor: Yu Ankun(Huawei 2023)
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,6 +59,15 @@ class PCG
     public lduMatrix::solver
 {
     // Private Member Functions
+
+        //- Blocking version of sum(a*b), sum(mag(b))
+        void gSumMagProd
+        (
+            FixedList<solveScalar, 2>& globalSum,
+            const solveScalarField& a,
+            const solveScalarField& b,
+            const label comm
+        ) const;
 
         //- No copy construct
         PCG(const PCG&) = delete;

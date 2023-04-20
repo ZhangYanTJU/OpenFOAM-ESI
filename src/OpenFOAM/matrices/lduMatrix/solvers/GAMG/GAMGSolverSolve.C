@@ -7,6 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2016-2021 OpenCFD Ltd.
+    Contributor: Yu Ankun(Huawei 2023)
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -222,16 +223,16 @@ void Foam::GAMGSolver::Vcycle
                     )
                 );
 
-                solveScalarField::subField ACf
-                (
-                    scratch1,
-                    coarseCorrFields[leveli].size()
-                );
-
                 // Scale coarse-grid correction field
                 // but not on the coarsest level because it evaluates to 1
                 if (scaleCorrection_ && leveli < coarsestLevel - 1)
                 {
+                    // ACf is not need outside the judgment
+                    solveScalarField::subField ACf
+                    (
+                        scratch1,
+                        coarseCorrFields[leveli].size()
+                    );
                     scale
                     (
                         coarseCorrFields[leveli],
@@ -248,19 +249,16 @@ void Foam::GAMGSolver::Vcycle
                 }
 
                 // Correct the residual with the new solution
-                matrixLevels_[leveli].Amul
+                // residual can be used by fusing Amul with b-Amul
+                matrixLevels_[leveli].residual
                 (
-                    const_cast<solveScalarField&>
-                    (
-                        ACf.operator const solveScalarField&()
-                    ),
+                    coarseSources[leveli],
                     coarseCorrFields[leveli],
+                    coarseSources[leveli],
                     interfaceLevelsBouCoeffs_[leveli],
                     interfaceLevels_[leveli],
                     cmpt
                 );
-
-                coarseSources[leveli] -= ACf;
             }
 
             // Residual is equal to source

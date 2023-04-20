@@ -7,6 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2019-2021 OpenCFD Ltd.
+    Contributor: Yu Ankun(Huawei 2023)
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,6 +64,35 @@ Foam::PCG::PCG
     )
 {}
 
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::PCG::gSumMagProd
+(
+    FixedList<solveScalar, 2>& globalSum,
+    const solveScalarField& a,
+    const solveScalarField& b,
+    const label comm
+) const
+{
+    const label nCells = a.size();
+
+    globalSum = 0.0;
+    for (label cell=0; cell<nCells; ++cell)
+    {
+        globalSum[0] += mag(b[cell]);    // sumMag(b)
+        globalSum[1] += a[cell]*b[cell];    // sumProd(a, b)
+    }
+
+    Foam::reduce
+    (
+        globalSum.data(),
+        globalSum.size(),
+        sumOp<solveScalar>(),
+        Pstream::msgType(),
+        comm
+    );
+}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -136,6 +166,7 @@ Foam::solverPerformance Foam::PCG::scalarSolve
                 controlDict_
             );
 
+        FixedList<solveScalar, 2> globalSum;
         // --- Solver iteration
         do
         {
@@ -145,8 +176,22 @@ Foam::solverPerformance Foam::PCG::scalarSolve
             // --- Precondition residual
             preconPtr->precondition(wA, rA, cmpt);
 
-            // --- Update search directions:
-            wArA = gSumProd(wA, rA, matrix().mesh().comm());
+            // --- Update search directions and calculate residual: 
+            gSumMagProd(globalSum, wA, rA, matrix().mesh().comm());
+
+            solverPerf.finalResidual() = globalSum[0]/normFactor;
+
+            // Check convergence (bypass if not enough iterations yet)
+            if
+            (
+                (minIter_ <= 0 || solverPerf.nIterations() >= minIter_)
+            && solverPerf.checkConvergence(tolerance_, relTol_, log_)
+            )
+            {
+                break;
+            }
+            
+            wArA = globalSum[1];
 
             if (solverPerf.nIterations() == 0)
             {
@@ -185,17 +230,9 @@ Foam::solverPerformance Foam::PCG::scalarSolve
                 rAPtr[cell] -= alpha*wAPtr[cell];
             }
 
-            solverPerf.finalResidual() =
-                gSumMag(rA, matrix().mesh().comm())
-               /normFactor;
-
         } while
         (
-            (
-              ++solverPerf.nIterations() < maxIter_
-            && !solverPerf.checkConvergence(tolerance_, relTol_, log_)
-            )
-         || solverPerf.nIterations() < minIter_
+            ++solverPerf.nIterations() < maxIter_
         );
     }
 

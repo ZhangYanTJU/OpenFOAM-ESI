@@ -189,12 +189,6 @@ void Foam::symGaussSeidelSmoother::smooth
             // Finish psi for this cell
             psii /= diagPtr[celli];
 
-            // Distribute the neighbour side using psi for this cell
-            for (label facei=fStart; facei<fEnd; facei++)
-            {
-                bPrimePtr[uPtr[facei]] -= lowerPtr[facei]*psii;
-            }
-
             psiPtr[celli] = psii;
         }
     }
