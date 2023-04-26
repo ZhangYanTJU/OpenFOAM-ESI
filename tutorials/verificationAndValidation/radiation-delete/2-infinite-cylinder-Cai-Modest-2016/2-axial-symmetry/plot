@@ -1,0 +1,91 @@
+#!/bin/sh
+cd "${0%/*}" || exit                        # Run from this directory
+#------------------------------------------------------------------------------
+
+# settings
+
+    # operand setups
+    setups="
+    kR-1.0
+    "
+
+
+#------------------------------------------------------------------------------
+
+plot_r_vs_G() {
+
+    setup="$1"
+
+    endTime=$(foamDictionary results/"$setup"/system/controlDict -entry endTime -value)
+    benchmarkFile="resources/dataset/Fig4.dat"
+    sampleFile="results/$setup/postProcessing/sets1/$endTime/r_G.xy"
+    image="plots/r_vs_G_$setup.png"
+
+    gnuplot<<PLT_R_VS_G
+    set terminal pngcairo font "helvetica,20" size 1000, 1000
+    set grid
+    set key bottom right
+    set xrange [0:1]
+    set yrange [0.34:0.8]
+    set key samplen 2
+    set key spacing 0.75
+    set xlabel "r/R"
+    set ylabel "G/(4 {/Symbol s} T_{ref}^4)"
+    set offset .05, .05
+    set output "$image"
+    set title "Nondimensional incident radiation"
+
+    # Benchmark
+        benchmark = "$benchmarkFile"
+
+    # OpenFOAM
+        samples="$sampleFile"
+        R=1.0
+        Tref=1000.0
+        sigma=5.6704e-8
+        c=4.0
+
+    plot \
+        benchmark u 1:2 t "Analytical (Cai and Modest, 2016)" w p ps 1.5 pt 7 lc rgb "black", \
+        samples every 2 u (\$1/R):(\$2/c/sigma/Tref**4) t "OpenFOAM" w l lw 2 lc rgb "blue"
+
+PLT_R_VS_G
+}
+
+
+#------------------------------------------------------------------------------
+
+# Require gnuplot
+command -v gnuplot >/dev/null || {
+    echo "gnuplot not found - skipping graph creation" 1>&2
+    exit 1
+}
+
+# Check directory: "results"
+[ -d "results" ] || {
+    echo "No results directory found - skipping graph creation" 1>&2
+    exit 1
+}
+
+
+#------------------------------------------------------------------------------
+
+for setup in $setups
+do
+    echo ""
+    echo "# Plots for the setup: $setup"
+    echo ""
+
+    [ -d "results/$setup" ] || {
+        echo "No results/$setup directory found - skipping graph creation" 1>&2
+        continue
+    }
+
+    dirPlots="plots"
+    [ -d "$dirPlots" ] || mkdir -p "$dirPlots"
+
+    plot_r_vs_G "$setup"
+done
+
+
+#------------------------------------------------------------------------------

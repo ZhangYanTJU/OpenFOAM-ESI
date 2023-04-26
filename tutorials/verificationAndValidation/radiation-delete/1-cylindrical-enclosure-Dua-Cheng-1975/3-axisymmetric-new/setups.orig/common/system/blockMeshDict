@@ -1,0 +1,111 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2301                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+/*
+Sketch: https://openfoamwiki.net/index.php/File:AxiSymetricMeshDrawingSchematicBlockMeshPoints.v.1.0.svg
+*/
+
+scale           1;
+
+alpha           5.0;  // wedge angle [deg]
+R               1.0;
+L               #eval{ 2.0*$R };  // cylinder length in z-dir
+p1              #eval{ $R*cos(pi()*0.5*$alpha/180.0) };
+p2              #eval{ $R*sin(pi()*0.5*$alpha/180.0) };
+p2n             #eval{ -1.0*$p2 };
+
+xcells          10;
+ycells          1;
+zcells          30;
+
+vertices
+(
+    (0    0     0)
+    ($p1  $p2   0)
+    ($p1  $p2   $L)
+    (0    0     $L)
+    ($p1  $p2n  0)
+    ($p1  $p2n  $L)
+);
+
+blocks
+(
+    hex (0 4 1 0 3 5 2 3) ($xcells $ycells $zcells) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    front
+    {
+        type    patch;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+    back
+    {
+        type    patch;
+        faces
+        (
+            (0 3 5 4)
+        );
+    }
+    pipe
+    {
+        type    wall;
+        faces
+        (
+            (1 4 5 2)
+        );
+    }
+    inlet
+    {
+        type    patch;
+        faces
+        (
+            (0 4 1 0)
+        );
+    }
+    outlet
+    {
+        type    patch;
+        faces
+        (
+            (3 5 2 3)
+        );
+    }
+    /*
+    axis
+    {
+        type    empty;
+        faces
+        (
+            (0 3 3 0)
+        );
+    }
+    */
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

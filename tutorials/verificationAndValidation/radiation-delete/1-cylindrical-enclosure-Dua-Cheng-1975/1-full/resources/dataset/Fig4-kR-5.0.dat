@@ -1,0 +1,34 @@
+# Nondimensional radial heat flux distribution for various
+# optical thicknesses - analytical data produced by Dua and Cheng (1975).
+#
+# Reference:
+#     Dua, S. S., & Ping, C. (1975).
+#     Multi-dimensional radiative transfer in non-isothermal
+#     cylindrical media with non-isothermal bounding walls.
+#     International Journal of Heat and Mass Transfer, 18(2), 245-259.
+#
+#     Kim, M. Y., & Baek, S. W. (2005).
+#     Modeling of radiative heat transfer in an axisymmetric
+#     cylindrical enclosure with participating medium.
+#     J. of Quantitative Spectroscopy and Radiative Transfer, 90(3-4), 377-388.
+#
+#     Figure 4a, K=5 [m^-1] (optical thickness)
+#
+#     The data is extracted by using https://automeris.io/WebPlotDigitizer/
+#
+# z/zc [m/m]          qw/sigma/Tref^4 [-]
+0.013251783893985736 0.6842105263157896
+0.030581039755351702 0.7954887218045112
+0.06320081549439344 0.8759398496240602
+0.10397553516819563 0.9353383458646617
+0.1794087665647297 0.9669172932330827
+0.2874617737003057 0.98796992481203
+0.45667686034658495 0.9947368421052631
+0.5402650356778796 0.9947368421052631
+0.7104994903160039 0.98796992481203
+0.81855249745158 0.9676691729323308
+0.8939857288481142 0.9353383458646617
+0.9347604485219164 0.8759398496240601
+0.9673802242609583 0.7954887218045112
+0.9847094801223243 0.6834586466165413
+0.9959225280326197 0.536842105263158

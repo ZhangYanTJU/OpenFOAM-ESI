@@ -1,0 +1,139 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2301                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+/*
+References:
+Guerrero, Joel (2021): OpenFOAM Introductory Training. figshare.
+Media. https://doi.org/10.6084/m9.figshare.16783657.
+*/
+
+scale           1.0;
+
+R               1.0;
+L               #eval{ 2.0*$R };
+r1              #eval{ $R/sqrt(2.0) };
+r1m             #eval{ -1.0*$r1 };
+
+xcells          20;
+ycells          40;
+zcells          1;
+
+xcells1         20;
+ycells1         20;
+zcells1         1;
+
+stretch         0.25;
+
+vertices
+(
+    //block0 vertices
+    (-0.25      0.25        0)      //0
+    ($r1m       $r1         0)      //1
+    ($r1        $r1         0)      //2
+    (0.25       0.25        0)      //3
+    (-0.25      0.25        $L)     //4
+    ($r1m       $r1         $L)     //5
+    ($r1        $r1         $L)     //6
+    (0.25       0.25        $L)     //7
+
+    //block1 new vertices
+    (0.25       -0.25       0)      //8
+    ($r1        $r1m        0)      //9
+    (0.25       -0.25       $L)     //10
+    ($r1        $r1m        $L)     //11
+
+    //block3 new vertices
+    (-0.25      -0.25       0)      //12
+    ($r1m       $r1m        0)      //13
+    (-0.25      -0.25       $L)     //14
+    ($r1m       $r1m        $L)     //15
+);
+
+
+blocks
+(
+    //block0
+    hex (0 3 2 1 4 7 6 5)    ($xcells $ycells $zcells) simpleGrading (1 $stretch 1)
+    //block1
+    hex (3 8 9 2 7 10 11 6)    ($xcells $ycells $zcells) simpleGrading (1 $stretch 1)
+    //block2
+    hex (8 12 13 9 10 14 15 11) ($xcells $ycells $zcells) simpleGrading (1 $stretch 1)
+    //block3
+    hex (12 0 1 13 14 4 5 15)    ($xcells $ycells $zcells) simpleGrading (1 $stretch 1)
+    //block4
+    hex (0 12 8 3 4 14 10 7)    ($xcells1 $ycells1 $zcells1) simpleGrading (1 1 1)
+);
+
+edges
+(
+    //block0 arc
+    arc 1 2  (0 1 0)
+    arc 5 6  (0 1 $L)
+
+    //block1 arc
+    arc 2 9  (1 0 0)
+    arc 6 11 (1 0 $L)
+
+    //block2 arc
+    arc 9 13  (0 -1 0)
+    arc 11 15 (0 -1 $L)
+
+    //block3 arc
+    arc 1 13  (-1 0 0)
+    arc 5 15  (-1 0 $L)
+);
+
+boundary
+(
+    inlet
+    {
+        type    patch;
+        faces
+        (
+            (0 1 2 3)
+            (2 3 8 9)
+            (8 9 13 12)
+            (13 12 0 1)
+            (0 3 8 12)
+        );
+    }
+
+    outlet
+    {
+        type    patch;
+        faces
+        (
+            (4 5 6 7)
+            (6 7 10 11)
+            (15 11 10 14)
+            (15 14 4 5)
+            (4 7 10 14)
+        );
+    }
+
+    pipe
+    {
+        type    wall;
+        faces
+        (
+            (1 5 6 2)
+            (2 6 11 9)
+            (9 11 15 13)
+            (15 13 5 1)
+        );
+    }
+);
+
+// ************************************************************************* //
