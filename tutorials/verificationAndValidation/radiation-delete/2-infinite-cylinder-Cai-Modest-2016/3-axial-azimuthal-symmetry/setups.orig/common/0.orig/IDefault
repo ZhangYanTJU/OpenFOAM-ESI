@@ -20,7 +20,7 @@ internalField   uniform 0;
 
 boundaryField
 {
-    pipe
+    "(pipe|inlet|outlet)"
     {
         type            greyDiffusiveRadiation;
         T               T;
@@ -29,19 +29,10 @@ boundaryField
         value           uniform 0;
     }
 
-    "(inlet|outlet)"
-    {
-        type            wideBandSpecularRadiation;
-//        type            zeroGradient;
-//        type            wedge;
-        value           uniform 0;
-    }
-
     "(front|back)"
     {
         type            wideBandSpecularRadiation;
-        //type            zeroGradient;
-        //type            wedge;
+        patchType       wedge;
         value           uniform 0;
     }
 }

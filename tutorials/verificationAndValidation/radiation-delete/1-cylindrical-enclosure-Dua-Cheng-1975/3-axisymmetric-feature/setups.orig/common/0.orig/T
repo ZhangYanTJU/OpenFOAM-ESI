@@ -10,36 +10,27 @@ FoamFile
     version     2.0;
     format      binary;
     class       volScalarField;
-    object      IDefault;
+    object      T;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [ 1 0 -3 0 0 0 0 ];
+dimensions      [ 0 0 0 1 0 0 0 ];
 
-internalField   uniform 0;
+internalField   uniform 1000;
+
+coldWalls       uniform 10;
 
 boundaryField
 {
-/*
-    "(pipe|inlet|outlet)"
+    ".*"
     {
-        type            greyDiffusiveRadiation;
-        T               T;
-        emissivityMode  lookup;
-        emissivity      uniform 1;
-        value           uniform 0;
-    }
-*/
-    "(pipe|inlet|outlet)"
-    {
-        type            wideBandDiffusiveRadiation;
-        value           uniform 0;
+        type        fixedValue;
+        value       $coldWalls;
     }
 
     "(front|back)"
     {
-        type            wideBandSpecularRadiation;
-        value           uniform 0;
+        type        wedge;
     }
 }
 

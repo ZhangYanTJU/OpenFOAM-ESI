@@ -20,8 +20,8 @@ radiationModel  fvDOM;
 
 fvDOMCoeffs
 {
-    nPhi    4;          // azimuthal angles in PI/2 on X-Y.(from Y to X)
-    nTheta  4;          // polar angles in PI (from Z to X-Y plane)
+    nPhi    1;          // azimuthal angles in PI/2 on X-Y.(from Y to X)
+    nTheta  1;          // polar angles in PI (from Z to X-Y plane)
     convergence 1e-5;   // convergence criteria for radiation iteration
     maxIter 3;          // maximum number of iterations
 }
@@ -33,8 +33,8 @@ absorptionEmissionModel constantAbsorptionEmission;
 
 constantAbsorptionEmissionCoeffs
 {
-    absorptivity             a [ 0 -1 0 0 0 0 0 ] 0.1;
-    emissivity               e [ 0 -1 0 0 0 0 0 ] 0.1;
+    absorptivity             a [ 0 -1 0 0 0 0 0 ] 1.0;
+    emissivity               e [ 0 -1 0 0 0 0 0 ] 1.0;
     E                        E [ 1 -1 -3 0 0 0 0 ] 0;
 }
 

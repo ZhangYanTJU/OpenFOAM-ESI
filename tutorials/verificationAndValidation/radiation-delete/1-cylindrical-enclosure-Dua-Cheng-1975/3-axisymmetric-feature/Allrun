@@ -25,7 +25,7 @@ cd "${0%/*}" || exit                                # Run from this directory
     common_dynamic_code=true
 
     # flag to enable to plot the data
-    plot=false
+    plot=true
 
 
 #------------------------------------------------------------------------------

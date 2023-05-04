@@ -25,24 +25,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::wideBandSpecularRadiationMixedFvPatchScalarField
+    Foam::specularRadiationWedgeFvPatchScalarField
 
 Description
-    Foam::wideBandSpecularRadiationMixedFvPatchScalarField
+    Foam::specularRadiationWedgeFvPatchScalarField
 
 SourceFiles
-    wideBandSpecularRadiationMixedFvPatchScalarField.C
+    specularRadiationWedgeFvPatchScalarField.C
 
 Author
     Dominik Christ, Wikki Ltd. All rights reserved.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef wideBandSpecularRadiationMixedFvPatchScalarField_H
-#define wideBandSpecularRadiationMixedFvPatchScalarField_H
+#ifndef specularRadiationWedgeFvPatchScalarField_H
+#define specularRadiationWedgeFvPatchScalarField_H
 
-#include "mixedFvPatchField.H"
-#include "wedgePolyPatch.H"
+#include "wedgeFvPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,18 +51,16 @@ namespace radiation
 {
 
 /*---------------------------------------------------------------------------*\
-            Class wideBandSpecularRadiationMixedFvPatchScalarField Declaration
+            Class specularRadiationWedgeFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
-class wideBandSpecularRadiationMixedFvPatchScalarField
+class specularRadiationWedgeFvPatchScalarField
 :
-    public mixedFvPatchField<scalar>
+    public wedgeFvPatchField<scalar>
 {
 
     //- For each face, ray index of ray in direction of reflection
     mutable labelListList *receivedRayIDPtr_;
-
-    const wedgePolyPatch& wedgePolyPatch_;
 
     //- Calculate IDs of rays in direction of reflection
     void calcReceivedRayIDs() const;
@@ -72,66 +69,66 @@ class wideBandSpecularRadiationMixedFvPatchScalarField
 public:
 
     //- Runtime type information
-    TypeName("wideBandSpecularRadiation");
+    TypeName("specularRadiationWedge");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        wideBandSpecularRadiationMixedFvPatchScalarField
+        specularRadiationWedgeFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        wideBandSpecularRadiationMixedFvPatchScalarField
+        specularRadiationWedgeFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const dictionary&
         );
 
-        //- Construct by mapping given wideBandSpecularRadiationMixedFvPatchScalarField onto a new patch
-        wideBandSpecularRadiationMixedFvPatchScalarField
+        //- Construct by mapping given specularRadiationWedgeFvPatchScalarField onto a new patch
+        specularRadiationWedgeFvPatchScalarField
         (
-            const wideBandSpecularRadiationMixedFvPatchScalarField&,
+            const specularRadiationWedgeFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Construct as copy
-        wideBandSpecularRadiationMixedFvPatchScalarField
+        specularRadiationWedgeFvPatchScalarField
         (
-            const wideBandSpecularRadiationMixedFvPatchScalarField&
+            const specularRadiationWedgeFvPatchScalarField&
         );
 
         //- Construct and return a clone
-        virtual tmp<fvPatchField<scalar> > clone() const
+        virtual tmp<fvPatchField<scalar>> clone() const
         {
-            return tmp<fvPatchField<scalar> >
+            return tmp<fvPatchField<scalar>>
             (
-                new wideBandSpecularRadiationMixedFvPatchScalarField(*this)
+                new specularRadiationWedgeFvPatchScalarField(*this)
             );
         }
 
         //- Construct as copy setting internal field reference
-        wideBandSpecularRadiationMixedFvPatchScalarField
+        specularRadiationWedgeFvPatchScalarField
         (
-            const wideBandSpecularRadiationMixedFvPatchScalarField&,
+            const specularRadiationWedgeFvPatchScalarField&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatchField<scalar> > clone
+        virtual tmp<fvPatchField<scalar>> clone
         (
             const DimensionedField<scalar, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<scalar> >
+            return tmp<fvPatchField<scalar>>
             (
-                new wideBandSpecularRadiationMixedFvPatchScalarField(*this, iF)
+                new specularRadiationWedgeFvPatchScalarField(*this, iF)
             );
         }
 
@@ -152,7 +149,7 @@ public:
 
     // Member operators
 
-        //virtual void operator=(const fvPatchScalarField& pvf);
+        virtual void operator=(const fvPatchScalarField& pvf);
 };
 
 

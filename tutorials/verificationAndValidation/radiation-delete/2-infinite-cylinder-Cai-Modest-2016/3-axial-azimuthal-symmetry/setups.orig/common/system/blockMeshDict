@@ -54,8 +54,7 @@ boundary
 (
     front
     {
-        // type    wedge;
-        type    patch;
+        type    wedge;
         faces
         (
             (0 1 2 3)
@@ -63,8 +62,7 @@ boundary
     }
     back
     {
-        //type    wedge;
-        type    patch;
+        type    wedge;
         faces
         (
             (0 3 5 4)

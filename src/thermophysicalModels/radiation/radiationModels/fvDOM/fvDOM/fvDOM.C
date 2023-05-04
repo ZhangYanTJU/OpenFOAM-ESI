@@ -165,6 +165,7 @@ void Foam::radiation::fvDOM::initialise()
     // 3D
     if (mesh_.nSolutionD() == 3)
     {
+        DebugVar("Solution3D");
         nRay_ = 4*nPhi_*nTheta_;
 
         IRay_.setSize(nRay_);
@@ -205,6 +206,7 @@ void Foam::radiation::fvDOM::initialise()
     // 2D
     else if (mesh_.nSolutionD() == 2)
     {
+        DebugVar("Solution2D");
         const scalar thetai = piByTwo;
         const scalar deltaTheta = pi;
         nRay_ = 4*nPhi_;
@@ -237,6 +239,7 @@ void Foam::radiation::fvDOM::initialise()
     // 1D
     else
     {
+        DebugVar("Solution1D");
         const scalar thetai = piByTwo;
         const scalar deltaTheta = pi;
         nRay_ = 2;
@@ -750,6 +753,10 @@ void Foam::radiation::fvDOM::updateG()
     {
         IRay_[rayI].addIntensity();
         G_ += IRay_[rayI].I()*IRay_[rayI].omega();
+
+        // DebugVar(IRay_[rayI].I());
+        //DebugVar(IRay_[rayI].omega());
+
         qr_.boundaryFieldRef() += IRay_[rayI].qr().boundaryField();
         qem_.boundaryFieldRef() += IRay_[rayI].qem().boundaryField();
         qin_.boundaryFieldRef() += IRay_[rayI].qin().boundaryField();

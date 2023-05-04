@@ -27,7 +27,7 @@ p1              #eval{ $R*cos(pi()*0.5*$alpha/180.0) };
 p2              #eval{ $R*sin(pi()*0.5*$alpha/180.0) };
 p2n             #eval{ -1.0*$p2 };
 
-xcells          10;
+xcells          25;
 ycells          1;
 zcells          30;
 
@@ -54,7 +54,7 @@ boundary
 (
     front
     {
-        type    patch;
+        type    wedge;
         faces
         (
             (0 1 2 3)
@@ -62,7 +62,7 @@ boundary
     }
     back
     {
-        type    patch;
+        type    wedge;
         faces
         (
             (0 3 5 4)

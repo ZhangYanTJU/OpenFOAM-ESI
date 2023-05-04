@@ -28,8 +28,7 @@ License
 
 #include "radiationModel.H"
 #include "fvDOM.H"
-#include "OBJstream.H"
-#include "wideBandSpecularRadiationMixedFvPatchScalarField.H"
+#include "specularRadiationWedgeFvPatchScalarField.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -40,14 +39,13 @@ namespace radiation
 {
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void wideBandSpecularRadiationMixedFvPatchScalarField::
-calcReceivedRayIDs() const
+void specularRadiationWedgeFvPatchScalarField::calcReceivedRayIDs() const
 {
     if (receivedRayIDPtr_)
     {
         FatalErrorIn
         (
-            "wideBandSpecularRadiationMixedFvPatchScalarField"
+            "specularRadiationWedgeFvPatchScalarField"
             "::calcreceivedRayIDs()"
         )   << "receivedRayIDPtr already calculated"
             << abort(FatalError);
@@ -74,40 +72,18 @@ calcReceivedRayIDs() const
     rayAndBand =
         rayAndBand.substr(rayAndBand.find("_")+1, rayAndBand.size()-1);
 
-    const tensor& cellT = wedgePolyPatch_.cellT();
 
-    //DebugVar(cellT);
+    const tensor& cellT = refCast<const wedgeFvPatch>(this->patch()).cellT();
+
 
     // Get all ray directions
-    /*
     List<vector> dAve(dom.nRay());
     forAll (dAve, rayI)
     {
         dAve[rayI] = dom.IRay(rayI).dAve()/mag(dom.IRay(rayI).dAve());
-        Info<< "dAve - before = " << dAve[rayI] << endl;
-        dAve[rayI] = transform(cellT, dAve[rayI]);
-        Info<< "dAve - after = " << dAve[rayI] << endl;
-    }
-    */
 
-    List<vector> dAve(dom.nRay());
-    forAll (dAve, rayI)
-    {
-        dAve[rayI] = dom.IRay(rayI).dAve()/mag(dom.IRay(rayI).dAve());
+        transform(cellT, dAve);
     }
-
-    //DebugVar(dAve);
-
-    /*
-    List<vector> dAveT(dom.nRay());
-    forAll (dAveT, rayI)
-    {
-        dAveT[rayI] = dom.IRay(rayI).dAve()/mag(dom.IRay(rayI).dAve());
-        Info<< "dAveT - before = " << dAveT[rayI] << endl;
-        dAveT[rayI] = transform(cellT, dAveT[rayI]);
-        Info<< "dAveT - after = " << dAveT[rayI] << endl;
-    }
-    */
 
     // Get face normal vectors
     //vectorField nHat = this->patch().nf();
@@ -137,32 +113,12 @@ calcReceivedRayIDs() const
         // Count actual number of receiving rays
         label nReceiving = 0;
 
-        autoPtr<OBJstream> dAveStr;
-        //if (debug)
-        {
-            dAveStr.reset
-            (
-                new OBJstream
-                (
-                    "dAve.obj"
-                )
-            );
-        }
-
-
         forAll(dAve, incomingRayI)
         {
             // Calculate reflected ray direction for rayI
             vector dReflected =
                 dAve[incomingRayI]
               - 2*(dAve[incomingRayI] & nHat[faceI])*nHat[faceI];
-
-            if (dAveStr)
-            {
-                //const point& pt = mesh().points()[pointI];
-                //medialVecStr().writeLine(pt, medialVec_[pointI]);
-                dAveStr().writeLine(point(0,0,0), dAve[incomingRayI]);
-            }
 
             // Get dot product with this ray
             scalar dotProductThisRay = dAve[rayId] & dReflected;
@@ -202,13 +158,6 @@ calcReceivedRayIDs() const
         receivedRayIDs.setSize(nReceiving);
     }
 
-/*
-    Info<< "rayID="<<rayId << nl
-        << "receivedRayID" << receivedRayID << endl;*/
-
-    //DebugVar(receivedRayID);
-
-
     // Sanity check on last ray
     if (rayId == (dom.nRay() - 1))
     {
@@ -226,10 +175,10 @@ calcReceivedRayIDs() const
                 }
 
                 // How many rays are picked up by this ray?
-                const wideBandSpecularRadiationMixedFvPatchScalarField& rayBC =
+                const specularRadiationWedgeFvPatchScalarField& rayBC =
                     refCast
                     <
-                        const wideBandSpecularRadiationMixedFvPatchScalarField
+                        const specularRadiationWedgeFvPatchScalarField
                     >
                     (
                         dom.IRayLambda
@@ -248,7 +197,7 @@ calcReceivedRayIDs() const
             {
                 FatalErrorIn
                 (
-                    "wideBandSpecularRadiationMixedFvPatchScalarField"
+                    "specularRadiationWedgeFvPatchScalarField"
                     "::calcreceivedRayIDs()"
                 )   << "Sanity checked failed on patch " << patch().name()
                     << " face " << faceI << nl
@@ -266,54 +215,59 @@ calcReceivedRayIDs() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-wideBandSpecularRadiationMixedFvPatchScalarField::
-wideBandSpecularRadiationMixedFvPatchScalarField
+specularRadiationWedgeFvPatchScalarField::
+specularRadiationWedgeFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
-    receivedRayIDPtr_(nullptr),
-    wedgePolyPatch_(refCast<const wedgePolyPatch>(p.patch()))
+    // mixedFvPatchField<scalar>(p, iF),
+    wedgeFvPatchField<scalar>(p, iF),
+    receivedRayIDPtr_(nullptr)
 {
+    /*
     this->refValue() = 0;
     this->refGrad() = 0;
     this->valueFraction() = 0;
+    */
 }
 
 
-wideBandSpecularRadiationMixedFvPatchScalarField::
-wideBandSpecularRadiationMixedFvPatchScalarField
+specularRadiationWedgeFvPatchScalarField::
+specularRadiationWedgeFvPatchScalarField
 (
-    const wideBandSpecularRadiationMixedFvPatchScalarField& ptf,
+    const specularRadiationWedgeFvPatchScalarField& ptf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
-    mixedFvPatchField<scalar>(ptf, p, iF, mapper),
-    receivedRayIDPtr_(nullptr),
-    wedgePolyPatch_(refCast<const wedgePolyPatch>(p.patch()))
+    //mixedFvPatchField<scalar>(ptf, p, iF, mapper),
+    wedgeFvPatchField<scalar>(ptf, p, iF, mapper),
+    receivedRayIDPtr_(nullptr)
 {}
 
 
-wideBandSpecularRadiationMixedFvPatchScalarField::
-wideBandSpecularRadiationMixedFvPatchScalarField
+specularRadiationWedgeFvPatchScalarField::
+specularRadiationWedgeFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const dictionary& dict
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
-    receivedRayIDPtr_(nullptr),
-    wedgePolyPatch_(refCast<const wedgePolyPatch>(p.patch()))
+    //mixedFvPatchField<scalar>(p, iF),
+    wedgeFvPatchField<scalar>(p, iF),
+    receivedRayIDPtr_(nullptr)
 {
+    /*
     this->refValue() = 0;
     this->refGrad() = 0;
     this->valueFraction() = 0;
+    */
 
+    /*
     if (dict.found("patchType"))
     {
         word& pType = const_cast<word &>(this->patchType());
@@ -331,38 +285,39 @@ wideBandSpecularRadiationMixedFvPatchScalarField
     {
         fvPatchScalarField::operator=(this->refValue());
     }
+    */
 }
 
 
-wideBandSpecularRadiationMixedFvPatchScalarField::
-wideBandSpecularRadiationMixedFvPatchScalarField
+specularRadiationWedgeFvPatchScalarField::
+specularRadiationWedgeFvPatchScalarField
 (
-    const wideBandSpecularRadiationMixedFvPatchScalarField& ptf,
+    const specularRadiationWedgeFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(ptf, iF),
-    receivedRayIDPtr_(nullptr),
-    wedgePolyPatch_(ptf.wedgePolyPatch_)
+    //mixedFvPatchField<scalar>(ptf, iF),
+    wedgeFvPatchField<scalar>(ptf, iF),
+    receivedRayIDPtr_(nullptr)
 {}
 
 
-wideBandSpecularRadiationMixedFvPatchScalarField::
-wideBandSpecularRadiationMixedFvPatchScalarField
+specularRadiationWedgeFvPatchScalarField::
+specularRadiationWedgeFvPatchScalarField
 (
-    const wideBandSpecularRadiationMixedFvPatchScalarField& ptf
+    const specularRadiationWedgeFvPatchScalarField& ptf
 )
 :
-    mixedFvPatchField<scalar>(ptf),
-    receivedRayIDPtr_(nullptr),
-    wedgePolyPatch_(ptf.wedgePolyPatch_)
+    //mixedFvPatchField<scalar>(ptf),
+    wedgeFvPatchField<scalar>(ptf),
+    receivedRayIDPtr_(nullptr)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::labelListList&
-wideBandSpecularRadiationMixedFvPatchScalarField::receivedRayIDs() const
+specularRadiationWedgeFvPatchScalarField::receivedRayIDs() const
 {
     if (!receivedRayIDPtr_)
     {
@@ -374,7 +329,7 @@ wideBandSpecularRadiationMixedFvPatchScalarField::receivedRayIDs() const
 
 
 // Evaluate the field on the patch
-void wideBandSpecularRadiationMixedFvPatchScalarField::updateCoeffs()
+void specularRadiationWedgeFvPatchScalarField::updateCoeffs()
 {
     if (this->updated())
     {
@@ -398,8 +353,6 @@ void wideBandSpecularRadiationMixedFvPatchScalarField::updateCoeffs()
 
     const labelListList& receivedRayIDs = this->receivedRayIDs();
 
-    //DebugVar(receivedRayIDs);
-
     scalarField IValue(this->size(), 0);
 
     labelList faceCellIDs = this->patch().faceCells();
@@ -410,26 +363,16 @@ void wideBandSpecularRadiationMixedFvPatchScalarField::updateCoeffs()
         if (receivedRayIDs[faceI].size() == 0)
         {
             // Ray goes into face -> act as zeroGradient
-            //DebugVar("Ray goes into face");
-            this->valueFraction()[faceI] = 0;
+            // // this->valueFraction()[faceI] = 0;
         }
         else
         {
-            //DebugVar("Ray goes out of face");
             // Ray goes out of face -> act as fixedValue
-            this->valueFraction()[faceI] = 1;
+            //// this->valueFraction()[faceI] = 1;
 
             // Pick up all reflected rays
             forAll(receivedRayIDs[faceI], receivedRayI)
             {
-                /*
-                DebugVar(receivedRayIDs[faceI][receivedRayI]);
-
-                DebugVar(dom.IRayLambda(
-                        receivedRayIDs[faceI][receivedRayI],
-                        lambdaId));
-                */
-
                 // Get ray from object registry
                 IValue[faceI] +=
                     dom.IRayLambda
@@ -441,12 +384,10 @@ void wideBandSpecularRadiationMixedFvPatchScalarField::updateCoeffs()
         }
     }
 
-    //DebugVar(IValue);
-
+/*
     // Set value for patch
     this->refValue() = IValue;
 
-/*
     scalarField::operator=
     (
         this->valueFraction()*this->refValue()
@@ -458,57 +399,42 @@ void wideBandSpecularRadiationMixedFvPatchScalarField::updateCoeffs()
         )
     );
 */
-    const tensor& faceT = wedgePolyPatch_.faceT();
+    wedgeFvPatchField<scalar>::updateCoeffs();
 
-    scalarField::operator=
-    (
-        transform
-        (
-            faceT,
-            this->valueFraction()*this->refValue()
-            +
-            (1.0 - this->valueFraction())*
-            (
-                this->patchInternalField()
-              + this->refGrad()/this->patch().deltaCoeffs()
-            )
-        )
-    );
-
-    mixedFvPatchField<scalar>::updateCoeffs();
 }
 
 
-void wideBandSpecularRadiationMixedFvPatchScalarField::write(Ostream& os) const
+void specularRadiationWedgeFvPatchScalarField::write(Ostream& os) const
 {
     fvPatchScalarField::write(os);
     this->writeEntry("value", os);
 }
 
 
-/*
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
-void wideBandSpecularRadiationMixedFvPatchScalarField::operator=
+void specularRadiationWedgeFvPatchScalarField::operator=
 (
     const fvPatchScalarField& ptf
 )
 {
-    DebugVar("ali");
+    /*
     fvPatchScalarField::operator=
     (
         this->valueFraction()*this->refValue()
         + (1 - this->valueFraction())*ptf
     );
+    */
 }
-*/
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 makePatchTypeField
 (
    fvPatchScalarField,
-   wideBandSpecularRadiationMixedFvPatchScalarField
+   // wedgeFvPatchField<scalar>, ?
+   specularRadiationWedgeFvPatchScalarField
 );
 
 
