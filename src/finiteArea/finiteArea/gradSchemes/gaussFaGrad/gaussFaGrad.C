@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,17 +48,21 @@ tmp
 <
     GeometricField
     <
-        typename outerProduct<vector, Type>::type, faPatchField, areaMesh
+        typename outerProduct<vector, Type>::type,
+        faPatchField,
+        areaMesh
     >
 >
-gaussGrad<Type>::grad
+gaussGrad<Type>::calcGrad
 (
-    const GeometricField<Type, faPatchField, areaMesh>& vsf
+    const GeometricField<Type, faPatchField, areaMesh>& vsf,
+    const word& name
 ) const
 {
     typedef typename outerProduct<vector, Type>::type GradType;
+    typedef GeometricField<GradType, faPatchField, areaMesh> GradFieldType;
 
-    tmp<GeometricField<GradType, faPatchField, areaMesh>> tgGrad
+    tmp<GradFieldType> tgGrad
     (
         fac::edgeIntegrate
         (
@@ -65,12 +70,11 @@ gaussGrad<Type>::grad
            *tinterpScheme_().interpolate(vsf)
         )
     );
-
-    GeometricField<GradType, faPatchField, areaMesh>& gGrad = tgGrad.ref();
+    GradFieldType& gGrad = tgGrad.ref();
 
     gGrad.correctBoundaryConditions();
+    gGrad.rename(name);
 
-    gGrad.rename("grad(" + vsf.name() + ')');
     correctBoundaryConditions(vsf, gGrad);
 
     return tgGrad;
