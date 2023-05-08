@@ -407,6 +407,10 @@ Foam::faPatchList Foam::faMesh::createPatchList
                           : word::null
                         )
                         << nl;
+
+                    Pout<< "local/finite-area = " << a.is_localProc() << "/" << a.is_finiteArea()
+                        << " <=>  " << b.is_localProc() << "/" << b.is_finiteArea() << endl;
+
                 }
             }
         }

@@ -120,6 +120,9 @@ Foam::faMesh::getBoundaryEdgeConnections() const
     labelHashSet badEdges(2*nBoundaryEdges);
     labelHashSet danglingEdges(2*nBoundaryEdges);
 
+    // Heavy handed
+    labelHashSet facesUsed(faceLabels_);
+
     {
         // Local collection structure for accounting of patch pairs.
         // Based on 'edge' which has some hash-like insertion properties
@@ -142,6 +145,22 @@ Foam::faMesh::getBoundaryEdgeConnections() const
         DebugInFunction
             << "Determining required boundary edge connections, "
             << "resolving locally attached boundary edges." << endl;
+
+        // Pass 1:
+        // - setup lookup (edge -> bnd index)
+        // - add owner patch for each boundary edge
+        labelList nEdgeFaces(nBoundaryEdges, Zero);
+        for (label bndEdgei = 0; bndEdgei < nBoundaryEdges; ++bndEdgei)
+        {
+            const label patchEdgei = (bndEdgei + nInternalEdges);
+
+            // The attached patch face. Should only be one!
+            const labelList& edgeFaces = patch().edgeFaces()[patchEdgei];
+
+            nEdgeFaces[bndEdgei] = edgeFaces.size();
+        }
+
+        Pout<< "nEdgeFaces : "; nEdgeFaces.writeList(Pout) << endl;
 
         // Pass 1:
         // - setup lookup (edge -> bnd index)
@@ -250,6 +269,24 @@ Foam::faMesh::getBoundaryEdgeConnections() const
                 {
                     // Has a matching owner boundary edge
 
+                    // The attached patch face. Should only be one!
+                    const labelList& edgeFaces = pp.edgeFaces()[patchEdgei];
+
+                    if (edgeFaces.size() != 1)
+                    {
+                        badEdges.insert(badEdges.size());
+                        continue;
+                    }
+
+                    const label patchFacei = edgeFaces[0];
+                    const label meshFacei = patchFacei + pp.start();
+
+                    if (facesUsed.contains(meshFacei))
+                    {
+                        Pout<< "patch=" << patchi << " face " << meshFacei << endl;
+                        continue;
+                    }
+
                     auto& pairing = patchPairings[bndEdgei];
 
                     // Add neighbour (patchId, patchEdgei, meshFacei)
@@ -257,22 +294,10 @@ Foam::faMesh::getBoundaryEdgeConnections() const
                     // which does not insert the same value twice
                     if (pairing.insert(patchi))
                     {
-                        // The attached patch face. Should only be one!
-                        const labelList& edgeFaces = pp.edgeFaces()[patchEdgei];
-
-                        if (edgeFaces.size() != 1)
-                        {
-                            pairing.erase(patchi);
-                            badEdges.insert(badEdges.size());
-                            continue;
-                        }
-
-                        const label patchFacei = edgeFaces[0];
-                        const label meshFacei = patchFacei + pp.start();
-
                         // The neighbour information
                         pairing.patchEdgei_ = patchEdgei;
                         pairing.meshFacei_ = meshFacei;
+
 
                         --nMissing;
                         if (!nMissing) break;  // Early exit
@@ -451,7 +476,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
 
             if (bndEdgei != -1)
             {
-                // A boundary finiteEdge edge (known from this side)
+                // A boundary finiteArea edge (known from this side)
 
                 auto& gathered = gatheredConnections[cppEdgei];
                 gathered.setCapacity_nocopy(2);
@@ -565,7 +590,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
 
         if (bndEdgei != -1)
         {
-            // A boundary finiteEdge edge (known from this side)
+            // A boundary finiteArea edge (known from this side)
             auto& connection = bndEdgeConnections[bndEdgei];
 
             if (gathered.size() == 1)
@@ -678,8 +703,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
             << nl << "Dangling edges detected" << endl;
 
         // Print out edges as point pairs
-        // These are globally synchronised - so only output on master
-        constexpr label maxOutput = 10;
+        constexpr label maxOutput = 5;
 
         label nOutput = 0;
 
@@ -689,17 +713,17 @@ Foam::faMesh::getBoundaryEdgeConnections() const
 
             const auto& gathered = gatheredConnections[cppEdgei];
 
-            Info<< "connection: ";
-            gathered.writeList(Info) << nl;
+            Pout<< "connection: ";
+            gathered.writeList(Pout) << nl;
 
-            Info<<"    edge  : "
+            Pout<<"    edge  : "
                 << cpp.points()[e.first()] << ' '
                 << cpp.points()[e.second()] << nl;
 
             ++nOutput;
             if (maxOutput > 0 && nOutput >= maxOutput)
             {
-                Info<< " ... suppressing further output" << nl;
+                Pout<< " ... suppressing further output" << nl;
                 break;
             }
         }
@@ -824,6 +848,8 @@ Foam::faMesh::getBoundaryEdgeConnections() const
 
     // Globally consistent ordering
     patchTuple::sort(bndEdgeConnections);
+
+    Pout<< "connections " << flatOutput(bndEdgeConnections) << endl;
 
     DebugInFunction
         << "Return sorted list of boundary connections" << endl;

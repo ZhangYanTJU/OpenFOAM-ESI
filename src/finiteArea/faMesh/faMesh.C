@@ -97,6 +97,8 @@ static labelList selectPatchFaces
             << exit(FatalError);
     }
 
+    Pout<< "patchIDs: " << flatOutput(patchIDs) << endl;
+
     label nFaceLabels = 0;
     for (const label patchi : patchIDs)
     {
