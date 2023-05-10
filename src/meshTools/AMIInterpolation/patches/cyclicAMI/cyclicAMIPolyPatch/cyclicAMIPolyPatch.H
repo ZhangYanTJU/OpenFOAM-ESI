@@ -166,6 +166,9 @@ protected:
             //- Temporary storage for AMI face centres
             mutable vectorField faceCentres0_;
 
+        // Cache
+        bool cacheAMI_;
+
 
     // Protected Member Functions
 

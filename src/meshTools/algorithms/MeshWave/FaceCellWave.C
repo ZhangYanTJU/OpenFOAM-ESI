@@ -790,12 +790,17 @@ void Foam::FaceCellWave<Type, TrackingData>::handleAMICyclicPatches()
                     (
                         cycPatch.patchInternalList(allCellInfo_)
                     );
-
-                    cycPatch.interpolate(sendInfo, cmb, receiveInfo, defVals);
+WarningInFunction
+    << "Disabled for MD24 cache AMI"
+    << endl;
+                    //cycPatch.interpolate(sendInfo, cmb, receiveInfo, defVals);
                 }
                 else
                 {
-                    cycPatch.interpolate(sendInfo, cmb, receiveInfo);
+WarningInFunction
+    << "Disabled for MD24 cache AMI"
+    << endl;
+                    //cycPatch.interpolate(sendInfo, cmb, receiveInfo);
                 }
             }
 
