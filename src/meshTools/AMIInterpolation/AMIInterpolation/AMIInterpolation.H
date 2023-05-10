@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,7 +61,7 @@ SourceFiles
 #include "indexedOctree.H"
 #include "treeDataPrimitivePatch.H"
 #include "runTimeSelectionTables.H"
-
+#include "cylindricalCS.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -78,12 +78,17 @@ public:
 
     // Public Data Types
 
+        //- Flag to store face-to-face intersection triangles; default = false
         static bool cacheIntersections_;
 
         //- localComm : 0 : all processors (backwards compatible)
         //- localComm : 1 : only processors with patch faces
         //- localComm : 2 : like 1 but add master processor always
         static int localComm_;
+
+        //- Tolerance used when caching the AMI to identify e.g. if the
+        //- current rotation angle has already been captured
+        static scalar cacheThetaTolerance_;
 
 
 protected:
@@ -144,7 +149,6 @@ protected:
             autoPtr<mapDistribute> srcMapPtr_;
 
 
-
         // Target patch
 
             //- Target face areas
@@ -172,8 +176,31 @@ protected:
             //- Target map pointer - parallel running only
             autoPtr<mapDistribute> tgtMapPtr_;
 
+
         //- Up-to-date flag
         bool upToDate_;
+
+        // Cache
+
+            label cacheSize_;
+            bool cacheComplete_;
+            label cachedIndex0_;
+            label cachedIndex1_;
+            scalar cachedWeight_;
+            autoPtr<coordSystem::cylindrical> coordSysPtr_;
+            List<scalar> cachedTheta_;
+
+            //-
+
+            List<labelListList> cachedSrcAddress_;
+            List<scalarListList> cachedSrcWeights_;
+            List<scalarList> cachedSrcWeightsSum_;
+            List<autoPtr<mapDistribute>> cachedSrcMapPtr_;
+
+            List<labelListList> cachedTgtAddress_;
+            List<scalarListList> cachedTgtWeights_;
+            List<scalarList> cachedTgtWeightsSum_;
+            List<autoPtr<mapDistribute>> cachedTgtMapPtr_;
 
 
     // Protected Member Functions
@@ -211,11 +238,14 @@ protected:
 
         // Access
 
-            //- Return the orginal src patch with optionally updated points
+            //- Return the original src patch with optionally updated points
             inline const primitivePatch& srcPatch0() const;
 
-            //- Return the orginal tgt patch with optionally updated points
+            //- Return the original tgt patch with optionally updated points
             inline const primitivePatch& tgtPatch0() const;
+
+            //- Get rotation angle for cached AMI cases
+            scalar getRotationAngle(const point& p) const;
 
 
         // Evaluation
@@ -410,6 +440,8 @@ public:
             //  old value
             inline label comm(const label newComm);
 
+            //- Return true if caching is active
+            inline bool cacheActive() const;
 
             // Source patch
 
@@ -669,6 +701,17 @@ public:
                 point& srcPoint
             )
             const;
+
+            //- Restore AMI weights and addressing from the cache
+            bool restoreCache(const point& refPt);
+
+            //- Add AMI weights and addressing to the cache
+            void addToCache
+            (
+                const point& refPt,
+                const vector& rotationAxis,
+                const vector& rotationCentre
+            );
 
 
         // Checks
