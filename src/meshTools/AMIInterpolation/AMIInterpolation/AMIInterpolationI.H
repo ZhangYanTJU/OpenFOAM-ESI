@@ -122,6 +122,11 @@ inline Foam::label Foam::AMIInterpolation::comm(const label newComm)
     return oldComm;
 }
 
+inline bool Foam::AMIInterpolation::cacheActive() const
+{
+    return cacheSize_ > 0;
+}
+
 
 inline const Foam::List<Foam::scalar>& Foam::AMIInterpolation::srcMagSf() const
 {
