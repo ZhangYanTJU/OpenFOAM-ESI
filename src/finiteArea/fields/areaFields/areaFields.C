@@ -142,6 +142,64 @@ registerOptSwitch
     Foam::areaTensorField::Boundary::tolerance
 );
 
+
+// Local-ops consistency enforcing
+
+template<> int areaScalarField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "areaScalarField::Boundary::localConsistency",
+    int,
+    Foam::areaScalarField::Boundary::localConsistency
+);
+
+template<> int areaVectorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "areaVectorField::Boundary::localConsistency",
+    int,
+    Foam::areaVectorField::Boundary::localConsistency
+);
+
+template<> int areaSphericalTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "areaSphericalTensorField::Boundary::localConsistency",
+    int,
+    Foam::areaSphericalTensorField::Boundary::localConsistency
+);
+
+template<> int areaSymmTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "areaSymmTensorField::Boundary::localConsistency",
+    int,
+    Foam::areaSymmTensorField::Boundary::localConsistency
+);
+
+template<> int areaTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "areaTensorField::Boundary::localConsistency",
+    int,
+    Foam::areaTensorField::Boundary::localConsistency
+);
+
 } // End namespace Foam
 
 

@@ -78,6 +78,9 @@ defineTemplateDebugSwitchWithName
     0
 );
 
+
+// Tolerance optimisation switch
+
 template<> scalar volScalarField::Boundary::tolerance
 (
     debug::floatOptimisationSwitch("volScalarField::Boundary::tolerance", 0)
@@ -139,6 +142,64 @@ registerOptSwitch
     "volTensorField::Boundary::tolerance",
     scalar,
     Foam::volTensorField::Boundary::tolerance
+);
+
+
+// Local-ops consistency enforcing
+
+template<> int volScalarField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volScalarField::Boundary::localConsistency",
+    int,
+    Foam::volScalarField::Boundary::localConsistency
+);
+
+template<> int volVectorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volVectorField::Boundary::localConsistency",
+    int,
+    Foam::volVectorField::Boundary::localConsistency
+);
+
+template<> int volSphericalTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volSphericalTensorField::Boundary::localConsistency",
+    int,
+    Foam::volSphericalTensorField::Boundary::localConsistency
+);
+
+template<> int volSymmTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volSymmTensorField::Boundary::localConsistency",
+    int,
+    Foam::volSymmTensorField::Boundary::localConsistency
+);
+
+template<> int volTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volTensorField::Boundary::localConsistency",
+    int,
+    Foam::volTensorField::Boundary::localConsistency
 );
 
 

@@ -653,6 +653,11 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
     ///    InfoInFunction << nl;
     ///}
 
+    if (!localConsistency)
+    {
+        return;
+    }
+
     const UPstream::commsTypes commsType = UPstream::defaultCommsType;
     const label startOfRequests = UPstream::nRequests();
 

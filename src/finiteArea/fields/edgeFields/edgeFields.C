@@ -27,6 +27,7 @@ License
 
 #include "faMesh.H"
 #include "edgeFields.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -95,6 +96,63 @@ template<> scalar edgeSymmTensorField::Boundary::tolerance
 template<> scalar edgeTensorField::Boundary::tolerance
 (
     debug::floatOptimisationSwitch("tolerance", 0)
+);
+
+// Local-ops consistency enforcing
+
+template<> int edgeScalarField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeScalarField::Boundary::localConsistency",
+    int,
+    Foam::edgeScalarField::Boundary::localConsistency
+);
+
+template<> int edgeVectorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeVectorField::Boundary::localConsistency",
+    int,
+    Foam::edgeVectorField::Boundary::localConsistency
+);
+
+template<> int edgeSphericalTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeSphericalTensorField::Boundary::localConsistency",
+    int,
+    Foam::edgeSphericalTensorField::Boundary::localConsistency
+);
+
+template<> int edgeSymmTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeSymmTensorField::Boundary::localConsistency",
+    int,
+    Foam::edgeSymmTensorField::Boundary::localConsistency
+);
+
+template<> int edgeTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeTensorField::Boundary::localConsistency",
+    int,
+    Foam::edgeTensorField::Boundary::localConsistency
 );
 
 } // End namespace Foam

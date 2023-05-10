@@ -27,6 +27,7 @@ License
 
 #include "polyMesh.H"
 #include "pointFields.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -76,6 +77,66 @@ defineTemplateDebugSwitchWithName
     "pointTensorField::Boundary",
     0
 );
+
+
+
+// Local-ops consistency enforcing
+
+template<> int pointScalarField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "localConsistency",
+    int,
+    Foam::pointScalarField::Boundary::localConsistency
+);
+
+template<> int pointVectorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "pointVectorField::Boundary::localConsistency",
+    int,
+    Foam::pointVectorField::Boundary::localConsistency
+);
+
+template<> int pointSphericalTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "pointSphericalTensorField::Boundary::localConsistency",
+    int,
+    Foam::pointSphericalTensorField::Boundary::localConsistency
+);
+
+template<> int pointSymmTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "pointSymmTensorField::Boundary::localConsistency",
+    int,
+    Foam::pointSymmTensorField::Boundary::localConsistency
+);
+
+template<> int pointTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "pointTensorField::Boundary::localConsistency",
+    int,
+    Foam::pointTensorField::Boundary::localConsistency
+);
+
 
 } // End namespace Foam
 

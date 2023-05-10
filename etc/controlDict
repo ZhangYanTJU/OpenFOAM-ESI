@@ -213,6 +213,10 @@ OptimisationSwitches
     //  in commit da787200.  Default is to use the formulation from v1712
     //  see ddtScheme.C
     experimentalDdtCorr 0;
+
+    //- Enable enforced consistency of constraint bcs after 'local' operations.
+    //  Default is on. Set to 0/false to revert to <v2306 behaviour
+    //localConsistency 0;
 }
 
 
