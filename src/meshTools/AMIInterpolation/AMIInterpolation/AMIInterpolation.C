@@ -58,14 +58,206 @@ registerOptSwitch
     Foam::AMIInterpolation::useLocalComm_
 );
 
+Foam::scalar Foam::AMIInterpolation::cacheThetaTolerance_ = 1e-8;
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::indexedOctree<Foam::AMIInterpolation::treeType>>
-Foam::AMIInterpolation::createTree
+Foam::scalar Foam::AMIInterpolation::getRotationAngle(const point& p) const
+{
+    if (!coordSysPtr_)
+    {
+        FatalErrorInFunction
+            << "No co-ordinate system available for theta evaluation"
+            << abort(FatalError);
+    }
+
+    scalar theta = -GREAT;
+    if (p != point::max)
+    {
+        theta = coordSysPtr_->localPosition(p)[1];
+    }
+    reduce(theta, maxOp<scalar>());
+
+    // Ensure 0 < theta < 2pi
+    if (mag(theta) < cacheThetaTolerance_)
+    {
+        theta = 0;
+    }
+    else if (theta < 0)
+    {
+        theta += constant::mathematical::twoPi;
+    }
+
+    return theta;
+}
+
+
+void Foam::AMIInterpolation::addToCache
 (
-    const primitivePatch& patch
-) const
+    const point& refPt,
+    const vector& rotationAxis,
+    const vector& rotationCentre
+)
+{
+    if (cacheSize_ == -1)
+    {
+        DebugInfo<< "-- addToCache - deactivated" << endl;
+        return;
+    }
+
+    DebugInfo<< "-- addToCache" << endl;
+
+    if (!coordSysPtr_)
+    {
+        DebugInfo
+            << "Creating rotation co-ordinate system:"
+            << " rotationCentre:" << rotationCentre
+            << " rotationAxis:" << rotationAxis
+            << " p:" << refPt
+            << endl;
+
+        vector axis(normalised(refPt - rotationCentre));
+        coordSysPtr_.reset
+        (
+            new coordSystem::cylindrical(rotationCentre, rotationAxis, axis)
+        );
+        DebugInfo<< "Coord sys:" << coordSysPtr_() << endl;
+    }
+
+    // Check if cache is complete
+    if (!cacheComplete_)
+    {
+        forAll(cachedTheta_, i)
+        {
+            if (cachedTheta_[i] > constant::mathematical::twoPi)
+            {
+                cacheComplete_ = false;
+                break;
+            }
+        }
+    }
+
+    if (!cacheComplete_)
+    {
+        const scalar theta = getRotationAngle(refPt);
+        const label bini = theta/constant::mathematical::twoPi*cacheSize_;
+
+        DebugInfo<< "--   bini:" << bini << " for theta:" << theta << endl;
+
+        if (cachedTheta_[bini] > constant::mathematical::twoPi)
+        {
+            DebugInfo<< "--   setting cache at index " << bini << endl;
+
+            // New entry
+            cachedTheta_[bini] = theta;
+
+            cachedSrcAddress_[bini] = srcAddress_;
+            cachedSrcWeights_[bini] = srcWeights_;
+            cachedSrcWeightsSum_[bini] = srcWeightsSum_;
+            cachedSrcMapPtr_[bini] = srcMapPtr_.clone();
+
+            cachedTgtAddress_[bini] = tgtAddress_;
+            cachedTgtWeights_[bini] = tgtWeights_;
+            cachedTgtWeightsSum_[bini] = tgtWeightsSum_;
+            cachedTgtMapPtr_[bini] = tgtMapPtr_.clone();
+        }
+    }
+}
+
+
+bool Foam::AMIInterpolation::restoreCache(const point& refPt)
+{
+    DebugInfo<< "-- restoreCache" << endl;
+
+    upToDate_ = false;
+    cachedIndex0_ = -1;
+    cachedIndex1_ = -1;
+    cachedWeight_ = -1;
+
+    if (!coordSysPtr_ || cacheSize_ == -1)
+    {
+        return upToDate_;
+    }
+
+    const scalar theta = getRotationAngle(refPt);
+    const label bini = theta/constant::mathematical::twoPi*cacheSize_;
+
+    DebugInfo<< "--   bini:" << bini << " for theta:" << theta << endl;
+
+    auto validIndex = [&](const scalar bini)
+    {
+        return cachedTheta_[bini] < constant::mathematical::twoPi;
+    };
+
+    if (validIndex(bini))
+    {
+        // Find participating bins
+        if (mag(theta - cachedTheta_[bini]) < cacheThetaTolerance_)
+        {
+            // Hit cached value - no interpolation needed
+            cachedIndex0_ = bini;
+            upToDate_ = true;
+        }
+        else if (theta > cachedTheta_[bini])
+        {
+            // Check that previous bin is valid
+            const label i1 = cachedTheta_.fcIndex(bini);
+            if (validIndex(i1))
+            {
+                cachedIndex0_ = bini;
+                cachedIndex1_ = i1;
+                upToDate_ = true;
+            }
+        }
+        else // (theta < cachedTheta_[bini])
+        {
+            // Check that previous bin is valid
+            const label i1 = cachedTheta_.rcIndex(bini);
+            if (validIndex(i1))
+            {
+                cachedIndex0_ = i1;
+                cachedIndex1_ = bini;
+                upToDate_ = true;
+            }
+        }
+
+        if (!upToDate_)
+        {
+            DebugInfo<< "-- no cache available" << endl;
+            return false;
+        }
+
+
+        // Calculate weighting factor
+        if (cachedIndex1_ != -1)
+        {
+            const scalar t0 = cachedTheta_[cachedIndex0_];
+            scalar t1 = cachedTheta_[cachedIndex1_];
+
+            if (cachedIndex1_ < cachedIndex0_)
+            {
+                t1 += constant::mathematical::twoPi;
+            }
+
+            // Set time-based weighting factor
+            cachedWeight_ = (theta - t0)/(t1 - t0);
+
+            DebugInfo
+                << "--   i0:" << cachedIndex0_ << " i1:" << cachedIndex1_
+                << " w:" << cachedWeight_ << endl;
+        }
+    }
+    else
+    {
+        DebugInfo<< "  -- no cache available" << endl;
+    }
+
+    return upToDate_;
+}
+
+
+Foam::autoPtr<Foam::indexedOctree<Foam::AMIInterpolation::treeType>>
+Foam::AMIInterpolation::createTree(const primitivePatch &patch) const
 {
     treeBoundBox bb(patch.points(), patch.meshPoints());
     bb.inflate(0.01);
@@ -704,8 +896,36 @@ Foam::AMIInterpolation::AMIInterpolation
     tgtWeightsSum_(),
     tgtCentroids_(),
     tgtMapPtr_(nullptr),
-    upToDate_(false)
-{}
+    upToDate_(false),
+    cacheSize_(dict.getOrDefault<scalar>("cacheSize", -1)),
+    cacheComplete_(false),
+    cachedIndex0_(-1),
+    cachedIndex1_(-1),
+    cachedWeight_(0),
+    coordSysPtr_(nullptr),
+    cachedTheta_(),
+    cachedSrcAddress_(),
+    cachedSrcWeights_(),
+    cachedSrcWeightsSum_(),
+    cachedSrcMapPtr_(),
+    cachedTgtAddress_(),
+    cachedTgtWeights_(),
+    cachedTgtWeightsSum_(),
+    cachedTgtMapPtr_()
+{
+    if (cacheSize_ != -1)
+    {
+        cachedTheta_.resize(cacheSize_, GREAT);
+        cachedSrcAddress_.resize(cacheSize_);
+        cachedSrcWeights_.resize(cacheSize_);
+        cachedSrcWeightsSum_.resize(cacheSize_);
+        cachedSrcMapPtr_.resize(cacheSize_);
+        cachedTgtAddress_.resize(cacheSize_);
+        cachedTgtWeights_.resize(cacheSize_);
+        cachedTgtWeightsSum_.resize(cacheSize_);
+        cachedTgtMapPtr_.resize(cacheSize_);
+    }
+}
 
 
 Foam::AMIInterpolation::AMIInterpolation
@@ -734,7 +954,22 @@ Foam::AMIInterpolation::AMIInterpolation
     tgtCentroids_(),
     tgtPatchPts_(),
     tgtMapPtr_(nullptr),
-    upToDate_(false)
+    upToDate_(false),
+    cacheSize_(0),
+    cacheComplete_(false),
+    cachedIndex0_(-1),
+    cachedIndex1_(-1),
+    cachedWeight_(0),
+    coordSysPtr_(nullptr),
+    cachedTheta_(),
+    cachedSrcAddress_(),
+    cachedSrcWeights_(),
+    cachedSrcWeightsSum_(),
+    cachedSrcMapPtr_(),
+    cachedTgtAddress_(),
+    cachedTgtWeights_(),
+    cachedTgtWeightsSum_(),
+    cachedTgtMapPtr_()
 {}
 
 
@@ -747,7 +982,7 @@ Foam::AMIInterpolation::AMIInterpolation
 :
     requireMatch_(fineAMI.requireMatch_),
     reverseTarget_(fineAMI.reverseTarget_),
-    lowWeightCorrection_(-1.0),
+    lowWeightCorrection_(-1.0), // Deactivated?
     singlePatchProc_(fineAMI.singlePatchProc_),
     comm_(fineAMI.comm()),  // use fineAMI geomComm if present, comm otherwise
     geomComm_(),
@@ -763,16 +998,31 @@ Foam::AMIInterpolation::AMIInterpolation
     tgtWeightsSum_(),
     tgtPatchPts_(),
     tgtMapPtr_(nullptr),
-    upToDate_(false)
+    upToDate_(false),
+    cacheSize_(fineAMI.cacheSize_),
+    cacheComplete_(fineAMI.cacheComplete_),
+    cachedIndex0_(fineAMI.cachedIndex0_),
+    cachedIndex1_(fineAMI.cachedIndex1_),
+    cachedWeight_(fineAMI.cachedWeight_),
+    coordSysPtr_(nullptr),
+    cachedTheta_(fineAMI.cachedTheta_),
+    cachedSrcAddress_(fineAMI.cachedSrcAddress_.size()),
+    cachedSrcWeights_(fineAMI.cachedSrcWeights_.size()),
+    cachedSrcWeightsSum_(fineAMI.cachedSrcWeightsSum_.size()),
+    cachedSrcMapPtr_(fineAMI.cachedSrcMapPtr_.size()),
+    cachedTgtAddress_(fineAMI.cachedTgtAddress_.size()),
+    cachedTgtWeights_(fineAMI.cachedTgtWeights_.size()),
+    cachedTgtWeightsSum_(fineAMI.cachedTgtWeightsSum_.size()),
+    cachedTgtMapPtr_(fineAMI.cachedTgtMapPtr_.size())
 {
-    label sourceCoarseSize =
+    const label sourceCoarseSize =
     (
         sourceRestrictAddressing.size()
       ? max(sourceRestrictAddressing)+1
       : 0
     );
 
-    label neighbourCoarseSize =
+    const label neighbourCoarseSize =
     (
         targetRestrictAddressing.size()
       ? max(targetRestrictAddressing)+1
@@ -883,6 +1133,76 @@ Foam::AMIInterpolation::AMIInterpolation
             comm()
         );
     }
+
+    if (cacheSize_ > 0)
+    {
+        FixedList<label, 2> indices({cachedIndex0_, cachedIndex1_});
+
+        for (label cachei : indices)
+        {
+            if (cachei == -1) continue;
+
+            scalarField dummySrcMagSf;
+
+            labelListList cSrcAddress;
+            scalarListList cSrcWeights;
+            autoPtr<mapDistribute> cTgtMapPtr;
+            scalarField cSrcWeightsSum;
+
+            labelListList cTgtAddress;
+            scalarListList cTgtWeights;
+            autoPtr<mapDistribute> cSrcMapPtr;
+            scalarField cTgtWeightsSum;
+
+            agglomerate
+            (
+                fineAMI.cachedTgtMapPtr_[cachei],
+                fineAMI.srcMagSf(),
+                fineAMI.cachedSrcAddress_[cachei],
+                fineAMI.cachedSrcWeights_[cachei],
+
+                sourceRestrictAddressing,
+                targetRestrictAddressing,
+
+                dummySrcMagSf,
+                cSrcAddress,
+                cSrcWeights,
+                cSrcWeightsSum,
+                cTgtMapPtr,
+                comm()
+            );
+
+            scalarField dummyTgtMagSf;
+
+            agglomerate
+            (
+                fineAMI.cachedSrcMapPtr_[cachei],
+                fineAMI.tgtMagSf(),
+                fineAMI.cachedTgtAddress_[cachei],
+                fineAMI.cachedTgtWeights_[cachei],
+
+                targetRestrictAddressing,
+                sourceRestrictAddressing,
+
+                dummyTgtMagSf,
+                cTgtAddress,
+                cTgtWeights,
+                cTgtWeightsSum,
+                cSrcMapPtr,
+                comm()
+            );
+
+            cachedSrcAddress_[cachei] = cSrcAddress;
+            cachedSrcWeights_[cachei] = cSrcWeights;
+            cachedSrcWeightsSum_[cachei] = cSrcWeightsSum;
+            cachedSrcMapPtr_[cachei] = cSrcMapPtr.clone();
+
+            cachedTgtAddress_[cachei] = cTgtAddress;
+            cachedTgtWeights_[cachei] = cTgtWeights;
+            cachedTgtWeightsSum_[cachei] = cTgtWeightsSum;
+            cachedTgtMapPtr_[cachei] = cTgtMapPtr.clone();
+        }
+    }
 }
 
 
@@ -899,15 +1219,40 @@ Foam::AMIInterpolation::AMIInterpolation(const AMIInterpolation& ami)
     srcWeights_(ami.srcWeights_),
     srcWeightsSum_(ami.srcWeightsSum_),
     srcCentroids_(ami.srcCentroids_),
-    srcMapPtr_(nullptr),
+    srcMapPtr_(ami.srcMapPtr_.clone()),
     tgtMagSf_(ami.tgtMagSf_),
     tgtAddress_(ami.tgtAddress_),
     tgtWeights_(ami.tgtWeights_),
     tgtWeightsSum_(ami.tgtWeightsSum_),
     tgtCentroids_(ami.tgtCentroids_),
-    tgtMapPtr_(nullptr),
-    upToDate_(false)
-{}
+    tgtMapPtr_(ami.tgtMapPtr_.clone()),
+    upToDate_(ami.upToDate_),
+    cacheSize_(ami.cacheSize_),
+    cacheComplete_(ami.cacheComplete_),
+    cachedIndex0_(ami.cachedIndex0_),
+    cachedIndex1_(ami.cachedIndex1_),
+    cachedWeight_(ami.cachedWeight_),
+    coordSysPtr_(nullptr), // TODO: ami.coordSysPtr_.clone()),
+    cachedTheta_(ami.cachedTheta_),
+    cachedSrcAddress_(ami.cachedSrcAddress_),
+    cachedSrcWeights_(ami.cachedSrcWeights_),
+    cachedSrcWeightsSum_(ami.cachedSrcWeightsSum_),
+    cachedSrcMapPtr_(ami.cachedSrcMapPtr_.size()), // Need to clone
+    cachedTgtAddress_(ami.cachedTgtAddress_),
+    cachedTgtWeights_(ami.cachedTgtWeights_),
+    cachedTgtWeightsSum_(ami.cachedTgtWeightsSum_),
+    cachedTgtMapPtr_(ami.cachedTgtMapPtr_.size()) // Need to clone
+{
+    forAll(cachedSrcMapPtr_, cachei)
+    {
+        cachedSrcMapPtr_[cachei].reset(ami.cachedSrcMapPtr_[cachei].clone());
+    }
+
+    forAll(cachedTgtMapPtr_, cachei)
+    {
+        cachedTgtMapPtr_[cachei].reset(ami.cachedTgtMapPtr_[cachei].clone());
+    }
+}
 
 
 Foam::AMIInterpolation::AMIInterpolation(Istream& is)
@@ -934,7 +1279,24 @@ Foam::AMIInterpolation::AMIInterpolation(Istream& is)
     //tgtPatchPts_(is),
     tgtMapPtr_(nullptr),
 
-    upToDate_(readBool(is))
+    upToDate_(readBool(is)),
+
+    cacheSize_(readLabel(is)),
+    cacheComplete_(readBool(is)),
+
+    cachedIndex0_(-1),
+    cachedIndex1_(-1),
+    cachedWeight_(0),
+    coordSysPtr_(nullptr),
+    cachedTheta_(),
+    cachedSrcAddress_(),
+    cachedSrcWeights_(),
+    cachedSrcWeightsSum_(),
+    cachedSrcMapPtr_(),
+    cachedTgtAddress_(),
+    cachedTgtWeights_(),
+    cachedTgtWeightsSum_(),
+    cachedTgtMapPtr_()
 {
     // Hopefully no need to stream geomComm_ since only used in processor
     // agglomeration?
@@ -943,6 +1305,51 @@ Foam::AMIInterpolation::AMIInterpolation(Istream& is)
     {
         srcMapPtr_.reset(new mapDistribute(is));
         tgtMapPtr_.reset(new mapDistribute(is));
+    }
+
+    // Caching
+
+    const bitSet goodMap(is);
+
+    if (goodMap.size())
+    {
+        is >> cachedIndex0_
+           >> cachedIndex1_
+           >> cachedWeight_
+           >> cachedTheta_;
+
+        const bool goodCoord(readBool(is));
+        if (goodCoord)
+        {
+            coordSysPtr_.reset(new coordSystem::cylindrical(is));
+        }
+
+        is >> cachedSrcAddress_
+           >> cachedSrcWeights_
+           >> cachedSrcWeightsSum_;
+
+        cachedSrcMapPtr_.setSize(goodMap.size());
+        forAll(goodMap, cachei)
+        {
+            if (goodMap[cachei])
+            {
+                cachedSrcMapPtr_[cachei].reset(new mapDistribute(is));
+            }
+        }
+
+        is >> cachedTgtAddress_
+           >> cachedTgtWeights_
+           >> cachedTgtWeightsSum_;
+
+
+        cachedTgtMapPtr_.setSize(goodMap.size());
+        forAll(goodMap, cachei)
+        {
+            if (goodMap[cachei])
+            {
+                cachedTgtMapPtr_[cachei].reset(new mapDistribute(is));
+            }
+        }
     }
 }
 
@@ -1365,7 +1772,6 @@ const
         }
         else if (ray.distance() < nearest.distance())
         {
-
             nearest = ray;
             nearestFacei = srcFacei;
         }
@@ -1543,6 +1949,11 @@ void Foam::AMIInterpolation::write(Ostream& os) const
     {
         os.writeEntry("lowWeightCorrection", lowWeightCorrection_);
     }
+
+    if (cacheSize_ > 0)
+    {
+        os.writeEntry("cacheSize", cacheSize_);
+    }
 }
 
 
@@ -1566,12 +1977,55 @@ bool Foam::AMIInterpolation::writeData(Ostream& os) const
         << token::SPACE<< tgtWeightsSum()
         << token::SPACE<< tgtCentroids_
 
-        << token::SPACE<< upToDate();
+        << token::SPACE<< upToDate()
+
+        << token::SPACE<< cacheSize_
+        << token::SPACE<< cacheComplete_;
+
 
     if (distributed() && comm() != -1)
     {
         os  << token::SPACE<< srcMap()
             << token::SPACE<< tgtMap();
+    }
+
+    bitSet goodMap(cachedSrcMapPtr_.size());
+    forAll(goodMap, cachei)
+    {
+        goodMap.set(cachei, cachedSrcMapPtr_[cachei].good());
+    }
+    os  << token::SPACE << goodMap;
+
+
+    os  << token::SPACE << cachedIndex0_
+        << token::SPACE << cachedIndex1_
+        << token::SPACE << cachedWeight_
+        << token::SPACE << cachedTheta_;
+
+    os  << token::SPACE << coordSysPtr_.good();
+
+    if (coordSysPtr_.good())
+    {
+        os  << token::SPACE << coordSysPtr_();
+    }
+
+    os  << token::SPACE << cachedSrcAddress_
+        << token::SPACE << cachedSrcWeights_
+        << token::SPACE << cachedSrcWeightsSum_;
+
+
+    for (const auto& index : goodMap)
+    {
+        os  << token::SPACE << cachedSrcMapPtr_[index]();
+    }
+
+    os  << token::SPACE << cachedTgtAddress_
+        << token::SPACE << cachedTgtWeights_
+        << token::SPACE << cachedTgtWeightsSum_;
+
+    for (const auto& index : goodMap)
+    {
+        os  << token::SPACE << cachedTgtMapPtr_[index]();
     }
 
     return os.good();
