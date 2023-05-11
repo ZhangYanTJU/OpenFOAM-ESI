@@ -1,0 +1,5 @@
+subdir('rhoCentralFoam')
+subdir('rhoPimpleAdiabaticFoam')
+subdir('rhoPimpleFoam')
+subdir('rhoSimpleFoam')
+subdir('sonicFoam')

@@ -1,0 +1,62 @@
+subdir('twoPhaseMixtureThermo')
+subdir('surfaceTensionModels')
+subdir('VoFphaseCompressibleTurbulenceModels')
+subdir('compressibleInterDyMFoam')
+subdir('compressibleInterFilmFoam')
+subdir('compressibleInterIsoFoam')
+
+srcfiles = [
+    lnInclude_hack,
+    'compressibleInterFoam.C',
+]
+link_with = [
+    lib_OpenFOAM,
+    lib_finiteVolume,
+    lib_fvOptions,
+    lib_meshTools,
+    lib_twoPhaseMixtureThermo,
+    lib_twoPhaseSurfaceTension,
+    lib_compressibleTransportModels,
+    lib_fluidThermophysicalModels,
+    lib_specie,
+    lib_twoPhaseMixture,
+    lib_twoPhaseProperties,
+    lib_interfaceProperties,
+    lib_turbulenceModels,
+    lib_compressibleTurbulenceModels,
+    lib_thermoTools,
+    lib_VoFphaseCompressibleTurbulenceModels,
+]
+dependencies = [
+    m_dep,
+    dl_dep,
+]
+cpp_args = [
+    '-I' + meson.source_root() / 'applications/solvers/multiphase/compressibleInterFoam',
+    '-I' + meson.source_root() / 'applications/solvers/multiphase/VoF',
+    '-I' + meson.source_root() / 'applications/solvers/multiphase/compressibleInterFoam/twoPhaseMixtureThermo',
+    '-I' + recursive_include_dirs / 'src/finiteVolume',
+    '-I' + recursive_include_dirs / 'src/meshTools',
+    '-I' + recursive_include_dirs / 'src/transportModels/compressible',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/basic',
+    '-I' + recursive_include_dirs / 'src/transportModels/twoPhaseMixture',
+    '-I' + recursive_include_dirs / 'src/transportModels/interfaceProperties',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/turbulenceModels',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/compressible',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/phaseCompressible',
+    '-I' + recursive_include_dirs / 'applications/solvers/multiphase/compressibleInterFoam/VoFphaseCompressibleTurbulenceModels',
+    '-I' + recursive_include_dirs / 'applications/solvers/multiphase/compressibleInterFoam',
+    '-I' + recursive_include_dirs / 'src/OpenFOAM',
+    '-I' + recursive_include_dirs / 'src/OSspecific/POSIX',
+]
+exe_compressibleInterFoam = executable(
+    'compressibleInterFoam',
+    srcfiles,
+    link_with: link_with,
+    dependencies: dependencies,
+    cpp_args: cpp_args,
+    implicit_include_directories: false,
+    install: true,
+)
+
+subdir('overCompressibleInterDyMFoam')

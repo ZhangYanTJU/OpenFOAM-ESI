@@ -1,0 +1,2 @@
+subdir('solidDisplacementFoam')
+subdir('solidEquilibriumDisplacementFoam')

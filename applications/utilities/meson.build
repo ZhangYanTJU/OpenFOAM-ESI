@@ -1,0 +1,8 @@
+subdir('finiteArea')
+subdir('mesh')
+subdir('miscellaneous')
+subdir('parallelProcessing')
+subdir('postProcessing')
+subdir('preProcessing')
+subdir('surface')
+subdir('thermophysical')

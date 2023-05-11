@@ -1,0 +1,2 @@
+subdir('ccmToFoam')
+subdir('foamToCcm')

@@ -1,0 +1,55 @@
+srcfiles = [
+    lnInclude_hack,
+    'common/parcelSelectionDetail.C',
+    'dataCloud/dataCloud.C',
+    'cloudInfo/cloudInfo.C',
+    'icoUncoupledKinematicCloud/icoUncoupledKinematicCloud.C',
+    'dsmcFields/dsmcFields.C',
+    'vtkCloud/vtkCloud.C',
+]
+link_with = [
+    lib_finiteVolume,
+    lib_fileFormats,
+    lib_meshTools,
+    lib_conversion,
+    lib_incompressibleTransportModels,
+    lib_lagrangian,
+    lib_lagrangianIntermediate,
+    lib_lagrangianTurbulence,
+    lib_regionModels,
+    lib_surfaceFilmModels,
+    lib_regionFaModels,
+    lib_finiteArea,
+    lib_faOptions,
+]
+dependencies = []
+cpp_args = [
+    '-I' + meson.source_root() / 'src/functionObjects/lagrangian',
+    '-I' + recursive_include_dirs / 'src/finiteVolume',
+    '-I' + recursive_include_dirs / 'src/finiteArea',
+    '-I' + recursive_include_dirs / 'src/fileFormats',
+    '-I' + recursive_include_dirs / 'src/meshTools',
+    '-I' + recursive_include_dirs / 'src/conversion',
+    '-I' + meson.source_root() / 'src/transportModels',
+    '-I' + meson.source_root() / 'src/transportModels/incompressible/singlePhaseTransportModel',
+    '-I' + recursive_include_dirs / 'src/lagrangian/basic',
+    '-I' + recursive_include_dirs / 'src/lagrangian/intermediate',
+    '-I' + recursive_include_dirs / 'src/lagrangian/DSMC',
+    '-I' + recursive_include_dirs / 'src/regionModels/regionModel',
+    '-I' + recursive_include_dirs / 'src/regionModels/surfaceFilmModels',
+    '-I' + recursive_include_dirs / 'src/regionFaModels',
+    '-I' + recursive_include_dirs / 'src/faOptions',
+    '-I' + recursive_include_dirs / 'src/functionObjects/lagrangian',
+    '-I' + recursive_include_dirs / 'src/OpenFOAM',
+    '-I' + recursive_include_dirs / 'src/OSspecific/POSIX',
+]
+lib_lagrangianFunctionObjects = library(
+    'lagrangianFunctionObjects',
+    srcfiles,
+    link_with: link_with,
+    dependencies: dependencies,
+    cpp_args: cpp_args,
+    implicit_include_directories: false,
+    install: true,
+)
+pkg.generate(lib_lagrangianFunctionObjects)

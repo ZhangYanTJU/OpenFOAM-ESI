@@ -1,0 +1,5 @@
+subdir('MGridGen')
+subdir('kahipDecomp')
+subdir('metisDecomp')
+subdir('ptscotchDecomp')
+subdir('scotchDecomp')

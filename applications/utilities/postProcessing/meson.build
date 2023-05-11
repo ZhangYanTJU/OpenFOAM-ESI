@@ -1,0 +1,7 @@
+subdir('dataConversion')
+subdir('lagrangian')
+subdir('lumped')
+subdir('miscellaneous')
+subdir('noise')
+subdir('optimisation')
+subdir('postProcess')

@@ -1,0 +1,6 @@
+subdir('PDRFoam')
+subdir('XiFoam')
+subdir('chemFoam')
+subdir('coldEngineFoam')
+subdir('fireFoam')
+subdir('reactingFoam')

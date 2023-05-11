@@ -1,0 +1,7 @@
+subdir('buoyantBoussinesqPimpleFoam')
+subdir('buoyantBoussinesqSimpleFoam')
+subdir('buoyantPimpleFoam')
+subdir('buoyantSimpleFoam')
+subdir('chtMultiRegionFoam')
+subdir('solidFoam')
+subdir('thermoFoam')

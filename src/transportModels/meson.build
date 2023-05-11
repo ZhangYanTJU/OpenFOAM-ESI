@@ -1,0 +1,7 @@
+subdir('compressible')
+subdir('twoPhaseMixture')
+subdir('incompressible')
+subdir('interfaceProperties')
+subdir('twoPhaseProperties')
+subdir('geometricVoF')
+subdir('immiscibleIncompressibleTwoPhaseMixture')

@@ -1,0 +1,7 @@
+subdir('DSMC')
+subdir('intermediate')
+subdir('molecularDynamics')
+subdir('solidParticle')
+subdir('turbulence')
+subdir('coalCombustion')
+subdir('spray')

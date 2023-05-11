@@ -1,0 +1,2 @@
+subdir('lumpedPointMotion')
+subdir('pimpleFoam')

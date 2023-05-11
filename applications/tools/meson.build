@@ -1,0 +1,2 @@
+subdir('foamCalc')
+subdir('foamExprParserInfo')

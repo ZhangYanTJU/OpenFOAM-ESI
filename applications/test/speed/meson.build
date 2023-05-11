@@ -1,0 +1,2 @@
+subdir('scalarSpeed')
+subdir('vectorSpeed')

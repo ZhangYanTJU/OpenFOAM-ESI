@@ -1,0 +1,8 @@
+subdir('DPMFoam')
+subdir('coalChemistryFoam')
+subdir('icoUncoupledKinematicParcelFoam')
+subdir('kinematicParcelFoam')
+subdir('reactingParcelFoam')
+subdir('simpleCoalParcelFoam')
+subdir('sprayFoam')
+subdir('uncoupledKinematicParcelFoam')

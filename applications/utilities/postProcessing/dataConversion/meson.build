@@ -1,0 +1,6 @@
+subdir('foamDataToFluent')
+subdir('foamToEnsight')
+subdir('foamToGMV')
+subdir('foamToTetDualMesh')
+subdir('foamToVTK')
+subdir('smapToFoam')

@@ -1,0 +1,5 @@
+subdir('adiabaticFlameT')
+subdir('chemkinToFoam')
+subdir('equilibriumCO')
+subdir('equilibriumFlameT')
+subdir('mixtureAdiabaticFlameT')

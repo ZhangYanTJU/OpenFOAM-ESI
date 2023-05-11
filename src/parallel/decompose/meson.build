@@ -1,0 +1,7 @@
+subdir('decompositionMethods')
+subdir('faDecompose')
+subdir('decompose')
+subdir('kahipDecomp')
+subdir('metisDecomp')
+subdir('ptscotchDecomp')
+subdir('scotchDecomp')

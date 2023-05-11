@@ -1,0 +1,5 @@
+subdir('multiphaseEuler')
+subdir('reactingEuler')
+subdir('twoPhaseEuler')
+subdir('twoPhaseInter')
+subdir('multiphaseInter')

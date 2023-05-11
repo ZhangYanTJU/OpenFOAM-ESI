@@ -1,0 +1,2 @@
+subdir('mdEquilibrationFoam')
+subdir('mdFoam')

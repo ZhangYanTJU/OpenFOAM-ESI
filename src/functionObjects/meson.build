@@ -1,0 +1,8 @@
+subdir('field')
+subdir('forces')
+subdir('initialisation')
+subdir('lagrangian')
+subdir('randomProcesses')
+subdir('solvers')
+subdir('utilities')
+subdir('phaseSystems')

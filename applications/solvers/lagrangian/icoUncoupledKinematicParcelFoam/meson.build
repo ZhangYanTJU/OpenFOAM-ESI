@@ -1,0 +1,64 @@
+srcfiles = [
+    lnInclude_hack,
+    'icoUncoupledKinematicParcelFoam.C',
+]
+link_with = [
+    lib_OpenFOAM,
+    lib_finiteVolume,
+    lib_fvOptions,
+    lib_meshTools,
+    lib_lagrangian,
+    lib_lagrangianIntermediate,
+    lib_lagrangianTurbulence,
+    lib_compressibleTransportModels,
+    lib_fluidThermophysicalModels,
+    lib_specie,
+    lib_radiationModels,
+    lib_turbulenceModels,
+    lib_incompressibleTurbulenceModels,
+    lib_incompressibleTransportModels,
+    lib_regionModels,
+    lib_surfaceFilmModels,
+    lib_regionFaModels,
+    lib_finiteArea,
+    lib_faOptions,
+]
+dependencies = [
+    m_dep,
+    dl_dep,
+]
+cpp_args = [
+    '-I' + meson.source_root() / 'applications/solvers/lagrangian/icoUncoupledKinematicParcelFoam',
+    '-I' + recursive_include_dirs / 'src/finiteVolume',
+    '-I' + recursive_include_dirs / 'src/finiteArea',
+    '-I' + recursive_include_dirs / 'src/meshTools',
+    '-I' + recursive_include_dirs / 'src/lagrangian/basic',
+    '-I' + recursive_include_dirs / 'src/lagrangian/intermediate',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/specie',
+    '-I' + recursive_include_dirs / 'src/transportModels/compressible',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/basic',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/reactionThermo',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/radiation',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/turbulenceModels',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/incompressible',
+    '-I' + meson.source_root() / 'src/transportModels',
+    '-I' + meson.source_root() / 'src/transportModels/incompressible/singlePhaseTransportModel',
+    '-I' + recursive_include_dirs / 'src/regionModels/regionModel',
+    '-I' + recursive_include_dirs / 'src/regionModels/surfaceFilmModels',
+    '-I' + recursive_include_dirs / 'src/regionFaModels',
+    '-I' + recursive_include_dirs / 'src/faOptions',
+    '-I' + recursive_include_dirs / 'applications/solvers/lagrangian/icoUncoupledKinematicParcelFoam',
+    '-I' + recursive_include_dirs / 'src/OpenFOAM',
+    '-I' + recursive_include_dirs / 'src/OSspecific/POSIX',
+]
+exe_icoUncoupledKinematicParcelFoam = executable(
+    'icoUncoupledKinematicParcelFoam',
+    srcfiles,
+    link_with: link_with,
+    dependencies: dependencies,
+    cpp_args: cpp_args,
+    implicit_include_directories: false,
+    install: true,
+)
+
+subdir('icoUncoupledKinematicParcelDyMFoam')

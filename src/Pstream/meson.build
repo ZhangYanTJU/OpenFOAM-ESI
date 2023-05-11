@@ -1,0 +1,2 @@
+subdir('dummy')
+subdir('mpi')

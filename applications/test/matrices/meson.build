@@ -1,0 +1,6 @@
+subdir('DiagonalMatrix')
+subdir('Matrix')
+subdir('QRMatrix')
+subdir('RectangularMatrix')
+subdir('SquareMatrix')
+subdir('SymmetricSquareMatrix')

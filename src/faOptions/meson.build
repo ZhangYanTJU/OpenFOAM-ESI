@@ -1,0 +1,58 @@
+srcfiles = [
+    lnInclude_hack,
+    'faOption/faOption.C',
+    'faOption/faOptionIO.C',
+    'faOption/faOptionList.C',
+    'faOption/faOptions.C',
+    'faceSetOption/faceSetOption.C',
+    'sources/derived/externalHeatFluxSource/externalHeatFluxSource.C',
+    'sources/derived/jouleHeatingSource/jouleHeatingSource.C',
+    'sources/derived/contactHeatFluxSource/contactHeatFluxSource.C',
+    'sources/derived/externalFileSource/externalFileSource.C',
+    'corrections/limitVelocity/limitVelocity.C',
+    'corrections/limitHeight/limitHeight.C',
+]
+link_with = [
+    lib_finiteArea,
+    lib_finiteVolume,
+    lib_fileFormats,
+    lib_surfMesh,
+    lib_meshTools,
+    lib_sampling,
+    lib_turbulenceModels,
+    lib_incompressibleTurbulenceModels,
+    lib_compressibleTurbulenceModels,
+    lib_thermoTools,
+]
+dependencies = []
+cpp_args = [
+    '-I' + meson.source_root() / 'src/faOptions',
+    '-I' + recursive_include_dirs / 'src/finiteArea',
+    '-I' + recursive_include_dirs / 'src/finiteVolume',
+    '-I' + recursive_include_dirs / 'src/fileFormats',
+    '-I' + recursive_include_dirs / 'src/surfMesh',
+    '-I' + recursive_include_dirs / 'src/meshTools',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/solidThermo',
+    '-I' + meson.source_root() / 'src/transportModels',
+    '-I' + recursive_include_dirs / 'src/transportModels/compressible',
+    '-I' + recursive_include_dirs / 'src/transportModels/incompressible',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/basic',
+    '-I' + recursive_include_dirs / 'src/thermophysicalModels/specie',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/turbulenceModels',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/compressible',
+    '-I' + recursive_include_dirs / 'src/thermoTools',
+    '-I' + recursive_include_dirs / 'src/TurbulenceModels/incompressible',
+    '-I' + recursive_include_dirs / 'src/faOptions',
+    '-I' + recursive_include_dirs / 'src/OpenFOAM',
+    '-I' + recursive_include_dirs / 'src/OSspecific/POSIX',
+]
+lib_faOptions = library(
+    'faOptions',
+    srcfiles,
+    link_with: link_with,
+    dependencies: dependencies,
+    cpp_args: cpp_args,
+    implicit_include_directories: false,
+    install: true,
+)
+pkg.generate(lib_faOptions)
