@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,6 +48,7 @@ readLagrangian
 (
     const fvMesh& mesh,
     const wordList& cloudNames,
+    const boolUList& haveClouds,
     const wordRes& selectedFields
 )
 {
@@ -78,11 +79,10 @@ readLagrangian
 
         IOobjectList cloudObjs(clouds[i], clouds[i].time().timeName());
 
-        //Pout<< "Found cloud objects:" << cloudObjs.names() << endl;
-
         parLagrangianDistributor::readAllFields
         (
             clouds[i],
+            haveClouds[i],
             cloudObjs,
             selectedFields
         );
@@ -101,11 +101,19 @@ readLagrangian
 )
 {
     wordList cloudNames;
+    boolList haveClouds;
     List<wordList> fieldNames;
-    // Find all cloudNames on all processors
-    parLagrangianDistributor::findClouds(mesh, cloudNames, fieldNames);
 
-    return readLagrangian(mesh, cloudNames, selectedFields);
+    // Find all cloudNames on all processors
+    parLagrangianDistributor::findClouds
+    (
+        mesh,
+        cloudNames,
+        haveClouds,
+        fieldNames
+    );
+
+    return readLagrangian(mesh, cloudNames, haveClouds, selectedFields);
 }
 
 
@@ -121,9 +129,17 @@ void reconstructLagrangian
     // Clouds (note: might not be present on all processors)
 
     wordList cloudNames;
+    boolList haveClouds;
     List<wordList> fieldNames;
+
     // Find all cloudNames on all processors
-    parLagrangianDistributor::findClouds(mesh, cloudNames, fieldNames);
+    parLagrangianDistributor::findClouds
+    (
+        mesh,
+        cloudNames,
+        haveClouds,
+        fieldNames
+    );
 
     if (cloudNames.empty())
     {
@@ -142,13 +158,16 @@ void reconstructLagrangian
                 baseMesh,
                 mesh.nCells(),      // range of cell indices in clouds
                 distMap
+                //writeHandler        // Which processors to write
             )
         );
     }
     const auto& distributor = *distributorPtr;
 
-    for (const word& cloudName : cloudNames)
+    forAll(cloudNames, cloudi)
     {
+        const word& cloudName = cloudNames[cloudi];
+
         Info<< "Reconstructing lagrangian fields for cloud "
             << cloudName << nl << endl;
 
@@ -169,6 +188,7 @@ void reconstructLagrangian
         (
             lagrangianMapPtr(),
             cloudName,
+            haveClouds[cloudi],
             cloudObjs,
             selectedFields
         );

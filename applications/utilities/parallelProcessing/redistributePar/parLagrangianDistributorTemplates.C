@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,90 +64,86 @@ Foam::label Foam::parLagrangianDistributor::distributeFields
 (
     const mapDistributeBase& map,
     const word& cloudName,
+    const bool haveCloud,
     const IOobjectList& objects,
     const wordRes& selectedFields
 ) const
 {
-    typedef IOField<Type> fieldType;
+    typedef IOField<Type> Container;
 
     const wordList fieldNames
     (
-        filterObjects<fieldType>
+        filterObjects<IOField<Type>>
         (
             objects,
             selectedFields
         )
     );
 
+    // Read if present
+    IOobject srcIOobject
+    (
+        "none",
+        srcMesh_.time().timeName(),
+        cloud::prefix/cloudName,
+        srcMesh_,
+        IOobject::LAZY_READ,
+        IOobject::NO_WRITE,
+        IOobject::NO_REGISTER
+    );
 
-    bool reconstruct = false;
+    IOobject tgtIOobject
+    (
+        "none",
+        tgtMesh_.time().timeName(),
+        cloud::prefix/cloudName,
+        tgtMesh_,
+        IOobject::NO_READ,
+        IOobject::NO_WRITE,
+        IOobject::NO_REGISTER
+    );
+
+    //bool reconstruct = false;
 
     label nFields = 0;
     for (const word& objectName : fieldNames)
     {
-        if (!nFields)
-        {
-            // Performing an all-to-one (reconstruct)?
-            reconstruct =
-                returnReduceAnd(!map.constructSize() || Pstream::master());
-        }
-
         if (verbose_)
         {
             if (!nFields)
             {
                 Info<< "    Distributing lagrangian "
-                    << fieldType::typeName << "s\n" << nl;
+                    << Container::typeName << "s\n" << nl;
             }
             Info<< "        " <<  objectName << nl;
         }
         ++nFields;
 
-        // Read if present
-        IOField<Type> field
-        (
-            IOobject
-            (
-                objectName,
-                srcMesh_.time().timeName(),
-                cloud::prefix/cloudName,
-                srcMesh_,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            label(0)
-        );
+        srcIOobject.resetHeader(objectName);
+        tgtIOobject.resetHeader(objectName);
 
+        // Read if present (ie, haveCloud means readOnProc)
+        Container field(srcIOobject, haveCloud);
+
+        // Distribute
         map.distribute(field);
 
+        const bool writeOnProc = field.size();
 
-        const IOobject fieldIO
-        (
-            objectName,
-            tgtMesh_.time().timeName(),
-            cloud::prefix/cloudName,
-            tgtMesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        );
+        // Write
+        Container(tgtIOobject, std::move(field)).write(writeOnProc);
 
-        if (field.size())
-        {
-            IOField<Type>(fieldIO, std::move(field)).write();
-        }
-        else if (!reconstruct)
-        {
-            // When running with -overwrite it should also delete the old
-            // files. Below works but is not optimal.
-
-            const fileName fldName(fieldIO.objectPath());
-            Foam::rm(fldName);
-        }
+        //if (!writeOnProc && !reconstruct)
+        //{
+        //    // When running with -overwrite it should also delete the old
+        //    // files. Below works but is not optimal.
+        //
+        //    Foam::rm(tgtIOobject.objectPath());
+        //}
     }
 
     if (nFields && verbose_) Info<< endl;
+
     return nFields;
 }
 
@@ -157,25 +153,27 @@ Foam::label Foam::parLagrangianDistributor::distributeFieldFields
 (
     const mapDistributeBase& map,
     const word& cloudName,
+    const bool haveCloud,
     const IOobjectList& objects,
     const wordRes& selectedFields
 ) const
 {
-    typedef CompactIOField<Field<Type>, Type> fieldType;
+    typedef CompactIOField<Field<Type>, Type> Container;
 
     DynamicList<word> fieldNames;
 
-    fieldNames.append
+    // CompactIOField Field names
+    fieldNames.push_back
     (
-        filterObjects<fieldType>
+        filterObjects<CompactIOField<Field<Type>, Type>>
         (
             objects,
             selectedFields
         )
     );
 
-    // Append IOField Field names
-    fieldNames.append
+    // IOField Field names
+    fieldNames.push_back
     (
         filterObjects<IOField<Field<Type>>>
         (
@@ -184,76 +182,66 @@ Foam::label Foam::parLagrangianDistributor::distributeFieldFields
         )
     );
 
-    bool reconstruct = false;
+    // Read if present
+    IOobject srcIOobject
+    (
+        "none",
+        srcMesh_.time().timeName(),
+        cloud::prefix/cloudName,
+        srcMesh_,
+        IOobject::LAZY_READ,
+        IOobject::NO_WRITE,
+        IOobject::NO_REGISTER
+    );
+
+    IOobject tgtIOobject
+    (
+        "none",
+        tgtMesh_.time().timeName(),
+        cloud::prefix/cloudName,
+        tgtMesh_,
+        IOobject::NO_READ,
+        IOobject::NO_WRITE,
+        IOobject::NO_REGISTER
+    );
+
+    //bool reconstruct = false;
 
     label nFields = 0;
     for (const word& objectName : fieldNames)
     {
-        if (!nFields)
-        {
-            // Performing an all-to-one (reconstruct)?
-            reconstruct =
-                returnReduceAnd(!map.constructSize() || Pstream::master());
-        }
-
         if (verbose_)
         {
             if (!nFields)
             {
                 Info<< "    Distributing lagrangian "
-                    << fieldType::typeName << "s\n" << nl;
+                    << Container::typeName << "s\n" << nl;
             }
             Info<< "        " <<  objectName << nl;
         }
         ++nFields;
 
-        // Read if present
-        CompactIOField<Field<Type>, Type> field
-        (
-            IOobject
-            (
-                objectName,
-                srcMesh_.time().timeName(),
-                cloud::prefix/cloudName,
-                srcMesh_,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            label(0)
-        );
+        srcIOobject.resetHeader(objectName);
+        tgtIOobject.resetHeader(objectName);
+
+        // Read if present (ie, haveCloud means readOnProc)
+        Container field(srcIOobject, haveCloud);
 
         // Distribute
         map.distribute(field);
 
+        const bool writeOnProc = field.size();
+
         // Write
-        const IOobject fieldIO
-        (
-            objectName,
-            tgtMesh_.time().timeName(),
-            cloud::prefix/cloudName,
-            tgtMesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        );
+        Container(tgtIOobject, std::move(field)).write(writeOnProc);
 
-        if (field.size())
-        {
-            CompactIOField<Field<Type>, Type>
-            (
-                fieldIO,
-                std::move(field)
-            ).write();
-        }
-        else if (!reconstruct)
-        {
-            // When running with -overwrite it should also delete the old
-            // files. Below works but is not optimal.
-
-            const fileName fldName(fieldIO.objectPath());
-            Foam::rm(fldName);
-        }
+        //if (!writeOnProc && !reconstruct)
+        //{
+        //    // When running with -overwrite it should also delete the old
+        //    // files. Below works but is not optimal.
+        //
+        //    Foam::rm(tgtIOobject.objectPath());
+        //}
     }
 
     if (nFields && verbose_) Info<< endl;
@@ -265,12 +253,11 @@ template<class Container>
 Foam::label Foam::parLagrangianDistributor::readFields
 (
     const passivePositionParticleCloud& cloud,
+    const bool haveCloud,
     const IOobjectList& objects,
     const wordRes& selectedFields
 )
 {
-    const word fieldClassName(Container::typeName);
-
     const wordList fieldNames
     (
         filterObjects<Container>
@@ -278,6 +265,17 @@ Foam::label Foam::parLagrangianDistributor::readFields
             objects,
             selectedFields
         )
+    );
+
+    // Read if present
+    IOobject readIO
+    (
+        "none",
+        cloud.time().timeName(),
+        cloud,
+        IOobject::LAZY_READ,
+        IOobject::NO_WRITE,
+        IOobject::REGISTER
     );
 
     label nFields = 0;
@@ -294,20 +292,10 @@ Foam::label Foam::parLagrangianDistributor::readFields
         }
         ++nFields;
 
-        // Read if present
-        Container* fieldPtr = new Container
-        (
-            IOobject
-            (
-                objectName,
-                cloud.time().timeName(),
-                cloud,
-                IOobject::LAZY_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
-            ),
-            label(0)
-        );
+        readIO.resetHeader(objectName);
+
+        // Read if present (ie, haveCloud means readOnProc)
+        Container* fieldPtr = new Container(readIO, haveCloud);
 
         fieldPtr->store();
     }
@@ -329,19 +317,27 @@ Foam::label Foam::parLagrangianDistributor::distributeStoredFields
         cloud.lookupClass<Container>()
     );
 
-    bool reconstruct = false;
+    // Parallel-consistent names
+    const wordList fieldNames(fields.sortedToc());
+
+    IOobject writeIO
+    (
+        "none",
+        tgtMesh_.time().timeName(),
+        cloud::prefix/cloud.name(),
+        tgtMesh_,
+        IOobject::NO_READ,
+        IOobject::NO_WRITE,
+        IOobject::NO_REGISTER
+    );
+
+    //bool reconstruct = false;
 
     label nFields = 0;
-    forAllIters(fields, iter)
-    {
-        Container& field = *(iter.val());
 
-        if (!nFields)
-        {
-            // Performing an all-to-one (reconstruct)?
-            reconstruct =
-                returnReduceAnd(!map.constructSize() || Pstream::master());
-        }
+    for (const word& fieldName : fieldNames)
+    {
+        Container& field = *(fields[fieldName]);
 
         if (verbose_)
         {
@@ -356,29 +352,20 @@ Foam::label Foam::parLagrangianDistributor::distributeStoredFields
 
         map.distribute(field);
 
-        const IOobject fieldIO
-        (
-            field.name(),
-            tgtMesh_.time().timeName(),
-            cloud::prefix/cloud.name(),
-            tgtMesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        );
+        writeIO.resetHeader(field.name());
 
-        if (field.size())
-        {
-            Container(fieldIO, std::move(field)).write();
-        }
-        else if (!reconstruct)
-        {
-            // When running with -overwrite it should also delete the old
-            // files. Below works but is not optimal.
+        const bool writeOnProc = field.size();
 
-            const fileName fldName(fieldIO.objectPath());
-            Foam::rm(fldName);
-        }
+        // Write
+        Container(writeIO, std::move(field)).write(writeOnProc);
+
+        //if (!writeOnProc && !reconstruct)
+        //{
+        //    // When running with -overwrite it should also delete the old
+        //    // files. Below works but is not optimal.
+        //
+        //    Foam::rm(writeIO.objectPath());
+        //}
     }
 
     if (nFields && verbose_) Info<< endl;
