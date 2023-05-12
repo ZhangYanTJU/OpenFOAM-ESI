@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,7 @@ License
 Foam::label Foam::parLagrangianDistributor::readAllFields
 (
     const passivePositionParticleCloud& cloud,
+    const bool haveCloud,
     const IOobjectList& cloudObjs,
     const wordRes& selectedFields
 )
@@ -48,6 +49,7 @@ Foam::label Foam::parLagrangianDistributor::readAllFields
             <IOField<Type>>                                                   \
             (                                                                 \
                 cloud,                                                        \
+                haveCloud,                                                    \
                 cloudObjs,                                                    \
                 selectedFields                                                \
             );                                                                \
@@ -56,6 +58,7 @@ Foam::label Foam::parLagrangianDistributor::readAllFields
             <IOField<Field<Type>>>                                            \
             (                                                                 \
                 cloud,                                                        \
+                haveCloud,                                                    \
                 cloudObjs,                                                    \
                 selectedFields                                                \
             );                                                                \
@@ -64,6 +67,7 @@ Foam::label Foam::parLagrangianDistributor::readAllFields
             <CompactIOField<Field<Type>, Type>>                               \
             (                                                                 \
                 cloud,                                                        \
+                haveCloud,                                                    \
                 cloudObjs,                                                    \
                 selectedFields                                                \
             );                                                                \
@@ -84,21 +88,22 @@ Foam::label Foam::parLagrangianDistributor::readAllFields
 }
 
 
-Foam::label Foam::parLagrangianDistributor::readAllFields
-(
-    const passivePositionParticleCloud& cloud,
-    const wordRes& selectedFields
-)
-{
-    IOobjectList cloudObjs(cloud, cloud.time().timeName());
-    return readAllFields(cloud, cloudObjs, selectedFields);
-}
+//Foam::label Foam::parLagrangianDistributor::readAllFields
+//(
+//    const passivePositionParticleCloud& cloud,
+//    const wordRes& selectedFields
+//)
+//{
+//    IOobjectList cloudObjs(cloud, cloud.time().timeName());
+//    return readAllFields(cloud, cloudObjs, selectedFields);
+//}
 
 
 Foam::label Foam::parLagrangianDistributor::distributeAllFields
 (
     const mapDistributeBase& lagrangianMap,
     const word& cloudName,
+    const bool haveCloud,
     const IOobjectList& cloudObjs,
     const wordRes& selectedFields
 ) const
@@ -114,6 +119,7 @@ Foam::label Foam::parLagrangianDistributor::distributeAllFields
             (                                                                 \
                 lagrangianMap,                                                \
                 cloudName,                                                    \
+                haveCloud,                                                    \
                 cloudObjs,                                                    \
                 selectedFields                                                \
             );                                                                \
@@ -122,6 +128,7 @@ Foam::label Foam::parLagrangianDistributor::distributeAllFields
             (                                                                 \
                 lagrangianMap,                                                \
                 cloudName,                                                    \
+                haveCloud,                                                    \
                 cloudObjs,                                                    \
                 selectedFields                                                \
             );                                                                \
