@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -114,7 +114,14 @@ public:
         static void findClouds
         (
             const fvMesh&,
+
+            //! All cloud names on any processor
             wordList& cloudNames,
+
+            //! Per cloud name, whether my processor has it
+            boolList& haveClouds,
+
+            //! Per cloud nmae, the field names
             List<wordList>& objectNames
         );
 
@@ -131,6 +138,7 @@ public:
         static label readFields
         (
             const passivePositionParticleCloud& cloud,
+            const bool haveCloud,
             const IOobjectList& objects,
             const wordRes& selectedFields = wordRes()
         );
@@ -139,15 +147,8 @@ public:
         static label readAllFields
         (
             const passivePositionParticleCloud& cloud,
+            const bool haveCloud,
             const IOobjectList& objects,
-            const wordRes& selectedFields = wordRes()
-        );
-
-        //- Read and store all fields for known cloud field types
-        //  Uses the current cloud instance to obtain the IOobjectList
-        static label readAllFields
-        (
-            const passivePositionParticleCloud& cloud,
             const wordRes& selectedFields = wordRes()
         );
 
@@ -171,6 +172,7 @@ public:
         (
             const mapDistributeBase& lagrangianMap,
             const word& cloudName,
+            const bool haveCloud,
             const IOobjectList& cloudObjs,
             const wordRes& selectedFields
         ) const;
@@ -189,6 +191,7 @@ public:
         (
             const mapDistributeBase& map,
             const word& cloudName,
+            const bool haveCloud,
             const IOobjectList& objects,
             const wordRes& selectedFields = wordRes()
         ) const;
@@ -199,11 +202,14 @@ public:
         (
             const mapDistributeBase& map,
             const word& cloudName,
+            const bool haveCloud,
             const IOobjectList& objects,
             const wordRes& selectedFields = wordRes()
         ) const;
 
-        //- Redistribute and write stored lagrangian fields
+        //- Redistribute and write stored lagrangian fields.
+        //  Note: does no reading so no need to check for existence
+        //  of lagrangian files
         template<class Container>
         label distributeStoredFields
         (
