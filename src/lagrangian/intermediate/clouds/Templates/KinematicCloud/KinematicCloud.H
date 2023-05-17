@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -254,6 +254,9 @@ protected:
 
 
         // Sources
+
+            //- Mass for kinematic cloud
+            autoPtr<volScalarField::Internal> rhokTrans_;
 
             //- Momentum
             autoPtr<volVectorField::Internal> UTrans_;
@@ -526,19 +529,26 @@ public:
 
                 // Momentum
 
+                    //- Return reference to mass for kinematic source
+                    inline volScalarField::Internal& rhokTrans();
+
+                    //- Return const reference to mass for kinematic source
+                    inline const volScalarField::Internal& rhokTrans() const;
+
                     //- Return reference to momentum source
                     inline volVectorField::Internal& UTrans();
 
                     //- Return const reference to momentum source
-                    inline const volVectorField::Internal&
-                        UTrans() const;
+                    inline const volVectorField::Internal& UTrans() const;
 
                      //- Return coefficient for carrier phase U equation
                     inline volScalarField::Internal& UCoeff();
 
                     //- Return const coefficient for carrier phase U equation
-                    inline const volScalarField::Internal&
-                        UCoeff() const;
+                    inline const volScalarField::Internal& UCoeff() const;
+
+                    //- Return tmp mass source for kinematic
+                    inline tmp<volScalarField::Internal> Srhok() const;
 
                     //- Return tmp momentum source term (compressible)
                     inline tmp<fvVectorMatrix> SU
