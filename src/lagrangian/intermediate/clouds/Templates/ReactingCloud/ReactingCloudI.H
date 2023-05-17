@@ -76,6 +76,39 @@ Foam::ReactingCloud<CloudType>::phaseChange()
 
 
 template<class CloudType>
+inline void Foam::ReactingCloud<CloudType>::transferToCarrier
+(
+    const parcelType& p,
+    const typename parcelType::trackingData& td
+)
+{
+    const auto& comp = this->composition();
+
+    const label celli = p.cell();
+
+    const scalar m = p.nParticle()*p.mass();
+
+    this->rhokTrans()[celli] += m;
+
+    this->UTrans()[celli] += m*p.U();
+
+    const scalar pc = td.pc();
+    const scalar T = p.T();
+    const auto& Y = p.Y();
+
+    forAll(Y, i)
+    {
+        const scalar dm = m*p.Y[i];
+        const label gid = comp.localToCarrierId(0, i);
+        const scalar hs = comp.carrier().Hs(gid, pc, T);
+
+        this->rhoTrans(gid)[celli] += dm;
+        this->hsTrans()[celli] += dm*hs;
+    }
+}
+
+
+template<class CloudType>
 inline Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
 Foam::ReactingCloud<CloudType>::rhoTrans(const label i)
 {

@@ -527,6 +527,14 @@ public:
 
             // Sources
 
+                //- Transfer the effect of parcel to the carrier phase
+                inline void transferToCarrier
+                (
+                    const parcelType& p,
+                    const typename parcelType::trackingData& td
+                );
+
+
                 // Momentum
 
                     //- Return reference to mass for kinematic source
