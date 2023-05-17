@@ -248,16 +248,18 @@ Foam::RemoveParcels<CloudType>::RemoveParcels
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::RemoveParcels<CloudType>::postFace
+bool Foam::RemoveParcels<CloudType>::postFace
 (
     const parcelType& p,
-    bool& keepParticle
+    const typename parcelType::trackingData& td
 )
 {
+    bool keepParticle = true;
+
     if ((typeId_ >= 0) && (p.typeId() != typeId_))
     {
         // Not processing this particle type
-        return;
+        return keepParticle;
     }
 
     if
@@ -280,6 +282,8 @@ void Foam::RemoveParcels<CloudType>::postFace
             }
         }
     }
+
+    return keepParticle;
 }
 
 

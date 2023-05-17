@@ -350,7 +350,11 @@ Foam::FacePostProcessing<CloudType>::FacePostProcessing
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::FacePostProcessing<CloudType>::postFace(const parcelType& p, bool&)
+bool Foam::FacePostProcessing<CloudType>::postFace
+(
+    const parcelType& p,
+    const typename parcelType::trackingData& td
+)
 {
     if
     (
@@ -380,6 +384,8 @@ void Foam::FacePostProcessing<CloudType>::postFace(const parcelType& p, bool&)
             }
         }
     }
+
+    return true;
 }
 
 

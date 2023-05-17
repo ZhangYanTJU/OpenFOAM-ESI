@@ -200,15 +200,19 @@ public:
     // Evaluation
 
         //- Post-patch hook
-        virtual void postPatch
+        virtual bool postPatch
         (
             const parcelType& p,
             const polyPatch& pp,
-            bool& keepParticle
+            const typename parcelType::trackingData& td
         );
 
         //- Post-face hook
-        virtual void postFace(const parcelType& p, bool& keepParticle);
+        virtual bool postFace
+        (
+            const parcelType& p,
+            const typename parcelType::trackingData& td
+        );
 
 
     // I-O

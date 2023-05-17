@@ -126,11 +126,11 @@ public:
     // Member Functions
 
         //- Post-patch hook
-        virtual void postPatch
+        virtual bool postPatch
         (
             const parcelType& p,
             const polyPatch& pp,
-            bool& keepParticle
+            const typename parcelType::trackingData& td
         );
 };
 

@@ -110,9 +110,9 @@ void Foam::CloudFunctionObjectList<CloudType>::preEvolve
     const typename parcelType::trackingData& td
 )
 {
-    forAll(*this, i)
+    for (auto& cfo : *this)
     {
-        this->operator[](i).preEvolve(td);
+        cfo.preEvolve(td);
     }
 }
 
@@ -123,70 +123,71 @@ void Foam::CloudFunctionObjectList<CloudType>::postEvolve
     const typename parcelType::trackingData& td
 )
 {
-    forAll(*this, i)
+    for (auto& cfo : *this)
     {
-        this->operator[](i).postEvolve(td);
+        cfo.postEvolve(td);
     }
 }
 
 
 template<class CloudType>
-void Foam::CloudFunctionObjectList<CloudType>::postMove
+bool Foam::CloudFunctionObjectList<CloudType>::postMove
 (
     parcelType& p,
     const scalar dt,
     const point& position0,
-    bool& keepParticle
+    const typename parcelType::trackingData& td
 )
 {
-    forAll(*this, i)
+    for (auto& cfo : *this)
     {
-        if (!keepParticle)
+        if (!cfo.postMove(p, dt, position0, td))
         {
-            return;
+            return false;
         }
-
-        this->operator[](i).postMove(p, dt, position0, keepParticle);
     }
+
+    return true;
 }
 
 
 template<class CloudType>
-void Foam::CloudFunctionObjectList<CloudType>::postPatch
+bool Foam::CloudFunctionObjectList<CloudType>::postPatch
 (
-    const parcelType& p,
+    parcelType& p,
     const polyPatch& pp,
-    bool& keepParticle
+    const typename parcelType::trackingData& td
 )
 {
-    forAll(*this, i)
+    for (auto& cfo : *this)
     {
-        if (!keepParticle)
+        if (!cfo.postPatch(p, pp, td))
         {
-            return;
+            return false;
         }
-
-        this->operator[](i).postPatch(p, pp, keepParticle);
     }
+
+    return true;
 }
 
 
 template<class CloudType>
-void Foam::CloudFunctionObjectList<CloudType>::postFace
+bool Foam::CloudFunctionObjectList<CloudType>::postFace
 (
-    const parcelType& p,
-    bool& keepParticle
+    parcelType& p,
+    const typename parcelType::trackingData& td
 )
 {
-    forAll(*this, i)
+    for (auto& cfo : *this)
     {
-        if (!keepParticle)
+        if (!cfo.postFace(p, td))
         {
-            return;
+            return false;
         }
 
-        this->operator[](i).postFace(p, keepParticle);
     }
+
+    return true;
 }
 
 

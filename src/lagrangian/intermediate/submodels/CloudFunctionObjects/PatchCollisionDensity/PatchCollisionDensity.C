@@ -139,11 +139,11 @@ Foam::PatchCollisionDensity<CloudType>::PatchCollisionDensity
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::PatchCollisionDensity<CloudType>::postPatch
+bool Foam::PatchCollisionDensity<CloudType>::postPatch
 (
     const parcelType& p,
     const polyPatch& pp,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     const label patchi = pp.index();
@@ -158,6 +158,8 @@ void Foam::PatchCollisionDensity<CloudType>::postPatch
         collisionDensity_[patchi][patchFacei] +=
             1/this->owner().mesh().magSf().boundaryField()[patchi][patchFacei];
     }
+
+    return true;
 }
 
 

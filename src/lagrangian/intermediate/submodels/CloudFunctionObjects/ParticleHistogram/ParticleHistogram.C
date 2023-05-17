@@ -136,16 +136,16 @@ Foam::ParticleHistogram<CloudType>::ParticleHistogram
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::ParticleHistogram<CloudType>::postPatch
+bool Foam::ParticleHistogram<CloudType>::postPatch
 (
     const parcelType& p,
     const polyPatch& pp,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     if (!collector_.isPatch())
     {
-        return;
+        return true;
     }
 
     const label patchi = pp.index();
@@ -160,19 +160,21 @@ void Foam::ParticleHistogram<CloudType>::postPatch
         dParticles_[localPatchi].append(p.d());
         nParticles_[localPatchi].append(p.nParticle());
     }
+
+    return true;
 }
 
 
 template<class CloudType>
-void Foam::ParticleHistogram<CloudType>::postFace
+bool Foam::ParticleHistogram<CloudType>::postFace
 (
     const parcelType& p,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     if (collector_.isPatch())
     {
-        return;
+        return true;
     }
 
     const labelList& IDs = collector_.IDs();
@@ -200,6 +202,8 @@ void Foam::ParticleHistogram<CloudType>::postFace
             nParticles_[i].append(p.nParticle());
         }
     }
+
+    return true;
 }
 
 

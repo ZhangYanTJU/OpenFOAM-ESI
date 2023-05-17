@@ -159,11 +159,11 @@ void Foam::ParticleErosion<CloudType>::preEvolve
 
 
 template<class CloudType>
-void Foam::ParticleErosion<CloudType>::postPatch
+bool Foam::ParticleErosion<CloudType>::postPatch
 (
     const parcelType& p,
     const polyPatch& pp,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     const label patchi = pp.index();
@@ -184,7 +184,7 @@ void Foam::ParticleErosion<CloudType>::postPatch
         // quick reject if particle travelling away from the patch
         if ((nw & U) < 0)
         {
-            return;
+            return true;
         }
 
         const scalar magU = mag(U);
@@ -206,6 +206,8 @@ void Foam::ParticleErosion<CloudType>::postPatch
             Q += coeff*(K_*sqr(cos(alpha))/6.0);
         }
     }
+
+    return true;
 }
 
 

@@ -124,17 +124,19 @@ void Foam::VoidFraction<CloudType>::postEvolve
 
 
 template<class CloudType>
-void Foam::VoidFraction<CloudType>::postMove
+bool Foam::VoidFraction<CloudType>::postMove
 (
     parcelType& p,
     const scalar dt,
     const point&,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     volScalarField& theta = thetaPtr_();
 
     theta[p.cell()] += dt*p.nParticle()*p.volume();
+
+    return true;
 }
 
 
