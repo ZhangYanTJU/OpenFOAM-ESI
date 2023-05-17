@@ -285,6 +285,14 @@ public:
 
             // Sources
 
+                //- Transfer the effect of parcel to the carrier phase
+                inline void transferToCarrier
+                (
+                    const parcelType& p,
+                    const typename parcelType::trackingData& td
+                );
+
+
                 // Enthalpy
 
                     //- Sensible enthalpy transfer [J/kg]

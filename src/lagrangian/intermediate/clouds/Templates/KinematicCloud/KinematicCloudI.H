@@ -435,6 +435,21 @@ Foam::KinematicCloud<CloudType>::cellLengthScale() const
 
 
 template<class CloudType>
+inline void Foam::KinematicCloud<CloudType>::transferToCarrier
+(
+    const parcelType& p,
+    const typename parcelType::trackingData& td
+)
+{
+    const scalar m = p.nParticle()*p.mass();
+
+    rhokTrans()[p.cell()] += m;
+
+    UTrans()[p.cell()] += m*p.U();
+}
+
+
+template<class CloudType>
 inline Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
 Foam::KinematicCloud<CloudType>::rhokTrans()
 {

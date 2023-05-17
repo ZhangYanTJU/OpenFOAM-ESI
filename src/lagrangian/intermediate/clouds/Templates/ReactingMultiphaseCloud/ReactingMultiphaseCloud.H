@@ -251,6 +251,16 @@ public:
                 surfaceReaction();
 
 
+            // Sources
+
+                //- Transfer the effect of parcel to the carrier phase
+                inline void transferToCarrier
+                (
+                    const parcelType& p,
+                    const typename parcelType::trackingData& td
+                );
+
+
         // Cloud evolution functions
 
             //- Set parcel thermo properties
