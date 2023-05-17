@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -428,13 +428,29 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
     isotropyModel_(nullptr),
 
     UIntegrator_(nullptr),
+    rhokTrans_
+    (
+        new volScalarField::Internal
+        (
+            IOobject
+            (
+                IOobject::scopedName(this->name(), "rhokTrans"),
+                this->db().time().timeName(),
+                this->db(),
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
+            ),
+            mesh_,
+            dimensionedScalar(dimMass, Zero)
+        )
+    ),
     UTrans_
     (
         new volVectorField::Internal
         (
             IOobject
             (
-                this->name() + ":UTrans",
+                IOobject::scopedName(this->name(), "UTrans"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::READ_IF_PRESENT,
@@ -450,7 +466,7 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
         (
             IOobject
             (
-                this->name() + ":UCoeff",
+                IOobject::scopedName(this->name(), "UCoeff"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::READ_IF_PRESENT,
@@ -517,13 +533,29 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
     isotropyModel_(c.isotropyModel_->clone()),
 
     UIntegrator_(c.UIntegrator_->clone()),
+    rhokTrans_
+    (
+        new volScalarField::Internal
+        (
+            IOobject
+            (
+                IOobject::scopedName(this->name(), "rhokTrans"),
+                this->db().time().timeName(),
+                this->db(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            c.rhokTrans_()
+        )
+    ),
     UTrans_
     (
         new volVectorField::Internal
         (
             IOobject
             (
-                this->name() + ":UTrans",
+                IOobject::scopedName(this->name(), "UTrans"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,
@@ -614,6 +646,7 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
     isotropyModel_(nullptr),
 
     UIntegrator_(nullptr),
+    rhokTrans_(nullptr),
     UTrans_(nullptr),
     UCoeff_(nullptr),
     log(c.log)
@@ -687,8 +720,9 @@ void Foam::KinematicCloud<CloudType>::restoreState()
 template<class CloudType>
 void Foam::KinematicCloud<CloudType>::resetSourceTerms()
 {
+    rhokTrans().field() = Zero;
     UTrans().field() = Zero;
-    UCoeff().field() = 0.0;
+    UCoeff().field() = Zero;
 }
 
 
@@ -725,6 +759,7 @@ void Foam::KinematicCloud<CloudType>::relaxSources
     const KinematicCloud<CloudType>& cloudOldTime
 )
 {
+    this->relax(rhokTrans_(), cloudOldTime.rhokTrans(), "rhok");
     this->relax(UTrans_(), cloudOldTime.UTrans(), "U");
     this->relax(UCoeff_(), cloudOldTime.UCoeff(), "U");
 }
@@ -733,6 +768,7 @@ void Foam::KinematicCloud<CloudType>::relaxSources
 template<class CloudType>
 void Foam::KinematicCloud<CloudType>::scaleSources()
 {
+    this->scale(rhokTrans_(), "rhok");
     this->scale(UTrans_(), "U");
     this->scale(UCoeff_(), "U");
 }

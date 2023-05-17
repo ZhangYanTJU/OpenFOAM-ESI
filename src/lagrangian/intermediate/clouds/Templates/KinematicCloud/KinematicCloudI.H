@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -435,6 +435,22 @@ Foam::KinematicCloud<CloudType>::cellLengthScale() const
 
 
 template<class CloudType>
+inline Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
+Foam::KinematicCloud<CloudType>::rhokTrans()
+{
+    return *rhokTrans_;
+}
+
+
+template<class CloudType>
+inline const Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
+Foam::KinematicCloud<CloudType>::rhokTrans() const
+{
+    return *rhokTrans_;
+}
+
+
+template<class CloudType>
 inline Foam::DimensionedField<Foam::vector, Foam::volMesh>&
 Foam::KinematicCloud<CloudType>::UTrans()
 {
@@ -463,6 +479,45 @@ inline const Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
 Foam::KinematicCloud<CloudType>::UCoeff() const
 {
     return *UCoeff_;
+}
+
+
+template<class CloudType>
+inline Foam::tmp<Foam::volScalarField::Internal>
+Foam::KinematicCloud<CloudType>::Srhok() const
+{
+    label debug0 = debug;
+    debug = 1;
+    if (debug)
+    {
+        Pout<< "rhokTrans min/max = " << min(rhokTrans()).value() << ", "
+            << max(rhokTrans()).value() << endl;
+    }
+    debug = debug0;
+
+    if (this->solution().coupled())
+    {
+        return rhokTrans()/this->db().time().deltaT()/this->mesh().V();
+    }
+
+    return
+        tmp<volScalarField::Internal>::New
+        (
+            IOobject
+            (
+                IOobject::scopedName(this->name(), "rhokTrans"),
+                this->db().time().timeName(),
+                this->db(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ),
+            this->mesh(),
+            dimensionedScalar
+            (
+                rhokTrans().dimensions()/dimTime/dimVolume, Zero
+            )
+        );
 }
 
 
@@ -524,7 +579,7 @@ Foam::KinematicCloud<CloudType>::vDotSweep() const
         (
             IOobject
             (
-                this->name() + ":vDotSweep",
+                IOobject::scopedName(this->name(), "vDotSweep"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,
@@ -562,7 +617,7 @@ Foam::KinematicCloud<CloudType>::theta() const
         (
             IOobject
             (
-                this->name() + ":theta",
+                IOobject::scopedName(this->name(), "theta"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,
@@ -600,7 +655,7 @@ Foam::KinematicCloud<CloudType>::alpha() const
         (
             IOobject
             (
-                this->name() + ":alpha",
+                IOobject::scopedName(this->name(), "alpha"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,
@@ -636,7 +691,7 @@ Foam::KinematicCloud<CloudType>::rhoEff() const
         (
             IOobject
             (
-                this->name() + ":rhoEff",
+                IOobject::scopedName(this->name(), "rhoEff"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,
