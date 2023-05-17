@@ -629,17 +629,19 @@ Foam::ParticleCollector<CloudType>::ParticleCollector
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::ParticleCollector<CloudType>::postMove
+bool Foam::ParticleCollector<CloudType>::postMove
 (
     parcelType& p,
     const scalar dt,
     const point& position0,
-    bool& keepParticle
+    const typename parcelType::trackingData& td
 )
 {
+    bool keepParticle = true;
+
     if ((parcelType_ != -1) && (parcelType_ != p.typeId()))
     {
-        return;
+        return keepParticle;
     }
 
     hitFaceIDs_.clear();
@@ -708,6 +710,8 @@ void Foam::ParticleCollector<CloudType>::postMove
             keepParticle = false;
         }
     }
+
+    return keepParticle;
 }
 
 

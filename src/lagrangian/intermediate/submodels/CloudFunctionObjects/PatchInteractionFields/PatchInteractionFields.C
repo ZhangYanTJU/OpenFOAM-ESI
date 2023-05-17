@@ -170,11 +170,11 @@ void Foam::PatchInteractionFields<CloudType>::preEvolve
 
 
 template<class CloudType>
-void Foam::PatchInteractionFields<CloudType>::postPatch
+bool Foam::PatchInteractionFields<CloudType>::postPatch
 (
     const parcelType& p,
     const polyPatch& pp,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     const label patchi = pp.index();
@@ -182,6 +182,8 @@ void Foam::PatchInteractionFields<CloudType>::postPatch
 
     massPtr_->boundaryFieldRef()[patchi][facei] += p.nParticle()*p.mass();
     countPtr_->boundaryFieldRef()[patchi][facei] += 1;
+
+    return true;
 }
 
 

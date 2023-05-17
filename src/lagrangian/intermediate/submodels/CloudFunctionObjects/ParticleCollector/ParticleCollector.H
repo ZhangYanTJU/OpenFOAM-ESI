@@ -282,12 +282,12 @@ public:
         inline bool resetOnWrite() const;
 
         //- Post-move hook
-        virtual void postMove
+        virtual bool postMove
         (
             parcelType& p,
             const scalar dt,
             const point& position0,
-            bool& keepParticle
+            const typename parcelType::trackingData& td
         );
 };
 

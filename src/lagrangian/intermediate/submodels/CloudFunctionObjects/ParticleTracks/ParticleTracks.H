@@ -150,7 +150,11 @@ public:
         );
 
         //- Post-face hook
-        virtual void postFace(const parcelType& p, bool& keepParticle);
+        virtual bool postFace
+        (
+            const parcelType& p,
+            const typename parcelType::trackingData& td
+        );
 };
 
 

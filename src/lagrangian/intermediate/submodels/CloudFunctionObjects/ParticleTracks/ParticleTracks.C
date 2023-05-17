@@ -105,7 +105,11 @@ void Foam::ParticleTracks<CloudType>::preEvolve
 
 
 template<class CloudType>
-void Foam::ParticleTracks<CloudType>::postFace(const parcelType& p, bool&)
+bool Foam::ParticleTracks<CloudType>::postFace
+(
+    const parcelType& p,
+    const typename parcelType::trackingData& td
+)
 {
     if
     (
@@ -132,6 +136,8 @@ void Foam::ParticleTracks<CloudType>::postFace(const parcelType& p, bool&)
             );
         }
     }
+
+    return true;
 }
 
 

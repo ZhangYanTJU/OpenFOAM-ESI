@@ -103,12 +103,12 @@ void Foam::ParticleTrap<CloudType>::postEvolve
 
 
 template<class CloudType>
-void Foam::ParticleTrap<CloudType>::postMove
+bool Foam::ParticleTrap<CloudType>::postMove
 (
     parcelType& p,
     const scalar,
     const point&,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     if (alphaPtr_->primitiveField()[p.cell()] < threshold_)
@@ -122,6 +122,8 @@ void Foam::ParticleTrap<CloudType>::postMove
             p.U() -= 2*nHat*nHatU;
         }
     }
+
+    return true;
 }
 
 
