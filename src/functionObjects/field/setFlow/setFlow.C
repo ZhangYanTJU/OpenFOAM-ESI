@@ -234,6 +234,9 @@ bool Foam::functionObjects::setFlow::execute()
         }
         case modeType::ROTATION:
         {
+            const int oldLocal = volVectorField::Boundary::localConsistency;
+            volVectorField::Boundary::localConsistency = 0;
+
             const volVectorField& C = mesh_.C();
             const volVectorField d
             (
@@ -266,6 +269,7 @@ bool Foam::functionObjects::setFlow::execute()
             }
 
             U = U & R_;
+            volVectorField::Boundary::localConsistency = oldLocal;
             U.correctBoundaryConditions();
             setPhi(U);
 
@@ -274,6 +278,9 @@ bool Foam::functionObjects::setFlow::execute()
         case modeType::VORTEX2D:
         {
             const scalar pi = Foam::constant::mathematical::pi;
+
+            const int oldLocal = volVectorField::Boundary::localConsistency;
+            volVectorField::Boundary::localConsistency = 0;
 
             const volVectorField& C = mesh_.C();
 
@@ -291,6 +298,7 @@ bool Foam::functionObjects::setFlow::execute()
             Uc.replace(vector::Z, sin(2*pi*x)*sqr(sin(pi*z)));
 
             U = U & R_;
+            volVectorField::Boundary::localConsistency = oldLocal;
             U.correctBoundaryConditions();
 
             // Calculating phi
@@ -334,6 +342,10 @@ bool Foam::functionObjects::setFlow::execute()
         case modeType::VORTEX3D:
         {
             const scalar pi = Foam::constant::mathematical::pi;
+
+            const int oldLocal = volVectorField::Boundary::localConsistency;
+            volVectorField::Boundary::localConsistency = 0;
+
             const volVectorField& C = mesh_.C();
 
             const volVectorField d
@@ -351,6 +363,7 @@ bool Foam::functionObjects::setFlow::execute()
             Uc.replace(vector::Z, -sin(2*pi*x)*sin(2*pi*y)*sqr(sin(pi*z)));
 
             U = U & R_;
+            volVectorField::Boundary::localConsistency = oldLocal;
             U.correctBoundaryConditions();
 
             // Calculating phi
