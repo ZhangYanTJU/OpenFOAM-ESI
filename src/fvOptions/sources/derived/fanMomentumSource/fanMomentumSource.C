@@ -67,7 +67,8 @@ void Foam::fv::fanMomentumSource::writeProps
                 "uniform",
                 mesh_,
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             )
         );
         propsDict.add("gradient", gradP);
@@ -85,11 +86,10 @@ void Foam::fv::fanMomentumSource::initializeUpstreamFaces()
 
     vector centreGravityCellZone = vector::zero;
     scalar cellZoneVolume = 0.;
-    forAll(cells_, i)
+    for (const label celli : cells_)
     {
-        const label cellI = cells_[i];
-        const scalar cellVolume = cellVolumes[cellI];
-        centreGravityCellZone += cellCentres[cellI]*cellVolume;
+        const scalar cellVolume = cellVolumes[celli];
+        centreGravityCellZone += cellCentres[celli]*cellVolume;
         cellZoneVolume += cellVolume;
     }
 
@@ -102,75 +102,71 @@ void Foam::fv::fanMomentumSource::initializeUpstreamFaces()
     const faceZone& fZone = mesh_.faceZones()[surroundingFaceZoneID_];
     const vectorField& faceCentreGravity = mesh_.faceCentres();
 
-    upstreamFaceIDs_.setSize(fZone.size());
-    upstreamFacePatchIDs_.setSize(fZone.size());
+    upstreamPatchFaceInfo_.resize_nocopy(fZone.size());
 
     label count = 0;
-    forAll(fZone, i)
+    for (const label facei : fZone)
     {
-        const label faceI = fZone[i];
-
         if
         (
-            (flowDir_ & (faceCentreGravity[faceI] - centreGravityCellZone)) < 0.
+            (flowDir_ & (faceCentreGravity[facei] - centreGravityCellZone)) < 0.
         )
         {
-            label faceId = -1;
-            label facePatchId = -1;
-            if (mesh_.isInternalFace(faceI))
+            labelPair patchFaceInfo(-1, -1);
+
+            if (mesh_.isInternalFace(facei))
             {
-                faceId = faceI;
-                facePatchId = -1;
+                // Patch ID already set to -1, set only the face ID
+                patchFaceInfo.second() = facei;
             }
             else
             {
-                facePatchId = mesh_.boundaryMesh().whichPatch(faceI);
-                const polyPatch& pp = mesh_.boundaryMesh()[facePatchId];
+                patchFaceInfo.first() = mesh_.boundaryMesh().whichPatch(facei);
+                const polyPatch& pp = mesh_.boundaryMesh()[patchFaceInfo.first()];
                 const auto* cpp = isA<coupledPolyPatch>(pp);
 
                 if (cpp)
                 {
-                    faceId = cpp->owner() ? pp.whichFace(faceI) : -1;
+                    patchFaceInfo.second() =
+                        cpp->owner()
+                      ? pp.whichFace(facei)
+                      : -1;
                 }
                 else if (!isA<emptyPolyPatch>(pp))
                 {
-                    faceId = pp.whichFace(faceI);
+                    patchFaceInfo.second() = pp.whichFace(facei);
                 }
-                else
-                {
-                    faceId = -1;
-                    facePatchId = -1;
-                }
+                // else both face ID and patch ID remain at -1
             }
-            if (faceId >= 0)
+
+            // If this is an upstream face, set it in the list
+            if (patchFaceInfo.second() >= 0)
             {
-                upstreamFacePatchIDs_[count] = facePatchId;
-                upstreamFaceIDs_[count] = faceId;
+                upstreamPatchFaceInfo_[count] = patchFaceInfo;
                 count++;
             }
         }
     }
 
-    upstreamFaceIDs_.setSize(count);
-    upstreamFacePatchIDs_.setSize(count);
+    upstreamPatchFaceInfo_.setSize(count);
 
     // Fill cellsInZones_ with all cell IDs
-    forAll(cells_, i)
+    for (const label celli : cells_)
     {
-        cellsInZones_.insert(cells_[i]);
+        cellsInZones_.insert(celli);
     }
 
     // Sanity check
     const labelUList& owners = mesh_.owner();
     const labelUList& neighbours = mesh_.neighbour();
-    forAll(upstreamFaceIDs_, i)
+    for (const labelPair& patchFaceInfo : upstreamPatchFaceInfo_)
     {
-        if (upstreamFacePatchIDs_[i] == -1)
+        if (patchFaceInfo.first() == -1)
         {
-            const label faceI = upstreamFaceIDs_[i];
-            const label own = owners[faceI];
-            const label nei = neighbours[faceI];
-            
+            const label facei = patchFaceInfo.second();
+            const label own = owners[facei];
+            const label nei = neighbours[facei];
+
             // To be valid: one cell has to be inside the cellZone and the other
             // one, outside
             if (cellsInZones_.found(own) == cellsInZones_.found(nei))
@@ -185,44 +181,26 @@ void Foam::fv::fanMomentumSource::initializeUpstreamFaces()
 }
 
 
-template<typename flowRateFunctorPatch, typename flowRateFunctor>
-Foam::scalar Foam::fv::fanMomentumSource::calculateFlowRate
-(
-    flowRateFunctorPatch fPatch,
-    flowRateFunctor f
-) const
+template<typename FlowRateFunctor>
+Foam::scalar
+Foam::fv::fanMomentumSource::calculateFlowRate(FlowRateFunctor f) const
 {
-    // Calculate the flow rate over the upstream faces
-    scalarList phif(upstreamFaceIDs_.size());
+    // Calculate the flow rate through the upstream faces
+    scalarList phif(upstreamPatchFaceInfo_.size());
 
     const labelUList& owners = mesh_.owner();
 
-    forAll(upstreamFaceIDs_, i)
+    forAll(upstreamPatchFaceInfo_, i)
     {
-        const label faceI = upstreamFaceIDs_[i];
-        if (upstreamFacePatchIDs_[i] != -1)
-        {
-            const label patchI = upstreamFacePatchIDs_[i];
-            phif[i] = fPatch(patchI,faceI);
-        }
-        else
-        {
-            const label own = owners[faceI];
-            if (cellsInZones_.found(own))
-            {
-                // Owner is in cell zone, which means that neighbour is not.
-                // Positive flux means that the flux is going out of the domain.
-                // Flip the sign.
-                phif[i] = -f(faceI);
-            }
-            else // if (cellsInZones_.found(nei))
-            {
-                // Neighbour is in cell zone, which means that owner is not.
-                // Positive flux means that the flux is coming into the domain.
-                // Don't flip the sign.
-                phif[i] = f(faceI);
-            }
-        }
+        const labelPair& patchFaceInfo = upstreamPatchFaceInfo_[i];
+
+        // Sign of the flux needs to be flipped if this is an internal face
+        // whose owner is found in the cell zone
+        phif[i] =
+            patchFaceInfo.first() < 0
+        && cellsInZones_.found(owners[patchFaceInfo.second()])
+         ? -f(patchFaceInfo)
+         : f(patchFaceInfo);
     }
 
     return gSum(phif);
@@ -243,8 +221,7 @@ Foam::fv::fanMomentumSource::fanMomentumSource
     flowDir_(coeffs_.get<vector>("flowDir")),
     thickness_(coeffs_.get<scalar>("thickness")),
     gradPFan_(0.0),
-    upstreamFaceIDs_(),
-    upstreamFacePatchIDs_(),
+    upstreamPatchFaceInfo_(),
     rho_(nullptr)
 {
     // Skip all the checks if the source term has been deactivated
@@ -361,20 +338,19 @@ void Foam::fv::fanMomentumSource::addSup
             << abort(FatalError);
     }
 
-    // Lambda functions passed as arguments to calculateFlowRate
-    auto getVolumetricFlowRatePatch =
-        [&phi](const label patchI, const label faceI)
-        {
-            return phi.boundaryField()[patchI][faceI];
-        };
+    // Lambda function passed as argument to calculateFlowRate
     auto getVolumetricFlowRate =
-        [&phi](const label faceI)
+        [&phi](const labelPair& patchFaceInfo)
         {
-            return phi[faceI];
+            return
+            (
+                patchFaceInfo.first() < 0
+              ? phi[patchFaceInfo.second()]
+              : phi.boundaryField()[patchFaceInfo]
+            );
         };
 
-    const scalar flowRate =
-        calculateFlowRate(getVolumetricFlowRatePatch, getVolumetricFlowRate);
+    const scalar flowRate = calculateFlowRate(getVolumetricFlowRate);
 
     // Pressure drop for this flow rate
     // if flow rate is negative, pressure is clipped at the static pressure
@@ -412,7 +388,7 @@ void Foam::fv::fanMomentumSource::addSup
 
     const auto& phi = mesh().lookupObject<surfaceScalarField>("phi");
 
-    if (phi.dimensions() != dimVelocity*dimArea*dimDensity)
+    if (phi.dimensions() != dimMass/dimTime)
     {
         FatalErrorInFunction
             << "You called compressible variant of addSup for case with "
@@ -422,21 +398,21 @@ void Foam::fv::fanMomentumSource::addSup
 
     const surfaceScalarField rhof = fvc::interpolate(rho);
 
-    // Lambda functions passed as arguments to calculateFlowRate
-    auto getVolumetricFlowRatePatch =
-        [&phi, &rhof](const label patchI, const label faceI)
-        {
-            return phi.boundaryField()[patchI][faceI]
-                  /rhof.boundaryField()[patchI][faceI];
-        };
+    // Lambda function passed as argument to calculateFlowRate
     auto getVolumetricFlowRate =
-        [&phi, &rhof](const label faceI)
+        [&phi, &rhof](const labelPair& patchFaceInfo)
         {
-            return phi[faceI]/rhof.internalField()[faceI];
+            return
+            (
+                patchFaceInfo.first() < 0
+              ? phi[patchFaceInfo.second()]/
+                rhof.internalField()[patchFaceInfo.second()]
+              : phi.boundaryField()[patchFaceInfo]/
+                rhof.boundaryField()[patchFaceInfo]
+            );
         };
 
-    const scalar flowRate =
-        calculateFlowRate(getVolumetricFlowRatePatch, getVolumetricFlowRate);
+    const scalar flowRate = calculateFlowRate(getVolumetricFlowRate);
 
     // Pressure drop for this flow rate
     // if flow rate is negative, pressure is clipped at the static pressure
