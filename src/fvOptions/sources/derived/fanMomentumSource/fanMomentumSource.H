@@ -109,11 +109,9 @@ class fanMomentumSource
         //- Pressure drop
         scalar gradPFan_;
 
-        //- Local list of upstream face IDs
-        labelList upstreamFaceIDs_;
-
-        //- Local list of upstream patch ID per face
-        labelList upstreamFacePatchIDs_;
+        //- Local list of pairs of upstream patch IDs and upstream face IDs
+        //  For internal faces, the upstream patch ID is -1
+        List<labelPair> upstreamPatchFaceInfo_;
 
         //- Id for the surrounding face zone
         label surroundingFaceZoneID_;
@@ -135,12 +133,8 @@ class fanMomentumSource
         void initializeUpstreamFaces();
 
         //- Calculate the volumetric flow rate
-        template<typename flowRateFunctorPatch, typename flowRateFunctor>
-        scalar calculateFlowRate
-        (
-            flowRateFunctorPatch fPatch,
-            flowRateFunctor f
-        ) const;
+        template<typename FlowRateFunctor>
+        scalar calculateFlowRate(FlowRateFunctor f) const;
 
 
 public:
