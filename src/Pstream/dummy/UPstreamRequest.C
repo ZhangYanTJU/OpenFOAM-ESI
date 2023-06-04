@@ -111,4 +111,7 @@ void Foam::UPstream::waitRequestPair(label& req1, label& req2)
 }
 
 
+void Foam::UPstream::freeRequests(UList<UPstream::Request>& requests) {}
+
+
 // ************************************************************************* //

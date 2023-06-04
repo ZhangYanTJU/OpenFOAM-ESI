@@ -190,6 +190,9 @@ protected:
         //- Wait for explicit requests
         void wait(DynamicList<UPstream::Request>& requests) const;
 
+        //- Ignore & discard requests
+        void ignore(DynamicList<UPstream::Request>& requests) const;
+
         //- Update diagonal for interface
         virtual void addInterfaceDiag
         (
@@ -260,6 +263,9 @@ public:
             const solveScalarField& rA,
             const direction cmpt=0
         ) const;
+
+        //- Signal end of solver
+        virtual void finished(const solverPerformance& perf);
 };
 
 

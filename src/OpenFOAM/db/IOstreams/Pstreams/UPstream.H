@@ -709,6 +709,11 @@ public:
         //  Each finished request parameter is set to -1 (ie, done).
         static void waitRequestPair(label& req1, label& req2);
 
+        //- Discard outstanding requests
+        //- Corresponds to MPI_Request_free()
+        //  A no-op if parRun() == false, or the list is empty.
+        static void freeRequests(UList<UPstream::Request>& requests);
+
 
     // General
 

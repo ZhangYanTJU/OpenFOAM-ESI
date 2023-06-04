@@ -924,4 +924,54 @@ void Foam::UPstream::waitRequestPair(label& req1, label& req2)
 }
 
 
+void Foam::UPstream::freeRequests(UList<UPstream::Request>& requests)
+{
+    // No-op for non-parallel or no pending requests
+    if (!UPstream::parRun() || requests.empty())
+    {
+        return;
+    }
+    // Looks ugly but is legitimate since UPstream::Request is an intptr_t,
+    // which is always large enough to hold an MPI_Request (int or pointer)
+
+    label count = 0;
+    auto* waitRequests = reinterpret_cast<MPI_Request*>(requests.data());
+
+    for (auto& req : requests)
+    {
+        MPI_Request request = PstreamDetail::Request::get(req);
+
+        if (MPI_REQUEST_NULL != request)
+        {
+            waitRequests[count] = request;
+            ++count;
+        }
+    }
+
+    if (!count)
+    {
+        // Early exit: has NULL requests only
+        return;
+    }
+
+    profilingPstream::beginTiming();
+
+    // On success: sets each request to MPI_REQUEST_NULL
+    for (label i = count-1; i >= 0; --i)
+    {
+        if (MPI_Request_free(&waitRequests[count]))
+        {
+            FatalErrorInFunction
+                << "MPI_Request_free returned with error"
+                << Foam::abort(FatalError);
+        }
+    }
+
+    profilingPstream::addWaitTime();
+
+    // Everything handled, reset all to MPI_REQUEST_NULL
+    requests = UPstream::Request(MPI_REQUEST_NULL);
+}
+
+
 // ************************************************************************* //
