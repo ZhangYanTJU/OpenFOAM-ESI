@@ -251,7 +251,7 @@ Foam::solverPerformance Foam::PPCG::scalarSolveCG
 
     if (preconPtr_)
     {
-        preconPtr_->finished(solverPerf);
+        preconPtr_->ready(solverPerf);
     }
 
     //TBD

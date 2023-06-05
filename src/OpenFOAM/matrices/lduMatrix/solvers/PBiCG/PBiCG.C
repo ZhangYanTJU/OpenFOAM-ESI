@@ -239,7 +239,7 @@ Foam::solverPerformance Foam::PBiCG::solve
 
     if (preconPtr_)
     {
-        preconPtr_->finished(solverPerf);
+        preconPtr_->ready(solverPerf);
     }
 
     matrix().setResidualField

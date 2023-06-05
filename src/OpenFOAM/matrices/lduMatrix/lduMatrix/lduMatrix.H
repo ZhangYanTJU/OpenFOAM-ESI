@@ -577,7 +577,7 @@ public:
             }
 
             //- Signal end of solver
-            virtual void finished(const solverPerformance& perf)
+            virtual void ready(const solverPerformance& perf) const
             {}
     };
 

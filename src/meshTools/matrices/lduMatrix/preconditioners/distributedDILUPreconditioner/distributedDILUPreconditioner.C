@@ -912,9 +912,12 @@ void Foam::distributedDILUPreconditioner::precondition
 }
 
 
-void Foam::distributedDILUPreconditioner::finished(const solverPerformance& s)
+void Foam::distributedDILUPreconditioner::ready
+(
+    const solverPerformance& s
+) const
 {
-    DebugPout<< "finished fieldName:" << s.fieldName() << endl;
+    DebugPout<< "ready fieldName:" << s.fieldName() << endl;
 
     // Wait on all requests before storage is being taken down
     // (could rely on construction order?)

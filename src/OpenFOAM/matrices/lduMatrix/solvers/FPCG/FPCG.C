@@ -241,7 +241,7 @@ Foam::solverPerformance Foam::FPCG::scalarSolve
 
     if (preconPtr_)
     {
-        preconPtr_->finished(solverPerf);
+        preconPtr_->ready(solverPerf);
     }
 
     matrix().setResidualField
