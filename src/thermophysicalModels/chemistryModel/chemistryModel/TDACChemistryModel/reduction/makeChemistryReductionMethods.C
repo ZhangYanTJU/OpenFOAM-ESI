@@ -42,6 +42,11 @@ namespace Foam
     makeChemistryReductionMethods
     (
         psiReactionThermo,
+        PengRobinsonGasHThermoPhysics
+    );
+    makeChemistryReductionMethods
+    (
+        psiReactionThermo,
         constIncompressibleGasHThermoPhysics
     );
     makeChemistryReductionMethods
@@ -61,6 +66,11 @@ namespace Foam
 
     makeChemistryReductionMethods(rhoReactionThermo, constGasHThermoPhysics);
     makeChemistryReductionMethods(rhoReactionThermo, gasHThermoPhysics);
+    makeChemistryReductionMethods
+    (
+        rhoReactionThermo,
+        PengRobinsonGasHThermoPhysics
+    );
     makeChemistryReductionMethods
     (
         rhoReactionThermo,
@@ -88,6 +98,11 @@ namespace Foam
     makeChemistryReductionMethods
     (
         psiReactionThermo,
+        PengRobinsonGasEThermoPhysics
+    );
+    makeChemistryReductionMethods
+    (
+        psiReactionThermo,
         constIncompressibleGasEThermoPhysics
     );
     makeChemistryReductionMethods
@@ -107,6 +122,11 @@ namespace Foam
 
     makeChemistryReductionMethods(rhoReactionThermo, constGasEThermoPhysics);
     makeChemistryReductionMethods(rhoReactionThermo, gasEThermoPhysics);
+    makeChemistryReductionMethods
+    (
+        rhoReactionThermo,
+        PengRobinsonGasEThermoPhysics
+    );
     makeChemistryReductionMethods
     (
         rhoReactionThermo,

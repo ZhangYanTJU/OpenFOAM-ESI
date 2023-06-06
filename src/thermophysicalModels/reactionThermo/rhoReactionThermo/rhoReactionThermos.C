@@ -33,6 +33,7 @@ License
 
 #include "specie.H"
 #include "perfectGas.H"
+#include "PengRobinsonGas.H"
 #include "incompressiblePerfectGas.H"
 #include "hConstThermo.H"
 #include "janafThermo.H"
@@ -222,6 +223,130 @@ makeReactionThermos
     specie
 );
 
+// Peng Robinson
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    homogeneousMixture,
+    constTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    inhomogeneousMixture,
+    constTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    veryInhomogeneousMixture,
+    constTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+
+// sutherlandTransport, hConstThermo
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    homogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    inhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    veryInhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    hConstThermo,
+    PengRobinsonGas,
+    specie
+);
+
+
+// sutherlandTransport, janafThermo
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    homogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    janafThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    inhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    janafThermo,
+    PengRobinsonGas,
+    specie
+);
+
+makeReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    veryInhomogeneousMixture,
+    sutherlandTransport,
+    sensibleEnthalpy,
+    janafThermo,
+    PengRobinsonGas,
+    specie
+);
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Multi-component thermo for internal energy
@@ -382,6 +507,14 @@ makeThermoPhysicsReactionThermos
     constEThermoPhysics
 );
 
+makeThermoPhysicsReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    reactingMixture,
+    PengRobinsonGasEThermoPhysics
+);
 
 // Single-step reaction thermo for internal energy
 
@@ -393,7 +526,6 @@ makeThermoPhysicsReactionThermos
     singleStepReactingMixture,
     gasEThermoPhysics
 );
-
 
 // Single-component thermo for internal energy
 
@@ -579,6 +711,15 @@ makeThermoPhysicsReactionThermos
     heRhoThermo,
     multiComponentMixture,
     constHThermoPhysics
+);
+
+makeThermoPhysicsReactionThermos
+(
+    rhoThermo,
+    rhoReactionThermo,
+    heRhoThermo,
+    reactingMixture,
+    PengRobinsonGasHThermoPhysics
 );
 
 // Reaction thermo for sensible enthalpy

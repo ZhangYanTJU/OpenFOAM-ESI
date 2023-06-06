@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,6 +37,7 @@ Description
 
 #include "specie.H"
 #include "perfectGas.H"
+#include "PengRobinsonGas.H"
 #include "incompressiblePerfectGas.H"
 #include "rPolynomial.H"
 #include "perfectFluid.H"
@@ -90,6 +91,19 @@ namespace Foam
             sensibleEnthalpy
         >
     > gasHThermoPhysics;
+
+    typedef
+    sutherlandTransport
+    <
+        species::thermo
+        <
+            janafThermo
+            <
+                PengRobinsonGas<specie>
+            >,
+            sensibleEnthalpy
+        >
+    > PengRobinsonGasHThermoPhysics;
 
     typedef
     constTransport
@@ -243,6 +257,19 @@ namespace Foam
             sensibleInternalEnergy
         >
     > gasEThermoPhysics;
+
+    typedef
+    sutherlandTransport
+    <
+        species::thermo
+        <
+            janafThermo
+            <
+                PengRobinsonGas<specie>
+            >,
+            sensibleInternalEnergy
+        >
+    > PengRobinsonGasEThermoPhysics;
 
     typedef
     constTransport
