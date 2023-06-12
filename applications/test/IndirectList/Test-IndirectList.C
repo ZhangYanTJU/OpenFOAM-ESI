@@ -183,9 +183,7 @@ int main(int argc, char *argv[])
             Pout<<"recv: " << flatOutput(recv) << endl;
         }
 
-        // MPI barrier
-        bool barrier = true;
-        Pstream::broadcast(barrier);
+        UPstream::barrier(UPstream::worldComm);
     }
 
 

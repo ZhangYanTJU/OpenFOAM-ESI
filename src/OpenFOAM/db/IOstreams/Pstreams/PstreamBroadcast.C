@@ -80,4 +80,61 @@ void Foam::Pstream::broadcasts(const label comm, Type& arg1, Args&&... args)
 }
 
 
+template<class ListType>
+void Foam::Pstream::broadcastList(ListType& list, const label comm)
+{
+    if (is_contiguous<typename ListType::value_type>::value)
+    {
+        // List data are contiguous
+        // 1. broadcast the size
+        // 2. resize for receiver list
+        // 3. broadcast contiguous contents
+
+        if (UPstream::is_parallel(comm))
+        {
+            label len(list.size());
+
+            UPstream::broadcast
+            (
+                reinterpret_cast<char*>(&len),
+                sizeof(label),
+                comm,
+                UPstream::masterNo()
+            );
+
+            if (UPstream::is_subrank(comm))
+            {
+                list.resize_nocopy(len);
+            }
+
+            if (len)
+            {
+                UPstream::broadcast
+                (
+                    list.data_bytes(),
+                    list.size_bytes(),
+                    comm,
+                    UPstream::masterNo()
+                );
+            }
+        }
+    }
+    else if (UPstream::is_parallel(comm))
+    {
+        // List data are non-contiguous - serialize/de-serialize
+
+        if (UPstream::master(comm))
+        {
+            OPBstream os(UPstream::masterNo(), comm);
+            os << list;
+        }
+        else  // UPstream::is_subrank(comm)
+        {
+            IPBstream is(UPstream::masterNo(), comm);
+            is >> list;
+        }
+    }
+}
+
+
 // ************************************************************************* //

@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
     labelPair inOut;
     pointField allCcs(globalNumbering.gather(mesh.cellCentres()));
     inOut[0] = allCcs.size();
-    Pstream::broadcast(allCcs);
+    Pstream::broadcastList(allCcs);
     inOut[1] = allCcs.size();
     Pout<< "    " << inOut << endl;
 

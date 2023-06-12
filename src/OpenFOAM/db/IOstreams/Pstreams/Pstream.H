@@ -102,9 +102,8 @@ public:
         //- Broadcast buffer content to all processes in communicator.
         using UPstream::broadcast;
 
-        //- Broadcast content (contiguous or non-contiguous)
-        //- to all processes in communicator.
-        //  For \b non-parallel : do nothing.
+        //- Broadcast content (contiguous or non-contiguous) to all
+        //- communicator ranks. Does nothing in \b non-parallel.
         template<class Type>
         static void broadcast
         (
@@ -112,10 +111,21 @@ public:
             const label comm = UPstream::worldComm
         );
 
-        //- Broadcast multiple items to all processes in communicator.
-        //  For \b non-parallel : do nothing.
+        //- Broadcast multiple items to all communicator ranks.
+        //- Does nothing in \b non-parallel.
         template<class Type, class... Args>
         static void broadcasts(const label comm, Type& arg1, Args&&... args);
+
+        //- Broadcast list content (contiguous or non-contiguous) to all
+        //- communicator ranks. Does nothing in \b non-parallel.
+        //  For contiguous list data, this avoids serialization overhead,
+        //  but at the expense of an additional broadcast call.
+        template<class ListType>
+        static void broadcastList
+        (
+            ListType& list,
+            const label comm = UPstream::worldComm
+        );
 
 
     // Gather
