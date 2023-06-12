@@ -1,6 +1,7 @@
 probes/probes.C
 probes/patchProbes.C
 
+sampledSet/abaqus/abaqusMeshSet.C
 sampledSet/circle/circleSet.C
 sampledSet/cloud/cloudSet.C
 sampledSet/patchCloud/patchCloudSet.C
