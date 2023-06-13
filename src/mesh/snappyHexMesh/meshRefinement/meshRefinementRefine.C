@@ -2650,7 +2650,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::meshRefinement::balance
                 << "    Trigger cell count: " << maxCellUnbalance << nl
                 << "    Max new cell count in proc: " << maxNewCells << nl
                 << "    Max difference between new cells and balanced: "
-                << maxDeltaCells
+                << maxDeltaCells << nl
                 << "    Max load unbalance " << maxLoadUnbalance
                 << nl <<endl;
         }

@@ -85,10 +85,7 @@ Foam::refinementParameters::refinementParameters
         dict.getOrDefault("useTopologicalSnapDetection", true)
     ),
     maxLoadUnbalance_(dict.getOrDefault<scalar>("maxLoadUnbalance", 0)),
-    maxCellUnbalance_
-    (
-        meshRefinement::get<label>(dict, "maxCellUnbalance", 0)
-    ),
+    maxCellUnbalance_(dict.getOrDefault<label>("maxCellUnbalance", -1)),
     handleSnapProblems_
     (
         dict.getOrDefault<Switch>("handleSnapProblems", true)

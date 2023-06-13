@@ -126,9 +126,9 @@ castellatedMeshControls
     // nProcs). 0=balance always. Can be triggered by using maxCellUnbalance
     maxLoadUnbalance 0.10;
 
-    // Trigger value after the balancing (based on maxLoadUnbalance) is 
-    // considered since balancing is quite expensive for high core counts.
-    // Avoid balancing in first refinement iterations as refinement is cheap.
+    // Optional absolute unbalance start trigger. Used to avoid balancing
+    // in first refinement iterations since balancing is expensive for
+    // high core counts
     // The trigger value is used for two checks:
     // a: if on any processor the number of new added cells <= maxCellUnbalance
     //    the balancing is skipped
@@ -136,10 +136,10 @@ castellatedMeshControls
     //    (new cell count of proc - idealCellCount) <= maxCellUnbalance
     //    the balancing is skipped
     // Set to -1 to deactivate
-    maxCellUnbalance 200000;
+    //maxCellUnbalance 200000;
 
-    // Force a balancing step after the mesh is completely refined
-    balanceAtEnd     false;
+    // Optional forcing balancing after the mesh is completely refined
+    //balanceAtEnd     false;
 
     // Number of buffer layers between different levels.
     // 1 means normal 2:1 refinement restriction, larger means slower
