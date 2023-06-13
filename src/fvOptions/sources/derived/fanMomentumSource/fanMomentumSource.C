@@ -26,12 +26,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fanMomentumSource.H"
-#include "fvMatrices.H"
-#include "DimensionedField.H"
 #include "IFstream.H"
 #include "addToRunTimeSelectionTable.H"
-#include "TableFile.H"
-#include "turbulenceModel.H"
 #include "turbulentTransportModel.H"
 #include "turbulentFluidThermoModel.H"
 
@@ -78,14 +74,14 @@ void Foam::fv::fanMomentumSource::writeProps
 }
 
 
-void Foam::fv::fanMomentumSource::initializeUpstreamFaces()
+void Foam::fv::fanMomentumSource::initUpstreamFaces()
 {
     // First calculate the centre of gravity of the cell zone
     const vectorField& cellCentres = mesh_.cellCentres();
     const scalarField& cellVolumes = mesh_.cellVolumes();
 
-    vector centreGravityCellZone = vector::zero;
-    scalar cellZoneVolume = 0.;
+    vector centreGravityCellZone(Zero);
+    scalar cellZoneVolume = 0;
     for (const label celli : cells_)
     {
         const scalar cellVolume = cellVolumes[celli];
@@ -96,7 +92,16 @@ void Foam::fv::fanMomentumSource::initializeUpstreamFaces()
     reduce(centreGravityCellZone, sumOp<vector>());
     reduce(cellZoneVolume, sumOp<scalar>());
 
-    centreGravityCellZone /= max(cellZoneVolume, SMALL);
+    if (cellZoneVolume < SMALL)
+    {
+        FatalErrorInFunction
+            << "Cannot initialize upstream faces because the total cell zone"
+            << " volume is zero or negative: " << cellZoneVolume << "." << nl
+            << "Check whether there are cells in fan momentum source cell zone."
+            << abort(FatalError);
+    }
+
+    centreGravityCellZone /= cellZoneVolume;
 
     // Collect faces upstream of the centre of gavity
     const faceZone& fZone = mesh_.faceZones()[surroundingFaceZoneID_];
@@ -109,7 +114,7 @@ void Foam::fv::fanMomentumSource::initializeUpstreamFaces()
     {
         if
         (
-            (flowDir_ & (faceCentreGravity[facei] - centreGravityCellZone)) < 0.
+            (flowDir_ & (faceCentreGravity[facei] - centreGravityCellZone)) < 0
         )
         {
             labelPair patchFaceInfo(-1, -1);
@@ -181,10 +186,26 @@ void Foam::fv::fanMomentumSource::initializeUpstreamFaces()
 }
 
 
-template<typename FlowRateFunctor>
 Foam::scalar
-Foam::fv::fanMomentumSource::calculateFlowRate(FlowRateFunctor f) const
+Foam::fv::fanMomentumSource::calcFlowRate
+(
+    const surfaceScalarField& phi,
+    const surfaceScalarField& rhof
+) const
 {
+    // Sanity check to make sure we're not left in an inconsistent state because
+    // here we're operating on primitive (non-dimensional) fields
+    if (isNull(rhof) != (phi.dimensions() == dimVolume/dimTime))
+    {
+        FatalErrorInFunction
+            << "Incorrect usage of the function. " << nl
+            << "For incompressible flow, pass surfaceScalarField::null for rhof"
+            << " and volumetric flux for phi." << nl
+            << "For compressible flow, pass face-interpolated density as rhof"
+            << " and mass flux for phi."
+            << exit(FatalError);
+    }
+
     // Calculate the flow rate through the upstream faces
     scalarList phif(upstreamPatchFaceInfo_.size());
 
@@ -194,13 +215,35 @@ Foam::fv::fanMomentumSource::calculateFlowRate(FlowRateFunctor f) const
     {
         const labelPair& patchFaceInfo = upstreamPatchFaceInfo_[i];
 
+        if (isNull(rhof))
+        {
+            // Incompressible variant (phi = volumetric flux)
+            phif[i] =
+                patchFaceInfo.first() < 0
+              ? phi[patchFaceInfo.second()]
+              : phi.boundaryField()[patchFaceInfo];
+        }
+        else
+        {
+            // Compressible variant (phi = mass flux)
+            phif[i] =
+               patchFaceInfo.first() < 0
+             ? phi[patchFaceInfo.second()]/
+               rhof.internalField()[patchFaceInfo.second()]
+             : phi.boundaryField()[patchFaceInfo]/
+               rhof.boundaryField()[patchFaceInfo];
+        }
+
         // Sign of the flux needs to be flipped if this is an internal face
         // whose owner is found in the cell zone
-        phif[i] =
+        if
+        (
             patchFaceInfo.first() < 0
-        && cellsInZones_.found(owners[patchFaceInfo.second()])
-         ? -f(patchFaceInfo)
-         : f(patchFaceInfo);
+         && cellsInZones_.found(owners[patchFaceInfo.second()])
+        )
+        {
+            phif[i] *= -1;
+        }
     }
 
     return gSum(phif);
@@ -217,19 +260,23 @@ Foam::fv::fanMomentumSource::fanMomentumSource
 )
 :
     fv::cellSetOption(sourceName, modelType, dict, mesh),
-    fanCurve_(Function1<scalar>::New("fanCurve", dict)),
+    upstreamPatchFaceInfo_(),
+    cellsInZones_(),
+    fanCurvePtr_(Function1<scalar>::New("fanCurve", coeffs_, &mesh)),
+    UName_(coeffs_.get<word>("U")),
     flowDir_(coeffs_.get<vector>("flowDir")),
     thickness_(coeffs_.get<scalar>("thickness")),
     gradPFan_(0.0),
-    upstreamPatchFaceInfo_(),
-    rho_(nullptr)
+    surroundingFaceZoneID_(-1),
+    rho_(coeffs_.getOrDefault<scalar>("rho", SMALL)),
+    useRefRho_(coeffs_.found("rho"))
 {
     // Skip all the checks if the source term has been deactivated
     // because there are no selected cells.
     // Such a situation typically occurs for multiple fluid regions
     if (fv::option::isActive())
     {
-        const word faceZoneName = coeffs_.get<word>("faceZone");
+        const word faceZoneName = coeffs_.getWord("faceZone");
 
         surroundingFaceZoneID_ = mesh_.faceZones().findZoneID(faceZoneName);
 
@@ -242,34 +289,29 @@ Foam::fv::fanMomentumSource::fanMomentumSource
                 << exit(FatalError);
         }
 
+        flowDir_.normalise();
         if (mag(flowDir_) < SMALL)
         {
-            FatalErrorInFunction
-                << "Detected zero-vector for flowDir. Check your settings."
-                << exit(FatalError);
+            FatalIOErrorInFunction(coeffs_)
+                << "'flowDir' cannot be a zero-valued vector."
+                << exit(FatalIOError);
         }
-        else
+
+        if (thickness_ < VSMALL)
         {
-            flowDir_ /= mag(flowDir_);
+            FatalIOErrorInFunction(coeffs_)
+                << "'thickness' cannot be non-positive."
+                << exit(FatalIOError);
         }
 
-        if (thickness_ <= 0.)
+        if (coeffs_.found("fields"))
         {
-            FatalErrorInFunction
-                << "The thickness of the fan model region cannot be negative"
-                << " or null."
-                << exit(FatalError);
+            IOWarningInFunction(coeffs_)
+                << "Found 'fields' entry, which will be ignored. This function"
+                << " object will operate only on field 'U' = " << UName_
+                << endl;
         }
-
-
-        coeffs_.readEntry("fields", fieldNames_);
-
-        if (fieldNames_.size() != 1)
-        {
-            FatalErrorInFunction
-                << "Source can only be applied to a single field. Current "
-                << "settings are:" << fieldNames_ << exit(FatalError);
-        }
+        fieldNames_.resize(1, UName_);
 
         fv::option::resetApplied();
 
@@ -288,12 +330,14 @@ Foam::fv::fanMomentumSource::fanMomentumSource
 
         Info<< "    Initial pressure gradient = " << gradPFan_ << nl << endl;
 
-        if (coeffs_.found("rho"))
+        if (rho_ < SMALL)
         {
-            rho_.reset(new scalar(coeffs_.get<scalar>("rho")));
+            FatalIOErrorInFunction(coeffs_)
+                << "'rho' cannot be zero or negative."
+                << exit(FatalIOError);
         }
 
-        initializeUpstreamFaces();
+        initUpstreamFaces();
     }
 }
 
@@ -314,7 +358,8 @@ void Foam::fv::fanMomentumSource::addSup
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
         ),
         mesh_,
         dimensionedVector(eqn.dimensions()/dimVolume, Zero)
@@ -330,31 +375,20 @@ void Foam::fv::fanMomentumSource::addSup
             << abort(FatalError);
     }
 
-    if (!rho_.good() || rho_.ref() < VSMALL)
+    if (!useRefRho_)
     {
         FatalErrorInFunction
-            << "You called incompressible addSup without or with "
-            << "zero value reference density."
+            << "You called incompressible addSup without providing a "
+            << "reference density. Add 'rho' entry to the dictionary."
             << abort(FatalError);
     }
 
-    // Lambda function passed as argument to calculateFlowRate
-    auto getVolumetricFlowRate =
-        [&phi](const labelPair& patchFaceInfo)
-        {
-            return
-            (
-                patchFaceInfo.first() < 0
-              ? phi[patchFaceInfo.second()]
-              : phi.boundaryField()[patchFaceInfo]
-            );
-        };
-
-    const scalar flowRate = calculateFlowRate(getVolumetricFlowRate);
+    const scalar flowRate = calcFlowRate(phi, surfaceScalarField::null());
 
     // Pressure drop for this flow rate
     // if flow rate is negative, pressure is clipped at the static pressure
-    gradPFan_ = fanCurve_->value(max(flowRate, scalar(0)))/thickness_/rho_.ref();
+    gradPFan_ =
+        fanCurvePtr_->value(max(flowRate, scalar(0)))/thickness_/rho_;
 
     // Create the source term
     UIndirectList<vector>(Su, cells_) = flowDir_*gradPFan_;
@@ -380,7 +414,8 @@ void Foam::fv::fanMomentumSource::addSup
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
         ),
         mesh_,
         dimensionedVector(eqn.dimensions()/dimVolume, Zero)
@@ -396,27 +431,12 @@ void Foam::fv::fanMomentumSource::addSup
             << abort(FatalError);
     }
 
-    const surfaceScalarField rhof = fvc::interpolate(rho);
-
-    // Lambda function passed as argument to calculateFlowRate
-    auto getVolumetricFlowRate =
-        [&phi, &rhof](const labelPair& patchFaceInfo)
-        {
-            return
-            (
-                patchFaceInfo.first() < 0
-              ? phi[patchFaceInfo.second()]/
-                rhof.internalField()[patchFaceInfo.second()]
-              : phi.boundaryField()[patchFaceInfo]/
-                rhof.boundaryField()[patchFaceInfo]
-            );
-        };
-
-    const scalar flowRate = calculateFlowRate(getVolumetricFlowRate);
+    const surfaceScalarField rhof(fvc::interpolate(rho));
+    const scalar flowRate = calcFlowRate(phi, rhof);
 
     // Pressure drop for this flow rate
     // if flow rate is negative, pressure is clipped at the static pressure
-    gradPFan_ = fanCurve_->value(max(flowRate, scalar(0)))/thickness_;
+    gradPFan_ = fanCurvePtr_->value(max(flowRate, scalar(0)))/thickness_;
 
     // Create the source term
     UIndirectList<vector>(Su, cells_) = flowDir_*gradPFan_;
@@ -424,7 +444,6 @@ void Foam::fv::fanMomentumSource::addSup
     eqn += Su;
 
     writeProps(gradPFan_, flowRate);
-
 }
 
 

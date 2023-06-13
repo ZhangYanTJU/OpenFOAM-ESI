@@ -24,61 +24,73 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fanMomentumSource
+    Foam::fv::fanMomentumSource
+
+Group
+    grpFvOptionsSources
 
 Description
-    This source term models the action of a fan on the flow.
+    This source term models the action of a fan on the flow. It calculates
+    flow rate through a set of upstream faces of encompassing the cell zone. The
+    set of upstream faces is automatically calculated based on the flow
+    direction and the surrounding face zone. Based on the flow rate, the
+    pressure gradient is calculated based on the fan pressure curve and the
+    thickness of the fan (measurement section). The pressure gradient is then
+    added to the momentum equation.
 
 Usage
+    Minimal example by using \c constant/fvOptions:
+    \verbatim
+    <name>
+    {
+        // Mandatory entries
+        type                fanMomentumSource;
+        fanCurve            <Function1<scalar>>;
+        flowDir             <vector>;
+        thickness           <scalar>;
+        cellZone            <word>;
+        faceZone            <word>;
+
+        // Optional entries
+        gradient            <scalar>;
+        rho                 <scalar>;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
     \table
-        Property     | Description                          | Required | Default
-        fanCurve     | Pressure drop vs flow-rate           | yes |
-        fields       | Name of operand field                | yes |
-        flowDir      | Direction of the flow through the fan| yes |
-        faceZone     | Name of upstream faceZone            | yes |
-        thickness    | Thickness of the fan                 | yes |
-     \endtable
+      Property  | Description                       | Type  | Reqd | Deflt
+      type      | Type name: fanMomentumSource      | word  | yes  | -
+      fanCurve  | Pressure drop vs flow-rate  | Function1\<scalar\>| yes | -
+      flowDir   | Direction of the flow through the fan | vector | yes | -
+      cellZone  | Cell zone representing the fan    | word   | yes | -
+      faceZone  | Face zone around the cell zone    | word   | yes | -
+      thickness | Thickness of the fan [m]          | scalar | yes | -
+      gradient  | Initial pressure gradient         | scalar | no  | -
+      rho       | Reference density for incompressible flow | scalar | no  | -
+    \endtable
 
     The inherited entries are elaborated in:
-     - \link cellSetOption.H \endlink
-
-    Example of the source term specification:
-    \verbatim
-    fanModel
-    {
-        type          fanMomentumSource;
-        active        on;
-        selectionMode cellZone;
-        cellZone      fanCellZone;
-        faceZone      fanUpstreamFaceZone;
-        fanCurve
-        {
-            type table;
-            file "constant/fanCurve";
-        }
-        fields   (U);
-        flowDir  (1.0 0.0 0.0);
-        thickness 0.2;
-    }
+      - \link fvOption.H \endlink
+      - \link cellSetOption.H \endlink
+      - \link Function1.H \endlink
 
 Note
-    The fan curve needs to provide for a pressure drop expressed in Pascal and
-    is specified as a function of the volumetric flow rate in (m^3/s)
+  - The fan curve needs to be provded for a pressure drop in [Pa] and
+    is specified as a function of the volumetric flow rate in [m^3/s].
 
 SourceFiles
     fanMomentumSource.C
 
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef fanMomentumSource_H
-#define fanMomentumSource_H
+#ifndef Foam_fv_fanMomentumSource_H
+#define Foam_fv_fanMomentumSource_H
 
-#include "autoPtr.H"
-#include "fvMesh.H"
-#include "volFields.H"
 #include "cellSetOption.H"
-#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -88,7 +100,7 @@ namespace fv
 {
 
 /*---------------------------------------------------------------------------*\
-               Class fanMomentumSource Declaration
+                      Class fanMomentumSource Declaration
 \*---------------------------------------------------------------------------*/
 
 class fanMomentumSource
@@ -97,30 +109,36 @@ class fanMomentumSource
 {
     // Private Data
 
-        //- Volumetric flow rate vs. pressure drop table
-        autoPtr<Function1<scalar>> fanCurve_;
-
-        //- Direction of flow through the fan
-        vector flowDir_;
-
-        //- Thickness of the fan
-        const scalar thickness_;
-
-        //- Pressure drop
-        scalar gradPFan_;
-
         //- Local list of pairs of upstream patch IDs and upstream face IDs
         //  For internal faces, the upstream patch ID is -1
         List<labelPair> upstreamPatchFaceInfo_;
 
-        //- Id for the surrounding face zone
-        label surroundingFaceZoneID_;
-
         //- Cells in zone
         labelHashSet cellsInZones_;
 
+        //- Volumetric flow rate [m3] vs. pressure drop [Pa] table
+        autoPtr<Function1<scalar>> fanCurvePtr_;
+
+        //- Name of the velocity field this function object operates on
+        word UName_;
+
+        //- Direction of flow through the fan
+        vector flowDir_;
+
+        //- Thickness of the fan, in [m]
+        scalar thickness_;
+
+        //- Pressure drop
+        scalar gradPFan_;
+
+        //- Id for the surrounding face zone
+        label surroundingFaceZoneID_;
+
         //- Reference density for incompressible cases
-        autoPtr<scalar> rho_;
+        scalar rho_;
+
+        //- Whether to use reference density
+        bool useRefRho_;
 
 
     // Private Member Functions
@@ -128,13 +146,18 @@ class fanMomentumSource
         //- Write the pressure gradient to file (for restarts etc)
         void writeProps(const scalar gradP, const scalar flowRate) const;
 
-        //- Collect all faces upstream of the centre of gravity of the cell
-        //  zone
-        void initializeUpstreamFaces();
+        //- Collect all faces upstream of
+        //- the centre of gravity of the cell zone
+        void initUpstreamFaces();
 
-        //- Calculate the volumetric flow rate
-        template<typename FlowRateFunctor>
-        scalar calculateFlowRate(FlowRateFunctor f) const;
+        //- Return the volumetric flow rate given flux and face-interpolated
+        //  density. For incompressible cases, use surfaceScalarField::null()
+        //  for rhof
+        scalar calcFlowRate
+        (
+            const surfaceScalarField& phi,
+            const surfaceScalarField& rhof
+        ) const;
 
 
 public:
