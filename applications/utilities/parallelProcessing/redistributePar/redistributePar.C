@@ -1451,10 +1451,6 @@ int main(int argc, char *argv[])
     Info<< "Disabling uncollated master reading" << nl << endl;
     IOobject::fileModificationChecking = IOobject::timeStamp;
 
-    // Set up uncollated file handler (still over all processors)
-    refPtr<fileOperation> basicHandler(fileOperation::NewUncollated());
-    auto oldHandler = fileOperation::fileHandler(basicHandler);
-
     // Replace #include "createTime.H" with our own version
     // that has MUST_READ instead of READ_MODIFIED
 
@@ -1468,8 +1464,6 @@ int main(int argc, char *argv[])
         IOobjectOption::MUST_READ  // Without watching
     );
 
-    // Restore file handler
-    (void) fileOperation::fileHandler(oldHandler);
 
     refPtr<fileOperation> writeHandler;
 
