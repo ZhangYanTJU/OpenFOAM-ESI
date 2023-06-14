@@ -30,6 +30,7 @@ License
 #include "faMesh.H"
 #include "Pstream.H"
 #include "OSspecific.H"
+#include "decomposedBlockData.H"
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
@@ -47,7 +48,6 @@ bool Foam::checkFileExistence(const fileName& fName)
     //       (in collated format). Use file-based searching instead
 
     const auto& handler = Foam::fileHandler();
-
     typedef fileOperation::procRangeType procRangeType;
 
     fileName path, pDir, local;
@@ -136,7 +136,79 @@ Foam::boolList Foam::haveMeshFile
     const bool verbose
 )
 {
+    #if 0
+
+    // Simple directory scanning - too fragile
     bool found = checkFileExistence(runTime.path()/meshPath/meshFile);
+
+    #else
+
+    // Trimmed-down version of lookupAndCacheProcessorsPath
+    // with Foam::exists() check. No caching.
+
+    // Check for two conditions:
+    // - file has to exist
+    // - if collated the entry has to exist inside the file
+
+    // Note: bypass fileOperation::filePath(IOobject&) since has problems
+    //       with going to a different number of processors
+    //       (in collated format). Use file-based searching instead
+
+    const auto& handler = Foam::fileHandler();
+    typedef fileOperation::procRangeType procRangeType;
+
+    const fileName fName
+    (
+        handler.filePath(runTime.path()/meshPath/meshFile)
+    );
+
+    bool found = (!fName.empty() && handler.isFile(fName));
+
+    if (found)
+    {
+        autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fName));
+        if (isPtr && isPtr->good())
+        {
+            auto& is = *isPtr;
+
+            IOobject io(meshFile, meshPath, runTime);
+            io.readHeader(is);
+
+            if (decomposedBlockData::isCollatedType(io))
+            {
+                fileName path, pDir, local;
+                procRangeType group;
+                label numProcs;
+                label proci = fileOperation::splitProcessorPath
+                (
+                    fName,
+                    path,
+                    pDir,
+                    local,
+                    group,
+                    numProcs
+                );
+
+                label myBlockNumber = 0;
+                if (proci == -1 && group.empty())
+                {
+                    // 'processorsXXX' format so contains all ranks
+                    // according to worldComm
+                    myBlockNumber = UPstream::myProcNo(UPstream::worldComm);
+                }
+                else
+                {
+                    // 'processorsXXX_n-m' format so check for the
+                    // relative rank
+                    myBlockNumber = UPstream::myProcNo(fileHandler().comm());
+                }
+
+                // Check if block for the local rank is inside file
+                found = decomposedBlockData::hasBlock(is, myBlockNumber);
+            }
+        }
+    }
+    #endif
 
     // Globally consistent information about who has a mesh
     boolList haveFileOnProc
