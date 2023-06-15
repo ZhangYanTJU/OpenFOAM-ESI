@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2022 Louis Vittoz, SimScale GmbH
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -263,7 +264,7 @@ Foam::fv::fanMomentumSource::fanMomentumSource
     upstreamPatchFaceInfo_(),
     cellsInZones_(),
     fanCurvePtr_(Function1<scalar>::New("fanCurve", coeffs_, &mesh)),
-    UName_(coeffs_.get<word>("U")),
+    UName_(coeffs_.getOrDefault<word>("U", "U")),
     flowDir_(coeffs_.get<vector>("flowDir")),
     thickness_(coeffs_.get<scalar>("thickness")),
     gradPFan_(0.0),

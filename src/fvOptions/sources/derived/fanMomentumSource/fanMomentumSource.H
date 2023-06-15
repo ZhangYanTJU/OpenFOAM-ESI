@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2022 Louis Vittoz, SimScale GmbH
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,6 +55,7 @@ Usage
         // Optional entries
         gradient            <scalar>;
         rho                 <scalar>;
+        U                   <word>;
 
         // Inherited entries
         ...
@@ -71,6 +73,7 @@ Usage
       thickness | Thickness of the fan [m]          | scalar | yes | -
       gradient  | Initial pressure gradient         | scalar | no  | -
       rho       | Reference density for incompressible flow | scalar | no  | -
+      U         | Name of velocity field            | word   | no  | U
     \endtable
 
     The inherited entries are elaborated in:
