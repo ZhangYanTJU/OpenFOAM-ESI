@@ -593,7 +593,17 @@ void Foam::UPstream::allocatePstreamCommunicator
 
 void Foam::UPstream::freePstreamCommunicator(const label communicator)
 {
-    if (communicator != 0)
+    // Not touching the first communicator (WORLD)
+    // or anything out-of bounds.
+    //
+    // No UPstream communicator indices when MPI is initialized outside
+    // of OpenFOAM - thus needs a bounds check too!
+
+    if
+    (
+        communicator > 0
+     && (communicator < PstreamGlobals::MPICommunicators_.size())
+    )
     {
         if (PstreamGlobals::MPICommunicators_[communicator] != MPI_COMM_NULL)
         {
