@@ -34,7 +34,7 @@ Description
 
     This fraction is then used to scale the motion. Use
     - fixedValue on all moving patches
-    - zeroFixedValue on stationary patches
+    - zeroValue on stationary patches
     - slip on all slipping patches
     Note that the fixedValue boundary conditions might be changed by this
     solver to enforce consistency and a valid resulting mesh.

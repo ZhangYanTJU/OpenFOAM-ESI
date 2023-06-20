@@ -33,7 +33,6 @@ externalDisplacementMeshMover/externalDisplacementMeshMover.C
 externalDisplacementMeshMover/medialAxisMeshMover.C
 externalDisplacementMeshMover/displacementMotionSolverMeshMover.C
 /* externalDisplacementMeshMover/pointSmoothingMeshMover.C */
-externalDisplacementMeshMover/zeroFixedValue/zeroFixedValuePointPatchFields.C
 externalDisplacementMeshMover/fieldSmoother/fieldSmoother.C
 
 LIB = $(FOAM_LIBBIN)/libsnappyHexMesh

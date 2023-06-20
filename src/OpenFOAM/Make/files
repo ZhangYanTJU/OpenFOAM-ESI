@@ -806,6 +806,7 @@ $(basicPointPatchFields)/coupled/coupledPointPatchFields.C
 $(basicPointPatchFields)/value/valuePointPatchFields.C
 $(basicPointPatchFields)/fixedValue/fixedValuePointPatchFields.C
 $(basicPointPatchFields)/zeroGradient/zeroGradientPointPatchFields.C
+$(basicPointPatchFields)/zeroValue/zeroValuePointPatchFields.C
 
 constraintPointPatchFields = $(pointPatchFields)/constraint
 $(constraintPointPatchFields)/cyclic/cyclicPointPatchFields.C

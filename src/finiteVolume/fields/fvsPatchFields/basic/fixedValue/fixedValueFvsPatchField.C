@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2024 OpenCFD Ltd.
+    Copyright (C) 2024-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,21 +82,24 @@ Foam::fixedValueFvsPatchField<Type>::fixedValueFvsPatchField
 template<class Type>
 Foam::fixedValueFvsPatchField<Type>::fixedValueFvsPatchField
 (
-    const fixedValueFvsPatchField<Type>& ptf,
-    const DimensionedField<Type, surfaceMesh>& iF
+    const fixedValueFvsPatchField<Type>& pfld,
+    const fvPatch& p,
+    const DimensionedField<Type, surfaceMesh>& iF,
+    const Type& value
 )
 :
-    fvsPatchField<Type>(ptf, iF)
+    fvsPatchField<Type>(pfld, p, iF, value)
 {}
 
 
 template<class Type>
 Foam::fixedValueFvsPatchField<Type>::fixedValueFvsPatchField
 (
-    const fixedValueFvsPatchField<Type>& ptf
+    const fixedValueFvsPatchField<Type>& pfld,
+    const DimensionedField<Type, surfaceMesh>& iF
 )
 :
-    fixedValueFvsPatchField<Type>(ptf, ptf.internalField())
+    fvsPatchField<Type>(pfld, iF)
 {}
 
 

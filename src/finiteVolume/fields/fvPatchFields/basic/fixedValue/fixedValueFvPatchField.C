@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,21 +92,24 @@ Foam::fixedValueFvPatchField<Type>::fixedValueFvPatchField
 template<class Type>
 Foam::fixedValueFvPatchField<Type>::fixedValueFvPatchField
 (
-    const fixedValueFvPatchField<Type>& ptf,
-    const DimensionedField<Type, volMesh>& iF
+    const fixedValueFvPatchField<Type>& pfld,
+    const fvPatch& p,
+    const DimensionedField<Type, volMesh>& iF,
+    const Type& value
 )
 :
-    fvPatchField<Type>(ptf, iF)
+    fvPatchField<Type>(pfld, p, iF, value)
 {}
 
 
 template<class Type>
 Foam::fixedValueFvPatchField<Type>::fixedValueFvPatchField
 (
-    const fixedValueFvPatchField<Type>& ptf
+    const fixedValueFvPatchField<Type>& pfld,
+    const DimensionedField<Type, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<Type>(ptf, ptf.internalField())
+    fvPatchField<Type>(pfld, iF)
 {}
 
 
@@ -119,6 +122,7 @@ Foam::fixedValueFvPatchField<Type>::valueInternalCoeffs
     const tmp<scalarField>&
 ) const
 {
+    // No contribution from internal values
     return tmp<Field<Type>>::New(this->size(), Foam::zero{});
 }
 

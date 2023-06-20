@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,24 +26,24 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "zeroFixedValuePointPatchField.H"
+#include "zeroValuePointPatchField.H"
 
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::zeroFixedValuePointPatchField<Type>::zeroFixedValuePointPatchField
+Foam::zeroValuePointPatchField<Type>::zeroValuePointPatchField
 (
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
     // Field is zero
-    fixedValuePointPatchField<Type>(p, iF, Type(Zero))
+    parent_bctype(p, iF, Type(Zero))
 {}
 
 
 template<class Type>
-Foam::zeroFixedValuePointPatchField<Type>::zeroFixedValuePointPatchField
+Foam::zeroValuePointPatchField<Type>::zeroValuePointPatchField
 (
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
@@ -51,48 +51,45 @@ Foam::zeroFixedValuePointPatchField<Type>::zeroFixedValuePointPatchField
 )
 :
     // Field is zero
-    fixedValuePointPatchField<Type>(p, iF, Type(Zero))
-{}
-
-
-template<class Type>
-Foam::zeroFixedValuePointPatchField<Type>::zeroFixedValuePointPatchField
-(
-    const zeroFixedValuePointPatchField<Type>& ptf,
-    const pointPatch& p,
-    const DimensionedField<Type, pointMesh>& iF,
-    const pointPatchFieldMapper& mapper
-)
-:
-    // Field is zero : no mapping needed
-    fixedValuePointPatchField<Type>(p, iF, Type(Zero))
-{}
-
-
-template<class Type>
-Foam::zeroFixedValuePointPatchField<Type>::zeroFixedValuePointPatchField
-(
-    const zeroFixedValuePointPatchField<Type>& ptf
-)
-:
-    fixedValuePointPatchField<Type>(ptf)
+    parent_bctype(p, iF, Type(Zero))
 {
-    // Field is zero. For safety, re-assign
-    valuePointPatchField<Type>::operator=(Type(Zero));
+    pointPatchFieldBase::readDict(dict);
 }
 
 
 template<class Type>
-Foam::zeroFixedValuePointPatchField<Type>::zeroFixedValuePointPatchField
+Foam::zeroValuePointPatchField<Type>::zeroValuePointPatchField
 (
-    const zeroFixedValuePointPatchField<Type>& ptf,
+    const zeroValuePointPatchField<Type>& pfld,
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const pointPatchFieldMapper&
+)
+:
+    // Field is zero. No mapping
+    parent_bctype(pfld, p, iF, Type(Zero))
+{}
+
+
+template<class Type>
+Foam::zeroValuePointPatchField<Type>::zeroValuePointPatchField
+(
+    const zeroValuePointPatchField<Type>& pfld,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    fixedValuePointPatchField<Type>(ptf, iF)
+    // Field is zero
+    parent_bctype(pfld, pfld.patch(), iF, Type(Zero))
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::zeroValuePointPatchField<Type>::write(Ostream& os) const
 {
-    // Field is zero. For safety, re-assign
-    valuePointPatchField<Type>::operator=(Type(Zero));
+    pointPatchField<Type>::write(os);
+    // Without writeValueEntry() since the value == zero
 }
 
 

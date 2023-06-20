@@ -120,6 +120,12 @@ inline const char* zeroGradientTypeName_() noexcept { return "zeroGradient"; }
 //- A \c zeroGradient patch field type
 extern const word zeroGradientType;
 
+//- A \c zeroValue patch field type
+inline const char* zeroValueTypeName_() noexcept { return "zeroValue"; }
+
+//- A \c zeroValue patch field type
+extern const word zeroValueType;
+
 } // End namespace fieldTypes
 } // End namespace Foam
 

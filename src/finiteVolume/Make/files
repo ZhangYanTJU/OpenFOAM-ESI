@@ -138,6 +138,7 @@ $(basicFvPatchFields)/mixed/mixedFvPatchFields.C
 $(basicFvPatchFields)/sliced/slicedFvPatchFields.C
 $(basicFvPatchFields)/transform/transformFvPatchFields.C
 $(basicFvPatchFields)/zeroGradient/zeroGradientFvPatchFields.C
+$(basicFvPatchFields)/zeroValue/zeroValueFvPatchFields.C
 
 constraintFvPatchFields = $(fvPatchFields)/constraint
 $(constraintFvPatchFields)/cyclic/cyclicFvPatchFields.C
@@ -263,6 +264,7 @@ $(basicFvsPatchFields)/calculated/calculatedFvsPatchFields.C
 $(basicFvsPatchFields)/coupled/coupledFvsPatchFields.C
 $(basicFvsPatchFields)/fixedValue/fixedValueFvsPatchFields.C
 $(basicFvsPatchFields)/sliced/slicedFvsPatchFields.C
+$(basicFvsPatchFields)/zeroValue/zeroValueFvsPatchFields.C
 
 constraintFvsPatchFields = $(fvsPatchFields)/constraint
 $(constraintFvsPatchFields)/cyclic/cyclicFvsPatchFields.C

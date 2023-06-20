@@ -30,27 +30,28 @@ Group
     grpWallBoundaryConditions
 
 Description
-    This boundary condition fixes the velocity to zero at walls.
+    This boundary condition fixes the velocity to zero (eg, at walls).
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        type            noSlip;
+        type    noSlip;
     }
     \endverbatim
 
 See also
     Foam::fixedValueFvPatchVectorField
+    Foam::zeroValueFvPatchVectorField
 
 SourceFiles
     noSlipFvPatchVectorField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef noSlipFvPatchVectorField_H
-#define noSlipFvPatchVectorField_H
+#ifndef Foam_noSlipFvPatchVectorField_H
+#define Foam_noSlipFvPatchVectorField_H
 
 #include "fixedValueFvPatchFields.H"
 
@@ -60,13 +61,15 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-             Class noSlipFvPatchVectorField Declaration
+                  Class noSlipFvPatchVectorField Declaration
 \*---------------------------------------------------------------------------*/
 
 class noSlipFvPatchVectorField
 :
     public fixedValueFvPatchVectorField
 {
+    //- The parent boundary condition type
+    typedef fixedValueFvPatchVectorField parent_bctype;
 
 public:
 
@@ -92,7 +95,7 @@ public:
         );
 
         //- Construct by mapping given noSlipFvPatchVectorField
-        //  onto a new patch
+        //- onto a new patch
         noSlipFvPatchVectorField
         (
             const noSlipFvPatchVectorField&,
@@ -101,18 +104,19 @@ public:
             const fvPatchFieldMapper&
         );
 
-        //- Construct as copy
+        //- Copy construct with internal field reference
         noSlipFvPatchVectorField
         (
-            const noSlipFvPatchVectorField&
+            const noSlipFvPatchVectorField& pfld,
+            const DimensionedField<vector, volMesh>& iF
         );
 
-        //- Construct as copy setting internal field reference
-        noSlipFvPatchVectorField
-        (
-            const noSlipFvPatchVectorField&,
-            const DimensionedField<vector, volMesh>&
-        );
+        //- Copy construct
+        noSlipFvPatchVectorField(const noSlipFvPatchVectorField& pfld)
+        :
+            noSlipFvPatchVectorField(pfld, pfld.internalField())
+        {}
+
 
         //- Return a clone
         virtual tmp<fvPatchField<vector>> clone() const
@@ -130,7 +134,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         //- Write
         virtual void write(Ostream&) const;

@@ -150,6 +150,12 @@ public:
             return Foam::fieldTypes::zeroGradientType;
         }
 
+        //- The type name for \c zeroValue patch fields
+        static const word& zeroValueType() noexcept
+        {
+            return Foam::fieldTypes::zeroValueType;
+        }
+
 
     // Member Functions
 
@@ -351,15 +357,28 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct as copy
-        pointPatchField(const pointPatchField<Type>&);
-
-        //- Construct as copy setting internal field reference
+        //- Copy construct onto a new patch with (unused) value
         pointPatchField
         (
-            const pointPatchField<Type>&,
-            const DimensionedField<Type, pointMesh>&
+            const pointPatchField<Type>& pfld,
+            const pointPatch& p,
+            const DimensionedField<Type, pointMesh>& iF,
+            const Type& value  /* (unused) */
         );
+
+        //- Copy construct with internal field reference
+        pointPatchField
+        (
+            const pointPatchField<Type>& pfld,
+            const DimensionedField<Type, pointMesh>& iF
+        );
+
+        //- Copy construct
+        pointPatchField(const pointPatchField<Type>& pfld)
+        :
+            pointPatchField(pfld, pfld.internalField())
+        {}
+
 
         //- Clone patch field with its own internal field reference
         virtual autoPtr<pointPatchField<Type>> clone() const = 0;
@@ -590,22 +609,19 @@ public:
             const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
         );
 
-            //- Initialise the evaluation of the patch field after a local
-            //  operation
-            virtual void initEvaluateLocal
-            (
-                const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::buffered
-            )
-            {}
+        //- Initialise the evaluation of the patch field after a local operation
+        virtual void initEvaluateLocal
+        (
+            const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
+        )
+        {}
 
-            //- Evaluate the patch field after a local operation (e.g. *=)
-            virtual void evaluateLocal
-            (
-                const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::buffered
-            )
-            {}
+        //- Evaluate the patch field after a local operation (e.g. *=)
+        virtual void evaluateLocal
+        (
+            const Pstream::commsTypes commsType = Pstream::commsTypes::buffered
+        )
+        {}
 
 
     // Other

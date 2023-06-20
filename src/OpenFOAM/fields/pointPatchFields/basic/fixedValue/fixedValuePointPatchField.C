@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +37,7 @@ Foam::fixedValuePointPatchField<Type>::fixedValuePointPatchField
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    valuePointPatchField<Type>(p, iF)
+    parent_bctype(p, iF)
 {}
 
 
@@ -49,7 +49,7 @@ Foam::fixedValuePointPatchField<Type>::fixedValuePointPatchField
     const Type& value
 )
 :
-    valuePointPatchField<Type>(p, iF, value)
+    parent_bctype(p, iF, value)
 {}
 
 
@@ -62,31 +62,44 @@ Foam::fixedValuePointPatchField<Type>::fixedValuePointPatchField
     IOobjectOption::readOption requireValue
 )
 :
-    valuePointPatchField<Type>(p, iF, dict, requireValue)
+    parent_bctype(p, iF, dict, requireValue)
 {}
 
 
 template<class Type>
 Foam::fixedValuePointPatchField<Type>::fixedValuePointPatchField
 (
-    const fixedValuePointPatchField<Type>& ptf,
+    const fixedValuePointPatchField<Type>& pfld,
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
     const pointPatchFieldMapper& mapper
 )
 :
-    valuePointPatchField<Type>(ptf, p, iF, mapper)
+    parent_bctype(pfld, p, iF, mapper)
 {}
 
 
 template<class Type>
 Foam::fixedValuePointPatchField<Type>::fixedValuePointPatchField
 (
-    const fixedValuePointPatchField<Type>& ptf,
+    const fixedValuePointPatchField<Type>& pfld,
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const Type& value
+)
+:
+    parent_bctype(pfld, p, iF, value)
+{}
+
+
+template<class Type>
+Foam::fixedValuePointPatchField<Type>::fixedValuePointPatchField
+(
+    const fixedValuePointPatchField<Type>& pfld,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    valuePointPatchField<Type>(ptf, iF)
+    parent_bctype(pfld, iF)
 {}
 
 

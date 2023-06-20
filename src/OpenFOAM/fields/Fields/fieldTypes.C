@@ -69,6 +69,11 @@ const Foam::word Foam::fieldTypes::zeroGradientType
     Foam::fieldTypes::zeroGradientTypeName_()
 );
 
+const Foam::word Foam::fieldTypes::zeroValueType
+(
+    Foam::fieldTypes::zeroValueTypeName_()
+);
+
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 

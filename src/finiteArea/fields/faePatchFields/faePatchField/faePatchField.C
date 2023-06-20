@@ -158,24 +158,27 @@ Foam::faePatchField<Type>::faePatchField
 template<class Type>
 Foam::faePatchField<Type>::faePatchField
 (
-    const faePatchField<Type>& ptf
+    const faePatchField<Type>& pfld,
+    const faPatch& p,
+    const DimensionedField<Type, edgeMesh>& iF,
+    const Type& value
 )
 :
-    faePatchFieldBase(ptf),
-    Field<Type>(ptf),
-    internalField_(ptf.internalField_)
+    faePatchFieldBase(pfld, p),
+    Field<Type>(p.size(), value),
+    internalField_(iF)
 {}
 
 
 template<class Type>
 Foam::faePatchField<Type>::faePatchField
 (
-    const faePatchField<Type>& ptf,
+    const faePatchField<Type>& pfld,
     const DimensionedField<Type, edgeMesh>& iF
 )
 :
-    faePatchFieldBase(ptf),
-    Field<Type>(ptf),
+    faePatchFieldBase(pfld),
+    Field<Type>(pfld),
     internalField_(iF)
 {}
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,6 +56,9 @@ class fixedValuePointPatchField
 :
     public valuePointPatchField<Type>
 {
+    //- The parent boundary condition type
+    typedef valuePointPatchField<Type> parent_bctype;
+
 public:
 
     //- Runtime type information
@@ -113,12 +116,29 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct as copy setting internal field reference
+        //- Copy construct onto patch with internal field reference
+        //- and specified value
         fixedValuePointPatchField
         (
-            const fixedValuePointPatchField<Type>&,
-            const DimensionedField<Type, pointMesh>&
+            const fixedValuePointPatchField<Type>& pfld,
+            const pointPatch& p,
+            const DimensionedField<Type, pointMesh>& iF,
+            const Type& value
         );
+
+        //- Copy construct with internal field reference
+        fixedValuePointPatchField
+        (
+            const fixedValuePointPatchField<Type>& pfld,
+            const DimensionedField<Type, pointMesh>& iF
+        );
+
+        //- Copy construct
+        fixedValuePointPatchField(const fixedValuePointPatchField<Type>& pfld)
+        :
+            fixedValuePointPatchField<Type>(pfld, pfld.internalField())
+        {}
+
 
         //- Return a clone
         virtual autoPtr<pointPatchField<Type>> clone() const
@@ -148,9 +168,8 @@ public:
     // Member Operators
 
         // Disable assignment operators
-
-            virtual void operator=(const Field<Type>&){}
-            virtual void operator=(const Type&){}
+        virtual void operator=(const Field<Type>&) {}
+        virtual void operator=(const Type&) {}
 };
 
 

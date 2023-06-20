@@ -28,7 +28,7 @@ License
 
 #include "externalDisplacementMeshMover.H"
 #include "mapPolyMesh.H"
-#include "zeroFixedValuePointPatchFields.H"
+#include "zeroValuePointPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -50,20 +50,16 @@ Foam::labelList Foam::externalDisplacementMeshMover::getFixedValueBCs
 
     forAll(field.boundaryField(), patchI)
     {
-        const pointPatchField<vector>& patchField =
-            field.boundaryField()[patchI];
+        const auto& patchField = field.boundaryField()[patchI];
 
-        if (isA<valuePointPatchField<vector>>(patchField))
+        if (isA<zeroValuePointPatchField<vector>>(patchField))
         {
-            if (isA<zeroFixedValuePointPatchField<vector>>(patchField))
-            {
-                // Special condition of fixed boundary condition. Does not
-                // get adapted
-            }
-            else
-            {
-                adaptPatchIDs.append(patchI);
-            }
+            // Special condition of fixed boundary condition. Does not
+            // get adapted
+        }
+        else if (isA<valuePointPatchField<vector>>(patchField))
+        {
+            adaptPatchIDs.append(patchI);
         }
     }
 

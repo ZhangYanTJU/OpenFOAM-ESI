@@ -5,7 +5,6 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2017 Wikki Ltd
     Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -25,23 +24,28 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fixedValueFaPatchField
+    Foam::zeroValueFaPatchField
 
 Description
+    Specifies a zero fixed value boundary condition.
 
-Author
-    Zeljko Tukovic, FMENA
-    Hrvoje Jasak, Wikki Ltd.
+    Example of the boundary condition specification:
+    \verbatim
+    inlet
+    {
+        type    zeroValue;
+    }
+    \endverbatim
 
 SourceFiles
-    fixedValueFaPatchField.C
+    zeroValueFaPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_fixedValueFaPatchField_H
-#define Foam_fixedValueFaPatchField_H
+#ifndef Foam_zeroValueFaPatchField_H
+#define Foam_zeroValueFaPatchField_H
 
-#include "faPatchField.H"
+#include "fixedValueFaPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,94 +53,82 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                   Class fixedValueFaPatchField Declaration
+                   Class zeroValueFaPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class fixedValueFaPatchField
+class zeroValueFaPatchField
 :
-    public faPatchField<Type>
+    public fixedValueFaPatchField<Type>
 {
+    //- The parent boundary condition type
+    typedef fixedValueFaPatchField<Type> parent_bctype;
+
 public:
 
     //- Runtime type information
-    TypeName("fixedValue");
+    TypeName("zeroValue");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        fixedValueFaPatchField
+        zeroValueFaPatchField
         (
-            const faPatch&,
-            const DimensionedField<Type, areaMesh>&
-        );
-
-        //- Construct from patch, internal field and value
-        fixedValueFaPatchField
-        (
-            const faPatch&,
-            const DimensionedField<Type, areaMesh>&,
-            const Type& value
+            const faPatch& p,
+            const DimensionedField<Type, areaMesh>& iF
         );
 
         //- Construct from patch, internal field and dictionary
-        fixedValueFaPatchField
+        zeroValueFaPatchField
         (
-            const faPatch&,
-            const DimensionedField<Type, areaMesh>&,
-            const dictionary&,
-            //! The "value" entry (default: mandatory)
-            IOobjectOption::readOption requireValue = IOobjectOption::MUST_READ
+            const faPatch& p,
+            const DimensionedField<Type, areaMesh>& iF,
+            const dictionary& dict
         );
 
-        //- Construct by mapping the given fixedValue patch field
-        //- onto a new patch
-        fixedValueFaPatchField
+        //- Copy construct onto a new patch (no mapping needed)
+        zeroValueFaPatchField
         (
-            const fixedValueFaPatchField<Type>&,
-            const faPatch&,
-            const DimensionedField<Type, areaMesh>&,
+            const zeroValueFaPatchField<Type>& pfld,
+            const faPatch& p,
+            const DimensionedField<Type, areaMesh>& iF,
             const faPatchFieldMapper&
         );
 
-        //- Copy construct onto a new patch with internal field reference
-        //- and specified value
-        fixedValueFaPatchField
-        (
-            const fixedValueFaPatchField<Type>& pfld,
-            const faPatch& p,
-            const DimensionedField<Type, areaMesh>& iF,
-            const Type& value
-        );
-
         //- Copy construct with internal field reference
-        fixedValueFaPatchField
+        zeroValueFaPatchField
         (
-            const fixedValueFaPatchField<Type>& pfld,
+            const zeroValueFaPatchField<Type>& pfld,
             const DimensionedField<Type, areaMesh>& iF
         );
 
         //- Copy construct
-        fixedValueFaPatchField(const fixedValueFaPatchField<Type>& pfld)
+        zeroValueFaPatchField(const zeroValueFaPatchField<Type>& pfld)
         :
-            fixedValueFaPatchField<Type>(pfld, pfld.internalField())
+            zeroValueFaPatchField<Type>(pfld, pfld.internalField())
         {}
 
 
-        //- Return clone
+        //- Construct and return a clone
         virtual tmp<faPatchField<Type>> clone() const
         {
-            return faPatchField<Type>::Clone(*this);
+            return tmp<faPatchField<Type>>
+            (
+                new zeroValueFaPatchField<Type>(*this)
+            );
         }
 
-        //- Clone with an internal field reference
+        //- Construct and return a clone setting internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
         ) const
         {
-            return faPatchField<Type>::Clone(*this, iF);
+            return tmp<faPatchField<Type>>
+            (
+                new zeroValueFaPatchField<Type>(*this, iF)
+            );
         }
 
 
@@ -145,38 +137,41 @@ public:
         //- True: this patch field fixes a value.
         virtual bool fixesValue() const { return true; }
 
+        //- False: this patch field is not altered by assignment.
+        virtual bool assignable() const { return false; }
 
-        // Evaluation functions
-
-            //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
-            virtual tmp<Field<Type>> valueInternalCoeffs
-            (
-                const tmp<scalarField>&
-            ) const;
-
-            //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the value of this patchField with given weights
-            virtual tmp<Field<Type>> valueBoundaryCoeffs
-            (
-                const tmp<scalarField>&
-            ) const;
-
-            //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
-            virtual tmp<Field<Type>> gradientInternalCoeffs() const;
-
-            //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
-            virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
+        //- Write (without "value" entry)
+        virtual void write(Ostream& os) const;
 
 
-        //- Write
-        virtual void write(Ostream&) const;
+    // Evaluation Functions
+
+        //- Return the matrix diagonal coefficients corresponding to the
+        //-  evaluation of the value of this patchField with given weights
+        virtual tmp<Field<Type>> valueInternalCoeffs
+        (
+            const tmp<scalarField>&
+        ) const;
+
+        //- Return the matrix source coefficients corresponding to the
+        //- evaluation of the value of this patchField with given weights
+        virtual tmp<Field<Type>> valueBoundaryCoeffs
+        (
+            const tmp<scalarField>&
+        ) const;
+
+        //- Return the matrix diagonal coefficients corresponding to the
+        //- evaluation of the gradient of this patchField
+        virtual tmp<Field<Type>> gradientInternalCoeffs() const;
+
+        //- Return the matrix source coefficients corresponding to the
+        //- evaluation of the gradient of this patchField
+        virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
-    // Member operators
+    // Member Operators
 
+        // Disable assignment operators
         virtual void operator=(const UList<Type>&) {}
 
         virtual void operator=(const faPatchField<Type>&) {}
@@ -196,6 +191,17 @@ public:
         virtual void operator-=(const Type&) {}
         virtual void operator*=(const scalar) {}
         virtual void operator/=(const scalar) {}
+
+
+        // Disable forced assignment operators
+        virtual void operator==(const faPatchField<Type>&) {}
+        virtual void operator==(const Field<Type>&) {}
+        virtual void operator==(const Type&) {}
+
+        // Prevent automatic comparison rewriting (c++20)
+        bool operator!=(const faPatchField<Type>&) const = delete;
+        bool operator!=(const Field<Type>&) const = delete;
+        bool operator!=(const Type&) const = delete;
 };
 
 
@@ -206,7 +212,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "fixedValueFaPatchField.C"
+    #include "zeroValueFaPatchField.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -162,6 +162,12 @@ public:
             return Foam::fieldTypes::zeroGradientType;
         }
 
+        //- The type name for \c zeroValue patch fields
+        static const word& zeroValueType() noexcept
+        {
+            return Foam::fieldTypes::zeroValueType;
+        }
+
 
     // Member Functions
 
@@ -403,15 +409,29 @@ public:
             const faPatchFieldMapper&
         );
 
-        //- Construct as copy
-        faPatchField(const faPatchField<Type>&);
-
-        //- Construct as copy setting internal field reference
+        //- Copy construct onto a new patch with internal field reference
+        //- and specified value
         faPatchField
         (
-            const faPatchField<Type>&,
-            const DimensionedField<Type, areaMesh>&
+            const faPatchField<Type>& pfld,
+            const faPatch& p,
+            const DimensionedField<Type, areaMesh>& iF,
+            const Type& value
         );
+
+        //- Copy construct with internal field reference
+        faPatchField
+        (
+            const faPatchField<Type>& pfld,
+            const DimensionedField<Type, areaMesh>& iF
+        );
+
+        //- Copy construct
+        faPatchField(const faPatchField<Type>& pfld)
+        :
+            faPatchField<Type>(pfld, pfld.internalField())
+        {}
+
 
         //- Clone patch field with its own internal field reference
         virtual tmp<faPatchField<Type>> clone() const
@@ -622,7 +642,7 @@ public:
             //- evaluation of the value of this patchField with given weights
             virtual tmp<Field<Type>> valueInternalCoeffs
             (
-                const tmp<Field<scalar>>&
+                const tmp<scalarField>&
             ) const
             {
                 NotImplemented;
@@ -633,7 +653,7 @@ public:
             //- evaluation of the value of this patchField with given weights
             virtual tmp<Field<Type>> valueBoundaryCoeffs
             (
-                const tmp<Field<scalar>>&
+                const tmp<scalarField>&
             ) const
             {
                 NotImplemented;

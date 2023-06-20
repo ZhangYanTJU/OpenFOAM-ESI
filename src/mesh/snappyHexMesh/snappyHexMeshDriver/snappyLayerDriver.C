@@ -53,7 +53,7 @@ Description
 #include "PatchTools.H"
 #include "slipPointPatchFields.H"
 #include "fixedValuePointPatchFields.H"
-#include "zeroFixedValuePointPatchFields.H"
+#include "zeroValuePointPatchFields.H"
 #include "calculatedPointPatchFields.H"
 #include "cyclicSlipPointPatchFields.H"
 #include "fixedValueFvPatchFields.H"
@@ -1148,8 +1148,7 @@ Foam::snappyLayerDriver::makeLayerDisplacementField
         // >0 layers: fixedValue which gets adapted
         if (numLayers[patchi] == 0)
         {
-            patchFieldTypes[patchi] =
-                zeroFixedValuePointPatchVectorField::typeName;
+            patchFieldTypes[patchi] = zeroValuePointPatchVectorField::typeName;
         }
         else if (numLayers[patchi] > 0)
         {

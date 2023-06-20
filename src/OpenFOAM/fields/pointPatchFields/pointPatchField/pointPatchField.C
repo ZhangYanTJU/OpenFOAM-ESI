@@ -60,13 +60,13 @@ Foam::pointPatchField<Type>::pointPatchField
 template<class Type>
 Foam::pointPatchField<Type>::pointPatchField
 (
-    const pointPatchField<Type>& ptf,
+    const pointPatchField<Type>& pfld,
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
     const pointPatchFieldMapper&
 )
 :
-    pointPatchFieldBase(ptf, p),
+    pointPatchFieldBase(pfld, p),
     internalField_(iF)
 {}
 
@@ -74,22 +74,25 @@ Foam::pointPatchField<Type>::pointPatchField
 template<class Type>
 Foam::pointPatchField<Type>::pointPatchField
 (
-    const pointPatchField<Type>& ptf
+    const pointPatchField<Type>& pfld,
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const Type&
 )
 :
-    pointPatchFieldBase(ptf),
-    internalField_(ptf.internalField_)
+    pointPatchFieldBase(pfld, p),
+    internalField_(iF)
 {}
 
 
 template<class Type>
 Foam::pointPatchField<Type>::pointPatchField
 (
-    const pointPatchField<Type>& ptf,
+    const pointPatchField<Type>& pfld,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    pointPatchFieldBase(ptf),
+    pointPatchFieldBase(pfld),
     internalField_(iF)
 {}
 

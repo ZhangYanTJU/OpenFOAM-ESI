@@ -155,23 +155,29 @@ Foam::fvsPatchField<Type>::fvsPatchField
 
 
 template<class Type>
-Foam::fvsPatchField<Type>::fvsPatchField(const fvsPatchField<Type>& ptf)
+Foam::fvsPatchField<Type>::fvsPatchField
+(
+    const fvsPatchField<Type>& pfld,
+    const fvPatch& p,
+    const DimensionedField<Type, surfaceMesh>& iF,
+    const Type& value
+)
 :
-    fvsPatchFieldBase(ptf),
-    Field<Type>(ptf),
-    internalField_(ptf.internalField_)
+    fvsPatchFieldBase(pfld, p),
+    Field<Type>(p.size(), value),
+    internalField_(iF)
 {}
 
 
 template<class Type>
 Foam::fvsPatchField<Type>::fvsPatchField
 (
-    const fvsPatchField<Type>& ptf,
+    const fvsPatchField<Type>& pfld,
     const DimensionedField<Type, surfaceMesh>& iF
 )
 :
-    fvsPatchFieldBase(ptf),
-    Field<Type>(ptf),
+    fvsPatchFieldBase(pfld),
+    Field<Type>(pfld),
     internalField_(iF)
 {}
 

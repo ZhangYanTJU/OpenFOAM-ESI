@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,26 +129,40 @@ Foam::valuePointPatchField<Type>::valuePointPatchField
 template<class Type>
 Foam::valuePointPatchField<Type>::valuePointPatchField
 (
-    const valuePointPatchField<Type>& ptf,
+    const valuePointPatchField<Type>& pfld,
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
     const pointPatchFieldMapper& mapper
 )
 :
-    pointPatchField<Type>(ptf, p, iF, mapper),
-    Field<Type>(ptf, mapper)
+    pointPatchField<Type>(pfld, p, iF, mapper),
+    Field<Type>(pfld, mapper)
 {}
 
 
 template<class Type>
 Foam::valuePointPatchField<Type>::valuePointPatchField
 (
-    const valuePointPatchField<Type>& ptf,
+    const valuePointPatchField<Type>& pfld,
+    const pointPatch& p,
+    const DimensionedField<Type, pointMesh>& iF,
+    const Type& value
+)
+:
+    pointPatchField<Type>(pfld, p, iF, value),
+    Field<Type>(p.size(), value)
+{}
+
+
+template<class Type>
+Foam::valuePointPatchField<Type>::valuePointPatchField
+(
+    const valuePointPatchField<Type>& pfld,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
-    pointPatchField<Type>(ptf, iF),
-    Field<Type>(ptf)
+    pointPatchField<Type>(pfld, iF),
+    Field<Type>(pfld)
 {}
 
 

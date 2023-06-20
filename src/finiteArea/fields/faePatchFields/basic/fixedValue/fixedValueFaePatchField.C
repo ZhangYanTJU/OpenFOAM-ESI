@@ -70,17 +70,6 @@ template<class Type>
 Foam::fixedValueFaePatchField<Type>::fixedValueFaePatchField
 (
     const fixedValueFaePatchField<Type>& ptf,
-    const DimensionedField<Type, edgeMesh>& iF
-)
-:
-    faePatchField<Type>(ptf, iF)
-{}
-
-
-template<class Type>
-Foam::fixedValueFaePatchField<Type>::fixedValueFaePatchField
-(
-    const fixedValueFaePatchField<Type>& ptf,
     const faPatch& p,
     const DimensionedField<Type, edgeMesh>& iF,
     const faPatchFieldMapper& mapper
@@ -93,10 +82,24 @@ Foam::fixedValueFaePatchField<Type>::fixedValueFaePatchField
 template<class Type>
 Foam::fixedValueFaePatchField<Type>::fixedValueFaePatchField
 (
-    const fixedValueFaePatchField<Type>& ptf
+    const fixedValueFaePatchField<Type>& pfld,
+    const faPatch& p,
+    const DimensionedField<Type, edgeMesh>& iF,
+    const Type& value
 )
 :
-    faePatchField<Type>(ptf)
+    faePatchField<Type>(pfld, p, iF, value)
+{}
+
+
+template<class Type>
+Foam::fixedValueFaePatchField<Type>::fixedValueFaePatchField
+(
+    const fixedValueFaePatchField<Type>& pfld,
+    const DimensionedField<Type, edgeMesh>& iF
+)
+:
+    faePatchField<Type>(pfld, iF)
 {}
 
 

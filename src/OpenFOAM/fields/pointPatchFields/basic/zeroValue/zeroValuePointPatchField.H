@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014 OpenFOAM Foundation
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,26 +25,26 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::zeroFixedValuePointPatchField
+    Foam::zeroValuePointPatchField
 
 Description
-    Enables the specification of a zero fixed value boundary condition.
+    Specifies a zero fixed value boundary condition
 
     Example of the boundary condition specification:
     \verbatim
     inlet
     {
-        type            zeroFixedValue;
+        type    zeroValue;
     }
     \endverbatim
 
 SourceFiles
-    zeroFixedValuePointPatchField.C
+    zeroValuePointPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_zeroFixedValuePointPatchField_H
-#define Foam_zeroFixedValuePointPatchField_H
+#ifndef Foam_zeroValuePointPatchField_H
+#define Foam_zeroValuePointPatchField_H
 
 #include "fixedValuePointPatchField.H"
 
@@ -53,58 +54,62 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                Class zeroFixedValuePointPatchField Declaration
+                  Class zeroValuePointPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class zeroFixedValuePointPatchField
+class zeroValuePointPatchField
 :
     public fixedValuePointPatchField<Type>
 {
+    //- The parent boundary condition type
+    typedef fixedValuePointPatchField<Type> parent_bctype;
+
 public:
 
     //- Runtime type information
-    TypeName("zeroFixedValue");
+    TypeName("zeroValue");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        zeroFixedValuePointPatchField
+        zeroValuePointPatchField
         (
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        zeroFixedValuePointPatchField
+        zeroValuePointPatchField
         (
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&,
             const dictionary&
         );
 
-        //- Construct by mapping given patch field onto a new patch
-        zeroFixedValuePointPatchField
+        //- Copy construct onto a new patch
+        zeroValuePointPatchField
         (
-            const zeroFixedValuePointPatchField<Type>&,
-            const pointPatch&,
-            const DimensionedField<Type, pointMesh>&,
+            const zeroValuePointPatchField<Type>& pfld,
+            const pointPatch& p,
+            const DimensionedField<Type, pointMesh>& iF,
             const pointPatchFieldMapper&
         );
 
-        //- Construct as copy
-        zeroFixedValuePointPatchField
+        //- Copy construct with internal field reference
+        zeroValuePointPatchField
         (
-            const zeroFixedValuePointPatchField<Type>&
+            const zeroValuePointPatchField<Type>& pfld,
+            const DimensionedField<Type, pointMesh>& iF
         );
 
-        //- Construct as copy setting internal field reference
-        zeroFixedValuePointPatchField
-        (
-            const zeroFixedValuePointPatchField<Type>&,
-            const DimensionedField<Type, pointMesh>&
-        );
+        //- Copy construct
+        zeroValuePointPatchField(const zeroValuePointPatchField<Type>& pfld)
+        :
+            zeroValuePointPatchField<Type>(pfld, pfld.internalField())
+        {}
+
 
         //- Return a clone
         virtual autoPtr<pointPatchField<Type>> clone() const
@@ -120,6 +125,39 @@ public:
         {
             return pointPatchField<Type>::Clone(*this, iF);
         }
+
+
+    // Member Functions
+
+        //- True: this patch field fixes a value.
+        virtual bool fixesValue() const { return true; }
+
+        //- False: this patch field is not altered by assignment.
+        virtual bool assignable() const { return false; }
+
+        //- Write (without "value" entry)
+        virtual void write(Ostream& os) const;
+
+
+    // Member Operators
+
+        // Disable assignment operators
+        virtual void operator=(const valuePointPatchField<Type>&) {}
+        virtual void operator=(const pointPatchField<Type>&) {}
+        virtual void operator=(const Field<Type>&) {}
+        virtual void operator=(const Type&) {}
+
+        // Disable forced assignment operators
+        virtual void operator==(const valuePointPatchField<Type>&) {}
+        virtual void operator==(const pointPatchField<Type>&) {}
+        virtual void operator==(const Field<Type>&) {}
+        virtual void operator==(const Type&) {}
+
+        // Prevent automatic comparison rewriting (c++20)
+        bool operator!=(const valuePointPatchField<Type>&) const = delete;
+        bool operator!=(const pointPatchField<Type>&) const = delete;
+        bool operator!=(const Field<Type>&) const = delete;
+        bool operator!=(const Type&) const = delete;
 };
 
 
@@ -130,7 +168,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#    include "zeroFixedValuePointPatchField.C"
+    #include "zeroValuePointPatchField.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

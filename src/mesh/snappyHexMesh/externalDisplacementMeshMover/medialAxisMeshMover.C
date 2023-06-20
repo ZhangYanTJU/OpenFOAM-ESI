@@ -36,7 +36,7 @@ License
 #include "PatchTools.H"
 #include "OBJstream.H"
 #include "PointData.H"
-#include "zeroFixedValuePointPatchFields.H"
+#include "zeroValuePointPatchFields.H"
 #include "pointSet.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

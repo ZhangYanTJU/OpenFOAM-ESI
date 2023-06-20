@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,37 +23,17 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-InClass
-    Foam::zeroFixedValuePointPatchFields
-
-Description
-
-SourceFiles
-    zeroFixedValuePointPatchFields.C
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef zeroFixedValuePointPatchFields_H
-#define zeroFixedValuePointPatchFields_H
+#include "zeroValueFvPatchFields.H"
+#include "volFields.H"
+#include "addToRunTimeSelectionTable.H"
 
-#include "zeroFixedValuePointPatchField.H"
-#include "fieldTypes.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-makePointPatchFieldTypedefs(zeroFixedValue);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
+    makePatchFields(zeroValue);
+}
 
 // ************************************************************************* //

@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,78 +25,71 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "noSlipFvPatchVectorField.H"
-#include "addToRunTimeSelectionTable.H"
+#include "zeroValueFaePatchField.H"
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::noSlipFvPatchVectorField::noSlipFvPatchVectorField
+template<class Type>
+Foam::zeroValueFaePatchField<Type>::zeroValueFaePatchField
 (
-    const fvPatch& p,
-    const DimensionedField<vector, volMesh>& iF
+    const faPatch& p,
+    const DimensionedField<Type, edgeMesh>& iF
 )
 :
     // Field is zero
-    parent_bctype(p, iF, Zero)
+    parent_bctype(p, iF, Type(Zero))
 {}
 
 
-Foam::noSlipFvPatchVectorField::noSlipFvPatchVectorField
+template<class Type>
+Foam::zeroValueFaePatchField<Type>::zeroValueFaePatchField
 (
-    const fvPatch& p,
-    const DimensionedField<vector, volMesh>& iF,
+    const faPatch& p,
+    const DimensionedField<Type, edgeMesh>& iF,
     const dictionary& dict
 )
 :
     // Field is zero
-    parent_bctype(p, iF, Zero)
+    parent_bctype(p, iF, Type(Zero))
 {
-    fvPatchFieldBase::readDict(dict);
+    faePatchFieldBase::readDict(dict);
 }
 
 
-Foam::noSlipFvPatchVectorField::noSlipFvPatchVectorField
+template<class Type>
+Foam::zeroValueFaePatchField<Type>::zeroValueFaePatchField
 (
-    const noSlipFvPatchVectorField& pfld,
-    const fvPatch& p,
-    const DimensionedField<vector, volMesh>& iF,
-    const fvPatchFieldMapper&
+    const zeroValueFaePatchField<Type>& pfld,
+    const faPatch& p,
+    const DimensionedField<Type, edgeMesh>& iF,
+    const faPatchFieldMapper&
 )
 :
     // Field is zero. No mapping
-    parent_bctype(pfld, p, iF, Zero)
+    parent_bctype(pfld, p, iF, Type(Zero))
 {}
 
 
-Foam::noSlipFvPatchVectorField::noSlipFvPatchVectorField
+template<class Type>
+Foam::zeroValueFaePatchField<Type>::zeroValueFaePatchField
 (
-    const noSlipFvPatchVectorField& pfld,
-    const DimensionedField<vector, volMesh>& iF
+    const zeroValueFaePatchField<Type>& pfld,
+    const DimensionedField<Type, edgeMesh>& iF
 )
 :
     // Field is zero
-    parent_bctype(pfld, pfld.patch(), iF, Zero)
+    parent_bctype(pfld, pfld.patch(), iF, Type(Zero))
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::noSlipFvPatchVectorField::write(Ostream& os) const
+template<class Type>
+void Foam::zeroValueFaePatchField<Type>::write(Ostream& os) const
 {
-    fvPatchField<vector>::write(os);
+    faePatchField<Type>::write(os);
     // Without writeValueEntry() since the value == zero
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-    makePatchTypeField
-    (
-        fvPatchVectorField,
-        noSlipFvPatchVectorField
-    );
-}
 
 // ************************************************************************* //
