@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -162,20 +162,20 @@ void Foam::Time::setControls()
 
         if (startFrom == "firstTime")
         {
-            if (nTimes > 1 && timeDirs.first().name() == constant())
+            if (nTimes > 1 && timeDirs.front().name() == constant())
             {
                 startTime_ = timeDirs[1].value();
             }
             else if (nTimes)
             {
-                startTime_ = timeDirs.first().value();
+                startTime_ = timeDirs.front().value();
             }
         }
         else if (startFrom == "latestTime")
         {
             if (nTimes)
             {
-                startTime_ = timeDirs.last().value();
+                startTime_ = timeDirs.back().value();
             }
         }
         else
@@ -277,9 +277,9 @@ void Foam::Time::setControls()
             timeName(),
             "uniform",
             *this,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::LAZY_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     );
 
@@ -365,8 +365,8 @@ void Foam::Time::setMonitoring(const bool forceProfiling)
                 timeName(),
                 "uniform",
                 *this,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
+                IOobjectOption::NO_READ,
+                IOobjectOption::AUTO_WRITE
             ),
             *this
         );
@@ -386,8 +386,8 @@ void Foam::Time::setMonitoring(const bool forceProfiling)
                 timeName(),
                 "uniform",
                 *this,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
+                IOobjectOption::NO_READ,
+                IOobjectOption::AUTO_WRITE
             ),
             *this
         );
@@ -418,22 +418,15 @@ Foam::Time::Time
     const word& ctrlDictName,
     const fileName& rootPath,
     const fileName& caseName,
-    const word& systemName,
-    const word& constantName,
+    const word& systemDirName,
+    const word& constantDirName,
     const bool enableFunctionObjects,
-    const bool enableLibs
+    const bool enableLibs,
+    IOobjectOption::readOption rOpt  // (default: READ_MODIFIED)
 )
 :
-    TimePaths
-    (
-        rootPath,
-        caseName,
-        systemName,
-        constantName
-    ),
-
+    TimePaths(rootPath, caseName, systemDirName, constantDirName),
     objectRegistry(*this),
-
     loopProfiling_(nullptr),
     libs_(),
 
@@ -444,9 +437,9 @@ Foam::Time::Time
             ctrlDictName,
             system(),
             *this,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            rOpt,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     ),
 
@@ -480,7 +473,7 @@ Foam::Time::Time
 
     // Explicitly set read flags on objectRegistry so anything constructed
     // from it reads as well (e.g. fvSolution).
-    readOpt(IOobject::MUST_READ_IF_MODIFIED);
+    objectRegistry::readOpt(rOpt);
 
     setControls();
     setMonitoring();
@@ -491,16 +484,15 @@ Foam::Time::Time
 (
     const word& ctrlDictName,
     const argList& args,
-    const word& systemName,
-    const word& constantName,
+    const word& systemDirName,
+    const word& constantDirName,
     const bool enableFunctionObjects,
-    const bool enableLibs
+    const bool enableLibs,
+    IOobjectOption::readOption rOpt  // (default: READ_MODIFIED)
 )
 :
-    TimePaths(args, systemName, constantName),
-
+    TimePaths(args, systemDirName, constantDirName),
     objectRegistry(*this),
-
     loopProfiling_(nullptr),
     libs_(),
 
@@ -511,9 +503,9 @@ Foam::Time::Time
             ctrlDictName,
             system(),
             *this,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            rOpt,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     ),
 
@@ -555,7 +547,7 @@ Foam::Time::Time
 
     // Explicitly set read flags on objectRegistry so anything constructed
     // from it reads as well (e.g. fvSolution).
-    readOpt(IOobject::MUST_READ_IF_MODIFIED);
+    objectRegistry::readOpt(rOpt);
 
     setControls();
 
@@ -569,35 +561,29 @@ Foam::Time::Time
     const dictionary& dict,
     const fileName& rootPath,
     const fileName& caseName,
-    const word& systemName,
-    const word& constantName,
+    const word& systemDirName,
+    const word& constantDirName,
     const bool enableFunctionObjects,
-    const bool enableLibs
+    const bool enableLibs,
+    IOobjectOption::readOption rOpt  // (default: READ_MODIFIED)
 )
 :
-    TimePaths
-    (
-        rootPath,
-        caseName,
-        systemName,
-        constantName
-    ),
-
+    TimePaths(rootPath, caseName, systemDirName, constantDirName),
     objectRegistry(*this),
-
     loopProfiling_(nullptr),
     libs_(),
 
     controlDict_
     (
+        // Construct no-read, copying initial contents
         IOobject
         (
-            controlDictName,
+            Time::controlDictName,
             system(),
             *this,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         ),
         dict
     ),
@@ -633,10 +619,10 @@ Foam::Time::Time
 
     // Explicitly set read flags on objectRegistry so anything constructed
     // from it reads as well (e.g. fvSolution).
-    readOpt(IOobject::MUST_READ_IF_MODIFIED);
+    objectRegistry::readOpt(rOpt);
 
-    // Since could not construct regIOobject with setting:
-    controlDict_.readOpt(IOobject::MUST_READ_IF_MODIFIED);
+    // Since could not construct controlDict with setting:
+    controlDict_.readOpt(rOpt);
 
     setControls();
     setMonitoring();
@@ -647,22 +633,14 @@ Foam::Time::Time
 (
     const fileName& rootPath,
     const fileName& caseName,
-    const word& systemName,
-    const word& constantName,
+    const word& systemDirName,
+    const word& constantDirName,
     const bool enableFunctionObjects,
     const bool enableLibs
 )
 :
-    TimePaths
-    (
-        rootPath,
-        caseName,
-        systemName,
-        constantName
-    ),
-
+    TimePaths(rootPath, caseName, systemDirName, constantDirName),
     objectRegistry(*this),
-
     loopProfiling_(nullptr),
     libs_(),
 
@@ -670,12 +648,12 @@ Foam::Time::Time
     (
         IOobject
         (
-            controlDictName,
+            Time::controlDictName,
             system(),
             *this,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     ),
 
@@ -745,7 +723,8 @@ Foam::autoPtr<Foam::Time> Foam::Time::New(const argList& args)
             Time::controlDictName,
             args,
             false,          // No enableFunctionObjects
-            false           // No enableLibs
+            false,          // No enableLibs
+            IOobjectOption::MUST_READ  // No re-reading
         );
 }
 
@@ -1014,9 +993,9 @@ void Foam::Time::setTime(const instant& inst, const label newIndex)
             timeName(),
             "uniform",
             *this,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::LAZY_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     );
 

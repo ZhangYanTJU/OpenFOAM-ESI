@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,6 +25,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+inline Foam::TimePaths::TimePaths
+(
+    const fileName& rootPath,
+    const fileName& caseName,
+    const word& systemDirName,
+    const word& constantDirName
+)
+:
+    TimePaths
+    (
+        false,              // processorCase
+        rootPath,           // rootPath
+        false,              // distributed
+        caseName,           // globalCaseName
+        caseName,           // caseName
+        systemDirName,
+        constantDirName
+    )
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 inline bool Foam::TimePaths::distributed() const noexcept
@@ -39,10 +62,10 @@ inline bool Foam::TimePaths::processorCase() const noexcept
 }
 
 
-inline bool Foam::TimePaths::processorCase(bool isProcessorCase) noexcept
+inline bool Foam::TimePaths::processorCase(bool on) noexcept
 {
     bool old(processorCase_);
-    processorCase_ = isProcessorCase;
+    processorCase_ = on;
     return old;
 }
 

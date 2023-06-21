@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,8 @@ inline Foam::Time::Time
     const word& ctrlDictName,
     const argList& args,
     const bool enableFunctionObjects,
-    const bool enableLibs
+    const bool enableLibs,
+    IOobjectOption::readOption rOpt  // (default: READ_MODIFIED)
 )
 :
     Foam::Time
@@ -42,7 +43,8 @@ inline Foam::Time::Time
         "system",
         "constant",
         enableFunctionObjects,
-        enableLibs
+        enableLibs,
+        rOpt
     )
 {}
 
@@ -53,7 +55,8 @@ inline Foam::Time::Time
     const fileName& rootPath,
     const fileName& caseName,
     const bool enableFunctionObjects,
-    const bool enableLibs
+    const bool enableLibs,
+    IOobjectOption::readOption rOpt  // (default: READ_MODIFIED)
 )
 :
     Foam::Time
@@ -64,7 +67,8 @@ inline Foam::Time::Time
         "system",
         "constant",
         enableFunctionObjects,
-        enableLibs
+        enableLibs,
+        rOpt
 )
 {}
 
@@ -75,7 +79,8 @@ inline Foam::Time::Time
     const fileName& rootPath,
     const fileName& caseName,
     const bool enableFunctionObjects,
-    const bool enableLibs
+    const bool enableLibs,
+    IOobjectOption::readOption rOpt  // (default: READ_MODIFIED)
 )
 :
     Foam::Time
@@ -86,7 +91,8 @@ inline Foam::Time::Time
         "system",
         "constant",
         enableFunctionObjects,
-        enableLibs
+        enableLibs,
+        rOpt
     )
 {}
 
@@ -99,7 +105,7 @@ inline Foam::Time::Time
     const bool enableLibs
 )
 :
-    Time
+    Foam::Time
     (
         rootPath,
         caseName,

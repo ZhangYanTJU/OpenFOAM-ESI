@@ -259,10 +259,10 @@ Foam::instantList Foam::timeSelector::select0
             << "No time specified or available, selecting 'constant'"
             << endl;
 
-        times.append(instant(0, runTime.constant()));
+        times.push_back(instant(0, runTime.constant()));
     }
 
-    runTime.setTime(times.first(), 0);
+    runTime.setTime(times.front(), 0);
 
     return times;
 }

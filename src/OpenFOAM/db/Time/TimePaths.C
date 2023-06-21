@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2016-2018 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,56 +67,13 @@ bool Foam::TimePaths::detectProcessorCase()
 
 Foam::TimePaths::TimePaths
 (
-    const argList& args,
-    const word& systemName,
-    const word& constantName
-)
-:
-    processorCase_(args.runControl().parRun()),
-    distributed_(args.runControl().distributed()),
-    rootPath_(args.rootPath()),
-    globalCaseName_(args.globalCaseName()),
-    case_(args.caseName()),
-    system_(systemName),
-    constant_(constantName)
-{
-    // For convenience: find out from case name whether it is a
-    // processor directory and set processorCase flag so file searching
-    // goes up one level.
-    detectProcessorCase();
-}
-
-
-Foam::TimePaths::TimePaths
-(
-    const fileName& rootPath,
-    const fileName& caseName,
-    const word& systemName,
-    const word& constantName
-)
-:
-    processorCase_(false),
-    distributed_(false),
-    rootPath_(rootPath),
-    globalCaseName_(caseName),
-    case_(caseName),
-    system_(systemName),
-    constant_(constantName)
-{
-    // Find out from case name whether a processor directory
-    detectProcessorCase();
-}
-
-
-Foam::TimePaths::TimePaths
-(
     const bool processorCase,
     const fileName& rootPath,
     const bool distributed,
     const fileName& globalCaseName,
     const fileName& caseName,
-    const word& systemName,
-    const word& constantName
+    const word& systemDirName,
+    const word& constantDirName
 )
 :
     processorCase_(processorCase),
@@ -124,14 +81,33 @@ Foam::TimePaths::TimePaths
     rootPath_(rootPath),
     globalCaseName_(globalCaseName),
     case_(caseName),
-    system_(systemName),
-    constant_(constantName)
+    system_(systemDirName),
+    constant_(constantDirName)
 {
-    // For convenience: find out from case name whether it is a
-    // processor directory and set processorCase flag so file searching
-    // goes up one level.
+    // Find out from case name whether it is a processor directory
+    // and set processorCase flag so file searching goes up one level.
     detectProcessorCase();
 }
+
+
+Foam::TimePaths::TimePaths
+(
+    const argList& args,
+    const word& systemDirName,
+    const word& constantDirName
+)
+:
+    TimePaths
+    (
+        args.runControl().parRun(),  // processorCase
+        args.rootPath(),
+        args.runControl().distributed(),
+        args.globalCaseName(),
+        args.caseName(),
+        systemDirName,
+        constantDirName
+    )
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -139,10 +115,10 @@ Foam::TimePaths::TimePaths
 Foam::instantList Foam::TimePaths::findTimes
 (
     const fileName& directory,
-    const word& constantName
+    const word& constantDirName
 )
 {
-    return fileHandler().findTimes(directory, constantName);
+    return fileHandler().findTimes(directory, constantDirName);
 }
 
 
@@ -156,7 +132,7 @@ Foam::label Foam::TimePaths::findClosestTimeIndex
 (
     const instantList& timeDirs,
     const scalar t,
-    const word& constantName
+    const word& constantDirName
 )
 {
     const label nTimes = timeDirs.size();
@@ -166,7 +142,7 @@ Foam::label Foam::TimePaths::findClosestTimeIndex
 
     for (label timei=0; timei < nTimes; ++timei)
     {
-        if (timeDirs[timei].name() == constantName) continue;
+        if (timeDirs[timei].name() == constantDirName) continue;
 
         const scalar diff = mag(timeDirs[timei].value() - t);
         if (diff < deltaT)
@@ -186,22 +162,26 @@ Foam::instant Foam::TimePaths::findClosestTime(const scalar t) const
 
     const label nTimes = timeDirs.size();
 
-    // There is only one time (likely "constant") so return it
-    if (nTimes == 1)
+    if (nTimes == 0)
     {
-        return timeDirs.first();
+        // Cannot really fail at this point, but for some safety...
+        return instant(0, constant());
     }
-
-    if (t < timeDirs[1].value())
+    else if (nTimes == 1)
+    {
+        // Only one time (likely "constant") so return it
+        return timeDirs.front();
+    }
+    else if (t < timeDirs[1].value())
     {
         return timeDirs[1];
     }
-    else if (t > timeDirs.last().value())
+    else if (t > timeDirs.back().value())
     {
-        return timeDirs.last();
+        return timeDirs.back();
     }
 
-    label nearestIndex = -1;
+    label nearestIndex = 0;  // Failsafe value
     scalar deltaT = GREAT;
 
     for (label timei=1; timei < nTimes; ++timei)

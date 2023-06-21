@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,33 +70,16 @@ class TimePaths
 
     // Private Member Functions
 
-        //- Determine from case name whether it is a processor directory
+        //- If not already designated as a processor-case, determine from
+        //- the globalCaseName whether it is a processor directory
+        //- and adjust both the globalCaseName and processor-case accordingly
         bool detectProcessorCase();
-
 
 public:
 
     // Constructors
 
-        //- Construct using characteristics given by the argList
-        explicit TimePaths
-        (
-            const argList& args,
-            const word& systemName = "system",
-            const word& constantName = "constant"
-        );
-
-        //- Construct given database name, rootPath and casePath
-        TimePaths
-        (
-            const fileName& rootPath,
-            const fileName& caseName,
-            const word& systemName = "system",
-            const word& constantName = "constant"
-        );
-
-
-        //- Construct given database name, rootPath and casePath
+        //- Construct from all components
         TimePaths
         (
             const bool processorCase,
@@ -104,8 +87,25 @@ public:
             const bool distributed,
             const fileName& globalCaseName,
             const fileName& caseName,
-            const word& systemName = "system",
-            const word& constantName = "constant"
+            const word& systemDirName = "system",
+            const word& constantDirName = "constant"
+        );
+
+        //- Construct using characteristics given by the argList
+        explicit TimePaths
+        (
+            const argList& args,
+            const word& systemDirName = "system",
+            const word& constantDirName = "constant"
+        );
+
+        //- Construct from rootPath and casePath
+        inline TimePaths
+        (
+            const fileName& rootPath,
+            const fileName& caseName,
+            const word& systemDirName = "system",
+            const word& constantDirName = "constant"
         );
 
 
@@ -115,11 +115,11 @@ public:
         //- (ie. not NFS mounted)
         inline bool distributed() const noexcept;
 
-        //- Return true if this is a processor case
+        //- True if this is a processor case
         inline bool processorCase() const noexcept;
 
-        //- Set processor case status. Return old one
-        inline bool processorCase(const bool isProcessorCase) noexcept;
+        //- Set processor case status. Return old status
+        inline bool processorCase(bool on) noexcept;
 
         //- Return root path
         inline const fileName& rootPath() const noexcept;
@@ -181,7 +181,7 @@ public:
         static instantList findTimes
         (
             const fileName& directory,
-            const word& constantName = "constant"
+            const word& constantDirName = "constant"
         );
 
         //- Search instantList for the time index closest to the specified time
@@ -189,7 +189,7 @@ public:
         (
             const instantList& timeDirs,
             const scalar t,
-            const word& constantName = "constant"
+            const word& constantDirName = "constant"
         );
 
         //- Search the case for valid time directories

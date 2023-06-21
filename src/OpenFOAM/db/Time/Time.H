@@ -236,15 +236,38 @@ public:
 
     // Constructors
 
-        //- Construct from dictionary name to read and argument list.
+    // Construct from argList
+
+        //- Construct from argument list,
+        //- reading from specified control dictionary name
         //  Uses "system" and "constant" for its directories.
         inline Time
         (
             const word& ctrlDictName,
             const argList& args,
             const bool enableFunctionObjects = true,
-            const bool enableLibs = true
+            const bool enableLibs = true,
+            //! Read option for controlDict and objectRegistry
+            IOobjectOption::readOption rOpt = IOobjectOption::READ_MODIFIED
         );
+
+        //- Construct from argument list,
+        //- reading from specified control dictionary name.
+        //  Use specified system/constant directory names.
+        Time
+        (
+            const word& ctrlDictName,
+            const argList& args,
+            const word& systemDirName,      //!< "system" directory name
+            const word& constantDirName,    //!< "constant" directory name
+            const bool enableFunctionObjects = true,
+            const bool enableLibs = true,
+            //! Read option for controlDict and objectRegistry
+            IOobjectOption::readOption rOpt = IOobjectOption::READ_MODIFIED
+        );
+
+
+    // Construct from root and case paths
 
         //- Construct given name of dictionary to read and root/case paths.
         //  Uses "system" and "constant" for its directories.
@@ -254,40 +277,9 @@ public:
             const fileName& rootPath,
             const fileName& caseName,
             const bool enableFunctionObjects = true,
-            const bool enableLibs = true
-        );
-
-        //- Construct given dictionary and root/case paths.
-        //  Uses "system" and "constant" for its directories.
-        inline Time
-        (
-            const dictionary& dict,
-            const fileName& rootPath,
-            const fileName& caseName,
-            const bool enableFunctionObjects = true,
-            const bool enableLibs = true
-        );
-
-        //- Construct at endTime and root/case paths.
-        //  Uses "system" and "constant" for its directories.
-        inline Time
-        (
-            const fileName& rootPath,
-            const fileName& caseName,
-            const bool enableFunctionObjects = true,
-            const bool enableLibs = true
-        );
-
-        //- Construct from dictionary name to read and argument list.
-        //  Use specified system/constant directory names.
-        Time
-        (
-            const word& ctrlDictName,
-            const argList& args,
-            const word& systemName,     //!< "system" directory name
-            const word& constantName,   //!< "constant" directory name
-            const bool enableFunctionObjects = true,
-            const bool enableLibs = true
+            const bool enableLibs = true,
+            //! Read option for controlDict and objectRegistry
+            IOobjectOption::readOption rOpt = IOobjectOption::READ_MODIFIED
         );
 
         //- Construct given name of dictionary to read and root/case paths.
@@ -297,33 +289,70 @@ public:
             const word& ctrlDictName,
             const fileName& rootPath,
             const fileName& caseName,
-            const word& systemName,     //!< "system" directory name
-            const word& constantName,   //!< "constant" directory name
+            const word& systemDirName,      //!< "system" directory name
+            const word& constantDirName,    //!< "constant" directory name
             const bool enableFunctionObjects = true,
-            const bool enableLibs = true
+            const bool enableLibs = true,
+            //! Read option for controlDict and objectRegistry
+            IOobjectOption::readOption rOpt = IOobjectOption::READ_MODIFIED
         );
 
-        //- Construct given dictionary and root/case paths.
+        //- Construct from root/case paths,
+        //- with initial dictionary content
+        //- \em without reading from "controlDict".
+        //  Uses "system" and "constant" for its directories.
+        inline Time
+        (
+            const dictionary& dict,
+            const fileName& rootPath,
+            const fileName& caseName,
+            const bool enableFunctionObjects = true,
+            const bool enableLibs = true,
+            //! Read option for controlDict and objectRegistry
+            IOobjectOption::readOption rOpt = IOobjectOption::READ_MODIFIED
+        );
+
+        //- Construct from root/case paths,
+        //- with initial dictionary content
+        //- \em without reading from "controlDict".
         //  Use specified system/constant directory names.
         Time
         (
             const dictionary& dict,
             const fileName& rootPath,
             const fileName& caseName,
-            const word& systemName,     //!< "system" directory name
-            const word& constantName,   //!< "constant" directory name
+            const word& systemDirName,      //!< "system" directory name
+            const word& constantDirName,    //!< "constant" directory name
+            const bool enableFunctionObjects = true,
+            const bool enableLibs = true,
+            //! Read option for controlDict and objectRegistry
+            IOobjectOption::readOption rOpt = IOobjectOption::READ_MODIFIED
+        );
+
+        //- Construct from root/case paths
+        //- \em without reading or requiring a controlDict or other files.
+        //  Uses "system" and "constant" for its directories.
+        //  Uses default controls values
+        //  (write: timeStep, stop: endTime, format: ASCII, ...),
+        inline Time
+        (
+            const fileName& rootPath,
+            const fileName& caseName,
             const bool enableFunctionObjects = true,
             const bool enableLibs = true
         );
 
-        //- Construct given endTime and root/case paths.
+        //- Construct from root/case paths
+        //- \em without reading or requiring a controlDict or other files.
         //  Use specified system/constant directory names.
+        //  Uses default controls values
+        //  (write: timeStep, stop: endTime, format: ASCII, ...)
         Time
         (
             const fileName& rootPath,
             const fileName& caseName,
-            const word& systemName,     //!< "system" directory name
-            const word& constantName,   //!< "constant" directory name
+            const word& systemDirName,      //!< "system" directory name
+            const word& constantDirName,    //!< "constant" directory name
             const bool enableFunctionObjects = true,
             const bool enableLibs = true
         );
@@ -450,7 +479,7 @@ public:
             //  \note If the instance cannot be found, returns the
             //  stopInstance (if set and reached) or \em constant.
             //  FatalError if it cannot be found and readOpt is
-            //  (MUST_READ or MUST_READ_IF_MODIFIED).
+            //  (MUST_READ or READ_MODIFIED).
             word findInstance
             (
                 const fileName& dir,
