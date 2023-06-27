@@ -431,25 +431,42 @@ public:
 
         // Evaluation Functions
 
-            //- Return field created from appropriate internal field values
-            tmp<Field<Type>> patchInternalField() const;
-
-            //- Return field created from appropriate internal field values
-            //- given internal field reference
+            //- Extract field using specified addressing
+            // \param internalData The internal field to extract from
+            // \param addressing Addressing (mesh-points) into internal field
+            // \param [out] pfld The extracted patch field.
+            //     It is always resized according to the patch size(),
+            //     which can be smaller than the addressing size
             template<class Type1>
-            tmp<Field<Type1>> patchInternalField
+            void patchInternalField
             (
-                const Field<Type1>& iF
+                const UList<Type1>& internalData,
+                const labelUList& addressing,
+                Field<Type1>& pfld
             ) const;
 
             //- Return field created from selected internal field values
             //- given internal field reference
+            // \param internalData The internal field to extract from
+            // \param addressing Addressing (mesh-points) into internal field
             template<class Type1>
             tmp<Field<Type1>> patchInternalField
             (
-                const Field<Type1>& iF,
-                const labelUList& meshPoints
+                const UList<Type1>& internalData,
+                const labelUList& addressing
             ) const;
+
+            //- Return field created from appropriate internal field values
+            //- given internal field reference
+            template<class Type1>
+            tmp<Field<Type1>> patchInternalField
+            (
+                const UList<Type1>& internalData
+            ) const;
+
+            //- Return field created from appropriate internal field values
+            tmp<Field<Type>> patchInternalField() const;
+
 
             //- Given the internal field and a patch field,
             //- add the patch field to the internal field
