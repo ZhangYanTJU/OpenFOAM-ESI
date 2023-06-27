@@ -122,7 +122,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         //- Return gradient at boundary
         virtual tmp<Field<Type>> snGrad() const;
@@ -135,6 +135,12 @@ public:
 
         //- Return face-gradient transform diagonal
         virtual tmp<Field<Type>> snGradTransformDiag() const;
+
+
+    // Member Operators
+
+        //- Inherit assignment operators
+        using transformFvPatchField<Type>::operator=;
 };
 
 

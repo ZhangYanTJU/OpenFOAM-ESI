@@ -124,7 +124,7 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
         // Evaluation functions
 
@@ -141,6 +141,12 @@ public:
 
             //- Return face-gradient transform diagonal
             virtual tmp<Field<Type>> snGradTransformDiag() const;
+
+
+    // Member Operators
+
+        //- Inherit assignment operators
+        using transformFaPatchField<Type>::operator=;
 };
 
 

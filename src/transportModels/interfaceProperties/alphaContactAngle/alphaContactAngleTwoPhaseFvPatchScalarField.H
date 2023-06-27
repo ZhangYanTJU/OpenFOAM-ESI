@@ -136,7 +136,7 @@ public:
         );
 
 
-    // Member functions
+    // Member Functions
 
         //- Return the contact angle
         virtual tmp<scalarField> theta
@@ -153,6 +153,12 @@ public:
 
         //- Write
         virtual void write(Ostream& os) const;
+
+
+    // Member Operators
+
+        //- Inherit assignment operators
+        using fvPatchField<scalar>::operator=;
 };
 
 

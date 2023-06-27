@@ -119,16 +119,19 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
-        // Evaluation functions
+        //- Update the patch field
+        virtual void evaluate
+        (
+            const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
+        );
 
-            //- Update the patch field
-            virtual void evaluate
-            (
-                const Pstream::commsTypes commsType =
-                    Pstream::commsTypes::blocking
-            );
+
+    // Member Operators
+
+        //- Inherit assignment operators
+        using pointPatchField<Type>::operator=;
 };
 
 

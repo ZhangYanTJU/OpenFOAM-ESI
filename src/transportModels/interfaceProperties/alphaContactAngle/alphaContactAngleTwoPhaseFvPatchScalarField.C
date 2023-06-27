@@ -55,7 +55,7 @@ alphaContactAngleTwoPhaseFvPatchScalarField
 )
 :
     fixedGradientFvPatchScalarField(p, iF),
-    limit_(lcZeroGradient)
+    limit_(limitControls::lcZeroGradient)
 {}
 
 
@@ -128,7 +128,7 @@ void Foam::alphaContactAngleTwoPhaseFvPatchScalarField::evaluate
     const Pstream::commsTypes
 )
 {
-    if (limit_ == lcGradient)
+    if (limit_ == limitControls::lcGradient)
     {
         gradient() =
         patch().deltaCoeffs()
@@ -137,14 +137,14 @@ void Foam::alphaContactAngleTwoPhaseFvPatchScalarField::evaluate
          - *this
        );
     }
-    else if (limit_ == lcZeroGradient)
+    else if (limit_ == limitControls::lcZeroGradient)
     {
         gradient() = Zero;
     }
 
     fixedGradientFvPatchScalarField::evaluate();
 
-    if (limit_ == lcAlpha)
+    if (limit_ == limitControls::lcAlpha)
     {
         scalarField::operator=(clamp(*this, zero_one{}));
     }
