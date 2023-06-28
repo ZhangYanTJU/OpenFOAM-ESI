@@ -30,8 +30,21 @@ License
 
 inline Foam::scalar Foam::TimeState::timeOutputValue() const
 {
-    return timeToUserTime(value());
+    return timeToUserTime(dimensionedScalar::value());
 }
+
+
+inline const Foam::word& Foam::TimeState::timeName() const noexcept
+{
+    return dimensionedScalar::name();
+}
+
+
+// FUTURE?
+// inline Foam::scalar Foam::TimeState::timeValue() const noexcept
+// {
+//     return dimensionedScalar::value();
+// }
 
 
 inline Foam::label Foam::TimeState::timeIndex() const noexcept

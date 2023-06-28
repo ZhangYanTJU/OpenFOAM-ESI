@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
             vector
             (
                 0,
-                a0*::cos(M_PI*x/L)/runTime.deltaT().value(),
+                a0*::cos(M_PI*x/L)/runTime.deltaTValue(),
                 0
             );
     }

@@ -834,8 +834,7 @@ void Foam::interfaceTrackingFvMesh::smoothFreeSurfaceMesh()
             )
         );
 
-    fsPatchPointMeshU ==
-        displacement/mesh().time().deltaT().value();
+    fsPatchPointMeshU == displacement/mesh().time().deltaTValue();
 
     dynamicMotionSolverFvMesh::update();
 }
@@ -1008,7 +1007,7 @@ Foam::scalar Foam::interfaceTrackingFvMesh::maxCourantNumber()
 
         CoNum = gMax
         (
-            mesh().time().deltaT().value()/
+            mesh().time().deltaTValue()/
             sqrt
             (
                 Foam::pow(dE, 3.0)/2.0/M_PI/(sigma().value() + SMALL)
@@ -1027,7 +1026,7 @@ Foam::scalar Foam::interfaceTrackingFvMesh::maxCourantNumber()
 
         CoNum = gMax
         (
-            mesh().time().deltaT().value()/
+            mesh().time().deltaTValue()/
             sqrt
             (
                 Foam::pow(dE, 3.0)/2.0/M_PI/sigmaE
@@ -2125,7 +2124,7 @@ bool Foam::interfaceTrackingFvMesh::update()
          == fv::CrankNicolsonDdtScheme<vector>::typeName
         )
         {
-            sweptVolCorr *= (1.0/2.0)*mesh().time().deltaT().value();
+            sweptVolCorr *= (1.0/2.0)*mesh().time().deltaTValue();
         }
         else if
         (
@@ -2133,7 +2132,7 @@ bool Foam::interfaceTrackingFvMesh::update()
          == fv::EulerDdtScheme<vector>::typeName
         )
         {
-            sweptVolCorr *= mesh().time().deltaT().value();
+            sweptVolCorr *= mesh().time().deltaTValue();
         }
         else if
         (
@@ -2143,11 +2142,11 @@ bool Foam::interfaceTrackingFvMesh::update()
         {
             if (mesh().time().timeIndex() == 1)
             {
-                sweptVolCorr *= mesh().time().deltaT().value();
+                sweptVolCorr *= mesh().time().deltaTValue();
             }
             else
             {
-                sweptVolCorr *= (2.0/3.0)*mesh().time().deltaT().value();
+                sweptVolCorr *= (2.0/3.0)*mesh().time().deltaTValue();
             }
         }
         else
@@ -2212,8 +2211,7 @@ bool Foam::interfaceTrackingFvMesh::update()
                 )
             );
 
-        fsPatchPointMeshU ==
-            displacement/mesh().time().deltaT().value();
+        fsPatchPointMeshU == displacement/mesh().time().deltaTValue();
 
         dynamicMotionSolverFvMesh::update();
 
@@ -2245,8 +2243,7 @@ bool Foam::interfaceTrackingFvMesh::update()
                 )
             );
 
-        fsPatchPointMeshU ==
-            displacement/mesh().time().deltaT().value();
+        fsPatchPointMeshU == displacement/mesh().time().deltaTValue();
 
         dynamicMotionSolverFvMesh::update();
     }

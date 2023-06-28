@@ -124,7 +124,7 @@ Foam::temperaturePhaseChangeTwoPhaseMixtures::constant::mDot() const
       * max(TSat - T, T0)
     );
 
-    if (mesh_.time().outputTime())
+    if (mesh_.time().writeTime())
     {
         mDotC.write();
         mDotE.write();

@@ -699,7 +699,7 @@ void Foam::radiation::laserDTRM::calculate()
         scalar totalQ = gSum(Q_.primitiveFieldRef()*mesh_.V());
         Info << "Total energy absorbed [W]: " << totalQ << endl;
 
-        if (mesh_.time().outputTime())
+        if (mesh_.time().writeTime())
         {
             reflectingCellsVol.write();
             nHat.write();

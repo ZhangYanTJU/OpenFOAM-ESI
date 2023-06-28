@@ -7,7 +7,7 @@
             *mag(aMesh.edgeInterpolation::deltaCoeffs())
             /rhol
         )
-    ).value()*runTime.deltaT().value();
+    ).value()*runTime.deltaTValue();
 
     Info<< "Max Capillary Courant Number = " << CoNumSigma << '\n' << endl;
 }

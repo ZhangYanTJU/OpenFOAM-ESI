@@ -41,7 +41,7 @@ Description
         libs    (sampling);
 
         // Write at same frequency as fields
-        writeControl    outputTime;
+        writeControl    writeTime;
         writeInterval   1;
 
         // Fields to be sampled

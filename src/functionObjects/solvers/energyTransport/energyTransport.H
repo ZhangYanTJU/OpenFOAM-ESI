@@ -53,7 +53,7 @@ Usage
             libs            (energyTransportFunctionObjects);
 
             enabled         true;
-            writeControl    outputTime;
+            writeControl    writeTime;
             writeInterval   1;
 
             field           T;
@@ -99,7 +99,7 @@ Usage
             libs            (energyTransportFunctionObjects);
 
             enabled         true;
-            writeControl    outputTime;
+            writeControl    writeTime;
             writeInterval   1;
 
             field           T;

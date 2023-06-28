@@ -20,7 +20,7 @@
     IOobject rhoIO
     (
         "rho",
-        runTime.timeName(0),
+        Time::timeName(0),
         mesh,
         IOobject::NO_READ,
         IOobject::NO_WRITE
@@ -75,7 +75,7 @@
     IOobject EHeader
     (
         "E",
-        runTime.timeName(0),
+        Time::timeName(0),
         mesh,
         IOobject::NO_READ,
         IOobject::NO_WRITE
@@ -127,7 +127,7 @@
     IOobject nuIO
     (
         "nu",
-        runTime.timeName(0),
+        Time::timeName(0),
         mesh,
         IOobject::NO_READ,
         IOobject::NO_WRITE

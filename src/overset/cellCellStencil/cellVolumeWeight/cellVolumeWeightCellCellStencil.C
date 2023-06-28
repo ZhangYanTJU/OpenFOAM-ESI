@@ -657,7 +657,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
         markPatchCells(partMesh, partCellMap, allPatchTypes);
     }
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -794,7 +794,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     }
 
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -840,7 +840,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     }
 
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -864,7 +864,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     // Mark unreachable bits
     findHoles(globalCells, mesh_, zoneID, allStencil, allCellTypes);
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -910,7 +910,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     );
 
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -1024,16 +1024,13 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     }
 
     // Write to volField for debugging
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
-        if ((debug&2) && (mesh_.time().outputTime()))
-        {
-            tmp<volScalarField> tfld
-            (
-                createField(mesh_, "allCellTypes_final", allCellTypes)
-            );
-            tfld().write();
-        }
+        tmp<volScalarField> tfld
+        (
+            createField(mesh_, "allCellTypes_final", allCellTypes)
+        );
+        tfld().write();
     }
 
 
@@ -1066,7 +1063,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     );
 
     // Dump interpolation stencil
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         // Dump weight
         cellInterpolationWeight_.instance() = mesh_.time().timeName();

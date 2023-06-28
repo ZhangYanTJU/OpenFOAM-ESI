@@ -68,7 +68,7 @@ Foam::porousModels::VollerPrakash::S() const
     const volScalarField& solidAlpha =
         mesh_.lookupObject<volScalarField>(solidPhase_);
 
-    if (mesh_.time().outputTime() && debug)
+    if (debug && mesh_.time().writeTime())
     {
         volScalarField Su
         (

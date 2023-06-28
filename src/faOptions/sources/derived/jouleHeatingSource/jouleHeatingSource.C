@@ -143,7 +143,7 @@ void Foam::fa::jouleHeatingSource::addSup
         // Add the Joule heating contribution
         areaVectorField gradV("gradV", fac::grad(V_));
 
-        if (debug > 1 && mesh().time().outputTime())
+        if (debug > 1 && mesh().time().writeTime())
         {
             areaScalarField qgradV("gradVSource", (gradV & gradV));
             qgradV.write();

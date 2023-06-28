@@ -456,7 +456,7 @@ EulerFaDdtScheme<Type>::famDdt
 
     faMatrix<Type>& fam = tfam.ref();
 
-    scalar rDeltaT = 1.0/mesh().time().deltaT().value();
+    scalar rDeltaT = 1.0/mesh().time().deltaTValue();
 
     fam.diag() = rDeltaT*mesh().S();
 
@@ -491,7 +491,7 @@ EulerFaDdtScheme<Type>::famDdt
     );
     faMatrix<Type>& fam = tfam.ref();
 
-    scalar rDeltaT = 1.0/mesh().time().deltaT().value();
+    scalar rDeltaT = 1.0/mesh().time().deltaTValue();
 
     fam.diag() = rDeltaT*rho.value()*mesh().S();
 
@@ -528,7 +528,7 @@ EulerFaDdtScheme<Type>::famDdt
     );
     faMatrix<Type>& fam = tfam.ref();
 
-    scalar rDeltaT = 1.0/mesh().time().deltaT().value();
+    scalar rDeltaT = 1.0/mesh().time().deltaTValue();
 
     fam.diag() = rDeltaT*rho.primitiveField()*mesh().S();
 

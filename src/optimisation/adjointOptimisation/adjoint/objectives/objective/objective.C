@@ -306,7 +306,7 @@ void objective::accumulateJMean()
         const scalar time = mesh_.time().value();
         if (isWithinIntegrationTime())
         {
-            const scalar dt = mesh_.time().deltaT().value();
+            const scalar dt = mesh_.time().deltaTValue();
             const scalar elapsedTime = time - integrationStartTimePtr_();
             const scalar denom = elapsedTime + dt;
             JMean_ = (JMean_*elapsedTime + J_*dt)/denom;

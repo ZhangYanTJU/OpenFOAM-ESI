@@ -68,7 +68,7 @@ functions
         timeEnd             10;
         evaluateControl     timeStep;
         evaluateInterval    1;
-        writeControl        outputTime;
+        writeControl        writeTime;
         writeInterval       1;
         ...
     }

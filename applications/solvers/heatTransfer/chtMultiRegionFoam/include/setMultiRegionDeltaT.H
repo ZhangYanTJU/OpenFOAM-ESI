@@ -59,12 +59,12 @@ if (adjustTimeStep)
     (
         min
         (
-            min(deltaTFluid, maxDeltaTSolid)*runTime.deltaT().value(),
+            min(deltaTFluid, maxDeltaTSolid)*runTime.deltaTValue(),
             maxDeltaT
         )
     );
 
-    Info<< "deltaT = " <<  runTime.deltaT().value() << endl;
+    Info<< "deltaT = " <<  runTime.deltaTValue() << endl;
 }
 
 // ************************************************************************* //

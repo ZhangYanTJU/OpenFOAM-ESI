@@ -73,7 +73,7 @@ Foam::Time::writeControlNames
 });
 
 
-Foam::Time::fmtflags Foam::Time::format_(Foam::Time::general);
+Foam::Time::fmtflags Foam::Time::format_(Foam::Time::fmtflags::general);
 
 int Foam::Time::precision_(6);
 
@@ -777,16 +777,10 @@ Foam::Time::~Time()
 Foam::word Foam::Time::timeName(const scalar t, const int precision)
 {
     std::ostringstream buf;
-    buf.setf(ios_base::fmtflags(format_), ios_base::floatfield);
+    buf.setf(std::ios_base::fmtflags(format_), std::ios_base::floatfield);
     buf.precision(precision);
     buf << t;
     return buf.str();
-}
-
-
-Foam::word Foam::Time::timeName() const
-{
-    return dimensionedScalar::name();
 }
 
 
@@ -1003,18 +997,14 @@ bool Foam::Time::isAdjustTimeStep() const
 
 void Foam::Time::setTime(const Time& t)
 {
-    value() = t.value();
-    dimensionedScalar::name() = t.dimensionedScalar::name();
-    timeIndex_ = t.timeIndex_;
+    resetTimeState(t.timeName(), t.value(), t.timeIndex());
     fileHandler().setTime(*this);
 }
 
 
 void Foam::Time::setTime(const instant& inst, const label newIndex)
 {
-    value() = inst.value();
-    dimensionedScalar::name() = inst.name();
-    timeIndex_ = newIndex;
+    resetTimeState(inst.name(), inst.value(), newIndex);
 
     IOdictionary timeDict
     (
@@ -1045,9 +1035,12 @@ void Foam::Time::setTime(const dimensionedScalar& newTime, const label newIndex)
 
 void Foam::Time::setTime(const scalar newTime, const label newIndex)
 {
-    value() = newTime;
-    dimensionedScalar::name() = timeName(timeToUserTime(newTime));
-    timeIndex_ = newIndex;
+    resetTimeState
+    (
+        timeName(timeToUserTime(newTime)),
+        newTime,
+        newIndex
+    );
     fileHandler().setTime(*this);
 }
 

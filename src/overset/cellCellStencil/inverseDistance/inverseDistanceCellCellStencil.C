@@ -1478,7 +1478,7 @@ void Foam::cellCellStencils::inverseDistance::holeExtrapolationStencil
             }
         }
 
-        if (debug&2)
+        if (debug & 2)
         {
             reduce(nSpecialNear, sumOp<label>());
             reduce(nSpecialFar, sumOp<label>());
@@ -2051,7 +2051,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
         }
     }
 
-    if ((debug&2)&& (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -2089,7 +2089,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
         }
     }
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -2108,7 +2108,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
     findHoles(globalCells, mesh_, zoneID, allStencil, allCellTypes);
 
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -2116,7 +2116,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
         );
         tfld().write();
     }
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         labelList stencilSize(mesh_.nCells());
         forAll(allStencil, celli)
@@ -2172,7 +2172,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
 //         }
 //     }
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -2216,7 +2216,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
         useLayer
     );
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -2365,7 +2365,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
     >(cellInterpolationWeight_.boundaryFieldRef(), false);
 
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         // Dump mesh
         mesh_.time().write();
@@ -2404,9 +2404,8 @@ bool Foam::cellCellStencils::inverseDistance::update()
         holeExtrapolationStencil(globalCells);
     }
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
-
         // Dump weight
         cellInterpolationWeight_.instance() = mesh_.time().timeName();
         cellInterpolationWeight_.write();

@@ -283,11 +283,11 @@ Foam::scalar Foam::expressions::exprDriver::deltaT() const
 {
     if (timeStatePtr_)
     {
-        return timeStatePtr_->deltaT().value();
+        return timeStatePtr_->deltaTValue();
     }
     else if (obrPtr_)
     {
-        return obrPtr_->time().deltaT().value();
+        return obrPtr_->time().deltaTValue();
     }
     return 0;
 }

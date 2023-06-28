@@ -46,7 +46,7 @@ Description
         name            probes;
 
         // Write at same frequency as fields
-        writeControl    outputTime;
+        writeControl    writeTime;
         writeInterval   1;
 
         // Fields to be probed

@@ -834,7 +834,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
     DebugInfo<< FUNCTION_NAME << " : Determined holes and donor-acceptors"
         << endl;
 
-    if ((debug & 2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -875,7 +875,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
     }
     DebugInfo<< FUNCTION_NAME << " : Removed bad donors" << endl;
 
-    if ((debug & 2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -894,7 +894,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
     findHoles(globalCells_, mesh_, zoneID, allStencil, allCellTypes);
     DebugInfo<< FUNCTION_NAME << " : Flood-filled holes" << endl;
 
-    if ((debug & 2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -947,7 +947,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
         dict_.getOrDefault("useLayer", -1)
     );
 
-    if ((debug & 2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (
@@ -1063,7 +1063,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
     >(cellInterpolationWeight_.boundaryFieldRef(), false);
 
 
-    if ((debug & 2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         // Dump mesh
         mesh_.time().write();
@@ -1106,7 +1106,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
     }
 
 
-    if ((debug & 2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         // Dump weight
         cellInterpolationWeight_.instance() = mesh_.time().timeName();

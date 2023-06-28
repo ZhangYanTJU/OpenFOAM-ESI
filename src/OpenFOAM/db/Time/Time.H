@@ -347,7 +347,17 @@ public:
 
     // Member Functions
 
-        // Database functions
+    // TimeState Functions
+
+        //- Return the current time name
+        using TimeState::timeName;
+
+        //- Return a time name for the given scalar time value
+        //- formatted with the given precision
+        static word timeName(const scalar t, const int precision = precision_);
+
+
+        // Database Functions
 
             //- Return name from objectRegistry and not TimePaths
             using objectRegistry::name;
@@ -365,7 +375,7 @@ public:
             }
 
             //- Return read access to the controlDict dictionary
-            const dictionary& controlDict() const
+            const dictionary& controlDict() const noexcept
             {
                 return controlDict_;
             }
@@ -487,17 +497,6 @@ public:
 
         // Access
 
-            //- Return time name of given scalar time
-            //- formatted with the given precision
-            static word timeName
-            (
-                const scalar t,
-                const int precision = precision_
-            );
-
-            //- Return current time name
-            virtual word timeName() const;
-
             //- Return start time index
             virtual label startTimeIndex() const;
 
@@ -514,7 +513,7 @@ public:
             virtual bool isAdjustTimeStep() const;
 
             //- Return the list of function objects
-            const functionObjectList& functionObjects() const
+            const functionObjectList& functionObjects() const noexcept
             {
                 return functionObjects_;
             }
@@ -644,13 +643,13 @@ public:
             virtual void endSubCycle();
 
             //- Return non-const access to the list of function objects
-            functionObjectList& functionObjects()
+            functionObjectList& functionObjects() noexcept
             {
                 return functionObjects_;
             }
 
 
-    // Member operators
+    // Member Operators
 
         //- Set deltaT to that specified and increment time via operator++()
         virtual Time& operator+=(const dimensionedScalar& deltaT);

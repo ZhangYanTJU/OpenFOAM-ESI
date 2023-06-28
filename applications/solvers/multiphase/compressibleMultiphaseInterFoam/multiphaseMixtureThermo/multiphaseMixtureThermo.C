@@ -1075,7 +1075,7 @@ void Foam::multiphaseMixtureThermo::solveAlphas
 
         MULES::limit
         (
-            1.0/mesh_.time().deltaT().value(),
+            1.0/mesh_.time().deltaTValue(),
             geometricOneField(),
             alpha,
             phi_,

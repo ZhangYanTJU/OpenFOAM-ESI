@@ -887,7 +887,7 @@ bool Foam::DMDModels::STDMD::read(const dictionary& dict)
             "interval",
             (
                 dict.getCheck<label>("executeInterval", labelMinMax::ge(1))
-               *mesh_.time().deltaT().value()
+               *mesh_.time().deltaTValue()
             ),
             scalarMinMax::ge(0)
         );

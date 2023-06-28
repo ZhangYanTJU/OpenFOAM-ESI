@@ -96,7 +96,7 @@
             MULES::limiter
             (
                 allLambda,
-                1.0/runTime.deltaT().value(),
+                1.0/runTime.deltaTValue(),
                 geometricOneField(),
                 alpha1,
                 alphaPhi1BD,
@@ -164,7 +164,7 @@
             MULES::limiter
             (
                 allLambda,
-                1.0/runTime.deltaT().value(),
+                1.0/runTime.deltaTValue(),
                 geometricOneField(),
                 alpha2,
                 alphaPhi2BD,

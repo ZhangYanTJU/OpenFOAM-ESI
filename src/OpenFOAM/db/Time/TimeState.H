@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,7 +53,18 @@ class TimeState
 :
     public dimensionedScalar
 {
+    // Private Member Functions
+
+        // //- Dimensions for 1/time
+        // inline static dimensionSet dimInvTime()
+        // {
+        //     return dimensionSet(0, 0, -1, 0, 0, 0, 0);
+        // }
+
+
 protected:
+
+    // Protected Data
 
         label timeIndex_;
         label writeTimeIndex_;
@@ -64,6 +75,22 @@ protected:
 
         bool deltaTchanged_;
         bool writeTime_;
+
+
+    // Protected Member Functions
+
+        //- Reset some of TimeState (name, value, index)
+        void resetTimeState
+        (
+            const word& newName,
+            const scalar newValue,
+            const label newIndex
+        )
+        {
+            dimensionedScalar::name() = newName;
+            dimensionedScalar::value() = newValue;
+            timeIndex_ = newIndex;
+        }
 
 
 public:
@@ -78,43 +105,50 @@ public:
     virtual ~TimeState() = default;
 
 
-    // Member functions
+    // Member Functions
 
-        // Access
+    // Conversion
 
-            //- Convert the user-time (e.g. CA deg) to real-time (s).
-            virtual scalar userTimeToTime(const scalar theta) const;
+        //- Convert the user-time (e.g. CA deg) to real-time (s).
+        virtual scalar userTimeToTime(const scalar theta) const;
 
-            //- Convert the real-time (s) into user-time (e.g. CA deg)
-            virtual scalar timeToUserTime(const scalar t) const;
-
-            //- Return current time value
-            inline scalar timeOutputValue() const;
-
-            //- Return current time index
-            inline label timeIndex() const noexcept;
-
-            //- Return time step value
-            inline scalar deltaTValue() const noexcept;
-
-            //- Return old time step value
-            inline scalar deltaT0Value() const noexcept;
-
-            //- Return time step
-            inline dimensionedScalar deltaT() const;
-
-            //- Return old time step
-            inline dimensionedScalar deltaT0() const;
+        //- Convert the real-time (s) into user-time (e.g. CA deg)
+        virtual scalar timeToUserTime(const scalar t) const;
 
 
-        // Check
+    // Access
 
-            //- True if this is a write time
-            inline bool writeTime() const noexcept;
+        //- Return the current user-time value.
+        //- (ie, after applying any timeToUserTime() conversion)
+        inline scalar timeOutputValue() const;
 
-            //- Deprecated(2016-05) return true if this is a write time.
-            //  \deprecated(2016-05) - use writeTime() method
-            bool outputTime() const noexcept { return this->writeTime(); }
+        //- Return the current time name
+        inline const word& timeName() const noexcept;
+
+        //- Return the current time index
+        inline label timeIndex() const noexcept;
+
+        //- Return time step value
+        inline scalar deltaTValue() const noexcept;
+
+        //- Return old time step value
+        inline scalar deltaT0Value() const noexcept;
+
+        //- Return time step
+        inline dimensionedScalar deltaT() const;
+
+        //- Return old time step
+        inline dimensionedScalar deltaT0() const;
+
+        //- True if this is a write interval
+        inline bool writeTime() const noexcept;
+
+
+    // Housekeeping
+
+        //- Deprecated(2016-05) return true if this is a write time.
+        //  \deprecated(2016-05) - use writeTime() method
+        bool outputTime() const noexcept { return this->writeTime(); }
 };
 
 

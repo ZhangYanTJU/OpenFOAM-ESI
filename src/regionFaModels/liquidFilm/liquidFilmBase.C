@@ -261,7 +261,7 @@ scalar liquidFilmBase::CourantNumber() const
     );
 
     CoNum =
-        max(SfUfbyDelta/regionMesh().magLe()).value()*time().deltaT().value();
+        max(SfUfbyDelta/regionMesh().magLe()).value()*time().deltaTValue();
 
     velMag = max(mag(phif_)/regionMesh().magLe()).value();
 

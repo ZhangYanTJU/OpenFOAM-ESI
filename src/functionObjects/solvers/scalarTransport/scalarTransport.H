@@ -84,7 +84,7 @@ Usage
             libs            (solverFunctionObjects);
 
             enabled         true;
-            writeControl    outputTime;
+            writeControl    writeTime;
             writeInterval   1;
 
             field           s;

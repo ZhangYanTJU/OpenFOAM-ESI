@@ -234,7 +234,7 @@ void Foam::isoAdvection::boundFlux
 {
     addProfilingInFunction(geometricVoF);
     DebugInFunction << endl;
-    scalar rDeltaT = 1/mesh_.time().deltaTValue();
+    const scalar rDeltaT = 1.0/mesh_.time().deltaTValue();
 
     correctedFaces.clear();
     const scalar aTol = 100*SMALL; // Note: tolerances
@@ -400,7 +400,7 @@ void Foam::isoAdvection::advect(const SpType& Sp, const SuType& Su)
 
     scalar advectionStartTime = mesh_.time().elapsedCpuTime();
 
-    const scalar rDeltaT = 1/mesh_.time().deltaTValue();
+    const scalar rDeltaT = 1.0/mesh_.time().deltaTValue();
 
     // reconstruct the interface
     surf_->reconstruct();

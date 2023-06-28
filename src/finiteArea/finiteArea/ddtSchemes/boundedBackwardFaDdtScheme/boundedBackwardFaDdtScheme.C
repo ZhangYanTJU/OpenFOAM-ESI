@@ -43,13 +43,13 @@ namespace fa
 
 scalar boundedBackwardFaDdtScheme::deltaT_() const
 {
-    return mesh().time().deltaT().value();
+    return mesh().time().deltaTValue();
 }
 
 
 scalar boundedBackwardFaDdtScheme::deltaT0_() const
 {
-    return mesh().time().deltaT0().value();
+    return mesh().time().deltaT0Value();
 }
 
 

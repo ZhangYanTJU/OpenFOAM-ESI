@@ -305,7 +305,7 @@ void Foam::multiphaseInter::multiphaseSystem::solveAlphas()
 
             MULES::limit
             (
-                1.0/mesh_.time().deltaT().value(),
+                1.0/mesh_.time().deltaTValue(),
                 geometricOneField(),
                 alpha1,
                 phi,
@@ -479,7 +479,7 @@ Foam::multiphaseInter::multiphaseSystem::maxDiffNo() const
         maxVal = max(maxVal, max(iter()->diffNo()).value());
     }
 
-    return maxVal * mesh_.time().deltaT().value();
+    return maxVal * mesh_.time().deltaTValue();
 }
 
 

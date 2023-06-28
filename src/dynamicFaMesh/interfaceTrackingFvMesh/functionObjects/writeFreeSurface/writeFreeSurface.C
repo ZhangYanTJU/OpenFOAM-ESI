@@ -48,7 +48,7 @@ namespace Foam
 
 bool Foam::writeFreeSurface::writeData()
 {
-    if (time_.outputTime())
+    if (time_.writeTime())
     {
         const fvMesh& mesh =
             time_.lookupObject<fvMesh>(polyMesh::defaultRegion);

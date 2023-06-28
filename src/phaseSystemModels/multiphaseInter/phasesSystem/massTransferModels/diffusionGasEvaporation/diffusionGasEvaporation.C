@@ -198,7 +198,7 @@ Foam::meltingEvaporationModels::diffusionGasEvaporation<Thermo, OtherThermo>
        *C_*rhog*Dvg*gradYgm*interfaceArea_
        /(1 - YvSat);
 
-    if (debug && mesh.time().outputTime())
+    if (debug && mesh.time().writeTime())
     {
         volScalarField pSat("pSat", saturationModelPtr_->pSat(T));
         pSat.write();

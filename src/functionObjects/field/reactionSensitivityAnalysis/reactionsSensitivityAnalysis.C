@@ -95,7 +95,7 @@ calculateSpeciesRR
     );
     auto& RR = RRt.ref();
 
-    scalar dt = time_.deltaT().value();
+    scalar dt = time_.deltaTValue();
 
     endTime_ += dt;
 
@@ -131,9 +131,9 @@ writeSpeciesRR()
 {
 
     consFilePtr_() << "time : " << mesh_.time().value() << tab << nl;
-    consFilePtr_() << "delta T : "<< mesh_.time().deltaT().value() << nl << nl;
+    consFilePtr_() << "delta T : "<< mesh_.time().deltaTValue() << nl << nl;
     prodFilePtr_() << "time : " << mesh_.time().value() << tab << nl;
-    prodFilePtr_() << "delta T : "<< mesh_.time().deltaT().value() << nl << nl;
+    prodFilePtr_() << "delta T : "<< mesh_.time().deltaTValue() << nl << nl;
 
     consIntFilePtr_() << "start time : " << startTime_ << tab
         << "end time :" <<  endTime_ << nl;

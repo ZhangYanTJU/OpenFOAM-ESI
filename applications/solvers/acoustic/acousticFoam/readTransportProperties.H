@@ -18,6 +18,6 @@ dimensionedScalar rho("rho", dimDensity, transportProperties);
 
 scalar MaxCo =
     max(mesh.surfaceInterpolation::deltaCoeffs()*c0).value()
-   *runTime.deltaT().value();
+   *runTime.deltaTValue();
 
 Info<< "Max acoustic Courant Number = " << MaxCo << endl;

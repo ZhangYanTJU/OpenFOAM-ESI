@@ -44,14 +44,14 @@ namespace fa
 template<class Type>
 scalar backwardFaDdtScheme<Type>::deltaT_() const
 {
-    return mesh().time().deltaT().value();
+    return mesh().time().deltaTValue();
 }
 
 
 template<class Type>
 scalar backwardFaDdtScheme<Type>::deltaT0_() const
 {
-    return mesh().time().deltaT0().value();
+    return mesh().time().deltaT0Value();
 }
 
 
@@ -65,7 +65,7 @@ scalar backwardFaDdtScheme<Type>::deltaT0_(const GeoField& vf) const
     }
     else
     {
-        return deltaT0_();
+        return mesh().time().deltaT0Value();
     }
 }
 

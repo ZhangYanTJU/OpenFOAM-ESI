@@ -47,10 +47,10 @@ if (aMesh.nInternalEdges())
     );
 
     CoNum = max(SfUfbyDelta/aMesh.magLe())
-        .value()*runTime.deltaT().value();
+        .value()*runTime.deltaTValue();
 
     meanCoNum = (sum(SfUfbyDelta)/sum(aMesh.magLe()))
-        .value()*runTime.deltaT().value();
+        .value()*runTime.deltaTValue();
 
     velMag = max(mag(phis)/aMesh.magLe()).value();
 }

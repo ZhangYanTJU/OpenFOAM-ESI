@@ -49,11 +49,11 @@ if (adjustTimeStep)
         (
             min
             (
-                min(maxCo/CoNum, maxDi/DiNum)*runTime.deltaT().value(),
+                min(maxCo/CoNum, maxDi/DiNum)*runTime.deltaTValue(),
                 min(runTime.deltaTValue(), maxDeltaT)
             )
         );
-        Info<< "deltaT = " <<  runTime.deltaT().value() << endl;
+        Info<< "deltaT = " <<  runTime.deltaTValue() << endl;
     }
 }
 

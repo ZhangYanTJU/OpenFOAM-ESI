@@ -505,7 +505,7 @@ void Foam::cellCellStencil::walkFront
         }
 
 
-        if ((debug&2) && (mesh_.time().outputTime()))
+        if ((debug & 2) && mesh_.time().writeTime())
         {
             tmp<volScalarField> tfld
             (
@@ -656,7 +656,7 @@ void Foam::cellCellStencil::walkFront
             fraction.transfer(newFraction);
         }
 
-        if ((debug&2) && (mesh_.time().outputTime()))
+        if ((debug & 2) && mesh_.time().writeTime())
         {
             tmp<volScalarField> tfld
             (
@@ -708,7 +708,7 @@ void Foam::cellCellStencil::walkFront
     }
 
 
-    if ((debug&2) && (mesh_.time().outputTime()))
+    if ((debug & 2) && mesh_.time().writeTime())
     {
         tmp<volScalarField> tfld
         (

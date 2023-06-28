@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 
         vector r0(x, y, 0);
 
-        fsPatchU[pointI] = (scale - 1.0)*r0/runTime.deltaT().value();
+        fsPatchU[pointI] = (scale - 1.0)*r0/runTime.deltaTValue();
     }
 
     fixedValuePointPatchVectorField& fsPatchPointMeshU =

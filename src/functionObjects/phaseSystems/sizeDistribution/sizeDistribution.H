@@ -39,7 +39,7 @@ Description
     {
         type sizeDistribution;
         libs (reactingEulerFoamFunctionObjects);
-        writeControl    outputTime;
+        writeControl    writeTime;
         writeInterval   1;
         log             true;
         ...

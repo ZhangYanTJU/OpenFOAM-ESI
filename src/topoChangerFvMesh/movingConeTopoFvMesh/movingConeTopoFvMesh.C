@@ -366,7 +366,7 @@ bool Foam::movingConeTopoFvMesh::update()
                 topoChangeMap().preMotionPoints()
               + (
                     pos0(0.5 - mag(motionMask_)) // cells above the body
-                )*curMotionVel_*time().deltaT().value();
+                )*curMotionVel_*time().deltaTValue();
         }
         else
         {
@@ -385,7 +385,7 @@ bool Foam::movingConeTopoFvMesh::update()
                 points()
               + (
                     pos0(0.5 - mag(motionMask_)) // cells above the body
-                )*curMotionVel_*time().deltaT().value();
+                )*curMotionVel_*time().deltaTValue();
         }
     }
     else
@@ -396,7 +396,7 @@ bool Foam::movingConeTopoFvMesh::update()
             points()
           + (
                 pos0(0.5 - mag(motionMask_)) // cells above the body
-           )*curMotionVel_*time().deltaT().value();
+           )*curMotionVel_*time().deltaTValue();
     }
 
     // The mesh now contains the cells with zero volume

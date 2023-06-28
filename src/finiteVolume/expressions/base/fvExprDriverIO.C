@@ -279,7 +279,7 @@ void Foam::expressions::fvExprDriver::createWriterAndRead(const word& name)
 
 void Foam::expressions::fvExprDriver::tryWrite() const
 {
-    if (writer_ && mesh().time().outputTime())
+    if (writer_ && mesh().time().writeTime())
     {
         writer_->write();
     }

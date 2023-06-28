@@ -744,7 +744,7 @@ Foam::SolverPerformance<Type> Foam::oversetFvMeshBase::solveOverset
     // Calculate stabilised diagonal as normalisation for interpolation
     const scalarField norm(normalisation(m));
 
-    if (debug && mesh_.time().outputTime())
+    if (debug && mesh_.time().writeTime())
     {
         volScalarField scale
         (

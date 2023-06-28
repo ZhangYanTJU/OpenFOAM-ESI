@@ -324,7 +324,7 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
 
             MULES::limit
             (
-                1.0/mesh.time().deltaT().value(),
+                1.0/mesh.time().deltaTValue(),
                 geometricOneField(),
                 Yi,
                 phi,

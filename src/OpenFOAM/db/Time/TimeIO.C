@@ -335,20 +335,20 @@ void Foam::Time::readDict()
 
         if (formatName == "general")
         {
-            format_ = general;
+            format_ = fmtflags::general;
         }
         else if (formatName == "fixed")
         {
-            format_ = fixed;
+            format_ = fmtflags::fixed;
         }
         else if (formatName == "scientific")
         {
-            format_ = scientific;
+            format_ = fmtflags::scientific;
         }
         else
         {
             WarningInFunction
-                << "unsupported time format " << formatName
+                << "Unsupported time format " << formatName
                 << endl;
         }
     }
@@ -373,6 +373,7 @@ void Foam::Time::readDict()
         endTime_ = 0;
     }
 
+    // Adjust the TimeState name
     dimensionedScalar::name() = timeName(value());
 
     if (controlDict_.found("writeVersion"))

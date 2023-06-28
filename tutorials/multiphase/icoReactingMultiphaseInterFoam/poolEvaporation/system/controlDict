@@ -77,7 +77,7 @@ functions
         libs            (fieldFunctionObjects);
 
         field           T;
-        writeControl    outputTime;
+        writeControl    writeTime;
         writeInterval   1;
         htcModel        fixedReferenceTemperature;
         patches         (bottom);
@@ -90,7 +90,7 @@ functions
         libs            (fieldFunctionObjects);
 
         patches         (bottom);
-        writeControl    outputTime;
+        writeControl    writeTime;
         writeInterval   1;
     }
 }
