@@ -41,8 +41,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef entry_H
-#define entry_H
+#ifndef Foam_entry_H
+#define Foam_entry_H
 
 #include "keyType.H"
 #include "IDLList.H"

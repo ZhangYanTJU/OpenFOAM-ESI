@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,7 +83,8 @@ Foam::ITstream& Foam::dictionaryEntry::stream() const
         << "Attempt to return dictionary entry as a primitive"
         << abort(FatalIOError);
 
-    return lookup("");
+    // Need to return something - send back an empty stream
+    return ITstream::emptyStream();
 }
 
 

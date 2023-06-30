@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -189,6 +189,11 @@ public:
 
     // Static Functions
 
+        //- Return readable reference to an empty ITstream.
+        //- For functions needing to return an ITstream reference
+        //- that don't have anything valid.
+        static ITstream& emptyStream();
+
         //- Create token list by parsing the input character sequence
         //- until no good tokens remain.
         static tokenList parse
@@ -252,10 +257,18 @@ public:
         //- Non-const access to the current token index
         label& tokenIndex() noexcept { return tokenIndex_; }
 
+        //- Set the token index. \return the previous value
+        label tokenIndex(const label num) noexcept
+        {
+            label old(tokenIndex_);
+            tokenIndex_ = num;
+            return old;
+        }
+
         //- Number of tokens remaining
         label nRemainingTokens() const noexcept
         {
-            return size() - tokenIndex_;
+            return (tokenList::size() - tokenIndex_);
         }
 
         //- Move tokenIndex to the specified position

@@ -30,6 +30,12 @@ License
 #include "ITstream.H"
 #include "StringStream.H"
 #include "UIListStream.H"
+#include <memory>
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+static std::unique_ptr<Foam::ITstream> emptyStreamPtr_;
+
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
@@ -60,6 +66,22 @@ static label parseStream(ISstream& is, tokenList& tokens)
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::ITstream& Foam::ITstream::emptyStream()
+{
+    if (emptyStreamPtr_)
+    {
+        emptyStreamPtr_->ITstream::clear();  // Ensure it really is empty
+        emptyStreamPtr_->ITstream::seek(0);  // rewind(), but bypasss virtual
+    }
+    else
+    {
+        emptyStreamPtr_.reset(new ITstream(Foam::zero{}, "empty-stream"));
+    }
+
+    return *emptyStreamPtr_;
+}
+
 
 Foam::tokenList Foam::ITstream::parse
 (
@@ -237,7 +259,7 @@ Foam::ITstream::ITstream
     UIListStream is(input, streamOpt);
 
     parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::rewind();
+    ITstream::seek(0);  // rewind(), but bypasss virtual
 }
 
 
@@ -253,7 +275,7 @@ Foam::ITstream::ITstream
     UIListStream is(input.data(), input.length(), streamOpt);
 
     parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::rewind();
+    ITstream::seek(0);  // rewind(), but bypasss virtual
 }
 
 
@@ -269,7 +291,7 @@ Foam::ITstream::ITstream
     UIListStream is(input, strlen(input), streamOpt);
 
     parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::rewind();
+    ITstream::seek(0);  // rewind(), but bypasss virtual
 }
 
 
@@ -358,7 +380,7 @@ void Foam::ITstream::seek(label pos)
     }
     else if (pos < 0 || pos >= nToks)
     {
-        // Seek end or seek is out of range
+        // Seek end (-1) or seek is out of range
         tokenIndex_ = nToks;
 
         if (nToks)
@@ -536,7 +558,7 @@ Foam::Istream& Foam::ITstream::read(char*, std::streamsize)
 
 void Foam::ITstream::rewind()
 {
-    seek(0);
+    ITstream::seek(0);
 }
 
 
@@ -598,7 +620,7 @@ void Foam::ITstream::operator=(const ITstream& is)
         Istream::operator=(is);
         tokenList::operator=(is);
         name_ = is.name_;
-        rewind();
+        ITstream::seek(0);  // rewind(), but bypasss virtual
     }
 }
 
@@ -606,14 +628,14 @@ void Foam::ITstream::operator=(const ITstream& is)
 void Foam::ITstream::operator=(const UList<token>& toks)
 {
     tokenList::operator=(toks);
-    rewind();
+    ITstream::seek(0);  // rewind(), but bypasss virtual
 }
 
 
 void Foam::ITstream::operator=(List<token>&& toks)
 {
     tokenList::operator=(std::move(toks));
-    rewind();
+    ITstream::seek(0);  // rewind(), but bypasss virtual
 }
 
 
