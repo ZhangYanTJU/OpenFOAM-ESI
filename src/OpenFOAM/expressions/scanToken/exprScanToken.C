@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,7 @@ License
 Foam::expressions::scanToken Foam::expressions::scanToken::null()
 {
     scanToken tok;
-    tok.type_ = LABEL;
+    tok.type_ = tokenType::LABEL;
     tok.labelValue = 0;
 
     return tok;
@@ -41,12 +41,12 @@ Foam::expressions::scanToken Foam::expressions::scanToken::null()
 
 void Foam::expressions::scanToken::destroy()
 {
-    if (type_ == VECTOR)
+    if (type_ == tokenType::VECTOR)
     {
         delete vectorPtr;
         vectorPtr = nullptr;
     }
-    else if (type_ == WORD)
+    else if (type_ == tokenType::WORD)
     {
         delete wordPtr;
         wordPtr = nullptr;
@@ -56,35 +56,35 @@ void Foam::expressions::scanToken::destroy()
 
 void Foam::expressions::scanToken::setLabel(label val)
 {
-    type_ = LABEL;
+    type_ = tokenType::LABEL;
     labelValue = val;
 }
 
 
 void Foam::expressions::scanToken::setScalar(scalar val)
 {
-    type_ = SCALAR;
+    type_ = tokenType::SCALAR;
     scalarValue = val;
 }
 
 
 void Foam::expressions::scanToken::setVector(scalar x, scalar y, scalar z)
 {
-    type_ = VECTOR;
+    type_ = tokenType::VECTOR;
     vectorPtr = new Foam::vector(x, y, z);
 }
 
 
 void Foam::expressions::scanToken::setVector(const vector& val)
 {
-    type_ = VECTOR;
+    type_ = tokenType::VECTOR;
     vectorPtr = new Foam::vector(val);
 }
 
 
 void Foam::expressions::scanToken::setWord(const word& val)
 {
-    type_ = WORD;
+    type_ = tokenType::WORD;
     wordPtr = new Foam::word(val);
 }
 

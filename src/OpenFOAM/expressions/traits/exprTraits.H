@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,18 +28,33 @@ Class
 
 Description
     Simple type identifiers for polymorphic expression values.
-
     The definitions are similar to std::integral_constant in that they
     provide value, value_type (and name).
 
+SourceFiles
+    exprTraits.C
+
+Namespace
+    Foam::expressions
+
+Description
+    A namespace for expression-related classes/traits etc.
+
+Namespace
+    Foam::expressions::Detail
+
+Description
+    A namespace for implementation details related to expressions.
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef expressions_exprTraits_H
-#define expressions_exprTraits_H
+#ifndef Foam_expressions_exprTraits_H
+#define Foam_expressions_exprTraits_H
 
 // Regular field types
 #include "label.H"
 #include "scalar.H"
+//TBD: #include "complex.H"
 #include "vector.H"
 #include "sphericalTensor.H"
 #include "symmTensor.H"
@@ -56,7 +71,7 @@ namespace expressions
 //- An enumeration of known and expected expression value types.
 //  Do not rely on the enumeration values for any direct coding.
 //
-//  \note NONE use used when initializing types, whereas INVALID is used
+//  \note NONE used when initializing types, whereas INVALID is used
 //  for unsupported types (never as a stored type).
 //  This avoids false positives when testing.
 //
@@ -72,6 +87,7 @@ enum class valueTypeCode : unsigned char
     type_bool,              //!< Type is 'bool'
     type_label,             //!< Type is 'label'
     type_scalar,            //!< Type is 'scalar'
+//TBD: type_complex,           //!< Type is 'complex'
 
     // Rank 1 types
     type_vector,            //!< Type is 'vector'
@@ -86,7 +102,23 @@ enum class valueTypeCode : unsigned char
 // Global Functions
 
 //- From string to valueTypeCode (if any)
-valueTypeCode valueTypeCodeOf(const word& dataTypeName);
+valueTypeCode valueTypeCodeOf
+(
+    const word& dataTypeName,
+    // Fallback for unknown
+    const expressions::valueTypeCode deflt = expressions::valueTypeCode::INVALID
+);
+
+
+// Some implementation detail
+namespace Detail
+{
+
+//- The number of components associated with given valueTypeCode
+::Foam::direction nComponents(const expressions::valueTypeCode) noexcept;
+
+} // End namespace Detail
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -101,45 +133,58 @@ valueTypeCode valueTypeCodeOf(const word& dataTypeName);
 template<class Type>
 struct exprTypeTraits
 {
+    // The value type
     typedef Type value_type;
+    // The type name (similar to pTraits typeName)
     static constexpr const char* const name = "";
+    // The enumeration number associated with the type
     static constexpr
         ::Foam::expressions::valueTypeCode value =
         ::Foam::expressions::valueTypeCode::INVALID;
+    // The rank of the type
+    static constexpr ::Foam::direction rank = 0;
+    // The number of components
+    static constexpr ::Foam::direction nComponents = 0;
 };
 
 
 #undef  defineExprTypeTraits
-#define defineExprTypeTraits(Type, Name)                                      \
+#define defineExprTypeTraits(Type, Name, Rank, NumCmpts)                      \
+    /*! \brief \c Name expression traits */                                   \
     template<>                                                                \
     struct exprTypeTraits<Type>                                               \
     {                                                                         \
         typedef Type value_type;                                              \
-        static constexpr const char* const name = #Name;                      \
+        static constexpr const char* const name = #Name ;                     \
         static constexpr                                                      \
             ::Foam::expressions::valueTypeCode value =                        \
-            ::Foam::expressions::valueTypeCode::type_##Name;                  \
+            ::Foam::expressions::valueTypeCode::type_##Name ;                 \
+        static constexpr ::Foam::direction rank = Rank ;                      \
+        static constexpr ::Foam::direction nComponents = NumCmpts ;           \
     };
 
 
-// Define with "name" to match regular pTraits typeName
-defineExprTypeTraits(bool, bool);
-defineExprTypeTraits(::Foam::label, label);
-defineExprTypeTraits(::Foam::scalar, scalar);
-defineExprTypeTraits(::Foam::vector, vector);
-defineExprTypeTraits(::Foam::tensor, tensor);
-defineExprTypeTraits(::Foam::sphericalTensor, sphericalTensor);
-defineExprTypeTraits(::Foam::symmTensor, symmTensor);
+// Define with name to match pTraits::typeName, with rank/nComponents
+defineExprTypeTraits(bool, bool, 0, 1);
+defineExprTypeTraits(::Foam::label, label, 0, 1);
+defineExprTypeTraits(::Foam::scalar, scalar, 0, 1);
+//TBD: defineExprTypeTraits(::Foam::complex, complex, 0, 2);
+defineExprTypeTraits(::Foam::vector, vector, 1, 3);
+defineExprTypeTraits(::Foam::tensor, tensor, 2, 9);
+defineExprTypeTraits(::Foam::sphericalTensor, sphericalTensor, 2, 1);
+defineExprTypeTraits(::Foam::symmTensor, symmTensor, 2, 6);
 
 #undef defineExprTypeTraits
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- A word representation of a valueTypeCode. Empty for INVALID
+//- A word representation of a valueTypeCode.
+//- Empty for expressions::valueTypeCode::INVALID
 word name(const expressions::valueTypeCode typeCode);
 
 
-//- A word representation of a valueTypeCode. Empty for INVALID
+//- A word representation of a valueTypeCode.
+//- Empty for expressions::valueTypeCode::INVALID
 template<>
 struct nameOp<expressions::valueTypeCode>
 {

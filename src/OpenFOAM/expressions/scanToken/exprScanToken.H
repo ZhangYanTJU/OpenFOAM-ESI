@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,12 +33,14 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef expressions_scanToken_H
-#define expressions_scanToken_H
+#ifndef Foam_expressions_scanToken_H
+#define Foam_expressions_scanToken_H
 
 #include "scalar.H"
 #include "vector.H"
 #include "word.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
@@ -80,7 +82,7 @@ struct scanToken
 
     // Member Functions
 
-        //- Return a null token - in lieu of a default constructor
+        //- Return a null token (label = 0) - in lieu of a default constructor
         static scanToken null();
 
         //- Assign type/value to be LABEL. Does not call destroy().
@@ -97,6 +99,12 @@ struct scanToken
 
         //- Assign type/value to be WORD (name). Does not call destroy().
         void setWord(const word& val);
+
+        //- True if a pointer type
+        bool is_pointer() const noexcept
+        {
+            return (type_ == tokenType::VECTOR || type_ == tokenType::WORD);
+        }
 
         //- Manual deletion of pointer types
         void destroy();

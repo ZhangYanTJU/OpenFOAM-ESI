@@ -27,45 +27,82 @@ License
 
 #include "exprTraits.H"
 
+//TBD: handle complex?
+
+#undef  FOR_ALL_EXPR_TYPE_CODES
+#define FOR_ALL_EXPR_TYPE_CODES(Macro, ...)                                   \
+    Macro(bool, __VA_ARGS__)                                                  \
+    Macro(label, __VA_ARGS__)                                                 \
+    Macro(scalar, __VA_ARGS__)                                                \
+    Macro(vector, __VA_ARGS__)                                                \
+    Macro(sphericalTensor, __VA_ARGS__)                                       \
+    Macro(symmTensor, __VA_ARGS__)                                            \
+    Macro(tensor, __VA_ARGS__)
+
+
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
-Foam::expressions::valueTypeCode
-Foam::expressions::valueTypeCodeOf(const word& dataTypeName)
+Foam::direction
+Foam::expressions::Detail::nComponents
+(
+    const expressions::valueTypeCode typeCode
+) noexcept
 {
-    #undef  stringToTypeCode
-    #define stringToTypeCode(Type)                                  \
-                                                                    \
-    if (dataTypeName == exprTypeTraits<Type>::name)                 \
-    {                                                               \
-        return expressions::valueTypeCode::type_##Type;             \
+    switch (typeCode)
+    {
+        case expressions::valueTypeCode::NONE :
+        case expressions::valueTypeCode::INVALID :
+        {
+            break;
+        }
+
+        #undef  doLocalCode
+        #define doLocalCode(Type, UnusedParam)                        \
+                                                                      \
+        case expressions::valueTypeCode::type_##Type :                \
+        {                                                             \
+            return pTraits<Type>::nComponents;                        \
+        }
+
+        FOR_ALL_EXPR_TYPE_CODES(doLocalCode);
+        #undef doLocalCode
     }
 
+    return 0;
+}
+
+
+Foam::expressions::valueTypeCode
+Foam::expressions::valueTypeCodeOf
+(
+    const word& dataTypeName,
+    const expressions::valueTypeCode deflt
+)
+{
     if (!dataTypeName.empty())
     {
-        stringToTypeCode(bool);
-        stringToTypeCode(label);
-        stringToTypeCode(scalar);
-        stringToTypeCode(vector);
-        stringToTypeCode(tensor);
-        stringToTypeCode(sphericalTensor);
-        stringToTypeCode(symmTensor);
-    }
-    #undef stringToTypeCode
+        // Could compare with pTraits<Type>::typeName instead of
+        // exprTypeTraits<Type>::name, but then we might miss
+        // possible typos.
 
-    return expressions::valueTypeCode::INVALID;
+        #undef  doLocalCode
+        #define doLocalCode(Type, UnusedParam)                        \
+                                                                      \
+        if (dataTypeName == exprTypeTraits<Type>::name)               \
+        {                                                             \
+            return expressions::valueTypeCode::type_##Type;           \
+        }
+
+        FOR_ALL_EXPR_TYPE_CODES(doLocalCode);
+        #undef doLocalCode
+    }
+
+    return deflt;
 }
 
 
 Foam::word Foam::name(const expressions::valueTypeCode typeCode)
 {
-    #undef  case_typeCodeToString
-    #define case_typeCodeToString(Type)                             \
-                                                                    \
-    case expressions::valueTypeCode::type_##Type :                  \
-    {                                                               \
-        return exprTypeTraits<Type>::name;                          \
-    }
-
     switch (typeCode)
     {
         case expressions::valueTypeCode::NONE :
@@ -75,22 +112,27 @@ Foam::word Foam::name(const expressions::valueTypeCode typeCode)
 
         case expressions::valueTypeCode::INVALID :
         {
-            // ie, ""
+            // returns ""
             break;
         }
 
-        case_typeCodeToString(bool);
-        case_typeCodeToString(label);
-        case_typeCodeToString(scalar);
-        case_typeCodeToString(vector);
-        case_typeCodeToString(tensor);
-        case_typeCodeToString(sphericalTensor);
-        case_typeCodeToString(symmTensor);
+        #undef  doLocalCode
+        #define doLocalCode(Type, UnusedParam)                        \
+        case expressions::valueTypeCode::type_##Type :                \
+        {                                                             \
+            return exprTypeTraits<Type>::name;                        \
+        }
+
+        FOR_ALL_EXPR_TYPE_CODES(doLocalCode);
+        #undef doLocalCode
     }
-    #undef case_typeCodeToString
 
     return word();
 }
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#undef  FOR_ALL_EXPR_TYPE_CODES
 
 // ************************************************************************* //

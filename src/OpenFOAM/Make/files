@@ -183,6 +183,7 @@ $(expr)/exprTools/exprTools.C
 $(expr)/scanToken/exprScanToken.C
 
 $(expr)/traits/exprTraits.C
+$(expr)/value/exprValue.C
 
 $(expr)/exprDriver/exprDriver.C
 $(expr)/exprDriver/exprDriverFields.C

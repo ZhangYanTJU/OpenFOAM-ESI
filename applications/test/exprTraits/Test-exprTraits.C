@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -17,8 +17,9 @@ Description
 
 #include "IOstreams.H"
 #include "ITstream.H"
-#include "exprTraits.H"
 #include "uLabel.H"
+
+#include "exprTraits.H"
 #include "error.H"
 #include "stringList.H"
 #include "exprScanToken.H"
@@ -27,21 +28,34 @@ using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-template<class T>
+template<class Type>
 void printTraits()
 {
-    const auto typeCode = exprTypeTraits<T>::value;
+    const auto typeCode = exprTypeTraits<Type>::value;
 
-    Info<< "type " << pTraits<T>::typeName
-        << " code:" << int(typeCode)
-        << " name:" << exprTypeTraits<T>::name;
+    Info<< "Type '" << pTraits<Type>::typeName
+        << "' = code:" << int(typeCode)
+        << " rank:" << exprTypeTraits<Type>::rank
+        << " cmpt:" << exprTypeTraits<Type>::nComponents
+        << " name:" << exprTypeTraits<Type>::name;
 
-    if (pTraits<T>::typeName != word(exprTypeTraits<T>::name))
+    if (pTraits<Type>::typeName != word(exprTypeTraits<Type>::name))
     {
         Info<< " (UNSUPPORTED)";
     }
 
     Info << endl;
+}
+
+
+void print(const expressions::scanToken& tok)
+{
+    Info<< "    type:" << int(tok.type_);
+    if (tok.is_pointer())
+    {
+        Info<< " ptr:" << Foam::name(tok.name_);
+    }
+    Info<< nl;
 }
 
 
@@ -56,6 +70,7 @@ int main()
     printTraits<bool>();
     printTraits<label>();
     printTraits<scalar>();
+    printTraits<complex>();
     printTraits<vector>();
     printTraits<tensor>();
     printTraits<symmTensor>();
@@ -71,33 +86,27 @@ int main()
     Info<< "Name of typeCode: "
         << getName(expressions::valueTypeCode::type_bool) << nl;
 
-
     {
-        expressions::scanToken tok;
-        expressions::scanToken tok2;
+        expressions::scanToken tok(expressions::scanToken::null());
+        expressions::scanToken tok2(expressions::scanToken::null());
 
         Info<< nl << "sizeof(scanToken): "
             << sizeof(tok) << nl;
 
-        Info<< "    type:" << int(tok.type_) << nl;
-        Info<< "    ptr:" << Foam::name(tok.name_) << nl;
-
-        Info<< "    type:" << int(tok2.type_) << nl;
-        Info<< "    ptr:" << Foam::name(tok2.name_) << nl;
+        print(tok);
+        print(tok2);
 
         tok.setWord("hello");
 
-        Info<< "    type:" << int(tok.type_) << nl;
-        Info<< "    ptr:" << Foam::name(tok.name_) << nl;
+        print(tok);
 
         tok2 = tok;
-        Info<< "    type:" << int(tok2.type_) << nl;
-        Info<< "    ptr:" << Foam::name(tok2.name_) << nl;
+        print(tok2);
 
         tok2.destroy();
 
-        Info<< "    type:" << int(tok2.type_) << nl;
-        Info<< "    ptr:" << Foam::name(tok2.name_) << nl;
+        print(tok);  // Not a leak, but old rubbish
+        print(tok2);
     }
 
     Info<< nl << "Done" << nl;
