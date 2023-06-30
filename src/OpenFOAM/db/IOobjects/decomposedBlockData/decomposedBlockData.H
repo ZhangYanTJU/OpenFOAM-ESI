@@ -157,10 +157,6 @@ protected:
         //- Helper: skip a block of (binary) character data
         static bool skipBlockEntry(Istream& is);
 
-        //- Extract number of blocks from decomposedBlockData file stream
-        static label getNumBlocks(Istream& is, const bool readHeader);
-
-
 public:
 
     //- Declare type-name, virtual type (with debug switch)
@@ -206,6 +202,20 @@ public:
 
         //- True if object header class is a known collated type
         static bool isCollatedType(const IOobject& io);
+
+        //- Extract number of decomposedBlockData block entries, optionally
+        //- with an upper limit.
+        //- The input stream should be in a rewound state
+        //- (or only have read the header) before calling.
+        static label getNumBlocks(Istream& is, const label maxNumBlocks = -1);
+
+        //- True if the given block number (starts at 0) has a corresponding
+        //- decomposedBlockData block entry.
+        //- The input stream should be in a rewound state
+        //- (or only have read the header) before calling.
+        //  This will be faster than checking against getNumBlocks()
+        //  since it can potentially exit without scanning the entire file.
+        static bool hasBlock(Istream& is, const label blockNumber);
 
         //- Read header as per IOobject with additional handling of
         //- decomposedBlockData

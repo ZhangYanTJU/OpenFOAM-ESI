@@ -86,11 +86,11 @@ Foam::decomposedBlockData::decomposedBlockData
     contentData_()
 {
     // Temporary warning
-    if (readOpt() == IOobject::MUST_READ_IF_MODIFIED)
+    if (readOpt() == IOobjectOption::READ_MODIFIED)
     {
         WarningInFunction
             << "decomposedBlockData " << name()
-            << " constructed with IOobject::MUST_READ_IF_MODIFIED"
+            << " constructed with READ_MODIFIED"
             " but decomposedBlockData does not support automatic rereading."
             << endl;
     }
@@ -226,12 +226,13 @@ bool Foam::decomposedBlockData::skipBlockEntry(Istream& is)
 Foam::label Foam::decomposedBlockData::getNumBlocks
 (
     Istream& is,
-    const bool readHeader
+    const label maxNumBlocks
 )
 {
     label nBlocks = 0;
 
-    if (readHeader)
+    // Handle OpenFOAM header if it is the first entry
+    if (is.good())
     {
         token tok(is);
 
@@ -243,9 +244,16 @@ Foam::label Foam::decomposedBlockData::getNumBlocks
             {
                 is.version(tok);
             }
-            is.format(headerDict.get<word>("format"));
+
+            word formatName;
+            if (headerDict.readIfPresent("format", formatName))
+            {
+                is.format(formatName);
+            }
+
             //// Obtain number of blocks directly
-            // headerDict.readIfPresent("blocks", nBlocks);
+            ///  This may not be reliable...
+            //if (headerDict.readIfPresent("blocks", nBlocks))
             //{
             //    return nBlocks;
             //}
@@ -259,9 +267,24 @@ Foam::label Foam::decomposedBlockData::getNumBlocks
     while (is.good() && skipBlockEntry(is))
     {
         ++nBlocks;
+
+        if (maxNumBlocks == nBlocks)
+        {
+            break;
+        }
     }
 
     return nBlocks;
+}
+
+
+bool Foam::decomposedBlockData::hasBlock(Istream& is, const label blockNumber)
+{
+    return
+    (
+        blockNumber >= 0
+     && (blockNumber < getNumBlocks(is, blockNumber+1))
+    );
 }
 
 
