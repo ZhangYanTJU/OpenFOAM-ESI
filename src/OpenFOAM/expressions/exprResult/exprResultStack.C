@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2012-2018 Bernhard Gschaider <bgschaid@hfd-research.com>
+    Copyright (C) 2012-2018 Bernhard Gschaider
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -81,7 +81,7 @@ Foam::expressions::exprResultStack::exprResultStack
 
 Foam::expressions::exprResultStack::exprResultStack
 (
-    const dictionary &dict
+    const dictionary& dict
 )
 :
     expressions::exprResult(dict)
@@ -194,13 +194,13 @@ void Foam::expressions::exprResultStack::operator=
 
     DebugInFunction << nl;
 
-    exprResult exprValue
+    exprResult value
     (
         // Issue warning if the other result is not really uniform
         rhs.getUniform(1, false)
     );
 
-    this->push(exprValue);
+    this->push(value);
 }
 
 

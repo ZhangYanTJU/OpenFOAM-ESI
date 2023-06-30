@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2018 Bernhard Gschaider
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,6 +58,7 @@ SourceFiles
 #define Foam_expressions_exprResult_H
 
 #include "exprTraits.H"
+#include "exprValue.H"
 #include "dimensionedType.H"
 #include "runTimeSelectionTables.H"
 
@@ -73,17 +74,12 @@ namespace expressions
 \*---------------------------------------------------------------------------*/
 
 class exprResult
-:
-    public refCount
 {
     // Private Data
 
         //- The value type as string,
         //- normally corresponds to pTraits or typeName
         word valType_;
-
-        //- Is single, uniform value (can be a non-field)
-        bool isUniform_;
 
         //- Represents point data
         bool isPointData_;
@@ -97,50 +93,8 @@ class exprResult
         //- Size (length) of field or object
         label size_;
 
-        //- A %union of single values, including standard VectorSpace types
-        union singleValue
-        {
-            bool bool_;
-            label label_;
-            scalar scalar_;
-            vector vector_;
-            tensor tensor_;
-            symmTensor symmTensor_;
-            sphericalTensor sphTensor_;
-
-            //- Default construct, zero-initialized
-            singleValue();
-
-            //- Copy construct
-            singleValue(const singleValue& val);
-
-            //- Copy assignment
-            void operator=(const singleValue& val);
-
-            //- Return current value for specified type.
-            template<class T>
-            inline const T& get() const
-            {
-                WarningInFunction
-                    << "Not implemented for type "
-                    << pTraits<T>::typeName << nl;
-                return pTraits<T>::zero;
-            }
-
-            //- Set new value for specified type.
-            //  \return updated value
-            template<class T>
-            inline const T& set(const T& val)
-            {
-                WarningInFunction
-                    << "Not implemented for type "
-                    << pTraits<T>::typeName << nl;
-                return val;
-            }
-        };
-
         //- The single value representation
-        singleValue single_;
+        expressions::exprValue value_;
 
         //- Allocated plain field (eg, scalarField)
         void *fieldPtr_;
@@ -153,8 +107,8 @@ class exprResult
         template<class Type>
         inline bool deleteChecked();
 
-        //- Dispatch to type-checked pointer deletion
-        void uglyDelete();
+        //- Invoke type-checked pointer deletion
+        void destroy();
 
         //- Type-checked creation of field from dictionary (primitive) entry
         //  \return True if the type check was satisfied
@@ -162,8 +116,10 @@ class exprResult
         inline bool readChecked
         (
             const entry& e,
+            //! Field length
             const label len,
-            const bool uniform
+            //! Read a single entry, not a field
+            const bool singleValueOnly
         );
 
         //- Type-checked retrieval of uniform field from current results
@@ -309,8 +265,10 @@ public:
         explicit exprResult
         (
             const dictionary& dict,
-            const bool uniform = false,
-            const bool needsValue = false
+            //! Read a single entry, not a field
+            const bool singleValueOnly = false,
+            //! The "value" entry required or optional
+            const bool valueReqd = false
         );
 
         //- Construct from Istream as dictionary content
@@ -395,6 +353,11 @@ public:
         //- which means that it can generally be considered as failsafe.
         template<class Type>
         inline Type getValue() const;
+
+        //- Return a read pointer to the field data if the type matches,
+        //- nullptr otherwise. Can generally be considered as failsafe.
+        template<class Type>
+        inline const Field<Type>* getField() const;
 
         //- True if valueType is a bool
         inline bool is_bool() const;

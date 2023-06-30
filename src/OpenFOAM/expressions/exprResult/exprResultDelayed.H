@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2018 Bernhard Gschaider
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,8 +46,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef expressions_exprResultDelayed_H
-#define expressions_exprResultDelayed_H
+#ifndef Foam_expressions_exprResultDelayed_H
+#define Foam_expressions_exprResultDelayed_H
 
 #include "exprResult.H"
 #include "exprString.H"
@@ -137,13 +137,13 @@ public:
     // Member Functions
 
         //- The expression name
-        const word& name() const
+        const word& name() const noexcept
         {
             return name_;
         }
 
         //- The initial value expression
-        const expressions::exprString& startupValueExpression() const
+        const expressions::exprString& startupValueExpression() const noexcept
         {
             return startExpr_;
         }
@@ -176,6 +176,12 @@ public:
 
         //- Move assignment
         void operator=(exprResult&& rhs);
+
+        //- Compare for inequality (need by Ulist)
+        bool operator!=(const exprResultDelayed& rhs) const noexcept
+        {
+            return (this != &rhs);
+        }
 };
 
 
@@ -185,14 +191,6 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-inline bool operator!=
-(
-    const expressions::exprResultDelayed&,
-    const expressions::exprResultDelayed&
-)
-{
-    return false;
-}
 
 // IO Operators
 Istream& operator>>(Istream& is, expressions::exprResultDelayed& data);

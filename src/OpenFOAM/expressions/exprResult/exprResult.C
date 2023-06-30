@@ -90,8 +90,8 @@ bool Foam::expressions::exprResult::setAverageValueCheckedBool
 
     if (!nTrue)
     {
-        isUniform_ = true;
-        single_.set(false);
+        // All false
+        value_.set(false);
         return true;
     }
 
@@ -102,21 +102,23 @@ bool Foam::expressions::exprResult::setAverageValueCheckedBool
 
     if (nTrue == len)
     {
-        isUniform_ = true;
-        single_.set(true);
+        // All true
+        value_.set(true);
+    }
+    if (nTrue*10 < len)
+    {
+        // 90% are false => False
+        value_.set(false);
+    }
+    else if (nTrue*10 >= len*9)
+    {
+        // 90% are true  => True
+        value_.set(true);
     }
     else
     {
-        isUniform_ = false;
-
-        if (nTrue > len/2)
-        {
-            single_.set(true);
-        }
-        else
-        {
-            single_.set(false);
-        }
+        // Mixed - no single value representation
+        value_.clear();
     }
 
     return true;
@@ -175,48 +177,16 @@ bool Foam::expressions::exprResult::getUniformCheckedBool
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::expressions::exprResult::singleValue::singleValue()
-{
-    std::memset(static_cast<void*>(this), '\0', sizeof(*this));
-}
-
-
-Foam::expressions::exprResult::singleValue::singleValue
-(
-    const singleValue& val
-)
-{
-    std::memcpy(static_cast<void*>(this), &val, sizeof(*this));
-}
-
-
-void Foam::expressions::exprResult::singleValue::operator=
-(
-    const singleValue& val
-)
-{
-    if (this != &val)
-    {
-        // Self-assignment is a no-op
-        std::memcpy(static_cast<void*>(this), &val, sizeof(*this));
-    }
-}
-
-
 Foam::expressions::exprResult::exprResult()
 :
-    refCount(),
     valType_(),
-    isUniform_(false),
     isPointData_(false),
     noReset_(false),
     needsReset_(false),
     size_(0),
-    single_(),
+    value_(),
     fieldPtr_(nullptr)
-{
-    clear();
-}
+{}
 
 
 Foam::expressions::exprResult::exprResult(const exprResult& rhs)
@@ -238,20 +208,17 @@ Foam::expressions::exprResult::exprResult(exprResult&& rhs)
 Foam::expressions::exprResult::exprResult
 (
     const dictionary& dict,
-    bool uniform,
-    bool needsValue
+    bool singleValueOnly,
+    bool valueReqd
 )
 :
-    refCount(),
-    valType_(dict.getOrDefault<word>("valueType", "")),
-    isUniform_(dict.getOrDefault("isSingleValue", uniform)),
-    isPointData_(dict.getOrDefault("isPointValue", false)),
-    noReset_(dict.getOrDefault("noReset", false)),
-    needsReset_(false),
-    size_(0),
-    single_(),
-    fieldPtr_(nullptr)
+    exprResult()
 {
+    dict.readIfPresent("valueType", valType_);
+    dict.readIfPresent("isPointValue", isPointData_);
+    dict.readIfPresent("noReset", noReset_);
+    dict.readIfPresent("isSingleValue", singleValueOnly);
+
     DebugInFunction << nl;
 
     const auto* hasValue = dict.findEntry("value", keyType::LITERAL);
@@ -259,11 +226,10 @@ Foam::expressions::exprResult::exprResult
     if (hasValue)
     {
         const auto& valueEntry = *hasValue;
-        const bool uniform = isUniform_;
 
         const label len =
         (
-            uniform
+            singleValueOnly
           ? dict.getOrDefault<label>("fieldSize", 1)
           : dict.get<label>("fieldSize")
         );
@@ -271,12 +237,12 @@ Foam::expressions::exprResult::exprResult
         const bool ok =
         (
             // Just use <scalar> for <label>?
-            readChecked<scalar>(valueEntry, len, uniform)
-         || readChecked<vector>(valueEntry, len, uniform)
-         || readChecked<tensor>(valueEntry, len, uniform)
-         || readChecked<symmTensor>(valueEntry, len, uniform)
-         || readChecked<sphericalTensor>(valueEntry, len, uniform)
-         || readChecked<bool>(valueEntry, len, uniform)
+            readChecked<scalar>(valueEntry, len, singleValueOnly)
+         || readChecked<vector>(valueEntry, len, singleValueOnly)
+         || readChecked<tensor>(valueEntry, len, singleValueOnly)
+         || readChecked<symmTensor>(valueEntry, len, singleValueOnly)
+         || readChecked<sphericalTensor>(valueEntry, len, singleValueOnly)
+         || readChecked<bool>(valueEntry, len, singleValueOnly)
         );
 
         if (!ok)
@@ -288,15 +254,21 @@ Foam::expressions::exprResult::exprResult
             }
 
             FatalIOErrorInFunction(dict)
-                << "Do not know how to read data type " << valType_
-                << (uniform ? " as a single value." : ".") << nl
+                << "Do not know how to read data type " << valueType()
+                << (singleValueOnly ? " as a single value." : ".") << nl
                 << exit(FatalIOError);
         }
     }
-    else if (needsValue)
+    else if (valueReqd)
     {
+        if (valType_.empty())
+        {
+            // For error message only
+            valType_ = "none";
+        }
+
         FatalIOErrorInFunction(dict)
-            << "No entry 'value' defined" << nl
+            << "No entry 'value' defined for data type " << valueType() << nl
             << exit(FatalIOError);
     }
 }
@@ -372,7 +344,7 @@ Foam::expressions::exprResult::~exprResult()
 {
     DebugInFunction << nl;
 
-    uglyDelete();
+    destroy();
 }
 
 
@@ -398,15 +370,15 @@ bool Foam::expressions::exprResult::reset(bool force)
 
 void Foam::expressions::exprResult::clear()
 {
-    uglyDelete();
+    destroy();
     valType_.clear();
     size_ = 0;
 }
 
 
-// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::expressions::exprResult::uglyDelete()
+void Foam::expressions::exprResult::destroy()
 {
     if (fieldPtr_)
     {
@@ -423,7 +395,7 @@ void Foam::expressions::exprResult::uglyDelete()
         if (!ok)
         {
             FatalErrorInFunction
-                << "Unknown type " << valType_
+                << "Unknown type " << valueType()
                 << " probable memory loss" << nl
                 << exit(FatalError);
         }
@@ -463,7 +435,8 @@ Foam::expressions::exprResult::getUniform
     if (!ok)
     {
         FatalErrorInFunction
-            << "Cannot get uniform value for type " << valType_ << nl
+            << "Cannot get uniform value for type "
+            << valueType() << nl
             << exit(FatalError);
     }
 
@@ -493,7 +466,7 @@ void Foam::expressions::exprResult::testIfSingleValue(const bool parRun)
     if (!ok)
     {
         WarningInFunction
-            << "Unknown type " << valType_ << nl << endl;
+            << "Type " << valueType() << " was not handled" << nl << endl;
     }
 }
 
@@ -510,9 +483,8 @@ void Foam::expressions::exprResult::operator=(const exprResult& rhs)
     clear();
 
     valType_ = rhs.valType_;
-    isUniform_ = rhs.isUniform_;
     isPointData_ = rhs.isPointData_;
-    single_ = rhs.single_;
+    value_ = rhs.value_;
 
     if (rhs.fieldPtr_)
     {
@@ -529,7 +501,7 @@ void Foam::expressions::exprResult::operator=(const exprResult& rhs)
         if (!ok)
         {
             FatalErrorInFunction
-                << " Type " << valType_ << " can not be copied" << nl
+                << "Type " << valueType() << " could not be copied" << nl
                 << exit(FatalError);
         }
     }
@@ -546,13 +518,12 @@ void Foam::expressions::exprResult::operator=(exprResult&& rhs)
     clear();
 
     valType_ = rhs.valType_;
-    isUniform_ = rhs.isUniform_;
     isPointData_ = rhs.isPointData_;
     noReset_ = rhs.noReset_;
     needsReset_ = rhs.needsReset_;
     size_ = rhs.size_;
 
-    single_ = rhs.single_;
+    value_ = rhs.value_;
     fieldPtr_ = rhs.fieldPtr_;
 
     rhs.fieldPtr_ = nullptr;  // Took ownership of field pointer
@@ -579,7 +550,7 @@ void Foam::expressions::exprResult::writeEntry
     if (!ok)
     {
         WarningInFunction
-            << "Unknown data type " << valType_ << endl;
+            << "Data type " << valueType() << " was not written" << endl;
     }
 }
 
@@ -611,10 +582,10 @@ void Foam::expressions::exprResult::writeDict
     }
     else
     {
-        os.writeEntry("valueType", valType_);
+        os.writeEntry("valueType", valueType());
 
         os.writeEntryIfDifferent<Switch>("isPointValue", false, isPointData_);
-        os.writeEntry<Switch>("isSingleValue", isUniform_);
+        os.writeEntry<Switch>("isSingleValue", value_.good());
 
         this->writeField(os, "value");
     }
@@ -655,7 +626,7 @@ void Foam::expressions::exprResult::writeField
     if (!ok)
     {
         WarningInFunction
-            << "Unknown data type " << valType_ << endl;
+            << "Data type " << valueType() << " was not written" << endl;
     }
 }
 
@@ -686,7 +657,7 @@ void Foam::expressions::exprResult::writeValue
     if (!ok)
     {
         WarningInFunction
-            << "Unknown data type " << valType_ << endl;
+            << "Data type " << valueType() << " was not written" << endl;
     }
 }
 
@@ -702,7 +673,8 @@ Foam::expressions::exprResult::operator*=
     if (!fieldPtr_)
     {
         FatalErrorInFunction
-            << "Can not multiply. Unallocated field of type" << valType_ << nl
+            << "Can not multiply. Unallocated field of type "
+            << valueType() << nl
             << exit(FatalError);
     }
 
@@ -719,7 +691,7 @@ Foam::expressions::exprResult::operator*=
     {
         FatalErrorInFunction
             << "Can not multiply field of type "
-            << valType_ << nl
+            << valueType() << nl
             << exit(FatalError);
     }
 
@@ -736,7 +708,8 @@ Foam::expressions::exprResult::operator+=
     if (!fieldPtr_)
     {
         FatalErrorInFunction
-            << "Can not add. Unallocated field of type " << valType_ << nl
+            << "Can not add. Unallocated field of type "
+            << valueType() << nl
             << exit(FatalError);
     }
 
@@ -744,6 +717,14 @@ Foam::expressions::exprResult::operator+=
     {
         FatalErrorInFunction
             << "Different sizes " << this->size() << " and " << b.size() << nl
+            << exit(FatalError);
+    }
+
+    if (this->valueType() != b.valueType())
+    {
+        FatalErrorInFunction
+            << "Different types: "
+            << this->valueType() << " and " << b.valueType() << nl
             << exit(FatalError);
     }
 
@@ -759,8 +740,8 @@ Foam::expressions::exprResult::operator+=
     if (!ok)
     {
         FatalErrorInFunction
-            << "Can not add Field-type exprResult of type"
-            << valType_ << nl
+            << "Can not add Field-type exprResult of type "
+            << valueType() << nl
             << exit(FatalError);
     }
 
@@ -851,7 +832,7 @@ const void* Foam::expressions::exprResult::dataAddress() const
     #undef defineExpressionMethod
 
     FatalErrorInFunction
-        << "Unsupported type" << valType_ << nl
+        << "Unsupported type:" << valueType() << nl
         << exit(FatalError);
 
     return nullptr;

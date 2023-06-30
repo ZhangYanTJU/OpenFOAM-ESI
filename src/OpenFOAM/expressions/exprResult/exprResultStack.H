@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2012-2018 Bernhard Gschaider <bgschaid@hfd-research.com>
+    Copyright (C) 2012-2018 Bernhard Gschaider
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef expressions_exprResultStack_H
-#define expressions_exprResultStack_H
+#ifndef Foam_expressions_exprResultStack_H
+#define Foam_expressions_exprResultStack_H
 
 #include "exprResult.H"
 

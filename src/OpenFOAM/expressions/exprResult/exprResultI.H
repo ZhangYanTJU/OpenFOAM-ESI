@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2018 Bernhard Gschaider
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,41 +25,6 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
-
-// * * * * * * * * * * * * Template Specializations  * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace expressions
-{
-    #undef  defineExpressionMethod
-    #define defineExpressionMethod(Type, Member)                              \
-        template<>                                                            \
-        inline const Type& exprResult::singleValue::get<Type>() const         \
-        {                                                                     \
-            return Member;                                                    \
-        }                                                                     \
-                                                                              \
-        template<>                                                            \
-        inline const Type& exprResult::singleValue::set(const Type& val)      \
-        {                                                                     \
-            Member = val;                                                     \
-            return Member;                                                    \
-        }
-
-    defineExpressionMethod(bool, bool_);
-    defineExpressionMethod(label, label_);
-    defineExpressionMethod(scalar, scalar_);
-    defineExpressionMethod(vector, vector_);
-    defineExpressionMethod(tensor, tensor_);
-    defineExpressionMethod(symmTensor, symmTensor_);
-    defineExpressionMethod(sphericalTensor, sphTensor_);
-
-    #undef defineExpressionMethod
-
-} // End namespace expressions
-} // End namespace Foam
-
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -84,31 +49,31 @@ inline bool Foam::expressions::exprResult::readChecked
 (
     const entry& e,
     const label len,
-    const bool uniform
+    const bool singleValueOnly
 )
 {
     const bool ok = isType<Type>();
 
     if (ok)
     {
-        uglyDelete();
+        destroy();
 
-        if (uniform)
+        if (singleValueOnly)
         {
             const Type val(e.get<Type>());
 
             size_ = len;
             fieldPtr_ = new Field<Type>(size_, val);
 
-            single_.set(val);
+            value_.set(val);
         }
         else
         {
             size_ = len;
             fieldPtr_ = new Field<Type>(e, size_);
-        }
 
-        isUniform_ = uniform;
+            value_.clear();
+        }
     }
 
     return ok;
@@ -248,7 +213,7 @@ inline bool Foam::expressions::exprResult::isPointData
 
 inline bool Foam::expressions::exprResult::isUniform() const
 {
-    return isUniform_;
+    return value_.good();
 }
 
 
@@ -262,12 +227,26 @@ inline bool Foam::expressions::exprResult::isType() const
 template<class Type>
 inline Type Foam::expressions::exprResult::getValue() const
 {
-    if (!isUniform_ || !isType<Type>())
+    if (value_.good() && isType<Type>())
     {
-        return Zero;
+        return value_.get<Type>();
     }
 
-    return single_.get<Type>();
+    // Fallthrough
+    return Zero;
+}
+
+
+template<class Type>
+inline const Foam::Field<Type>* Foam::expressions::exprResult::getField() const
+{
+    if (isType<Type>())
+    {
+        return static_cast<const Field<Type>*>(fieldPtr_);
+    }
+
+    // Fallthrough
+    return nullptr;
 }
 
 
@@ -319,8 +298,8 @@ void Foam::expressions::exprResult::setResultImpl
     DebugInFunction << nl;
 
     clear();
+    value_.clear();
 
-    isUniform_ = false;
     isPointData_ = wantPointData;
 
     size_ = fld.size();
@@ -341,8 +320,8 @@ void Foam::expressions::exprResult::setResultImpl
     DebugInFunction << nl;
 
     clear();
+    value_.clear();
 
-    isUniform_ = false;
     isPointData_ = wantPointData;
 
     size_ = fld.size();
@@ -372,8 +351,8 @@ void Foam::expressions::exprResult::setResultImpl
 )
 {
     clear();
+    value_.clear();
 
-    isUniform_ = false;
     isPointData_ = wantPointData;
 
     if (fldPtr != nullptr)
@@ -406,15 +385,13 @@ void Foam::expressions::exprResult::setResultImpl
     DebugInFunction << nl;
 
     clear();
+    value_.set(val);
 
     isPointData_ = false;
 
     size_ = len;
     valType_ = pTraits<Type>::typeName;
     fieldPtr_ = new Field<Type>(size_, val);
-
-    isUniform_ = true;
-    single_.set(val);
 }
 
 
@@ -435,9 +412,9 @@ bool Foam::expressions::exprResult::writeSingleValueChecked(Ostream& os) const
 
     if (this->size() <= 0)
     {
-        if (isUniform_)
+        if (value_.good())
         {
-            os << single_.get<Type>();
+            os << value_.get<Type>();
         }
         else
         {
@@ -449,7 +426,7 @@ bool Foam::expressions::exprResult::writeSingleValueChecked(Ostream& os) const
     {
         const Field<Type>& fld = *static_cast<const Field<Type>*>(fieldPtr_);
 
-        os << fld.first();
+        os << fld.front();
     }
 
     return true;
@@ -470,9 +447,10 @@ bool Foam::expressions::exprResult::writeFieldChecked
 
     if (this->size() <= 0)
     {
-        if (isUniform_)
+        if (value_.good())
         {
-            const Type& val = single_.get<Type>();
+            const Type& val = value_.get<Type>();
+
             if (keyword.empty())
             {
                 os << val;
@@ -505,9 +483,9 @@ bool Foam::expressions::exprResult::writeFieldChecked
         }
         else
         {
-            if (isUniform_)
+            if (value_.good())
             {
-                os.writeEntry(keyword, fld.first());
+                os.writeEntry(keyword, fld.front());
             }
             else
             {
@@ -534,16 +512,16 @@ bool Foam::expressions::exprResult::writeEntryChecked
 
     if (this->size() <= 0)
     {
-        if (isUniform_ && is_contiguous<Type>::value)
+        if (value_.good() && is_contiguous<Type>::value)
         {
-            const Type& val = single_.get<Type>();
+            const Type& val = value_.get<Type>();
 
             if (keyword.size())
             {
                 os.writeKeyword(keyword);
             }
-            os  << word("uniform") << token::SPACE << val
-                << token::END_STATEMENT << nl;
+            os  << word("uniform") << token::SPACE
+                << val << token::END_STATEMENT << nl;
         }
         else
         {
@@ -556,14 +534,14 @@ bool Foam::expressions::exprResult::writeEntryChecked
     {
         const Field<Type>& fld = *static_cast<const Field<Type>*>(fieldPtr_);
 
-        if (isUniform_ && is_contiguous<Type>::value)
+        if (value_.good() && is_contiguous<Type>::value)
         {
             if (keyword.size())
             {
                 os.writeKeyword(keyword);
             }
-            os  << word("uniform") << token::SPACE << fld.first()
-                << token::END_STATEMENT << nl;
+            os  << word("uniform") << token::SPACE
+                << fld.front() << token::END_STATEMENT << nl;
         }
         else
         {
@@ -587,11 +565,14 @@ bool Foam::expressions::exprResult::setAverageValueChecked(const bool parRun)
 
     const MinMax<Type> limits = (parRun ? gMinMax(fld) : minMax(fld));
 
-    isUniform_ = (limits.mag() <= SMALL);
-
-    const Type avg = limits.centre();
-
-    single_.set(avg);
+    if (limits.mag() <= SMALL)
+    {
+        value_.set(limits.centre());  // Average value
+    }
+    else
+    {
+        value_.clear();
+    }
 
     return true;
 }
@@ -625,13 +606,11 @@ void Foam::expressions::exprResult::setSingleValueImpl(const Type& val)
     DebugInFunction << nl;
 
     clear();
+    value_.set(val);
 
-    isUniform_ = true;
     isPointData_ = false;
 
-    single_.set(val);
     size_ = 1;
-
     valType_ = pTraits<Type>::typeName;
     fieldPtr_ = new Field<Type>(size_, val);
 }
@@ -648,7 +627,7 @@ Foam::expressions::exprResult::getResult(bool cacheCopy)
         FatalErrorInFunction
             << "The expected return type " << pTraits<Type>::typeName
             << " is different from the stored result type "
-            << valType_ << nl << nl
+            << valueType() << nl << nl
             << exit(FatalError);
     }
 
@@ -670,12 +649,12 @@ Foam::expressions::exprResult::getResult(bool cacheCopy)
     }
 
 
-    tmp<Field<Type>> result(ptr);
+    tmp<Field<Type>> tresult(ptr);
 
     fieldPtr_ = nullptr;  // Took ownership of field pointer
     clear();
 
-    return result;
+    return tresult;
 }
 
 
@@ -690,7 +669,7 @@ Foam::expressions::exprResult::cref() const
         FatalErrorInFunction
             << "The expected return type " << pTraits<Type>::typeName
             << " is different from the stored result type "
-            << valType_ << nl << nl
+            << valueType() << nl << nl
             << exit(FatalError);
     }
 
@@ -734,7 +713,7 @@ inline Type Foam::expressions::exprResult::getReduced
         FatalErrorInFunction
             << "The expected return type " << pTraits<Type>::typeName
             << " is different from the stored result type "
-            << valType_ << nl << nl
+            << valueType() << nl << nl
             << exit(FatalError);
     }
 

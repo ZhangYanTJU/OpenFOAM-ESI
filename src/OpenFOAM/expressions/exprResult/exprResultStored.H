@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2018 Bernhard Gschaider
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,8 +43,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef expressions_exprResultStored_H
-#define expressions_exprResultStored_H
+#ifndef Foam_expressions_exprResultStored_H
+#define Foam_expressions_exprResultStored_H
 
 #include "exprResult.H"
 #include "exprString.H"
@@ -139,6 +139,12 @@ public:
 
         //- Copy assignment
         void operator=(const exprResult& rhs);
+
+        //- Compare for inequality (need by Ulist)
+        bool operator!=(const exprResultStored& rhs) const noexcept
+        {
+            return (this != &rhs);
+        }
 };
 
 
@@ -151,16 +157,6 @@ public:
 // IO Operators
 Istream& operator>>(Istream& is, expressions::exprResultStored& data);
 Ostream& operator<<(Ostream& is, const expressions::exprResultStored& data);
-
-// Comparison
-inline bool operator!=
-(
-    const expressions::exprResultStored& a,
-    const expressions::exprResultStored& b
-)
-{
-    return (&a != &b);
-}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
