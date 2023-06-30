@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef GeometricFieldOps_H
-#define GeometricFieldOps_H
+#ifndef Foam_GeometricFieldOps_H
+#define Foam_GeometricFieldOps_H
 
 #include "FieldOps.H"
 #include "GeometricField.H"

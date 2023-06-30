@@ -56,7 +56,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::readFields
     const dictionary& dict
 )
 {
-    Internal::readField(dict, "internalField");
+    Internal::readField(dict, "internalField");  // Includes size check
 
     boundaryField_.readField(*this, dict.subDict("boundaryField"));
 
@@ -85,9 +85,9 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::readFields()
             this->instance(),
             this->local(),
             this->db(),
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::MUST_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         ),
         typeName
     );
@@ -104,7 +104,7 @@ bool Foam::GeometricField<Type, PatchField, GeoMesh>::readIfPresent()
     if (this->isReadRequired())
     {
         WarningInFunction
-            << "read option IOobject::MUST_READ or MUST_READ_IF_MODIFIED"
+            << "The readOption MUST_READ or READ_MODIFIED"
             << " suggests that a read constructor for field " << this->name()
             << " would be more appropriate." << endl;
     }
@@ -118,17 +118,6 @@ bool Foam::GeometricField<Type, PatchField, GeoMesh>::readIfPresent()
     )
     {
         readFields();
-
-        // Check compatibility between field and mesh
-        if (this->size() != GeoMesh::size(this->mesh()))
-        {
-            FatalIOErrorInFunction(this->readStream(typeName))
-                << "   number of field elements = " << this->size()
-                << " number of mesh elements = "
-                << GeoMesh::size(this->mesh())
-                << exit(FatalIOError);
-        }
-
         readOldTimeIfPresent();
 
         return true;
@@ -147,8 +136,8 @@ bool Foam::GeometricField<Type, PatchField, GeoMesh>::readOldTimeIfPresent()
         this->name()  + "_0",
         this->time().timeName(),
         this->db(),
-        IOobject::READ_IF_PRESENT,
-        IOobject::AUTO_WRITE,
+        IOobjectOption::LAZY_READ,
+        IOobjectOption::AUTO_WRITE,
         this->registerObject()
     );
 
@@ -233,7 +222,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
 
     readIfPresent();
 }
-
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
@@ -561,17 +549,20 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     fieldPrevIterPtr_(nullptr),
     boundaryField_(mesh.boundary())
 {
-    readFields();
+    DebugInFunction
+        << "Read construct" << nl << this->info() << endl;
 
-    // Check compatibility between field and mesh
-
-    if (this->size() != GeoMesh::size(this->mesh()))
+    if (!this->isAnyRead())
     {
-        FatalIOErrorInFunction(this->readStream(typeName))
-            << "   number of field elements = " << this->size()
-            << " number of mesh elements = " << GeoMesh::size(this->mesh())
-            << exit(FatalIOError);
+        // Do not warn about LAZY_READ since we may have already checked
+        // the IOobject before calling.
+        WarningInFunction
+            << "Had readOption NO_READ for field "
+            << this->name() << ", but constructor always reads field!"
+            << endl;
     }
+
+    readFields();
 
     if (readOldTime)
     {
@@ -598,16 +589,6 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     boundaryField_(mesh.boundary())
 {
     readFields(dict);
-
-    // Check compatibility between field and mesh
-
-    if (this->size() != GeoMesh::size(this->mesh()))
-    {
-        FatalIOErrorInFunction(dict)
-            << "   number of field elements = " << this->size()
-            << " number of mesh elements = " << GeoMesh::size(this->mesh())
-            << exit(FatalIOError);
-    }
 
     DebugInFunction
         << "Finishing dictionary-construct" << nl << this->info() << endl;
@@ -637,7 +618,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
         );
     }
 
-    this->writeOpt(IOobject::NO_WRITE);
+    this->writeOpt(IOobjectOption::NO_WRITE);
 }
 
 
@@ -656,7 +637,7 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::GeometricField
     DebugInFunction
         << "Constructing from tmp" << nl << this->info() << endl;
 
-    this->writeOpt(IOobject::NO_WRITE);
+    this->writeOpt(IOobjectOption::NO_WRITE);
 
     tgf.clear();
 }
@@ -1029,8 +1010,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::oldTime() const
                 this->name() + "_0",
                 this->time().timeName(),
                 this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
                 this->registerObject()
             ),
             *this

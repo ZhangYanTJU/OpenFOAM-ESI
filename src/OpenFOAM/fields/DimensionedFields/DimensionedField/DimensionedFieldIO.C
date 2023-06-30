@@ -46,7 +46,7 @@ void Foam::DimensionedField<Type, GeoMesh>::readField
     //   an old run where the oriented state may not have been set
     if (oriented_.oriented() != orientedType::ORIENTED)
     {
-        oriented_.read(fieldDict);
+        oriented_.read(fieldDict);  // The "oriented" entry (if present)
     }
 
 
@@ -54,7 +54,7 @@ void Foam::DimensionedField<Type, GeoMesh>::readField
     auto& fld = static_cast<Field<Type>&>(*this);
 
     fld.resize_nocopy(GeoMesh::size(mesh_));
-    fld.assign(fieldDictEntry, fieldDict, fld.size());
+    fld.assign(fieldDictEntry, fieldDict, fld.size());  // <- MUST_READ
 }
 
 

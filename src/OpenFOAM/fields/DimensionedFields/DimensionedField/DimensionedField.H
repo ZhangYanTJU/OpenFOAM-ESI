@@ -390,6 +390,8 @@ public:
 
     // Member Functions
 
+        //- Resize to the mesh size and read the field from the dictionary.
+        //- Internal implementation checks field vs mesh size.
         void readField
         (
             const dictionary& fieldDict,

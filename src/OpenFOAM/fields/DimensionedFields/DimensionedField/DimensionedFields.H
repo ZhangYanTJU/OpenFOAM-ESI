@@ -25,8 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef DimensionedFields_H
-#define DimensionedFields_H
+#ifndef Foam_DimensionedFields_H
+#define Foam_DimensionedFields_H
 
 #include "DimensionedScalarField.H"
 //#include "DimensionedVectorField.H"

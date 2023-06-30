@@ -32,8 +32,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef GeometricFields_H
-#define GeometricFields_H
+#ifndef Foam_GeometricFields_H
+#define Foam_GeometricFields_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

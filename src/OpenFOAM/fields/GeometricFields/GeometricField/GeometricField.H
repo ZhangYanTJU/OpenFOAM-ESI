@@ -307,7 +307,7 @@ public:
             const PtrList<PatchField<Type>>& ptfl
         );
 
-        //- Construct and read given IOobject
+        //- Read construct using given IOobject. Always reads!
         GeometricField
         (
             const IOobject& io,
