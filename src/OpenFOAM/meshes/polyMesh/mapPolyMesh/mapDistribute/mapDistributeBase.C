@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -191,8 +191,8 @@ Foam::List<Foam::labelPair> Foam::mapDistributeBase::schedule
     const label comm
 )
 {
-    const label myRank = Pstream::myProcNo(comm);
-    const label nProcs = Pstream::nProcs(comm);
+    const label myRank = UPstream::myProcNo(comm);
+    const label nProcs = UPstream::nProcs(comm);
 
     // Communications: send and receive processor
     List<labelPair> allComms;
@@ -222,14 +222,14 @@ Foam::List<Foam::labelPair> Foam::mapDistributeBase::schedule
 
 
     // Gather/reduce
-    if (Pstream::master(comm))
+    if (UPstream::master(comm))
     {
         // Receive and merge
-        for (const int proci : Pstream::subProcs(comm))
+        for (const int proci : UPstream::subProcs(comm))
         {
             IPstream fromProc
             (
-                Pstream::commsTypes::scheduled,
+                UPstream::commsTypes::scheduled,
                 proci,
                 0,
                 tag,
@@ -245,12 +245,12 @@ Foam::List<Foam::labelPair> Foam::mapDistributeBase::schedule
     }
     else
     {
-        if (Pstream::parRun())
+        if (UPstream::parRun())
         {
             OPstream toMaster
             (
-                Pstream::commsTypes::scheduled,
-                Pstream::masterNo(),
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo(),
                 0,
                 tag,
                 comm
@@ -310,8 +310,8 @@ const Foam::List<Foam::labelPair>& Foam::mapDistributeBase::whichSchedule
 
 void Foam::mapDistributeBase::printLayout(Ostream& os) const
 {
-    const label myRank = Pstream::myProcNo(comm_);
-    const label nProcs = Pstream::nProcs(comm_);
+    const label myRank = UPstream::myProcNo(comm_);
+    const label nProcs = UPstream::nProcs(comm_);
 
     // Determine offsets of remote data.
     labelList minIndex(nProcs, labelMax);
@@ -391,8 +391,8 @@ void Foam::mapDistributeBase::calcCompactAddressing
     List<Map<label>>& compactMap
 ) const
 {
-    const label myRank = Pstream::myProcNo(comm_);
-    const label nProcs = Pstream::nProcs(comm_);
+    const label myRank = UPstream::myProcNo(comm_);
+    const label nProcs = UPstream::nProcs(comm_);
 
     // Count all (non-local) elements needed. Just for presizing map.
     labelList nNonLocal(nProcs, Zero);
@@ -439,8 +439,8 @@ void Foam::mapDistributeBase::calcCompactAddressing
     List<Map<label>>& compactMap
 ) const
 {
-    const label myRank = Pstream::myProcNo(comm_);
-    const label nProcs = Pstream::nProcs(comm_);
+    const label myRank = UPstream::myProcNo(comm_);
+    const label nProcs = UPstream::nProcs(comm_);
 
     // Count all (non-local) elements needed. Just for presizing map.
     labelList nNonLocal(nProcs, Zero);
@@ -495,8 +495,8 @@ void Foam::mapDistributeBase::exchangeAddressing
     labelList& compactStart
 )
 {
-    const label myRank = Pstream::myProcNo(comm_);
-    const label nProcs = Pstream::nProcs(comm_);
+    const label myRank = UPstream::myProcNo(comm_);
+    const label nProcs = UPstream::nProcs(comm_);
 
     // The overall compact addressing is
     // - myProcNo data first (uncompacted)
@@ -575,8 +575,8 @@ void Foam::mapDistributeBase::exchangeAddressing
     labelList& compactStart
 )
 {
-    const label myRank = Pstream::myProcNo(comm_);
-    const label nProcs = Pstream::nProcs(comm_);
+    const label myRank = UPstream::myProcNo(comm_);
+    const label nProcs = UPstream::nProcs(comm_);
 
     // The overall compact addressing is
     // - myProcNo data first (uncompacted)
@@ -724,8 +724,8 @@ Foam::mapDistributeBase::mapDistributeBase
     comm_(comm),
     schedulePtr_(nullptr)
 {
-    const label myRank = Pstream::myProcNo(comm_);
-    const label nProcs = Pstream::nProcs(comm_);
+    const label myRank = UPstream::myProcNo(comm_);
+    const label nProcs = UPstream::nProcs(comm_);
 
     if (sendProcs.size() != recvProcs.size())
     {
@@ -922,6 +922,7 @@ Foam::mapDistributeBase::mapDistributeBase
 
 Foam::mapDistributeBase::mapDistributeBase
 (
+    const layoutTypes constructLayout,
     labelListList&& subMap,
     const bool subHasFlip,
     const bool constructHasFlip,
@@ -936,30 +937,21 @@ Foam::mapDistributeBase::mapDistributeBase
     comm_(comm),
     schedulePtr_(nullptr)
 {
-    const label myRank = Pstream::myProcNo(comm_);
-    const label nProcs = Pstream::nProcs(comm_);
+    const label myRank = UPstream::myProcNo(comm_);
+    const label nProcs = UPstream::nProcs(comm_);
 
     // Send over how many i need to receive.
     labelList recvSizes;
     Pstream::exchangeSizes(subMap_, recvSizes, comm_);
 
-    // Determine order of receiving
     constructSize_ = 0;
     constructMap_.resize(nProcs);
 
+    // The order of receiving:
 
-    // My data first
+    if (constructLayout == layoutTypes::linear)
     {
-        const label len = recvSizes[myRank];
-
-        constructMap_[myRank] = identity(len, constructSize_);
-        constructSize_ += len;
-    }
-
-    // What the other processors are sending to me
-    forAll(constructMap_, proci)
-    {
-        if (proci != myRank)
+        forAll(constructMap_, proci)
         {
             const label len = recvSizes[proci];
 
@@ -967,7 +959,50 @@ Foam::mapDistributeBase::mapDistributeBase
             constructSize_ += len;
         }
     }
+    else
+    {
+        // layoutTypes::localFirst
+
+        // My data first
+        {
+            const label len = recvSizes[myRank];
+
+            constructMap_[myRank] = identity(len, constructSize_);
+            constructSize_ += len;
+        }
+
+        // What the other processors are sending to me
+        forAll(constructMap_, proci)
+        {
+            if (proci != myRank)
+            {
+                const label len = recvSizes[proci];
+
+                constructMap_[proci] = identity(len, constructSize_);
+                constructSize_ += len;
+            }
+        }
+    }
 }
+
+
+Foam::mapDistributeBase::mapDistributeBase
+(
+    labelListList&& subMap,
+    const bool subHasFlip,
+    const bool constructHasFlip,
+    const label comm
+)
+:
+    mapDistributeBase
+    (
+        layoutTypes::localFirst,
+        std::move(subMap),
+        subHasFlip,
+        constructHasFlip,
+        comm
+    )
+{}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //

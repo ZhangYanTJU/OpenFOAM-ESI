@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -409,7 +409,7 @@ public:
         // Access
 
             //- For every globalIndexAndTransform::transformPermutations
-            //  gives the elements that need to be transformed
+            //- gives the elements that need to be transformed
             const labelListList& transformElements() const noexcept
             {
                 return transformElements_;
@@ -433,7 +433,8 @@ public:
             //- Transfer the contents of the argument and annul the argument.
             void transfer(mapDistribute& map);
 
-            //- Distribute data using default commsType.
+            //- Distribute List data using default commsType,
+            //- default flip/negate operator
             template<class T>
             void distribute
             (
@@ -442,7 +443,40 @@ public:
                 const int tag = UPstream::msgType()
             ) const;
 
-            //- Distribute data using default commsType.
+            //- Distribute DynamicList data using default commsType,
+            //- default flip/negate operator
+            template<class T>
+            void distribute
+            (
+                DynamicList<T>& fld,
+                const bool dummyTransform = true,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Distribute List data using specified commsType,
+            //- default flip/negate operator
+            template<class T>
+            void distribute
+            (
+                const UPstream::commsTypes commsType,
+                List<T>& fld,
+                const bool dummyTransform = true,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Distribute DynamicList data using specified commsType,
+            //- default flip/negate operator
+            template<class T>
+            void distribute
+            (
+                const UPstream::commsTypes commsType,
+                DynamicList<T>& fld,
+                const bool dummyTransform = true,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Distribute List data using default commsType
+            //- and the specified negate operator (for flips).
             template<class T, class NegateOp>
             void distribute
             (
@@ -452,11 +486,14 @@ public:
                 const int tag = UPstream::msgType()
             ) const;
 
-            //- Distribute data using default commsType.
-            template<class T>
+            //- Distribute List data using specified commsType
+            //- and the specified negate operator (for flips).
+            template<class T, class NegateOp>
             void distribute
             (
-                DynamicList<T>& fld,
+                const UPstream::commsTypes commsType,
+                List<T>& fld,
+                const NegateOp& negOp,
                 const bool dummyTransform = true,
                 const int tag = UPstream::msgType()
             ) const;
@@ -465,6 +502,17 @@ public:
             template<class T>
             void reverseDistribute
             (
+                const label constructSize,
+                List<T>& fld,
+                const bool dummyTransform = true,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Reverse distribute data using specified commsType.
+            template<class T>
+            void reverseDistribute
+            (
+                const UPstream::commsTypes commsType,
                 const label constructSize,
                 List<T>& fld,
                 const bool dummyTransform = true,
@@ -484,10 +532,36 @@ public:
                 const int tag = UPstream::msgType()
             ) const;
 
+            //- Reverse distribute data using specified commsType.
+            //  Since constructSize might be larger than supplied size supply
+            //  a nullValue
+            template<class T>
+            void reverseDistribute
+            (
+                const UPstream::commsTypes commsType,
+                const label constructSize,
+                const T& nullValue,
+                List<T>& fld,
+                const bool dummyTransform = true,
+                const int tag = UPstream::msgType()
+            ) const;
+
             //- Distribute with transforms
             template<class T, class TransformOp>
             void distribute
             (
+                const globalIndexAndTransform&,
+                List<T>& fld,
+                const TransformOp& top,
+                const int tag = UPstream::msgType()
+            ) const;
+
+
+            //- Distribute with transforms
+            template<class T, class TransformOp>
+            void distribute
+            (
+                const UPstream::commsTypes commsType,
                 const globalIndexAndTransform&,
                 List<T>& fld,
                 const TransformOp& top,
@@ -509,6 +583,31 @@ public:
             template<class T, class TransformOp>
             void reverseDistribute
             (
+                const UPstream::commsTypes commsType,
+                const globalIndexAndTransform&,
+                const label constructSize,
+                List<T>& fld,
+                const TransformOp& top,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Reverse distribute with transforms
+            template<class T, class TransformOp>
+            void reverseDistribute
+            (
+                const globalIndexAndTransform&,
+                const label constructSize,
+                const T& nullValue,
+                List<T>& fld,
+                const TransformOp& top,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Reverse distribute with transforms
+            template<class T, class TransformOp>
+            void reverseDistribute
+            (
+                const UPstream::commsTypes commsType,
                 const globalIndexAndTransform&,
                 const label constructSize,
                 const T& nullValue,

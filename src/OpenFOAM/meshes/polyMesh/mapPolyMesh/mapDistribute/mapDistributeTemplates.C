@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +40,6 @@ void Foam::mapDistribute::applyDummyTransforms(List<T>& field) const
     forAll(transformElements_, trafoI)
     {
         const labelList& elems = transformElements_[trafoI];
-
         label n = transformStart_[trafoI];
 
         forAll(elems, i)
@@ -129,19 +129,46 @@ void Foam::mapDistribute::applyInverseTransforms
 template<class T, class NegateOp>
 void Foam::mapDistribute::distribute
 (
+    const UPstream::commsTypes commsType,
     List<T>& fld,
     const NegateOp& negOp,
     const bool dummyTransform,
     const int tag
 ) const
 {
-    mapDistributeBase::distribute(fld, negOp, tag);
+    mapDistributeBase::distribute(commsType, fld, negOp, tag);
 
     //- Fill in transformed slots with copies
     if (dummyTransform)
     {
         applyDummyTransforms(fld);
     }
+}
+
+
+template<class T, class NegateOp>
+void Foam::mapDistribute::distribute
+(
+    List<T>& fld,
+    const NegateOp& negOp,
+    const bool dummyTransform,
+    const int tag
+) const
+{
+    distribute(UPstream::defaultCommsType, fld, negOp, dummyTransform, tag);
+}
+
+
+template<class T>
+void Foam::mapDistribute::distribute
+(
+    const UPstream::commsTypes commsType,
+    List<T>& fld,
+    const bool dummyTransform,
+    const int tag
+) const
+{
+    distribute(commsType, fld, flipOp(), dummyTransform, tag);
 }
 
 
@@ -153,7 +180,26 @@ void Foam::mapDistribute::distribute
     const int tag
 ) const
 {
-    distribute(fld, flipOp(), dummyTransform, tag);
+    distribute(UPstream::defaultCommsType, fld, dummyTransform, tag);
+}
+
+
+template<class T>
+void Foam::mapDistribute::distribute
+(
+    const UPstream::commsTypes commsType,
+    DynamicList<T>& fld,
+    const bool dummyTransform,
+    const int tag
+) const
+{
+    fld.shrink();
+
+    List<T>& list = static_cast<List<T>&>(fld);
+
+    distribute(commsType, list, dummyTransform, tag);
+
+    fld.setCapacity(list.size());
 }
 
 
@@ -165,13 +211,26 @@ void Foam::mapDistribute::distribute
     const int tag
 ) const
 {
-    fld.shrink();
+    distribute(UPstream::defaultCommsType, fld, dummyTransform, tag);
+}
 
-    List<T>& list = static_cast<List<T>&>(fld);
 
-    distribute(list, dummyTransform, tag);
+template<class T>
+void Foam::mapDistribute::reverseDistribute
+(
+    const UPstream::commsTypes commsType,
+    const label constructSize,
+    List<T>& fld,
+    const bool dummyTransform,
+    const int tag
+) const
+{
+    if (dummyTransform)
+    {
+        applyDummyInverseTransforms(fld);
+    }
 
-    fld.setCapacity(list.size());
+    mapDistributeBase::reverseDistribute(commsType, constructSize, fld, tag);
 }
 
 
@@ -184,12 +243,41 @@ void Foam::mapDistribute::reverseDistribute
     const int tag
 ) const
 {
+    reverseDistribute
+    (
+        UPstream::defaultCommsType,
+        constructSize,
+        fld,
+        dummyTransform,
+        tag
+    );
+}
+
+
+template<class T>
+void Foam::mapDistribute::reverseDistribute
+(
+    const UPstream::commsTypes commsType,
+    const label constructSize,
+    const T& nullValue,
+    List<T>& fld,
+    const bool dummyTransform,
+    const int tag
+) const
+{
     if (dummyTransform)
     {
         applyDummyInverseTransforms(fld);
     }
 
-    mapDistributeBase::reverseDistribute(constructSize, fld, tag);
+    mapDistributeBase::reverseDistribute
+    (
+        commsType,
+        constructSize,
+        nullValue,
+        fld,
+        tag
+    );
 }
 
 
@@ -203,12 +291,33 @@ void Foam::mapDistribute::reverseDistribute
     const int tag
 ) const
 {
-    if (dummyTransform)
-    {
-        applyDummyInverseTransforms(fld);
-    }
+    reverseDistribute
+    (
+        UPstream::defaultCommsType,
+        constructSize,
+        nullValue,
+        fld,
+        dummyTransform,
+        tag
+    );
+}
 
-    mapDistributeBase::reverseDistribute(constructSize, nullValue, fld, tag);
+
+template<class T, class TransformOp>
+void Foam::mapDistribute::distribute
+(
+    const UPstream::commsTypes commsType,
+    const globalIndexAndTransform& git,
+    List<T>& fld,
+    const TransformOp& top,
+    const int tag
+) const
+{
+    // Distribute. Leave out dummy transforms since we're doing them ourselves
+    distribute(commsType, fld, false, tag);
+
+    // Do transforms
+    applyTransforms(git, fld, top);
 }
 
 
@@ -222,10 +331,28 @@ void Foam::mapDistribute::distribute
 ) const
 {
     // Distribute. Leave out dummy transforms since we're doing them ourselves
-    distribute(fld, false, tag);
+    distribute(UPstream::defaultCommsType, git, fld, top, tag);
+}
 
-    // Do transforms
-    applyTransforms(git, fld, top);
+
+template<class T, class TransformOp>
+void Foam::mapDistribute::reverseDistribute
+(
+    const UPstream::commsTypes commsType,
+    const globalIndexAndTransform& git,
+    const label constructSize,
+    List<T>& fld,
+    const TransformOp& top,
+    const int tag
+) const
+{
+    // Fill slots with reverse-transformed data. Note that it also copies
+    // back into the non-remote part of fld even though these values are not
+    // used.
+    applyInverseTransforms(git, fld, top);
+
+    // And send back (the remote slots). Disable dummy transformations.
+    reverseDistribute(commsType, constructSize, fld, false, tag);
 }
 
 
@@ -252,6 +379,7 @@ void Foam::mapDistribute::reverseDistribute
 template<class T, class TransformOp>
 void Foam::mapDistribute::reverseDistribute
 (
+    const UPstream::commsTypes commsType,
     const globalIndexAndTransform& git,
     const label constructSize,
     const T& nullValue,
@@ -266,7 +394,39 @@ void Foam::mapDistribute::reverseDistribute
     applyInverseTransforms(git, fld, top);   //, eqOp<T>());
 
     // And send back (the remote slots) Disable dummy transformations.
-    reverseDistribute(constructSize, nullValue, fld, false, tag);
+    reverseDistribute
+    (
+        commsType,
+        constructSize,
+        nullValue,
+        fld,
+        false,
+        tag
+    );
+}
+
+
+template<class T, class TransformOp>
+void Foam::mapDistribute::reverseDistribute
+(
+    const globalIndexAndTransform& git,
+    const label constructSize,
+    const T& nullValue,
+    List<T>& fld,
+    const TransformOp& top,
+    const int tag
+) const
+{
+    reverseDistribute
+    (
+        UPstream::defaultCommsType,
+        git,
+        constructSize,
+        nullValue,
+        fld,
+        top,
+        tag
+    );
 }
 
 

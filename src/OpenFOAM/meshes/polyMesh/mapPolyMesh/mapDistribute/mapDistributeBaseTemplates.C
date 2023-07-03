@@ -417,7 +417,7 @@ void Foam::mapDistributeBase::receive
 template<class T, class NegateOp>
 void Foam::mapDistributeBase::distribute
 (
-    const Pstream::commsTypes commsType,
+    const UPstream::commsTypes commsType,
     const List<labelPair>& schedule,
     const label constructSize,
     const labelListList& subMap,
@@ -430,10 +430,10 @@ void Foam::mapDistributeBase::distribute
     const label comm
 )
 {
-    const label myRank = Pstream::myProcNo(comm);
-    const label nProcs = Pstream::nProcs(comm);
+    const label myRank = UPstream::myProcNo(comm);
+    const label nProcs = UPstream::nProcs(comm);
 
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
         // Do only me to me.
 
@@ -460,13 +460,13 @@ void Foam::mapDistributeBase::distribute
         return;
     }
 
-    if (commsType == Pstream::commsTypes::blocking)
+    if (commsType == UPstream::commsTypes::blocking)
     {
         // Since buffered sending can reuse the field to collect the
         // received data.
 
         // Send sub field to neighbour
-        for (const int domain : Pstream::allProcs(comm))
+        for (const int domain : UPstream::allProcs(comm))
         {
             const labelList& map = subMap[domain];
 
@@ -474,7 +474,7 @@ void Foam::mapDistributeBase::distribute
             {
                 OPstream toNbr
                 (
-                    Pstream::commsTypes::blocking,
+                    UPstream::commsTypes::blocking,
                     domain,
                     0,
                     tag,
@@ -514,7 +514,7 @@ void Foam::mapDistributeBase::distribute
         }
 
         // Receive sub field from neighbour
-        for (const int domain : Pstream::allProcs(comm))
+        for (const int domain : UPstream::allProcs(comm))
         {
             const labelList& map = constructMap[domain];
 
@@ -522,7 +522,7 @@ void Foam::mapDistributeBase::distribute
             {
                 IPstream fromNbr
                 (
-                    Pstream::commsTypes::blocking,
+                    UPstream::commsTypes::blocking,
                     domain,
                     0,
                     tag,
@@ -544,7 +544,7 @@ void Foam::mapDistributeBase::distribute
             }
         }
     }
-    else if (commsType == Pstream::commsTypes::scheduled)
+    else if (commsType == UPstream::commsTypes::scheduled)
     {
         // Need to make sure I don't overwrite field with received data
         // since the data might need to be sent to another processor. So
@@ -587,7 +587,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     OPstream toNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         recvProc,
                         0,
                         tag,
@@ -605,7 +605,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     IPstream fromNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         recvProc,
                         0,
                         tag,
@@ -634,7 +634,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     IPstream fromNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         sendProc,
                         0,
                         tag,
@@ -659,7 +659,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     OPstream toNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         sendProc,
                         0,
                         tag,
@@ -678,16 +678,16 @@ void Foam::mapDistributeBase::distribute
         }
         field.transfer(newField);
     }
-    else if (commsType == Pstream::commsTypes::nonBlocking)
+    else if (commsType == UPstream::commsTypes::nonBlocking)
     {
-        const label nOutstanding = Pstream::nRequests();
+        const label nOutstanding = UPstream::nRequests();
 
         if (!is_contiguous<T>::value)
         {
-            PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking, tag, comm);
+            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
 
             // Stream data into buffer
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = subMap[domain];
 
@@ -733,10 +733,10 @@ void Foam::mapDistributeBase::distribute
             }
 
             // Block ourselves, waiting only for the current comms
-            Pstream::waitRequests(nOutstanding);
+            UPstream::waitRequests(nOutstanding);
 
             // Consume
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = constructMap[domain];
 
@@ -765,7 +765,7 @@ void Foam::mapDistributeBase::distribute
 
             List<List<T>> sendFields(nProcs);
 
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = subMap[domain];
 
@@ -776,7 +776,7 @@ void Foam::mapDistributeBase::distribute
 
                     UOPstream::write
                     (
-                        Pstream::commsTypes::nonBlocking,
+                        UPstream::commsTypes::nonBlocking,
                         domain,
                         sendFields[domain].cdata_bytes(),
                         sendFields[domain].size_bytes(),
@@ -790,7 +790,7 @@ void Foam::mapDistributeBase::distribute
 
             List<List<T>> recvFields(nProcs);
 
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = constructMap[domain];
 
@@ -799,7 +799,7 @@ void Foam::mapDistributeBase::distribute
                     recvFields[domain].resize(map.size());
                     UIPstream::read
                     (
-                        Pstream::commsTypes::nonBlocking,
+                        UPstream::commsTypes::nonBlocking,
                         domain,
                         recvFields[domain].data_bytes(),
                         recvFields[domain].size_bytes(),
@@ -839,12 +839,12 @@ void Foam::mapDistributeBase::distribute
 
 
             // Wait for outstanding requests
-            Pstream::waitRequests(nOutstanding);
+            UPstream::waitRequests(nOutstanding);
 
 
             // Collect neighbour fields
 
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = constructMap[domain];
 
@@ -879,7 +879,7 @@ void Foam::mapDistributeBase::distribute
 template<class T, class CombineOp, class NegateOp>
 void Foam::mapDistributeBase::distribute
 (
-    const Pstream::commsTypes commsType,
+    const UPstream::commsTypes commsType,
     const List<labelPair>& schedule,
     const label constructSize,
     const labelListList& subMap,
@@ -894,10 +894,10 @@ void Foam::mapDistributeBase::distribute
     const label comm
 )
 {
-    const label myRank = Pstream::myProcNo(comm);
-    const label nProcs = Pstream::nProcs(comm);
+    const label myRank = UPstream::myProcNo(comm);
+    const label nProcs = UPstream::nProcs(comm);
 
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
         // Do only me to me.
 
@@ -917,13 +917,13 @@ void Foam::mapDistributeBase::distribute
         return;
     }
 
-    if (commsType == Pstream::commsTypes::blocking)
+    if (commsType == UPstream::commsTypes::blocking)
     {
         // Since buffered sending can reuse the field to collect the
         // received data.
 
         // Send sub field to neighbour
-        for (const int domain : Pstream::allProcs(comm))
+        for (const int domain : UPstream::allProcs(comm))
         {
             const labelList& map = subMap[domain];
 
@@ -931,7 +931,7 @@ void Foam::mapDistributeBase::distribute
             {
                 OPstream toNbr
                 (
-                    Pstream::commsTypes::blocking,
+                    UPstream::commsTypes::blocking,
                     domain,
                     0,
                     tag,
@@ -971,7 +971,7 @@ void Foam::mapDistributeBase::distribute
         }
 
         // Receive sub field from neighbour
-        for (const int domain : Pstream::allProcs(comm))
+        for (const int domain : UPstream::allProcs(comm))
         {
             const labelList& map = constructMap[domain];
 
@@ -979,7 +979,7 @@ void Foam::mapDistributeBase::distribute
             {
                 IPstream fromNbr
                 (
-                    Pstream::commsTypes::blocking,
+                    UPstream::commsTypes::blocking,
                     domain,
                     0,
                     tag,
@@ -1001,7 +1001,7 @@ void Foam::mapDistributeBase::distribute
             }
         }
     }
-    else if (commsType == Pstream::commsTypes::scheduled)
+    else if (commsType == UPstream::commsTypes::scheduled)
     {
         // Need to make sure I don't overwrite field with received data
         // since the data might need to be sent to another processor. So
@@ -1045,7 +1045,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     OPstream toNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         recvProc,
                         0,
                         tag,
@@ -1064,7 +1064,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     IPstream fromNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         recvProc,
                         0,
                         tag,
@@ -1092,7 +1092,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     IPstream fromNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         sendProc,
                         0,
                         tag,
@@ -1116,7 +1116,7 @@ void Foam::mapDistributeBase::distribute
                 {
                     OPstream toNbr
                     (
-                        Pstream::commsTypes::scheduled,
+                        UPstream::commsTypes::scheduled,
                         sendProc,
                         0,
                         tag,
@@ -1136,16 +1136,16 @@ void Foam::mapDistributeBase::distribute
         }
         field.transfer(newField);
     }
-    else if (commsType == Pstream::commsTypes::nonBlocking)
+    else if (commsType == UPstream::commsTypes::nonBlocking)
     {
-        const label nOutstanding = Pstream::nRequests();
+        const label nOutstanding = UPstream::nRequests();
 
         if (!is_contiguous<T>::value)
         {
-            PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking, tag, comm);
+            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
 
             // Stream data into buffer
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = subMap[domain];
 
@@ -1192,10 +1192,10 @@ void Foam::mapDistributeBase::distribute
             }
 
             // Block ourselves, waiting only for the current comms
-            Pstream::waitRequests(nOutstanding);
+            UPstream::waitRequests(nOutstanding);
 
             // Consume
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = constructMap[domain];
 
@@ -1224,7 +1224,7 @@ void Foam::mapDistributeBase::distribute
 
             List<List<T>> sendFields(nProcs);
 
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = subMap[domain];
 
@@ -1235,7 +1235,7 @@ void Foam::mapDistributeBase::distribute
 
                     UOPstream::write
                     (
-                        Pstream::commsTypes::nonBlocking,
+                        UPstream::commsTypes::nonBlocking,
                         domain,
                         sendFields[domain].cdata_bytes(),
                         sendFields[domain].size_bytes(),
@@ -1249,7 +1249,7 @@ void Foam::mapDistributeBase::distribute
 
             List<List<T>> recvFields(nProcs);
 
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = constructMap[domain];
 
@@ -1258,7 +1258,7 @@ void Foam::mapDistributeBase::distribute
                     recvFields[domain].resize(map.size());
                     UIPstream::read
                     (
-                        Pstream::commsTypes::nonBlocking,
+                        UPstream::commsTypes::nonBlocking,
                         domain,
                         recvFields[domain].data_bytes(),
                         recvFields[domain].size_bytes(),
@@ -1298,12 +1298,12 @@ void Foam::mapDistributeBase::distribute
 
 
             // Wait for outstanding requests
-            Pstream::waitRequests(nOutstanding);
+            UPstream::waitRequests(nOutstanding);
 
 
             // Collect neighbour fields
 
-            for (const int domain : Pstream::allProcs(comm))
+            for (const int domain : UPstream::allProcs(comm))
             {
                 const labelList& map = constructMap[domain];
 
@@ -1340,7 +1340,7 @@ void Foam::mapDistributeBase::send(PstreamBuffers& pBufs, const List<T>& field)
 const
 {
     // Stream data into buffer
-    for (const int domain : Pstream::allProcs(comm_))
+    for (const int domain : UPstream::allProcs(comm_))
     {
         const labelList& map = subMap_[domain];
 
@@ -1370,7 +1370,7 @@ const
     // Consume
     field.resize_nocopy(constructSize_);
 
-    for (const int domain : Pstream::allProcs(comm_))
+    for (const int domain : UPstream::allProcs(comm_))
     {
         const labelList& map = constructMap_[domain];
 
@@ -1405,7 +1405,7 @@ const
 template<class T, class NegateOp>
 void Foam::mapDistributeBase::distribute
 (
-    const Pstream::commsTypes commsType,
+    const UPstream::commsTypes commsType,
     List<T>& values,
     const NegateOp& negOp,
     const int tag
@@ -1431,7 +1431,7 @@ void Foam::mapDistributeBase::distribute
 template<class T, class NegateOp>
 void Foam::mapDistributeBase::distribute
 (
-    const Pstream::commsTypes commsType,
+    const UPstream::commsTypes commsType,
     const T& nullValue,
     List<T>& values,
     const NegateOp& negOp,
@@ -1475,11 +1475,41 @@ void Foam::mapDistributeBase::distribute
 template<class T>
 void Foam::mapDistributeBase::distribute
 (
+    const UPstream::commsTypes commsType,
     List<T>& values,
     const int tag
 ) const
 {
-    distribute(values, flipOp(), tag);
+    distribute(commsType, values, flipOp(), tag);
+}
+
+
+template<class T>
+void Foam::mapDistributeBase::distribute
+(
+    const UPstream::commsTypes commsType,
+    DynamicList<T>& values,
+    const int tag
+) const
+{
+    values.shrink();
+
+    List<T>& list = static_cast<List<T>&>(values);
+
+    distribute(commsType, list, tag);
+
+    values.setCapacity(list.size());
+}
+
+
+template<class T>
+void Foam::mapDistributeBase::distribute
+(
+    List<T>& values,
+    const int tag
+) const
+{
+    distribute(UPstream::defaultCommsType, values, tag);
 }
 
 
@@ -1490,20 +1520,14 @@ void Foam::mapDistributeBase::distribute
     const int tag
 ) const
 {
-    values.shrink();
-
-    List<T>& list = static_cast<List<T>&>(values);
-
-    distribute(list, tag);
-
-    values.setCapacity(list.size());
+    distribute(UPstream::defaultCommsType, values, tag);
 }
 
 
 template<class T>
 void Foam::mapDistributeBase::reverseDistribute
 (
-    const Pstream::commsTypes commsType,
+    const UPstream::commsTypes commsType,
     const label constructSize,
     List<T>& values,
     const int tag
@@ -1523,7 +1547,7 @@ void Foam::mapDistributeBase::reverseDistribute
 template<class T, class NegateOp>
 void Foam::mapDistributeBase::reverseDistribute
 (
-    const Pstream::commsTypes commsType,
+    const UPstream::commsTypes commsType,
     const label constructSize,
     List<T>& values,
     const NegateOp& negOp,
@@ -1550,7 +1574,7 @@ void Foam::mapDistributeBase::reverseDistribute
 template<class T>
 void Foam::mapDistributeBase::reverseDistribute
 (
-    const Pstream::commsTypes commsType,
+    const UPstream::commsTypes commsType,
     const label constructSize,
     const T& nullValue,
     List<T>& values,

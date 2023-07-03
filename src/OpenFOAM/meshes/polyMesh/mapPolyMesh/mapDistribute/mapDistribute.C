@@ -222,7 +222,7 @@ Foam::mapDistribute::mapDistribute
 :
     mapDistributeBase(comm)
 {
-    const label myRank = Pstream::myProcNo(comm);
+    const label myRank = UPstream::myProcNo(comm);
 
     // Construct per processor compact addressing of the global elements
     // needed. The ones from the local processor are not included since
@@ -330,7 +330,7 @@ Foam::mapDistribute::mapDistribute
 :
     mapDistributeBase(comm)
 {
-    const label myRank = Pstream::myProcNo(comm);
+    const label myRank = UPstream::myProcNo(comm);
 
     // Construct per processor compact addressing of the global elements
     // needed. The ones from the local processor are not included since

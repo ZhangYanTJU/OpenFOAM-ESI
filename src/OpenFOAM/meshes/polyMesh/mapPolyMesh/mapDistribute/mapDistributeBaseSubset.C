@@ -216,7 +216,7 @@ void Foam::mapDistributeBase::unionCombineMasks
             << Foam::abort(FatalError);
     }
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
         // Scratch buffers for union operations
         List<bitSet> scratch(recvMasks.size());
@@ -254,7 +254,7 @@ void Foam::mapDistributeBase::unionCombineMasks
     else
     {
         // Non-parallel: 'synchronize' myself
-        const label myRank = Pstream::myProcNo(comm);
+        const label myRank = UPstream::myProcNo(comm);
 
         recvMasks[myRank] &= sendMasks[myRank];
         sendMasks[myRank] = recvMasks[myRank];

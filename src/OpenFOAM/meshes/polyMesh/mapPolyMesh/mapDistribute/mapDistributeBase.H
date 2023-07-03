@@ -107,6 +107,18 @@ Ostream& operator<<(Ostream&, const InfoProxy<mapDistributeBase>&);
 
 class mapDistributeBase
 {
+public:
+
+    //- The map layout (eg, of the constructMap)
+    enum class layoutTypes : char
+    {
+        linear,     //!< In processor-order
+        localFirst  //!< Local processor first, others in linear order
+    };
+
+
+private:
+
     // Private Data
 
         //- Size of reconstructed data
@@ -429,6 +441,17 @@ public:
             labelListList& cellCells,
             List<Map<label>>& compactMap,
             const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
+
+        //- Construct from my elements to send, targetting the specified
+        //- constructMap layout
+        explicit mapDistributeBase
+        (
+            const layoutTypes constructLayout,
+            labelListList&& subMap,
+            const bool subHasFlip = false,
+            const bool constructHasFlip = false,
             const label comm = UPstream::worldComm
         );
 
@@ -792,7 +815,7 @@ public:
             template<class T, class NegateOp>
             static void distribute
             (
-                const Pstream::commsTypes commsType,
+                const UPstream::commsTypes commsType,
                 const List<labelPair>& schedule,
                 const label constructSize,
                 const labelListList& subMap,
@@ -812,7 +835,7 @@ public:
             template<class T, class CombineOp, class NegateOp>
             static void distribute
             (
-                const Pstream::commsTypes commsType,
+                const UPstream::commsTypes commsType,
                 const List<labelPair>& schedule,
                 const label constructSize,
                 const labelListList& subMap,
@@ -828,7 +851,9 @@ public:
             );
 
 
-            //- Distribute data using default commsType
+    // Distribute (simpler interface)
+
+            //- Distribute List data using default commsType
             //- and the default flip/negate operator.
             template<class T>
             void distribute
@@ -837,11 +862,31 @@ public:
                 const int tag = UPstream::msgType()
             ) const;
 
-            //- Distribute data using default commsType
+            //- Distribute DynamicList data using default commsType
             //- and the default flip/negate operator.
             template<class T>
             void distribute
             (
+                DynamicList<T>& values,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Distribute List data using specified commsType
+            //- and the default flip/negate operator.
+            template<class T>
+            void distribute
+            (
+                const UPstream::commsTypes commsType,
+                List<T>& values,
+                const int tag = UPstream::msgType()
+            ) const;
+
+            //- Distribute DynamicList data using specified commsType
+            //- and the default flip/negate operator.
+            template<class T>
+            void distribute
+            (
+                const UPstream::commsTypes commsType,
                 DynamicList<T>& values,
                 const int tag = UPstream::msgType()
             ) const;
@@ -864,7 +909,7 @@ public:
             template<class T, class NegateOp>
             void distribute
             (
-                const Pstream::commsTypes commsType,
+                const UPstream::commsTypes commsType,
                 List<T>& values,
                 const NegateOp& negOp,
                 const int tag = UPstream::msgType()
@@ -878,13 +923,15 @@ public:
             template<class T, class NegateOp>
             void distribute
             (
-                const Pstream::commsTypes commsType,
+                const UPstream::commsTypes commsType,
                 const T& nullValue,
                 List<T>& values,
                 const NegateOp& negOp,
                 const int tag = UPstream::msgType()
             ) const;
 
+
+    // Reverse Distribute (simpler interface)
 
             //- Reverse distribute data using default commsType
             //- and the default flip/negate operator
@@ -914,7 +961,7 @@ public:
             template<class T>
             void reverseDistribute
             (
-                const Pstream::commsTypes commsType,
+                const UPstream::commsTypes commsType,
                 const label constructSize,
                 List<T>& values,
                 const int tag = UPstream::msgType()
@@ -925,7 +972,7 @@ public:
             template<class T, class NegateOp>
             void reverseDistribute
             (
-                const Pstream::commsTypes commsType,
+                const UPstream::commsTypes commsType,
                 const label constructSize,
                 List<T>& values,
                 const NegateOp& negOp,
@@ -939,13 +986,15 @@ public:
             template<class T>
             void reverseDistribute
             (
-                const Pstream::commsTypes commsType,
+                const UPstream::commsTypes commsType,
                 const label constructSize,
                 const T& nullValue,
                 List<T>& values,
                 const int tag = UPstream::msgType()
             ) const;
 
+
+    // Send/Receive
 
             //- Do all sends using PstreamBuffers
             template<class T>
