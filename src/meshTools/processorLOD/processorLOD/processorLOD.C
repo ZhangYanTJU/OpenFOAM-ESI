@@ -38,7 +38,7 @@ Foam::processorLOD::processorLOD
 (
     const label maxObjectsPerLeaf,
     const label nObjectsOfType
-)
+) noexcept
 :
     maxObjectsPerLeaf_(maxObjectsPerLeaf),
     nObjectsOfType_(nObjectsOfType)

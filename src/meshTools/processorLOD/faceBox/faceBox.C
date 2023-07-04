@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,21 +38,21 @@ namespace processorLODs
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::boundBox Foam::processorLODs::faceBox::calcSrcBox
+Foam::treeBoundBox Foam::processorLODs::faceBox::calcSrcBox
 (
     const label srcObji
 ) const
 {
-    return boundBox(srcPoints_, srcFaces_[srcObji], false);
+    return treeBoundBox(srcPoints_, srcFaces_[srcObji]);  // No reduce
 }
 
 
-Foam::boundBox Foam::processorLODs::faceBox::calcTgtBox
+Foam::treeBoundBox Foam::processorLODs::faceBox::calcTgtBox
 (
     const label tgtObji
 ) const
 {
-    return boundBox(tgtPoints_, tgtFaces_[tgtObji], false);
+    return treeBoundBox(tgtPoints_, tgtFaces_[tgtObji]);  // No reduce
 }
 
 
@@ -69,15 +69,21 @@ Foam::processorLODs::faceBox::faceBox
     const label nRefineIterMax
 )
 :
-    box(srcPoints, tgtPoints, maxObjectsPerLeaf, nObjectsOfType),
+    processorLODs::box(srcPoints, tgtPoints, maxObjectsPerLeaf, nObjectsOfType),
     srcFaces_(srcFaces),
     tgtFaces_(tgtFaces)
 {}
 
 
-Foam::autoPtr<Foam::mapDistribute> Foam::processorLODs::faceBox::map()
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::mapDistribute>
+Foam::processorLODs::faceBox::map
+(
+    const mapDistributeBase::layoutTypes constructLayout
+)
 {
-    return createMap(srcFaces_.size(), tgtFaces_.size());
+    return createMap(srcFaces_.size(), tgtFaces_.size(), constructLayout);
 }
 
 

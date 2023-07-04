@@ -846,8 +846,8 @@ Foam::meshToMesh::meshToMesh
 (
     const polyMesh& src,
     const polyMesh& tgt,
-    const interpolationMethod& method,
-    const procMapMethod& mapMethod,
+    const interpolationMethod method,
+    const procMapMethod mapMethod,
     bool interpAllPatches
 )
 :
@@ -884,7 +884,7 @@ Foam::meshToMesh::meshToMesh
     const polyMesh& tgt,
     const word& methodName,
     const word& AMIMethodName,
-    const procMapMethod& mapMethod,
+    const procMapMethod mapMethod,
     bool interpAllPatches
 )
 :
@@ -914,10 +914,10 @@ Foam::meshToMesh::meshToMesh
 (
     const polyMesh& src,
     const polyMesh& tgt,
-    const interpolationMethod& method,
+    const interpolationMethod method,
     const HashTable<word>& patchMap,
     const wordList& cuttingPatches,
-    const procMapMethod& mapMethod,
+    const procMapMethod mapMethod,
     const bool normalise
 )
 :
@@ -956,7 +956,7 @@ Foam::meshToMesh::meshToMesh
     const word& AMIMethodName,  // boundary mapping
     const HashTable<word>& patchMap,
     const wordList& cuttingPatches,
-    const procMapMethod& mapMethod,
+    const procMapMethod mapMethod,
     const bool normalise
 )
 :

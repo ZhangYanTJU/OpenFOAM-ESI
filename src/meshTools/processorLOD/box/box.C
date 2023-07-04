@@ -51,28 +51,27 @@ void Foam::processorLODs::box::writeBoxes
     const label iter
 ) const
 {
-    static label time = 0;
+    static label timeIndex = 0;
 
     OFstream os
     (
         "processor" + Foam::name(Pstream::myProcNo())
-        + "_time" + Foam::name(time)
+        + "_time" + Foam::name(timeIndex)
         + "_iter" + Foam::name(iter) + ".obj"
     );
 
+    ++timeIndex;
+
     label verti = 0;
-    for (const int proci : Pstream::allProcs())
+    for (const int proci : UPstream::allProcs())
     {
-        if (proci == Pstream::myProcNo())
+        if (proci == UPstream::myProcNo())
         {
             continue;
         }
 
-        const DynamicList<treeBoundBox>& procBoxes = fixedBoxes[proci];
-        forAll(procBoxes, boxi)
+        for (const treeBoundBox& bb : fixedBoxes[proci])
         {
-            const treeBoundBox& bb = procBoxes[boxi];
-
             // Write the points
             const pointField pts(bb.points());
             meshTools::writeOBJ(os, pts);
@@ -90,8 +89,6 @@ void Foam::processorLODs::box::writeBoxes
             verti += pts.size();
         }
     }
-
-    ++time;
 }
 
 
@@ -418,7 +415,8 @@ bool Foam::processorLODs::box::doRefineBoxes
 Foam::autoPtr<Foam::mapDistribute> Foam::processorLODs::box::createMap
 (
     const label nSrcElems,
-    const label nTgtElems
+    const label nTgtElems,
+    const mapDistributeBase::layoutTypes constructLayout
 )
 {
     // Store elements to send - will be used to build the mapDistribute
@@ -528,7 +526,11 @@ Foam::autoPtr<Foam::mapDistribute> Foam::processorLODs::box::createMap
         }
     }
 
-    return autoPtr<mapDistribute>::New(std::move(sendElems));
+    return autoPtr<mapDistribute>::New
+    (
+        constructLayout,
+        std::move(sendElems)
+    );
 }
 
 

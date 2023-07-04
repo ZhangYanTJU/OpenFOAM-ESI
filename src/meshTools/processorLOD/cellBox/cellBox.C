@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,12 +39,12 @@ namespace processorLODs
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::boundBox Foam::processorLODs::cellBox::calcSrcBox
+Foam::treeBoundBox Foam::processorLODs::cellBox::calcSrcBox
 (
     const label srcObji
 ) const
 {
-    boundBox bb;
+    treeBoundBox bb;
 
     for (const label facei : srcCells_[srcObji])
     {
@@ -55,12 +55,12 @@ Foam::boundBox Foam::processorLODs::cellBox::calcSrcBox
 }
 
 
-Foam::boundBox Foam::processorLODs::cellBox::calcTgtBox
+Foam::treeBoundBox Foam::processorLODs::cellBox::calcTgtBox
 (
     const label tgtObji
 ) const
 {
-    boundBox bb;
+    treeBoundBox bb;
 
     for (const label facei : tgtCells_[tgtObji])
     {
@@ -86,7 +86,7 @@ Foam::processorLODs::cellBox::cellBox
     const label nRefineIterMax
 )
 :
-    faceBox
+    processorLODs::faceBox
     (
         srcFaces,
         srcPoints,
@@ -101,9 +101,15 @@ Foam::processorLODs::cellBox::cellBox
 {}
 
 
-Foam::autoPtr<Foam::mapDistribute> Foam::processorLODs::cellBox::map()
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::mapDistribute>
+Foam::processorLODs::cellBox::map
+(
+    const mapDistributeBase::layoutTypes constructLayout
+)
 {
-    return createMap(srcCells_.size(), tgtCells_.size());
+    return createMap(srcCells_.size(), tgtCells_.size(), constructLayout);
 }
 
 

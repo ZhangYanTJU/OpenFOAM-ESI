@@ -114,6 +114,11 @@ Foam::autoPtr<Foam::mapDistribute> Foam::meshToMesh::calcProcMap
     const polyMesh& tgt
 ) const
 {
+    // Uses linear construct order
+    const
+        mapDistributeBase::layoutTypes constructLayout =
+        mapDistributeBase::layoutTypes::linear;
+
     switch (procMapMethod_)
     {
         case procMapMethod::pmLOD:
@@ -139,7 +144,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::meshToMesh::calcProcMap
                 src.nCells()
             );
 
-            return boxLOD.map();
+            return boxLOD.map(constructLayout);
             break;
         }
         default:
@@ -232,25 +237,10 @@ Foam::autoPtr<Foam::mapDistribute> Foam::meshToMesh::calcProcMap
             }
 
 
-            labelList recvSizes;
-            Pstream::exchangeSizes(sendMap, recvSizes, UPstream::worldComm);
-
-            // Uses linear receive order
-            labelListList constructMap(UPstream::nProcs());
-
-            label constructSize = 0;
-            forAll(constructMap, proci)
-            {
-                const label len = recvSizes[proci];
-                constructMap[proci] = identity(len, constructSize);
-                constructSize += len;
-            }
-
             return autoPtr<mapDistribute>::New
             (
-                constructSize,
-                std::move(sendMap),
-                std::move(constructMap)
+                constructLayout,
+                std::move(sendMap)
             );
             break;
         }

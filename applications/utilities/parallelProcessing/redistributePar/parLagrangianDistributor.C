@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,10 +144,10 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
 
     const label oldLpi = lpi.size();
 
-    labelListList subMap;
+    labelListList sendMap;
 
-    // Allocate transfer buffers
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    // Transfer buffers
+    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
 
     {
         // List of lists of particles to be transferred for all of the
@@ -173,7 +173,7 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
 
 
         // Per processor the indices of the particles to send
-        subMap = invertOneToMany(Pstream::nProcs(), destProc);
+        sendMap = invertOneToMany(UPstream::nProcs(), destProc);
 
 
         // Stream into send buffers
@@ -282,29 +282,12 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
         lpi.rename(cloudName);
     }
 
-    // Until now (FEB-2023) we have always used processor ordering for the
-    // construct map (whereas mapDistribute has local transfers first),
-    // so we'll stick with that for now, but can likely just use the subMap
-    // directly with mapDistribute and have it determine the constructMap.
 
-    labelList recvSizes;
-    Pstream::exchangeSizes(subMap, recvSizes);
-
-    label constructSize = 0;
-    labelListList constructMap(Pstream::nProcs());
-
-    forAll(constructMap, proci)
-    {
-        const label len = recvSizes[proci];
-        constructMap[proci] = identity(len, constructSize);
-        constructSize += len;
-    }
-
+    // The constructMap is in linear (processor) order
     return autoPtr<mapDistributeBase>::New
     (
-        constructSize,
-        std::move(subMap),
-        std::move(constructMap)
+        mapDistributeBase::layoutTypes::linear,
+        std::move(sendMap)
     );
 }
 

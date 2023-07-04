@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,8 +38,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorLODs_faceBox
-#define processorLODs_faceBox
+#ifndef Foam_processorLODs_faceBox
+#define Foam_processorLODs_faceBox
 
 #include "box.H"
 
@@ -47,7 +47,6 @@ Description
 
 namespace Foam
 {
-
 namespace processorLODs
 {
 
@@ -57,11 +56,11 @@ namespace processorLODs
 
 class faceBox
 :
-    public box
+    public processorLODs::box
 {
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Reference to the source face list
         const faceList& srcFaces_;
@@ -72,8 +71,11 @@ protected:
 
     // Protected Member Functions
 
-        virtual boundBox calcSrcBox(const label srcObji) const;
-        virtual boundBox calcTgtBox(const label tgtObji) const;
+        //- The local boundBox associated with given source object
+        virtual treeBoundBox calcSrcBox(const label srcObji) const;
+
+        //- The local boundBox associated with given target object
+        virtual treeBoundBox calcTgtBox(const label tgtObji) const;
 
 
 public:
@@ -81,17 +83,20 @@ public:
     //- Runtime type information
     TypeName("box");
 
-    //- Construct from list of points
-    faceBox
-    (
-        const faceList& srcFaces,
-        const UList<point>& srcPoints,
-        const faceList& tgtFaces,
-        const UList<point>& tgtPoints,
-        const label maxObjectsPerLeaf,
-        const label nObjectsOfType,
-        const label nRefineIterMax = 100
-    );
+    // Constructors
+
+        //- Construct from list of points/faces for source and target
+        faceBox
+        (
+            const faceList& srcFaces,
+            const UList<point>& srcPoints,
+            const faceList& tgtFaces,
+            const UList<point>& tgtPoints,
+            const label maxObjectsPerLeaf,
+            const label nObjectsOfType,
+            const label nRefineIterMax = 100
+        );
+
 
     //- Destructor
     virtual ~faceBox() = default;
@@ -100,16 +105,17 @@ public:
     // Member Functions
 
         //- Return the parallel distribution map
-        virtual autoPtr<mapDistribute> map();
+        //- (usually linear construct order)
+        virtual autoPtr<mapDistribute> map
+        (
+            const mapDistributeBase::layoutTypes constructLayout
+        );
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace processorLODs
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

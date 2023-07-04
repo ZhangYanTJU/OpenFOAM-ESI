@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,8 +38,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorLODs_cellBox
-#define processorLODs_cellBox
+#ifndef Foam_processorLODs_cellBox
+#define Foam_processorLODs_cellBox
 
 #include "faceBox.H"
 #include "cellList.H"
@@ -48,7 +48,6 @@ Description
 
 namespace Foam
 {
-
 namespace processorLODs
 {
 
@@ -58,23 +57,27 @@ namespace processorLODs
 
 class cellBox
 :
-    public faceBox
+    public processorLODs::faceBox
 {
-private:
+protected:
 
-    // Private data
+    // Protected Data
 
-        //- Reference to the source face list
+        //- Reference to the source cell list
         const cellList& srcCells_;
 
-        //- Reference to the target face list
+        //- Reference to the target cell list
         const cellList& tgtCells_;
 
 
-    // Private Member Functions
+    // Protected Member Functions
 
-        virtual boundBox calcSrcBox(const label srcObji) const;
-        virtual boundBox calcTgtBox(const label tgtObji) const;
+        //- The local boundBox associated with given source object
+        virtual treeBoundBox calcSrcBox(const label srcObji) const;
+
+        //- The local boundBox associated with given target object
+        virtual treeBoundBox calcTgtBox(const label tgtObji) const;
+
 
 
 public:
@@ -82,19 +85,22 @@ public:
     //- Runtime type information
     TypeName("box");
 
-    //- Construct from list of points
-    cellBox
-    (
-        const cellList& srcCells,
-        const faceList& srcFaces,
-        const UList<point>& srcPoints,
-        const cellList& tgtCells,
-        const faceList& tgtFaces,
-        const UList<point>& tgtPoints,
-        const label maxObjectsPerLeaf,
-        const label nObjectsOfType,
-        const label nRefineIterMax = 100
-    );
+    // Constructors
+
+        //- Construct from list of points/faces/cells for source and target
+        cellBox
+        (
+            const cellList& srcCells,
+            const faceList& srcFaces,
+            const UList<point>& srcPoints,
+            const cellList& tgtCells,
+            const faceList& tgtFaces,
+            const UList<point>& tgtPoints,
+            const label maxObjectsPerLeaf,
+            const label nObjectsOfType,
+            const label nRefineIterMax = 100
+        );
+
 
     //- Destructor
     virtual ~cellBox() = default;
@@ -103,16 +109,17 @@ public:
     // Member Functions
 
         //- Return the parallel distribution map
-        virtual autoPtr<mapDistribute> map();
+        //- (usually linear construct order)
+        virtual autoPtr<mapDistribute> map
+        (
+            const mapDistributeBase::layoutTypes constructLayout
+        );
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace processorLODs
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

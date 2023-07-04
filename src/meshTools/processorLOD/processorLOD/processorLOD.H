@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,17 +33,19 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorLOD_H
-#define processorLOD_H
+#ifndef Foam_processorLOD_H
+#define Foam_processorLOD_H
 
 #include "autoPtr.H"
 #include "typeInfo.H"
+#include "mapDistributeBase.H"  // For layoutTypes
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
+// Forward Declarations
 class mapDistribute;
 
 /*---------------------------------------------------------------------------*\
@@ -52,16 +54,15 @@ class mapDistribute;
 
 class processorLOD
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Maximum number of objects per leaf
         label maxObjectsPerLeaf_;
 
-        //- Number of objects of this type, e.g. number of faces/cells on this
-        //- processor
+        //- Number of objects of this type.
+        //- e.g. number of faces/cells on this processor
         label nObjectsOfType_;
 
 
@@ -75,7 +76,7 @@ public:
     (
         const label maxObjectsPerLeaf,
         const label nObjectsOfType
-    );
+    ) noexcept;
 
     //- Destructor
     virtual ~processorLOD() = default;
@@ -84,7 +85,12 @@ public:
     // Member Functions
 
         //- Return the parallel distribution map
-        virtual autoPtr<mapDistribute> map() = 0;
+        //- (usually linear construct order)
+        virtual autoPtr<mapDistribute> map
+        (
+            const mapDistributeBase::layoutTypes constructLayout
+          = mapDistributeBase::layoutTypes::linear
+        ) = 0;
 };
 
 

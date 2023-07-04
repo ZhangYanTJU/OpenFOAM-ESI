@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -315,8 +315,8 @@ public:
     (
         const polyMesh& src,
         const polyMesh& tgt,
-        const interpolationMethod& method,
-        const procMapMethod& mapMethod = procMapMethod::pmAABB,
+        const interpolationMethod method,
+        const procMapMethod mapMethod = procMapMethod::pmAABB,
         const bool interpAllPatches = true
     );
 
@@ -327,7 +327,7 @@ public:
         const polyMesh& tgt,
         const word& methodName,     // internal mapping
         const word& AMIMethodName,  // boundary mapping
-        const procMapMethod& mapMethod = procMapMethod::pmAABB,
+        const procMapMethod mapMethod = procMapMethod::pmAABB,
         const bool interpAllPatches = true
     );
 
@@ -336,10 +336,10 @@ public:
     (
         const polyMesh& src,
         const polyMesh& tgt,
-        const interpolationMethod& method,
+        const interpolationMethod method,
         const HashTable<word>& patchMap,
         const wordList& cuttingPatches,
-        const procMapMethod& mapMethod = procMapMethod::pmAABB,
+        const procMapMethod mapMethod = procMapMethod::pmAABB,
         const bool normalise = true
     );
 
@@ -353,7 +353,7 @@ public:
         const word& AMIMethodName,  // boundary mapping
         const HashTable<word>& patchMap,
         const wordList& cuttingPatches,
-        const procMapMethod& mapMethod = procMapMethod::pmAABB,
+        const procMapMethod mapMethod = procMapMethod::pmAABB,
         const bool normalise = true
     );
 
