@@ -497,9 +497,9 @@ Foam::MeshedSurface<Face>::MeshedSurface
             "dummyName",
             runTime.timeName(),
             runTime,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::MUST_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         ),
         surfName
     );

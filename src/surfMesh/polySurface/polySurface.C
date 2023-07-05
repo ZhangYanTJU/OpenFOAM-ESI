@@ -91,9 +91,9 @@ Foam::polySurface::polySurface(const IOobject& io, bool doCheckIn)
             io.name(),
             io.db().time().constant(),
             io.db(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::REGISTER
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::REGISTER
         )
     ),
     MeshReference(faceList(), pointField()),
@@ -122,9 +122,9 @@ Foam::polySurface::polySurface
             surfName,
             obr.time().constant(),
             obr,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::REGISTER
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::REGISTER
         ),
         doCheckIn
     )

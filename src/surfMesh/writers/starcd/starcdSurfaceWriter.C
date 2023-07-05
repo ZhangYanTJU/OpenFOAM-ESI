@@ -140,7 +140,7 @@ Foam::fileName Foam::surfaceWriters::starcdWriter::write()
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         if (!isDir(outputFile.path()))
         {
@@ -219,7 +219,7 @@ Foam::fileName Foam::surfaceWriters::starcdWriter::writeTemplate
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         const auto& values = tfield();
 

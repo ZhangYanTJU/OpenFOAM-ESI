@@ -360,7 +360,7 @@ void Foam::surfaceWriter::setSurface
 {
     expire();
     surf_.reset(surf);
-    parallel_ = (parallel && Pstream::parRun());
+    parallel_ = (parallel && UPstream::parRun());
 }
 
 
@@ -373,7 +373,7 @@ void Foam::surfaceWriter::setSurface
 {
     expire();
     surf_.reset(points, faces);
-    parallel_ = (parallel && Pstream::parRun());
+    parallel_ = (parallel && UPstream::parRun());
 }
 
 
@@ -466,7 +466,7 @@ bool Foam::surfaceWriter::merge() const
         // Similar to expire
         adjustedSurf_.clear();
 
-        if (parallel_ && Pstream::parRun())
+        if (parallel_ && UPstream::parRun())
         {
             changed = mergedSurf_.merge(surf_, mergeDim_);
         }
@@ -474,15 +474,14 @@ bool Foam::surfaceWriter::merge() const
         {
             mergedSurf_.clear();
         }
+
+        if (changed)
+        {
+            wroteGeom_ = false;
+        }
     }
 
     upToDate_ = true;
-
-    if (changed)
-    {
-        wroteGeom_ = false;
-    }
-
     return changed;
 }
 
@@ -491,7 +490,7 @@ const Foam::meshedSurf& Foam::surfaceWriter::surface() const
 {
     merge();
 
-    if (parallel_ && Pstream::parRun())
+    if (parallel_ && UPstream::parRun())
     {
         return mergedSurf_;
     }
@@ -563,7 +562,7 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::mergeFieldTemplate
     const Field<Type>& fld
 ) const
 {
-    if (parallel_ && Pstream::parRun())
+    if (parallel_ && UPstream::parRun())
     {
         // Ensure geometry is also merged
         merge();
@@ -593,7 +592,7 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::mergeFieldTemplate
         // Renumber (point data) to correspond to merged points
         if
         (
-            Pstream::master()
+            UPstream::master()
          && this->isPointData()
          && mergedSurf_.pointsMap().size()
         )

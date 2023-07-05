@@ -129,7 +129,7 @@ Foam::fileName Foam::surfaceWriters::abaqusWriter::writeTemplate
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         const auto& values = tfield();
 

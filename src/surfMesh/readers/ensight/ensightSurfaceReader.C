@@ -346,7 +346,7 @@ Foam::ensightSurfaceReader::ensightSurfaceReader
     surfaceReader(fName, options),
     masterOnly_
     (
-        Pstream::parRun()
+        UPstream::parRun()
      && options.getOrDefault("masterOnly", false)
     ),
     readFormat_(IOstreamOption::ASCII),  // Placeholder value
@@ -371,7 +371,7 @@ Foam::ensightSurfaceReader::ensightSurfaceReader
         readCase(is);
     }
 
-    if (masterOnly_ && Pstream::parRun())
+    if (masterOnly_ && UPstream::parRun())
     {
         Pstream::broadcasts
         (
@@ -644,7 +644,7 @@ const Foam::meshedSurface& Foam::ensightSurfaceReader::geometry
             surf = readGeometry(geomFile);
         }
 
-        if (masterOnly_ && Pstream::parRun())
+        if (masterOnly_ && UPstream::parRun())
         {
             // Note: don't need faceTypeInfo_ on (non-reading) ranks
             Pstream::broadcast(surf, UPstream::worldComm);

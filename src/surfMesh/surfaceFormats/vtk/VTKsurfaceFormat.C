@@ -114,9 +114,9 @@ bool Foam::fileFormats::VTKsurfaceFormat<Face>::read
         (
             "vtk::surfaceFormat",
             *dummyTimePtr,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     );
 

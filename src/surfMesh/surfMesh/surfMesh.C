@@ -96,8 +96,8 @@ Foam::surfMesh::surfMesh(const IOobject& io, const word& surfName)
             time().findInstance(meshDir(), "points"),
             meshSubDir,
             *this,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::MUST_READ,
+            IOobjectOption::NO_WRITE
         ),
         IOobject
         (
@@ -105,8 +105,8 @@ Foam::surfMesh::surfMesh(const IOobject& io, const word& surfName)
             time().findInstance(meshDir(), "faces"),
             meshSubDir,
             *this,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::MUST_READ,
+            IOobjectOption::NO_WRITE
         )
     ),
     MeshReference(this->storedIOFaces(), this->storedIOPoints()),
@@ -119,8 +119,8 @@ Foam::surfMesh::surfMesh(const IOobject& io, const word& surfName)
             time().findInstance(meshDir(), "surfZones"),
             meshSubDir,
             *this,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobjectOption::LAZY_READ,
+            IOobjectOption::NO_WRITE
         )
     )
 {}
@@ -141,8 +141,8 @@ Foam::surfMesh::surfMesh
             instance(),
             meshSubDir,
             *this,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE
         ),
         IOobject
         (
@@ -150,8 +150,8 @@ Foam::surfMesh::surfMesh
             instance(),
             meshSubDir,
             *this,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE
         )
     ),
     MeshReference(this->storedIOFaces(), this->storedIOPoints()),
@@ -164,8 +164,8 @@ Foam::surfMesh::surfMesh
             instance(),
             meshSubDir,
             *this,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE
         )
     )
 {}
@@ -187,7 +187,7 @@ Foam::surfMesh::surfMesh
             instance(),
             meshSubDir,
             *this,
-            IOobject::NO_READ,
+            IOobjectOption::NO_READ,
             io.writeOpt()
         ),
         IOobject
@@ -196,7 +196,7 @@ Foam::surfMesh::surfMesh
             instance(),
             meshSubDir,
             *this,
-            IOobject::NO_READ,
+            IOobjectOption::NO_READ,
             io.writeOpt()
         )
     ),
@@ -210,7 +210,7 @@ Foam::surfMesh::surfMesh
             instance(),
             meshSubDir,
             *this,
-            IOobject::NO_READ,
+            IOobjectOption::NO_READ,
             io.writeOpt()
         )
     )

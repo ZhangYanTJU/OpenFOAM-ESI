@@ -156,7 +156,7 @@ Foam::tmp<Foam::Field<Type>> Foam::ensightSurfaceReader::readField
         }
     }
 
-    if (masterOnly_ && Pstream::parRun())
+    if (masterOnly_ && UPstream::parRun())
     {
         Pstream::broadcast(field, UPstream::worldComm);
     }

@@ -267,7 +267,7 @@ Foam::fileName Foam::surfaceWriters::debugWriter::write()
         Info<< "Not writing: " << surf.faces().size() << " faces" << nl;
     }
 
-    if (enableWrite_ && (Pstream::master() || !parallel_))
+    if (enableWrite_ && (UPstream::master() || !parallel_))
     {
         if (!isDir(surfaceDir))
         {
@@ -281,9 +281,9 @@ Foam::fileName Foam::surfaceWriters::debugWriter::write()
             (
                 surfaceDir/"points",
                 *dummyTimePtr,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
         iopts.note() = (this->isPointData() ? "point data" : "face data");
@@ -334,7 +334,7 @@ Foam::fileName Foam::surfaceWriters::debugWriter::writeTemplate
     const meshedSurf& surf = surface();
     // const meshedSurfRef& surf = adjustSurface();
 
-    if (enableWrite_ && (Pstream::master() || !parallel_))
+    if (enableWrite_ && (UPstream::master() || !parallel_))
     {
         if (!isDir(outputFile.path()))
         {
@@ -349,9 +349,9 @@ Foam::fileName Foam::surfaceWriters::debugWriter::writeTemplate
                 (
                     surfaceDir/"points",
                     *dummyTimePtr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 )
             );
             iopts.note() = (this->isPointData() ? "point data" : "face data");
@@ -367,9 +367,9 @@ Foam::fileName Foam::surfaceWriters::debugWriter::writeTemplate
                 (
                     outputFile,
                     *dummyTimePtr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 )
             );
             iofld.note() = (this->isPointData() ? "point data" : "face data");

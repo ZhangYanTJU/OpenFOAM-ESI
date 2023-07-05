@@ -217,7 +217,7 @@ Foam::fileName Foam::surfaceWriters::x3dWriter::write()
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         if (!isDir(outputFile.path()))
         {
@@ -282,7 +282,7 @@ Foam::fileName Foam::surfaceWriters::x3dWriter::writeTemplate
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         const auto& values = tfield();
 

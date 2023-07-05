@@ -215,7 +215,7 @@ Foam::fileName Foam::surfaceWriters::vtkWriter::write()
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (!writer_ && (Pstream::master() || !parallel_))
+    if (!writer_ && (UPstream::master() || !parallel_))
     {
         writer_.reset
         (
@@ -295,7 +295,7 @@ Foam::fileName Foam::surfaceWriters::vtkWriter::writeTemplate
     }
 
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         if (!nFields_ && writer_->legacy())
         {

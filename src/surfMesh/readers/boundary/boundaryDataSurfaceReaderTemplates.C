@@ -51,9 +51,9 @@ Foam::boundaryDataSurfaceReader::readField
     (
         valuesFile,   // absolute path
         runTime,
-        IOobject::MUST_READ,
-        IOobject::NO_WRITE,
-        IOobject::NO_REGISTER,
+        IOobjectOption::MUST_READ,
+        IOobjectOption::NO_WRITE,
+        IOobjectOption::NO_REGISTER,
         true                // global object (currently not used)
     );
 
@@ -61,7 +61,7 @@ Foam::boundaryDataSurfaceReader::readField
         << "File: " << io.objectPath() << endl;
 
     // Read data (TDB: setAverage)
-    rawIOField<Type> rawData(io, IOobjectOption::READ_IF_PRESENT);
+    rawIOField<Type> rawData(io, IOobjectOption::LAZY_READ);
 
     if (rawData.hasAverage())
     {

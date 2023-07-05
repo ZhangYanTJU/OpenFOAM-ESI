@@ -128,7 +128,7 @@ Foam::fileName Foam::surfaceWriters::proxyWriter::write()
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         if (!isDir(outputFile.path()))
         {

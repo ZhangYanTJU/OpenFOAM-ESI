@@ -64,9 +64,9 @@ Foam::pointField Foam::boundaryDataSurfaceReader::readPoints
     (
         pointsFile,             // absolute path
         runTime,
-        IOobject::MUST_READ,
-        IOobject::NO_WRITE,
-        IOobject::NO_REGISTER,
+        IOobjectOption::MUST_READ,
+        IOobjectOption::NO_WRITE,
+        IOobjectOption::NO_REGISTER,
         true                    // global object (currently not used)
     );
 

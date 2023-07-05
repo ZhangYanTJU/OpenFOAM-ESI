@@ -153,9 +153,9 @@ void Foam::MeshedSurfaceProxy<Face>::write
                 t.timeName(),
                 surfMesh::meshSubDir,
                 t,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 
@@ -179,9 +179,9 @@ void Foam::MeshedSurfaceProxy<Face>::write
                 t.timeName(),
                 surfMesh::meshSubDir,
                 t,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 
@@ -212,9 +212,9 @@ void Foam::MeshedSurfaceProxy<Face>::write
                 t.timeName(),
                 surfMesh::meshSubDir,
                 t,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 

@@ -137,7 +137,7 @@ public:
         (
             const meshedSurf& surf,
             const fileName& outputPath,
-            bool parallel = Pstream::parRun(),
+            bool parallel = UPstream::parRun(),
             const dictionary& options = dictionary()
         );
 
@@ -147,7 +147,7 @@ public:
             const pointField& points,
             const faceList& faces,
             const fileName& outputPath,
-            bool parallel = Pstream::parRun(),
+            bool parallel = UPstream::parRun(),
             const dictionary& options = dictionary()
         );
 

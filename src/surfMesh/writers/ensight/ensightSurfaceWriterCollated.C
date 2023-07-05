@@ -97,7 +97,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         if (!isDir(outputFile.path()))
         {

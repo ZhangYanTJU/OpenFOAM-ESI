@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -169,9 +169,9 @@ void Foam::surfaceWriters::boundaryDataWriter::serialWriteGeometry
             (
                 iopts.objectPath().path()/"normal",
                 iopts.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
         iofld.note() = "face data";
@@ -208,7 +208,7 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::write()
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         if (!isDir(surfaceDir))
         {
@@ -222,9 +222,9 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::write()
             (
                 surfaceDir/"points",
                 *timePtr,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
         iopts.note() = (this->isPointData() ? "point data" : "face data");
@@ -270,7 +270,7 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::writeTemplate
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         if (!isDir(outputFile.path()))
         {
@@ -285,9 +285,9 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::writeTemplate
                 (
                     surfaceDir/"points",
                     *timePtr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 )
             );
             iopts.note() = (this->isPointData() ? "point data" : "face data");
@@ -303,9 +303,9 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::writeTemplate
                 (
                     outputFile,
                     *timePtr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 )
             );
             iofld.note() = (this->isPointData() ? "point data" : "face data");

@@ -138,7 +138,7 @@ Foam::fileName Foam::surfaceWriters::rawWriter::write()
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
 
-    if (Pstream::master() || !parallel_)
+    if (UPstream::master() || !parallel_)
     {
         const pointField& points = surf.points();
         const faceList& faces = surf.faces();

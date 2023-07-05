@@ -90,9 +90,9 @@ Foam::surfMesh::readUpdateState Foam::surfMesh::readUpdate()
                 pointsInst,
                 meshSubDir,
                 *this,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 
@@ -104,9 +104,9 @@ Foam::surfMesh::readUpdateState Foam::surfMesh::readUpdate()
                 facesInst,
                 meshSubDir,
                 *this,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 
@@ -119,9 +119,9 @@ Foam::surfMesh::readUpdateState Foam::surfMesh::readUpdate()
                 facesInst,
                 meshSubDir,
                 *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::LAZY_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 
@@ -174,9 +174,9 @@ Foam::surfMesh::readUpdateState Foam::surfMesh::readUpdate()
                 pointsInst,
                 meshSubDir,
                 *this,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 

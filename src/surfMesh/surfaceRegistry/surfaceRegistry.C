@@ -56,8 +56,8 @@ Foam::surfaceRegistry::surfaceRegistry
             obr.time().timeName(),
             prefix,
             obr,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE
         )
     )
 {}

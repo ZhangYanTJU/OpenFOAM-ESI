@@ -117,9 +117,9 @@ void Foam::polySurface::storeField
             (
                 fieldName,
                 fieldDb,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             ),
             *this,
             dims,
@@ -158,9 +158,9 @@ void Foam::polySurface::storeField
             (
                 fieldName,
                 fieldDb,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             ),
             *this,
             dims,
