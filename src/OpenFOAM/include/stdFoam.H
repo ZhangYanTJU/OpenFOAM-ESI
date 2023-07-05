@@ -75,11 +75,6 @@ namespace Detail {}
 //- Additional OpenFOAM modules
 namespace Module {}
 
-// Standard items
-
-//- Allow use of std::unique_ptr directly as Foam::unique_ptr
-using std::unique_ptr;
-
 
 //- A functor that returns its argument unchanged (cf. C++20 std::identity)
 //- Should \em never be specialized.
