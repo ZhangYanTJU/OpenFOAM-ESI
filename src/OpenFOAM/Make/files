@@ -24,6 +24,7 @@ $(fileOps)/fileOperation/fileOperationRanks.C
 $(fileOps)/fileOperation/fileOperationInitialise.C
 $(fileOps)/dummyFileOperation/dummyFileOperation.C
 $(fileOps)/uncollatedFileOperation/uncollatedFileOperation.C
+$(fileOps)/uncollatedFileOperation/hostUncollatedFileOperation.C
 $(fileOps)/masterUncollatedFileOperation/masterUncollatedFileOperation.C
 $(fileOps)/collatedFileOperation/collatedFileOperation.C
 $(fileOps)/collatedFileOperation/hostCollatedFileOperation.C
