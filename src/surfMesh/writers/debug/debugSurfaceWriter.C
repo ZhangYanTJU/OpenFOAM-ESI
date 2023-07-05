@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,69 +60,8 @@ Foam::surfaceWriters::debugWriter::mergeField
     const Field<Type>& fld
 ) const
 {
-    addProfiling
-    (
-        merge,
-        "debugWriter::merge-field"
-    );
-
-    if (parallel_ && Pstream::parRun())
-    {
-        // Ensure geometry is also merged
-        merge();
-
-        // Gather all values
-        auto tfield = tmp<Field<Type>>::New();
-        auto& allFld = tfield.ref();
-
-        if (mpiGatherv_)
-        {
-            globalIndex::mpiGatherOp
-            (
-                fld,
-                allFld,
-                UPstream::worldComm,
-                commType_
-            );
-        }
-        else
-        {
-            const globalIndex& globIndex =
-            (
-                this->isPointData()
-              ? mergedSurf_.pointGlobalIndex()
-              : mergedSurf_.faceGlobalIndex()
-            );
-
-            globIndex.gather
-            (
-                fld,
-                allFld,
-                UPstream::msgType(),
-                commType_,
-                UPstream::worldComm
-            );
-        }
-
-        // Renumber (point data) to correspond to merged points
-        if
-        (
-            Pstream::master()
-         && this->isPointData()
-         && mergedSurf_.pointsMap().size()
-        )
-        {
-            inplaceReorder(mergedSurf_.pointsMap(), allFld);
-            allFld.resize(mergedSurf_.points().size());
-        }
-
-        return tfield;
-    }
-
-    // Mark that any geometry changes have been taken care of
-    upToDate_ = true;
-
-    return fld;
+    addProfiling(merge, "debugWriter::merge-field");
+    return surfaceWriter::mergeField(fld);
 }
 
 
@@ -131,7 +70,7 @@ Foam::surfaceWriters::debugWriter::mergeField
 Foam::surfaceWriters::debugWriter::debugWriter()
 :
     surfaceWriter(),
-    mpiGatherv_(false),
+    enableMerge_(true),
     enableWrite_(false),
     header_(true),
     streamOpt_(IOstreamOption::BINARY)
@@ -144,7 +83,7 @@ Foam::surfaceWriters::debugWriter::debugWriter
 )
 :
     surfaceWriter(options),
-    mpiGatherv_(options.getOrDefault("gatherv", false)),
+    enableMerge_(options.getOrDefault("merge", true)),
     enableWrite_(options.getOrDefault("write", false)),
     header_(true),
     streamOpt_(IOstreamOption::BINARY)
@@ -152,7 +91,7 @@ Foam::surfaceWriters::debugWriter::debugWriter
     Info<< "Using debug surface writer ("
         << (this->isPointData() ? "point" : "face") << " data):"
         << " commsType=" << UPstream::commsTypeNames[commType_]
-        << " gatherv=" << Switch::name(mpiGatherv_)
+        << " merge=" << Switch::name(enableMerge_)
         << " write=" << Switch::name(enableWrite_) << endl;
 }
 
@@ -252,6 +191,19 @@ Foam::fileName Foam::surfaceWriters::debugWriter::write()
 
     fileName surfaceDir = outputPath_;
 
+    if (parallel_ && !enableMerge_)
+    {
+        if (verbose_)
+        {
+            Info<< "Not merging or writing" << nl;
+        }
+
+        // Pretend to have succeeded
+        wroteGeom_ = true;
+        return surfaceDir;
+    }
+
+
     const meshedSurf& surf = surface();
     // const meshedSurfRef& surf = adjustSurface();
 
@@ -313,6 +265,19 @@ Foam::fileName Foam::surfaceWriters::debugWriter::writeTemplate
     fileName surfaceDir = outputPath_;
 
     const fileName outputFile(surfaceDir/timeName()/fieldName);
+
+    if (parallel_ && !enableMerge_)
+    {
+        if (verbose_)
+        {
+            Info<< "Not merging or writing" << nl;
+        }
+
+        // Pretend to have succeeded
+        wroteGeom_ = true;
+        return surfaceDir;
+    }
+
 
     // Implicit geometry merge()
     tmp<Field<Type>> tfield = mergeField(localValues);

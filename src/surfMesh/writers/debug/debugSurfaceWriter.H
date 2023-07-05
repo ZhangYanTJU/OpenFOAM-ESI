@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,8 @@ Description
     {
         debug
         {
-            write       true;
+            merge   true;
+            write   true;
         }
     }
     \endverbatim
@@ -44,9 +45,15 @@ Description
     \table
         Property    | Description                           | Required | Default
         commsType   | blocking/nonBlocking/scheduled        | no  | scheduled
-        gatherv     | Use MPI gatherv when merging          | no  | false
-        write       | Write boundaryData (binary + header)  | no  | false
+        merge       | Enable geometry/field merging         | no  | true
+        write       | Write file(s)                         | no  | false
     \endtable
+
+Note
+    Disabling geometry/field merging (in parallel) implicitly deactivates
+    writing as well.
+
+    Output files (if any) are written as boundaryData (binary + header).
 
 SourceFiles
     debugSurfaceWriter.C
@@ -79,8 +86,8 @@ class debugWriter
 {
     // Private Data
 
-        //- Use MPI gatherv in globalIndex gathering
-        bool mpiGatherv_;
+        //- Enable/disable all merging in parallel
+        bool enableMerge_;
 
         //- Output writing?
         bool enableWrite_;
