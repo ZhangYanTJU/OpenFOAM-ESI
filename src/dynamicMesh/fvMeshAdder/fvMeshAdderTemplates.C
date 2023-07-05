@@ -712,15 +712,12 @@ void Foam::fvMeshAdder::MapDimField
     // Add fields to fields[0] after adding the meshes to meshes[0].
     // Mesh[0] is the sum of all meshes. Fields are not yet mapped.
 
-    if
-    (
-        flds.size() == 0
-    || !flds.set(0)
-    || cellProcAddressing.size() != flds.size()
-    )
+    if (!flds.test(0) || cellProcAddressing.size() != flds.size())
     {
-        FatalErrorInFunction << "Not valid field at element 0"
-            << " in field list of size " << flds.size() << exit(FatalError);
+        FatalErrorInFunction
+            << "Not valid field at element 0 in list of size "
+            << flds.size() << nl
+            << exit(FatalError);
     }
 
 
@@ -766,10 +763,12 @@ void Foam::fvMeshAdder::MapVolField
     // Add fields to fields[0] after adding the meshes to meshes[0].
     // Mesh[0] is the sum of all meshes. Fields are not yet mapped.
 
-    if (flds.size() == 0 || !flds.set(0))
+    if (!flds.test(0))
     {
-        FatalErrorInFunction << "Not valid field at element 0"
-            << " in field list of size " << flds.size() << exit(FatalError);
+        FatalErrorInFunction
+            << "Not valid field at element 0 in list of size "
+            << flds.size() << nl
+            << exit(FatalError);
     }
 
 
@@ -902,10 +901,12 @@ void Foam::fvMeshAdder::MapSurfaceField
     // Add fields to fields[0] after adding the meshes to meshes[0].
     // Mesh[0] is the sum of all meshes. Fields are not yet mapped.
 
-    if (flds.size() == 0 || !flds.set(0))
+    if (!flds.test(0))
     {
-        FatalErrorInFunction << "Not valid field at element 0"
-            << " in field list of size " << flds.size() << exit(FatalError);
+        FatalErrorInFunction
+            << "Not valid field at element 0 in list of size "
+            << flds.size() << nl
+            << exit(FatalError);
     }
 
     const fvMesh& mesh0 = flds[0].mesh();
@@ -1105,12 +1106,14 @@ void Foam::fvMeshAdder::MapVolFields
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fldType;
 
-    if (meshes.size() == 0 || !meshes.set(0))
+    if (!meshes.test(0))
     {
-        FatalErrorInFunction << "Not valid field at element 0"
-            << " in mesh list of size " << meshes.size() << exit(FatalError);
+        FatalErrorInFunction
+            << "Not valid mesh at element 0 in list of size "
+            << meshes.size() << nl
+            << exit(FatalError);
     }
-    const fvMesh& mesh0 = meshes[0];
+    const auto& mesh0 = meshes[0];
 
     HashTable<const fldType*> fields
     (
@@ -1176,12 +1179,14 @@ void Foam::fvMeshAdder::MapDimFields
     typedef DimensionedField<Type, volMesh> fldType;
     typedef GeometricField<Type, fvPatchField, volMesh> excludeType;
 
-    if (meshes.size() == 0 || !meshes.set(0))
+    if (!meshes.test(0))
     {
-        FatalErrorInFunction << "Not valid field at element 0"
-            << " in mesh list of size " << meshes.size() << exit(FatalError);
+        FatalErrorInFunction
+            << "Not valid mesh at element 0 in list of size "
+            << meshes.size() << nl
+            << exit(FatalError);
     }
-    const fvMesh& mesh0 = meshes[0];
+    const auto& mesh0 = meshes[0];
 
     HashTable<const fldType*> fields
     (
@@ -1236,10 +1241,12 @@ void Foam::fvMeshAdder::MapSurfaceFields
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fldType;
 
-    if (meshes.size() == 0 || !meshes.set(0))
+    if (!meshes.test(0))
     {
-        FatalErrorInFunction << "Not valid field at element 0"
-            << " in mesh list of size " << meshes.size() << exit(FatalError);
+        FatalErrorInFunction
+            << "Not valid mesh at element 0 in list of size "
+            << meshes.size() << nl
+            << exit(FatalError);
     }
     const auto& mesh0 = meshes[0];
 

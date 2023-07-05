@@ -116,7 +116,7 @@ label writeVolFields
             label writeri = 0;
             for (vtk::patchWriter& writer : patchWriters)
             {
-                if (writeri < patchInterps.size() && patchInterps.set(writeri))
+                if (patchInterps.test(writeri))
                 {
                     writer.write(tfield(), patchInterps[writeri]);
                 }

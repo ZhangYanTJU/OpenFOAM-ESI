@@ -627,9 +627,7 @@ bool Foam::functionObjects::vtkWrite::write()
             {
                 const label nPatchFields =
                 (
-                    writeri < patchInterps.size() && patchInterps.set(writeri)
-                  ? nVolFields
-                  : 0
+                    patchInterps.test(writeri) ? nVolFields : 0
                 );
 
                 if (nPatchFields)

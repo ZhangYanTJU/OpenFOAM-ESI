@@ -128,7 +128,7 @@ Foam::label Foam::functionObjects::vtkWrite::writeVolFieldsImpl
         label writeri = 0;
         for (vtk::patchWriter& writer : patchWriters)
         {
-            if (writeri < patchInterps.size() && patchInterps.set(writeri))
+            if (patchInterps.test(writeri))
             {
                 ok = true;
                 writer.write(field, patchInterps[writeri]);

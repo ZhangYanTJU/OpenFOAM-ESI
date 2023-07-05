@@ -368,11 +368,7 @@ Description
         {
             const label nPatchFields =
             (
-                (
-                    writeri < patchInterps.size() && patchInterps.set(writeri)
-                  ? nVolFields
-                  : 0
-                )
+                (patchInterps.test(writeri) ? nVolFields : 0)
               + nPointFields
             );
 
