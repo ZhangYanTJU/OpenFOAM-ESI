@@ -39,14 +39,25 @@ Description
         16(4), 209-226.
     \endverbatim
 
+    Entries
+    \table
+        Property | Description                            | Type | Reqd | Deflt
+        lambda   | Molecular free path length             | scalar | yes  | -
+        turbulence | Use turbulence                       | bool | yes | -
+        spherical | Spherical instead of cubic distribution | bool | no  | true
+    \endtable
+
+Note
+    The treatment changed from cubic to spherical around v1606.
+    Reinstate support for cubic via spherical (true/false) switch after v2306.
+
 SourceFiles
-    BrownianMotionForceI.H
     BrownianMotionForce.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BrownianMotionForce_H
-#define BrownianMotionForce_H
+#ifndef Foam_BrownianMotionForce_H
+#define Foam_BrownianMotionForce_H
 
 #include "ParticleForce.H"
 #include "Random.H"
@@ -81,6 +92,9 @@ class BrownianMotionForce
 
         //- Local ownership of the turbulence k field
         bool ownK_;
+
+        //- Spherical vs cubic (transitional)
+        bool useSpherical_;
 
 
     // Private Member Functions
@@ -124,13 +138,13 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return const access to the molecular free path length [m]
-            inline scalar lambda() const;
+        //- The molecular free path length [m]
+        scalar lambda() const noexcept { return lambda_; }
 
-            //- Return const access to the turbulence flag
-            inline bool turbulence() const;
+        //- The turbulence flag
+        bool turbulence() const noexcept { return turbulence_; }
 
 
         // Evaluation
@@ -156,8 +170,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "BrownianMotionForceI.H"
 
 #ifdef NoRepository
     #include "BrownianMotionForce.C"

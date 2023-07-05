@@ -79,7 +79,8 @@ Foam::BrownianMotionForce<CloudType>::BrownianMotionForce
     lambda_(this->coeffs().getScalar("lambda")),
     kPtr_(nullptr),
     turbulence_(this->coeffs().getBool("turbulence")),
-    ownK_(false)
+    ownK_(false),
+    useSpherical_(this->coeffs().getOrDefault("spherical", true))
 {}
 
 
@@ -94,7 +95,8 @@ Foam::BrownianMotionForce<CloudType>::BrownianMotionForce
     lambda_(bmf.lambda_),
     kPtr_(nullptr),
     turbulence_(bmf.turbulence_),
-    ownK_(false)
+    ownK_(false),
+    useSpherical_(bmf.useSpherical_)
 {}
 
 
@@ -103,7 +105,11 @@ Foam::BrownianMotionForce<CloudType>::BrownianMotionForce
 template<class CloudType>
 Foam::BrownianMotionForce<CloudType>::~BrownianMotionForce()
 {
-    cacheFields(false);
+    if (ownK_)
+    {
+        deleteDemandDrivenData(kPtr_);
+        ownK_ = false;
+    }
 }
 
 
@@ -179,28 +185,33 @@ Foam::forceSuSp Foam::BrownianMotionForce<CloudType>::calcCoupled
         f = mass*sqrt(mathematical::pi*s0/dt);
     }
 
-
-    // To generate a cubic distribution (3 independent directions) :
-    // const scalar sqrt2 = sqrt(2.0);
-    // for (direction dir = 0; dir < vector::nComponents; dir++)
-    // {
-    //     const scalar x = rndGen_.sample01<scalar>();
-    //     const scalar eta = sqrt2*Math::erfInv(2*x - 1.0);
-    //     value.Su()[dir] = f*eta;
-    // }
-
-
-    // To generate a spherical distribution:
-
     Random& rnd = this->owner().rndGen();
 
-    const scalar theta = rnd.sample01<scalar>()*twoPi;
-    const scalar u = 2*rnd.sample01<scalar>() - 1;
+    if (useSpherical_)
+    {
+        // To generate a spherical distribution:
+        const scalar theta = rnd.sample01<scalar>()*twoPi;
+        const scalar u = 2*rnd.sample01<scalar>() - 1;
 
-    const scalar a = sqrt(1 - sqr(u));
-    const vector dir(a*cos(theta), a*sin(theta), u);
+        const scalar a = sqrt(1 - sqr(u));
+        const vector dir(a*cos(theta), a*sin(theta), u);
 
-    value.Su() = f*mag(rnd.GaussNormal<scalar>())*dir;
+        value.Su() = f*mag(rnd.GaussNormal<scalar>())*dir;
+    }
+    else
+    {
+        // Generate a cubic distribution (3 independent directions)
+        value.Su() = f*rnd.GaussNormal<vector>();
+
+        // OLD CODE for cubic distribution
+        // const scalar sqrt2 = sqrt(2.0);
+        // for (direction dir = 0; dir < vector::nComponents; dir++)
+        // {
+        //     const scalar x = rnd.sample01<scalar>();
+        //     const scalar eta = sqrt2*Math::erfInv(2*x - 1.0);
+        //     value.Su()[dir] = f*eta;
+        // }
+    }
 
     return value;
 }

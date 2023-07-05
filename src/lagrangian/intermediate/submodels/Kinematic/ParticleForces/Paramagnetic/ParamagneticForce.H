@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ParamagneticForce_H
-#define ParamagneticForce_H
+#ifndef Foam_ParamagneticForce_H
+#define Foam_ParamagneticForce_H
 
 #include "ParticleForce.H"
 #include "interpolation.H"
@@ -48,8 +48,6 @@ SourceFiles
 
 namespace Foam
 {
-
-class fvMesh;
 
 /*---------------------------------------------------------------------------*\
                        Class ParamagneticForce Declaration
@@ -60,7 +58,7 @@ class ParamagneticForce
 :
     public ParticleForce<CloudType>
 {
-    // Private data
+    // Private Data
 
         //- Name of paramagnetic field strength field - default = "HdotGradH"
         const word HdotGradHName_;
@@ -107,13 +105,16 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return the name of paramagnetic field strength field
-            const word& HdotGradHName() const;
+        //- Return the name of paramagnetic field strength field
+        const word& HdotGradHName() const noexcept { return HdotGradHName_; }
 
-            //- Return the magnetic susceptibility of particle
-            scalar magneticSusceptibility() const;
+        //- Return the magnetic susceptibility of particle
+        scalar magneticSusceptibility() const noexcept
+        {
+            return magneticSusceptibility_;
+        }
 
 
         // Evaluation
@@ -139,8 +140,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "ParamagneticForceI.H"
 
 #ifdef NoRepository
     #include "ParamagneticForce.C"

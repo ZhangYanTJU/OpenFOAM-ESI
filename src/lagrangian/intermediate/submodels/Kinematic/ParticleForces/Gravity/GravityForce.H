@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef GravityForce_H
-#define GravityForce_H
+#ifndef Foam_GravityForce_H
+#define Foam_GravityForce_H
 
 #include "ParticleForce.H"
 
@@ -48,6 +48,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class fvMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -59,7 +60,7 @@ class GravityForce
 :
     public ParticleForce<CloudType>
 {
-    // Private data
+    // Private Data
 
         //- Reference to the acceleration due to gravity
         const vector& g_;
@@ -100,10 +101,10 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return the acceleration due to gravity
-            inline const vector& g() const;
+        //- Return the acceleration due to gravity
+        const vector& g() const noexcept { return g_; }
 
 
         // Evaluation
@@ -126,8 +127,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "GravityForceI.H"
 
 #ifdef NoRepository
     #include "GravityForce.C"

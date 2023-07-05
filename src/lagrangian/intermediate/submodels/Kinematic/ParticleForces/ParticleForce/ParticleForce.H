@@ -33,14 +33,13 @@ Description
     Abstract base class for particle forces
 
 SourceFiles
-    ParticleForceI.H
     ParticleForce.C
     ParticleForceNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ParticleForce_H
-#define ParticleForce_H
+#ifndef Foam_ParticleForce_H
+#define Foam_ParticleForce_H
 
 #include "dictionary.H"
 #include "forceSuSp.H"
@@ -59,7 +58,7 @@ namespace Foam
 template<class CloudType>
 class ParticleForce
 {
-    // Private data
+    // Private Data
 
         //- Reference to the owner cloud
         CloudType& owner_;
@@ -136,19 +135,19 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return const access to the cloud owner
-            inline const CloudType& owner() const;
+        //- Return const access to the cloud owner
+        const CloudType& owner() const noexcept { return owner_; }
 
-            //- Return reference to the cloud owner
-            inline CloudType& owner();
+        //- Return reference to the cloud owner
+        CloudType& owner() noexcept { return owner_; }
 
-            //- Return the mesh database
-            inline const fvMesh& mesh() const;
+        //- Return the mesh database
+        const fvMesh& mesh() const noexcept { return mesh_; }
 
-            //- Return the force coefficients dictionary
-            inline const dictionary& coeffs() const;
+        //- Return the force coefficients dictionary
+        const dictionary& coeffs() const noexcept { return coeffs_; }
 
 
         // Evaluation
@@ -193,8 +192,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "ParticleForceI.H"
 
 #ifdef NoRepository
     #include "ParticleForce.C"

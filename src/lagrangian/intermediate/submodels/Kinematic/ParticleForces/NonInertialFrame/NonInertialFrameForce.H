@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef NonInertialFrameForce_H
-#define NonInertialFrameForce_H
+#ifndef Foam_NonInertialFrameForce_H
+#define Foam_NonInertialFrameForce_H
 
 #include "ParticleForce.H"
 
@@ -47,8 +47,6 @@ SourceFiles
 
 namespace Foam
 {
-
-class fvMesh;
 
 /*---------------------------------------------------------------------------*\
                   Class NonInertialFrameForce Declaration
@@ -59,7 +57,7 @@ class NonInertialFrameForce
 :
     public ParticleForce<CloudType>
 {
-    // Private data
+    // Private Data
 
         //- Name of the linear acceleration field
         word WName_;
@@ -121,19 +119,22 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return the linear acceleration of the reference frame
-            inline const vector& W() const;
+        //- Return the linear acceleration of the reference frame
+        const vector& W() const noexcept { return W_; }
 
-            //- Return the angular velocity of the reference frame
-            inline const vector& omega() const;
+        //- Return the angular velocity of the reference frame
+        const vector& omega() const noexcept { return omega_; }
 
-            //- Return the angular acceleration of the reference frame
-            inline const vector& omegaDot() const;
+        //- Return the angular acceleration of the reference frame
+        const vector& omegaDot() const noexcept { return omegaDot_; }
 
-            //- Return the centre of rotation of the reference frame
-            inline const vector& centreOfRotation() const;
+        //- Return the centre of rotation of the reference frame
+        const vector& centreOfRotation() const noexcept
+        {
+            return centreOfRotation_;
+        }
 
 
         // Evaluation
@@ -159,8 +160,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "NonInertialFrameForceI.H"
 
 #ifdef NoRepository
     #include "NonInertialFrameForce.C"
