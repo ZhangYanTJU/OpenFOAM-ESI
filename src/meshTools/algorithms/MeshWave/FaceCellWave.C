@@ -529,21 +529,19 @@ void Foam::FaceCellWave<Type, TrackingData>::handleProcPatches()
     // Which processors this processor is connected to
     const labelList& neighbourProcs = pData.topology().procNeighbours();
 
-    // Reset buffers
-    pBufs_.clear();
-
-
-    // Information to send:
-    DynamicList<Type> sendFacesInfo;
-    DynamicList<label> sendFaces;
-
     // Reduce communication by only sending non-zero data,
     // but with multiply-connected processor/processor
     // (eg, processorCyclic) also need to send zero information
     // to keep things synchronised
 
-    // If data needs to be sent (index corresponding to neighbourProcs)
-    List<bool> isActiveSend(neighbourProcs.size(), false);
+    // Reset buffers, initialize for registerSend() bookkeeping
+    pBufs_.clear();
+    pBufs_.initRegisterSend();
+
+
+    // Information to send
+    DynamicList<Type> sendFacesInfo;
+    DynamicList<label> sendFaces;
 
     for (const label patchi : procPatches)
     {
@@ -579,20 +577,13 @@ void Foam::FaceCellWave<Type, TrackingData>::handleProcPatches()
             sendFacesInfo
         );
 
-        // Record if send is required (non-empty data)
-        if (!sendFaces.empty())
-        {
-            const label nbrIndex = neighbourProcs.find(nbrProci);
-            if (nbrIndex >= 0)  // Safety check (should be unnecessary)
-            {
-                isActiveSend[nbrIndex] = true;
-            }
-        }
-
         // Send to neighbour
         {
             UOPstream toNbr(nbrProci, pBufs_);
             toNbr << sendFaces << sendFacesInfo;
+
+            // Record if send is required (data are non-zero)
+            pBufs_.registerSend(nbrProci, !sendFaces.empty());
 
             if (debug & 2)
             {
@@ -603,16 +594,8 @@ void Foam::FaceCellWave<Type, TrackingData>::handleProcPatches()
         }
     }
 
-    // Eliminate unnecessary sends
-    forAll(neighbourProcs, nbrIndex)
-    {
-        if (!isActiveSend[nbrIndex])
-        {
-            pBufs_.clearSend(neighbourProcs[nbrIndex]);
-        }
-    }
-
     // Limit exchange to involved procs
+    // - automatically discards unnecessary (unregistered) sends
     pBufs_.finishedNeighbourSends(neighbourProcs);
 
 

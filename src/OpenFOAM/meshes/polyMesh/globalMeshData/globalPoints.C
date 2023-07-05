@@ -487,8 +487,15 @@ void Foam::globalPoints::sendPatchPoints
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
     const labelPairList& patchInfo = globalTransforms_.patchTransformSign();
 
-    // Reset send/recv information
+    // Reduce communication by only sending non-zero data,
+    // but with multiply-connected processor/processor
+    // (eg, processorCyclic) also need to send zero information
+    // to keep things synchronised
+
+    // Reset buffers, initialize for registerSend() bookkeeping
     pBufs.clear();
+    pBufs.initRegisterSend();
+
 
     // Information to send:
 
@@ -501,19 +508,6 @@ void Foam::globalPoints::sendPatchPoints
     // All information I currently hold about the patchPoint
     DynamicList<labelPairList> allInfo;
 
-
-    // Reduce communication by only sending non-zero data,
-    // but with multiply-connected processor/processor
-    // (eg, processorCyclic) also need to send zero information
-    // to keep things synchronised
-
-    // Has non-zero data sent
-    Map<int> isActiveSend(0);
-
-    if (UPstream::parRun())
-    {
-        isActiveSend.resize(2*min(patches.size(),pBufs.nProcs()));
-    }
 
     forAll(patches, patchi)
     {
@@ -583,7 +577,7 @@ void Foam::globalPoints::sendPatchPoints
                 toNbr << patchFaces << indexInFace << allInfo;
 
                 // Record if send is required (data are non-zero)
-                isActiveSend(nbrProci) |= int(!patchFaces.empty());
+                pBufs.registerSend(nbrProci, !patchFaces.empty());
 
                 if (debug)
                 {
@@ -595,14 +589,8 @@ void Foam::globalPoints::sendPatchPoints
         }
     }
 
-    // Eliminate unnecessary sends
-    forAllConstIters(isActiveSend, iter)
-    {
-        if (!iter.val())
-        {
-            pBufs.clearSend(iter.key());
-        }
-    }
+    // Discard unnecessary (unregistered) sends
+    pBufs.clearUnregistered();
 }
 
 

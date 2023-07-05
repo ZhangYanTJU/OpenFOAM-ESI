@@ -55,15 +55,23 @@ static constexpr int algorithm_full_NBX = 1;       // Very experimental
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+inline void Foam::PstreamBuffers::initFinalExchange()
+{
+    // Could also check that it is not called twice
+    // but that is used for overlapping send/recv (eg, overset)
+    finishedSendsCalled_ = true;
+
+    clearUnregistered();
+}
+
+
 void Foam::PstreamBuffers::finalExchange
 (
     const bool wait,
     labelList& recvSizes
 )
 {
-    // Could also check that it is not called twice
-    // but that is used for overlapping send/recv (eg, overset)
-    finishedSendsCalled_ = true;
+    initFinalExchange();
 
     if (commsType_ == UPstream::commsTypes::nonBlocking)
     {
@@ -140,9 +148,7 @@ void Foam::PstreamBuffers::finalExchange
     labelList& recvSizes
 )
 {
-    // Could also check that it is not called twice
-    // but that is used for overlapping send/recv (eg, overset)
-    finishedSendsCalled_ = true;
+    initFinalExchange();
 
     if (commsType_ == UPstream::commsTypes::nonBlocking)
     {
@@ -201,9 +207,7 @@ void Foam::PstreamBuffers::finalGatherScatter
     labelList& recvSizes
 )
 {
-    // Could also check that it is not called twice
-    // but that is used for overlapping send/recv (eg, overset)
-    finishedSendsCalled_ = true;
+    initFinalExchange();
 
     if (isGather)
     {
@@ -316,7 +320,7 @@ Foam::PstreamBuffers::~PstreamBuffers()
         const label pos = recvPositions_[proci];
         const label len = recvBuffers_[proci].size();
 
-        if (pos < len)
+        if (pos >= 0 && pos < len)
         {
             FatalErrorInFunction
                 << "Message from processor " << proci
@@ -382,9 +386,27 @@ void Foam::PstreamBuffers::clear()
 }
 
 
+void Foam::PstreamBuffers::clearUnregistered()
+{
+    for (label proci = 0; proci < nProcs_; ++proci)
+    {
+        if (recvPositions_[proci] < 0)
+        {
+            recvPositions_[proci] = 0;
+            sendBuffers_[proci].clear();
+        }
+    }
+}
+
+
 void Foam::PstreamBuffers::clearSend(const label proci)
 {
     sendBuffers_[proci].clear();
+    if (recvPositions_[proci] < 0)
+    {
+        // Reset the unregistered flag
+        recvPositions_[proci] = 0;
+    }
 }
 
 
@@ -410,6 +432,30 @@ void Foam::PstreamBuffers::clearStorage()
     recvPositions_ = Zero;
 
     finishedSendsCalled_ = false;
+}
+
+
+void Foam::PstreamBuffers::initRegisterSend()
+{
+    if (!finishedSendsCalled_)
+    {
+        for (label proci = 0; proci < nProcs_; ++proci)
+        {
+            sendBuffers_[proci].clear();
+            // Mark send buffer as 'unregistered'
+            recvPositions_[proci] = -1;
+        }
+    }
+}
+
+
+void Foam::PstreamBuffers::registerSend(const label proci, const bool toggleOn)
+{
+    // Clear the 'unregistered' flag
+    if (toggleOn && recvPositions_[proci] < 0)
+    {
+        recvPositions_[proci] = 0;
+    }
 }
 
 

@@ -63,7 +63,7 @@ Description
         }
     \endcode
 
-    There are additional special versions of finishedSends() for
+    There are special versions of finishedSends() for
     restricted neighbour communication as well as for special
     one-to-all and all-to-one communication patterns.
     For example,
@@ -87,6 +87,40 @@ Description
             UIPstream recv(UPstream::masterNo(), pBufs);
             someObject vals(recv);
         }
+    \endcode
+
+    Additionally there are some situations that use speculative sends
+    that may not actually be required. In this case, it is possible to
+    mark all sends as initially \em unregistered and subsequently
+    mark the "real" sends as \em registered.
+
+    For example,
+    \code
+        PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
+
+        pBufs.initRegisterSend();
+
+        for (const polyPatch& pp : patches)
+        {
+            const auto* ppp = isA<processorPolyPatch>(pp);
+            if (ppp)
+            {
+                const label nbrProci = ppp->neighbProcNo();
+
+                // Gather some patch information...
+                UOPstream toNbr(nbrProci, pBufs);
+                toNbr << patchInfo;
+
+                // The send is needed if patchInfo is non-empty
+                pBufs.registerSend(nbrProci, !patchInfo.empty());
+            }
+        }
+
+        // optional:  pBufs.clearUnregistered();
+
+        pBufs.finishedSends();
+
+        ...
     \endcode
 
 SourceFiles
@@ -150,10 +184,14 @@ class PstreamBuffers
         List<DynamicList<char>> recvBuffers_;
 
         //- Current read positions within recvBuffers_. Size is nProcs()
+        //  This list is also misused for registerSend() bookkeeping
         labelList recvPositions_;
 
 
     // Private Member Functions
+
+        //- Clear 'unregistered' send buffers, tag as being send-ready
+        inline void initFinalExchange();
 
         //- Mark all sends as having been done.
         //  This will start receives (nonBlocking comms).
@@ -379,6 +417,21 @@ public:
 
         //- Change allowClearRecv, return previous value
         bool allowClearRecv(bool on) noexcept;
+
+
+    // Registered Sending
+
+        //- Initialise registerSend() bookkeeping by mark all send buffers
+        //- as 'unregistered'
+        //  Usually called immediately after construction or clear().
+        void initRegisterSend();
+
+        //- Toggle an individual send buffer as 'registered'.
+        //- The setting is sticky (does not turn off)
+        void registerSend(const label proci, const bool toggleOn = true);
+
+        //- Clear any 'unregistered' send buffers.
+        void clearUnregistered();
 
 
     // Regular Functions

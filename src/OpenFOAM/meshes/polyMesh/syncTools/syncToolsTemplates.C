@@ -132,14 +132,16 @@ void Foam::syncTools::syncPointMap
         DynamicList<label> neighbProcs(patches.nProcessorPatches());
         PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
 
-        // Sample and send.
         // Reduce communication by only sending non-zero data,
         // but with multiply-connected processor/processor
         // (eg, processorCyclic) also need to send zero information
         // to keep things synchronised
 
-        // If data needs to be sent (index corresponding to neighbProcs)
-        DynamicList<bool> isActiveSend(neighbProcs.capacity());
+        // Initialize for registerSend() bookkeeping
+        pBufs.initRegisterSend();
+
+
+        // Sample and send.
 
         for (const polyPatch& pp : patches)
         {
@@ -168,45 +170,22 @@ void Foam::syncTools::syncPointMap
                     }
                 }
 
-
-                const bool hasSendData = (!patchInfo.empty());
-
-                // Neighbour connectivity (push_uniq)
-                // - record if send is required (non-empty data)
-                {
-                    label nbrIndex = neighbProcs.find(nbrProci);
-                    if (nbrIndex < 0)
-                    {
-                        nbrIndex = neighbProcs.size();
-                        neighbProcs.push_back(nbrProci);
-                        isActiveSend.push_back(false);
-                    }
-
-                    if (hasSendData)
-                    {
-                        isActiveSend[nbrIndex] = true;
-                    }
-                }
-
+                // Neighbour connectivity
+                neighbProcs.push_uniq(nbrProci);
 
                 // Send to neighbour
                 {
                     UOPstream toNbr(nbrProci, pBufs);
                     toNbr << patchInfo;
+
+                    // Record if send is required (data are non-zero)
+                    pBufs.registerSend(nbrProci, !patchInfo.empty());
                 }
             }
         }
 
-        // Eliminate unnecessary sends
-        forAll(neighbProcs, nbrIndex)
-        {
-            if (!isActiveSend[nbrIndex])
-            {
-                pBufs.clearSend(neighbProcs[nbrIndex]);
-            }
-        }
-
-        // Limit exchange to involved procs
+        // Limit exchange to involved procs.
+        // - automatically discards unnecessary (unregistered) sends
         pBufs.finishedNeighbourSends(neighbProcs);
 
 
@@ -426,14 +405,16 @@ void Foam::syncTools::syncEdgeMap
         DynamicList<label> neighbProcs(patches.nProcessorPatches());
         PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
 
-        // Sample and send.
         // Reduce communication by only sending non-zero data,
         // but with multiply-connected processor/processor
         // (eg, processorCyclic) also need to send zero information
         // to keep things synchronised
 
-        // If data needs to be sent (index corresponding to neighbProcs)
-        DynamicList<bool> isActiveSend(neighbProcs.capacity());
+        // Initialize for registerSend() bookkeeping
+        pBufs.initRegisterSend();
+
+
+        // Sample and send.
 
         for (const polyPatch& pp : patches)
         {
@@ -465,44 +446,22 @@ void Foam::syncTools::syncEdgeMap
                 }
 
 
-                const bool hasSendData = (!patchInfo.empty());
-
-                // Neighbour connectivity (push_uniq)
-                // and record if send is required (non-empty data)
-                {
-                    label nbrIndex = neighbProcs.find(nbrProci);
-                    if (nbrIndex < 0)
-                    {
-                        nbrIndex = neighbProcs.size();
-                        neighbProcs.push_back(nbrProci);
-                        isActiveSend.push_back(false);
-                    }
-
-                    if (hasSendData)
-                    {
-                        isActiveSend[nbrIndex] = true;
-                    }
-                }
-
+                // Neighbour connectivity
+                neighbProcs.push_uniq(nbrProci);
 
                 // Send to neighbour
                 {
                     UOPstream toNbr(nbrProci, pBufs);
                     toNbr << patchInfo;
+
+                    // Record if send is required (data are non-zero)
+                    pBufs.registerSend(nbrProci, !patchInfo.empty());
                 }
             }
         }
 
-        // Eliminate unnecessary sends
-        forAll(neighbProcs, nbrIndex)
-        {
-            if (!isActiveSend[nbrIndex])
-            {
-                pBufs.clearSend(neighbProcs[nbrIndex]);
-            }
-        }
-
         // Limit exchange to involved procs
+        // - automatically discards unnecessary (unregistered) sends
         pBufs.finishedNeighbourSends(neighbProcs);
 
 
