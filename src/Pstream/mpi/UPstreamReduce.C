@@ -266,6 +266,43 @@ void Foam::sumReduce                                                          \
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Bitwise reductions
+
+#undef  Pstream_BitwiseReductions
+#define Pstream_BitwiseReductions(Native, TaggedType)                         \
+                                                                              \
+void Foam::reduce                                                             \
+(                                                                             \
+    Native values[],                                                          \
+    const int size,                                                           \
+    const bitOrOp<Native>&,                                                   \
+    const int tag,  /* (unused) */                                            \
+    const label comm                                                          \
+)                                                                             \
+{                                                                             \
+    PstreamDetail::allReduce<Native>                                          \
+    (                                                                         \
+        values, size, TaggedType, MPI_BOR, comm                               \
+    );                                                                        \
+}                                                                             \
+                                                                              \
+void Foam::reduce                                                             \
+(                                                                             \
+    Native& value,                                                            \
+    const bitOrOp<Native>&,                                                   \
+    const int tag,  /* (unused) */                                            \
+    const label comm                                                          \
+)                                                                             \
+{                                                                             \
+    PstreamDetail::allReduce<Native>                                          \
+    (                                                                         \
+        &value, 1, TaggedType, MPI_BOR, comm                                  \
+    );                                                                        \
+}                                                                             \
+
+\
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 Pstream_CommonReductions(int32_t, MPI_INT32_T);
 Pstream_CommonReductions(int64_t, MPI_INT64_T);
 Pstream_CommonReductions(uint32_t, MPI_UINT32_T);
@@ -274,11 +311,13 @@ Pstream_CommonReductions(uint64_t, MPI_UINT64_T);
 Pstream_FloatReductions(float, MPI_FLOAT);
 Pstream_FloatReductions(double, MPI_DOUBLE);
 
+Pstream_BitwiseReductions(unsigned, MPI_UNSIGNED);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef Pstream_CommonReductions
 #undef Pstream_FloatReductions
+#undef Pstream_BitwiseReductions
 
 
 // ************************************************************************* //

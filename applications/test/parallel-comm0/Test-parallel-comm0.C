@@ -39,6 +39,7 @@ Description
 #include "Tuple2.H"
 #include "IOstreams.H"
 #include "PstreamReduceOps.H"
+#include "bitSet.H"
 
 using namespace Foam;
 
@@ -87,7 +88,10 @@ int main(int argc, char *argv[])
 
     // Reductions (using MPI intrinsics)
     {
-        label val = Pstream::myProcNo(UPstream::commWorld());
+        const label myRank = UPstream::myProcNo(UPstream::commWorld());
+        const label nProcs = UPstream::nProcs(UPstream::commWorld());
+
+        label val = myRank;
 
         label worldVal = returnReduce
         (
@@ -108,6 +112,42 @@ int main(int argc, char *argv[])
         Pout<< "value " << val
             << " (world) reduced " << worldVal
             << " (self) reduced " << selfVal << nl;
+
+        // Identical size on all procs
+        bitSet procUsed(nProcs);
+
+        if ((myRank % 4) == 0)
+        {
+            procUsed.set(myRank);
+        }
+
+        Pout<< "local  procUsed " << procUsed << nl;
+        reduce(procUsed.data(), procUsed.size_data(), bitOrOp<unsigned>());
+        Pout<< "reduce procUsed " << procUsed << nl;
+
+        // Identical size on all procs
+        // encode as 0:empty, 1:uniform, 2:nonuniform, 3:mixed
+        PackedList<2> uniformity(10);
+
+        if ((myRank % 2) == 0)
+        {
+            // Every second is uniform
+            uniformity.set(2, 1);
+            uniformity.set(4, 1);
+            uniformity.set(6, 1);
+            uniformity.set(8, 1);
+        }
+        else if ((myRank % 3) == 0)
+        {
+            // Every third is nonuniform
+            uniformity.set(3, 2);
+            uniformity.set(6, 2);
+            uniformity.set(9, 2);
+        }
+
+        Pout<< "local  uniform " << uniformity << nl;
+        reduce(uniformity.data(), uniformity.size_data(), bitOrOp<unsigned>());
+        Pout<< "reduce uniform " << uniformity << nl;
     }
 
     // Reductions (not using MPI intrinsics)

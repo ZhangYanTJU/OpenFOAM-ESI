@@ -188,6 +188,33 @@ void Foam::sumReduce                                                          \
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Bitwise reductions
+
+#undef  Pstream_BitwiseReductions
+#define Pstream_BitwiseReductions(Native)                                     \
+                                                                              \
+void Foam::reduce                                                             \
+(                                                                             \
+    Native values[],                                                          \
+    const int size,                                                           \
+    const bitOrOp<Native>&,                                                   \
+    const int tag,                                                            \
+    const label comm                                                          \
+)                                                                             \
+{}                                                                            \
+                                                                              \
+void Foam::reduce                                                             \
+(                                                                             \
+    Native& value,                                                            \
+    const bitOrOp<Native>&,                                                   \
+    const int tag,                                                            \
+    const label comm                                                          \
+)                                                                             \
+{}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 Pstream_CommonReductions(int32_t);
 Pstream_CommonReductions(int64_t);
 Pstream_CommonReductions(uint32_t);
@@ -196,11 +223,13 @@ Pstream_CommonReductions(uint64_t);
 Pstream_FloatReductions(float);
 Pstream_FloatReductions(double);
 
+Pstream_BitwiseReductions(unsigned);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef Pstream_CommonReductions
 #undef Pstream_FloatReductions
+#undef Pstream_BitwiseReductions
 
 
 // ************************************************************************* //

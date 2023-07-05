@@ -87,7 +87,7 @@ void reduce
 
 
 //- Reduce inplace (cf. MPI Allreduce)
-//- multiple values (same size on all processes!)
+//- multiple values (same size on all ranks!)
 template<class T, class BinaryOp>
 void reduce
 (
@@ -132,7 +132,7 @@ void reduce
 }
 
 //- Non-blocking reduce inplace (cf. MPI Iallreduce)
-//- of multiple values (same size on all processes!). Sets request.
+//- of multiple values (same size on all ranks!). Sets request.
 template<class T, class BinaryOp>
 void reduce
 (
@@ -148,7 +148,7 @@ void reduce
 }
 
 //- Non-blocking reduce inplace (cf. MPI Iallreduce)
-//- of multiple values (same size on all processes!). Sets request.
+//- of multiple values (same size on all ranks!). Sets request.
 template<class T, class BinaryOp>
 void reduce
 (
@@ -194,7 +194,7 @@ void reduce
 #undef  Pstream_CommonReductions
 #define Pstream_CommonReductions(Native)                                      \
                                                                               \
-/*! \brief Reduce (min) multiple Native values (same size all procs!) */      \
+/*! \brief Reduce (min) multiple Native values (same size on all ranks!) */   \
 void reduce                                                                   \
 (                                                                             \
     Native values[],                                                          \
@@ -226,7 +226,7 @@ inline void reduce                                                            \
     reduce(values.data(), int(values.size()), minOp<Native>(), tag, comm);    \
 }                                                                             \
                                                                               \
-/*! \brief Reduce (max) multiple Native values (same size all procs!) */      \
+/*! \brief Reduce (max) multiple Native values (same size on all ranks!) */   \
 void reduce                                                                   \
 (                                                                             \
     Native values[],                                                          \
@@ -258,7 +258,7 @@ inline void reduce                                                            \
     reduce(values.data(), int(values.size()), maxOp<Native>(), tag, comm);    \
 }                                                                             \
                                                                               \
-/*! \brief Reduce (sum) multiple Native values (same size all procs!) */      \
+/*! \brief Reduce (sum) multiple Native values (same size on all ranks!) */   \
 void reduce                                                                   \
 (                                                                             \
     Native values[],                                                          \
@@ -347,6 +347,33 @@ void reduce                                                                   \
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Bitwise reductions
+
+#undef  Pstream_BitwiseReductions
+#define Pstream_BitwiseReductions(Native)                                     \
+                                                                              \
+/*! \brief Reduce (bit-or) multiple Native values (same size on all ranks!)*/ \
+void reduce                                                                   \
+(                                                                             \
+    Native values[],                                                          \
+    const int size,                                                           \
+    const bitOrOp<Native>&,                                                   \
+    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
+    const label comm = UPstream::worldComm                                    \
+);                                                                            \
+                                                                              \
+/*! \brief Reduce (bit-or) single Native value */                             \
+void reduce                                                                   \
+(                                                                             \
+    Native& value,                                                            \
+    const bitOrOp<Native>&,                                                   \
+    const int tag = UPstream::msgType(),  /*!< (ignored) */                   \
+    const label comm = UPstream::worldComm                                    \
+);
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 Pstream_CommonReductions(int32_t);
 Pstream_CommonReductions(int64_t);
 Pstream_CommonReductions(uint32_t);
@@ -355,11 +382,13 @@ Pstream_CommonReductions(uint64_t);
 Pstream_FloatReductions(float);
 Pstream_FloatReductions(double);
 
+Pstream_BitwiseReductions(unsigned);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #undef Pstream_CommonReductions
 #undef Pstream_FloatReductions
+#undef Pstream_BitwiseReductions
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
