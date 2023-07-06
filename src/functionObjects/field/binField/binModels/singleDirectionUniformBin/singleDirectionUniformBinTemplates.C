@@ -25,7 +25,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-
 template<class Type>
 void Foam::binModels::singleDirectionUniformBin::writeFileHeader
 (
@@ -33,9 +32,9 @@ void Foam::binModels::singleDirectionUniformBin::writeFileHeader
 ) const
 {
     writeHeaderValue(os, "bins", nBin_);
-    writeHeaderValue(os, "start", binMin_);
-    writeHeaderValue(os, "end", binMax_);
-    writeHeaderValue(os, "delta", binDx_);
+    writeHeaderValue(os, "start", binLimits_.min());
+    writeHeaderValue(os, "end", binLimits_.max());
+    writeHeaderValue(os, "delta", binWidth_);
     writeHeaderValue(os, "direction", binDir_);
 
     // Compute and print bin end points in the binning direction
@@ -43,7 +42,7 @@ void Foam::binModels::singleDirectionUniformBin::writeFileHeader
     writeCommented(os, "x co-ords  :");
     forAll(binPoints, pointi)
     {
-        binPoints[pointi] = (binMin_ + (pointi + 1)*binDx_)*binDir_;
+        binPoints[pointi] = (binLimits_.min() + (pointi + 1)*binWidth_)*binDir_;
         os  << tab << binPoints[pointi].x();
     }
     os  << nl;
@@ -80,7 +79,6 @@ void Foam::binModels::singleDirectionUniformBin::writeFileHeader
         {
             writeTabbed(os, writeComponents<Type>("patch" + ibin));
         }
-
     }
 
     os  << endl;
@@ -130,8 +128,26 @@ bool Foam::binModels::singleDirectionUniformBin::processField
     List<List<Type>> data(nField);
     for (auto& binList : data)
     {
-        binList.setSize(nBin_, Zero);
+        binList.resize(nBin_, Zero);
     }
+
+    const auto whichBin = [&](const scalar d) -> label
+    {
+        if (d >= binLimits_.min() && d <= binLimits_.max())
+        {
+            // Find the bin division
+            label bini = floor
+            (
+                (d - binLimits_.min())/binWidth_
+            );
+            return min(max(bini, 0), nBin_ - 1);
+        }
+        else
+        {
+            return -1;
+        }
+    };
+
 
     for (const label zonei : cellZoneIDs_)
     {
@@ -139,18 +155,12 @@ bool Foam::binModels::singleDirectionUniformBin::processField
 
         for (const label celli : cZone)
         {
-            const scalar dd = mesh_.C()[celli] & binDir_;
+            const label bini = whichBin(mesh_.C()[celli] & binDir_);
 
-            if (dd < binMin_ || dd > binMax_)
+            if (bini >= 0)
             {
-                continue;
+                data[0][bini] += fld[celli];
             }
-
-            // Find the bin division corresponding to the cell
-            const label bini =
-                min(max(floor((dd - binMin_)/binDx_), 0), nBin_ - 1);
-
-            data[0][bini] += fld[celli];
         }
     }
 
@@ -159,25 +169,22 @@ bool Foam::binModels::singleDirectionUniformBin::processField
         const polyPatch& pp = mesh_.boundaryMesh()[patchi];
         const vectorField np(mesh_.boundary()[patchi].nf());
 
+        const auto& pts = pp.faceCentres();
+
         const scalarField dd(pp.faceCentres() & binDir_);
 
-        forAll(dd, facei)
+        forAll(pts, facei)
         {
-            // Avoid faces outside of the bin
-            if (dd[facei] < binMin_ || dd[facei] > binMax_)
+            const label bini = whichBin(pts[facei] & binDir_);
+
+            if (bini >= 0)
             {
-                continue;
-            }
+                const Type& v = fld.boundaryField()[patchi][facei];
 
-            // Find the bin division corresponding to the face
-            const label bini =
-                min(max(floor((dd[facei] - binMin_)/binDx_), 0), nBin_ - 1);
-
-            const Type& v = fld.boundaryField()[patchi][facei];
-
-            if (!decomposePatchValues(data, bini, v, np[facei]))
-            {
-                data[1][bini] += v;
+                if (!decomposePatchValues(data, bini, v, np[facei]))
+                {
+                    data[1][bini] += v;
+                }
             }
         }
     }
