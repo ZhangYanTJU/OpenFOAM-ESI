@@ -46,7 +46,10 @@ CASE_ROOTS
 
 #export FOAM_ABORT=true
 
-runParallel -s decompose redistributePar -decompose -case test-distribute/machineA/testcase
+runParallel -s decompose redistributePar \
+    -decompose \
+    -case test-distribute/machineA/testcase \
+    -fileHandler masterUncollated
 
 runParallel checkMesh -case test-distribute/machineA/testcase
 
