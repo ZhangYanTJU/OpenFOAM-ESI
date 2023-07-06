@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,7 +49,7 @@ void Foam::binModels::singleDirectionUniformBin::initialise()
     // Determine extents of patches in a given direction
     scalar geomMin = GREAT;
     scalar geomMax = -GREAT;
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         const polyPatch& pp = pbm[patchi];
         const scalarField d(pp.faceCentres() & binDir_);

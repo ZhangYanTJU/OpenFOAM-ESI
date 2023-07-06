@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,8 +89,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_wallHeatFlux_H
-#define functionObjects_wallHeatFlux_H
+#ifndef Foam_functionObjects_wallHeatFlux_H
+#define Foam_functionObjects_wallHeatFlux_H
 
 #include "fvMeshFunctionObject.H"
 #include "writeFile.H"
@@ -117,8 +117,8 @@ protected:
 
     // Protected Data
 
-        //- Optional list of wall patches to process
-        labelHashSet patchSet_;
+        //- Wall patches to process (optionally filtered by name)
+        labelList patchIDs_;
 
         //- Name of radiative heat flux name
         word qrName_;

@@ -75,7 +75,7 @@ Usage
       Property     | Description                           | Type | Req'd | Dflt
       type         | Type name: wallShearStress            | word |  yes  | -
       libs         | Library name: fieldFunctionObjects    | word |  yes  | -
-      patches    | Names of operand patches   | wordList | no | all wall patches
+      patches    | Names of operand patches   | wordRes | no | all wall patches
       writeFields | Flag to write shear stress field       | bool |  no   | true
     \endtable
 
@@ -111,7 +111,6 @@ SourceFiles
 #include "fvMeshFunctionObject.H"
 #include "writeFile.H"
 #include "volFieldsFwd.H"
-#include "HashSet.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -139,8 +138,8 @@ protected:
 
     // Protected Data
 
-        //- Optional list of patches to process
-        labelHashSet patchSet_;
+        //- Wall patches to process (optionally filtered by name)
+        labelList patchIDs_;
 
 
     // Protected Member Functions

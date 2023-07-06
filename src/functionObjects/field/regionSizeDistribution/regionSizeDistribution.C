@@ -61,7 +61,7 @@ template<class Type>
 static Map<Type> regionSum(const regionSplit& regions, const Field<Type>& fld)
 {
     // Per region the sum of fld
-    Map<Type> regionToSum(regions.nRegions()/Pstream::nProcs());
+    Map<Type> regionToSum(regions.nRegions()/UPstream::nProcs());
 
     forAll(fld, celli)
     {
@@ -70,6 +70,23 @@ static Map<Type> regionSum(const regionSplit& regions, const Field<Type>& fld)
     }
 
     Pstream::mapCombineReduce(regionToSum, plusEqOp<Type>());
+
+    return regionToSum;
+}
+
+
+static Map<label> regionSum(const regionSplit& regions, const label nCells)
+{
+    // Per region the sum of fld
+    Map<label> regionToSum(regions.nRegions()/UPstream::nProcs());
+
+    for (label celli = 0; celli < nCells; ++celli)
+    {
+        const label regioni = regions[celli];
+        ++regionToSum(regioni);
+    }
+
+    Pstream::mapCombineReduce(regionToSum, plusEqOp<label>());
 
     return regionToSum;
 }
@@ -95,7 +112,7 @@ static List<Type> extractData(const labelUList& keys, const Map<Type>& regionDat
 void Foam::functionObjects::regionSizeDistribution::writeAlphaFields
 (
     const regionSplit& regions,
-    const Map<label>& patchRegions,
+    const labelHashSet& keepRegions,
     const Map<scalar>& regionVolume,
     const volScalarField& alpha
 ) const
@@ -138,11 +155,11 @@ void Foam::functionObjects::regionSizeDistribution::writeAlphaFields
     );
 
 
-    // Knock out any cell not in patchRegions
+    // Knock out any cell not in keepRegions (patch regions)
     forAll(liquidCore, celli)
     {
         const label regioni = regions[celli];
-        if (patchRegions.found(regioni))
+        if (keepRegions.found(regioni))
         {
             backgroundAlpha[celli] = 0;
         }
@@ -178,7 +195,7 @@ void Foam::functionObjects::regionSizeDistribution::writeAlphaFields
 }
 
 
-Foam::Map<Foam::label>
+Foam::labelHashSet
 Foam::functionObjects::regionSizeDistribution::findPatchRegions
 (
     const regionSplit& regions
@@ -187,37 +204,23 @@ Foam::functionObjects::regionSizeDistribution::findPatchRegions
     // Mark all regions starting at patches
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    // Count number of patch faces (just for initial sizing)
-    const labelHashSet patchIDs(mesh_.boundaryMesh().patchSet(patchNames_));
+    labelHashSet patchRegions(2*regions.nRegions());
 
-    label nPatchFaces = 0;
-    for (const label patchi : patchIDs)
-    {
-        nPatchFaces += mesh_.boundaryMesh()[patchi].size();
-    }
+    labelHashSet patchSet(mesh_.boundaryMesh().patchSet(patchNames_));
 
-
-    Map<label> patchRegions(nPatchFaces);
-    for (const label patchi : patchIDs)
+    for (const label patchi : patchSet)
     {
         const polyPatch& pp = mesh_.boundaryMesh()[patchi];
 
-        // Collect all regions on the patch
-        const labelList& faceCells = pp.faceCells();
-
-        for (const label celli : faceCells)
+        // All regions connected to the patch
+        for (const label celli : pp.faceCells())
         {
-            patchRegions.insert
-            (
-                regions[celli],
-                Pstream::myProcNo()     // dummy value
-            );
+            patchRegions.insert(regions[celli]);
         }
     }
 
-
-    // Make sure all the processors have the same set of regions
-    Pstream::mapCombineReduce(patchRegions, minEqOp<label>());
+    // Ensure all processors have the same set of regions
+    Pstream::combineReduce(patchRegions, plusEqOp<labelHashSet>());
 
     return patchRegions;
 }
@@ -230,18 +233,14 @@ Foam::functionObjects::regionSizeDistribution::divide
     const scalarField& denom
 )
 {
-    auto tresult = tmp<scalarField>::New(num.size());
+    auto tresult = tmp<scalarField>::New(num.size(), Zero);
     auto& result = tresult.ref();
 
     forAll(denom, i)
     {
-        if (denom[i] != 0)
+        if (ROOTVSMALL < Foam::mag(denom[i]))
         {
             result[i] = num[i]/denom[i];
-        }
-        else
-        {
-            result[i] = 0;
         }
     }
     return tresult;
@@ -258,7 +257,7 @@ void Foam::functionObjects::regionSizeDistribution::writeGraphs
     const coordSet& coords              // graph data for bins
 ) const
 {
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // Calculate per-bin average
         scalarField binSum(nBins_, Zero);
@@ -449,8 +448,8 @@ bool Foam::functionObjects::regionSizeDistribution::write()
                     alphaName_,
                     mesh_.time().timeName(),
                     mesh_,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::NO_WRITE
                 ),
                 mesh_
             )
@@ -541,14 +540,15 @@ bool Foam::functionObjects::regionSizeDistribution::write()
                 "region",
                 mesh_.time().timeName(),
                 mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             ),
             mesh_,
             dimensionedScalar(dimless, Zero)
         );
-        Info<< "    Dumping region as volScalarField to " << region.name()
-            << endl;
+        Info<< "    Dumping region as volScalarField to "
+            << region.name() << endl;
 
         forAll(regions, celli)
         {
@@ -560,21 +560,13 @@ bool Foam::functionObjects::regionSizeDistribution::write()
 
 
     // Determine regions connected to supplied patches
-    Map<label> patchRegions(findPatchRegions(regions));
-
+    const labelHashSet patchRegions(findPatchRegions(regions));
 
     // Sum all regions
     const scalarField alphaVol(alpha.primitiveField()*mesh_.V());
     Map<scalar> allRegionVolume(regionSum(regions, mesh_.V()));
     Map<scalar> allRegionAlphaVolume(regionSum(regions, alphaVol));
-    Map<label> allRegionNumCells
-    (
-        regionSum
-        (
-            regions,
-            labelField(mesh_.nCells(), 1.0)
-        )
-    );
+    Map<label> allRegionNumCells(regionSum(regions, mesh_.nCells()));
 
     if (debug)
     {
@@ -623,9 +615,8 @@ bool Foam::functionObjects::regionSizeDistribution::write()
             << token::TAB << "Volume(" << alpha.name() << "):"
             << nl;
 
-        forAllConstIters(patchRegions, iter)
+        for (const label regioni : patchRegions.sortedToc())
         {
-            const label regioni = iter.key();
             Info<< "    " << token::TAB << regioni
                 << token::TAB << allRegionVolume[regioni]
                 << token::TAB << allRegionAlphaVolume[regioni] << nl;
@@ -786,7 +777,7 @@ bool Foam::functionObjects::regionSizeDistribution::write()
             }
 
             // Write
-            if (Pstream::master())
+            if (UPstream::master())
             {
                 // Construct mids of bins for plotting
                 pointField xBin(nDownstreamBins_, Zero);
@@ -863,7 +854,7 @@ bool Foam::functionObjects::regionSizeDistribution::write()
         }
 
         // Write counts
-        if (Pstream::master())
+        if (UPstream::master())
         {
             auto& writer = formatterPtr_();
             writer.nFields(1);

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,7 +49,7 @@ void Foam::binModels::uniformBin::initialise()
     vector geomMin(GREAT, GREAT, GREAT);
     vector geomMax(-GREAT, -GREAT, -GREAT);
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         const polyPatch& pp = pbm[patchi];
         const vectorField ppcs(coordSysPtr_->localPosition(pp.faceCentres()));
@@ -159,19 +159,19 @@ Foam::labelList Foam::binModels::uniformBin::binAddr(const vectorField& d) const
 
 void Foam::binModels::uniformBin::setBinsAddressing()
 {
-    faceToBin_.setSize(mesh_.nBoundaryFaces());
+    faceToBin_.resize_nocopy(mesh_.nBoundaryFaces());
     faceToBin_ = -1;
 
-    forAllIters(patchSet_, iter)
+    for (const label patchi : patchIDs_)
     {
-        const polyPatch& pp = mesh_.boundaryMesh()[iter()];
+        const polyPatch& pp = mesh_.boundaryMesh()[patchi];
         const label i0 = pp.start() - mesh_.nInternalFaces();
 
         SubList<label>(faceToBin_, pp.size(), i0) =
             binAddr(coordSysPtr_->localPosition(pp.faceCentres()));
     }
 
-    cellToBin_.setSize(mesh_.nCells());
+    cellToBin_.resize_nocopy(mesh_.nCells());
     cellToBin_ = -1;
 
     for (const label zonei : cellZoneIDs_)

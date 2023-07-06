@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -111,8 +111,7 @@ Foam::functionObjects::fieldExtents::fieldExtents
     internalField_(true),
     threshold_(0),
     C0_(Zero),
-    fieldSet_(mesh_),
-    patchIDs_()
+    fieldSet_(mesh_)
 {
     read(dict);
 
@@ -125,6 +124,8 @@ Foam::functionObjects::fieldExtents::fieldExtents
 
 bool Foam::functionObjects::fieldExtents::read(const dictionary& dict)
 {
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
     if (fvMeshFunctionObject::read(dict) && writeFile::read(dict))
     {
         dict.readIfPresent<bool>("internalField", internalField_);
@@ -133,28 +134,31 @@ bool Foam::functionObjects::fieldExtents::read(const dictionary& dict)
 
         dict.readIfPresent<vector>("referencePosition", C0_);
 
-        patchIDs_.clear();
-        const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
-
         wordRes patchNames;
         if (dict.readIfPresent("patches", patchNames))
         {
-            for (const wordRe& name : patchNames)
-            {
-                patchIDs_.insert(pbm.indices(name));
-            }
+            patchIDs_ = pbm.indices(patchNames);
         }
         else
         {
-            // Add all non-processor and non-empty patches
+            labelHashSet patchSet(2*pbm.size());
+
+            // All non-processor and non-empty patches
             forAll(pbm, patchi)
             {
                 const polyPatch& pp = pbm[patchi];
-                if (!isA<processorPolyPatch>(pp) && !isA<emptyPolyPatch>(pp))
+
+                if
+                (
+                    !isA<processorPolyPatch>(pp)
+                 && !isA<emptyPolyPatch>(pp)
+                )
                 {
-                    patchIDs_.insert(patchi);
+                    patchSet.insert(patchi);
                 }
             }
+
+            patchIDs_ = patchSet.sortedToc();
         }
 
         if (!internalField_ && patchIDs_.empty())

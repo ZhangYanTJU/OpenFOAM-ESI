@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -122,12 +122,8 @@ Foam::binModel::binModel
     mesh_(mesh),
     decomposePatchValues_(false),
     cumulative_(false),
-    coordSysPtr_(),
-    nBin_(1),
-    patchSet_(),
-    fieldNames_(),
-    cellZoneIDs_(),
-    filePtrs_()
+    coordSysPtr_(nullptr),
+    nBin_(1)
 {}
 
 
@@ -135,19 +131,23 @@ Foam::binModel::binModel
 
 bool Foam::binModel::read(const dictionary& dict)
 {
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
     if (!functionObjects::writeFile::read(dict))
     {
         return false;
     }
 
-    patchSet_ = mesh_.boundaryMesh().patchSet(dict.get<wordRes>("patches"));
+    // Can also use pbm.indices(), but no warnings...
+    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
     fieldNames_ = dict.get<wordHashSet>("fields").sortedToc();
 
-    if (dict.found("cellZones"))
+    wordRes zoneNames;
+    if (dict.readIfPresent("cellZones", zoneNames))
     {
         DynamicList<label> zoneIDs;
         DynamicList<wordRe> czUnmatched;
-        for (const auto& cz : dict.get<wordRes>("cellZones"))
+        for (const auto& cz : zoneNames)
         {
             const labelList czi(mesh_.cellZones().indices(cz));
 

@@ -67,7 +67,7 @@ void Foam::functionObjects::wallShearStress::calcShearStress
 {
     shearStress.dimensions().reset(Reff.dimensions());
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         vectorField& ssp = shearStress.boundaryFieldRef()[patchi];
         const vectorField& Sfp = mesh_.Sf().boundaryField()[patchi];
@@ -105,9 +105,9 @@ Foam::functionObjects::wallShearStress::wallShearStress
                 scopedName(typeName),
                 mesh_.time().timeName(),
                 mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             ),
             mesh_,
             dimensionedVector(sqr(dimLength)/sqr(dimTime), Zero)
@@ -130,48 +130,51 @@ bool Foam::functionObjects::wallShearStress::read(const dictionary& dict)
 
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
-    patchSet_ =
-        mesh_.boundaryMesh().patchSet
-        (
-            dict.getOrDefault<wordRes>("patches", wordRes())
-        );
-
-    Info<< type() << " " << name() << ":" << nl;
-
-    if (patchSet_.empty())
+    wordRes patchNames;
+    labelHashSet patchSet(0);
+    if (dict.readIfPresent("patches", patchNames) && !patchNames.empty())
     {
-        forAll(pbm, patchi)
-        {
-            if (isA<wallPolyPatch>(pbm[patchi]))
-            {
-                patchSet_.insert(patchi);
-            }
-        }
+        patchSet = pbm.patchSet(patchNames);
+    }
 
-        Info<< "    processing all wall patches" << nl << endl;
+    labelHashSet allWalls(pbm.findPatchIDs<wallPolyPatch>());
+
+    Info<< type() << ' ' << name() << ':' << nl;
+
+    if (patchSet.empty())
+    {
+        patchIDs_ = allWalls.sortedToc();
+
+        Info<< "    processing all (" << patchIDs_.size()
+            << ") wall patches" << nl << endl;
     }
     else
     {
-        Info<< "    processing wall patches: " << nl;
-        labelHashSet filteredPatchSet;
-        for (const label patchi : patchSet_)
+        allWalls &= patchSet;
+        patchSet -= allWalls;
+        patchIDs_ = allWalls.sortedToc();
+
+        if (!patchSet.empty())
         {
-            if (isA<wallPolyPatch>(pbm[patchi]))
+            WarningInFunction
+                << "Requested wall shear stress on ("
+                << patchSet.size() << ") non-wall patches:" << nl;
+
+            for (const label patchi : patchSet.sortedToc())
             {
-                filteredPatchSet.insert(patchi);
-                Info<< "        " << pbm[patchi].name() << endl;
+                Info<< "        " << pbm[patchi].name() << nl;
             }
-            else
-            {
-                WarningInFunction
-                    << "Requested wall shear stress on non-wall boundary "
-                    << "type patch: " << pbm[patchi].name() << endl;
-            }
+            Info<< nl;
         }
 
-        Info<< endl;
+        Info<< "    processing (" << patchIDs_.size()
+            << ") wall patches:" << nl;
 
-        patchSet_ = filteredPatchSet;
+        for (const label patchi : patchIDs_)
+        {
+            Info<< "        " << pbm[patchi].name() << nl;
+        }
+        Info<< endl;
     }
 
     return true;
@@ -234,14 +237,13 @@ bool Foam::functionObjects::wallShearStress::write()
 
     const fvPatchList& patches = mesh_.boundary();
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         const fvPatch& pp = patches[patchi];
 
         const vectorField& ssp = wallShearStress.boundaryField()[patchi];
 
-        const vector minSsp = gMin(ssp);
-        const vector maxSsp = gMax(ssp);
+        const MinMax<vector> limits = gMinMax(ssp);
 
         if (UPstream::master())
         {
@@ -249,13 +251,13 @@ bool Foam::functionObjects::wallShearStress::write()
 
             file()
                 << token::TAB << pp.name()
-                << token::TAB << minSsp
-                << token::TAB << maxSsp
+                << token::TAB << limits.min()
+                << token::TAB << limits.max()
                 << endl;
         }
 
         Log << "    min/max(" << pp.name() << ") = "
-            << minSsp << ", " << maxSsp << endl;
+            << limits.min() << ", " << limits.max() << endl;
     }
 
     return true;

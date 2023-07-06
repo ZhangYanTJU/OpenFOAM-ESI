@@ -74,7 +74,7 @@ void Foam::functionObjects::nearWallFields::createFields
                     (
                         io,
                         fld,
-                        patchSet_.toc(),
+                        patchIDs_,
                         fvPatchFieldBase::calculatedType()
                     )
                 );
@@ -120,7 +120,7 @@ void Foam::functionObjects::nearWallFields::sampleBoundaryField
 
     // Pick up data
     label nPatchFaces = 0;
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         fvPatchField<Type>& pfld = fldBf[patchi];
 

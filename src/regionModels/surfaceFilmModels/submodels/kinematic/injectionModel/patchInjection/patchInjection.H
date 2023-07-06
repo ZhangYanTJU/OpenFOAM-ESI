@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef patchInjection_H
-#define patchInjection_H
+#ifndef Foam_patchInjection_H
+#define Foam_patchInjection_H
 
 #include "injectionModel.H"
 
@@ -57,15 +57,6 @@ class patchInjection
 :
     public injectionModel
 {
-    // Private member functions
-
-        //- No copy construct
-        patchInjection(const patchInjection&) = delete;
-
-        //- No copy assignment
-        void operator=(const patchInjection&) = delete;
-
-
 protected:
 
         //- Stable film thickness - mass only removed if thickness exceeds
@@ -81,6 +72,13 @@ protected:
 
 public:
 
+    //- No copy construct
+    patchInjection(const patchInjection&) = delete;
+
+    //- No copy assignment
+    void operator=(const patchInjection&) = delete;
+
+
     //- Runtime type information
     TypeName("patchInjection");
 
@@ -92,7 +90,7 @@ public:
 
 
     //- Destructor
-    virtual ~patchInjection();
+    virtual ~patchInjection() = default;
 
 
     // Member Functions

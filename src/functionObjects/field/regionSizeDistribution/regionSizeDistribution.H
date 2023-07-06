@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -257,13 +257,13 @@ class regionSizeDistribution
         void writeAlphaFields
         (
             const regionSplit& regions,
-            const Map<label>& keepRegions,
+            const labelHashSet& keepRegions,
             const Map<scalar>& regionVolume,
             const volScalarField& alpha
         ) const;
 
         //- Mark all regions starting at patches
-        Map<label> findPatchRegions(const regionSplit&) const;
+        labelHashSet findPatchRegions(const regionSplit&) const;
 
         //- Helper: divide if denom != 0
         static tmp<scalarField> divide(const scalarField&, const scalarField&);

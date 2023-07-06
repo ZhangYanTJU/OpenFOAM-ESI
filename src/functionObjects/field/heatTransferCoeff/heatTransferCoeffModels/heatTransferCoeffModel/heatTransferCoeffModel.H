@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,8 +67,8 @@ protected:
         //- Const reference to the mesh
         const fvMesh& mesh_;
 
-        //- List of (wall) patches to process
-        labelHashSet patchSet_;
+        //- List of (wall) patches to process (selected by name)
+        labelList patchIDs_;
 
         //- Name of temperature field
         const word TName_;
@@ -152,9 +152,9 @@ public:
         }
 
         //- Return const reference to wall patches to process
-        const labelHashSet& patchSet() const noexcept
+        const labelList& patchIDs() const noexcept
         {
-            return patchSet_;
+            return patchIDs_;
         }
 
         //- Return const reference to name of temperature field

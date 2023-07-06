@@ -231,8 +231,8 @@ protected:
             //- Coordinate system used when evaluating forces and moments
             autoPtr<coordinateSystem> coordSysPtr_;
 
-            //- Names of operand patches
-            labelHashSet patchSet_;
+            //- Selected operand patches
+            labelList patchIDs_;
 
             //- Reference density needed for incompressible calculations
             scalar rhoRef_;

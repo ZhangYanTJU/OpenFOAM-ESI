@@ -206,7 +206,7 @@ void Foam::functionObjects::forces::reset()
     else
     {
         constexpr bool updateAccessTime = false;
-        for (const label patchi : patchSet_)
+        for (const label patchi : patchIDs_)
         {
             force.boundaryFieldRef(updateAccessTime)[patchi] = Zero;
             moment.boundaryFieldRef(updateAccessTime)[patchi] = Zero;
@@ -545,7 +545,6 @@ Foam::functionObjects::forces::forces
     forceFilePtr_(),
     momentFilePtr_(),
     coordSysPtr_(nullptr),
-    patchSet_(),
     rhoRef_(VGREAT),
     pRef_(0),
     pName_("p"),
@@ -585,7 +584,6 @@ Foam::functionObjects::forces::forces
     forceFilePtr_(),
     momentFilePtr_(),
     coordSysPtr_(nullptr),
-    patchSet_(),
     rhoRef_(VGREAT),
     pRef_(0),
     pName_("p"),
@@ -610,6 +608,8 @@ Foam::functionObjects::forces::forces
 
 bool Foam::functionObjects::forces::read(const dictionary& dict)
 {
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
     if (!fvMeshFunctionObject::read(dict) || !writeFile::read(dict))
     {
         return false;
@@ -617,13 +617,10 @@ bool Foam::functionObjects::forces::read(const dictionary& dict)
 
     initialised_ = false;
 
-    Info<< type() << " " << name() << ":" << endl;
+    Info<< type() << ' ' << name() << ':' << endl;
 
-    patchSet_ =
-        mesh_.boundaryMesh().patchSet
-        (
-            dict.get<wordRes>("patches")
-        );
+    // Can also use pbm.indices(), but no warnings...
+    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
 
     dict.readIfPresent("directForceDensity", directForceDensity_);
     if (directForceDensity_)
@@ -702,7 +699,7 @@ void Foam::functionObjects::forces::calcForcesMoments()
         const auto& magSfb = mesh_.magSf().boundaryField();
         const auto& Cb = mesh_.C().boundaryField();
 
-        for (const label patchi : patchSet_)
+        for (const label patchi : patchIDs_)
         {
             const vectorField Md(Cb[patchi] - origin);
 
@@ -738,7 +735,7 @@ void Foam::functionObjects::forces::calcForcesMoments()
         const scalar rhoRef = rho(p);
         const scalar pRef = pRef_/rhoRef;
 
-        for (const label patchi : patchSet_)
+        for (const label patchi : patchIDs_)
         {
             const vectorField Md(Cb[patchi] - origin);
 
