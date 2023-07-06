@@ -174,7 +174,7 @@ bool Foam::binModel::read(const dictionary& dict)
 
     decomposePatchValues_ = dict.getOrDefault("decomposePatchValues", false);
 
-    filePtrs_.setSize(fieldNames_.size());
+    filePtrs_.resize(fieldNames_.size());
     forAll(filePtrs_, i)
     {
         filePtrs_.set(i, newFileAtStartTime(fieldNames_[i] + "Bin"));
