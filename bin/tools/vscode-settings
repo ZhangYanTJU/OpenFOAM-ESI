@@ -141,10 +141,10 @@ fi
 
 cat << JSON_CONTENT
 
-        "C_Cpp.autocomplete": "Disabled",
-        "C_Cpp.errorSquiggles": "Disabled",
-        "C_Cpp.formatting": "Disabled",
-        "C_Cpp.intelliSenseEngine": "Disabled"
+        "C_Cpp.autocomplete": "disabled",
+        "C_Cpp.errorSquiggles": "disabled",
+        "C_Cpp.formatting": "disabled",
+        "C_Cpp.intelliSenseEngine": "disabled"
     }
 }
 JSON_CONTENT
