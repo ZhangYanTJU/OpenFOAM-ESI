@@ -54,7 +54,7 @@ void executeFunctionObjects
     const argList& args,
     const Time& runTime,
     fvMesh& mesh,
-    const wordHashSet& selectedFields,
+    const wordList& selectedFields,
     functionObjectList& functions,
     bool lastTime
 )
@@ -73,11 +73,16 @@ void executeFunctionObjects
         objects.size() + constObjects.size()
     );
 
+    const auto nameMatcher = [&](const word& name) -> bool
+    {
+        return selectedFields.contains(name);
+    };
+
     // Read GeometricFields
 
     #undef  ReadFields
     #define ReadFields(FieldType)                                             \
-    readFields<FieldType>(mesh, objects, selectedFields, storedObjects);
+    readFields<FieldType>(mesh, objects, nameMatcher, storedObjects);
 
     // Read volFields
     ReadFields(volScalarField);
@@ -105,7 +110,7 @@ void executeFunctionObjects
     const pointMesh& pMesh = pointMesh::New(mesh);
     #undef  ReadPointFields
     #define ReadPointFields(FieldType)                                        \
-    readFields<FieldType>(pMesh, objects, selectedFields, storedObjects);
+    readFields<FieldType>(pMesh, objects, nameMatcher, storedObjects);
 
     ReadPointFields(pointScalarField)
     ReadPointFields(pointVectorField);
@@ -118,7 +123,7 @@ void executeFunctionObjects
 
     #undef  ReadUniformFields
     #define ReadUniformFields(FieldType)                                      \
-    readUniformFields<FieldType>(constObjects, selectedFields, storedObjects);
+    readUniformFields<FieldType>(constObjects, nameMatcher, storedObjects);
 
     ReadUniformFields(uniformDimensionedScalarField);
     ReadUniformFields(uniformDimensionedVectorField);

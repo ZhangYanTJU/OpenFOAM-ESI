@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,8 +32,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_fieldInfo_H
-#define functionObjects_fieldInfo_H
+#ifndef Foam_functionObjects_fieldInfo_H
+#define Foam_functionObjects_fieldInfo_H
 
 #include "label.H"
 #include "wordRes.H"
@@ -57,7 +57,7 @@ Ostream& operator<<(Ostream&, const fieldInfo&);
 
 class fieldInfo
 {
-    // Pivate Data
+    // Private Data
 
         //- Pattern for the field name(s)
         wordRe name_;
@@ -65,8 +65,8 @@ class fieldInfo
         //- Field component
         label component_;
 
-        //- Found
-        mutable Switch found_;
+        //- Found the field
+        mutable bool found_;
 
 
 public:
@@ -81,9 +81,8 @@ public:
             found_(false)
         {}
 
-
         //- Construct from components
-        fieldInfo(const wordRe& name, const label component = -1)
+        explicit fieldInfo(const wordRe& name, const label component = -1)
         :
             name_(name),
             component_(component),
@@ -91,7 +90,7 @@ public:
         {}
 
         //- Construct from stream
-        fieldInfo(Istream& is)
+        explicit fieldInfo(Istream& is)
         :
             name_(is),
             component_(readLabel(is)),
@@ -105,27 +104,27 @@ public:
 
     // Member Functions
 
-        const wordRe& name() const
-        {
-            return name_;
-        }
+        //- Return the selector pattern for the field name(s)
+        const wordRe& name() const noexcept { return name_; }
 
-        label component() const
-        {
-            return component_;
-        }
+        //- Return the component
+        label component() const noexcept { return component_; }
 
-        Switch& found() const
-        {
-            return found_;
-        }
+        //- Return the found state
+        bool found() const noexcept { return found_; }
+
+        //- Set the found state to be 'on'
+        void found(bool on) const noexcept { found_ = on; }
+
 
         friend bool operator==(const fieldInfo& a, const fieldInfo& b)
         {
             return
-                a.name_ == b.name_
-             && a.component_ == b.component_
-             && a.found_ == b.found_;
+            (
+                a.found() == b.found()
+             && a.component() == b.component()
+             && a.name() == b.name()
+            );
         }
 
         friend bool operator!=(const fieldInfo& a, const fieldInfo& b)
@@ -143,7 +142,9 @@ public:
         }
         friend Ostream& operator<<(Ostream& os, const fieldInfo& fi)
         {
-            os  << fi.name_ << ' ' << fi.component_ << ' ' << fi.found_;
+            os  << fi.name_ << ' '
+                << fi.component_ << ' '
+                << Switch::name(fi.found_);
             return os;
         }
 };

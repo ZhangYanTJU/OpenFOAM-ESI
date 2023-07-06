@@ -39,8 +39,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_fieldSelection_H
-#define functionObjects_fieldSelection_H
+#ifndef Foam_functionObjects_fieldSelection_H
+#define Foam_functionObjects_fieldSelection_H
 
 #include "fieldInfo.H"
 #include "DynamicList.H"
@@ -51,6 +51,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class dictionary;
 class objectRegistry;
 
@@ -65,9 +66,11 @@ class fieldSelection
 :
     public List<fieldInfo>
 {
-private:
-
     // Private Member Functions
+
+        //- Reset the field filters to the given field names
+        template<class Container>
+        bool resetFieldFiltersImpl(const Container& names);
 
         //- No copy construct
         fieldSelection(const fieldSelection&) = delete;
@@ -75,7 +78,7 @@ private:
 
 protected:
 
-    // Protected member data
+    // Protected Member Data
 
         //- Reference to the database
         const objectRegistry& obr_;
@@ -97,7 +100,7 @@ protected:
 public:
 
     //- Construct from object registry
-    fieldSelection
+    explicit fieldSelection
     (
         const objectRegistry& obr,
         const bool includeComponents = false
@@ -110,13 +113,17 @@ public:
 
     // Member Functions
 
-        //- Return the cuurent filters
+        //- The current field selection
+        const List<fieldInfo>& selection() const noexcept
+        {
+            return selection_;
+        }
+
+        //- Return the current filters
         inline HashSet<wordRe> filters() const;
 
-        inline const List<fieldInfo>& selection() const;
-
-        //- Return the current field selection
-        inline wordHashSet selectionNames() const;
+        //- Return the current field selection, in sorted order
+        inline wordList selectionNames() const;
 
         //- Reset the field filters to the given field names
         virtual bool resetFieldFilters(const HashSet<wordRe>& names);

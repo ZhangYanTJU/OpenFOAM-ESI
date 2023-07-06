@@ -51,14 +51,13 @@ void Foam::functionObjects::fileFieldSelection::addFromFile
     {
         const wordList names(objects.sortedNames<Type>(fi.name()));
 
-        if (names.size())
+        if (!names.empty())
         {
-            for (const word& name : names)
-            {
-                set.append(fieldInfo(wordRe(name)));
-            }
-
-            fi.found() = true;
+            fi.found(true);
+        }
+        for (const word& name : names)
+        {
+            set.emplace_back(wordRe(name));
         }
     }
 }

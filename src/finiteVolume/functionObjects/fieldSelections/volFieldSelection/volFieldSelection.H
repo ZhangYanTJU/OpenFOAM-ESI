@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_volFieldSelection_H
-#define functionObjects_volFieldSelection_H
+#ifndef Foam_functionObjects_volFieldSelection_H
+#define Foam_functionObjects_volFieldSelection_H
 
 #include "fieldSelection.H"
 
@@ -54,14 +54,6 @@ class volFieldSelection
 :
     public fieldSelection
 {
-private:
-
-    // Private Member Functions
-
-        //- No copy construct
-        volFieldSelection(const volFieldSelection&) = delete;
-
-
 protected:
 
     // Protected Member Functions
@@ -73,8 +65,12 @@ protected:
 
 public:
 
+    //- No copy construct
+    volFieldSelection(const volFieldSelection&) = delete;
+
+
     //- Construct from object registry
-    volFieldSelection
+    explicit volFieldSelection
     (
         const objectRegistry& obr,
         const bool includeComponents = false

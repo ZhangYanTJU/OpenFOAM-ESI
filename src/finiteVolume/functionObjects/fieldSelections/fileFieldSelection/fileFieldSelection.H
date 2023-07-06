@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_fileFieldSelection_H
-#define functionObjects_fileFieldSelection_H
+#ifndef Foam_functionObjects_fileFieldSelection_H
+#define Foam_functionObjects_fileFieldSelection_H
 
 #include "fieldSelection.H"
 
@@ -91,11 +91,11 @@ class fileFieldSelection
         ) const;
 
 
-        //- No copy construct
-        fileFieldSelection(const fileFieldSelection&) = delete;
-
-
 public:
+
+    //- No copy construct
+    fileFieldSelection(const fileFieldSelection&) = delete;
+
 
     // Constructors
 
