@@ -154,9 +154,8 @@ bool Foam::binModels::singleDirectionUniformBin::processField
         }
     }
 
-    forAllIters(patchSet_, iter)
+    for (const label patchi : patchIDs_)
     {
-        const label patchi = iter();
         const polyPatch& pp = mesh_.boundaryMesh()[patchi];
         const vectorField np(mesh_.boundary()[patchi].nf());
 

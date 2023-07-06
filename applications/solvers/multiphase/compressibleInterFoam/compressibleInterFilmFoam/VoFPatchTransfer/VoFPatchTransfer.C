@@ -86,6 +86,7 @@ VoFPatchTransfer::VoFPatchTransfer
     wordRes patchNames;
     if (coeffDict_.readIfPresent("patches", patchNames))
     {
+        // Can also use pbm.indices(), but no warnings...
         patchIDs_ = pbm.patchSet(patchNames).sortedToc();
 
         Info<< "        applying to " << patchIDs_.size() << " patches:" << nl;

@@ -174,7 +174,7 @@ Foam::heatTransferCoeffModels::ReynoldsAnalogy::Cf() const
     const volSymmTensorField R(devReff());
     const volSymmTensorField::Boundary& Rbf = R.boundaryField();
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         const fvPatchVectorField& Up = Ubf[patchi];
 
@@ -202,7 +202,7 @@ void Foam::heatTransferCoeffModels::ReynoldsAnalogy::htc
 
     volScalarField::Boundary& htcBf = htc.boundaryFieldRef();
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         tmp<scalarField> trhop = rho(patchi);
         tmp<scalarField> tCpp = Cp(patchi);

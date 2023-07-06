@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,13 +51,13 @@ void Foam::functionObjects::nearWallFields::calcAddressing()
 {
     // Count number of faces
     label nPatchFaces = 0;
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         nPatchFaces += mesh_.boundary()[patchi].size();
     }
 
     // Global indexing
-    globalIndex globalWalls(nPatchFaces);
+    const globalIndex globalWalls(nPatchFaces);
 
     DebugInFunction << "nPatchFaces: " << globalWalls.totalSize() << endl;
 
@@ -72,7 +72,7 @@ void Foam::functionObjects::nearWallFields::calcAddressing()
     // Add particles to track to sample locations
     nPatchFaces = 0;
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         const fvPatch& patch = mesh_.boundary()[patchi];
 
@@ -260,16 +260,15 @@ Foam::functionObjects::nearWallFields::nearWallFields
 
 bool Foam::functionObjects::nearWallFields::read(const dictionary& dict)
 {
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
     fvMeshFunctionObject::read(dict);
 
     dict.readEntry("fields", fieldSet_);
     dict.readEntry("distance", distance_);
 
-    patchSet_ =
-        mesh_.boundaryMesh().patchSet
-        (
-            dict.get<wordRes>("patches")
-        );
+    // Can also use pbm.indices(), but no warnings...
+    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
 
 
     // Clear out any previously loaded fields

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,7 +89,7 @@ Foam::functionObjects::multiphaseInterHtcModel::q() const
 
     const multiphaseInterSystem& fluid = *fluidPtr;
 
-    for (const label patchi : htcModelPtr_->patchSet())
+    for (const label patchi : htcModelPtr_->patchIDs())
     {
         q[patchi] += fluid.kappaEff(patchi)()*Tbf[patchi].snGrad();
     }
@@ -103,7 +103,7 @@ Foam::functionObjects::multiphaseInterHtcModel::q() const
     {
         const volScalarField::Boundary& qrbf = qrPtr->boundaryField();
 
-        for (const label patchi : htcModelPtr_->patchSet())
+        for (const label patchi : htcModelPtr_->patchIDs())
         {
             q[patchi] += qrbf[patchi];
         }

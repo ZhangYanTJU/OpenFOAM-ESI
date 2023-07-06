@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,7 +84,7 @@ protected:
         label nBin_;
 
         //- Indices of operand patches
-        labelHashSet patchSet_;
+        labelList patchIDs_;
 
         //- Names of operand fields
         wordList fieldNames_;

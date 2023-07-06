@@ -63,7 +63,6 @@ Foam::functionObjects::Curle::Curle
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(mesh_, name),
     pName_("p"),
-    patchSet_(),
     observerPositions_(),
     c0_(0),
     rawFilePtrs_(),
@@ -78,6 +77,8 @@ Foam::functionObjects::Curle::Curle
 
 bool Foam::functionObjects::Curle::read(const dictionary& dict)
 {
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
     if (!(fvMeshFunctionObject::read(dict) && writeFile::read(dict)))
     {
         return false;
@@ -85,14 +86,12 @@ bool Foam::functionObjects::Curle::read(const dictionary& dict)
 
     dict.readIfPresent("p", pName_);
 
-    patchSet_ = mesh_.boundaryMesh().patchSet(dict.get<wordRes>("patches"));
+    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
 
-    if (patchSet_.empty())
+    if (patchIDs_.empty())
     {
         WarningInFunction
-            << "No patches defined"
-            << endl;
-
+            << "No patches defined" << endl;
         return false;
     }
 
@@ -117,8 +116,7 @@ bool Foam::functionObjects::Curle::read(const dictionary& dict)
     if (observerPositions_.empty())
     {
         WarningInFunction
-            << "No observer positions defined"
-            << endl;
+            << "No observer positions defined" << endl;
 
         return false;
     }
@@ -205,7 +203,7 @@ bool Foam::functionObjects::Curle::execute()
 
     scalarField pDash(observerPositions_.size(), 0);
 
-    for (auto patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         const scalarField& pp = pBf[patchi];
         const scalarField& dpdtp = dpdtBf[patchi];
@@ -228,7 +226,7 @@ bool Foam::functionObjects::Curle::execute()
 
     if (surfaceWriterPtr_)
     {
-        if (Pstream::master())
+        if (UPstream::master())
         {
             // Time-aware, with time spliced into the output path
             surfaceWriterPtr_->beginTime(time_);

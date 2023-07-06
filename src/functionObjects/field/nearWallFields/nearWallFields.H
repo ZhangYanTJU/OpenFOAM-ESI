@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,8 +90,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_nearWallFields_H
-#define functionObjects_nearWallFields_H
+#ifndef Foam_functionObjects_nearWallFields_H
+#define Foam_functionObjects_nearWallFields_H
 
 #include "fvMeshFunctionObject.H"
 #include "volFields.H"
@@ -123,7 +123,7 @@ protected:
             List<Tuple2<word, word>> fieldSet_;
 
             //- Patches to sample
-            labelHashSet patchSet_;
+            labelList patchIDs_;
 
             //- Distance away from wall
             scalar distance_;

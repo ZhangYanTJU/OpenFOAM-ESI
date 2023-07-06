@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -75,7 +75,7 @@ void Foam::functionObjects::wallHeatFlux::calcHeatFlux
 
     const volScalarField::Boundary& alphaBf = alpha.boundaryField();
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         wallHeatFluxBf[patchi] = alphaBf[patchi]*heBf[patchi].snGrad();
     }
@@ -87,7 +87,7 @@ void Foam::functionObjects::wallHeatFlux::calcHeatFlux
     {
         const volScalarField::Boundary& radHeatFluxBf = qrPtr->boundaryField();
 
-        for (const label patchi : patchSet_)
+        for (const label patchi : patchIDs_)
         {
             wallHeatFluxBf[patchi] -= radHeatFluxBf[patchi];
         }
@@ -106,7 +106,6 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
 :
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(obr_, name, typeName, dict),
-    patchSet_(),
     qrName_("qr")
 {
     volScalarField* wallHeatFluxPtr
@@ -118,9 +117,9 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
                 scopedName(typeName),
                 mesh_.time().timeName(),
                 mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             ),
             mesh_,
             dimensionedScalar(dimMass/pow3(dimTime), Zero)
@@ -139,55 +138,58 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
 
 bool Foam::functionObjects::wallHeatFlux::read(const dictionary& dict)
 {
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+
     fvMeshFunctionObject::read(dict);
     writeFile::read(dict);
 
-    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
-
-    patchSet_ =
-        mesh_.boundaryMesh().patchSet
-        (
-            dict.getOrDefault<wordRes>("patches", wordRes())
-        );
-
     dict.readIfPresent("qr", qrName_);
 
-    Info<< type() << " " << name() << ":" << nl;
-
-    if (patchSet_.empty())
+    wordRes patchNames;
+    labelHashSet patchSet(0);
+    if (dict.readIfPresent("patches", patchNames) && !patchNames.empty())
     {
-        forAll(pbm, patchi)
-        {
-            if (isA<wallPolyPatch>(pbm[patchi]))
-            {
-                patchSet_.insert(patchi);
-            }
-        }
+        patchSet = pbm.patchSet(patchNames);
+    }
 
-        Info<< "    processing all wall patches" << nl << endl;
+    labelHashSet allWalls(pbm.findPatchIDs<wallPolyPatch>());
+
+    Info<< type() << ' ' << name() << ':' << nl;
+
+    if (patchSet.empty())
+    {
+        patchIDs_ = allWalls.sortedToc();
+
+        Info<< "    processing all (" << patchIDs_.size()
+            << ") wall patches" << nl << endl;
     }
     else
     {
-        Info<< "    processing wall patches: " << nl;
-        labelHashSet filteredPatchSet;
-        for (const label patchi : patchSet_)
+        allWalls &= patchSet;
+        patchSet -= allWalls;
+        patchIDs_ = allWalls.sortedToc();
+
+        if (!patchSet.empty())
         {
-            if (isA<wallPolyPatch>(pbm[patchi]))
+            WarningInFunction
+                << "Requested wall heat-flux on ("
+                << patchSet.size() << ") non-wall patches:" << nl;
+
+            for (const label patchi : patchSet.sortedToc())
             {
-                filteredPatchSet.insert(patchi);
-                Info<< "        " << pbm[patchi].name() << endl;
+                Info<< "        " << pbm[patchi].name() << nl;
             }
-            else
-            {
-                WarningInFunction
-                    << "Requested wall heat-flux on non-wall boundary "
-                    << "type patch: " << pbm[patchi].name() << endl;
-            }
+            Info<< nl;
         }
 
-        Info<< endl;
+        Info<< "    processing (" << patchIDs_.size()
+            << ") wall patches:" << nl;
 
-        patchSet_ = filteredPatchSet;
+        for (const label patchi : patchIDs_)
+        {
+            Info<< "        " << pbm[patchi].name() << nl;
+        }
+        Info<< endl;
     }
 
     return true;
@@ -258,18 +260,18 @@ bool Foam::functionObjects::wallHeatFlux::execute()
             << "database" << exit(FatalError);
     }
 
+
     const fvPatchList& patches = mesh_.boundary();
 
     const surfaceScalarField::Boundary& magSf = mesh_.magSf().boundaryField();
 
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         const fvPatch& pp = patches[patchi];
 
         const scalarField& hfp = wallHeatFlux.boundaryField()[patchi];
 
-        const scalar minHfp = gMin(hfp);
-        const scalar maxHfp = gMax(hfp);
+        const MinMax<scalar> limits = gMinMax(hfp);
         const scalar integralHfp = gSum(magSf[patchi]*hfp);
 
         if (Pstream::master())
@@ -278,20 +280,20 @@ bool Foam::functionObjects::wallHeatFlux::execute()
 
             file()
                 << token::TAB << pp.name()
-                << token::TAB << minHfp
-                << token::TAB << maxHfp
+                << token::TAB << limits.min()
+                << token::TAB << limits.max()
                 << token::TAB << integralHfp
                 << endl;
         }
 
         Log << "    min/max/integ(" << pp.name() << ") = "
-            << minHfp << ", " << maxHfp << ", " << integralHfp << endl;
+            << limits.min() << ", " << limits.max()
+            << ", " << integralHfp << endl;
 
-        this->setResult("min(" + pp.name() + ")", minHfp);
-        this->setResult("max(" + pp.name() + ")", maxHfp);
+        this->setResult("min(" + pp.name() + ")", limits.min());
+        this->setResult("max(" + pp.name() + ")", limits.max());
         this->setResult("int(" + pp.name() + ")", integralHfp);
     }
-
 
     return true;
 }
@@ -302,7 +304,7 @@ bool Foam::functionObjects::wallHeatFlux::write()
     const auto& wallHeatFlux =
         lookupObject<volScalarField>(scopedName(typeName));
 
-    Log << type() << " " << name() << " write:" << nl
+    Log << type() << ' ' << name() << " write:" << nl
         << "    writing field " << wallHeatFlux.name() << endl;
 
     wallHeatFlux.write();

@@ -190,7 +190,7 @@ void Foam::heatTransferCoeffModels::faceZoneReferenceTemperature::htc
     const scalar Tref = faceZoneAverageTemperature();
 
     // Calculate heat-transfer coefficient boundary fields for current region
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         htcBf[patchi] = q[patchi]/(Tref - Tbf[patchi] + ROOTVSMALL);
     }
