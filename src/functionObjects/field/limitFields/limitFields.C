@@ -157,11 +157,13 @@ bool Foam::functionObjects::limitFields::execute()
 {
     fieldSet_.updateSelection();
 
-    Log << type() << " " << name() << ":" << nl;
+    Log << type() << ' ' << name() << ':' << nl;
 
-    label count = 0;
+    label count = 0, total = 0;
+
     for (const word& fieldName : fieldSet_.selectionNames())
     {
+        ++total;
         if
         (
             limitScalarField(fieldName)
@@ -177,8 +179,7 @@ bool Foam::functionObjects::limitFields::execute()
 
     if (debug)
     {
-        Log << " - limited " << count << '/'
-            << fieldSet_.selectionNames().size() << " fields";
+        Log << " - limited " << count << '/' << total << " fields";
     }
 
     Log << endl;

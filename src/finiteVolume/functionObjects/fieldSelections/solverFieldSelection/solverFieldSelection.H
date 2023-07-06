@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_solverFieldSelection_H
-#define functionObjects_solverFieldSelection_H
+#ifndef Foam_functionObjects_solverFieldSelection_H
+#define Foam_functionObjects_solverFieldSelection_H
 
 #include "fieldSelection.H"
 
@@ -54,18 +54,14 @@ class solverFieldSelection
 :
     public fieldSelection
 {
-private:
-
-    // Private Member Functions
-
-        //- No copy construct
-        solverFieldSelection(const solverFieldSelection&) = delete;
-
-
 public:
 
+    //- No copy construct
+    solverFieldSelection(const solverFieldSelection&) = delete;
+
+
     //- Construct from object registry
-    solverFieldSelection
+    explicit solverFieldSelection
     (
         const objectRegistry& obr,
         const bool includeComponents = false
