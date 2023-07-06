@@ -386,8 +386,10 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
 
     if (inst.isAbsolute() || !tm.processorCase())
     {
-        mkDir(io.path());
-        fileName pathName(io.objectPath());
+        // Note: delay mkdir to masterOFstream so it does not get created
+        //       if not needed (e.g. when running distributed)
+
+        const fileName pathName(io.objectPath());
 
         if (debug)
         {
@@ -427,10 +429,12 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
     else
     {
         // Construct the equivalent processors/ directory
-        fileName path(processorsPath(io, inst, processorsDir(io)));
+        const fileName path(processorsPath(io, inst, processorsDir(io)));
 
-        mkDir(path);
-        fileName pathName(path/io.name());
+        // Note: delay mkdir to masterOFstream so it does not get created
+        //       if not needed (e.g. when running distributed)
+
+        const fileName pathName(path/io.name());
 
         if (io.global() || io.globalObject())
         {
