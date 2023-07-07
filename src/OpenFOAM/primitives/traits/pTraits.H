@@ -41,6 +41,7 @@ Description
 
 #include "direction.H"
 #include <type_traits>  // For std::integral_constant, std::void_t (C++17)
+#include <utility>      // For declval
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -157,6 +158,31 @@ struct pTraits_has_zero
 <
     T,
     stdFoam::void_t<decltype(pTraits<T>::zero)>
+>
+:
+    std::true_type
+{};
+
+
+/*---------------------------------------------------------------------------*\
+                               Container Traits
+\*---------------------------------------------------------------------------*/
+
+//- Test for containers with begin/end range iterators.
+template<class T, class = void>
+struct is_range : std::false_type {};
+
+//- Test for list containers with begin/end range iterators.
+//- \attention May yield a false positive with HashTable, HashSet etc
+template<class T>
+struct is_range
+<
+    T,
+    stdFoam::void_t
+    <
+        decltype(std::declval<T>().begin()),
+        decltype(std::declval<T>().end())
+    >
 >
 :
     std::true_type
