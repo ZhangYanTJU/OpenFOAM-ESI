@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -177,13 +177,14 @@ Foam::wordList Foam::IOobjectList::namesTypeImpl
 }
 
 
-// Templated implementation for sorted()
+// Templated implementation for csorted(), csorted()
 template<class Type, class MatchPredicate>
 Foam::UPtrList<const Foam::IOobject>
 Foam::IOobjectList::objectsTypeImpl
 (
     const IOobjectList& list,
-    const MatchPredicate& matchName
+    const MatchPredicate& matchName,
+    const bool doSort
 )
 {
     UPtrList<const IOobject> result(list.size());
@@ -203,7 +204,10 @@ Foam::IOobjectList::objectsTypeImpl
 
     result.resize(count);
 
-    Foam::sort(result, nameOp<IOobject>());  // Sort by object name()
+    if (doSort)
+    {
+        Foam::sort(result, nameOp<IOobject>());  // Sort by object name()
+    }
 
     return result;
 }
@@ -472,19 +476,30 @@ Foam::label Foam::IOobjectList::count
 
 template<class Type>
 Foam::UPtrList<const Foam::IOobject>
-Foam::IOobjectList::sorted() const
+Foam::IOobjectList::cobjects() const
 {
-    return objectsTypeImpl<Type>(*this, predicates::always());
+    // doSort = false
+    return objectsTypeImpl<Type>(*this, predicates::always(), false);
 }
 
 
 template<class Type>
 Foam::UPtrList<const Foam::IOobject>
-Foam::IOobjectList::sorted(const bool syncPar) const
+Foam::IOobjectList::csorted() const
+{
+    // doSort = true
+    return objectsTypeImpl<Type>(*this, predicates::always(), true);
+}
+
+
+template<class Type>
+Foam::UPtrList<const Foam::IOobject>
+Foam::IOobjectList::csorted(const bool syncPar) const
 {
     UPtrList<const IOobject> list
     (
-        objectsTypeImpl<Type>(*this, predicates::always())
+        // doSort = true
+        objectsTypeImpl<Type>(*this, predicates::always(), true)
     );
 
     checkObjectOrder(list, syncPar);
@@ -495,18 +510,31 @@ Foam::IOobjectList::sorted(const bool syncPar) const
 
 template<class Type, class MatchPredicate>
 Foam::UPtrList<const Foam::IOobject>
-Foam::IOobjectList::sorted
+Foam::IOobjectList::cobjects
 (
     const MatchPredicate& matchName
 ) const
 {
-    return objectsTypeImpl<Type>(*this, matchName);
+    // doSort = false
+    return objectsTypeImpl<Type>(*this, matchName, false);
 }
 
 
 template<class Type, class MatchPredicate>
 Foam::UPtrList<const Foam::IOobject>
-Foam::IOobjectList::sorted
+Foam::IOobjectList::csorted
+(
+    const MatchPredicate& matchName
+) const
+{
+    // doSort = true
+    return objectsTypeImpl<Type>(*this, matchName, true);
+}
+
+
+template<class Type, class MatchPredicate>
+Foam::UPtrList<const Foam::IOobject>
+Foam::IOobjectList::csorted
 (
     const MatchPredicate& matchName,
     const bool syncPar
@@ -514,7 +542,8 @@ Foam::IOobjectList::sorted
 {
     UPtrList<const IOobject> list
     (
-        objectsTypeImpl<Type>(*this, matchName)
+        // doSort = true
+        objectsTypeImpl<Type>(*this, matchName, true)
     );
 
     checkObjectOrder(list, syncPar);
@@ -531,6 +560,7 @@ Foam::wordList Foam::IOobjectList::names
     const MatchPredicate& matchClass
 ) const
 {
+    // doSort = false
     return namesImpl(*this, matchClass, predicates::always(), false);
 }
 
@@ -553,6 +583,7 @@ Foam::wordList Foam::IOobjectList::names
     const MatchPredicate2& matchName
 ) const
 {
+    // doSort = false
     return namesImpl(*this, matchClass, matchName, false);
 }
 
@@ -572,6 +603,7 @@ Foam::wordList Foam::IOobjectList::names
 template<class Type>
 Foam::wordList Foam::IOobjectList::names() const
 {
+    // doSort = false
     return namesTypeImpl<Type>(*this, predicates::always(), false);
 }
 
@@ -589,6 +621,7 @@ Foam::wordList Foam::IOobjectList::names
     const MatchPredicate& matchName
 ) const
 {
+    // doSort = false
     return namesTypeImpl<Type>(*this, matchName, false);
 }
 

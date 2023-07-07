@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -139,7 +139,7 @@ void printInfo(const ensightMesh& mesh, int verbose = 0)
     FixedList<label, 3> cellStats(Zero);
     FixedList<label, 3> faceStats(Zero);
 
-    for (const auto& iter : mesh.cellZoneParts().sorted())
+    for (const auto& iter : mesh.cellZoneParts().csorted())
     {
         FixedList<label, 3> stats = printPartInfo(iter.val(), verbose);
 
@@ -149,7 +149,7 @@ void printInfo(const ensightMesh& mesh, int verbose = 0)
         }
     }
 
-    for (const auto& iter : mesh.faceZoneParts().sorted())
+    for (const auto& iter : mesh.faceZoneParts().csorted())
     {
         FixedList<label, 3> stats = printPartInfo(iter.val(), verbose);
 
@@ -159,7 +159,7 @@ void printInfo(const ensightMesh& mesh, int verbose = 0)
         }
     }
 
-    for (const auto& iter : mesh.boundaryParts().sorted())
+    for (const auto& iter : mesh.boundaryParts().csorted())
     {
         FixedList<label, 3> stats = printPartInfo(iter.val(), verbose);
 

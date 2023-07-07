@@ -158,27 +158,6 @@ Foam::label Foam::objectRegistry::count(const char* clsName) const
 }
 
 
-Foam::UPtrList<const Foam::regIOobject>
-Foam::objectRegistry::csorted() const
-{
-    return objectsTypeImpl<const regIOobject>(*this, predicates::always());
-}
-
-
-Foam::UPtrList<const Foam::regIOobject>
-Foam::objectRegistry::sorted() const
-{
-    return objectsTypeImpl<const regIOobject>(*this, predicates::always());
-}
-
-
-Foam::UPtrList<Foam::regIOobject>
-Foam::objectRegistry::sorted()
-{
-    return objectsTypeImpl<regIOobject>(*this, predicates::always());
-}
-
-
 Foam::wordList Foam::objectRegistry::names() const
 {
     return HashTable<regIOobject*>::toc();

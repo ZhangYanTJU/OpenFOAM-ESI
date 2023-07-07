@@ -193,14 +193,6 @@ Foam::HashTable<T, Key, Hash>::csorted() const
 
 
 template<class T, class Key, class Hash>
-Foam::UPtrList<const typename Foam::HashTable<T, Key, Hash>::node_type>
-Foam::HashTable<T, Key, Hash>::sorted() const
-{
-    return csorted();
-}
-
-
-template<class T, class Key, class Hash>
 Foam::UPtrList<typename Foam::HashTable<T, Key, Hash>::node_type>
 Foam::HashTable<T, Key, Hash>::sorted()
 {
