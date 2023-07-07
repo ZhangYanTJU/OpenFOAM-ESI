@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
     Info<< "Found: " << objects << nl << endl;
 
-    for (const IOobject& io : objects.sorted<uniformDimensionedVectorField>())
+    for (const IOobject& io : objects.csorted<uniformDimensionedVectorField>())
     {
         if (io.name() == meshObjects::gravity::typeName)
         {

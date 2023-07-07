@@ -184,13 +184,15 @@ Foam::wordList Foam::objectRegistry::namesTypeImpl
 }
 
 
-// Templated implementation for sorted()
+// Templated implementation for cobjects()/objects(), csorted()/sorted()
 template<class Type, class MatchPredicate>
 Foam::UPtrList<Type>
 Foam::objectRegistry::objectsTypeImpl
 (
+    const bool strict,
     const objectRegistry& list,
-    const MatchPredicate& matchName
+    const MatchPredicate& matchName,
+    const bool doSort
 )
 {
     typedef typename std::remove_cv<Type>::type BaseType;
@@ -200,9 +202,15 @@ Foam::objectRegistry::objectsTypeImpl
     label count = 0;
     forAllConstIters(list, iter)
     {
-        const BaseType* ptr = Foam::isA<BaseType>(*iter.val());
+        const regIOobject* obj = iter.val();
+        const BaseType* ptr = dynamic_cast<const BaseType*>(obj);
 
-        if (ptr && matchName(ptr->name()))
+        if
+        (
+            ptr
+         && (!strict || Foam::isType<BaseType>(*obj))
+         && matchName(ptr->name())
+        )
         {
             result.set(count, const_cast<BaseType*>(ptr));
             ++count;
@@ -211,7 +219,42 @@ Foam::objectRegistry::objectsTypeImpl
 
     result.resize(count);
 
-    Foam::sort(result, nameOp<Type>());  // Sort by object name()
+    if (doSort)
+    {
+        Foam::sort(result, nameOp<Type>());  // Sort by object name()
+    }
+
+    return result;
+}
+
+
+// Templated implementation for lookupClass()
+template<class Type>
+Foam::HashTable<Type*>
+Foam::objectRegistry::lookupClassTypeImpl
+(
+    const bool strict,
+    const objectRegistry& list
+)
+{
+    typedef typename std::remove_cv<Type>::type BaseType;
+
+    HashTable<Type*> result(list.capacity());
+
+    forAllConstIters(list, iter)
+    {
+        const regIOobject* obj = iter.val();
+        const BaseType* ptr = dynamic_cast<const BaseType*>(obj);
+
+        if
+        (
+            ptr
+         && (!strict || Foam::isType<BaseType>(*obj))
+        )
+        {
+            result.insert(obj->name(), const_cast<BaseType*>(ptr));
+        }
+    }
 
     return result;
 }
@@ -294,27 +337,71 @@ Foam::label Foam::objectRegistry::count
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-template<class Type>
+template<class Type, bool Strict>
+Foam::UPtrList<const Type>
+Foam::objectRegistry::cobjects() const
+{
+    return objectsTypeImpl<const Type>
+    (
+        Strict, *this, predicates::always(), false  // doSort = false
+    );
+}
+
+
+template<class Type, bool Strict>
+Foam::UPtrList<Type>
+Foam::objectRegistry::objects()
+{
+    return objectsTypeImpl<Type>
+    (
+        Strict, *this, predicates::always(), false  // doSort = false
+    );
+}
+
+
+template<class Type, bool Strict>
 Foam::UPtrList<const Type>
 Foam::objectRegistry::csorted() const
 {
-    return objectsTypeImpl<const Type>(*this, predicates::always());
+    return objectsTypeImpl<const Type>
+    (
+        Strict, *this, predicates::always(), true  // doSort = true
+    );
 }
 
 
-template<class Type>
-Foam::UPtrList<const Type>
-Foam::objectRegistry::sorted() const
-{
-    return objectsTypeImpl<const Type>(*this, predicates::always());
-}
-
-
-template<class Type>
+template<class Type, bool Strict>
 Foam::UPtrList<Type>
 Foam::objectRegistry::sorted()
 {
-    return objectsTypeImpl<Type>(*this, predicates::always());
+    return objectsTypeImpl<Type>
+    (
+        Strict, *this, predicates::always(), true  // doSort = false
+    );
+}
+
+
+template<class Type, class MatchPredicate>
+Foam::UPtrList<const Type>
+Foam::objectRegistry::cobjects
+(
+    const MatchPredicate& matchName
+) const
+{
+    // doSort = false
+    return objectsTypeImpl<const Type>(false, *this, matchName, false);
+}
+
+
+template<class Type, class MatchPredicate>
+Foam::UPtrList<Type>
+Foam::objectRegistry::objects
+(
+    const MatchPredicate& matchName
+)
+{
+    // doSort = false
+    return objectsTypeImpl<Type>(false, *this, matchName, false);
 }
 
 
@@ -325,19 +412,9 @@ Foam::objectRegistry::csorted
     const MatchPredicate& matchName
 ) const
 {
-    return objectsTypeImpl<const Type>(*this, matchName);
+    return objectsTypeImpl<const Type>(false, *this, matchName, true);
 }
 
-
-template<class Type, class MatchPredicate>
-Foam::UPtrList<const Type>
-Foam::objectRegistry::sorted
-(
-    const MatchPredicate& matchName
-) const
-{
-    return objectsTypeImpl<const Type>(*this, matchName);
-}
 
 template<class Type, class MatchPredicate>
 Foam::UPtrList<Type>
@@ -346,7 +423,7 @@ Foam::objectRegistry::sorted
     const MatchPredicate& matchName
 )
 {
-    return objectsTypeImpl<Type>(*this, matchName);
+    return objectsTypeImpl<Type>(false, *this, matchName, true);
 }
 
 
@@ -428,30 +505,27 @@ Foam::wordList Foam::objectRegistry::sortedNames
 }
 
 
+template<class Type, bool Strict>
+Foam::HashTable<const Type*> Foam::objectRegistry::lookupClass() const
+{
+    return lookupClassTypeImpl<const Type>(Strict, *this);
+}
+
+
+template<class Type, bool Strict>
+Foam::HashTable<Type*> Foam::objectRegistry::lookupClass()
+{
+    return lookupClassTypeImpl<Type>(Strict, *this);
+}
+
+
 template<class Type>
 Foam::HashTable<const Type*> Foam::objectRegistry::lookupClass
 (
     const bool strict
 ) const
 {
-    HashTable<const Type*> objectsOfClass(size());
-
-    forAllConstIters(*this, iter)
-    {
-        const regIOobject* obj = iter.val();
-
-        if
-        (
-            strict
-          ? bool(Foam::isType<Type>(*obj))
-          : bool(Foam::isA<Type>(*obj))
-        )
-        {
-            objectsOfClass.insert(obj->name(), dynamic_cast<const Type*>(obj));
-        }
-    }
-
-    return objectsOfClass;
+    return lookupClassTypeImpl<const Type>(strict, *this);
 }
 
 
@@ -461,24 +535,7 @@ Foam::HashTable<Type*> Foam::objectRegistry::lookupClass
     const bool strict
 )
 {
-    HashTable<Type*> objectsOfClass(size());
-
-    forAllIters(*this, iter)
-    {
-        regIOobject* obj = iter.val();
-
-        if
-        (
-            strict
-          ? bool(Foam::isType<Type>(*obj))
-          : bool(Foam::isA<Type>(*obj))
-        )
-        {
-            objectsOfClass.insert(obj->name(), dynamic_cast<Type*>(obj));
-        }
-    }
-
-    return objectsOfClass;
+    return lookupClassTypeImpl<Type>(strict, *this);
 }
 
 

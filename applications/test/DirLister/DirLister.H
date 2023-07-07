@@ -85,7 +85,7 @@ Description
 
         fileNameList procDirs
         (
-            DirLister::dirs(".").sorted<fileName>(matchProcs)
+            DirLister::dirs(".").csorted<fileName>(matchProcs)
         );
     }
     \endcode
@@ -206,11 +206,11 @@ public:
 
         //- Return a complete list of names, sorted in natural order
         template<class StringType=Foam::word>
-        List<StringType> sorted() const;
+        List<StringType> csorted() const;
 
         //- Return complete list of names, sorted in natural order
         template<class StringType=Foam::word, class UnaryPredicate>
-        List<StringType> sorted
+        List<StringType> csorted
         (
             const UnaryPredicate& pred,
             const bool prune = false

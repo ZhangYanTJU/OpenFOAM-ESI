@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -290,14 +290,14 @@ int main(int argc, char *argv[])
         Info<< "Time: " << runTime.timeName() << nl;
 
         report(objects);
-        report(objects.sorted());
+        report(objects.csorted());
 
-        report(objects.sorted<volScalarField>());
-        report(objects.sorted<volVectorField>());
+        report(objects.csorted<volScalarField>());
+        report(objects.csorted<volVectorField>());
 
         // Extra checks
-        report<volScalarField>(objects.sorted<volScalarField>());
-        report<volScalarField>(objects.sorted<volVectorField>());
+        report<volScalarField>(objects.csorted<volScalarField>());
+        report<volScalarField>(objects.csorted<volVectorField>());
 
 
         findObjectTest(objects);

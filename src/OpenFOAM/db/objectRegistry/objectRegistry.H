@@ -150,13 +150,24 @@ class objectRegistry
             const bool doSort
         );
 
-        //- Templated implementation for sorted()
+        //- Templated implementation for csorted()/sorted()
         //  Called with 'Type' or 'const Type'
         template<class Type, class MatchPredicate>
         static UPtrList<Type> objectsTypeImpl
         (
+            const bool strict,         // Check with isType<Type>
             const objectRegistry& list,
-            const MatchPredicate& matchName
+            const MatchPredicate& matchName,
+            const bool doSort          // Sort the list by name
+        );
+
+        //- Templated implementation for lookupClass()
+        //  Called with 'Type' or 'const Type'
+        template<class Type>
+        static HashTable<Type*> lookupClassTypeImpl
+        (
+            const bool strict,  // Check with isType<Type>
+            const objectRegistry& list
         );
 
 
@@ -240,49 +251,69 @@ public:
         HashTable<wordHashSet> classes(const MatchPredicate& matchName) const;
 
 
-    // Sorted access
+    // List-wise access (unsorted)
 
-        //- Return sorted list of objects
+        //- Return unsorted list of objects with a class satisfying
+        //- \c isA\<Type\> or \c isType\<Type\> (with Strict)
         //  The lifetime of the returned content cannot exceed the parent!
-        UPtrList<const regIOobject> csorted() const;
+        template<class Type, bool Strict=false>
+        UPtrList<const Type> cobjects() const;
 
-        //- Return sorted list of objects
+        //- Return unsorted list of objects with a class satisfying
+        //- \c isA\<Type\> or \c isType\<Type\> (with Strict)
         //  The lifetime of the returned content cannot exceed the parent!
-        UPtrList<const regIOobject> sorted() const;
+        template<class Type, bool Strict=false>
+        UPtrList<Type> objects();
 
-        //- Return sorted list of objects
+        //- Return unsorted list of objects with a class satisfying
+        //- \c isA\<Type\> that also have a matching object name.
         //  The lifetime of the returned content cannot exceed the parent!
-        UPtrList<regIOobject> sorted();
-
-        //- Return sorted list of objects with a class satisfying \c isA\<Type\>
-        //  The lifetime of the returned content cannot exceed the parent!
-        template<class Type>
-        UPtrList<const Type> csorted() const;
-
-        //- Return sorted list of objects with a class satisfying \c isA\<Type\>
-        //  The lifetime of the returned content cannot exceed the parent!
-        template<class Type>
-        UPtrList<const Type> sorted() const;
-
-        //- Return sorted list of objects with a class satisfying \c isA\<Type\>
-        //  The lifetime of the returned content cannot exceed the parent!
-        template<class Type>
-        UPtrList<Type> sorted();
+        template<class Type, class MatchPredicate>
+        UPtrList<const Type> cobjects(const MatchPredicate& matchName) const;
 
         //- Return sorted list of objects with a class satisfying \c isA\<Type\>
         //- that also have a matching object name.
+        //  The lifetime of the returned content cannot exceed the parent!
+        template<class Type, class MatchPredicate>
+        UPtrList<Type> objects(const MatchPredicate& matchName);
+
+
+    // List-wise access (sorted)
+
+        //- Return sorted list of objects with a class satisfying
+        //- \c isA\<Type\> or \c isType\<Type\> (with Strict)
+        //  The lifetime of the returned content cannot exceed the parent!
+        template<class Type, bool Strict=false>
+        UPtrList<const Type> csorted() const;
+
+        //- Return sorted list of objects with a class satisfying
+        //- \c isA\<Type\> or \c isType\<Type\> (with Strict)
+        //  The lifetime of the returned content cannot exceed the parent!
+        template<class Type, bool Strict=false>
+        UPtrList<Type> sorted();
+
+        //- Return sorted list of objects
+        //  The lifetime of the returned content cannot exceed the parent!
+        UPtrList<const regIOobject> csorted() const
+        {
+            return csorted<regIOobject>();
+        }
+
+        //- Return sorted list of objects
+        //  The lifetime of the returned content cannot exceed the parent!
+        UPtrList<regIOobject> sorted()
+        {
+            return sorted<regIOobject>();
+        }
+
+        //- Return sorted list of objects with a class satisfying
+        //- \c isA\<Type\> that also have a matching object name.
         //  The lifetime of the returned content cannot exceed the parent!
         template<class Type, class MatchPredicate>
         UPtrList<const Type> csorted(const MatchPredicate& matchName) const;
 
-        //- Return sorted list of objects with a class satisfying \c isA\<Type\>
-        //- that also have a matching object name.
-        //  The lifetime of the returned content cannot exceed the parent!
-        template<class Type, class MatchPredicate>
-        UPtrList<const Type> sorted(const MatchPredicate& matchName) const;
-
-        //- Return sorted list of objects with a class satisfying \c isA\<Type\>
-        //- that also have a matching object name.
+        //- Return sorted list of objects with a class satisfying
+        //- \c isA\<Type\> that also have a matching object name.
         //  The lifetime of the returned content cannot exceed the parent!
         template<class Type, class MatchPredicate>
         UPtrList<Type> sorted(const MatchPredicate& matchName);
@@ -351,7 +382,7 @@ public:
             const MatchPredicate2& matchName
         ) const;
 
-        //- The unsorted names of objects with a class satisfying \c isA\<Type\>.
+        //- The unsorted names of objects with a class satisfying \c isA\<Type\>
         //
         //  \note If \a Type is \c void, no isA check is used (always true).
         template<class Type>
@@ -417,17 +448,27 @@ public:
         ) const;
 
 
-        //- Return all objects with a class satisfying \c isA\<Type\>
-        //
-        //  \param strict use \c isType\<Type\> instead of \c isA\<Type\>
-        template<class Type>
-        HashTable<const Type*> lookupClass(const bool strict = false) const;
+        //- Return all objects with a class satisfying
+        //- \c isA\<Type\> or \c isType\<Type\> (with Strict)
+        template<class Type, bool Strict=false>
+        HashTable<const Type*> lookupClass() const;
+
+        //- Return all objects with a class satisfying
+        //- \c isA\<Type\> or \c isType\<Type\> (with Strict)
+        template<class Type, bool Strict=false>
+        HashTable<Type*> lookupClass();
 
         //- Return all objects with a class satisfying \c isA\<Type\>
         //
         //  \param strict use \c isType\<Type\> instead of \c isA\<Type\>
         template<class Type>
-        HashTable<Type*> lookupClass(const bool strict = false);
+        HashTable<const Type*> lookupClass(const bool strict) const;
+
+        //- Return all objects with a class satisfying \c isA\<Type\>
+        //
+        //  \param strict use \c isType\<Type\> instead of \c isA\<Type\>
+        template<class Type>
+        HashTable<Type*> lookupClass(const bool strict);
 
         //- Return const pointer to the regIOobject.
         //
@@ -672,6 +713,32 @@ public:
         ) const
         {
             return this->getObjectPtr<Type>(name, recursive);
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        template<class Type>
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const Type> sorted() const
+        {
+            return csorted<Type>();
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const regIOobject> sorted() const
+        {
+            return csorted<regIOobject>();
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        template<class Type, class MatchPredicate>
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const Type> sorted(const MatchPredicate& matchName) const
+        {
+            return csorted<Type>(matchName);
         }
 };
 

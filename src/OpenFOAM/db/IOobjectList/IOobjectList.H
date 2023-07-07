@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,12 +129,13 @@ class IOobjectList
             const bool doSort
         );
 
-        //- Templated implementation for sorted()
+        //- Templated implementation for csorted()/sorted()
         template<class Type, class MatchPredicate>
         static UPtrList<const IOobject> objectsTypeImpl
         (
             const IOobjectList& list,
-            const MatchPredicate& matchName
+            const MatchPredicate& matchName,
+            const bool doSort
         );
 
         //- Templated implementation for lookup()
@@ -421,26 +422,37 @@ public:
         HashTable<wordHashSet> classes(const MatchPredicate& matchName) const;
 
 
-    // Sorted access
+    // List-wise access (unsorted)
 
-        //- The sorted list of IOobjects
-        //  The lifetime of the returned content cannot exceed the parent!
-        UPtrList<const IOobject> sorted() const;
-
-        //- The sorted list of IOobjects with optional check for
-        //- parallel consistency.
-        //  FatalError if syncPar = true and names are not consistent on all
-        //  processors.
-        //  The lifetime of the returned content cannot exceed the parent!
-        UPtrList<const IOobject> sorted(const bool syncPar) const;
-
-        //- The sorted list of IOobjects with headerClassName == Type::typeName
+        //- The unsorted list of IOobjects with
+        //- headerClassName == Type::typeName
         //
         //  \note If \a Type is \c void, no headerClassName check is used
         //      (always true).
         //  The lifetime of the returned content cannot exceed the parent!
         template<class Type>
-        UPtrList<const IOobject> sorted() const;
+        UPtrList<const IOobject> cobjects() const;
+
+        //- The unsorted list of IOobjects with
+        //- headerClassName == Type::typeName
+        //- that also have a matching object name.
+        //  The lifetime of the returned content cannot exceed the parent!
+        template<class Type, class MatchPredicate>
+        UPtrList<const IOobject> cobjects
+        (
+            const MatchPredicate& matchName
+        ) const;
+
+    // List-wise access (sorted)
+
+        //- The sorted list of IOobjects with
+        //- headerClassName == Type::typeName
+        //
+        //  \note If \a Type is \c void, no headerClassName check is used
+        //      (always true).
+        //  The lifetime of the returned content cannot exceed the parent!
+        template<class Type>
+        UPtrList<const IOobject> csorted() const;
 
         //- The sorted names of the IOobjects with optional check for
         //- parallel consistency.
@@ -448,13 +460,30 @@ public:
         //  processors.
         //  The lifetime of the returned content cannot exceed the parent!
         template<class Type>
-        UPtrList<const IOobject> sorted(const bool syncPar) const;
+        UPtrList<const IOobject> csorted(const bool syncPar) const;
+
+        //- The sorted list of IOobjects
+        //  The lifetime of the returned content cannot exceed the parent!
+        UPtrList<const IOobject> csorted() const
+        {
+            return csorted<void>();
+        }
+
+        //- The sorted list of IOobjects with optional check for
+        //- parallel consistency.
+        //  FatalError if syncPar = true and names are not consistent on all
+        //  processors.
+        //  The lifetime of the returned content cannot exceed the parent!
+        UPtrList<const IOobject> csorted(const bool syncPar) const
+        {
+            return csorted<void>(syncPar);
+        }
 
         //- The sorted list of IOobjects with headerClassName == Type::typeName
         //- that also have a matching object name.
         //  The lifetime of the returned content cannot exceed the parent!
         template<class Type, class MatchPredicate>
-        UPtrList<const IOobject> sorted(const MatchPredicate& matchName) const;
+        UPtrList<const IOobject> csorted(const MatchPredicate& matchName) const;
 
         //- The sorted list of IOobjects with headerClassName == Type::typeName
         //- that also have a matching object name.
@@ -462,7 +491,7 @@ public:
         //  processors.
         //  The lifetime of the returned content cannot exceed the parent!
         template<class Type, class MatchPredicate>
-        UPtrList<const IOobject> sorted
+        UPtrList<const IOobject> csorted
         (
             const MatchPredicate& matchName,
             const bool syncPar
@@ -769,10 +798,67 @@ public:
         {
             return getObject(objName);
         }
+
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        template<class Type>
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const IOobject> sorted() const
+        {
+            return csorted<Type>();
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        template<class Type>
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const IOobject> sorted(const bool syncPar) const
+        {
+            return csorted<Type>(syncPar);
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const IOobject> sorted() const
+        {
+            return csorted<void>();
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const IOobject> sorted(const bool syncPar) const
+        {
+            return csorted<void>(syncPar);
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        template<class Type, class MatchPredicate>
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const IOobject> sorted(const MatchPredicate& matchName) const
+        {
+            return csorted<Type>(matchName);
+        }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        template<class Type, class MatchPredicate>
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const IOobject> sorted
+        (
+            const MatchPredicate& matchName,
+            const bool syncPar
+        ) const
+        {
+            return csorted<Type>(matchName, syncPar);
+        }
 };
 
 
-// Ostream operator
+// Ostream Operator
 Ostream& operator<<(Ostream& os, const IOobjectList& list);
 
 

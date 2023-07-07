@@ -222,22 +222,6 @@ Foam::label Foam::IOobjectList::count(const char* clsName) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Foam::UPtrList<const Foam::IOobject>
-Foam::IOobjectList::sorted() const
-{
-    return sorted<void>();
-}
-
-
-Foam::UPtrList<const Foam::IOobject>
-Foam::IOobjectList::sorted(const bool syncPar) const
-{
-    return sorted<void>(syncPar);
-}
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 Foam::wordList Foam::IOobjectList::names() const
 {
     return HashPtrTable<IOobject>::toc();
