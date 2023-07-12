@@ -123,6 +123,7 @@ Usage
         V                     <word>;
         electricField         <bool>;
         E                     <word>;
+        fvOptions             <dict>;
 
         // Inherited entries
         ...
@@ -141,10 +142,12 @@ Usage
       V    | Name of electric potential field | word | no | electricPotential:V
       electricField | Flag to calculate electric field  | bool | no | false
       E    | Name of electric field           | word | no | electricPotential:E
+      fvOptions | List of finite-volume options       | dict | no   | -
     \endtable
 
     The inherited entries are elaborated in:
       - \link functionObject.H \endlink
+      - \link fvOption.H \endlink
 
     Fields written out when the \c writeDerivedFields entry is \c true:
     \table
@@ -152,6 +155,9 @@ Usage
       Current density | volVectorField   | \<time\>/electricPotential:J
       Charge density  | volScalarField   | \<time\>/electricPotential:rho
     \endtable
+
+Note
+  - Only constraint-type finite-volume options can be used.
 
 SourceFiles
     electricPotential.C
@@ -163,6 +169,7 @@ SourceFiles
 
 #include "fvMeshFunctionObject.H"
 #include "volFields.H"
+#include "fvOptionList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -207,6 +214,9 @@ class electricPotential
 
         //- Name of electric field
         word Ename_;
+
+        //- Run-time selectable finite volume options
+        fv::optionList fvOptions_;
 
         //- Number of corrector iterations
         int nCorr_;
