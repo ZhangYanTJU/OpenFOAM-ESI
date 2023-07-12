@@ -341,7 +341,7 @@ bool Foam::functionObjects::electricPotential::read(const dictionary& dict)
         }
     }
 
-    return false;
+    return true;
 }
 
 
