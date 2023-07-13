@@ -37,8 +37,8 @@ plotTemperature() {
 
     plot \
     (x<=0)?fu(x):fo(x) w l lc 0 t 'analytical solution', \
-    "$graphDir/1/line_T.xy" u 1:2 w p pt 2 ps 2 lt rgb "red" t 'linear interpolation', \
-    "$graphDir/2/line_T.xy" u 1:2 w p pt 6 ps 2 lt rgb "green" t 'harmonic interpolation'
+    "$graphDir/1/line_T_flux.xy" u 1:2 w p pt 2 ps 2 lt rgb "red" t 'linear interpolation', \
+    "$graphDir/2/line_T_flux.xy" u 1:2 w p pt 6 ps 2 lt rgb "green" t 'harmonic interpolation'
 GNUPLOT
 }
 
@@ -63,9 +63,9 @@ plotHeatFlux() {
     set bmargin 3.2
 
     plot \
-    "$graphDir/1/line_flux.xy" u 1:4 w p pt 6 ps 2 lt rgb "red" t 'laplacian: linear, grad: linear', \
-    "$graphDir/2/line_flux.xy" u 1:4 w p pt 2 ps 2 lt rgb "blue" t 'laplacian: harmonic, grad: linear', \
-    "$graphDir/3/line_flux.xy" u 1:4 w l lt rgb "green" t 'laplacian: harmonic, grad: weightedFlux'
+    "$graphDir/1/line_T_flux.xy" u 1:5 w p pt 6 ps 2 lt rgb "red" t 'laplacian: linear, grad: linear', \
+    "$graphDir/2/line_T_flux.xy" u 1:5 w p pt 2 ps 2 lt rgb "blue" t 'laplacian: harmonic, grad: linear', \
+    "$graphDir/3/line_T_flux.xy" u 1:5 w l lt rgb "green" t 'laplacian: harmonic, grad: weightedFlux'
 GNUPLOT
 }
 
