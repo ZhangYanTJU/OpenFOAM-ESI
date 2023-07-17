@@ -34,29 +34,27 @@ Description
 Usage
     Minimal example by using \c constant/fvOptions:
     \verbatim
-    <userDefinedName1>
+    fvOption1
     {
-        // Mandatory/Optional (inherited) entries
-        ...
+        // Mandatory entries
+        selectionMode     <word>;
 
-        // Mandatory entries (unmodifiable)
-        selectionMode     all;
+        // Optional entries
+        timeStart         <scalar>;
+        updateSelection   <bool>;
 
-        // Optional entries (runtime modifiable)
-        timeStart         1.0;
-
-        // Conditional mandatory entries (runtime modifiable)
+        // Conditional entries
 
             // when timeStart entry is present
-            duration          1.4;
+            duration          <scalar>;
 
             // when selectionMode=cellSet
-            cellSet           <name>;
+            cellSet           <word>;
 
             // when selectionMode=cellZone
-            cellZone          <name>;
+            cellZone          <word>;
 
-            //OR: cellZones   (<name> ...);
+            //OR: cellZones   (<word> ...);
 
             // when selectionMode=points
             points            (<point1> <point2> ... <pointN>);
@@ -74,6 +72,8 @@ Usage
             // when selectionMode=geometric
             selection
             {
+                topoSet1      <dictionary>;
+
                 box1
                 {
                     action  use;
@@ -91,26 +91,27 @@ Usage
                 ...
             }
 
-        // Mandatory/Optional (derived) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property      | Description                        | Type  | Reqd | Dflt
+      Property      | Description                        | Type  | Reqd | Deflt
       selectionMode | Mode of cell selection - see below | word  | yes  | -
-      timeStart     | Start time of fvOption             | scalar | no  | -1
+      timeStart     | Start time of fvOption            | scalar | no   | -1
+      updateSelection | Flag to enable selection updates | bool  | no   | false
       duration      | Duration of fvOption execution <!--
-                          --> starting from timeStart    | scalar | cndtnl | 0
-      cellSet       | Name of operand cellSet            | word  | cndtnl | -
-      cellZone      | Name of operand cellZone           | wordRe | cndtnl | -
-      cellZones     | Name of operand cellZones          | wordRes  | cndtnl | -
+                    --> starting from timeStart       | scalar | choice | 0
+      cellSet       | Name of operand cellSet         | word   | choice | -
+      cellZone      | Name of operand cellZone        | wordRe | choice | -
+      cellZones     | Name of operand cellZones      | wordRes | choice | -
       points        | Set of points in global coordinate <!--
-                            --> system              | vectorList | cndtnl | -
+                    --> system                    | vectorList | choice | -
       movingPoints  | Set of moving points in global coordinate system <!--
                     -->                  | Function1\<vector\> | choice | -
-      selection     | Dictionary of geometric selections | dict | cndtnl | -
+      selection     | Dictionary of geometric selections | dict | choice | -
     \endtable
 
     Options for the \c selectionMode entry:
@@ -127,12 +128,11 @@ Usage
      - \link fvOption.H \endlink
      - \link Function1.H \endlink
 
-    The geometric selection uses topoSetCellSource to select cells.
-    Any searchableSurface selections must describe a closed volume.
-    Ie, its hasVolumeType() method must be true.
-
 Note
   - Source/sink options are to be added to the right-hand side of equations.
+  - The geometric selection uses \c topoSetCellSource to select cells.
+    Any \c searchableSurface selections must describe a closed volume.
+    Ie, its \c hasVolumeType() method must be \c true.
 
 See also
     Foam::cellBitSet::select
@@ -171,7 +171,7 @@ public:
     // Public Data
 
         //- Enumeration for selection mode types
-        enum selectionModeType
+        enum selectionModeType : char
         {
             smAll,          //!< "all" cells
             smCellSet,      //!< "cellSet"
@@ -190,14 +190,17 @@ protected:
 
     // Protected Data
 
+        //- Cell selection mode
+        selectionModeType selectionMode_;
+
+        //- Flag to enable dictionary-based updates of selections
+        bool updateSelection_;
+
         //- Start time of fvOption
         scalar timeStart_;
 
         //- Duration of fvOption execution starting from timeStart
         scalar duration_;
-
-        //- Cell selection mode
-        selectionModeType selectionMode_;
 
         //- Face selection names (for set or zone selections)
         wordRes selectionNames_;
@@ -283,6 +286,12 @@ public:
 
             //- Return const access to the cell selection
             inline const labelList& cells() const noexcept;
+
+            //- Return flag for selection updates
+            bool isSelectionUpdated() const noexcept
+            {
+                return updateSelection_;
+            }
 
 
         // Edit
