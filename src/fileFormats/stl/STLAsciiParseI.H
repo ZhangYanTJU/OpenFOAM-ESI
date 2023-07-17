@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,12 +48,13 @@ inline void Foam::Detail::STLAsciiParse::beginSolid(word solidName)
         groupId_ = sizes_.size();
         if (nameLookup_.insert(solidName, groupId_))
         {
-            names_.append(solidName);
-            sizes_.append(0);
+            names_.push_back(std::move(solidName));
+            sizes_.push_back(0);
         }
         else
         {
-            FatalErrorInFunction<< "Duplicate solid-name: " << solidName
+            FatalErrorInFunction
+                << "Duplicate solid-name: " << solidName << nl
                 << exit(FatalError);
         }
     }
@@ -79,7 +80,7 @@ inline bool Foam::Detail::STLAsciiParse::addVertexComponent(float val)
 
     if (++nVertexCmpt_ == 3)
     {
-        points_.append(currVertex_);
+        points_.push_back(currVertex_);
         nVertexCmpt_ = 0;
         ++nFacetPoints_;
     }
@@ -95,7 +96,7 @@ inline bool Foam::Detail::STLAsciiParse::addVertexComponent(const char* text)
 
     if (++nVertexCmpt_ == 3)
     {
-        points_.append(currVertex_);
+        points_.push_back(currVertex_);
         nVertexCmpt_ = 0;
         ++nFacetPoints_;
     }
@@ -108,8 +109,8 @@ inline void Foam::Detail::STLAsciiParse::endFacet()
 {
     if (nFacetPoints_ == 3)
     {
-        facets_.append(groupId_);
-        sizes_[groupId_]++;
+        facets_.push_back(groupId_);
+        ++sizes_[groupId_];
     }
     else
     {
@@ -158,36 +159,6 @@ inline void Foam::Detail::STLAsciiParse::clear()
     names_.clear();
     sizes_.clear();
     nameLookup_.clear();
-}
-
-
-inline bool Foam::Detail::STLAsciiParse::sorted() const
-{
-    return sorted_;
-}
-
-
-inline Foam::DynamicList<Foam::STLpoint>& Foam::Detail::STLAsciiParse::points()
-{
-    return points_;
-}
-
-
-inline Foam::DynamicList<Foam::label>& Foam::Detail::STLAsciiParse::facets()
-{
-    return facets_;
-}
-
-
-inline Foam::DynamicList<Foam::word>& Foam::Detail::STLAsciiParse::names()
-{
-    return names_;
-}
-
-
-inline Foam::DynamicList<Foam::label>& Foam::Detail::STLAsciiParse::sizes()
-{
-    return sizes_;
 }
 
 

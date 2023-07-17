@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
         zoneBb.min() = markedZone[0];
         zoneBb.max() = markedZone[1];
 
-        if (!zoneBb.valid())
+        if (!zoneBb.good())
         {
             WarningInFunction
                 << "Defined zone is invalid: " << zoneBb << nl;
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     // Faces with centre inside "zone"
     //
 
-    if (zoneBb.valid())
+    if (zoneBb.good())
     {
         Info<< "Using zone " << zoneBb << endl;
 

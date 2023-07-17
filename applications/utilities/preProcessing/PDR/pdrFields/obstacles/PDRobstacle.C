@@ -239,7 +239,7 @@ Foam::volumeType Foam::PDRobstacle::trim(const boundBox& bb)
 {
     volumeType::type vt = volumeType::UNKNOWN;
 
-    if (!bb.valid() || !typeId)
+    if (!bb.good() || !typeId)
     {
         return vt;
     }

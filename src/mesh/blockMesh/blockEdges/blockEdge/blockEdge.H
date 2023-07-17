@@ -42,8 +42,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef blockEdge_H
-#define blockEdge_H
+#ifndef Foam_blockEdge_H
+#define Foam_blockEdge_H
 
 #include "searchableSurfaces.H"
 #include "edge.H"
@@ -196,7 +196,10 @@ public:
     // Member Functions
 
         //- True if first/last indices are unique and non-negative.
-        inline bool valid() const noexcept;
+        inline bool good() const noexcept;
+
+        //- Same as good()
+        bool valid() const noexcept { return good(); }
 
         //- Index of start (first) point
         inline label start() const noexcept;

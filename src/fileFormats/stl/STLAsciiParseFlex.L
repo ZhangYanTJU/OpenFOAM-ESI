@@ -232,7 +232,7 @@ endsolid              {space}("endsolid"|"ENDSOLID")({some_space}{word})*
      normal.x() = strtof(YYText(), &endPtr);
      normal.y() = strtof(endPtr, &endPtr);
      normal.z() = strtof(endPtr, &endPtr);
-     normals_.append(normal);
+     normals_.push_back(normal);
      */
     BEGIN(readFacet);
 }

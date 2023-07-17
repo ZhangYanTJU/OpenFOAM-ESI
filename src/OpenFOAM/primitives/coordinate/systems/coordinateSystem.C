@@ -426,7 +426,7 @@ void Foam::coordinateSystem::rotation(autoPtr<coordinateRotation>&& crot)
 
 void Foam::coordinateSystem::write(Ostream& os) const
 {
-    if (!valid())
+    if (!good())
     {
         return;
     }
@@ -450,7 +450,7 @@ void Foam::coordinateSystem::writeEntry(Ostream& os) const
 
 void Foam::coordinateSystem::writeEntry(const word& keyword, Ostream& os) const
 {
-    if (!valid())
+    if (!good())
     {
         return;
     }

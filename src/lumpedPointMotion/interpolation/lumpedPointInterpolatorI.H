@@ -45,7 +45,7 @@ inline Foam::lumpedPointInterpolator::lumpedPointInterpolator(const label id)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline bool Foam::lumpedPointInterpolator::valid() const
+inline bool Foam::lumpedPointInterpolator::good() const
 {
     return nearest_ != -1;
 }

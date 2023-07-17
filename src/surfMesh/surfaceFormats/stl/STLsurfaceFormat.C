@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -148,7 +148,7 @@ bool Foam::fileFormats::STLsurfaceFormat<Face>::read
     // Generate the (sorted) faces
     List<Face> faceLst(zoneIds.size());
 
-    if (reader.sorted())
+    if (reader.is_sorted())
     {
         // Already sorted - generate directly
         forAll(faceLst, facei)

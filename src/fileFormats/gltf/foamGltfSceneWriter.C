@@ -50,7 +50,7 @@ Foam::glTF::sceneWriter::~sceneWriter()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::glTF::sceneWriter::valid() const noexcept
+bool Foam::glTF::sceneWriter::good() const noexcept
 {
     return (ofile_ && scene_);
 }

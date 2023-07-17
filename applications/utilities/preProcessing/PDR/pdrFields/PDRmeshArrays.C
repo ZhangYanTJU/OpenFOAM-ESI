@@ -212,7 +212,7 @@ void Foam::PDRmeshArrays::classify
         {
             const auto& limits = faceLimits[cmpt];
 
-            if (!limits.valid())
+            if (!limits.good())
             {
                 // This should be impossible
                 FatalErrorInFunction

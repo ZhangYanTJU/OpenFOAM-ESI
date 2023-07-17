@@ -161,17 +161,17 @@ public:
 
     // Characteristics
 
-        //- Is coordinate system valid?
-        virtual bool valid() const
-        {
-            return backend_ && backend_->valid();
-        }
+        //- Is coordinate system good/valid?
+        virtual bool good() const { return backend_ && backend_->good(); }
 
         //- True if the rotation tensor is uniform for all positions
         virtual bool uniform() const
         {
-            return backend_->uniform();
+            return !backend_ || backend_->uniform();
         }
+
+        //- Same as good() - 2023-07
+        virtual bool valid() const { return this->good(); }
 
 
     // Access

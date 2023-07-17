@@ -100,7 +100,7 @@ void Foam::coordSystem::indirect::writeEntry
     Ostream& os
 ) const
 {
-    if (!valid())
+    if (!good())
     {
         return;
     }

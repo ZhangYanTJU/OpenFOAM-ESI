@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline bool Foam::lumpedPointState::valid() const
+inline bool Foam::lumpedPointState::good() const
 {
     return points_.size() && points_.size() == angles_.size();
 }

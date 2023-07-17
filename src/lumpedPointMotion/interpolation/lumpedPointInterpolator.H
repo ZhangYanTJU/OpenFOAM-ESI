@@ -40,8 +40,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef lumpedPointInterpolator_H
-#define lumpedPointInterpolator_H
+#ifndef Foam_lumpedPointInterpolator_H
+#define Foam_lumpedPointInterpolator_H
 
 #include "Pair.H"
 #include "triFace.H"
@@ -90,19 +90,22 @@ public:
 
     // Access
 
-        //- Valid if there is an associated nearest point
-        inline bool valid() const;
+        //- True if there is an associated nearest point
+        inline bool good() const;
 
-        //- The nearest control point, or -1 if invalid
+        //- Same as good()
+        bool valid() const { return good(); }
+
+        //- The nearest control point, or -1 if !good()
         inline label nearest() const;
 
         //- The first neighbour control point - identical to next1()
         inline label next() const;
 
-        //- The first neighbour control point, or -1 if invalid
+        //- The first neighbour control point, or -1 if !good()
         inline label next1() const;
 
-        //- The second neighbour control point, or -1 if invalid
+        //- The second neighbour control point, or -1 if !good()
         inline label next2() const;
 
         //- The weighting for the nearest point

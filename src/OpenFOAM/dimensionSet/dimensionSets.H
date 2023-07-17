@@ -124,10 +124,10 @@ public:
         }
 
         //- Is there a valid inverse of the selected unit
-        bool valid() const noexcept
-        {
-            return valid_;
-        }
+        bool good() const noexcept { return valid_; }
+
+        //- Is there a valid inverse of the selected unit
+        bool valid() const noexcept { return valid_; }
 
         //- (if valid) obtain set of coefficients of unitNames
         void coefficients(scalarField& exponents) const;

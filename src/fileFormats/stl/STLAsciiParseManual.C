@@ -80,7 +80,7 @@ class STLAsciiParseManual
     typedef std::pair<const char*, const char*> tokenType;
 
     // Tokenized line
-    DynamicList<tokenType, 16> tokens_;
+    DynamicList<tokenType> tokens_;
 
     //- Tokenize
     inline std::string::size_type tokenize(const char *p, const char *pe)
@@ -107,7 +107,7 @@ class STLAsciiParseManual
             {
                 ++p;
             }
-            tokens_.append(tokenType(beg, p));
+            tokens_.emplace_back(beg, p);
 
             // Find next
             while (p < pe && isspace(*p))
@@ -250,7 +250,11 @@ void Foam::Detail::STLAsciiParseManual::execute(std::istream& is)
                         {
                             beginSolid
                             (
-                                word::validate(tokens_[1].first, tokens_[1].second)
+                                word::validate
+                                (
+                                    tokens_[1].first,
+                                    tokens_[1].second
+                                )
                             );
                         }
 
@@ -305,8 +309,8 @@ void Foam::Detail::STLAsciiParseManual::execute(std::istream& is)
                     {
                         if (tokens_.size() > 3)
                         {
-                            // Although tokens are not nul-terminated,
-                            // they are space delimited and thus good enough for atof()
+                            // The tokens are space-delimited and thus okay
+                            // for atof()
                             addVertexComponent(tokens_[1].first);
                             addVertexComponent(tokens_[2].first);
                             addVertexComponent(tokens_[3].first);

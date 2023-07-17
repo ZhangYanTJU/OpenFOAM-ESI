@@ -28,7 +28,7 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline bool Foam::blockEdge::valid() const noexcept
+inline bool Foam::blockEdge::good() const noexcept
 {
     return (start_ != end_ && start_ >= 0 && end_ >= 0);
 }

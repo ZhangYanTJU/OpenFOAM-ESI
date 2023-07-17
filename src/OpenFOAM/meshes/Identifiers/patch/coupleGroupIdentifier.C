@@ -40,7 +40,7 @@ Foam::label Foam::coupleGroupIdentifier::findOtherPatchID
 {
     const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
-    if (!valid())
+    if (!good())
     {
         FatalErrorInFunction
             << "Invalid coupleGroup patch group"

@@ -558,17 +558,14 @@ public:
 
     // Characteristics
 
-        //- Consider valid if it has a specification
-        virtual bool valid() const
-        {
-            return bool(spec_);
-        }
+        //- Consider good if it has a specification
+        virtual bool good() const { return bool(spec_); }
 
         //- True if the rotation tensor is uniform for all locations
-        virtual bool uniform() const
-        {
-            return true;
-        }
+        virtual bool uniform() const { return true; }
+
+        //- Same as good() - 2023-07
+        virtual bool valid() const { return this->good(); }
 
 
     // Access

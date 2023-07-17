@@ -94,7 +94,7 @@ Foam::dynamicCodeContext::dynamicCodeContext(const dictionary& dict)
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-bool Foam::dynamicCodeContext::valid() const noexcept
+bool Foam::dynamicCodeContext::good() const noexcept
 {
     return &(dict_.get()) != &(dictionary::null);
 }

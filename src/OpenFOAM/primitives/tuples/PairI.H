@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -148,7 +148,7 @@ inline void Foam::Pair<T>::flip()
 
 
 template<class T>
-inline bool Foam::Pair<T>::sorted() const
+inline bool Foam::Pair<T>::is_sorted() const
 {
     return !(second() < first());
 }

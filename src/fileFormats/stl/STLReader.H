@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef STLReader_H
-#define STLReader_H
+#ifndef Foam_STLReader_H
+#define Foam_STLReader_H
 
 #include "STLCore.H"
 #include "labelledTri.H"
@@ -132,7 +132,7 @@ public:
 
         //- Read from file, filling in the information.
         //  Auto-detect ASCII/BINARY format.
-        STLReader(const fileName& filename);
+        explicit STLReader(const fileName& filename);
 
         //- Read from file, filling in the information.
         //  Manually selected choice of ASCII/BINARY/UNKNOWN(detect) formats.
@@ -158,40 +158,22 @@ public:
         label mergePointsMap(const scalar mergeTol, labelList& pointMap) const;
 
         //- File read was already sorted?
-        inline bool sorted() const
-        {
-            return sorted_;
-        }
+        bool is_sorted() const noexcept { return sorted_; }
 
         //- Return full access to the points
-        inline List<STLpoint>& points()
-        {
-            return points_;
-        }
+        List<STLpoint>& points() noexcept { return points_; }
 
         //- Return full access to the zoneIds
-        inline List<label>& zoneIds()
-        {
-            return zoneIds_;
-        }
+        List<label>& zoneIds() noexcept { return zoneIds_; }
 
         //- The list of solid names in the order of their first appearance
-        inline List<word>& names()
-        {
-            return names_;
-        }
+        List<word>& names() noexcept { return names_; }
 
         //- The list of solid sizes in the order of their first appearance
-        inline List<label>& sizes()
-        {
-            return sizes_;
-        }
+        List<label>& sizes() noexcept { return sizes_; }
 
         //- The STL format used (ASCII or BINARY)
-        inline enum STLFormat stlFormat() const
-        {
-            return format_;
-        }
+        enum STLFormat stlFormat() const noexcept { return format_; }
 };
 
 

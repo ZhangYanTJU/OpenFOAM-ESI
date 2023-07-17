@@ -94,15 +94,15 @@ public:
     // Member Functions
 
         //- True if output file and scene exist
-        bool valid() const noexcept;
+        bool good() const noexcept;
 
-        //- The json file name. Empty with !valid()
+        //- The json file name. Empty with !good()
         const fileName& path() const;
 
-        //- Const access to the scene. Error if valid() is not true!
+        //- Const access to the scene. Error if good() is not true!
         const scene& getScene() const;
 
-        //- Non-const access to the scene. Error if valid() is not true!
+        //- Non-const access to the scene. Error if good() is not true!
         scene& getScene();
 
 
@@ -111,6 +111,9 @@ public:
 
         //- Write scene and close file
         void close();
+
+        //- Same as good()
+        bool valid() const noexcept { return good(); }
 };
 
 

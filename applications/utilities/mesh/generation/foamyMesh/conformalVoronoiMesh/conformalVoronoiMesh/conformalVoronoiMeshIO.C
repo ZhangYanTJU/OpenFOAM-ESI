@@ -78,7 +78,7 @@ void Foam::conformalVoronoiMesh::timeCheck
 
         memInfo m;
 
-        if (m.valid())
+        if (m.good())
         {
             PrintTable<word, label> memoryTable
             (

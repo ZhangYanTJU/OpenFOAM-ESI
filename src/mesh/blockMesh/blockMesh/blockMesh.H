@@ -315,7 +315,10 @@ public:
         }
 
         //- True if the blockMesh topology exists
-        bool valid() const noexcept;
+        bool good() const noexcept;
+
+        //- Same as good()
+        bool valid() const noexcept { return good(); }
 
         //- Return the patch names
         wordList patchNames() const;

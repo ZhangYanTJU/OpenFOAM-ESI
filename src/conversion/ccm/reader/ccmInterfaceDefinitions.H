@@ -117,10 +117,13 @@ public:
         }
 
         //- True if all internal ids are non-negative
-        bool valid() const
+        bool good() const noexcept
         {
             return (id >= 0 && bnd0 >= 0 && bnd1 >= 0 && bnd0 != bnd1);
         }
+
+        //- Same as good()
+        bool valid() const noexcept { return good(); }
 
 
         //- Canonical name for boundary 0
@@ -218,7 +221,7 @@ public:
         //- Add (valid) interface entry
         bool add(const interfaceEntry& entry)
         {
-            return (entry.valid() && map().set(entry.id, entry));
+            return (entry.good() && map().set(entry.id, entry));
         }
 
 

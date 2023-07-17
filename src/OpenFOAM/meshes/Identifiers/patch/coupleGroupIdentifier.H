@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coupleGroupIdentifier_H
-#define coupleGroupIdentifier_H
+#ifndef Foam_coupleGroupIdentifier_H
+#define Foam_coupleGroupIdentifier_H
 
 #include "word.H"
 #include "label.H"
@@ -97,16 +97,13 @@ public:
     // Member Functions
 
         //- Name of patchGroup
-        const word& name() const noexcept
-        {
-            return name_;
-        }
+        const word& name() const noexcept { return name_; }
 
-        //- Is a valid patchGroup (non-empty) name
-        bool valid() const noexcept
-        {
-            return !name_.empty();
-        }
+        //- The patchGroup has a non-empty name
+        bool good() const noexcept { return !name_.empty(); }
+
+        //- The patchGroup has a non-empty name
+        bool valid() const noexcept { return good(); }
 
         //- Find other patch in same region.
         //  \return index of patch or -1.

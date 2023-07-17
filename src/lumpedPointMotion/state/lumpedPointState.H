@@ -192,13 +192,16 @@ public:
     // Member Functions
 
         //- Has positions and consistent number of rotations?
-        inline bool valid() const;
+        inline bool good() const;
 
         //- If no points were specified
         inline bool empty() const;
 
         //- The number of points
         inline label size() const;
+
+        //- Same as good()
+        bool valid() const { return good(); }
 
         //- The points corresponding to mass centres
         inline const pointField& points() const;

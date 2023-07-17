@@ -304,7 +304,7 @@ Foam::blockMesh::blockMesh
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::blockMesh::valid() const noexcept
+bool Foam::blockMesh::good() const noexcept
 {
     return bool(topologyPtr_);
 }

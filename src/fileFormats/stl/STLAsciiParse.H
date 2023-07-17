@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef STLAsciiParse_H
-#define STLAsciiParse_H
+#ifndef Foam_STLAsciiParse_H
+#define Foam_STLAsciiParse_H
 
 #include "DynamicList.H"
 #include "HashTable.H"
@@ -122,20 +122,20 @@ public:
         inline void clear();
 
         //- Do all the solid groups appear in order?
-        inline bool sorted() const;
+        bool is_sorted() const noexcept { return sorted_; }
 
         //- A list of unstitched triangle points
-        inline DynamicList<STLpoint>& points();
+        DynamicList<STLpoint>& points() noexcept { return points_; }
 
         //- A list of facet IDs (group IDs)
         //- corresponds to the number of triangles
-        inline DynamicList<label>& facets();
+        DynamicList<label>& facets() noexcept { return facets_; }
 
         //- Solid names in the order of their appearance.
-        inline DynamicList<word>& names();
+        DynamicList<word>& names() noexcept { return names_; }
 
         //- Solid sizes in the order of their appearance.
-        inline DynamicList<label>& sizes();
+        DynamicList<label>& sizes() noexcept { return sizes_; }
 };
 
 

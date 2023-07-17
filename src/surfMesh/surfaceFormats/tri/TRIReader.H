@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,8 +41,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TRIReader_H
-#define TRIReader_H
+#ifndef Foam_TRIReader_H
+#define Foam_TRIReader_H
 
 #include "STLpoint.H"
 #include "labelList.H"
@@ -90,7 +90,7 @@ public:
     // Constructors
 
         //- Read from file, filling in the information
-        TRIReader(const fileName& filename);
+        explicit TRIReader(const fileName& filename);
 
 
     //- Destructor
@@ -112,35 +112,20 @@ public:
         label mergePointsMap(const scalar mergeTol, labelList& pointMap) const;
 
 
-        //- File read was already sorted
-        bool sorted() const
-        {
-            return sorted_;
-        }
+        //- File read was already in sorted order
+        bool is_sorted() const noexcept { return sorted_; }
 
         //- Return full access to the points
-        List<STLpoint>& points()
-        {
-            return points_;
-        }
+        List<STLpoint>& points() noexcept { return points_; }
 
         //- Return full access to the zones
-        List<label>& zoneIds()
-        {
-            return zoneIds_;
-        }
+        List<label>& zoneIds() noexcept { return zoneIds_; }
 
         //- The list of solid names in the order of their first appearance
-        List<word>& names()
-        {
-            return names_;
-        }
+        List<word>& names() noexcept { return names_; }
 
         //- The list of zone sizes in the order of their first appearance
-        List<label>& sizes()
-        {
-            return sizes_;
-        }
+        List<label>& sizes() noexcept { return sizes_; }
 };
 
 

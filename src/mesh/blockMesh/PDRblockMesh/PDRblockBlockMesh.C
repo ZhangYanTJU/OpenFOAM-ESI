@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -177,7 +177,7 @@ static Ostream& serializeProjectEdge
 {
     os  << indent << projKeyword << token::SPACE;
 
-    if (e.sorted())
+    if (e.is_sorted())
     {
         os  << e.first() << token::SPACE << e.second();
     }

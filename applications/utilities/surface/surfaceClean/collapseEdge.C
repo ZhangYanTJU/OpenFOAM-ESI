@@ -68,7 +68,7 @@ static triSurface pack
         f[1] = pointMap[f[1]];
         f[2] = pointMap[f[2]];
 
-        if (f.valid())
+        if (f.good())
         {
             newTriangles[nNewTris++] = f;
         }

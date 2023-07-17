@@ -119,8 +119,11 @@ public:
 
     // Member Functions
 
-        //- Considered valid if not using dictionary::null as the context
-        bool valid() const noexcept;
+        //- Not using dummy code context (dictionary::null)
+        bool good() const noexcept;
+
+        //- Same as good()
+        bool valid() const noexcept { return good(); }
 
         //- Set code context from a dictionary
         void setCodeContext(const dictionary& dict);

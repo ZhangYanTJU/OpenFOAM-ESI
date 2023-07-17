@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,7 +49,7 @@ void Foam::fileFormats::STLReader::transfer
     Detail::STLAsciiParse& parsed
 )
 {
-    sorted_ = parsed.sorted();
+    sorted_ = parsed.is_sorted();
 
     points_.transfer(parsed.points());
     zoneIds_.transfer(parsed.facets());
@@ -143,7 +143,7 @@ bool Foam::fileFormats::STLReader::readBINARY
         {
             zoneI = dynSizes.size();
             lookup.insert(origId, zoneI);
-            dynSizes.append(0);
+            dynSizes.push_back(0);
         }
 
         zoneIds_[facei] = zoneI;
