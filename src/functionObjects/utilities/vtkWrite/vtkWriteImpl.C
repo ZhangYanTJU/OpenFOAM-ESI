@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,7 +43,7 @@ Foam::label Foam::functionObjects::vtkWrite::writeVolFieldsImpl
     for
     (
         const GeoField& origField
-      : baseMesh.sorted<GeoField>(candidateNames)
+      : baseMesh.csorted<GeoField>(candidateNames)
     )
     {
         bool ok = false;
@@ -110,7 +110,7 @@ Foam::label Foam::functionObjects::vtkWrite::writeVolFieldsImpl
     for
     (
         const GeoField& origField
-      : baseMesh.sorted<GeoField>(candidateNames)
+      : baseMesh.csorted<GeoField>(candidateNames)
     )
     {
         bool ok = false;

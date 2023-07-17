@@ -185,11 +185,11 @@ Foam::label Foam::parPointFieldDistributor::distributePointFields
 {
     typedef GeometricField<Type, pointPatchField, pointMesh> fieldType;
 
-    UPtrList<const IOobject> fieldObjects
+    const UPtrList<const IOobject> fieldObjects
     (
         selectedFields.empty()
-      ? objects.sorted<fieldType>()
-      : objects.sorted<fieldType>(selectedFields)
+      ? objects.csorted<fieldType>()
+      : objects.csorted<fieldType>(selectedFields)
     );
 
     label nFields = 0;

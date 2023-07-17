@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -236,7 +236,7 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedDataFileHeader
     writeHeader(os, "");
     writeCommented(os, "Time");
 
-    for (const auto& iter : coeffs_.sorted())
+    for (const auto& iter : coeffs_.csorted())
     {
         const auto& coeff = iter.val();
 
@@ -255,7 +255,7 @@ void Foam::functionObjects::forceCoeffs::writeIntegratedDataFile()
 
     writeCurrentTime(os);
 
-    for (const auto& iter : coeffs_.sorted())
+    for (const auto& iter : coeffs_.csorted())
     {
         const auto& coeff = iter.val();
 
@@ -359,16 +359,16 @@ bool Foam::functionObjects::forceCoeffs::read(const dictionary& dict)
 
         for (const word& key : coeffs)
         {
-            auto coeffIter = coeffs_.find(key);
+            auto iter = coeffs_.find(key);
 
-            if (!coeffIter.good())
+            if (!iter.good())
             {
                 FatalIOErrorInFunction(dict)
                     << "Unknown coefficient type " << key
                     << " . Valid entries are : " << coeffs_.sortedToc()
                     << exit(FatalIOError);
             }
-            auto& coeff = coeffIter.val();
+            auto& coeff = iter.val();
             coeff.active_ = true;
             Info<< "    - " << coeff << nl;
         }
@@ -412,7 +412,7 @@ bool Foam::functionObjects::forceCoeffs::execute()
     };
 
     // Always setting all results
-    for (const auto& iter : coeffs_.sorted())
+    for (const auto& iter : coeffs_.csorted())
     {
         const word& coeffName = iter.key();
         const auto& coeff = iter.val();

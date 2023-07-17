@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -158,7 +158,7 @@ void printSets(Ostream& os, const IOobjectList& objects)
 {
     label n = 0;
 
-    for (const IOobject& io : objects.sorted<SetType>())
+    for (const IOobject& io : objects.csorted<SetType>())
     {
         SetType set(io);
         if (!n++) os << SetType::typeName << "s:" << nl;
