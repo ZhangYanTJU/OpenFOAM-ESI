@@ -92,10 +92,11 @@ class polyMeshFilter
 
     // Private Member Functions
 
-        template<class T>
+        //- Update all sets of the given type
+        template<class SetType>
         static void updateSets(const mapPolyMesh& map);
 
-        template<class T>
+        template<class SetType>
         static void copySets(const polyMesh& oldMesh, const polyMesh& newMesh);
 
         label filterFacesLoop(const label nOriginalBadFaces);

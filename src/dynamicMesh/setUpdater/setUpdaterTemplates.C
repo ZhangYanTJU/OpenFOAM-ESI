@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,27 +32,29 @@ License
 #include "mapPolyMesh.H"
 #include "IOobjectList.H"
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-template<class Type>
-void Foam::setUpdater::updateSets(const mapPolyMesh& morphMap) const
+template<class SetType>
+void Foam::setUpdater::updateSets(const mapPolyMesh& map)
 {
     //
-    // Update all sets in memory.
+    // Update all sets in memory
     //
 
-    HashTable<const Type*> memSets =
-        morphMap.mesh().objectRegistry::lookupClass<Type>();
+    const HashTable<const SetType*> sets
+    (
+        map.mesh().objectRegistry::lookupClass<const SetType>()
+    );
 
-    forAllIters(memSets, iter)
+    for (const auto& iter : sets.csorted())
     {
-        Type& set = const_cast<Type&>(*iter());
+        SetType& set = const_cast<SetType&>(*iter.val());
 
         DebugPout
             << "Set:" << set.name() << " size:" << set.size()
             << " updated in memory" << endl;
 
-        set.updateMesh(morphMap);
+        set.updateMesh(map);
 
         // Write or not? Debatable.
         set.write();
@@ -66,35 +68,30 @@ void Foam::setUpdater::updateSets(const mapPolyMesh& morphMap) const
     // Get last valid mesh (discard points-only change)
     IOobjectList objs
     (
-        morphMap.mesh().time(),
-        morphMap.mesh().facesInstance(),
+        map.mesh().time(),
+        map.mesh().facesInstance(),
         "polyMesh/sets"
     );
 
-    IOobjectList fileSets(objs.lookupClass<Type>());
-
-    forAllConstIters(fileSets, iter)
+    for (const IOobject& io : objs.csorted<SetType>())
     {
-        if (!memSets.found(iter.key()))
+        if (!sets.contains(io.name()))
         {
             // Not in memory. Load it.
-            Type set(*iter());
+            SetType set(io);
 
-            if (debug)
-            {
-                Pout<< "Set:" << set.name() << " size:" << set.size()
-                    << " updated on disk" << endl;
-            }
+            DebugPout
+                << "Set:" << set.name() << " size:" << set.size()
+                << " updated on disk" << endl;
 
-            set.updateMesh(morphMap);
-
+            set.updateMesh(map);
             set.write();
         }
         else
         {
             DebugPout
-                << "Set:" << iter.key() << " already updated from memory"
-                << endl;
+                << "Set:" << io.name()
+                << " already updated from memory" << endl;
         }
     }
 }

@@ -456,29 +456,26 @@ const Foam::basicThermo& Foam::basicThermo::lookupThermo
     const fvPatchScalarField& pf
 )
 {
-    const basicThermo* thermo = pf.db().findObject<basicThermo>(dictName);
+    const basicThermo* thermoPtr = pf.db().cfindObject<basicThermo>(dictName);
 
-    if (thermo)
+    if (thermoPtr)
     {
-        return *thermo;
+        return *thermoPtr;
     }
 
-    HashTable<const basicThermo*> thermos =
-        pf.db().lookupClass<basicThermo>();
-
-    forAllConstIters(thermos, iter)
+    for (const basicThermo& thermo : pf.db().cobjects<basicThermo>())
     {
-        thermo = iter.val();
         if
         (
-            &(thermo->he().internalField())
+            &(thermo.he().internalField())
          == &(pf.internalField())
         )
         {
-            return *thermo;
+            return thermo;
         }
     }
 
+    // Failure
     return pf.db().lookupObject<basicThermo>(dictName);
 }
 

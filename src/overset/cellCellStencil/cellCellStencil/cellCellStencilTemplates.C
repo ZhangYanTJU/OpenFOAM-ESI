@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,10 +116,10 @@ void Foam::cellCellStencil::interpolate
 {
     const cellCellStencil& overlap = *this;
 
-    auto flds(mesh.lookupClass<GeoField>());
-    for (auto fldPtr : flds)
+    for (const GeoField& field : mesh.thisDb().csorted<GeoField>())
     {
-        const word& name = fldPtr->name();
+        const word& name = field.name();
+
         if (!suppressed.found(baseName(name)))
         {
             if (debug)
@@ -128,7 +128,7 @@ void Foam::cellCellStencil::interpolate
                     << name << endl;
             }
 
-            auto& fld = const_cast<GeoField&>(*fldPtr);
+            auto& fld = const_cast<GeoField&>(field);
 
             interpolate
             (
@@ -142,8 +142,8 @@ void Foam::cellCellStencil::interpolate
         {
             if (debug)
             {
-                Pout<< "cellCellStencil::interpolate: skipping : " << name
-                    << endl;
+                Pout<< "cellCellStencil::interpolate: skipping : "
+                    << name << endl;
             }
         }
     }

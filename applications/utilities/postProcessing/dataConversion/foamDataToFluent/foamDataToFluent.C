@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,8 +106,9 @@ int main(int argc, char *argv[])
                 "foamDataToFluentDict",
                 runTime.system(),
                 mesh,
-                IOobject::MUST_READ_IF_MODIFIED,
-                IOobject::NO_WRITE
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             )
         );
 
@@ -115,44 +117,21 @@ int main(int argc, char *argv[])
         IOobjectList objects(mesh, runTime.timeName());
 
 
-        // volScalarField
-        for (const word& fieldName : objects.sortedNames<volScalarField>())
-        {
-            // Lookup field from dictionary and convert field
-            label unitNumber;
-            if
-            (
-                foamDataToFluentDict.readIfPresent(fieldName, unitNumber)
-             && unitNumber > 0
-            )
-            {
-                // Read field
-                volScalarField field(*(objects[fieldName]), mesh);
+        readFieldsAndWriteFluent<volScalarField>
+        (
+            foamDataToFluentDict,
+            objects,
+            mesh,
+            fluentDataFile
+        );
 
-                Info<< "    Converting field " << fieldName << nl;
-                writeFluentField(field, unitNumber, fluentDataFile);
-            }
-        }
-
-
-        // volVectorField
-        for (const word& fieldName : objects.sortedNames<volVectorField>())
-        {
-            // Lookup field from dictionary and convert field
-            label unitNumber;
-            if
-            (
-                foamDataToFluentDict.readIfPresent(fieldName, unitNumber)
-             && unitNumber > 0
-            )
-            {
-                // Read field
-                volVectorField field(*(objects[fieldName]), mesh);
-
-                Info<< "    Converting field " << fieldName << nl;
-                writeFluentField(field, unitNumber, fluentDataFile);
-            }
-        }
+        readFieldsAndWriteFluent<volVectorField>
+        (
+            foamDataToFluentDict,
+            objects,
+            mesh,
+            fluentDataFile
+        );
 
         Info<< endl;
     }

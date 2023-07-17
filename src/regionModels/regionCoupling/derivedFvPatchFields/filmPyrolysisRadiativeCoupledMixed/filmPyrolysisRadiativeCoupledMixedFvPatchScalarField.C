@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,21 +41,25 @@ const filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::filmModelType&
 filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::
 filmModel() const
 {
-    HashTable<const filmModelType*> models
-        = db().time().lookupClass<filmModelType>();
+    typedef filmModelType ModelType;
 
-    forAllConstIters(models, iter)
+    const UPtrList<const ModelType> models
+    (
+        db().time().csorted<ModelType>()
+    );
+
+    for (const ModelType& mdl : models)
     {
-        if (iter()->regionMesh().name() == filmRegionName_)
+        if (mdl.regionMesh().name() == filmRegionName_)
         {
-            return *iter();
+            return mdl;
         }
     }
 
-    DynamicList<word> modelNames;
-    forAllConstIters(models, iter)
+    DynamicList<word> modelNames(models.size());
+    for (const ModelType& mdl : models)
     {
-        modelNames.append(iter()->regionMesh().name());
+        modelNames.push_back(mdl.regionMesh().name());
     }
 
     FatalErrorInFunction
@@ -63,7 +67,7 @@ filmModel() const
         << ".  Available regions include: " << modelNames
         << abort(FatalError);
 
-    return **models.begin();
+    return models.front();  // Failure
 }
 
 
@@ -72,21 +76,25 @@ pyrolysisModelType&
 filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::
 pyrModel() const
 {
-    HashTable<const pyrolysisModelType*> models =
-        db().time().lookupClass<pyrolysisModelType>();
+    typedef pyrolysisModelType ModelType;
 
-    forAllConstIters(models, iter)
+    const UPtrList<const ModelType> models
+    (
+        db().time().csorted<ModelType>()
+    );
+
+    for (const ModelType& mdl : models)
     {
-        if (iter()->regionMesh().name() == pyrolysisRegionName_)
+        if (mdl.regionMesh().name() == pyrolysisRegionName_)
         {
-            return *iter();
+            return mdl;
         }
     }
 
-    DynamicList<word> modelNames;
-    forAllConstIters(models, iter)
+    DynamicList<word> modelNames(models.size());
+    for (const ModelType& mdl : models)
     {
-        modelNames.append(iter()->regionMesh().name());
+        modelNames.push_back(mdl.regionMesh().name());
     }
 
     FatalErrorInFunction
@@ -94,7 +102,7 @@ pyrModel() const
         << ".  Available regions include: " << modelNames
         << abort(FatalError);
 
-    return **models.begin();
+    return models.front();  // Failure
 }
 
 

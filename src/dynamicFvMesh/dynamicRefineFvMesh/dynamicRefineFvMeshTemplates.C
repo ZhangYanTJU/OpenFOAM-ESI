@@ -105,24 +105,20 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
 )
 {
     typedef GeometricField<T, fvsPatchField, surfaceMesh> GeoField;
-    HashTable<GeoField*> sFlds(this->objectRegistry::lookupClass<GeoField>());
 
-    forAllIters(sFlds, iter)
+    for (GeoField& sFld : this->objectRegistry::sorted<GeoField>())
     {
-        //if (mapSurfaceFields_.found(iter.key()))
+        //if (mapSurfaceFields_.found(sFld.name()))
         {
             DebugInfo
                 << "dynamicRefineFvMesh::mapNewInternalFaces():"
                 << " Mapping new internal faces by interpolation on "
-                << iter.key()<< endl;
-
-            GeoField& sFld = *iter();
+                << sFld.name()<< endl;
 
             if (sFld.is_oriented())
             {
                 WarningInFunction << "Ignoring mapping oriented field "
-                    << sFld.name() << " since of type " << sFld.type()
-                    << endl;
+                    << sFld.name() << " since of type " << sFld.type() << endl;
             }
             else
             {
@@ -141,35 +137,33 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
 )
 {
     typedef GeometricField<T, fvsPatchField, surfaceMesh> GeoField;
-    HashTable<GeoField*> sFlds(this->objectRegistry::lookupClass<GeoField>());
 
-    forAllIters(sFlds, iter)
+    typedef GeometricField
+    <
+        typename outerProduct<vector, T>::type,
+        fvsPatchField,
+        surfaceMesh
+    > NormalGeoField;
+
+
+    for (GeoField& sFld : this->objectRegistry::sorted<GeoField>())
     {
-        //if (mapSurfaceFields_.found(iter.key()))
+        //if (mapSurfaceFields_.found(sFld.name()))
         {
             DebugInfo
                 << "dynamicRefineFvMesh::mapNewInternalFaces():"
                 << " Mapping new internal faces by interpolation on "
-                << iter.key() << endl;
-
-            GeoField& sFld = *iter();
+                << sFld.name() << endl;
 
             if (sFld.is_oriented())
             {
                 DebugInfo
                     << "dynamicRefineFvMesh::mapNewInternalFaces(): "
-                    << "Converting oriented field " << iter.key()
+                    << "Converting oriented field " << sFld.name()
                     << " to intensive field and mapping" << endl;
 
                 // Assume any oriented field is face area weighted (i.e. a flux)
                 // Convert to intensive (& oriented) before mapping. Untested.
-
-                typedef GeometricField
-                <
-                    typename outerProduct<vector, T>::type,
-                    fvsPatchField,
-                    surfaceMesh
-                > NormalGeoField;
 
                 // Convert to intensive and non oriented
                 NormalGeoField fFld(sFld*Sf/Foam::sqr(magSf));

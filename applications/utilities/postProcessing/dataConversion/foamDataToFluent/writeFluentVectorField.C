@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,12 +35,7 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-namespace Foam
-{
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-void writeFluentField
+void Foam::writeFluentField
 (
     const volVectorField& phi,
     const label fluentFieldIdentifier,
@@ -57,19 +53,16 @@ void writeFluentField
         << "3 "                  // Number of components (scalar=1, vector=3)
         << "0 0 "                // Unused
         << "1 " << phiInternal.size() // Start and end of list
-        << ")(" << endl;
+        << ")(" << nl;
 
-    forAll(phiInternal, celli)
+    for (const vector& val : phiInternal)
     {
         stream
-            << phiInternal[celli].x() << " "
-            << phiInternal[celli].y() << " "
-            << phiInternal[celli].z() << " "
-            << endl;
+            << val.x() << ' ' << val.y() << ' ' << val.z() << nl;
     }
 
     stream
-        << "))" << endl;
+        << "))" << nl;
 
     label nWrittenFaces = phiInternal.size();
 
@@ -87,17 +80,14 @@ void writeFluentField
             << "0 0 "            // Unused
             << nWrittenFaces + 1 << " " << nWrittenFaces + patchPhi.size()
                                  // Start and end of list
-            << ")(" << endl;
+            << ")(" << nl;
 
         nWrittenFaces += patchPhi.size();
 
-        forAll(patchPhi, facei)
+        for (const vector& val : patchPhi)
         {
             stream
-                << patchPhi[facei].x() << " "
-                << patchPhi[facei].y() << " "
-                << patchPhi[facei].z() << " "
-                << endl;
+                << val.x() << ' ' << val.y() << ' ' << val.z() << nl;
         }
 
         stream
@@ -105,7 +95,5 @@ void writeFluentField
     }
 }
 
-
-} // End namespace Foam
 
 // ************************************************************************* //

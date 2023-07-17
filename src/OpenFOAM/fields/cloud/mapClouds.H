@@ -34,8 +34,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef mapClouds_H
-#define mapClouds_H
+#ifndef Foam_mapClouds_H
+#define Foam_mapClouds_H
 
 #include "cloud.H"
 #include "objectRegistry.H"
@@ -50,18 +50,14 @@ namespace Foam
 //  fields depending on mesh type.
 inline void mapClouds(const objectRegistry& db, const mapPolyMesh& mapper)
 {
-    HashTable<const cloud*> clouds(db.lookupClass<cloud>());
-
-    forAllIters(clouds, iter)
+    for (const cloud& c : db.csorted<cloud>())
     {
-        cloud& c = const_cast<cloud&>(*iter());
-
         if (polyMesh::debug)
         {
             Info<< "Mapping cloud " << c.name() << endl;
         }
 
-        c.autoMap(mapper);
+        const_cast<cloud&>(c).autoMap(mapper);
     }
 }
 

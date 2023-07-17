@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,30 +32,49 @@ License
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class GeoField>
-void Foam::addToFieldList
+Foam::PtrList<GeoField> Foam::readFields
 (
-    PtrList<GeoField>& fieldList,
-    const IOobject& obj,
-    const label fieldi,
+    const IOobjectList& objects,
     const typename GeoField::Mesh& mesh
 )
 {
-    if (obj.isHeaderClass<GeoField>())
+    const UPtrList<const IOobject> fieldObjects
+    (
+        objects.csorted<GeoField>()
+    );
+
+    PtrList<GeoField> fields(fieldObjects.size());
+
+    label nFields = 0;
+    for (const IOobject& io : fieldObjects)
     {
-        fieldList.set
-        (
-            fieldi,
-            new GeoField(obj, mesh)
-        );
-        Info<< "    " << GeoField::typeName << tab << obj.name() << endl;
+        if (!nFields)
+        {
+            Info<< "    " << GeoField::typeName << " (";
+        }
+        else
+        {
+            Info<< ' ';
+        }
+        Info<< io.name();
+
+        fields.emplace_set(nFields, io, mesh);
+        ++nFields;
     }
+
+    if (nFields)
+    {
+        Info<< ')' << nl;
+    }
+
+    return fields;
 }
 
 
 template<class GeoField>
 void Foam::outputFieldList
 (
-    const PtrList<GeoField>& fieldList,
+    const UPtrList<GeoField>& fieldList,
     const label patchi
 )
 {
@@ -74,7 +94,7 @@ void Foam::outputFieldList
 template<class GeoField>
 void Foam::collectFieldList
 (
-    const PtrList<GeoField>& fieldList,
+    const UPtrList<GeoField>& fieldList,
     const label patchi,
     HashTable<word>& fieldToType
 )

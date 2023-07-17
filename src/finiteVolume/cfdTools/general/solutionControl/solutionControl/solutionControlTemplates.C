@@ -37,12 +37,8 @@ void Foam::solutionControl::storePrevIter() const
 {
     typedef GeometricField<Type, fvPatchField, volMesh> GeoField;
 
-    HashTable<GeoField*> flds(mesh_.objectRegistry::lookupClass<GeoField>());
-
-    forAllIters(flds, iter)
+    for (GeoField& fld : mesh_.objectRegistry::sorted<GeoField>())
     {
-        GeoField& fld = *iter();
-
         const word& fldName = fld.name();
 
         if (!fldName.contains("PrevIter") && mesh_.relaxField(fldName))

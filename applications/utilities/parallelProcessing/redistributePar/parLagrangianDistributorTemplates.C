@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -324,18 +324,11 @@ Foam::label Foam::parLagrangianDistributor::distributeStoredFields
     passivePositionParticleCloud& cloud
 ) const
 {
-    HashTable<Container*> fields
-    (
-        cloud.lookupClass<Container>()
-    );
-
     bool reconstruct = false;
-
     label nFields = 0;
-    forAllIters(fields, iter)
-    {
-        Container& field = *(iter.val());
 
+    for (Container& field : cloud.sorted<Container>())
+    {
         if (!nFields)
         {
             // Performing an all-to-one (reconstruct)?

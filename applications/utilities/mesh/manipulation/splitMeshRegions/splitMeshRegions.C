@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -164,14 +164,8 @@ void subsetVolFields
 {
     const labelList patchMap(identity(mesh.boundaryMesh().size()));
 
-    HashTable<const GeoField*> fields
-    (
-        mesh.objectRegistry::lookupClass<GeoField>()
-    );
-    forAllConstIters(fields, iter)
+    for (const GeoField& fld : mesh.objectRegistry::csorted<GeoField>())
     {
-        const GeoField& fld = *iter.val();
-
         Info<< "Mapping field " << fld.name() << endl;
 
         tmp<GeoField> tSubFld
@@ -192,8 +186,7 @@ void subsetVolFields
         {
             if (addedPatches.found(patchi))
             {
-                tSubFld.ref().boundaryFieldRef()[patchi] ==
-                    typename GeoField::value_type(Zero);
+                tSubFld.ref().boundaryFieldRef()[patchi] == Zero;
             }
         }
 
@@ -218,14 +211,8 @@ void subsetSurfaceFields
 {
     const labelList patchMap(identity(mesh.boundaryMesh().size()));
 
-    HashTable<const GeoField*> fields
-    (
-        mesh.objectRegistry::lookupClass<GeoField>()
-    );
-    forAllConstIters(fields, iter)
+    for (const GeoField& fld : mesh.objectRegistry::csorted<GeoField>())
     {
-        const GeoField& fld = *iter.val();
-
         Info<< "Mapping field " << fld.name() << endl;
 
         tmp<GeoField> tSubFld
@@ -246,8 +233,7 @@ void subsetSurfaceFields
         {
             if (addedPatches.found(patchi))
             {
-                tSubFld.ref().boundaryFieldRef()[patchi] ==
-                    typename GeoField::value_type(Zero);
+                tSubFld.ref().boundaryFieldRef()[patchi] == Zero;
             }
         }
 

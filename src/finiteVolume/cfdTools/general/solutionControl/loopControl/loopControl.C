@@ -101,14 +101,16 @@ bool Foam::loopControl::checkConverged() const
         return false;
     }
 
-    HashTable<const fvMesh*> meshes = time_.lookupClass<const fvMesh>();
-
     bool achieved = true;
     bool checked = false; // safety that some checks were indeed performed
 
-    forAllConstIters(meshes, meshIter)
+    const objectRegistry& obr = time_;
+
+    forAllConstIters(obr, iter)
     {
-        const fvMesh& regionMesh = *(meshIter.val());
+        const fvMesh* meshPtr = dynamic_cast<const fvMesh*>(iter.val());
+        if (!meshPtr) continue;
+        const fvMesh& regionMesh = *meshPtr;
 
         const dictionary& solverDict = regionMesh.solverPerformanceDict();
         for (const entry& dataDictEntry : solverDict)

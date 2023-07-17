@@ -84,7 +84,7 @@ void Foam::functionObjects::setFlow::setPhi(const volVectorField& U)
             FatalErrorInFunction
                 << "Unable to find rho field'" << rhoName_
                 << "' in the mesh database.  Available fields are:"
-                << mesh_.names<volScalarField>()
+                << flatOutput(mesh_.sortedNames<volScalarField>())
                 << exit(FatalError);
         }
     }

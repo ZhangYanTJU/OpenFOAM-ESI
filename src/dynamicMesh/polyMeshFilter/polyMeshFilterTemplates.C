@@ -36,15 +36,25 @@ License
 template<class SetType>
 void Foam::polyMeshFilter::updateSets(const mapPolyMesh& map)
 {
-    HashTable<const SetType*> sets =
-        map.mesh().objectRegistry::lookupClass<const SetType>();
+    //
+    // Update all sets in memory
+    //
 
-    forAllIters(sets, iter)
+    const HashTable<const SetType*> sets
+    (
+        map.mesh().objectRegistry::lookupClass<const SetType>()
+    );
+
+    for (const auto& iter : sets.csorted())
     {
-        SetType& set = const_cast<SetType&>(*iter());
+        SetType& set = const_cast<SetType&>(*iter.val());
         set.updateMesh(map);
         set.sync(map.mesh());
     }
+
+    //
+    // Update all sets on disk
+    //
 
     IOobjectList objs
     (
@@ -53,14 +63,12 @@ void Foam::polyMeshFilter::updateSets(const mapPolyMesh& map)
         "polyMesh/sets"
     );
 
-    IOobjectList fileSets(objs.lookupClass<SetType>());
-
-    forAllConstIters(fileSets, iter)
+    for (const IOobject& io : objs.csorted<SetType>())
     {
-        if (!sets.found(iter.key()))
+        if (!sets.contains(io.name()))
         {
             // Not in memory. Load it.
-            SetType set(*iter());
+            SetType set(io);
             set.updateMesh(map);
 
             set.write();
@@ -76,13 +84,8 @@ void Foam::polyMeshFilter::copySets
     const polyMesh& newMesh
 )
 {
-    HashTable<const SetType*> sets =
-        oldMesh.objectRegistry::lookupClass<const SetType>();
-
-    forAllConstIters(sets, iter)
+    for (const SetType& set : oldMesh.objectRegistry::csorted<SetType>())
     {
-        const SetType& set = *iter();
-
         auto* setPtr =
             newMesh.objectRegistry::getObjectPtr<SetType>(set.name());
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2021 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -272,14 +272,9 @@ void Foam::fvMeshAdder::MapVolFields
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fldType;
 
-    HashTable<const fldType*> fields
+    const UPtrList<const fldType> fields
     (
-        mesh.objectRegistry::lookupClass<fldType>()
-    );
-
-    HashTable<const fldType*> fieldsToAdd
-    (
-        meshToAdd.objectRegistry::lookupClass<fldType>()
+        mesh.objectRegistry::csorted<fldType>()
     );
 
     // It is necessary to enforce that all old-time fields are stored
@@ -287,36 +282,35 @@ void Foam::fvMeshAdder::MapVolFields
     // old-time-level field is mapped before the field itself, sizes
     // will not match.
 
-    forAllIters(fields, fieldIter)
+    for (const auto& field : fields)
     {
-        fldType& fld = const_cast<fldType&>(*fieldIter());
-
         DebugPout
-            << "MapVolFields : Storing old time for " << fld.name() << endl;
+            << "MapVolFields : Storing old time for "
+            << field.name() << endl;
 
-        fld.storeOldTimes();
+        const_cast<fldType&>(field).storeOldTimes();
     }
 
 
-    forAllIters(fields, fieldIter)
+    for (const auto& field : fields)
     {
-        fldType& fld = const_cast<fldType&>(*fieldIter());
+        fldType& fld = const_cast<fldType&>(field);
 
-        if (fieldsToAdd.found(fld.name()))
+        const auto* toAdd =
+            meshToAdd.objectRegistry::cfindObject<fldType>(field.name());
+
+        if (toAdd)
         {
-            const fldType& fldToAdd = *fieldsToAdd[fld.name()];
-
             DebugPout
-                << "MapVolFields : mapping " << fld.name()
-                << " and " << fldToAdd.name() << endl;
+                << "MapVolFields : mapping " << field.name() << endl;
 
-            MapVolField<Type>(meshMap, fld, fldToAdd, fullyMapped);
+            MapVolField<Type>(meshMap, fld, *toAdd, fullyMapped);
         }
         else
         {
             WarningInFunction
-                << "Not mapping field " << fld.name()
-                << " since not present on mesh to add" << endl;
+                << "Not mapping field " << field.name()
+                << " - not present on mesh to add" << endl;
         }
     }
 }
@@ -582,14 +576,9 @@ void Foam::fvMeshAdder::MapSurfaceFields
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fldType;
 
-    HashTable<const fldType*> fields
+    const UPtrList<const fldType> fields
     (
-        mesh.objectRegistry::lookupClass<fldType>()
-    );
-
-    HashTable<const fldType*> fieldsToAdd
-    (
-        meshToAdd.objectRegistry::lookupClass<fldType>()
+        mesh.objectRegistry::csorted<fldType>()
     );
 
     // It is necessary to enforce that all old-time fields are stored
@@ -597,36 +586,34 @@ void Foam::fvMeshAdder::MapSurfaceFields
     // old-time-level field is mapped before the field itself, sizes
     // will not match.
 
-    forAllIters(fields, fieldIter)
+    for (const auto& field : fields)
     {
-        fldType& fld = const_cast<fldType&>(*fieldIter());
-
         DebugPout
-            << "MapSurfaceFields : Storing old time for " << fld.name() << endl;
+            << "MapSurfaceFields : Storing old time for "
+            << field.name() << endl;
 
-        fld.storeOldTimes();
+        const_cast<fldType&>(field).storeOldTimes();
     }
 
-
-    forAllIters(fields, fieldIter)
+    for (const auto& field : fields)
     {
-        fldType& fld = const_cast<fldType&>(*fieldIter());
+        fldType& fld = const_cast<fldType&>(field);
 
-        if (fieldsToAdd.found(fld.name()))
+        const auto* toAdd =
+            meshToAdd.objectRegistry::cfindObject<fldType>(field.name());
+
+        if (toAdd)
         {
-            const fldType& fldToAdd = *fieldsToAdd[fld.name()];
-
             DebugPout
-                << "MapSurfaceFields : mapping " << fld.name()
-                << " and " << fldToAdd.name() << endl;
+                << "MapSurfaceFields : mapping " << field.name() << endl;
 
-            MapSurfaceField<Type>(meshMap, fld, fldToAdd, fullyMapped);
+            MapSurfaceField<Type>(meshMap, fld, *toAdd, fullyMapped);
         }
         else
         {
             WarningInFunction
-                << "Not mapping field " << fld.name()
-                << " since not present on mesh to add" << endl;
+                << "Not mapping field " << field.name()
+                << " - not present on mesh to add" << endl;
         }
     }
 }
@@ -663,37 +650,32 @@ void Foam::fvMeshAdder::MapDimFields
 {
     typedef DimensionedField<Type, volMesh> fldType;
 
-    // Note: use strict flag on lookupClass to avoid picking up
-    //       volFields
-    HashTable<const fldType*> fields
+    // NB: strict=true to avoid picking up volFields
+    const UPtrList<const fldType> fields
     (
-        mesh.objectRegistry::lookupClass<fldType>(true)
+        mesh.objectRegistry::csorted<fldType, true>()
     );
 
-    HashTable<const fldType*> fieldsToAdd
-    (
-        meshToAdd.objectRegistry::lookupClass<fldType>(true)
-    );
-
-    forAllIters(fields, fieldIter)
+    for (const auto& field : fields)
     {
-        fldType& fld = const_cast<fldType&>(*fieldIter());
+        fldType& fld = const_cast<fldType&>(field);
 
-        if (fieldsToAdd.found(fld.name()))
+        const auto* toAdd =
+            meshToAdd.objectRegistry::cfindObject<fldType>(field.name());
+
+        // Apply strict check (to avoid picking volFields)
+        if (toAdd && Foam::isType<fldType>(*toAdd))
         {
-            const fldType& fldToAdd = *fieldsToAdd[fld.name()];
-
             DebugPout
-                << "MapDimFields : mapping " << fld.name()
-                << " and " << fldToAdd.name() << endl;
+                << "MapDimFields : mapping " << field.name() << endl;
 
-            MapDimField<Type>(meshMap, fld, fldToAdd);
+            MapDimField<Type>(meshMap, fld, *toAdd);
         }
         else
         {
             WarningInFunction
-                << "Not mapping field " << fld.name()
-                << " since not present on mesh to add" << endl;
+                << "Not mapping field " << field.name()
+                << " - not present on mesh to add" << endl;
         }
     }
 }
@@ -1115,9 +1097,9 @@ void Foam::fvMeshAdder::MapVolFields
     }
     const auto& mesh0 = meshes[0];
 
-    HashTable<const fldType*> fields
+    const UPtrList<const fldType> fields
     (
-        mesh0.objectRegistry::lookupClass<fldType>()
+        mesh0.objectRegistry::csorted<fldType>()
     );
 
 
@@ -1126,19 +1108,19 @@ void Foam::fvMeshAdder::MapVolFields
     // old-time-level field is mapped before the field itself, sizes
     // will not match.
 
-    for (const auto& fld : fields)
+    for (const auto& field : fields)
     {
         DebugPout
-            << "MapVolFields : Storing old time for " << fld->name()
-            << endl;
+            << "MapVolFields : Storing old time for "
+            << field.name() << endl;
 
-        const_cast<fldType&>(*fld).storeOldTimes();
+        const_cast<fldType&>(field).storeOldTimes();
     }
 
 
-    for (const auto& fld : fields)
+    for (const auto& field : fields)
     {
-        const word& name0 = fld->name();
+        const word& name0 = field.name();
 
         DebugPout
             << "MapVolFields : mapping " << name0 << endl;
@@ -1177,7 +1159,6 @@ void Foam::fvMeshAdder::MapDimFields
 )
 {
     typedef DimensionedField<Type, volMesh> fldType;
-    typedef GeometricField<Type, fvPatchField, volMesh> excludeType;
 
     if (!meshes.test(0))
     {
@@ -1188,39 +1169,31 @@ void Foam::fvMeshAdder::MapDimFields
     }
     const auto& mesh0 = meshes[0];
 
-    HashTable<const fldType*> fields
+    // NB: strict=true to avoid picking up volFields
+    const UPtrList<const fldType> fields
     (
-        mesh0.objectRegistry::lookupClass<fldType>()
+        mesh0.objectRegistry::csorted<fldType, true>()
     );
 
-
-    for (const auto& fld : fields)
+    for (const auto& field : fields)
     {
-        if (!isA<excludeType>(*fld))
+        const word& name0 = field.name();
+
+        DebugPout
+            << "MapDimFields : mapping " << name0 << endl;
+
+        UPtrList<fldType> meshToField(meshes.size());
+        forAll(meshes, meshi)
         {
-            const word& name0 = fld->name();
-
-            DebugPout
-                << "MapDimFields : mapping " << name0 << endl;
-
-            UPtrList<fldType> meshToField(meshes.size());
-            forAll(meshes, meshi)
+            if (meshes.set(meshi))
             {
-                if (meshes.set(meshi))
-                {
-                    auto& meshFld = meshes[meshi].
-                        objectRegistry::lookupObjectRef<fldType>(name0);
-                    meshToField.set(meshi, &meshFld);
-                }
+                auto& meshFld = meshes[meshi].
+                    objectRegistry::lookupObjectRef<fldType>(name0);
+                meshToField.set(meshi, &meshFld);
             }
+        }
 
-            MapDimField(meshToField, cellProcAddressing, fullyMapped);
-        }
-        else
-        {
-            DebugPout
-                << "MapDimFields : ignoring " << fld->name() << endl;
-        }
+        MapDimField(meshToField, cellProcAddressing, fullyMapped);
     }
 }
 
@@ -1250,9 +1223,9 @@ void Foam::fvMeshAdder::MapSurfaceFields
     }
     const auto& mesh0 = meshes[0];
 
-    HashTable<const fldType*> fields
+    const UPtrList<const fldType> fields
     (
-        mesh0.objectRegistry::lookupClass<fldType>()
+        mesh0.objectRegistry::csorted<fldType>()
     );
 
 
@@ -1261,22 +1234,22 @@ void Foam::fvMeshAdder::MapSurfaceFields
     // old-time-level field is mapped before the field itself, sizes
     // will not match.
 
-    for (const auto& fld : fields)
+    for (const auto& field : fields)
     {
         DebugPout
-            << "MapSurfaceFields : Storing old time for " << fld->name()
-            << endl;
+            << "MapSurfaceFields : Storing old time for "
+            << field.name() << endl;
 
-        const_cast<fldType&>(*fld).storeOldTimes();
+        const_cast<fldType&>(field).storeOldTimes();
     }
 
 
-    for (const auto& fld : fields)
+    for (const auto& field : fields)
     {
-        const word& name0 = fld->name();
+        const word& name0 = field.name();
 
         DebugPout
-            << "MapSurfaceFields : Mapping " << fld->name() << endl;
+            << "MapSurfaceFields : Mapping " << field.name() << endl;
 
         UPtrList<fldType> meshToField(meshes.size());
         forAll(meshes, meshi)

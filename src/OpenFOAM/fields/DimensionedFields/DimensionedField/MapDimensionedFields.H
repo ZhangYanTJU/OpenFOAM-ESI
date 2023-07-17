@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,20 +46,23 @@ template<class Type, class MeshMapper, class GeoMesh>
 void MapDimensionedFields(const MeshMapper& mapper)
 {
     typedef DimensionedField<Type, GeoMesh> FieldType;
-    typedef HashTable<const FieldType*> TableType;
 
-    TableType fields(mapper.thisDb().template lookupClass<FieldType>(true));
+    // Note: use strict=true to avoid picking up volFields
+    const UPtrList<const FieldType> fields
+    (
+        mapper.thisDb().template csorted<FieldType, true>()
+    );
 
-    forAllConstIters(fields, fieldIter)
+    for (const auto& fld : fields)
     {
-        FieldType& field = const_cast<FieldType&>(*fieldIter());
+        FieldType& field = const_cast<FieldType&>(fld);
 
         if (&field.mesh() == &mapper.mesh())
         {
             if (polyMesh::debug)
             {
-                Info<< "Mapping " << field.typeName << ' ' << field.name()
-                    << endl;
+                Info<< "Mapping "
+                    << FieldType::typeName << ' ' << field.name() << endl;
             }
 
             MapInternalField<Type, MeshMapper, GeoMesh>()(field, mapper);
@@ -68,7 +71,8 @@ void MapDimensionedFields(const MeshMapper& mapper)
         }
         else if (polyMesh::debug)
         {
-            Info<< "Not mapping " << field.typeName << ' ' << field.name()
+            Info<< "Not mapping "
+                << FieldType::typeName << ' ' << field.name()
                 << " since originating mesh differs from that of mapper."
                 << endl;
         }
