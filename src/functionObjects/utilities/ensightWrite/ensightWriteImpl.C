@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,7 +46,7 @@ Foam::label Foam::functionObjects::ensightWrite::writeVolFieldsImpl
     for
     (
         const GeoField& origField
-      : baseMesh.sorted<GeoField>(candidateNames)
+      : baseMesh.csorted<GeoField>(candidateNames)
     )
     {
         const word& fieldName = origField.name();

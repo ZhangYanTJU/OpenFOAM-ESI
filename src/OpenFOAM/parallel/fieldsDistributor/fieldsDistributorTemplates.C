@@ -65,7 +65,7 @@ void Foam::fieldsDistributor::readFields
     typedef GeometricField<Type, PatchField, GeoMesh> GeoField;
 
     // GeoField fields - sorted for consistent order on all processors
-    UPtrList<const IOobject> fieldObjects(objects.sorted<GeoField>());
+    const UPtrList<const IOobject> fieldObjects(objects.csorted<GeoField>());
 
     // Construct the fields
     fields.resize(fieldObjects.size());
@@ -86,7 +86,7 @@ void Foam::fieldsDistributor::readFields
 )
 {
     // GeoField fields - sorted for consistent order on all processors
-    UPtrList<const IOobject> fieldObjects(objects.sorted<GeoField>());
+    const UPtrList<const IOobject> fieldObjects(objects.csorted<GeoField>());
 
     // Construct the fields
     fields.resize(fieldObjects.size());

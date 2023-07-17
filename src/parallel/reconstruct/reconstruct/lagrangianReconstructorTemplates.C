@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -199,8 +199,8 @@ Foam::label Foam::lagrangianReconstructor::reconstructFields
         cloudName,
         (
             selectedFields.empty()
-          ? objects.sorted<fieldType>()
-          : objects.sorted<fieldType>(selectedFields)
+          ? objects.csorted<fieldType>()
+          : objects.csorted<fieldType>(selectedFields)
         )
     );
 }
@@ -221,13 +221,13 @@ Foam::label Foam::lagrangianReconstructor::reconstructFieldFields
 
     if (selectedFields.empty())
     {
-        fieldObjects.append(objects.sorted<fieldType>());
-        fieldObjects.append(objects.sorted<fieldTypeB>());
+        fieldObjects.push_back(objects.csorted<fieldType>());
+        fieldObjects.push_back(objects.csorted<fieldTypeB>());
     }
     else
     {
-        fieldObjects.append(objects.sorted<fieldType>(selectedFields));
-        fieldObjects.append(objects.sorted<fieldTypeB>(selectedFields));
+        fieldObjects.push_back(objects.csorted<fieldType>(selectedFields));
+        fieldObjects.push_back(objects.csorted<fieldTypeB>(selectedFields));
     }
 
     Foam::sort(fieldObjects, nameOp<IOobject>());

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -114,14 +114,13 @@ void Foam::KinematicSurfaceFilm<CloudType>::initFilmModels()
     // Set up area films
     if (areaFilms_.empty())
     {
-        UPtrList<const areaFilm> models
+        for
         (
-            mesh.time().objectRegistry::template sorted<areaFilm>()
-        );
-
-        for (const auto& model : models)
+            const areaFilm& regionFa
+          : mesh.time().objectRegistry::template csorted<areaFilm>()
+        )
         {
-            areaFilms_.append(const_cast<areaFilm*>(&model));
+            areaFilms_.push_back(const_cast<areaFilm*>(&regionFa));
         }
     }
 }

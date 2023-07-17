@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -653,7 +653,7 @@ int main(int argc, char *argv[])
                         const labelList& cellMap =
                             procMeshes.cellProcAddressing()[proci];
 
-                        for (const IOobject& io : objects.sorted<cellSet>())
+                        for (const IOobject& io : objects.csorted<cellSet>())
                         {
                             // Load cellSet
                             const cellSet procSet(io);
@@ -684,7 +684,7 @@ int main(int argc, char *argv[])
                         const labelList& faceMap =
                             procMeshes.faceProcAddressing()[proci];
 
-                        for (const IOobject& io : objects.sorted<faceSet>())
+                        for (const IOobject& io : objects.csorted<faceSet>())
                         {
                             // Load faceSet
                             const faceSet procSet(io);
@@ -714,7 +714,7 @@ int main(int argc, char *argv[])
                         const labelList& pointMap =
                             procMeshes.pointProcAddressing()[proci];
 
-                        for (const IOobject& io : objects.sorted<pointSet>())
+                        for (const IOobject& io : objects.csorted<pointSet>())
                         {
                             // Load pointSet
                             const pointSet procSet(io);
