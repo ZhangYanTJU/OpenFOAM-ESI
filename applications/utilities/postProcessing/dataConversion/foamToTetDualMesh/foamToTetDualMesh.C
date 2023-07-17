@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,18 +59,21 @@ void ReadAndMapFields
 {
     typedef typename MappedGeoField::value_type Type;
 
-    // Search list of objects for wanted type
-    IOobjectList fieldObjects(objects.lookupClass(ReadGeoField::typeName));
+    // Objects of wanted type
+    const UPtrList<const IOobject> fieldObjects
+    (
+        objects.csorted<ReadGeoField>()
+    );
 
-    tetFields.setSize(fieldObjects.size());
+    tetFields.resize(fieldObjects.size());
 
     label i = 0;
-    forAllConstIters(fieldObjects, iter)
+    for (const IOobject& io : fieldObjects)
     {
-        Info<< "Converting " << ReadGeoField::typeName << ' ' << iter.key()
-            << endl;
+        Info<< "Converting "
+            << ReadGeoField::typeName << ' ' << io.name() << endl;
 
-        ReadGeoField readField(*iter(), mesh);
+        ReadGeoField readField(io, mesh);
 
         tetFields.set
         (
@@ -82,8 +86,8 @@ void ReadAndMapFields
                     readField.instance(),
                     readField.local(),
                     tetDualMesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE,
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::AUTO_WRITE,
                     readField.registerObject()
                 ),
                 pointMesh::New(tetDualMesh),

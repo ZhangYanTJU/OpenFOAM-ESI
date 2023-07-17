@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,18 +87,12 @@ void Foam::fvMeshDistribute::printIntFieldInfo(const fvMesh& mesh)
         volMesh
     > excludeType;
 
-    const HashTable<const GeoField*> flds
-    (
-        mesh.objectRegistry::lookupClass<GeoField>()
-    );
-
-    forAllConstIters(flds, iter)
+    for (const GeoField& field : mesh.objectRegistry::csorted<GeoField>())
     {
-        const GeoField& fld = *iter();
-        if (!isA<excludeType>(fld))
+        if (!isA<excludeType>(field))
         {
-            Pout<< "Field:" << iter.key() << " internalsize:" << fld.size()
-                //<< " value:" << fld
+            Pout<< "Field:" << field.name() << " size:" << field.size()
+                //<< " value:" << field
                 << endl;
         }
     }
@@ -108,20 +102,13 @@ void Foam::fvMeshDistribute::printIntFieldInfo(const fvMesh& mesh)
 template<class GeoField>
 void Foam::fvMeshDistribute::printFieldInfo(const fvMesh& mesh)
 {
-    const HashTable<const GeoField*> flds
-    (
-        mesh.objectRegistry::lookupClass<GeoField>()
-    );
-
-    forAllConstIters(flds, iter)
+    for (const GeoField& field : mesh.objectRegistry::csorted<GeoField>())
     {
-        const GeoField& fld = *iter();
-
-        Pout<< "Field:" << iter.key() << " internalsize:" << fld.size()
-            //<< " value:" << fld
+        Pout<< "Field:" << field.name() << " size:" << field.size()
+            //<< " value:" << field
             << endl;
 
-        for (const auto& patchFld : fld.boundaryField())
+        for (const auto& patchFld : field.boundaryField())
         {
             Pout<< "    " << patchFld.patch().index()
                 << ' ' << patchFld.patch().name()
@@ -143,21 +130,20 @@ void Foam::fvMeshDistribute::saveBoundaryFields
 
     typedef GeometricField<T, fvsPatchField, Mesh> fldType;
 
-    HashTable<const fldType*> flds
+    const UPtrList<const fldType> flds
     (
-        mesh_.objectRegistry::lookupClass<const fldType>()
+        mesh_.objectRegistry::csorted<fldType>()
     );
 
+    bflds.free();
     bflds.resize(flds.size());
 
-    label i = 0;
-    forAllConstIters(flds, iter)
+    label fieldi = 0;
+    for (const fldType& fld : flds)
     {
-        const fldType& fld = *iter();
+        bflds.set(fieldi, fld.boundaryField().clone());
 
-        bflds.set(i, fld.boundaryField().clone());
-
-        ++i;
+        ++fieldi;
     }
 }
 
@@ -176,9 +162,9 @@ void Foam::fvMeshDistribute::mapBoundaryFields
 
     typedef GeometricField<T, fvsPatchField, Mesh> fldType;
 
-    HashTable<fldType*> flds
+    UPtrList<fldType> flds
     (
-        mesh_.objectRegistry::lookupClass<fldType>()
+        mesh_.objectRegistry::sorted<fldType>()
     );
 
     if (flds.size() != oldBflds.size())
@@ -187,14 +173,10 @@ void Foam::fvMeshDistribute::mapBoundaryFields
             << abort(FatalError);
     }
 
-    label fieldi = 0;
-
-    forAllIters(flds, iter)
+    forAll(flds, fieldi)
     {
-        fldType& fld = *iter();
-        auto& bfld = fld.boundaryFieldRef();
-
-        const FieldField<fvsPatchField, T>& oldBfld = oldBflds[fieldi++];
+        auto& bfld = flds[fieldi].boundaryFieldRef();
+        const auto& oldBfld = oldBflds[fieldi];
 
         // Pull from old boundary field into bfld.
 
@@ -231,22 +213,17 @@ void Foam::fvMeshDistribute::saveInternalFields
 {
     typedef GeometricField<T, fvsPatchField, surfaceMesh> fldType;
 
-    HashTable<const fldType*> flds
+    const UPtrList<const fldType> fields
     (
-        mesh_.objectRegistry::lookupClass<const fldType>()
+        mesh_.objectRegistry::csorted<fldType>()
     );
 
-    iflds.resize(flds.size());
+    iflds.free();
+    iflds.resize(fields.size());
 
-    label i = 0;
-
-    forAllConstIters(flds, iter)
+    forAll(fields, fieldi)
     {
-        const fldType& fld = *iter();
-
-        iflds.set(i, fld.primitiveField().clone());
-
-        ++i;
+        iflds.set(fieldi, fields[fieldi].primitiveField().clone());
     }
 }
 
@@ -264,9 +241,9 @@ void Foam::fvMeshDistribute::mapExposedFaces
 
     typedef GeometricField<T, fvsPatchField, surfaceMesh> fldType;
 
-    HashTable<fldType*> flds
+    UPtrList<fldType> flds
     (
-        mesh_.objectRegistry::lookupClass<fldType>()
+        mesh_.objectRegistry::sorted<fldType>()
     );
 
     if (flds.size() != oldFlds.size())
@@ -277,16 +254,15 @@ void Foam::fvMeshDistribute::mapExposedFaces
     }
 
 
-    label fieldI = 0;
-
-    forAllIters(flds, iter)
+    forAll(flds, fieldi)
     {
-        fldType& fld = *iter();
+        auto& fld = flds[fieldi];
+        const auto& oldInternal = oldFlds[fieldi];
+
         const bool oriented = fld.is_oriented();
 
-        typename fldType::Boundary& bfld = fld.boundaryFieldRef();
+        auto& bfld = fld.boundaryFieldRef();
 
-        const Field<T>& oldInternal = oldFlds[fieldI++];
 
         // Pull from old internal field into bfld.
 
@@ -322,16 +298,10 @@ void Foam::fvMeshDistribute::initPatchFields
 )
 {
     // Init patch fields of certain type
+    // - field order is irrelevant
 
-    HashTable<GeoField*> flds
-    (
-        mesh_.objectRegistry::lookupClass<GeoField>()
-    );
-
-    forAllIters(flds, iter)
+    for (GeoField& fld : mesh_.objectRegistry::objects<GeoField>())
     {
-        GeoField& fld = *iter();
-
         auto& bfld = fld.boundaryFieldRef();
 
         forAll(bfld, patchi)
@@ -350,14 +320,8 @@ void Foam::fvMeshDistribute::initPatchFields
 //{
 //    // CorrectBoundaryConditions patch fields of certain type
 //
-//    HashTable<GeoField*> flds
-//    (
-//        mesh_.objectRegistry::lookupClass<GeoField>()
-//    );
-//
-//    forAllIters(flds, iter)
+//    for (GeoField& fld : mesh_.objectRegistry::sorted<GeoField>())
 //    {
-//        GeoField& fld = *iter();
 //        fld.correctBoundaryConditions();
 //    }
 //}
@@ -377,19 +341,23 @@ void Foam::fvMeshDistribute::getFieldNames
 
     if (!excludeType.empty())
     {
-        const wordList& excludeList = allFieldNames(excludeType);
+        const wordList& excludeList =
+            allFieldNames.lookup(excludeType, wordList::null());
 
-        DynamicList<word> newList(list.size());
-        for(const auto& name : list)
+        if (!excludeList.empty())
         {
-            if (!excludeList.found(name))
+            DynamicList<word> newList(list.size());
+            for (const auto& name : list)
             {
-                newList.append(name);
+                if (!excludeList.contains(name))
+                {
+                    newList.push_back(name);
+                }
             }
-        }
-        if (newList.size() < list.size())
-        {
-            list = std::move(newList);
+            if (newList.size() < list.size())
+            {
+                list = std::move(newList);
+            }
         }
     }
 

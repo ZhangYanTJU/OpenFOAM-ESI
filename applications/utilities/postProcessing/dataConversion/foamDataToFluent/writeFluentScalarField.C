@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,12 +36,7 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-namespace Foam
-{
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-void writeFluentField
+void Foam::writeFluentField
 (
     const volScalarField& phi,
     const label fluentFieldIdentifier,
@@ -58,15 +54,15 @@ void writeFluentField
         << "1 "                  // Number of components (scalar=1, vector=3)
         << "0 0 "                // Unused
         << "1 " << phiInternal.size() // Start and end of list
-        << ")(" << endl;
+        << ")(" << nl;
 
-    forAll(phiInternal, celli)
+    for (const scalar val : phiInternal)
     {
-        stream << phiInternal[celli] << endl;
+        stream << val << nl;
     }
 
     stream
-        << "))" << endl;
+        << "))" << nl;
 
     label nWrittenFaces = phiInternal.size();
 
@@ -92,13 +88,13 @@ void writeFluentField
                 << "0 0 "                // Unused
                 << nWrittenFaces + 1 << " "
                 << nWrittenFaces + emptyFaceCells.size()// Start and end of list
-                << ")(" << endl;
+                << ")(" << nl;
 
             nWrittenFaces += emptyFaceCells.size();
 
             forAll(emptyFaceCells, facei)
             {
-                stream << phiInternal[emptyFaceCells[facei]] << endl;
+                stream << phiInternal[emptyFaceCells[facei]] << nl;
             }
 
             stream
@@ -120,13 +116,13 @@ void writeFluentField
                 << "0 0 "            // Unused
                 << nWrittenFaces + 1 << " " << nWrittenFaces + patchPhi.size()
                                  // Start and end of list
-                << ")(" << endl;
+                << ")(" << nl;
 
             nWrittenFaces += patchPhi.size();
 
-            forAll(patchPhi, facei)
+            for (const scalar val : patchPhi)
             {
-                stream << patchPhi[facei] << endl;
+                stream << val << nl;
             }
 
             stream
@@ -135,9 +131,5 @@ void writeFluentField
     }
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

@@ -756,7 +756,10 @@ void Foam::functionObjects::forces::calcForcesMoments()
         const volScalarField rho(this->rho());
         const volScalarField mu(this->mu());
 
-        const auto models = obr_.lookupClass<porosityModel>();
+        const UPtrList<const porosityModel> models
+        (
+            obr_.csorted<porosityModel>()
+        );
 
         if (models.empty())
         {
@@ -766,10 +769,10 @@ void Foam::functionObjects::forces::calcForcesMoments()
                 << endl;
         }
 
-        forAllConstIters(models, iter)
+        for (const porosityModel& mdl : models)
         {
             // Non-const access required if mesh is changing
-            auto& pm = const_cast<porosityModel&>(*iter());
+            auto& pm = const_cast<porosityModel&>(mdl);
 
             const vectorField fPTot(pm.force(U, rho, mu));
 

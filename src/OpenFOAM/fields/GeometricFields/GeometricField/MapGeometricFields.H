@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,8 +49,7 @@ class MapInternalField
 {
 public:
 
-    MapInternalField()
-    {}
+    MapInternalField() = default;
 
     void operator()
     (
@@ -77,10 +76,9 @@ void MapGeometricFields
 {
     typedef GeometricField<Type, PatchField, GeoMesh> FieldType;
 
-    HashTable<const FieldType*> fields
+    const UPtrList<const FieldType> fields
     (
-        mapper.thisDb().objectRegistry::template
-            lookupClass<FieldType>()
+        mapper.thisDb().objectRegistry::template csorted<FieldType>()
     );
 
     // It is necessary to enforce that all old-time fields are stored
@@ -88,39 +86,37 @@ void MapGeometricFields
     // old-time-level field is mapped before the field itself, sizes
     // will not match.
 
-    forAllConstIters(fields, fieldIter)
+    for (const auto& field : fields)
     {
-        FieldType& field = const_cast<FieldType&>(*fieldIter());
-
         //Note: check can be removed once pointFields are actually stored on
         //      the pointMesh instead of now on the polyMesh!
         if (&field.mesh() == &mapper.mesh())
         {
-            field.storeOldTimes();
+            const_cast<FieldType&>(field).storeOldTimes();
         }
     }
 
-    forAllConstIters(fields, fieldIter)
+    for (const auto& field : fields)
     {
-        FieldType& field = const_cast<FieldType&>(*fieldIter());
+        FieldType& fld = const_cast<FieldType&>(field);
 
         if (&field.mesh() == &mapper.mesh())
         {
             if (polyMesh::debug)
             {
-                Info<< "Mapping " << field.typeName << ' ' << field.name()
-                    << endl;
+                Info<< "Mapping "
+                    << FieldType::typeName << ' ' << field.name() << endl;
             }
 
             // Map the internal field
             MapInternalField<Type, MeshMapper, GeoMesh>()
             (
-                field.internalFieldRef(),
+                fld.internalFieldRef(),
                 mapper
             );
 
             // Map the patch fields
-            auto& bfield = field.boundaryFieldRef();
+            auto& bfield = fld.boundaryFieldRef();
 
             forAll(bfield, patchi)
             {
@@ -132,11 +128,12 @@ void MapGeometricFields
                 bfield[patchi].autoMap(mapper.boundaryMap()[patchi]);
             }
 
-            field.instance() = field.time().timeName();
+            fld.instance() = fld.time().timeName();
         }
         else if (polyMesh::debug)
         {
-            Info<< "Not mapping " << field.typeName << ' ' << field.name()
+            Info<< "Not mapping "
+                << FieldType::typeName << ' ' << field.name()
                 << " since originating mesh differs from that of mapper."
                 << endl;
         }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -285,7 +285,7 @@ void rewriteField
             fieldName,
             runTime.timeName(),
             runTime,
-            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::MUST_READ,
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
         )
@@ -369,29 +369,7 @@ void rewriteField
 }
 
 
-void rewriteFields
-(
-    const bool dryrun,
-    const Time& runTime,
-    const wordList& fieldNames,
-    const HashTable<word>& thisNames,
-    const HashTable<word>& nbrNames
-)
-{
-    for (const word& fieldName : fieldNames)
-    {
-        rewriteField
-        (
-            dryrun,
-            runTime,
-            fieldName,
-            thisNames,
-            nbrNames
-        );
-    }
-}
-
-
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
@@ -473,9 +451,9 @@ int main(int argc, char *argv[])
 
     // Convert any fields
 
-    forAll(timeDirs, timeI)
+    forAll(timeDirs, timei)
     {
-        runTime.setTime(timeDirs[timeI], timeI);
+        runTime.setTime(timeDirs[timei], timei);
 
         Info<< "Time: " << runTime.timeName() << endl;
 
@@ -514,139 +492,44 @@ int main(int argc, char *argv[])
             entry::disableFunctionEntries = 1;
         }
 
+        // Rewriting of fields:
+
+        #undef  rewriteFields
+        #define rewriteFields(FieldType)                                      \
+        for (const word& fieldName : objects.sortedNames<FieldType>())        \
+        {                                                                     \
+            rewriteField(dryrun, runTime, fieldName, thisNames, nbrNames);    \
+        }
+
         // volFields
         // ~~~~~~~~~
 
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(volScalarField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(volVectorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(volSphericalTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(volSymmTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(volTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
-
+        rewriteFields(volScalarField);
+        rewriteFields(volVectorField);
+        rewriteFields(volSphericalTensorField);
+        rewriteFields(volSymmTensorField);
+        rewriteFields(volTensorField);
 
         // pointFields
         // ~~~~~~~~~~~
 
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(pointScalarField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(pointVectorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(pointSphericalTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(pointSymmTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(pointTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
+        rewriteFields(pointScalarField);
+        rewriteFields(pointVectorField);
+        rewriteFields(pointSphericalTensorField);
+        rewriteFields(pointSymmTensorField);
+        rewriteFields(pointTensorField);
 
 
         // surfaceFields
-        // ~~~~~~~~~~~
+        // ~~~~~~~~~~~~~
 
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(surfaceScalarField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(surfaceVectorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(surfaceSphericalTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(surfaceSymmTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
-        rewriteFields
-        (
-            dryrun,
-            runTime,
-            objects.names(surfaceTensorField::typeName),
-            thisNames,
-            nbrNames
-        );
+        rewriteFields(surfaceScalarField);
+        rewriteFields(surfaceVectorField);
+        rewriteFields(surfaceSphericalTensorField);
+        rewriteFields(surfaceSymmTensorField);
+        rewriteFields(surfaceTensorField);
+
+        #undef rewriteFields
 
         entry::disableFunctionEntries = oldFlag;
     }

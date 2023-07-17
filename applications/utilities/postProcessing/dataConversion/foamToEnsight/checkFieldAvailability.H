@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -28,9 +28,9 @@ forAll(meshes, regioni)
 
     IOobjectList objects(0);
 
-    if (doConvertFields)
+    if (doConvertFields && !timeDirs.empty())
     {
-        objects = IOobjectList(mesh, timeDirs.last().name());
+        objects = IOobjectList(mesh, timeDirs.back().name());
 
         if (fieldSelector && !fieldSelector().empty())
         {

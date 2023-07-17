@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,23 +52,20 @@ void MapConsistentVolFields
     const fvMesh& meshSource = meshToMesh0Interp.fromMesh();
     const fvMesh& meshTarget = meshToMesh0Interp.toMesh();
 
-    IOobjectList fields = objects.lookupClass(fieldType::typeName);
-
-    forAllConstIters(fields, fieldIter)
+    for (const IOobject& io : objects.csorted<fieldType>())
     {
-        Info<< "    interpolating " << (*fieldIter)->name()
-            << endl;
+        Info<< "    interpolating " << io.name() << endl;
 
         // Read field. Do not auto-load old-time field
-        fieldType fieldSource(*fieldIter(), meshSource, false);
+        fieldType fieldSource(io, meshSource, false);
 
         IOobject fieldTargetIOobject
         (
-            (*fieldIter)->name(),
+            io.name(),
             meshTarget.time().timeName(),
             meshTarget,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobjectOption::MUST_READ,
+            IOobjectOption::AUTO_WRITE
         );
 
         if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
@@ -90,7 +87,7 @@ void MapConsistentVolFields
         }
         else
         {
-            fieldTargetIOobject.readOpt(IOobject::NO_READ);
+            fieldTargetIOobject.readOpt(IOobjectOption::NO_READ);
 
             // Interpolate field
             fieldType fieldTarget

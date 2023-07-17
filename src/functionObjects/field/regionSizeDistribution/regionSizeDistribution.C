@@ -907,16 +907,15 @@ bool Foam::functionObjects::regionSizeDistribution::write()
         {
             for
             (
-                const word& fldName
-              : obr_.sortedNames<volScalarField>(fields_)
+                const volScalarField& vfield
+              : obr_.csorted<volScalarField>(fields_)
             )
             {
+                const word& fldName = vfield.name();
+
                 Log << "    Scalar field " << fldName << endl;
 
-                tmp<Field<scalar>> tfld
-                (
-                    obr_.lookupObject<volScalarField>(fldName).primitiveField()
-                );
+                tmp<Field<scalar>> tfld(vfield.primitiveField());
                 const auto& fld = tfld();
 
                 writeGraphs
@@ -938,23 +937,21 @@ bool Foam::functionObjects::regionSizeDistribution::write()
         {
             for
             (
-                const word& fldName
-              : obr_.sortedNames<volVectorField>(fields_)
+                const volVectorField& vfield
+              : obr_.csorted<volVectorField>(fields_)
             )
             {
+                const word& fldName = vfield.name();
+
                 Log << "    Vector field " << fldName << endl;
 
-                tmp<Field<vector>> tfld
-                (
-                    obr_.lookupObject<volVectorField>(fldName).primitiveField()
-                );
+                tmp<Field<vector>> tfld(vfield.primitiveField());
 
                 if (csysPtr_)
                 {
                     Log << "Transforming vector field " << fldName
                         << " with coordinate system "
-                        << csysPtr_->name()
-                        << endl;
+                        << csysPtr_->name() << endl;
 
                     tfld = csysPtr_->localVector(tfld());
                 }

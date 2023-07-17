@@ -597,19 +597,19 @@ int main(int argc, char *argv[])
                         polyMesh::meshSubDir/"sets"
                     );
 
-                    for (const word& setName : objects.sortedNames<cellSet>())
+                    for (const IOobject& io : objects.csorted<cellSet>())
                     {
-                        cSetNames.insert(setName, cSetNames.size());
+                        cSetNames.insert(io.name(), cSetNames.size());
                     }
 
-                    for (const word& setName : objects.sortedNames<faceSet>())
+                    for (const IOobject& io : objects.csorted<faceSet>())
                     {
-                        fSetNames.insert(setName, fSetNames.size());
+                        fSetNames.insert(io.name(), fSetNames.size());
                     }
 
-                    for (const word& setName : objects.sortedNames<pointSet>())
+                    for (const IOobject& io : objects.csorted<pointSet>())
                     {
-                        pSetNames.insert(setName, pSetNames.size());
+                        pSetNames.insert(io.name(), pSetNames.size());
                     }
                 }
 

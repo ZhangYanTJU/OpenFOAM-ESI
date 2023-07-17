@@ -28,10 +28,12 @@ InClass
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef writeFluentFields_H
-#define writeFluentFields_H
+#ifndef Foam_writeFluentFields_H
+#define Foam_writeFluentFields_H
 
 #include "volFields.H"
+#include "dictionary.H"
+#include "IOobjectList.H"
 #include "Ostream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -43,15 +45,47 @@ void writeFluentField
 (
     const volScalarField& phi,
     const label fluentFieldIdentifier,
-    Ostream& stream
+    Ostream& os
 );
 
 void writeFluentField
 (
     const volVectorField& phi,
     const label fluentFieldIdentifier,
-    Ostream& stream
+    Ostream& os
 );
+
+
+template<class GeoField>
+void readFieldsAndWriteFluent
+(
+    const dictionary& dict,
+    const IOobjectList& objects,
+    const fvMesh& mesh,
+    Ostream& os
+)
+{
+    for (const IOobject& io : objects.csorted<GeoField>())
+    {
+        // Lookup field from dictionary and convert field
+        const word& fieldName = io.name();
+        label unitNumber;
+        if
+        (
+            dict.readIfPresent(fieldName, unitNumber)
+         && unitNumber > 0
+        )
+        {
+            // Read field
+            GeoField field(io, mesh);
+
+            Info<< "    Converting field " << fieldName << nl;
+            writeFluentField(field, unitNumber, os);
+        }
+    }
+}
+
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

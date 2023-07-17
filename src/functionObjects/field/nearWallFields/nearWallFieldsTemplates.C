@@ -38,15 +38,13 @@ void Foam::functionObjects::nearWallFields::createFields
 {
     typedef GeometricField<Type, fvPatchField, volMesh> VolFieldType;
 
-    HashTable<const VolFieldType*> flds(obr_.lookupClass<VolFieldType>());
-
-    forAllConstIters(flds, iter)
+    for (const VolFieldType& fld : obr_.csorted<VolFieldType>())
     {
-        const VolFieldType& fld = *(iter.val());
+        const auto fieldMapIter = fieldMap_.cfind(fld.name());
 
-        if (fieldMap_.found(fld.name()))
+        if (fieldMapIter.good())
         {
-            const word& sampleFldName = fieldMap_[fld.name()];
+            const word& sampleFldName = fieldMapIter.val();
 
             if (obr_.found(sampleFldName))
             {
@@ -57,19 +55,18 @@ void Foam::functionObjects::nearWallFields::createFields
             }
             else
             {
-                label sz = sflds.size();
-                sflds.setSize(sz+1);
-
                 IOobject io(fld);
-                io.readOpt(IOobject::NO_READ);
-                io.writeOpt(IOobject::NO_WRITE);
-
+                io.readOpt(IOobjectOption::NO_READ);
+                io.writeOpt(IOobjectOption::NO_WRITE);
                 io.rename(sampleFldName);
 
                 // Override bc to be calculated
+                const label newFieldi = sflds.size();
+                sflds.resize(newFieldi+1);
+
                 sflds.set
                 (
-                    sz,
+                    newFieldi,
                     new VolFieldType
                     (
                         io,
@@ -79,7 +76,7 @@ void Foam::functionObjects::nearWallFields::createFields
                     )
                 );
 
-                Log << "    created " << sflds[sz].name()
+                Log << "    created " << io.name()
                     << " to sample " << fld.name() << endl;
             }
         }

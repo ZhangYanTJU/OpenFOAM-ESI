@@ -568,7 +568,7 @@ bool Foam::functionObjects::externalCoupled::read(const dictionary& dict)
     // Leave trigger intact
 
     // Get names of all fvMeshes (and derived types)
-    wordList allRegionNames(time_.lookupClass<fvMesh>().sortedToc());
+    wordList allRegionNames(time_.sortedNames<fvMesh>());
 
     const dictionary& allRegionsDict = dict.subDict("regions");
     for (const entry& dEntry : allRegionsDict)

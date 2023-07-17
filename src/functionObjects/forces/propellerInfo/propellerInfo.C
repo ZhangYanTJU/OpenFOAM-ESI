@@ -220,7 +220,7 @@ const Foam::volVectorField& Foam::functionObjects::propellerInfo::U() const
         FatalErrorInFunction
             << "Unable to find velocity field " << UName_
             << " . Available vector fields are: "
-            << mesh_.names<volVectorField>()
+            << flatOutput(mesh_.sortedNames<volVectorField>())
             << exit(FatalError);
     }
 

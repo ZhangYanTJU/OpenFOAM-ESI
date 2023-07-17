@@ -40,11 +40,9 @@ namespace Foam
 template<class Type>
 void UnMapped(const IOobjectList& objects)
 {
-    IOobjectList fields = objects.lookupClass(Type::typeName);
-
-    forAllConstIters(fields, fieldIter)
+    for (const IOobject& io : objects.csorted<Type>())
     {
-        mvBak((*fieldIter)->objectPath(), "unmapped");
+        mvBak(io.objectPath(), "unmapped");
     }
 }
 

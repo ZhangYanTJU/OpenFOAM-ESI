@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -149,178 +149,127 @@ labelList nearestPatch(const polyMesh& mesh, const labelList& patchIDs)
 
 
 //
-// Subset field-type, availability information cached
-// in the availableFields hashtable.
+// Subset DimensionedField/GeometricField
 //
-template<class Type, template<class> class PatchField, class GeoMesh>
-void subsetFields
+template<class FieldType>
+PtrList<FieldType> subsetFields
 (
     const fvMeshSubset& subsetter,
-    HashTable<wordHashSet>& availableFields,
-    PtrList<GeometricField<Type, PatchField, GeoMesh>>& subFields
+    const IOobjectList& objects
 )
 {
-    typedef GeometricField<Type, PatchField, GeoMesh> FieldType;
-    const word fieldType = FieldType::typeName;
-
-    const wordList fieldNames = availableFields(fieldType).sortedToc();
-    subFields.setSize(fieldNames.size());
-
     const fvMesh& baseMesh = subsetter.baseMesh();
 
+    const UPtrList<const IOobject> fieldObjects
+    (
+        objects.csorted<FieldType>()
+    );
+
+    PtrList<FieldType> subFields(fieldObjects.size());
+
     label nFields = 0;
-    for (const word& fieldName : fieldNames)
+    for (const IOobject& io : fieldObjects)
     {
         if (!nFields)
         {
-            Info<< "Subsetting " << fieldType << " (";
+            Info<< "Subsetting " << FieldType::typeName << " (";
         }
         else
         {
             Info<< ' ';
         }
-        Info<< fieldName;
+        Info<< io.name();
 
         FieldType fld
         (
             IOobject
             (
-                fieldName,
+                io.name(),
                 baseMesh.time().timeName(),
                 baseMesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             ),
             baseMesh
         );
 
         subFields.set(nFields, subsetter.interpolate(fld));
+        auto& subField = subFields[nFields];
+        ++nFields;
 
         // Subsetting adds 'subset' prefix - rename to match original.
-        subFields[nFields].rename(fieldName);
-
-        ++nFields;
+        subField.rename(io.name());
     }
 
     if (nFields)
     {
         Info<< ')' << nl;
     }
+
+    return subFields;
 }
 
 
-template<class Type>
-void subsetPointFields
+// Subset point fields
+template<class FieldType>
+PtrList<FieldType> subsetFields
 (
     const fvMeshSubset& subsetter,
-    const pointMesh& pMesh,
-    HashTable<wordHashSet>& availableFields,
-    PtrList<GeometricField<Type, pointPatchField, pointMesh>>& subFields
+    const IOobjectList& objects,
+    const pointMesh& pMesh
 )
 {
-    typedef GeometricField<Type, pointPatchField, pointMesh> FieldType;
-    const word fieldType = FieldType::typeName;
-
-    const wordList fieldNames = availableFields(fieldType).sortedToc();
-    subFields.setSize(fieldNames.size());
-
     const fvMesh& baseMesh = subsetter.baseMesh();
 
+    const UPtrList<const IOobject> fieldObjects
+    (
+        objects.csorted<FieldType>()
+    );
+
+    PtrList<FieldType> subFields(fieldObjects.size());
+
     label nFields = 0;
-    for (const word& fieldName : fieldNames)
+    for (const IOobject& io : fieldObjects)
     {
         if (!nFields)
         {
-            Info<< "Subsetting " << fieldType << " (";
+            Info<< "Subsetting " << FieldType::typeName << " (";
         }
         else
         {
             Info<< ' ';
         }
-        Info<< fieldName;
+        Info<< io.name();
 
         FieldType fld
         (
             IOobject
             (
-                fieldName,
+                io.name(),
                 baseMesh.time().timeName(),
                 baseMesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
             ),
             pMesh
         );
 
         subFields.set(nFields, subsetter.interpolate(fld));
+        auto& subField = subFields[nFields];
+        ++nFields;
 
         // Subsetting adds 'subset' prefix - rename to match original.
-        subFields[nFields].rename(fieldName);
-
-        ++nFields;
+        subField.rename(io.name());
     }
 
     if (nFields)
     {
         Info<< ')' << nl;
     }
-}
 
-
-template<class Type>
-void subsetDimensionedFields
-(
-    const fvMeshSubset& subsetter,
-    HashTable<wordHashSet>& availableFields,
-    PtrList<DimensionedField<Type, volMesh>>& subFields
-)
-{
-    typedef DimensionedField<Type, volMesh> FieldType;
-    const word fieldType = FieldType::typeName;
-
-    const wordList fieldNames = availableFields(fieldType).sortedToc();
-    subFields.setSize(fieldNames.size());
-
-    const fvMesh& baseMesh = subsetter.baseMesh();
-
-    label nFields = 0;
-    for (const word& fieldName : fieldNames)
-    {
-        if (!nFields)
-        {
-            Info<< "Subsetting " << fieldType << " (";
-        }
-        else
-        {
-            Info<< ' ';
-        }
-        Info<< fieldName;
-
-        FieldType fld
-        (
-            IOobject
-            (
-                fieldName,
-                baseMesh.time().timeName(),
-                baseMesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE
-            ),
-            baseMesh
-        );
-
-        subFields.set(nFields, subsetter.interpolate(fld));
-
-        // Subsetting adds 'subset' prefix - rename to match original.
-        subFields[nFields].rename(fieldName);
-
-        ++nFields;
-    }
-
-    if (nFields)
-    {
-        Info<< ')' << nl;
-    }
+    return subFields;
 }
 
 
@@ -338,7 +287,9 @@ void subsetTopoSets
     PtrList<TopoSet> sets;
     ReadFields<TopoSet>(objects, sets);
 
-    subSets.setSize(sets.size());
+    subSets.free();
+    subSets.resize(sets.size());
+
     forAll(sets, seti)
     {
         const TopoSet& set = sets[seti];
@@ -347,6 +298,7 @@ void subsetTopoSets
 
         labelHashSet subset(2*min(set.size(), map.size()));
 
+        // Map the data
         forAll(map, i)
         {
             if (set.found(map[i]))
@@ -363,13 +315,14 @@ void subsetTopoSets
                 subMesh,
                 set.name(),
                 std::move(subset),
-                IOobject::AUTO_WRITE
+                IOobjectOption::AUTO_WRITE
             )
         );
     }
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
@@ -552,54 +505,51 @@ int main(int argc, char *argv[])
             );
         }
 
-        Info<< "Subset "
-            << returnReduce(subsetter.subMesh().nCells(), sumOp<label>())
-            << " of "
-            << returnReduce(mesh.nCells(), sumOp<label>())
+        FixedList<label, 2> cellCount;
+        cellCount[0] = subsetter.subMesh().nCells();
+        cellCount[1] = mesh.nCells();
+        reduce(cellCount, sumOp<label>());
+
+        Info<< "Subset " << cellCount[0] << " of " << cellCount[1]
             << " cells" << nl << nl;
     }
 
 
     IOobjectList objects(mesh, runTime.timeName());
-    HashTable<wordHashSet> availableFields = objects.classes();
+
+
+    // Read fields and subset
+    #undef  createSubsetFields
+    #define createSubsetFields(FieldType, Variable)             \
+    PtrList<FieldType> Variable                                 \
+    (                                                           \
+        subsetFields<FieldType>(subsetter, objects)             \
+    );
 
 
     // Read vol fields and subset
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    PtrList<volScalarField> vScalarFlds;
-    subsetFields(subsetter, availableFields, vScalarFlds);
-
-    PtrList<volVectorField> vVectorFlds;
-    subsetFields(subsetter, availableFields, vVectorFlds);
-
-    PtrList<volSphericalTensorField> vSphTensorFlds;
-    subsetFields(subsetter, availableFields, vSphTensorFlds);
-
-    PtrList<volSymmTensorField> vSymmTensorFlds;
-    subsetFields(subsetter, availableFields, vSymmTensorFlds);
-
-    PtrList<volTensorField> vTensorFlds;
-    subsetFields(subsetter, availableFields, vTensorFlds);
-
+    createSubsetFields(volScalarField, vScalarFlds);
+    createSubsetFields(volVectorField, vVectorFlds);
+    createSubsetFields(volSphericalTensorField, vSphTensorFlds);
+    createSubsetFields(volSymmTensorField, vSymmTensorFlds);
+    createSubsetFields(volTensorField, vTensorFlds);
 
     // Read surface fields and subset
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    createSubsetFields(surfaceScalarField, sScalarFlds);
+    createSubsetFields(surfaceVectorField, sVectorFlds);
+    createSubsetFields(surfaceSphericalTensorField, sSphTensorFlds);
+    createSubsetFields(surfaceSymmTensorField, sSymmTensorFlds);
+    createSubsetFields(surfaceTensorField, sTensorFlds);
 
-    PtrList<surfaceScalarField> sScalarFlds;
-    subsetFields(subsetter, availableFields, sScalarFlds);
-
-    PtrList<surfaceVectorField> sVectorFlds;
-    subsetFields(subsetter, availableFields, sVectorFlds);
-
-    PtrList<surfaceSphericalTensorField> sSphTensorFlds;
-    subsetFields(subsetter, availableFields, sSphTensorFlds);
-
-    PtrList<surfaceSymmTensorField> sSymmTensorFlds;
-    subsetFields(subsetter, availableFields, sSymmTensorFlds);
-
-    PtrList<surfaceTensorField> sTensorFlds;
-    subsetFields(subsetter, availableFields, sTensorFlds);
+    // Read dimensioned fields and subset
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    createSubsetFields(volScalarField::Internal, dScalarFlds);
+    createSubsetFields(volVectorField::Internal, dVectorFlds);
+    createSubsetFields(volSphericalTensorField::Internal, dSphTensorFlds);
+    createSubsetFields(volSymmTensorField::Internal, dSymmTensorFlds);
+    createSubsetFields(volTensorField::Internal, dTensorFlds);
 
 
     // Read point fields and subset
@@ -607,39 +557,20 @@ int main(int argc, char *argv[])
 
     const pointMesh& pMesh = pointMesh::New(mesh);
 
-    PtrList<pointScalarField> pScalarFlds;
-    subsetPointFields(subsetter, pMesh, availableFields, pScalarFlds);
+    #undef  createSubsetFields
+    #define createSubsetFields(FieldType, Variable)             \
+    PtrList<FieldType> Variable                                 \
+    (                                                           \
+        subsetFields<FieldType>(subsetter, objects, pMesh)      \
+    );
 
-    PtrList<pointVectorField> pVectorFlds;
-    subsetPointFields(subsetter, pMesh, availableFields, pVectorFlds);
+    createSubsetFields(pointScalarField, pScalarFlds);
+    createSubsetFields(pointVectorField, pVectorFlds);
+    createSubsetFields(pointSphericalTensorField, pSphTensorFlds);
+    createSubsetFields(pointSymmTensorField, pSymmTensorFlds);
+    createSubsetFields(pointTensorField, pTensorFlds);
 
-    PtrList<pointSphericalTensorField> pSphTensorFlds;
-    subsetPointFields(subsetter, pMesh, availableFields, pSphTensorFlds);
-
-    PtrList<pointSymmTensorField> pSymmTensorFlds;
-    subsetPointFields(subsetter, pMesh, availableFields, pSymmTensorFlds);
-
-    PtrList<pointTensorField> pTensorFlds;
-    subsetPointFields(subsetter, pMesh, availableFields, pTensorFlds);
-
-
-    // Read dimensioned fields and subset
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    PtrList<volScalarField::Internal> dScalarFlds;
-    subsetDimensionedFields(subsetter, availableFields, dScalarFlds);
-
-    PtrList<volVectorField::Internal> dVectorFlds;
-    subsetDimensionedFields(subsetter, availableFields, dVectorFlds);
-
-    PtrList<volSphericalTensorField::Internal> dSphTensorFlds;
-    subsetDimensionedFields(subsetter, availableFields, dSphTensorFlds);
-
-    PtrList<volSymmTensorField::Internal> dSymmTensorFlds;
-    subsetDimensionedFields(subsetter, availableFields, dSymmTensorFlds);
-
-    PtrList<volTensorField::Internal> dTensorFlds;
-    subsetDimensionedFields(subsetter, availableFields, dTensorFlds);
+    #undef createSubsetFields
 
 
     // Read topoSets and subset
@@ -719,19 +650,19 @@ int main(int argc, char *argv[])
     for (const auto& fld : sSymmTensorFlds) { fld.write(); }
     for (const auto& fld : sTensorFlds)     { fld.write(); }
 
-    // Point fields
-    for (const auto& fld : pScalarFlds)     { fld.write(); }
-    for (const auto& fld : pVectorFlds)     { fld.write(); }
-    for (const auto& fld : pSphTensorFlds)  { fld.write(); }
-    for (const auto& fld : pSymmTensorFlds) { fld.write(); }
-    for (const auto& fld : pTensorFlds)     { fld.write(); }
-
     // Dimensioned fields
     for (const auto& fld : dScalarFlds)     { fld.write(); }
     for (const auto& fld : dVectorFlds)     { fld.write(); }
     for (const auto& fld : dSphTensorFlds)  { fld.write(); }
     for (const auto& fld : dSymmTensorFlds) { fld.write(); }
     for (const auto& fld : dTensorFlds)     { fld.write(); }
+
+    // Point fields
+    for (const auto& fld : pScalarFlds)     { fld.write(); }
+    for (const auto& fld : pVectorFlds)     { fld.write(); }
+    for (const auto& fld : pSphTensorFlds)  { fld.write(); }
+    for (const auto& fld : pSymmTensorFlds) { fld.write(); }
+    for (const auto& fld : pTensorFlds)     { fld.write(); }
 
     Info<< "\nEnd\n" << endl;
 

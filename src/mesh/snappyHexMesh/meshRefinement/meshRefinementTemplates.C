@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -203,26 +203,22 @@ void Foam::meshRefinement::addPatchFields
     const word& patchFieldType
 )
 {
-    HashTable<GeoField*> flds
-    (
-        mesh.objectRegistry::lookupClass<GeoField>()
-    );
-
-    forAllIters(flds, iter)
+    // Field order is irrelevant...
+    for (GeoField& fld : mesh.objectRegistry::objects<GeoField>())
     {
-        GeoField& fld = *iter();
-        auto& fldBf = fld.boundaryFieldRef();
+        auto& bfld = fld.boundaryFieldRef();
 
-        label sz = fldBf.size();
-        fldBf.setSize(sz+1);
-        fldBf.set
+        const label newPatchi = bfld.size();
+        bfld.resize(newPatchi+1);
+
+        bfld.set
         (
-            sz,
+            newPatchi,
             GeoField::Patch::New
             (
                 patchFieldType,
-                mesh.boundary()[sz],
-                fld()
+                mesh.boundary()[newPatchi],
+                fld.internalField()
             )
         );
     }
@@ -236,14 +232,10 @@ void Foam::meshRefinement::reorderPatchFields
     const labelList& oldToNew
 )
 {
-    HashTable<GeoField*> flds
-    (
-        mesh.objectRegistry::lookupClass<GeoField>()
-    );
-
-    forAllIters(flds, iter)
+    // Field order is irrelevant...
+    for (GeoField& fld : mesh.objectRegistry::objects<GeoField>())
     {
-        iter()->boundaryFieldRef().reorder(oldToNew);
+        fld.boundaryFieldRef().reorder(oldToNew);
     }
 }
 

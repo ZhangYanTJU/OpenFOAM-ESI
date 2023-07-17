@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,9 +45,10 @@ Foam::wordList Foam::ReadFields
     typedef GeometricField<Type, PatchField, GeoMesh> GeoField;
 
     // Names of GeoField objects, sorted order.
-    const wordList fieldNames(objects.names(GeoField::typeName, syncPar));
+    const wordList fieldNames(objects.sortedNames<GeoField>(syncPar));
 
     // Construct the fields - reading in consistent (master) order.
+    fields.free();
     fields.resize(fieldNames.size());
 
     label nFields = 0;
@@ -73,8 +74,8 @@ Foam::wordList Foam::ReadFields
                     io.instance(),
                     io.local(),
                     io.db(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE,
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::AUTO_WRITE,
                     io.registerObject()
                 ),
                 mesh,
@@ -99,9 +100,10 @@ Foam::wordList Foam::ReadFields
 )
 {
     // Names of GeoField objects, sorted order.
-    const wordList fieldNames(objects.names(GeoField::typeName, syncPar));
+    const wordList fieldNames(objects.sortedNames<GeoField>(syncPar));
 
     // Construct the fields - reading in consistent (master) order.
+    fields.free();
     fields.resize(fieldNames.size());
 
     label nFields = 0;
@@ -127,8 +129,8 @@ Foam::wordList Foam::ReadFields
                     io.instance(),
                     io.local(),
                     io.db(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE,
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::AUTO_WRITE,
                     io.registerObject()
                 ),
                 mesh
@@ -151,9 +153,10 @@ Foam::wordList Foam::ReadFields
 )
 {
     // Names of GeoField objects, sorted order.
-    const wordList fieldNames(objects.names(GeoField::typeName, syncPar));
+    const wordList fieldNames(objects.sortedNames<GeoField>(syncPar));
 
     // Construct the fields - reading in consistent (master) order.
+    fields.free();
     fields.resize(fieldNames.size());
 
     label nFields = 0;
@@ -179,8 +182,8 @@ Foam::wordList Foam::ReadFields
                     io.instance(),
                     io.local(),
                     io.db(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE,
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::AUTO_WRITE,
                     io.registerObject()
                 )
             )
@@ -260,9 +263,9 @@ void Foam::ReadFields
                     fieldName,
                     timeName,
                     mesh.thisDb(),
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 ),
                 mesh
             );
@@ -275,9 +278,9 @@ void Foam::ReadFields
                     fieldName,
                     timeName,
                     timeCache,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::REGISTER
                 ),
                 loadedFld
             );
@@ -318,39 +321,33 @@ void Foam::readFields
     LIFOStack<regIOobject*>& storedObjects
 )
 {
-    // Names of GeoField objects, sorted order. Not synchronised.
-    const wordList fieldNames
+    // GeoField objects, sorted order. Not synchronised.
+    const UPtrList<const IOobject> fieldObjects
     (
-        objects.sortedNames
-        (
-            GeoFieldType::typeName,
-            selectedFields   // Only permit these
-        )
+        objects.csorted<GeoFieldType>(selectedFields)
     );
 
     label nFields = 0;
 
-    for (const word& fieldName : fieldNames)
+    for (const IOobject& io : fieldObjects)
     {
-        const IOobject& io = *objects[fieldName];
-
         if (!nFields)
         {
             Info<< "    " << GeoFieldType::typeName << ':';
         }
-        Info<< ' ' << fieldName;
+        Info<< ' ' << io.name();
 
         GeoFieldType* fieldPtr = new GeoFieldType
         (
             IOobject
             (
-                fieldName,
+                io.name(),
                 io.instance(),
                 io.local(),
                 io.db(),
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             ),
             mesh
         );
@@ -373,40 +370,33 @@ void Foam::readUniformFields
     const bool syncPar
 )
 {
-    // Names of UniformField objects, sorted order.
-    const wordList fieldNames
+    // UniformField objects, sorted order, synchronised.
+    const UPtrList<const IOobject> fieldObjects
     (
-        objects.names
-        (
-            UniformFieldType::typeName,
-            selectedFields,  // Only permit these
-            syncPar
-        )
+        objects.csorted<UniformFieldType>(selectedFields, syncPar)
     );
 
     label nFields = 0;
 
-    for (const word& fieldName : fieldNames)
+    for (const IOobject& io : fieldObjects)
     {
-        const IOobject& io = *objects[fieldName];
-
         if (!nFields)
         {
             Info<< "    " << UniformFieldType::typeName << ':';
         }
-        Info<< ' ' << fieldName;
+        Info<< ' ' << io.name();
 
         UniformFieldType* fieldPtr = new UniformFieldType
         (
             IOobject
             (
-                fieldName,
+                io.name(),
                 io.instance(),
                 io.local(),
                 io.db(),
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             )
         );
         fieldPtr->store();

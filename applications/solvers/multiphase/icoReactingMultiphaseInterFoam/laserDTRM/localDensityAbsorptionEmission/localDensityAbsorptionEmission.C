@@ -52,7 +52,9 @@ namespace Foam
 const Foam::volScalarField&
 Foam::radiation::localDensityAbsorptionEmission::alpha(word alphaName) const
 {
-    if (!mesh_.foundObject<volScalarField>(alphaName))
+    const volScalarField* ptr = mesh_.cfindObject<volScalarField>(alphaName);
+
+    if (!ptr)
     {
         FatalErrorInFunction
             << "Unable to retrieve density field " << alphaName << " from "
@@ -60,7 +62,7 @@ Foam::radiation::localDensityAbsorptionEmission::alpha(word alphaName) const
             << exit(FatalError);
     }
 
-    return mesh_.lookupObject<volScalarField>(alphaName);
+    return *ptr;
 }
 
 

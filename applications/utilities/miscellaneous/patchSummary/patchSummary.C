@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,50 +90,41 @@ int main(int argc, char *argv[])
                 << endl;
         }
 
-        const wordList objNames
-        (
-            IOobjectList(mesh, runTime.timeName()).sortedNames()
+        const IOobjectList objects(mesh, runTime.timeName());
+
+        Info<< "Reading fields:" << endl;
+
+        // Read fields
+        #undef  createFields
+        #define createFields(FieldType, Variable)                   \
+        PtrList<FieldType> Variable                                 \
+        (                                                           \
+            readFields<FieldType>(objects, mesh)                    \
         );
 
-        PtrList<volScalarField> vsf(objNames.size());
-        PtrList<volVectorField> vvf(objNames.size());
-        PtrList<volSphericalTensorField> vsptf(objNames.size());
-        PtrList<volSymmTensorField> vsytf(objNames.size());
-        PtrList<volTensorField> vtf(objNames.size());
+        createFields(volScalarField, vsf);
+        createFields(volVectorField, vvf);
+        createFields(volSphericalTensorField, vsptf);
+        createFields(volSymmTensorField, vsytf);
+        createFields(volTensorField, vtf);
 
-        PtrList<pointScalarField> psf(objNames.size());
-        PtrList<pointVectorField> pvf(objNames.size());
-        PtrList<pointSphericalTensorField> psptf(objNames.size());
-        PtrList<pointSymmTensorField> psytf(objNames.size());
-        PtrList<pointTensorField> ptf(objNames.size());
+        // Point fields
+        const pointMesh& pMesh = pointMesh::New(mesh);
 
-        Info<< "Valid fields:" << endl;
+        #undef  createFields
+        #define createFields(FieldType, Variable)                   \
+        PtrList<FieldType> Variable                                 \
+        (                                                           \
+            readFields<FieldType>(objects, pMesh)                   \
+        );
 
-        forAll(objNames, objI)
-        {
-            IOobject obj
-            (
-                objNames[objI],
-                runTime.timeName(),
-                mesh,
-                IOobject::MUST_READ
-            );
+        createFields(pointScalarField, psf);
+        createFields(pointVectorField, pvf);
+        createFields(pointSphericalTensorField, psptf);
+        createFields(pointSymmTensorField, psytf);
+        createFields(pointTensorField, ptf);
 
-            if (obj.typeHeaderOk<volScalarField>(false))
-            {
-                addToFieldList(vsf, obj, objI, mesh);
-                addToFieldList(vvf, obj, objI, mesh);
-                addToFieldList(vsptf, obj, objI, mesh);
-                addToFieldList(vsytf, obj, objI, mesh);
-                addToFieldList(vtf, obj, objI, mesh);
-
-                addToFieldList(psf, obj, objI, pointMesh::New(mesh));
-                addToFieldList(pvf, obj, objI, pointMesh::New(mesh));
-                addToFieldList(psptf, obj, objI, pointMesh::New(mesh));
-                addToFieldList(psytf, obj, objI, pointMesh::New(mesh));
-                addToFieldList(ptf, obj, objI, pointMesh::New(mesh));
-            }
-        }
+        #undef createFields
 
         Info<< endl;
 
@@ -144,6 +136,7 @@ int main(int argc, char *argv[])
             forAll(bm, patchi)
             {
                 Info<< bm[patchi].type() << "\t: " << bm[patchi].name() << nl;
+
                 outputFieldList(vsf, patchi);
                 outputFieldList(vvf, patchi);
                 outputFieldList(vsptf, patchi);
@@ -167,6 +160,7 @@ int main(int argc, char *argv[])
             DynamicList<HashTable<word>> fieldToTypes(bm.size());
             // Per 'group' the patches
             DynamicList<DynamicList<label>> groupToPatches(bm.size());
+
             forAll(bm, patchi)
             {
                 HashTable<word> fieldToType;
@@ -208,40 +202,39 @@ int main(int argc, char *argv[])
                     labelHashSet nonGroupPatches;
                     bm.matchGroups(patchIDs, groups, nonGroupPatches);
 
-                    const labelList sortedPatches(nonGroupPatches.sortedToc());
-                    forAll(sortedPatches, i)
+                    for (const label patchi : nonGroupPatches.sortedToc())
                     {
-                        Info<< bm[sortedPatches[i]].type()
-                            << "\t: " << bm[sortedPatches[i]].name() << nl;
+                        Info<< bm[patchi].type()
+                            << "\t: " << bm[patchi].name() << nl;
                     }
-                    if (groups.size())
+                    for (const word& groupName : groups)
                     {
-                        forAll(groups, i)
-                        {
-                            Info<< "group\t: " << groups[i] << nl;
-                        }
+                        Info<< "group\t: " << groupName << nl;
                     }
-                    outputFieldList(vsf, patchIDs[0]);
-                    outputFieldList(vvf, patchIDs[0]);
-                    outputFieldList(vsptf, patchIDs[0]);
-                    outputFieldList(vsytf, patchIDs[0]);
-                    outputFieldList(vtf, patchIDs[0]);
 
-                    outputFieldList(psf, patchIDs[0]);
-                    outputFieldList(pvf, patchIDs[0]);
-                    outputFieldList(psptf, patchIDs[0]);
-                    outputFieldList(psytf, patchIDs[0]);
-                    outputFieldList(ptf, patchIDs[0]);
+                    const label patchi = patchIDs[0];
+
+                    outputFieldList(vsf, patchi);
+                    outputFieldList(vvf, patchi);
+                    outputFieldList(vsptf, patchi);
+                    outputFieldList(vsytf, patchi);
+                    outputFieldList(vtf, patchi);
+
+                    outputFieldList(psf, patchi);
+                    outputFieldList(pvf, patchi);
+                    outputFieldList(psptf, patchi);
+                    outputFieldList(psytf, patchi);
+                    outputFieldList(ptf, patchi);
                     Info<< endl;
                 }
                 else
                 {
                     // No group.
-                    forAll(patchIDs, i)
+                    for (const label patchi : patchIDs)
                     {
-                        label patchi = patchIDs[i];
                         Info<< bm[patchi].type()
                             << "\t: " << bm[patchi].name() << nl;
+
                         outputFieldList(vsf, patchi);
                         outputFieldList(vvf, patchi);
                         outputFieldList(vsptf, patchi);

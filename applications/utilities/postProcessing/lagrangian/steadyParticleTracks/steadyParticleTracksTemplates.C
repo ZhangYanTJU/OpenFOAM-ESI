@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,24 +108,12 @@ void Foam::processFields
     const IOobjectList& cloudObjects
 )
 {
-    for (const word& fldName : cloudObjects.sortedNames<IOField<Type>>())
+    for (const IOobject& io : cloudObjects.csorted<IOField<Type>>())
     {
-        const IOobject* io = cloudObjects.cfindObject<IOField<Type>>(fldName);
+        Info<< "        reading field " << io.name() << endl;
+        IOField<Type> field(io);
 
-        if (!io)
-        {
-            FatalErrorInFunction
-                << "Could not read field:" << fldName
-                << " type:" << IOField<Type>::typeName
-                << abort(FatalError);
-        }
-        else
-        {
-            Info<< "        reading field " << fldName << endl;
-            IOField<Type> field(*io);
-
-            writeVTKField<Type>(os, field, addr);
-        }
+        writeVTKField<Type>(os, field, addr);
     }
 }
 

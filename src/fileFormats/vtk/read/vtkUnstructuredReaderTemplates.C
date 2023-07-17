@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,20 +33,18 @@ License
 template<class Type>
 void Foam::vtkUnstructuredReader::printFieldStats(const objectRegistry& obj)
 {
-    const wordList fieldNames(obj.sortedNames<Type>());
+    const UPtrList<const Type> fields(obj.csorted<Type>());
 
-    if (fieldNames.size())
+    if (!fields.empty())
     {
-        Info<< "Read " << fieldNames.size() << ' ' << Type::typeName
+        Info<< "Read " << fields.size() << ' ' << Type::typeName
             << " fields:" << nl
             << "Size\tName" << nl
             << "----\t----" << nl;
 
-        for (const word& fieldName : fieldNames)
+        for (const Type& field : fields)
         {
-            Info<< obj.lookupObject<Type>(fieldName).size()
-                << '\t' << fieldName
-                << nl;
+            Info<< field.size() << '\t' << field.name() << nl;
         }
         Info<< endl;
     }

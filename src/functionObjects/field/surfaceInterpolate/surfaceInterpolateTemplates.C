@@ -45,12 +45,8 @@ void Foam::functionObjects::surfaceInterpolate::interpolateFields()
     }
 
 
-    HashTable<const VolFieldType*> flds(obr_.lookupClass<VolFieldType>());
-
-    forAllConstIters(flds, iter)
+    for (const VolFieldType& fld : obr_.csorted<VolFieldType>())
     {
-        const VolFieldType& fld = *iter();
-
         if (fieldMap.found(fld.name()))
         {
             // const word sName = "interpolate(" + fld.name() + ')';
@@ -62,8 +58,8 @@ void Foam::functionObjects::surfaceInterpolate::interpolateFields()
             }
             else
             {
-                Log << "        interpolating " << fld.name() << " to create "
-                    << sName << endl;
+                Log << "        interpolating "
+                    << fld.name() << " to create " << sName << endl;
             }
 
             store(sName, linearInterpolate(fld));
