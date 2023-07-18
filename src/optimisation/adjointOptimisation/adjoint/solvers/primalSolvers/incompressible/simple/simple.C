@@ -107,7 +107,7 @@ Foam::simple::simple
     incoVars_(allocateVars()),
     MRF_(mesh, word(useSolverNameForFields() ? solverName_ : word::null)),
     cumulativeContErr_(Zero),
-    objectives_(0)
+    objectives_()
 {
     addExtraSchemes();
     setRefCell
@@ -248,11 +248,11 @@ void Foam::simple::postIter()
 
     // Print objective values to screen and compute mean value
     Info<< endl;
-    for (objective* obj : objectives_)
+    for (auto& obj : objectives_)
     {
-        Info<< obj->objectiveName() << " : " << obj->J() << endl;
-        obj->accumulateJMean(solverControl_());
-        obj->writeInstantaneousValue();
+        Info<< obj.objectiveName() << " : " << obj.J() << endl;
+        obj.accumulateJMean(solverControl_());
+        obj.writeInstantaneousValue();
     }
 
     // Average fields if necessary
@@ -309,9 +309,9 @@ void Foam::simple::preLoop()
 
 void Foam::simple::postLoop()
 {
-    for (objective* obj : objectives_)
+    for (auto& obj : objectives_)
     {
-        obj->writeInstantaneousSeparator();
+        obj.writeInstantaneousSeparator();
     }
 
     // Safety
