@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -233,58 +233,15 @@ void Foam::mergeAndWrite
     const fileName& outputDir
 )
 {
-    if (Pstream::parRun())
-    {
-        labelList pointToGlobal;
-        labelList uniqueMeshPointLabels;
-        autoPtr<globalIndex> globalPoints;
-        autoPtr<globalIndex> globalFaces;
-        faceList mergedFaces;
-        pointField mergedPoints;
-        Foam::PatchTools::gatherAndMerge
-        (
-            mesh,
-            setPatch.localFaces(),
-            setPatch.meshPoints(),
-            setPatch.meshPointMap(),
+    writer.open
+    (
+        setPatch.localPoints(),
+        setPatch.localFaces(),
+        (outputDir / name)
+    );
 
-            pointToGlobal,
-            uniqueMeshPointLabels,
-            globalPoints,
-            globalFaces,
-
-            mergedFaces,
-            mergedPoints
-        );
-
-        // Write
-        if (Pstream::master())
-        {
-            writer.open
-            (
-                mergedPoints,
-                mergedFaces,
-                (outputDir / name),
-                false  // serial - already merged
-            );
-
-            writer.write();
-            writer.clear();
-        }
-    }
-    else
-    {
-        writer.open
-        (
-            setPatch.localPoints(),
-            setPatch.localFaces(),
-            (outputDir / name),
-            false  // serial - already merged
-        );
-
-        writer.write();
-        writer.clear();
-    }
+    writer.write();
+    writer.clear();
 }
 
 
