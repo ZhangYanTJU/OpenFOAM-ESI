@@ -346,7 +346,7 @@ Foam::Ostream& Foam::UOPstreamBase::write
     std::streamsize count
 )
 {
-    if (format() != BINARY)
+    if (format() != IOstreamOption::BINARY)
     {
         FatalErrorInFunction
             << "stream format not binary"
@@ -366,7 +366,7 @@ Foam::Ostream& Foam::UOPstreamBase::writeRaw
     std::streamsize count
 )
 {
-    // No check for format() == BINARY since this is either done in the
+    // No check for IOstreamOption::BINARY since this is either done in the
     // beginRawWrite() method, or the caller knows what they are doing.
 
     // Previously aligned and sizes reserved via beginRawWrite()
@@ -378,7 +378,7 @@ Foam::Ostream& Foam::UOPstreamBase::writeRaw
 
 bool Foam::UOPstreamBase::beginRawWrite(std::streamsize count)
 {
-    if (format() != BINARY)
+    if (format() != IOstreamOption::BINARY)
     {
         FatalErrorInFunction
             << "stream format not binary"

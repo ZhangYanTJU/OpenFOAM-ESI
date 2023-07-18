@@ -74,10 +74,7 @@ void Foam::areaWrite::performAction
         fieldNames = areaMesh.thisDb().names<GeoField>(fieldSelection_);
 
         // Synchronize names
-        if (Pstream::parRun())
-        {
-            Pstream::combineReduce(fieldNames, ListOps::uniqueEqOp<word>());
-        }
+        Pstream::combineReduce(fieldNames, ListOps::uniqueEqOp<word>());
         Foam::sort(fieldNames);  // Consistent order
     }
 

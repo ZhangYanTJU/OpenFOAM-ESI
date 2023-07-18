@@ -122,7 +122,12 @@ int main(int argc, char *argv[])
         }
 
         Pout<< "local  procUsed " << procUsed << nl;
-        reduce(procUsed.data(), procUsed.size_data(), bitOrOp<unsigned>());
+        reduce
+        (
+            procUsed.data(),
+            procUsed.size_data(),
+            bitOrOp<unsigned int>()
+        );
         Pout<< "reduce procUsed " << procUsed << nl;
 
         // Identical size on all procs
@@ -146,7 +151,12 @@ int main(int argc, char *argv[])
         }
 
         Pout<< "local  uniform " << uniformity << nl;
-        reduce(uniformity.data(), uniformity.size_data(), bitOrOp<unsigned>());
+        reduce
+        (
+            uniformity.data(),
+            uniformity.size_data(),
+            bitOrOp<unsigned int>()
+        );
         Pout<< "reduce uniform " << uniformity << nl;
     }
 

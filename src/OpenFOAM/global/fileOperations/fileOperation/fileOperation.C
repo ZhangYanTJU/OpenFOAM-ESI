@@ -566,7 +566,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
         // 3 : mixed empty/non-empty directory (after reduce)
         // Combines andOp<bool>() and orOp<bool>() in single operation
 
-        unsigned procDirsStatus = (procDirs.empty() ? 1u : 2u);
+        unsigned int procDirsStatus = (procDirs.empty() ? 1u : 2u);
 
         if (debug)
         {
@@ -576,7 +576,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
 
         if (UPstream::parRun() && (!distributed() || syncPar))
         {
-            reduce(procDirsStatus, bitOrOp<unsigned>());  // worldComm
+            reduce(procDirsStatus, bitOrOp<unsigned int>());  // worldComm
 
             if (procDirsStatus == 3u)
             {

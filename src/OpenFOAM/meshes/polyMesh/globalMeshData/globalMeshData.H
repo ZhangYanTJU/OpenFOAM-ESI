@@ -606,34 +606,6 @@ public:
             //  full parallel analysis to determine shared points and
             //  boundaries.
             void updateMesh();
-
-
-    // Housekeeping
-
-        //- Deprecated(2020-09) use ListOps::appendEqOp
-        //  Uses a different template parameter
-        //  \code
-        //      globalMeshData::ListPlusEqOp<labelList>()
-        //      ListOps::appendEqOp<label>()
-        //  \endcode
-        //
-        //  \deprecated(2020-09) - use ListOps::appendEqOp
-        template<class T>
-        struct ListPlusEqOp
-        {
-            FOAM_DEPRECATED_FOR(2020-09, "ListOps::appendEqOp")
-            void operator()(T& x, const T& y) const
-            {
-                label n = x.size();
-
-                x.setSize(x.size() + y.size());
-
-                forAll(y, i)
-                {
-                    x[n++] = y[i];
-                }
-            }
-        };
 };
 
 

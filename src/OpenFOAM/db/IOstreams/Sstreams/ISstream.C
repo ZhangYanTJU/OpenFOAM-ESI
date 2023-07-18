@@ -1061,7 +1061,7 @@ Foam::Istream& Foam::ISstream::readRaw(char* data, std::streamsize count)
 
 bool Foam::ISstream::beginRawRead()
 {
-    if (format() != BINARY)
+    if (format() != IOstreamOption::BINARY)
     {
         FatalIOErrorInFunction(*this)
             << "stream format not binary"

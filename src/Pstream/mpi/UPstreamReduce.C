@@ -311,7 +311,8 @@ Pstream_CommonReductions(uint64_t, MPI_UINT64_T);
 Pstream_FloatReductions(float, MPI_FLOAT);
 Pstream_FloatReductions(double, MPI_DOUBLE);
 
-Pstream_BitwiseReductions(unsigned, MPI_UNSIGNED);
+Pstream_BitwiseReductions(unsigned char, MPI_UNSIGNED_CHAR);
+Pstream_BitwiseReductions(unsigned int, MPI_UNSIGNED);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

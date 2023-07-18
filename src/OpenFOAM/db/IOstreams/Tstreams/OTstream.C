@@ -143,15 +143,14 @@ Foam::Ostream& Foam::OTstream::write(const double val)
 
 Foam::Ostream& Foam::OTstream::write(const char* data, std::streamsize count)
 {
-    if (format() != IOstreamOption::BINARY)
-    {
-        FatalErrorInFunction
-            << "stream format not binary"
-            << Foam::abort(FatalError);
-    }
+    // if (format() != IOstreamOption::BINARY)
+    // {
+    //     FatalErrorInFunction
+    //         << "stream format not binary"
+    //         << Foam::abort(FatalError);
+    // }
 
     NotImplemented;
-
     return *this;
 }
 
@@ -162,26 +161,24 @@ Foam::Ostream& Foam::OTstream::writeRaw
     std::streamsize count
 )
 {
-    // No check for format() == BINARY since this is either done in the
+    // No check for IOstreamOption::BINARY since this is either done in the
     // beginRawWrite() method, or the caller knows what they are doing.
 
     NotImplemented;
-
     return *this;
 }
 
 
 bool Foam::OTstream::beginRawWrite(std::streamsize count)
 {
-    if (format() != IOstreamOption::BINARY)
-    {
-        FatalErrorInFunction
-            << "stream format not binary"
-            << Foam::abort(FatalError);
-    }
+    // if (format() != IOstreamOption::BINARY)
+    // {
+    //     FatalErrorInFunction
+    //         << "stream format not binary"
+    //         << Foam::abort(FatalError);
+    // }
 
     NotImplemented;
-
     return true;
 }
 

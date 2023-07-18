@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,7 @@ void Foam::IOobjectList::checkObjectOrder
     bool syncPar
 )
 {
-    if (syncPar && Pstream::parRun())
+    if (syncPar && UPstream::is_parallel())
     {
         wordList objectNames(objs.size());
 
@@ -62,21 +62,21 @@ void Foam::IOobjectList::checkNameOrder
     bool syncPar
 )
 {
-    if (syncPar && Pstream::parRun())
+    if (syncPar && UPstream::is_parallel())
     {
         wordList masterNames;
-        if (Pstream::master())
+        if (UPstream::master())
         {
             masterNames = objectNames;
         }
         Pstream::broadcast(masterNames);
 
-        if (objectNames != masterNames)
+        if (!UPstream::master() && (objectNames != masterNames))
         {
             FatalErrorInFunction
                 << "Objects not synchronised across processors." << nl
                 << "Master has " << flatOutput(masterNames) << nl
-                << "Processor " << Pstream::myProcNo()
+                << "Processor " << UPstream::myProcNo()
                 << " has " << flatOutput(objectNames) << endl
                 << exit(FatalError);
         }
@@ -86,12 +86,8 @@ void Foam::IOobjectList::checkNameOrder
 
 void Foam::IOobjectList::syncNames(wordList& objNames)
 {
-    if (Pstream::parRun())
-    {
-        // Synchronize names
-        Pstream::combineReduce(objNames, ListOps::uniqueEqOp<word>());
-    }
-
+    // Synchronize names
+    Pstream::combineReduce(objNames, ListOps::uniqueEqOp<word>());
     Foam::sort(objNames);  // Consistent order
 }
 
@@ -331,7 +327,7 @@ Foam::wordList Foam::IOobjectList::allNames() const
 
 void Foam::IOobjectList::checkNames(const bool syncPar) const
 {
-    if (syncPar && Pstream::parRun())
+    if (syncPar && UPstream::is_parallel())
     {
         wordList objNames(HashPtrTable<IOobject>::sortedToc());
 

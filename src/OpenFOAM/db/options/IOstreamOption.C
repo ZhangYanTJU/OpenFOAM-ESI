@@ -59,7 +59,7 @@ Foam::IOstreamOption::formatEnum
 
     if (!formatName.empty())
     {
-        if (formatNames.found(formatName))
+        if (formatNames.contains(formatName))
         {
             return formatNames[formatName];
         }

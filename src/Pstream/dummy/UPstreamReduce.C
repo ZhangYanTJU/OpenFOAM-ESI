@@ -223,7 +223,8 @@ Pstream_CommonReductions(uint64_t);
 Pstream_FloatReductions(float);
 Pstream_FloatReductions(double);
 
-Pstream_BitwiseReductions(unsigned);
+Pstream_BitwiseReductions(unsigned char);
+Pstream_BitwiseReductions(unsigned int);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

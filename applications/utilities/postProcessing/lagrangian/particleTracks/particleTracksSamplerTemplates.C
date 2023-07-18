@@ -75,10 +75,7 @@ Foam::label Foam::particleTracksSampler::setTrackFields
     {
         wordList fieldNames = obr.names<IOField<Type>>();
 
-        if (Pstream::parRun())
-        {
-            Pstream::combineReduce(fieldNames, ListOps::uniqueEqOp<word>());
-        }
+        Pstream::combineReduce(fieldNames, ListOps::uniqueEqOp<word>());
 
         for (const word& fieldName : fieldNames)
         {

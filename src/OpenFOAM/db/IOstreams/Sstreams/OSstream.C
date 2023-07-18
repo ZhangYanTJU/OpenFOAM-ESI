@@ -224,7 +224,7 @@ Foam::Ostream& Foam::OSstream::write(const char* data, std::streamsize count)
 
 bool Foam::OSstream::beginRawWrite(std::streamsize count)
 {
-    if (format() != BINARY)
+    if (format() != IOstreamOption::BINARY)
     {
         FatalIOErrorInFunction(*this)
             << "stream format not binary"
@@ -251,7 +251,7 @@ Foam::Ostream& Foam::OSstream::writeRaw
     std::streamsize count
 )
 {
-    // No check for format() == BINARY since this is either done in the
+    // No check for IOstreamOption::BINARY since this is either done in the
     // beginRawWrite() method, or the caller knows what they are doing.
 
     os_.write(data, count);

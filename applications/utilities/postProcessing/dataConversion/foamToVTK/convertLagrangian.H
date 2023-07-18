@@ -30,11 +30,7 @@ if (doLagrangian)
         nameOp<fileName>()
     );
 
-    if (UPstream::parRun())
-    {
-        // Synchronise cloud names
-        Pstream::combineReduce(cloudNames, ListOps::uniqueEqOp<word>());
-    }
+    Pstream::combineReduce(cloudNames, ListOps::uniqueEqOp<word>());
     Foam::sort(cloudNames);  // Consistent order
 
     for (const word& cloudName : cloudNames)

@@ -237,10 +237,7 @@ void Foam::multiWorldConnections::createComms()
     const label oldWarnComm = UPstream::commWarn(UPstream::commGlobal());
     const label oldWorldComm = UPstream::commWorld(UPstream::commGlobal());
 
-    if (Pstream::parRun())
-    {
-        Pstream::combineReduce(allConnections, worldConnectBitOrEq());
-    }
+    Pstream::combineReduce(allConnections, worldConnectBitOrEq());
 
     // Check for mismatched connections
     label brokenConnections = 0;

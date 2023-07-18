@@ -494,7 +494,7 @@ Foam::Istream& Foam::UIPstreamBase::read(char* data, std::streamsize count)
 
 Foam::Istream& Foam::UIPstreamBase::readRaw(char* data, std::streamsize count)
 {
-    // No check for format() == BINARY since this is either done in the
+    // No check for IOstreamOption::BINARY since this is either done in the
     // beginRawRead() method, or the caller knows what they are doing.
 
     // Any alignment must have been done prior to this call
@@ -505,7 +505,7 @@ Foam::Istream& Foam::UIPstreamBase::readRaw(char* data, std::streamsize count)
 
 bool Foam::UIPstreamBase::beginRawRead()
 {
-    if (format() != BINARY)
+    if (format() != IOstreamOption::BINARY)
     {
         FatalErrorInFunction
             << "stream format not binary"
