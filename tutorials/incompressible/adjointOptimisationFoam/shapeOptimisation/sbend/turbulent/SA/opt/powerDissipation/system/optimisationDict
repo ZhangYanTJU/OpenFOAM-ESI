@@ -93,17 +93,15 @@ adjointManagers
 
 optimisation
 {
-    optimisationType
+    designVariables
     {
-        type                    shapeOptimisation;
-        writeEachMesh           true;
+        type            shape;
+        shapeType       volumetricBSplines;
+        sensitivityType shapeFI;
+        patches         (lower upper);
+        maxInitChange   2.e-3;
     }
 
-    sensitivities
-    {
-        type                   volumetricBSplinesFI;
-        patches                (lower upper);
-    }
     updateMethod
     {
         method BFGS;
@@ -112,11 +110,6 @@ optimisation
             etaHessian         0.8;
             scaleFirstHessian  true;
         }
-    }
-    meshMovement
-    {
-        type                   volumetricBSplines;
-        maxAllowedDisplacement 2.e-3;
     }
 }
 

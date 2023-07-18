@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2022 PCOpt/NTUA
-    Copyright (C) 2013-2022 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,6 +51,25 @@ addToRunTimeSelectionTable
 );
 
 
+void objectivePowerDissipation::populateFieldNames()
+{
+    if (fieldNames_.size() == 1)
+    {
+        const incompressibleAdjointSolver& adjSolver =
+            mesh_.lookupObject<incompressibleAdjointSolver>(adjointSolverName_);
+        const autoPtr<incompressibleAdjoint::adjointRASModel>& adjointRAS =
+            adjSolver.getAdjointVars().adjointTurbulence();
+        const wordList& baseNames =
+            adjointRAS().getAdjointTMVariablesBaseNames();
+        forAll(baseNames, nI)
+        {
+            fieldNames_.push_back
+                (adjSolver.extendedVariableName(baseNames[nI]));
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 objectivePowerDissipation::objectivePowerDissipation
@@ -65,14 +84,12 @@ objectivePowerDissipation::objectivePowerDissipation
     zones_(mesh_.cellZones().indices(dict.get<wordRes>("zones")))
 {
     // Append Ua name to fieldNames
-    /*
     fieldNames_.setSize
     (
         1,
         mesh_.lookupObject<solver>(adjointSolverName_).
             extendedVariableName("Ua")
     );
-    */
 
     // Check if cellZones provided include at least one cell
     checkCellZonesSize(zones_);
@@ -93,13 +110,19 @@ objectivePowerDissipation::objectivePowerDissipation
     // Allocate terms to be added to volume-based sensitivity derivatives
     divDxDbMultPtr_.reset
     (
-        createZeroFieldPtr<scalar>
+        new volScalarField
         (
+            IOobject
+            (
+                "divDxDbMult" + objectiveName_,
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
             mesh_,
-            ("divDxdbMult" + type()),
-            // Dimensions are set in a way that the gradient of this term
-            // matches the source of the adjoint grid displacement PDE
-            sqr(dimLength)/pow3(dimTime)
+            dimensionedScalar(sqr(dimLength)/pow3(dimTime), Zero),
+            fvPatchFieldBase::zeroGradientType()
         )
     );
     gradDxDbMultPtr_.reset
@@ -250,7 +273,21 @@ void objectivePowerDissipation::update_gradDxDbMultiplier()
         }
     }
     gradDxDbMult.correctBoundaryConditions();
-    // Missing contribution from gradU in nut
+}
+
+
+void objectivePowerDissipation::addSource(fvScalarMatrix& matrix)
+{
+    populateFieldNames();
+    const label fieldI = fieldNames_.find(matrix.psi().name());
+    if (fieldI == 1)
+    {
+        matrix += weight()*dJdTMvar1Ptr_();
+    }
+    if (fieldI == 2)
+    {
+        matrix += weight()*dJdTMvar2Ptr_();
+    }
 }
 
 

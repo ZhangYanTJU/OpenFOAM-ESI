@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -161,6 +161,15 @@ public:
 
             //- Loop
             virtual bool loop() = 0;
+
+            //- Is the solver converged
+            virtual bool converged();
+
+            //- Perform this iteration?
+            virtual bool performIter();
+
+            //- Increment iteration counter
+            virtual void incrementIter();
 };
 
 

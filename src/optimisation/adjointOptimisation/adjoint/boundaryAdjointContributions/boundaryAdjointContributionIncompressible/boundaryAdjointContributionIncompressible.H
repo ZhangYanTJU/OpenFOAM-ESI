@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -96,17 +96,6 @@ protected:
         const incompressibleAdjointSolver& adjointSolver_;
 
 
-    // Protected Member Functions
-
-        template<class returnType, class sourceType, class castType>
-        tmp<Field<returnType>> sumContributions
-        (
-            PtrList<sourceType>& sourceList,
-            const fvPatchField<returnType>&(castType::*boundaryFunction)
-                (const label)
-        );
-
-
 public:
 
     //- Runtime type information
@@ -155,7 +144,7 @@ public:
         const fvPatchVectorField& Ub() const;
         const fvPatchScalarField& pb() const;
         const fvsPatchScalarField& phib() const;
-        const fvPatchScalarField& turbulentDiffusivity() const;
+        tmp<fvPatchScalarField> turbulentDiffusivity() const;
         const fvPatchVectorField& Uab() const;
         const fvPatchScalarField& pab() const;
         const fvsPatchScalarField& phiab() const;
@@ -172,12 +161,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-#   include "boundaryAdjointContributionIncompressibleTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

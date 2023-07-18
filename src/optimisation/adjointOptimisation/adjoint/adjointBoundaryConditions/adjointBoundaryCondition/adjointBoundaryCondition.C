@@ -314,12 +314,7 @@ tmp
 >
 adjointBoundaryCondition<Type>::dxdbMult() const
 {
-    return
-        tmp<Field<typename Foam::outerProduct<Foam::vector, Type>::type>>::New
-        (
-            patch_.size(),
-            Zero
-        );
+    return nullptr;
 }
 
 

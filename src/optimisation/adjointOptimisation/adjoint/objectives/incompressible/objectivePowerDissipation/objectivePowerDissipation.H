@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2022 PCOpt/NTUA
-    Copyright (C) 2013-2022 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,6 +66,12 @@ class objectivePowerDissipation
         labelList zones_;
 
 
+    // Private Member Functions
+
+        //- Populate fieldNames
+        void populateFieldNames();
+
+
 public:
 
     //- Runtime type information
@@ -107,6 +113,9 @@ public:
 
         //- Update grad(dx/db multiplier). Volume-based sensitivity term
         virtual void update_gradDxDbMultiplier();
+
+        //- Add source terms to the adjoint turbulence model equations
+        virtual void addSource(fvScalarMatrix& matrix);
 };
 
 

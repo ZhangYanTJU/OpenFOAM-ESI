@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -28,6 +28,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "adjointSolver.H"
+#include "adjointSensitivity.H"
+#include "designVariables.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -38,6 +40,39 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+void Foam::adjointSolver::allocateSensitivities()
+{
+    if (computeSensitivities_)
+    {
+        adjointSensitivity_.reset
+        (
+            adjointSensitivity::New(mesh_, designVarsDict(), *this).ptr()
+        );
+    }
+}
+
+
+Foam::dictionary Foam::adjointSolver::designVarsDict() const
+{
+    // Re-read optimisationDict here to cover multi-region cases
+    return
+        IOdictionary
+        (
+            IOobject
+            (
+                "optimisationDict",
+                mesh_.time().globalPath()/"system",
+                mesh_,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                false
+            )
+        ).subDict("optimisation").subDict("designVariables");
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::adjointSolver::adjointSolver
@@ -45,31 +80,38 @@ Foam::adjointSolver::adjointSolver
     fvMesh& mesh,
     const word& managerType,
     const dictionary& dict,
-    const word& primalSolverName
+    const word& primalSolverName,
+    const word& solverName
 )
 :
-    solver(mesh, managerType, dict),
+    solver(mesh, managerType, dict, solverName),
     primalSolverName_(primalSolverName),
-    objectiveManagerPtr_
+    objectiveManager_
     (
-        objectiveManager::New
-        (
-            mesh,
-            dict.subDict("objectives"),
-            solverName_,
-            primalSolverName
-        )
+        mesh,
+        dict.subDict("objectives"),
+        solverName_,
+        primalSolverName
     ),
     sensitivities_(nullptr),
     computeSensitivities_
     (
         dict.getOrDefault<bool>("computeSensitivities", true)
     ),
-    isConstraint_(dict.getOrDefault<bool>("isConstraint", false))
+    isConstraint_(dict.getOrDefault<bool>("isConstraint", false)),
+    isDoubleSidedConstraint_
+        (dict.getOrDefault<bool>("isDoubleSidedConstraint", false)),
+    adjointSensitivity_(nullptr)
 {
+    // Force solver to not be a (single-sided) contraint if flagged as
+    // double-sided
+    if (isDoubleSidedConstraint_)
+    {
+        isConstraint_ = false;
+    }
     // Update objective-related quantities to get correct derivatives
     // in case of continuation
-    objectiveManagerPtr_().update();
+    objectiveManager_.update();
 }
 
 
@@ -80,7 +122,8 @@ Foam::autoPtr<Foam::adjointSolver> Foam::adjointSolver::New
     fvMesh& mesh,
     const word& managerType,
     const dictionary& dict,
-    const word& primalSolverName
+    const word& primalSolverName,
+    const word& solverName
 )
 {
     const word solverType(dict.get<word>("type"));
@@ -100,28 +143,12 @@ Foam::autoPtr<Foam::adjointSolver> Foam::adjointSolver::New
 
     return autoPtr<adjointSolver>
     (
-        ctorPtr(mesh, managerType, dict, primalSolverName)
+        ctorPtr(mesh, managerType, dict, primalSolverName, solverName)
     );
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-const Foam::primalSolver& Foam::adjointSolver::getPrimalSolver() const
-{
-    return mesh_.lookupObject<primalSolver>(primalSolverName_);
-}
-
-
-Foam::primalSolver& Foam::adjointSolver::getPrimalSolver()
-{
-    return
-        const_cast<primalSolver&>
-        (
-            mesh_.lookupObject<primalSolver>(primalSolverName_)
-        );
-}
-
 
 bool Foam::adjointSolver::readDict(const dictionary& dict)
 {
@@ -130,7 +157,12 @@ bool Foam::adjointSolver::readDict(const dictionary& dict)
         computeSensitivities_ =
             dict.getOrDefault<bool>("computeSensitivities", true);
 
-        objectiveManagerPtr_->readDict(dict.subDict("objectives"));
+        objectiveManager_.readDict(dict.subDict("objectives"));
+
+        if (adjointSensitivity_)
+        {
+            adjointSensitivity_().readDict(designVarsDict());
+        }
 
         return true;
     }
@@ -139,38 +171,94 @@ bool Foam::adjointSolver::readDict(const dictionary& dict)
 }
 
 
-const Foam::objectiveManager& Foam::adjointSolver::getObjectiveManager() const
+bool Foam::adjointSolver::includeDistance() const
 {
-    return objectiveManagerPtr_();
+    return false;
 }
 
 
-Foam::objectiveManager& Foam::adjointSolver::getObjectiveManager()
+Foam::dimensionSet Foam::adjointSolver::daDimensions() const
 {
-    return objectiveManagerPtr_();
+    NotImplemented;
+    return dimless;
 }
 
 
-void Foam::adjointSolver::postLoop()
+Foam::dimensionSet Foam::adjointSolver::maDimensions() const
 {
-    addProfiling(adjointSolver, "adjointSolver::postLoop");
-    computeObjectiveSensitivities();
-    // The solver dictionary has been already written after the termination
-    // of the adjoint loop. Force re-writing it to include the sensitivities
-    // as well
-    regIOobject::write(true);
+    NotImplemented;
+    return dimless;
 }
 
 
-bool Foam::adjointSolver::isConstraint()
+Foam::tmp<Foam::volScalarField> Foam::adjointSolver::adjointEikonalSource()
 {
-    return isConstraint_;
+    return nullptr;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::adjointSolver::yWall() const
+{
+    return nullptr;
+}
+
+
+void Foam::adjointSolver::computeObjectiveSensitivities
+(
+    autoPtr<designVariables>& designVars
+)
+{
+    if (computeSensitivities_)
+    {
+        preCalculateSensitivities();
+        const scalarField& sens =
+            adjointSensitivity_->calculateSensitivities(designVars);
+        if (!sensitivities_)
+        {
+            sensitivities_.reset(new scalarField(sens.size(), Zero));
+        }
+        sensitivities_.ref() = sens;
+    }
+    else
+    {
+        sensitivities_.reset(new scalarField());
+    }
+}
+
+
+const Foam::scalarField& Foam::adjointSolver::getObjectiveSensitivities
+(
+    autoPtr<designVariables>& designVars
+)
+{
+    if (!sensitivities_)
+    {
+        // Read sensitivities from file in case of continuation
+        // Done here and not in allocateSensitivities since the size of the
+        // design variables and, hence, the sensitivities is not known there
+        if (dictionary::found("sensitivities"))
+        {
+            sensitivities_ =
+                tmp<scalarField>::New
+                    ("sensitivities", *this, designVars().size());
+        }
+        else
+        {
+            computeObjectiveSensitivities(designVars);
+        }
+    }
+
+    return sensitivities_();
 }
 
 
 void Foam::adjointSolver::clearSensitivities()
 {
-    sensitivities_.clear();
+    if (computeSensitivities_)
+    {
+        adjointSensitivity_->clearSensitivities();
+        sensitivities_.clear();
+    }
 }
 
 

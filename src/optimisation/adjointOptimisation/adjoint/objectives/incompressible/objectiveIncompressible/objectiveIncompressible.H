@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -176,76 +176,76 @@ public:
         virtual void doNormalization();
 
         //- Contribution to field adjoint momentum eqs
-        const volVectorField& dJdv();
+        inline const volVectorField& dJdv();
 
         //- Contribution to field adjoint continuity eq
-        const volScalarField& dJdp();
+        inline const volScalarField& dJdp();
 
         //- Contribution to field adjoint energy eq
-        const volScalarField& dJdT();
+        inline const volScalarField& dJdT();
 
         //- Contribution to field adjoint turbulence model variable 1
-        const volScalarField& dJdTMvar1();
+        inline const volScalarField& dJdTMvar1();
 
         //- Contribution to field adjoint turbulence model variable 2
-        const volScalarField& dJdTMvar2();
+        inline const volScalarField& dJdTMvar2();
 
         //- Objective partial deriv wrt velocity for a specific patch
         const fvPatchVectorField& boundarydJdv(const label);
 
         //- Objective partial deriv wrt normal velocity for a specific patch
-        const fvPatchScalarField& boundarydJdvn(const label);
+        inline const fvPatchScalarField& boundarydJdvn(const label);
 
         //- Objective partial deriv wrt tangent velocity for a specific patch
-        const fvPatchVectorField& boundarydJdvt(const label);
+        inline const fvPatchVectorField& boundarydJdvt(const label);
 
         //- Objective partial deriv wrt pressure (times normal) for a specific
         //- patch
-        const fvPatchVectorField& boundarydJdp(const label);
+        inline const fvPatchVectorField& boundarydJdp(const label);
 
         //- Objective partial deriv wrt temperature for a specific patch
-        const fvPatchScalarField& boundarydJdT(const label);
+        inline const fvPatchScalarField& boundarydJdT(const label);
 
         //- Objective partial deriv wrt turbulence model var 1 for a specific
         //- patch
-        const fvPatchScalarField& boundarydJdTMvar1(const label);
+        inline const fvPatchScalarField& boundarydJdTMvar1(const label);
 
         //- Objective partial deriv wrt turbulence model var 2 for a specific
         //- patch
-        const fvPatchScalarField& boundarydJdTMvar2(const label);
+        inline const fvPatchScalarField& boundarydJdTMvar2(const label);
 
         //- Objective partial deriv wrt nut for a specific patch
-        const fvPatchScalarField& boundarydJdnut(const label);
+        inline const fvPatchScalarField& boundarydJdnut(const label);
 
         //- Objective partial deriv wrt stress tensor
-        const fvPatchTensorField& boundarydJdGradU(const label);
+        inline const fvPatchTensorField& boundarydJdGradU(const label);
 
         //- Objective partial deriv wrt velocity for all patches
-        const boundaryVectorField& boundarydJdv();
+        inline const boundaryVectorField& boundarydJdv();
 
         //- Objective partial deriv wrt normal velocity for all patches
-        const boundaryScalarField& boundarydJdvn();
+        inline const boundaryScalarField& boundarydJdvn();
 
         //- Objective partial deriv wrt tangent velocity for all patches
-        const boundaryVectorField& boundarydJdvt();
+        inline const boundaryVectorField& boundarydJdvt();
 
         //- Objective partial deriv wrt pressure (times normal) for all patches
-        const boundaryVectorField& boundarydJdp();
+        inline const boundaryVectorField& boundarydJdp();
 
         //- Objective partial deriv wrt temperature for all patches
-        const boundaryScalarField& boundarydJdT();
+        inline const boundaryScalarField& boundarydJdT();
 
         //- Objective partial deriv wrt turbulence model var 1 for all patches
-        const boundaryScalarField& boundarydJdTMvar1();
+        inline const boundaryScalarField& boundarydJdTMvar1();
 
         //- Objective partial deriv wrt turbulence model var 2 for all patches
-        const boundaryScalarField& boundarydJdTMvar2();
+        inline const boundaryScalarField& boundarydJdTMvar2();
 
         //- Objective partial deriv wrt nut for all patches
-        const boundaryScalarField& boundarydJdnut();
+        inline const boundaryScalarField& boundarydJdnut();
 
         //- Objective partial deriv wrt gradU
-        const boundaryTensorField& boundarydJdGradU();
+        inline const boundaryTensorField& boundarydJdGradU();
 
         //- Update objective function derivatives
         virtual void update();
@@ -295,6 +295,9 @@ public:
         virtual void update_dJdb()
         {}
 
+        virtual void update_dJdbField()
+        {}
+
         virtual void update_divDxDbMultiplier()
         {}
 
@@ -328,20 +331,16 @@ public:
         virtual void update_boundarydJdGradU()
         {}
 
-        virtual void update_boundarydJdb()
+        //- Vector sources can be given only to the adjoint momentum equations.
+        //- Implemented in base objectiveIncompressible
+        virtual void addSource(fvVectorMatrix& matrix);
+
+        //- Scalar sources are more ambigious (adjoint pressure, turbulence
+        //- model, energy, etc equations), so the equivalent functions should
+        //- be overridden on an objective-basis
+        virtual void addSource(fvScalarMatrix& matrix)
         {}
 
-        virtual void update_dSdbMultiplier()
-        {}
-
-        virtual void update_dndbMultiplier()
-        {}
-
-        virtual void update_dxdbMultiplier()
-        {}
-
-        virtual void update_dxdbDirectMultiplier()
-        {}
 
         //- Some objectives need to store some auxiliary values.
         //- If averaging is enabled, update these mean values here.

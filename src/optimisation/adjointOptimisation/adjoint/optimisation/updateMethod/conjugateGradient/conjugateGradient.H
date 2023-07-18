@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2021 PCOpt/NTUA
+    Copyright (C) 2013-2021 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -63,20 +63,9 @@ protected:
 
     // Protected data
 
-        labelList activeDesignVars_;
         scalarField dxOld_;
         scalarField sOld_;
-        label counter_;
         word betaType_;
-
-
-    // Protected Member Functions
-
-        //- Allocate matrices in the first optimisation cycle
-        void allocateFields();
-
-        //- Read old info from dict
-        void readFromDict();
 
 
 private:
@@ -99,7 +88,14 @@ public:
     // Constructors
 
         //- Construct from components
-        conjugateGradient(const fvMesh& mesh, const dictionary& dict);
+        conjugateGradient
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            autoPtr<designVariables>& designVars,
+            const label nConstraints,
+            const word& type
+        );
 
 
     //- Destructor
@@ -108,14 +104,14 @@ public:
 
     // Member Functions
 
-       //- Compute design variables correction
-       void computeCorrection();
+        //- Compute design variables correction
+        void computeCorrection();
 
-       //- Update old correction. For use when eta has been changed externally
-       virtual void updateOldCorrection(const scalarField& oldCorrection);
+        //- Update old correction. For use when eta has been changed externally
+        virtual void updateOldCorrection(const scalarField& oldCorrection);
 
-       //- Write old info to dict
-       virtual void write();
+        //- Write useful quantities to files
+        virtual bool writeData(Ostream& os) const;
 };
 
 

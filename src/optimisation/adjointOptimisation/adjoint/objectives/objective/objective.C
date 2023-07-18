@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2022 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -50,6 +50,10 @@ void objective::makeFolder()
         const Time& time = mesh_.time();
         objFunctionFolder_ =
             time.globalPath()/"optimisation"/type()/time.timeName();
+        if (mesh_.name() != polyMesh::defaultRegion)
+        {
+            objFunctionFolder_ /= mesh_.name();
+        }
 
         mkDir(objFunctionFolder_);
     }
@@ -131,10 +135,12 @@ objective::objective
     computeMeanFields_(false), // is reset in derived classes
     nullified_(false),
     normalize_(dict.getOrDefault<bool>("normalize", false)),
+    shouldWrite_(true),
 
     J_(Zero),
     JMean_(this->getOrDefault<scalar>("JMean", Zero)),
-    weight_(Zero),
+    weight_(dict.get<scalar>("weight")),
+    computed_(false),
     normFactor_(nullptr),
     target_
     (
@@ -142,14 +148,22 @@ objective::objective
         autoPtr<scalar>::New(dict.get<scalar>("target")) :
         nullptr
     ),
+    targetLeft_
+    (
+        dict.found("targetLeft") ?
+        autoPtr<scalar>::New(dict.get<scalar>("targetLeft")) :
+        nullptr
+    ),
     integrationStartTimePtr_(nullptr),
     integrationEndTimePtr_(nullptr),
+    fieldNames_(),
 
     // Initialize pointers to nullptr.
     // Not all of them are required for each objective function.
     // Each child should allocate whatever is needed.
 
     dJdbPtr_(nullptr),
+    dJdbFieldPtr_(nullptr),
     bdJdbPtr_(nullptr),
     bdSdbMultPtr_(nullptr),
     bdndbMultPtr_(nullptr),
@@ -196,6 +210,9 @@ objective::objective
             normFactor_.reset(new scalar(normFactor));
         }
     }
+
+    // Set the weight factor in case of continuation
+    this->readIfPresent("weight", weight_);
 }
 
 
@@ -245,7 +262,7 @@ bool objective::readDict(const dictionary& dict)
 }
 
 
-scalar objective::JCycle() const
+scalar objective::JCycle(bool negate) const
 {
     scalar J(J_);
     if
@@ -260,7 +277,14 @@ scalar objective::JCycle() const
     // Subtract target, in case the objective is used as a constraint
     if (target_.valid())
     {
-        J -= target_();
+        if (negate)
+        {
+            J = - J + targetLeft_();
+        }
+        else
+        {
+            J -= target_();
+        }
     }
 
     // Normalize here, in order to get the correct value for line search
@@ -268,6 +292,7 @@ scalar objective::JCycle() const
     {
         J /= normFactor_();
     }
+    J *= weight_;
 
     return J;
 }
@@ -277,7 +302,12 @@ void objective::updateNormalizationFactor()
 {
     if (normalize_ && !normFactor_)
     {
-        normFactor_.reset(new scalar(JCycle()));
+        scalar J(JCycle()/weight_);
+        normFactor_.reset(new scalar(J));
+        DebugInfo
+            << "objective " << name() << ":: updating norm factor "
+            << "to " << normFactor_()
+            << " for time = " << mesh_.time().timeName() << endl;
     }
 }
 
@@ -343,6 +373,10 @@ void objective::doNormalization()
         {
             dJdbPtr_().primitiveFieldRef() *= oneOverNorm;
         }
+        if (hasdJdbField())
+        {
+            dJdbFieldPtr_() *= oneOverNorm;
+        }
         if (hasBoundarydJdb())
         {
             bdJdbPtr_() *= oneOverNorm;
@@ -393,7 +427,8 @@ bool objective::isWithinIntegrationTime() const
     else
     {
         FatalErrorInFunction
-            << "Unallocated integration start or end time"
+            << "Unallocated integration start or end time for objective '"
+            << objectiveName_ << "'"
             << exit(FatalError);
     }
     return false;
@@ -416,193 +451,24 @@ void objective::incrementIntegrationTimes(const scalar timeSpan)
 }
 
 
-const volScalarField& objective::dJdb()
+void objective::update()
 {
-    if (!dJdbPtr_)
-    {
-        // If pointer is not set, set it to a zero field
-        dJdbPtr_.reset
-        (
-            createZeroFieldPtr<scalar>
-            (
-                mesh_,
-                ("dJdb_" + objectiveName_),
-                dimensionSet(0, 5, -2, 0, 0, 0, 0)
-            )
-        );
-    }
+    // Objective function value
+    J();
 
-    return *dJdbPtr_;
-}
+    // volFields
+    update_dJdb();
+    update_dJdbField();
+    update_divDxDbMultiplier();
+    update_gradDxDbMultiplier();
 
-
-const fvPatchVectorField& objective::boundarydJdb(const label patchI)
-{
-    if (!bdJdbPtr_)
-    {
-        bdJdbPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdJdbPtr_()[patchI];
-}
-
-
-const fvPatchVectorField& objective::dSdbMultiplier(const label patchI)
-{
-    if (!bdSdbMultPtr_)
-    {
-        bdSdbMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdSdbMultPtr_()[patchI];
-}
-
-
-const fvPatchVectorField& objective::dndbMultiplier(const label patchI)
-{
-    if (!bdndbMultPtr_)
-    {
-        bdndbMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdndbMultPtr_()[patchI];
-}
-
-
-const fvPatchVectorField& objective::dxdbMultiplier(const label patchI)
-{
-    if (!bdxdbMultPtr_)
-    {
-        bdxdbMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdxdbMultPtr_()[patchI];
-}
-
-
-const fvPatchVectorField& objective::dxdbDirectMultiplier(const label patchI)
-{
-    if (!bdxdbDirectMultPtr_)
-    {
-        bdxdbDirectMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdxdbDirectMultPtr_()[patchI];
-}
-
-
-const vectorField& objective::boundaryEdgeMultiplier
-(
-    const label patchI,
-    const label edgeI
-)
-{
-    if (!bdxdbDirectMultPtr_)
-    {
-        FatalErrorInFunction
-            << "Unallocated boundaryEdgeMultiplier field"
-            << exit(FatalError);
-    }
-    return bEdgeContribution_()[patchI][edgeI];
-}
-
-
-const boundaryVectorField& objective::boundarydJdb()
-{
-    if (!bdJdbPtr_)
-    {
-        bdJdbPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return *bdJdbPtr_;
-}
-
-
-const boundaryVectorField& objective::dSdbMultiplier()
-{
-    if (!bdSdbMultPtr_)
-    {
-        bdSdbMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return *bdSdbMultPtr_;
-}
-
-
-const boundaryVectorField& objective::dndbMultiplier()
-{
-    if (!bdndbMultPtr_)
-    {
-        bdndbMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return *bdndbMultPtr_;
-}
-
-
-const boundaryVectorField& objective::dxdbMultiplier()
-{
-    if (!bdxdbMultPtr_)
-    {
-        bdxdbMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return *bdxdbMultPtr_;
-}
-
-
-const boundaryVectorField& objective::dxdbDirectMultiplier()
-{
-    if (!bdxdbDirectMultPtr_)
-    {
-        bdxdbDirectMultPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return *bdxdbDirectMultPtr_;
-}
-
-
-const vectorField3& objective::boundaryEdgeMultiplier()
-{
-    if (!bdxdbDirectMultPtr_)
-    {
-        FatalErrorInFunction
-            << "Unallocated boundaryEdgeMultiplier field"
-            << endl << endl
-            << exit(FatalError);
-    }
-    return *bEdgeContribution_;
-}
-
-
-const volScalarField& objective::divDxDbMultiplier()
-{
-    if (!divDxDbMultPtr_)
-    {
-        // If pointer is not set, set it to a zero field
-        divDxDbMultPtr_.reset
-        (
-            createZeroFieldPtr<scalar>
-            (
-                mesh_,
-                ("divDxDbMult"+objectiveName_),
-                // Variable dimensions!!
-                // Dummy dimensionless. Only the internalField will be used
-                dimless
-            )
-        );
-    }
-    return *divDxDbMultPtr_;
-}
-
-
-const volTensorField& objective::gradDxDbMultiplier()
-{
-    if (!gradDxDbMultPtr_)
-    {
-        // If pointer is not set, set it to a zero field
-        gradDxDbMultPtr_.reset
-        (
-            createZeroFieldPtr<tensor>
-            (
-                mesh_,
-                ("gradDxDbMult"+objectiveName_),
-                // Variable dimensions!!
-                dimensionSet(pow2(dimLength)/pow3(dimTime))
-            )
-        );
-    }
-    return *gradDxDbMultPtr_;
+    // boundaryFields
+    update_boundarydJdb();
+    update_dSdbMultiplier();
+    update_dndbMultiplier();
+    update_dxdbMultiplier();
+    update_dxdbDirectMultiplier();
+    update_boundaryEdgeContribution();
 }
 
 
@@ -613,6 +479,10 @@ void objective::nullify()
         if (hasdJdb())
         {
             dJdbPtr_() == dimensionedScalar(dJdbPtr_().dimensions(), Zero);
+        }
+        if (hasdJdbField())
+        {
+            dJdbFieldPtr_() = Zero;
         }
         if (hasBoundarydJdb())
         {
@@ -676,6 +546,11 @@ bool objective::write(const bool valid) const
                 file<< setw(width_) << "#target" << " "
                     << setw(width_) << target_() << endl;
             }
+            if (targetLeft_.valid())
+            {
+                file<< setw(width_) << "#targetLeft" << " "
+                    << setw(width_) << targetLeft_() << endl;
+            }
             if (normalize_)
             {
                 file<< setw(width_) << "#normFactor " << " "
@@ -685,6 +560,10 @@ bool objective::write(const bool valid) const
             file<< setw(4) << "#" << " ";
             file<< setw(width_) << "J" << " ";
             file<< setw(width_) << "JCycle" << " ";
+            if (targetLeft_)
+            {
+                file<< setw(width_) << "JCycleLeft" << " ";
+            }
             addHeaderColumns();
             file<< endl;
         }
@@ -693,6 +572,10 @@ bool objective::write(const bool valid) const
         file<< setw(4) << mesh_.time().value() << " ";
         file<< setw(width_) << J_ << " ";
         file<< setw(width_) << JCycle() << " ";
+        if (targetLeft_)
+        {
+            file<< setw(width_) << JCycle(true) << " ";
+        }
         addColumnValues();
         file<< endl;
     }
@@ -708,12 +591,14 @@ void objective::writeInstantaneousValue() const
         // File is opened only upon invocation of the write function
         // in order to avoid various instantiations of the same objective
         // opening the same file
+        unsigned int width = IOstream::defaultPrecision() + 6;
         if (!instantValueFilePtr_)
         {
             setInstantValueFilePtr();
         }
 
-        instantValueFilePtr_() << mesh_.time().value() << tab << J_ << endl;
+        instantValueFilePtr_()
+            << setw(width) << mesh_.time().value() << tab << J_ << endl;
     }
 }
 
@@ -764,6 +649,7 @@ bool objective::writeData(Ostream& os) const
     {
         os.writeEntry("normFactor", normFactor_());
     }
+    os.writeEntry("weight", weight_);
     return os.good();
 }
 

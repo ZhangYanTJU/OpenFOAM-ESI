@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2022 PCOpt/NTUA
-    Copyright (C) 2013-2022 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,6 +76,20 @@ class objectiveNutSqr
         //- Where to define the objective
         labelList zones_;
 
+        //- List with the names of the adjoint turbulence model fields
+        //  This is kept separately from fieldNames since the latter may
+        //  or may not include Ua, depending on whether nut is a function
+        //  of U.  This makes deciding on whether to add or not sources
+        //  to a given fvScalarMatrix tricky, hence the utilisation of
+        //  adjointTurbulenceNames_
+        wordList adjointTurbulenceNames_;
+
+
+    // Private Member Functions
+
+        //- Populate fieldNames
+        void populateFieldNames();
+
 
 public:
 
@@ -116,6 +130,9 @@ public:
         //- Update field to be added to be added to volume-based
         //- sensitivity derivatives, emerging from delta ( dV ) / delta b
         void update_divDxDbMultiplier();
+
+        //- Add source terms to the adjoint turbulence model equations
+        virtual void addSource(fvScalarMatrix& matrix);
 };
 
 

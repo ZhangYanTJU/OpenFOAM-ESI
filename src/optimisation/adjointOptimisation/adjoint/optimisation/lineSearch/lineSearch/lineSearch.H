@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -44,6 +44,7 @@ SourceFiles
 #include "IOdictionary.H"
 #include "scalarField.H"
 #include "stepUpdate.H"
+#include "updateMethod.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -90,8 +91,11 @@ protected:
         //- Correction multiplier
         scalar step_;
 
-        //- Inner line search iteration
+        //- Optimisation cycle
         label iter_;
+
+        //- Inner line search iteration
+        label innerIter_;
 
         //- Maximum line search iterations
         label maxIters_;
@@ -103,6 +107,9 @@ protected:
 
         //- Mechanism to update method if line search conditions are not set
         autoPtr<stepUpdate> stepUpdate_;
+
+        //- Reference to the update method related to the line search
+        updateMethod& updateMethod_;
 
 
     // Protected Member Functions
@@ -137,16 +144,22 @@ public:
             dictionary,
             (
                 const dictionary& dict,
-                const Time& time
+                const Time& time,
+                updateMethod& UpdateMethod
             ),
-            (dict, time)
+            (dict, time, UpdateMethod)
         );
 
 
     // Constructors
 
         //- Construct from components
-        lineSearch(const dictionary& dict, const Time& time);
+        lineSearch
+        (
+            const dictionary& dict,
+            const Time& time,
+            updateMethod& UpdateMethod
+        );
 
     // Selectors
 
@@ -154,7 +167,8 @@ public:
         static autoPtr<lineSearch> New
         (
             const dictionary& dict,
-            const Time& time
+            const Time& time,
+            updateMethod& UpdateMethod
         );
 
 
@@ -164,46 +178,80 @@ public:
 
     // Member Functions
 
-       //- Set objective derivative
-       virtual void setDeriv(const scalar deriv);
+        //- Set directional derivative
+        virtual void setDeriv(const scalar deriv);
 
-       //- Set direction
-       void setDirection(const scalarField& direction);
+        //- Set new directional derivative.
+        //  Does nothing in base. Only used by methods that require the
+        //  gradient information to be computed at the new point
+        virtual void setNewDeriv(const scalar deriv);
 
-       //- Set new objective value
-       void setNewMeritValue(const scalar value);
+        //- Set direction
+        inline void setDirection(const scalarField& direction)
+        {
+            direction_ = direction;
+        }
 
-       //- Set old objective value
-       void setOldMeritValue(const scalar value);
+        //- Set new objective value
+        void setNewMeritValue(const scalar value);
 
-       //- Reset step to initial value
-       virtual void reset();
+        //- Set old objective value
+        void setOldMeritValue(const scalar value);
 
-       //- Get max number of iterations
-       label maxIters() const;
+        //- Reset step to initial value
+        virtual void reset();
 
-       //- Get current step
-       scalar step() const;
+        //- Get inner line search iteration
+        inline label innerIter() const
+        {
+            return innerIter_;
+        }
 
-       //- Return the correction of the design variables
-       virtual bool converged() = 0;
+        //- Get max number of iterations
+        inline label maxIters() const
+        {
+            return maxIters_;
+        }
 
-       //- Update the line search step based on the specific line search
-       //- strategy, e.g. bisection, quadratic fit, etc.
-       virtual void updateStep() = 0;
+        //- Get current step
+        inline scalar step() const
+        {
+            return step_;
+        }
 
-       //- Update the step using the supplied value
-       virtual void updateStep(const scalar newStep);
+        //- Return the correction of the design variables
+        virtual bool converged() = 0;
+
+        //- Update the line search step based on the specific line search
+        //- strategy, e.g. bisection, quadratic fit, etc.
+        virtual void updateStep() = 0;
+
+        //- Update the step using the supplied value
+        virtual void updateStep(const scalar newStep);
+
+        //- Update the correction.
+        //  Multiplies with step in base
+        virtual void updateCorrection(scalarField& correction);
+
+        //- Return true if lineSearch should continue and if so increment inner
+        //  iteration
+        virtual bool loop();
+
+        //- Does line search need to update the gradient?
+        virtual bool computeGradient() const;
+
+        //- Execute steps at the end of the line search iterations
+        virtual void postUpdate();
 
 
     // Member operators
 
-       //- Increment iteration number and store merit value corresponding to
-       //- the previous optimisation cycle
-       virtual lineSearch& operator++();
+        //- Increment iteration number and store merit value corresponding to
+        //- the previous optimisation cycle
+        virtual lineSearch& operator++();
 
-       //- Postfix increment. Necessary for compilation
-       virtual lineSearch& operator++(int);
+        //- Postfix increment. Necessary for compilation
+        virtual lineSearch& operator++(int);
 };
 
 

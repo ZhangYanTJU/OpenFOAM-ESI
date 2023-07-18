@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -48,17 +48,12 @@ Foam::sensitivity::sensitivity
 :
     mesh_(mesh),
     dict_(dict),
+    writeFieldSens_(dict.getOrDefault<bool>("writeFieldSens", false)),
     fieldSensPtr_(nullptr)
 {}
 
 
 // * * * * * * * * * * * * * * *  Member Functions   * * * * * * * * * * * * //
-
-const Foam::dictionary& Foam::sensitivity::dict() const
-{
-    return dict_;
-}
-
 
 bool Foam::sensitivity::readDict(const dictionary& dict)
 {
@@ -68,15 +63,9 @@ bool Foam::sensitivity::readDict(const dictionary& dict)
 }
 
 
-void Foam::sensitivity::computeDerivativesSize()
-{
-    // Does nothing
-}
-
-
 void Foam::sensitivity::write(const word& baseName)
 {
-    if (fieldSensPtr_)
+    if (fieldSensPtr_ && writeFieldSens_)
     {
         fieldSensPtr_->write();
     }

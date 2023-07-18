@@ -97,10 +97,10 @@ adjointManagers
 
 optimisation
 {
-    sensitivities
+    designVariables
     {
-        type              surfacePoints;
-        patches           (pressure suction);
+        sensitivityType surfacePoints;
+        patches         (pressure suction);
     }
 }
 

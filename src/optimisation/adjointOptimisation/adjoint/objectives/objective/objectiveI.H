@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -36,9 +36,145 @@ inline const Foam::word& Foam::objective::objectiveName() const
 }
 
 
+inline bool Foam::objective::shouldWrite() const
+{
+    return shouldWrite_;
+}
+
+
+inline void Foam::objective::setWrite(const bool shouldWrite)
+{
+    shouldWrite_ = shouldWrite;
+}
+
+
+inline const Foam::volScalarField& Foam::objective::dJdb()
+{
+    return *dJdbPtr_;
+}
+
+
+inline const Foam::scalarField& Foam::objective::dJdbField()
+{
+    return *dJdbFieldPtr_;
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objective::boundarydJdb(const label patchI)
+{
+    return bdJdbPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objective::dSdbMultiplier(const label patchI)
+{
+    return bdSdbMultPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objective::dndbMultiplier(const label patchI)
+{
+    return bdndbMultPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objective::dxdbMultiplier(const label patchI)
+{
+    return bdxdbMultPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objective::dxdbDirectMultiplier(const label patchI)
+{
+    return bdxdbDirectMultPtr_()[patchI];
+}
+
+
+inline const Foam::vectorField& Foam::objective::boundaryEdgeMultiplier
+(
+    const label patchI,
+    const label edgeI
+)
+{
+    if (!bdxdbDirectMultPtr_)
+    {
+        FatalErrorInFunction
+            << "Unallocated boundaryEdgeMultiplier field"
+            << exit(FatalError);
+    }
+    return bEdgeContribution_()[patchI][edgeI];
+}
+
+
+inline const Foam::boundaryVectorField& Foam::objective::boundarydJdb()
+{
+    return *bdJdbPtr_;
+}
+
+
+inline const Foam::boundaryVectorField& Foam::objective::dSdbMultiplier()
+{
+    return *bdSdbMultPtr_;
+}
+
+
+inline const Foam::boundaryVectorField& Foam::objective::dndbMultiplier()
+{
+    return *bdndbMultPtr_;
+}
+
+
+inline const Foam::boundaryVectorField& Foam::objective::dxdbMultiplier()
+{
+    return *bdxdbMultPtr_;
+}
+
+
+inline const Foam::boundaryVectorField& Foam::objective::dxdbDirectMultiplier()
+{
+    return *bdxdbDirectMultPtr_;
+}
+
+
+inline const Foam::vectorField3& Foam::objective::boundaryEdgeMultiplier()
+{
+    if (!bdxdbDirectMultPtr_)
+    {
+        FatalErrorInFunction
+            << "Unallocated boundaryEdgeMultiplier field"
+            << endl << endl
+            << exit(FatalError);
+    }
+    return *bEdgeContribution_;
+}
+
+
+inline const Foam::volScalarField& Foam::objective::divDxDbMultiplier()
+{
+    return *divDxDbMultPtr_;
+}
+
+
+inline const Foam::volTensorField& Foam::objective::gradDxDbMultiplier()
+{
+    return *gradDxDbMultPtr_;
+}
+
+
 inline bool Foam::objective::hasdJdb() const
 {
     return bool(dJdbPtr_);
+}
+
+
+inline bool Foam::objective::hasdJdbField() const
+{
+    return bool(dJdbFieldPtr_);
 }
 
 
@@ -100,5 +236,12 @@ inline bool Foam::objective::hasIntegrationEndTime() const
 {
     return bool(integrationEndTimePtr_);
 }
+
+
+inline void Foam::objective::setComputed(const bool isComputed)
+{
+    computed_ = isComputed;
+}
+
 
 // ************************************************************************* //

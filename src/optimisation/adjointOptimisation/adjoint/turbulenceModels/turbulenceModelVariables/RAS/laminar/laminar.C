@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -53,60 +53,7 @@ laminar::laminar
 )
 :
     RASModelVariables(mesh, SolverControl)
-{
-    TMVar1Ptr_.reset
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "dummylaminarVar1",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensionedScalar(dimless, Zero)
-        )
-    );
-
-    TMVar2Ptr_.reset
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "dummylaminarVar2",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensionedScalar(dimless, Zero)
-        )
-    );
-
-    nutPtr_.reset
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "dummylaminarNut",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensionedScalar(sqr(dimLength)/dimTime, Zero)
-        )
-    );
-
-    allocateInitValues();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

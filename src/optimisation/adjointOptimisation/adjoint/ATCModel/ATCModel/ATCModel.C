@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -214,6 +214,7 @@ void ATCModel::computeLimiter
             scheme.interpolate(limiter)
         );
         limiter = fvc::average(faceLimiter);
+        limiter.correctBoundaryConditions();
     }
 }
 

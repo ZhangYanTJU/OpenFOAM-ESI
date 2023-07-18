@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -55,10 +55,11 @@ Foam::incompressiblePrimalSolver::incompressiblePrimalSolver
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 :
-    primalSolver(mesh, managerType, dict),
+    primalSolver(mesh, managerType, dict, solverName),
     phiReconstructionTol_
     (
         dict.subOrEmptyDict("fieldReconstruction").
@@ -79,7 +80,8 @@ Foam::incompressiblePrimalSolver::New
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 {
     const word solverType(dict.get<word>("solver"));
@@ -99,7 +101,7 @@ Foam::incompressiblePrimalSolver::New
     return
         autoPtr<incompressiblePrimalSolver>
         (
-            ctorPtr(mesh, managerType, dict)
+            ctorPtr(mesh, managerType, dict, solverName)
         );
 }
 
@@ -141,12 +143,6 @@ Foam::incompressiblePrimalSolver::getObjectiveFunctions() const
     }
 
     return objectives;
-}
-
-
-bool Foam::incompressiblePrimalSolver::useSolverNameForFields() const
-{
-    return vars_().useSolverNameForFields();
 }
 
 

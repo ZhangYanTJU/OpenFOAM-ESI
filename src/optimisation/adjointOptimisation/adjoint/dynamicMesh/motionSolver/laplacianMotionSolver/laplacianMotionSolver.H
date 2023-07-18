@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -59,6 +59,7 @@ namespace Foam
 
 // Forward class declarations
 class motionInterpolation;
+class motionDiffusivity;
 class mapPolyMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -80,21 +81,14 @@ protected:
         //- Interpolation used to transfer cell displacement to the points
         autoPtr<motionInterpolation> interpolationPtr_;
 
+        //- Diffusivity used to control the motion
+        autoPtr<motionDiffusivity> diffusivityPtr_;
+
         //- Number of laplacian iterations per solution step
         label nIters_;
 
         //- Residual threshold
         scalar tolerance_;
-
-
-    // Protected Member Functions
-
-        //- Set boundary conditions of cellMotionU based on pointMotionU.
-        //  Avoiding the use of the cellMotionFvPatchField bc
-        //  due to the use of the registry in order to grab pointMotionU, which
-        //  may give problems if multiple objects of this class are constructed
-        //  at the same time
-        void setBoundaryConditions();
 
 
 private:
@@ -143,6 +137,13 @@ public:
 
         //- Solve for motion
         virtual void solve();
+
+        //- Set boundary conditions of cellMotionU based on pointMotionU.
+        //  Avoiding the use of the cellMotionFvPatchField bc
+        //  due to the use of the registry in order to grab pointMotionU, which
+        //  may give problems if multiple objects of this class are constructed
+        //  at the same time
+        void setBoundaryConditions();
 
         //- Update local data for geometry changes
         virtual void movePoints(const pointField&);

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -41,8 +41,7 @@ SourceFiles
 #ifndef LBFGS_H
 #define LBFGS_H
 
-#include "updateMethod.H"
-#include "scalarMatrices.H"
+#include "quasiNewton.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,12 +49,12 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                             Class LBFGS Declaration
+                            Class LBFGS Declaration
 \*---------------------------------------------------------------------------*/
 
 class LBFGS
 :
-    public updateMethod
+    public quasiNewton
 {
 private:
 
@@ -72,15 +71,6 @@ protected:
 
     // Protected data
 
-        //- Step for the Newton method
-        scalar etaHessian_;
-
-        //- Number of first steepest descent steps
-        label nSteepestDescent_;
-
-        //- Map to active design variables
-        labelList activeDesignVars_;
-
         //- Number of old corrections and grad differences kept
         label nPrevSteps_;
 
@@ -90,36 +80,107 @@ protected:
         //- The previous correction. Holds nPrevSteps_ fields
         PtrList<scalarField> s_;
 
-        //- The previous derivatives
-        scalarField derivativesOld_;
+        //- Use damping for s to ensure positive-definitiveness
+        bool useSDamping_;
 
-        //- The previous correction
-        scalarField correctionOld_;
+        //- Use damping for s to ensure positive-definitiveness
+        bool useYDamping_;
 
-        //- Optimisation cycle counter
-        label counter_;
+
+    // Protected Member Functions
 
         //- Allocate matrices in the first optimisation cycle
-        void allocateMatrices();
+        void allocateVectors();
 
         //- Move pointers in PtrList to the left and replace last element with
         //- given field
         void pivotFields(PtrList<scalarField>& list, const scalarField& f);
 
         //- Update y and s vectors
-        void updateVectors();
+        void updateVectors
+        (
+            const scalarField& derivatives,
+            const scalarField& derivativesOld
+        );
+
+        //- Use the damped version of s to ensure positive-definitiveness
+        //  Usefull in conjunction with SQP
+        void applyDamping
+        (
+            scalarField& y,
+            scalarField& s
+        );
+
+        //- Update the Hessian matrix by updating the base vectors
+        virtual void updateHessian();
 
         //- Update design variables
-        void update();
+        virtual void update();
 
-        //- Update based on steepest descent
-        void steepestDescentUpdate();
+        //- Compute the inverse Hessian - vector product
+        //  Input should have the size of all design variables or the active
+        //  ones, output is the size of the active design variables
+        virtual tmp<scalarField> invHessianVectorProduct
+        (
+            const scalarField& vector
+        );
 
-        //- Update based on LBFGS
-        void LBFGSUpdate();
+        //- Same as previous one, but with an explicit counter provided
+        tmp<scalarField> invHessianVectorProduct
+        (
+            const scalarField& vector,
+            const label counter
+        );
 
-        //- Read old info from dict
-        void readFromDict();
+        //- Compute the Hessian - vector product
+        //  Requires the solution of a system of equations twice the size of
+        //  the bases. This should be OK since the latter is small.
+        //  Input should have the size of all design variables or the active
+        //  ones, output is the size of the active design variables
+        virtual tmp<scalarField> HessianVectorProduct
+        (
+            const scalarField& vector
+        );
+
+        //- Same as previous one, but with an explicit counter provided
+        tmp<scalarField> HessianVectorProduct
+        (
+            const scalarField& vector,
+            const label counter
+        );
+
+        //- Return the diagonal of the Hessian.
+        //  Requires the solution of a system of equations twice the size of
+        //  the bases. This should be OK since the latter is small.
+        //  Useful for preconditioning
+        tmp<scalarField> HessianDiag();
+
+
+        // Similar functions, but using the SR1 formula instead of BFGS.
+        // Should become a separate class at some point
+
+            //- Compute the Hessian - vector product
+            //  Requires the solution of a system of equations twice the size
+            //  of the bases. This should be OK since the latter is small.
+            //  Input should have the size of all design variables or the
+            //  active ones, output is the size of the active design variables
+            virtual tmp<scalarField> SR1HessianVectorProduct
+            (
+                const scalarField& vector
+            );
+
+            //- Same as previous one, but with an explicit counter provided
+            tmp<scalarField> SR1HessianVectorProduct
+            (
+                const scalarField& vector,
+                const label counter
+            );
+
+            //- Return the diagonal of the Hessian.
+            //  Requires the solution of a system of equations twice the size
+            //  of the bases. This should be OK since the latter is small.
+            //  Useful for preconditioning
+            tmp<scalarField> SR1HessianDiag();
 
 
 public:
@@ -131,7 +192,14 @@ public:
     // Constructors
 
         //- Construct from components
-        LBFGS(const fvMesh& mesh, const dictionary& dict);
+        LBFGS
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            autoPtr<designVariables>& designVars,
+            const label nConstraints,
+            const word& type
+        );
 
 
     //- Destructor
@@ -140,15 +208,8 @@ public:
 
     // Member Functions
 
-       //- Compute design variables correction
-       void computeCorrection();
-
-       //- Update old correction. Useful for quasi-Newton methods coupled with
-       //- line search
-       virtual void updateOldCorrection(const scalarField& oldCorrection);
-
-       //- Write old info to dict
-       virtual void write();
+       //- Write useful quantities to files
+       virtual bool writeData(Ostream& os) const;
 };
 
 

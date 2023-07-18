@@ -163,10 +163,10 @@ adjointManagers
 
 optimisation
 {
-    sensitivities
+    designVariables
     {
-        type                surfacePoints;
-        patches             (lower upper);
+        sensitivityType surfacePoints;
+        patches         (lower upper);
     }
 }
 

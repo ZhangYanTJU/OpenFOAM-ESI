@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -114,9 +114,10 @@ void Foam::adjointWallVelocityFvPatchVectorField::manipulateMatrix
     typedef Foam::nutUSpaldingWallFunctionFvPatchScalarField
         SAwallFunctionPatchField;
 
+    tmp<fvPatchScalarField> nutPatch(boundaryContrPtr_->turbulentDiffusivity());
     if
     (
-        isA<SAwallFunctionPatchField>(boundaryContrPtr_->turbulentDiffusivity())
+        isA<SAwallFunctionPatchField>(nutPatch())
      && patch().size() != 0
     )
     {
@@ -199,8 +200,8 @@ void Foam::adjointWallVelocityFvPatchVectorField::updateCoeffs()
     typedef Foam::nutUSpaldingWallFunctionFvPatchScalarField
         SAwallFunctionPatchField;
 
-    const fvPatchScalarField& nutb = boundaryContrPtr_->turbulentDiffusivity();
-    if (isA<SAwallFunctionPatchField>(nutb))
+    tmp<fvPatchScalarField> nutb(boundaryContrPtr_->turbulentDiffusivity());
+    if (isA<SAwallFunctionPatchField>(nutb()))
     {
         Uap_t1 = (Uac & tf1)*tf1;
         // leaving out second term for now

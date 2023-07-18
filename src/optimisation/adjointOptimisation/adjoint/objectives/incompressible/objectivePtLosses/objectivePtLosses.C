@@ -107,7 +107,7 @@ void objectivePtLosses::initialize()
                 const scalar mass = gSum(phiPatch);
                 if (mag(mass) > SMALL)
                 {
-                    objectiveReportPatches.append(patchI);
+                    objectiveReportPatches.push_back(patchI);
                 }
             }
         }

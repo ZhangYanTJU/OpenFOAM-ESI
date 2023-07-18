@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019, 2022 PCOpt/NTUA
-    Copyright (C) 2013-2019, 2022 FOSS GP
+    Copyright (C) 2007-2019, 2022-2023 PCOpt/NTUA
+    Copyright (C) 2013-2019, 2022-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -176,10 +176,6 @@ public:
         inline const word& nutBaseName() const;
 
         //- Bools to identify which turbulent fields are present
-        //  Apart from the distance pointer, all other pointers are
-        //  allocated even if the the corresponding field does not exist.
-        //  Hence, the pointer itself cannot be used to determine the
-        //  existance of the field
         inline virtual bool hasTMVar1() const;
         inline virtual bool hasTMVar2() const;
         inline virtual bool hasNut() const;
@@ -194,10 +190,16 @@ public:
         inline       volScalarField& TMVar2();
         inline const volScalarField& nutRef() const;
         inline       volScalarField& nutRef();
+        inline tmp<volScalarField> nut() const;
         inline const volScalarField& d() const;
         inline       volScalarField& d();
 
-        //- return references to instantaneous turbulence fields
+        inline tmp<scalarField> TMVar1(const label patchi) const;
+        inline tmp<scalarField> TMVar2(const label patchi) const;
+        inline tmp<scalarField> nut(const label patchi) const;
+        inline tmp<fvPatchScalarField> nutPatchField(const label patchi) const;
+
+        //- Return references to instantaneous turbulence fields
         inline const volScalarField& TMVar1Inst() const;
         inline       volScalarField& TMVar1Inst();
         inline const volScalarField& TMVar2Inst() const;

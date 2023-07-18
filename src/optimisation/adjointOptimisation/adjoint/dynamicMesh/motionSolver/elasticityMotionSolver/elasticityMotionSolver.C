@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -29,6 +29,7 @@ License
 
 #include "elasticityMotionSolver.H"
 #include "motionInterpolation.H"
+#include "motionDiffusivity.H"
 #include "wallDist.H"
 #include "fixedValuePointPatchFields.H"
 #include "fvMatrices.H"
@@ -36,6 +37,7 @@ License
 #include "fvmDiv.H"
 #include "fvmDiv.H"
 #include "fvmLaplacian.H"
+#include "surfaceInterpolate.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -57,6 +59,19 @@ namespace Foam
 
 void Foam::elasticityMotionSolver::setBoundaryConditions()
 {
+    // Adjust boundary conditions based on the steps to be executed
+    forAll(cellMotionU_.boundaryField(), patchI)
+    {
+        fvPatchVectorField& bc =
+            cellMotionU_.boundaryFieldRef()[patchI];
+        if (isA<fixedValueFvPatchVectorField>(bc))
+        {
+            auto& fixedValueBCs =
+                refCast<fixedValueFvPatchVectorField>(bc);
+            fixedValueBCs == fixedValueBCs/scalar(nSteps_);
+        }
+    }
+    /*
     // Adjust boundary conditions based on the steps to be executed
     forAll(pointMotionU_.boundaryField(), patchI)
     {
@@ -88,6 +103,7 @@ void Foam::elasticityMotionSolver::setBoundaryConditions()
             }
         }
     }
+    */
 }
 
 
@@ -141,21 +157,10 @@ Foam::elasticityMotionSolver::elasticityMotionSolver
       ? motionInterpolation::New(fvMesh_, coeffDict().lookup("interpolation"))
       : motionInterpolation::New(fvMesh_)
     ),
-    E_
+    diffusivityPtr_
     (
-        IOobject
-        (
-            "mu",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fvMesh_,
-        dimensionedScalar(dimless, Zero),
-        fvPatchFieldBase::zeroGradientType()
+        motionDiffusivity::New(fvMesh_, coeffDict().lookup("diffusivity"))
     ),
-    exponent_(this->coeffDict().get<scalar>("exponent")),
     nSteps_(this->coeffDict().get<label>("steps")),
     nIters_(this->coeffDict().get<label>("iters")),
     tolerance_(this->coeffDict().get<scalar>("tolerance"))
@@ -175,7 +180,7 @@ Foam::tmp<Foam::pointField> Foam::elasticityMotionSolver::curPoints() const
 void Foam::elasticityMotionSolver::solve()
 {
     // Re-init to zero
-    cellMotionU_.primitiveFieldRef() = vector::zero;
+    cellMotionU_.primitiveFieldRef() = Zero;
 
     // Adjust boundary conditions based on the number of steps to be executed
     // and interpolate to faces
@@ -187,19 +192,18 @@ void Foam::elasticityMotionSolver::solve()
         Info<< "Step " << istep << endl;
 
         // Update diffusivity
-        const scalarField& vols = mesh().cellVolumes();
-        E_.primitiveFieldRef() = 1./pow(vols, exponent_);
-        E_.correctBoundaryConditions();
-
+        diffusivityPtr_->correct();
+        const surfaceScalarField E(diffusivityPtr_->operator()());
+        const surfaceVectorField& Sf = fvMesh_.Sf();
         for (label iter = 0; iter < nIters_; ++iter)
         {
             Info<< "Iteration " << iter << endl;
             cellMotionU_.storePrevIter();
             fvVectorMatrix dEqn
             (
-                fvm::laplacian(2*E_, cellMotionU_)
-              + fvc::div(2*E_*T(fvc::grad(cellMotionU_)))
-              - fvc::div(E_*fvc::div(cellMotionU_)*tensor::I)
+                fvm::laplacian(2*E, cellMotionU_)
+              + fvc::div(2*E*(fvc::interpolate(fvc::grad(cellMotionU_)) & Sf))
+              - fvc::div(E*fvc::interpolate(fvc::div(cellMotionU_))*Sf)
             );
 
             scalar residual = mag(dEqn.solve().initialResidual());
@@ -218,12 +222,34 @@ void Foam::elasticityMotionSolver::solve()
             }
         }
 
+        interpolationPtr_->interpolate
+        (
+            cellMotionU_,
+            pointMotionU_
+        );
+
+        tmp<vectorField> newPoints
+        (
+            fvMesh_.points() + pointMotionU_.primitiveField()
+        );
+
+        /*
         // Interpolate from cells to points
         interpolationPtr_->interpolate(cellMotionU_, pointMotionU_);
+
+        syncTools::syncPointList
+        (
+            fvMesh_,
+            pointMotionU_.primitiveFieldRef(),
+            maxEqOp<vector>(),
+            vector::zero
+        );
+
         vectorField newPoints
         (
             mesh().points() + pointMotionU_.primitiveFieldRef()
         );
+        */
 
         // Move points and check mesh
         fvMesh_.movePoints(newPoints);
@@ -259,7 +285,14 @@ void Foam::elasticityMotionSolver::movePoints(const pointField&)
 
 void Foam::elasticityMotionSolver::updateMesh(const mapPolyMesh&)
 {
-    // Do nothing
+    // Update diffusivity. Note two stage to make sure old one is de-registered
+    // before creating/registering new one.
+    diffusivityPtr_.reset(nullptr);
+    diffusivityPtr_ = motionDiffusivity::New
+    (
+        fvMesh_,
+        coeffDict().lookup("diffusivity")
+    );
 }
 
 

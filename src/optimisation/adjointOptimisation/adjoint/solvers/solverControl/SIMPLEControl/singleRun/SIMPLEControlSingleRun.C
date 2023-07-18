@@ -118,7 +118,7 @@ bool Foam::SIMPLEControlSingleRun::write(const bool valid) const
 void Foam::SIMPLEControlSingleRun::writeNow()
 {
     Time& time = const_cast<Time&>(mesh_.time());
-    // Avoid writing fields if already in an outputTime iter
+    // Avoid writing fields if already in an writeTime iter
     // since results will be written by the solver class either way
     if (!time.writeTime())
     {
@@ -156,7 +156,7 @@ bool Foam::SIMPLEControlSingleRun::loop()
     else
     {
         initialised_ = true;
-        storePrevIterFields();
+        simpleControl::storePrevIterFields();
     }
 
     bool isRunning = runTime.loop();

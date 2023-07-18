@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -139,13 +139,13 @@ const vectorField& volBSplinesBase::getControlPoints(const label& iNURB) const
 
 vectorField volBSplinesBase::getAllControlPoints() const
 {
-    vectorField totalCPs(0);
+    DynamicList<vector> totalCPs(0);
     forAll(volume_, iNURB)
     {
-        totalCPs.append(volume_[iNURB].getControlPoints());
+        totalCPs.push_back(volume_[iNURB].getControlPoints());
     }
 
-    return totalCPs;
+    return vectorField(std::move(totalCPs));
 }
 
 
@@ -182,6 +182,12 @@ labelList volBSplinesBase::getStartCpID() const
 }
 
 
+labelList volBSplinesBase::getStartVarID() const
+{
+    return 3*getStartCpID();
+}
+
+
 label volBSplinesBase::findBoxID(const label cpI) const
 {
     const labelList startCPID(getStartCpID());
@@ -197,6 +203,33 @@ label volBSplinesBase::findBoxID(const label cpI) const
         << "Invalid control point ID " << cpI << endl
         << exit(FatalError);
     return -1;
+}
+
+
+Vector<label> volBSplinesBase::decomposeDV(const label varID) const
+{
+    Vector<label> decomposed;
+    labelList startVarID = getStartVarID();
+    label boxID(-1);
+    for (label iBox = 0; iBox < startVarID.size() - 1 ; ++iBox)
+    {
+        if (varID >= startVarID[iBox] && varID < startVarID[iBox + 1])
+        {
+            boxID = iBox;
+            break;
+        }
+    }
+    const label localVarID = varID - startVarID[boxID];
+    decomposed.x() = boxID;
+    decomposed.y() = localVarID/3;
+    decomposed.z() = localVarID%3;
+    DebugInfo
+        << "varID " << varID
+        << " belongs to box " << decomposed.x()
+        << " cpLocal " << decomposed.y()
+        << " dir " << decomposed.z()
+        << endl;
+    return decomposed;
 }
 
 
@@ -240,6 +273,43 @@ Foam::scalar Foam::volBSplinesBase::computeMaxBoundaryDisplacement
     }
 
     return maxDisplacement;
+}
+
+
+Foam::tmp<vectorField> Foam::volBSplinesBase::computeBoundaryDisplacement
+(
+    const vectorField& controlPointsMovement,
+    const labelList& patchesToBeMoved
+)
+{
+    auto tdisplacement(tmp<vectorField>::New(mesh_.nPoints(), Zero));
+    vectorField& displacement = tdisplacement.ref();
+
+    label pastControlPoints(0);
+    forAll(volume_, iNURB)
+    {
+        const label nb(volume_[iNURB].getControlPoints().size());
+        vectorField localControlPointsMovement(nb, Zero);
+
+        // Set localControlPointsMovement
+        forAll(localControlPointsMovement, iCPM)
+        {
+            localControlPointsMovement[iCPM] =
+                controlPointsMovement[pastControlPoints + iCPM];
+        }
+
+        displacement +=
+            volume_[iNURB].computeNewBoundaryPoints
+            (
+                localControlPointsMovement,
+                patchesToBeMoved
+            )
+          - mesh_.points();
+
+        pastControlPoints += nb;
+    }
+
+    return tdisplacement;
 }
 
 

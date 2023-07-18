@@ -103,14 +103,13 @@ adjointManagers
 
 optimisation
 {
-    sensitivities
+    designVariables
     {
-        type              surfacePoints;
-        patches           (pressure suction);
+        sensitivityType surfacePoints;
+        patches         (pressure suction);
         includeSurfaceArea  false;
         includeDistance     true;
         includeMeshMovement true;
-        includeObjectiveContribution true;
         writeAllSurfaceFiles         true;
         adjointMeshMovementSolver
         {

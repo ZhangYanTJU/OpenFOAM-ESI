@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -159,9 +159,9 @@ public:
         }
 
         //- Return the turbulence viscosity
-        virtual const volScalarField& nut() const
+        virtual const tmp<volScalarField> nut() const
         {
-            return primalVars_.RASModelVariables()().nutRef();
+            return primalVars_.RASModelVariables()().nut();
         }
 
         //- Return the effective viscosity
@@ -178,9 +178,8 @@ public:
                 tmp<volScalarField>::New
                 (
                     "nuEff",
-                    lamTrans.nu()() + turbVars().nutRef()
+                    lamTrans.nu() + turbVars().nut()
                 );
-            //return primalVars_.turbulence()().nuEff();
         }
 
         //- Return the effective viscosity on a given patch
@@ -193,11 +192,7 @@ public:
             const autoPtr<incompressible::RASModelVariables>&
                 turbVars = primalVars_.RASModelVariables();
 
-            return
-                (
-                    lamTrans.nu()().boundaryField()[patchI]
-                  + turbVars().nutRef().boundaryField()[patchI]
-                );
+            return (lamTrans.nu(patchI) + turbVars().nut(patchI));
         }
 
         //- Return the effective stress tensor including the laminar stress

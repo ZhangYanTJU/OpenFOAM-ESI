@@ -110,4 +110,10 @@ inline bool Foam::solverControl::average() const
 }
 
 
+inline const Foam::solver& Foam::solverControl::getSolver() const
+{
+    return solver_;
+}
+
+
 // ************************************************************************* //

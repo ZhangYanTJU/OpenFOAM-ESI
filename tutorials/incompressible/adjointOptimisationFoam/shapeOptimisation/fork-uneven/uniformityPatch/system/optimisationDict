@@ -93,24 +93,17 @@ adjointManagers
 
 optimisation
 {
-    optimisationType
+    designVariables
     {
-        type             shapeOptimisation;
-        writeEachMesh    true;
-    }
-    sensitivities
-    {
-        type            volumetricBSplinesFI;
+        type            shape;
+        shapeType       volumetricBSplines;
+        sensitivityType shapeFI;
         patches         (upperWall lowerWall middleWall);
+        maxInitChange   1.e-3;
     }
     updateMethod
     {
         method  conjugateGradient;
-    }
-    meshMovement
-    {
-        type                   volumetricBSplines;
-        maxAllowedDisplacement 1.e-3;
     }
 }
 

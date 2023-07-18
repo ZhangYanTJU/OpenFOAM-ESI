@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -141,6 +141,30 @@ inline volScalarField& RASModelVariables::nutRef()
 }
 
 
+inline tmp<volScalarField> RASModelVariables::nut() const
+{
+    if (hasNut())
+    {
+        return tmp<volScalarField>(nutRef());
+    }
+
+    return
+        tmp<volScalarField>::New
+        (
+            IOobject
+            (
+                "dummylaminarNut",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_,
+            dimensionedScalar(dimViscosity, Zero)
+        );
+}
+
+
 inline const volScalarField& RASModelVariables::d() const
 {
     return distPtr_.cref();
@@ -150,6 +174,53 @@ inline const volScalarField& RASModelVariables::d() const
 inline volScalarField& RASModelVariables::d()
 {
     return distPtr_.ref();
+}
+
+
+inline tmp<scalarField> RASModelVariables::TMVar1(const label patchi) const
+{
+    if (hasTMVar1())
+    {
+        return TMVar1().boundaryField()[patchi];
+    }
+
+    return tmp<scalarField>::New(mesh_.boundary()[patchi].size(), Zero);
+}
+
+
+inline tmp<scalarField> RASModelVariables::TMVar2(const label patchi) const
+{
+    if (hasTMVar2())
+    {
+        return TMVar2().boundaryField()[patchi];
+    }
+
+    return tmp<scalarField>::New(mesh_.boundary()[patchi].size(), Zero);
+}
+
+
+inline tmp<scalarField> RASModelVariables::nut(const label patchi) const
+{
+    if (hasNut())
+    {
+        return nutRef().boundaryField()[patchi];
+    }
+
+    return tmp<scalarField>::New(mesh_.boundary()[patchi].size(), Zero);
+}
+
+
+inline tmp<fvPatchScalarField>
+RASModelVariables::nutPatchField(const label patchi) const
+{
+    if (hasNut())
+    {
+        return nutRef().boundaryField()[patchi];
+    }
+
+    // Using dummy internalField
+    return
+        tmp<fvPatchScalarField>::New(mesh_.boundary()[patchi], mesh_.V(), Zero);
 }
 
 

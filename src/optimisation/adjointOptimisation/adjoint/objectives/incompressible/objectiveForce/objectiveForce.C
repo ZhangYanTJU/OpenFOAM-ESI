@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019, 2022 PCOpt/NTUA
-    Copyright (C) 2013-2019, 2022 FOSS GP
+    Copyright (C) 2007-2023, 2022 PCOpt/NTUA
+    Copyright (C) 2013-2023, 2022 FOSS GP
     Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -216,7 +216,7 @@ void objectiveForce::update_dxdbMultiplier()
     tgradp.clear();
 
     // Term coming from stresses
-    tmp<volScalarField> tnuEff = lamTransp.nu() + turbVars->nutRef();
+    tmp<volScalarField> tnuEff = lamTransp.nu() + turbVars->nut();
     tmp<volSymmTensorField> tstress = tnuEff*twoSymm(tgradU);
     const volSymmTensorField& stress = tstress.cref();
     autoPtr<volVectorField> ptemp
@@ -260,14 +260,14 @@ void objectiveForce::update_boundarydJdGradU()
     const autoPtr<incompressible::RASModelVariables>& turbVars =
         vars_.RASModelVariables();
     const singlePhaseTransportModel& lamTransp = vars_.laminarTransport();
-    volScalarField nuEff(lamTransp.nu() + turbVars->nutRef());
+    volScalarField nuEff(lamTransp.nu() + turbVars->nut());
     for (const label patchI : forcePatches_)
     {
         const fvPatch& patch = mesh_.boundary()[patchI];
         const vectorField& Sf = patch.Sf();
         bdJdGradUPtr_()[patchI] =
           - nuEff.boundaryField()[patchI]
-           *dev(forceDirection_*Sf + Sf*forceDirection_);
+           *dev(forceDirection_*Sf + Sf*forceDirection_)/denom();
     }
 }
 

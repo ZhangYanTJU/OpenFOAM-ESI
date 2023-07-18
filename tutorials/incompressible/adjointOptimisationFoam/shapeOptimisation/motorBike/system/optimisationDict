@@ -106,15 +106,13 @@ adjointManagers
 
 optimisation
 {
-    optimisationType
+    designVariables
     {
-        type             shapeOptimisation;
-        writeEachMesh    true;
-    }
-    sensitivities
-    {
-        type     volumetricBSplinesFI;
-        patches  (motorBikeGroup);
+        type            shape;
+        shapeType       volumetricBSplines;
+        sensitivityType shapeFI;
+        patches         (motorBikeGroup);
+        maxInitChange   2.e-3;
     }
     updateMethod
     {
@@ -124,11 +122,6 @@ optimisation
             type    ArmijoConditions;
         }
         //eta 1; //optional
-    }
-    meshMovement
-    {
-        type                   volumetricBSplines;
-        maxAllowedDisplacement 2.e-3;
     }
 }
 

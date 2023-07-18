@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -94,6 +94,13 @@ const Foam::NURBSbasis& Foam::NURBS3DVolume::basisV() const
 const Foam::NURBSbasis& Foam::NURBS3DVolume::basisW() const
 {
     return basisW_;
+}
+
+
+inline Foam::Vector<Foam::label>
+Foam::NURBS3DVolume::nCPsPerDirection() const
+{
+    return Vector<label>(basisU_.nCPs(), basisV_.nCPs(), basisW_.nCPs());
 }
 
 
