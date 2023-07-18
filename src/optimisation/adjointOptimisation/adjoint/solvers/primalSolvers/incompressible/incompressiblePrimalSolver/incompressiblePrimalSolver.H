@@ -139,7 +139,7 @@ public:
         // Access
 
             //- Return the list of objectives assodicated with this solver
-            List<objective*> getObjectiveFunctions() const;
+            UPtrList<objective> getObjectiveFunctions() const;
 
             //- Access to the incompressible variables set
             const incompressibleVars& getIncoVars() const;

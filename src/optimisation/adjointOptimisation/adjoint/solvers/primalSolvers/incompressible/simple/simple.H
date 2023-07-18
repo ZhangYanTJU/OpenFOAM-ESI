@@ -84,7 +84,7 @@ protected:
         scalar cumulativeContErr_;
 
         //- List of objectives related to this primal solver
-        List<objective*> objectives_;
+        UPtrList<objective> objectives_;
 
 
     //- Protected Member Functions

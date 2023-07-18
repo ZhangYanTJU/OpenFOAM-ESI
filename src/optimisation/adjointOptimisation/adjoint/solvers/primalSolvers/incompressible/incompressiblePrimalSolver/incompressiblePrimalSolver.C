@@ -119,17 +119,13 @@ bool Foam::incompressiblePrimalSolver::readDict(const dictionary& dict)
 }
 
 
-Foam::List<Foam::objective*>
+Foam::UPtrList<Foam::objective>
 Foam::incompressiblePrimalSolver::getObjectiveFunctions() const
 {
-    DynamicList<objective*> objectives(10);
+    DynamicList<objective*> objectives;
 
-    auto adjointSolvers = mesh_.lookupClass<adjointSolver>();
-
-    for (adjointSolver* adjointPtr : adjointSolvers)
+    for (auto& adjoint : mesh_.sorted<adjointSolver>())
     {
-        adjointSolver& adjoint = *adjointPtr;
-
         if (adjoint.primalSolverName() == solverName_)
         {
             PtrList<objective>& managerObjectives =
@@ -137,12 +133,12 @@ Foam::incompressiblePrimalSolver::getObjectiveFunctions() const
 
             for (objective& obj : managerObjectives)
             {
-                objectives.append(&obj);
+                objectives.push_back(&obj);
             }
         }
     }
 
-    return objectives;
+    return UPtrList<objective>(objectives);
 }
 
 
