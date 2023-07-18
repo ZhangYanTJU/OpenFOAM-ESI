@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,6 +61,16 @@ Usage
             // when selectionMode=points
             points            (<point1> <point2> ... <pointN>);
 
+            // when selectionMode=movingPoints
+            movingPoints
+            (
+                <word>        <Function1<vector>>;
+                // e.g.
+                point1        <Function1<vector>>;
+                pointN        <Function1<vector>>;
+                ...
+            );
+
             // when selectionMode=geometric
             selection
             {
@@ -98,6 +108,8 @@ Usage
       cellZones     | Name of operand cellZones          | wordRes  | cndtnl | -
       points        | Set of points in global coordinate <!--
                             --> system              | vectorList | cndtnl | -
+      movingPoints  | Set of moving points in global coordinate system <!--
+                    -->                  | Function1\<vector\> | choice | -
       selection     | Dictionary of geometric selections | dict | cndtnl | -
     \endtable
 
@@ -107,11 +119,13 @@ Usage
       cellZone  | Use specified cellZone
       cellSet   | Use specified cellSet
       points    | Use cells containing a given set of points
+      movingPoints | Use cells containing a given set of moving points
       geometric | Select cells based on topoSetCellSource actions
     \endverbatim
 
     The inherited entries are elaborated in:
      - \link fvOption.H \endlink
+     - \link Function1.H \endlink
 
     The geometric selection uses topoSetCellSource to select cells.
     Any searchableSurface selections must describe a closed volume.
@@ -135,6 +149,7 @@ SourceFiles
 #include "fvMesh.H"
 #include "dictionary.H"
 #include "Time.H"
+#include "Function1.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -162,6 +177,7 @@ public:
             smCellSet,      //!< "cellSet"
             smCellZone,     //!< "cellZone"
             smPoints,       //!< "points"
+            smMovingPoints, //!< "movingPoints"
             smGeometric,    //!< "geometric"
             smCellType      //!< "overset type cells"
         };
@@ -188,6 +204,9 @@ protected:
 
         //- List of points for "points" selectionMode
         List<point> points_;
+
+        //- List of points for "movingPoints" selectionMode
+        PtrList<Function1<point>> movingPoints_;
 
         //- Dictionary entries for "geometric" (topoSetCellSource) selection
         dictionary geometricSelection_;
