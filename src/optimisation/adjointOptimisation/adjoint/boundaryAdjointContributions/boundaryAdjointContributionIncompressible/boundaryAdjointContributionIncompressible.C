@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -93,7 +93,8 @@ tmp<vectorField> boundaryAdjointContributionIncompressible::velocitySource()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdv
+            &objectiveIncompressible::boundarydJdv,
+            &objectiveIncompressible::hasBoundarydJdv
         );
     vectorField& source = tsource.ref();
 
@@ -113,7 +114,8 @@ tmp<scalarField> boundaryAdjointContributionIncompressible::pressureSource()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdvn
+            &objectiveIncompressible::boundarydJdvn,
+            &objectiveIncompressible::hasBoundarydJdvn
         );
 
     scalarField& source = tsource.ref();
@@ -138,7 +140,8 @@ boundaryAdjointContributionIncompressible::tangentVelocitySource()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdvt
+            &objectiveIncompressible::boundarydJdvt,
+            &objectiveIncompressible::hasBoundarydJdvt
         );
 
     vectorField& source = tsource.ref();
@@ -165,7 +168,8 @@ boundaryAdjointContributionIncompressible::normalVelocitySource()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdp
+            &objectiveIncompressible::boundarydJdp,
+            &objectiveIncompressible::hasBoundarydJdp
         );
 
 }
@@ -177,7 +181,8 @@ tmp<scalarField> boundaryAdjointContributionIncompressible::energySource()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdT
+            &objectiveIncompressible::boundarydJdT,
+            &objectiveIncompressible::hasBoundarydJdT
         );
 
 }
@@ -190,7 +195,8 @@ boundaryAdjointContributionIncompressible::adjointTMVariable1Source()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdTMvar1
+            &objectiveIncompressible::boundarydJdTMvar1,
+            &objectiveIncompressible::hasBoundarydJdTMVar1
         );
 
 }
@@ -203,7 +209,8 @@ boundaryAdjointContributionIncompressible::adjointTMVariable2Source()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdTMvar2
+            &objectiveIncompressible::boundarydJdTMvar2,
+            &objectiveIncompressible::hasBoundarydJdTMVar2
         );
 
 }
@@ -216,7 +223,8 @@ boundaryAdjointContributionIncompressible::dJdnut()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdnut
+            &objectiveIncompressible::boundarydJdnut,
+            &objectiveIncompressible::hasBoundarydJdnut
         );
 }
 
@@ -228,7 +236,8 @@ boundaryAdjointContributionIncompressible::dJdGradU()
         sumContributions
         (
             objectiveManager_.getObjectiveFunctions(),
-            &objectiveIncompressible::boundarydJdGradU
+            &objectiveIncompressible::boundarydJdGradU,
+            &objectiveIncompressible::hasBoundarydJdGradU
         );
 }
 
@@ -331,14 +340,10 @@ boundaryAdjointContributionIncompressible::phib() const
 }
 
 
-const fvPatchScalarField&
+tmp<fvPatchScalarField>
 boundaryAdjointContributionIncompressible::turbulentDiffusivity() const
 {
-    return
-        primalVars_.RASModelVariables()().nutRef().boundaryField()
-        [
-            patch_.index()
-        ];
+    return primalVars_.RASModelVariables()().nutPatchField(patch_.index());
 }
 
 

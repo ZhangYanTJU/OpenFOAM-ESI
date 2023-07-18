@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -34,7 +34,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(ArmijoConditions, 0);
+    defineTypeNameAndDebug(ArmijoConditions, 1);
     addToRunTimeSelectionTable
     (
         lineSearch,
@@ -49,10 +49,11 @@ namespace Foam
 Foam::ArmijoConditions::ArmijoConditions
 (
     const dictionary& dict,
-    const Time& time
+    const Time& time,
+    updateMethod& UpdateMethod
 )
 :
-    lineSearch(dict, time),
+    lineSearch(dict, time, UpdateMethod),
     c1_(coeffsDict().getOrDefault<scalar>("c1", 1.e-4))
 {}
 
@@ -61,9 +62,15 @@ Foam::ArmijoConditions::ArmijoConditions
 
 bool Foam::ArmijoConditions::converged()
 {
-    Info<< "New merit function value " << newMeritValue_ << endl;
-    Info<< "Old merit function value " << oldMeritValue_ << endl;
-    Info<< "Extrapolated merit function value "
+    DebugInfo
+        << "New merit function value " << newMeritValue_ << endl;
+    DebugInfo
+        << "Old merit function value " << oldMeritValue_ << endl;
+    DebugInfo
+        << "c1, step, directionalDeriv "
+        << c1_ << " " << step_ << " " <<directionalDeriv_
+        << endl;
+    DebugInfo<< "Extrapolated merit function value "
         << oldMeritValue_ + c1_*step_*directionalDeriv_ << endl;
     return newMeritValue_ < oldMeritValue_ + c1_*step_*directionalDeriv_;
 }

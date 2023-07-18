@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -49,9 +49,6 @@ Description
 
 #include "incompressibleAdjointSolver.H"
 #include "SIMPLEControl.H"
-#include "incompressibleVars.H"
-#include "incompressibleAdjointVars.H"
-#include "adjointSensitivityIncompressible.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -93,9 +90,6 @@ protected:
         //- Cumulative continuity error
         scalar cumulativeContErr_;
 
-        //- Sensitivity Derivatives engine
-        autoPtr<incompressible::adjointSensitivity> adjointSensitivity_;
-
 
     // Protected Member Functions
 
@@ -103,15 +97,11 @@ protected:
         //- for convenience in the rest of the class.
         incompressibleAdjointVars& allocateVars();
 
-        //- In case variable names are different than the base ones,
-        //- add extra schemes and relaxation factors to the appropriate dicts
-        //  Note: 160813: Changes in the baseline solution and fvSchemes classes
-        //  have to be made in order to add schemes in the dict at run time.
-        //  Not supported for now
-        void addExtraSchemes();
-
         //- Compute continuity errors
         void continuityErrors();
+
+        //- Accumulate the sensitivities integrand before calculating them
+        virtual void preCalculateSensitivities();
 
 
 public:
@@ -130,7 +120,8 @@ public:
             fvMesh& mesh,
             const word& managerType,
             const dictionary& dict,
-            const word& primalSolverName
+            const word& primalSolverName,
+            const word& solverName
         );
 
 
@@ -139,10 +130,6 @@ public:
 
 
     // Member Functions
-
-        //- Read dict if updated
-        virtual bool readDict(const dictionary& dict);
-
 
         // Evolution
 
@@ -167,19 +154,6 @@ public:
             //- Functions to be called before loop
             virtual void preLoop();
 
-            //- Compute sensitivities of the underlaying objectives
-            virtual void computeObjectiveSensitivities();
-
-            //- Grab a reference to the computed sensitivities
-            virtual const scalarField& getObjectiveSensitivities();
-
-            //- Clears the sensitivity field known by the adjoint solver
-            //- and zeros sensitivities constituents
-            virtual void clearSensitivities();
-
-            //- Return the base sensitivity object
-            virtual sensitivity& getSensitivityBase();
-
 
             // Source terms to be added to the adjoint equations
 
@@ -189,6 +163,7 @@ public:
                 //- Source terms for the continuity equation
                 virtual void addPressureSource(fvScalarMatrix& matrix);
 
+
             //- Update primal based quantities
             //- related to the objective functions.
             //  Also writes the objective function values to files.
@@ -196,6 +171,9 @@ public:
             //  to make sure we don't pollute the objective files with
             //  objectives of non-converged linearSearch iterations
             virtual void updatePrimalBasedQuantities();
+
+            //- Add fvOptions for TopO
+            virtual void addTopOFvOptions() const;
 
             //- Write average iteration
             virtual bool writeData(Ostream& os) const;

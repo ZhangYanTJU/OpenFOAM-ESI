@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -34,7 +34,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(LBFGS, 0);
+    defineTypeNameAndDebug(LBFGS, 1);
     addToRunTimeSelectionTable
     (
         updateMethod,
@@ -46,20 +46,27 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::LBFGS::allocateMatrices()
+void Foam::LBFGS::allocateVectors()
 {
-    // Set active design variables, if necessary
-    if (activeDesignVars_.empty())
-    {
-        activeDesignVars_ = identity(objectiveDerivatives_.size());
-    }
-
-    // Allocate vectors
     label nVars(activeDesignVars_.size());
-    for (label i = 0; i < nPrevSteps_; i++)
+    for (label i = 0; i < nPrevSteps_; ++i)
     {
-        y_.set(i, new scalarField(nVars, Zero));
-        s_.set(i, new scalarField(nVars, Zero));
+        if (!y_.get(i))
+        {
+            y_.set(i, new scalarField(nVars, Zero));
+        }
+        if (!s_.get(i))
+        {
+            s_.set(i, new scalarField(nVars, Zero));
+        }
+        if (found("y" + Foam::name(i)))
+        {
+            y_[i] = scalarField("y" + Foam::name(i), *this, nVars);
+        }
+        if (found("s" + Foam::name(i)))
+        {
+            s_[i] = scalarField("s" + Foam::name(i), *this, nVars);
+        }
     }
 }
 
@@ -87,64 +94,486 @@ void Foam::LBFGS::pivotFields(PtrList<scalarField>& list, const scalarField& f)
 }
 
 
-void Foam::LBFGS::updateVectors()
+void Foam::LBFGS::updateVectors
+(
+    const scalarField& derivatives,
+    const scalarField& derivativesOld
+)
 {
-    // Update list of y. Can only be done here since objectiveDerivatives_
-    // was not known at the end of the previous loop
-    scalarField yRecent
-        (objectiveDerivatives_ - derivativesOld_, activeDesignVars_);
-    pivotFields(y_, yRecent);
+    // Sanity checks
+    if
+    (
+        (derivatives.size() != derivativesOld.size())
+     || (derivatives.size() != designVars_().getVars().size())
+    )
+    {
+        FatalErrorInFunction
+            << "Sizes of input derivatives and design variables do not match"
+            << exit(FatalError);
+    }
+
+    // Update list of y. Can only be done here since derivatives
+    // were not known at the end of the previous cycle
+    scalarField yRecent(derivatives - derivativesOld, activeDesignVars_);
     // Update list of s.
     // correction_ holds the previous correction
     scalarField sActive(correctionOld_, activeDesignVars_);
+    applyDamping(yRecent, sActive);
+
+    pivotFields(y_, yRecent);
     pivotFields(s_, sActive);
-
-    DebugInfo
-        << "y fields" << nl << y_ << endl;
-    DebugInfo
-        << "s fields" << nl << s_ << endl;
 }
 
 
-void Foam::LBFGS::steepestDescentUpdate()
+void Foam::LBFGS::applyDamping(scalarField& y, scalarField& s)
 {
-    Info<< "Using steepest descent to update design variables" << endl;
-    correction_ = -eta_*objectiveDerivatives_;
+    const scalar sy(globalSum(s*y));
+    if (useSDamping_)
+    {
+        const scalarField Hy(invHessianVectorProduct(y, counter_ - 1));
+        const scalar yHy(globalSum(y*Hy));
+        scalar theta(1);
+        if (sy < 0.2*yHy)
+        {
+            WarningInFunction
+                << "y*s is below threshold. Using damped form" << nl
+                << "sy, yHy " << sy << " " << yHy << endl;
+
+            theta = 0.8*yHy/(yHy - sy);
+        }
+        s = theta*s + (1 - theta)*Hy;
+    }
+    else if (useYDamping_)
+    {
+        const scalarField Bs(HessianVectorProduct(s, counter_ - 1));
+        const scalar sBs(globalSum(s*Bs));
+        scalar theta(1);
+        if (sy < 0.2*sBs)
+        {
+            WarningInFunction
+                << "y*s is below threshold. Using damped form" << nl
+                << "sy, sBs " << sy << " " << sBs << endl;
+
+            theta = 0.8*sBs/(sBs - sy);
+        }
+        y = theta*y + (1 - theta)*Bs;
+    }
+    DebugInfo
+        << "Curvature index (sy) is " << sy << endl;
 }
 
 
-void Foam::LBFGS::LBFGSUpdate()
+Foam::tmp<Foam::scalarField>
+Foam::LBFGS::invHessianVectorProduct(const scalarField& vector)
 {
-    // L-BFGS two loop recursion
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~
-    label nSteps(min(counter_, nPrevSteps_));
-    label nLast(nSteps - 1);
-    scalarField q(objectiveDerivatives_, activeDesignVars_);
-    scalarField a(nSteps, Zero);
-    scalarField r(nSteps, Zero);
-    for (label i = nLast; i > -1; --i)
+    return invHessianVectorProduct(vector, counter_);
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::LBFGS::invHessianVectorProduct
+(
+    const scalarField& vector,
+    const label counter
+)
+{
+    // Sanity checks
+    tmp<scalarField> tq(tmp<scalarField>::New(activeDesignVars_.size(), Zero));
+    scalarField& q = tq.ref();
+    if (vector.size() == designVars_().getVars().size())
     {
-        r[i] = 1./globalSum(y_[i]*s_[i]);
-        a[i] = r[i]*globalSum(s_[i]*q);
-        q -= a[i]*y_[i];
+        q.map(vector, activeDesignVars_);
+    }
+    else if (vector.size() == activeDesignVars_.size())
+    {
+        q = vector;
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Size of input vector is equal to neither the number of "
+            << " design variabes nor that of the active design variables"
+            << exit(FatalError);
     }
 
-    scalar gamma =
-        globalSum(y_[nLast]*s_[nLast])/globalSum(y_[nLast]*y_[nLast]);
-    q *= gamma;
-
-    scalarField b(activeDesignVars_.size(), Zero);
-    for (label i = 0; i < nSteps; ++i)
+    if (counter != 0)
     {
-        b = r[i]*globalSum(y_[i]*q);
-        q += s_[i]*(a[i] -b);
+        // L-BFGS two loop recursion
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~
+        label nSteps(min(counter, nPrevSteps_));
+        label nLast(nSteps - 1);
+        scalarField a(nSteps, 0.);
+        scalarField r(nSteps, 0.);
+        for (label i = nLast; i > -1; --i)
+        {
+          //Info << "Y " << y_[i] << endl;
+          //Info << "S " << s_[i] << endl;
+            r[i] = 1./globalSum(y_[i]*s_[i]);
+            a[i] = r[i]*globalSum(s_[i]*q);
+            q -= a[i]*y_[i];
+        }
+
+        scalar gamma =
+            globalSum(y_[nLast]*s_[nLast])/globalSum(y_[nLast]*y_[nLast]);
+        q *= gamma;
+
+        scalarField b(activeDesignVars_.size(), Zero);
+        for (label i = 0; i < nSteps; ++i)
+        {
+            b = r[i]*globalSum(y_[i]*q);
+            q += s_[i]*(a[i] - b);
+        }
     }
 
-    // Update correction
-    forAll(activeDesignVars_, varI)
+    return tq;
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::LBFGS::HessianVectorProduct(const scalarField& vector)
+{
+    return HessianVectorProduct(vector, counter_);
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::LBFGS::HessianVectorProduct
+(
+    const scalarField& vector,
+    const label counter
+)
+{
+    // Sanity checks
+    tmp<scalarField> tq(tmp<scalarField>::New(activeDesignVars_.size(), Zero));
+    scalarField& q = tq.ref();
+
+    scalarField source;
+    if (vector.size() == designVars_().getVars().size())
     {
-        correction_[activeDesignVars_[varI]] = -etaHessian_*q[varI];
+        source = scalarField(vector, activeDesignVars_);
     }
+    else if (vector.size() == activeDesignVars_.size())
+    {
+        source = vector;
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Size of input vector is equal to neither the number of "
+            << " design variabes nor that of the active design variables"
+            << exit(FatalError);
+    }
+
+    if (counter != 0)
+    {
+        const label nSteps(min(counter, nPrevSteps_));
+        const label nLast(nSteps - 1);
+        const scalar delta =
+            globalSum(y_[nLast]*y_[nLast])/globalSum(y_[nLast]*s_[nLast]);
+
+        // Product of the last matrix on the right with the input vector
+        scalarField SKsource(2*nSteps, Zero);
+        for(label i = 0; i < nSteps; ++i)
+        {
+            SKsource[i] = delta*globalSum(s_[i]*source);
+            SKsource[i + nSteps] = globalSum(y_[i]*source);
+        }
+
+        // Form the middle matrix to be inverted
+        SquareMatrix<scalar> M(2*nSteps, 2*nSteps, Zero);
+        for (label i = 0; i < nSteps; ++i)
+        {
+            // Lower diagonal part
+            M[nSteps + i][nSteps + i] = - globalSum(s_[i]*y_[i]);
+            // Upper left part
+            for (label j = 0; j < nSteps; ++j)
+            {
+                M[i][j] = delta*globalSum(s_[i]*s_[j]);
+            }
+        }
+
+        // Upper right and lower left parts
+        for (label j = 0; j < nSteps; ++j)
+        {
+            for (label i = j + 1; i < nSteps; ++i)
+            {
+                scalar value = globalSum(s_[i]*y_[j]);
+                M[i][j + nSteps] = value;
+                M[j + nSteps][i] = value;
+            }
+        }
+        SquareMatrix<scalar> invM(inv(M));
+
+        // Product of the inverted middle matrix with the right vector
+        scalarField invMSource(rightMult(invM, SKsource));
+
+        // Left vector multiplication with the rest of contributions
+        // vag: parallel comms
+        forAll(q, i)
+        {
+            for (label j = 0; j < nSteps; ++j)
+            {
+                q[i] -=
+                    delta*s_[j][i]*invMSource[j]
+                  + y_[j][i]*invMSource[j + nSteps];
+            }
+        }
+
+        q += delta*source;
+    }
+    else
+    {
+        q = source;
+    }
+
+    return tq;
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::LBFGS::HessianDiag()
+{
+    // Sanity checks
+    const label n(activeDesignVars_.size());
+    tmp<scalarField> tdiag(tmp<scalarField>::New(n, 1));
+    scalarField& diag = tdiag.ref();
+
+    if (counter_ != 0)
+    {
+        const label nSteps(min(counter_, nPrevSteps_));
+        const label nLast(nSteps - 1);
+        const scalar delta =
+            globalSum(y_[nLast]*y_[nLast])/globalSum(y_[nLast]*s_[nLast]);
+        diag *= delta;
+
+        // Form the middle matrix to be inverted
+        SquareMatrix<scalar> M(2*nSteps, 2*nSteps, Zero);
+        for (label i = 0; i < nSteps; ++i)
+        {
+            // Lower diagonal part
+            M[nSteps + i][nSteps + i] = - globalSum(s_[i]*y_[i]);
+            // Upper left part
+            for (label j = 0; j < nSteps; ++j)
+            {
+                M[i][j] = delta*globalSum(s_[i]*s_[j]);
+            }
+        }
+
+        // Upper right and lower left parts
+        for (label j = 0; j < nSteps; ++j)
+        {
+            for (label i = j + 1; i < nSteps; ++i)
+            {
+                scalar value = globalSum(s_[i]*y_[j]);
+                M[i][j + nSteps] = value;
+                M[j + nSteps][i] = value;
+            }
+        }
+
+        // Invert the matrix
+        SquareMatrix<scalar> invM(inv(M));
+
+        // Product of the inverse of the middle matrix with the right vector
+        List<scalarField> MR(2*nSteps, scalarField(n, Zero));
+        for(label k = 0; k < n; ++k)
+        {
+            for(label i = 0; i < 2*nSteps; ++i)
+            {
+                for(label j = 0; j < nSteps; ++j)
+                {
+                    MR[i][k] +=
+                        invM[i][j]*delta*s_[j][k]
+                      + invM[i][j + nSteps]*y_[j][k];
+                }
+            }
+        }
+
+        // Part of the Hessian diagonal computed by the multiplication
+        // of the above matrix with the left matrix of the recursive Hessian
+        // reconstruction
+        for(label k = 0; k < n; ++k)
+        {
+            for(label j = 0; j < nSteps; ++j)
+            {
+                diag[k] -=
+                    delta*s_[j][k]*MR[j][k] + y_[j][k]*MR[j + nSteps][k];
+            }
+        }
+    }
+
+    return tdiag;
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::LBFGS::SR1HessianVectorProduct(const scalarField& vector)
+{
+    return SR1HessianVectorProduct(vector, counter_);
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::LBFGS::SR1HessianVectorProduct
+(
+    const scalarField& vector,
+    const label counter
+)
+{
+    // Sanity checks
+    tmp<scalarField> tq(tmp<scalarField>::New(activeDesignVars_.size(), Zero));
+    scalarField& q = tq.ref();
+
+    scalarField source;
+    if (vector.size() == designVars_().getVars().size())
+    {
+        source = scalarField(vector, activeDesignVars_);
+    }
+    else if (vector.size() == activeDesignVars_.size())
+    {
+        source = vector;
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Size of input vector is equal to neither the number of "
+            << " design variabes nor that of the active design variables"
+            << exit(FatalError);
+    }
+
+    if (counter != 0)
+    {
+        const label nSteps(min(counter, nPrevSteps_));
+        const label nLast(nSteps - 1);
+        const scalar delta =
+            globalSum(y_[nLast]*y_[nLast])/globalSum(y_[nLast]*s_[nLast]);
+
+        // Product of the last matrix on the right with the input vector
+        scalarField YBSsource(nSteps, Zero);
+        for(label i = 0; i < nSteps; ++i)
+        {
+            YBSsource[i] = globalSum((y_[i] - delta*s_[i])*source);
+        }
+
+        // Form the middle matrix to be inverted
+        SquareMatrix<scalar> M(nSteps, nSteps, Zero);
+        for (label i = 0; i < nSteps; ++i)
+        {
+            // D part
+            M[i][i] += globalSum(s_[i]*y_[i]);
+            // (S^T)BS part
+            for (label j = 0; j < nSteps; ++j)
+            {
+                M[i][j] -= delta*globalSum(s_[i]*s_[j]);
+            }
+        }
+
+        // Upper right and lower left parts
+        for (label j = 0; j < nSteps; ++j)
+        {
+            for (label i = j + 1; i < nSteps; ++i)
+            {
+                scalar value = globalSum(s_[i]*y_[j]);
+                M[i][j] += value;
+                M[j][i] += value;
+            }
+        }
+        SquareMatrix<scalar> invM(inv(M));
+
+        // Product of the inverted middle matrix with the right vector
+        scalarField invMSource(rightMult(invM, YBSsource));
+
+        // Left vector multiplication with the rest of contributions
+        // vag: parallel comms
+        forAll(q, i)
+        {
+            for (label j = 0; j < nSteps; ++j)
+            {
+                q[i] += (y_[j][i] - delta*s_[j][i])*invMSource[j];
+            }
+        }
+
+        q += delta*source;
+    }
+    else
+    {
+        q = source;
+    }
+
+    return tq;
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::LBFGS::SR1HessianDiag()
+{
+    // Sanity checks
+    const label n(activeDesignVars_.size());
+    tmp<scalarField> tdiag(tmp<scalarField>::New(n, 1));
+    scalarField& diag = tdiag.ref();
+
+    if (counter_ != 0)
+    {
+        const label nSteps(min(counter_, nPrevSteps_));
+        const label nLast(nSteps - 1);
+        const scalar delta =
+            globalSum(y_[nLast]*y_[nLast])/globalSum(y_[nLast]*s_[nLast]);
+        diag *= delta;
+
+        // Form the middle matrix to be inverted
+        SquareMatrix<scalar> M(nSteps, nSteps, Zero);
+        for (label i = 0; i < nSteps; ++i)
+        {
+            // D part
+            M[i][i] += globalSum(s_[i]*y_[i]);
+            // (S^T)BS part
+            for (label j = 0; j < nSteps; ++j)
+            {
+                M[i][j] -= delta*globalSum(s_[i]*s_[j]);
+            }
+        }
+
+        // Upper right and lower left parts
+        for (label j = 0; j < nSteps; ++j)
+        {
+            for (label i = j + 1; i < nSteps; ++i)
+            {
+                scalar value = globalSum(s_[i]*y_[j]);
+                M[i][j] += value;
+                M[j][i] += value;
+            }
+        }
+        SquareMatrix<scalar> invM(inv(M));
+
+        // Product of the inverse of the middle matrix with the right vector
+        List<scalarField> MR(nSteps, scalarField(n, Zero));
+        for(label k = 0; k < n; ++k)
+        {
+            for(label i = 0; i < nSteps; ++i)
+            {
+                for(label j = 0; j < nSteps; ++j)
+                {
+                    MR[i][k] += invM[i][j]*(y_[j][k] - delta*s_[j][k]);
+                }
+            }
+        }
+
+        // Part of the Hessian diagonal computed by the multiplication
+        // of the above matrix with the left matrix of the recursive Hessian
+        // reconstruction
+        for(label k = 0; k < n; ++k)
+        {
+            for(label j = 0; j < nSteps; ++j)
+            {
+                diag[k] += (y_[j][k] - delta*s_[j][k])*MR[j][k];
+            }
+        }
+    }
+
+    return tdiag;
+}
+
+
+void Foam::LBFGS::updateHessian()
+{
+    updateVectors(objectiveDerivatives_, derivativesOld_);
 }
 
 
@@ -154,12 +583,20 @@ void Foam::LBFGS::update()
     // matrix
     if (counter_ < nSteepestDescent_)
     {
-        steepestDescentUpdate();
+        Info<< "Using steepest descent to update design variables" << endl;
+        for (const label varI : activeDesignVars_)
+        {
+            correction_[varI] = -eta_*objectiveDerivatives_[varI];
+        }
     }
     // else use LBFGS formula to update the design variables
     else
     {
-        LBFGSUpdate();
+        scalarField q(invHessianVectorProduct(objectiveDerivatives_));
+        forAll(activeDesignVars_, varI)
+        {
+            correction_[activeDesignVars_[varI]] = -etaHessian_*q[varI];
+        }
     }
 
     // Store fields for the next iteration
@@ -168,106 +605,42 @@ void Foam::LBFGS::update()
 }
 
 
-void Foam::LBFGS::readFromDict()
-{
-    if (optMethodIODict_.headerOk())
-    {
-        optMethodIODict_.readEntry("y", y_);
-        optMethodIODict_.readEntry("s", s_);
-        optMethodIODict_.readEntry("derivativesOld", derivativesOld_);
-        optMethodIODict_.readEntry("counter", counter_);
-        optMethodIODict_.readEntry("eta", eta_);
-        optMethodIODict_.readEntry("correctionOld", correctionOld_);
-
-        correction_ = scalarField(correctionOld_.size(), Zero);
-
-        if (activeDesignVars_.empty())
-        {
-            activeDesignVars_ = identity(derivativesOld_.size());
-        }
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::LBFGS::LBFGS
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    autoPtr<designVariables>& designVars,
+    const label nConstraints,
+    const word& type
 )
 :
-    updateMethod(mesh, dict),
-
-    // Construct null matrix since we dont know the dimension yet
-    etaHessian_
-    (
-        coeffsDict().getOrDefault<scalar>("etaHessian", 1)
-    ),
-    nSteepestDescent_
-    (
-        coeffsDict().getOrDefault<label>("nSteepestDescent", 1)
-    ),
-    activeDesignVars_(0),
-    nPrevSteps_
-    (
-        coeffsDict().getOrDefault<label>("nPrevSteps", 10)
-    ),
+    quasiNewton(mesh, dict, designVars, nConstraints, type),
+    nPrevSteps_(coeffsDict(type).getOrDefault<label>("nPrevSteps", 10)),
     y_(nPrevSteps_),
     s_(nPrevSteps_),
-    derivativesOld_(0),
-    counter_(Zero)
+    useSDamping_(coeffsDict(type).getOrDefault<bool>("useSDamping", false)),
+    useYDamping_(coeffsDict(type).getOrDefault<bool>("useYDamping", false))
 {
-    if
-    (
-        !coeffsDict().readIfPresent("activeDesignVariables", activeDesignVars_)
-    )
-    {
-        // If not, all available design variables will be used. Number is not
-        // know at the moment
-        Info<< "\t Did not find explicit definition of active design variables. "
-            << "Treating all available ones as active " << endl;
-    }
-
-    // Read old Hessian, correction and derivatives, if present
-    readFromDict();
+    // Allocate the correct sizes for y and s
+    allocateVectors();
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::LBFGS::computeCorrection()
+bool Foam::LBFGS::writeData(Ostream& os) const
 {
-    if (counter_ == 0)
+    // Write each component of y and s as a separate field so as to allow for
+    // reading them also in binary, since PtrList does not support this
+    forAll(y_, i)
     {
-        allocateMatrices();
-    }
-    else
-    {
-        updateVectors();
+        y_[i].writeEntry(word("y" + Foam::name(i)), os);
+        s_[i].writeEntry(word("s" + Foam::name(i)), os);
     }
 
-    update();
-    ++counter_;
-}
-
-
-void Foam::LBFGS::updateOldCorrection(const scalarField& oldCorrection)
-{
-    updateMethod::updateOldCorrection(oldCorrection);
-    correctionOld_ = oldCorrection;
-}
-
-
-void Foam::LBFGS::write()
-{
-    optMethodIODict_.add<PtrList<scalarField>>("y", y_, true);
-    optMethodIODict_.add<PtrList<scalarField>>("s", s_, true);
-    optMethodIODict_.add<scalarField>("derivativesOld", derivativesOld_, true);
-    optMethodIODict_.add<scalarField>("correctionOld", correctionOld_, true);
-    optMethodIODict_.add<label>("counter", counter_, true);
-
-    updateMethod::write();
+    return quasiNewton::writeData(os);
 }
 
 

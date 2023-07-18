@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2021 PCOpt/NTUA
+    Copyright (C) 2013-2021 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -42,7 +42,10 @@ SourceFiles
 #ifndef constrainedOptimisationMethod_H
 #define constrainedOptimisationMethod_H
 
-#include "updateMethod.H"
+#include "runTimeSelectionTables.H"
+#include "fvMesh.H"
+#include "dictionary.H"
+#include "designVariables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,8 +57,6 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class constrainedOptimisationMethod
-:
-    public updateMethod
 {
 private:
 
@@ -87,9 +88,12 @@ public:
             dictionary,
             (
                 const fvMesh& mesh,
-                const dictionary& dict
+                const dictionary& dict,
+                autoPtr<designVariables>& designVars,
+                const label nConstraints,
+                const word& type
             ),
-            (mesh, dict)
+            (mesh, dict, designVars, nConstraints, type)
         );
 
 
@@ -99,18 +103,15 @@ public:
         constrainedOptimisationMethod
         (
             const fvMesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            autoPtr<designVariables>& designVars,
+            const label nConstraints,
+            const word& type
         );
 
 
     //- Destructor
     virtual ~constrainedOptimisationMethod() = default;
-
-
-    // Member Functions
-
-       //- Return the correction of the design variables
-       virtual void computeCorrection()=0;
 };
 
 

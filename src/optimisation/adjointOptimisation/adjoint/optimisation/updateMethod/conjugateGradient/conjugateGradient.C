@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2021 PCOpt/NTUA
+    Copyright (C) 2013-2021 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -44,72 +44,23 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-void Foam::conjugateGradient::allocateFields()
-{
-    // Set active design variables, if necessary
-    if (activeDesignVars_.empty())
-    {
-        activeDesignVars_ = identity(objectiveDerivatives_.size());
-    }
-
-    // Allocate old fields
-    dxOld_ = scalarField(activeDesignVars_.size(), Zero);
-    sOld_ = scalarField(activeDesignVars_.size(), Zero);
-}
-
-
-void Foam::conjugateGradient::readFromDict()
-{
-    if (optMethodIODict_.headerOk())
-    {
-        optMethodIODict_.readEntry("dxOld", dxOld_);
-        optMethodIODict_.readEntry("sOld", sOld_);
-        optMethodIODict_.readEntry("counter", counter_);
-        optMethodIODict_.readEntry("eta", eta_);
-
-        label nDVs = optMethodIODict_.get<label>("nDVs");
-        correction_ = scalarField(nDVs, Zero);
-
-        if (activeDesignVars_.empty())
-        {
-            activeDesignVars_ = identity(nDVs);
-        }
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::conjugateGradient::conjugateGradient
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    autoPtr<designVariables>& designVars,
+    const label nConstraints,
+    const word& type
 )
 :
-    updateMethod(mesh, dict),
+    updateMethod(mesh, dict, designVars, nConstraints, type),
 
-    activeDesignVars_(0),
-    dxOld_(0),
-    sOld_(0),
-    counter_(0),
-    betaType_
-    (
-        coeffsDict().getOrDefault<word>("betaType", "FletcherReeves")
-    )
+    dxOld_(readOrZeroField("dxOld", activeDesignVars_.size())),
+    sOld_(readOrZeroField("sOld", activeDesignVars_.size())),
+    betaType_(coeffsDict(type).getOrDefault<word>("betaType", "FletcherReeves"))
 {
-    if
-    (
-        !coeffsDict().readIfPresent("activeDesignVariables", activeDesignVars_)
-    )
-    {
-        // If not, all available design variables will be used.
-        // Number is not know at the moment
-        Info<< "\t Did not find explicit definition of active design variables. "
-            << "Treating all available ones as active " << endl;
-    }
-
     // Check if beta type is valid
     if
     (
@@ -124,9 +75,6 @@ Foam::conjugateGradient::conjugateGradient
            << nl << nl
            << exit(FatalError);
     }
-
-    // Read old dx and s, if present
-    readFromDict();
 }
 
 
@@ -136,17 +84,18 @@ void Foam::conjugateGradient::computeCorrection()
 {
     if (counter_ == 0)
     {
-        allocateFields();
-
         Info<< "Using steepest descent for the first iteration" << endl;
-        correction_ = -eta_*objectiveDerivatives_;
+        for (const label varI : activeDesignVars_)
+        {
+            correction_[varI] = -eta_*objectiveDerivatives_[varI];
+        }
 
         dxOld_.map(-objectiveDerivatives_, activeDesignVars_);
         sOld_ = dxOld_;
     }
     else
     {
-        scalarField dx = scalarField(activeDesignVars_.size(), Zero);
+        scalarField dx(activeDesignVars_.size(), Zero);
         dx.map(-objectiveDerivatives_, activeDesignVars_);
 
         scalar beta(Zero);
@@ -200,14 +149,12 @@ void Foam::conjugateGradient::updateOldCorrection
 }
 
 
-void Foam::conjugateGradient::write()
+bool Foam::conjugateGradient::writeData(Ostream& os) const
 {
-    optMethodIODict_.add<scalarField>("dxOld", dxOld_, true);
-    optMethodIODict_.add<scalarField>("sOld", sOld_, true);
-    optMethodIODict_.add<label>("counter", counter_, true);
-    optMethodIODict_.add<label>("nDVs", objectiveDerivatives_.size(), true);
+    dxOld_.writeEntry("dxOld", os);
+    sOld_.writeEntry("sOld", os);
 
-    updateMethod::write();
+    return updateMethod::writeData(os);
 }
 
 

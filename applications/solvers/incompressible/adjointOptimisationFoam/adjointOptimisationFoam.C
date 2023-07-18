@@ -64,13 +64,13 @@ int main(int argc, char *argv[])
         {
             // Solve all primal equations
             om.solvePrimalEquations();
+
+            // Clear sensitivities
+            om.clearSensitivities();
+
+            // Solve all adjoint equations
+            om.solveAdjointEquations();
         }
-
-        // Update primal-based quantities of the adjoint solvers
-        om.updatePrimalBasedQuantities();
-
-        // Solve all adjoint equations
-        om.solveAdjointEquations();
     }
 
     Info<< "End\n" << endl;

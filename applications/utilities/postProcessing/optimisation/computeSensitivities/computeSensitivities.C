@@ -60,7 +60,8 @@ int main(int argc, char *argv[])
         forAll(adjointSolvers, asI)
         {
             adjointSolvers[asI].getObjectiveManager().updateAndWrite();
-            adjointSolvers[asI].computeObjectiveSensitivities();
+            adjointSolvers[asI].
+                computeObjectiveSensitivities(om.getDesignVariables());
         }
     }
 

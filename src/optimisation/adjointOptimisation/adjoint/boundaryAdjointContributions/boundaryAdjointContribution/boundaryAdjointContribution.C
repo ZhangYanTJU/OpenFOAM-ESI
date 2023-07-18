@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -28,6 +28,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "boundaryAdjointContribution.H"
+#include "fvPatchFieldsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -138,6 +139,13 @@ tmp<scalarField> boundaryAdjointContribution::TMVariable2()
     return tmp<scalarField>::New(patch_.size(), Zero);
 }
 
+
+tmp<fvPatchScalarField>
+boundaryAdjointContribution::turbulentDiffusivity() const
+{
+    NotImplemented;
+    return tmp<fvPatchScalarField>(nullptr);
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

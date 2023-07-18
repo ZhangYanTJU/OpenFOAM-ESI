@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2022 PCOpt/NTUA
-    Copyright (C) 2014-2022 FOSS GP
+    Copyright (C) 2014-2023 PCOpt/NTUA
+    Copyright (C) 2014-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -2173,7 +2173,7 @@ void adjointkOmegaSST::correct()
 
     // Sources from the objective should be added after the boundary
     // manipulation
-    objectiveManager_.addTMEqn2Source(waEqn.ref());
+    objectiveManager_.addSource(waEqn.ref());
     waEqn.ref().solve();
 
     // Adjoint Turbulent kinetic energy equation
@@ -2195,7 +2195,7 @@ void adjointkOmegaSST::correct()
     kaEqn.ref().boundaryManipulate(ka().boundaryFieldRef());
     addWallFunctionTerms(kaEqn.ref(), dR_dnut);
     // Add sources from the objective functions
-    objectiveManager_.addTMEqn1Source(kaEqn.ref());
+    objectiveManager_.addSource(kaEqn.ref());
 
     kaEqn.ref().solve();
 

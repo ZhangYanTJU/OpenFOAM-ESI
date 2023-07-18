@@ -46,10 +46,11 @@ Foam::primalSolver::primalSolver
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 :
-    solver(mesh, managerType, dict)
+    solver(mesh, managerType, dict, solverName)
 {}
 
 
@@ -59,7 +60,8 @@ Foam::autoPtr<Foam::primalSolver> Foam::primalSolver::New
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 {
     const word solverType(dict.get<word>("type"));
@@ -77,7 +79,8 @@ Foam::autoPtr<Foam::primalSolver> Foam::primalSolver::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<primalSolver>(ctorPtr(mesh, managerType, dict));
+    return
+        autoPtr<primalSolver>(ctorPtr(mesh, managerType, dict, solverName));
 }
 
 

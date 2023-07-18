@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2021 PCOpt/NTUA
+    Copyright (C) 2013-2021 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -49,10 +49,13 @@ namespace Foam
 Foam::steepestDescent::steepestDescent
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    autoPtr<designVariables>& designVars,
+    const label nConstraints,
+    const word& type
 )
 :
-    updateMethod(mesh, dict)
+    updateMethod(mesh, dict, designVars, nConstraints, type)
 {}
 
 
@@ -60,7 +63,10 @@ Foam::steepestDescent::steepestDescent
 
 void Foam::steepestDescent::computeCorrection()
 {
-    correction_ = -eta_*objectiveDerivatives_;
+    for (const label varI : activeDesignVars_)
+    {
+        correction_[varI] = -eta_*objectiveDerivatives_[varI];
+    }
 }
 
 

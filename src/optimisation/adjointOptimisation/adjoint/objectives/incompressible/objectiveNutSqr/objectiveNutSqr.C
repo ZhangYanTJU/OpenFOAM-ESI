@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "objectiveNutSqr.H"
+#include "incompressiblePrimalSolver.H"
 #include "incompressibleAdjointSolver.H"
 #include "createZeroField.H"
 #include "addToRunTimeSelectionTable.H"
@@ -50,6 +51,27 @@ addToRunTimeSelectionTable
 );
 
 
+void objectiveNutSqr::populateFieldNames()
+{
+    if (adjointTurbulenceNames_.empty())
+    {
+        const incompressibleAdjointSolver& adjSolver =
+            mesh_.lookupObject<incompressibleAdjointSolver>(adjointSolverName_);
+        const autoPtr<incompressibleAdjoint::adjointRASModel>& adjointRAS =
+            adjSolver.getAdjointVars().adjointTurbulence();
+        const wordList& baseNames =
+            adjointRAS().getAdjointTMVariablesBaseNames();
+        forAll(baseNames, nI)
+        {
+            fieldNames_.push_back
+                (adjSolver.extendedVariableName(baseNames[nI]));
+            adjointTurbulenceNames_.
+                push_back(adjSolver.extendedVariableName(baseNames[nI]));
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 objectiveNutSqr::objectiveNutSqr
@@ -61,7 +83,8 @@ objectiveNutSqr::objectiveNutSqr
 )
 :
     objectiveIncompressible(mesh, dict, adjointSolverName, primalSolverName),
-    zones_(mesh_.cellZones().indices(dict.get<wordRes>("zones")))
+    zones_(mesh_.cellZones().indices(dict.get<wordRes>("zones"))),
+    adjointTurbulenceNames_()
 {
     // Check if cellZones provided include at least one cell
     checkCellZonesSize(zones_);
@@ -70,13 +93,19 @@ objectiveNutSqr::objectiveNutSqr
     // Allocate term to be added to volume-based sensitivity derivatives
     divDxDbMultPtr_.reset
     (
-        createZeroFieldPtr<scalar>
+        new volScalarField
         (
+            IOobject
+            (
+                "divDxDbMult" + objectiveName_,
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
             mesh_,
-            ("divDxdbMult"+type()) ,
-            // Dimensions are set in a way that the gradient of this term
-            // matches the source of the adjoint grid displacement PDE
-            sqr(dimLength)/pow3(dimTime)
+            dimensionedScalar(sqr(dimLength)/pow3(dimTime), Zero),
+            fvPatchFieldBase::zeroGradientType()
         )
     );
 }
@@ -125,6 +154,9 @@ void objectiveNutSqr::update_dJdv()
         tmp<volVectorField> dnutdU = adjointRAS->nutJacobianU(dnutdUMult);
         if (dnutdU)
         {
+            // If nut depends on U, allocate dJdv and add Ua to the fieldNames.
+            // It should be safe to do this here since objectives are updated
+            // before the first adjoint solution
             if (!dJdvPtr_)
             {
                 dJdvPtr_.reset
@@ -136,6 +168,10 @@ void objectiveNutSqr::update_dJdv()
                         dimLength/sqr(dimTime)
                     )
                 );
+            }
+            if (!fieldNames_.size())
+            {
+                fieldNames_.push_back(adjSolver.extendedVariableName("Ua"));
             }
             for (const label zI : zones_)
             {
@@ -201,6 +237,22 @@ void objectiveNutSqr::update_divDxDbMultiplier()
         }
     }
     divDxDbMult.correctBoundaryConditions();
+}
+
+
+void objectiveNutSqr::addSource(fvScalarMatrix& matrix)
+{
+    populateFieldNames();
+    const label fieldI = fieldNames_.find(matrix.psi().name());
+
+    if (fieldI == 0)
+    {
+        matrix += weight()*dJdTMvar1();
+    }
+    if (fieldI == 1)
+    {
+        matrix += weight()*dJdTMvar2();
+    }
 }
 
 

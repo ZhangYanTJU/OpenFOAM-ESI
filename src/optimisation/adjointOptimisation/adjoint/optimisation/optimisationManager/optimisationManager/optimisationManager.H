@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -42,8 +42,9 @@ SourceFiles
 
 #include "runTimeSelectionTables.H"
 #include "IOdictionary.H"
-#include "optimisationTypeIncompressible.H"
 #include "primalSolver.H"
+#include "designVariables.H"
+#include "designVariablesUpdate.H"
 #include "adjointSolverManager.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -63,12 +64,63 @@ protected:
 
     // Protected data
 
+        //- Reference to the mesh
         fvMesh& mesh_;
+
+        //- Reference to the time
         Time& time_;
+
+        //- Design variables of the optimisation problem.
+        //  Constructed before the adjoint solvers, since
+        //  some objective functions depend on their values
+        autoPtr<designVariables> designVars_;
+
+        //- List of primal solvers to be included in the optimisation
         PtrList<primalSolver> primalSolvers_;
+
+        //- List of adjoint solver managers to be included in the optimisation
         PtrList<adjointSolverManager> adjointSolverManagers_;
+
+        //- Type of the optimisation manager (singleRun, (un)steadyOptimisation)
         const word managerType_;
-        autoPtr<incompressible::optimisationType> optType_;
+
+        //- Helper class managing parts of the optimisation.
+        //  Allocated only when an actual optimisation is conducted.
+        autoPtr<designVariablesUpdate> dvUpdate_;
+
+        //- Switch defining if the design variables should be updated or not.
+        Switch shouldUpdateDesignVariables_;
+
+
+    // Protected Member Functions
+
+        //- Reset time
+        //  Does nothing in base, useful in unsteady adjoint
+        virtual void resetTime
+        (
+            const dimensionedScalar startTime,
+            const label startTimeIndex,
+            const scalar endTime
+        );
+
+        //- Update design variables
+        virtual void moveDesignVariables();
+
+        //- Update design variables. Multiplication with line search step
+        //  happens inside the update(direction) function
+        virtual void moveDesignVariables
+        (
+            const scalarField& direction
+        );
+
+        //- Update design variables using a line-search
+        void lineSearchUpdate();
+
+        //- Update design variables using a fixed step
+        void fixedStepUpdate();
+
+        //- Initialization. Construct primal and adjoint solvers
+        virtual void initialize();
 
 
 private:
@@ -120,44 +172,73 @@ public:
 
     // Member Functions
 
-        virtual PtrList<primalSolver>& primalSolvers();
+        // Access
 
-        virtual PtrList<adjointSolverManager>& adjointSolverManagers();
+            //- Get the primal solvers
+            inline PtrList<primalSolver>& primalSolvers()
+            {
+                return primalSolvers_;
+            }
 
-        virtual bool read();
+            //- Get the adjoint solver managers
+            inline PtrList<adjointSolverManager>& adjointSolverManagers()
+            {
+                return adjointSolverManagers_;
+            }
 
-        //- Prefix increment,
-        virtual optimisationManager& operator++() = 0;
+            //- Get the design variables
+            inline autoPtr<designVariables>& getDesignVariables()
+            {
+                return designVars_;
+            }
 
-        //- Postfix increment, this is identical to the prefix increment
-        virtual optimisationManager& operator++(int) = 0;
+            //- Get the mechanism supporting the update of the design variables
+            inline autoPtr<designVariablesUpdate>& getOptimisationType()
+            {
+                return dvUpdate_;
+            }
 
-        //- Return true if end of optimisation run.
-        //  Also, updates the design variables if needed
-        virtual bool checkEndOfLoopAndUpdate() = 0;
 
-        //- Return true if end of optimisation run
-        virtual bool end() = 0;
+        // Evolution
 
-        //- Whether to update the design variables
-        virtual bool update() = 0;
+            //- Changes in case of run-time update of optimisationDict
+            virtual bool read();
 
-        //- Update design variables.
-        //  Might employ a line search to find a correction satisfying the step
-        //  convergence criteria
-        virtual void updateDesignVariables() = 0;
+            //- Prefix increment
+            virtual optimisationManager& operator++() = 0;
 
-        //- Solve all primal equations
-        virtual void solvePrimalEquations();
+            //- Postfix increment, this is identical to the prefix increment
+            virtual optimisationManager& operator++(int) = 0;
 
-        //- Solve all adjoint equations
-        virtual void solveAdjointEquations();
+            //- Return true if end of optimisation run.
+            //  Also, updates the design variables if needed
+            virtual bool checkEndOfLoopAndUpdate() = 0;
 
-        //- Compute all adjoint sensitivities
-        virtual void computeSensitivities();
+            //- Return true if end of optimisation run
+            virtual bool end() = 0;
 
-        //- Solve all primal equations
-        virtual void updatePrimalBasedQuantities();
+            //- Whether to update the design variables
+            virtual bool update() = 0;
+
+            //- Update design variables.
+            //  Might employ a line search to find a correction satisfying the
+            //  step convergence criteria
+            virtual void updateDesignVariables();
+
+            //- Solve all primal equations
+            virtual void solvePrimalEquations();
+
+            //- Solve all adjoint equations
+            virtual void solveAdjointEquations();
+
+            //- Compute all adjoint sensitivities
+            virtual void computeSensitivities();
+
+            //- Clear all adjoint sensitivities
+            virtual void clearSensitivities();
+
+            //- Solve all primal equations
+            virtual void updatePrimalBasedQuantities();
 };
 
 

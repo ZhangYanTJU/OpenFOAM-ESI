@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2021 PCOpt/NTUA
+    Copyright (C) 2013-2021 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -30,7 +30,8 @@ Class
     Foam::SR1
 
 Description
-    The quasi-Newton Symmetric Rank One formula
+    The quasi-Newton Symmetric Rank One formula.
+    The quasiNewton::Hessian corresponds to Hessian inverse for SR1
 
 SourceFiles
     SR1.C
@@ -40,8 +41,7 @@ SourceFiles
 #ifndef SR1_H
 #define SR1_H
 
-#include "updateMethod.H"
-#include "scalarMatrices.H"
+#include "quasiNewton.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,54 +54,23 @@ namespace Foam
 
 class SR1
 :
-    public updateMethod
+    public quasiNewton
 {
 protected:
 
     // Protected data
 
-        //- Step for the Newton method
-        scalar etaHessian_;
-
-        //- Number of first steepest descent steps
-        label nSteepestDescent_;
-
         //- For stability check
         scalar ratioThreshold_;
 
-        //- Map to active design variables
-        labelList activeDesignVars_;
 
-        //- The Hessian inverse. Should have the size of the active design
-        //- variables
-        SquareMatrix<scalar> HessianInv_;
-
-        //- The previous Hessian inverse
-        SquareMatrix<scalar> HessianInvOld_;
-
-        //- The previous derivatives
-        scalarField derivativesOld_;
-
-        //- The previous correction
-        scalarField correctionOld_;
-
-        //- Optimisation counter
-        label counter_;
-
-
-    // Protected functions
-
-        //- Allocate matrices in the first optimisation cycle
-        void allocateMatrices();
+    // Protected Member Functions
 
         //- Update approximation of the inverse Hessian
-        void updateHessian();
+        virtual void updateHessian();
 
         //- Update design variables
-        void update();
-
-        //- Read old info from dict
-        void readFromDict();
+        virtual void update();
 
 
 private:
@@ -124,24 +93,18 @@ public:
     // Constructors
 
         //- Construct from components
-        SR1(const fvMesh& mesh, const dictionary& dict);
+        SR1
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            autoPtr<designVariables>& designVars,
+            const label nConstraints,
+            const word& type
+        );
 
 
     //- Destructor
     virtual ~SR1() = default;
-
-
-    // Member Functions
-
-       //- Compute design variables correction
-       void computeCorrection();
-
-       //- Update old correction. Useful for quasi-Newton methods coupled with
-       //- line search
-       virtual void updateOldCorrection(const scalarField& oldCorrection);
-
-       //- Write old info to dict
-       virtual void write();
 };
 
 

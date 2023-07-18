@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2022 PCOpt/NTUA
-    Copyright (C) 2013-2022 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,14 +67,12 @@ objectiveUniformityCellZone::objectiveUniformityCellZone
     volZone_(zones_.size(), Zero)
 {
     // Append Ua name to fieldNames
-    /*
     fieldNames_.setSize
     (
         1,
         mesh_.lookupObject<solver>(adjointSolverName_).
             extendedVariableName("Ua")
     );
-    */
 
     // Check if cellZones provided include at least one cell
     checkCellZonesSize(zones_);
@@ -92,13 +90,19 @@ objectiveUniformityCellZone::objectiveUniformityCellZone
     // Allocate term to be added to volume-based sensitivity derivatives
     divDxDbMultPtr_.reset
     (
-        createZeroFieldPtr<scalar>
+        new volScalarField
         (
+            IOobject
+            (
+                "divDxDbMult" + objectiveName_,
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
             mesh_,
-            ("divDxdbMult" + type()) ,
-            // Dimensions are set in a way that the gradient of this term
-            // matches the source of the adjoint grid displacement PDE
-            sqr(dimLength)/pow3(dimTime)
+            dimensionedScalar(sqr(dimLength)/pow3(dimTime), Zero),
+            fvPatchFieldBase::zeroGradientType()
         )
     );
 }

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -29,8 +29,10 @@ License
 
 #include "laplacianMotionSolver.H"
 #include "motionInterpolation.H"
-#include "addToRunTimeSelectionTable.H"
+#include "motionDiffusivity.H"
 #include "fvmLaplacian.H"
+#include "syncTools.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -44,29 +46,6 @@ namespace Foam
         laplacianMotionSolver,
         dictionary
     );
-}
-
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-void Foam::laplacianMotionSolver::setBoundaryConditions()
-{
-    pointMotionU_.boundaryFieldRef().updateCoeffs();
-    auto& cellMotionUbf = cellMotionU_.boundaryFieldRef();
-
-    forAll(cellMotionU_.boundaryField(), pI)
-    {
-        fvPatchVectorField& bField = cellMotionUbf[pI];
-        if (isA<fixedValueFvPatchVectorField>(bField))
-        {
-            const pointField& points = fvMesh_.points();
-            const polyPatch& patch = fvMesh_.boundaryMesh()[pI];
-            forAll(bField, fI)
-            {
-                bField[fI] = patch[fI].average(points, pointMotionU_);
-            }
-        }
-    }
 }
 
 
@@ -114,6 +93,10 @@ Foam::laplacianMotionSolver::laplacianMotionSolver
       ? motionInterpolation::New(fvMesh_, coeffDict().lookup("interpolation"))
       : motionInterpolation::New(fvMesh_)
     ),
+    diffusivityPtr_
+    (
+        motionDiffusivity::New(fvMesh_, coeffDict().lookup("diffusivity"))
+    ),
     nIters_(this->coeffDict().get<label>("iters")),
     tolerance_(this->coeffDict().get<scalar>("tolerance"))
 {}
@@ -129,9 +112,17 @@ Foam::tmp<Foam::pointField> Foam::laplacianMotionSolver::curPoints() const
         pointMotionU_
     );
 
+    syncTools::syncPointList
+    (
+        fvMesh_,
+        pointMotionU_.primitiveFieldRef(),
+        maxEqOp<vector>(),
+        vector::zero
+    );
+
     tmp<vectorField> tcurPoints
     (
-        fvMesh_.points() + pointMotionU_.internalField()
+        fvMesh_.points() + pointMotionU_.primitiveField()
     );
 
     twoDCorrectPoints(tcurPoints.ref());
@@ -142,7 +133,7 @@ Foam::tmp<Foam::pointField> Foam::laplacianMotionSolver::curPoints() const
 
 void Foam::laplacianMotionSolver::solve()
 {
-    setBoundaryConditions();
+    diffusivityPtr_->correct();
 
     // Iteratively solve the Laplace equation, to account for non-orthogonality
     for (label iter = 0; iter < nIters_; ++iter)
@@ -150,7 +141,13 @@ void Foam::laplacianMotionSolver::solve()
         Info<< "Iteration " << iter << endl;
         fvVectorMatrix dEqn
         (
-            fvm::laplacian(cellMotionU_)
+            fvm::laplacian
+            (
+                dimensionedScalar("viscosity", dimViscosity, 1.0)
+              * diffusivityPtr_->operator()(),
+                cellMotionU_,
+                "laplacian(diffusivity,cellMotionU)"
+            )
         );
 
         scalar residual = mag(dEqn.solve().initialResidual());
@@ -169,6 +166,27 @@ void Foam::laplacianMotionSolver::solve()
 }
 
 
+void Foam::laplacianMotionSolver::setBoundaryConditions()
+{
+    pointMotionU_.boundaryFieldRef().updateCoeffs();
+    auto& cellMotionUbf = cellMotionU_.boundaryFieldRef();
+
+    forAll(cellMotionU_.boundaryField(), pI)
+    {
+        fvPatchVectorField& bField = cellMotionUbf[pI];
+        if (isA<fixedValueFvPatchVectorField>(bField))
+        {
+            const pointField& points = fvMesh_.points();
+            const polyPatch& patch = fvMesh_.boundaryMesh()[pI];
+            forAll(bField, fI)
+            {
+                bField[fI] = patch[fI].average(points, pointMotionU_);
+            }
+        }
+    }
+}
+
+
 void Foam::laplacianMotionSolver::movePoints(const pointField&)
 {
     // Do nothing
@@ -177,7 +195,14 @@ void Foam::laplacianMotionSolver::movePoints(const pointField&)
 
 void Foam::laplacianMotionSolver::updateMesh(const mapPolyMesh&)
 {
-    // Do nothing
+    // Update diffusivity. Note two stage to make sure old one is de-registered
+    // before creating/registering new one.
+    diffusivityPtr_.reset(nullptr);
+    diffusivityPtr_ = motionDiffusivity::New
+    (
+        fvMesh_,
+        coeffDict().lookup("diffusivity")
+    );
 }
 
 

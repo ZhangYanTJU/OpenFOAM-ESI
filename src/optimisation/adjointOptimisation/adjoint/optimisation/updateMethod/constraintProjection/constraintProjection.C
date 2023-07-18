@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2021 PCOpt/NTUA
+    Copyright (C) 2013-2021 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -55,14 +55,16 @@ namespace Foam
 Foam::constraintProjection::constraintProjection
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    autoPtr<designVariables>& designVars,
+    const label nConstraints,
+    const word& type
 )
 :
-    constrainedOptimisationMethod(mesh, dict),
-    useCorrection_
-    (
-        coeffsDict().getOrDefault<bool>("useCorrection", true)
-    )
+    constrainedOptimisationMethod(mesh, dict, designVars, nConstraints, type),
+    updateMethod(mesh, dict, designVars, nConstraints, type),
+    useCorrection_(coeffsDict(type).getOrDefault<bool>("useCorrection", true)),
+    delta_(coeffsDict(type).getOrDefault<scalar>("delta", 0.1))
 {}
 
 
@@ -73,7 +75,6 @@ void Foam::constraintProjection::computeCorrection()
     // Reset to zero
     const label n = objectiveDerivatives_.size();
     const label m = constraintDerivatives_.size();
-    correction_ = scalarField(n, Zero);
 
     // Matrix with constraint derivatives and its inverse
     scalarSquareMatrix MMT(m, Zero);
@@ -114,12 +115,23 @@ void Foam::constraintProjection::computeCorrection()
     }
 
     // Final correction
-    correction_ = objectiveDerivatives_ - constraintContribution;
-    correction_ *= -eta_;
+    scalarField correction(objectiveDerivatives_ - constraintContribution);
+    correction *= -eta_;
     if (useCorrection_)
     {
-        correction_ -= nonLinearContribution;
+        correction -= nonLinearContribution;
     }
+
+    for (const label varI : activeDesignVars_)
+    {
+        correction_[varI] = correction[varI];
+    }
+}
+
+
+Foam::scalar Foam::constraintProjection::computeMeritFunction()
+{
+    return objectiveValue_ + delta_*sum(mag(cValues_));
 }
 
 

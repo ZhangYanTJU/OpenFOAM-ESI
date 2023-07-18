@@ -242,7 +242,7 @@ void objectiveMoment::update_dxdbMultiplier()
     tgradp.clear();
 
     // Term coming from stresses
-    tmp<volScalarField> tnuEff = lamTransp.nu() + turbVars->nutRef();
+    tmp<volScalarField> tnuEff = lamTransp.nu() + turbVars->nut();
     tmp<volSymmTensorField> tstress = tnuEff*twoSymm(tgradU);
     const volSymmTensorField& stress = tstress.cref();
     autoPtr<volVectorField> ptemp

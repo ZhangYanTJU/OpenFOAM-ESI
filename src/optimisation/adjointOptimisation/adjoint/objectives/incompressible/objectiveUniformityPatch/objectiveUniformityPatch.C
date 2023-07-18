@@ -106,7 +106,7 @@ void objectiveUniformityPatch::initialize()
                 const scalar mass = gSum(phiPatch);
                 if (mass > SMALL)
                 {
-                    objectiveReportPatches.append(patchI);
+                    objectiveReportPatches.push_back(patchI);
                 }
             }
         }

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -58,25 +58,11 @@ Foam::incompressibleAdjointVars& Foam::adjointSimple::allocateVars()
         (
             mesh_,
             solverControl_(),
-            objectiveManagerPtr_(),
+            objectiveManager_,
             primalVars_
         )
     );
     return getAdjointVars();
-}
-
-
-void Foam::adjointSimple::addExtraSchemes()
-{
-    if (adjointVars_.useSolverNameForFields())
-    {
-        WarningInFunction
-            << "useSolverNameForFields is set to true for adjointSolver "
-            << solverName() << nl << tab
-            << "Appending variable names with the solver name" << nl << tab
-            << "Please adjust the necessary entries in fvSchemes and fvSolution"
-            << nl << endl;
-    }
 }
 
 
@@ -99,6 +85,12 @@ void Foam::adjointSimple::continuityErrors()
 }
 
 
+void Foam::adjointSimple::preCalculateSensitivities()
+{
+    adjointSensitivity_->accumulateIntegrand(scalar(1));
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::adjointSimple::adjointSimple
@@ -106,14 +98,21 @@ Foam::adjointSimple::adjointSimple
     fvMesh& mesh,
     const word& managerType,
     const dictionary& dict,
-    const word& primalSolverName
+    const word& primalSolverName,
+    const word& solverName
 )
 :
-    incompressibleAdjointSolver(mesh, managerType, dict, primalSolverName),
+    incompressibleAdjointSolver
+    (
+        mesh,
+        managerType,
+        dict,
+        primalSolverName,
+        solverName
+    ),
     solverControl_(SIMPLEControl::New(mesh, managerType, *this)),
     adjointVars_(allocateVars()),
-    cumulativeContErr_(Zero),
-    adjointSensitivity_(nullptr)
+    cumulativeContErr_(Zero)
 {
     ATCModel_.reset
     (
@@ -126,7 +125,6 @@ Foam::adjointSimple::adjointSimple
         ).ptr()
     );
 
-    addExtraSchemes();
     setRefCell
     (
         adjointVars_.paInst(),
@@ -134,67 +132,21 @@ Foam::adjointSimple::adjointSimple
         solverControl_().pRefCell(),
         solverControl_().pRefValue()
     );
-
-    if (computeSensitivities_)
-    {
-        const IOdictionary& optDict =
-            mesh.lookupObject<IOdictionary>("optimisationDict");
-
-        adjointSensitivity_.reset
-        (
-            incompressible::adjointSensitivity::New
-            (
-                mesh,
-                optDict.subDict("optimisation").subDict("sensitivities"),
-                *this
-            ).ptr()
-        );
-        // Read stored sensitivities, if they exist
-        // Need to know the size of the sensitivity field, retrieved after the
-        // allocation of the corresponding object
-        if (dictionary::found("sensitivities"))
-        {
-            sensitivities_ =
-                tmp<scalarField>::New
-                (
-                    "sensitivities",
-                    *this,
-                    adjointSensitivity_().getSensitivities().size()
-                );
-        }
-    }
+    allocateSensitivities();
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::adjointSimple::readDict(const dictionary& dict)
-{
-    if (incompressibleAdjointSolver::readDict(dict))
-    {
-        if (adjointSensitivity_)
-        {
-            const IOdictionary& optDict =
-                mesh_.lookupObject<IOdictionary>("optimisationDict");
-
-            adjointSensitivity_().readDict
-            (
-                optDict.subDict("optimisation").subDict("sensitivities")
-            );
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
-
 void Foam::adjointSimple::solveIter()
 {
-    preIter();
-    mainIter();
-    postIter();
+    solverControl_().incrementIter();
+    if (solverControl_().performIter())
+    {
+        preIter();
+        mainIter();
+        postIter();
+    }
 }
 
 
@@ -236,7 +188,7 @@ void Foam::adjointSimple::mainIter()
     UaEqn.boundaryManipulate(Ua.boundaryFieldRef());
 
     // Add sources from volume-based objectives
-    objectiveManagerPtr_().addUaEqnSource(UaEqn);
+    objectiveManager_.addSource(UaEqn);
 
     // Add ATC term
     ATCModel_->addATC(UaEqn);
@@ -321,8 +273,8 @@ void Foam::adjointSimple::mainIter()
     {
         dimensionedScalar maxUa = gMax(mag(Ua)());
         dimensionedScalar maxpa = gMax(mag(pa)());
-        Info<< "Max mag of adjoint velocity = " << maxUa.value() << endl;
-        Info<< "Max mag of adjoint pressure = " << maxpa.value() << endl;
+        Info<< "Max mag (" << Ua.name() << ") = " << maxUa.value() << endl;
+        Info<< "Max mag (" << pa.name() << ") = " << maxpa.value() << endl;
     }
 }
 
@@ -362,64 +314,9 @@ bool Foam::adjointSimple::loop()
 
 void Foam::adjointSimple::preLoop()
 {
-    // Reset mean fields before solving
+    // Reset initial and mean fields before solving
+    adjointVars_.restoreInitValues();
     adjointVars_.resetMeanFields();
-}
-
-
-void Foam::adjointSimple::computeObjectiveSensitivities()
-{
-    if (computeSensitivities_)
-    {
-        adjointSensitivity_->accumulateIntegrand(scalar(1));
-        const scalarField& sens = adjointSensitivity_->calculateSensitivities();
-        if (!sensitivities_)
-        {
-            sensitivities_.reset(new scalarField(sens.size(), Zero));
-        }
-        sensitivities_.ref() = sens;
-    }
-    else
-    {
-        sensitivities_.reset(new scalarField());
-    }
-}
-
-
-const Foam::scalarField& Foam::adjointSimple::getObjectiveSensitivities()
-{
-    if (!sensitivities_)
-    {
-        computeObjectiveSensitivities();
-    }
-
-    return sensitivities_();
-}
-
-
-void Foam::adjointSimple::clearSensitivities()
-{
-    if (computeSensitivities_)
-    {
-        adjointSensitivity_->clearSensitivities();
-        adjointSolver::clearSensitivities();
-    }
-}
-
-
-Foam::sensitivity& Foam::adjointSimple::getSensitivityBase()
-{
-    if (!adjointSensitivity_)
-    {
-        FatalErrorInFunction
-            << "Sensitivity object not allocated" << nl
-            << "Turn computeSensitivities on in "
-            << solverName_
-            << nl << nl
-            << exit(FatalError);
-    }
-
-    return adjointSensitivity_();
 }
 
 
@@ -440,7 +337,48 @@ void Foam::adjointSimple::updatePrimalBasedQuantities()
     incompressibleAdjointSolver::updatePrimalBasedQuantities();
 
     // Update objective function related quantities
-    objectiveManagerPtr_->updateAndWrite();
+    objectiveManager_.updateAndWrite();
+}
+
+
+void Foam::adjointSimple::addTopOFvOptions() const
+{
+    // Determine number of variables related to the adjoint turbulence model
+    autoPtr<incompressibleAdjoint::adjointRASModel>& adjointTurbulence =
+        adjointVars_.adjointTurbulence();
+    const wordList& turbVarNames =
+        adjointTurbulence().getAdjointTMVariablesBaseNames();
+    label nTurbVars(turbVarNames.size());
+    if (adjointTurbulence().includeDistance())
+    {
+        nTurbVars++;
+    }
+
+    // Determine names of fields to be added to the dictionary
+    wordList names(1 + nTurbVars);
+    label varID(0);
+    names[varID++] = adjointVars_.UaInst().name();
+    for (const word& turbName : turbVarNames)
+    {
+        names[varID++] = turbName;
+    }
+    if (adjointTurbulence().includeDistance())
+    {
+        names[varID++] =
+            word(useSolverNameForFields() ? "da" + solverName_ : "da");
+    }
+
+    // Add entries to dictionary
+    const word dictName("topOSource" + solverName_);
+    dictionary optionDict(dictName);
+    optionDict.add<word>("type", "topOSource");
+    optionDict.add<wordList>("names", names);
+    optionDict.add<word>("function", "linear");
+    optionDict.add<word>("interpolationField", "beta");
+
+    // Construct and append fvOption
+    fv::optionList& fvOptions(fv::options::New(this->mesh_));
+    fvOptions.push_back(fv::option::New(dictName, optionDict, mesh_));
 }
 
 

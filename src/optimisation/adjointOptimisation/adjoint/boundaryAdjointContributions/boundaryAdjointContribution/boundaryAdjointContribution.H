@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -77,6 +77,18 @@ protected:
     // Protected data
 
         const fvPatch& patch_;
+
+
+    // Protected Member Functions
+
+        template<class returnType, class sourceType, class castType>
+        tmp<Field<returnType>> sumContributions
+        (
+            PtrList<sourceType>& sourceList,
+            const fvPatchField<returnType>&(castType::*boundaryFunction)
+                (const label),
+            bool (castType::*hasFunction)() const
+        );
 
 
 public:
@@ -156,7 +168,7 @@ public:
         virtual const fvPatchVectorField& Ub() const = 0;
         virtual const fvPatchScalarField& pb() const = 0;
         virtual const fvsPatchScalarField& phib() const = 0;
-        virtual const fvPatchScalarField& turbulentDiffusivity() const = 0;
+        virtual tmp<fvPatchScalarField> turbulentDiffusivity() const;
         virtual const fvPatchVectorField& Uab() const = 0;
         virtual const fvPatchScalarField& pab() const = 0;
         virtual const fvsPatchScalarField& phiab() const = 0;
@@ -170,6 +182,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "boundaryAdjointContributionTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

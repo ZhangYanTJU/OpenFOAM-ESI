@@ -122,4 +122,22 @@ void Foam::SIMPLEControl::checkMeanSolution() const
 }
 
 
+bool Foam::SIMPLEControl::converged()
+{
+    return simpleControl::criteriaSatisfied();
+}
+
+
+bool Foam::SIMPLEControl::performIter()
+{
+    return true;
+}
+
+
+void Foam::SIMPLEControl::incrementIter()
+{
+    // Does nothing in base
+}
+
+
 // ************************************************************************* //

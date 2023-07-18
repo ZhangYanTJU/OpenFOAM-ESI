@@ -97,6 +97,8 @@ kOmegaSST::kOmegaSST
 }
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
 tmp<volScalarField::Internal> kOmegaSST::computeG()
 {
     const turbulenceModel& turbModel = mesh_.lookupObject<turbulenceModel>

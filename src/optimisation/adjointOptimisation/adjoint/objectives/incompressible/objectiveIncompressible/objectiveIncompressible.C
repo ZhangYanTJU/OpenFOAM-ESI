@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -89,7 +89,6 @@ objectiveIncompressible::objectiveIncompressible
     bdJdnutPtr_(nullptr),
     bdJdGradUPtr_(nullptr)
 {
-    weight_ = dict.get<scalar>("weight");
     computeMeanFields_ = vars_.computeMeanFields();
 }
 
@@ -200,312 +199,10 @@ void objectiveIncompressible::doNormalization()
 }
 
 
-const volVectorField& objectiveIncompressible::dJdv()
-{
-    if (!dJdvPtr_)
-    {
-        // If pointer is not set, set it to a zero field
-        dJdvPtr_.reset
-        (
-            createZeroFieldPtr<vector>
-            (
-                mesh_,
-                ("dJdv_"+type()),
-                dimLength/sqr(dimTime)
-            )
-        );
-    }
-    return *dJdvPtr_;
-}
-
-
-const volScalarField& objectiveIncompressible::dJdp()
-{
-    if (!dJdpPtr_)
-    {
-        // If pointer is not set, set it to a zero field
-        dJdpPtr_.reset
-        (
-            createZeroFieldPtr<scalar>
-            (
-                mesh_,
-                ("dJdp_"+type()),
-                dimensionSet(0, 3, -2, 0, 0, 0, 0)
-            )
-        );
-    }
-    return *dJdpPtr_;
-}
-
-
-const volScalarField& objectiveIncompressible::dJdT()
-{
-    if (!dJdTPtr_)
-    {
-        // If pointer is not set, set it to a zero field
-        dJdTPtr_.reset
-        (
-            createZeroFieldPtr<scalar>
-            (
-                mesh_,
-                ("dJdT_"+type()),
-                dimensionSet(0, 3, -2, 0, 0, 0, 0)
-            )
-        );
-    }
-    return *dJdTPtr_;
-}
-
-
-const volScalarField& objectiveIncompressible::dJdTMvar1()
-{
-    if (!dJdTMvar1Ptr_)
-    {
-        // If pointer is not set, set it to a zero field
-        dJdTMvar1Ptr_.reset
-        (
-            createZeroFieldPtr<scalar>
-            (
-                mesh_,
-                ("dJdTMvar1_"+type()),
-                dimensionSet(0, 0, -2, 0, 0, 0, 0)
-            )
-        );
-    }
-    return *dJdTMvar1Ptr_;
-}
-
-
-const volScalarField& objectiveIncompressible::dJdTMvar2()
-{
-    if (!dJdTMvar2Ptr_)
-    {
-        // If pointer is not set, set it to a zero field
-        dJdTMvar2Ptr_.reset
-        (
-            createZeroFieldPtr<scalar>
-            (
-                mesh_,
-                ("dJdTMvar2_"+type()),
-                dimensionSet(0, 3, -2, 0, 0, 0, 0)
-            )
-        );
-    }
-    return *dJdTMvar2Ptr_;
-}
-
-
-const fvPatchVectorField& objectiveIncompressible::boundarydJdv
-(
-    const label patchI
-)
-{
-    if (!bdJdvPtr_)
-    {
-        bdJdvPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdJdvPtr_()[patchI];
-}
-
-
-const fvPatchScalarField& objectiveIncompressible::boundarydJdvn
-(
-    const label patchI
-)
-{
-    if (!bdJdvnPtr_)
-    {
-        bdJdvnPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdvnPtr_()[patchI];
-}
-
-
-const fvPatchVectorField& objectiveIncompressible::boundarydJdvt
-(
-    const label patchI
-)
-{
-    if (!bdJdvtPtr_)
-    {
-        bdJdvtPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdJdvtPtr_()[patchI];
-}
-
-
-const fvPatchVectorField& objectiveIncompressible::boundarydJdp
-(
-    const label patchI
-)
-{
-    if (!bdJdpPtr_)
-    {
-        bdJdpPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdJdpPtr_()[patchI];
-}
-
-
-const fvPatchScalarField& objectiveIncompressible::boundarydJdT
-(
-    const label patchI
-)
-{
-    if (!bdJdTPtr_)
-    {
-        bdJdTPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdTPtr_()[patchI];
-}
-
-
-const fvPatchScalarField& objectiveIncompressible::boundarydJdTMvar1
-(
-    const label patchI
-)
-{
-    if (!bdJdTMvar1Ptr_)
-    {
-        bdJdTMvar1Ptr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdTMvar1Ptr_()[patchI];
-}
-
-
-const fvPatchScalarField& objectiveIncompressible::boundarydJdTMvar2
-(
-    const label patchI
-)
-{
-    if (!bdJdTMvar2Ptr_)
-    {
-        bdJdTMvar2Ptr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdTMvar2Ptr_()[patchI];
-}
-
-
-const fvPatchScalarField& objectiveIncompressible::boundarydJdnut
-(
-    const label patchI
-)
-{
-    if (!bdJdnutPtr_)
-    {
-        bdJdnutPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdnutPtr_()[patchI];
-}
-
-
-const fvPatchTensorField& objectiveIncompressible::boundarydJdGradU
-(
-    const label patchI
-)
-{
-    if (!bdJdGradUPtr_)
-    {
-        bdJdGradUPtr_.reset(createZeroBoundaryPtr<tensor>(mesh_));
-    }
-    return bdJdGradUPtr_()[patchI];
-}
-
-
-const boundaryVectorField& objectiveIncompressible::boundarydJdv()
-{
-    if (!bdJdvPtr_)
-    {
-        bdJdvPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdJdvPtr_();
-}
-
-
-const boundaryScalarField& objectiveIncompressible::boundarydJdvn()
-{
-    if (!bdJdvnPtr_)
-    {
-        bdJdvnPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdvnPtr_();
-}
-
-
-const boundaryVectorField& objectiveIncompressible::boundarydJdvt()
-{
-    if (!bdJdvtPtr_)
-    {
-        bdJdvtPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdJdvtPtr_();
-}
-
-
-const boundaryVectorField& objectiveIncompressible::boundarydJdp()
-{
-    if (!bdJdpPtr_)
-    {
-        bdJdpPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    }
-    return bdJdpPtr_();
-}
-
-
-const boundaryScalarField& objectiveIncompressible::boundarydJdT()
-{
-    if (!bdJdTPtr_)
-    {
-        bdJdTPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdTPtr_();
-}
-
-
-const boundaryScalarField& objectiveIncompressible::boundarydJdTMvar1()
-{
-    if (!bdJdTMvar1Ptr_)
-    {
-        bdJdTMvar1Ptr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdTMvar1Ptr_();
-}
-
-
-const boundaryScalarField& objectiveIncompressible::boundarydJdTMvar2()
-{
-    if (!bdJdTMvar2Ptr_)
-    {
-        bdJdTMvar2Ptr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdTMvar2Ptr_();
-}
-
-
-const boundaryScalarField& objectiveIncompressible::boundarydJdnut()
-{
-    if (!bdJdnutPtr_)
-    {
-        bdJdnutPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    }
-    return bdJdnutPtr_();
-}
-
-
-const boundaryTensorField& objectiveIncompressible::boundarydJdGradU()
-{
-    if (!bdJdGradUPtr_)
-    {
-        bdJdGradUPtr_.reset(createZeroBoundaryPtr<tensor>(mesh_));
-    }
-    return *bdJdGradUPtr_;
-}
-
-
 void objectiveIncompressible::update()
 {
-    // Objective function value
-    J();
+    // Update geometric fields
+    objective::update();
 
     // Update mean values here since they might be used in the
     // subsequent functions
@@ -517,9 +214,6 @@ void objectiveIncompressible::update()
     update_dJdT();
     update_dJdTMvar1();
     update_dJdTMvar2();
-    update_dJdb();
-    update_divDxDbMultiplier();
-    update_gradDxDbMultiplier();
 
     // boundaryFields
     update_boundarydJdv();
@@ -531,15 +225,12 @@ void objectiveIncompressible::update()
     update_boundarydJdTMvar2();
     update_boundarydJdnut();
     update_boundarydJdGradU();
-    update_boundarydJdb();
-    update_dSdbMultiplier();
-    update_dndbMultiplier();
-    update_dxdbMultiplier();
-    update_dxdbDirectMultiplier();
-    update_boundaryEdgeContribution();
 
     // Divide everything with normalization factor
     doNormalization();
+
+    // Set objective as not computed, for the next optimisation cycle
+    computed_ = false;
 }
 
 
@@ -718,6 +409,15 @@ void objectiveIncompressible::update_dJdTMvar
                 << "the adjoint solver is complete"
                 << endl;
         }
+    }
+}
+
+
+void objectiveIncompressible::addSource(fvVectorMatrix& matrix)
+{
+    if (fieldNames_.found(matrix.psi().name()) && hasdJdv())
+    {
+        matrix += weight()*dJdv();
     }
 }
 

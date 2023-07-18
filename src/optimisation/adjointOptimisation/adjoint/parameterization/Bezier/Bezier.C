@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019, 2022 PCOpt/NTUA
-    Copyright (C) 2013-2019, 2022 FOSS GP
+    Copyright (C) 2007-2019, 2022-2023 PCOpt/NTUA
+    Copyright (C) 2013-2019, 2022-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -91,7 +91,7 @@ Bezier::Bezier(const fvMesh& mesh, const dictionary& dict)
     {
         for (label iCP = 0; iCP < nBezier_; ++iCP)
         {
-            if (confineMovement_[iDir][iCP])
+            if (!confineMovement_[iDir][iCP])
             {
                 activeDesignVariables_[iActive++] = iDir*nBezier_ + iCP;
             }

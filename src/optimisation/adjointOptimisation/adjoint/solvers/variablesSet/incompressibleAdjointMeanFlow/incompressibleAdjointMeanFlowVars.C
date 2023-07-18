@@ -57,6 +57,7 @@ void incompressibleAdjointMeanFlowVars::setFields()
     mesh_.setFluxRequired(paPtr_->name());
 }
 
+
 void incompressibleAdjointMeanFlowVars::setMeanFields()
 {
     // Allocate mean fields

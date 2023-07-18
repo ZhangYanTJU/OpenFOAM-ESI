@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -61,10 +61,17 @@ Foam::RASTurbulenceModel::RASTurbulenceModel
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 :
-    incompressiblePrimalSolver(mesh, managerType, dict),
+    incompressiblePrimalSolver
+    (
+        mesh,
+        managerType,
+        dict,
+        solverName
+    ),
     solverControl_(SIMPLEControl::New(mesh, managerType, *this)),
     incoVars_(allocateVars())
 {

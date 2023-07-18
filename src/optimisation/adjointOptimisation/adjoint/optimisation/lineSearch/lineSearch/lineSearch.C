@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -49,7 +49,12 @@ const Foam::dictionary& Foam::lineSearch::coeffsDict()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::lineSearch::lineSearch(const dictionary& dict, const Time& time)
+Foam::lineSearch::lineSearch
+(
+    const dictionary& dict,
+    const Time& time,
+    updateMethod& UpdateMethod
+)
 :
     dict_(dict),
     lineSearchDict_
@@ -77,6 +82,7 @@ Foam::lineSearch::lineSearch(const dictionary& dict, const Time& time)
     minStep_(dict.getOrDefault<scalar>("minStep", 0.3)),
     step_(Zero),
     iter_(lineSearchDict_.getOrDefault<label>("iter", 0)),
+    innerIter_(0),
     maxIters_(dict.getOrDefault<label>("maxIters", 4)),
     extrapolateInitialStep_
     (
@@ -86,7 +92,8 @@ Foam::lineSearch::lineSearch(const dictionary& dict, const Time& time)
             false
         )
     ),
-    stepUpdate_(stepUpdate::New(dict))
+    stepUpdate_(stepUpdate::New(dict)),
+    updateMethod_(UpdateMethod)
 {}
 
 
@@ -95,7 +102,8 @@ Foam::lineSearch::lineSearch(const dictionary& dict, const Time& time)
 Foam::autoPtr<Foam::lineSearch> Foam::lineSearch::New
 (
     const dictionary& dict,
-    const Time& time
+    const Time& time,
+    updateMethod& UpdateMethod
 )
 {
     autoPtr<lineSearch> lineSrch(nullptr);
@@ -119,7 +127,7 @@ Foam::autoPtr<Foam::lineSearch> Foam::lineSearch::New
             ) << exit(FatalIOError);
         }
 
-        lineSrch.reset((ctorPtr(dict, time)).ptr());
+        lineSrch.reset((ctorPtr(dict, time, UpdateMethod)).ptr());
     }
     else
     {
@@ -140,9 +148,9 @@ void Foam::lineSearch::setDeriv(const scalar deriv)
 }
 
 
-void Foam::lineSearch::setDirection(const scalarField& direction)
+void Foam::lineSearch::setNewDeriv(const scalar deriv)
 {
-    direction_ = direction;
+    // Does nothing in base
 }
 
 
@@ -162,6 +170,7 @@ void Foam::lineSearch::setOldMeritValue(const scalar value)
 
 void Foam::lineSearch::reset()
 {
+    innerIter_ = 0;
     if (extrapolateInitialStep_ && iter_ != 0)
     {
         // step_ = 2*(oldMeritValue_-prevMeritValue_)/directionalDeriv_;
@@ -181,35 +190,57 @@ void Foam::lineSearch::reset()
 }
 
 
-Foam::label Foam::lineSearch::maxIters() const
-{
-    return maxIters_;
-}
-
-
-Foam::scalar Foam::lineSearch::step() const
-{
-    return step_;
-}
-
-
 void Foam::lineSearch::updateStep(const scalar newStep)
 {
     step_ = newStep;
 }
 
 
+void Foam::lineSearch::updateCorrection(scalarField& correction)
+{
+    correction *= step_;
+}
+
+
+bool Foam::lineSearch::loop()
+{
+    const bool isRunning = innerIter_ < maxIters_;
+
+    if (isRunning)
+    {
+        ++innerIter_;
+    }
+
+    return isRunning;
+}
+
+
+bool Foam::lineSearch::computeGradient() const
+{
+    return false;
+}
+
+
+void Foam::lineSearch::postUpdate()
+{
+    this->operator++();
+}
+
+
 Foam::lineSearch& Foam::lineSearch::operator++()
 {
-    iter_++;
+    ++iter_;
     prevMeritDeriv_ = directionalDeriv_;
     lineSearchDict_.add<scalar>("prevMeritDeriv", prevMeritDeriv_, true);
     lineSearchDict_.add<label>("iter", iter_, true);
-    lineSearchDict_.regIOobject::writeObject
-    (
-        IOstreamOption(IOstreamOption::ASCII),
-        true
-    );
+    if (lineSearchDict_.time().writeTime())
+    {
+        lineSearchDict_.regIOobject::writeObject
+        (
+            IOstreamOption(IOstreamOption::ASCII),
+            true
+        );
+    }
 
     return *this;
 }

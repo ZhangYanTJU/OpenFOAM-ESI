@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -28,6 +28,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "adjointSolverManager.H"
+#include "primalSolver.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -42,6 +43,7 @@ namespace Foam
 Foam::adjointSolverManager::adjointSolverManager
 (
     fvMesh& mesh,
+    autoPtr<designVariables>& designVars,
     const word& managerType,
     const dictionary& dict,
     bool overrideUseSolverName
@@ -62,14 +64,18 @@ Foam::adjointSolverManager::adjointSolverManager
     mesh_(mesh),
     dict_(dict),
     managerName_(dict.dictName()),
+    managerType_(managerType),
     primalSolverName_(dict.get<word>("primalSolver")),
     adjointSolvers_(0),
     objectiveSolverIDs_(0),
-    constraintSolverIDs_(0),
+    oneSidedConstraintSolverIDs_(0),
+    doubleSidedConstraintSolverIDs_(0),
     operatingPointWeight_
     (
         dict.getOrDefault<scalar>("operatingPointWeight", 1)
-    )
+    ),
+    nActiveAdjointSolvers_(0),
+    designVars_(designVars)
 {
     dictionary& adjointSolversDict =
         const_cast<dictionary&>(dict.subDict("adjointSolvers"));
@@ -77,14 +83,16 @@ Foam::adjointSolverManager::adjointSolverManager
     const wordList adjSolverNames = adjointSolversDict.toc();
     adjointSolvers_.setSize(adjSolverNames.size());
     objectiveSolverIDs_.setSize(adjSolverNames.size());
-    constraintSolverIDs_.setSize(adjSolverNames.size());
+    oneSidedConstraintSolverIDs_.setSize(adjSolverNames.size());
+    doubleSidedConstraintSolverIDs_.setSize(adjSolverNames.size());
     label nObjectives(0);
-    label nConstraints(0);
+    label nOneSidedConstraints(0);
+    label nDoubleSidedConstraints(0);
     forAll(adjSolverNames, namei)
     {
         dictionary& solverDict =
             adjointSolversDict.subDict(adjSolverNames[namei]);
-        if (overrideUseSolverName || adjointSolvers_.size() > 1)
+        if (overrideUseSolverName)
         {
             solverDict.add<bool>("useSolverNameForFields", true);
         }
@@ -96,13 +104,21 @@ Foam::adjointSolverManager::adjointSolverManager
                 mesh_,
                 managerType,
                 solverDict,
-                primalSolverName_
+                primalSolverName_,
+                adjSolverNames[namei]
             )
         );
-
-        if (adjointSolvers_[namei].isConstraint())
+        if (adjointSolvers_[namei].active())
         {
-            constraintSolverIDs_[nConstraints++] = namei;
+            nActiveAdjointSolvers_++;
+        }
+        if (adjointSolvers_[namei].isDoubleSidedConstraint())
+        {
+            doubleSidedConstraintSolverIDs_[nDoubleSidedConstraints++] = namei;
+        }
+        else if (adjointSolvers_[namei].isConstraint())
+        {
+            oneSidedConstraintSolverIDs_[nOneSidedConstraints++] = namei;
         }
         else
         {
@@ -110,10 +126,17 @@ Foam::adjointSolverManager::adjointSolverManager
         }
     }
     objectiveSolverIDs_.setSize(nObjectives);
-    constraintSolverIDs_.setSize(nConstraints);
+    oneSidedConstraintSolverIDs_.setSize(nOneSidedConstraints);
+    doubleSidedConstraintSolverIDs_.setSize(nDoubleSidedConstraints);
 
-    Info<< "Found " << nConstraints
-        << " adjoint solvers acting as constraints" << endl;
+    Info<< "Found " << nOneSidedConstraints
+        << " adjoint solvers acting as single-sided constraints" << endl;
+
+    Info<< "Found " << nDoubleSidedConstraints
+        << " adjoint solvers acting as double-sided constraints" << endl;
+
+    Info<< "Found " << nActiveAdjointSolvers_
+        << " active adjoint solvers" << endl;
 
     // Having more than one non-aggregated objectives per operating point
     // is needlessly expensive. Issue a warning
@@ -122,7 +145,7 @@ Foam::adjointSolverManager::adjointSolverManager
         WarningInFunction
             << "Number of adjoint solvers corresponding to objectives "
             << "is greater than 1 (" << objectiveSolverIDs_.size() << ")" << nl
-            << "Consider aggregating your objectives to one" << endl;
+            << "Consider aggregating your objectives to one\n" << endl;
     }
 }
 
@@ -177,15 +200,66 @@ Foam::adjointSolverManager::adjointSolvers()
 }
 
 
+Foam::wordList Foam::adjointSolverManager::adjointSolversNames() const
+{
+    wordList names(adjointSolvers_.size());
+    forAll(adjointSolvers_, sI)
+    {
+        names[sI]  = adjointSolvers_[sI].name();
+    }
+    return names;
+}
+
+
 Foam::scalar Foam::adjointSolverManager::operatingPointWeight() const
 {
     return operatingPointWeight_;
 }
 
 
+Foam::label Foam::adjointSolverManager::nActiveAdjointSolvers() const
+{
+    return nActiveAdjointSolvers_;
+}
+
+
+Foam::label Foam::adjointSolverManager::nActiveAdjointSolvers
+(
+    const dictionary& dict
+)
+{
+    const dictionary& adjointSolversDict = dict.subDict("adjointSolvers");
+    const wordList adjSolverNames = adjointSolversDict.toc();
+    label n(0);
+    Switch active(true);
+    forAll(adjSolverNames, namei)
+    {
+        active = adjointSolversDict.subDict(adjSolverNames[namei]).
+            getOrDefault<bool>("active", true);
+        if (active)
+        {
+            n++;
+        }
+    }
+    return n;
+}
+
+
 Foam::label Foam::adjointSolverManager::nConstraints() const
 {
-    return constraintSolverIDs_.size();
+    return nOneSidedConstraints() + 2*nDoubleSidedConstraints();
+}
+
+
+Foam::label Foam::adjointSolverManager::nOneSidedConstraints() const
+{
+    return oneSidedConstraintSolverIDs_.size();
+}
+
+
+Foam::label Foam::adjointSolverManager::nDoubleSidedConstraints() const
+{
+    return doubleSidedConstraintSolverIDs_.size();
 }
 
 
@@ -197,17 +271,29 @@ Foam::label Foam::adjointSolverManager::nObjectives() const
 
 Foam::label Foam::adjointSolverManager::nAdjointSolvers() const
 {
-    return nConstraints() + nObjectives();
+    return nOneSidedConstraints() + nDoubleSidedConstraints() + nObjectives();
 }
 
 
 void Foam::adjointSolverManager::solveAdjointEquations()
 {
+    //  Solve all adjoint equations of this adjointSolverManager
     for (adjointSolver& solver : adjointSolvers_)
     {
+        // Update all primal-based quantities needed by the adjoint equations
+        solver.updatePrimalBasedQuantities();
+
         // Solve the adjoint equations taking into consideration the weighted
         // contribution of possibly multiple objectives
         solver.solve();
+
+        // Compute sensitivities and force writing to the adjoint dictionary
+        // if this an output time
+        solver.computeObjectiveSensitivities(designVars_);
+        if (mesh_.time().writeTime())
+        {
+            solver.regIOobject::write(true);
+        }
     }
 }
 
@@ -223,7 +309,7 @@ Foam::adjointSolverManager::aggregateSensitivities()
     {
         // Sum contributions
         const scalarField& solverSens =
-            adjointSolvers_[solveri].getObjectiveSensitivities();
+            adjointSolvers_[solveri].getObjectiveSensitivities(designVars_);
 
         if (sens.empty())
         {
@@ -239,15 +325,26 @@ Foam::adjointSolverManager::aggregateSensitivities()
 Foam::PtrList<Foam::scalarField>
 Foam::adjointSolverManager::constraintSensitivities()
 {
-    PtrList<scalarField> constraintSens(constraintSolverIDs_.size());
-    forAll(constraintSens, cI)
+    PtrList<scalarField> constraintSens(nConstraints());
+    // Only one-sided constraints
+    label cI(0);
+    for (const label consI : oneSidedConstraintSolverIDs_)
     {
-        label consI = constraintSolverIDs_[cI];
         constraintSens.set
         (
-            cI,
-            new scalarField(adjointSolvers_[consI].getObjectiveSensitivities())
+            cI++,
+            new scalarField
+                (adjointSolvers_[consI].getObjectiveSensitivities(designVars_))
         );
+    }
+
+    // Two-sided constraints. Negated left-most side sensitivities
+    for (const label consI : doubleSidedConstraintSolverIDs_)
+    {
+        scalarField sens
+            (adjointSolvers_[consI].getObjectiveSensitivities(designVars_));
+        constraintSens.set(cI++, new scalarField(  sens));
+        constraintSens.set(cI++, new scalarField(- sens));
     }
 
     return constraintSens;
@@ -258,7 +355,7 @@ void Foam::adjointSolverManager::computeAllSensitivities()
 {
     for (adjointSolver& adjSolver : adjointSolvers_)
     {
-        adjSolver.computeObjectiveSensitivities();
+        adjSolver.computeObjectiveSensitivities(designVars_);
     }
 }
 
@@ -288,16 +385,24 @@ Foam::scalar Foam::adjointSolverManager::objectiveValue()
 
 Foam::tmp<Foam::scalarField> Foam::adjointSolverManager::constraintValues()
 {
-    tmp<scalarField> tconstraintValues
-    (
-        new scalarField(constraintSolverIDs_.size(), Zero)
-    );
+    auto tconstraintValues(tmp<scalarField>::New(nConstraints(), Zero));
     scalarField& constraintValues = tconstraintValues.ref();
-    forAll(constraintValues, cI)
+    label cI(0);
+    // One-sided constraints only
+    for (const label consI : oneSidedConstraintSolverIDs_)
     {
         objectiveManager& objManager =
-            adjointSolvers_[constraintSolverIDs_[cI]].getObjectiveManager();
-        constraintValues[cI] = objManager.print();
+            adjointSolvers_[consI].getObjectiveManager();
+        constraintValues[cI++] = objManager.print();
+    }
+    // Double-sided constraints
+    // Objective value of the left-most side is negated
+    for (const label consI : doubleSidedConstraintSolverIDs_)
+    {
+        objectiveManager& objManager =
+            adjointSolvers_[consI].getObjectiveManager();
+        constraintValues[cI++] = objManager.print(false);
+        constraintValues[cI++] = objManager.print(true);
     }
 
     return tconstraintValues;
@@ -313,6 +418,12 @@ void Foam::adjointSolverManager::updatePrimalBasedQuantities(const word& name)
             solver.updatePrimalBasedQuantities();
         }
     }
+}
+
+
+bool Foam::adjointSolverManager::isMaster() const
+{
+    return mesh_.lookupObject<primalSolver>(primalSolverName_).isMaster();
 }
 
 

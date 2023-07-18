@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -29,6 +29,189 @@ License
 \*---------------------------------------------------------------------------*/
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+inline const Foam::volVectorField& Foam::objectiveIncompressible::dJdv()
+{
+    return *dJdvPtr_;
+}
+
+
+inline const Foam::volScalarField& Foam::objectiveIncompressible::dJdp()
+{
+    return *dJdpPtr_;
+}
+
+
+inline const Foam::volScalarField& Foam::objectiveIncompressible::dJdT()
+{
+    return *dJdTPtr_;
+}
+
+
+inline const Foam::volScalarField& Foam::objectiveIncompressible::dJdTMvar1()
+{
+    return *dJdTMvar1Ptr_;
+}
+
+
+inline const Foam::volScalarField& Foam::objectiveIncompressible::dJdTMvar2()
+{
+    return *dJdTMvar2Ptr_;
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objectiveIncompressible::boundarydJdv
+(
+    const label patchI
+)
+{
+    return bdJdvPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchScalarField&
+Foam::objectiveIncompressible::boundarydJdvn
+(
+    const label patchI
+)
+{
+    return bdJdvnPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objectiveIncompressible::boundarydJdvt
+(
+    const label patchI
+)
+{
+    return bdJdvtPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchVectorField&
+Foam::objectiveIncompressible::boundarydJdp
+(
+    const label patchI
+)
+{
+    return bdJdpPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchScalarField&
+Foam::objectiveIncompressible::boundarydJdT
+(
+    const label patchI
+)
+{
+    return bdJdTPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchScalarField&
+Foam::objectiveIncompressible::boundarydJdTMvar1
+(
+    const label patchI
+)
+{
+    return bdJdTMvar1Ptr_()[patchI];
+}
+
+
+inline const Foam::fvPatchScalarField&
+Foam::objectiveIncompressible::boundarydJdTMvar2
+(
+    const label patchI
+)
+{
+    return bdJdTMvar2Ptr_()[patchI];
+}
+
+
+inline const Foam::fvPatchScalarField&
+Foam::objectiveIncompressible::boundarydJdnut
+(
+    const label patchI
+)
+{
+    return bdJdnutPtr_()[patchI];
+}
+
+
+inline const Foam::fvPatchTensorField&
+Foam::objectiveIncompressible::boundarydJdGradU
+(
+    const label patchI
+)
+{
+    return bdJdGradUPtr_()[patchI];
+}
+
+
+inline const Foam::boundaryVectorField&
+Foam::objectiveIncompressible::boundarydJdv()
+{
+    return bdJdvPtr_();
+}
+
+
+inline const Foam::boundaryScalarField&
+Foam::objectiveIncompressible::boundarydJdvn()
+{
+    return bdJdvnPtr_();
+}
+
+
+inline const Foam::boundaryVectorField&
+Foam::objectiveIncompressible::boundarydJdvt()
+{
+    return bdJdvtPtr_();
+}
+
+
+inline const Foam::boundaryVectorField&
+Foam::objectiveIncompressible::boundarydJdp()
+{
+    return bdJdpPtr_();
+}
+
+
+inline const Foam::boundaryScalarField&
+Foam::objectiveIncompressible::boundarydJdT()
+{
+    return bdJdTPtr_();
+}
+
+
+inline const Foam::boundaryScalarField&
+Foam::objectiveIncompressible::boundarydJdTMvar1()
+{
+    return bdJdTMvar1Ptr_();
+}
+
+
+inline const Foam::boundaryScalarField&
+Foam::objectiveIncompressible::boundarydJdTMvar2()
+{
+    return bdJdTMvar2Ptr_();
+}
+
+
+inline const Foam::boundaryScalarField&
+Foam::objectiveIncompressible::boundarydJdnut()
+{
+    return bdJdnutPtr_();
+}
+
+
+inline const Foam::boundaryTensorField&
+Foam::objectiveIncompressible::boundarydJdGradU()
+{
+    return *bdJdGradUPtr_;
+}
+
 
 inline bool Foam::objectiveIncompressible::hasdJdv() const
 {

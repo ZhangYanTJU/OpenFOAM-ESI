@@ -61,10 +61,10 @@ private:
         incompressibleAdjointMeanFlowVars
         (
             const incompressibleAdjointMeanFlowVars&
-        );
+        ) = delete;
 
         //- No copy assignment
-        void operator=(const incompressibleAdjointMeanFlowVars&);
+        void operator=(const incompressibleAdjointMeanFlowVars&) = delete;
 
 
 protected:

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2022 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -195,48 +195,63 @@ Foam::scalar Foam::updateMethod::globalSum(tmp<scalarField>& tfield)
 }
 
 
+Foam::label Foam::updateMethod::globalSum(const label size)
+{
+    label res(0);
+    if (globalSum_)
+    {
+        res = returnReduce(size, sumOp<label>());
+    }
+    else
+    {
+        res = size;
+    }
+    return res;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::updateMethod::updateMethod
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    autoPtr<designVariables>& designVars,
+    const label nConstraints,
+    const word& type
 )
 :
-    mesh_(mesh),
-    dict_(dict),
-    optMethodIODict_
+    localIOdictionary
     (
         IOobject
         (
             "updateMethodDict",
-            mesh_.time().timeName(),
+            mesh.time().timeName(),
             "uniform",
-            mesh_,
+            mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        )
+            IOobject::AUTO_WRITE
+        ),
+        word::null // avoid type checking
     ),
-    objectiveDerivatives_(0),
+    mesh_(mesh),
+    dict_(dict),
+    designVars_(designVars),
+    nConstraints_(nConstraints),
+    activeDesignVars_(designVars().activeDesignVariables()),
+    objectiveDerivatives_(designVars().getVars().size(), Zero),
     constraintDerivatives_(0),
     objectiveValue_(0),
+    objectiveValueOld_(0),
     cValues_(0),
-    correction_(0),
+    correction_(readOrZeroField("correction", designVars().getVars().size())),
     cumulativeCorrection_(0),
     eta_(1),
+    counter_(getOrDefault<label>("counter", Zero)),
     initialEtaSet_(false),
     correctionFolder_(mesh_.time().globalPath()/"optimisation"/"correction"),
-    globalSum_
-    (
-        dict.getOrDefault<bool>("globalSum", false)
-    )
+    globalSum_(designVars_->globalSum())
 {
-    // Create folder to store corrections
-    if (Pstream::master())
-    {
-        mkDir(correctionFolder_);
-    }
-
     // Set initial eta, if present. It might be set either in the
     // optimisationDict or in the specific dictionary dedicated to the
     // updateMethod
@@ -244,16 +259,25 @@ Foam::updateMethod::updateMethod
     {
         initialEtaSet_ = true;
     }
-    else if (optMethodIODict_.readIfPresent("eta", eta_))
+    else if (this->readIfPresent("eta", eta_))
     {
         initialEtaSet_ = true;
     }
 }
 
 
-Foam::dictionary Foam::updateMethod::coeffsDict()
+Foam::tmp<Foam::scalarField> Foam::updateMethod::readOrZeroField
+(
+    const word& name,
+    const label size
+)
 {
-    return dict_.subOrEmptyDict(type());
+    return tmp<scalarField>
+    (
+        found(name) ?
+        new scalarField(name, *this, size) :
+        new scalarField(size, Zero)
+    );
 }
 
 
@@ -262,7 +286,9 @@ Foam::dictionary Foam::updateMethod::coeffsDict()
 Foam::autoPtr<Foam::updateMethod> Foam::updateMethod::New
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    autoPtr<designVariables>& designVars,
+    const label nConstraints
 )
 {
     const word modelType(dict.get<word>("method"));
@@ -282,11 +308,18 @@ Foam::autoPtr<Foam::updateMethod> Foam::updateMethod::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<updateMethod>(ctorPtr(mesh, dict));
+    return autoPtr<updateMethod>
+        (ctorPtr(mesh, dict, designVars, nConstraints, modelType));
 }
 
 
 // * * * * * * * * * * * * * * *  Member Functions   * * * * * * * * * * * * //
+
+Foam::dictionary Foam::updateMethod::coeffsDict(const word& type) const
+{
+    return dict_.optionalSubDict(type);
+}
+
 
 void Foam::updateMethod::setObjectiveDeriv(const scalarField& derivs)
 {
@@ -309,9 +342,39 @@ void Foam::updateMethod::setObjectiveValue(const scalar value)
 }
 
 
+void Foam::updateMethod::setObjectiveValueOld(const scalar value)
+{
+    objectiveValueOld_ = value;
+}
+
+
 void Foam::updateMethod::setConstraintValues(const scalarField& values)
 {
     cValues_ = values;
+}
+
+
+Foam::scalar Foam::updateMethod::getObjectiveValue() const
+{
+    return objectiveValue_;
+}
+
+
+Foam::scalar Foam::updateMethod::getObjectiveValueOld() const
+{
+    return objectiveValueOld_;
+}
+
+
+const Foam::scalarField& Foam::updateMethod::getConstraintValues() const
+{
+    return cValues_;
+}
+
+
+Foam::label Foam::updateMethod::getCycle() const
+{
+    return counter_;
 }
 
 
@@ -321,15 +384,32 @@ void Foam::updateMethod::setStep(const scalar eta)
 }
 
 
+void Foam::updateMethod::modifyStep(const scalar multiplier)
+{
+    eta_ *= multiplier;
+}
+
+
 void Foam::updateMethod::setGlobalSum(const bool useGlobalSum)
 {
     globalSum_ = useGlobalSum;
 }
 
 
+void Foam::updateMethod::setConstaintsNumber(const label nConstraints)
+{
+    nConstraints_ = nConstraints;
+}
+
+
+Foam::label Foam::updateMethod::nConstraints() const
+{
+    return nConstraints_;
+}
+
+
 Foam::scalarField& Foam::updateMethod::returnCorrection()
 {
-    computeCorrection();
     return correction_;
 }
 
@@ -395,27 +475,25 @@ void Foam::updateMethod::updateOldCorrection
 }
 
 
-void Foam::updateMethod::write()
+bool Foam::updateMethod::writeData(Ostream& os) const
 {
     // Insert eta if set
     if (initialEtaSet_)
     {
-        optMethodIODict_.add<scalar>("eta", eta_, true);
+        os.writeEntry("eta", eta_);
     }
 
-    optMethodIODict_.add<scalarField>("correction", correction_, true);
+    os.writeEntry("counter", counter_);
+    correction_.writeEntry("correction", os);
 
-    // Write IOdictionary
-    // Always write in ASCII format.
-    // Even when choosing to write in binary through controlDict,
-    // the content is written in ASCII format but with a binary header.
-    // This creates problems when the content is read back in
-    // (e.g. continuation)
-    optMethodIODict_.regIOobject::writeObject
-    (
-        IOstreamOption(IOstreamOption::ASCII, mesh_.time().writeCompression()),
-        true
-    );
+    return true;
+}
+
+
+bool Foam::updateMethod::writeAuxiliaryData()
+{
+    // Does nothing in base
+    return true;
 }
 
 

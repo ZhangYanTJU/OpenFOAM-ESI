@@ -97,9 +97,11 @@ adjointManagers
 
 optimisation
 {
-    sensitivities
+    designVariables
     {
-        type            volumetricBSplinesFI;
+        type            shape;
+        shapeType       volumetricBSplines;
+        sensitivityType shapeFI;
         patches         (pressure suction);
     }
 }

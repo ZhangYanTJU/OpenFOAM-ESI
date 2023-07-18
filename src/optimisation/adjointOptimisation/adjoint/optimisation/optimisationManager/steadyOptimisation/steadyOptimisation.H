@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -60,9 +60,6 @@ private:
 
     // Private Member Functions
 
-        //- Update optimisationType source for all primal and adjoint solvers
-        void updateOptTypeSource();
-
         //- No copy construct
         steadyOptimisation(const steadyOptimisation&) = delete;
 
@@ -114,10 +111,6 @@ public:
 
         //- Whether to update the design variables
         virtual bool update();
-
-        //- Do a line search to find a correction satisfying the step
-        //- convergence criteria
-        virtual void updateDesignVariables();
 };
 
 

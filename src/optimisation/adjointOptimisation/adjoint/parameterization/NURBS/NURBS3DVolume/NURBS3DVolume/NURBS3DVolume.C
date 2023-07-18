@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2022 PCOpt/NTUA
-    Copyright (C) 2013-2022 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -350,7 +350,7 @@ bool Foam::NURBS3DVolume::bound
     vector& vec,
     scalar minValue,
     scalar maxValue
-)
+) const
 {
     bool boundPoint(false);
     // Lower value bounding
@@ -425,6 +425,70 @@ void Foam::NURBS3DVolume::determineActiveDesignVariablesAndPoints()
         )
         {
             activeControlPoints_[cpI] = false;
+        }
+    }
+
+    // Deactivate design varibles if they affect no mesh point
+    confineInertControlPoints();
+}
+
+
+void Foam::NURBS3DVolume::confineInertControlPoints()
+{
+    // Loop over all active control points and check whether they parameterize
+    // at least one mesh point of the ones laying within the morphing box
+    const labelList& map = getMap();
+    const pointVectorField& parametricCoors = getParametricCoordinates();
+
+    const scalarField& knotsU = basisU_.knots();
+    const scalarField& knotsV = basisV_.knots();
+    const scalarField& knotsW = basisW_.knots();
+
+    const label pU = basisU_.degree();
+    const label pV = basisV_.degree();
+    const label pW = basisW_.degree();
+    forAll(activeControlPoints_, cpI)
+    {
+        if (activeControlPoints_[cpI])
+        {
+            // Get i, j, k corresponding to this control point
+            label i(-1),  j(-1), k(-1);
+            getIJK(i, j, k, cpI);
+
+            const scalar uMin(knotsU[i]);
+            const scalar uMax(knotsU[i + pU + 1]);
+            const scalar vMin(knotsV[j]);
+            const scalar vMax(knotsV[j + pV + 1]);
+            const scalar wMin(knotsW[k]);
+            const scalar wMax(knotsW[k + pW + 1]);
+            bool foundParamPt(false);
+            for (const label paramI : map)
+            {
+                const vector& paramCoors = parametricCoors()[paramI];
+                if
+                (
+                    paramCoors.x() >= uMin && paramCoors.x() < uMax
+                 && paramCoors.y() >= vMin && paramCoors.y() < vMax
+                 && paramCoors.z() >= wMin && paramCoors.z() < wMax
+                )
+                {
+                    foundParamPt = true;
+                    break;
+                }
+            }
+            reduce(foundParamPt, orOp<bool>());
+            if (!foundParamPt)
+            {
+                activeControlPoints_[cpI] = false;
+                activeDesignVariables_[3*cpI] = false;
+                activeDesignVariables_[3*cpI + 1] = false;
+                activeDesignVariables_[3*cpI + 2] = false;
+                Info<< "Disabling control " << cpI
+                    << " and variables "
+                    << "(" << 3*cpI << ", " << 3*cpI+1 << ", " << 3*cpI+2 << ")"
+                    << " since they does not parameterize any mesh point"
+                    << endl;
+            }
         }
     }
 }
@@ -765,7 +829,6 @@ Foam::NURBS3DVolume::NURBS3DVolume
     {
         controlPointsDefinition::New(*this);
     }
-    determineActiveDesignVariablesAndPoints();
 }
 
 
@@ -800,6 +863,114 @@ Foam::autoPtr<Foam::NURBS3DVolume> Foam::NURBS3DVolume::New
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+Foam::tmp<Foam::vectorField> Foam::NURBS3DVolume::computeParametricCoordinates
+(
+    const vectorField& points
+) const
+{
+    tmp<vectorField> tparamCoors(tmp<vectorField>::New(points.size(), Zero));
+    vectorField& paramCoors = tparamCoors.ref();
+    // Initialize parametric coordinates based on min/max of control points
+    scalar minX1 = min(cps_.component(0));
+    scalar maxX1 = max(cps_.component(0));
+    scalar minX2 = min(cps_.component(1));
+    scalar maxX2 = max(cps_.component(1));
+    scalar minX3 = min(cps_.component(2));
+    scalar maxX3 = max(cps_.component(2));
+
+    scalar oneOverDenomX(1./(maxX1 - minX1));
+    scalar oneOverDenomY(1./(maxX2 - minX2));
+    scalar oneOverDenomZ(1./(maxX3 - minX3));
+
+    forAll(points, pI)
+    {
+        paramCoors[pI].x() = (points[pI].x() - minX1)*oneOverDenomX;
+        paramCoors[pI].y() = (points[pI].y() - minX2)*oneOverDenomY;
+        paramCoors[pI].z() = (points[pI].z() - minX3)*oneOverDenomZ;
+    }
+
+    // Indices of points that failed to converge
+    // (i.e. are bounded for nMaxBound iters)
+    boolList dropOffPoints(points.size(), false);
+    label nDropedPoints(0);
+
+    // Initial cartesian coordinates
+    tmp<vectorField> tsplinesBasedCoors(coordinates(paramCoors));
+    vectorField& splinesBasedCoors = tsplinesBasedCoors.ref();
+
+    // Newton-Raphson loop to compute parametric coordinates
+    // based on cartesian coordinates and the known control points
+    Info<< "Mapping of mesh points to parametric space for box " << name_
+        << " ..." << endl;
+    // Do loop on a point-basis and check residual of each point equation
+    label maxIterNeeded(0);
+    forAll(points, pI)
+    {
+        label iter(0);
+        label nBoundIters(0);
+        vector res(GREAT, GREAT, GREAT);
+        do
+        {
+            vector& uVec = paramCoors[pI];
+            vector& coorPointI = splinesBasedCoors[pI];
+            uVec += ((inv(JacobianUVW(uVec))) & (points[pI] - coorPointI));
+            // Bounding might be needed for the first iterations
+            // If multiple bounds happen, point is outside of the control
+            // boxes and should be discarded
+            if (bound(uVec))
+            {
+                ++nBoundIters;
+            }
+            if (nBoundIters > nMaxBound_)
+            {
+                dropOffPoints[pI] = true;
+                ++nDropedPoints;
+                break;
+            }
+            // Update current cartesian coordinates based on parametric ones
+            coorPointI = coordinates(uVec);
+            // Compute residual
+            res = cmptMag(points[pI] - coorPointI);
+        }
+        while
+        (
+            (iter++ < maxIter_)
+         && (
+                   res.component(0) > tolerance_
+                || res.component(1) > tolerance_
+                || res.component(2) > tolerance_
+            )
+        );
+        if (iter > maxIter_)
+        {
+            WarningInFunction
+                << "Mapping to parametric space for point " << pI
+                << " failed." << endl
+                << "Residual after " << maxIter_ + 1 << " iterations : "
+                << res << endl
+                << "parametric coordinates " <<  paramCoors[pI]
+                <<  endl
+                << "Local system coordinates " <<  points[pI] <<  endl
+                << "Threshold residual per direction : " << tolerance_
+                << endl;
+        }
+        maxIterNeeded = max(maxIterNeeded, iter);
+    }
+    reduce(maxIterNeeded, maxOp<label>());
+
+    label nParameterizedPoints = points.size() - nDropedPoints;
+
+    reduce(nDropedPoints, sumOp<label>());
+    reduce(nParameterizedPoints, sumOp<label>());
+    Info<< "Found " << nDropedPoints
+        << " to discard from morphing boxes" << endl;
+    Info<< "Keeping " << nParameterizedPoints
+        << " parameterized points in boxes"  << endl;
+    return tparamCoors;
+}
+
 
 Foam::vector Foam::NURBS3DVolume::volumeDerivativeU
 (
@@ -1499,6 +1670,23 @@ Foam::label Foam::NURBS3DVolume::getCPID
     const label nCPsV = basisV_.nCPs();
 
     return k*nCPsU*nCPsV + j*nCPsU + i;
+}
+
+
+void Foam::NURBS3DVolume::getIJK
+(
+    label&  i,
+    label&  j,
+    label&  k,
+    const label cpID
+) const
+{
+    const label nCPsU = basisU_.nCPs();
+    const label nCPsV = basisV_.nCPs();
+    k = cpID/(nCPsU*nCPsV);
+    const label inKplaneID = (cpID - k*(nCPsU*nCPsV));
+    j = inKplaneID/nCPsU;
+    i = inKplaneID - j*nCPsU;
 }
 
 
