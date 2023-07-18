@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -213,8 +213,8 @@ class vtkWrite
         //- Dictionary of volume selections
         dictionary selection_;
 
-        //- Pointers to the requested mesh regions
-        HashTable<const fvMesh*> meshes_;
+        //- Pointers to the requested mesh regions (sorted)
+        UPtrList<const fvMesh> meshes_;
 
         //- Subsetting for meshes.
         //  Access index according to sorted mesh names.

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -98,10 +98,8 @@ bool Foam::functionObjects::vtkWrite::update()
     vtuMappings_.resize(meshes_.size());
 
     label regioni = 0;
-    for (const word& regionName : meshes_.sortedToc())
+    for (const fvMesh& mesh : meshes_)
     {
-        const fvMesh& mesh = *(meshes_[regionName]);
-
         if (meshSubsets_.set(regioni))
         {
             meshSubsets_[regioni].clear();
@@ -149,10 +147,8 @@ bool Foam::functionObjects::vtkWrite::readSelection(const dictionary& dict)
 {
     meshSubsets_.clear();
     vtuMappings_.clear();
+    meshes_.clear();
     meshState_ = polyMesh::TOPO_CHANGE;
-
-    // All possible meshes
-    meshes_ = time_.lookupClass<fvMesh>();
 
     selectRegions_.clear();
     dict.readIfPresent("regions", selectRegions_);
@@ -160,18 +156,18 @@ bool Foam::functionObjects::vtkWrite::readSelection(const dictionary& dict)
     if (selectRegions_.empty())
     {
         selectRegions_.resize(1);
-        selectRegions_.first() =
+        selectRegions_.front() =
             dict.getOrDefault<word>("region", polyMesh::defaultRegion);
     }
 
     // Restrict to specified meshes
-    meshes_.filterKeys(selectRegions_);
+    meshes_ = time_.csorted<fvMesh>(selectRegions_);
 
     if (meshes_.empty())
     {
         WarningInFunction
-            << "No mesh regions selected for function object " << name()
-            << nl;
+            << "No mesh regions selected for function object "
+            << name() << nl;
     }
 
     selectPatches_.clear();
