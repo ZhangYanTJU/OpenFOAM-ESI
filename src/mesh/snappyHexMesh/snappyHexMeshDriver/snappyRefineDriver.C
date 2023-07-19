@@ -68,6 +68,7 @@ Foam::snappyRefineDriver::snappyRefineDriver
     const labelUList& globalToMasterPatch,
     const labelUList& globalToSlavePatch,
     coordSetWriter& setFormatter,
+    refPtr<surfaceWriter>& surfFormatter,
     const bool dryRun
 )
 :
@@ -77,6 +78,7 @@ Foam::snappyRefineDriver::snappyRefineDriver
     globalToMasterPatch_(globalToMasterPatch),
     globalToSlavePatch_(globalToSlavePatch),
     setFormatter_(setFormatter),
+    surfFormatter_(surfFormatter),
     dryRun_(dryRun)
 {}
 
@@ -1810,7 +1812,8 @@ void Foam::snappyRefineDriver::removeInsideCells
         refineParams.zonesInMesh(),
         refineParams.locationsOutsideMesh(),
         !refineParams.useLeakClosure(),
-        setFormatter_
+        setFormatter_,
+        surfFormatter_
     );
 
     if (debug&meshRefinement::MESH)
@@ -2793,7 +2796,8 @@ void Foam::snappyRefineDriver::baffleAndSplitMesh
         refineParams.zonesInMesh(),
         refineParams.locationsOutsideMesh(),
         !refineParams.useLeakClosure(),
-        setFormatter_
+        setFormatter_,
+        surfFormatter_
     );
 
 
@@ -2859,6 +2863,7 @@ void Foam::snappyRefineDriver::zonify
             refineParams.locationsOutsideMesh(),
             !refineParams.useLeakClosure(),
             setFormatter_,
+            surfFormatter_,
             zonesToFaceZone
         );
 
@@ -2931,7 +2936,8 @@ void Foam::snappyRefineDriver::splitAndMergeBaffles
         refineParams.zonesInMesh(),
         refineParams.locationsOutsideMesh(),
         !refineParams.useLeakClosure(),
-        setFormatter_
+        setFormatter_,
+        surfFormatter_
     );
 
     // Merge free-standing baffles always

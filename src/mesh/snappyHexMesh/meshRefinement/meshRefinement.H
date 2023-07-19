@@ -60,6 +60,7 @@ SourceFiles
 #include "volumeType.H"
 #include "DynamicField.H"
 #include "coordSetWriter.H"
+#include "surfaceWriter.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -613,6 +614,7 @@ private:
                 const pointField& locationsOutsideMesh,
                 const bool exitIfLeakPath,
                 const refPtr<coordSetWriter>& leakPathFormatter,
+                refPtr<surfaceWriter>& surfFormatter,
 
                 const labelList& neiLevel,
                 const pointField& neiCc,
@@ -873,6 +875,7 @@ private:
                 const pointField& locationsOutsideMesh,
                 const bool exitIfLeakPath,
                 const refPtr<coordSetWriter>& leakPathFormatter,
+                refPtr<surfaceWriter>& surfFormatter,
 
                 labelList& cellToZone,
                 labelList& unnamedRegion1,
@@ -1343,7 +1346,8 @@ public:
                 const wordList& regionsInMesh,
                 const pointField& locationsOutsideMesh,
                 const bool exitIfLeakPath,
-                const refPtr<coordSetWriter>& leakPathFormatter
+                const refPtr<coordSetWriter>& leakPathFormatter,
+                refPtr<surfaceWriter>& surfFormatter
             );
 
             //- Merge free-standing baffles
@@ -1375,7 +1379,8 @@ public:
                 const wordList& regionsInMesh,
                 const pointField& locationsOutsideMesh,
                 const bool exitIfLeakPath,
-                const refPtr<coordSetWriter>& leakPathFormatter
+                const refPtr<coordSetWriter>& leakPathFormatter,
+                refPtr<surfaceWriter>& surfFormatter
             );
 
             //- Remove cells from limitRegions if level -1
@@ -1479,6 +1484,7 @@ public:
                 const pointField& locationsOutsideMesh,
                 const bool exitIfLeakPath,
                 const refPtr<coordSetWriter>& leakPathFormatter,
+                refPtr<surfaceWriter>& surfFormatter,
                 wordPairHashTable& zonesToFaceZone
             );
 

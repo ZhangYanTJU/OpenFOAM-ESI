@@ -85,6 +85,9 @@ class snappyRefineDriver
         //- How to write lines. Used e.g. when writing leak-paths
         coordSetWriter& setFormatter_;
 
+        //- How to write surfaces. Used e.g. when writing leak closure faces
+        refPtr<surfaceWriter>& surfFormatter_;
+
         //- Are we operating in test mode?
         const bool dryRun_;
 
@@ -276,6 +279,7 @@ public:
             const labelUList& globalToMasterPatch,
             const labelUList& globalToSlavePatch,
             coordSetWriter& setFormatter,
+            refPtr<surfaceWriter>& surfFormatter,
             const bool dryRun = false
         );
 

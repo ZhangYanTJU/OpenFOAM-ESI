@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -291,6 +291,7 @@ void Foam::meshRefinement::getBafflePatches
     const pointField& locationsOutsideMesh,
     const bool exitIfLeakPath,
     const refPtr<coordSetWriter>& leakPathFormatter,
+    refPtr<surfaceWriter>& surfFormatter,
     const labelList& neiLevel,
     const pointField& neiCc,
 
@@ -326,6 +327,7 @@ void Foam::meshRefinement::getBafflePatches
             locationsOutsideMesh,
             exitIfLeakPath,
             leakPathFormatter,
+            surfFormatter,
 
             cellToZone,
             unnamedRegion1,
@@ -2848,6 +2850,7 @@ void Foam::meshRefinement::zonify
     const pointField& locationsOutsideMesh,
     const bool exitIfLeakPath,
     const refPtr<coordSetWriter>& leakPathFormatter,
+    refPtr<surfaceWriter>& surfFormatter,
 
     labelList& cellToZone,
     labelList& unnamedRegion1,
@@ -3221,27 +3224,66 @@ void Foam::meshRefinement::zonify
                 str.write(mesh_.points()[pointi]);
             }
         }
-        if (debug && returnReduceOr(unnamedClosureFaces.size()))
+
+        if (returnReduceOr(unnamedClosureFaces.size()) && surfFormatter)
         {
-            mkDir(mesh_.time().timePath());
-            OBJstream str(mesh_.time().timePath()/"unnamedClosureFaces.obj");
-            Pout<< "Writing " << unnamedClosureFaces.size()
-                << " unnamedClosureFaces to " << str.name() << endl;
-            for (const label facei : unnamedClosureFaces)
-            {
-                str.write(mesh_.faces()[facei], mesh_.points(), false);
-            }
+            fileName outputName
+            (
+                mesh_.time().globalPath()
+              / functionObject::outputPrefix
+              / mesh_.pointsInstance()
+              / "unnamedClosureFaces"
+            );
+            outputName.clean();  // Remove unneeded ".."
+
+            Info<< "Writing "
+                << returnReduce(unnamedClosureFaces.size(), sumOp<label>())
+                << " unnamedClosureFaces to " << outputName << endl;
+
+            const indirectPrimitivePatch setPatch
+            (
+                IndirectList<face>(mesh_.faces(), unnamedClosureFaces),
+                mesh_.points()
+            );
+
+            surfFormatter->open
+            (
+                setPatch.localPoints(),
+                setPatch.localFaces(),
+                outputName
+            );
+            surfFormatter->write();
+            surfFormatter->clear();
         }
-        if (debug && returnReduceOr(namedClosureFaces.size()))
+        if (returnReduceOr(namedClosureFaces.size()) && surfFormatter)
         {
-            mkDir(mesh_.time().timePath());
-            OBJstream str(mesh_.time().timePath()/"namedClosureFaces.obj");
-            Pout<< "Writing " << namedClosureFaces.size()
-                << " namedClosureFaces to " << str.name() << endl;
-            for (const label facei : namedClosureFaces)
-            {
-                str.write(mesh_.faces()[facei], mesh_.points(), false);
-            }
+            fileName outputName
+            (
+                mesh_.time().globalPath()
+              / functionObject::outputPrefix
+              / mesh_.pointsInstance()
+              / "namedClosureFaces"
+            );
+            outputName.clean();  // Remove unneeded ".."
+
+            Info<< "Writing "
+                << returnReduce(namedClosureFaces.size(), sumOp<label>())
+                << " namedClosureFaces to " << outputName << endl;
+
+            const indirectPrimitivePatch setPatch
+            (
+                IndirectList<face>(mesh_.faces(), namedClosureFaces),
+                mesh_.points()
+            );
+
+            surfFormatter->open
+            (
+                setPatch.localPoints(),
+                setPatch.localFaces(),
+                outputName
+            );
+            surfFormatter->write();
+            surfFormatter->clear();
         }
     }
 
@@ -4541,7 +4583,8 @@ void Foam::meshRefinement::baffleAndSplitMesh
     const wordList& zonesInMesh,
     const pointField& locationsOutsideMesh,
     const bool exitIfLeakPath,
-    const refPtr<coordSetWriter>& leakPathFormatter
+    const refPtr<coordSetWriter>& leakPathFormatter,
+    refPtr<surfaceWriter>& surfFormatter
 )
 {
     // Introduce baffles
@@ -4560,6 +4603,8 @@ void Foam::meshRefinement::baffleAndSplitMesh
     calcNeighbourData(neiLevel, neiCc);
 
     labelList ownPatch, neiPatch;
+
+    refPtr<surfaceWriter> dummyWriter(nullptr);
     getBafflePatches
     (
         nErodeCellZones,
@@ -4570,6 +4615,7 @@ void Foam::meshRefinement::baffleAndSplitMesh
         locationsOutsideMesh,
         exitIfLeakPath,
         refPtr<coordSetWriter>(nullptr),
+        dummyWriter,
 
         neiLevel,
         neiCc,
@@ -4635,6 +4681,7 @@ void Foam::meshRefinement::baffleAndSplitMesh
             calcNeighbourData(neiLevel, neiCc);
 
             labelList ownPatch, neiPatch;
+            refPtr<surfaceWriter> dummyWriter(nullptr);
             getBafflePatches
             (
                 nErodeCellZones,
@@ -4645,6 +4692,7 @@ void Foam::meshRefinement::baffleAndSplitMesh
                 locationsOutsideMesh,
                 exitIfLeakPath,
                 refPtr<coordSetWriter>(nullptr),
+                dummyWriter,
 
                 neiLevel,
                 neiCc,
@@ -4819,7 +4867,8 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::splitMesh
     const wordList& zonesInMesh,
     const pointField& locationsOutsideMesh,
     const bool exitIfLeakPath,
-    const refPtr<coordSetWriter>& leakPathFormatter
+    const refPtr<coordSetWriter>& leakPathFormatter,
+    refPtr<surfaceWriter>& surfFormatter
 )
 {
     // Determine patches to put intersections into
@@ -4843,6 +4892,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::splitMesh
         locationsOutsideMesh,
         exitIfLeakPath,
         leakPathFormatter,
+        surfFormatter,
 
         neiLevel,
         neiCc,
@@ -5384,6 +5434,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::removeLimitShells
 
     // Find intersections with all unnamed(!) surfaces
     labelList ownPatch, neiPatch;
+    refPtr<surfaceWriter> dummyWriter(nullptr);
     getBafflePatches
     (
         nErodeCellZones,
@@ -5394,6 +5445,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::removeLimitShells
         locationsOutsideMesh,
         false,                      // do not exit. Use leak-closure instead.
         refPtr<coordSetWriter>(nullptr),
+        dummyWriter,
 
         neiLevel,
         neiCc,
@@ -5705,6 +5757,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::zonify
     const pointField& locationsOutsideMesh,
     const bool exitIfLeakPath,
     const refPtr<coordSetWriter>& leakPathFormatter,
+    refPtr<surfaceWriter>& surfFormatter,
     wordPairHashTable& zonesToFaceZone
 )
 {
@@ -5787,6 +5840,7 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::zonify
             locationsOutsideMesh,
             exitIfLeakPath,
             leakPathFormatter,
+            surfFormatter,
 
             cellToZone,
             unnamedRegion1,

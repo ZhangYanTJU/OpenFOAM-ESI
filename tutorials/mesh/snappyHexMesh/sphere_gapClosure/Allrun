@@ -15,6 +15,7 @@ runApplication blockMesh
 runParallel -s decompose redistributePar -decompose -constant $fileHandler
 runParallel snappyHexMesh -overwrite $fileHandler
 runParallel checkMesh -allTopology -allGeometry $fileHandler
+runParallel -s reconstruct redistributePar -reconstruct $fileHandler
 
 # runParallel -s redistrib $decomp16 redistributePar -constant $fileHandler
 
