@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,6 +52,7 @@ Description
 #include "snapParameters.H"
 #include "layerParameters.H"
 #include "vtkCoordSetWriter.H"
+#include "vtkSurfaceWriter.H"
 #include "faceSet.H"
 #include "motionSmoother.H"
 #include "polyTopoChange.H"
@@ -859,19 +860,36 @@ int main(int argc, char *argv[])
     // Writer for writing lines
     autoPtr<coordSetWriter> setFormatter;
     {
-        const word setFormat
+        const word writerType
         (
             meshDict.getOrDefault<word>
             (
                 "setFormat",
-                coordSetWriters::vtkWriter::typeName  // Default: "vtk"
+                coordSetWriters::vtkWriter::typeName    // Default: "vtk"
             )
         );
 
         setFormatter = coordSetWriter::New
         (
-            setFormat,
-            meshDict.subOrEmptyDict("formatOptions").optionalSubDict(setFormat)
+            writerType,
+            meshDict.subOrEmptyDict("formatOptions").optionalSubDict(writerType)
+        );
+    }
+    // Writer for writing surfaces
+    refPtr<surfaceWriter> surfFormatter;
+    {
+        const word type
+        (
+            meshDict.getOrDefault<word>
+            (
+                "surfaceFormat",
+                surfaceWriters::vtkWriter::typeName      // Default: "vtk"
+            )
+        );
+        surfFormatter = surfaceWriter::New
+        (
+            type,
+            meshDict.subOrEmptyDict("formatOptions").optionalSubDict(type)
         );
     }
 
@@ -1774,6 +1792,7 @@ int main(int argc, char *argv[])
             globalToMasterPatch,
             globalToSlavePatch,
             setFormatter(),
+            surfFormatter,
             dryRun
         );
 
