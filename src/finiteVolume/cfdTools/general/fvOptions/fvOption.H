@@ -7,8 +7,8 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2019-2020 OpenCFD Ltd.
-    Copyright (C) 2020 PCOpt/NTUA
-    Copyright (C) 2020 FOSS GP
+    Copyright (C) 2020,2023 PCOpt/NTUA
+    Copyright (C) 2020,2023 FOSS GP
 ------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,6 +74,7 @@ SourceFiles
 #include "fvMatricesFwd.H"
 #include "primitiveFieldsFwd.H"
 #include "volFieldsFwd.H"
+#include "surfaceFieldsFwd.H"
 #include "dictionary.H"
 #include "runTimeSelectionTables.H"
 
@@ -417,6 +418,10 @@ public:
                 virtual void correct(volSymmTensorField& field);
                 virtual void correct(volTensorField& field);
 
+                virtual void correct(surfaceScalarField& field);
+                virtual void correct(surfaceVectorField& field);
+                virtual void correct(surfaceTensorField& field);
+
 
             // Post process sensitivity field related to the fvOption
 
@@ -437,6 +442,28 @@ public:
                     tensorField& sensField,
                     const word& fieldName = word::null,
                     const word& designVariablesName = word::null
+                );
+
+                virtual void postProcessAuxSens
+                (
+                    const volScalarField& primalField,
+                    const volScalarField& adjointField,
+                    scalarField& sensField,
+                    const word& fieldName = word::null
+                );
+                virtual void postProcessAuxSens
+                (
+                    const volVectorField& primalField,
+                    const volVectorField& adjointField,
+                    scalarField& sensField,
+                    const word& fieldName = word::null
+                );
+                virtual void postProcessAuxSens
+                (
+                    const volTensorField& primalField,
+                    const volTensorField& adjointField,
+                    scalarField& sensField,
+                    const word& fieldName = word::null
                 );
 
 

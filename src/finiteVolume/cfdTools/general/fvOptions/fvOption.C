@@ -7,8 +7,8 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2019-2021 OpenCFD Ltd.
-    Copyright (C) 2020 PCOpt/NTUA
-    Copyright (C) 2020 FOSS GP
+    Copyright (C) 2020,2023 PCOpt/NTUA
+    Copyright (C) 2020,2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -335,6 +335,18 @@ void Foam::fv::option::correct(volTensorField& field)
 {}
 
 
+void Foam::fv::option::correct(surfaceScalarField& field)
+{}
+
+
+void Foam::fv::option::correct(surfaceVectorField& field)
+{}
+
+
+void Foam::fv::option::correct(surfaceTensorField& field)
+{}
+
+
 void Foam::fv::option::postProcessSens
 (
     scalarField& sensField,
@@ -358,6 +370,36 @@ void Foam::fv::option::postProcessSens
     tensorField& sensField,
     const word& fieldName,
     const word& designVariablesName
+)
+{}
+
+
+void Foam::fv::option::postProcessAuxSens
+(
+    const volScalarField& primalField,
+    const volScalarField& adjointField,
+    scalarField& sensField,
+    const word& fieldName
+)
+{}
+
+
+void Foam::fv::option::postProcessAuxSens
+(
+    const volVectorField& primalField,
+    const volVectorField& adjointField,
+    scalarField& sensField,
+    const word& fieldName
+)
+{}
+
+
+void Foam::fv::option::postProcessAuxSens
+(
+    const volTensorField& primalField,
+    const volTensorField& adjointField,
+    scalarField& sensField,
+    const word& fieldName
 )
 {}
 
