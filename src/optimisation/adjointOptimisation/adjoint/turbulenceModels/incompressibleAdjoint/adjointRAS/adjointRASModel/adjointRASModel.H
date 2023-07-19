@@ -331,6 +331,15 @@ public:
         //  Misses grad(dxdb), to be added by the assembling the sensitivities
         virtual tmp<volTensorField> FISensitivityTerm() = 0;
 
+        //- Term contributing to the computation of topology optimisation
+        //- sensitivities
+        //  Misses betaMax, dBeta/dAlpha and the mesh volume, to be added
+        //  during the assembly of the sensitivities
+        virtual tmp<scalarField> topologySensitivities
+        (
+            const word& designVarsName
+        ) const = 0;
+
         //- Solve the adjoint turbulence equations
         virtual void correct();
 

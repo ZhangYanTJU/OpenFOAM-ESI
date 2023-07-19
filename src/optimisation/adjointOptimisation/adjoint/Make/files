@@ -6,6 +6,13 @@ turbulenceModels/turbulenceModelVariables/RAS/kOmegaSST/kOmegaSST.C
 turbulenceModels/turbulenceModelVariables/RAS/kEpsilon/kEpsilon.C
 turbulenceModels/turbulenceModelVariables/RAS/LaunderSharmaKE/LaunderSharmaKE.C
 
+/* FVOPTIONS */
+fvOptions/sources/TopO/topOSource/topOSource.C
+
+/* FUNCTION1 */
+OpenFOAM/primitives/functions/Function1/stepRamp/stepRamp.C
+OpenFOAM/primitives/functions/Function1/reverseRamp/reverseRamp.C
+
 /* VARIABLES SET */
 solvers/variablesSet/variablesSet/variablesSet.C
 solvers/variablesSet/incompressible/incompressibleVars.C
@@ -57,6 +64,8 @@ objectives/incompressible/objectiveUniformityPatch/objectiveUniformityPatch.C
 objectives/incompressible/objectiveUniformityCellZone/objectiveUniformityCellZone.C
 objectives/geometric/objectiveGeometric/objectiveGeometric.C
 objectives/geometric/objectivePartialVolume/objectivePartialVolume.C
+objectives/geometric/objectiveTopOVolume/objectiveTopOVolume.C
+objectives/geometric/objectiveTopOSolidVolume/objectiveTopOSolidVolume.C
 
 /* OBJECTIVE MANAGER*/
 objectiveManager/objectiveManager.C
@@ -152,6 +161,7 @@ optimisation/adjointSensitivity/adjointSensitivity/multiple/sensitivityMultiple.
 /* LINE SEARCH */
 optimisation/lineSearch/lineSearch/lineSearch.C
 optimisation/lineSearch/ArmijoConditions/ArmijoConditions.C
+optimisation/lineSearch/GCMMA/GCMMA.C
 optimisation/lineSearch/stepUpdate/stepUpdate/stepUpdate.C
 optimisation/lineSearch/stepUpdate/bisection/bisection.C
 optimisation/lineSearch/stepUpdate/quadratic/quadratic.C
@@ -167,6 +177,7 @@ $(updateMethod)/DBFGS/DBFGS.C
 $(updateMethod)/LBFGS/LBFGS.C
 $(updateMethod)/SR1/SR1.C
 $(updateMethod)/conjugateGradient/conjugateGradient.C
+$(updateMethod)/MMA/MMA.C
 $(updateMethod)/constraintProjection/constraintProjection.C
 $(updateMethod)/SQPBase/SQPBase.C
 $(updateMethod)/SQP/SQP.C
@@ -174,6 +185,33 @@ $(updateMethod)/ISQP/ISQP.C
 
 /* DESIGN VARIABLES */
 optimisation/designVariables/designVariables/designVariables.C
+topoVars=optimisation/designVariables/topODesignVariables
+$(topoVars)/topOVariablesBase/topOVariablesBase.C
+$(topoVars)/topODesignVariables.C
+$(topoVars)/dynamicTopODesignVariables/dynamicTopODesignVariables.C
+$(topoVars)/betaMax/betaMax/betaMax.C
+$(topoVars)/betaMax/value/betaMaxValue.C
+$(topoVars)/betaMax/Darcy/betaMaxDarcy.C
+$(topoVars)/betaMax/stepRamp/betaMaxStepRamp.C
+$(topoVars)/topOZones/topOZones.C
+$(topoVars)/regularisation/fieldRegularisation.C
+$(topoVars)/regularisation/regularisationRadius/regularisationRadius/regularisationRadius.C
+$(topoVars)/regularisation/regularisationRadius/isotropic/regularisationRadiusIsotropic.C
+$(topoVars)/regularisation/regularisationPDE/regularisationPDE/regularisationPDE.C
+$(topoVars)/regularisation/regularisationPDE/Helmoltz/Helmholtz.C
+$(topoVars)/marchingCells/marchingCells.C
+$(topoVars)/interpolationFunctions/interpolationFunction/topOInterpolationFunction.C
+$(topoVars)/interpolationFunctions/BorrvallPetersson/BorrvallPeterssonInterpolation.C
+$(topoVars)/interpolationFunctions/invBP/invBP.C
+$(topoVars)/interpolationFunctions/linear/linearInterpolation.C
+$(topoVars)/interpolationFunctions/SIMP/SIMPInterpolation.C
+$(topoVars)/interpolationFunctions/sinh/sinhInterpolation.C
+$(topoVars)/interpolationFunctions/tanh/tanhInterpolation.C
+$(topoVars)/interpolationFunctions/exp/expInterpolation.C
+levelSetVars=optimisation/designVariables/levelSet
+$(levelSetVars)/levelSetDesignVariables.C
+$(levelSetVars)/interpolationFunctions/sigmoidalHeaviside/sigmoidalHeaviside.C
+$(levelSetVars)/interpolationFunctions/smoothHeaviside/smoothHeaviside.C
 shapeVars=optimisation/designVariables/shape
 $(shapeVars)/shapeDesignVariables/shapeDesignVariables.C
 $(shapeVars)/volumetricBSplines/morphingBoxConstraints/morphingBoxConstaint/morphingBoxConstraint.C

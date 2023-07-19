@@ -30,6 +30,7 @@ License
 #include "incompressibleAdjointSolver.H"
 #include "incompressiblePrimalSolver.H"
 #include "wallFvPatch.H"
+#include "sensitivityTopO.H"
 #include "adjointBoundaryConditions.H"
 #include "adjointBoundaryConditionsFwd.H"
 #include "addToRunTimeSelectionTable.H"
@@ -457,6 +458,67 @@ void Foam::incompressibleAdjointSolver::accumulateOptionsDxDbMultiplier
         temp, av.paInst().name(), av.solverName()
     );
     optionsDxDbMult += temp*dt;
+}
+
+
+void Foam::incompressibleAdjointSolver::topOSensMultiplier
+(
+    scalarField& betaMult,
+    const word& designVariablesName,
+    const scalar dt
+)
+{
+    const incompressibleAdjointVars& adjointVars = getAdjointVars();
+    const volVectorField& U = primalVars_.U();
+    const volVectorField& Ua = adjointVars.Ua();
+    const autoPtr<incompressibleAdjoint::adjointRASModel>& adjointTurbulence =
+        adjointVars.adjointTurbulence();
+    fv::options& fvOptions(fv::options::New(mesh_));
+
+    // Term from the momentum equations
+    scalarField momSens((U.primitiveField() & Ua.primitiveField())*dt);
+    Foam::sensitivityTopO::postProcessSens
+        (betaMult, momSens, fvOptions, U.name(), designVariablesName);
+    if (debug > 2)
+    {
+        volScalarField IvSens
+        (
+            IOobject
+            (
+                "IvSens" + solverName(),
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_,
+            dimensionedScalar(dimless, Zero)
+        );
+        IvSens.primitiveFieldRef() = momSens;
+        IvSens.write();
+    }
+
+    // Term from the turbulence model.
+    // Includes already the derivative of the interpolation function
+    betaMult +=
+        (adjointTurbulence->topologySensitivities(designVariablesName))*dt;
+
+    // Terms resulting directly from the objective function
+    PtrList<objective>& functions = objectiveManager_.getObjectiveFunctions();
+    for (objective& objI : functions)
+    {
+        const scalar weight(objI.weight());
+        if (objI.hasdJdb())
+        {
+            betaMult += weight*objI.dJdb()*dt;
+        }
+
+        if (objI.hasdJdbField())
+        {
+            SubField<scalar> betaSens(objI.dJdbField(), mesh_.nCells(), 0);
+            betaMult += weight*betaSens*dt;
+        }
+    }
 }
 
 

@@ -235,4 +235,30 @@ void Foam::adjointNull::accumulateGeometryVariationsMultipliers
 }
 
 
+void Foam::adjointNull::topOSensMultiplier
+(
+    scalarField& betaMult,
+    const word& designVariablesName,
+    const scalar dt
+)
+{
+    // Terms resulting directly from the objective function
+    PtrList<objective>& functions = objectiveManager_.getObjectiveFunctions();
+    for (objective& objI : functions)
+    {
+        const scalar weight = objI.weight();
+        if (objI.hasdJdb())
+        {
+            betaMult += weight*objI.dJdb()*dt;
+        }
+
+        if (objI.hasdJdbField())
+        {
+            SubField<scalar> betaSens(objI.dJdbField(), mesh_.nCells(), 0);
+            betaMult += weight*betaSens*dt;
+        }
+    }
+}
+
+
 // ************************************************************************* //
