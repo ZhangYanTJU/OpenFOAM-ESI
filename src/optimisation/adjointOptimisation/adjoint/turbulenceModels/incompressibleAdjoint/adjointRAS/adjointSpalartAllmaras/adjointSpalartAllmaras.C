@@ -36,6 +36,7 @@ License
 #include "coupledFvPatch.H"
 #include "ATCModel.H"
 #include "fvOptions.H"
+#include "sensitivityTopO.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -1035,6 +1036,24 @@ tmp<volTensorField> adjointSpalartAllmaras::FISensitivityTerm()
 
     return tFISens;
 }
+
+
+tmp<scalarField> adjointSpalartAllmaras::topologySensitivities
+(
+    const word& designVarsName
+) const
+{
+    auto tres(tmp<scalarField>::New(nuTilda().primitiveField().size(), Zero));
+    scalarField nuTildaSens
+        (nuTilda().primitiveField()*nuaTilda().primitiveField());
+
+    fv::options& fvOptions(fv::options::New(mesh_));
+    sensitivityTopO::postProcessSens
+    (
+        tres.ref(), nuTildaSens, fvOptions, nuTilda().name(), designVarsName
+    );
+
+    return tres;
 }
 
 
@@ -1070,7 +1089,7 @@ void adjointSpalartAllmaras::correct()
 
     nuaTilda().storePrevIter();
 
-    fv::options& fvOptions(fv::options::New(this->mesh_));
+    fv::options& fvOptions(fv::options::New(mesh_));
 
     tmp<fvScalarMatrix> nuaTildaEqn
     (
@@ -1082,9 +1101,9 @@ void adjointSpalartAllmaras::correct()
       + fvc::laplacian(2.0*Cb2_*oneOverSigmaNut*nuaTilda(), nuTilda())
       + gradNua*oneOverSigmaNut
      ==
-        // always a negative contribution to the lhs. No Sp used!
+        // Always a negative contribution to the lhs. No Sp used!
         Cb1_*Stilda_*nuaTilda()
-        //always a positive contribution to the lhs. no need for SuSp
+        // Always a positive contribution to the lhs. no need for SuSp
       - fvm::Sp(Cw1_*fw_*nuTilda()/sqr(y_), nuaTilda())
       - Cdnut_*gradUaR
       + fvOptions(nuaTilda())

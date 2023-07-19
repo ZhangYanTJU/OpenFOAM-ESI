@@ -252,6 +252,17 @@ public:
                     );
 
 
+                // Topology optimisation
+
+                    //- Compute the multiplier of beta
+                    virtual void topOSensMultiplier
+                    (
+                        scalarField& betaMult,
+                        const word& designVariablesName,
+                        const scalar dt
+                    );
+
+
         // IO
 
             //- In case of multi-point runs with turbulent flows,

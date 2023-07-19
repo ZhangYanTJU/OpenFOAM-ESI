@@ -343,6 +343,11 @@ public:
 
         virtual tmp<volTensorField> FISensitivityTerm();
 
+        virtual tmp<scalarField> topologySensitivities
+        (
+            const word& designVarsName
+        ) const;
+
         //- Nullify all adjoint turbulence model fields and their old times
         virtual void nullify();
 

@@ -171,6 +171,17 @@ public:
                         const labelHashSet& sensitivityPatchIDs,
                         const scalar dt
                     );
+
+
+                // Topology optimisation
+
+                    //- Compute the multiplier of beta
+                    virtual void topOSensMultiplier
+                    (
+                        scalarField& betaMult,
+                        const word& designVariablesName,
+                        const scalar dt
+                    );
 };
 
 
