@@ -7,6 +7,8 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
     Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 PCOpt/NTUA
+    Copyright (C) 2020-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +35,7 @@ License
 #include "fvmDiv.H"
 #include "fvmLaplacian.H"
 #include "fvmSup.H"
+#include "fvOptions.H"
 #include "addToRunTimeSelectionTable.H"
 
 #include "fixedValueFvPatchFields.H"
@@ -75,7 +78,9 @@ Foam::patchDistMethods::advectionDiffusion::advectionDiffusion
     epsilon_(coeffs_.getOrDefault<scalar>("epsilon", 0.1)),
     tolerance_(coeffs_.getOrDefault<scalar>("tolerance", 1e-3)),
     maxIter_(coeffs_.getOrDefault<int>("maxIter", 10)),
-    predicted_(false)
+    predicted_(false),
+    checkAndWriteMesh_
+        (coeffs_.lookupOrDefault<bool>("checkAndWriteMesh", true))
 {}
 
 
@@ -97,6 +102,33 @@ bool Foam::patchDistMethods::advectionDiffusion::correct
     {
         pdmPredictor_->correct(y);
         predicted_ = true;
+    }
+
+    // If the mesh has become invalid, trying to solve the eikonal equation
+    // might lead to crashing and we wont get a chance to see the failed mesh.
+    // Write the mesh points here
+    if (checkAndWriteMesh_)
+    {
+        DebugInfo
+            << "Checking mesh in advectionDiffusion " << endl;
+        if (mesh_.checkMesh(true))
+        {
+            pointIOField points
+            (
+                IOobject
+                (
+                   "points",
+                    mesh_.pointsInstance(),
+                    mesh_.meshSubDir,
+                    mesh_,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE,
+                    false
+                ),
+                mesh_.points()
+            );
+            points.write();
+        }
     }
 
     volVectorField ny
@@ -123,6 +155,23 @@ bool Foam::patchDistMethods::advectionDiffusion::correct
         nybf[patchi] == -patches[patchi].nf();
     }
 
+    // Scaling dimensions, to be used with fvOptions
+    volScalarField scaleDims
+    (
+        IOobject
+        (
+            "scaleDims",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        mesh_,
+        dimensionedScalar("scaleDims", dimTime/dimLength, scalar(1))
+    );
+
+    fv::options& fvOptions(fv::options::New(this->mesh_));
     int iter = 0;
     scalar initialResidual = 0;
 
@@ -139,14 +188,17 @@ bool Foam::patchDistMethods::advectionDiffusion::correct
         fvScalarMatrix yEqn
         (
             fvm::div(yPhi, y)
-          - fvm::Sp(fvc::div(yPhi), y)
+          + fvm::SuSp(-fvc::div(yPhi), y)
           - epsilon_*y*fvm::laplacian(y)
          ==
             dimensionedScalar("1", dimless, 1.0)
+          + fvOptions(scaleDims, y)
         );
 
         yEqn.relax();
+        fvOptions.constrain(yEqn);
         initialResidual = yEqn.solve().initialResidual();
+        fvOptions.correct(y);
 
     } while (initialResidual > tolerance_ && ++iter < maxIter_);
 

@@ -6,6 +6,8 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2016 OpenFOAM Foundation
+    Copyright (C) 2020-2023 PCOpt/NTUA
+    Copyright (C) 2020-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -206,6 +208,18 @@ class advectionDiffusion
         //- Flag to indicate the predictor step has been executed
         bool predicted_;
 
+        //- Check mesh before computing the distance field and write the mesh
+        //- points if at least one check fails.
+        //  advectionDiffusion is frequently used within optimisation loops
+        //  since it is differentiable. In shape optimisation, the
+        //  re-computation of mesh distances is performed at the very beginning
+        //  of a new optimisation cycle, due to inheriting from MeshObject. If
+        //  the mesh quality is poor enough, the advectionDiffusion PDE might
+        //  diverge and crash the run, before the problematic mesh is written
+        //  to files for inspection. By setting this flag to true, the mesh is
+        //  written to files before the solution of the advectionDiffusion PDE,
+        //  if some mesh check fails.
+        bool checkAndWriteMesh_;
 
     // Private Member Functions
 
