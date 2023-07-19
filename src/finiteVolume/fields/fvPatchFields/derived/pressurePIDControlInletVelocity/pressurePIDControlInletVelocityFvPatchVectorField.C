@@ -72,8 +72,8 @@ pressurePIDControlInletVelocityFvPatchVectorField
 )
 :
     fixedValueFvPatchField<vector>(p, iF),
-    upstreamName_(word::null),
-    downstreamName_(word::null),
+    upstreamName_(),
+    downstreamName_(),
     deltaP_(1),
     shapeFactor_(0),
     pName_("p"),

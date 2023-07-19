@@ -310,9 +310,9 @@ void Foam::distributedDILUPreconditioner::forwardInternalDiag
     const scalar* const __restrict__ lowerPtr = matrix.lower().begin();
 
     const label nFaces = matrix.upper().size();
-    if (cellColourPtr_.valid())
+    if (cellColourPtr_)
     {
-        const auto& cellColour = cellColourPtr_();
+        const auto& cellColour = *cellColourPtr_;
         for (label face=0; face<nFaces; face++)
         {
             const label cell = lPtr[face];
@@ -375,9 +375,9 @@ void Foam::distributedDILUPreconditioner::forwardInternal
     const scalar* const __restrict__ lowerPtr = matrix.lower().begin();
 
     const label nFaces = matrix.upper().size();
-    if (cellColourPtr_.valid())
+    if (cellColourPtr_)
     {
-        const auto& cellColour = cellColourPtr_();
+        const auto& cellColour = *cellColourPtr_;
         for (label face=0; face<nFaces; face++)
         {
             const label sface = losortPtr[face];
@@ -419,9 +419,9 @@ void Foam::distributedDILUPreconditioner::backwardInternal
 
     const label nFacesM1 = matrix.upper().size() - 1;
 
-    if (cellColourPtr_.valid())
+    if (cellColourPtr_)
     {
-        const auto& cellColour = cellColourPtr_();
+        const auto& cellColour = *cellColourPtr_;
         for (label face=nFacesM1; face>=0; face--)
         {
             const label cell = uPtr[face];
@@ -486,7 +486,7 @@ void Foam::distributedDILUPreconditioner::calcReciprocalD
 
     for (label colouri = 0; colouri < nColours_; colouri++)
     {
-        if (cellColourPtr_.valid())// && colourBufs_.set(colouri))
+        if (cellColourPtr_) // && colourBufs_.set(colouri))
         {
             for (const label inti : lowerGlobalRecv_[colouri])
             {
@@ -497,7 +497,7 @@ void Foam::distributedDILUPreconditioner::calcReciprocalD
         forwardInternalDiag(rD, colouri);
 
         // Store effect of exchanging rD to higher interfaces in colourBufs_
-        if (cellColourPtr_.valid())
+        if (cellColourPtr_)
         {
             sendGlobal(higherGlobalSend_[colouri], rD, higherColour_[colouri]);
         }
@@ -645,7 +645,7 @@ Foam::distributedDILUPreconditioner::distributedDILUPreconditioner
 
     // Start off with all cells colour 0
     nColours_ = 1;
-    cellColourPtr_.clear();
+    cellColourPtr_.reset();
     if (coupled_ && haveGlobalCoupled)
     {
         labelList patchToColour;
@@ -653,7 +653,7 @@ Foam::distributedDILUPreconditioner::distributedDILUPreconditioner
         //if (haveDistributedAMI)
         //{
         //    nColours_ = 1;
-        //    cellColourPtr_() = 0;
+        //    *cellColourPtr_ = 0;
         //    patchToColour = labelList(interfaces.size(), 0);
         //}
         //else
@@ -826,7 +826,7 @@ void Foam::distributedDILUPreconditioner::precondition
         for (label colouri = 0; colouri < nColours_; colouri++)
         {
             // Do non-processor boundaries for this colour
-            if (cellColourPtr_.valid())// && colourBufs_.set(colouri))
+            if (cellColourPtr_)  // && colourBufs_.set(colouri))
             {
                 for (const label inti : lowerGlobalRecv_[colouri])
                 {
@@ -838,7 +838,7 @@ void Foam::distributedDILUPreconditioner::precondition
 
             // Store effect of exchanging rD to higher interfaces
             // in colourBufs_
-            if (cellColourPtr_.valid())
+            if (cellColourPtr_)
             {
                 sendGlobal
                 (
@@ -878,7 +878,7 @@ void Foam::distributedDILUPreconditioner::precondition
         for (label colouri = nColours_-1; colouri >= 0; colouri--)
         {
             // Do non-processor boundaries for this colour
-            if (cellColourPtr_.valid())// && colourBufs_.set(colouri))
+            if (cellColourPtr_)  // && colourBufs_.set(colouri))
             {
                 for (const label inti : higherGlobalRecv_[colouri])
                 {
@@ -890,7 +890,7 @@ void Foam::distributedDILUPreconditioner::precondition
 
             // Store effect of exchanging rD to higher interfaces
             // in colourBufs_
-            if (cellColourPtr_.valid())
+            if (cellColourPtr_)
             {
                 sendGlobal
                 (

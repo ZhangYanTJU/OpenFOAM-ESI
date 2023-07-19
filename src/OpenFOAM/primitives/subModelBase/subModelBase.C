@@ -32,7 +32,7 @@ License
 
 bool Foam::subModelBase::subModelBase::inLine() const
 {
-    return (modelName_ != word::null);
+    return (!modelName_.empty());
 }
 
 
@@ -171,7 +171,7 @@ bool Foam::subModelBase::writeTime() const
 
 Foam::fileName Foam::subModelBase::localPath() const
 {
-    if (modelName_ != word::null)
+    if (!modelName_.empty())
     {
         return modelName_;
     }

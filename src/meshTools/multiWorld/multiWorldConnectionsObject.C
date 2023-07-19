@@ -145,7 +145,7 @@ Foam::label Foam::multiWorldConnections::createCommunicator(const edge& worlds)
     // Fallback: do not create, just use local world
     label comm = UPstream::worldComm;
 
-    if (!worlds.valid())
+    if (!worlds.good())
     {
         return comm;
     }
@@ -299,7 +299,7 @@ bool Foam::multiWorldConnections::addConnectionById(const label otherWorld)
     // The worlds (sorted)
     edge worlds(worldPair(otherWorld));
 
-    if (!worlds.valid())
+    if (!worlds.good())
     {
         return false;
     }
@@ -318,7 +318,7 @@ bool Foam::multiWorldConnections::addConnectionByName(const word& otherWorld)
     // The worlds (sorted)
     edge worlds(worldPair(otherWorld));
 
-    if (!worlds.valid())
+    if (!worlds.good())
     {
         return false;
     }
@@ -343,7 +343,7 @@ Foam::label Foam::multiWorldConnections::getCommById
     // The communication worlds (sorted)
     edge worlds(worldPair(otherWorldID));
 
-    if (!worlds.valid())
+    if (!worlds.good())
     {
         return comm;
     }
@@ -384,7 +384,7 @@ Foam::label Foam::multiWorldConnections::getCommByName
     // The communication worlds (sorted)
     edge worlds(worldPair(otherWorld));
 
-    if (!worlds.valid())
+    if (!worlds.good())
     {
         return comm;
     }

@@ -211,7 +211,7 @@ void Foam::triSurface::checkTriangles(const bool verbose)
     {
         const labelledTri& f = (*this)[facei];
 
-        if (!f.valid())
+        if (!f.good())
         {
             // 'degenerate' triangle check
             valid.unset(facei);

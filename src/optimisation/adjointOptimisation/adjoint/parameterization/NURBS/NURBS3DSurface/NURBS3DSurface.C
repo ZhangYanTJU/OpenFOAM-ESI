@@ -2347,7 +2347,7 @@ void NURBS3DSurface::writeVTK
 {
     if (Pstream::master())
     {
-        if (vtkFileName.ext() != word::null)
+        if (vtkFileName.has_ext())
         {
             FatalErrorInFunction
                 << "Do not supply a file extension."

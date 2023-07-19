@@ -466,7 +466,7 @@ Foam::labelList Foam::surfaceZonesInfo::addCellZonesToMesh
 
         const word& cellZoneName = surfList[surfI].cellZoneName();
 
-        if (cellZoneName != word::null)
+        if (!cellZoneName.empty())
         {
             label zoneI = addCellZone
             (

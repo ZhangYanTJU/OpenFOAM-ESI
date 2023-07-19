@@ -562,7 +562,7 @@ Foam::cyclicACMIPolyPatch::cyclicACMIPolyPatch
         transform,
         defaultAMIMethod
     ),
-    nonOverlapPatchName_(word::null),
+    nonOverlapPatchName_(),
     nonOverlapPatchID_(-1),
     srcMask_(),
     tgtMask_(),

@@ -2956,12 +2956,12 @@ void Foam::meshRefinement::zonify
         {
             Pout<< "meshRefinement::zonify : found wall closure faces:"
                 << unnamedClosureFaces.size()
-                << "  map:" << unnamedMapPtr.valid() << endl;
+                << "  map:" << bool(unnamedMapPtr) << endl;
         }
 
 
         // Add to unnamedRegion1, unnamedRegion2
-        if (unnamedMapPtr.valid())
+        if (unnamedMapPtr)
         {
             // Dump leak path
             if (leakPathFormatter)
@@ -3097,11 +3097,11 @@ void Foam::meshRefinement::zonify
         //        Pout<< "meshRefinement::zonify :"
         //            << " found faceZone closure faces:"
         //            << namedClosureFaces.size()
-        //            << "  map:" << namedMapPtr.valid() << endl;
+        //            << "  map:" << bool(namedMapPtr) << endl;
         //    }
         //
         //    // Add to namedSurfaceRegion, posOrientation
-        //    if (namedMapPtr.valid())
+        //    if (namedMapPtr)
         //    {
         //        WarningInFunction
         //            << "Detected and closed leak path"

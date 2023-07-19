@@ -61,7 +61,7 @@ void basicTests(const coordinateSystem& cs)
 
     if (const auto* cartptr = isA<coordSystem::cartesian>(cs))
     {
-        if (!cartptr->valid())
+        if (!cartptr->good())
         {
             Info<< "invalid cartesian = " << (*cartptr)
                 << " with: " << (*cartptr).R() << nl;

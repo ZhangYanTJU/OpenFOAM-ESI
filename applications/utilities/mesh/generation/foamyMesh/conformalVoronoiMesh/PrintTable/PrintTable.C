@@ -33,7 +33,7 @@ template<class KeyType, class DataType>
 Foam::PrintTable<KeyType, DataType>::PrintTable()
 :
     table_(),
-    title_(string::null)
+    title_()
 {}
 
 

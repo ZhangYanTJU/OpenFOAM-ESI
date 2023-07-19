@@ -639,7 +639,7 @@ public:
             //  (so does e.g. parallel communication). If not use
             //  validBoundary=false
             //
-            // \note Only autoPtr parameters that test as valid() are used
+            // \note Only autoPtr parameters that test as good() are used
             //    for resetting, otherwise the existing entries are left
             //    untouched.
             void resetPrimitives

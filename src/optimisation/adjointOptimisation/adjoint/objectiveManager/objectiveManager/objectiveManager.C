@@ -265,7 +265,7 @@ bool objectiveManager::writeObjectives
         obj.writeMeanValue();
     }
 
-    if (weigthedObjectiveFile_.valid())
+    if (weigthedObjectiveFile_)
     {
         unsigned int width = IOstream::defaultPrecision() + 5;
         weigthedObjectiveFile_()

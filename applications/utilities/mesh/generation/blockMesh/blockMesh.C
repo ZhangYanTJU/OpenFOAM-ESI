@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 
     blockMesh blocks(meshDict, regionName, strategy, args.verbose());
 
-    if (!blocks.valid())
+    if (!blocks.good())
     {
         // Could/should be Fatal?
 

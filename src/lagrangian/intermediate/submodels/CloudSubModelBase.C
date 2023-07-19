@@ -131,7 +131,7 @@ bool Foam::CloudSubModelBase<CloudType>::writeTime() const
 template<class CloudType>
 Foam::fileName Foam::CloudSubModelBase<CloudType>::localPath() const
 {
-    if (modelName_ != word::null)
+    if (!modelName_.empty())
     {
         return cloud::prefix/owner_.name()/modelName_;
     }

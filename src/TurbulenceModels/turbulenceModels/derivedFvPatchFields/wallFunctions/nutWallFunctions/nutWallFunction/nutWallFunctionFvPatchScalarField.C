@@ -61,7 +61,7 @@ const Foam::volVectorField& Foam::nutWallFunctionFvPatchScalarField::U
     const turbulenceModel& turb
 ) const
 {
-    if (UName_ == word::null)
+    if (UName_.empty())
     {
         return turb.U();
     }
@@ -89,7 +89,7 @@ Foam::nutWallFunctionFvPatchScalarField::nutWallFunctionFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF),
-    UName_(word::null),
+    UName_(),
     wallCoeffs_()
 {
     checkType();

@@ -160,6 +160,9 @@ public:
         //- True if range is empty (zero-sized)
         bool empty() const noexcept { return !size_; }
 
+        //- True if range has size greater than zero
+        bool good() const noexcept { return (size_ > 0); }
+
         //- The size of the range
         IntType size() const noexcept { return size_; }
 
@@ -243,8 +246,8 @@ public:
         //- Decrease the size by n, but never below 0.
         inline IntType operator-=(const IntType n) noexcept;
 
-        //- True if range is non-empty
-        explicit operator bool() const noexcept { return bool(size_); }
+        //- True if range has size greater than zero. Same as good()
+        explicit operator bool() const noexcept { return (size_ > 0); }
 
 
     // Iterator ranges

@@ -38,7 +38,7 @@ void Foam::cuttingSurfaceBase::checkOverlap
 )
 {
     // User bounding-box does not overlap with (global) mesh!
-    if (userBounds.valid() && !userBounds.overlaps(meshBounds))
+    if (userBounds.good() && !userBounds.overlaps(meshBounds))
     {
         WarningInFunction
             << nl << callerName

@@ -815,7 +815,7 @@ Foam::triSurface Foam::isoSurfaceCell::stitchTriPoints
                 triPointReverseMap[rawPointi+2],
                 0
             );
-            if (tri.valid())
+            if (tri.good())
             {
                 newToOldTri.append(oldTriI);
                 dynTris.append(tri);
@@ -1300,7 +1300,7 @@ Foam::isoSurfaceCell::isoSurfaceCell
         DynamicList<label> trimTriMap;
         // Trimmed to original point
         labelList trimTriPointMap;
-        if (getClipBounds().valid())
+        if (getClipBounds().good())
         {
             isoSurfacePoint::trimToBox
             (
@@ -1332,7 +1332,7 @@ Foam::isoSurfaceCell::isoSurfaceCell
                 << " merged triangles." << endl;
         }
 
-        if (getClipBounds().valid())
+        if (getClipBounds().good())
         {
             // Adjust interpolatedPoints_
             inplaceRenumber(triPointMergeMap_, interpolatedPoints_);

@@ -206,7 +206,7 @@ Foam::searchableBox::searchableBox
     searchableSurface(io),
     treeBoundBox(bb)
 {
-    if (!treeBoundBox::valid())
+    if (!treeBoundBox::good())
     {
         FatalErrorInFunction
             << "Illegal bounding box specification : "
@@ -229,7 +229,7 @@ Foam::searchableBox::searchableBox
 {
     readBoxDim(dict, *this);
 
-    if (!treeBoundBox::valid())
+    if (!treeBoundBox::good())
     {
         FatalErrorInFunction
             << "Illegal bounding box specification : "

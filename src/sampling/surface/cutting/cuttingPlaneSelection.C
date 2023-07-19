@@ -42,7 +42,7 @@ void Foam::cuttingPlane::checkOverlap
     const plane& pln = *this;
 
     // Plane does not intersect the user bounding box
-    if (userBounds.valid() && !userBounds.intersects(pln))
+    if (userBounds.good() && !userBounds.intersects(pln))
     {
         WarningInFunction
             << nl << callerName

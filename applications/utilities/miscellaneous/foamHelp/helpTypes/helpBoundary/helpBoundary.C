@@ -92,8 +92,8 @@ void Foam::helpTypes::helpBoundary::execute
 {
     setEnv("FOAM_ABORT", "", true);
 
-    word condition(word::null);
-    word fieldName(word::null);
+    word condition;
+    word fieldName;
 
     if (args.readIfPresent("browse", condition))
     {

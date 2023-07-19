@@ -1951,10 +1951,10 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::blockLeakFaces
             {
                 Pout<< "meshRefinement::blockLeakFaces :"
                     << " found closure faces:" << closureFaces.size()
-                    << "  map:" << closureMapPtr.valid() << endl;
+                    << "  map:" << bool(closureMapPtr) << endl;
             }
 
-            if (!closureMapPtr.valid())
+            if (!closureMapPtr)
             {
                 FatalErrorInFunction
                     << "have leak but did not find any closure faces"

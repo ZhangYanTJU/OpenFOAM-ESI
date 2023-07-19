@@ -126,13 +126,13 @@ public:
             void reset(const scalar low, const scalar upp, const label nCells);
 
             //- The location list is valid if it contains 2 or more points
-            inline bool valid() const;
+            inline bool good() const noexcept;
 
             //- The number of cells in this direction.
-            inline label nCells() const;
+            inline label nCells() const noexcept;
 
             //- The number of points in this direction.
-            inline label nPoints() const;
+            inline label nPoints() const noexcept;
 
             //- True if the location is within the range
             inline bool contains(const scalar p) const;

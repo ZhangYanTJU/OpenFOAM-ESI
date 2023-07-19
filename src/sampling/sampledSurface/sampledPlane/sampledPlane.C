@@ -166,7 +166,7 @@ Foam::sampledPlane::sampledPlane
             << " origin:" << origin()
             << " normal:" << normal();
 
-        if (bounds_.valid())
+        if (bounds_.good())
         {
             Info<< " bounds:" << bounds_;
         }

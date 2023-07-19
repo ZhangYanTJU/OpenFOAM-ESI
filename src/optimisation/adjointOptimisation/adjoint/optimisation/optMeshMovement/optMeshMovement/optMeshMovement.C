@@ -194,7 +194,7 @@ void Foam::optMeshMovement::resetDesignVariables()
 
 bool Foam::optMeshMovement::maxAllowedDisplacementSet() const
 {
-    return maxAllowedDisplacement_.valid();
+    return bool(maxAllowedDisplacement_);
 }
 
 

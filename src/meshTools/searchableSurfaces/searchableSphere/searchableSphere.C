@@ -860,7 +860,7 @@ bool Foam::searchableSphere::overlaps(const boundBox& bb) const
         return bb.overlaps(origin_, sqr(radius()));
     }
 
-    if (!bb.valid())
+    if (!bb.good())
     {
         return false;
     }

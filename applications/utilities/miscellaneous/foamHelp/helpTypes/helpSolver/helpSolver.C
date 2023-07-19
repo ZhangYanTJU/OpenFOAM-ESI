@@ -80,7 +80,7 @@ void Foam::helpTypes::helpSolver::execute
     const fvMesh& mesh
 )
 {
-    word solver(word::null);
+    word solver;
 
     if (args.readIfPresent("browse", solver))
     {

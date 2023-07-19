@@ -184,7 +184,7 @@ Foam::PrimitivePatch<FaceList, PointField>::findEdge
     const edge& e
 ) const
 {
-    if (e.valid() && e.first() < nPoints() && e.second() < nPoints())
+    if (e.good() && e.first() < nPoints() && e.second() < nPoints())
     {
         // Get pointEdges from the starting point and search all the candidates
         const edgeList& myEdges = this->edges();

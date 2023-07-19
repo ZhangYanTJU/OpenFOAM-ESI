@@ -1361,7 +1361,7 @@ Foam::mappedPatchBase::mappedPatchBase
 {
     addWorldConnection();
 
-    if (!coupleGroup_.valid())
+    if (!coupleGroup_.good())
     {
         if (sampleWorld_.empty() && sampleRegion_.empty())
         {
@@ -1474,7 +1474,7 @@ Foam::mappedPatchBase::mappedPatchBase
             << exit(FatalIOError);
     }
 
-    if (!coupleGroup_.valid())
+    if (!coupleGroup_.good())
     {
         if (sampleWorld_.empty() && sampleRegion_.empty())
         {

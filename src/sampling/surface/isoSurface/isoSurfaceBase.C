@@ -183,7 +183,7 @@ Foam::label Foam::isoSurfaceBase::blockCells
     {
         // Could warn about invalid...
     }
-    else if (bb.valid())
+    else if (bb.good())
     {
         const pointField& cc = mesh_.cellCentres();
 

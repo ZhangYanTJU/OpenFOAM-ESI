@@ -126,7 +126,7 @@ Foam::histogramModel::histogramModel
 :
     writeFile(mesh, name, "histogram", dict),
     mesh_(mesh),
-    fieldName_(word::null)
+    fieldName_()
 {}
 
 

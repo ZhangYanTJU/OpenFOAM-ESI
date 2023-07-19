@@ -567,7 +567,7 @@ bool Foam::MRFZone::read(const dictionary& dict)
     omega_.reset(Function1<scalar>::New("omega", coeffs_, &mesh_));
 
     const word oldCellZoneName = cellZoneName_;
-    if (cellZoneName_ == word::null)
+    if (cellZoneName_.empty())
     {
         coeffs_.readEntry("cellZone", cellZoneName_);
     }

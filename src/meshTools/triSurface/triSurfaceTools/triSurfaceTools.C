@@ -1695,7 +1695,7 @@ Foam::triSurface Foam::triSurfaceTools::collapseEdges
             f[1] = pointMap[f[1]];
             f[2] = pointMap[f[2]];
 
-            if (f.valid())
+            if (f.good())
             {
                 newTriangles[nNewTris++] = f;
             }
@@ -1910,7 +1910,7 @@ Foam::triSurface Foam::triSurfaceTools::mergePoints
             f[1] = pointMap[f[1]];
             f[2] = pointMap[f[2]];
 
-            if (f.valid())
+            if (f.good())
             {
                 newTriangles[nNewTris++] = f;
             }

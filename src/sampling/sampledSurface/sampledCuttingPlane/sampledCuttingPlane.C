@@ -103,7 +103,7 @@ void Foam::sampledCuttingPlane::checkBoundsIntersection
     // Verify specified bounding box
     const boundBox& clipBb = isoParams_.getClipBounds();
 
-    if (clipBb.valid())
+    if (clipBb.good())
     {
         // Bounding box does not overlap with (global) mesh!
         if (!clipBb.overlaps(meshBb))
@@ -419,7 +419,7 @@ void Foam::sampledCuttingPlane::createGeometry()
             // the initial selection smaller.
 
             const boundBox& clipBb = isoParams_.getClipBounds();
-            if (clipBb.valid() && cellsToSelect.any())
+            if (clipBb.good() && cellsToSelect.any())
             {
                 const auto& cellCentres = fvm.C();
 

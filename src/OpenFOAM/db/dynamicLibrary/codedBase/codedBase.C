@@ -348,7 +348,7 @@ void Foam::codedBase::updateLibrary
 
 void Foam::codedBase::updateLibrary(const word& name) const
 {
-    if (context_.valid())
+    if (context_.good())
     {
         updateLibrary(name, context_);
     }
