@@ -77,6 +77,9 @@ class patchWave
         //- Distance at patch faces
         FieldField<Field, scalar> patchDistance_;
 
+        //- Additional faces to be used as seeds for distance calculations
+        labelList sourceIDs_;
+
 
     // Private Member Functions
 
@@ -107,7 +110,8 @@ public:
         (
             const polyMesh& mesh,
             const labelHashSet& patchIDs,
-            bool correctWalls = true
+            bool correctWalls = true,
+            const labelList& sourceFaceIDs = labelList()
         );
 
     //- Destructor
