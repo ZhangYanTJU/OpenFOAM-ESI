@@ -228,20 +228,24 @@ public:
 
     // Constructors
 
-        //- Default construct with default (128) table capacity
+        //- Default construct with default (128) initial table capacity
         HashTable();
 
-        //- Construct given initial table capacity
-        explicit HashTable(const label size);
+        //- Construct empty with zero initial table capacity
+        explicit HashTable(const Foam::zero) noexcept;
 
-        //- Construct from Istream with default table capacity
-        HashTable(Istream& is, const label size = 128);
+        //- Construct empty with initial table capacity
+        explicit HashTable(const label initialCapacity);
+
+        //- Construct from Istream,
+        //- with default or specified initial table capacity.
+        HashTable(Istream& is, const label initialCapacity = 128);
 
         //- Copy construct
         HashTable(const this_type& ht);
 
         //- Move construct
-        HashTable(this_type&& rhs);
+        HashTable(this_type&& rhs) noexcept;
 
         //- Construct from an initializer list
         //  Duplicate entries are handled by overwriting
@@ -528,17 +532,17 @@ public:
 
 
         //- Resize the hash table for efficiency
-        void resize(const label sz);
+        void resize(const label requestedCapacity);
 
-        //- Clear all entries from table
+        //- Remove all entries from table
         void clear();
 
-        //- Clear the table entries and the table itself.
+        //- Remove all entries from table and the table itself.
         //  Equivalent to clear() followed by resize(0)
         void clearStorage();
 
         //- Swap contents into this table
-        void swap(HashTable<T, Key, Hash>& rhs);
+        void swap(HashTable<T, Key, Hash>& rhs) noexcept;
 
         //- Transfer contents into this table.
         void transfer(HashTable<T, Key, Hash>& rhs);

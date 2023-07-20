@@ -168,10 +168,13 @@ public:
     // Constructors
 
         //- Default construct (empty) with default (128) table capacity
-        inline IOobjectList();
+        IOobjectList() = default;
+
+        //- Construct with zero table capacity
+        inline explicit IOobjectList(const Foam::zero) noexcept;
 
         //- Construct given initial table capacity
-        inline explicit IOobjectList(const label nObjects);
+        inline explicit IOobjectList(const label initialCapacity);
 
         //- Copy construct
         inline IOobjectList(const IOobjectList& list);

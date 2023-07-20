@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,23 +33,14 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable(Istream& is, const label size)
+Foam::HashTable<T, Key, Hash>::HashTable
+(
+    Istream& is,
+    const label initialCapacity
+)
 :
-    HashTableCore(),
-    size_(0),
-    capacity_(HashTableCore::canonicalSize(size)),
-    table_(nullptr)
+    HashTable(initialCapacity)
 {
-    if (capacity_)
-    {
-        table_ = new node_type*[capacity_];
-
-        for (label i=0; i < capacity_; ++i)
-        {
-            table_[i] = nullptr;
-        }
-    }
-
     operator>>(is, *this);
 }
 

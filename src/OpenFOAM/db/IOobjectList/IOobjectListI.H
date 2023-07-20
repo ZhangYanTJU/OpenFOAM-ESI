@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +27,15 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-inline Foam::IOobjectList::IOobjectList()
+inline Foam::IOobjectList::IOobjectList(const Foam::zero) noexcept
 :
-    HashPtrTable<IOobject>()
+    HashPtrTable<IOobject>(Foam::zero{})
 {}
 
 
-inline Foam::IOobjectList::IOobjectList(const label nObjects)
+inline Foam::IOobjectList::IOobjectList(const label initialCapacity)
 :
-    HashPtrTable<IOobject>(nObjects)  // Could also use 2*nObjects instead
+    HashPtrTable<IOobject>(initialCapacity)
 {}
 
 

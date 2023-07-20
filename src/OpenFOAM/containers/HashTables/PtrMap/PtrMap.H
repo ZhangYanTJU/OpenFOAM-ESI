@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2018 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,19 +65,22 @@ public:
 
     // Constructors
 
-        //- Default construct with default table capacity
-        PtrMap()
+        //- Default construct with default (128) initial table capacity
+        PtrMap() = default;
+
+        //- Construct empty with zero initial table capacity
+        explicit PtrMap(const Foam::zero) noexcept
         :
-            parent_type()
+            parent_type(Foam::zero{})
         {}
 
-        //- Construct with given initial table capacity
-        explicit PtrMap(const label size)
+        //- Construct empty with given initial table capacity
+        explicit PtrMap(const label initialCapacity)
         :
-            parent_type(size)
+            parent_type(initialCapacity)
         {}
 
-        //- Construct from Istream
+        //- Construct from Istream (with default initial table capacity)
         PtrMap(Istream& is)
         :
             parent_type(is)
@@ -90,7 +93,7 @@ public:
         {}
 
         //- Move construct
-        PtrMap(this_type&& map)
+        PtrMap(this_type&& map) noexcept
         :
             parent_type(std::move(map))
         {}

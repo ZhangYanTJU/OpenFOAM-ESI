@@ -56,31 +56,35 @@ class PtrDictionary
 {
 public:
 
+    //- The template instance used for the dictionary content
+    typedef DictionaryBase<DLPtrList<T>, T> dict_type;
+
+
     // Constructors
 
-        //- Construct given initial table size
-        explicit PtrDictionary(const label size = 128)
+        //- Default construct, or with initial table capacity
+        explicit PtrDictionary(const label initialCapacity = 128)
         :
-            DictionaryBase<DLPtrList<T>, T>(size)
+            dict_type(initialCapacity)
         {}
 
         //- Copy construct
         PtrDictionary(const PtrDictionary& dict)
         :
-            DictionaryBase<DLPtrList<T>, T>(dict)
+            dict_type(dict)
         {}
 
         //- Construct from Istream using given Istream constructor class
         template<class INew>
         PtrDictionary(Istream& is, const INew& inew)
         :
-            DictionaryBase<DLPtrList<T>, T>(is, inew)
+            dict_type(is, inew)
         {}
 
         //- Construct from Istream
         explicit PtrDictionary(Istream& is)
         :
-            DictionaryBase<DLPtrList<T>, T>(is)
+            dict_type(is)
         {}
 
 
@@ -89,13 +93,13 @@ public:
         //- Find and return entry
         const T& operator[](const word& key) const
         {
-            return *DictionaryBase<DLPtrList<T>, T>::operator[](key);
+            return *(dict_type::lookup(key));
         }
 
         //- Find and return entry
         T& operator[](const word& key)
         {
-            return *DictionaryBase<DLPtrList<T>, T>::operator[](key);
+            return *(dict_type::lookup(key));
         }
 };
 

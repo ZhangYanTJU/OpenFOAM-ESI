@@ -32,7 +32,7 @@ License
 template<class T>
 Foam::PtrListDictionary<T>::PtrListDictionary(const label size)
 :
-    DictionaryBase<PtrList<T>, T>(2*size)
+    dict_type(2*size)
 {
     PtrList<T>::resize(size);
 }
@@ -41,7 +41,7 @@ Foam::PtrListDictionary<T>::PtrListDictionary(const label size)
 template<class T>
 Foam::PtrListDictionary<T>::PtrListDictionary(const PtrListDictionary& dict)
 :
-    DictionaryBase<PtrList<T>, T>(dict)
+    dict_type(dict)
 {}
 
 
@@ -49,14 +49,14 @@ template<class T>
 template<class INew>
 Foam::PtrListDictionary<T>::PtrListDictionary(Istream& is, const INew& iNew)
 :
-    DictionaryBase<PtrList<T>, T>(is, iNew)
+    dict_type(is, iNew)
 {}
 
 
 template<class T>
 Foam::PtrListDictionary<T>::PtrListDictionary(Istream& is)
 :
-    DictionaryBase<PtrList<T>, T>(is)
+    dict_type(is)
 {}
 
 
@@ -70,13 +70,16 @@ inline Foam::autoPtr<T> Foam::PtrListDictionary<T>::set
     T* ptr
 )
 {
-    if (!DictionaryBase<PtrList<T>, T>::hashedTs_.insert(key, ptr))
+    autoPtr<T> old(PtrList<T>::set(i, ptr));
+
+    if (!dict_type::addHashEntry(key, ptr))
     {
         FatalErrorInFunction
             << "Cannot insert with key '" << key << "' into hash-table"
             << abort(FatalError);
     }
-    return PtrList<T>::set(i, ptr);
+
+    return old;
 }
 
 
@@ -85,17 +88,10 @@ inline Foam::autoPtr<T> Foam::PtrListDictionary<T>::set
 (
     const label i,
     const word& key,
-    autoPtr<T>& aptr
+    autoPtr<T>& ptr
 )
 {
-    T* ptr = aptr.ptr();
-    if (!DictionaryBase<PtrList<T>, T>::hashedTs_.insert(key, ptr))
-    {
-        FatalErrorInFunction
-            << "Cannot insert with key '" << key << "' into hash-table"
-            << abort(FatalError);
-    }
-    return PtrList<T>::set(i, ptr);
+    return this->set(i, key, ptr.release());
 }
 
 
@@ -104,17 +100,10 @@ inline Foam::autoPtr<T> Foam::PtrListDictionary<T>::set
 (
     const label i,
     const word& key,
-    tmp<T>& t
+    tmp<T>& ptr
 )
 {
-    T* ptr = t.ptr();
-    if (!DictionaryBase<PtrList<T>, T>::hashedTs_.insert(key, ptr))
-    {
-        FatalErrorInFunction
-            << "Cannot insert with key '" << key << "' into hash-table"
-            << abort(FatalError);
-    }
-    return PtrList<T>::set(i, ptr);
+    return this->set(i, key, ptr.ptr());  // release or clone
 }
 
 

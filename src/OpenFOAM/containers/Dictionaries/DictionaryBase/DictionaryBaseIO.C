@@ -35,9 +35,10 @@ template<class IDLListType, class T>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const DictionaryBase<IDLListType, T>& dict)
+    const DictionaryBase<IDLListType, T>& dict
+)
 {
-    for (auto iter = dict.begin(); iter != dict.end(); ++iter)
+    for (auto iter = dict.cbegin(); iter != dict.cend(); ++iter)
     {
         os << *iter;
 

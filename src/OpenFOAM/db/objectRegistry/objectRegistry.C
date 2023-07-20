@@ -79,7 +79,11 @@ bool Foam::objectRegistry::parentNotTime() const noexcept
 
 // * * * * * * * * * * * * * * * * Constructors *  * * * * * * * * * * * * * //
 
-Foam::objectRegistry::objectRegistry(const Time& t, const label nObjects)
+Foam::objectRegistry::objectRegistry
+(
+    const Time& t,
+    const label initialCapacity
+)
 :
     regIOobject
     (
@@ -94,7 +98,7 @@ Foam::objectRegistry::objectRegistry(const Time& t, const label nObjects)
         ),
         true    // to flag that this is the top-level regIOobject
     ),
-    HashTable<regIOobject*>(nObjects),
+    HashTable<regIOobject*>(initialCapacity),
     time_(t),
     parent_(t),
     dbDir_(name()),
@@ -105,10 +109,14 @@ Foam::objectRegistry::objectRegistry(const Time& t, const label nObjects)
 {}
 
 
-Foam::objectRegistry::objectRegistry(const IOobject& io, const label nObjects)
+Foam::objectRegistry::objectRegistry
+(
+    const IOobject& io,
+    const label initialCapacity
+)
 :
     regIOobject(io),
-    HashTable<regIOobject*>(nObjects),
+    HashTable<regIOobject*>(initialCapacity),
     time_(io.time()),
     parent_(io.db()),
     dbDir_(parent_.dbDir()/local()/name()),
@@ -117,7 +125,7 @@ Foam::objectRegistry::objectRegistry(const IOobject& io, const label nObjects)
     cacheTemporaryObjects_(0),
     temporaryObjects_(0)
 {
-    writeOpt(IOobject::AUTO_WRITE);
+    writeOpt(IOobjectOption::AUTO_WRITE);
 }
 
 

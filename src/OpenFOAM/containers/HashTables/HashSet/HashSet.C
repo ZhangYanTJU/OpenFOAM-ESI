@@ -287,8 +287,12 @@ void Foam::HashSet<Key, Hash>::operator=(std::initializer_list<Key> rhs)
 template<class Key, class Hash>
 bool Foam::HashSet<Key, Hash>::operator==(const HashSet<Key, Hash>& rhs) const
 {
-    // Sizes (number of keys) must match
-    if (this->size() != rhs.size())
+    // Trivial checks first
+    if (this == &rhs)
+    {
+        return true;
+    }
+    else if (this->size() != rhs.size())
     {
         return false;
     }
@@ -316,10 +320,13 @@ template<class Key, class Hash>
 Foam::HashSet<Key, Hash>&
 Foam::HashSet<Key, Hash>::operator|=(const HashSet<Key, Hash>& rhs)
 {
-    // Add rhs elements into lhs
-    for (const_iterator iter = rhs.cbegin(); iter != rhs.cend(); ++iter)
+    // Add rhs elements into lhs - avoid no-ops
+    if (this != &rhs)
     {
-        this->insert(iter.key());
+        for (const_iterator iter = rhs.cbegin(); iter != rhs.cend(); ++iter)
+        {
+            this->insert(iter.key());
+        }
     }
 
     return *this;

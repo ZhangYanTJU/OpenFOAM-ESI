@@ -87,7 +87,13 @@ protected:
 
     // Protected Member Functions
 
-        // Add the IDLListType entries into the HashTable
+        //- Add an entry to the HashTable
+        bool addHashEntry(const word& key, T* ptr)
+        {
+            return hashedTs_.insert(key, ptr);
+        }
+
+        //- Add the IDLListType entries into the HashTable
         void addEntries();
 
 
@@ -96,7 +102,10 @@ public:
     // Constructors
 
         //- Construct with given or default (128) table capacity
-        explicit DictionaryBase(const label size = 128);
+        explicit DictionaryBase(const label initialCapacity = 128)
+        :
+            hashedTs_(initialCapacity)
+        {}
 
         //- Copy construct
         DictionaryBase(const DictionaryBase& dict);
@@ -128,15 +137,24 @@ public:
             //- Find and return entry, FatalError on failure.
             T* lookup(const word& keyword);
 
-            //- Return the table of contents (as a sorted list)
-            wordList toc() const;
+            //- The table of contents (as a sorted list)
+            wordList toc() const
+            {
+                return hashedTs_.sortedToc();
+            }
 
-            //- Return the table of contents as a sorted list
-            wordList sortedToc() const;
+            //- The table of contents as a sorted list
+            wordList sortedToc() const
+            {
+                return hashedTs_.sortedToc();
+            }
 
-            //- Return table of contents sorted using the specified comparator
+            //- The table of contents sorted using the specified comparator
             template<class Compare>
-            wordList sortedToc(const Compare& comp) const;
+            wordList sortedToc(const Compare& comp) const
+            {
+                return hashedTs_.sortedToc(comp);
+            }
 
 
         // Editing
@@ -194,39 +212,24 @@ public:
         //- Deprecated(2020-03) use cfind()
         //  \deprecated(2020-03) - use cfind() method
         FOAM_DEPRECATED_FOR(2020-03, "cfind() method")
-        const T* lookupPtr(const word& keyword) const
-        {
-            return this->cfind(keyword);
-        }
+        const T* lookupPtr(const word& k) const { return this->cfind(k); }
 
         //- Deprecated(2020-03) use find()
         //  \deprecated(2020-03) - use find() method
         FOAM_DEPRECATED_FOR(2020-03, "find() method")
-        T* lookupPtr(const word& keyword)
-        {
-            return this->find(keyword);
-        }
+        T* lookupPtr(const word& k) { return this->find(k); }
 
         //- Add to front of dictionary
         //FOAM_DEPRECATED_FOR(2022-10, "push_front()")
-        void insert(const word& keyword, T* ptr)
-        {
-            this->push_front(keyword, ptr);
-        }
+        void insert(const word& k, T* ptr) { this->push_front(k, ptr); }
 
         //- Add to front of dictionary
         //FOAM_DEPRECATED_FOR(2022-10, "push_front()")
-        void prepend(const word& keyword, T* ptr)
-        {
-            this->push_front(keyword, ptr);
-        }
+        void prepend(const word& k, T* ptr) { this->push_front(k, ptr); }
 
         //- Add to back of dictionary
         //FOAM_DEPRECATED_FOR(2022-10, "push_back()")
-        void append(const word& keyword, T* ptr)
-        {
-            this->push_back(keyword, ptr);
-        }
+        void append(const word& k, T* ptr) { this->push_back(k, ptr); }
 };
 
 
@@ -238,6 +241,7 @@ public:
 
 #ifdef NoRepository
     #include "DictionaryBase.C"
+    #include "DictionaryBaseIO.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

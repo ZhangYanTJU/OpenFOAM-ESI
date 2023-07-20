@@ -113,8 +113,8 @@ public:
         //- Default construct, an empty list without allocation.
         inline constexpr DynamicList() noexcept;
 
-        //- Construct an empty list with given reserve size.
-        inline explicit DynamicList(const label len);
+        //- Construct an empty list with given initial capacity
+        inline explicit DynamicList(const label initialCapacity);
 
         //- Construct with given size and value for all elements.
         inline DynamicList(const label len, const T& val);
