@@ -736,7 +736,7 @@ void Foam::Field<Type>::writeEntry(const word& keyword, Ostream& os) const
 
     if (is_contiguous<Type>::value && List<Type>::uniform())
     {
-        os << word("uniform") << token::SPACE << this->first();
+        os << word("uniform") << token::SPACE << List<Type>::front();
     }
     else
     {

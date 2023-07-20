@@ -565,7 +565,7 @@ Foam::word Foam::fileName::component
     {
         if (cmpt == std::string::npos)
         {
-            return parsed.last().str();
+            return parsed.back().str();
         }
         else if (cmpt < parsed.size())
         {

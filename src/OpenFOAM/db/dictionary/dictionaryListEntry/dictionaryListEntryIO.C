@@ -32,16 +32,14 @@ License
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
 // File-scope: The dictionary size without the "FoamFile" entry
-static Foam::label realSize(const Foam::dictionary& dict)
+static inline Foam::label realSize(const Foam::dictionary& dict)
 {
-    if (dict.size() < 1 || dict.first()->keyword() != "FoamFile")
-    {
-        return dict.size();
-    }
-    else
-    {
-        return dict.size() - 1;
-    }
+    return
+    (
+        (dict.empty() || (dict.front()->keyword() != "FoamFile"))
+      ? dict.size()
+      : dict.size() - 1
+    );
 }
 
 

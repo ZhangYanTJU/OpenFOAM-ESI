@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -265,26 +265,14 @@ Foam::primitiveEntry::primitiveEntry(const keyType& key, const ITstream& is)
 Foam::label Foam::primitiveEntry::startLineNumber() const
 {
     const tokenList& tokens = *this;
-
-    if (tokens.size())
-    {
-        return tokens.first().lineNumber();
-    }
-
-    return -1;
+    return (tokens.empty() ? -1 : tokens.front().lineNumber());
 }
 
 
 Foam::label Foam::primitiveEntry::endLineNumber() const
 {
     const tokenList& tokens = *this;
-
-    if (tokens.size())
-    {
-        return tokens.last().lineNumber();
-    }
-
-    return -1;
+    return (tokens.empty() ? -1 : tokens.back().lineNumber());
 }
 
 

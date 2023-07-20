@@ -179,17 +179,22 @@ void Foam::dictionary::writeEntry(const keyType& kw, Ostream& os) const
 
 void Foam::dictionary::writeEntries(Ostream& os, const bool extraNewLine) const
 {
+    // Add extra new line separation between entries
+    // for "top-level" dictionaries
+
+    const bool addLine = (extraNewLine && parent() == dictionary::null);
+    bool separator = false;
+
     for (const entry& e : *this)
     {
-        // Write entry
-        os  << e;
-
-        // Add extra new line between entries for "top-level" dictionaries,
-        // but not after the last entry (looks ugly).
-        if (extraNewLine && parent() == dictionary::null && e != *last())
+        if (separator)
         {
             os  << nl;
         }
+        separator = addLine;
+
+        // Write entry
+        os  << e;
 
         // Check stream before going to next entry.
         if (!os.good())
