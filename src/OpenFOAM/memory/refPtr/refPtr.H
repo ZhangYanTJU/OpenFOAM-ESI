@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -248,6 +248,11 @@ public:
 
         //- Reference tmp contents or transfer pointer ownership if possible
         inline void reset(tmp<T>& rhs, bool reuse);
+
+        //- Reset with emplace construction.
+        //- Return reference to the new content.
+        template<class... Args>
+        inline T& emplace(Args&&... args);
 
         //- Clear existing and set (const) reference from other
         inline void cref(const refPtr<T>& other) noexcept;

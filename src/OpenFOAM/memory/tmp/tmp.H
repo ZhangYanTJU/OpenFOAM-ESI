@@ -272,6 +272,11 @@ public:
         //- Avoid inadvertent casting (to object)
         void reset(const refPtr<T>&) = delete;
 
+        //- Reset with emplace construction.
+        //- Return reference to the new content.
+        template<class... Args>
+        inline T& emplace(Args&&... args);
+
         //- Clear existing and set (const) reference from other
         inline void cref(const tmp<T>& other) noexcept;
 

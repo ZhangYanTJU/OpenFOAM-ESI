@@ -34,8 +34,8 @@ Description
 #ifndef Foam_SLList_H
 #define Foam_SLList_H
 
-#include "SLListBase.H"
 #include "LList.H"
+#include "SLListBase.H"
 #include "SLListFwd.H"
 
 #endif

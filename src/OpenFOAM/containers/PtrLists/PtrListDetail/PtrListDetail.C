@@ -97,25 +97,13 @@ Foam::label Foam::Detail::PtrListDetail<T>::find_next_not(label pos) const
 
 
 template<class T>
-void Foam::Detail::PtrListDetail<T>::setNull()
-{
-    List<T*>& ptrs = *this;
-    const label len = ptrs.size();
-
-    for (label i=0; i<len; ++i)
-    {
-        ptrs[i] = nullptr;
-    }
-}
-
-
-template<class T>
 void Foam::Detail::PtrListDetail<T>::free()
 {
     List<T*>& ptrs = *this;
     const label len = ptrs.size();
 
-    for (label i=0; i<len; ++i)
+    // Presume they were allocated from front to back...
+    for (label i = len - 1; i >= 0; --i)
     {
         delete ptrs[i];
         ptrs[i] = nullptr;
@@ -133,7 +121,7 @@ Foam::Detail::PtrListDetail<T>::clone(Args&&... args) const
 
     PtrListDetail<T> cloned(len);
 
-    for (label i=0; i<len; ++i)
+    for (label i = 0; i < len; ++i)
     {
         const T* ptr = ptrs[i];
 

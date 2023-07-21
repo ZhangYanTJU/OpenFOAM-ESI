@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -105,12 +105,21 @@ int main()
         Info<< nl << "Construct from reference" << nl;
 
         scalarField f2(10, Foam::sqrt(2.0));
-        printInfo(refPtr<scalarField>(f2), true);
+        refPtr<scalarField> tfld2(f2);
+        printInfo(tfld2, true);
+
+        Info<< nl << "emplaced:"<< nl;
+        tfld2.emplace(25, scalar(1));
+        printInfo(tfld2, true);
     }
 
     {
         Info<< nl << "Construct from New (is_pointer)" << nl;
-        auto tfld1 = refPtr<scalarField>::New(10, scalar(1));
+        auto tfld1 = refPtr<scalarField>::New(10, scalar(-1));
+        printInfo(tfld1, true);
+
+        Info<< nl << "emplaced:"<< nl;
+        tfld1.emplace(15, scalar(1));
         printInfo(tfld1, true);
 
         Info<< nl << "Dereferenced: " << *tfld1 << nl;

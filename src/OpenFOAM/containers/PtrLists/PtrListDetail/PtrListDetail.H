@@ -128,10 +128,6 @@ public:
         //  \note Method name as per bitSet
         label find_next_not(label pos) const;
 
-        //- Reassign all pointers to nullptr, without deleting.
-        //- Does not affect the list size.
-        void setNull();
-
         //- Delete allocated entries and reassign to nullptr.
         //- Does not affect the list size.
         void free();
@@ -143,6 +139,9 @@ public:
         //- Reset size of list.
         //  New entries are initialized to nullptr.
         inline void resize(const label newLen);
+
+        //- Set the list to the given size and set all entries to nullptr.
+        inline void resize_null(const label newLen);
 
         //- Set addressed size to be inconsistent with allocated storage.
         //  Use with care
@@ -159,6 +158,9 @@ public:
 
         //- Move assignment
         inline void operator=(PtrListDetail<T>&& list);
+
+        //- Assign all entries to nullptr (without deleting)
+        inline void operator=(std::nullptr_t);
 
 
     // Housekeeping

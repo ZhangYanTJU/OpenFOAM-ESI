@@ -109,6 +109,11 @@ public:
         //- Alter the addressed list size.
         inline void resize(const label newLen);
 
+        //- Set the addressed list to the given size,
+        //- deleting all existing entries.
+        //- Afterwards the list contains all \c nullptr entries.
+        inline void resize_null(const label newLen);
+
         //- Clear the addressed list, i.e. set the size to zero.
         //  Allocated size does not change
         inline void clear();
@@ -174,7 +179,14 @@ public:
 
         //- Construct and set a new element at given position,
         //- (discard old element at that location).
-        //- Return reference to the new list element.
+        //- Auto-sizes list as required.
+        //  \param i - the location to set
+        //  \param args arguments to forward to the constructor of the element
+        //  \return reference to the new list element.
+        template<class... Args>
+        inline T& emplace_set(const label i, Args&&... args);
+
+        //- Same as emplace_set()
         template<class... Args>
         inline T& emplace(const label i, Args&&... args);
 

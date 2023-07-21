@@ -165,6 +165,24 @@ public:
             return *(parent_type::back());
         }
 
+        //- Emplace construct new element at front of list. Return reference.
+        template<class... Args>
+        T& emplace_front(Args&&... args)
+        {
+            T* ptr = new T(std::forward<Args>(args)...);
+            this->push_front(ptr);
+            return *ptr;  // OR: return *(parent_type::front());
+        }
+
+        //- Emplace construct new element at back of list. Return reference.
+        template<class... Args>
+        T& emplace_back(Args&&... args)
+        {
+            T* ptr = new T(std::forward<Args>(args)...);
+            this->push_back(ptr);
+            return *ptr;  // OR: return *(parent_type::back());
+        }
+
         //- Remove first element(s) from the list (deletes pointers)
         void pop_front(label n = 1);
 

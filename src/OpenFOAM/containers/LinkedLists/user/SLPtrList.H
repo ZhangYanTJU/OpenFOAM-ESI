@@ -34,8 +34,8 @@ Description
 #ifndef Foam_SLPtrList_H
 #define Foam_SLPtrList_H
 
-#include "SLListBase.H"
 #include "LPtrList.H"
+#include "SLListBase.H"
 #include "SLPtrListFwd.H"
 
 #endif

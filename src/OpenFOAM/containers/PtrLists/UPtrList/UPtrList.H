@@ -218,7 +218,7 @@ public:
         //- Default construct
         inline constexpr UPtrList() noexcept;
 
-        //- Construct with specified size, each element initialized to nullptr
+        //- Construct with specified size and set all entries to \c nullptr
         inline explicit UPtrList(const label len);
 
         //- Copy construct (shallow copies addresses)
@@ -299,8 +299,12 @@ public:
         inline void free();
 
         //- Change the size of the list.
-        //  New entries are initialized to nullptr.
+        //- Any new entries are \c nullptr.
         inline void resize(const label newLen);
+
+        //- Set the list to the given size
+        //- and set \em all entries to \c nullptr.
+        inline void resize_null(const label newLen);
 
         //- Squeeze out nullptr entries in the list of pointers after which
         //- any null pointers will be at the end of the list

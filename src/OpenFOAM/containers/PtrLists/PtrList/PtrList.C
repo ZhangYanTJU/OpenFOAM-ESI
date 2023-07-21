@@ -70,7 +70,7 @@ Foam::PtrList<T>::PtrList(const SLPtrList<T>& list)
 template<class T>
 Foam::PtrList<T>::~PtrList()
 {
-    (this->ptrs_).free(); // free old pointers
+    (this->ptrs_).free();  // Free old pointers
 }
 
 
@@ -110,14 +110,10 @@ void Foam::PtrList<T>::resize(const label newLen)
     else if (newLen != oldLen)
     {
         // Truncation frees old pointers
-        for (label i=newLen; i<oldLen; ++i)
+        for (label i = newLen; i < oldLen; ++i)
         {
-            T* ptr = this->ptrs_[i];
-
-            if (ptr)
-            {
-                delete ptr;
-            }
+            delete this->ptrs_[i];
+            this->ptrs_[i] = nullptr;
         }
 
         // Any new elements are initialized to nullptr.

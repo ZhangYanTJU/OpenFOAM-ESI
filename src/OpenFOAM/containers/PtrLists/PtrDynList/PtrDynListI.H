@@ -141,9 +141,29 @@ inline void Foam::PtrDynList<T, SizeMin>::resize(const label newLen)
 
 
 template<class T, int SizeMin>
+inline void Foam::PtrDynList<T, SizeMin>::resize_null(const label newLen)
+{
+    if (capacity_ < newLen)
+    {
+        // Increase capacity (doubling)
+        capacity_ = max(SizeMin, max(newLen, label(2*capacity_)));
+
+        PtrList<T>::resize_null(capacity_);
+    }
+    else
+    {
+        PtrList<T>::free();  // Free (and nullify) old pointers
+    }
+
+    // Adjust addressed size
+    PtrList<T>::setAddressableSize(newLen);
+}
+
+
+template<class T, int SizeMin>
 inline void Foam::PtrDynList<T, SizeMin>::clear()
 {
-    (this->ptrs_).free(); // free old pointers
+    PtrList<T>::free();  // Free (and nullify) old pointers
     PtrList<T>::setAddressableSize(0);
 }
 
@@ -369,15 +389,29 @@ inline void Foam::PtrDynList<T, SizeMin>::pop_back(label n)
 
 template<class T, int SizeMin>
 template<class... Args>
+inline T& Foam::PtrDynList<T, SizeMin>::emplace_set
+(
+    const label i,
+    Args&&... args
+)
+{
+    if (i >= this->size())
+    {
+        resize(i+1);
+    }
+    return this->PtrList<T>::emplace_set(i, std::forward<Args>(args)...);
+}
+
+
+template<class T, int SizeMin>
+template<class... Args>
 inline T& Foam::PtrDynList<T, SizeMin>::emplace
 (
     const label i,
     Args&&... args
 )
 {
-    T* ptr = new T(std::forward<Args>(args)...);
-    (void)this->set(i, ptr);
-    return *ptr;
+    return this->emplace_set(i, std::forward<Args>(args)...);
 }
 
 

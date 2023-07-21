@@ -355,6 +355,17 @@ inline void Foam::tmp<T>::reset(tmp<T>&& other) noexcept
 
 
 template<class T>
+template<class... Args>
+inline T& Foam::tmp<T>::emplace(Args&&... args)
+{
+    clear();  // delete old entry
+    ptr_ = new T(std::forward<Args>(args)...);
+    type_ = PTR;
+    return *ptr_;
+}
+
+
+template<class T>
 inline void Foam::tmp<T>::cref(const tmp<T>& other) noexcept
 {
     // Could also make Fatal with FULLDEBUG

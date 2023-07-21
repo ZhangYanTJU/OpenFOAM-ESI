@@ -147,6 +147,11 @@ public:
         //  New entries are initialized to nullptr, removed entries are deleted
         void resize(const label newLen);
 
+        //- Set the addressed list to the given size,
+        //- deleting all existing entries.
+        //- Afterwards the list contains all \c nullptr entries.
+        inline void resize_null(const label newLen);
+
         //- Construct and append an element to the end of the list,
         //- return reference to the new list element
         template<class... Args>
@@ -172,7 +177,9 @@ public:
 
         //- Construct and set a new element at given position,
         //- (discard old element at that location).
-        //- Return reference to the new list element.
+        //  \param i - the location to set
+        //  \param args arguments to forward to the constructor of the element
+        //  \return reference to the new list element.
         template<class... Args>
         inline T& emplace_set(const label i, Args&&... args);
 
