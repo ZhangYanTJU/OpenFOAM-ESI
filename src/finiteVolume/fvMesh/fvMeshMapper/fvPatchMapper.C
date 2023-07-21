@@ -142,9 +142,11 @@ void Foam::fvPatchMapper::calcAddressing() const
             else
             {
                 // Need to recalculate weights to exclude hits into internal
-                labelList newAddr(curAddr.size(), false);
+                labelList newAddr(curAddr.size());
                 scalarField newWeights(curAddr.size());
+
                 label nActive = 0;
+                scalar sumWeight = 0;
 
                 forAll(curAddr, lfI)
                 {
@@ -156,17 +158,19 @@ void Foam::fvPatchMapper::calcAddressing() const
                     {
                         newAddr[nActive] = curAddr[lfI] - oldPatchStart;
                         newWeights[nActive] = curW[lfI];
-                        nActive++;
+
+                        sumWeight += curW[lfI];
+                        ++nActive;
                     }
                 }
 
-                newAddr.setSize(nActive);
-                newWeights.setSize(nActive);
+                newAddr.resize(nActive);
+                newWeights.resize(nActive);
 
                 // Re-scale the weights
                 if (nActive > 0)
                 {
-                    newWeights /= sum(newWeights);
+                    newWeights /= sumWeight;
                 }
                 else
                 {

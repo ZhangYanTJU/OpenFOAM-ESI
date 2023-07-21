@@ -160,8 +160,7 @@ void Foam::fieldsDistributor::readFieldsImpl
     #endif
 
 
-    fields.free();
-    fields.resize(masterNames.size());
+    fields.resize_null(masterNames.size());
 
     if (fields.empty())
     {

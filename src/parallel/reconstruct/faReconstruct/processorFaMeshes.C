@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,9 +34,20 @@ License
 
 void Foam::processorFaMeshes::read()
 {
+    // Make sure to clear (and hence unregister) any previously loaded meshes
+    // and fields
+
+    boundaryProcAddressing_.free();
+    faceProcAddressing_.free();
+    edgeProcAddressing_.free();
+    pointProcAddressing_.free();
+    meshes_.free();
+
+
     forAll(fvMeshes_, proci)
     {
-        meshes_.set(proci, new faMesh(fvMeshes_[proci]));
+        // Construct from polyMesh IO information
+        meshes_.emplace_set(proci, fvMeshes_[proci]);
 
         // Read the addressing information
 
@@ -46,8 +57,8 @@ void Foam::processorFaMeshes::read()
             "constant",  // Placeholder
             faMesh::meshSubDir,
             meshes_[proci].thisDb(),
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::MUST_READ,
+            IOobjectOption::NO_WRITE
         );
 
         const auto& runTime = meshes_[proci].thisDb().time();
@@ -56,22 +67,22 @@ void Foam::processorFaMeshes::read()
         // pointProcAddressing (faMesh)
         ioAddr.rename("pointProcAddressing");
         ioAddr.instance() = runTime.findInstance(meshDir, ioAddr.name());
-        pointProcAddressing_.set(proci, new labelIOList(ioAddr));
+        pointProcAddressing_.emplace_set(proci, ioAddr);
 
         // edgeProcAddressing (faMesh)
         ioAddr.rename("edgeProcAddressing");
         ioAddr.instance() = runTime.findInstance(meshDir, ioAddr.name());
-        edgeProcAddressing_.set(proci, new labelIOList(ioAddr));
+        edgeProcAddressing_.emplace_set(proci, ioAddr);
 
         // faceProcAddressing (faMesh)
         ioAddr.rename("faceProcAddressing");
         ioAddr.instance() = runTime.findInstance(meshDir, ioAddr.name());
-        faceProcAddressing_.set(proci, new labelIOList(ioAddr));
+        faceProcAddressing_.emplace_set(proci, ioAddr);
 
         // boundaryProcAddressing (faMesh)
         ioAddr.rename("boundaryProcAddressing");
         ioAddr.instance() = runTime.findInstance(meshDir, ioAddr.name());
-        boundaryProcAddressing_.set(proci, new labelIOList(ioAddr));
+        boundaryProcAddressing_.emplace_set(proci, ioAddr);
     }
 }
 

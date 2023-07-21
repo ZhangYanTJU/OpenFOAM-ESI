@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,28 +46,22 @@ void Foam::processorMeshes::read()
 {
     // Make sure to clear (and hence unregister) any previously loaded meshes
     // and fields
-    forAll(databases_, proci)
-    {
-        boundaryProcAddressing_.set(proci, nullptr);
-        cellProcAddressing_.set(proci, nullptr);
-        faceProcAddressing_.set(proci, nullptr);
-        pointProcAddressing_.set(proci, nullptr);
-        meshes_.set(proci, nullptr);
-    }
+    boundaryProcAddressing_.free();
+    cellProcAddressing_.free();
+    faceProcAddressing_.free();
+    pointProcAddressing_.free();
+    meshes_.free();
 
     forAll(databases_, proci)
     {
-        meshes_.set
+        meshes_.emplace_set
         (
             proci,
-            new fvMesh
+            IOobject
             (
-                IOobject
-                (
-                    meshName_,
-                    databases_[proci].timeName(),
-                    databases_[proci]
-                )
+                meshName_,
+                databases_[proci].timeName(),
+                databases_[proci]
             )
         );
 
@@ -79,25 +73,25 @@ void Foam::processorMeshes::read()
             meshes_[proci].facesInstance(),
             polyMesh::meshSubDir,
             meshes_[proci].thisDb(),
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
+            IOobjectOption::MUST_READ,
+            IOobjectOption::NO_WRITE
         );
 
         // pointProcAddressing (polyMesh)
         ioAddr.rename("pointProcAddressing");
-        pointProcAddressing_.set(proci, new labelIOList(ioAddr));
+        pointProcAddressing_.emplace_set(proci, ioAddr);
 
         // faceProcAddressing (polyMesh)
         ioAddr.rename("faceProcAddressing");
-        faceProcAddressing_.set(proci, new labelIOList(ioAddr));
+        faceProcAddressing_.emplace_set(proci, ioAddr);
 
         // cellProcAddressing (polyMesh)
         ioAddr.rename("cellProcAddressing");
-        cellProcAddressing_.set(proci, new labelIOList(ioAddr));
+        cellProcAddressing_.emplace_set(proci, ioAddr);
 
         // boundaryProcAddressing (polyMesh)
         ioAddr.rename("boundaryProcAddressing");
-        boundaryProcAddressing_.set(proci, new labelIOList(ioAddr));
+        boundaryProcAddressing_.emplace_set(proci, ioAddr);
     }
 }
 

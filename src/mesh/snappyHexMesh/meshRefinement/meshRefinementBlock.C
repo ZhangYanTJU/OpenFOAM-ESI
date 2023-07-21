@@ -1526,18 +1526,12 @@ void Foam::meshRefinement::selectIntersectedFaces
 //            if (zonei == -1)
 //            {
 //                zonei = faceZones.size();
-//                faceZones.setSize(zonei+1);
-//                faceZones.set
+//
+//                faceZones.emplace_back
 //                (
-//                    zonei,
-//                    new faceZone
-//                    (
-//                        "frozenFaces",              // name
-//                        labelList(0),               // addressing
-//                        boolList(0),                // flip
-//                        zonei,                      // index
-//                        faceZones                   // faceZoneMesh
-//                    )
+//                    "frozenFaces",    // name
+//                    zonei,            // index
+//                    faceZones
 //                );
 //            }
 //
@@ -1653,17 +1647,13 @@ void Foam::meshRefinement::selectIntersectedFaces
 //        //    if (zonei == -1)
 //        //    {
 //        //        zonei = pointZones.size();
-//        //        pointZones.setSize(zonei+1);
-//        //        pointZones.set
+//        //
+//        //        pointZones.emplace_back
 //        //        (
-//        //            zonei,
-//        //            new pointZone
-//        //            (
-//        //                "frozenPoints",             // name
-//        //                isFrozenPoint.sortedToc(),  // addressing
-//        //                zonei,                      // index
-//        //                pointZones                  // pointZoneMesh
-//        //            )
+//        //            "frozenPoints",             // name
+//        //            isFrozenPoint.sortedToc(),  // addressing
+//        //            zonei,                      // index
+//        //            pointZones                  // pointZoneMesh
 //        //        );
 //        //    }
 //        //}

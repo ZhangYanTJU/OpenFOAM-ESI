@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,26 +72,22 @@ Foam::probes::getOrLoadField(const word& fieldName) const
 
     if (loadFromFiles_)
     {
-        tfield.reset
+        tfield.emplace
         (
-            new GeoField
+            IOobject
             (
-                IOobject
-                (
-                    fieldName,
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                mesh_
-            )
+                fieldName,
+                mesh_.time().timeName(),
+                mesh_.thisDb(),
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
+            ),
+            mesh_
         );
     }
     else
     {
-        // Slightly paranoid here
         tfield.cref(mesh_.cfindObject<GeoField>(fieldName));
     }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,31 +87,27 @@ Foam::functionObjects::fieldCoordinateSystemTransform::transformFieldName
 const Foam::surfaceTensorField&
 Foam::functionObjects::fieldCoordinateSystemTransform::srotTensor() const
 {
-    typedef surfaceTensorField FieldType;
     typedef surfaceTensorField::Boundary BoundaryType;
 
     if (!rotTensorSurface_)
     {
         tensorField rotations(csysPtr_->R(mesh_.faceCentres()));
 
-        rotTensorSurface_.reset
+        rotTensorSurface_.emplace
         (
-            new FieldType
+            IOobject
             (
-                IOobject
-                (
-                    "surfRotation",
-                    mesh_.objectRegistry::instance(),
-                    mesh_.objectRegistry::db(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                mesh_,
-                dimless,
-                std::move(rotations)
-                // calculatedType
-            )
+                "surfRotation",
+                mesh_.objectRegistry::instance(),
+                mesh_.objectRegistry::db(),
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
+            ),
+            mesh_,
+            dimless,
+            std::move(rotations)
+            // calculatedType
         );
 
         auto& rot = *rotTensorSurface_;
@@ -132,31 +128,27 @@ Foam::functionObjects::fieldCoordinateSystemTransform::srotTensor() const
 const Foam::volTensorField&
 Foam::functionObjects::fieldCoordinateSystemTransform::vrotTensor() const
 {
-    typedef volTensorField FieldType;
     typedef volTensorField::Boundary BoundaryType;
 
     if (!rotTensorVolume_)
     {
         tensorField rotations(csysPtr_->R(mesh_.cellCentres()));
 
-        rotTensorVolume_.reset
+        rotTensorVolume_.emplace
         (
-            new FieldType
+            IOobject
             (
-                IOobject
-                (
-                    "volRotation",
-                    mesh_.objectRegistry::instance(),
-                    mesh_.objectRegistry::db(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                mesh_,
-                dimless,
-                std::move(rotations)
-                // calculatedType
-            )
+                "volRotation",
+                mesh_.objectRegistry::instance(),
+                mesh_.objectRegistry::db(),
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
+            ),
+            mesh_,
+            dimless,
+            std::move(rotations)
+            // calculatedType
         );
 
         auto& rot = *rotTensorVolume_;

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,29 +85,30 @@ void Foam::areaWrite::performAction
             Info<< "write: " << fieldName << endl;
         }
 
+        refPtr<GeoField> tfield;
+
         if (loadFromFiles_)
         {
-            const GeoField fld
+            tfield.emplace
             (
                 IOobject
                 (
                     fieldName,
                     time_.timeName(),
                     areaMesh.thisDb(),
-                    IOobject::MUST_READ
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 ),
                 areaMesh
             );
-
-            writeSurface(writer, &fld, fieldName);
         }
         else
         {
-            const auto* fieldPtr =
-                areaMesh.thisDb().cfindObject<GeoField>(fieldName);
-
-            writeSurface(writer, fieldPtr, fieldName);
+            tfield.cref(areaMesh.thisDb().cfindObject<GeoField>(fieldName));
         }
+
+        writeSurface(writer, tfield.get(), fieldName);
     }
 }
 

@@ -402,7 +402,7 @@ public:
             static void printFieldInfo(const fvMesh&);
 
             //- Print some info on mesh.
-            static void printMeshInfo(const fvMesh&);
+            static void printMeshInfo(const polyMesh&);
 
             //- Generate a test field on faces
             static tmp<surfaceScalarField> generateTestField(const fvMesh&);

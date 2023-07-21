@@ -1406,9 +1406,9 @@ Foam::isoSurfacePoint::isoSurfacePoint
             );
 
             // Clear old value. Cannot resize it since is a slice.
-            bfld.set(patchi, nullptr);
-
             // Set new value we can change
+
+            bfld.release(patchi);
             bfld.set
             (
                 patchi,

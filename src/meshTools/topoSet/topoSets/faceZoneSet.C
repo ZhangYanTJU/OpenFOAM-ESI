@@ -462,18 +462,13 @@ bool Foam::faceZoneSet::writeObject
     {
         zoneID = faceZones.size();
 
-        faceZones.setSize(zoneID+1);
-        faceZones.set
+        faceZones.emplace_back
         (
+            name(),
+            addressing_,
+            flipMap_,
             zoneID,
-            new faceZone
-            (
-                name(),
-                addressing_,
-                flipMap_,
-                zoneID,
-                faceZones
-            )
+            faceZones
         );
     }
     else

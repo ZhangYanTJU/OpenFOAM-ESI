@@ -45,18 +45,12 @@ void Foam::lagrangianFieldDecomposer::readFields
         lagrangianObjects.sorted<IOField<Type>>()
     );
 
-    lagrangianFields.set
-    (
-        cloudi,
-        new PtrList<IOField<Type>>(fieldObjects.size())
-    );
+    auto& cloudFields =
+        lagrangianFields.emplace_set(cloudi, fieldObjects.size());
 
-
-    label fieldi = 0;
-
-    for (const IOobject& io : fieldObjects)
+    forAll(fieldObjects, fieldi)
     {
-        lagrangianFields[cloudi].set(fieldi++, new IOField<Type>(io));
+        cloudFields.emplace_set(fieldi, fieldObjects[fieldi]);
     }
 }
 
@@ -70,14 +64,12 @@ void Foam::lagrangianFieldDecomposer::readFieldFields
 )
 {
     // List of lagrangian field objects
-    UPtrList<const IOobject> fieldObjects;
-
-    fieldObjects.append
+    UPtrList<const IOobject> fieldObjects
     (
         lagrangianObjects.sorted<IOField<Field<Type>>>()
     );
 
-    fieldObjects.append
+    fieldObjects.push_back
     (
         lagrangianObjects.sorted<CompactIOField<Field<Type>, Type>>()
     );
@@ -85,22 +77,12 @@ void Foam::lagrangianFieldDecomposer::readFieldFields
     Foam::sort(fieldObjects, nameOp<IOobject>());
 
 
-    lagrangianFields.set
-    (
-        cloudi,
-        new PtrList<CompactIOField<Field<Type>, Type>>(fieldObjects.size())
-    );
+    auto& cloudFields =
+        lagrangianFields.emplace_set(cloudi, fieldObjects.size());
 
-
-    label fieldi = 0;
-
-    for (const IOobject& io : fieldObjects)
+    forAll(fieldObjects, fieldi)
     {
-        lagrangianFields[cloudi].set
-        (
-            fieldi++,
-            new CompactIOField<Field<Type>, Type>(io)
-        );
+        cloudFields.emplace_set(fieldi, fieldObjects[fieldi]);
     }
 }
 
