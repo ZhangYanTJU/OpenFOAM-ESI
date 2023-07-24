@@ -144,18 +144,19 @@ public:
                 return cyclicAMIPolyPatch_;
             }
 
-            //- Return neighbour
-            virtual label neighbPatchID() const
-            {
-                return cyclicAMIPolyPatch_.neighbPatchID();
-            }
-
+            //- Does this side own the patch?
             virtual bool owner() const
             {
                 return cyclicAMIPolyPatch_.owner();
             }
 
-            //- Return processor number
+            //- Return neighbour patch ID
+            virtual label neighbPatchID() const
+            {
+                return cyclicAMIPolyPatch_.neighbPatchID();
+            }
+
+            //- Return a reference to the neighbour patch
             virtual const cyclicAMIFvPatch& neighbPatch() const
             {
                 return refCast<const cyclicAMIFvPatch>

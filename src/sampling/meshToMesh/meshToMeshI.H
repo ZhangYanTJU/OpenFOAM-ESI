@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2014 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,15 +84,35 @@ inline Foam::scalar Foam::meshToMesh::V() const
 }
 
 
+inline bool Foam::meshToMesh::distributed() const noexcept
+{
+    return (singleMeshProc_ == -1);
+}
+
+
+inline const Foam::mapDistribute*
+Foam::meshToMesh::hasSrcMap() const noexcept
+{
+    return srcMapPtr_.get();
+}
+
+
+inline const Foam::mapDistribute*
+Foam::meshToMesh::hasTgtMap() const noexcept
+{
+    return tgtMapPtr_.get();
+}
+
+
 inline const Foam::autoPtr<Foam::mapDistribute>&
-Foam::meshToMesh::srcMap() const
+Foam::meshToMesh::srcMap() const noexcept
 {
     return srcMapPtr_;
 }
 
 
 inline const Foam::autoPtr<Foam::mapDistribute>&
-Foam::meshToMesh::tgtMap() const
+Foam::meshToMesh::tgtMap() const noexcept
 {
     return tgtMapPtr_;
 }

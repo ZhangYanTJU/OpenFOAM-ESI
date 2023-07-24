@@ -41,27 +41,18 @@ License
 template<class ParticleType>
 void Foam::Cloud<ParticleType>::checkPatches() const
 {
-    bool ok = true;
     for (const polyPatch& pp : polyMesh_.boundaryMesh())
     {
         const auto* camipp = isA<cyclicAMIPolyPatch>(pp);
 
-        if (camipp && camipp->owner())
+        if (camipp && camipp->owner() && camipp->AMI().distributed())
         {
-            ok = (camipp->AMI().singlePatchProc() != -1);
-            if (!ok)
-            {
-                break;
-            }
+            FatalErrorInFunction
+                << "Particle tracking across AMI patches is only currently "
+                << "supported for cases where the AMI patches reside on a "
+                << "single processor" << abort(FatalError);
+            break;
         }
-    }
-
-    if (!ok)
-    {
-        FatalErrorInFunction
-            << "Particle tracking across AMI patches is only currently "
-            << "supported for cases where the AMI patches reside on a "
-            << "single processor" << abort(FatalError);
     }
 }
 

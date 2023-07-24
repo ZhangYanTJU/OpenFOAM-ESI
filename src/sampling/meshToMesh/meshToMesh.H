@@ -137,8 +137,8 @@ private:
         //- Cell total volume in overlap region [m3]
         scalar V_;
 
-        //- Index of processor that holds all of both sides. -1 in all other
-        //  cases
+        //- Index of processor that holds all of both sides.
+        //- The value is -1 for distributed cases
         label singleMeshProc_;
 
         //- Source map pointer - parallel running only
@@ -404,13 +404,24 @@ public:
             patchAMIs() const;
 
 
-            // Explicit access. Can probably be done with combine operator.
+        // Mapping
 
-                //- Source map pointer - valid if no singleMeshProc
-                inline const autoPtr<mapDistribute>& srcMap() const;
+            //- Distributed across processors (singleMeshProc == -1)
+            inline bool distributed() const noexcept;
 
-                //- Target map pointer - valid if no singleMeshProc
-                inline const autoPtr<mapDistribute>& tgtMap() const;
+            //- Pointer to the source map (if distributed).
+            //- Can be checked as a bool.
+            inline const mapDistribute* hasSrcMap() const noexcept;
+
+            //- Pointer to the target map (if distributed).
+            //- Can be checked as a bool.
+            inline const mapDistribute* hasTgtMap() const noexcept;
+
+            //- Source map pointer - valid if no singleMeshProc
+            inline const autoPtr<mapDistribute>& srcMap() const noexcept;
+
+            //- Target map pointer - valid if no singleMeshProc
+            inline const autoPtr<mapDistribute>& tgtMap() const noexcept;
 
 
         // Evaluation
