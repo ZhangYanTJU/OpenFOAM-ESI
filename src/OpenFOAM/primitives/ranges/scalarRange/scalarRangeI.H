@@ -29,7 +29,7 @@ License
 
 inline constexpr Foam::scalarRange::scalarRange
 (
-    const scalarRange::testType type,
+    const scalarRange::rangeTypes type,
     const scalar minVal,
     const scalar maxVal
 ) noexcept
@@ -42,13 +42,13 @@ inline constexpr Foam::scalarRange::scalarRange
 
 inline constexpr Foam::scalarRange::scalarRange() noexcept
 :
-    scalarRange(scalarRange::NONE, GREAT, -GREAT)
+    scalarRange(rangeTypes::NONE, GREAT, -GREAT)
 {}
 
 
 inline constexpr Foam::scalarRange::scalarRange(const scalar val) noexcept
 :
-    scalarRange(scalarRange::EQ, val, val)
+    scalarRange(rangeTypes::EQ, val, val)
 {}
 
 
@@ -58,15 +58,15 @@ inline Foam::scalarRange::scalarRange
     const scalar maxVal
 ) noexcept
 :
-    scalarRange(scalarRange::GE_LE, minVal, maxVal)
+    scalarRange(rangeTypes::GE_LE, minVal, maxVal)
 {
     if (maxVal < minVal)
     {
-        clear();  // Inverted - explicitly mark as such
+        reset();  // Inverted - explicitly mark as such
     }
     else if (equal(minVal, maxVal))
     {
-        type_ = scalarRange::EQ;
+        type_ = rangeTypes::EQ;
     }
 }
 
@@ -74,76 +74,76 @@ inline Foam::scalarRange::scalarRange
 inline constexpr Foam::scalarRange
 Foam::scalarRange::ge(const scalar minVal) noexcept
 {
-    return scalarRange(scalarRange::GE, minVal, GREAT);
+    return scalarRange(rangeTypes::GE, minVal, GREAT);
 }
 
 
 inline constexpr Foam::scalarRange
 Foam::scalarRange::gt(const scalar minVal) noexcept
 {
-    return scalarRange(scalarRange::GT, minVal, GREAT);
+    return scalarRange(rangeTypes::GT, minVal, GREAT);
 }
 
 
 inline constexpr Foam::scalarRange
 Foam::scalarRange::ge0() noexcept
 {
-    return scalarRange(scalarRange::GE, 0, GREAT);
+    return scalarRange(rangeTypes::GE, 0, GREAT);
 }
 
 
 inline constexpr Foam::scalarRange
 Foam::scalarRange::gt0() noexcept
 {
-    return scalarRange(scalarRange::GT, 0, GREAT);
+    return scalarRange(rangeTypes::GT, 0, GREAT);
 }
 
 
 inline constexpr Foam::scalarRange
 Foam::scalarRange::le(const scalar maxVal) noexcept
 {
-    return scalarRange(scalarRange::LE, -GREAT, maxVal);
+    return scalarRange(rangeTypes::LE, -GREAT, maxVal);
 }
 
 inline constexpr Foam::scalarRange
 Foam::scalarRange::lt(const scalar maxVal) noexcept
 {
-    return scalarRange(scalarRange::LT, -GREAT, maxVal);
+    return scalarRange(rangeTypes::LT, -GREAT, maxVal);
 }
 
 
 inline constexpr Foam::scalarRange
 Foam::scalarRange::zero_one() noexcept
 {
-    return scalarRange(scalarRange::GE_LE, 0, 1);
+    return scalarRange(rangeTypes::GE_LE, 0, 1);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline void Foam::scalarRange::clear() noexcept
+inline void Foam::scalarRange::reset() noexcept
 {
     min_ = GREAT;
     max_ = -GREAT;
-    type_ = scalarRange::NONE;
+    type_ = rangeTypes::NONE;
 }
 
 
 inline bool Foam::scalarRange::empty() const noexcept
 {
-    return type_ == scalarRange::NONE;
+    return (type_ == rangeTypes::NONE);
 }
 
 
 inline bool Foam::scalarRange::good() const noexcept
 {
-    return type_ != scalarRange::NONE;
+    return (type_ != rangeTypes::NONE);
 }
 
 
 inline bool Foam::scalarRange::single() const noexcept
 {
-    return type_ == scalarRange::EQ;
+    return (type_ == rangeTypes::EQ);
 }
 
 
@@ -151,16 +151,16 @@ inline Foam::scalar Foam::scalarRange::value() const
 {
     switch (type_)
     {
-        case scalarRange::EQ: // For equals, min and max are identical
-        case scalarRange::GE:
-        case scalarRange::GT:
+        case rangeTypes::EQ: // For equals, min and max are identical
+        case rangeTypes::GE:
+        case rangeTypes::GT:
             return min_;
 
-        case scalarRange::LE:
-        case scalarRange::LT:
+        case rangeTypes::LE:
+        case rangeTypes::LT:
             return max_;
 
-        case scalarRange::GE_LE:
+        case rangeTypes::GE_LE:
             // Multiply before adding to avoid possible overflow
             return (0.5 * min_) + (0.5 * max_);
 
@@ -174,13 +174,13 @@ inline bool Foam::scalarRange::contains(const scalar val) const
 {
     switch (type_)
     {
-        case scalarRange::EQ:    return equal(val, min_);
-        case scalarRange::GE:    return (val >= min_);
-        case scalarRange::GT:    return (val > min_);
-        case scalarRange::LE:    return (val <= max_);
-        case scalarRange::LT:    return (val < max_);
-        case scalarRange::GE_LE: return (val >= min_ && val <= max_);
-        case scalarRange::ALWAYS: return true;
+        case rangeTypes::EQ:    return equal(val, min_);
+        case rangeTypes::GE:    return (val >= min_);
+        case rangeTypes::GT:    return (val > min_);
+        case rangeTypes::LE:    return (val <= max_);
+        case rangeTypes::LT:    return (val < max_);
+        case rangeTypes::GE_LE: return (val >= min_ && val <= max_);
+        case rangeTypes::ALWAYS: return true;
         default:    return false;
     }
 }

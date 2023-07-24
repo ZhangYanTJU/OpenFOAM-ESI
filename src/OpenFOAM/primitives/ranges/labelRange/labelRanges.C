@@ -164,7 +164,7 @@ bool Foam::labelRanges::add(const labelRange& range)
                 if (currRange.overlaps(nextRange, true))
                 {
                     currRange.join(nextRange);
-                    nextRange.clear();
+                    nextRange.reset();
                 }
                 else
                 {

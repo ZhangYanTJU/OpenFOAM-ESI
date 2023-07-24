@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,11 +67,11 @@ Ostream& operator<<(Ostream& os, const scalarRange& range);
 
 class scalarRange
 {
-    //- The type of range test to use
-    enum testType
+    //- The type of range
+    enum rangeTypes : unsigned char
     {
         NONE = 0,   //!< Empty or invalid (inverse) range. Never matches.
-        EQ,         //!< A single value test.
+        EQ,         //!< Single value equality
         GE,         //!< Greater-than-equal.
         GT,         //!< Greater-than.
         LE,         //!< Less-than-equal.
@@ -89,13 +89,13 @@ class scalarRange
         //- The max value of the range
         scalar max_;
 
-        //- The type of range test
-        enum testType type_;
+        //- The range type
+        enum rangeTypes type_;
 
         //- Construct from components, no checks
         inline constexpr scalarRange
         (
-            const testType type,
+            const rangeTypes type,
             const scalar minVal,
             const scalar maxVal
         ) noexcept;
@@ -179,9 +179,6 @@ public:
 
     // Member Functions
 
-        //- Reset to an empty (inverse, NONE) range.
-        inline void clear() noexcept;
-
         //- True if range is empty (eg, inverted, NONE)
         inline bool empty() const noexcept;
 
@@ -196,6 +193,12 @@ public:
 
         //- The max value of the range.
         scalar max() const noexcept { return max_; }
+
+        //- Reset to an empty (inverse, NONE) range.
+        inline void reset() noexcept;
+
+        //- Same as reset() - reset to an empty (inverse, NONE) range.
+        void clear() noexcept { reset(); }
 
 
         //- A representative (average) value for the range.
@@ -220,7 +223,10 @@ public:
 
     // IOstream Operators
 
-        //- Print information about the range.
+        //- Print information about the range
+        void print(Ostream& os) const;
+
+        //- Print information about the range
         friend Ostream& operator<<(Ostream& os, const scalarRange& range);
 
 

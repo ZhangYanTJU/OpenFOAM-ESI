@@ -184,10 +184,13 @@ public:
     // Edit
 
         //- Reset to zero start and zero size
-        inline void clear() noexcept;
+        inline void reset() noexcept;
 
         //- Reset start and length, no checks
         inline void reset(const IntType beg, const IntType len) noexcept;
+
+        //- Same as reset() - reset to zero start and zero size
+        void clear() noexcept { reset(); }
 
         //- Set the start position, no checks
         inline void setStart(const IntType i) noexcept;

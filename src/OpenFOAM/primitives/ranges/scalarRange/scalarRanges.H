@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,28 +68,35 @@ public:
         constexpr scalarRanges() noexcept = default;
 
         //- Construct by parsing string using the parse() static method
-        inline explicit scalarRanges
-        (
-            const std::string& str,
-            bool report = true  //!< Report when any range fails to parse
-        );
+        //- with optional reporting if any range fails to parse
+        explicit scalarRanges(const std::string& str, bool report = true)
+        :
+            List<scalarRange>(scalarRanges::parse(str, report))
+        {}
 
 
     // Static Constructors
 
         //- Construct by parsing string for scalar ranges
+        //- with optional reporting if any range fails to parse.
         //  The individual items are space, comma or semicolon delimited.
-        static scalarRanges parse
-        (
-            const std::string& str,
-            bool report = true  //!< Report when any range fails to parse
-        );
+        static scalarRanges parse(const std::string& str, bool report = true);
 
 
     // Member Functions
 
         //- True if the value is contained by any of the sub-ranges
-        inline bool contains(const scalar value) const;
+        bool contains(const scalar value) const
+        {
+            for (const scalarRange& range : *this)
+            {
+                if (range.contains(value))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         //- True if the value is matched by any of the sub-ranges
         bool match(const scalar value) const { return contains(value); }
@@ -107,8 +114,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "scalarRangesI.H"
 
 #endif
 
