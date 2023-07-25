@@ -196,6 +196,19 @@ inline T& Foam::PtrList<T>::emplace(const label i, Args&&... args)
 
 
 template<class T>
+template<class... Args>
+inline T& Foam::PtrList<T>::try_emplace(const label i, Args&&... args)
+{
+    T* ptr = UPtrList<T>::get(i);
+    if (ptr)
+    {
+        return *ptr;
+    }
+    return this->emplace_set(i, std::forward<Args>(args)...);
+}
+
+
+template<class T>
 inline Foam::autoPtr<T> Foam::PtrList<T>::set(const label i, T* ptr)
 {
     // UPtrList::set returns a nullptr if trying to set with the same

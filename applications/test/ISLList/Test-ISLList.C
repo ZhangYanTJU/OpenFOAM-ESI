@@ -46,25 +46,26 @@ class Scalar
 {
 public:
 
+    // static bool verbose;
+
     scalar data_;
 
-    Scalar()
-    :
-        data_(0)
-    {}
+    Scalar() : data_(0) {}
+    Scalar(scalar val) : data_(val) {}
 
-    Scalar(scalar s)
-    :
-        data_(s)
-    {}
+    // ~Scalar() {}
 
-    friend Ostream& operator<<(Ostream& os, const Scalar& s)
+    scalar value() const noexcept { return data_; }
+    scalar& value() noexcept { return data_; }
+
+    friend Ostream& operator<<(Ostream& os, const Scalar& item)
     {
-        os  << s.data_;
+        os  << item.value();
         return os;
     }
-
 };
+
+// bool Scalar::verbose = true;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

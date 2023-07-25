@@ -45,28 +45,29 @@ class Scalar
 
 public:
 
-    Scalar()
-    :
-        data_(0)
-    {}
+    static bool verbose;
 
-    Scalar(scalar val)
-    :
-        data_(val)
-    {}
+    constexpr Scalar() noexcept : data_(0) {}
+    Scalar(scalar val) noexcept : data_(val) {}
 
     ~Scalar()
     {
-        Info<<"delete Scalar: " << data_ << endl;
+        if (verbose) Info<< "delete Scalar: " << data_ << endl;
     }
 
-    friend Ostream& operator<<(Ostream& os, const Scalar& val)
+    const scalar& value() const noexcept { return data_; }
+    scalar& value() noexcept { return data_; }
+
+    autoPtr<Scalar> clone() const { return autoPtr<Scalar>::New(data_); }
+
+    friend Ostream& operator<<(Ostream& os, const Scalar& item)
     {
-        os  << val.data_;
+        os  << item.value();
         return os;
     }
 };
 
+bool Scalar::verbose = true;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

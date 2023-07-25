@@ -49,15 +49,8 @@ public:
 
     static bool verbose;
 
-    constexpr Scalar() noexcept
-    :
-        data_(0)
-    {}
-
-    Scalar(scalar val) noexcept
-    :
-        data_(val)
-    {}
+    constexpr Scalar() noexcept : data_(0) {}
+    Scalar(scalar val) noexcept : data_(val) {}
 
     ~Scalar()
     {
@@ -67,10 +60,7 @@ public:
     scalar value() const noexcept { return data_; }
     scalar& value() noexcept { return data_; }
 
-    autoPtr<Scalar> clone() const
-    {
-        return autoPtr<Scalar>::New(data_);
-    }
+    autoPtr<Scalar> clone() const { return autoPtr<Scalar>::New(data_); }
 
     friend Ostream& operator<<(Ostream& os, const Scalar& item)
     {
@@ -361,15 +351,19 @@ int main(int argc, char *argv[])
         list2.emplace(i, (10 + 1.3*i));
     }
 
-    #if 0
     list2.release(5);
     list2.release(10);
 
-    forAll(list2, i)
     {
-        list2.try_emplace(i, (50 + 1.3*i));
+        // Memory error (with fulldebug): const label len = (list2.size()+2);
+        const label len = list2.size();
+        Info<< "try_emplace " << len << " values" << nl;
+
+        for (label i = 0; i < len; ++i)
+        {
+            list2.try_emplace(i, (50 + 1.3*i));
+        }
     }
-    #endif
 
     PtrList<Scalar> listApp;
     for (label i = 0; i < 5; ++i)

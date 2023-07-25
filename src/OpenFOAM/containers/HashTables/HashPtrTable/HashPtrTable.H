@@ -78,6 +78,14 @@ class HashPtrTable
         template<class INew>
         void read(const dictionary& dict, const INew& inew);
 
+        //- Implementation for emplace_set and try_emplace
+        template<class... Args>
+        inline T& emplaceImpl
+        (
+            const bool overwrite,
+            const Key& key,
+            Args&&... args
+        );
 
 public:
 
@@ -232,6 +240,14 @@ public:
         //  \return Reference to the new element.
         template<class... Args>
         inline T& emplace_set(const Key& key, Args&&... args);
+
+        //- Like emplace_set() but will not overwrite an occupied (non-null)
+        //- location.
+        //  \param key - the location to set (unless already defined)
+        //  \param args arguments to forward to the constructor of the element
+        //  \return reference to the existing or the new element.
+        template<class... Args>
+        inline T& try_emplace(const Key& key, Args&&... args);
 
         //- No insert() with raw pointers (potential memory leaks).
         //- Use insert() with autoPtr or set()

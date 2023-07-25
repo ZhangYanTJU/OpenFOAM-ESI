@@ -44,37 +44,27 @@ class Scalar
 
 public:
 
-    Scalar()
-    :
-        data_(0)
-    {}
+    static bool verbose;
 
-    Scalar(scalar val)
-    :
-        data_(val)
-    {}
+    constexpr Scalar() noexcept : data_(0) {}
+    Scalar(scalar val) noexcept : data_(val) {}
 
     ~Scalar()
     {
-        Info<<"delete Scalar: " << data_ << endl;
+        if (verbose) Info<< "delete Scalar: " << data_ << endl;
     }
 
-    const scalar& value() const
-    {
-        return data_;
-    }
+    const scalar& value() const noexcept { return data_; }
+    scalar& value() noexcept { return data_; }
 
-    scalar& value()
+    friend Ostream& operator<<(Ostream& os, const Scalar& item)
     {
-        return data_;
-    }
-
-    friend Ostream& operator<<(Ostream& os, const Scalar& val)
-    {
-        os  << val.data_;
+        os  << item.value();
         return os;
     }
 };
+
+bool Scalar::verbose = true;
 
 
 template<class T>
@@ -129,6 +119,9 @@ int main()
     myTable.set("natlog", new double(2.718282));
     myTable.insert("sqrt2", autoPtr<double>::New(1.414214));
     myTable.insert("euler", autoPtr<double>::New(0.577216));
+    myTable.set("def_0", nullptr);
+    myTable.emplace_set("def_1", 123);
+    myTable.emplace_set("def_2", 456);
 
     HashTable<std::unique_ptr<double>> myTable1;
 
@@ -144,6 +137,14 @@ int main()
     myTable2.insert("sqrt2", autoPtr<double>::New(1.414214));
 
     Info<< "Initial table" << nl;
+    printTable(myTable);
+
+    myTable.try_emplace("def_0", 1000);  // was nullptr, now value
+    myTable.try_emplace("def_1", 1001);  // no-op
+    myTable.try_emplace("def_2", 1002);  // no-op;
+    myTable.try_emplace("def_3", 1003);  // was non-existent, now value
+
+    Info<< "after try_emplace" << nl;
     printTable(myTable);
 
     Info<< "print" << nl;

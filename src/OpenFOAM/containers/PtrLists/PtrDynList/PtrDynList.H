@@ -190,6 +190,13 @@ public:
         template<class... Args>
         inline T& emplace(const label i, Args&&... args);
 
+        //- Like emplace_set() but will not overwrite an occupied location.
+        //  \param i - the location to set (unless already defined)
+        //  \param args arguments to forward to the constructor of the element
+        //  \return reference to the existing or the new list element.
+        template<class... Args>
+        inline T& try_emplace(const label i, Args&&... args);
+
         //- Set element to given pointer and return old element (can be null).
         //- Auto-sizes list as required.
         inline autoPtr<T> set(const label i, T* ptr);

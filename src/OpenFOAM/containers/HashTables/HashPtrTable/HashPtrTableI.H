@@ -76,15 +76,63 @@ inline bool Foam::HashPtrTable<T, Key, Hash>::emplace
 
 template<class T, class Key, class Hash>
 template<class... Args>
+inline T& Foam::HashPtrTable<T, Key, Hash>::emplaceImpl
+(
+    const bool overwrite,
+    const Key& key,
+    Args&&... args
+)
+{
+    T* ptr = nullptr;
+
+    // Replace existing entry unconditionally (overwrite = true)
+    // or only if nullptr (overwrite = false)
+    iterator iter(this->find(key));
+    if (iter.good())
+    {
+        ptr = iter.val();
+
+        if (overwrite || !ptr)
+        {
+            // Overwrite existing or replace nullptr
+            delete ptr;
+            ptr = new T(std::forward<Args>(args)...);
+            iter.val() = ptr;
+        }
+    }
+    else
+    {
+        ptr = new T(std::forward<Args>(args)...);
+        this->parent_type::set(key, ptr);
+    }
+
+    return *ptr;
+}
+
+
+template<class T, class Key, class Hash>
+template<class... Args>
 inline T& Foam::HashPtrTable<T, Key, Hash>::emplace_set
 (
     const Key& key,
     Args&&... args
 )
 {
-    T* ptr = new T(std::forward<Args>(args)...);
-    (void)this->set(key, ptr);
-    return *ptr;
+    // overwrite = true
+    return this->emplaceImpl(true, key, std::forward<Args>(args)...);
+}
+
+
+template<class T, class Key, class Hash>
+template<class... Args>
+inline T& Foam::HashPtrTable<T, Key, Hash>::try_emplace
+(
+    const Key& key,
+    Args&&... args
+)
+{
+    // overwrite = false
+    return this->emplaceImpl(false, key, std::forward<Args>(args)...);
 }
 
 
@@ -129,16 +177,20 @@ inline bool Foam::HashPtrTable<T, Key, Hash>::set
     T* ptr
 )
 {
-    const T* old = this->get(key);
-
-    const bool ok = this->parent_type::set(key, ptr);
-
-    if (ok && old != ptr)
+    // Replace existing entry unconditionally
+    iterator iter(this->find(key));
+    if (iter.good())
     {
-        delete const_cast<T*>(old);
+        if (iter.val() != ptr)
+        {
+            delete iter.val();
+            iter.val() = ptr;
+        }
+        return true;
     }
 
-    return ok;
+    // Or add new entry
+    return this->parent_type::set(key, ptr);
 }
 
 

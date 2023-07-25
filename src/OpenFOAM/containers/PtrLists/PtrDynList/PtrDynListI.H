@@ -399,7 +399,7 @@ inline T& Foam::PtrDynList<T, SizeMin>::emplace_set
     {
         resize(i+1);
     }
-    return this->PtrList<T>::emplace_set(i, std::forward<Args>(args)...);
+    return PtrList<T>::emplace_set(i, std::forward<Args>(args)...);
 }
 
 
@@ -412,6 +412,22 @@ inline T& Foam::PtrDynList<T, SizeMin>::emplace
 )
 {
     return this->emplace_set(i, std::forward<Args>(args)...);
+}
+
+
+template<class T, int SizeMin>
+template<class... Args>
+inline T& Foam::PtrDynList<T, SizeMin>::try_emplace
+(
+    const label i,
+    Args&&... args
+)
+{
+    if (i >= this->size())
+    {
+        resize(i+1);
+    }
+    return PtrList<T>::try_emplace(i, std::forward<Args>(args)...);
 }
 
 
