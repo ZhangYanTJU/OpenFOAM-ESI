@@ -229,25 +229,39 @@ protected:
         );
 
 
+        //- Combine field values (after any flip negation operation)
+        //- into the specified mapped target locations
         template<class T, class CombineOp, class NegateOp>
         static void flipAndCombine
         (
-            const labelUList& map,
-            const bool hasFlip,
+            //! [in,out] The left of binary combine operation
+            List<T>& lhs,
+            //! The right of binary combine operation
             const UList<T>& rhs,
+            //! The mapping indices
+            const labelUList& map,
+            //! Mapping indices include flip encoding
+            const bool hasFlip,
+            //! Binary combine operation
             const CombineOp& cop,
-            const NegateOp& negOp,
-            List<T>& lhs
+            //! Unary negation operation (for flipped indices)
+            const NegateOp& negOp
         );
 
-        //- Lookup a field value at specified index and return its value
+        //- Lookup field values at specified map indices and save
         //- after any flip negation operations
         template<class T, class NegateOp>
-        static T accessAndFlip
+        static void accessAndFlip
         (
+            //! [out] The result values
+            List<T>& output,
+            //! [out] The input values
             const UList<T>& values,
-            const label index,
+            //! The mapping indices
+            const labelUList& map,
+            //! Mapping indices include flip encoding
             const bool hasFlip,
+            //! Unary negation operation (for flipped indices)
             const NegateOp& negOp
         );
 
@@ -256,9 +270,13 @@ protected:
         template<class T, class NegateOp>
         static List<T> accessAndFlip
         (
+            //! [out] The input values
             const UList<T>& values,
-            const labelUList& indices,
+            //! The mapping indices
+            const labelUList& map,
+            //! Mapping indices include flip encoding
             const bool hasFlip,
+            //! Unary negation operation (for flipped indices)
             const NegateOp& negOp
         );
 
@@ -813,48 +831,52 @@ public:
 
     // Distribute
 
-            //- Distribute data with specified negate operator (for flips).
-            //
-            //  \note schedule currently only used for
-            //  Pstream::commsTypes::scheduled, all others just use
-            //  send-to-all, receive-from-all.
-            template<class T, class NegateOp>
-            static void distribute
-            (
-                const UPstream::commsTypes commsType,
-                const List<labelPair>& schedule,
-                const label constructSize,
-                const labelListList& subMap,
-                const bool subHasFlip,
-                const labelListList& constructMap,
-                const bool constructHasFlip,
-                List<T>& field,
-                const NegateOp& negOp,
-                const int tag = UPstream::msgType(),
-                const label comm = UPstream::worldComm
-            );
+        //- Distribute combine data with specified combine operation
+        //- and negate operator (for flips).
+        //
+        //  If multiple processors write to same position,
+        //  contributions are added using the combine cop.
+        //
+        //  \note schedule only used for UPstream::commsTypes::scheduled,
+        //        others just use send-to-all, receive-from-all.
+        template<class T, class CombineOp, class NegateOp>
+        static void distribute
+        (
+            const UPstream::commsTypes commsType,
+            const List<labelPair>& schedule,
+            const label constructSize,
+            const labelListList& subMap,
+            const bool subHasFlip,
+            const labelListList& constructMap,
+            const bool constructHasFlip,
+            List<T>& field,
+            const T& nullValue,
+            const CombineOp& cop,
+            const NegateOp& negOp,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
 
-            //- Distribute data with specified combine operation
-            //
-            //  If multiple processors writing to same
-            //  position adds contributions using cop.
-            template<class T, class CombineOp, class NegateOp>
-            static void distribute
-            (
-                const UPstream::commsTypes commsType,
-                const List<labelPair>& schedule,
-                const label constructSize,
-                const labelListList& subMap,
-                const bool subHasFlip,
-                const labelListList& constructMap,
-                const bool constructHasFlip,
-                List<T>& field,
-                const T& nullValue,
-                const CombineOp& cop,
-                const NegateOp& negOp,
-                const int tag = UPstream::msgType(),
-                const label comm = UPstream::worldComm
-            );
+        //- Distribute assign data with specified negate operator (for flips).
+        //- Uses assignment for combine operation.
+        //
+        //  \note schedule only used for UPstream::commsTypes::scheduled,
+        //        others just use send-to-all, receive-from-all.
+        template<class T, class NegateOp>
+        static void distribute
+        (
+            const UPstream::commsTypes commsType,
+            const List<labelPair>& schedule,
+            const label constructSize,
+            const labelListList& subMap,
+            const bool subHasFlip,
+            const labelListList& constructMap,
+            const bool constructHasFlip,
+            List<T>& field,
+            const NegateOp& negOp,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
 
 
     // Distribute (simpler interface)
@@ -1023,9 +1045,10 @@ public:
                 const labelListList& constructMap,
                 const bool constructHasFlip,
                 const UList<T>& field,
-                labelRange& requests,
-                PtrList<List<T>>& sendFields,
-                PtrList<List<T>>& recvFields,
+                labelRange& sendRequests,       //!< The send requests range
+                PtrList<List<T>>& sendFields,   //!< The send fields storage
+                labelRange& recvRequests,       //!< The recv requests range
+                PtrList<List<T>>& recvFields,   //!< The recv fields storage
                 const negateOp& negOp,
                 const int tag,
                 const label comm
@@ -1036,22 +1059,22 @@ public:
             void send
             (
                 const UList<T>& field,
-                labelRange& requests,
-                PtrList<List<T>>& sendFields,
-                PtrList<List<T>>& recvFields,
+                labelRange& sendRequests,       //!< The send requests range
+                PtrList<List<T>>& sendFields,   //!< The send fields storage
+                labelRange& recvRequests,       //!< The recv requests range
+                PtrList<List<T>>& recvFields,   //!< The recv fields storage
                 const int tag = UPstream::msgType()
             ) const;
 
-            //- Wait for requests to finish and consume
+            //- Wait for (receive) requests to finish and consume
             template<class T, class CombineOp, class negateOp>
             static void receive
             (
                 const label constructSize,
                 const labelListList& constructMap,
                 const bool constructHasFlip,
-                const UPtrList<List<T>>& sendFields,
-                const UPtrList<List<T>>& recvFields,
                 const labelRange& requests,
+                const UPtrList<List<T>>& recvFields,
                 List<T>& field,
                 const CombineOp& cop,
                 const negateOp& negOp,
@@ -1059,12 +1082,11 @@ public:
                 const label comm
             );
 
-            //- Wait for requests to finish and consume
+            //- Wait for (receive) requests to finish and consume
             template<class T>
             void receive
             (
                 const labelRange& requests,
-                const UPtrList<List<T>>& sendFields,
                 const UPtrList<List<T>>& recvFields,
                 List<T>& field,
                 const int tag = UPstream::msgType()
