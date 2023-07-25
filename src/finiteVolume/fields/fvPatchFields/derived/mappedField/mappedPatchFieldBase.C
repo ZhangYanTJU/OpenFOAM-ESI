@@ -619,8 +619,7 @@ Foam::mappedPatchFieldBase<Type>::mappedField
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag + 1;
+    const int oldTag = UPstream::incrMsgType();
 
     const fvMesh& thisMesh = patchField_.patch().boundaryMesh().mesh();
 
@@ -802,8 +801,7 @@ Foam::mappedPatchFieldBase<Type>::mappedField
         }
     }
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     return tnewValues;
 }
@@ -842,13 +840,11 @@ Foam::mappedPatchFieldBase<Type>::mappedInternalField() const
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     distribute(fieldName_, nbrIntFld);
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     return tnbrIntFld;
 }
@@ -880,13 +876,11 @@ Foam::mappedPatchFieldBase<Type>::mappedWeightField() const
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    const int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     distribute(fieldName_ + "_deltaCoeffs", nbrKDelta);
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     return tnbrKDelta;
 }
@@ -940,13 +934,11 @@ void Foam::mappedPatchFieldBase<Type>::mappedWeightField
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     distribute(fieldName_ + "_weights", nbrWeights.ref());
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 }
 
 

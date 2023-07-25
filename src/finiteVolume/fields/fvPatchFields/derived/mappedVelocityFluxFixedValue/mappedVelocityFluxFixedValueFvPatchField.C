@@ -147,8 +147,7 @@ void Foam::mappedVelocityFluxFixedValueFvPatchField::updateCoeffs()
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     // Get the mappedPatchBase
     const mappedPatchBase& mpp = refCast<const mappedPatchBase>
@@ -224,8 +223,7 @@ void Foam::mappedVelocityFluxFixedValueFvPatchField::updateCoeffs()
         phiField
     ).boundaryFieldRef()[patch().index()] == newPhiValues;
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     fixedValueFvPatchVectorField::updateCoeffs();
 }

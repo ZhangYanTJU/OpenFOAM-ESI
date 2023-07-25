@@ -918,6 +918,24 @@ public:
             return msgType_;
         }
 
+        //- Set the message tag for standard messages
+        //  \return the previous value
+        static int msgType(int val) noexcept
+        {
+            int old(msgType_);
+            msgType_ = val;
+            return old;
+        }
+
+        //- Increment the message tag for standard messages
+        //  \return the previous value
+        static int incrMsgType(int val = 1) noexcept
+        {
+            int old(msgType_);
+            msgType_ += val;
+            return old;
+        }
+
         //- Get the communications type of the stream
         commsTypes commsType() const noexcept
         {

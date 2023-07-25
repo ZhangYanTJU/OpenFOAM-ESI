@@ -160,8 +160,7 @@ void alphatFilmWallFunctionFvPatchScalarField::updateCoeffs()
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     const label patchi = patch().index();
 
@@ -234,8 +233,7 @@ void alphatFilmWallFunctionFvPatchScalarField::updateCoeffs()
         alphat[facei] = max(alphaEff - alphaw[facei], scalar(0));
     }
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     fixedValueFvPatchScalarField::updateCoeffs();
 }

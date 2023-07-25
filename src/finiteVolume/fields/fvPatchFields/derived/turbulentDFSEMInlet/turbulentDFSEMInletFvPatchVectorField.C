@@ -487,8 +487,7 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::calcOverlappingProcEddies
     List<List<eddy>>& overlappingEddies
 ) const
 {
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag + 1;
+    const int oldTag = UPstream::incrMsgType();
 
     List<boundBox> patchBBs(Pstream::nProcs());
     patchBBs[Pstream::myProcNo()] = patchBounds_;
@@ -546,8 +545,7 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::calcOverlappingProcEddies
         }
     }
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 }
 
 

@@ -148,9 +148,7 @@ void Foam::filmPyrolysisTemperatureCoupledFvPatchScalarField::updateCoeffs()
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
-
+    const int oldTag = UPstream::incrMsgType();
 
     scalarField& Tp = *this;
 
@@ -175,8 +173,7 @@ void Foam::filmPyrolysisTemperatureCoupledFvPatchScalarField::updateCoeffs()
     // Evaluate temperature
     Tp = alphaFilm*TFilm + (1.0 - alphaFilm)*TPyr;
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     fixedValueFvPatchScalarField::updateCoeffs();
 }

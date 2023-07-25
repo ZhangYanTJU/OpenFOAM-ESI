@@ -151,8 +151,7 @@ Foam::PatchFunction1Types::Sampled<Type>::value
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag + 1;
+    const int oldTag = UPstream::incrMsgType();
 
     const fvMesh& thisMesh = refCast<const fvMesh>
     (
@@ -167,9 +166,8 @@ Foam::PatchFunction1Types::Sampled<Type>::value
 
     if (!haveSampleField())
     {
-        // Restore tag
-        UPstream::msgType() = oldTag;
-        newValues.setSize(this->mappedPatchBase::patch_.size());
+        UPstream::msgType(oldTag);  // Restore tag
+        newValues.resize_nocopy(this->mappedPatchBase::patch_.size());
         newValues = Zero;
         return this->transform(tnewValues);
     }
@@ -304,8 +302,7 @@ Foam::PatchFunction1Types::Sampled<Type>::value
         }
     }
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     return this->transform(tnewValues);
 }

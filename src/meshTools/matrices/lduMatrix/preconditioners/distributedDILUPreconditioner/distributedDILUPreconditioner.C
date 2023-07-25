@@ -68,7 +68,7 @@ void Foam::distributedDILUPreconditioner::updateMatrixInterfaces
     // From lduMatrix::initMatrixInterfaces
 
     // Avoid any conflicts with inter-processor comms
-    UPstream::msgType() += 321;
+    const int oldTag = UPstream::incrMsgType(321);
 
     for (const label interfacei : selectedInterfaces)
     {
@@ -103,7 +103,7 @@ void Foam::distributedDILUPreconditioner::updateMatrixInterfaces
         );
     }
 
-    UPstream::msgType() -= 321;
+    UPstream::msgType(oldTag);  // Restore tag
 }
 
 

@@ -103,8 +103,7 @@ Foam::tmp<Foam::scalarField> Foam::radiation::solidAbsorption::a
 {
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     const fvMesh& nbrMesh = nbrRegion();
 
@@ -129,8 +128,7 @@ Foam::tmp<Foam::scalarField> Foam::radiation::solidAbsorption::a
 
     mpp.distribute(absorptivity);
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     return tmp<scalarField>::New(std::move(absorptivity));
 }
@@ -157,8 +155,7 @@ Foam::tmp<Foam::scalarField> Foam::radiation::solidAbsorption::e
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     const fvMesh& nbrMesh = nbrRegion();
 
@@ -183,8 +180,7 @@ Foam::tmp<Foam::scalarField> Foam::radiation::solidAbsorption::e
 
     mpp.distribute(emissivity);
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     return tmp<scalarField>::New(std::move(emissivity));
 }

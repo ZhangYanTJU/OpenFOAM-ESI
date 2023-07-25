@@ -210,12 +210,12 @@ int Foam::processorCyclicPolyPatch::tag() const
             tag_ = string::hasher()(cycPatch.neighbPatch().name()) % 32768u;
         }
 
-        if (tag_ == Pstream::msgType() || tag_ == -1)
+        if (tag_ == UPstream::msgType() || tag_ == -1)
         {
             FatalErrorInFunction
                 << "Tag calculated from cyclic patch name " << tag_
                 << " is the same as the current message type "
-                << Pstream::msgType() << " or -1" << nl
+                << UPstream::msgType() << " or -1" << nl
                 << "Please set a non-conflicting, unique, tag by hand"
                 << " using the 'tag' entry"
                 << exit(FatalError);

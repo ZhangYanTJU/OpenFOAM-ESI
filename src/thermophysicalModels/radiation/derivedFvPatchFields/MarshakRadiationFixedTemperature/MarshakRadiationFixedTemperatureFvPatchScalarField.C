@@ -147,8 +147,7 @@ updateCoeffs()
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     // Re-calc reference value
     refValue() = 4.0*constant::physicoChemical::sigma.value()*pow4(Trad_);
@@ -173,8 +172,7 @@ updateCoeffs()
     // Set value fraction
     valueFraction() = 1.0/(1.0 + gamma*patch().deltaCoeffs()/Ep);
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     mixedFvPatchScalarField::updateCoeffs();
 }

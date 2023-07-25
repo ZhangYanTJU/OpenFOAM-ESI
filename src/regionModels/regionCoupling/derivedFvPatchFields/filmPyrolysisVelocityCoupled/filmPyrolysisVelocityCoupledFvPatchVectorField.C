@@ -149,9 +149,7 @@ void Foam::filmPyrolysisVelocityCoupledFvPatchVectorField::updateCoeffs()
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
-
+    const int oldTag = UPstream::incrMsgType();
 
     vectorField& Up = *this;
 
@@ -200,8 +198,7 @@ void Foam::filmPyrolysisVelocityCoupledFvPatchVectorField::updateCoeffs()
     // Evaluate velocity
     Up = alphaFilm*UFilm + (1.0 - alphaFilm)*UAvePyr*nf;
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     fixedValueFvPatchVectorField::updateCoeffs();
 }

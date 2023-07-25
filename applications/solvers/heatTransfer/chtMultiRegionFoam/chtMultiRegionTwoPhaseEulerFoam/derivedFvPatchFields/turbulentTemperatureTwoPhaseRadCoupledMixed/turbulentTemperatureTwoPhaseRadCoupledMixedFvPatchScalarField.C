@@ -292,8 +292,7 @@ updateCoeffs()
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag+1;
+    const int oldTag = UPstream::incrMsgType();
 
     // Get the coupling information from the mappedPatchBase
     const label patchi = patch().index();
@@ -471,10 +470,9 @@ updateCoeffs()
             << regionTypeNames_ << nl << exit(FatalError);
     }
 
-    mixedFvPatchScalarField::updateCoeffs();
+    UPstream::msgType(oldTag);  // Restore tag
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    mixedFvPatchScalarField::updateCoeffs();
 }
 
 

@@ -106,8 +106,7 @@ void Foam::mappedFixedInternalValueFvPatchField<Type>::updateCoeffs()
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag + 1;
+    const int oldTag = UPstream::incrMsgType();
 
     // Retrieve the neighbour values and assign to this patch boundary field
     mappedFixedValueFvPatchField<Type>::updateCoeffs();
@@ -177,8 +176,7 @@ void Foam::mappedFixedInternalValueFvPatchField<Type>::updateCoeffs()
         }
     }
 
-    // Restore tag
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     // Assign to (this) patch internal field its neighbour values
     Field<Type>& intFld = const_cast<Field<Type>&>(this->primitiveField());

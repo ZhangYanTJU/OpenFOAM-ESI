@@ -207,8 +207,7 @@ Foam::regionModels::regionModel::interRegionAMI
             const polyPatch& p = regionMesh().boundaryMesh()[regionPatchi];
             const polyPatch& nbrP = nbrRegionMesh.boundaryMesh()[nbrPatchi];
 
-            int oldTag = UPstream::msgType();
-            UPstream::msgType() = oldTag + 1;
+            const int oldTag = UPstream::incrMsgType();
 
             interRegionAMI_[nbrRegionID].set
             (
@@ -223,7 +222,7 @@ Foam::regionModels::regionModel::interRegionAMI
 
             interRegionAMI_[nbrRegionID][regionPatchi].calculate(p, nbrP);
 
-            UPstream::msgType() = oldTag;
+            UPstream::msgType(oldTag);  // Restore tag
         }
 
         return interRegionAMI_[nbrRegionID][regionPatchi];
@@ -237,7 +236,7 @@ Foam::regionModels::regionModel::interRegionAMI
         const polyPatch& p = regionMesh().boundaryMesh()[regionPatchi];
         const polyPatch& nbrP = nbrRegionMesh.boundaryMesh()[nbrPatchi];
 
-        label nPatch = regionMesh().boundaryMesh().size();
+        const label nPatch = regionMesh().boundaryMesh().size();
 
 
         interRegionAMI_.resize(nbrRegionID + 1);
@@ -248,8 +247,7 @@ Foam::regionModels::regionModel::interRegionAMI
             new PtrList<AMIPatchToPatchInterpolation>(nPatch)
         );
 
-        int oldTag = UPstream::msgType();
-        UPstream::msgType() = oldTag + 1;
+        const int oldTag = UPstream::incrMsgType();
 
         interRegionAMI_[nbrRegionID].set
         (
@@ -264,7 +262,7 @@ Foam::regionModels::regionModel::interRegionAMI
 
         interRegionAMI_[nbrRegionID][regionPatchi].calculate(p, nbrP);
 
-        UPstream::msgType() = oldTag;
+        UPstream::msgType(oldTag);  // Restore tag
 
         return interRegionAMI_[nbrRegionID][regionPatchi];
     }

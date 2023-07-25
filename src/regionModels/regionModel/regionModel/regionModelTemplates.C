@@ -36,15 +36,14 @@ Foam::regionModels::regionModel::mapRegionPatchField
     const bool flip
 ) const
 {
-    int oldTag = UPstream::msgType();
-    UPstream::msgType() = oldTag + 1;
+    const int oldTag = UPstream::incrMsgType();
 
     const AMIPatchToPatchInterpolation& ami =
         interRegionAMI(nbrRegion, regionPatchi, nbrPatchi, flip);
 
     tmp<Field<Type>> tresult(ami.interpolateToSource(nbrField));
 
-    UPstream::msgType() = oldTag;
+    UPstream::msgType(oldTag);  // Restore tag
 
     return tresult;
 }
@@ -68,8 +67,7 @@ Foam::regionModels::regionModel::mapRegionPatchField
     {
         const label nbrPatchi = nbrCoupledPatchID(nbrRegion, regionPatchi);
 
-        int oldTag = UPstream::msgType();
-        UPstream::msgType() = oldTag + 1;
+        const int oldTag = UPstream::incrMsgType();
 
         const AMIPatchToPatchInterpolation& ami =
             interRegionAMI(nbrRegion, regionPatchi, nbrPatchi, flip);
@@ -81,7 +79,7 @@ Foam::regionModels::regionModel::mapRegionPatchField
 
         tmp<Field<Type>> tresult(ami.interpolateToSource(nbrFieldp));
 
-        UPstream::msgType() = oldTag;
+        UPstream::msgType(oldTag);  // Restore tag
 
         return tresult;
     }
@@ -112,8 +110,7 @@ Foam::regionModels::regionModel::mapRegionPatchInternalField
     {
         const label nbrPatchi = nbrCoupledPatchID(nbrRegion, regionPatchi);
 
-        int oldTag = UPstream::msgType();
-        UPstream::msgType() = oldTag + 1;
+        const int oldTag = UPstream::incrMsgType();
 
         const AMIPatchToPatchInterpolation& ami =
             interRegionAMI(nbrRegion, regionPatchi, nbrPatchi, flip);
@@ -129,7 +126,7 @@ Foam::regionModels::regionModel::mapRegionPatchInternalField
             ami.interpolateToSource(nbrFieldp.patchInternalField())
         );
 
-        UPstream::msgType() = oldTag;
+        UPstream::msgType(oldTag);  // Restore tag
 
         return tresult;
     }
