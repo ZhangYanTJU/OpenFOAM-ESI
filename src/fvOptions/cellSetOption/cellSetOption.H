@@ -122,6 +122,7 @@ Usage
       points    | Use cells containing a given set of points
       movingPoints | Use cells containing a given set of moving points
       geometric | Select cells based on topoSetCellSource actions
+      mesh      | Select cells based on a given secondary mesh
     \endverbatim
 
     The inherited entries are elaborated in:
@@ -179,6 +180,7 @@ public:
             smPoints,       //!< "points"
             smMovingPoints, //!< "movingPoints"
             smGeometric,    //!< "geometric"
+            smMesh,         //!< "mesh"
             smCellType      //!< "overset type cells"
         };
 

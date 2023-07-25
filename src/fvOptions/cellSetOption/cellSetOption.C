@@ -51,6 +51,7 @@ Foam::fv::cellSetOption::selectionModeTypeNames_
 ({
     { selectionModeType::smAll, "all" },
     { selectionModeType::smGeometric, "geometric" },
+    { selectionModeType::smMesh, "mesh" },
     { selectionModeType::smPoints, "points" },
     { selectionModeType::smMovingPoints, "movingPoints" },
     { selectionModeType::smCellSet, "cellSet" },
@@ -74,6 +75,11 @@ void Foam::fv::cellSetOption::setSelection(const dictionary& dict)
         case smGeometric:
         {
             geometricSelection_ = dict.subDict("selection");
+            break;
+        }
+        case smMesh:
+        {
+            // Delegate the task to finite-volume options
             break;
         }
         case smPoints:
@@ -193,6 +199,11 @@ void Foam::fv::cellSetOption::setCellSelection()
 
             // From bitSet -> labels
             cells_ = selectedCells.sortedToc();
+            break;
+        }
+        case smMesh:
+        {
+            // Delegate the task to finite-volume options
             break;
         }
         case smPoints:
@@ -330,7 +341,11 @@ void Foam::fv::cellSetOption::setCellSelection()
 
     if
     (
-        !(smAll == selectionMode_ || smMovingPoints == selectionMode_)
+       !(
+            smAll == selectionMode_
+         || smMovingPoints == selectionMode_
+         || smMesh == selectionMode_
+        )
      && returnReduceAnd(cells_.empty())
     )
     {
