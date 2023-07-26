@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2022 OpenCFD Ltd.
+#     Copyright (C) 2016-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -87,6 +87,7 @@ setenv WM_COMPILE_OPTION Opt
 #   +lld    : with  lld linker (with clang)
 #   +mold   : with mold linker (with clang)
 #   ~libz   : without libz compression
+#   ~rpath  : without rpath handling [MacOS]
 #   +openmp : with openmp
 #   ~openmp : without openmp
 #   +ccache : use ccache
