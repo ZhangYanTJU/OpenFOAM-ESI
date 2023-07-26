@@ -614,6 +614,12 @@ void Foam::advancingFrontAMI::write(Ostream& os) const
         faceAreaIntersect::triangulationModeNames_[faceAreaIntersect::tmMesh],
         faceAreaIntersect::triangulationModeNames_[triMode_]
     );
+    os.writeEntryIfDifferent<word>
+    (
+        "areaNormalisationMode",
+        areaNormalisationModeNames_[areaNormalisationMode::project],
+        areaNormalisationModeNames_[areaNormalisationMode_]
+    );
 }
 
 
