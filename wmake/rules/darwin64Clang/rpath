@@ -1,0 +1,30 @@
+#------------------------------------------------------------------------------
+
+# Compile-time rpath information:
+
+PROJECT_RPATH :=
+
+ifneq (,$(strip $(FOAM_USER_LIBBIN)))
+    PROJECT_RPATH += -rpath $(FOAM_USER_LIBBIN)
+endif
+ifneq (,$(strip $(FOAM_SITE_LIBBIN)))
+    PROJECT_RPATH += -rpath $(FOAM_SITE_LIBBIN)
+endif
+ifneq (,$(strip $(FOAM_EXT_LIBBIN)))
+    PROJECT_RPATH += -rpath $(FOAM_EXT_LIBBIN)
+    ifneq (,$(strip $(FOAM_MPI)))
+        PROJECT_RPATH += -rpath $(FOAM_EXT_LIBBIN)/$(FOAM_MPI)
+    endif
+endif
+
+# MacOS relative rpath:
+# Encode as @loader_path and recompose as @executable_path as needed
+
+PROJECT_RPATH += -rpath @loader_path
+ifneq (,$(strip $(FOAM_MPI)))
+    PROJECT_RPATH += -rpath @loader_path/$(FOAM_MPI)
+endif
+# Fallback for stubs (eg, missing MPI)
+PROJECT_RPATH += -rpath @loader_path/dummy
+
+#------------------------------------------------------------------------------
