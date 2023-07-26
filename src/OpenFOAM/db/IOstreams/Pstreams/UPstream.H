@@ -604,6 +604,17 @@ public:
         //  A no-op if parRun() == false or list is empty
         static void cancelRequests(UList<UPstream::Request>& requests);
 
+        //- Non-blocking comms: cancel/free outstanding requests
+        //- (from position onwards) and remove from internal list of requests.
+        //- Corresponds to MPI_Cancel() + MPI_Request_free()
+        //  A no-op if parRun() == false,
+        //  if the position is out-of-range [0 to nRequests()],
+        //  or the internal list of requests is empty.
+        //
+        //  \param pos starting position within the internal list of requests
+        //  \param len length of slice to remove (negative = until the end)
+        static void removeRequests(const label pos, label len = -1);
+
         //- Non-blocking comms: free outstanding request.
         //- Corresponds to MPI_Request_free()
         //  A no-op if parRun() == false
@@ -656,13 +667,32 @@ public:
         //  \returns false if all requests have already been handled
         //
         //  \param pos starting position within the internal list of requests
+        //  \param len length of slice to check (negative = until the end)
         //  \param[out] indices the completed request indices relative to the
-        //      starting position. The is an optional parameter, which can be
+        //      starting position. This is an optional parameter that can be
         //      used to recover the indices or simply to avoid reallocations
         //      when calling within a loop.
         static bool waitSomeRequests
         (
             const label pos,
+            label len = -1,
+            DynamicList<int>* indices = nullptr
+        );
+
+        //- Wait until some requests have finished.
+        //- Corresponds to MPI_Waitsome()
+        //  A no-op and returns false if parRun() == false,
+        //  the list is empty,
+        //  or if all the requests have already been handled.
+        //
+        //  \param requests the requests
+        //  \param[out] indices the completed request indices relative to the
+        //      starting position. This is an optional parameter that can be
+        //      used to recover the indices or simply to avoid reallocations
+        //      when calling within a loop.
+        static bool waitSomeRequests
+        (
+            UList<UPstream::Request>& requests,
             DynamicList<int>* indices = nullptr
         );
 

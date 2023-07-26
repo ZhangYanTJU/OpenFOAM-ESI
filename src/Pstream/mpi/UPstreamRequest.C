@@ -153,6 +153,47 @@ void Foam::UPstream::cancelRequests(UList<UPstream::Request>& requests)
 }
 
 
+void Foam::UPstream::removeRequests(const label pos, label len)
+{
+    // No-op for non-parallel, no pending requests or out-of-range
+    if
+    (
+        !UPstream::parRun()
+     || (pos < 0 || pos >= PstreamGlobals::outstandingRequests_.size())
+     || !len
+    )
+    {
+        return;
+    }
+
+    label count = (PstreamGlobals::outstandingRequests_.size() - pos);
+
+    // Apply range-checking on slice with (len < 0) behaving like npos
+    // (ie, the rest of the list)
+    if (len >= 0 && len < count)
+    {
+        // A non-trailing slice
+        count = len;
+    }
+    // Have count >= 1
+
+    const labelRange range(pos, count);
+
+    for (const label i : range)
+    {
+        auto& request = PstreamGlobals::outstandingRequests_[i];
+        if (MPI_REQUEST_NULL != request)  // Active handle is mandatory
+        {
+            MPI_Cancel(&request);
+            MPI_Request_free(&request);  //<- Sets to MPI_REQUEST_NULL
+        }
+    }
+
+    // Remove from list of outstanding requests and move down
+    PstreamGlobals::outstandingRequests_.remove(range);
+}
+
+
 void Foam::UPstream::freeRequest(UPstream::Request& req)
 {
     // No-op for non-parallel
@@ -214,7 +255,7 @@ void Foam::UPstream::waitRequests(const label pos, label len)
     }
 
     label count = (PstreamGlobals::outstandingRequests_.size() - pos);
-    bool trim = true;  // Trim the trailing part of the list
+    bool trim = true;  // Can trim the trailing part of the list
 
     // Apply range-checking on slice with (len < 0) behaving like npos
     // (ie, the rest of the list)
@@ -348,7 +389,7 @@ bool Foam::UPstream::waitAnyRequest(const label pos, label len)
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream::waitAnyRequest : starting wait for some of "
+        Pout<< "UPstream::waitAnyRequest : starting wait for any of "
             << count << " requests starting at " << pos << endl;
     }
 
@@ -378,6 +419,7 @@ bool Foam::UPstream::waitAnyRequest(const label pos, label len)
 bool Foam::UPstream::waitSomeRequests
 (
     const label pos,
+    label len,
     DynamicList<int>* indices
 )
 {
@@ -386,13 +428,10 @@ bool Foam::UPstream::waitSomeRequests
     (
         !UPstream::parRun()
      || (pos < 0 || pos >= PstreamGlobals::outstandingRequests_.size())
-     // || !len
+     || !len
     )
     {
-        if (indices)
-        {
-            indices->clear();
-        }
+        if (indices) indices->clear();
         return false;
     }
 
@@ -400,25 +439,24 @@ bool Foam::UPstream::waitSomeRequests
 
     // Apply range-checking on slice with (len < 0) behaving like npos
     // (ie, the rest of the list)
-    // if (len >= 0 && len < count)
-    // {
-    //     // A non-trailing slice
-    //     count = len;
-    // }
+    if (len >= 0 && len < count)
+    {
+        // A non-trailing slice
+        count = len;
+    }
     // Have count >= 1
 
     auto* waitRequests = (PstreamGlobals::outstandingRequests_.data() + pos);
 
     if (UPstream::debug)
     {
-        Pout<< "UPstream:waitSomeRequest : starting wait for any of "
+        Pout<< "UPstream:waitSomeRequest : starting wait for some of "
             << count << " requests starting at " << pos << endl;
     }
 
 
     // Local temporary storage, or return via calling parameter
     List<int> tmpIndices;
-
     if (indices)
     {
         indices->resize_nocopy(count);
@@ -454,16 +492,106 @@ bool Foam::UPstream::waitSomeRequests
     if (outcount == MPI_UNDEFINED || outcount < 1)
     {
         // No active request handles
-        if (indices)
-        {
-            indices->clear();
-        }
+        if (indices) indices->clear();
         return false;
     }
 
     if (indices)
     {
         indices->resize(outcount);
+    }
+
+    return true;
+}
+
+
+bool Foam::UPstream::waitSomeRequests
+(
+    UList<UPstream::Request>& requests,
+    DynamicList<int>* indices
+)
+{
+    // No-op for non-parallel or no pending requests
+    if (!UPstream::parRun() || requests.empty())
+    {
+        if (indices) indices->clear();
+        return false;
+    }
+
+    // Looks ugly but is legitimate since UPstream::Request is an intptr_t,
+    // which is always large enough to hold an MPI_Request (int or pointer)
+
+    label count = 0;
+    auto* waitRequests = reinterpret_cast<MPI_Request*>(requests.data());
+
+    for (auto& req : requests)
+    {
+        waitRequests[count] = PstreamDetail::Request::get(req);
+        ++count;
+    }
+
+    // Local temporary storage, or return via calling parameter
+    List<int> tmpIndices;
+    if (indices)
+    {
+        indices->resize_nocopy(count);
+    }
+    else
+    {
+        tmpIndices.resize(count);
+    }
+
+    if (UPstream::debug)
+    {
+        Pout<< "UPstream:waitSomeRequest : starting wait for some of "
+            << requests.size() << " requests" << endl;
+    }
+
+    profilingPstream::beginTiming();
+
+    // On success: sets non-blocking requests to MPI_REQUEST_NULL
+    int outcount = 0;
+    if
+    (
+        MPI_Waitsome
+        (
+            count,
+            waitRequests,
+           &outcount,
+            (indices ? indices->data() : tmpIndices.data()),
+            MPI_STATUSES_IGNORE
+        )
+    )
+    {
+        FatalErrorInFunction
+            << "MPI_Waitsome returned with error"
+            << Foam::abort(FatalError);
+    }
+
+    profilingPstream::addWaitTime();
+
+    if (outcount == MPI_UNDEFINED || outcount < 1)
+    {
+        // No active request handles
+        if (indices) indices->clear();
+
+        // Everything handled or inactive, reset all to MPI_REQUEST_NULL
+        requests = UPstream::Request(MPI_REQUEST_NULL);
+        return false;
+    }
+
+    if (indices)
+    {
+        indices->resize(outcount);
+    }
+
+    // Transcribe MPI_Request back into UPstream::Request
+    // - do in reverse order - see note in finishedRequests()
+    {
+        for (label i = requests.size()-1; i >= 0; --i)
+        {
+            requests[i] = UPstream::Request(waitRequests[i]);
+        }
     }
 
     return true;

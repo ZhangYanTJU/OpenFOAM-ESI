@@ -59,6 +59,8 @@ void Foam::UPstream::cancelRequest(const label i) {}
 void Foam::UPstream::cancelRequest(UPstream::Request&) {}
 void Foam::UPstream::cancelRequests(UList<UPstream::Request>&) {}
 
+void Foam::UPstream::removeRequests(const label pos, label len) {}
+
 void Foam::UPstream::freeRequest(UPstream::Request&) {}
 void Foam::UPstream::freeRequests(UList<UPstream::Request>&) {}
 
@@ -73,6 +75,17 @@ bool Foam::UPstream::waitAnyRequest(const label pos, label len)
 bool Foam::UPstream::waitSomeRequests
 (
     const label pos,
+    label len,
+    DynamicList<int>* indices
+)
+{
+    if (indices) indices->clear();
+    return false;
+}
+
+bool Foam::UPstream::waitSomeRequests
+(
+    UList<UPstream::Request>& requests,
     DynamicList<int>* indices
 )
 {
