@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,9 +50,6 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
 {
     List<T>& list = *this;
 
-    // Anull list
-    list.clear();
-
     is.fatalCheck(FUNCTION_NAME);
 
     token tok(is);
@@ -63,6 +60,7 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
     {
         // Compound: simply transfer contents
 
+        list.clear();  // Clear old contents
         list.transfer
         (
             dynamicCast<token::Compound<List<T>>>
@@ -77,8 +75,8 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
 
         const label len = tok.labelToken();
 
-        // Resize to actual length read
-        list.resize(len);
+        // Resize to length required
+        list.resize_nocopy(len);
 
         if (is.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
         {
@@ -96,7 +94,7 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
                 is.fatalCheck
                 (
                     "List<T>::readList(Istream&) : "
-                    "reading the binary block"
+                    "reading binary block"
                 );
             }
         }
@@ -133,10 +131,8 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
                         "reading the single entry"
                     );
 
-                    for (label i=0; i<len; ++i)
-                    {
-                        list[i] = elem;  // Copy the value
-                    }
+                    // Fill with the value
+                    this->fill_uniform(elem);
                 }
             }
 
@@ -148,6 +144,8 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
     {
         // "(...)" : read as SLList and transfer contents
 
+        list.clear();  // Clear old contents
+
         is.putBack(tok);    // Putback the opening bracket
         SLList<T> sll(is);  // Read as singly-linked list
 
@@ -156,6 +154,8 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
     }
     else
     {
+        list.clear();  // Clear old contents
+
         FatalIOErrorInFunction(is)
             << "incorrect first token, expected <int> or '(', found "
             << tok.info() << nl

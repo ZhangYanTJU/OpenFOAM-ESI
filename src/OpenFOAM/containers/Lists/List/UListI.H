@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "error.H"
+// <algorithm> already included by stdFoam.H
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -44,6 +45,25 @@ inline Foam::UList<T>::UList(T* __restrict__ v, const label len) noexcept
     size_(len),
     v_(v)
 {}
+
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+template<class T>
+inline void Foam::UList<T>::fill_uniform(const T& val)
+{
+    // Can also dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+
+    if (this->size_ > 0)
+    {
+        std::fill_n
+        (
+            this->v_, this->size_, val
+        );
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -268,7 +288,7 @@ inline bool Foam::UList<T>::contains(const T& val, label pos) const
 
 
 template<class T>
-inline void Foam::UList<T>::shallowCopy(const UList<T>& list)
+inline void Foam::UList<T>::shallowCopy(const UList<T>& list) noexcept
 {
     size_ = list.size_;
     v_ = list.v_;
@@ -276,6 +296,13 @@ inline void Foam::UList<T>::shallowCopy(const UList<T>& list)
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class T>
+inline void Foam::UList<T>::operator=(const T& val)
+{
+    this->fill_uniform(val);
+}
+
 
 namespace Foam
 {
@@ -439,7 +466,7 @@ inline void Foam::UList<T>::setAddressableSize(const label n) noexcept
 
 
 template<class T>
-inline void Foam::UList<T>::swap(UList<T>& list)
+inline void Foam::UList<T>::swap(UList<T>& list) noexcept
 {
     if (&list == this)
     {

@@ -54,7 +54,7 @@ void Foam::List<T>::doResize(const label len)
             // - when used as storage for DynamicList, it is possible to have
             //   a zero-sized List with a non-null data pointer.
 
-            if (this->v_) delete[] this->v_;
+            delete[] this->v_;
             this->size_ = len;
             this->v_ = new T[len];
         }
@@ -64,7 +64,9 @@ void Foam::List<T>::doResize(const label len)
 
             T* nv = new T[len];
 
-            // ie, std::copy(this->v_, this->v_ + overlap, nv);
+            // Like std::copy(this->v_, this->v_ + overlap, nv);
+            // but with move semantics!
+
             #ifdef USEMEMCPY
             if (is_contiguous<T>::value)
             {
@@ -137,12 +139,7 @@ Foam::List<T>::List(const label len, const T& val)
     if (len)
     {
         doAlloc();
-
-        List_ACCESS(T, (*this), vp);
-        for (label i=0; i < len; ++i)
-        {
-            vp[i] = val;
-        }
+        this->fill_uniform(val);
     }
 }
 
@@ -163,8 +160,9 @@ Foam::List<T>::List(const label len, const Foam::zero)
     {
         doAlloc();
 
+        // fill_uniform()
         List_ACCESS(T, (*this), vp);
-        for (label i=0; i < len; ++i)
+        for (label i = 0; i < len; ++i)
         {
             vp[i] = Zero;
         }
@@ -200,109 +198,49 @@ Foam::List<T>::List(const Foam::one, const Foam::zero)
 
 
 template<class T>
-Foam::List<T>::List(const UList<T>& a)
+Foam::List<T>::List(const UList<T>& list)
 :
-    UList<T>(nullptr, a.size_)
+    UList<T>(nullptr, list.size_)
 {
-    const label len = this->size_;
-
-    if (len)
+    if (this->size_ > 0)
     {
         doAlloc();
-
-        #ifdef USEMEMCPY
-        if (is_contiguous<T>::value)
-        {
-            std::memcpy
-            (
-                static_cast<void*>(this->v_), a.v_, this->size_bytes()
-            );
-        }
-        else
-        #endif
-        {
-            List_ACCESS(T, (*this), vp);
-            List_CONST_ACCESS(T, a, ap);
-            for (label i = 0; i < len; ++i)
-            {
-                vp[i] = ap[i];
-            }
-        }
+        UList<T>::deepCopy(list);
     }
 }
 
 
 template<class T>
-Foam::List<T>::List(const List<T>& a)
+Foam::List<T>::List(const List<T>& list)
 :
-    UList<T>(nullptr, a.size_)
+    UList<T>(nullptr, list.size_)
 {
-    const label len = this->size_;
-
-    if (len)
+    if (this->size_ > 0)
     {
         doAlloc();
-
-        #ifdef USEMEMCPY
-        if (is_contiguous<T>::value)
-        {
-            std::memcpy
-            (
-                static_cast<void*>(this->v_), a.v_, this->size_bytes()
-            );
-        }
-        else
-        #endif
-        {
-            List_ACCESS(T, (*this), vp);
-            List_CONST_ACCESS(T, a, ap);
-            for (label i = 0; i < len; ++i)
-            {
-                vp[i] = ap[i];
-            }
-        }
+        UList<T>::deepCopy(list);
     }
 }
 
 
 template<class T>
-Foam::List<T>::List(List<T>& a, bool reuse)
+Foam::List<T>::List(List<T>& list, bool reuse)
 :
-    UList<T>(nullptr, a.size_)
+    UList<T>(nullptr, list.size_)
 {
     if (reuse)
     {
         // Steal content
-        this->v_ = a.v_;
-        a.v_ = nullptr;
-        a.size_ = 0;
+        this->v_ = list.v_;
+        list.v_ = nullptr;
+        list.size_ = 0;
         return;
     }
 
-    const label len = this->size_;
-
-    if (len)
+    if (this->size_)
     {
         doAlloc();
-
-        #ifdef USEMEMCPY
-        if (is_contiguous<T>::value)
-        {
-            std::memcpy
-            (
-                static_cast<void*>(this->v_), a.v_, this->size_bytes()
-            );
-        }
-        else
-        #endif
-        {
-            List_ACCESS(T, (*this), vp);
-            List_CONST_ACCESS(T, a, ap);
-            for (label i = 0; i < len; ++i)
-            {
-                vp[i] = ap[i];
-            }
-        }
+        UList<T>::deepCopy(list);
     }
 }
 
@@ -318,6 +256,7 @@ Foam::List<T>::List(const UList<T>& list, const labelUList& indices)
     {
         doAlloc();
 
+        // Copy indirect
         List_ACCESS(T, (*this), vp);
 
         for (label i=0; i < len; ++i)
@@ -340,13 +279,16 @@ Foam::List<T>::List
 {
     const label len = label(N);
 
-    doAlloc();
-
-    List_ACCESS(T, (*this), vp);
-
-    for (label i=0; i < len; ++i)
     {
-        vp[i] = list[indices[i]];
+        doAlloc();
+
+        // Copy indirect
+        List_ACCESS(T, (*this), vp);
+
+        for (label i = 0; i < len; ++i)
+        {
+            vp[i] = list[indices[i]];
+        }
     }
 }
 
@@ -431,10 +373,7 @@ Foam::List<T>::List(SLList<T>&& list)
 template<class T>
 Foam::List<T>::~List()
 {
-    if (this->v_)
-    {
-        delete[] this->v_;
-    }
+    delete[] this->v_;
 }
 
 
@@ -443,14 +382,16 @@ Foam::List<T>::~List()
 template<class T>
 void Foam::List<T>::resize(const label len, const T& val)
 {
-    label idx = this->size_;
+    const label oldLen = this->size_;
     this->doResize(len);
 
-    List_ACCESS(T, *this, vp);
-    while (idx < len)
+    // Fill trailing part with new values
+    if (oldLen < this->size_)
     {
-        vp[idx] = val;
-        ++idx;
+        std::fill
+        (
+            (this->v_ + oldLen), (this->v_ + this->size_), val
+        );
     }
 }
 
@@ -463,7 +404,7 @@ void Foam::List<T>::transfer(List<T>& list)
         return;  // Self-assignment is a no-op
     }
 
-    // Clear and swap - could also check for self assignment
+    // Clear and swap
     clear();
     this->size_ = list.size_;
     this->v_ = list.v_;
@@ -489,37 +430,18 @@ void Foam::List<T>::transfer(DynamicList<T, SizeMin>& list)
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class T>
-void Foam::List<T>::operator=(const UList<T>& a)
+void Foam::List<T>::operator=(const UList<T>& list)
 {
-    if (this == &a)
+    if (this == &list)
     {
         return;  // Self-assignment is a no-op
     }
 
-    reAlloc(a.size_);
+    reAlloc(list.size_);
 
-    const label len = this->size_;
-
-    if (len)
+    if (this->size_ > 0)
     {
-        #ifdef USEMEMCPY
-        if (is_contiguous<T>::value)
-        {
-            std::memcpy
-            (
-                static_cast<void*>(this->v_), a.v_, this->size_bytes()
-            );
-        }
-        else
-        #endif
-        {
-            List_ACCESS(T, (*this), vp);
-            List_CONST_ACCESS(T, a, ap);
-            for (label i = 0; i < len; ++i)
-            {
-                vp[i] = ap[i];
-            }
-        }
+        UList<T>::deepCopy(list);
     }
 }
 
@@ -532,7 +454,12 @@ void Foam::List<T>::operator=(const List<T>& list)
         return;  // Self-assignment is a no-op
     }
 
-    operator=(static_cast<const UList<T>&>(list));
+    reAlloc(list.size_);
+
+    if (this->size_ > 0)
+    {
+        UList<T>::deepCopy(list);
+    }
 }
 
 
@@ -545,6 +472,8 @@ void Foam::List<T>::operator=(const SLList<T>& list)
 
     if (len)
     {
+        // std::copy(list.begin(), list.end(), this->v_);
+
         T* iter = this->begin();
 
         for (const T& val : list)
@@ -582,6 +511,7 @@ void Foam::List<T>::operator=(const IndirectListBase<T, Addr>& list)
 
     if (len)
     {
+        // copyList ...
         List_ACCESS(T, (*this), vp);
 
         for (label i=0; i < len; ++i)

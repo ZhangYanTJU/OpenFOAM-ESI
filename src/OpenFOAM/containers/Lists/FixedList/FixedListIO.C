@@ -244,10 +244,8 @@ Foam::Istream& Foam::FixedList<T, N>::readList
                 "reading the single entry"
             );
 
-            for (unsigned i=0; i<N; ++i)
-            {
-                list[i] = elem;  // Copy the value
-            }
+            // Fill with the value
+            this->fill(elem);
         }
 
         // End of contents marker

@@ -43,13 +43,10 @@ Foam::DynamicList<T, SizeMin>::DynamicList(Istream& is)
 }
 
 
-// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class T, int SizeMin>
-Foam::Istream& Foam::DynamicList<T, SizeMin>::readList
-(
-    Istream& is
-)
+Foam::Istream& Foam::DynamicList<T, SizeMin>::readList(Istream& is)
 {
     DynamicList<T, SizeMin>& list = *this;
 

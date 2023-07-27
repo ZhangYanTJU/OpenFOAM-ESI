@@ -28,6 +28,7 @@ License
 
 #include "UList.H"
 #include "SLList.H"
+// <algorithm> already included by stdFoam.H
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -372,6 +373,7 @@ inline void Foam::FixedList<T, N>::resize_nocopy(const label n)
 template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::fill(const T& val)
 {
+    // Usually small enough that parallel execution is pointless...
     for (unsigned i=0; i<N; ++i)
     {
         v_[i] = val;
@@ -382,6 +384,7 @@ inline void Foam::FixedList<T, N>::fill(const T& val)
 template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::fill(const Foam::zero)
 {
+    // Usually small enough that parallel execution is pointless...
     for (unsigned i=0; i<N; ++i)
     {
         v_[i] = Zero;

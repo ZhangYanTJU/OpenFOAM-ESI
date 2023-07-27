@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,35 +105,20 @@ void Foam::UList<T>::swapLast(const label i)
 template<class T>
 void Foam::UList<T>::deepCopy(const UList<T>& list)
 {
-    const label len = this->size_;
-
-    if (len != list.size_)
+    if (this->size_ != list.size_)
     {
         FatalErrorInFunction
             << "Lists have different sizes: "
-            << len << " != " << list.size() << nl
+            << this->size_ << " != " << list.size() << nl
             << abort(FatalError);
     }
-    else if (len)
+    else if (this->size_ > 0)
     {
-        #ifdef USEMEMCPY
-        if (is_contiguous<T>::value)
-        {
-            std::memcpy
-            (
-                static_cast<void*>(this->v_), list.v_, this->size_bytes()
-            );
-        }
-        else
-        #endif
-        {
-            List_ACCESS(T, (*this), lhs);
-            List_CONST_ACCESS(T, list, rhs);
-            for (label i = 0; i < len; ++i)
-            {
-                lhs[i] = rhs[i];
-            }
-        }
+        // Can also dispatch with
+        // - std::execution::parallel_unsequenced_policy
+        // - std::execution::unsequenced_policy
+
+        std::copy(list.cbegin(), list.cend(), this->v_);
     }
 }
 
@@ -142,17 +127,19 @@ template<class T>
 template<class Addr>
 void Foam::UList<T>::deepCopy(const IndirectListBase<T, Addr>& list)
 {
-    const label len = this->size_;
-
-    if (len != list.size())
+    if (this->size_ != list.size())
     {
         FatalErrorInFunction
             << "Lists have different sizes: "
-            << len << " != " << list.size() << nl
+            << this->size_ << " != " << list.size() << nl
             << abort(FatalError);
     }
-    else if (len)
+    else if (this->size_)
     {
+        // copyList()
+
+        const label len = this->size_;
+
         List_ACCESS(T, (*this), lhs);
         for (label i = 0; i < len; ++i)
         {
@@ -165,27 +152,14 @@ void Foam::UList<T>::deepCopy(const IndirectListBase<T, Addr>& list)
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class T>
-void Foam::UList<T>::operator=(const T& val)
-{
-    const label len = this->size();
-
-    List_ACCESS(T, (*this), vp);
-
-    for (label i=0; i < len; ++i)
-    {
-        vp[i] = val;
-    }
-}
-
-
-template<class T>
 void Foam::UList<T>::operator=(const Foam::zero)
 {
+    // fill_uniform()
     const label len = this->size();
 
     List_ACCESS(T, (*this), vp);
 
-    for (label i=0; i < len; ++i)
+    for (label i = 0; i < len; ++i)
     {
         vp[i] = Zero;
     }
