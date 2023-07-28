@@ -378,7 +378,7 @@ public:
         //  \deprecated(2018-11) - should generally use construct from
         //      dictionary or primitiveEntry instead
         //      (additional checks on the input stream).
-        FOAM_DEPRECATED(2018-11)
+        FOAM_DEPRECATED_FOR(2018-11, "construct from dictionary or entry")
         explicit dimensioned(Istream& is);
 
         //- Deprecated(2018-11) Construct from Istream with given name
@@ -386,7 +386,7 @@ public:
         //  \deprecated(2018-11) - should generally use construct from
         //      dictionary or primitiveEntry instead
         //      (additional checks on the input stream).
-        FOAM_DEPRECATED(2018-11)
+        FOAM_DEPRECATED_FOR(2018-11, "construct from dictionary or entry")
         dimensioned(const word& name, Istream& is);
 
         //- Deprecated(2018-11) Construct from Istream with given name
@@ -397,7 +397,7 @@ public:
         //  \deprecated(2018-11) - should generally use construct from
         //      dictionary or primitiveEntry instead
         //      (additional checks on the input stream).
-        FOAM_DEPRECATED(2018-11)
+        FOAM_DEPRECATED_FOR(2018-11, "construct from dictionary or entry")
         dimensioned(const word& name, const dimensionSet& dims, Istream& is);
 
 

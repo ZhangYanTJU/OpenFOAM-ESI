@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef decompositionModel_H
-#define decompositionModel_H
+#ifndef Foam_decompositionModel_H
+#define Foam_decompositionModel_H
 
 #include "IOdictionary.H"
 #include "MeshObject.H"
@@ -126,7 +126,7 @@ public:
 
         //- Deprecated(2021-04) compatibility constructor
         //  \deprecated(2021-04)
-        FOAM_DEPRECATED(2021-04)
+        FOAM_DEPRECATED_FOR(2021-04, "construct mesh/fileName/dictionary")
         decompositionModel
         (
             const polyMesh& mesh,
@@ -139,7 +139,7 @@ public:
 
         //- Deprecated(2021-04) compatibility selector
         //  \deprecated(2021-04)
-        FOAM_DEPRECATED(2021-04)
+        FOAM_DEPRECATED_FOR(2021-04, "New mesh/fileName/dictionary")
         static const decompositionModel& New
         (
             const polyMesh& mesh,

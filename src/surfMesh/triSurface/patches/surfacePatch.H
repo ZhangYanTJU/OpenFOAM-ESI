@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef surfacePatch_H
-#define surfacePatch_H
+#ifndef Foam_surfacePatch_H
+#define Foam_surfacePatch_H
 
 #include "geometricSurfacePatch.H"
 
@@ -81,7 +81,7 @@ public:
         //- Default construct, with zero start, size, index=-1
         surfacePatch();
 
-        //- Construct null with specified index
+        //- Default construct, with zero start, size, and specified index
         explicit surfacePatch(const label index);
 
         //- Construct from components
@@ -148,7 +148,7 @@ public:
 
         //- Deprecated(2020-01) Construct from components
         //  \deprecated(2020-01) - order inconsistent with other identifiers
-        FOAM_DEPRECATED(2020-01)
+        FOAM_DEPRECATED_FOR(2020-01, "construct name/size/start/index/type")
         surfacePatch
         (
             const word& geometricType,

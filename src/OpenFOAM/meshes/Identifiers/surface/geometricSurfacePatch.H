@@ -196,7 +196,7 @@ public:
 
         //- Deprecated(2020-01) Construct from components
         //  \deprecated(2020-01) - order inconsistent with other identifiers
-        FOAM_DEPRECATED(2020-01)
+        FOAM_DEPRECATED_FOR(2020-01, "construct name/index/type")
         geometricSurfacePatch
         (
             const word& geometricType,
