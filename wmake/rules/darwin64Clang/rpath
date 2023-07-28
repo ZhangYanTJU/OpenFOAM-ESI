@@ -2,29 +2,49 @@
 
 # Compile-time rpath information:
 
+FOAM_MPI ?= dummy
+ifeq (,$(strip $(FOAM_MPI)))
+    FOAM_MPI = dummy
+endif
+
 PROJECT_RPATH :=
 
-ifneq (,$(strip $(FOAM_USER_LIBBIN)))
-    PROJECT_RPATH += -rpath $(FOAM_USER_LIBBIN)
-endif
+# No user libraries (FOAM_USER_LIBBIN) - too fragile
+
+# group libraries
 ifneq (,$(strip $(FOAM_SITE_LIBBIN)))
     PROJECT_RPATH += -rpath $(FOAM_SITE_LIBBIN)
 endif
+
+# project libraries - serial and mpi-specific
+ifneq (,$(strip $(FOAM_LIBBIN)))
+    ifneq (dummy,$(strip $(FOAM_MPI)))
+        PROJECT_RPATH += -rpath $(FOAM_LIBBIN)/$(FOAM_MPI)
+    endif
+    PROJECT_RPATH += -rpath $(FOAM_LIBBIN)
+endif
+
+# ThirdParty serial and mpi-specific libraries
 ifneq (,$(strip $(FOAM_EXT_LIBBIN)))
-    PROJECT_RPATH += -rpath $(FOAM_EXT_LIBBIN)
-    ifneq (,$(strip $(FOAM_MPI)))
+    ifneq (dummy,$(strip $(FOAM_MPI)))
         PROJECT_RPATH += -rpath $(FOAM_EXT_LIBBIN)/$(FOAM_MPI)
     endif
+    PROJECT_RPATH += -rpath $(FOAM_EXT_LIBBIN)
 endif
 
-# MacOS relative rpath:
+
+# Largely as above, but with MacOS relative rpath:
 # Encode as @loader_path and recompose as @executable_path as needed
 
-PROJECT_RPATH += -rpath @loader_path
-ifneq (,$(strip $(FOAM_MPI)))
+ifneq (dummy,$(strip $(FOAM_MPI)))
     PROJECT_RPATH += -rpath @loader_path/$(FOAM_MPI)
 endif
-# Fallback for stubs (eg, missing MPI)
+PROJECT_RPATH += -rpath @loader_path
+
+# Fallback for stubs libraries (largely for missing MPI) - to be found last
+ifneq (,$(strip $(FOAM_LIBBIN)))
+    PROJECT_RPATH += -rpath $(FOAM_LIBBIN)/dummy
+endif
 PROJECT_RPATH += -rpath @loader_path/dummy
 
 #------------------------------------------------------------------------------
