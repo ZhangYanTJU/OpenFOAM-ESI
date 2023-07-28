@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -309,24 +309,24 @@ void Foam::ReadFields
 }
 
 
-template<class GeoFieldType>
+template<class GeoFieldType, class NameMatchPredicate>
 void Foam::readFields
 (
     const typename GeoFieldType::Mesh& mesh,
     const IOobjectList& objects,
-    const wordHashSet& selectedFields,
-    LIFOStack<regIOobject*>& storedObjects
+    const NameMatchPredicate& selectedFields,
+    DynamicList<regIOobject*>& storedObjects
 )
 {
     // Names of GeoField objects, sorted order. Not synchronised.
     const wordList fieldNames
     (
-        objects.sortedNames
-        (
-            GeoFieldType::typeName,
-            selectedFields   // Only permit these
-        )
+        objects.sortedNames<GeoFieldType>(selectedFields)
     );
+
+
+    // pre-extend reserve
+    storedObjects.reserve(storedObjects.size() + fieldNames.size());
 
     label nFields = 0;
 
@@ -355,7 +355,7 @@ void Foam::readFields
             mesh
         );
         fieldPtr->store();
-        storedObjects.push(fieldPtr);
+        storedObjects.push_back(fieldPtr);
 
         ++nFields;
     }
@@ -364,25 +364,23 @@ void Foam::readFields
 }
 
 
-template<class UniformFieldType>
+template<class UniformFieldType, class NameMatchPredicate>
 void Foam::readUniformFields
 (
     const IOobjectList& objects,
-    const wordHashSet& selectedFields,
-    LIFOStack<regIOobject*>& storedObjects,
+    const NameMatchPredicate& selectedFields,
+    DynamicList<regIOobject*>& storedObjects,
     const bool syncPar
 )
 {
     // Names of UniformField objects, sorted order.
     const wordList fieldNames
     (
-        objects.names
-        (
-            UniformFieldType::typeName,
-            selectedFields,  // Only permit these
-            syncPar
-        )
+        objects.names<UniformFieldType>(selectedFields, syncPar)
     );
+
+    // pre-extend reserve
+    storedObjects.reserve(storedObjects.size() + fieldNames.size());
 
     label nFields = 0;
 
@@ -410,12 +408,66 @@ void Foam::readUniformFields
             )
         );
         fieldPtr->store();
-        storedObjects.push(fieldPtr);
+        storedObjects.push_back(fieldPtr);
 
         ++nFields;
     }
 
     if (nFields) Info<< endl;
+}
+
+
+template<class GeoFieldType, class NameMatchPredicate>
+void Foam::readFields
+(
+    const typename GeoFieldType::Mesh& mesh,
+    const IOobjectList& objects,
+    const NameMatchPredicate& selectedFields,
+    LIFOStack<regIOobject*>& storedObjects
+)
+{
+    DynamicList<regIOobject*> newObjects;
+
+    readFields<GeoFieldType, NameMatchPredicate>
+    (
+        mesh,
+        objects,
+        selectedFields,
+        newObjects
+    );
+
+    // Transcribe from list to stack
+    for (regIOobject* fieldPtr : newObjects)
+    {
+        storedObjects.push(fieldPtr);
+    }
+}
+
+
+template<class UniformFieldType, class NameMatchPredicate>
+void Foam::readUniformFields
+(
+    const IOobjectList& objects,
+    const NameMatchPredicate& selectedFields,
+    LIFOStack<regIOobject*>& storedObjects,
+    const bool syncPar
+)
+{
+    DynamicList<regIOobject*> newObjects;
+
+    readUniformFields<UniformFieldType, NameMatchPredicate>
+    (
+        objects,
+        selectedFields,
+        newObjects,
+        syncPar
+    );
+
+    // Transcribe from list to stack
+    for (regIOobject* fieldPtr : newObjects)
+    {
+        storedObjects.push(fieldPtr);
+    }
 }
 
 
