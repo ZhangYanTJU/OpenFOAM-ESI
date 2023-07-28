@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -452,15 +452,31 @@ int main(int argc, char *argv[])
     {
         const wordRes patchNames(args.getList<wordRe>("patches"));
 
-        if (patchNames.size() == 1 && patchNames.first().isLiteral())
+        if (patchNames.size() == 1 && patchNames.front().isLiteral())
         {
-            exposedPatchIDs.first() =
-                getExposedPatchId(mesh, patchNames.first());
+            exposedPatchIDs.front() =
+                getExposedPatchId(mesh, patchNames.front());
         }
         else
         {
-            exposedPatchIDs =
-                mesh.boundaryMesh().patchSet(patchNames).sortedToc();
+            // Patches selected
+            labelHashSet patchIds
+            (
+                mesh.boundaryMesh().patchSet(patchNames)
+            );
+
+            // Only retain initial, non-processor patches
+            label nNonProcessor
+            (
+                mesh.boundaryMesh().nNonProcessor()
+            );
+
+            patchIds.filterKeys
+            (
+                [=](label patchi) { return (patchi < nNonProcessor); }
+            );
+
+            exposedPatchIDs = patchIds.sortedToc();
 
             Info<< "Adding exposed internal faces to nearest of patches "
                 << flatOutput(patchNames) << nl << endl;
@@ -469,14 +485,14 @@ int main(int argc, char *argv[])
             {
                 FatalErrorInFunction
                     << nl << "No patches matched. Patches: "
-                    << mesh.boundaryMesh().names() << nl
+                    << flatOutput(mesh.boundaryMesh().names()) << nl
                     << exit(FatalError);
             }
         }
     }
     else if (args.found("patch"))
     {
-        exposedPatchIDs.first() =
+        exposedPatchIDs.front() =
             getExposedPatchId(mesh, args.get<word>("patch"));
     }
     else
@@ -513,7 +529,7 @@ int main(int argc, char *argv[])
 
         Info<< "Using cellSet " << selectionName << nl << endl;
 
-        cellSetPtr = autoPtr<cellSet>::New(mesh, selectionName);
+        cellSetPtr.emplace(mesh, selectionName);
     }
 
 
@@ -531,7 +547,7 @@ int main(int argc, char *argv[])
         if (exposedPatchIDs.size() == 1)
         {
             // Single patch for exposed faces (syncPar)
-            subsetter.reset(selectedCells, exposedPatchIDs.first(), true);
+            subsetter.reset(selectedCells, exposedPatchIDs.front(), true);
         }
         else
         {
