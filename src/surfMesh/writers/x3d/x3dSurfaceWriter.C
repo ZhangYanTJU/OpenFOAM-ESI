@@ -151,7 +151,7 @@ Foam::surfaceWriters::x3dWriter::x3dWriter
     {
         Info<< "X3D with colourMap '" << tableName << "' and range ";
 
-        if (range_.valid())
+        if (range_.good())
         {
             Info<< range_;
         }
@@ -288,7 +288,7 @@ Foam::fileName Foam::surfaceWriters::x3dWriter::writeTemplate
 
         scalarMinMax range(range_);
 
-        if (!range.valid())
+        if (!range.good())
         {
             range = minMaxMag(values);
 

@@ -54,56 +54,44 @@ Description
                 );
 
                 // An empty zone for cut points
-                pzs.append
+                pzs.emplace_back
                 (
-                    new pointZone
-                    (
-                        mergeName + "CutPointZone",
-                        pzs.size(),
-                        pzs
-                    )
+                    mergeName + "CutPointZone",
+                    pzs.size(),     // index
+                    pzs
                 );
-                cleanupPointZones.insert(pzs.last().name());
+                cleanupPointZones.insert(pzs.back().name());
 
                 // Coupling side 0 (master)
-                fzs.append
+                fzs.emplace_back
                 (
-                    new faceZone
-                    (
-                        mergeName + "Side0Zone",
-                        identity(patch0.range()),
-                        false, // none are flipped
-                        fzs.size(),
-                        fzs
-                    )
+                    mergeName + "Side0Zone",
+                    identity(patch0.range()),
+                    false,          // none are flipped
+                    fzs.size(),     // index
+                    fzs
                 );
-                cleanupFaceZones.insert(fzs.last().name());
+                cleanupFaceZones.insert(fzs.back().name());
 
                 // Coupling side 1 (slave)
-                fzs.append
+                fzs.emplace_back
                 (
-                    new faceZone
-                    (
-                        mergeName + "Side1Zone",
-                        identity(patch1.range()),
-                        false, // none are flipped
-                        fzs.size(),
-                        fzs
-                    )
+                    mergeName + "Side1Zone",
+                    identity(patch1.range()),
+                    false,          // none are flipped
+                    fzs.size(),     // index
+                    fzs
                 );
-                cleanupFaceZones.insert(fzs.last().name());
+                cleanupFaceZones.insert(fzs.back().name());
 
                 // An empty zone for cut faces
-                fzs.append
+                fzs.emplace_back
                 (
-                    new faceZone
-                    (
-                        mergeName + "CutFaceZone",
-                        fzs.size(),
-                        fzs
-                    )
+                    mergeName + "CutFaceZone",
+                    fzs.size(),     // index
+                    fzs
                 );
-                cleanupFaceZones.insert(fzs.last().name());
+                cleanupFaceZones.insert(fzs.back().name());
             }
         }
 

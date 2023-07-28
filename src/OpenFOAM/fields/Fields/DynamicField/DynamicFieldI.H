@@ -137,12 +137,12 @@ inline constexpr Foam::DynamicField<T, SizeMin>::DynamicField() noexcept
 
 
 template<class T, int SizeMin>
-inline Foam::DynamicField<T, SizeMin>::DynamicField(const label len)
+inline Foam::DynamicField<T, SizeMin>::DynamicField(const label initialCapacity)
 :
     Field<T>(),
     capacity_(0)
 {
-    reserve_nocopy(len);
+    reserve_nocopy(initialCapacity);
 }
 
 

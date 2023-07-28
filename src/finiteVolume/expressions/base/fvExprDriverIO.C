@@ -107,7 +107,7 @@ Foam::expressions::fvExprDriver::getTopoSetLabels
     }
 
 
-    if (selected.valid())
+    if (selected.good())
     {
         return selected;
     }

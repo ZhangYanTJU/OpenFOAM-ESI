@@ -88,7 +88,7 @@ Foam::functionObjects::norm::norm
     fieldExpression(name, runTime, dict),
     norm_(normType::L1),
     divisorPtr_(nullptr),
-    divisorFieldName_(word::null),
+    divisorFieldName_(),
     p_(-1)
 {
     read(dict);
@@ -127,7 +127,7 @@ bool Foam::functionObjects::norm::read(const dictionary& dict)
     {
         divisorFieldName_ = dict.get<word>("divisorField");
 
-        if (divisorFieldName_ == word::null)
+        if (divisorFieldName_.empty())
         {
             FatalIOErrorInFunction(dict)
                 << "The norm 'field' needs the input entry 'divisorField'."

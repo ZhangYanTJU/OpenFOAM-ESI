@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,7 +54,7 @@ Foam::scalarRanges Foam::scalarRanges::parse
         }
         else if (report)
         {
-            Info<< "Bad scalar-range parsing: " << s << endl;
+            InfoErr<< "Bad scalar-range parsing: " << s << endl;
         }
     }
 

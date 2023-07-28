@@ -216,6 +216,11 @@ public:
         //  \remark Same as move assign, but better for code documentation
         inline void reset(autoPtr<T>&& other) noexcept;
 
+        //- Reset with emplace construction.
+        //- Return reference to the new content.
+        template<class... Args>
+        inline T& emplace(Args&&... args);
+
         //- Swaps the managed object with other autoPtr.
         inline void swap(autoPtr<T>& other) noexcept;
 

@@ -17,7 +17,7 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
             vf,
             dir,
             "reconstruct("
-          + (reconFieldName != word::null ? reconFieldName : vf.name())
+          + (reconFieldName.empty() ? vf.name() : reconFieldName)
           + ')'
         )
     );

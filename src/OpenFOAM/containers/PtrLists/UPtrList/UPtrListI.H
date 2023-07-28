@@ -208,7 +208,7 @@ inline void Foam::UPtrList<T>::clear()
 template<class T>
 inline void Foam::UPtrList<T>::free()
 {
-    ptrs_.setNull();
+    ptrs_ = nullptr;
 }
 
 
@@ -258,6 +258,13 @@ template<class T>
 inline void Foam::UPtrList<T>::resize(const label newLen)
 {
     ptrs_.resize(newLen);
+}
+
+
+template<class T>
+inline void Foam::UPtrList<T>::resize_null(const label newLen)
+{
+    ptrs_.resize_null(newLen);
 }
 
 

@@ -47,43 +47,39 @@ class Scalar
 
 public:
 
-    Scalar()
+    static bool verbose;
+
+    constexpr Scalar() noexcept
     :
         data_(0)
     {}
 
-    Scalar(scalar val)
+    Scalar(scalar val) noexcept
     :
         data_(val)
     {}
 
     ~Scalar()
     {
-        Info<< "delete Scalar: " << data_ << endl;
+        if (verbose) Info<< "delete Scalar: " << data_ << endl;
     }
 
-    const scalar& value() const
-    {
-        return data_;
-    }
-
-    scalar& value()
-    {
-        return data_;
-    }
+    scalar value() const noexcept { return data_; }
+    scalar& value() noexcept { return data_; }
 
     autoPtr<Scalar> clone() const
     {
         return autoPtr<Scalar>::New(data_);
     }
 
-    friend Ostream& operator<<(Ostream& os, const Scalar& val)
+    friend Ostream& operator<<(Ostream& os, const Scalar& item)
     {
-        os  << val.data_;
+        os  << item.value();
         return os;
     }
 };
 
+bool Scalar::verbose = true;
 
 
 // As per
@@ -268,6 +264,22 @@ Ostream& report
 
 int main(int argc, char *argv[])
 {
+    #if 1
+    {
+        DLPtrList<Scalar> llist1;
+        Info<< "emplace_front: " << llist1.emplace_front(100) << nl;
+        Info<< "emplace_front: " << llist1.emplace_front(200) << nl;
+        Info<< "emplace_front: " << llist1.emplace_front(300) << nl;
+        Info<< "emplace_back:  " << llist1.emplace_back(500)  << nl;
+
+        Info<< "DLPtrList: " << llist1 << endl;
+
+        Scalar::verbose = false;
+        llist1.clear();
+        Scalar::verbose = true;
+    }
+    #endif
+
     #if 0
     {
         DLPtrList<Scalar> llist1;
@@ -348,6 +360,16 @@ int main(int argc, char *argv[])
     {
         list2.emplace(i, (10 + 1.3*i));
     }
+
+    #if 0
+    list2.release(5);
+    list2.release(10);
+
+    forAll(list2, i)
+    {
+        list2.try_emplace(i, (50 + 1.3*i));
+    }
+    #endif
 
     PtrList<Scalar> listApp;
     for (label i = 0; i < 5; ++i)
@@ -639,7 +661,7 @@ int main(int argc, char *argv[])
         dynPlanes.set(6, new plane(vector(2,2,1), vector::one));
         dynPlanes.set(10, new plane(vector(4,5,6), vector::one));
 
-        Info<< "emplaced :"
+        Info<< "emplaced[12]: "
             << dynPlanes.emplace(12, vector(3,2,1), vector::one) << endl;
 
         dynPlanes.emplace_back(Zero, vector::one);

@@ -57,23 +57,13 @@ Foam::dictionaryEntry::dictionaryEntry
 
 Foam::label Foam::dictionaryEntry::startLineNumber() const
 {
-    if (size())
-    {
-        return first()->startLineNumber();
-    }
-
-    return -1;
+    return dictionary::startLineNumber();
 }
 
 
 Foam::label Foam::dictionaryEntry::endLineNumber() const
 {
-    if (size())
-    {
-        return last()->endLineNumber();
-    }
-
-    return -1;
+    return dictionary::endLineNumber();
 }
 
 

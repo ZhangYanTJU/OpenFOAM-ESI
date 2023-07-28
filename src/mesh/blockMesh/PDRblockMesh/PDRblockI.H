@@ -28,19 +28,19 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 // Location
 
-inline bool Foam::PDRblock::location::valid() const
+inline bool Foam::PDRblock::location::good() const noexcept
 {
     return (scalarList::size() > 1);
 }
 
 
-inline Foam::label Foam::PDRblock::location::nCells() const
+inline Foam::label Foam::PDRblock::location::nCells() const noexcept
 {
     return (scalarList::size()-1);
 }
 
 
-inline Foam::label Foam::PDRblock::location::nPoints() const
+inline Foam::label Foam::PDRblock::location::nPoints() const noexcept
 {
     return scalarList::size();
 }

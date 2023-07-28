@@ -118,6 +118,10 @@ protected:
         //- always addresses a valid section of the list.
         labelRange validateRange(const labelRange& requestedRange) const;
 
+        //- Assign all entries to the given value
+        //  Caution: method name subject to change
+        inline void fill_uniform(const T& val);
+
         //- No copy assignment (default: shallow copy)
         //
         //  Assignment may need to be shallow (copy pointer)
@@ -347,7 +351,7 @@ public:
     // Copy
 
         //- Copy the pointer and size held by the given UList
-        inline void shallowCopy(const UList<T>& list);
+        inline void shallowCopy(const UList<T>& list) noexcept;
 
         //- Copy elements of the given UList. Sizes must match!
         void deepCopy(const UList<T>& list);
@@ -390,7 +394,7 @@ public:
         inline operator const Foam::List<T>&() const;
 
         //- Assignment of all entries to the given value
-        void operator=(const T& val);
+        inline void operator=(const T& val);
 
         //- Assignment of all entries to zero
         void operator=(const Foam::zero);
@@ -468,7 +472,7 @@ public:
         static constexpr label max_size() noexcept { return labelMax; }
 
         //- Swap content with another UList of the same type in constant time
-        inline void swap(UList<T>& list);
+        inline void swap(UList<T>& list) noexcept;
 
 
     // STL member operators
@@ -703,15 +707,12 @@ template<class T>
 struct Hash<UList<T>> : UList<T>::hasher {};
 
 
-//- Object access operator or list access operator.
+//- Object access operator or list access operator (default is pass-through)
 //- \sa ListListOps::combine()
 template<class T>
 struct accessOp
 {
-    const T& operator()(const T& obj) const
-    {
-        return obj;  // Default is pass-through
-    }
+    const T& operator()(const T& obj) const { return obj; }
 };
 
 
@@ -719,10 +720,7 @@ struct accessOp
 template<class T>
 struct emptyOp
 {
-    bool operator()(const T& obj) const
-    {
-        return obj.empty();
-    }
+    bool operator()(const T& obj) const { return obj.empty(); }
 };
 
 
@@ -730,10 +728,7 @@ struct emptyOp
 template<class T>
 struct sizeOp
 {
-    label operator()(const T& obj) const
-    {
-        return obj.size();
-    }
+    label operator()(const T& obj) const { return obj.size(); }
 };
 
 

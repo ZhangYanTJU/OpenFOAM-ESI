@@ -401,7 +401,7 @@ Foam::IntRange<IntType>::crend() const noexcept
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class IntType>
-inline void Foam::IntRange<IntType>::clear() noexcept
+inline void Foam::IntRange<IntType>::reset() noexcept
 {
     start_ = size_ = 0;
 }

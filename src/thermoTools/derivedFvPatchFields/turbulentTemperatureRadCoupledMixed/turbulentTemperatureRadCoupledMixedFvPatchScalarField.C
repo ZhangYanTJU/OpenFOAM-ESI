@@ -148,7 +148,7 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
     executionIndex_(0),
     thermalInertia_(false),
     verbose_(false),
-    prefix_(word::null)
+    prefix_()
 {
     this->refValue() = Zero;
     this->refGrad() = Zero;

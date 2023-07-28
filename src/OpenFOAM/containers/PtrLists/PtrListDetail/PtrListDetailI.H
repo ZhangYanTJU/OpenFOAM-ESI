@@ -37,7 +37,7 @@ inline constexpr Foam::Detail::PtrListDetail<T>::PtrListDetail() noexcept
 template<class T>
 inline Foam::Detail::PtrListDetail<T>::PtrListDetail(const label len)
 :
-    List<T*>(len, reinterpret_cast<T*>(0))
+    List<T*>(len, static_cast<T*>(nullptr))
 {}
 
 
@@ -118,7 +118,22 @@ inline void Foam::Detail::PtrListDetail<T>::resize(const label newLen)
     else if (newLen != List<T*>::size())
     {
         // Truncate or extend. Any new elements are initialized to nullptr.
-        List<T*>::resize(newLen, reinterpret_cast<T*>(0));
+        List<T*>::resize(newLen, static_cast<T*>(nullptr));
+    }
+}
+
+
+template<class T>
+inline void Foam::Detail::PtrListDetail<T>::resize_null(const label newLen)
+{
+    if (newLen <= 0)
+    {
+        List<T*>::clear();
+    }
+    else
+    {
+        List<T*>::resize_nocopy(newLen);
+        List<T*>::operator=(static_cast<T*>(nullptr));
     }
 }
 
@@ -156,6 +171,13 @@ inline void Foam::Detail::PtrListDetail<T>::operator=
 )
 {
     List<T*>::transfer(list);
+}
+
+
+template<class T>
+inline void Foam::Detail::PtrListDetail<T>::operator=(std::nullptr_t)
+{
+    List<T*>::operator=(static_cast<T*>(nullptr));
 }
 
 

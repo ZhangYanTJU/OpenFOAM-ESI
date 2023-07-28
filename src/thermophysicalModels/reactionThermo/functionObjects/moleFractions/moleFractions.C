@@ -108,19 +108,17 @@ Foam::moleFractions<ThermoType>::moleFractions
     }
     else
     {
-        if (phaseName_ != word::null)
-        {
-            FatalErrorInFunction
-                << "Cannot find thermodynamics model of type "
-                << ThermoType::typeName
-                << " for phase " << phaseName_
-                << exit(FatalError);
-        }
-
         FatalErrorInFunction
             << "Cannot find thermodynamics model of type "
-            << ThermoType::typeName
-            << exit(FatalError);
+            << ThermoType::typeName;
+
+        if (!phaseName_.empty())
+        {
+            FatalError
+                << " for phase " << phaseName_;
+        }
+
+        FatalError << exit(FatalError);
     }
 }
 

@@ -616,7 +616,7 @@ Foam::cyclicAMIPolyPatch::cyclicAMIPolyPatch
 )
 :
     coupledPolyPatch(name, size, start, index, bm, patchType, transform),
-    nbrPatchName_(word::null),
+    nbrPatchName_(),
     nbrPatchID_(-1),
     fraction_(Zero),
     rotationAxis_(Zero),
@@ -624,7 +624,7 @@ Foam::cyclicAMIPolyPatch::cyclicAMIPolyPatch
     rotationAngleDefined_(false),
     rotationAngle_(0.0),
     separationVector_(Zero),
-    periodicPatchName_(word::null),
+    periodicPatchName_(),
     periodicPatchID_(-1),
     AMIPtr_(AMIInterpolation::New(defaultAMIMethod)),
     surfDict_(fileName("surface")),
@@ -683,7 +683,7 @@ Foam::cyclicAMIPolyPatch::cyclicAMIPolyPatch
     faceAreas0_(),
     faceCentres0_()
 {
-    if (nbrPatchName_ == word::null && !coupleGroup_.valid())
+    if (nbrPatchName_.empty() && !coupleGroup_.good())
     {
         FatalIOErrorInFunction(dict)
             << "No \"neighbourPatch\" or \"coupleGroup\" provided."
@@ -938,7 +938,7 @@ Foam::label Foam::cyclicAMIPolyPatch::neighbPatchID() const
 
 Foam::label Foam::cyclicAMIPolyPatch::periodicPatchID() const
 {
-    if (periodicPatchName_ == word::null)
+    if (periodicPatchName_.empty())
     {
         return -1;
     }
@@ -1261,7 +1261,7 @@ void Foam::cyclicAMIPolyPatch::write(Ostream& os) const
         }
     }
 
-    if (periodicPatchName_ != word::null)
+    if (!periodicPatchName_.empty())
     {
         os.writeEntry("periodicPatch", periodicPatchName_);
     }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,6 +84,20 @@ struct DerivedList : public List<T>
 };
 
 
+template<class T>
+void printInfo(const autoPtr<T>& item, const bool verbose = false)
+{
+    Info<< "autoPtr good:" << Switch::name(item.good())
+        << " addr: " << Foam::name(item.get());
+
+    if (verbose && item)
+    {
+        Info<< " content: " << item();
+    }
+    Info<< nl;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //  Main program:
 
@@ -112,6 +126,17 @@ int main(int argc, char *argv[])
 
         Info<<"move unique to autoPtr: " << *list3 << nl;
         Info<<"old is " << Switch(bool(list2)) << nl;
+
+        Info<< "before emplace: ";
+        printInfo(list, true);
+
+        list.emplace(4, label(-2));
+        Info<< "after emplace: ";
+        printInfo(list, true);
+
+        list.emplace(2, label(-4));
+        Info<< "after emplace: ";
+        printInfo(list, true);
     }
 
     // Confirm that forwarding with move construct actually works as expected

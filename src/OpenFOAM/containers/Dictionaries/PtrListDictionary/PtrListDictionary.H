@@ -59,6 +59,10 @@ class PtrListDictionary
 {
 public:
 
+    //- The template instance used for the dictionary content
+    typedef DictionaryBase<PtrList<T>, T> dict_type;
+
+
     // Constructors
 
         //- Construct given initial list size
@@ -81,26 +85,26 @@ public:
         autoPtr<T> set(const label i, const word& key, T* ptr);
 
         //- Set element to autoPtr value provided and return old element
-        autoPtr<T> set(const label i, const word& key, autoPtr<T>& aptr);
+        autoPtr<T> set(const label i, const word& key, autoPtr<T>& ptr);
 
         //- Set element to tmp value provided and return old element
-        autoPtr<T> set(const label i, const word& key, tmp<T>& t);
+        autoPtr<T> set(const label i, const word& key, tmp<T>& ptr);
 
 
-    // Member operators
+    // Member Operators
 
         using PtrList<T>::operator[];
 
         //- Find and return entry
         const T& operator[](const word& key) const
         {
-            return *DictionaryBase<PtrList<T>, T>::operator[](key);
+            return *(dict_type::lookup(key));
         }
 
         //- Find and return entry
         T& operator[](const word& key)
         {
-            return *DictionaryBase<PtrList<T>, T>::operator[](key);
+            return *(dict_type::lookup(key));
         }
 };
 

@@ -372,6 +372,17 @@ inline void Foam::refPtr<T>::reset(tmp<T>& other, bool reuse)
 
 
 template<class T>
+template<class... Args>
+inline T& Foam::refPtr<T>::emplace(Args&&... args)
+{
+    clear();  // delete old entry
+    ptr_ = new T(std::forward<Args>(args)...);
+    type_ = PTR;
+    return *ptr_;
+}
+
+
+template<class T>
 inline void Foam::refPtr<T>::cref(const refPtr<T>& other) noexcept
 {
     // Could also make Fatal with FULLDEBUG

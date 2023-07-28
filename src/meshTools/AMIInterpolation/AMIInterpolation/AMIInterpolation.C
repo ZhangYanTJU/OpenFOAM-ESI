@@ -1132,7 +1132,7 @@ const
 
 bool Foam::AMIInterpolation::checkSymmetricWeights(const bool log) const
 {
-    if (Pstream::parRun() && (singlePatchProc_ == -1))
+    if (UPstream::parRun() && this->distributed())
     {
         Log << "Checks only valid for serial running (currently)" << endl;
 

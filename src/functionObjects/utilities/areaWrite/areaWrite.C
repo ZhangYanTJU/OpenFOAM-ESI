@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -148,9 +148,6 @@ bool Foam::areaWrite::read(const dictionary& dict)
 
     verbose_ = dict.getOrDefault("verbose", false);
 
-    // All possible area meshes for the given fvMesh region
-    meshes_ = obr().lookupClass<faMesh>();
-
     dict.readIfPresent("areas", selectAreas_);
 
     if (selectAreas_.empty())
@@ -162,19 +159,19 @@ bool Foam::areaWrite::read(const dictionary& dict)
 
             if (available.size())
             {
-                areaName = available.first();
+                areaName = available.front();
             }
         }
 
         if (!areaName.empty())
         {
             selectAreas_.resize(1);
-            selectAreas_.first() = areaName;
+            selectAreas_.front() = areaName;
         }
     }
 
     // Restrict to specified meshes
-    meshes_.filterKeys(selectAreas_);
+    meshes_ = obr().csorted<faMesh>(selectAreas_);
 
     dict.readEntry("fields", fieldSelection_);
     fieldSelection_.uniq();
@@ -188,8 +185,10 @@ bool Foam::areaWrite::read(const dictionary& dict)
         surfaceWriter::formatOptions(dict, writerType)
     );
 
-    for (const word& areaName : meshes_.keys())
+    for (const faMesh& areaMesh : meshes_)
     {
+        const word& areaName = areaMesh.name();
+
         // Define surface writer, but do NOT yet attach a surface
 
         auto surfWriter = surfaceWriter::New(writerType, writerOptions);
@@ -222,9 +221,9 @@ bool Foam::areaWrite::write()
     DynamicList<label> missed(fieldSelection_.size());
 
 
-    for (const word& areaName : meshes_.sortedToc())
+    for (const faMesh& areaMesh : meshes_)
     {
-        const faMesh& areaMesh = *meshes_[areaName];
+        const word& areaName = areaMesh.name();
 
         polySurface* surfptr = surfaces_->getObjectPtr<polySurface>(areaName);
 

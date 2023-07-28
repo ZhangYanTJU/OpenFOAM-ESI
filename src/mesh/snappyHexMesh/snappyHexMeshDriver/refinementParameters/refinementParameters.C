@@ -129,7 +129,7 @@ Foam::refinementParameters::refinementParameters
         {
             locationsInMesh_[nZones] = pointsToZone[i].first();
             zonesInMesh_[nZones] = pointsToZone[i].second();
-            if (zonesInMesh_[nZones] == word::null)
+            if (zonesInMesh_[nZones].empty())
             {
                 zonesInMesh_[nZones] = "none";
             }
@@ -199,7 +199,7 @@ Foam::labelList Foam::refinementParameters::addCellZonesToMesh
     labelList zoneIDs(zonesInMesh_.size(), -1);
     forAll(zonesInMesh_, i)
     {
-        if (zonesInMesh_[i] != word::null && zonesInMesh_[i] != "none")
+        if (!zonesInMesh_[i].empty() && zonesInMesh_[i] != "none")
         {
             zoneIDs[i] = surfaceZonesInfo::addCellZone
             (
@@ -282,11 +282,7 @@ Foam::labelList Foam::refinementParameters::zonedLocations
 
     forAll(zonesInMesh, i)
     {
-        if
-        (
-            zonesInMesh[i] != word::null
-         && zonesInMesh[i] != "none"
-        )
+        if (!zonesInMesh[i].empty() && zonesInMesh[i] != "none")
         {
             indices.append(i);
         }
@@ -304,11 +300,7 @@ Foam::labelList Foam::refinementParameters::unzonedLocations
 
     forAll(zonesInMesh, i)
     {
-        if
-        (
-            zonesInMesh[i] == word::null
-         || zonesInMesh[i] == "none"
-        )
+        if (zonesInMesh[i].empty() || zonesInMesh[i] == "none")
         {
             indices.append(i);
         }

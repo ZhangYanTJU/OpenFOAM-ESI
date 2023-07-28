@@ -231,7 +231,7 @@ void Foam::expressions::exprResultDelayed::storeValue
     {
         // Replace value
 
-        storedValues_.last().second() = settingResult_;
+        storedValues_.back().second() = settingResult_;
     }
 }
 

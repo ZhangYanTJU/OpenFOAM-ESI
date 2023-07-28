@@ -947,7 +947,7 @@ void addZoneSidePatches
 
     forAll(zoneSidePatch, zoneI)
     {
-        if (oneDPolyPatchType != word::null)
+        if (!oneDPolyPatchType.empty())
         {
             // Reuse single empty patch.
             word patchName;

@@ -933,7 +933,7 @@ Foam::triSurface Foam::isoSurfacePoint::stitchTriPoints
             );
             rawPointi += 3;
 
-            if (tri.valid())
+            if (tri.good())
             {
                 newToOldTri.append(oldTriI);
                 dynTris.append(tri);
@@ -1406,9 +1406,9 @@ Foam::isoSurfacePoint::isoSurfacePoint
             );
 
             // Clear old value. Cannot resize it since is a slice.
-            bfld.set(patchi, nullptr);
-
             // Set new value we can change
+
+            bfld.release(patchi);
             bfld.set
             (
                 patchi,
@@ -1603,7 +1603,7 @@ Foam::isoSurfacePoint::isoSurfacePoint
         DynamicList<label> trimTriMap;
         // Trimmed to original point
         labelList trimTriPointMap;
-        if (getClipBounds().valid())
+        if (getClipBounds().good())
         {
             trimToBox
             (
@@ -1636,7 +1636,7 @@ Foam::isoSurfacePoint::isoSurfacePoint
         }
 
 
-        if (getClipBounds().valid())
+        if (getClipBounds().good())
         {
             // Adjust interpolatedPoints_
             inplaceRenumber(triPointMergeMap_, interpolatedPoints_);

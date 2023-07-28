@@ -45,7 +45,7 @@ Foam::mappedMixedFvPatchField<Type>::mappedMixedFvPatchField
         mappedFixedValueFvPatchField<Type>::mapper(p, iF),
         *this
     ),
-    weightFieldName_(word::null)
+    weightFieldName_()
 {
     this->refValue() = Zero;
     this->refGrad() = Zero;

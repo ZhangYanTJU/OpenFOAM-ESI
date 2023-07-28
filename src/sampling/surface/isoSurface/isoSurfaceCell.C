@@ -815,7 +815,7 @@ Foam::triSurface Foam::isoSurfaceCell::stitchTriPoints
                 triPointReverseMap[rawPointi+2],
                 0
             );
-            if (tri.valid())
+            if (tri.good())
             {
                 newToOldTri.append(oldTriI);
                 dynTris.append(tri);
@@ -946,9 +946,9 @@ void Foam::isoSurfaceCell::calcAddressing
 
 
     // Determine edgeFaces
-    edgeFace0.resize(nUnique);
+    edgeFace0.resize_nocopy(nUnique);
     edgeFace0 = -1;
-    edgeFace1.resize(nUnique);
+    edgeFace1.resize_nocopy(nUnique);
     edgeFace1 = -1;
     edgeFacesRest.clear();
 
@@ -972,19 +972,8 @@ void Foam::isoSurfaceCell::calcAddressing
             //    << " used by more than two triangles: " << edgeFace0[edgeI]
             //    << ", "
             //    << edgeFace1[edgeI] << " and " << triI << endl;
-            Map<labelList>::iterator iter = edgeFacesRest.find(edgeI);
 
-            if (iter != edgeFacesRest.end())
-            {
-                labelList& eFaces = iter();
-                label sz = eFaces.size();
-                eFaces.setSize(sz+1);
-                eFaces[sz] = triI;
-            }
-            else
-            {
-                edgeFacesRest.insert(edgeI, labelList(1, triI));
-            }
+            edgeFacesRest(edgeI).push_back(triI);
         }
     }
 }
@@ -1311,7 +1300,7 @@ Foam::isoSurfaceCell::isoSurfaceCell
         DynamicList<label> trimTriMap;
         // Trimmed to original point
         labelList trimTriPointMap;
-        if (getClipBounds().valid())
+        if (getClipBounds().good())
         {
             isoSurfacePoint::trimToBox
             (
@@ -1343,7 +1332,7 @@ Foam::isoSurfaceCell::isoSurfaceCell
                 << " merged triangles." << endl;
         }
 
-        if (getClipBounds().valid())
+        if (getClipBounds().good())
         {
             // Adjust interpolatedPoints_
             inplaceRenumber(triPointMergeMap_, interpolatedPoints_);

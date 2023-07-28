@@ -109,7 +109,7 @@ void Foam::fvMeshAdder::MapVolField
         // Sort deleted ones last so is now in newPatch ordering
         bfld.reorder(oldToNew);
         // Extend to covers all patches
-        bfld.setSize(mesh.boundaryMesh().size());
+        bfld.resize(mesh.boundaryMesh().size());
         // Delete unused patches
         for
         (
@@ -118,7 +118,7 @@ void Foam::fvMeshAdder::MapVolField
             newPatchi++
         )
         {
-            bfld.set(newPatchi, nullptr);
+            bfld.release(newPatchi);
         }
 
 
@@ -419,7 +419,7 @@ void Foam::fvMeshAdder::MapSurfaceField
         // Sort deleted ones last so is now in newPatch ordering
         bfld.reorder(oldToNew);
         // Extend to covers all patches
-        bfld.setSize(mesh.boundaryMesh().size());
+        bfld.resize(mesh.boundaryMesh().size());
         // Delete unused patches
         for
         (
@@ -428,7 +428,7 @@ void Foam::fvMeshAdder::MapSurfaceField
             newPatchi++
         )
         {
-            bfld.set(newPatchi, nullptr);
+            bfld.release(newPatchi);
         }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,8 +102,8 @@ Foam::dictionary::dictionary
 
         if (e.keyword().isPattern())
         {
-            patterns_.prepend(&e);
-            regexps_.prepend(autoPtr<regExp>::New(e.keyword()));
+            patterns_.push_front(&e);
+            regexps_.push_front(autoPtr<regExp>::New(e.keyword()));
         }
     }
 }
@@ -124,8 +124,8 @@ Foam::dictionary::dictionary
 
         if (e.keyword().isPattern())
         {
-            patterns_.prepend(&e);
-            regexps_.prepend(autoPtr<regExp>::New(e.keyword()));
+            patterns_.push_front(&e);
+            regexps_.push_front(autoPtr<regExp>::New(e.keyword()));
         }
     }
 }
@@ -204,23 +204,23 @@ const Foam::dictionary& Foam::dictionary::topDict() const
 
 Foam::label Foam::dictionary::startLineNumber() const
 {
-    if (size())
-    {
-        return first()->startLineNumber();
-    }
-
-    return -1;
+    return
+    (
+        IDLList<entry>::empty()
+      ? -1
+      : IDLList<entry>::front()->startLineNumber()
+    );
 }
 
 
 Foam::label Foam::dictionary::endLineNumber() const
 {
-    if (size())
-    {
-        return last()->endLineNumber();
-    }
-
-    return -1;
+    return
+    (
+        IDLList<entry>::empty()
+      ? -1
+      : IDLList<entry>::back()->endLineNumber()
+    );
 }
 
 
@@ -674,8 +674,8 @@ Foam::entry* Foam::dictionary::add(entry* entryPtr, bool mergeEntry)
 
             if (entryPtr->keyword().isPattern())
             {
-                patterns_.prepend(entryPtr);
-                regexps_.prepend(autoPtr<regExp>::New(entryPtr->keyword()));
+                patterns_.push_front(entryPtr);
+                regexps_.push_front(autoPtr<regExp>::New(entryPtr->keyword()));
             }
 
             return entryPtr;  // now an entry in the dictionary
@@ -698,12 +698,12 @@ Foam::entry* Foam::dictionary::add(entry* entryPtr, bool mergeEntry)
         entryPtr->name() =
             fileName::concat(name(), entryPtr->keyword(), '.');
 
-        parent_type::append(entryPtr);
+        parent_type::push_back(entryPtr);
 
         if (entryPtr->keyword().isPattern())
         {
-            patterns_.prepend(entryPtr);
-            regexps_.prepend(autoPtr<regExp>::New(entryPtr->keyword()));
+            patterns_.push_front(entryPtr);
+            regexps_.push_front(autoPtr<regExp>::New(entryPtr->keyword()));
         }
 
         return entryPtr;  // now an entry in the dictionary

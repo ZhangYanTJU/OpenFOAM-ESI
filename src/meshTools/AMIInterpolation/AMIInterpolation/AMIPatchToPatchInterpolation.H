@@ -24,10 +24,16 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Typedef
+    Foam::AMIPatchToPatchInterpolation
+
+Description
+    Patch-to-patch interpolation == Foam::AMIInterpolation
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef AMIPatchToPatchInterpolation_H
-#define AMIPatchToPatchInterpolation_H
+#ifndef Foam_AMIPatchToPatchInterpolation_H
+#define Foam_AMIPatchToPatchInterpolation_H
 
 #include "AMIInterpolation.H"
 

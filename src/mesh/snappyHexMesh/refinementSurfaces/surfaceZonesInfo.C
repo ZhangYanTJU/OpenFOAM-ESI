@@ -432,25 +432,22 @@ Foam::label Foam::surfaceZonesInfo::addCellZone
 {
     cellZoneMesh& cellZones = mesh.cellZones();
 
-    label zoneI = cellZones.findZoneID(name);
+    label zoneID = cellZones.findZoneID(name);
 
-    if (zoneI == -1)
+    if (zoneID == -1)
     {
-        zoneI = cellZones.size();
-        cellZones.setSize(zoneI+1);
-        cellZones.set
+        zoneID = cellZones.size();
+
+        cellZones.emplace_back
         (
-            zoneI,
-            new cellZone
-            (
-                name,           // name
-                addressing,     // addressing
-                zoneI,          // index
-                cellZones       // cellZoneMesh
-            )
+            name,
+            addressing,
+            zoneID,
+            cellZones
         );
     }
-    return zoneI;
+
+    return zoneID;
 }
 
 
@@ -469,12 +466,12 @@ Foam::labelList Foam::surfaceZonesInfo::addCellZonesToMesh
 
         const word& cellZoneName = surfList[surfI].cellZoneName();
 
-        if (cellZoneName != word::null)
+        if (!cellZoneName.empty())
         {
             label zoneI = addCellZone
             (
                 cellZoneName,
-                labelList(0),   // addressing
+                labelList(),   // addressing
                 mesh
             );
 
@@ -515,24 +512,19 @@ Foam::label Foam::surfaceZonesInfo::addFaceZone
 {
     faceZoneMesh& faceZones = mesh.faceZones();
 
-    label zoneI = faceZones.findZoneID(name);
+    label zoneID = faceZones.findZoneID(name);
 
-    if (zoneI == -1)
+    if (zoneID == -1)
     {
-        zoneI = faceZones.size();
-        faceZones.setSize(zoneI+1);
+        zoneID = faceZones.size();
 
-        faceZones.set
+        faceZones.emplace_back
         (
-            zoneI,
-            new faceZone
-            (
-                name,           // name
-                addressing,     // addressing
-                flipMap,        // flipMap
-                zoneI,          // index
-                faceZones       // faceZoneMesh
-            )
+            name,
+            addressing,
+            flipMap,
+            zoneID,
+            faceZones
         );
     }
 //    else
@@ -604,7 +596,8 @@ Foam::label Foam::surfaceZonesInfo::addFaceZone
 //            }
 //        }
 //    }
-    return zoneI;
+
+    return zoneID;
 }
 
 
@@ -633,8 +626,8 @@ Foam::labelListList Foam::surfaceZonesInfo::addFaceZonesToMesh
             label zoneI = addFaceZone
             (
                 faceZoneName,   //name
-                labelList(0),   //addressing
-                boolList(0),    //flipmap
+                labelList(),    //addressing
+                boolList(),     //flipmap
                 mesh
             );
 

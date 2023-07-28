@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,19 +53,19 @@ inline const Foam::primitivePatch& Foam::AMIInterpolation::tgtPatch0() const
 }
 
 
-inline bool Foam::AMIInterpolation::distributed() const
+inline bool Foam::AMIInterpolation::distributed() const noexcept
 {
-    return singlePatchProc_ == -1;
+    return (singlePatchProc_ == -1);
 }
 
 
-inline bool Foam::AMIInterpolation::requireMatch() const
+inline bool Foam::AMIInterpolation::requireMatch() const noexcept
 {
     return requireMatch_;
 }
 
 
-inline bool Foam::AMIInterpolation::setRequireMatch(const bool flag)
+inline bool Foam::AMIInterpolation::setRequireMatch(bool flag) noexcept
 {
     requireMatch_ = flag;
     return requireMatch_;
@@ -78,7 +78,7 @@ inline bool Foam::AMIInterpolation::mustMatchFaces() const
 }
 
 
-inline bool Foam::AMIInterpolation::reverseTarget() const
+inline bool Foam::AMIInterpolation::reverseTarget() const noexcept
 {
     return reverseTarget_;
 }
@@ -96,7 +96,7 @@ inline bool Foam::AMIInterpolation::applyLowWeightCorrection() const
 }
 
 
-inline Foam::label Foam::AMIInterpolation::singlePatchProc() const
+inline Foam::label Foam::AMIInterpolation::singlePatchProc() const noexcept
 {
     return singlePatchProc_;
 }
@@ -168,6 +168,13 @@ inline const Foam::mapDistribute& Foam::AMIInterpolation::srcMap() const
 }
 
 
+inline const Foam::mapDistribute*
+Foam::AMIInterpolation::hasSrcMap() const noexcept
+{
+    return srcMapPtr_.get();
+}
+
+
 inline const Foam::List<Foam::scalar>& Foam::AMIInterpolation::tgtMagSf() const
 {
     return tgtMagSf_;
@@ -220,5 +227,13 @@ inline const Foam::mapDistribute& Foam::AMIInterpolation::tgtMap() const
 {
     return *tgtMapPtr_;
 }
+
+
+inline const Foam::mapDistribute*
+Foam::AMIInterpolation::hasTgtMap() const noexcept
+{
+    return tgtMapPtr_.get();
+}
+
 
 // ************************************************************************* //

@@ -65,7 +65,7 @@ void Foam::conformalVoronoiMesh::timeCheck
             << runTime.elapsedCpuTime() << " s, "
             << "delta " << runTime.cpuTimeIncrement()<< " s";
 
-        if (description != word::null)
+        if (!description.empty())
         {
             Info<< ", " << description << " ";
         }

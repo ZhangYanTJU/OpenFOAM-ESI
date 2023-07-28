@@ -37,6 +37,16 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T, class Key, class Hash>
+Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
+:
+    HashTableCore(),
+    size_(0),
+    capacity_(0),
+    table_(nullptr)
+{}
+
+
+template<class T, class Key, class Hash>
 Foam::HashTable<T, Key, Hash>::HashTable()
 :
     HashTable<T, Key, Hash>(128)
@@ -44,16 +54,19 @@ Foam::HashTable<T, Key, Hash>::HashTable()
 
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable(const label size)
+Foam::HashTable<T, Key, Hash>::HashTable(const label initialCapacity)
 :
     HashTableCore(),
     size_(0),
-    capacity_(HashTableCore::canonicalSize(size)),
+    capacity_(0),
     table_(nullptr)
 {
-    if (capacity_)
+    if (initialCapacity > 0)
     {
+        // Like resize() but no initial content to transfer
+        capacity_ = HashTableCore::canonicalSize(initialCapacity);
         table_ = new node_type*[capacity_];
+
         for (label i=0; i < capacity_; ++i)
         {
             table_[i] = nullptr;
@@ -75,13 +88,14 @@ Foam::HashTable<T, Key, Hash>::HashTable(const HashTable<T, Key, Hash>& ht)
 
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable(HashTable<T, Key, Hash>&& rhs)
+Foam::HashTable<T, Key, Hash>::HashTable(HashTable<T, Key, Hash>&& rhs) noexcept
 :
     HashTableCore(),
     size_(rhs.size_),
     capacity_(rhs.capacity_),
     table_(rhs.table_)
 {
+    // Stole all contents
     rhs.size_ = 0;
     rhs.capacity_ = 0;
     rhs.table_ = nullptr;
@@ -108,11 +122,13 @@ Foam::HashTable<T, Key, Hash>::HashTable
 template<class T, class Key, class Hash>
 Foam::HashTable<T, Key, Hash>::~HashTable()
 {
-    if (table_)
-    {
-        clear();
-        delete[] table_;
-    }
+    // Remove all entries from table
+    clear();
+
+    // Remove the table itself
+    capacity_ = 0;
+    delete[] table_;
+    table_ = nullptr;
 }
 
 
@@ -636,9 +652,9 @@ Foam::label Foam::HashTable<T, Key, Hash>::retain
 
 
 template<class T, class Key, class Hash>
-void Foam::HashTable<T, Key, Hash>::resize(const label sz)
+void Foam::HashTable<T, Key, Hash>::resize(const label requestedCapacity)
 {
-    const label newCapacity = HashTableCore::canonicalSize(sz);
+    const label newCapacity = HashTableCore::canonicalSize(requestedCapacity);
     const label oldCapacity = capacity_;
 
     if (newCapacity == oldCapacity)
@@ -656,12 +672,8 @@ void Foam::HashTable<T, Key, Hash>::resize(const label sz)
         }
         else
         {
-            if (table_)
-            {
-                delete[] table_;
-                capacity_ = 0;
-            }
-
+            capacity_ = 0;
+            delete[] table_;
             table_ = nullptr;
         }
 
@@ -679,9 +691,14 @@ void Foam::HashTable<T, Key, Hash>::resize(const label sz)
         table_[i] = nullptr;
     }
 
+    if (!oldTable)
+    {
+        return;
+    }
+
     // Move to new table[] but with new chaining.
 
-    for (label i = 0, nPending = size_; nPending && i < oldCapacity; ++i)
+    for (label i = 0, pending = size_; pending && i < oldCapacity; ++i)
     {
         for (node_type* ep = oldTable[i]; ep; /*nil*/)
         {
@@ -696,22 +713,24 @@ void Foam::HashTable<T, Key, Hash>::resize(const label sz)
             }
 
             ep = next;      // continue in the linked-list
-            --nPending;     // note any early completion
+            --pending;      // note any early completion
         }
         oldTable[i] = nullptr;
     }
 
-    if (oldTable)
-    {
-        delete[] oldTable;
-    }
+    delete[] oldTable;
 }
 
 
 template<class T, class Key, class Hash>
 void Foam::HashTable<T, Key, Hash>::clear()
 {
-    for (label i=0; size_ && i<capacity_; ++i)
+    if (!table_)
+    {
+        capacity_ = 0;  // Paranoid
+    }
+
+    for (label i = 0, pending = size_; pending && i < capacity_; ++i)
     {
         for (node_type* ep = table_[i]; ep; /*nil*/)
         {
@@ -720,23 +739,29 @@ void Foam::HashTable<T, Key, Hash>::clear()
             delete ep;
 
             ep = next;  // continue in the linked-list
-            --size_;    // note any early completion
+            --pending;  // note any early completion
         }
         table_[i] = nullptr;
     }
+    size_ = 0;
 }
 
 
 template<class T, class Key, class Hash>
 void Foam::HashTable<T, Key, Hash>::clearStorage()
 {
+    // Remove all entries from table
     clear();
-    resize(0);
+
+    // Remove the table itself
+    capacity_ = 0;
+    delete[] table_;
+    table_ = nullptr;
 }
 
 
 template<class T, class Key, class Hash>
-void Foam::HashTable<T, Key, Hash>::swap(HashTable<T, Key, Hash>& rhs)
+void Foam::HashTable<T, Key, Hash>::swap(HashTable<T, Key, Hash>& rhs) noexcept
 {
     if (this == &rhs)
     {
@@ -942,12 +967,7 @@ void Foam::HashTable<T, Key, Hash>::operator=
     HashTable<T, Key, Hash>&& rhs
 )
 {
-    if (this == &rhs)
-    {
-        return;  // Self-assignment is a no-op
-    }
-
-    transfer(rhs);
+    transfer(rhs);  // Includes self-assignment check
 }
 
 
@@ -994,7 +1014,7 @@ Foam::HashTable<T, Key, Hash>& Foam::HashTable<T, Key, Hash>::operator+=
 )
 {
     // Avoid no-ops:
-    if (rhs.size() || this != &rhs)
+    if (rhs.size() && (this != &rhs))
     {
         if (this->size())
         {

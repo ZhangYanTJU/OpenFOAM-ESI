@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,6 +58,16 @@ inline void Foam::autoPtr<T>::reset(autoPtr<T>&& other) noexcept
     }
 
     reset(other.release());
+}
+
+
+template<class T>
+template<class... Args>
+inline T& Foam::autoPtr<T>::emplace(Args&&... args)
+{
+    delete ptr_;  // delete old entry
+    ptr_ = new T(std::forward<Args>(args)...);
+    return *ptr_;
 }
 
 

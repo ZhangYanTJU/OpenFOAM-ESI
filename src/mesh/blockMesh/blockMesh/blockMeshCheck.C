@@ -47,7 +47,7 @@ bool Foam::blockMesh::checkDegenerate() const
             {
                 edge e(shape.edge(edgei));
 
-                if (!e.valid())
+                if (!e.good())
                 {
                     return true;  // Looks like a collapsed edge
                 }

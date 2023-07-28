@@ -2377,13 +2377,12 @@ Foam::label Foam::meshRefinement::appendPatch
         const_cast<polyBoundaryMesh&>(mesh.boundaryMesh());
     fvBoundaryMesh& fvPatches = const_cast<fvBoundaryMesh&>(mesh.boundary());
 
-    label patchi = polyPatches.size();
+    // The new location (at the end)
+    const label patchi = polyPatches.size();
 
     // Add polyPatch at the end
-    polyPatches.setSize(patchi+1);
-    polyPatches.set
+    polyPatches.push_back
     (
-        patchi,
         polyPatch::New
         (
             patchName,
@@ -2392,10 +2391,9 @@ Foam::label Foam::meshRefinement::appendPatch
             polyPatches
         )
     );
-    fvPatches.setSize(patchi+1);
-    fvPatches.set
+
+    fvPatches.push_back
     (
-        patchi,
         fvPatch::New
         (
             polyPatches[patchi],  // point to newly added polyPatch
@@ -2678,17 +2676,12 @@ Foam::label Foam::meshRefinement::addPointZone(const word& name)
     {
         zoneI = pointZones.size();
         pointZones.clearAddressing();
-        pointZones.setSize(zoneI+1);
-        pointZones.set
+
+        pointZones.emplace_back
         (
-            zoneI,
-            new pointZone
-            (
-                name,           // name
-                labelList(0),   // addressing
-                zoneI,          // index
-                pointZones      // pointZoneMesh
-            )
+            name,           // name
+            zoneI,          // index
+            pointZones      // pointZoneMesh
         );
     }
     return zoneI;

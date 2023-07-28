@@ -57,9 +57,9 @@ void Foam::distributedDICPreconditioner::forwardInternalDiag
     const scalar* const __restrict__ upperPtr = matrix.upper().begin();
 
     const label nFaces = matrix.upper().size();
-    if (cellColourPtr_.valid())
+    if (cellColourPtr_)
     {
-        const auto& cellColour = cellColourPtr_();
+        const auto& cellColour = *cellColourPtr_;
         for (label face=0; face<nFaces; face++)
         {
             const label cell = lPtr[face];
@@ -96,9 +96,9 @@ void Foam::distributedDICPreconditioner::forwardInternal
     const scalar* const __restrict__ upperPtr = matrix.upper().begin();
 
     const label nFaces = matrix.upper().size();
-    if (cellColourPtr_.valid())
+    if (cellColourPtr_)
     {
-        const auto& cellColour = cellColourPtr_();
+        const auto& cellColour = *cellColourPtr_;
         for (label face=0; face<nFaces; face++)
         {
             const label cell = lPtr[face];

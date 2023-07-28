@@ -246,17 +246,12 @@ bool Foam::cellZoneSet::writeObject
     {
         zoneID = cellZones.size();
 
-        cellZones.setSize(zoneID+1);
-        cellZones.set
+        cellZones.emplace_back
         (
+            name(),
+            addressing_,
             zoneID,
-            new cellZone
-            (
-                name(),
-                addressing_,
-                zoneID,
-                cellZones
-            )
+            cellZones
         );
     }
     else

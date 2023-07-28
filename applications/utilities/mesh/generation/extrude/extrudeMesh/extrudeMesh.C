@@ -979,7 +979,7 @@ int main(int argc, char *argv[])
     // Change the front and back patch types as required
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    word frontBackType(word::null);
+    word frontBackType;
 
     if (isType<extrudeModels::wedge>(model()))
     {

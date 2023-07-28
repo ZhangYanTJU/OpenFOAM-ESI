@@ -512,7 +512,7 @@ const Foam::meshedSurfRef& Foam::surfaceWriter::adjustSurface() const
 
         tmp<pointField> tpts;
 
-        if (geometryTransform_.valid())
+        if (geometryTransform_.good())
         {
             if (!geometryTransform_.R().is_identity())
             {
@@ -688,7 +688,7 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::adjustFieldTemplate
         if
         (
             (pTraits<Type>::rank != 0 && pTraits<Type>::nComponents > 1)
-         && geometryTransform_.valid()
+         && geometryTransform_.good()
          && !geometryTransform_.R().is_identity()
         )
         {

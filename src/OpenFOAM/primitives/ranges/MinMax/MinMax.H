@@ -41,7 +41,7 @@ Description
     // on construction
     MinMax<scalar> range(values);
 
-    range.clear();
+    range.reset();
 
     range += val;
 

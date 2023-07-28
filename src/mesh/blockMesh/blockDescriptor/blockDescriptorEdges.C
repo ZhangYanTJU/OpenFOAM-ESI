@@ -45,9 +45,7 @@ int Foam::blockDescriptor::calcEdgePointsWeights
     // The topological edge on the block
     const Foam::edge thisEdge(blockShape_, cellModelEdge);
 
-    const bool isCollapsedEdge = !thisEdge.valid();
-
-    if (blockEdge::debug && isCollapsedEdge)
+    if (blockEdge::debug && !thisEdge.good())
     {
         Info<< "Collapsed edge:" << thisEdge;
         if (index_ >= 0)

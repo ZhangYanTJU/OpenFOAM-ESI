@@ -75,7 +75,7 @@ Foam::fv::limitTemperature::limitTemperature
     writeFile(mesh, name, typeName, dict, false),
     Tmin_(0),
     Tmax_(0),
-    phase_(word::null)
+    phase_()
 {
     if (isActive())
     {

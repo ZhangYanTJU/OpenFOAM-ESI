@@ -289,8 +289,9 @@ bool Foam::functionObjects::vtkWrite::write()
     Info<< name() << " output Time: " << time_.timeName() << nl;
 
     label regioni = 0;
-    for (const word& regionName : meshes_.sortedToc())
+    for (const fvMesh& mesh : meshes_)
     {
+        const word& regionName = mesh.name();
         const word& regionDir = polyMesh::regionName(regionName);
 
         auto& meshProxy = meshSubsets_[regioni];

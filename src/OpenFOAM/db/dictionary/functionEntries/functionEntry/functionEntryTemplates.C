@@ -49,7 +49,7 @@ Foam::functionEntry::readStringList(Istream& is)
         // - treated like list with a single entry
 
         list.resize(1);
-        iss >> list.first();
+        iss >> list.front();
     }
     else
     {

@@ -100,7 +100,7 @@ Foam::fa::jouleHeatingSource::updateSigma
             typeName + ":sigma_" + regionName_
         );
 
-    if (!sigmaVsTPtr.valid())
+    if (!sigmaVsTPtr)
     {
         // Electrical conductivity field, sigma, was specified by the user
         return sigma;

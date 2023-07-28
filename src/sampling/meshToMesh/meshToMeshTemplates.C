@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,7 +69,7 @@ void Foam::meshToMesh::mapSrcToTgt
 
     multiplyWeightedOp<Type, CombineOp> cbop(cop);
 
-    if (singleMeshProc_ == -1)
+    if (distributed())
     {
         const mapDistribute& map = srcMapPtr_();
 
@@ -138,7 +138,7 @@ void Foam::meshToMesh::mapSrcToTgt
 
     multiplyWeightedOp<Type, CombineOp> cbop(cop);
 
-    if (singleMeshProc_ == -1)
+    if (distributed())
     {
         if (returnReduceAnd(tgtToSrcCellVec_.empty()))
         {
@@ -284,7 +284,7 @@ void Foam::meshToMesh::mapTgtToSrc
 
     multiplyWeightedOp<Type, CombineOp> cbop(cop);
 
-    if (singleMeshProc_ == -1)
+    if (distributed())
     {
         const mapDistribute& map = tgtMapPtr_();
 
@@ -351,7 +351,7 @@ void Foam::meshToMesh::mapTgtToSrc
 
     multiplyWeightedOp<Type, CombineOp> cbop(cop);
 
-    if (singleMeshProc_ == -1)
+    if (distributed())
     {
         if (returnReduceAnd(srcToTgtCellVec_.empty()))
         {
@@ -551,8 +551,8 @@ void Foam::meshToMesh::mapSrcToTgt
                 (
                     AMIList[i].singlePatchProc(),
                     (
-                        AMIList[i].singlePatchProc() == -1
-                      ? &AMIList[i].srcMap()
+                        AMIList[i].distributed()
+                      ? AMIList[i].hasSrcMap()  // pointer to map
                       : nullptr
                     ),
                     AMIList[i].tgtAddress(),
@@ -783,8 +783,8 @@ void Foam::meshToMesh::mapTgtToSrc
                 (
                     AMIList[i].singlePatchProc(),
                     (
-                        AMIList[i].singlePatchProc() == -1
-                      ? &AMIList[i].tgtMap()
+                        AMIList[i].distributed()
+                      ? AMIList[i].hasTgtMap()  // pointer to map
                       : nullptr
                     ),
                     AMIList[i].srcAddress(),

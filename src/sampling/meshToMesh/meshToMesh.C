@@ -443,7 +443,7 @@ void Foam::meshToMesh::calculate(const word& methodName, const bool normalise)
 
     singleMeshProc_ = calcDistribution(srcRegion_, tgtRegion_);
 
-    if (singleMeshProc_ == -1)
+    if (singleMeshProc_ == -1)  // -> distributed()
     {
         // create global indexing for src and tgt meshes
         globalIndex globalSrcCells(srcRegion_.nCells());

@@ -601,7 +601,7 @@ Foam::cyclicPolyPatch::cyclicPolyPatch
 )
 :
     coupledPolyPatch(name, size, start, index, bm, patchType, transform),
-    neighbPatchName_(word::null),
+    neighbPatchName_(),
     neighbPatchID_(-1),
     rotationAxis_(Zero),
     rotationCentre_(Zero),
@@ -661,7 +661,7 @@ Foam::cyclicPolyPatch::cyclicPolyPatch
     coupledPointsPtr_(nullptr),
     coupledEdgesPtr_(nullptr)
 {
-    if (neighbPatchName_ == word::null && !coupleGroup_.valid())
+    if (neighbPatchName_.empty() && !coupleGroup_.good())
     {
         FatalIOErrorInFunction(dict)
             << "No \"neighbourPatch\" provided." << endl

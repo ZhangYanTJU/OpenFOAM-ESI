@@ -72,7 +72,7 @@ void Foam::helpTypes::helpFunctionObject::execute
     const fvMesh& mesh
 )
 {
-    word function(word::null);
+    word function;
 
     if (args.readIfPresent("browse", function))
     {

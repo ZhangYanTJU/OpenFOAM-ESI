@@ -177,11 +177,19 @@ public:
 
         //- Construct the time objectRegistry,
         //- with estimated table capacity (default: 128)
-        explicit objectRegistry(const Time& db, const label nObjects=128);
+        explicit objectRegistry
+        (
+            const Time& db,
+            const label initialCapacity = 128
+        );
 
         //- Construct sub-registry given an IObject to describe the registry,
         //- with estimated table capacity (default: 128)
-        explicit objectRegistry(const IOobject& io, const label nObjects=128);
+        explicit objectRegistry
+        (
+            const IOobject& io,
+            const label initialCapacity = 128
+        );
 
 
     //- Destructor, with checkOut() for all objects that are ownedByRegistry

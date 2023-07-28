@@ -128,7 +128,7 @@ Foam::shapeSensitivitiesBase::shapeSensitivitiesBase
 )
 :
     meshShape_(mesh),
-    surfaceFieldSuffix_(word::null),
+    surfaceFieldSuffix_(),
     writeAllSurfaceFiles_
     (
         dict.getOrDefault<bool>

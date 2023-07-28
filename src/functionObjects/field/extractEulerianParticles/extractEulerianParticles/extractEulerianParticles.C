@@ -453,7 +453,7 @@ Foam::functionObjects::extractEulerianParticles::extractEulerianParticles
     fvMeshFunctionObject(name, runTime, dict),
     writeFile(runTime, name),
     cloud_(mesh_, "eulerianParticleCloud"),
-    faceZoneName_(word::null),
+    faceZoneName_(),
     zoneID_(-1),
     patchIDs_(),
     patchFaceIDs_(),

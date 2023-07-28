@@ -47,7 +47,7 @@ void Foam::DelaunayMesh<Triangulation>::timeCheck
             << time().elapsedCpuTime() << " s, "
             << "delta " << time().cpuTimeIncrement()<< " s";
 
-        if (description != word::null)
+        if (!description.empty())
         {
             Info<< ", " << description << " ";
         }

@@ -124,10 +124,19 @@ public:
 
     // Constructors
 
-        //- Default construct with default (128) table capacity
-        HashSet()
+        //- Default construct with default (128) initial table capacity
+        HashSet() = default;
+
+        //- Construct empty with zero table capacity
+        explicit HashSet(const Foam::zero) noexcept
         :
-            parent_type()
+            parent_type(Foam::zero{})
+        {}
+
+        //- Construct empty with initial table capacity
+        explicit HashSet(const label initialCapacity)
+        :
+            parent_type(initialCapacity)
         {}
 
         //- Copy construct
@@ -137,18 +146,12 @@ public:
         {}
 
         //- Move construct
-        HashSet(this_type&& rhs)
+        HashSet(this_type&& rhs) noexcept
         :
             parent_type(std::move(rhs))
         {}
 
-        //- Construct given initial table capacity
-        explicit HashSet(const label size)
-        :
-            parent_type(size)
-        {}
-
-        //- Construct from Istream with default table capacity
+        //- Construct from Istream with default initial table capacity
         explicit HashSet(Istream& is)
         :
             parent_type(is)

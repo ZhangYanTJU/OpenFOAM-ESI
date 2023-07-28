@@ -85,7 +85,7 @@ class List
         //  Discards old storage (if any). Does not copy old contents
         inline void reAlloc(const label len);
 
-        //- Copy all list contents
+        //- Copy all list contents. Uses operator[] on the input list
         template<class List2>
         inline void copyList(const List2& list);
 
@@ -142,13 +142,13 @@ public:
         List(const Foam::one, const Foam::zero);
 
         //- Copy construct from list
-        List(const List<T>& a);
+        List(const List<T>& list);
 
         //- Copy construct contents from list
-        explicit List(const UList<T>& a);
+        explicit List(const UList<T>& list);
 
         //- Construct as copy or re-use as specified
-        List(List<T>& a, bool reuse);
+        List(List<T>& list, bool reuse);
 
         //- Copy construct subset of list
         List(const UList<T>& list, const labelUList& indices);

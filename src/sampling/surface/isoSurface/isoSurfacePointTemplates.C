@@ -75,9 +75,9 @@ Foam::isoSurfacePoint::adaptPatchFields
         )
         {
             // Clear old value. Cannot resize it since is a slice.
-            sliceFldBf.set(patchi, nullptr);
-
             // Set new value we can change
+
+            sliceFldBf.release(patchi);
             sliceFldBf.set
             (
                 patchi,

@@ -680,8 +680,8 @@ bool Foam::dictionary::changeKeyword
 
     if (newKeyword.isPattern())
     {
-        patterns_.prepend(iter());
-        regexps_.prepend(autoPtr<regExp>::New(newKeyword));
+        patterns_.push_front(iter());
+        regexps_.push_front(autoPtr<regExp>::New(newKeyword));
     }
 
     return true;

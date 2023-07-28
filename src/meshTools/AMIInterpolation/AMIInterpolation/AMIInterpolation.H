@@ -104,8 +104,8 @@ protected:
         //- Threshold weight below which interpolation is deactivated
         const scalar lowWeightCorrection_;
 
-        //- Index of processor that holds all of both sides. -1 in all other
-        //- cases
+        //- Index of processor that holds all of both sides.
+        //- The value is -1 for distributed cases
         label singlePatchProc_;
 
 
@@ -309,14 +309,14 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        AMIInterpolation
+        explicit AMIInterpolation
         (
             const dictionary& dict,
             const bool reverseTarget = false
         );
 
         //- Construct from components
-        AMIInterpolation
+        explicit AMIInterpolation
         (
             const bool requireMatch = true,
             const bool reverseTarget = false,
@@ -361,24 +361,20 @@ public:
                 return old;
             }
 
-            //- Access to the up-to-date flag
-            //  \deprecated Prefer the upToDate(bool) setter (JAN-2023)
-            bool upToDate() noexcept { return upToDate_; }
+            //- Distributed across processors (singlePatchProc == -1)
+            inline bool distributed() const noexcept;
 
-            //- Access to the distributed flag
-            inline bool distributed() const;
+            //- Return the requireMatch flag
+            inline bool requireMatch() const noexcept;
 
-            //- Access to the requireMatch flag
-            inline bool requireMatch() const;
-
-            //- Access to the requireMatch flag
-            inline bool setRequireMatch(const bool flag);
+            //- Set the require match flag, return the \em new value
+            inline bool setRequireMatch(bool flag) noexcept;
 
             //- Return true if requireMatch and lowWeightCorrectionin active
             inline bool mustMatchFaces() const;
 
             //- Access to the reverseTarget flag
-            inline bool reverseTarget() const;
+            inline bool reverseTarget() const noexcept;
 
             //- Threshold weight below which interpolation is deactivated
             inline scalar lowWeightCorrection() const;
@@ -386,9 +382,9 @@ public:
             //- Return true if employing a 'lowWeightCorrection'
             inline bool applyLowWeightCorrection() const;
 
-            //- Set to -1, or the processor holding all faces (both sides) of
-            //- the AMI
-            inline label singlePatchProc() const;
+            //- The processor holding all faces (both sides),
+            //- or -1 if distributed
+            inline label singlePatchProc() const noexcept;
 
 
             // Source patch
@@ -425,10 +421,14 @@ public:
                 //- Return access to source patch face centroids
                 inline pointListList& srcCentroids();
 
-                //- Source map pointer - valid only if singlePatchProc = -1
+                //- Source map - valid only if singlePatchProc = -1
                 //- This gets source data into a form to be consumed by
                 //- tgtAddress, tgtWeights
                 inline const mapDistribute& srcMap() const;
+
+                //- Pointer to the source map (if distributed).
+                //- Can be checked as a bool.
+                inline const mapDistribute* hasSrcMap() const noexcept;
 
 
             // Target patch
@@ -459,10 +459,14 @@ public:
                 //- patch weights (i.e. the sum before normalisation)
                 inline scalarField& tgtWeightsSum();
 
-                //- Target map pointer -  valid only if singlePatchProc=-1.
+                //- Target map - valid only if singlePatchProc=-1.
                 //- This gets target data into a form to be consumed by
                 //- srcAddress, srcWeights
                 inline const mapDistribute& tgtMap() const;
+
+                //- Pointer to the target map (if distributed).
+                //- Can be checked as a bool.
+                inline const mapDistribute* hasTgtMap() const noexcept;
 
 
         // Manipulation
@@ -637,6 +641,13 @@ public:
 
             //- Write
             virtual void write(Ostream& os) const;
+
+
+    // Housekeeping
+
+        //- Non-const access to the up-to-date flag
+        //  \deprecated Prefer the upToDate(bool) setter (JAN-2023)
+        bool& upToDate() noexcept { return upToDate_; }
 };
 
 

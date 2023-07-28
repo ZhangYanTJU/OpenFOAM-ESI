@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -78,7 +78,10 @@ int main()
     }
 
     {
-        auto tfld1 = tmp<scalarField>::New(20, Zero);
+        auto tfld1 = tmp<scalarField>::New(10, Zero);
+        printInfo(tfld1, true);
+
+        tfld1.emplace(20, Zero);
         printInfo(tfld1, true);
 
         // Hold on to the old content for a bit

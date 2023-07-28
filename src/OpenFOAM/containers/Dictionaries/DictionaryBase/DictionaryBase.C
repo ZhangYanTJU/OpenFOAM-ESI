@@ -43,13 +43,6 @@ void Foam::DictionaryBase<IDLListType, T>::addEntries()
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class IDLListType, class T>
-Foam::DictionaryBase<IDLListType, T>::DictionaryBase(const label size)
-:
-    hashedTs_(size)
-{}
-
-
-template<class IDLListType, class T>
 Foam::DictionaryBase<IDLListType, T>::DictionaryBase
 (
     const DictionaryBase& dict
@@ -157,43 +150,15 @@ T* Foam::DictionaryBase<IDLListType, T>::lookup(const word& keyword)
 
 
 template<class IDLListType, class T>
-Foam::wordList Foam::DictionaryBase<IDLListType, T>::toc() const
-{
-    // Cannot rely on the items themselves having a keyword() method
-    // so simply return the toc() from the hashed entries
-    // Make it sorted, since anything else would have no meaning.
-    return hashedTs_.sortedToc();
-}
-
-
-template<class IDLListType, class T>
-Foam::wordList Foam::DictionaryBase<IDLListType, T>::sortedToc() const
-{
-    return hashedTs_.sortedToc();
-}
-
-
-template<class IDLListType, class T>
-template<class Compare>
-Foam::wordList Foam::DictionaryBase<IDLListType, T>::sortedToc
-(
-    const Compare& comp
-) const
-{
-    return hashedTs_.sortedToc(comp);
-}
-
-
-template<class IDLListType, class T>
 void Foam::DictionaryBase<IDLListType, T>::push_front
 (
     const word& keyword,
     T* ptr
 )
 {
+    IDLListType::push_front(ptr);
     // NOTE: we should probably check that HashTable::insert actually worked
     hashedTs_.insert(keyword, ptr);
-    IDLListType::push_front(ptr);
 }
 
 
@@ -213,16 +178,15 @@ void Foam::DictionaryBase<IDLListType, T>::push_back
 template<class IDLListType, class T>
 T* Foam::DictionaryBase<IDLListType, T>::remove(const word& keyword)
 {
+    T* ptr = nullptr;
     auto iter = hashedTs_.find(keyword);
 
     if (iter.good())
     {
-        T* ptr = IDLListType::remove(iter.val());
+        ptr = IDLListType::remove(iter.val());
         hashedTs_.erase(iter);
-        return ptr;
     }
-
-    return nullptr;
+    return ptr;
 }
 
 
@@ -268,9 +232,5 @@ void Foam::DictionaryBase<IDLListType, T>::operator=
     this->addEntries();
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "DictionaryBaseIO.C"
 
 // ************************************************************************* //

@@ -78,7 +78,7 @@ Foam::resolutionIndexModel::resolutionIndexModel
 )
 :
     mesh_(mesh),
-    resultName_(word::null)
+    resultName_()
 {}
 
 

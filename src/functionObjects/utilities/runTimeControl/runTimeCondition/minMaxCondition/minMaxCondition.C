@@ -109,7 +109,7 @@ bool Foam::functionObjects::runTimeControls::minMaxCondition::apply()
         const word valueType =
             state_.objectResultType(functionObjectName_, fieldName);
 
-        if (valueType == word::null)
+        if (valueType.empty())
         {
             WarningInFunction
                 << "Unable to find entry " << fieldName

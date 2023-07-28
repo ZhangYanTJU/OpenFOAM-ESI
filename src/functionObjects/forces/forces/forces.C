@@ -412,13 +412,13 @@ void Foam::functionObjects::forces::addToInternalField
 
 void Foam::functionObjects::forces::createIntegratedDataFiles()
 {
-    if (!forceFilePtr_.valid())
+    if (!forceFilePtr_)
     {
         forceFilePtr_ = newFileAtStartTime("force");
         writeIntegratedDataFileHeader("Force", forceFilePtr_());
     }
 
-    if (!momentFilePtr_.valid())
+    if (!momentFilePtr_)
     {
         momentFilePtr_ = newFileAtStartTime("moment");
         writeIntegratedDataFileHeader("Moment", momentFilePtr_());

@@ -96,14 +96,26 @@ public:
         //- Default construct with default table capacity
         HashPtrTable() = default;
 
+        //- Construct with zero table capacity
+        explicit HashPtrTable(const Foam::zero) noexcept
+        :
+            parent_type(Foam::zero{})
+        {}
+
         //- Construct given initial table capacity
-        inline explicit HashPtrTable(const label size);
+        explicit HashPtrTable(const label initialCapacity)
+        :
+            parent_type(initialCapacity)
+        {}
 
         //- Copy construct, making a copy of each element
         HashPtrTable(const this_type& rhs);
 
         //- Move construct
-        inline HashPtrTable(this_type&& rhs);
+        HashPtrTable(this_type&& rhs) noexcept
+        :
+            parent_type(std::move(rhs))
+        {}
 
         //- Construct from Istream using given Istream constructor class
         template<class INew>

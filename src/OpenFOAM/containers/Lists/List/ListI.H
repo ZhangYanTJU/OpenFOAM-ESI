@@ -55,11 +55,14 @@ template<class T>
 template<class List2>
 inline void Foam::List<T>::copyList(const List2& list)
 {
+    // NB: operator[] for list read access (eg, an indirect list)
+    // cannot necessarily replace with std::copy
+
     const label len = this->size_;
 
-    for (label i=0; i<len; ++i)
+    for (label i = 0; i < len; ++i)
     {
-        this->operator[](i) = list[i];
+        this->v_[i] = list[i];
     }
 }
 
@@ -79,10 +82,13 @@ inline Foam::List<T>::List
     {
         doAlloc();
 
+        // Like std::copy() or std::copy_n()
+        // but without any requirements on the iterator category
+
         InputIterator iter = begIter;
         for (label i = 0; i < len; ++i)
         {
-            this->operator[](i) = *iter;
+            this->v_[i] = *iter;
             ++iter;
         }
     }
@@ -147,6 +153,14 @@ inline void Foam::List<T>::resize_nocopy(const label len)
 {
     this->reAlloc(len);
 }
+
+
+// template<class T>
+// inline void Foam::List<T>::resize_fill(const label len, const T& val)
+// {
+//     this->reAlloc(len);
+//     this->fill_uniform(val);
+// }
 
 
 template<class T>

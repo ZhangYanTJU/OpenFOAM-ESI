@@ -356,7 +356,7 @@ Foam::functionObjects::sizeDistribution::sizeDistribution
     (
         selectionModeTypeNames_.get("selectionMode", dict)
     ),
-    selectionModeTypeName_(word::null),
+    selectionModeTypeName_(),
     functionType_(functionTypeNames_.get("functionType", dict)),
     abszissaType_(abszissaTypeNames_.get("abszissaType", dict)),
     nCells_(0),

@@ -33,13 +33,10 @@ Description
     It is derived from DictionaryBase instantiated on a non-memory managed
     form of intrusive doubly-linked list of \<T\>.
 
-SourceFiles
-    UDictionary.C
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef UDictionary_H
-#define UDictionary_H
+#ifndef Foam_UDictionary_H
+#define Foam_UDictionary_H
 
 #include "DictionaryBase.H"
 #include "UIDLList.H"
@@ -58,28 +55,31 @@ class UDictionary
 :
     public DictionaryBase<UIDLList<T>, T>
 {
-
 public:
+
+    //- The template instance used for the dictionary content
+    typedef DictionaryBase<UIDLList<T>, T> dict_type;
+
 
     // Constructors
 
-        //- Null constructor
-        UDictionary();
+        //- Default construct, or with initial table capacity
+        explicit UDictionary(const label initialCapacity = 128)
+        :
+            dict_type(initialCapacity)
+        {}
 
         //- Copy construct
-        UDictionary(const UDictionary&);
+        UDictionary(const UDictionary& dict)
+        :
+            dict_type(dict)
+        {}
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "UDictionary.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

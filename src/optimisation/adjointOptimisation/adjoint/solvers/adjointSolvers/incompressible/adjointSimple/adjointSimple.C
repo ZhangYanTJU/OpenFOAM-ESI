@@ -409,7 +409,7 @@ void Foam::adjointSimple::clearSensitivities()
 
 Foam::sensitivity& Foam::adjointSimple::getSensitivityBase()
 {
-    if (!adjointSensitivity_.valid())
+    if (!adjointSensitivity_)
     {
         FatalErrorInFunction
             << "Sensitivity object not allocated" << nl

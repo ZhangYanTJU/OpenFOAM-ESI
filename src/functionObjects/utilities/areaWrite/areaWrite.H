@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -128,8 +128,8 @@ class areaWrite
         //- Names of fields to write
         wordRes fieldSelection_;
 
-        //- Pointers to the requested mesh regions
-        HashTable<const faMesh*> meshes_;
+        //- Pointers to the requested mesh regions (sorted)
+        UPtrList<const faMesh> meshes_;
 
         //- Hold intermediate surfaces.
         //  The faMesh has an indirect face list but we require real ones.

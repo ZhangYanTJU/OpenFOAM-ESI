@@ -162,10 +162,10 @@ public:
 
     // Housekeeping
 
-        //- Deprecated(2020-09) True if range is non-empty
+        //- Deprecated(2020-09) True if range has size greater than zero
         //
-        //  \deprecated(2020-09) - use bool operator
-        bool valid() const noexcept { return !empty(); }
+        //  \deprecated(2020-09) - use bool operator - or good()
+        bool valid() const noexcept { return good(); }
 };
 
 

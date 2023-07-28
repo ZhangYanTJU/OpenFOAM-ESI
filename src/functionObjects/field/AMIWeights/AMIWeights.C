@@ -55,7 +55,7 @@ void Foam::functionObjects::AMIWeights::writeFileHeader(Ostream& os)
         writeTabbed(os, "Patch");
         writeTabbed(os, "nbr_patch");
 
-        if (Pstream::parRun())
+        if (UPstream::parRun())
         {
             writeTabbed(os, "distributed");
         }
@@ -85,7 +85,7 @@ void Foam::functionObjects::AMIWeights::reportPatch
 {
     const word& nbrPatchName = pp.neighbPatchName();
 
-    const Switch distributed = pp.AMI().singlePatchProc() == -1;
+    const Switch distributed = pp.AMI().distributed();
 
     const scalarField& srcWeightsSum = pp.AMI().srcWeightsSum();
     const scalar srcMinWeight = gMin(srcWeightsSum);
@@ -141,7 +141,7 @@ void Foam::functionObjects::AMIWeights::reportPatch
         << nbrPatchName << tab;
 
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
         file() << distributed << tab;
     }
@@ -165,7 +165,7 @@ void Foam::functionObjects::AMIWeights::reportPatch
         << "        Source: " << pp.name() << nl
         << "        Target: " << nbrPatchName << nl;
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
         Log << "        Parallel distributed: " << distributed << nl;
     }

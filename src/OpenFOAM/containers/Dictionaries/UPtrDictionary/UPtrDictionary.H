@@ -57,18 +57,22 @@ class UPtrDictionary
 {
 public:
 
+    //- The template instance used for the dictionary content
+    typedef DictionaryBase<DLList<T*>, T> dict_type;
+
+
     // Constructors
 
-        //- Construct given initial table size
-        explicit UPtrDictionary(const label size = 128)
+        //- Default construct, or with initial table capacity
+        explicit UPtrDictionary(const label initialCapacity = 128)
         :
-            DictionaryBase<DLList<T*>, T>(size)
+            dict_type(initialCapacity)
         {}
 
         //- Copy construct
         UPtrDictionary(const UPtrDictionary& dict)
         :
-            DictionaryBase<DLList<T*>, T>(dict)
+            dict_type(dict)
         {}
 };
 

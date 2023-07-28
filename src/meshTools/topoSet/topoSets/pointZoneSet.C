@@ -246,17 +246,12 @@ bool Foam::pointZoneSet::writeObject
     {
         zoneID = pointZones.size();
 
-        pointZones.setSize(zoneID+1);
-        pointZones.set
+        pointZones.emplace_back
         (
+            name(),
+            addressing_,
             zoneID,
-            new pointZone
-            (
-                name(),
-                addressing_,
-                zoneID,
-                pointZones
-            )
+            pointZones
         );
     }
     else

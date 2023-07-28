@@ -109,8 +109,8 @@ public:
         //- Default construct, an empty field without allocation.
         inline constexpr DynamicField() noexcept;
 
-        //- Construct empty field with given reserve size.
-        inline explicit DynamicField(const label len);
+        //- Construct empty field with given initial capacity
+        inline explicit DynamicField(const label initialCapacity);
 
         //- Construct given size and initial value
         inline DynamicField(const label len, const T& val);

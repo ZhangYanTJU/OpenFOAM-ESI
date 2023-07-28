@@ -199,25 +199,34 @@ void PatchToPatchInterpolation<FromPatch, ToPatch>::calcPointAddressing() const
         if (doWeights)
         {
             // Set interpolation pointWeights
-            pointWeights.set(pointi, new scalarField(hitFace.size()));
+            const pointField hitFacePoints
+            (
+                hitFace.points(fromPatchPoints)
+            );
 
-            pointField hitFacePoints = hitFace.points(fromPatchPoints);
+            auto& pointiWeights =
+                pointWeights.emplace_set(pointi, hitFacePoints.size());
+
+            scalar sumWeight = 0;
 
             forAll(hitFacePoints, masterPointi)
             {
-                pointWeights[pointi][masterPointi] =
-                    1.0/
-                    (
-                        hitPoint.dist(hitFacePoints[masterPointi])
-                      + VSMALL
-                    );
+                const point& p = hitFacePoints[masterPointi];
+
+                const scalar w =
+                (
+                    1.0 / (hitPoint.dist(p) + VSMALL)
+                );
+
+                pointiWeights[masterPointi] = w;
+                sumWeight += w;
             }
 
-            pointWeights[pointi] /= sum(pointWeights[pointi]);
+            pointiWeights /= sumWeight;
         }
         else
         {
-            pointWeights.set(pointi, new scalarField());
+            pointWeights.emplace_set(pointi);
         }
     }
 }
@@ -296,7 +305,9 @@ void PatchToPatchInterpolation<FromPatch, ToPatch>::calcFaceAddressing() const
             const labelList& neighbours =
                 fromPatchFaceFaces[faceAddressing[facei]];
 
-            scalar m = curHit.hitPoint().dist(hitFaceCentre);
+            const point& hitPoint = curHit.hitPoint();
+
+            scalar m = hitPoint.dist(hitFaceCentre);
 
             if
             (
@@ -304,8 +315,8 @@ void PatchToPatchInterpolation<FromPatch, ToPatch>::calcFaceAddressing() const
              || neighbours.empty()
             )
             {
-                faceWeights.set(facei, new scalarField(1));
-                faceWeights[facei][0] = 1.0;
+                auto& faceiWeights = faceWeights.emplace_set(facei, 1);
+                faceiWeights[0] = 1.0;
             }
             else
             {
@@ -313,29 +324,33 @@ void PatchToPatchInterpolation<FromPatch, ToPatch>::calcFaceAddressing() const
 
                 // The first coefficient corresponds to the centre face.
                 // The rest is ordered in the same way as the faceFaces list.
-                faceWeights.set(facei, new scalarField(neighbours.size() + 1));
 
-                faceWeights[facei][0] = 1.0/m;
+                auto& faceiWeights =
+                    faceWeights.emplace_set(facei, neighbours.size() + 1);
 
-                forAll(neighbours, nI)
+                faceiWeights[0] = 1.0/m;
+
+                scalar sumWeight = faceiWeights[0];
+
+                forAll(neighbours, nbri)
                 {
-                    faceWeights[facei][nI + 1] =
-                    1.0/
-                    (
-                        curHit.hitPoint().dist
-                        (
-                            fromPatchFaceCentres[neighbours[nI]]
-                        )
-                      + VSMALL
-                    );
-                }
-            }
+                    const point& p = fromPatchFaceCentres[neighbours[nbri]];
 
-            faceWeights[facei] /= sum(faceWeights[facei]);
+                    const scalar w =
+                    (
+                        1.0 / (hitPoint.dist(p) + VSMALL)
+                    );
+
+                    faceWeights[nbri+1] = w;
+                    sumWeight += w;
+                }
+
+                faceiWeights /= sumWeight;
+            }
         }
         else
         {
-            faceWeights.set(facei, new scalarField());
+            faceWeights.emplace_set(facei);
         }
     }
 }

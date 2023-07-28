@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2018 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -222,7 +222,7 @@ Foam::wordList Foam::fvMeshDistribute::mergeWordList(const wordList& procNames)
 }
 
 
-void Foam::fvMeshDistribute::printMeshInfo(const fvMesh& mesh)
+void Foam::fvMeshDistribute::printMeshInfo(const polyMesh& mesh)
 {
     Pout<< "Primitives:" << nl
         << "    points       :" << mesh.nPoints() << nl
@@ -231,52 +231,35 @@ void Foam::fvMeshDistribute::printMeshInfo(const fvMesh& mesh)
         << "    faces        :" << mesh.nFaces() << nl
         << "    cells        :" << mesh.nCells() << nl;
 
-    const fvBoundaryMesh& patches = mesh.boundary();
-
     Pout<< "Patches:" << endl;
-    forAll(patches, patchi)
+    for (const polyPatch& pp : mesh.boundaryMesh())
     {
-        const polyPatch& pp = patches[patchi].patch();
-
-        Pout<< "    " << patchi << " name:" << pp.name()
+        Pout<< "    " << pp.index() << " name:" << pp.name()
             << " size:" << pp.size()
             << " start:" << pp.start()
             << " type:" << pp.type()
             << endl;
     }
 
-    if (mesh.pointZones().size())
+    if (mesh.pointZones().empty()) Pout<< "PointZones:" << endl;
+    for (const auto& zn : mesh.pointZones())
     {
-        Pout<< "PointZones:" << endl;
-        forAll(mesh.pointZones(), zoneI)
-        {
-            const pointZone& pz = mesh.pointZones()[zoneI];
-            Pout<< "    " << zoneI << " name:" << pz.name()
-                << " size:" << pz.size()
-                << endl;
-        }
+        Pout<< "    " << zn.index() << " name:" << zn.name()
+            << " size:" << zn.size() << endl;
     }
-    if (mesh.faceZones().size())
+
+    if (!mesh.faceZones().empty()) Pout<< "FaceZones:" << endl;
+    for (const auto& zn : mesh.faceZones())
     {
-        Pout<< "FaceZones:" << endl;
-        forAll(mesh.faceZones(), zoneI)
-        {
-            const faceZone& fz = mesh.faceZones()[zoneI];
-            Pout<< "    " << zoneI << " name:" << fz.name()
-                << " size:" << fz.size()
-                << endl;
-        }
+        Pout<< "    " << zn.index() << " name:" << zn.name()
+            << " size:" << zn.size() << endl;
     }
-    if (mesh.cellZones().size())
+
+    if (!mesh.cellZones().empty()) Pout<< "CellZones:" << endl;
+    for (const auto& zn : mesh.cellZones())
     {
-        Pout<< "CellZones:" << endl;
-        forAll(mesh.cellZones(), zoneI)
-        {
-            const cellZone& cz = mesh.cellZones()[zoneI];
-            Pout<< "    " << zoneI << " name:" << cz.name()
-                << " size:" << cz.size()
-                << endl;
-        }
+        Pout<< "    " << zn.index() << " name:" << zn.name()
+            << " size:" << zn.size() << endl;
     }
 }
 
@@ -960,7 +943,7 @@ void Foam::fvMeshDistribute::getCouplingData
 
 
     // Collect coupled (collocated) points
-    sourcePointMaster.setSize(mesh_.nPoints());
+    sourcePointMaster.resize_nocopy(mesh_.nPoints());
     sourcePointMaster = -1;
     {
         // Assign global master point
@@ -1208,9 +1191,9 @@ void Foam::fvMeshDistribute::findCouples
     {
         if (meshes.set(meshi))
         {
-            dynLocalFace[meshi].setCapacity(nProcFaces[meshi]);
-            dynRemoteProc[meshi].setCapacity(nProcFaces[meshi]);
-            dynRemoteFace[meshi].setCapacity(nProcFaces[meshi]);
+            dynLocalFace[meshi].reserve(nProcFaces[meshi]);
+            dynRemoteProc[meshi].reserve(nProcFaces[meshi]);
+            dynRemoteFace[meshi].reserve(nProcFaces[meshi]);
         }
     }
 
@@ -2515,37 +2498,36 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
 
     PtrList<fvMesh> domainMeshPtrs(Pstream::nProcs());
 
-    PtrList<PtrList<volScalarField>> vsfs(Pstream::nProcs());
-    PtrList<PtrList<volVectorField>> vvfs(Pstream::nProcs());
-    PtrList<PtrList<volSphericalTensorField>> vsptfs(Pstream::nProcs());
-    PtrList<PtrList<volSymmTensorField>> vsytfs(Pstream::nProcs());
-    PtrList<PtrList<volTensorField>> vtfs(Pstream::nProcs());
+    // Define field storage lists
+    #undef  doLocalCode
+    #define doLocalCode(FieldType, Variable)                                  \
+        PtrList<PtrList<FieldType>> Variable(UPstream::nProcs());
 
-    PtrList<PtrList<surfaceScalarField>> ssfs(Pstream::nProcs());
-    PtrList<PtrList<surfaceVectorField>> svfs(Pstream::nProcs());
-    PtrList<PtrList<surfaceSphericalTensorField>> ssptfs
-    (
-        Pstream::nProcs()
-    );
-    PtrList<PtrList<surfaceSymmTensorField>> ssytfs(Pstream::nProcs());
-    PtrList<PtrList<surfaceTensorField>> stfs(Pstream::nProcs());
+    doLocalCode(volScalarField, vsfs);
+    doLocalCode(volVectorField, vvfs);
+    doLocalCode(volSphericalTensorField, vsptfs);
+    doLocalCode(volSymmTensorField, vsytfs);
+    doLocalCode(volTensorField, vtfs);
 
-    PtrList<PtrList<volScalarField::Internal>> dsfs(Pstream::nProcs());
-    PtrList<PtrList<volVectorField::Internal>> dvfs(Pstream::nProcs());
-    PtrList<PtrList<volSphericalTensorField::Internal>> dstfs
-    (
-        Pstream::nProcs()
-    );
-    PtrList<PtrList<volSymmTensorField::Internal>> dsytfs
-    (
-        Pstream::nProcs()
-    );
-    PtrList<PtrList<volTensorField::Internal>> dtfs(Pstream::nProcs());
+    doLocalCode(surfaceScalarField, ssfs);
+    doLocalCode(surfaceVectorField, svfs);
+    doLocalCode(surfaceSphericalTensorField, ssptfs);
+    doLocalCode(surfaceSymmTensorField, ssytfs);
+    doLocalCode(surfaceTensorField, stfs);
+
+    doLocalCode(volScalarField::Internal, dsfs);
+    doLocalCode(volVectorField::Internal, dvfs);
+    doLocalCode(volSphericalTensorField::Internal, dsptfs)
+    doLocalCode(volSymmTensorField::Internal, dsytfs);
+    doLocalCode(volTensorField::Internal, dtfs);
+
+    #undef doLocalCode
+
 
     forAll(nRecvCells, sendProc)
     {
         // Did processor sendProc send anything to me?
-        if (sendProc != Pstream::myProcNo() && nRecvCells[sendProc] > 0)
+        if (sendProc != UPstream::myProcNo() && nRecvCells[sendProc] > 0)
         {
             if (debug)
             {
@@ -2561,25 +2543,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
             UIPstream str(sendProc, pBufs);
 
 
-            // Receive from sendProc
-            domainSourceFaces.set(sendProc, new labelList(0));
-            labelList& domainSourceFace = domainSourceFaces[sendProc];
-
-            domainSourceProcs.set(sendProc, new labelList(0));
-            labelList& domainSourceProc = domainSourceProcs[sendProc];
-
-            domainSourcePatchs.set(sendProc, new labelList(0));
-            labelList& domainSourcePatch = domainSourcePatchs[sendProc];
-
-            domainSourceNewNbrProcs.set(sendProc, new labelList(0));
-            labelList& domainSourceNewNbrProc =
-                domainSourceNewNbrProcs[sendProc];
-
-            domainSourcePointMasters.set(sendProc, new labelList(0));
-            labelList& domainSourcePointMaster =
-                domainSourcePointMasters[sendProc];
-
-            // Opposite of sendMesh
+            // Receive from sendProc - opposite of sendMesh
             {
                 autoPtr<fvMesh> domainMeshPtr = receiveMesh
                 (
@@ -2589,14 +2553,15 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                     cellZoneNames,
 
                     const_cast<Time&>(mesh_.time()),
-                    domainSourceFace,
-                    domainSourceProc,
-                    domainSourcePatch,
-                    domainSourceNewNbrProc,
-                    domainSourcePointMaster,
+
+                    domainSourceFaces.emplace_set(sendProc),
+                    domainSourceProcs.emplace_set(sendProc),
+                    domainSourcePatchs.emplace_set(sendProc),
+                    domainSourceNewNbrProcs.emplace_set(sendProc),
+                    domainSourcePointMasters.emplace_set(sendProc),
                     str
                 );
-                domainMeshPtrs.set(sendProc, domainMeshPtr.ptr());
+                domainMeshPtrs.set(sendProc, std::move(domainMeshPtr));
                 fvMesh& domainMesh = domainMeshPtrs[sendProc];
                 // Force construction of various on mesh.
                 //(void)domainMesh.globalData();
@@ -2606,174 +2571,39 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 // of problems reading consecutive fields from single stream.
                 dictionary fieldDicts(str);
 
-                // Vol fields
-                vsfs.set(sendProc, new PtrList<volScalarField>(0));
-                receiveFields<volScalarField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    vsfs[sendProc],
-                    fieldDicts
-                );
-                vvfs.set(sendProc, new PtrList<volVectorField>(0));
-                receiveFields<volVectorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    vvfs[sendProc],
-                    fieldDicts
-                );
-                vsptfs.set
-                (
-                    sendProc,
-                    new PtrList<volSphericalTensorField>(0)
-                );
-                receiveFields<volSphericalTensorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    vsptfs[sendProc],
-                    fieldDicts
-                );
-                vsytfs.set(sendProc, new PtrList<volSymmTensorField>(0));
-                receiveFields<volSymmTensorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    vsytfs[sendProc],
-                    fieldDicts
-                );
-                vtfs.set(sendProc, new PtrList<volTensorField>(0));
-                receiveFields<volTensorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    vtfs[sendProc],
-                    fieldDicts
-                );
+                #undef  doLocalCode
+                #define doLocalCode(FieldType, Variable)                      \
+                    receiveFields<FieldType>                                  \
+                    (                                                         \
+                        sendProc,                                             \
+                        allFieldNames,                                        \
+                        domainMesh,                                           \
+                        Variable.emplace_set(sendProc),                       \
+                        fieldDicts                                            \
+                    )
 
-                // Surface fields
-                ssfs.set(sendProc, new PtrList<surfaceScalarField>(0));
-                receiveFields<surfaceScalarField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    ssfs[sendProc],
-                    fieldDicts
-                );
-                svfs.set(sendProc, new PtrList<surfaceVectorField>(0));
-                receiveFields<surfaceVectorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    svfs[sendProc],
-                    fieldDicts
-                );
-                ssptfs.set
-                (
-                    sendProc,
-                    new PtrList<surfaceSphericalTensorField>(0)
-                );
-                receiveFields<surfaceSphericalTensorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    ssptfs[sendProc],
-                    fieldDicts
-                );
-                ssytfs.set(sendProc, new PtrList<surfaceSymmTensorField>(0));
-                receiveFields<surfaceSymmTensorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    ssytfs[sendProc],
-                    fieldDicts
-                );
-                stfs.set(sendProc, new PtrList<surfaceTensorField>(0));
-                receiveFields<surfaceTensorField>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    stfs[sendProc],
-                    fieldDicts
-                );
+                // Volume Fields
+                doLocalCode(volScalarField, vsfs);
+                doLocalCode(volVectorField, vvfs);
+                doLocalCode(volSphericalTensorField, vsptfs);
+                doLocalCode(volSymmTensorField, vsytfs);
+                doLocalCode(volTensorField, vtfs);
 
-                // Dimensioned fields
-                dsfs.set
-                (
-                    sendProc,
-                    new PtrList<volScalarField::Internal>(0)
-                );
-                receiveFields<volScalarField::Internal>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    dsfs[sendProc],
-                    fieldDicts
-                );
-                dvfs.set
-                (
-                    sendProc,
-                    new PtrList<volVectorField::Internal>(0)
-                );
-                receiveFields<volVectorField::Internal>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    dvfs[sendProc],
-                    fieldDicts
-                );
-                dstfs.set
-                (
-                    sendProc,
-                    new PtrList<volSphericalTensorField::Internal>(0)
-                );
-                receiveFields<volSphericalTensorField::Internal>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    dstfs[sendProc],
-                    fieldDicts
-                );
-                dsytfs.set
-                (
-                    sendProc,
-                    new PtrList<volSymmTensorField::Internal>(0)
-                );
-                receiveFields<volSymmTensorField::Internal>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    dsytfs[sendProc],
-                    fieldDicts
-                );
-                dtfs.set
-                (
-                    sendProc,
-                    new PtrList<volTensorField::Internal>(0)
-                );
-                receiveFields<volTensorField::Internal>
-                (
-                    sendProc,
-                    allFieldNames,
-                    domainMesh,
-                    dtfs[sendProc],
-                    fieldDicts
-                );
+                // Surface Fields
+                doLocalCode(surfaceScalarField, ssfs);
+                doLocalCode(surfaceVectorField, svfs);
+                doLocalCode(surfaceSphericalTensorField, ssptfs);
+                doLocalCode(surfaceSymmTensorField, ssytfs);
+                doLocalCode(surfaceTensorField, stfs);
+
+                // Dimensioned Fields
+                doLocalCode(volScalarField::Internal, dsfs);
+                doLocalCode(volVectorField::Internal, dvfs);
+                doLocalCode(volSphericalTensorField::Internal, dsptfs);
+                doLocalCode(volSymmTensorField::Internal, dsytfs);
+                doLocalCode(volTensorField::Internal, dtfs);
+
+                #undef doLocalCode
             }
         }
     }
@@ -2796,33 +2626,25 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
 
     // 'Receive' from myself
     {
-        meshes.set(Pstream::myProcNo(), &mesh_);
-        fvMeshes.set(Pstream::myProcNo(), &mesh_);
+        meshes.set(UPstream::myProcNo(), &mesh_);
+        fvMeshes.set(UPstream::myProcNo(), &mesh_);
 
-        //domainSourceFaces.set(Pstream::myProcNo(), std::move(sourceFace));
-        domainSourceFaces.set(Pstream::myProcNo(), new labelList(0));
-        domainSourceFaces[Pstream::myProcNo()] = sourceFace;
+        domainSourceFaces.emplace_set(UPstream::myProcNo()) = sourceFace;
+        domainSourceProcs.emplace_set(UPstream::myProcNo()) = sourceProc;
+        domainSourcePatchs.emplace_set(UPstream::myProcNo()) = sourcePatch;
 
-        domainSourceProcs.set(Pstream::myProcNo(), new labelList(0));
-        //std::move(sourceProc));
-        domainSourceProcs[Pstream::myProcNo()] = sourceProc;
+        domainSourceNewNbrProcs.emplace_set(UPstream::myProcNo()) =
+            sourceNewNbrProc;
 
-        domainSourcePatchs.set(Pstream::myProcNo(), new labelList(0));
-        //, std::move(sourcePatch));
-        domainSourcePatchs[Pstream::myProcNo()] = sourcePatch;
-
-        domainSourceNewNbrProcs.set(Pstream::myProcNo(), new labelList(0));
-        domainSourceNewNbrProcs[Pstream::myProcNo()] = sourceNewNbrProc;
-
-        domainSourcePointMasters.set(Pstream::myProcNo(), new labelList(0));
-        domainSourcePointMasters[Pstream::myProcNo()] = sourcePointMaster;
+        domainSourcePointMasters.emplace_set(UPstream::myProcNo()) =
+            sourcePointMaster;
     }
 
 
     // Find matching faces that need to be stitched
-    labelListList localBoundaryFace(Pstream::nProcs());
-    labelListList remoteFaceProc(Pstream::nProcs());
-    labelListList remoteBoundaryFace(Pstream::nProcs());
+    labelListList localBoundaryFace(UPstream::nProcs());
+    labelListList remoteFaceProc(UPstream::nProcs());
+    labelListList remoteBoundaryFace(UPstream::nProcs());
     findCouples
     (
         meshes,
@@ -2887,15 +2709,15 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
 
     {
         //- Combine sourceProc, sourcePatch, sourceFace
-        sourceProc.setSize(mesh_.nBoundaryFaces());
+        sourceProc.resize_nocopy(mesh_.nBoundaryFaces());
         sourceProc = -1;
-        sourcePatch.setSize(mesh_.nBoundaryFaces());
+        sourcePatch.resize_nocopy(mesh_.nBoundaryFaces());
         sourcePatch = -1;
-        sourceFace.setSize(mesh_.nBoundaryFaces());
+        sourceFace.resize_nocopy(mesh_.nBoundaryFaces());
         sourceFace = -1;
-        sourceNewNbrProc.setSize(mesh_.nBoundaryFaces());
+        sourceNewNbrProc.resize_nocopy(mesh_.nBoundaryFaces());
         sourceNewNbrProc = -1;
-        sourcePointMaster.setSize(mesh_.nPoints());
+        sourcePointMaster.resize_nocopy(mesh_.nPoints());
         sourcePointMaster = -1;
 
         if (mesh_.nPoints() > 0)

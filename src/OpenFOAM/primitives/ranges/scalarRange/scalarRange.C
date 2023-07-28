@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,7 @@ License
 
 const Foam::scalarRange Foam::scalarRange::always
 (
-    scalarRange::ALWAYS,
+    scalarRange::rangeTypes::ALWAYS,
     -GREAT,
     GREAT
 );
@@ -45,7 +45,7 @@ const Foam::scalarRange Foam::scalarRange::always
 
 bool Foam::scalarRange::parse(const std::string& str, scalarRange& range)
 {
-    range.clear();
+    range.reset();
 
     const auto colon = str.find(':');
 
@@ -139,7 +139,7 @@ Foam::scalarRange::scalarRange(const MinMax<label>& range) noexcept
 :
     min_(range.min()),
     max_(range.max()),
-    type_(max_ < min_ ? scalarRange::NONE : scalarRange::GE_LE)
+    type_(max_ < min_ ? rangeTypes::NONE : rangeTypes::GE_LE)
 {}
 
 
@@ -147,35 +147,35 @@ Foam::scalarRange::scalarRange(const MinMax<scalar>& range) noexcept
 :
     min_(range.min()),
     max_(range.max()),
-    type_(max_ < min_ ? scalarRange::NONE : scalarRange::GE_LE)
+    type_(max_ < min_ ? rangeTypes::NONE : rangeTypes::GE_LE)
 {}
 
 
-// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const scalarRange& range)
+void Foam::scalarRange::print(Ostream& os) const
 {
-    switch (range.type_)
+    switch (type_)
     {
-        case scalarRange::EQ:
-            os << range.min();
+        case rangeTypes::EQ:
+            os << min_;
             break;
 
-        case scalarRange::GE:
-        case scalarRange::GT:
-            os << range.min() << ":Inf";
+        case rangeTypes::GE:
+        case rangeTypes::GT:
+            os << min_ << ":Inf";
             break;
 
-        case scalarRange::LE:
-        case scalarRange::LT:
-            os << "-Inf:" << range.max();
+        case rangeTypes::LE:
+        case rangeTypes::LT:
+            os << "-Inf:" << max_;
             break;
 
-        case scalarRange::GE_LE:
-            os << range.min() << ':' << range.max();
+        case rangeTypes::GE_LE:
+            os << min_ << ':' << max_;
             break;
 
-        case scalarRange::ALWAYS:
+        case rangeTypes::ALWAYS:
             os << "true";
             break;
 
@@ -183,7 +183,12 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const scalarRange& range)
             os << "none";
             break;
     }
+}
 
+
+Foam::Ostream& Foam::operator<<(Ostream& os, const scalarRange& range)
+{
+    range.print(os);
     return os;
 }
 

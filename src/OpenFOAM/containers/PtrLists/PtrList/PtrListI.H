@@ -66,7 +66,7 @@ inline Foam::PtrList<T>::PtrList(UList<T*>& list)
     UPtrList<T>(list)
 {
     // Took ownership of the pointers
-    list = reinterpret_cast<T*>(0);
+    list = static_cast<T*>(nullptr);
 }
 
 
@@ -87,7 +87,7 @@ inline Foam::PtrList<T>::PtrList
 template<class T>
 inline void Foam::PtrList<T>::clear()
 {
-    (this->ptrs_).free();  // Free and nullify old pointers
+    (this->ptrs_).free();  // Free (and nullify) old pointers
     UPtrList<T>::clear();
 }
 
@@ -96,6 +96,14 @@ template<class T>
 inline void Foam::PtrList<T>::free()
 {
     (this->ptrs_).free();  // Free and nullify old pointers
+}
+
+
+template<class T>
+inline void Foam::PtrList<T>::resize_null(const label newLen)
+{
+    (this->ptrs_).free();  // Free (and nullify) old pointers
+    UPtrList<T>::resize_null(newLen);
 }
 
 
@@ -172,8 +180,9 @@ template<class T>
 template<class... Args>
 inline T& Foam::PtrList<T>::emplace_set(const label i, Args&&... args)
 {
+    (void) this->release(i);  // delete old entry
     T* ptr = new T(std::forward<Args>(args)...);
-    (void)this->set(i, ptr);
+    (void) UPtrList<T>::set(i, ptr);
     return *ptr;
 }
 
@@ -182,9 +191,7 @@ template<class T>
 template<class... Args>
 inline T& Foam::PtrList<T>::emplace(const label i, Args&&... args)
 {
-    T* ptr = new T(std::forward<Args>(args)...);
-    (void)this->set(i, ptr);
-    return *ptr;
+    return this->emplace_set(i, std::forward<Args>(args)...);
 }
 
 

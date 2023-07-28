@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -220,29 +220,32 @@ void Foam::sampledSurfaces::performAction
             Info<< "sampleWrite: " << fieldName << endl;
         }
 
+        refPtr<GeoField> tfield;
+
         if (loadFromFiles_)
         {
-            const GeoField fld
+            tfield.emplace
             (
                 IOobject
                 (
                     fieldName,
                     time_.timeName(),
-                    mesh_,
-                    IOobject::MUST_READ
+                    mesh_.thisDb(),
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 ),
                 mesh_
             );
-
-            performAction(fld, request);
         }
         else
         {
-            performAction
-            (
-                mesh_.thisDb().lookupObject<GeoField>(fieldName),
-                request
-            );
+            tfield.cref(mesh_.thisDb().cfindObject<GeoField>(fieldName));
+        }
+
+        if (tfield)
+        {
+            performAction(tfield(), request);
         }
     }
 }

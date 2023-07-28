@@ -160,6 +160,9 @@ public:
         //- True if range is empty (zero-sized)
         bool empty() const noexcept { return !size_; }
 
+        //- True if range has size greater than zero
+        bool good() const noexcept { return (size_ > 0); }
+
         //- The size of the range
         IntType size() const noexcept { return size_; }
 
@@ -184,10 +187,13 @@ public:
     // Edit
 
         //- Reset to zero start and zero size
-        inline void clear() noexcept;
+        inline void reset() noexcept;
 
         //- Reset start and length, no checks
         inline void reset(const IntType beg, const IntType len) noexcept;
+
+        //- Same as reset() - reset to zero start and zero size
+        void clear() noexcept { reset(); }
 
         //- Set the start position, no checks
         inline void setStart(const IntType i) noexcept;
@@ -240,8 +246,8 @@ public:
         //- Decrease the size by n, but never below 0.
         inline IntType operator-=(const IntType n) noexcept;
 
-        //- True if range is non-empty
-        explicit operator bool() const noexcept { return bool(size_); }
+        //- True if range has size greater than zero. Same as good()
+        explicit operator bool() const noexcept { return (size_ > 0); }
 
 
     // Iterator ranges

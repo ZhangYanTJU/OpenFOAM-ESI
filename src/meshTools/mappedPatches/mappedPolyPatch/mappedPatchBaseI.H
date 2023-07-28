@@ -43,7 +43,7 @@ inline const Foam::word& Foam::mappedPatchBase::sampleRegion() const
 {
     if (sampleRegion_.empty())
     {
-        if (!coupleGroup_.valid())
+        if (!coupleGroup_.good())
         {
             FatalErrorInFunction
                 << "Supply either a regionName or a coupleGroup"
@@ -69,7 +69,7 @@ inline const Foam::word& Foam::mappedPatchBase::samplePatch() const
 {
     if (samplePatch_.empty())
     {
-        if (!coupleGroup_.valid())
+        if (!coupleGroup_.good())
         {
             FatalErrorInFunction
                 << "Supply either a patchName or a coupleGroup"

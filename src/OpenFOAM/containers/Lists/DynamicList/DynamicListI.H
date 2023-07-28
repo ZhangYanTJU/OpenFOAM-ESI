@@ -143,12 +143,12 @@ inline constexpr Foam::DynamicList<T, SizeMin>::DynamicList() noexcept
 
 
 template<class T, int SizeMin>
-inline Foam::DynamicList<T, SizeMin>::DynamicList(const label len)
+inline Foam::DynamicList<T, SizeMin>::DynamicList(const label initialCapacity)
 :
     List<T>(),
     capacity_(0)
 {
-    reserve_nocopy(len);
+    reserve_nocopy(initialCapacity);
 }
 
 
@@ -373,6 +373,18 @@ inline void Foam::DynamicList<T, SizeMin>::resize_nocopy
 }
 
 
+// template<class T, int SizeMin>
+// inline void Foam::DynamicList<T, SizeMin>::resize_fill
+// (
+//     const label len,
+//     const T& val
+// )
+// {
+//     this->doResize(true, len);  // nocopy = true
+//     this->fill_uniform(val);
+// }
+
+
 template<class T, int SizeMin>
 inline void Foam::DynamicList<T, SizeMin>::resize
 (
@@ -448,7 +460,7 @@ template<int AnySizeMin>
 inline void Foam::DynamicList<T, SizeMin>::swap
 (
     DynamicList<T, AnySizeMin>& other
-)
+) noexcept
 {
     if
     (

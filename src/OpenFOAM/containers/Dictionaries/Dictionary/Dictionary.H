@@ -34,13 +34,10 @@ Description
     It is derived from DictionaryBase instantiated on a memory managed form
     of intrusive doubly-linked list of \<T\>.
 
-SourceFiles
-    Dictionary.C
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef Dictionary_H
-#define Dictionary_H
+#ifndef Foam_Dictionary_H
+#define Foam_Dictionary_H
 
 #include "DictionaryBase.H"
 #include "IDLList.H"
@@ -61,32 +58,40 @@ class Dictionary
 {
 public:
 
+    //- The template instance used for the dictionary content
+    typedef DictionaryBase<IDLList<T>, T> dict_type;
+
+
     // Constructors
 
-        //- Construct with given or default (128) table capacity
-        explicit Dictionary(const label size = 128);
+        //- Default construct, or with initial table capacity
+        explicit Dictionary(const label initialCapacity = 128)
+        :
+            dict_type(initialCapacity)
+        {}
 
         //- Copy construct
-        Dictionary(const Dictionary& dict);
+        Dictionary(const Dictionary& dict)
+        :
+            dict_type(dict)
+        {}
 
 
     // Member Functions
 
         //- Remove an entry specified by keyword and delete the pointer.
         //  \return true if the keyword was found
-        bool erase(const word& keyword);
+        bool erase(const word& keyword)
+        {
+            T* ptr = this->remove(keyword);
+            delete ptr;
+            return bool(ptr);
+        }
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "Dictionary.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

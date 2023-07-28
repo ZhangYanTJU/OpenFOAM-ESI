@@ -144,7 +144,7 @@ void Foam::lduMatrix::updateMatrixInterfaces
             bool pollingActive = (UPstream::nPollProcInterfaces < 0);
             (
                 pollingActive
-             && UPstream::waitSomeRequests(startRequest, &indices)
+             && UPstream::waitSomeRequests(startRequest, -1, &indices)
             );
             /*nil*/
         )
