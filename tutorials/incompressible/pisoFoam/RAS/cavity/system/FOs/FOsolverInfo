@@ -17,7 +17,7 @@ solverInfo1
         epsilon
         p
         U
-    )
+    );
 
     // Optional entries
     writeResidualFields    true;
