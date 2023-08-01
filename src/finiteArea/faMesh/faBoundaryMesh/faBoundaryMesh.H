@@ -204,6 +204,18 @@ public:
             const bool useGroups = true
         ) const;
 
+        //- Return (sorted) patch indices for all selected matches that
+        //- are not ignored.
+        //- The selection logic as per Foam::wordRes::filter.
+        //  Optionally matches patch groups.
+        //  A no-op (returns empty list) for an empty select matcher
+        labelList indices
+        (
+            const wordRes& select,
+            const wordRes& ignore,
+            const bool useGroups = true
+        ) const;
+
         //- Return patch index for the first match, return -1 if not found
         //  A no-op (returns -1) for an empty key
         label findIndex(const wordRe& key) const;

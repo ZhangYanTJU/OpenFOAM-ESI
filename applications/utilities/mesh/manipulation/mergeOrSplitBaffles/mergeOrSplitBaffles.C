@@ -357,7 +357,7 @@ int main(int argc, char *argv[])
                 dict.subDict("merge").get<wordRes>("patches")
             ).sortedToc();
 
-            Info<< "Detecting baffles on " << mergePatchIDs.size()
+            Info<< "Merge baffles on " << mergePatchIDs.size()
                 << " patches with "
                 << returnReduce(patchSize(mesh, mergePatchIDs), sumOp<label>())
                 << " faces" << endl;
@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
                 dict.subDict("split").get<wordRes>("patches")
             ).sortedToc();
 
-            Info<< "Detecting baffles on " << splitPatchIDs.size()
+            Info<< "Split baffles on " << splitPatchIDs.size()
                 << " patches with "
                 << returnReduce(patchSize(mesh, splitPatchIDs), sumOp<label>())
                 << " faces" << endl;

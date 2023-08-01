@@ -82,12 +82,7 @@ static labelList selectPatchFaces
 {
     const labelList patchIDs
     (
-        pbm.patchSet
-        (
-            polyPatchNames,
-            false,  // warnNotFound
-            true    // useGroups
-        ).sortedToc()
+        pbm.indices(polyPatchNames, true)  // useGroups
     );
 
     if (patchIDs.empty())

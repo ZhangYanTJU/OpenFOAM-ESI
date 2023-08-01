@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,6 +69,9 @@ class pointBoundaryMesh
         //- Calculate geometry for the patches (transformation tensors etc.)
         void calcGeometry();
 
+        //- Assign facePointPatches corresponding to the given polyBoundaryMesh
+        void addPatches(const polyBoundaryMesh& pbm);
+
         //- No copy construct
         pointBoundaryMesh(const pointBoundaryMesh&) = delete;
 
@@ -85,11 +88,7 @@ public:
     // Constructors
 
         //- Construct from polyBoundaryMesh
-        pointBoundaryMesh
-        (
-            const pointMesh&,
-            const polyBoundaryMesh&
-        );
+        pointBoundaryMesh(const pointMesh&, const polyBoundaryMesh&);
 
 
     // Member Functions
@@ -107,6 +106,18 @@ public:
         //- Return (sorted) patch indices for all matches.
         //  A no-op (returns empty list) for an empty matcher
         labelList indices(const wordRes& matcher, const bool useGroups) const;
+
+        //- Return (sorted) patch indices for all selected matches that
+        //- are not ignored.
+        //- The selection logic as per Foam::wordRes::filter.
+        //  Optionally matches patch groups.
+        //  A no-op (returns empty list) for an empty select matcher
+        labelList indices
+        (
+            const wordRes& select,
+            const wordRes& ignore,
+            const bool useGroups
+        ) const;
 
         //- Find patch index given a name
         //  A no-op (returns -1) for an empty patchName

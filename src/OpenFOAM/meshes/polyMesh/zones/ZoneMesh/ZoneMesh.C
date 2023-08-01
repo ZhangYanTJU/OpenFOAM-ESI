@@ -68,7 +68,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcZoneMap() const
             nObjects += zn.size();
         }
 
-        zoneMapPtr_.reset(new Map<label>(2*nObjects));
+        zoneMapPtr_.emplace(2*nObjects);
         auto& zm = *zoneMapPtr_;
 
         // Fill in objects of all zones into the map.
@@ -122,7 +122,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcGroupIDs() const
         return;  // Or FatalError
     }
 
-    groupIDsPtr_.reset(new HashTable<labelList>(16));
+    groupIDsPtr_.emplace(16);
     auto& groupLookup = *groupIDsPtr_;
 
     const PtrList<ZoneType>& zones = *this;
@@ -382,7 +382,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
     // Only check groups if requested and they exist
     const bool checkGroups = (useGroups && this->hasGroupIDs());
 
-    labelHashSet ids;
+    labelHashSet ids(0);
 
     if (checkGroups)
     {
@@ -396,7 +396,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
             const auto& groupLookup = groupZoneIDs();
             forAllConstIters(groupLookup, iter)
             {
-                if (matcher.match(iter.key()))
+                if (matcher(iter.key()))
                 {
                     // Hash ids associated with the group
                     ids.insert(iter.val());
@@ -453,10 +453,10 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
     }
     else if (matcher.size() == 1)
     {
-        return this->indices(matcher.first(), useGroups);
+        return this->indices(matcher.front(), useGroups);
     }
 
-    labelHashSet ids;
+    labelHashSet ids(0);
 
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
@@ -466,9 +466,55 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
         const auto& groupLookup = groupZoneIDs();
         forAllConstIters(groupLookup, iter)
         {
-            if (matcher.match(iter.key()))
+            if (matcher(iter.key()))
             {
                 // Hash the ids associated with the group
+                ids.insert(iter.val());
+            }
+        }
+    }
+
+    if (ids.empty())
+    {
+        return PtrListOps::findMatching(*this, matcher);
+    }
+    else
+    {
+        ids.insert(PtrListOps::findMatching(*this, matcher));
+    }
+
+    return ids.sortedToc();
+}
+
+
+template<class ZoneType, class MeshType>
+Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
+(
+    const wordRes& select,
+    const wordRes& ignore,
+    const bool useGroups
+) const
+{
+    if (ignore.empty())
+    {
+        return this->indices(select, useGroups);
+    }
+
+    const wordRes::filter matcher(select, ignore);
+
+    labelHashSet ids(0);
+
+    // Only check groups if requested and they exist
+    if (useGroups && this->hasGroupIDs())
+    {
+        ids.resize(2*this->size());
+
+        const auto& groupLookup = groupZoneIDs();
+        forAllConstIters(groupLookup, iter)
+        {
+            if (matcher(iter.key()))
+            {
+                // Add patch ids associated with the group
                 ids.insert(iter.val());
             }
         }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -237,11 +237,7 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setPatchFaces()
 
     labelList selected
     (
-        mesh_.boundaryMesh().patchSet
-        (
-            selectionNames_,
-            false  // warnNotFound - we do that ourselves
-        ).sortedToc()
+        mesh_.boundaryMesh().indices(selectionNames_, true)  // useGroup
     );
 
     DynamicList<label> bad;
