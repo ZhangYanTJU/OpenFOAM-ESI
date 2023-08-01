@@ -29,7 +29,27 @@ Class
     Foam::topODesignVariables
 
 Description
-    Design variables for density-based topology optimisation (topO) problems
+    Design variables for porosity-based topology optimisation (topO) problems
+
+    Reference:
+    \verbatim
+        The main idea behind porosity-based topO can be found in
+
+            Papoutsis-Kiachagias, E. M., & Giannakoglou, K. C. (2014).
+            Continuous Adjoint Methods for Turbulent Flows, Applied to Shape
+            and Topology Optimization: Industrial Applications.
+            Archives of Computational Methods in Engineering, 23(2), 255-299.
+            http://doi.org/10.1007/s11831-014-9141-9
+
+        with regularisation and projection approaches following
+
+            Lazarov, B. S., & Sigmund O. (2010).
+            Filters in topology optimization based on Helmholtz-type
+            differential equations.
+            International Journal for Numerical Methods in Engineering,
+            86(6), 765-781.
+            https://doi.org/10.1002/nme.3072
+    \endverbatim
 
 SourceFiles
     topODesignVariables.C

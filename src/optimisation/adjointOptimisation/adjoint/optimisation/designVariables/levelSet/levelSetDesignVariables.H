@@ -29,7 +29,32 @@ Class
 
 Description
     Signed distance field design variables for level-set based topology
-    optimization.
+    optimization (topO).
+
+    A great reference for various aspects of level-set-based topO can be found
+    in
+
+    Reference:
+    \verbatim
+        van Dijk, N.P., Maute, K., Langelaar, M., & & van Keulen, F. (2013).
+        Level-set methods for structural topology optimization: a review.
+        Structural and Multidisciplinary Optimization, 48, 437–472.
+        https://doi.org/10.1007/s00158-013-0912-y
+    \endverbatim
+
+    The implemented approach borrows from the references therein, but does not
+    follow any of them exactly. The underlaying field of the design variables
+    is not the level-set field but affects the latter through:
+    a) a regularisation approach similar to that used in porosity-based topO
+    (see the regularisation class and references therein) and
+    b) a re-initialisation strategy. Since solving a modified Hamilton-Jacobi
+    equation poses a number of numerical challenges, the signed distance field
+    is obtained by identifying the zero level-set contour using the
+    cutFaceIso, cutCellIso infrastucture (see references therein for the
+    methodology) and using these "cut-faces" as seeds for meshWave.
+
+SourceFiles
+    levelSetDesignVariables.C
 
 \*---------------------------------------------------------------------------*/
 

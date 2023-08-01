@@ -37,6 +37,15 @@ Description
     - 2D: area of the inlet patches divided by the span in the empty direction
     - 3D: the hydraulic diameter of the inlet patches
 
+    Reference:
+    \verbatim
+        Olesen, L. H., Okkels, F., & Bruus H. (2006).
+        A high-level programming-language implementation of topology
+        optimization applied to steady-state Navier–Stokes flow.
+        International Journal for Numerical Methods in Engineering,
+        65(7), 975-1001.
+        https://doi.org/10.1002/nme.1468
+    \endverbatim
 
 SourceFiles
     betaMaxDarcy.C

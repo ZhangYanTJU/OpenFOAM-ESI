@@ -205,7 +205,7 @@ public:
         //  The interface is computed as an isoValue contour of the indicator
         //  field
         //  - 0 distance contour for levelSet or
-        //  - 0.5 beta contour for density-based topO.
+        //  - 0.5 beta contour for porosity-based topO.
         //  For levelSet topO, the process of identitying the contour sets also
         //  the seeds for computing the distance field in the entire domain
         void writeFluidSolidInterface
