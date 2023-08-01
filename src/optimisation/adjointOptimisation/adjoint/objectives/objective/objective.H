@@ -298,56 +298,59 @@ public:
         void incrementIntegrationTimes(const scalar timeSpan);
 
         //- Contribution to field sensitivities
-        inline const volScalarField& dJdb();
+        inline const volScalarField& dJdb() const;
 
         //- Contribution to sensitivities with a random number of designVars
-        inline const scalarField& dJdbField();
+        inline const scalarField& dJdbField() const;
 
         //- Contribution to surface sensitivities for a specific patch
-        inline const fvPatchVectorField& boundarydJdb(const label);
+        inline const fvPatchVectorField& boundarydJdb(const label) const;
 
         //- Multiplier of delta(n dS)/delta b
-        inline const fvPatchVectorField& dSdbMultiplier(const label);
+        inline const fvPatchVectorField& dSdbMultiplier(const label) const;
 
         //- Multiplier of delta(n dS)/delta b
-        inline const fvPatchVectorField& dndbMultiplier(const label);
+        inline const fvPatchVectorField& dndbMultiplier(const label) const;
 
         //- Multiplier of delta(x)/delta b
-        inline const fvPatchVectorField& dxdbMultiplier(const label);
+        inline const fvPatchVectorField& dxdbMultiplier(const label) const;
 
         //- Multiplier of delta(x)/delta b
-        inline const fvPatchVectorField& dxdbDirectMultiplier(const label);
+        inline const fvPatchVectorField& dxdbDirectMultiplier
+        (
+            const label
+        ) const;
 
         //- Multiplier located at patch boundary edges
         inline const vectorField& boundaryEdgeMultiplier
         (
             const label patchI,
             const label edgeI
-        );
+        ) const;
 
         //- Contribution to surface sensitivities for all patches
-        inline const boundaryVectorField& boundarydJdb();
+        inline const boundaryVectorField& boundarydJdb() const;
 
         //- Multiplier of delta(n dS)/delta b for all patches
-        inline const boundaryVectorField& dSdbMultiplier();
+        inline const boundaryVectorField& dSdbMultiplier() const;
 
         //- Multiplier of delta(n dS)/delta b for all patches
-        inline const boundaryVectorField& dndbMultiplier();
+        inline const boundaryVectorField& dndbMultiplier() const;
 
         //- Multiplier of delta(x)/delta b for all patches
-        inline const boundaryVectorField& dxdbMultiplier();
+        inline const boundaryVectorField& dxdbMultiplier() const;
 
         //- Multiplier of delta(x)/delta b for all patches
-        inline const boundaryVectorField& dxdbDirectMultiplier();
+        inline const boundaryVectorField& dxdbDirectMultiplier() const;
 
         //- Multiplier located at patch boundary edges
-        inline const vectorField3& boundaryEdgeMultiplier();
+        inline const vectorField3& boundaryEdgeMultiplier() const;
 
         //- Multiplier of grad( delta(x)/delta b) for volume-based sensitivities
-        inline const volScalarField& divDxDbMultiplier();
+        inline const volScalarField& divDxDbMultiplier() const;
 
         //- Multiplier of grad( delta(x)/delta b) for volume-based sensitivities
-        inline const volTensorField& gradDxDbMultiplier();
+        inline const volTensorField& gradDxDbMultiplier() const;
 
         //- Update objective function derivatives
         virtual void update() = 0;
