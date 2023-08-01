@@ -82,7 +82,7 @@ void Foam::Helmholtz::solveEqn
             zeroGradientFvPatchScalarField::typeName
         )
     );
-    // If solution corresponds to the topology density field, modify boundary
+    // If solution corresponds to the topology porosity field, modify boundary
     // conditions accordingly
     if (isTopoField && growFromWalls_)
     {

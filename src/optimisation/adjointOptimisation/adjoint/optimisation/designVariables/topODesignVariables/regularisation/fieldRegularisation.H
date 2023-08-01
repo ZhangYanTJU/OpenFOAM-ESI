@@ -33,6 +33,18 @@ Description
     optimisation to regularise the designed geometries and obtain 'grid
     independent' solutions.
 
+    Reference:
+    \verbatim
+        Largely follows the PDE-based smoothing of
+
+            Lazarov, B. S., & Sigmund O. (2010).
+            Filters in topology optimization based on Helmholtz-type
+            differential equations.
+            International Journal for Numerical Methods in Engineering,
+            86(6), 765-781.
+            https://doi.org/10.1002/nme.3072
+    \endverbatim
+
 SourceFiles
     fieldRegularisation.C
 
