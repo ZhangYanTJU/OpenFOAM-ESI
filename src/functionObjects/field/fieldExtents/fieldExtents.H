@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,8 +99,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_fieldExtents_H
-#define functionObjects_fieldExtents_H
+#ifndef Foam_functionObjects_fieldExtents_H
+#define Foam_functionObjects_fieldExtents_H
 
 #include "fvMeshFunctionObject.H"
 #include "writeFile.H"
@@ -122,7 +122,6 @@ class fieldExtents
     public fvMeshFunctionObject,
     public writeFile
 {
-
 protected:
 
     // Protected Data
@@ -140,7 +139,7 @@ protected:
         volFieldSelection fieldSet_;
 
         //- Patches to assess
-        labelHashSet patchIDs_;
+        labelList patchIDs_;
 
 
     // Protected Member Functions

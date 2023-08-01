@@ -405,20 +405,20 @@ Foam::label Foam::parFvFieldDistributor::distributeInternalFields
 {
     typedef DimensionedField<Type, volMesh> fieldType;
 
-    // Available fields, sorted order
-    const wordList fieldNames =
-    (
-        selectedFields.empty()
-      ? objects.sortedNames<fieldType>()
-      : objects.sortedNames<fieldType>(selectedFields)
-    );
-
     label nFields = 0;
-    for (const word& fieldName : fieldNames)
+    for
+    (
+        const IOobject& io :
+        (
+            selectedFields.empty()
+          ? objects.csorted<fieldType>()
+          : objects.csorted<fieldType>(selectedFields)
+        )
+    )
     {
-        if ("cellDist" == fieldName)
+        if ("cellDist" == io.name())
         {
-            // There is an odd chance this is an internal field
+            // Ignore cellDist (internal or volume) field
             continue;
         }
         if (verbose_)
@@ -428,13 +428,13 @@ Foam::label Foam::parFvFieldDistributor::distributeInternalFields
                 Info<< "    Reconstructing "
                     << fieldType::typeName << "s\n" << nl;
             }
-            Info<< "        " << fieldName << nl;
+            Info<< "        " << io.name() << nl;
         }
         ++nFields;
 
         tmp<fieldType> tfld
         (
-            distributeInternalField<Type>(*(objects[fieldName]))
+            distributeInternalField<Type>(io)
         );
 
         if (isWriteProc_.good())
@@ -470,19 +470,20 @@ Foam::label Foam::parFvFieldDistributor::distributeVolumeFields
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
 
-    // Available fields, sorted order
-    const wordList fieldNames =
-    (
-        selectedFields.empty()
-      ? objects.sortedNames<fieldType>()
-      : objects.sortedNames<fieldType>(selectedFields)
-    );
-
     label nFields = 0;
-    for (const word& fieldName : fieldNames)
+    for
+    (
+        const IOobject& io :
+        (
+            selectedFields.empty()
+          ? objects.csorted<fieldType>()
+          : objects.csorted<fieldType>(selectedFields)
+        )
+    )
     {
-        if ("cellDist" == fieldName)
+        if ("cellDist" == io.name())
         {
+            // Ignore cellDist (internal or volume) field
             continue;
         }
         if (verbose_)
@@ -492,13 +493,13 @@ Foam::label Foam::parFvFieldDistributor::distributeVolumeFields
                 Info<< "    Reconstructing "
                     << fieldType::typeName << "s\n" << nl;
             }
-            Info<< "        " << fieldName << nl;
+            Info<< "        " << io.name() << nl;
         }
         ++nFields;
 
         tmp<fieldType> tfld
         (
-            distributeVolumeField<Type>(*(objects[fieldName]))
+            distributeVolumeField<Type>(io)
         );
 
         if (isWriteProc_.good())
@@ -534,16 +535,16 @@ Foam::label Foam::parFvFieldDistributor::distributeSurfaceFields
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
 
-    // Available fields, sorted order
-    const wordList fieldNames =
-    (
-        selectedFields.empty()
-      ? objects.sortedNames<fieldType>()
-      : objects.sortedNames<fieldType>(selectedFields)
-    );
-
     label nFields = 0;
-    for (const word& fieldName : fieldNames)
+    for
+    (
+        const IOobject& io :
+        (
+            selectedFields.empty()
+          ? objects.csorted<fieldType>()
+          : objects.csorted<fieldType>(selectedFields)
+        )
+    )
     {
         if (verbose_)
         {
@@ -552,13 +553,13 @@ Foam::label Foam::parFvFieldDistributor::distributeSurfaceFields
                 Info<< "    Reconstructing "
                     << fieldType::typeName << "s\n" << nl;
             }
-            Info<< "        " << fieldName << nl;
+            Info<< "        " << io.name() << nl;
         }
         ++nFields;
 
         tmp<fieldType> tfld
         (
-            distributeSurfaceField<Type>(*(objects[fieldName]))
+            distributeSurfaceField<Type>(io)
         );
 
         if (isWriteProc_.good())

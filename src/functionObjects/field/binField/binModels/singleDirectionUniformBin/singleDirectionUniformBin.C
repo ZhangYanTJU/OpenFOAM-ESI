@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,46 +46,69 @@ void Foam::binModels::singleDirectionUniformBin::initialise()
 {
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
-    // Determine extents of patches in a given direction
-    scalar geomMin = GREAT;
-    scalar geomMax = -GREAT;
-    for (const label patchi : patchSet_)
-    {
-        const polyPatch& pp = pbm[patchi];
-        const scalarField d(pp.faceCentres() & binDir_);
-        geomMin = min(min(d), geomMin);
-        geomMax = max(max(d), geomMax);
-    }
-
-    for (const label zonei : cellZoneIDs_)
-    {
-        const cellZone& cZone = mesh_.cellZones()[zonei];
-        const vectorField cz(mesh_.C(), cZone);
-        const scalarField d(cz & binDir_);
-
-        geomMin = min(min(d), geomMin);
-        geomMax = max(max(d), geomMax);
-    }
-
-    reduce(geomMin, minOp<scalar>());
-    reduce(geomMax, maxOp<scalar>());
-
-    // Slightly boost max so that region of interest is fully within bounds
-    geomMax = 1.0001*(geomMax - geomMin) + geomMin;
-
     // Use geometry limits if not specified by the user
-    if (binMin_ == GREAT) binMin_ = geomMin;
-    if (binMax_ == GREAT) binMax_ = geomMax;
+    const bool useGeomLimits
+    (
+        binLimits_.min() == GREAT
+     || binLimits_.max() == GREAT
+    );
 
-    binDx_ = (binMax_ - binMin_)/scalar(nBin_);
+    if (useGeomLimits)
+    {
+        // Determine extents of patches/cells in a given direction
+        scalarMinMax geomLimits;
 
-    if (binDx_ <= 0)
+        for (const label patchi : patchIDs_)
+        {
+            for (const vector& p : pbm[patchi].faceCentres())
+            {
+                geomLimits.add(p & binDir_);
+            }
+        }
+
+        for (const label zonei : cellZoneIDs_)
+        {
+            for (const label celli : mesh_.cellZones()[zonei])
+            {
+                geomLimits.add(mesh_.C()[celli] & binDir_);
+            }
+        }
+
+        // Globally consistent
+        reduce(geomLimits, minMaxOp<scalar>());
+
+        if (!geomLimits.good())
+        {
+            FatalErrorInFunction
+                << "No patches/cellZones provided"
+                << exit(FatalError);
+        }
+
+        // Slightly boost max so that region of interest is fully within bounds
+        // TBD: also adjust min?
+        const scalar adjust(1e-4*geomLimits.span());
+        geomLimits.max() += adjust;
+
+        // Use geometry limits if not specified by the user
+        if (binLimits_.min() == GREAT)
+        {
+            binLimits_.min() = geomLimits.min();
+        }
+        if (binLimits_.max() == GREAT)
+        {
+            binLimits_.max() = geomLimits.max();
+        }
+    }
+
+    binWidth_ = binLimits_.span()/scalar(nBin_);
+
+    if (binWidth_ <= 0)
     {
         FatalErrorInFunction
             << "Max bound must be greater than min bound" << nl
-            << "    d           = " << binDx_ << nl
-            << "    min         = " << binMin_ << nl
-            << "    max         = " << binMax_ << nl
+            << "    d           = " << binWidth_ << nl
+            << "    min         = " << binLimits_.min() << nl
+            << "    max         = " << binLimits_.max() << nl
             << exit(FatalError);
     }
 }
@@ -101,9 +124,8 @@ Foam::binModels::singleDirectionUniformBin::singleDirectionUniformBin
 )
 :
     binModel(dict, mesh, outputPrefix),
-    binDx_(0),
-    binMin_(GREAT),
-    binMax_(GREAT),
+    binWidth_(0),
+    binLimits_(GREAT),
     binDir_(Zero)
 {
     read(dict);
@@ -125,30 +147,30 @@ bool Foam::binModels::singleDirectionUniformBin::read(const dictionary& dict)
 
     nBin_ = binDict.getCheck<label>("nBin", labelMinMax::ge(1));
 
-    Info<< "    Employing " << nBin_ << " bins" << endl;
-    if (binDict.readIfPresent("min", binMin_))
+    Info<< "    Employing " << nBin_ << " bins" << nl;
+
+    if (binDict.readIfPresent("min", binLimits_.min()))
     {
-        Info<< "    - min        : " << binMin_ << endl;
+        Info<< "    - min        : " << binLimits_.min() << nl;
     }
-    if (binDict.readIfPresent("max", binMax_))
+    if (binDict.readIfPresent("max", binLimits_.max()))
     {
-        Info<< "    - max        : " << binMax_ << endl;
+        Info<< "    - max        : " << binLimits_.max() << nl;
     }
 
     cumulative_ = binDict.getOrDefault<bool>("cumulative", false);
-    Info<< "    - cumulative    : " << cumulative_ << endl;
-    Info<< "    - decomposePatchValues    : " << decomposePatchValues_ << endl;
+    Info<< "    - cumulative    : " << cumulative_ << nl
+        << "    - decomposePatchValues    : " << decomposePatchValues_ << nl;
 
     binDir_ = binDict.get<vector>("direction");
-    binDir_.normalise();
-
-    if (mag(binDir_) == 0)
+    if (binDir_.mag() < SMALL)
     {
         FatalIOErrorInFunction(dict)
             << "Input direction should not be zero valued" << nl
             << "    direction = " << binDir_ << nl
             << exit(FatalIOError);
     }
+    binDir_.normalise();
 
     Info<< "    - direction     : " << binDir_ << nl << endl;
 
@@ -163,11 +185,13 @@ void Foam::binModels::singleDirectionUniformBin::apply()
     forAll(fieldNames_, i)
     {
         const bool ok =
+        (
             processField<scalar>(i)
          || processField<vector>(i)
          || processField<sphericalTensor>(i)
          || processField<symmTensor>(i)
-         || processField<tensor>(i);
+         || processField<tensor>(i)
+        );
 
         if (!ok)
         {

@@ -90,7 +90,7 @@ Foam::functionObjects::reactingEulerHtcModel::q() const
 
     const phaseSystem& fluid = *fluidPtr;
 
-    for (const label patchi : htcModelPtr_->patchSet())
+    for (const label patchi : htcModelPtr_->patchIDs())
     {
         for (const phaseModel& phase : fluid.phases())
         {
@@ -112,7 +112,7 @@ Foam::functionObjects::reactingEulerHtcModel::q() const
     {
         const volScalarField::Boundary& qrbf = qrPtr->boundaryField();
 
-        for (const label patchi : htcModelPtr_->patchSet())
+        for (const label patchi : htcModelPtr_->patchIDs())
         {
             q[patchi] += qrbf[patchi];
         }

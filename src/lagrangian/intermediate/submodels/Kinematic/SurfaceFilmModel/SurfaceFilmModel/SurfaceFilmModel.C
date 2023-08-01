@@ -288,7 +288,7 @@ void Foam::SurfaceFilmModel<CloudType>::inject(TrackCloudType& cloud)
     for
     (
         const areaFilm& regionFa
-      : mesh.time().objectRegistry::template sorted<areaFilm>()
+      : mesh.time().objectRegistry::template csorted<areaFilm>()
     )
     {
         if (regionFa.active())

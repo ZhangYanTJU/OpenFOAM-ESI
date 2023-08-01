@@ -58,7 +58,7 @@ void Foam::heatTransferCoeffModels::fixedReferenceTemperature::htc
     const scalar eps = ROOTVSMALL;
 
     volScalarField::Boundary& htcBf = htc.boundaryFieldRef();
-    for (const label patchi : patchSet_)
+    for (const label patchi : patchIDs_)
     {
         htcBf[patchi] = q[patchi]/(TRef_ - Tbf[patchi] + eps);
     }

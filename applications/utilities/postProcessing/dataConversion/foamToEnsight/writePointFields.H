@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -70,11 +70,11 @@ label writePointFields
 {
     typedef PointField<Type> FieldType;
 
-    const pointMesh& ptMesh = pointMesh::New(ensMesh.mesh());
+    const pointMesh& pMesh = pointMesh::New(ensMesh.mesh());
 
     label count = 0;
 
-    for (const word& fieldName : objects.sortedNames<FieldType>())
+    for (const IOobject& io : objects.csorted<FieldType>())
     {
         if
         (
@@ -82,11 +82,11 @@ label writePointFields
             (
                 ensCase,
                 ensMesh,
-                getField<FieldType>(ptMesh, objects, fieldName)
+                getField<FieldType>(io, pMesh)
             )
         )
         {
-            Info<< ' ' << fieldName;
+            Info<< ' ' << io.name();
             ++count;
         }
     }

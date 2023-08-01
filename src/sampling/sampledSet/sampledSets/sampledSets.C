@@ -155,8 +155,7 @@ void Foam::sampledSets::gatherAllSets()
 
     const PtrList<sampledSet>& localSets = *this;
 
-    gatheredSets_.free();
-    gatheredSets_.resize(localSets.size());
+    gatheredSets_.resize_null(localSets.size());
     gatheredSorting_.resize_nocopy(localSets.size());
     globalIndices_.resize_nocopy(localSets.size());
 

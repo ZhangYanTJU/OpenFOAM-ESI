@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,15 +88,8 @@ void Foam::distributedTriSurfaceMesh::distributeFields
 {
     typedef DimensionedField<Type, triSurfaceGeoMesh> fieldType;
 
-    HashTable<fieldType*> fields
-    (
-        objectRegistry::lookupClass<fieldType>()
-    );
-
-    forAllIters(fields, fieldIter)
+    for (fieldType& field : objectRegistry::sorted<fieldType>())
     {
-        fieldType& field = *fieldIter();
-
         const label oldSize = field.size();
 
         map.distribute(field);

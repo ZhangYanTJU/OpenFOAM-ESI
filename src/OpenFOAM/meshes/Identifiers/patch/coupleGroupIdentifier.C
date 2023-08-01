@@ -161,14 +161,10 @@ Foam::label Foam::coupleGroupIdentifier::findOtherPatchID
 
 
     // Loop over all regions to find other patch in coupleGroup
-    HashTable<const polyMesh*> meshSet = runTime.lookupClass<polyMesh>();
-
     label otherPatchID = -1;
 
-    forAllConstIters(meshSet, iter)
+    for (const polyMesh& mesh : runTime.cobjects<polyMesh>())
     {
-        const polyMesh& mesh = *iter();
-
         const label patchID = findOtherPatchID(mesh, thisPatch);
 
         if (patchID != -1)
@@ -178,15 +174,15 @@ Foam::label Foam::coupleGroupIdentifier::findOtherPatchID
                 FatalErrorInFunction
                     << "Couple patchGroup " << name()
                     << " should be present on only two patches"
-                    << " in any of the meshes in " << meshSet.sortedToc()
-                    << endl
+                    << " in any of the meshes in "
+                    << runTime.sortedNames<polyMesh>() << nl
                     << "    It seems to be present on patch "
                     << thisPatch.name()
                     << " in region " << thisMesh.name()
                     << ", on patch " << otherPatchID
                     << " in region " << otherRegion
                     << " and on patch " << patchID
-                    << " in region " << mesh.name()
+                    << " in region " << mesh.name() << endl
                     << exit(FatalError);
             }
             otherPatchID = patchID;
@@ -198,7 +194,8 @@ Foam::label Foam::coupleGroupIdentifier::findOtherPatchID
     {
         FatalErrorInFunction
             << "Couple patchGroup " << name()
-            << " not found in any of the other meshes " << meshSet.sortedToc()
+            << " not found in any of the other meshes "
+            << flatOutput(runTime.sortedNames<polyMesh>())
             << " on patch " << thisPatch.name()
             << " region " << thisMesh.name()
             << exit(FatalError);

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2018 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,11 +36,12 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ReadFields_H
-#define ReadFields_H
+#ifndef Foam_ReadFields_H
+#define Foam_ReadFields_H
 
 #include "PtrList.H"
 #include "wordList.H"
+#include "DynamicList.H"
 #include "GeometricField.H"
 #include "HashSet.H"
 #include "LIFOStack.H"
@@ -113,27 +114,63 @@ static void ReadFields
     const word& registryName = "fieldsCache"
 );
 
-//- Read the selected GeometricFields of the templated type.
-//  The fields are transferred to the objectRegistry and a list of them is
-//  returned as a stack for later cleanup
-template<class GeoFieldType>
+
+//- Read the selected GeometricFields of the templated type
+//- and store on the objectRegistry.
+//  Returns a list of field pointers for later cleanup
+template<class GeoFieldType, class NameMatchPredicate>
 void readFields
 (
     const typename GeoFieldType::Mesh& mesh,
     const IOobjectList& objects,
-    const wordHashSet& selectedFields,
+    //! Restrict to fields with matching names
+    const NameMatchPredicate& selectedFields,
+    //! [out] List of field pointers for later cleanup
+    DynamicList<regIOobject*>& storedObjects
+);
+
+//- Read the selected UniformDimensionedFields of the templated type
+//- and store on the objectRegistry.
+//  Returns a list of field pointers for later cleanup
+template<class UniformFieldType, class NameMatchPredicate>
+void readUniformFields
+(
+    const IOobjectList& objects,
+    //! Restrict to fields with matching names
+    const NameMatchPredicate& selectedFields,
+    //! [out] List of field pointers for later cleanup
+    DynamicList<regIOobject*>& storedObjects,
+    const bool syncPar = true
+);
+
+
+// Housekeeping
+
+//- Read the selected GeometricFields of the templated type
+//- and store on the objectRegistry.
+//  \deprecated(2023-07) - prefer the DynamicList version
+//  Returns a stack of field pointers for later cleanup
+template<class GeoFieldType, class NameMatchPredicate>
+FOAM_DEPRECATED_FOR(2023-07, "DynamicList version")
+void readFields
+(
+    const typename GeoFieldType::Mesh& mesh,
+    const IOobjectList& objects,
+    const NameMatchPredicate& selectedFields,
     LIFOStack<regIOobject*>& storedObjects
 );
 
 
-//- Read the selected UniformDimensionedFields of the templated type.
-//  The fields are transferred to the objectRegistry and a list of them is
-//  returned as a stack for later cleanup
-template<class GeoFieldType>
+//- Read the selected UniformDimensionedFields of the templated type
+//- and store on the objectRegistry.
+//  \deprecated(2023-07) - prefer the DynamicList version
+//  Returns a stack of field pointers for later cleanup
+template<class UniformFieldType, class NameMatchPredicate>
+FOAM_DEPRECATED_FOR(2023-07, "DynamicList version")
 void readUniformFields
 (
     const IOobjectList& objects,
-    const wordHashSet& selectedFields,
+    const NameMatchPredicate& selectedFields,
     LIFOStack<regIOobject*>& storedObjects,
     const bool syncPar = true
 );

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,12 +55,9 @@ void ReadAndRotateFields
     const dimensionedTensor& rotT
 )
 {
-    // Objects of field type
-    IOobjectList fields(objects.lookupClass<GeoField>());
-
-    forAllConstIters(fields, fieldIter)
+    for (const IOobject& io : objects.csorted<GeoField>())
     {
-        GeoField fld(*fieldIter(), mesh);
+        GeoField fld(io, mesh);
         Info<< "    Rotating " << fld.name() << endl;
         transform(fld, rotT, fld);
         fld.write();

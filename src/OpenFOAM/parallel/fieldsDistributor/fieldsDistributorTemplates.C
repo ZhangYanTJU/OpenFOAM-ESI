@@ -65,10 +65,10 @@ void Foam::fieldsDistributor::readFields
     typedef GeometricField<Type, PatchField, GeoMesh> GeoField;
 
     // GeoField fields - sorted for consistent order on all processors
-    UPtrList<const IOobject> fieldObjects(objects.sorted<GeoField>());
+    const UPtrList<const IOobject> fieldObjects(objects.csorted<GeoField>());
 
     // Construct the fields
-    fields.resize(fieldObjects.size());
+    fields.resize_null(fieldObjects.size());
 
     forAll(fieldObjects, i)
     {
@@ -86,10 +86,10 @@ void Foam::fieldsDistributor::readFields
 )
 {
     // GeoField fields - sorted for consistent order on all processors
-    UPtrList<const IOobject> fieldObjects(objects.sorted<GeoField>());
+    const UPtrList<const IOobject> fieldObjects(objects.csorted<GeoField>());
 
     // Construct the fields
-    fields.resize(fieldObjects.size());
+    fields.resize_null(fieldObjects.size());
 
     forAll(fieldObjects, i)
     {
@@ -167,18 +167,16 @@ void Foam::fieldsDistributor::readFieldsImpl
         if (deregister)
         {
             // Extra safety - remove all such types
-            HashTable<const GeoField*> other
+            const UPtrList<const GeoField> other
             (
-                mesh.thisDb().objectRegistry::template lookupClass<GeoField>()
+                mesh.thisDb().objectRegistry::template cobjects<GeoField>()
             );
 
-            forAllConstIters(other, iter)
+            for (const GeoField& field : other)
             {
-                GeoField& fld = const_cast<GeoField&>(*iter.val());
-
-                if (!fld.ownedByRegistry())
+                if (!field.ownedByRegistry())
                 {
-                    fld.checkOut();
+                    const_cast<GeoField&>(field).checkOut();
                 }
             }
         }

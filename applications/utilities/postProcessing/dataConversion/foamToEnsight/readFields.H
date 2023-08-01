@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,17 +35,29 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef readFields_H
-#define readFields_H
+#ifndef ensight_readFields_H
+#define ensight_readFields_H
 
 #include "instantList.H"
 #include "IOobjectList.H"
-#include "zeroGradientFvPatchFields.H"
+#include "fvPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+//- Get the field or FatalError
+template<class GeoField>
+tmp<GeoField> getField
+(
+    const IOobject& io,
+    const typename GeoField::Mesh& mesh
+)
+{
+    return tmp<GeoField>::New(io, mesh);
+}
+
 
 //- Get the field or return nullptr
 template<class GeoField>

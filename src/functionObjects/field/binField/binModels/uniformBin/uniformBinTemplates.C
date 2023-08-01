@@ -39,9 +39,9 @@ void Foam::binModels::uniformBin::writeFileHeader
     for (direction i = 0; i < vector::nComponents; ++i)
     {
         writeHeaderValue(os, "e" + Foam::name(i) + " bins", nBins_[i]);
-        writeHeaderValue(os, "    start", binMinMax_[i][0]);
-        writeHeaderValue(os, "    end", binMinMax_[i][1]);
-        writeHeaderValue(os, "    delta", binW_[i]);
+        writeHeaderValue(os, "    start", binLimits_.min()[i]);
+        writeHeaderValue(os, "    end", binLimits_.max()[i]);
+        writeHeaderValue(os, "    delta", binWidth_[i]);
         writeHeaderValue(os, "    direction", R.col(i));
     }
     writeCommented(os, "bin end co-ordinates:");
@@ -50,12 +50,12 @@ void Foam::binModels::uniformBin::writeFileHeader
     // Compute and print bin end points in binning directions
     for (direction i = 0; i < vector::nComponents; ++i)
     {
-        scalar binEnd = binMinMax_[i][0];
+        scalar binEnd = binLimits_.min()[i];
 
         writeCommented(os, "e"+Foam::name(i)+" co-ords   :");
         for (label j = 0; j < nBins_[i]; ++j)
         {
-            binEnd += binW_[i];
+            binEnd += binWidth_[i];
             os  << tab << binEnd;
         }
         os  << nl;
@@ -124,7 +124,7 @@ bool Foam::binModels::uniformBin::processField(const label fieldi)
     List<List<Type>> data(nField);
     for (auto& binList : data)
     {
-        binList.setSize(nBin_, Zero);
+        binList.resize(nBin_, Zero);
     }
 
     for (const label zonei : cellZoneIDs_)
@@ -135,16 +135,15 @@ bool Foam::binModels::uniformBin::processField(const label fieldi)
         {
             const label bini = cellToBin_[celli];
 
-            if (bini != -1)
+            if (bini >= 0)
             {
                 data[0][bini] += fld[celli];
             }
         }
     }
 
-    forAllIters(patchSet_, iter)
+    for (const label patchi : patchIDs_)
     {
-        const label patchi = iter();
         const polyPatch& pp = mesh_.boundaryMesh()[patchi];
         const vectorField np(mesh_.boundary()[patchi].nf());
 
@@ -154,7 +153,7 @@ bool Foam::binModels::uniformBin::processField(const label fieldi)
                 pp.start() - mesh_.nInternalFaces() + facei;
             const label bini = faceToBin_[localFacei];
 
-            if (bini != -1)
+            if (bini >= 0)
             {
                 const Type& v = fld.boundaryField()[patchi][facei];
 

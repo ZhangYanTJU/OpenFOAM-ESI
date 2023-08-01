@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
         << endl;
 
 
-    for (const IOobject& io : objects.sorted<pointSet>())
+    for (const IOobject& io : objects.csorted<pointSet>())
     {
         // Not in memory. Load it.
         pointSet set(io);
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 
     wordHashSet slaveCellSets;
 
-    for (const IOobject& io : objects.sorted<faceSet>())
+    for (const IOobject& io : objects.csorted<faceSet>())
     {
         // Not in memory. Load it.
         faceSet set(io);
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 
 
 
-    for (const IOobject& io : objects.sorted<cellSet>())
+    for (const IOobject& io : objects.csorted<cellSet>())
     {
         if (!slaveCellSets.found(io.name()))
         {

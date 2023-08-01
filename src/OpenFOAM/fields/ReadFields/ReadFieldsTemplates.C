@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,10 +45,10 @@ Foam::wordList Foam::ReadFields
     typedef GeometricField<Type, PatchField, GeoMesh> GeoField;
 
     // Names of GeoField objects, sorted order.
-    const wordList fieldNames(objects.names(GeoField::typeName, syncPar));
+    const wordList fieldNames(objects.sortedNames<GeoField>(syncPar));
 
     // Construct the fields - reading in consistent (master) order.
-    fields.resize(fieldNames.size());
+    fields.resize_null(fieldNames.size());
 
     label nFields = 0;
 
@@ -73,8 +73,8 @@ Foam::wordList Foam::ReadFields
                     io.instance(),
                     io.local(),
                     io.db(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE,
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::AUTO_WRITE,
                     io.registerObject()
                 ),
                 mesh,
@@ -99,10 +99,10 @@ Foam::wordList Foam::ReadFields
 )
 {
     // Names of GeoField objects, sorted order.
-    const wordList fieldNames(objects.names(GeoField::typeName, syncPar));
+    const wordList fieldNames(objects.sortedNames<GeoField>(syncPar));
 
     // Construct the fields - reading in consistent (master) order.
-    fields.resize(fieldNames.size());
+    fields.resize_null(fieldNames.size());
 
     label nFields = 0;
 
@@ -127,8 +127,8 @@ Foam::wordList Foam::ReadFields
                     io.instance(),
                     io.local(),
                     io.db(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE,
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::AUTO_WRITE,
                     io.registerObject()
                 ),
                 mesh
@@ -151,10 +151,10 @@ Foam::wordList Foam::ReadFields
 )
 {
     // Names of GeoField objects, sorted order.
-    const wordList fieldNames(objects.names(GeoField::typeName, syncPar));
+    const wordList fieldNames(objects.sortedNames<GeoField>(syncPar));
 
     // Construct the fields - reading in consistent (master) order.
-    fields.resize(fieldNames.size());
+    fields.resize_null(fieldNames.size());
 
     label nFields = 0;
 
@@ -179,8 +179,8 @@ Foam::wordList Foam::ReadFields
                     io.instance(),
                     io.local(),
                     io.db(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE,
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::AUTO_WRITE,
                     io.registerObject()
                 )
             )
@@ -235,9 +235,9 @@ void Foam::ReadFields
                     timeName,
                     timeName,
                     fieldsCache,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::REGISTER
                 )
             );
             timeCachePtr->store();
@@ -260,9 +260,9 @@ void Foam::ReadFields
                     fieldName,
                     timeName,
                     mesh.thisDb(),
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    IOobjectOption::MUST_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 ),
                 mesh
             );
@@ -275,9 +275,9 @@ void Foam::ReadFields
                     fieldName,
                     timeName,
                     timeCache,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::REGISTER
                 ),
                 loadedFld
             );
@@ -309,53 +309,51 @@ void Foam::ReadFields
 }
 
 
-template<class GeoFieldType>
+template<class GeoFieldType, class NameMatchPredicate>
 void Foam::readFields
 (
     const typename GeoFieldType::Mesh& mesh,
     const IOobjectList& objects,
-    const wordHashSet& selectedFields,
-    LIFOStack<regIOobject*>& storedObjects
+    const NameMatchPredicate& selectedFields,
+    DynamicList<regIOobject*>& storedObjects
 )
 {
-    // Names of GeoField objects, sorted order. Not synchronised.
-    const wordList fieldNames
+    // GeoField objects, sorted order. Not synchronised.
+    const UPtrList<const IOobject> fieldObjects
     (
-        objects.sortedNames
-        (
-            GeoFieldType::typeName,
-            selectedFields   // Only permit these
-        )
+        objects.csorted<GeoFieldType>(selectedFields)
     );
+
+
+    // pre-extend reserve
+    storedObjects.reserve(storedObjects.size() + fieldObjects.size());
 
     label nFields = 0;
 
-    for (const word& fieldName : fieldNames)
+    for (const IOobject& io : fieldObjects)
     {
-        const IOobject& io = *objects[fieldName];
-
         if (!nFields)
         {
             Info<< "    " << GeoFieldType::typeName << ':';
         }
-        Info<< ' ' << fieldName;
+        Info<< ' ' << io.name();
 
         GeoFieldType* fieldPtr = new GeoFieldType
         (
             IOobject
             (
-                fieldName,
+                io.name(),
                 io.instance(),
                 io.local(),
                 io.db(),
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             ),
             mesh
         );
         fieldPtr->store();
-        storedObjects.push(fieldPtr);
+        storedObjects.push_back(fieldPtr);
 
         ++nFields;
     }
@@ -364,58 +362,108 @@ void Foam::readFields
 }
 
 
-template<class UniformFieldType>
+template<class UniformFieldType, class NameMatchPredicate>
 void Foam::readUniformFields
 (
     const IOobjectList& objects,
-    const wordHashSet& selectedFields,
-    LIFOStack<regIOobject*>& storedObjects,
+    const NameMatchPredicate& selectedFields,
+    DynamicList<regIOobject*>& storedObjects,
     const bool syncPar
 )
 {
-    // Names of UniformField objects, sorted order.
-    const wordList fieldNames
+    // UniformField objects, sorted order, synchronised.
+    const UPtrList<const IOobject> fieldObjects
     (
-        objects.names
-        (
-            UniformFieldType::typeName,
-            selectedFields,  // Only permit these
-            syncPar
-        )
+        objects.csorted<UniformFieldType>(selectedFields, syncPar)
     );
+
+    // pre-extend reserve
+    storedObjects.reserve(storedObjects.size() + fieldObjects.size());
 
     label nFields = 0;
 
-    for (const word& fieldName : fieldNames)
+    for (const IOobject& io : fieldObjects)
     {
-        const IOobject& io = *objects[fieldName];
-
         if (!nFields)
         {
             Info<< "    " << UniformFieldType::typeName << ':';
         }
-        Info<< ' ' << fieldName;
+        Info<< ' ' << io.name();
 
         UniformFieldType* fieldPtr = new UniformFieldType
         (
             IOobject
             (
-                fieldName,
+                io.name(),
                 io.instance(),
                 io.local(),
                 io.db(),
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::MUST_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             )
         );
         fieldPtr->store();
-        storedObjects.push(fieldPtr);
+        storedObjects.push_back(fieldPtr);
 
         ++nFields;
     }
 
     if (nFields) Info<< endl;
+}
+
+
+template<class GeoFieldType, class NameMatchPredicate>
+void Foam::readFields
+(
+    const typename GeoFieldType::Mesh& mesh,
+    const IOobjectList& objects,
+    const NameMatchPredicate& selectedFields,
+    LIFOStack<regIOobject*>& storedObjects
+)
+{
+    DynamicList<regIOobject*> newObjects;
+
+    readFields<GeoFieldType, NameMatchPredicate>
+    (
+        mesh,
+        objects,
+        selectedFields,
+        newObjects
+    );
+
+    // Transcribe from list to stack
+    for (regIOobject* fieldPtr : newObjects)
+    {
+        storedObjects.push(fieldPtr);
+    }
+}
+
+
+template<class UniformFieldType, class NameMatchPredicate>
+void Foam::readUniformFields
+(
+    const IOobjectList& objects,
+    const NameMatchPredicate& selectedFields,
+    LIFOStack<regIOobject*>& storedObjects,
+    const bool syncPar
+)
+{
+    DynamicList<regIOobject*> newObjects;
+
+    readUniformFields<UniformFieldType, NameMatchPredicate>
+    (
+        objects,
+        selectedFields,
+        newObjects,
+        syncPar
+    );
+
+    // Transcribe from list to stack
+    for (regIOobject* fieldPtr : newObjects)
+    {
+        storedObjects.push(fieldPtr);
+    }
 }
 
 

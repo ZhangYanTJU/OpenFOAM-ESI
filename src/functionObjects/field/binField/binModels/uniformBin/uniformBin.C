@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,70 +45,87 @@ void Foam::binModels::uniformBin::initialise()
 {
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
-    // Determine extents of patches in a given coordinate system
-    vector geomMin(GREAT, GREAT, GREAT);
-    vector geomMax(-GREAT, -GREAT, -GREAT);
-
-    for (const label patchi : patchSet_)
+    // Use geometry limits if not specified by the user
     {
-        const polyPatch& pp = pbm[patchi];
-        const vectorField ppcs(coordSysPtr_->localPosition(pp.faceCentres()));
+        // Determine extents of patches/cells
+        boundBox geomLimits;
 
-        for (direction i = 0; i < vector::nComponents; ++i)
+        for (const label patchi : patchIDs_)
         {
-            geomMin[i] = min(min(ppcs.component(i)), geomMin[i]);
-            geomMax[i] = max(max(ppcs.component(i)), geomMax[i]);
+            vectorField pts
+            (
+                coordSysPtr_->localPosition(pbm[patchi].faceCentres())
+            );
+
+            MinMax<vector> limits(pts);
+
+            geomLimits.add(limits.min());
+            geomLimits.add(limits.max());
         }
-    }
 
-    for (const label zonei : cellZoneIDs_)
-    {
-        const cellZone& cZone = mesh_.cellZones()[zonei];
-        const vectorField d
-        (
-            coordSysPtr_->localPosition(vectorField(mesh_.C(), cZone))
-        );
-
-        for (direction i = 0; i < vector::nComponents; ++i)
+        for (const label zonei : cellZoneIDs_)
         {
-            geomMin[i] = min(min(d.component(i)), geomMin[i]);
-            geomMax[i] = max(max(d.component(i)), geomMax[i]);
+            const cellZone& cZone = mesh_.cellZones()[zonei];
+            const vectorField pts
+            (
+                coordSysPtr_->localPosition(vectorField(mesh_.C(), cZone))
+            );
+
+            MinMax<vector> limits(pts);
+
+            geomLimits.add(limits.min());
+            geomLimits.add(limits.max());
         }
-    }
 
-    reduce(geomMin, minOp<vector>());
-    reduce(geomMax, maxOp<vector>());
+        // Globally consistent
+        geomLimits.reduce();
 
-    for (direction i = 0; i < vector::nComponents; ++i)
-    {
         // Slightly boost max so that region of interest is fully within bounds
-        geomMax[i] = 1.0001*(geomMax[i] - geomMin[i]) + geomMin[i];
+        // TBD: could also adjust min?
+        const vector adjust(1e-4*geomLimits.span());
+        geomLimits.max() += adjust;
 
-        // Use geometry limits if not specified by the user
-        if (binMinMax_[i][0] == GREAT) binMinMax_[i][0] = geomMin[i];
-        if (binMinMax_[i][1] == GREAT) binMinMax_[i][1] = geomMax[i];
+        for (direction cmpt = 0; cmpt < vector::nComponents; ++cmpt)
+        {
+            // Use geometry limits if not specified by the user
+            if (binLimits_.min()[cmpt] == GREAT)
+            {
+                binLimits_.min()[cmpt] = geomLimits.min()[cmpt];
+            }
+            if (binLimits_.max()[cmpt] == GREAT)
+            {
+                binLimits_.max()[cmpt] = geomLimits.max()[cmpt];
+            }
+        }
+    }
 
-        if (binMinMax_[i][0] > binMinMax_[i][1])
+    for (direction cmpt = 0; cmpt < vector::nComponents; ++cmpt)
+    {
+        if (binLimits_.min()[cmpt] > binLimits_.max()[cmpt])
         {
             FatalErrorInFunction
                 << "Max bounds must be greater than min bounds" << nl
-                << "    direction   = " << i << nl
-                << "    min         = " << binMinMax_[i][0] << nl
-                << "    max         = " << binMinMax_[i][1] << nl
+                << "    direction   = " << cmpt << nl
+                << "    min         = " << binLimits_.min()[cmpt] << nl
+                << "    max         = " << binLimits_.max()[cmpt] << nl
                 << exit(FatalError);
         }
 
         //- Compute bin widths in binning directions
-        binW_[i] = (binMinMax_[i][1] - binMinMax_[i][0])/scalar(nBins_[i]);
+        binWidth_[cmpt] =
+        (
+            (binLimits_.max()[cmpt] - binLimits_.min()[cmpt])
+          / scalar(nBins_[cmpt])
+        );
 
-        if (binW_[i] <= 0)
+        if (binWidth_[cmpt] <= 0)
         {
             FatalErrorInFunction
                 << "Bin widths must be greater than zero" << nl
-                << "    direction = " << i << nl
-                << "    min bound = " << binMinMax_[i][0] << nl
-                << "    max bound = " << binMinMax_[i][1] << nl
-                << "    bin width = " << binW_[i]
+                << "    direction = " << cmpt << nl
+                << "    min bound = " << binLimits_.min()[cmpt] << nl
+                << "    max bound = " << binLimits_.max()[cmpt] << nl
+                << "    bin width = " << binWidth_[cmpt] << nl
                 << exit(FatalError);
         }
     }
@@ -125,9 +142,13 @@ Foam::labelList Foam::binModels::uniformBin::binAddr(const vectorField& d) const
     {
         // Avoid elements outside of the bin
         bool faceInside = true;
-        for (direction j = 0; j < vector::nComponents; ++j)
+        for (direction cmpt = 0; cmpt < vector::nComponents; ++cmpt)
         {
-            if (d[i][j] < binMinMax_[j][0] || d[i][j] > binMinMax_[j][1])
+            if
+            (
+                d[i][cmpt] < binLimits_.min()[cmpt]
+             || d[i][cmpt] > binLimits_.max()[cmpt]
+            )
             {
                 faceInside = false;
                 break;
@@ -138,14 +159,18 @@ Foam::labelList Foam::binModels::uniformBin::binAddr(const vectorField& d) const
         {
             // Find the bin division corresponding to the element
             Vector<label> n(Zero);
-            for (direction j = 0; j < vector::nComponents; ++j)
+            for (direction cmpt = 0; cmpt < vector::nComponents; ++cmpt)
             {
-                n[j] = floor((d[i][j] - binMinMax_[j][0])/binW_[j]);
-                n[j] = min(max(n[j], 0), nBins_[j] - 1);
+                label bini = floor
+                (
+                    (d[i][cmpt] - binLimits_.min()[cmpt])/binWidth_[cmpt]
+                );
+
+                n[cmpt] = min(max(bini, 0), nBins_[cmpt] - 1);
             }
 
             // Order: (e1, e2, e3), the first varies the fastest
-            binIndices[i] = n[0] + nBins_[0]*n[1] + nBins_[0]*nBins_[1]*n[2];
+            binIndices[i] = n.x() + nBins_[0]*n.y() + nBins_[0]*nBins_[1]*n.z();
         }
         else
         {
@@ -159,19 +184,19 @@ Foam::labelList Foam::binModels::uniformBin::binAddr(const vectorField& d) const
 
 void Foam::binModels::uniformBin::setBinsAddressing()
 {
-    faceToBin_.setSize(mesh_.nBoundaryFaces());
+    faceToBin_.resize_nocopy(mesh_.nBoundaryFaces());
     faceToBin_ = -1;
 
-    forAllIters(patchSet_, iter)
+    for (const label patchi : patchIDs_)
     {
-        const polyPatch& pp = mesh_.boundaryMesh()[iter()];
+        const polyPatch& pp = mesh_.boundaryMesh()[patchi];
         const label i0 = pp.start() - mesh_.nInternalFaces();
 
         SubList<label>(faceToBin_, pp.size(), i0) =
             binAddr(coordSysPtr_->localPosition(pp.faceCentres()));
     }
 
-    cellToBin_.setSize(mesh_.nCells());
+    cellToBin_.resize_nocopy(mesh_.nCells());
     cellToBin_ = -1;
 
     for (const label zonei : cellZoneIDs_)
@@ -202,13 +227,8 @@ Foam::binModels::uniformBin::uniformBin
 :
     binModel(dict, mesh, outputPrefix),
     nBins_(Zero),
-    binW_(Zero),
-    binMinMax_
-    (
-        vector2D(GREAT, GREAT),
-        vector2D(GREAT, GREAT),
-        vector2D(GREAT, GREAT)
-    )
+    binWidth_(Zero),
+    binLimits_(vector::uniform(GREAT))
 {
     read(dict);
 }
@@ -238,36 +258,40 @@ bool Foam::binModels::uniformBin::read(const dictionary& dict)
     {
         FatalIOErrorInFunction(binDict)
             << "Number of bins must be greater than zero" << nl
-            << "    e1 bins = " << nBins_[0] << nl
-            << "    e2 bins = " << nBins_[1] << nl
-            << "    e3 bins = " << nBins_[2]
+            << "    e1 bins = " << nBins_.x() << nl
+            << "    e2 bins = " << nBins_.y() << nl
+            << "    e3 bins = " << nBins_.z()
             << exit(FatalIOError);
     }
 
     Info<< "    - Employing:" << nl
-        << "        " << nBins_[0] << " e1 bins," << nl
-        << "        " << nBins_[1] << " e2 bins," << nl
-        << "        " << nBins_[2] << " e3 bins"
+        << "        " << nBins_.x() << " e1 bins," << nl
+        << "        " << nBins_.y() << " e2 bins," << nl
+        << "        " << nBins_.z() << " e3 bins"
         << endl;
 
     cumulative_ = binDict.getOrDefault<bool>("cumulative", false);
     Info<< "    - cumulative    : " << cumulative_ << endl;
     Info<< "    - decomposePatchValues    : " << decomposePatchValues_ << endl;
 
-    if (binDict.found("minMax"))
+    const dictionary* minMaxDictPtr = binDict.findDict("minMax");
+
+    if (minMaxDictPtr)
     {
-        const dictionary& minMaxDict = binDict.subDict("minMax");
+        const auto& minMaxDict = *minMaxDictPtr;
 
-        for (direction i = 0; i < vector::nComponents; ++i)
+        for (direction cmpt = 0; cmpt < vector::nComponents; ++cmpt)
         {
-            const word ei("e" + Foam::name(i));
+            const word ei("e" + Foam::name(cmpt));
 
-            if (minMaxDict.readIfPresent(ei, binMinMax_[i]))
+            scalarMinMax range;
+
+            if (minMaxDict.readIfPresent(ei, range))
             {
-                Info<< "    - " << ei << " min        : "
-                    << binMinMax_[i][0] << nl
-                    << "    - " << ei << " max        : "
-                    << binMinMax_[i][1] << endl;
+                binLimits_.min()[cmpt] = range.min();
+                binLimits_.max()[cmpt] = range.max();
+
+                Info<< "    - " << ei << " min/max    : " << range << nl;
             }
         }
     }
@@ -284,17 +308,18 @@ void Foam::binModels::uniformBin::apply()
     forAll(fieldNames_, i)
     {
         const bool ok =
+        (
             processField<scalar>(i)
          || processField<vector>(i)
          || processField<sphericalTensor>(i)
          || processField<symmTensor>(i)
-         || processField<tensor>(i);
+         || processField<tensor>(i)
+        );
 
         if (!ok)
         {
             WarningInFunction
-                << "Unable to find field " << fieldNames_[i]
-                << endl;
+                << "Unable to find field " << fieldNames_[i] << endl;
         }
     }
 

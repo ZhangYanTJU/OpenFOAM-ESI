@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -124,8 +124,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_Curle_H
-#define functionObjects_Curle_H
+#ifndef Foam_functionObjects_Curle_H
+#define Foam_functionObjects_Curle_H
 
 #include "fvMeshFunctionObject.H"
 #include "writeFile.H"
@@ -163,8 +163,8 @@ class Curle
         //- Name of pressure field; default = p
         word pName_;
 
-        //- Patches to integrate forces over
-        labelHashSet patchSet_;
+        //- List of patches to process
+        labelList patchIDs_;
 
         //- Observer positions
         List<point> observerPositions_;

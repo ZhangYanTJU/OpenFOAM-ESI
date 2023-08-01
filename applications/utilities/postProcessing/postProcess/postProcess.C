@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,34 +49,40 @@ using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define ReadFields(GeoFieldType)                                               \
-    readFields<GeoFieldType>(mesh, objects, selectedFields, storedObjects);
-
-#define ReadPointFields(GeoFieldType)                                          \
-    readFields<GeoFieldType>(pMesh, objects, selectedFields, storedObjects);
-
-#define ReadUniformFields(FieldType)                                           \
-    readUniformFields<FieldType>                                               \
-    (constantObjects, selectedFields, storedObjects);
-
 void executeFunctionObjects
 (
     const argList& args,
     const Time& runTime,
     fvMesh& mesh,
-    const wordHashSet& selectedFields,
+    const wordList& selectedFields,
     functionObjectList& functions,
     bool lastTime
 )
 {
     Info<< nl << "Reading fields:" << endl;
 
-    // Maintain a stack of the stored objects to clear after executing
-    // the functionObjects
-    LIFOStack<regIOobject*> storedObjects;
+    // Read objects in constant directory
+    IOobjectList constObjects(mesh, runTime.constant());
 
     // Read objects in time directory
     IOobjectList objects(mesh, runTime.timeName());
+
+    // List of stored objects to clear after executing functionObjects
+    DynamicList<regIOobject*> storedObjects
+    (
+        objects.size() + constObjects.size()
+    );
+
+    const auto nameMatcher = [&](const word& name) -> bool
+    {
+        return selectedFields.contains(name);
+    };
+
+    // Read GeometricFields
+
+    #undef  ReadFields
+    #define ReadFields(FieldType)                                             \
+    readFields<FieldType>(mesh, objects, nameMatcher, storedObjects);
 
     // Read volFields
     ReadFields(volScalarField);
@@ -99,8 +105,12 @@ void executeFunctionObjects
     ReadFields(surfaceSymmTensorField);
     ReadFields(surfaceTensorField);
 
+
     // Read point fields.
     const pointMesh& pMesh = pointMesh::New(mesh);
+    #undef  ReadPointFields
+    #define ReadPointFields(FieldType)                                        \
+    readFields<FieldType>(pMesh, objects, nameMatcher, storedObjects);
 
     ReadPointFields(pointScalarField)
     ReadPointFields(pointVectorField);
@@ -108,8 +118,12 @@ void executeFunctionObjects
     ReadPointFields(pointSymmTensorField);
     ReadPointFields(pointTensorField);
 
+
     // Read uniform dimensioned fields
-    IOobjectList constantObjects(mesh, runTime.constant());
+
+    #undef  ReadUniformFields
+    #define ReadUniformFields(FieldType)                                      \
+    readUniformFields<FieldType>(constObjects, nameMatcher, storedObjects);
 
     ReadUniformFields(uniformDimensionedScalarField);
     ReadUniformFields(uniformDimensionedVectorField);
@@ -130,7 +144,8 @@ void executeFunctionObjects
 
     while (!storedObjects.empty())
     {
-        storedObjects.pop()->checkOut();
+        storedObjects.back()->checkOut();
+        storedObjects.pop_back();
     }
 }
 

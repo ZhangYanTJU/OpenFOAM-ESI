@@ -70,23 +70,23 @@ Foam::List<StringType> Foam::DirLister::list() const
 
 
 template<class StringType, class UnaryPredicate>
-Foam::List<StringType> Foam::DirLister::sorted
+Foam::List<StringType> Foam::DirLister::csorted
 (
     const UnaryPredicate& pred,
     const bool prune
 ) const
 {
-    List<StringType> lst(list<StringType>(pred, prune));
-    sort(lst, stringOps::natural_sort());
+    List<StringType> list(list<StringType>(pred, prune));
+    Foam::sort(list, stringOps::natural_sort());
 
-    return lst;
+    return list;
 }
 
 
 template<class StringType>
-Foam::List<StringType> Foam::DirLister::sorted() const
+Foam::List<StringType> Foam::DirLister::csorted() const
 {
-    return sorted<StringType>(predicates::always());
+    return csorted<StringType>(predicates::always());
 }
 
 

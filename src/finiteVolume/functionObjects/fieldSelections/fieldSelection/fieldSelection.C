@@ -37,27 +37,28 @@ Foam::functionObjects::fieldSelection::fieldSelection
     const bool includeComponents
 )
 :
-    List<fieldInfo>(),
     obr_(obr),
-    includeComponents_(includeComponents),
-    selection_()
+    includeComponents_(includeComponents)
 {}
 
 
-bool Foam::functionObjects::fieldSelection::resetFieldFilters
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Container>
+bool Foam::functionObjects::fieldSelection::resetFieldFiltersImpl
 (
-    const HashSet<wordRe>& names
+    const Container& names
 )
 {
-    static word cmptStr(".component(");
-    static string::size_type len(cmptStr.size());
+    static std::string cmptStr(".component(");
+    static std::string::size_type len(cmptStr.size());
 
     DynamicList<fieldInfo> nameAndComponent(names.size());
 
     for (const wordRe& name : names)
     {
-        string::size_type n = name.find(cmptStr);
-        if (n != string::npos)
+        const auto n = name.find(cmptStr);
+        if (n != std::string::npos)
         {
             // Field should be written <field>.component(i)
 
@@ -76,12 +77,12 @@ bool Foam::functionObjects::fieldSelection::resetFieldFilters
                     << exit(FatalError);
             }
 
-            word baseName = name.substr(0, n);
+            const word baseName(name.substr(0, n));
 
             // Extract the component - number between ()'s
-            string::size_type closei = name.find(')', n);
+            const auto closei = name.find(')', n);
 
-            if (closei == string::npos)
+            if (closei == std::string::npos)
             {
                 FatalErrorInFunction
                     << "Invalid field component specification for "
@@ -90,18 +91,18 @@ bool Foam::functionObjects::fieldSelection::resetFieldFilters
                     << exit(FatalError);
             }
 
-            string::size_type cmptWidth = closei - n - len;
+            const auto cmptWidth = (closei - n - len);
 
             label component
             (
-                readLabel(IStringStream(name.substr(n+len, cmptWidth))())
+                readLabel(name.substr(n+len, cmptWidth))
             );
 
-            nameAndComponent.append(fieldInfo(wordRe(baseName), component));
+            nameAndComponent.emplace_back(wordRe(baseName), component);
         }
         else
         {
-            nameAndComponent.append(fieldInfo(name));
+            nameAndComponent.emplace_back(name);
         }
     }
 
@@ -113,10 +114,21 @@ bool Foam::functionObjects::fieldSelection::resetFieldFilters
 
 bool Foam::functionObjects::fieldSelection::resetFieldFilters
 (
+    const HashSet<wordRe>& names
+)
+{
+    return resetFieldFiltersImpl(names);
+}
+
+
+bool Foam::functionObjects::fieldSelection::resetFieldFilters
+(
     const wordRe& name
 )
 {
-    return resetFieldFilters(HashSet<wordRe>({name}));
+    List<wordRe> names(1, name);
+
+    return resetFieldFiltersImpl(names);
 }
 
 
@@ -124,7 +136,8 @@ bool Foam::functionObjects::fieldSelection::resetFieldFilters
 
 bool Foam::functionObjects::fieldSelection::read(const dictionary& dict)
 {
-    HashSet<wordRe> fields(dict.lookup("fields"));
+    HashSet<wordRe> fields(0);
+    dict.readEntry("fields", fields);
 
     return resetFieldFilters(fields);
 }

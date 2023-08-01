@@ -82,7 +82,7 @@ void Foam::parLagrangianDistributor::findClouds
         )
     );
 
-    cloudNames.setSize(localCloudDirs.size());
+    cloudNames.resize_nocopy(localCloudDirs.size());
     forAll(localCloudDirs, i)
     {
         cloudNames[i] = localCloudDirs[i];

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -78,8 +78,8 @@ void printRegistry
     Foam::label indent
 )
 {
-    UPtrList<const regIOobject> objects(obr.sorted());
-    wordList regNames(obr.sortedNames<objectRegistry>());
+    const UPtrList<const regIOobject> objects(obr.csorted());
+    const wordList regNames(obr.sortedNames<objectRegistry>());
 
     std::string prefix;
     for (label i=indent; i; --i)

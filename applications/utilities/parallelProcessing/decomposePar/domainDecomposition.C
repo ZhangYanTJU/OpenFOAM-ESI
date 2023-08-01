@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -186,26 +186,17 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
     {
         // Read sets
         IOobjectList objects(*this, facesInstance(), "polyMesh/sets");
+        for (const IOobject& io : objects.csorted<cellSet>())
         {
-            IOobjectList sets(objects.lookupClass<cellSet>());
-            forAllConstIters(sets, iter)
-            {
-                cellSets.append(new cellSet(*(iter.val())));
-            }
+            cellSets.emplace_back(io);
         }
+        for (const IOobject& io : objects.csorted<faceSet>())
         {
-            IOobjectList sets(objects.lookupClass<faceSet>());
-            forAllConstIters(sets, iter)
-            {
-                faceSets.append(new faceSet(*(iter.val())));
-            }
+            faceSets.emplace_back(io);
         }
+        for (const IOobject& io : objects.csorted<pointSet>())
         {
-            IOobjectList sets(objects.lookupClass<pointSet>());
-            forAllConstIters(sets, iter)
-            {
-                pointSets.append(new pointSet(*(iter.val())));
-            }
+            pointSets.emplace_back(io);
         }
     }
 
@@ -219,9 +210,9 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
             facesInstance(),
             polyMesh::meshSubDir,
             *this,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobjectOption::READ_IF_PRESENT,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
         )
     );
 

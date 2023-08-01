@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -107,7 +107,9 @@ bool Foam::functionObjects::particleDistribution::write()
 {
     Log << type() << " " << name() << " output:" << endl;
 
-    if (!mesh_.foundObject<cloud>(cloudName_))
+    const cloud* cloudPtr = mesh_.cfindObject<cloud>(cloudName_);
+
+    if (!cloudPtr)
     {
         WarningInFunction
             << "Unable to find cloud " << cloudName_
@@ -117,7 +119,7 @@ bool Foam::functionObjects::particleDistribution::write()
         return false;
     }
 
-    const cloud& c = mesh_.lookupObject<cloud>(cloudName_);
+    const cloud& c = *cloudPtr;
 
     objectRegistry cloudObr
     (

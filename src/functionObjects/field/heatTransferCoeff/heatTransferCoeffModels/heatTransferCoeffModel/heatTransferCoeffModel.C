@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,7 +50,6 @@ Foam::heatTransferCoeffModel::heatTransferCoeffModel
 )
 :
     mesh_(mesh),
-    patchSet_(),
     TName_(TName),
     qrName_("qr")
 {}
@@ -86,7 +85,7 @@ Foam::heatTransferCoeffModel::q() const
         const volScalarField alphaEff(turb.alphaEff());
         const volScalarField::Boundary& alphaEffbf = alphaEff.boundaryField();
 
-        for (const label patchi : patchSet_)
+        for (const label patchi : patchIDs_)
         {
             q[patchi] = alphaEffbf[patchi]*hebf[patchi].snGrad();
         }
@@ -103,7 +102,7 @@ Foam::heatTransferCoeffModel::q() const
         const volScalarField& alpha(thermo.alpha());
         const volScalarField::Boundary& alphabf = alpha.boundaryField();
 
-        for (const label patchi : patchSet_)
+        for (const label patchi : patchIDs_)
         {
             q[patchi] = alphabf[patchi]*hebf[patchi].snGrad();
         }
@@ -124,7 +123,7 @@ Foam::heatTransferCoeffModel::q() const
     {
         const volScalarField::Boundary& qrbf = qrPtr->boundaryField();
 
-        for (const label patchi : patchSet_)
+        for (const label patchi : patchIDs_)
         {
             q[patchi] += qrbf[patchi];
         }
@@ -148,9 +147,11 @@ bool Foam::heatTransferCoeffModel::calc
 
 bool Foam::heatTransferCoeffModel::read(const dictionary& dict)
 {
-    patchSet_ = mesh_.boundaryMesh().patchSet(dict.get<wordRes>("patches"));
+    const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
     dict.readIfPresent("qr", qrName_);
+
+    patchIDs_ = pbm.patchSet(dict.get<wordRes>("patches")).sortedToc();
 
     return true;
 }

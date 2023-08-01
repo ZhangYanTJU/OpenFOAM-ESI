@@ -57,9 +57,9 @@ class setUpdater
 {
     // Private Member Functions
 
-        //- Updates all sets
-        template<class Type>
-        void updateSets(const mapPolyMesh& morphMap) const;
+        //- Update all sets of the given type
+        template<class SetType>
+        static void updateSets(const mapPolyMesh& map);
 
         //- No copy construct
         setUpdater(const setUpdater&) = delete;

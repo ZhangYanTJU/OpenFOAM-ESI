@@ -310,8 +310,8 @@ Foam::label Foam::faMeshDistributor::distributeAreaFields
         const IOobject& io :
         (
             selectedFields.empty()
-          ? objects.sorted<fieldType>()
-          : objects.sorted<fieldType>(selectedFields)
+          ? objects.csorted<fieldType>()
+          : objects.csorted<fieldType>(selectedFields)
         )
     )
     {
@@ -368,8 +368,8 @@ Foam::label Foam::faMeshDistributor::distributeEdgeFields
         const IOobject& io :
         (
             selectedFields.empty()
-          ? objects.sorted<fieldType>()
-          : objects.sorted<fieldType>(selectedFields)
+          ? objects.csorted<fieldType>()
+          : objects.csorted<fieldType>(selectedFields)
         )
     )
     {

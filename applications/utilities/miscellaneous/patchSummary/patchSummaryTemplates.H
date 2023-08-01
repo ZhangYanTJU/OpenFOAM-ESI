@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,39 +26,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef patchSummaryTemplates_H
-#define patchSummaryTemplates_H
+#ifndef Foam_patchSummaryTemplates_H
+#define Foam_patchSummaryTemplates_H
 
-#include "fvCFD.H"
 #include "volFields.H"
+#include "IOobjectList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    template<class GeoField>
-    void addToFieldList
-    (
-        PtrList<GeoField>& fieldList,
-        const IOobject& obj,
-        const label fieldi,
-        const typename GeoField::Mesh& mesh
-    );
 
-    template<class GeoField>
-    void outputFieldList
-    (
-        const PtrList<GeoField>& fieldList,
-        const label patchi
-    );
+template<class GeoField>
+PtrList<GeoField> readFields
+(
+    const IOobjectList& objects,
+    const typename GeoField::Mesh& mesh
+);
 
-    template<class GeoField>
-    void collectFieldList
-    (
-        const PtrList<GeoField>& fieldList,
-        const label patchi,
-        HashTable<word>& fieldToType
-    );
+template<class GeoField>
+void outputFieldList
+(
+    const UPtrList<GeoField>& fieldList,
+    const label patchi
+);
+
+template<class GeoField>
+void collectFieldList
+(
+    const UPtrList<GeoField>& fieldList,
+    const label patchi,
+    HashTable<word>& fieldToType
+);
+
 } // End namespace Foam
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -97,22 +97,24 @@ public:
 template<class GeoFieldType>
 void fieldInterpolator::interpolate()
 {
-    const word& clsName = GeoFieldType::typeName;
-
-    const wordList fieldNames =
+    label nFields = 0;
+    for
     (
-        selectedFields_.empty()
-      ? objects_.sortedNames(clsName)
-      : objects_.sortedNames(clsName, selectedFields_)
-    );
-
-    if (fieldNames.size())
+        const IOobject& io :
+        (
+            selectedFields_.empty()
+          ? objects_.csorted<GeoFieldType>()
+          : objects_.csorted<GeoFieldType>(selectedFields_)
+        )
+    )
     {
-        Info<< "    " << clsName << 's';
-    }
+        const word& fieldName = io.name();
 
-    for (const word& fieldName : fieldNames)
-    {
+        if (!nFields)
+        {
+            Info<< "    " << GeoFieldType::typeName << 's';
+        }
+
         Info<< ' ' << fieldName << '(';
 
         const scalar deltaT = (ti1_.value() - ti_.value())/(divisions_ + 1);
@@ -166,7 +168,7 @@ void fieldInterpolator::interpolate()
                     (
                         fieldName,
                         runTime_.timeName(),
-                        objects_[fieldName]->db(),
+                        io.db(),
                         IOobject::NO_READ,
                         IOobject::NO_WRITE,
                         IOobject::NO_REGISTER
@@ -181,9 +183,10 @@ void fieldInterpolator::interpolate()
         }
 
         Info<< ')';
+        ++nFields;
     }
 
-    if (fieldNames.size()) Info<< endl;
+    if (nFields) Info<< endl;
 }
 
 

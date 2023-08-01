@@ -113,7 +113,7 @@ public:
 
 private:
 
-    // Private data
+    // Private Data
 
         //- Name of film region
         const word filmRegionName_;
@@ -136,10 +136,13 @@ private:
         //- Maximum delta film to be considered wet
         const scalar filmDeltaWet_;
 
-        //- Retrieve film model from the database
+
+    // Private Member Functions
+
+        //- Retrieve film model from the database, or FatalError
         const filmModelType& filmModel() const;
 
-        //- Retrieve pyrolysis model from the database
+        //- Retrieve pyrolysis model from the database, or FatalError
         const pyrolysisModelType& pyrModel() const;
 
 

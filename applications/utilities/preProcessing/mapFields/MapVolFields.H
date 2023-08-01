@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,25 +52,23 @@ void MapVolFields
     const fvMesh& meshSource = meshToMesh0Interp.fromMesh();
     const fvMesh& meshTarget = meshToMesh0Interp.toMesh();
 
-    IOobjectList fields = objects.lookupClass(fieldType::typeName);
-
-    forAllConstIters(fields, fieldIter)
+    for (const IOobject& io : objects.csorted<fieldType>())
     {
         IOobject fieldTargetIOobject
         (
-            (*fieldIter)->name(),
+            io.name(),
             meshTarget.time().timeName(),
             meshTarget,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobjectOption::MUST_READ,
+            IOobjectOption::AUTO_WRITE
         );
 
         if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
         {
-            Info<< "    interpolating " << (*fieldIter)->name() << endl;
+            Info<< "    interpolating " << io.name() << endl;
 
             // Read field fieldSource. Do not auto-load old-time fields
-            fieldType fieldSource(*fieldIter(), meshSource, false);
+            fieldType fieldSource(io, meshSource, false);
 
             // Read fieldTarget. Do not auto-load old-time fields
             fieldType fieldTarget

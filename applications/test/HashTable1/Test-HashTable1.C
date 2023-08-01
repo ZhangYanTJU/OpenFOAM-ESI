@@ -75,8 +75,8 @@ int main()
     }
 
 
-    Info<< "\ntable1 sorted() :" << endl;
-    for (const auto& iter : table1.sorted())
+    Info<< "\ntable1 csorted() :" << endl;
+    for (const auto& iter : table1.csorted())
     {
         Info<< "    " << iter.key() << " => " << iter.val() << nl;
     }
@@ -100,7 +100,7 @@ int main()
     }
 
     Info<< "\nInplace modified - via sorted() access :" << endl;
-    for (const auto& iter : table1.sorted())
+    for (const auto& iter : table1.csorted())
     {
         Info<< "    " << iter.key() << " => " << iter.val() << nl;
     }

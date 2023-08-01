@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -69,7 +69,7 @@ label writeDimFields
 
     label count = 0;
 
-    for (const word& fieldName : objects.sortedNames<FieldType>())
+    for (const IOobject& io : objects.csorted<FieldType>())
     {
         if
         (
@@ -77,11 +77,11 @@ label writeDimFields
             (
                 ensCase,
                 ensMesh,
-                getField<FieldType>(objects.findObject(fieldName), mesh)
+                getField<FieldType>(io, mesh)
             )
         )
         {
-            Info<< ' ' << fieldName;
+            Info<< ' ' << io.name();
             ++count;
         }
     }

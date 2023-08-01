@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -114,25 +114,20 @@ bool Foam::functionObjects::setTimeStepFaRegionsFunctionObject::read
 Foam::scalar Foam::functionObjects::setTimeStepFaRegionsFunctionObject::
 regionDeltaT() const
 {
-    const wordList names(time_.sortedNames<regionFaModel>());
+    bool adjust = false;
+    scalar Co = 0;
 
-    scalar Co = 0.0;
-
-    forAll (names, i)
+    for (const regionFaModel& reg : time_.cobjects<regionFaModel>())
     {
-        const auto* regionFa = time_.cfindObject<regionFaModel>(names[i]);
-
-        if (regionFa)
+        const scalar regionCo = reg.CourantNumber();
+        if (Co < regionCo)
         {
-            const scalar regionCo = regionFa->CourantNumber();
-            if (regionCo > Co)
-            {
-                Co = regionCo;
-            }
+            Co = regionCo;
+            adjust = true;
         }
     }
 
-    if (names.size() > 0)
+    if (adjust)
     {
         const scalar regionFaMaxCo =
             time_.controlDict().get<scalar>("regionFaMaxCo");

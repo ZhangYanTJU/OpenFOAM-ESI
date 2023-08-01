@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
         Info<< "dirList: "
             << flatOutput
                (
-                   DirLister::dirs(".").sorted<fileName>(relist)
+                   DirLister::dirs(".").csorted<fileName>(relist)
                ) << nl;
     }
 

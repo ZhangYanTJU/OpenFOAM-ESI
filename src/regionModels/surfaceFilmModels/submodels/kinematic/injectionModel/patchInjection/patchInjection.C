@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,52 +55,42 @@ patchInjection::patchInjection
     deltaStable_(coeffDict_.getOrDefault<scalar>("deltaStable", 0))
 {
     const polyBoundaryMesh& pbm = film.regionMesh().boundaryMesh();
-    patchIDs_.setSize
+
+    const label nPatches
     (
-        pbm.size() - film.regionMesh().globalData().processorPatches().size()
+        pbm.size()
+      - film.regionMesh().globalData().processorPatches().size()
     );
 
     wordRes patchNames;
     if (coeffDict_.readIfPresent("patches", patchNames))
     {
-        const labelHashSet patchSet = pbm.patchSet(patchNames);
+        // Can also use pbm.indices(), but no warnings...
+        patchIDs_ = pbm.patchSet(patchNames).sortedToc();
 
         Info<< "        applying to patches:" << nl;
 
-        label pidi = 0;
-        for (const label patchi : patchSet)
+        for (const label patchi : patchIDs_)
         {
-            patchIDs_[pidi++] = patchi;
             Info<< "            " << pbm[patchi].name() << endl;
         }
-        patchIDs_.setSize(pidi);
-        patchInjectedMasses_.setSize(pidi, 0);
     }
     else
     {
         Info<< "            applying to all patches" << endl;
 
-        forAll(patchIDs_, patchi)
-        {
-            patchIDs_[patchi] = patchi;
-        }
-
-        patchInjectedMasses_.setSize(patchIDs_.size(), 0);
+        patchIDs_ = identity(nPatches);
     }
 
-    if (!patchIDs_.size())
+    patchInjectedMasses_.resize(patchIDs_.size(), Zero);
+
+    if (patchIDs_.empty())
     {
         FatalErrorInFunction
             << "No patches selected"
             << exit(FatalError);
     }
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-patchInjection::~patchInjection()
-{}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
@@ -113,7 +103,7 @@ void patchInjection::correct
 )
 {
     // Do not correct if no patches selected
-    if (!patchIDs_.size()) return;
+    if (patchIDs_.empty()) return;
 
     const scalarField& delta = film().delta();
     const scalarField& rho = film().rho();
@@ -130,10 +120,8 @@ void patchInjection::correct
         // Accumulate the total mass removed from patch
         scalar dMassPatch = 0;
 
-        forAll(faceCells, fci)
+        for (const label celli : faceCells)
         {
-            label celli = faceCells[fci];
-
             scalar ddelta = max(0.0, delta[celli] - deltaStable_);
             scalar dMass = ddelta*rho[celli]*magSf[celli];
             massToInject[celli] += dMass;
@@ -154,7 +142,7 @@ void patchInjection::correct
             getModelProperty<scalarField>
             (
                 "patchInjectedMasses",
-                scalarField(patchInjectedMasses_.size(), 0)
+                scalarField(patchInjectedMasses_.size(), Zero)
             )
         );
 

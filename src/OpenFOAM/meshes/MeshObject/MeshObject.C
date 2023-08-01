@@ -206,7 +206,7 @@ void Foam::meshObject::updateMesh(objectRegistry& obr, const mapPolyMesh& mpm)
 
     forAllIters(meshObjects, iter)
     {
-        // isA<MoveableMeshObject<Mesh>>
+        // isA<UpdateableMeshObject<Mesh>>
         auto* objectPtr = dynamic_cast<UpdateableMeshObject<Mesh>*>(*iter);
 
         if (objectPtr)
@@ -277,7 +277,7 @@ void Foam::meshObject::clearUpto(objectRegistry& obr)
 
     forAllIters(meshObjects, iter)
     {
-        // isA<ToType<Mesh>
+        // isA<ToType<Mesh>>
         auto* objectPtr = dynamic_cast<ToType<Mesh>*>(*iter);
 
         if (!objectPtr)

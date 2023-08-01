@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,8 +33,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MapLagrangianFields_H
-#define MapLagrangianFields_H
+#ifndef Foam_MapLagrangianFields_H
+#define Foam_MapLagrangianFields_H
 
 #include "cloud.H"
 #include "GeometricField.H"
@@ -49,6 +49,63 @@ namespace Foam
 
 //- Gets the indices of (source)particles that have been appended to the
 //  target cloud and maps the lagrangian fields accordingly.
+template<class SourceIOFieldType, class TargetIOFieldType>
+void MapLagrangianFields
+(
+    const string& cloudName,
+    const IOobjectList& objects,
+    const polyMesh& meshTarget,
+    const labelList& addParticles,
+    const char* msg
+)
+{
+    for (const IOobject& io : objects.csorted<SourceIOFieldType>())
+    {
+        Info<< "    mapping lagrangian " << msg << ' ' << io.name() << endl;
+
+        // Read field (does not need mesh)
+        // Note: some fieldFields are 0 size (e.g. collision records)
+        //   if not used, so catch any of those for Field as well
+
+        SourceIOFieldType fieldSource(io);
+
+        // Map
+        TargetIOFieldType fieldTarget
+        (
+            IOobject
+            (
+                io.name(),
+                meshTarget.time().timeName(),
+                cloud::prefix/cloudName,
+                meshTarget,
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::NO_REGISTER
+            ),
+            min(fieldSource.size(), addParticles.size())  // handle 0 size
+        );
+
+        if (!fieldSource.empty())
+        {
+            forAll(addParticles, i)
+            {
+                fieldTarget[i] = fieldSource[addParticles[i]];
+            }
+        }
+        else if (cloud::debug && !addParticles.empty())
+        {
+            Pout<< "Not mapping " << io.name()
+                << " since source size = 0 and cloud size = "
+                << addParticles.size() << endl;
+        }
+
+        fieldTarget.write();
+    }
+}
+
+
+//- Gets the indices of (source)particles that have been appended to the
+//  target cloud and maps the lagrangian fields accordingly.
 template<class Type>
 void MapLagrangianFields
 (
@@ -58,144 +115,46 @@ void MapLagrangianFields
     const labelList& addParticles
 )
 {
-    {
-        IOobjectList fields = objects.lookupClass(IOField<Type>::typeName);
+    MapLagrangianFields
+    <
+        IOField<Type>,
+        IOField<Type>
+    >
+    (
+        cloudName,
+        objects,
+        meshTarget,
+        addParticles,
+        "Field"
+    );
 
-        forAllConstIters(fields, fieldIter)
-        {
-            const word& fieldName = (*fieldIter)->name();
+    // Target is CompactIOField to automatically write in
+    // compact form for binary format.
+    MapLagrangianFields
+    <
+        IOField<Field<Type>>,
+        CompactIOField<Field<Type>, Type>
+    >
+    (
+        cloudName,
+        objects,
+        meshTarget,
+        addParticles,
+        "FieldField"
+    );
 
-            Info<< "    mapping lagrangian field " << fieldName << endl;
-
-            // Read field (does not need mesh)
-            IOField<Type> fieldSource(*fieldIter());
-
-            // Map
-            IOField<Type> fieldTarget
-            (
-                IOobject
-                (
-                    fieldName,
-                    meshTarget.time().timeName(),
-                    cloud::prefix/cloudName,
-                    meshTarget,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                addParticles.size()
-            );
-
-            forAll(addParticles, i)
-            {
-                fieldTarget[i] = fieldSource[addParticles[i]];
-            }
-
-            // Write field
-            fieldTarget.write();
-        }
-    }
-
-    {
-        IOobjectList fieldFields =
-            objects.lookupClass(IOField<Field<Type>>::typeName);
-
-        forAllConstIters(fieldFields, fieldIter)
-        {
-            const word& fieldName = (*fieldIter)->name();
-
-            Info<< "    mapping lagrangian fieldField " << fieldName << endl;
-
-            // Read field (does not need mesh)
-            // Note: some fieldFields are 0 size (e.g. collision records) if
-            //       not used
-            IOField<Field<Type>> fieldSource(*fieldIter());
-
-            // Map - use CompactIOField to automatically write in
-            // compact form for binary format.
-            CompactIOField<Field<Type>, Type> fieldTarget
-            (
-                IOobject
-                (
-                    fieldName,
-                    meshTarget.time().timeName(),
-                    cloud::prefix/cloudName,
-                    meshTarget,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                min(fieldSource.size(), addParticles.size()) // handle 0 size
-            );
-
-            if (fieldSource.size())
-            {
-                forAll(addParticles, i)
-                {
-                    fieldTarget[i] = fieldSource[addParticles[i]];
-                }
-            }
-            else if (cloud::debug)
-            {
-                Pout<< "Not mapping " << fieldName << " since source size "
-                    << fieldSource.size() << " different to"
-                    << " cloud size " << addParticles.size()
-                    << endl;
-            }
-
-            // Write field
-            fieldTarget.write();
-        }
-    }
-
-    {
-        IOobjectList fieldFields =
-            objects.lookupClass(CompactIOField<Field<Type>, Type>::typeName);
-
-        forAllConstIters(fieldFields, fieldIter)
-        {
-            const word& fieldName = (*fieldIter)->name();
-
-            Info<< "    mapping lagrangian fieldField " << fieldName << endl;
-
-            // Read field (does not need mesh)
-            CompactIOField<Field<Type>, Type> fieldSource(*fieldIter());
-
-            // Map
-            CompactIOField<Field<Type>, Type> fieldTarget
-            (
-                IOobject
-                (
-                    fieldName,
-                    meshTarget.time().timeName(),
-                    cloud::prefix/cloudName,
-                    meshTarget,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                min(fieldSource.size(), addParticles.size()) // handle 0 size
-            );
-
-            if (fieldSource.size())
-            {
-                forAll(addParticles, i)
-                {
-                    fieldTarget[i] = fieldSource[addParticles[i]];
-                }
-            }
-            else if (cloud::debug)
-            {
-                Pout<< "Not mapping " << fieldName << " since source size "
-                    << fieldSource.size() << " different to"
-                    << " cloud size " << addParticles.size()
-                    << endl;
-            }
-
-            // Write field
-            fieldTarget.write();
-        }
-    }
+    MapLagrangianFields
+    <
+        CompactIOField<Field<Type>, Type>,
+        CompactIOField<Field<Type>, Type>
+    >
+    (
+        cloudName,
+        objects,
+        meshTarget,
+        addParticles,
+        "FieldField"
+    );
 }
 
 

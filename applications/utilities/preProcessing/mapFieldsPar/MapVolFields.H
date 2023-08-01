@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -132,20 +132,21 @@ void MapVolFields
     const fvMesh& meshTarget = static_cast<const fvMesh&>(interp.tgtRegion());
 
     // Available fields, sorted order
-    const wordList fieldNames =
+    for
     (
-        selectedFields.empty()
-      ? objects.sortedNames<fieldType>()
-      : objects.sortedNames<fieldType>(selectedFields)
-    );
-
-    for (const word& fieldName : fieldNames)
+        const IOobject& io :
+        (
+            selectedFields.empty()
+          ? objects.csorted<fieldType>()
+          : objects.csorted<fieldType>(selectedFields)
+        )
+    )
     {
-        const fieldType fieldSource(*(objects[fieldName]), meshSource, false);
+        const fieldType fieldSource(io, meshSource, false);
 
         IOobject targetIO
         (
-            fieldName,
+            io.name(),
             meshTarget.time().timeName(),
             meshTarget,
             IOobject::MUST_READ
@@ -154,7 +155,7 @@ void MapVolFields
         if (targetIO.typeHeaderOk<fieldType>(true))
         {
             Info<< "    interpolating onto existing field "
-                << fieldName << endl;
+                << targetIO.name() << endl;
 
             fieldType fieldTarget(targetIO, meshTarget, false);
 
@@ -167,7 +168,7 @@ void MapVolFields
         else
         {
             Info<< "    creating new field "
-                << fieldName << endl;
+                << targetIO.name() << endl;
 
             targetIO.readOpt(IOobject::NO_READ);
 

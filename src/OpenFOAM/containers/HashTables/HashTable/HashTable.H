@@ -34,7 +34,7 @@ Description
     depends on the method used to generate the hash key index, the
     table capacity, insertion order etc. When the key order is
     important, use the sortedToc() method to obtain a list of sorted
-    keys and use that for further access, or the sorted() method
+    keys and use that for further access, or the csorted()/sorted() methods
     to obtain a UPtrList of entries to traverse in sorted order.
 
     Internally the table uses closed addressing into a flat storage space
@@ -350,11 +350,6 @@ public:
         //- (sorted by keys).
         //  The lifetime of the returned content cannot exceed the parent!
         UPtrList<const node_type> csorted() const;
-
-        //- Const access to the hash-table contents in sorted order
-        //- (sorted by keys).
-        //  The lifetime of the returned content cannot exceed the parent!
-        UPtrList<const node_type> sorted() const;
 
         //- Non-const access to the hash-table contents in sorted order
         //- (sorted by keys).
@@ -1006,6 +1001,11 @@ public:
 
         //- Same as contains()
         bool found(const Key& key) const { return this->contains(key); }
+
+        //- Deprecated(2023-07) use csorted() method
+        //  \deprecated(2023-07) - use csorted() method
+        FOAM_DEPRECATED_FOR(2023-07, "csorted() method")
+        UPtrList<const node_type> sorted() const { return this->csorted(); }
 };
 
 

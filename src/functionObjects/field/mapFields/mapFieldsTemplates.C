@@ -119,14 +119,12 @@ bool Foam::functionObjects::mapFields::mapFieldType() const
 
     const fvMesh& mapRegion = mapRegionPtr_();
 
-    wordList fieldNames(this->mesh_.names(VolFieldType::typeName));
+    wordList fieldNames(this->mesh_.sortedNames<VolFieldType>(fieldNames_));
 
-    const labelList selected(fieldNames_.matching(fieldNames));
+    const bool processed = !fieldNames.empty();
 
-    for (const label fieldi : selected)
+    for (const word& fieldName : fieldNames)
     {
-        const word& fieldName = fieldNames[fieldi];
-
         const VolFieldType& field = lookupObject<VolFieldType>(fieldName);
 
         auto* mapFieldPtr = mapRegion.getObjectPtr<VolFieldType>(fieldName);
@@ -159,7 +157,7 @@ bool Foam::functionObjects::mapFields::mapFieldType() const
         evaluateConstraintTypes(mappedField);
     }
 
-    return !selected.empty();
+    return processed;
 }
 
 
@@ -170,14 +168,12 @@ bool Foam::functionObjects::mapFields::writeFieldType() const
 
     const fvMesh& mapRegion = mapRegionPtr_();
 
-    wordList fieldNames(this->mesh_.names(VolFieldType::typeName));
+    wordList fieldNames(this->mesh_.sortedNames<VolFieldType>(fieldNames_));
 
-    const labelList selected(fieldNames_.matching(fieldNames));
+    const bool processed = !fieldNames.empty();
 
-    for (const label fieldi : selected)
+    for (const word& fieldName : fieldNames)
     {
-        const word& fieldName = fieldNames[fieldi];
-
         const VolFieldType& mappedField =
             mapRegion.template lookupObject<VolFieldType>(fieldName);
 
@@ -186,7 +182,7 @@ bool Foam::functionObjects::mapFields::writeFieldType() const
         Log << "    " << fieldName << ": written";
     }
 
-    return !selected.empty();
+    return processed;
 }
 
 

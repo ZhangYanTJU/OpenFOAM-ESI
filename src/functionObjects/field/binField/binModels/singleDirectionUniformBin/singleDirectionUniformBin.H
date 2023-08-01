@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,13 +105,10 @@ protected:
     // Protected Data
 
         //- Distance between bin divisions
-        scalar binDx_;
+        scalar binWidth_;
 
-        //- Minimum bin bound
-        scalar binMin_;
-
-        //- Maximum bin bound
-        scalar binMax_;
+        //- The min/max bounds for the bins
+        MinMax<scalar> binLimits_;
 
         //- Binning direction
         vector binDir_;

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -295,9 +295,9 @@ void Foam::dynamicRefineFvMesh::mapFields(const mapPolyMesh& mpm)
             Pout<< "Found " << masterFaces.count() << " split faces " << endl;
         }
 
-        HashTable<surfaceScalarField*> fluxes
+        UPtrList<surfaceScalarField> fluxes
         (
-            lookupClass<surfaceScalarField>()
+            this->objectRegistry::sorted<surfaceScalarField>()
         );
 
         // Remove surfaceInterpolation to allow re-calculation on demand
@@ -305,44 +305,39 @@ void Foam::dynamicRefineFvMesh::mapFields(const mapPolyMesh& mpm)
         // might need the old interpolation fields (weights, etc).
         surfaceInterpolation::clearOut();
 
-        forAllIters(fluxes, iter)
+        for (surfaceScalarField& phi : fluxes)
         {
-            if (!correctFluxes_.found(iter.key()))
+            const word& UName = correctFluxes_.lookup(phi.name(), word::null);
+
+            if (UName.empty())
             {
                 WarningInFunction
-                    << "Cannot find surfaceScalarField " << iter.key()
+                    << "Cannot find surfaceScalarField " << phi.name()
                     << " in user-provided flux mapping table "
                     << correctFluxes_ << endl
                     << "    The flux mapping table is used to recreate the"
                     << " flux on newly created faces." << endl
                     << "    Either add the entry if it is a flux or use ("
-                    << iter.key() << " none) to suppress this warning."
+                    << phi.name() << " none) to suppress this warning."
                     << endl;
                 continue;
             }
-
-            const word& UName = correctFluxes_[iter.key()];
-
             if (UName == "none")
             {
                 continue;
             }
-
-            surfaceScalarField& phi = *iter();
-
             if (UName == "NaN")
             {
-                Pout<< "Setting surfaceScalarField " << iter.key()
+                Pout<< "Setting surfaceScalarField " << phi.name()
                     << " to NaN" << endl;
 
                 sigFpe::fillNan(phi.primitiveFieldRef());
-
                 continue;
             }
 
             if (debug)
             {
-                Pout<< "Mapping flux " << iter.key()
+                Pout<< "Mapping flux " << phi.name()
                     << " using interpolated flux " << UName
                     << endl;
             }
@@ -374,7 +369,7 @@ void Foam::dynamicRefineFvMesh::mapFields(const mapPolyMesh& mpm)
             }
 
             // Recalculate new boundary faces.
-            surfaceScalarField::Boundary& phiBf = phi.boundaryFieldRef();
+            auto& phiBf = phi.boundaryFieldRef();
 
             forAll(phiBf, patchi)
             {
@@ -617,42 +612,39 @@ Foam::dynamicRefineFvMesh::unrefine
         const labelList& reversePointMap = map().reversePointMap();
         const labelList& reverseFaceMap = map().reverseFaceMap();
 
-        HashTable<surfaceScalarField*> fluxes
+        UPtrList<surfaceScalarField> fluxes
         (
-            lookupClass<surfaceScalarField>()
+            this->objectRegistry::sorted<surfaceScalarField>()
         );
-        forAllIters(fluxes, iter)
+
+        for (surfaceScalarField& phi : fluxes)
         {
-            if (!correctFluxes_.found(iter.key()))
+            const word& UName = correctFluxes_.lookup(phi.name(), word::null);
+
+            if (UName.empty())
             {
                 WarningInFunction
-                    << "Cannot find surfaceScalarField " << iter.key()
+                    << "Cannot find surfaceScalarField " << phi.name()
                     << " in user-provided flux mapping table "
                     << correctFluxes_ << endl
                     << "    The flux mapping table is used to recreate the"
                     << " flux on newly created faces." << endl
                     << "    Either add the entry if it is a flux or use ("
-                    << iter.key() << " none) to suppress this warning."
+                    << phi.name() << " none) to suppress this warning."
                     << endl;
                 continue;
             }
-
-            const word& UName = correctFluxes_[iter.key()];
-
             if (UName == "none")
             {
                 continue;
             }
 
             DebugInfo
-                << "Mapping flux " << iter.key()
+                << "Mapping flux " << phi.name()
                 << " using interpolated flux " << UName
                 << endl;
 
-
-            surfaceScalarField& phi = *iter();
-            surfaceScalarField::Boundary& phiBf =
-                phi.boundaryFieldRef();
+            auto& phiBf = phi.boundaryFieldRef();
 
             const surfaceScalarField phiU
             (

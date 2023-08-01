@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,10 +129,10 @@ protected:
         Vector<label> nBins_;
 
         //- Equidistant bin widths in binning directions
-        vector binW_;
+        vector binWidth_;
 
-        //- Min-max bounds of bins in binning directions
-        Vector<vector2D> binMinMax_;
+        //- The geometric min/max bounds for the bins
+        MinMax<vector> binLimits_;
 
         //- Face index to bin index addressing
         labelList faceToBin_;

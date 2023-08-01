@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,35 +25,33 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
 inline Foam::HashSet<Foam::wordRe>
 Foam::functionObjects::fieldSelection::filters() const
 {
-    HashSet<wordRe> f;
+    HashSet<wordRe> values(2*this->size());
     for (const fieldInfo& fi : *this)
     {
-        f.insert(fi.name());
+        values.insert(fi.name());
     }
 
-    return f;
-}
-
-// * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
-
-inline const Foam::List<Foam::functionObjects::fieldInfo>&
-Foam::functionObjects::fieldSelection::selection() const
-{
-    return selection_;
+    return values;
 }
 
 
-inline Foam::wordHashSet
+inline Foam::wordList
 Foam::functionObjects::fieldSelection::selectionNames() const
 {
-    wordHashSet names;
+    DynamicList<word> values(selection_.size());
+
     for (const fieldInfo& fi : selection_)
     {
-        names.insert(fi.name());
+        values.push_uniq(fi.name());
     }
+
+    wordList names(std::move(values));
+    Foam::sort(names);  // Globally consistent order
 
     return names;
 }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,15 +37,14 @@ void Foam::functionObjects::fieldSelection::addRegistered
 {
     for (const fieldInfo& fi : *this)
     {
-        wordList names(obr_.names<Type>(fi.name()));
-        if (names.size())
+        const wordList names(obr_.sortedNames<Type>(fi.name()));
+        if (!names.empty())
         {
-            for (const word& name : names)
-            {
-                set.append(fieldInfo(wordRe(name), fi.component()));
-            }
-
-            fi.found() = true;
+            fi.found(true);
+        }
+        for (const word& name : names)
+        {
+            set.emplace_back(wordRe(name), fi.component());
         }
     }
 }

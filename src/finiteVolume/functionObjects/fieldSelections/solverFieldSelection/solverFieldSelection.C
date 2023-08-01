@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,11 +69,8 @@ bool Foam::functionObjects::solverFieldSelection::updateSelection()
         {
             if (fi.name().match(solvedField))
             {
-                newSelection.append
-                (
-                    fieldInfo(wordRe(solvedField), fi.component())
-                );
-                fi.found() = true;
+                fi.found(true);
+                newSelection.emplace_back(wordRe(solvedField), fi.component());
             }
         }
     }

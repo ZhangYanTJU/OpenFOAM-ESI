@@ -79,8 +79,8 @@ Foam::tmp<GeoField> Foam::getField
         {
             // Move field to the cache
             IOobject newIO(tfield(), *cache);
-            newIO.readOpt(IOobject::NO_READ);
-            newIO.writeOpt(IOobject::NO_WRITE);
+            newIO.readOpt(IOobjectOption::NO_READ);
+            newIO.writeOpt(IOobjectOption::NO_WRITE);
 
             tfield.ref().checkOut();  // Paranoid
             cache->store(new GeoField(newIO, tfield));

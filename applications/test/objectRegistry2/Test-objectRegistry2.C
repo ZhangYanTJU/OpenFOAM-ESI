@@ -145,8 +145,8 @@ void printRegistry
     Foam::label indent
 )
 {
-    UPtrList<const regIOobject> objects(obr.sorted());
-    wordList regNames(obr.sortedNames<objectRegistry>());
+    const UPtrList<const regIOobject> objects(obr.csorted());
+    const wordList regNames(obr.sortedNames<objectRegistry>());
 
     std::string prefix;
     for (label i=indent; i; --i)
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
 
         registryTests(mesh);
 
-        report(mesh.sorted<const volScalarField>());
+        report(mesh.csorted<volScalarField>());
         report(mesh.csorted<volVectorField>());
 
         Info<< nl;
