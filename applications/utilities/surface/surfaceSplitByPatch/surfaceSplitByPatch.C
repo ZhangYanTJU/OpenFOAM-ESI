@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,11 +45,11 @@ Usage
           -patches '( front \".*back\" )'
         \endverbatim
 
-      - \par -excludePatches NAME | LIST
+      - \par -exclude-patches NAME | LIST
         Exclude single or multiple patches (name or regex) from extracting.
         For example,
         \verbatim
-          -excludePatches '( inlet_1 inlet_2 "proc.*")'
+          -exclude-patches '( inlet_1 inlet_2 "proc.*" )'
         \endverbatim
 
 \*---------------------------------------------------------------------------*/
@@ -79,11 +79,12 @@ int main(int argc, char *argv[])
     );
     argList::addOption
     (
-        "excludePatches",
+        "exclude-patches",
         "wordRes",
         "Exclude single or multiple patches (name or regex) from extracting.\n"
         "Eg, 'outlet' or '( inlet \".*Wall\" )'"
     );
+    argList::addOptionCompat("exclude-patches", {"excludePatches", 2306});
 
     argList::addArgument("input", "The input surface file");
 
@@ -114,7 +115,7 @@ int main(int argc, char *argv[])
         Info<< "Including patches " << flatOutput(includePatches)
             << nl << endl;
     }
-    if (args.readListIfPresent<wordRe>("excludePatches", excludePatches))
+    if (args.readListIfPresent<wordRe>("exclude-patches", excludePatches))
     {
         Info<< "Excluding patches " << flatOutput(excludePatches)
             << nl << endl;

@@ -87,13 +87,11 @@ void Foam::MRFZone::setMRFFaces()
     }
 
 
-    labelHashSet excludedPatches(excludedPatchLabels_);
-
     forAll(patches, patchi)
     {
         const polyPatch& pp = patches[patchi];
 
-        if (pp.coupled() || excludedPatches.found(patchi))
+        if (pp.coupled() || excludedPatchLabels_.contains(patchi))
         {
             forAll(pp, i)
             {
@@ -250,7 +248,7 @@ Foam::MRFZone::MRFZone
     active_(true),
     cellZoneName_(cellZoneName),
     cellZoneID_(-1),
-    excludedPatchNames_(wordRes()),
+    excludedPatchNames_(),
     origin_(Zero),
     axis_(Zero),
     omega_(nullptr)
@@ -580,18 +578,8 @@ bool Foam::MRFZone::read(const dictionary& dict)
     {
         cellZoneID_ = mesh_.cellZones().findZoneID(cellZoneName_);
 
-        const labelHashSet excludedPatchSet
-        (
-            mesh_.boundaryMesh().patchSet(excludedPatchNames_)
-        );
-
-        excludedPatchLabels_.setSize(excludedPatchSet.size());
-
-        label i = 0;
-        for (const label patchi : excludedPatchSet)
-        {
-            excludedPatchLabels_[i++] = patchi;
-        }
+        excludedPatchLabels_ =
+            mesh_.boundaryMesh().indices(excludedPatchNames_);
 
         if (!returnReduceOr(cellZoneID_ != -1))
         {

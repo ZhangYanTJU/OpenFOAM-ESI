@@ -30,12 +30,7 @@ Input
 
     const labelList patchIDs
     (
-        pbm.patchSet
-        (
-            polyPatchNames,
-            false,  // warnNotFound
-            true    // useGroups
-        ).sortedToc()
+        pbm.indices(polyPatchNames, true)  // useGroups
     );
 
     label nFaceLabels = 0;

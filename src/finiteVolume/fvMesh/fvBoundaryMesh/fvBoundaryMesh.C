@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,16 +32,16 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::fvBoundaryMesh::addPatches(const polyBoundaryMesh& basicBdry)
+void Foam::fvBoundaryMesh::addPatches(const polyBoundaryMesh& pbm)
 {
-    setSize(basicBdry.size());
-
     // Set boundary patches
-    fvPatchList& Patches = *this;
+    fvPatchList& patches = *this;
 
-    forAll(Patches, patchi)
+    patches.resize_null(pbm.size());
+
+    forAll(patches, patchi)
     {
-        Patches.set(patchi, fvPatch::New(basicBdry[patchi], *this));
+        patches.set(patchi, fvPatch::New(pbm[patchi], *this));
     }
 }
 
@@ -61,13 +61,13 @@ Foam::fvBoundaryMesh::fvBoundaryMesh
 Foam::fvBoundaryMesh::fvBoundaryMesh
 (
     const fvMesh& m,
-    const polyBoundaryMesh& basicBdry
+    const polyBoundaryMesh& pbm
 )
 :
-    fvPatchList(basicBdry.size()),
+    fvPatchList(),
     mesh_(m)
 {
-    addPatches(basicBdry);
+    addPatches(pbm);
 }
 
 
@@ -93,27 +93,24 @@ Foam::labelList Foam::fvBoundaryMesh::indices
 }
 
 
+Foam::labelList Foam::fvBoundaryMesh::indices
+(
+    const wordRes& select,
+    const wordRes& ignore,
+    const bool useGroups
+) const
+{
+    return mesh().boundaryMesh().indices(select, ignore, useGroups);
+}
+
+
 Foam::label Foam::fvBoundaryMesh::findPatchID(const word& patchName) const
 {
     if (patchName.empty())
     {
         return -1;
     }
-
-    // OR: return PtrListOps::firstMatching(*this, patchName);
-
-    const fvPatchList& patches = *this;
-
-    forAll(patches, patchi)
-    {
-        if (patches[patchi].name() == patchName)
-        {
-            return patchi;
-        }
-    }
-
-    // Not found, return -1
-    return -1;
+    return PtrListOps::firstMatching(*this, patchName);
 }
 
 
@@ -171,10 +168,9 @@ Foam::lduInterfacePtrsList Foam::fvBoundaryMesh::interfaces() const
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::fvBoundaryMesh::readUpdate(const polyBoundaryMesh& basicBdry)
+void Foam::fvBoundaryMesh::readUpdate(const polyBoundaryMesh& pbm)
 {
-    clear();
-    addPatches(basicBdry);
+    addPatches(pbm);
 }
 
 

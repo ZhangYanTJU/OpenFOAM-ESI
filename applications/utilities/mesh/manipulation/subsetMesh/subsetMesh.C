@@ -70,7 +70,7 @@ label getExposedPatchId(const polyMesh& mesh, const word& patchName)
 
     Info<< "Adding exposed internal faces to "
         << (patchId == -1 ? "new" : "existing")
-        << " patch \"" << patchName << "\"" << nl << endl;
+        << " patch: " << patchName << nl << endl;
 
     return patchId;
 }
@@ -357,6 +357,12 @@ int main(int argc, char *argv[])
         "Add exposed internal faces to closest of specified patches"
         " instead of \"oldInternalFaces\""
     );
+    argList::addOption
+    (
+        "exclude-patches",
+        "wordRes",
+        "Exclude single or multiple patches from the -patches selection"
+    );
     argList::addBoolOption
     (
         "zone",
@@ -400,52 +406,59 @@ int main(int argc, char *argv[])
     // Default exposed patch id
     labelList exposedPatchIDs(one{}, -1);
 
-    if (args.found("patches"))
+    wordRes includePatches, excludePatches;
+
+    if (!args.readListIfPresent<wordRe>("patches", includePatches))
     {
-        const wordRes patchNames(args.getList<wordRe>("patches"));
-
-        if (patchNames.size() == 1 && patchNames.front().isLiteral())
+        if (args.found("patch"))
         {
-            exposedPatchIDs.front() =
-                getExposedPatchId(mesh, patchNames.front());
-        }
-        else
-        {
-            // Patches selected
-            labelHashSet patchIds
-            (
-                mesh.boundaryMesh().patchSet(patchNames)
-            );
-
-            // Only retain initial, non-processor patches
-            label nNonProcessor
-            (
-                mesh.boundaryMesh().nNonProcessor()
-            );
-
-            patchIds.filterKeys
-            (
-                [=](label patchi) { return (patchi < nNonProcessor); }
-            );
-
-            exposedPatchIDs = patchIds.sortedToc();
-
-            Info<< "Adding exposed internal faces to nearest of patches "
-                << flatOutput(patchNames) << nl << endl;
-
-            if (exposedPatchIDs.empty())
-            {
-                FatalErrorInFunction
-                    << nl << "No patches matched. Patches: "
-                    << flatOutput(mesh.boundaryMesh().names()) << nl
-                    << exit(FatalError);
-            }
+            includePatches.resize(1);
+            includePatches.front() = args.get<word>("patch");
         }
     }
-    else if (args.found("patch"))
+    args.readListIfPresent<wordRe>("exclude-patches", excludePatches);
+
+    if (includePatches.size() == 1 && includePatches.front().isLiteral())
     {
+        // Select a single patch - no exclude possible
         exposedPatchIDs.front() =
-            getExposedPatchId(mesh, args.get<word>("patch"));
+            getExposedPatchId(mesh, includePatches.front());
+    }
+    else if (!includePatches.empty())
+    {
+        // Patches selected (sorted order)
+        exposedPatchIDs =
+            mesh.boundaryMesh().indices(includePatches, excludePatches);
+
+        // Only retain initial, non-processor patches
+        const label nNonProcessor
+        (
+            mesh.boundaryMesh().nNonProcessor()
+        );
+
+        forAll(exposedPatchIDs, i)
+        {
+            if (exposedPatchIDs[i] > nNonProcessor)
+            {
+                exposedPatchIDs.resize(i);
+                break;
+            }
+        }
+
+        const wordList allPatchNames(mesh.boundaryMesh().names());
+
+        Info<< "Adding exposed internal faces to nearest of patches:" << nl
+            << "    include: " << flatOutput(includePatches) << nl
+            << "    exclude: " << flatOutput(excludePatches) << nl
+            << nl;
+
+        if (exposedPatchIDs.empty())
+        {
+            FatalErrorInFunction
+                << nl << "No patches matched. Patches: "
+                << flatOutput(allPatchNames) << nl
+                << exit(FatalError);
+        }
     }
     else
     {

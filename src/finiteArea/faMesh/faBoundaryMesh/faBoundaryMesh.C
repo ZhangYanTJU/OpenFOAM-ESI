@@ -31,6 +31,7 @@ License
 #include "globalIndex.H"
 #include "primitiveMesh.H"
 #include "processorFaPatch.H"
+#include "wordRes.H"
 #include "PtrListOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -72,7 +73,7 @@ void Foam::faBoundaryMesh::calcGroupIDs() const
         return;  // Or FatalError
     }
 
-    groupIDsPtr_.reset(new HashTable<labelList>(16));
+    groupIDsPtr_.emplace(16);
     auto& groupLookup = *groupIDsPtr_;
 
     const faPatchList& patches = *this;
@@ -83,7 +84,7 @@ void Foam::faBoundaryMesh::calcGroupIDs() const
 
         for (const word& groupName : groups)
         {
-            groupLookup(groupName).append(patchi);
+            groupLookup(groupName).push_back(patchi);
         }
     }
 
@@ -370,7 +371,7 @@ void Foam::faBoundaryMesh::setGroup
     // Add to specified patches
     for (const label patchi : patchIDs)
     {
-        patches[patchi].inGroups().appendUniq(groupName);
+        patches[patchi].inGroups().push_uniq(groupName);
         donePatch[patchi] = true;
     }
 
@@ -495,18 +496,20 @@ Foam::labelList Foam::faBoundaryMesh::indices
     // Only check groups if requested and they exist
     const bool checkGroups = (useGroups && this->hasGroupIDs());
 
-    labelHashSet ids;
+    labelHashSet ids(0);
 
     if (matcher.isPattern())
     {
         if (checkGroups)
         {
+            ids.resize(2*this->size());
+
             const auto& groupLookup = groupPatchIDs();
             forAllConstIters(groupLookup, iter)
             {
-                if (matcher.match(iter.key()))
+                if (matcher(iter.key()))
                 {
-                    // Hash ids associated with the group
+                    // Add patch ids associated with the group
                     ids.insert(iter.val());
                 }
             }
@@ -538,7 +541,7 @@ Foam::labelList Foam::faBoundaryMesh::indices
 
             if (iter.good())
             {
-                // Hash ids associated with the group
+                // Add patch ids associated with the group
                 ids.insert(iter.val());
             }
         }
@@ -560,10 +563,10 @@ Foam::labelList Foam::faBoundaryMesh::indices
     }
     else if (matcher.size() == 1)
     {
-        return this->indices(matcher.first(), useGroups);
+        return this->indices(matcher.front(), useGroups);
     }
 
-    labelHashSet ids;
+    labelHashSet ids(0);
 
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
@@ -573,9 +576,54 @@ Foam::labelList Foam::faBoundaryMesh::indices
         const auto& groupLookup = groupPatchIDs();
         forAllConstIters(groupLookup, iter)
         {
-            if (matcher.match(iter.key()))
+            if (matcher(iter.key()))
             {
-                // Hash ids associated with the group
+                // Add patch ids associated with the group
+                ids.insert(iter.val());
+            }
+        }
+    }
+
+    if (ids.empty())
+    {
+        return PtrListOps::findMatching(*this, matcher);
+    }
+    else
+    {
+        ids.insert(PtrListOps::findMatching(*this, matcher));
+    }
+
+    return ids.sortedToc();
+}
+
+
+Foam::labelList Foam::faBoundaryMesh::indices
+(
+    const wordRes& select,
+    const wordRes& ignore,
+    const bool useGroups
+) const
+{
+    if (ignore.empty())
+    {
+        return this->indices(select, useGroups);
+    }
+
+    const wordRes::filter matcher(select, ignore);
+
+    labelHashSet ids(0);
+
+    // Only check groups if requested and they exist
+    if (useGroups && this->hasGroupIDs())
+    {
+        ids.resize(2*this->size());
+
+        const auto& groupLookup = groupPatchIDs();
+        forAllConstIters(groupLookup, iter)
+        {
+            if (matcher(iter.key()))
+            {
+                // Add patch ids associated with the group
                 ids.insert(iter.val());
             }
         }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -145,12 +145,13 @@ int main(int argc, char *argv[])
     );
     argList::addOption
     (
-        "excludePatches",
+        "exclude-patches",
         "wordRes",
-        "Specify single patch or multiple patches to exclude from writing."
+        "Specify single patch or multiple patches to exclude from -patches."
         " Eg, 'outlet' or '( inlet \".*Wall\" )'",
         true  // mark as an advanced option
     );
+    argList::addOptionCompat("exclude-patches", {"excludePatches", 2306});
 
     #include "setRootCase.H"
     #include "createTime.H"
@@ -167,16 +168,13 @@ int main(int argc, char *argv[])
     Info<< "Extracting surface from boundaryMesh ..." << nl << nl;
 
     const bool includeProcPatches =
-       !(
-            args.found("excludeProcPatches")
-         || Pstream::parRun()
-        );
+        (!UPstream::parRun() && !args.found("excludeProcPatches"));
 
     if (includeProcPatches)
     {
         Info<< "Including all processor patches." << nl << endl;
     }
-    else if (Pstream::parRun())
+    else if (UPstream::parRun())
     {
         Info<< "Excluding all processor patches." << nl << endl;
     }
@@ -187,7 +185,7 @@ int main(int argc, char *argv[])
         Info<< "Including patches " << flatOutput(includePatches)
             << nl << endl;
     }
-    if (args.readListIfPresent<wordRe>("excludePatches", excludePatches))
+    if (args.readListIfPresent<wordRe>("exclude-patches", excludePatches))
     {
         Info<< "Excluding patches " << flatOutput(excludePatches)
             << nl << endl;

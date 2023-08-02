@@ -34,28 +34,35 @@ License
 #include "lduSchedule.H"
 #include "globalMeshData.H"
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::pointBoundaryMesh::addPatches(const polyBoundaryMesh& pbm)
+{
+    // Set boundary patches
+    pointPatchList& patches = *this;
+
+    patches.resize_null(pbm.size());
+
+    forAll(patches, patchi)
+    {
+        // NB: needs ptr() to get *pointPatch instead of *facePointPatch
+        patches.set(patchi, facePointPatch::New(pbm[patchi], *this).ptr());
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::pointBoundaryMesh::pointBoundaryMesh
 (
     const pointMesh& m,
-    const polyBoundaryMesh& basicBdry
+    const polyBoundaryMesh& pbm
 )
 :
-    pointPatchList(basicBdry.size()),
+    pointPatchList(),
     mesh_(m)
 {
-    // Set boundary patches
-    pointPatchList& Patches = *this;
-
-    forAll(Patches, patchi)
-    {
-        Patches.set
-        (
-            patchi,
-            facePointPatch::New(basicBdry[patchi], *this).ptr()
-        );
-    }
+    addPatches(pbm);
 }
 
 
@@ -78,6 +85,17 @@ Foam::labelList Foam::pointBoundaryMesh::indices
 ) const
 {
     return mesh().boundaryMesh().indices(matcher, useGroups);
+}
+
+
+Foam::labelList Foam::pointBoundaryMesh::indices
+(
+    const wordRes& select,
+    const wordRes& ignore,
+    const bool useGroups
+) const
+{
+    return mesh().boundaryMesh().indices(select, ignore, useGroups);
 }
 
 
