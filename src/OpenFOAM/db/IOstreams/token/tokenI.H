@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -241,7 +241,18 @@ inline Foam::token::token(token::compound* ptr, label lineNum)
     line_(lineNum)
 {
     data_.compoundPtr = ptr;
+    if (!data_.compoundPtr)
+    {
+        // Could handle nullptr as Fatal, but this is simpler
+        setUndefined();
+    }
 }
+
+
+inline Foam::token::token(autoPtr<token::compound>&& ptr, label lineNum)
+:
+    token(ptr.release(), lineNum)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -295,7 +306,14 @@ inline void Foam::token::reset()
 }
 
 
-inline void Foam::token::swap(token& tok)
+inline void Foam::token::setBad()
+{
+    reset();
+    type_ = tokenType::ERROR;
+}
+
+
+inline void Foam::token::swap(token& tok) noexcept
 {
     if (this == &tok)
     {
@@ -305,6 +323,12 @@ inline void Foam::token::swap(token& tok)
     std::swap(data_, tok.data_);
     std::swap(type_, tok.type_);
     std::swap(line_, tok.line_);
+}
+
+
+inline Foam::word Foam::token::name() const
+{
+    return token::name(type_);
 }
 
 
@@ -452,7 +476,7 @@ inline int Foam::token::flagToken() const
     }
 
     parseError("flag bitmask");
-    return NO_FLAG;
+    return flagType::NO_FLAG;
 }
 
 
@@ -719,22 +743,109 @@ inline bool Foam::token::isCompound() const noexcept
 }
 
 
-inline const Foam::token::compound& Foam::token::compoundToken() const
+inline bool Foam::token::isCompound(const word& compoundType) const
 {
-    if (type_ == tokenType::COMPOUND)
-    {
-        return *data_.compoundPtr;
-    }
-
-    parseError("compound");
-    return *data_.compoundPtr;  // This is questionable.
+    return
+    (
+        type_ == tokenType::COMPOUND
+     && data_.compoundPtr->type() == compoundType
+    );
 }
 
 
-inline void Foam::token::setBad()
+template<class Type>
+inline const Type* Foam::token::isCompound() const
 {
-    reset();
-    type_ = tokenType::ERROR;
+    return
+    (
+        type_ == tokenType::COMPOUND
+      ? dynamic_cast<const Type*>(data_.compoundPtr)
+      : nullptr
+    );
+}
+
+
+inline const Foam::token::compound& Foam::token::compoundToken() const
+{
+    if (type_ != tokenType::COMPOUND)
+    {
+        parseError("compound");
+    }
+    return *data_.compoundPtr;
+}
+
+
+inline Foam::token::compound& Foam::token::refCompoundToken()
+{
+    if (type_ != tokenType::COMPOUND)
+    {
+        parseError("compound");
+    }
+    return *data_.compoundPtr;
+}
+
+
+inline Foam::token::compound&
+Foam::token::transferCompoundToken(const Istream& is)
+{
+    return transferCompoundToken(&is);
+}
+
+
+template<class Type>
+inline Type& Foam::token::transferCompoundToken(const Istream& is)
+{
+    return static_cast<Type&>
+    (
+        dynamicCast<token::Compound<Type>>
+        (
+            transferCompoundToken(&is)
+        )
+    );
+}
+
+
+template<class T>
+Foam::token::tokenType Foam::token::Compound<T>::typeCode() const
+{
+    // Does not cover all possibilities perfectly, but should handle
+    // most of the common ones (bool, label, scalar, vector lists).
+    // Something like List<edge> will not be quite correct if we rely
+    // on nComponents
+
+    typedef typename T::value_type valueType;
+
+    if (std::is_same<valueType, bool>::value)
+    {
+        // List<bool>
+        return token::tokenType::BOOL;
+    }
+    else if (is_contiguous_label<valueType>::value)
+    {
+        // List<label>, List<labelVector> etc
+        return token::tokenType::LABEL;
+    }
+    else if (is_contiguous_scalar<valueType>::value)
+    {
+        // List<scalar>, List<vector>, List<tensor> etc
+        return
+        (
+            sizeof(float) == sizeof(Foam::scalar)
+          ? token::tokenType::FLOAT
+          : token::tokenType::DOUBLE
+        );
+    }
+    else if (std::is_same<valueType, char>::value)
+    {
+        // List<char>
+        return token::tokenType::PUNCTUATION;
+    }
+    else
+    {
+        // Do not handle List<word> or List<string> at the moment
+        // since filling non-contiguous data is probably not desirable
+        return token::tokenType::UNDEFINED;
+    }
 }
 
 

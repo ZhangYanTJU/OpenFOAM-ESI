@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
 
     #include "setRootCase.H"
 
-    Info<< "Known compound tokens: "
-        << token::compound::IstreamConstructorTablePtr_->sortedToc() << nl;
+    // Info<< "Known compound tokens: "
+    //     << token::compound::emptyConstructorTablePtr_->sortedToc() << nl;
 
     OStringStream ostr;
 

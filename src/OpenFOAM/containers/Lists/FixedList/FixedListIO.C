@@ -190,10 +190,7 @@ Foam::Istream& Foam::FixedList<T, N>::readList
         {
             // Compound: transfer contents
             // - in practice probably never reach this branch
-            list = dynamicCast<token::Compound<List<T>>>
-            (
-                tok.transferCompoundToken(is)
-            );
+            list = tok.transferCompoundToken<List<T>>(is);
             return is;
         }
         else if (tok.isLabel())

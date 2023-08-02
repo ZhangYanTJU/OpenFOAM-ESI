@@ -190,10 +190,7 @@ Foam::Istream& Foam::List<T>::readList(Istream& is)
         list.clear();  // Clear old contents
         list.transfer
         (
-            dynamicCast<token::Compound<List<T>>>
-            (
-                tok.transferCompoundToken(is)
-            )
+            tok.transferCompoundToken<List<T>>(is)
         );
     }
     else if (tok.isLabel())

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,6 +34,7 @@ Description
 #include "StringStream.H"
 #include "cpuTime.H"
 #include "labelList.H"
+#include "scalarList.H"
 #include "DynamicList.H"
 
 using namespace Foam;
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
     argList args(argc, argv, false, true);
 
     token tok1;
-    Info<< "construct null: " << tok1.info() << endl;
+    Info<< "default construct: " << tok1.info() << endl;
 
     tok1 = double(3.14159);
     Info<< "assign double: " << tok1.info() << endl;
@@ -81,7 +82,8 @@ int main(int argc, char *argv[])
 
         token ctok1(new token::Compound<labelList>(identity(10)));
 
-        Info<< "compound token: " << ctok1.info() << nl << ctok1 << endl;
+        Info<< "compound from pointer: "
+            << ctok1.info() << nl << ctok1 << endl;
     }
 
     {
@@ -94,26 +96,155 @@ int main(int argc, char *argv[])
 
         token ctok1(ptr.release());  // release() not get()!
 
-        Info<< "compound token: " << ctok1.info() << nl << ctok1 << endl;
+        Info<< "compound from autoPtr: "
+            << ctok1.info() << nl << ctok1 << endl;
     }
 
-    #if 0
     {
-        // This version will segfault.
-        // The implicit pointer cast from autoPtr to pointer wracks havoc
-
-        autoPtr<token::Compound<labelList>> ptr
+        // Construct from pointer
+        autoPtr<token::compound> ptr
         (
-            new token::Compound<labelList>(identity(10))
+            token::compound::New("List<label>")
         );
 
-        token ctok1(ptr);
+        token ctok1(ptr.release());  // release() not get()!
 
-        Info<< "compound token: " << ctok1.info() << nl << ctok1 << endl;
+        Info<< "compound from New (via pointer): "
+            << ctok1.info() << nl << ctok1 << endl;
     }
-    #endif
+
+    {
+        // Construct from autoPtr
+        autoPtr<token::compound> ptr
+        (
+            token::Compound<scalarList>::New(10, 1.0)
+        );
+
+        token ctok1(std::move(ptr));
+        Info<< "compound from autoPtr: "
+            << ctok1.info() << nl << ctok1 << endl;
+
+        // Shrink
+        ctok1.refCompoundToken().resize(5);
+
+        Info<< "resized: "
+            << ctok1.info() << nl << ctok1 << endl;
+
+        const scalarList* listptr = ctok1.compoundToken().isA<scalarList>();
+        if (listptr)
+        {
+            for (scalar& val : const_cast<scalarList&>(*listptr))
+            {
+                val *= 5;
+            }
+
+            Info<< "multiplied List<scalar>: "
+                << ctok1.info() << nl << ctok1 << endl;
+        }
+
+        listptr = ctok1.isCompound<scalarList>();
+        if (listptr)
+        {
+            for (scalar& val : const_cast<scalarList&>(*listptr))
+            {
+                val /= 2;
+            }
+
+            Info<< "divided List<scalar>: "
+                << ctok1.info() << nl << ctok1 << endl;
+        }
+
+        const labelList* listptr2 = ctok1.isCompound<labelList>();
+        if (listptr2)
+        {
+            for (label& val : const_cast<labelList&>(*listptr2))
+            {
+                val /= 2;
+            }
+
+            Info<< "divided List<label>: "
+                << ctok1.info() << nl << ctok1 << endl;
+        }
+        else
+        {
+            Info<< "compound is not List<label>" << nl;
+        }
+
+        Info<< "Before fill_zero: " << ctok1 << endl;
+
+        ctok1.refCompoundToken().fill_zero();
+
+        Info<< "After fill_zero: " << ctok1 << endl;
+
+
+        if (ctok1.isCompound())
+        {
+            auto& ct = ctok1.refCompoundToken();
+
+            ct.resize(20);
+            bool handled = true;
+
+            switch (ct.typeCode())
+            {
+                case token::tokenType::BOOL :
+                {
+                    UList<bool> cmpts
+                    (
+                        reinterpret_cast<bool*>(ct.data_bytes()),
+                        label(ct.size_bytes() / sizeof(bool))
+                    );
+                    cmpts = false;
+                }
+                break;
+
+                case token::tokenType::LABEL :
+                {
+                    UList<label> cmpts
+                    (
+                        reinterpret_cast<label*>(ct.data_bytes()),
+                        label(ct.size_bytes() / sizeof(label))
+                    );
+                    cmpts = 123;
+                }
+                break;
+
+                case token::tokenType::FLOAT :
+                {
+                    UList<float> cmpts
+                    (
+                        reinterpret_cast<float*>(ct.data_bytes()),
+                        label(ct.size_bytes() / sizeof(float))
+                    );
+                    cmpts = 2.7;
+                }
+                break;
+
+                case token::tokenType::DOUBLE :
+                {
+                    UList<double> cmpts
+                    (
+                        reinterpret_cast<double*>(ct.data_bytes()),
+                        label(ct.size_bytes() / sizeof(double))
+                    );
+                    cmpts = 3.1415;
+                }
+                break;
+
+                default:
+                    handled = false;
+                    break;
+            }
+
+
+            if (handled)
+            {
+                Info<< "assigned: " << ctok1 << nl;
+            }
+        }
+    }
 
     return 0;
 }
+
 
 // ************************************************************************* //

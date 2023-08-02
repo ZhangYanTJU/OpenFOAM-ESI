@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -125,10 +125,7 @@ Istream& UList<char>::readList(Istream& is)
         List<char> elems;
         elems.transfer
         (
-            dynamicCast<token::Compound<List<char>>>
-            (
-                tok.transferCompoundToken(is)
-            )
+            tok.transferCompoundToken<List<char>>(is)
         );
 
         const label inputLen = elems.size();
