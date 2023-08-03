@@ -110,6 +110,8 @@ public:
     typedef Foam::regionModels::pyrolysisModels::pyrolysisModel
         pyrolysisModelType;
 
+    typedef filmPyrolysisRadiativeCoupledMixedFvPatchScalarField myType;
+
 
 private:
 
