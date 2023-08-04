@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,7 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+#include "argList.H"
 #include "ListStream.H"
 #include "UListStream.H"
 #include "wordList.H"
@@ -155,35 +156,378 @@ void doTest
 }
 
 
+void printToken(const label index, const token& tok)
+{
+    Info<< "  " << index << "  " << tok.name();
+    if (tok.good())
+    {
+        Info<< " : " << tok;
+    }
+    Info<< nl;
+}
+
+
+template<class BUF>
+void testWalk1
+(
+    const std::string& name,
+    const BUF& input,
+    const int verbose
+)
+{
+    Info<< "tokenized " << name.c_str() << ":" << nl
+        << "====" << nl;
+    toString(Info, input)
+        << nl
+        << "====" << endl;
+
+    ITstream is(input);
+    Info<< is.size() << " tokens" << endl;
+    for (is.rewind(); !is.eof(); is.skip())
+    {
+        printToken(is.tokenIndex(), is.currentToken());
+    }
+    Info<< nl;
+
+    Info<< "every other token:" << nl;
+    for (is.seek(1); is.nRemainingTokens(); is.skip(2))
+    {
+        printToken(is.tokenIndex(), is.currentToken());
+    }
+
+    for (int i : { 3, 7, 11, 20 })
+    {
+        Info<< "peekToken: ";
+        printToken(i, is.peekToken(i));
+    }
+
+    labelRange range(is.size()-2, 2);
+    Info<< nl
+        << "remove: " << range << " of 0/" << is.size() << " tokens" << endl;
+    is.remove(range);
+
+    Info<< "Now " << is.size() << " tokens" << endl;
+    for (is.rewind(); !is.eof(); is.skip())
+    {
+        printToken(is.tokenIndex(), is.currentToken());
+    }
+
+    range.reset(10, 3);
+    Info<< nl
+        << "remove: " << range << " of 0/" << is.size() << " tokens" << endl;
+    is.remove(range);
+
+    Info<< "Now " << is.size() << " tokens" << endl;
+    for (is.rewind(); !is.eof(); is.skip())
+    {
+        printToken(is.tokenIndex(), is.currentToken());
+    }
+
+    Info<< nl;
+}
+
+
+void testRewrite(const std::string& input, const int verbose)
+{
+    Info<< "tokens" << nl
+        << "====" << nl;
+    toString(Info, input)
+        << nl
+        << "====" << endl;
+
+    ITstream is(input);
+    Info<< is.size() << " tokens" << endl;
+
+    if (verbose)
+    {
+        for (is.rewind(); !is.eof(); is.skip())
+        {
+            printToken(is.tokenIndex(), is.currentToken());
+        }
+        Info<< nl;
+    }
+    else
+    {
+        Info<< "==>";
+        for (const token& tok : is)
+        {
+            Info<< ' ' << tok;
+        }
+        Info<< nl;
+    }
+
+    Info<< nl
+        << "removing sub-dictionary tokens" << nl;
+
+    for (is.rewind(); !is.eof(); is.skip())
+    {
+        if (is.currentToken().isPunctuation(token::BEGIN_BLOCK))
+        {
+            labelRange slice(is.tokenIndex(), 0);
+
+            #if 0
+            // This is a bad way to remove things since we lose the parse
+            // point!
+            for (/*nil*/; !is.eof(); is.skip())
+            {
+                if (is.currentToken().isPunctuation(token::END_BLOCK))
+                {
+                    slice.size() = (is.tokenIndex() - slice.start()) + 1;
+                    break;
+                }
+            }
+            #else
+            for (label toki = is.tokenIndex()+1; toki < is.size(); ++toki)
+            {
+                if (is.peekToken(toki).isPunctuation(token::END_BLOCK))
+                {
+                    slice.size() = (toki - slice.start()) + 1;
+                    break;
+                }
+            }
+            #endif
+
+            Info<< "remove range: " << slice
+                << " currentIndex: " << is.tokenIndex() << '/' << is.size()
+                // NB peekToken handles out-of-range
+                << " token: " << is.peekToken(is.tokenIndex()) << nl;
+
+            const label nRemoved = is.remove(slice);
+
+            Info<< "remove " << nRemoved
+                << " new current: " << is.tokenIndex() << '/' << is.size()
+                // NB peekToken handles out-of-range
+                << " token: " << is.peekToken(is.tokenIndex()) << nl;
+
+            Info<< "==>";
+            for (const token& tok : is)
+            {
+                Info<< ' ' << tok;
+            }
+            Info<< nl << nl;
+        }
+    }
+    Info<< nl;
+}
+
+
+void testRemoveDict(const std::string& input, const int verbose)
+{
+    Info<< "tokens" << nl
+        << "====" << nl;
+    toString(Info, input)
+        << nl
+        << "====" << endl;
+
+    ITstream is(input);
+    Info<< is.size() << " tokens" << endl;
+
+    if (verbose)
+    {
+        for (is.rewind(); !is.eof(); is.skip())
+        {
+            printToken(is.tokenIndex(), is.currentToken());
+        }
+        Info<< nl;
+    }
+    else
+    {
+        Info<< "==>";
+        for (const token& tok : is)
+        {
+            Info<< ' ' << tok;
+        }
+        Info<< nl;
+    }
+
+    for (label pos = 0; pos < is.size(); /*nil*/)
+    {
+        labelRange slice
+        (
+            is.find(token::BEGIN_BLOCK, token::END_BLOCK, pos)
+        );
+
+        if (slice.good())
+        {
+            pos = slice.end_value();
+
+            tokenList::subList substream(is.slice(slice));
+
+            Info<< "  dict " << slice << " ==>";
+            for (const token& tok : substream)
+            {
+                Info<< ' ' << tok;
+            }
+            Info<< nl;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+
+    Info<< nl
+        << "removing sub-dictionary tokens" << nl;
+
+    for (is.rewind(); !is.eof(); is.skip())
+    {
+        if (is.currentToken().isPunctuation(token::BEGIN_BLOCK))
+        {
+            labelRange slice
+            (
+                is.find(token::BEGIN_BLOCK, token::END_BLOCK, is.tokenIndex())
+            );
+
+            if (slice.good())
+            {
+                ITstream substream(is.extract(slice));
+
+                Info<< "got " << slice << " ==>";
+                for (const token& tok : substream)
+                {
+                    Info<< ' ' << tok;
+                }
+                Info<< nl;
+
+                dictionary dict(substream);
+
+                Info<< "tokenIndex: " << is.tokenIndex() << nl;
+                Info<< "sub-dict " << dict << nl;
+
+                Info<< "remove range: " << slice
+                    << " currentIndex: " << is.tokenIndex() << '/' << is.size()
+                    << " token: " << is.peekToken(is.tokenIndex()) << nl;
+
+                const label nRemoved = is.remove(slice);
+
+                Info<< "remove " << nRemoved
+                    << " new current: " << is.tokenIndex() << '/' << is.size()
+                    << " token: " << is.peekToken(is.tokenIndex()) << nl;
+
+                Info<< "==>";
+                for (const token& tok : is)
+                {
+                    Info<< ' ' << tok;
+                }
+                Info<< nl << nl;
+
+                // Reposition the parse point
+                is.seek(slice.start());
+                is.skip(-1);
+
+                Info<< "continue after " << is.tokenIndex()
+                    << " : " << is.peekToken(is.tokenIndex()) << nl;
+            }
+        }
+    }
+    Info<< nl;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Main program:
 
 int main(int argc, char *argv[])
 {
-    const char* charInput =
-        "( const char input \"string\" to tokenize )\n"
-        "List<label> 5(0 1 2 3 4);";
+    argList::noBanner();
+    argList::noParallel();
+    argList::addVerboseOption("additional verbosity");
+    argList::addBoolOption("basic", "basic tests");
+    argList::addBoolOption("rewrite", "test rewriting only");
+    argList::addBoolOption("remove-dict", "test rewriting only");
 
-    string stringInput("( string     ;    input \"string\" to tokenize )");
+    argList args(argc, argv);
 
-    List<char> listInput
+    if
     (
-        ListOps::create<char>
+        !args.found("basic")
+     && !args.found("rewrite")
+     && !args.found("remove-dict")
+    )
+    {
+        Info<< "No test options specified!" << nl << nl;
+    }
+
+    if (args.found("basic"))
+    {
+        const char* charInput =
+            "( const char input \"string\" to tokenize )\n"
+            "List<label> 5(0 1 2 3 4);";
+
+        string stringInput("( string     ;    input \"string\" to tokenize )");
+
+        List<char> listInput
         (
-            stringInput.cbegin(),
-            stringInput.cend(),
-            Foam::identityOp{}
-        )
-    );
+            ListOps::create<char>
+            (
+                stringInput.cbegin(),
+                stringInput.cend(),
+                Foam::identityOp{}
+            )
+        );
 
-    doTest("empty", "", true, true);
+        doTest("empty", "", true, true);
 
-    doTest("char*", charInput, true, true);
-    doTest("string", stringInput, true);
-    doTest("List<char>", listInput, true);
+        doTest("char*", charInput, true, true);
+        doTest("string", stringInput, true);
+        doTest("List<char>", listInput, true);
 
-    reverse(listInput);
-    doTest("List<char>", listInput, true);
+        reverse(listInput);
+        doTest("List<char>", listInput, true);
+    }
+
+    if (args.found("rewrite"))
+    {
+        testWalk1
+        (
+            "std::string",
+            "( string ;    input \"string\" to tokenize )"
+            "{ other entry; value 100; value2 200; }"
+            , args.verbose()
+        );
+
+        testRewrite
+        (
+            "some entry ( string1 ; )"
+            "{ sub dict1; value 100; value2 200; }"
+            "other entry ( string2 ; )"
+            "{ sub dict2; value 100; value2 200; }"
+            "{ sub dict3; value 100; value2 200; }"
+            "trailing entry"
+            , args.verbose()
+        );
+    }
+
+    if (args.found("remove-dict"))
+    {
+        testRemoveDict
+        (
+            "some entry ( string1 ; )"
+            "{ sub dict1; value 100; value2 200; }"
+            "other entry ( string2 ; )"
+            "{ sub dict2; value 100; value2 200; }"
+            "{ sub dict3; value 100; value2 200; }"
+            "trailing entry"
+            , args.verbose()
+        );
+
+        testRemoveDict
+        (
+            "some entry no dictionary"
+            , args.verbose()
+        );
+        testRemoveDict
+        (
+            "{ leading dict; } last-stuff"
+            , args.verbose()
+        );
+        testRemoveDict
+        (
+            "first-stuff { trailing dict; }"
+            , args.verbose()
+        );
+    }
 
     Info<< "\nEnd\n" << endl;
 

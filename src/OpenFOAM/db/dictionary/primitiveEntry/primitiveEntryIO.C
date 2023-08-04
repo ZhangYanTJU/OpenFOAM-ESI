@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -220,12 +220,17 @@ bool Foam::primitiveEntry::read(const dictionary& dict, Istream& is)
 void Foam::primitiveEntry::readEntry(const dictionary& dict, Istream& is)
 {
     const label keywordLineNumber = is.lineNumber();
-    tokenIndex() = 0;
 
-    if (read(dict, is))
+    if (ITstream::empty())
     {
-        setSize(tokenIndex());
-        tokenIndex() = 0;
+        ITstream::resize(16);
+    }
+    ITstream::seek(0);
+
+    if (read(dict, is))  // Read with 'lazy' appending
+    {
+        ITstream::resize(tokenIndex());  // Truncate to number tokens read
+        ITstream::seek(0);
     }
     else
     {
@@ -256,9 +261,8 @@ Foam::primitiveEntry::primitiveEntry
     entry(key),
     ITstream
     (
-        is.name() + '.' + key,
-        tokenList(10),
-        static_cast<IOstreamOption>(is)
+        static_cast<IOstreamOption>(is),
+        is.name() + '.' + key
     )
 {
     readEntry(dict, is);

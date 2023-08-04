@@ -75,14 +75,13 @@ class ITstream
         //  In non-lazy mode, set exact capacity
         void reserveCapacity(const label nElem, const bool lazy);
 
-
         //- Failsafe read-access to token at specified location
         //- or undefinedToken
-        inline const token& peekAt(const label i) const
+        inline const token& peekNoFail(const label i) const
         {
             return
             (
-                i >= 0 && i < tokenList::size()
+                (i >= 0 && i < tokenList::size())
                 ? tokenList::operator[](i)
                 : token::undefinedToken
             );
@@ -229,27 +228,48 @@ public:
         //- The name of the input token stream, for modification.
         virtual fileName& name() { return name_; }
 
+        //- The line number of the first token in stream
+        label startLineNumber() const
+        {
+            return (tokenList::empty() ? -1 : tokenList::front().lineNumber());
+        }
+
+        //- The line number of the last token in stream
+        label endLineNumber() const
+        {
+            return (tokenList::empty() ? -1 : tokenList::back().lineNumber());
+        }
+
 
     // Token Access
 
         //- True if putback token is in use
-        bool hasPutback() const noexcept
-        {
-            return Istream::hasPutback();
-        }
+        bool hasPutback() const noexcept { return Istream::hasPutback(); }
 
-        //- Failsafe peek at the \b first token in the list.
+        //- Failsafe peek at the token at the \b front of the tokenList
         //  \return \c undefinedToken if the list is empty.
-        const token& front() const { return peekAt(0); }
+        const token& front() const { return peekNoFail(0); }
 
-        //- Failsafe peek at the \b last token in the list.
+        //- Failsafe peek at the token at the \b back of the tokenList
         //  \return \c undefinedToken if the list is empty.
-        const token& back() const { return peekAt(tokenList::size()-1); }
+        const token& back() const { return peekNoFail(tokenList::size()-1); }
 
         //- Failsafe peek at what the next read would return,
         //- including handling of any putback
         //  \return \c undefinedToken if list is exhausted
         const token& peek() const;
+
+        //- Read access to the token at the current tokenIndex.
+        //- \returns \c undefinedToken if list is exhausted
+        const token& currentToken() const { return peekNoFail(tokenIndex_); }
+
+        //- Write access to the token at the current tokenIndex.
+        //- Fatal if not in range
+        token& currentToken();
+
+        //- Failsafe read access to token at given position in the tokenList
+        //  \return \c undefinedToken for out-of-range
+        const token& peekToken(const label i) const { return peekNoFail(i); };
 
         //- The current token index when reading, or the insertion point.
         label tokenIndex() const noexcept { return tokenIndex_; }
@@ -257,7 +277,7 @@ public:
         //- Non-const access to the current token index
         label& tokenIndex() noexcept { return tokenIndex_; }
 
-        //- Set the token index. \return the previous value
+        //- Set the token index (no checks). \return the previous value
         label tokenIndex(const label num) noexcept
         {
             label old(tokenIndex_);
@@ -277,14 +297,51 @@ public:
         void seek(label pos);
 
         //- Move tokenIndex relative to the current position.
-        //  Will not overrun the beginning or end positions.
+        //  Will not overrun the beginning (0) or one-past end positions.
         //
         //  Use skip(2) to move forward two tokens.
         //  Use skip(-2) to move backward two tokens.
-        void skip(label n = 1);
+        //  \return True if the indexing completed without underflow/overflow
+        bool skip(label n = 1);
+
+
+    // Searching
+
+        //- Regular searching
+        using tokenList::find;
+
+        //- Find range containing matching delimiter pair, starting at the
+        //- the specified position. The position -1 indicates to continue
+        //- from the present tokenIndex() position.
+        labelRange find
+        (
+            const token::punctuationToken delimOpen,
+            const token::punctuationToken delimClose,
+            label pos = 0
+        ) const;
 
 
     // Token list modification
+
+        //- Remove a (start,size) subset from the list and move remaining
+        //- elements down.
+        //  If the tokenIndex() is within or to the right of the removed
+        //  region, it will be adjusted to remain valid. However, this may
+        //  not correspond to the expected parsing point so external bookkeeping
+        //  is likely necessary.
+        //  \note The range is subsetted with the list size itself to ensure
+        //  the result always addresses a valid section of the list.
+        ITstream extract(const labelRange& range);
+
+        //- Remove a (start,size) subset from the list and move remaining
+        //- elements down.
+        //  If the tokenIndex() is within or to the right of the removed
+        //  region, it will be adjusted to remain valid. However, this may
+        //  not correspond to the expected parsing point so external bookkeeping
+        //  is likely necessary.
+        //  \note The range is subsetted with the list size itself to ensure
+        //  the result always addresses a valid section of the list.
+        label remove(const labelRange& range);
 
         //- Copy append a token at the current tokenIndex,
         //- incrementing the index.
@@ -326,51 +383,44 @@ public:
         }
 
 
-        // Read Functions
+    // Read Functions
 
-            //- Return next token from stream
-            virtual Istream& read(token& tok);
+        //- Return next token from stream
+        virtual Istream& read(token& tok);
 
-            //- Read a character
-            virtual Istream& read(char&);
+        //- Read a character : triggers not implemented error
+        virtual Istream& read(char&);
 
-            //- Read a word
-            virtual Istream& read(word&);
+        //- Read a word : triggers not implemented error
+        virtual Istream& read(word&);
 
-            // Read a string (including enclosing double-quotes)
-            virtual Istream& read(string&);
+        //- Read a string (including enclosing double-quotes) :
+        //- triggers not implemented error
+        virtual Istream& read(string&);
 
-            //- Read a label
-            virtual Istream& read(label&);
+        //- Read a label : triggers not implemented error
+        virtual Istream& read(label&);
 
-            //- Read a float
-            virtual Istream& read(float&);
+        //- Read a float : triggers not implemented error
+        virtual Istream& read(float&);
 
-            //- Read a double
-            virtual Istream& read(double&);
+        //- Read a double : triggers not implemented error
+        virtual Istream& read(double&);
 
-            //- Read binary block
-            //  \note Not implemented
-            virtual Istream& read(char* data, std::streamsize);
+        //- Read binary block : triggers not implemented error
+        virtual Istream& read(char* data, std::streamsize);
 
-            //- Low-level raw binary read
-            //  \note Not implemented
-            virtual Istream& readRaw(char* data, std::streamsize count);
+        //- Low-level raw binary read : triggers not implemented error
+        virtual Istream& readRaw(char* data, std::streamsize count);
 
-            //- Start of low-level raw binary read
-            virtual bool beginRawRead()
-            {
-                return false;
-            }
+        //- Start of low-level raw binary read : no-op
+        virtual bool beginRawRead() { return false; }
 
-            //- End of low-level raw binary read
-            virtual bool endRawRead()
-            {
-                return false;
-            }
+        //- End of low-level raw binary read : no-op
+        virtual bool endRawRead() { return false; }
 
-            //- Rewind the stream so that it may be read again
-            virtual void rewind();
+        //- Rewind the stream so that it may be read again. Same as seek(0)
+        virtual void rewind();
 
 
     // Output
@@ -385,7 +435,7 @@ public:
 
     // Member Operators
 
-        //- Use operator() from Istream
+        //- Return a non-const reference to const Istream
         using Istream::operator();
 
         //- Copy assignment, with rewind()

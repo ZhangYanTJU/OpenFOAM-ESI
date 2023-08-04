@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -114,8 +114,11 @@ public:
         //  Contents to be filled with a later assignment
         explicit primitiveEntry(const keyType& key);
 
-        //- Construct from keyword and a single token
+        //- Construct from keyword and a single token (copy)
         primitiveEntry(const keyType& key, const token& tok);
+
+        //- Construct from keyword and a single token (move)
+        primitiveEntry(const keyType& key, token&& tok);
 
         //- Construct from keyword and a list of tokens
         primitiveEntry(const keyType& key, const UList<token>& tokens);
@@ -166,11 +169,17 @@ public:
             return ITstream::relativeName();
         }
 
-        //- Return line number of first token in dictionary
-        virtual label startLineNumber() const;
+        //- The line number of the first token in the entry
+        virtual label startLineNumber() const
+        {
+            return ITstream::startLineNumber();
+        }
 
-        //- Return line number of last token in dictionary
-        virtual label endLineNumber() const;
+        //- The line number of the last token in the entry
+        virtual label endLineNumber() const
+        {
+            return ITstream::endLineNumber();
+        }
 
         //- Return true - this entry is a stream
         virtual bool isStream() const noexcept
@@ -182,11 +191,11 @@ public:
         virtual ITstream& stream() const;
 
         //- This entry is not a dictionary,
-        //  calling this function generates a FatalError
+        //- calling this function generates a FatalError
         virtual const dictionary& dict() const;
 
         //- This entry is not a dictionary,
-        //  calling this function generates a FatalError
+        //- calling this function generates a FatalError
         virtual dictionary& dict();
 
         //- Read tokens from the given stream

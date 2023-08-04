@@ -256,17 +256,10 @@ bool Foam::mappedPatchBase::writeIOField
     {
         const auto& fld = *fldPtr;
 
-        token tok;
-        tok = new token::Compound<List<Type>>(fld);
-
         primitiveEntry* pePtr = new primitiveEntry
         (
             fld.name(),
-            tokenList
-            (
-                one(),
-                std::move(tok)
-            )
+            token(new token::Compound<List<Type>>(fld))
         );
 
         dict.set(pePtr);

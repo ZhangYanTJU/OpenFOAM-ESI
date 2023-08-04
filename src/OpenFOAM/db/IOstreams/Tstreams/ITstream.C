@@ -46,20 +46,25 @@ namespace Foam
 // Return the number of tokens in the resulting list.
 static label parseStream(ISstream& is, tokenList& tokens)
 {
-    label nTok = 0;
-
     tokens.clear();
-    tokens.resize(64, token());
 
+    label count = 0;
     token tok;
     while (!is.read(tok).bad() && tok.good())
     {
-        tokens.newElmt(nTok++) = std::move(tok);
+        if (count >= tokens.size())
+        {
+            // Increase capacity (doubling) with min-size [64]
+            tokens.resize(max(label(64), 2*tokens.size()));
+        }
+
+        tokens[count] = std::move(tok);
+        ++count;
     }
 
-    tokens.resize(nTok);
+    tokens.resize(count);
 
-    return nTok;
+    return count;
 }
 
 } // End namespace Foam
@@ -355,7 +360,21 @@ const Foam::token& Foam::ITstream::peek() const
         return Istream::peekBack();
     }
 
-    return peekAt(tokenIndex_);
+    return peekNoFail(tokenIndex_);
+}
+
+
+Foam::token& Foam::ITstream::currentToken()
+{
+    if (tokenIndex_ < 0 || tokenIndex_ >= tokenList::size())
+    {
+        FatalIOErrorInFunction(*this)
+            << "Token index " << tokenIndex_ << " out of range [0,"
+            << tokenList::size() << "]\n"
+            << abort(FatalIOError);
+    }
+
+    return tokenList::operator[](tokenIndex_);
 }
 
 
@@ -406,45 +425,50 @@ void Foam::ITstream::seek(label pos)
 }
 
 
-void Foam::ITstream::skip(label n)
+bool Foam::ITstream::skip(label n)
 {
-    const tokenList& toks = *this;
-    const label nToks = toks.size();
-
-    if (n < 0)
+    if (!n)
     {
-        // Move backwards
-        while (n++ && tokenIndex_)
-        {
-            --tokenIndex_;
-        }
+        // No movement - just check the current range
+        return (tokenIndex_ >= 0 && tokenIndex_ < tokenList::size());
+    }
 
-        if (tokenIndex_ < nToks)
+    tokenIndex_ += n;  // Move forward (+ve) or backwards (-ve)
+
+    bool noError = true;
+
+    if (tokenIndex_ < 0)
+    {
+        // Underflow range
+        noError = false;
+        tokenIndex_ = 0;
+    }
+    else if (tokenIndex_ >= tokenList::size())
+    {
+        // Overflow range
+        noError = false;
+        tokenIndex_ = tokenList::size();
+
+        if (!tokenList::empty())
         {
-            lineNumber_ = toks[tokenIndex_].lineNumber();
-            setOpened();
-            setGood();
+            // The closest reference lineNumber
+            lineNumber_ = tokenList::back().lineNumber();
         }
     }
-    else if (n > 0)
-    {
-        // Move forward
-        while (n-- && tokenIndex_ < nToks)
-        {
-            ++tokenIndex_;
-        }
 
-        if (tokenIndex_ < nToks)
-        {
-            lineNumber_ = toks[tokenIndex_].lineNumber();
-            setOpened();
-            setGood();
-        }
-        else
-        {
-            setEof();
-        }
+    // Update stream information
+    if (tokenIndex_ < tokenList::size())
+    {
+        lineNumber_ = tokenList::operator[](tokenIndex_).lineNumber();
+        setOpened();
+        setGood();
     }
+    else
+    {
+        setEof();
+    }
+
+    return noError;
 }
 
 
@@ -499,6 +523,153 @@ Foam::Istream& Foam::ITstream::read(token& tok)
     return *this;
 }
 
+
+Foam::labelRange Foam::ITstream::find
+(
+    const token::punctuationToken delimOpen,
+    const token::punctuationToken delimClose,
+    label pos
+) const
+{
+    if (pos < 0)
+    {
+        pos = tokenIndex_;
+    }
+
+    labelRange slice;
+
+    for (label depth = 0; pos < tokenList::size(); ++pos)
+    {
+        const token& tok = tokenList::operator[](pos);
+
+        if (tok.isPunctuation())
+        {
+            if (tok.isPunctuation(delimOpen))
+            {
+                if (!depth)
+                {
+                    // Initial open delimiter
+                    slice.start() = pos;
+                }
+
+                ++depth;
+            }
+            else if (tok.isPunctuation(delimClose))
+            {
+                --depth;
+
+                if (depth < 0)
+                {
+                    // A closing delimiter without an open!
+                    // Raise error?
+                    break;
+                }
+                if (!depth)
+                {
+                    // The end - include delimiter into the count
+                    slice.size() = (pos - slice.start()) + 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    return slice;
+}
+
+
+Foam::ITstream Foam::ITstream::extract(const labelRange& range)
+{
+    ITstream result
+    (
+        static_cast<IOstreamOption>(*this),
+        this->name()
+    );
+    result.setLabelByteSize(this->labelByteSize());
+    result.setScalarByteSize(this->scalarByteSize());
+
+    // Validate the slice range of list
+    const labelRange slice(range.subset0(tokenList::size()));
+
+    if (!slice.good())
+    {
+        // No-op
+        return result;
+    }
+
+    auto first = tokenList::begin(slice.begin_value());
+    auto last = tokenList::begin(slice.end_value());
+
+    result.resize(label(last - first));
+
+    // Move tokens into result list
+    std::move(first, last, result.begin());
+    result.seek(0);  // rewind
+
+    (void) remove(slice);  // Adjust the original list
+
+    return result;
+}
+
+
+Foam::label Foam::ITstream::remove(const labelRange& range)
+{
+    // Validate the slice range of list
+    const labelRange slice(range.subset0(tokenList::size()));
+
+    if (!slice.good())
+    {
+        // No-op
+        return 0;
+    }
+
+    if (slice.end_value() >= tokenList::size())
+    {
+        // Remove entire tail
+        tokenList::resize(slice.begin_value());
+    }
+    else
+    {
+        // Attempt to adjust the current token index to something sensible...
+        if (slice.contains(tokenIndex_))
+        {
+            // Within the removed slice - reposition tokenIndex before it
+            seek(slice.begin_value());
+            skip(-1);
+        }
+        else if (tokenIndex_ >= slice.end_value())
+        {
+            // After the removed slice - reposition tokenIndex relatively
+            skip(-slice.size());
+        }
+
+        // Move tokens down in the list
+        std::move
+        (
+            tokenList::begin(slice.end_value()),
+            tokenList::end(),
+            tokenList::begin(slice.begin_value())
+        );
+
+        // Truncate
+        tokenList::resize(tokenList::size() - slice.size());
+    }
+
+    if (tokenIndex_ >= tokenList::size())
+    {
+        tokenIndex_ = tokenList::size();
+        setEof();
+    }
+    else if (tokenIndex_ >= 0 && tokenIndex_ < tokenList::size())
+    {
+        lineNumber_ = tokenList::operator[](tokenIndex_).lineNumber();
+    }
+
+    return slice.size();
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::Istream& Foam::ITstream::read(char&)
 {
