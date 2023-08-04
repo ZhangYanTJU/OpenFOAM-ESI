@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "FixedList.H"
-#include "ListLoopM.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -51,11 +50,15 @@ Foam::label Foam::FixedList<T, N>::find(const T& val, label pos) const
 {
     if (pos >= 0)
     {
-        List_CONST_ACCESS(T, *this, list);
+        // auto iter = std::find(this->begin(pos), this->end(), val);
+        // if (iter != this->end())
+        // {
+        //     return label(iter - this->begin());
+        // }
 
         while (pos < label(N))
         {
-            if (list[pos] == val)
+            if (this->v_[pos] == val)
             {
                 return pos;
             }
@@ -77,11 +80,9 @@ Foam::label Foam::FixedList<T, N>::rfind(const T& val, label pos) const
         pos = label(N)-1;
     }
 
-    List_CONST_ACCESS(T, *this, list);
-
     while (pos >= 0)
     {
-        if (list[pos] == val)
+        if (this->v_[pos] == val)
         {
             return pos;
         }
@@ -148,44 +149,30 @@ void Foam::FixedList<T, N>::swapLast(const label i)
 template<class T, unsigned N>
 bool Foam::FixedList<T, N>::operator==(const FixedList<T, N>& list) const
 {
-    List_CONST_ACCESS(T, *this, lhs);
-    List_CONST_ACCESS(T, (list), rhs);
-
-    // List sizes are identical by definition (template parameter)
-    for (unsigned i = 0; i < N; ++i)
-    {
-        if (!(lhs[i] == rhs[i]))
-        {
-            return false;
-        }
-    }
-
-    // Contents appear to be identical.
-    return true;
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    return
+    (
+        // List sizes are identical by definition (template parameter)
+        std::equal(this->cbegin(), this->cend(), list.cbegin())
+    );
 }
 
 
 template<class T, unsigned N>
 bool Foam::FixedList<T, N>::operator<(const FixedList<T, N>& list) const
 {
-    List_CONST_ACCESS(T, *this, lhs);
-    List_CONST_ACCESS(T, (list), rhs);
-
     // List sizes are identical by definition (template parameter)
-    for (unsigned i=0; i<N; ++i)
-    {
-        if (lhs[i] < rhs[i])
-        {
-            return true;
-        }
-        else if (rhs[i] < lhs[i])
-        {
-            return false;
-        }
-    }
 
-    // Contents appear to be identical.
-    return false;
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    return std::lexicographical_compare
+    (
+        this->cbegin(), this->cend(),
+        list.cbegin(), list.cend()
+    );
 }
 
 

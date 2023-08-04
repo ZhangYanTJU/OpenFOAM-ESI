@@ -52,16 +52,41 @@ inline Foam::UList<T>::UList(T* __restrict__ v, const label len) noexcept
 template<class T>
 inline void Foam::UList<T>::fill_uniform(const T& val)
 {
-    // Can also dispatch with
+    // Can dispatch with
     // - std::execution::parallel_unsequenced_policy
     // - std::execution::unsequenced_policy
+    std::fill_n
+    (
+        this->v_, this->size_, val
+    );
+}
 
-    if (this->size_ > 0)
+
+template<class T>
+inline void Foam::UList<T>::fill_uniform(const Foam::zero)
+{
+    // Note: ambiguous conversions for char can still cause compilation
+    // issues.
+    // May also have special triggers when assigning non-contiguous from zero...
+
+    if (is_contiguous<T>::value)
     {
+        // Can dispatch with
+        // - std::execution::parallel_unsequenced_policy
+        // - std::execution::unsequenced_policy
         std::fill_n
         (
-            this->v_, this->size_, val
+            this->data_bytes(), this->size_bytes(), char(0)
         );
+    }
+    else
+    {
+        const auto last = (this->v_ + this->size_);
+
+        for (auto first = this->v_; (first != last); (void)++first)
+        {
+            *first = Foam::zero{};
+        }
     }
 }
 
@@ -196,18 +221,16 @@ inline void Foam::UList<T>::checkIndex(const label i) const
 template<class T>
 inline bool Foam::UList<T>::uniform() const
 {
-    const label len = size();
-
-    if (!len)
+    if (!size_)
     {
         return false;
     }
 
-    const T& val = (*this)[0];  // first
+    // std::all_of()
 
-    for (label i = 1; i < len; ++i)
+    for (label i = 1; i < size_; ++i)
     {
-        if (val != (*this)[i])
+        if (this->v_[0] != this->v_[i])
         {
             return false;
         }
@@ -318,7 +341,7 @@ namespace Foam
 
         return Foam::pTraits<bool>::zero;
     }
-}
+} // End namespace Foam
 
 
 template<class T>

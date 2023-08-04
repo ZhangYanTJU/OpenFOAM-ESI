@@ -239,7 +239,7 @@ public:
 
         //- Return the forward circular index, i.e. next index
         //- which returns to the first at the end of the list
-        inline label fcIndex(const label i) const;
+        inline label fcIndex(const label i) const noexcept;
 
         //- Return forward circular value (ie, next value in the list)
         inline const T& fcValue(const label i) const;
@@ -249,7 +249,7 @@ public:
 
         //- Return the reverse circular index, i.e. previous index
         //- which returns to the last at the beginning of the list
-        inline label rcIndex(const label i) const;
+        inline label rcIndex(const label i) const noexcept;
 
         //- Return reverse circular value (ie, previous value in the list)
         inline const T& rcValue(const label i) const;
@@ -297,9 +297,15 @@ public:
     // Edit
 
         //- Dummy function, to make FixedList consistent with List
+        //- Any resizing is ignored (Fatal with bad sizing in full debug).
         inline void resize(const label n);
 
+        //- Set val for \em all elements.
+        //- Any resizing is ignored (Fatal with bad sizing in full debug).
+        inline void resize_fill(const label n, const T& val);
+
         //- Dummy function, to make FixedList consistent with List
+        //- Any resizing is ignored (Fatal with bad sizing in full debug).
         inline void resize_nocopy(const label n);
 
         //- Dummy function, to make FixedList consistent with List

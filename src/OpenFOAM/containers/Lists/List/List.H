@@ -86,8 +86,13 @@ class List
         inline void reAlloc(const label len);
 
         //- Copy all list contents. Uses operator[] on the input list
-        template<class List2>
-        inline void copyList(const List2& list);
+        template<class ListType>
+        inline void copyList(const ListType& list);
+
+        //- Copy list contents via indirect indices.
+        //  Uses operator[] on the values and indices lists
+        template<class ListType, class ListIndices>
+        inline void copyList(const ListType& list, const ListIndices& indices);
 
         //- Change allocation size of List, retaining old contents.
         //  Backend for resize
@@ -98,8 +103,8 @@ class List
         template<class InputIterator>
         inline List
         (
-            InputIterator begIter,
-            InputIterator endIter,
+            InputIterator firstIter,
+            InputIterator lastIter,  // (unused)
             const label len
         );
 
@@ -213,8 +218,11 @@ public:
         //  The boolList version fills new memory with false.
         inline void resize(const label len);
 
-        //- Adjust allocated size of list and set val for new elements
+        //- Adjust allocated size of list and set val for \em new elements
         void resize(const label len, const T& val);
+
+        //- Adjust allocated size of list and set val for \em all elements
+        inline void resize_fill(const label len, const T& val);
 
         //- Adjust allocated size of list \b without necessarily
         //  retaining old content.

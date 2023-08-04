@@ -216,8 +216,11 @@ public:
         //  setting values (as per List usage).
         inline void resize(const label len);
 
-        //- Alter addressable size and fill new entries with constant value
+        //- Alter addressable size and fill \em new entries with constant value
         inline void resize(const label len, const T& val);
+
+        //- Alter addressable size and set val for \em all addressed entries
+        inline void resize_fill(const label len, const T& val);
 
         //- Alter addressable list size, allocating new space if required
         //- \em without necessarily recovering old content.
@@ -328,7 +331,6 @@ public:
             //- Retain a (start,size) subset from the list.
             //  The range is subsetted with the list size itself to ensure
             //  result always addresses a valid section of the list.
-            //  Remaining elements are moved down.
             inline label subset(const labelRange& range);
 
             //- Retain a (start,size) subset from List.

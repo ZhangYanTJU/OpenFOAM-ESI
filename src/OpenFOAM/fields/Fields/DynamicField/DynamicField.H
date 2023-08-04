@@ -293,6 +293,9 @@ public:
         //- Copy append another list to the end of this list
         inline void push_back(const UList<T>& list);
 
+        //- Move append another list to the end of this list
+        inline void push_back(List<T>&& list);
+
         //- Reduce size by 1 or more elements. Can be called on an empty list.
         inline void pop_back(label n = 1);
 

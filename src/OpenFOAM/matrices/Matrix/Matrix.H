@@ -188,19 +188,28 @@ public:
     // Access
 
         //- The number of rows
-        inline label m() const noexcept;
+        label mRows() const noexcept { return mRows_; }
+
+        //- The number of rows
+        label nRows() const noexcept { return mRows_; }
+
+        //- The number of rows
+        label m() const noexcept { return mRows_; }
 
         //- The number of columns
-        inline label n() const noexcept;
+        label nCols() const noexcept { return nCols_; }
+
+        //- The number of columns
+        label n() const noexcept { return nCols_; }
+
+        //- Return true if Matrix is empty (i.e., size() is zero)
+        inline bool empty() const noexcept;
 
         //- The number of elements in Matrix (m*n)
         inline label size() const;
 
         //- Return row/column sizes
         inline labelPair sizes() const;
-
-        //- Return true if Matrix is empty (i.e., size() is zero)
-        inline bool empty() const noexcept;
 
         //- Return const pointer to the first data element, which can also
         //- be used to address into Matrix contents
@@ -509,25 +518,6 @@ public:
 
 
     // Housekeeping
-
-        //- The number of rows - same as m()
-        inline label mRows() const noexcept
-        {
-            return mRows_;
-        }
-
-        //- The number of rows - same as m()
-        inline label nRows() const noexcept
-        {
-            return mRows_;
-        }
-
-        //- The number of columns - same as n()
-        inline label nCols() const noexcept
-        {
-            return nCols_;
-        }
-
 
         //- Deprecated(2019-04) raw data pointer, const access
         //  \deprecated(2019-04) - use cdata() method
