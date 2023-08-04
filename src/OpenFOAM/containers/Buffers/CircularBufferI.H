@@ -335,6 +335,21 @@ inline void Foam::CircularBuffer<T>::push_front(T&& val)
 
 
 template<class T>
+template<class... Args>
+inline T& Foam::CircularBuffer<T>::emplace_front(Args&&... args)
+{
+    reserve(size() + 2);
+
+    // Never overfilled. Move begin and write
+
+    begin_ = storage_.rcIndex(begin_);
+    storage_[begin_] = T(std::forward<Args>(args)...);
+
+    return storage_[begin_];
+}
+
+
+template<class T>
 inline void Foam::CircularBuffer<T>::push_back(const T& val)
 {
     reserve(size() + 2);
@@ -355,6 +370,22 @@ inline void Foam::CircularBuffer<T>::push_back(T&& val)
 
     storage_[end_] = std::move(val);  // move assign element
     end_ = storage_.fcIndex(end_);
+}
+
+
+template<class T>
+template<class... Args>
+inline T& Foam::CircularBuffer<T>::emplace_back(Args&&... args)
+{
+    reserve(size() + 2);
+
+    // Never overfilled, simply write at end_ (one-past position)
+
+    const label backIndex = end_;
+    storage_[end_] = T(std::forward<Args>(args)...);
+    end_ = storage_.fcIndex(end_);
+
+    return storage_[backIndex];
 }
 
 

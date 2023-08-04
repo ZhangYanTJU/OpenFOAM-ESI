@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,7 +30,6 @@ License
 #include "ListLoopM.H"
 #include "FixedList.H"
 #include "PtrList.H"
-#include "SLList.H"
 #include "contiguous.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -315,13 +314,6 @@ Foam::List<T>::List(const PtrList<T>& list)
 
 
 template<class T>
-Foam::List<T>::List(const SLList<T>& list)
-:
-    List<T>(list.begin(), list.end(), list.size())
-{}
-
-
-template<class T>
 template<class Addr>
 Foam::List<T>::List(const IndirectListBase<T, Addr>& list)
 :
@@ -356,15 +348,6 @@ Foam::List<T>::List(DynamicList<T, SizeMin>&& list)
     UList<T>()
 {
     transfer(list);
-}
-
-
-template<class T>
-Foam::List<T>::List(SLList<T>&& list)
-:
-    UList<T>()
-{
-    operator=(std::move(list));
 }
 
 
@@ -464,28 +447,6 @@ void Foam::List<T>::operator=(const List<T>& list)
 
 
 template<class T>
-void Foam::List<T>::operator=(const SLList<T>& list)
-{
-    const label len = list.size();
-
-    reAlloc(len);
-
-    if (len)
-    {
-        // std::copy(list.begin(), list.end(), this->v_);
-
-        T* iter = this->begin();
-
-        for (const T& val : list)
-        {
-            *iter = val;
-            ++iter;
-        }
-    }
-}
-
-
-template<class T>
 template<unsigned N>
 void Foam::List<T>::operator=(const FixedList<T, N>& list)
 {
@@ -562,22 +523,6 @@ void Foam::List<T>::operator=(DynamicList<T, SizeMin>&& list)
 }
 
 
-template<class T>
-void Foam::List<T>::operator=(SLList<T>&& list)
-{
-    label len = list.size();
-
-    reAlloc(len);
-
-    for (T* iter = this->begin(); len--; ++iter)
-    {
-        *iter = std::move(list.removeHead());
-    }
-
-    list.clear();
-}
-
-
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
 template<class T>
@@ -623,6 +568,38 @@ void Foam::sortedOrder
     }
 
     Foam::stableSort(order, comp);
+}
+
+
+
+// * * * * * * * * * * * * * * * Housekeeping  * * * * * * * * * * * * * * * //
+
+#include "SLList.H"
+
+template<class T>
+Foam::List<T>::List(const SLList<T>& list)
+:
+    List<T>(list.begin(), list.end(), list.size())
+{}
+
+
+template<class T>
+void Foam::List<T>::operator=(const SLList<T>& list)
+{
+    const label len = list.size();
+
+    reAlloc(len);
+
+    // Cannot use std::copy algorithm
+    // - SLList doesn't define iterator category
+
+    T* iter = this->begin();
+
+    for (const T& val : list)
+    {
+        *iter = val;
+        ++iter;
+    }
 }
 
 

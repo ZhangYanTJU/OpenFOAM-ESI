@@ -105,6 +105,10 @@ class DynamicList
         //  The 'nocopy' option will not attempt to recover old content
         inline void doResize(const bool nocopy, const label len);
 
+        //- Read List from Istream between '(' and ')' delimiters.
+        //- The size is not known a priori.
+        bool readBracketList(Istream& is);
+
 
 public:
 

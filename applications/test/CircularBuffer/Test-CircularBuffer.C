@@ -92,7 +92,10 @@ int main(int argc, char *argv[])
     }
     report(buf1);
 
-    buf1.push_back(identity(5)); report(buf1);
+    buf1.push_back(identity(5));
+    buf1.emplace_front(-1000);
+    buf1.emplace_back(1000);
+    report(buf1);
 
     buf1.info(Info);
     Info<< buf1 << nl;
