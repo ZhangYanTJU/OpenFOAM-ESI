@@ -27,7 +27,7 @@ License
 
 #include "setUpdater.H"
 #include "polyTopoChanger.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "addToRunTimeSelectionTable.H"
 #include "mapPolyMesh.H"
 #include "cellSet.H"
@@ -71,7 +71,7 @@ bool Foam::setUpdater::changeTopology() const
 }
 
 
-void Foam::setUpdater::setRefinement(polyTopoChange&) const
+void Foam::setUpdater::setRefinement(batchPolyTopoChange&) const
 {}
 
 

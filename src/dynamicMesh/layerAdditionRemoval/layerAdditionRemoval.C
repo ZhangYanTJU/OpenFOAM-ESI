@@ -355,7 +355,7 @@ bool Foam::layerAdditionRemoval::changeTopology() const
 }
 
 
-void Foam::layerAdditionRemoval::setRefinement(polyTopoChange& ref) const
+void Foam::layerAdditionRemoval::setRefinement(batchPolyTopoChange& ref) const
 {
     // Insert the layer addition/removal instructions
     // into the topological change
@@ -367,7 +367,7 @@ void Foam::layerAdditionRemoval::setRefinement(polyTopoChange& ref) const
         // Clear addressing.  This also resets the addition/removal data
         if (debug)
         {
-            Pout<< "layerAdditionRemoval::setRefinement(polyTopoChange&) "
+            Pout<< "layerAdditionRemoval::setRefinement(batchPolyTopoChange&) "
                 << "for object " << name() << " : "
                 << "Clearing addressing after layer removal" << endl;
         }
@@ -383,7 +383,7 @@ void Foam::layerAdditionRemoval::setRefinement(polyTopoChange& ref) const
         // Clear addressing.  This also resets the addition/removal data
         if (debug)
         {
-            Pout<< "layerAdditionRemoval::setRefinement(polyTopoChange&) "
+            Pout<< "layerAdditionRemoval::setRefinement(batchPolyTopoChange&) "
                 << "for object " << name() << " : "
                 << "Clearing addressing after layer addition" << endl;
         }

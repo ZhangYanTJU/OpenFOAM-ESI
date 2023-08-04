@@ -55,7 +55,7 @@ namespace Foam
 
 // Forward Declarations
 class polyTopoChanger;
-class polyTopoChange;
+class batchPolyTopoChange;
 class mapPolyMesh;
 class polyMeshModifier;
 
@@ -166,7 +166,7 @@ public:
         virtual bool changeTopology() const = 0;
 
         //- Insert the topological change instructions
-        virtual void setRefinement(polyTopoChange&) const = 0;
+        virtual void setRefinement(batchPolyTopoChange&) const = 0;
 
         //- Modify motion points to comply with the topological change
         virtual void modifyMotionPoints(pointField& motionPoints) const = 0;

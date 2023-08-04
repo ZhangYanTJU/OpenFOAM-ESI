@@ -100,7 +100,7 @@ bool Foam::dynamicMotionSolverTopoFvMesh::update()
     // (TBD: should be in changeMesh if no inflation?)
     moving(false);
     // Do mesh changes (not using inflation - points added directly into mesh)
-    autoPtr<mapPolyMesh> topoChangeMap = topoChanger_.changeMesh(false);
+    autoPtr<mapPolyMesh> topoChangeMap = topoChanger_.changeMesh();
 
     if (topoChangeMap)
     {

@@ -97,7 +97,7 @@ public:
 
         //- Insert the layer addition/removal instructions
         //  into the topological change
-        virtual void setRefinement(polyTopoChange&) const;
+        virtual void setRefinement(batchPolyTopoChange&) const;
 
         //- Modify motion points to comply with the topological change
         virtual void modifyMotionPoints(pointField& motionPoints) const;

@@ -29,7 +29,7 @@ License
 #include "slidingInterface.H"
 #include "polyTopoChanger.H"
 #include "polyMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "addToRunTimeSelectionTable.H"
 #include "plane.H"
 
@@ -367,7 +367,7 @@ bool Foam::slidingInterface::changeTopology() const
 }
 
 
-void Foam::slidingInterface::setRefinement(polyTopoChange& ref) const
+void Foam::slidingInterface::setRefinement(batchPolyTopoChange& ref) const
 {
     if (coupleDecouple_)
     {

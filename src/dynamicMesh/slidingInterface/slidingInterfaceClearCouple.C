@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "slidingInterface.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "polyMesh.H"
 #include "polyTopoChanger.H"
 #include "polyRemovePoint.H"
@@ -37,7 +37,7 @@ License
 
 void Foam::slidingInterface::clearCouple
 (
-    polyTopoChange& ref
+    batchPolyTopoChange& ref
 ) const
 {
     if (debug)

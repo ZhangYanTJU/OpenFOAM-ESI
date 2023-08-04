@@ -264,19 +264,19 @@ private:
             bool projectPoints() const;
 
             //- Couple sliding interface
-            void coupleInterface(polyTopoChange& ref) const;
+            void coupleInterface(batchPolyTopoChange& ref) const;
 
             //- Clear projection
             void clearPointProjection() const;
 
             //- Clear old couple
-            void clearCouple(polyTopoChange& ref) const;
+            void clearCouple(batchPolyTopoChange& ref) const;
 
             //- Decouple interface (returns it to decoupled state)
             //  Note: this should not be used in normal operation of the
             //  sliding mesh, but only to return the mesh to its
             //  original state
-            void decoupleInterface(polyTopoChange& ref) const;
+            void decoupleInterface(batchPolyTopoChange& ref) const;
 
 
     // Static data members
@@ -364,7 +364,7 @@ public:
 
         //- Insert the layer addition/removal instructions
         //  into the topological change
-        virtual void setRefinement(polyTopoChange&) const;
+        virtual void setRefinement(batchPolyTopoChange&) const;
 
         //- Modify motion points to comply with the topological change
         virtual void modifyMotionPoints(pointField& motionPoints) const;

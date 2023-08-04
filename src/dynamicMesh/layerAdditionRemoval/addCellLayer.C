@@ -29,7 +29,7 @@ License
 #include "layerAdditionRemoval.H"
 #include "polyMesh.H"
 #include "primitiveMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "polyTopoChanger.H"
 #include "polyAddPoint.H"
 #include "polyAddCell.H"
@@ -88,7 +88,7 @@ Foam::tmp<Foam::vectorField> Foam::layerAdditionRemoval::extrusionDir() const
 
 void Foam::layerAdditionRemoval::addCellLayer
 (
-    polyTopoChange& ref
+    batchPolyTopoChange& ref
 ) const
 {
     // Insert the layer addition instructions into the topological change
@@ -108,7 +108,7 @@ void Foam::layerAdditionRemoval::addCellLayer
     if (debug)
     {
         Pout<< "void layerAdditionRemoval::addCellLayer("
-            << "polyTopoChange& ref) const for object " << name() << " : "
+            << "batchPolyTopoChange& ref) const for object " << name() << " : "
             << "Adding cell layer" << endl;
     }
 
@@ -682,7 +682,7 @@ void Foam::layerAdditionRemoval::addCellLayer
 
     if (debug)
     {
-        Pout<< "void layerAdditionRemoval::addCellLayer(polyTopoChange&) const "
+        Pout<< "void layerAdditionRemoval::addCellLayer(batchPolyTopoChange&) const "
             << " for object " << name() << ": "
             << "Finished adding cell layer" << endl;
     }

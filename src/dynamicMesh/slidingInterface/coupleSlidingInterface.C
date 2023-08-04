@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "slidingInterface.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "polyMesh.H"
 #include "primitiveMesh.H"
 #include "enrichedPatch.H"
@@ -69,7 +69,7 @@ const Foam::scalar Foam::slidingInterface::edgeCoPlanarTolDefault_ = 0.8;
 // - - missed master edge in cut
 // u - edge already used in cutting
 
-void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
+void Foam::slidingInterface::coupleInterface(batchPolyTopoChange& ref) const
 {
     if (debug)
     {

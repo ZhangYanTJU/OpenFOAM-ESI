@@ -29,7 +29,7 @@ License
 #include "slidingInterface.H"
 #include "polyMesh.H"
 #include "primitiveMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "polyTopoChanger.H"
 #include "polyModifyFace.H"
 #include "polyModifyPoint.H"
@@ -38,7 +38,7 @@ License
 
 void Foam::slidingInterface::decoupleInterface
 (
-    polyTopoChange& ref
+    batchPolyTopoChange& ref
 ) const
 {
     if (debug)

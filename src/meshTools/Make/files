@@ -325,6 +325,8 @@ mappedPatches/mappedPolyPatch/mappedVariableThicknessWallPolyPatch.C
 mappedPatches/mappedPointPatch/mappedPointPatch.C
 mappedPatches/mappedPointPatch/mappedWallPointPatch.C
 
+batchPolyTopoChange/batchPolyTopoChange.C
+
 polyTopoChange/topoAction/topoActions.C
 polyTopoChange/polyTopoChange.C
 

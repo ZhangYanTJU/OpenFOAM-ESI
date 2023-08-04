@@ -332,7 +332,7 @@ Foam::movingConeTopoFvMesh::~movingConeTopoFvMesh()
 bool Foam::movingConeTopoFvMesh::update()
 {
     // Do mesh changes (use inflation - put new points in topoChangeMap)
-    autoPtr<mapPolyMesh> topoChangeMap = topoChanger_.changeMesh(true);
+    autoPtr<mapPolyMesh> topoChangeMap = topoChanger_.changeMesh();
 
     // Calculate the new point positions depending on whether the
     // topological change has happened or not

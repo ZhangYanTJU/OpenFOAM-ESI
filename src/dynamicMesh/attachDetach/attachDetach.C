@@ -31,7 +31,7 @@ License
 #include "polyMesh.H"
 #include "Time.H"
 #include "primitiveMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -365,7 +365,7 @@ bool Foam::attachDetach::changeTopology() const
 }
 
 
-void Foam::attachDetach::setRefinement(polyTopoChange& ref) const
+void Foam::attachDetach::setRefinement(batchPolyTopoChange& ref) const
 {
     // Insert the attach/detach instructions into the topological change
 

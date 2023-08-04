@@ -119,10 +119,10 @@ class layerAdditionRemoval
             tmp<vectorField> extrusionDir() const;
 
             //- Add a layer of cells
-            void addCellLayer(polyTopoChange&) const;
+            void addCellLayer(batchPolyTopoChange&) const;
 
             //- Remove a layer of cells
-            void removeCellLayer(polyTopoChange&) const;
+            void removeCellLayer(batchPolyTopoChange&) const;
 
             //- Clear addressing
             void clearAddressing() const;
@@ -179,7 +179,7 @@ public:
 
         //- Insert the layer addition/removal instructions
         //  into the topological change
-        virtual void setRefinement(polyTopoChange&) const;
+        virtual void setRefinement(batchPolyTopoChange&) const;
 
         //- Modify motion points to comply with the topological change
         virtual void modifyMotionPoints(pointField& motionPoints) const;

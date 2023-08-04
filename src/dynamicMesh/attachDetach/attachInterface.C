@@ -29,7 +29,7 @@ License
 #include "attachDetach.H"
 #include "polyMesh.H"
 #include "primitiveMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "polyTopoChanger.H"
 #include "polyRemovePoint.H"
 #include "polyRemoveFace.H"
@@ -43,7 +43,7 @@ const Foam::scalar Foam::attachDetach::positionDifference_ = 1e-8;
 
 void Foam::attachDetach::attachInterface
 (
-    polyTopoChange& ref
+    batchPolyTopoChange& ref
 ) const
 {
     // Algorithm:
@@ -62,7 +62,7 @@ void Foam::attachDetach::attachInterface
     if (debug)
     {
         Pout<< "void attachDetach::attachInterface("
-            << "polyTopoChange& ref) const "
+            << "batchPolyTopoChange& ref) const "
             << " for object " << name() << " : "
             << "Attaching interface" << endl;
     }
@@ -266,7 +266,7 @@ void Foam::attachDetach::attachInterface
     if (debug)
     {
         Pout<< "void attachDetach::attachInterface("
-            << "polyTopoChange& ref) const "
+            << "batchPolyTopoChange& ref) const "
             << " for object " << name() << " : "
             << "Finished attaching interface" << endl;
     }

@@ -65,7 +65,10 @@ void Foam::attachPolyTopoChanger::attach(const bool removeEmptyPatches)
     const fileName oldInst = mesh_.facesInstance();
 
     // Execute all polyMeshModifiers
-    changeMesh(false);  // no inflation
+    // DISABLED - this functionality is lost
+    // Bad rewrite by Mattijs Janssens - completely misunderstood the interface
+    // Needs to use polyTopoChange, and not changer.
+    // changeMesh(false);  // no inflation
 
     const pointField p = mesh_.oldPoints();
 

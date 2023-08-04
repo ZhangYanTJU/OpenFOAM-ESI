@@ -51,6 +51,7 @@ namespace Foam
 class polyMesh;
 class mapPolyMesh;
 class polyBoundaryMesh;
+class polyTopoChange;
 class polyTopoChanger;
 
 Ostream& operator<<(Ostream&, const polyTopoChanger&);
@@ -65,6 +66,12 @@ class polyTopoChanger
     public PtrList<polyMeshModifier>,
     public regIOobject
 {
+    // Private data
+
+        //- Current time index for mesh morph
+        label morphIndex_;
+
+
     // Private Member Functions
 
         //- Read if IOobject flags set, set modifiers. Return true if read.
@@ -83,6 +90,33 @@ protected:
 
         //- Reference to mesh
         polyMesh& mesh_;
+
+
+    // Protected Member Functions
+
+        // Topology changes
+
+            //- Rotate a face nShift positions in anticlockwise direction
+            static face rotateFace(const face& f, const label nShift);
+
+            //- Determine ordering of faces in coupled patches.
+            //  Calculate mapping to shuffle faces inside coupled patches and
+            //  rotation to make 0th vertex in faces align.
+            static bool reorderCoupledPatches
+            (
+                const polyBoundaryMesh& boundary,
+                const labelList& patchStarts,
+                const labelList& patchSizes,
+                const faceList& faces,
+                const pointField& points,
+                labelList& faceMap,
+                labelList& rotation
+            );
+
+            //- Sync communications required for couple patch reordering when
+            //  there is no local topological change
+            void syncCoupledPatches();
+
 
 public:
 
@@ -125,18 +159,26 @@ public:
         bool changeTopology() const;
 
         //- Return topology change request
-        autoPtr<polyTopoChange> topoChangeRequest() const;
+        autoPtr<batchPolyTopoChange> topoChangeRequest() const;
 
         //- Modify point motion
         void modifyMotionPoints(pointField&) const;
 
-        autoPtr<mapPolyMesh> changeMesh
+        // autoPtr<mapPolyMesh> changeMesh
+        // (
+        //     const bool inflate,
+        //     const bool syncParallel = true,
+        //     const bool orderCells = false,
+        //     const bool orderPoints = false
+        // );
+
+        static autoPtr<mapPolyMesh> changeMesh
         (
-            const bool inflate,
-            const bool syncParallel = true,
-            const bool orderCells = false,
-            const bool orderPoints = false
+            polyMesh&,
+            const batchPolyTopoChange&
         );
+
+        autoPtr<mapPolyMesh> changeMesh();
 
         //- Force recalculation of locally stored data on topological change
         void update(const mapPolyMesh& m);
@@ -146,6 +188,9 @@ public:
 
         //- Find modifier given a name
         label findModifierID(const word& modName) const;
+
+        //- Return morph index
+        label morphIndex() const;
 
 
         //- writeData member function required by regIOobject

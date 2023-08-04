@@ -83,8 +83,8 @@ bool Foam::rawTopoChangerFvMesh::update()
     moving(false);
     topoChanging(false);
 
-    // Do any topology changes. Sets topoChanging (through polyTopoChange)
-    autoPtr<mapPolyMesh> topoChangeMap = topoChanger_.changeMesh(true);
+    // Do any topology changes. Sets topoChanging (through batchPolyTopoChange)
+    autoPtr<mapPolyMesh> topoChangeMap = topoChanger_.changeMesh();
 
     const bool hasChanged = bool(topoChangeMap);
 

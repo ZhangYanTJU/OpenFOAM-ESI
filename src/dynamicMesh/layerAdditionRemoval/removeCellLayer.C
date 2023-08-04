@@ -29,7 +29,7 @@ License
 #include "layerAdditionRemoval.H"
 #include "polyMesh.H"
 #include "primitiveMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "oppositeFace.H"
 #include "polyTopoChanger.H"
 #include "polyRemoveCell.H"
@@ -83,7 +83,7 @@ bool Foam::layerAdditionRemoval::validCollapse() const
 
 void Foam::layerAdditionRemoval::removeCellLayer
 (
-    polyTopoChange& ref
+    batchPolyTopoChange& ref
 ) const
 {
     // Algorithm for layer removal.  Second phase: topological change

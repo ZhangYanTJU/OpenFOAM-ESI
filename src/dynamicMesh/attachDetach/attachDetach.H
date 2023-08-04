@@ -122,10 +122,10 @@ class attachDetach
         // Topological changes
 
             //- Attach interface
-            void attachInterface(polyTopoChange&) const;
+            void attachInterface(batchPolyTopoChange&) const;
 
             //- Detach interface
-            void detachInterface(polyTopoChange&) const;
+            void detachInterface(batchPolyTopoChange&) const;
 
             //- Calculate point match addressing
             void calcPointMatchMap() const;
@@ -215,7 +215,7 @@ public:
 
         //- Insert the layer addition/removal instructions
         //  into the topological change
-        virtual void setRefinement(polyTopoChange&) const;
+        virtual void setRefinement(batchPolyTopoChange&) const;
 
         //- Modify motion points to comply with the topological change
         virtual void modifyMotionPoints(pointField& motionPoints) const;

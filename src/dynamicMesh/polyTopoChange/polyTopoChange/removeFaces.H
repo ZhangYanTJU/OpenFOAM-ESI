@@ -86,6 +86,19 @@ class removeFaces
             labelList& cellRegion
         ) const;
 
+        //- Changes region of connected set of faces. Returns number of changed
+        //  faces. For use with batch topo change
+        label changeFaceRegion
+        (
+            const labelList& cellRegion,
+            const boolList& removedFace,
+            const labelList& nFacesPerEdge,
+            const label faceI,
+            const label newRegion,
+
+            labelList& faceRegion
+        ) const;
+
         //- Changes region of connected set of faces
         label changeFaceRegion
         (
@@ -119,13 +132,15 @@ class removeFaces
             );
 
             //- Merge faceLabels into single face.
+            template<class TopoChangeEngine>
             void mergeFaces
             (
                 const labelList& cellRegion,
                 const labelList& cellRegionMaster,
                 const labelHashSet& pointsToRemove,
                 const labelList& faceLabels,
-                polyTopoChange& meshMod
+
+                TopoChangeEngine& meshMod
             ) const;
 
             //- Get patch, zone info for facei
@@ -141,6 +156,7 @@ class removeFaces
             face filterFace(const labelHashSet&, const label) const;
 
             //- Wrapper for meshMod.modifyFace. Reverses face if own>nei.
+            template<class TopoChangeEngine>
             void modFace
             (
                 const face& f,
@@ -153,9 +169,8 @@ class removeFaces
                 const label zoneID,
                 const bool zoneFlip,
 
-                polyTopoChange& meshMod
+                TopoChangeEngine& meshMod
             ) const;
-
 
 
         //- No copy construct
@@ -199,12 +214,15 @@ public:
 
 
         //- Play commands into polyTopoChange to remove faces.
+        template<class TopoChangeEngine>
         void setRefinement
         (
             const labelList& piercedFaces,
             const labelList& cellRegion,
-            const labelList& cellRegionMaster,
-            polyTopoChange&
+            // const labelList& pointRegionMaster,
+            labelList& cellRegionMaster,
+
+            TopoChangeEngine&
         ) const;
 
         //- Force recalculation of locally stored data on topological change
@@ -220,6 +238,10 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+#ifdef NoRepository
+#   include "removeFacesTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

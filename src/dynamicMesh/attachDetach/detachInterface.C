@@ -28,7 +28,7 @@ License
 #include "attachDetach.H"
 #include "polyMesh.H"
 #include "primitiveMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "polyTopoChanger.H"
 #include "polyAddPoint.H"
 #include "polyModifyFace.H"
@@ -38,7 +38,7 @@ License
 
 void Foam::attachDetach::detachInterface
 (
-    polyTopoChange& ref
+    batchPolyTopoChange& ref
 ) const
 {
     // Algorithm:
@@ -66,7 +66,7 @@ void Foam::attachDetach::detachInterface
     if (debug)
     {
         Pout<< "void attachDetach::detachInterface("
-            << "polyTopoChange& ref) const "
+            << "batchPolyTopoChange& ref) const "
             << " for object " << name() << " : "
             << "Detaching interface" << endl;
     }
@@ -75,7 +75,7 @@ void Foam::attachDetach::detachInterface
     const faceZoneMesh& zoneMesh = mesh.faceZones();
 
     // Check that zone is in increasing order (needed since adding faces
-    // in same order - otherwise polyTopoChange face ordering will mess up
+    // in same order - otherwise batchPolyTopoChange face ordering will mess up
     // correspondence)
     if (debug)
     {
@@ -467,7 +467,7 @@ void Foam::attachDetach::detachInterface
     if (debug)
     {
         Pout<< "void attachDetach::detachInterface("
-            << "polyTopoChange& ref) const "
+            << "batchPolyTopoChange& ref) const "
             << " for object " << name() << " : "
             << "Finished detaching interface" << endl;
     }

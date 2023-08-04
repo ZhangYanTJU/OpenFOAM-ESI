@@ -129,7 +129,7 @@ public:
 
         //- Insert the layer addition/removal instructions
         //  into the topological change
-        virtual void setRefinement(polyTopoChange&) const;
+        virtual void setRefinement(batchPolyTopoChange&) const;
 
         //- Insert the layer addition/removal instructions
         //  into the topological change. Uses only mesh, not any of the
@@ -139,7 +139,7 @@ public:
         (
             const indirectPrimitivePatch& pp0,
             const indirectPrimitivePatch& pp1,
-            polyTopoChange&
+            batchPolyTopoChange&
         ) const;
 
         //- Modify motion points to comply with the topological change

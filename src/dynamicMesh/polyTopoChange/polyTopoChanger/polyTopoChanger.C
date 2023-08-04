@@ -28,7 +28,9 @@ License
 
 #include "polyTopoChanger.H"
 #include "polyMesh.H"
+#include "mapPolyMesh.H"
 #include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "Time.H"
 #include "PtrListOps.H"
 
@@ -192,14 +194,14 @@ bool Foam::polyTopoChanger::changeTopology() const
 }
 
 
-Foam::autoPtr<Foam::polyTopoChange>
+Foam::autoPtr<Foam::batchPolyTopoChange>
 Foam::polyTopoChanger::topoChangeRequest() const
 {
     // Collect changes from all modifiers
     const PtrList<polyMeshModifier>& topoChanges = *this;
 
-    auto ptr = autoPtr<polyTopoChange>::New(mesh());
-    polyTopoChange& ref = ptr.ref();
+    auto ptr = autoPtr<batchPolyTopoChange>::New(mesh());
+    batchPolyTopoChange& ref = ptr.ref();
 
     forAll(topoChanges, morphI)
     {
@@ -245,35 +247,35 @@ void Foam::polyTopoChanger::update(const mapPolyMesh& m)
 }
 
 
-Foam::autoPtr<Foam::mapPolyMesh> Foam::polyTopoChanger::changeMesh
-(
-    const bool inflate,
-    const bool syncParallel,
-    const bool orderCells,
-    const bool orderPoints
-)
-{
-    if (changeTopology())
-    {
-        autoPtr<polyTopoChange> ref = topoChangeRequest();
+// Foam::autoPtr<Foam::mapPolyMesh> Foam::polyTopoChanger::changeMesh
+// (
+//     const bool inflate,
+//     const bool syncParallel,
+//     const bool orderCells,
+//     const bool orderPoints
+// )
+// {
+//     if (changeTopology())
+//     {
+//         autoPtr<polyTopoChange> ref = topoChangeRequest();
 
-        autoPtr<mapPolyMesh> topoChangeMap = ref().changeMesh
-        (
-            mesh_,
-            inflate,
-            syncParallel,
-            orderCells,
-            orderPoints
-        );
+//         autoPtr<mapPolyMesh> topoChangeMap = ref().changeMesh
+//         (
+//             mesh_,
+//             inflate,
+//             syncParallel,
+//             orderCells,
+//             orderPoints
+//         );
 
-        update(topoChangeMap());
-        mesh_.updateMesh(topoChangeMap());
-        return topoChangeMap;
-    }
+//         update(topoChangeMap());
+//         mesh_.updateMesh(topoChangeMap());
+//         return topoChangeMap;
+//     }
 
-    mesh_.topoChanging(false);
-    return nullptr;
-}
+//     mesh_.topoChanging(false);
+//     return nullptr;
+// }
 
 
 void Foam::polyTopoChanger::addTopologyModifiers
@@ -326,6 +328,13 @@ Foam::label Foam::polyTopoChanger::findModifierID
 }
 
 
+Foam::label Foam::polyTopoChanger::morphIndex() const
+{
+    return morphIndex_;
+}
+
+
+// writeData member function required by regIOobject
 bool Foam::polyTopoChanger::writeData(Ostream& os) const
 {
     os << *this;

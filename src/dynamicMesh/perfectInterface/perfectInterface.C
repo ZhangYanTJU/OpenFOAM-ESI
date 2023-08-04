@@ -33,7 +33,7 @@ Description
 #include "perfectInterface.H"
 #include "polyTopoChanger.H"
 #include "polyMesh.H"
-#include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "addToRunTimeSelectionTable.H"
 #include "mapPolyMesh.H"
 #include "matchPoints.H"
@@ -154,7 +154,7 @@ void Foam::perfectInterface::setRefinement
 (
     const indirectPrimitivePatch& pp0,
     const indirectPrimitivePatch& pp1,
-    polyTopoChange& ref
+    batchPolyTopoChange& ref
 ) const
 {
     const polyMesh& mesh = topoChanger().mesh();
@@ -423,11 +423,11 @@ void Foam::perfectInterface::setRefinement
 }
 
 
-void Foam::perfectInterface::setRefinement(polyTopoChange& ref) const
+void Foam::perfectInterface::setRefinement(batchPolyTopoChange& ref) const
 {
     if (debug)
     {
-        Pout<< "bool perfectInterface::setRefinement(polyTopoChange&) const : "
+        Pout<< "bool perfectInterface::setRefinement(batchPolyTopoChange&) const : "
             << "for object " << name() << " : "
             << "masterPatchID_:" << masterPatchID_
             << " slavePatchID_:" << slavePatchID_

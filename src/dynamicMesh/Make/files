@@ -22,6 +22,7 @@ $(polyMeshModifier)/polyMeshModifier.C
 $(polyMeshModifier)/polyMeshModifierNew.C
 
 polyTopoChange/polyTopoChanger/polyTopoChanger.C
+polyTopoChange/polyTopoChanger/polyTopoChangerChangeMesh.C
 polyTopoChange/polyTopoChange/addPatchCellLayer.C
 polyTopoChange/polyTopoChange/pointEdgeCollapse/pointEdgeCollapse.C
 polyTopoChange/polyTopoChange/edgeCollapser.C
@@ -75,6 +76,10 @@ meshCut/splitCell/splitCell.C
 meshCut/refineCell/refineCell.C
 meshCut/wallLayerCells/wallLayerCells.C
 meshCut/wallLayerCells/wallNormalInfo/wallNormalInfo.C
+
+refinement/refinement/refinement.C
+refinement/polyhedralRefinement/polyhedralRefinement.C
+refinement/prismatic2DRefinement/prismatic2DRefinement.C
 
 polyTopoChange/attachPolyTopoChanger/attachPolyTopoChanger.C
 polyTopoChange/repatchPolyTopoChanger/repatchPolyTopoChanger.C
