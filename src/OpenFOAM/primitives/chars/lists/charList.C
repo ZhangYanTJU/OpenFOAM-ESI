@@ -50,9 +50,6 @@ Istream& List<char>::readList(Istream& is)
 {
     List<char>& list = *this;
 
-    // Anull list
-    list.clear();
-
     is.fatalCheck(FUNCTION_NAME);
 
     token tok(is);
@@ -63,6 +60,7 @@ Istream& List<char>::readList(Istream& is)
     {
         // Compound: simply transfer contents
 
+        list.clear();  // Clear old contents
         list.transfer
         (
             dynamicCast<token::Compound<List<char>>>
@@ -77,8 +75,8 @@ Istream& List<char>::readList(Istream& is)
 
         const label len = tok.labelToken();
 
-        // Resize to actual length read
-        list.resize(len);
+        // Resize to length required
+        list.resize_nocopy(len);
 
         // Binary, always contiguous
 
@@ -100,6 +98,8 @@ Istream& List<char>::readList(Istream& is)
     }
     else
     {
+        list.clear();  // Clear old contents
+
         FatalIOErrorInFunction(is)
             << "incorrect first token, expected <int>, found "
             << tok.info() << nl

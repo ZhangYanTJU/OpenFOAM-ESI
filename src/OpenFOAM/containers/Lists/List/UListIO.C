@@ -29,7 +29,6 @@ License
 #include "UList.H"
 #include "Ostream.H"
 #include "token.H"
-#include "SLList.H"
 #include "contiguous.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
@@ -275,24 +274,45 @@ Foam::Istream& Foam::UList<T>::readList(Istream& is)
     }
     else if (tok.isPunctuation(token::BEGIN_LIST))
     {
-        // "(...)" : read as SLList and transfer contents
+        // "(...)" : read into list, handling size-mismatch after
 
-        is.putBack(tok);    // Putback the opening bracket
-        SLList<T> sll(is);  // Read as singly-linked list
+        is >> tok;
+        is.fatalCheck(FUNCTION_NAME);
+
+        label inputLen = 0;
+
+        while (!tok.isPunctuation(token::END_LIST))
+        {
+            is.putBack(tok);
+            if (inputLen < len)
+            {
+                is >> list[inputLen];
+            }
+            else
+            {
+                // Read and discard
+                T dummy;
+                is >> dummy;
+            }
+            ++inputLen;
+
+            is.fatalCheck
+            (
+                "UList<T>::readList(Istream&) : "
+                "reading entry"
+            );
+
+            is >> tok;
+            is.fatalCheck(FUNCTION_NAME);
+        }
 
         // List lengths must match
-        if (sll.size() != len)
+        if (inputLen != len)
         {
             FatalIOErrorInFunction(is)
                 << "incorrect length for UList. Read "
-                << sll.size() << " expected " << len
+                << inputLen << " expected " << len
                 << exit(FatalIOError);
-        }
-
-        // Move assign each list element
-        for (label i = 0; i < len; ++i)
-        {
-            list[i] = std::move(sll.removeHead());
         }
     }
     else

@@ -27,8 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UList.H"
-#include "SLList.H"
-// <algorithm> already included by stdFoam.H
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -52,16 +50,6 @@ template<class T, unsigned N>
 inline Foam::FixedList<T, N>::FixedList(const Foam::zero)
 {
     this->fill(Foam::zero{});
-}
-
-
-template<class T, unsigned N>
-inline Foam::FixedList<T, N>::FixedList(const T list[N])
-{
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list[i];
-    }
 }
 
 
@@ -136,20 +124,6 @@ inline Foam::FixedList<T, N>::FixedList
     for (unsigned i=0; i<N; ++i)
     {
         v_[i] = list[indices[i]];
-    }
-}
-
-
-template<class T, unsigned N>
-inline Foam::FixedList<T, N>::FixedList(const SLList<T>& list)
-{
-    checkSize(list.size());
-
-    auto iter = list.begin();
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = *iter;
-        ++iter;
     }
 }
 
@@ -445,15 +419,6 @@ inline const T& Foam::FixedList<T, N>::operator[](const label i) const
 
 
 template<class T, unsigned N>
-inline void Foam::FixedList<T, N>::operator=(const T list[N])
-{
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list[i];
-    }
-}
-
-template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::operator=(const UList<T>& list)
 {
     checkSize(list.size());
@@ -464,18 +429,6 @@ inline void Foam::FixedList<T, N>::operator=(const UList<T>& list)
     }
 }
 
-template<class T, unsigned N>
-inline void Foam::FixedList<T, N>::operator=(const SLList<T>& list)
-{
-    checkSize(list.size());
-
-    auto iter = list.begin();
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = *iter;
-        ++iter;
-    }
-}
 
 template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::operator=(std::initializer_list<T> list)

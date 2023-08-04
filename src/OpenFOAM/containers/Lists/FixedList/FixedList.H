@@ -48,9 +48,9 @@ SourceFiles
 #include "stdFoam.H"
 #include "autoPtr.H"
 #include "Hash.H"
-#include "SLListFwd.H"
 #include "ListPolicy.H"
 
+// <algorithm> already included by stdFoam.H
 #include <iterator>
 #include <limits>
 #include <type_traits>
@@ -154,9 +154,6 @@ public:
         //- Construct and initialize all entries to zero
         inline explicit FixedList(const Foam::zero);
 
-        //- Copy construct from C-array (deprecated)
-        inline explicit FixedList(const T list[N]);
-
         //- Copy construct
         inline FixedList(const FixedList<T, N>& list);
 
@@ -184,9 +181,6 @@ public:
             const UList<T>& list,
             const FixedList<label, N>& indices
         );
-
-        //- Construct from SLList. Runtime size check
-        inline explicit FixedList(const SLList<T>& list);
 
         //- Construct from Istream
         explicit FixedList(Istream& is);
@@ -342,14 +336,8 @@ public:
         //- Return element of constant FixedList
         inline const T& operator[](const label i) const;
 
-        //- Assignment to array operator. Takes linear time
-        inline void operator=(const T list[N]);
-
         //- Assignment to UList operator. Takes linear time
         inline void operator=(const UList<T>& list);
-
-        //- Assignment to SLList operator. Takes linear time
-        inline void operator=(const SLList<T>& list);
 
         //- Assignment to an initializer list. Takes linear time
         inline void operator=(std::initializer_list<T> list);
@@ -529,6 +517,14 @@ public:
         {
             return this->contains(val, pos);
         }
+
+
+        //- Deprecated: copy construct from C-array
+        explicit FixedList(const T list[N]) { std::copy_n(list, N, v_); }
+
+        //- Deprecated: assignment from C-array
+        // \deprecated(2023-08) - use other assignment operators
+        void operator=(const T list[N]) { std::copy_n(list, N, v_); }
 };
 
 

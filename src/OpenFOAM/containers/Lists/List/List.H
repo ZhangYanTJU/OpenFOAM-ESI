@@ -103,6 +103,19 @@ class List
             const label len
         );
 
+        //- Read List from Istream between '(' and ')' delimiters.
+        //- The size is not known a priori.
+        bool readBracketList(Istream& is);
+
+
+    // Methods as per DynamicList to simplify code maintenance
+
+        //- Stub method for internal naming as per DynamicList
+        label capacity() const noexcept { return UList<T>::size(); }
+
+        //- Stub method for internal naming as per DynamicList
+        void setCapacity_nocopy(const label len) { resize_nocopy(len); }
+
 
 public:
 
@@ -164,9 +177,6 @@ public:
         //- Construct as copy of PtrList<T>
         explicit List(const PtrList<T>& list);
 
-        //- Construct as copy of SLList<T>
-        explicit List(const SLList<T>& list);
-
         //- Construct as copy of IndirectList contents
         template<class Addr>
         explicit List(const IndirectListBase<T, Addr>& list);
@@ -180,9 +190,6 @@ public:
         //- Move construct from DynamicList
         template<int SizeMin>
         List(DynamicList<T, SizeMin>&& list);
-
-        //- Move construct from SLList
-        List(SLList<T>&& list);
 
         //- Construct from Istream
         List(Istream& is);
@@ -279,9 +286,6 @@ public:
         //- Assignment operator. Takes linear time
         void operator=(const List<T>& list);
 
-        //- Assignment to SLList operator. Takes linear time
-        void operator=(const SLList<T>& list);
-
         //- Assignment from IndirectList. Takes linear time
         template<class Addr>
         void operator=(const IndirectListBase<T, Addr>& list);
@@ -305,9 +309,6 @@ public:
         //- Move assignment. Takes constant time.
         template<int SizeMin>
         void operator=(DynamicList<T, SizeMin>&& list);
-
-        //- Move assignment. Takes constant time
-        void operator=(SLList<T>&& list);
 
 
     // Reading/writing
@@ -389,6 +390,13 @@ public:
         //- Append an element if not already in the list.
         //FOAM_DEPRECATED_FOR(2022-10, "push_uniq()")
         label appendUniq(const T& val) { return this->push_uniq(val); }
+
+
+        //- Copy construct from SLList
+        explicit List(const SLList<T>& list);
+
+        //- Copy assign from SLList in linear time
+        void operator=(const SLList<T>& list);
 };
 
 
