@@ -259,7 +259,7 @@ Foam::Istream& Foam::DynamicList<T, SizeMin>::readList(Istream& is)
                     );
 
                     // Fill with the value
-                    this->fill_uniform(elem);
+                    UList<T>::operator=(elem);
                 }
             }
 

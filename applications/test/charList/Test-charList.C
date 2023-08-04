@@ -79,6 +79,13 @@ int main(int argc, char *argv[])
         List<char> alphabet(istr);
 
         Info<< "re-read: " << alphabet << nl;
+
+        // Can assign zero?
+//Fails:        alphabet = char(Zero);
+        alphabet = Foam::zero{};
+
+        // alphabet = '@';
+        Info<< "blanked: " << alphabet << nl;
     }
 
     return 0;

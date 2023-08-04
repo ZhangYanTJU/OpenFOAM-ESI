@@ -188,6 +188,13 @@ Istream& UList<char>::readList(Istream& is)
     return is;
 }
 
+
+template<>
+void UList<char>::operator=(const Foam::zero)
+{
+    UList<char>::operator=(char(0));
+}
+
 } // End namespace Foam
 
 // ************************************************************************* //

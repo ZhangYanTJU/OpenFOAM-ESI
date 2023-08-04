@@ -408,14 +408,16 @@ inline void Foam::DynamicField<T, SizeMin>::resize
     const T& val
 )
 {
-    label idx = List<T>::size();
+    const label oldLen = List<T>::size();
     resize(len);
 
     // Fill newly exposed with constant value
-    while (idx < len)
+    if (oldLen < List<T>::size())
     {
-        this->operator[](idx) = val;
-        ++idx;
+        std::fill
+        (
+            this->begin(oldLen), this->end(), val
+        );
     }
 }
 
@@ -596,7 +598,7 @@ inline T& Foam::DynamicField<T, SizeMin>::emplace_back(Args&&... args)
 
     // move assign element
     this->operator[](idx) = T(std::forward<Args>(args)...);
-    return this->back();
+    return this->operator[](idx);
 }
 
 
@@ -639,13 +641,32 @@ inline void Foam::DynamicField<T, SizeMin>::push_back
             << abort(FatalError);
     }
 
-    label idx = List<T>::size();
+    const label idx = List<T>::size();
     resize(idx + list.size());
 
-    for (const T& val : list)
+    std::copy(list.begin(), list.end(), this->begin(idx));
+}
+
+
+template<class T, int SizeMin>
+inline void Foam::DynamicField<T, SizeMin>::push_back
+(
+    List<T>&& list
+)
+{
+    if (this == &list)
     {
-        this->operator[](idx++) = val;  // copy element
+        FatalErrorInFunction
+            << "Attempted push_back to self"
+            << abort(FatalError);
     }
+
+    const label idx = List<T>::size();
+    resize(idx + list.size());
+
+    std::move(list.begin(), list.end(), this->begin(idx));
+
+    list.clear();
 }
 
 

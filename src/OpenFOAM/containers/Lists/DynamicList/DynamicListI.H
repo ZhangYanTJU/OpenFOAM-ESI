@@ -364,6 +364,18 @@ inline void Foam::DynamicList<T, SizeMin>::resize
 
 
 template<class T, int SizeMin>
+inline void Foam::DynamicList<T, SizeMin>::resize_fill
+(
+    const label len,
+    const T& val
+)
+{
+    this->doResize(true, len);  // nocopy = true
+    UList<T>::operator=(val);
+}
+
+
+template<class T, int SizeMin>
 inline void Foam::DynamicList<T, SizeMin>::resize_nocopy
 (
     const label len
@@ -373,18 +385,6 @@ inline void Foam::DynamicList<T, SizeMin>::resize_nocopy
 }
 
 
-// template<class T, int SizeMin>
-// inline void Foam::DynamicList<T, SizeMin>::resize_fill
-// (
-//     const label len,
-//     const T& val
-// )
-// {
-//     this->doResize(true, len);  // nocopy = true
-//     this->fill_uniform(val);
-// }
-
-
 template<class T, int SizeMin>
 inline void Foam::DynamicList<T, SizeMin>::resize
 (
@@ -392,14 +392,16 @@ inline void Foam::DynamicList<T, SizeMin>::resize
     const T& val
 )
 {
-    label idx = List<T>::size();
+    const label oldLen = List<T>::size();
     resize(len);
 
     // Fill newly exposed with constant value
-    while (idx < len)
+    if (oldLen < List<T>::size())
     {
-        this->operator[](idx) = val;
-        ++idx;
+        std::fill
+        (
+            this->begin(oldLen), this->end(), val
+        );
     }
 }
 
@@ -527,8 +529,8 @@ inline T& Foam::DynamicList<T, SizeMin>::emplace_back(Args&&... args)
     resize(idx + 1);
 
     // move assign element
-    this->operator[](idx) = T(std::forward<Args>(args)...);
-    return this->back();
+    UList<T>::operator[](idx) = T(std::forward<Args>(args)...);
+    return UList<T>::operator[](idx);
 }
 
 
@@ -541,7 +543,7 @@ inline void Foam::DynamicList<T, SizeMin>::push_back
     const label idx = List<T>::size();
     resize(idx + 1);
 
-    this->operator[](idx) = val;  // copy element
+    UList<T>::operator[](idx) = val;  // copy element
 }
 
 
@@ -554,30 +556,27 @@ inline void Foam::DynamicList<T, SizeMin>::push_back
     const label idx = List<T>::size();
     resize(idx + 1);
 
-    this->operator[](idx) = std::move(val);  // move assign element
+    UList<T>::operator[](idx) = std::move(val);  // move assign element
 }
 
 
 template<class T, int SizeMin>
 inline void Foam::DynamicList<T, SizeMin>::push_back
 (
-    const UList<T>& lst
+    const UList<T>& list
 )
 {
-    if (this == &lst)
+    if (this == &list)
     {
         FatalErrorInFunction
             << "Attempted push_back to self"
             << abort(FatalError);
     }
 
-    label idx = List<T>::size();
-    resize(idx + lst.size());
+    const label idx = List<T>::size();
+    resize(idx + list.size());
 
-    for (const T& val : lst)
-    {
-        this->operator[](idx++) = val;  // copy element
-    }
+    std::copy(list.begin(), list.end(), this->begin(idx));
 }
 
 
@@ -585,32 +584,26 @@ template<class T, int SizeMin>
 template<unsigned N>
 inline void Foam::DynamicList<T, SizeMin>::push_back
 (
-    const FixedList<T, N>& lst
+    const FixedList<T, N>& list
 )
 {
-    label idx = List<T>::size();
-    resize(idx + lst.size());
+    const label idx = List<T>::size();
+    resize(idx + list.size());
 
-    for (const T& val : lst)
-    {
-        this->operator[](idx++) = val;  // copy element
-    }
+    std::copy(list.begin(), list.end(), this->begin(idx));
 }
 
 
 template<class T, int SizeMin>
 inline void Foam::DynamicList<T, SizeMin>::push_back
 (
-    std::initializer_list<T> lst
+    std::initializer_list<T> list
 )
 {
-    label idx = List<T>::size();
-    resize(idx + lst.size());
+    const label idx = List<T>::size();
+    resize(idx + list.size());
 
-    for (const T& val : lst)
-    {
-        this->operator[](idx++) = val;  // copy element
-    }
+    std::copy(list.begin(), list.end(), this->begin(idx));
 }
 
 
@@ -618,17 +611,23 @@ template<class T, int SizeMin>
 template<class Addr>
 inline void Foam::DynamicList<T, SizeMin>::push_back
 (
-    const IndirectListBase<T, Addr>& lst
+    const IndirectListBase<T, Addr>& list
 )
 {
-    label idx = List<T>::size();
-    const label n = lst.size();
+    // Note: push_back will still work even if the indirect list
+    // actually references *this, since its source elements will not
+    // overlap the new destinations.
 
-    resize(idx + n);
+    const label idx = this->size();
+    const label n = list.size();
 
-    for (label i=0; i<n; ++i)
+    resize(list + n);
+
+    auto iter = this->begin(idx);
+
+    for (label i = 0; i < n; (void)++i, (void)++iter)
     {
-        this->operator[](idx++) = lst[i];  // copy element
+        *iter = list[i];  // copy element
     }
 }
 
@@ -646,13 +645,10 @@ inline void Foam::DynamicList<T, SizeMin>::push_back
             << abort(FatalError);
     }
 
-    label idx = List<T>::size();
+    const label idx = List<T>::size();
     resize(idx + list.size());
 
-    for (T& val : list)
-    {
-        Foam::Swap(this->operator[](idx++), val);  // moved content
-    }
+    std::move(list.begin(), list.end(), this->begin(idx));
 
     list.clear();
 }
@@ -795,7 +791,7 @@ inline T& Foam::DynamicList<T, SizeMin>::operator()
         resize(i + 1);
     }
 
-    return this->operator[](i);
+    return UList<T>::operator[](i);
 }
 
 
