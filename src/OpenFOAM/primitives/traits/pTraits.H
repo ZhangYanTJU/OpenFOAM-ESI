@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,10 +28,10 @@ Class
     Foam::pTraits
 
 Description
-    A traits class, which is primarily used for primitives.
+    A traits class, which is primarily used for primitives and vector-space.
 
     All primitives need a specialised version of this class. The
-    specialised version will normally also require a conversion
+    specialised versions will normally also require a conversion
     method.
 
 \*---------------------------------------------------------------------------*/
@@ -39,14 +39,33 @@ Description
 #ifndef Foam_pTraits_H
 #define Foam_pTraits_H
 
+#include "direction.H"
+#include <type_traits>  // For std::integral_constant, std::void_t (C++17)
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace stdFoam
+{
+
+//- Map a sequence of any types to \c void as per C++17 \c std::void_t
+template<class... >
+using void_t = void;
+
+} // End namespace Foam
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-// Forward Declarations
-class Istream;
-class Ostream;
+/*---------------------------------------------------------------------------*\
+                          Class zero_one Declaration
+\*---------------------------------------------------------------------------*/
+
+//- Represents 0/1 range or concept. Used for tagged dispatch or clamping
+class zero_one {};
+
 
 /*---------------------------------------------------------------------------*\
                            Class pTraits Declaration
@@ -78,11 +97,70 @@ public:
 
 
 /*---------------------------------------------------------------------------*\
-                          Class zero_one Declaration
+                              VectorSpace Traits
 \*---------------------------------------------------------------------------*/
 
-//- Represents 0/1 range or concept. Used for tagged dispatch or clamping
-class zero_one {};
+//- Test for VectorSpace : default is false
+template<class T, class = void>
+struct is_vectorspace : std::false_type {};
+
+//- Test for VectorSpace : test for T::rank != 0 static member directly
+//  Do not need pTraits layer since rank is defined via VectorSpace etc
+template<class T>
+struct is_vectorspace<T, stdFoam::void_t<decltype(T::rank)>>
+:
+    std::integral_constant<bool, (T::rank != 0)>
+{};
+
+
+//- The vector-space rank: default is 0.
+template<class T, class = void>
+struct pTraits_rank : std::integral_constant<Foam::direction, 0> {};
+
+//- Rank of VectorSpace,
+//- using the pTraits \c rank static member.
+template<class T>
+struct pTraits_rank
+<
+    T,
+    stdFoam::void_t<decltype(pTraits<T>::rank)>
+>
+:
+    std::integral_constant<Foam::direction, pTraits<T>::rank>
+{};
+
+
+//- The vector-space number of components: default is 1.
+template<class T, class = void>
+struct pTraits_nComponents : std::integral_constant<Foam::direction, 1> {};
+
+//- Number of VectorSpace components,
+//- using the pTraits \c nComponents static member.
+template<class T>
+struct pTraits_nComponents
+<
+    T,
+    stdFoam::void_t<decltype(pTraits<T>::nComponents)>
+>
+:
+    std::integral_constant<Foam::direction, pTraits<T>::nComponents>
+{};
+
+
+//- Test for pTraits zero : default is false
+template<class T, class = void>
+struct pTraits_has_zero : std::false_type {};
+
+//- Test for pTraits zero
+template<class T>
+struct pTraits_has_zero
+<
+    T,
+    stdFoam::void_t<decltype(pTraits<T>::zero)>
+>
+:
+    std::true_type
+{};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

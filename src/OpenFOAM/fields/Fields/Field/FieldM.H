@@ -33,7 +33,7 @@ Description
 #define Foam_FieldM_H
 
 #include "error.H"
-#include "ListLoopM.H"
+#include "ListLoopM.H"  // For list access macros
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
