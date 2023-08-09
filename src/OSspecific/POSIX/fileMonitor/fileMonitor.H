@@ -42,11 +42,10 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fileMonitor_H
-#define fileMonitor_H
+#ifndef Foam_fileMonitor_H
+#define Foam_fileMonitor_H
 
 #include "Enum.H"
-#include "className.H"
 #include "DynamicList.H"
 #include <memory>
 #include <sys/types.h>
@@ -117,12 +116,13 @@ private:
 
 public:
 
-    // Declare name of the class and its debug switch
-    ClassName("fileMonitor");
+    //- Named/registered debug switch: 'fileMonitor'
+    static int debug;
+
 
     // Constructors
 
-        //- Construct null
+        //- Construct with specified inotify use
         explicit fileMonitor(const bool useInotify);
 
 

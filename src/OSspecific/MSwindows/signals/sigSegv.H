@@ -44,8 +44,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sigSegv_H
-#define sigSegv_H
+#ifndef Foam_sigSegv_H
+#define Foam_sigSegv_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -74,7 +74,7 @@ public:
 
     // Constructors
 
-        //- Construct null
+        //- Default construct
         sigSegv();
 
 

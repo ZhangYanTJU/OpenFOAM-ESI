@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,10 +61,9 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef timer_H
-#define timer_H
+#ifndef Foam_timer_H
+#define Foam_timer_H
 
-#include "className.H"
 #include <csetjmp>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -99,8 +98,8 @@ public:
 
     // Public Data
 
-        //- Declare name of the class and its debug switch
-        ClassName("timer");
+        //- Named/registered debug switch: 'timer'
+        static int debug;
 
         //- The time-out value (seconds). Needed by macro timedOut
         unsigned int timeOut_;

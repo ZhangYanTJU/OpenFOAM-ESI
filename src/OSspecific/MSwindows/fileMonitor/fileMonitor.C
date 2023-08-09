@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fileMonitor.H"
+#include "error.H"
+#include "defineDebugSwitch.H"
 #include "IOstreams.H"
 #include "Pstream.H"
 #include "PackedList.H"
@@ -64,12 +66,12 @@ Foam::fileMonitor::fileStateNames_
 
 namespace Foam
 {
-    defineTypeNameAndDebug(fileMonitor, 0);
+    defineDebugSwitchWithName(fileMonitor, "fileMonitor", 0);
+    registerDebugSwitchWithName(fileMonitor, fileMonitor, "fileMonitor");
 
     //- Reduction operator for PackedList of fileState
-    class reduceFileStates
+    struct reduceFileStates
     {
-        public:
         unsigned int operator()(const unsigned int x, const unsigned int y)
         const
         {
@@ -98,9 +100,8 @@ namespace Foam
     };
 
     //- Combine operator for PackedList of fileState
-    class combineReduceFileStates
+    struct combineReduceFileStates
     {
-        public:
         void operator()(unsigned int& x, const unsigned int y) const
         {
             x = reduceFileStates()(x, y);

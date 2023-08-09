@@ -44,8 +44,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sigQuit_H
-#define sigQuit_H
+#ifndef Foam_sigQuit_H
+#define Foam_sigQuit_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -74,7 +74,7 @@ public:
 
     // Constructors
 
-        //- Construct null
+        //- Default construct
         sigQuit();
 
 

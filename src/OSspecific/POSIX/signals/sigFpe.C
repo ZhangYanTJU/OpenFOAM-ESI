@@ -31,8 +31,11 @@ License
 #include "JobInfo.H"
 #include "OSspecific.H"
 #include "IOstreams.H"
-#include "List.H"
+#include "UList.H"
 #include "Switch.H"
+
+// File-local functions
+#include "signalMacros.C"
 
 #include <limits>
 
@@ -44,12 +47,10 @@ License
     #include <malloc.h>
 #endif
 
+// Special handling for APPLE
 #ifdef __APPLE__
     #include "feexceptErsatz.H"
 #endif
-
-// File-local functions
-#include "signalMacros.C"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

@@ -101,13 +101,9 @@ void Foam::sigWriteNow::sigHandler(int)
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::sigWriteNow::sigWriteNow()
-{}
-
-
 Foam::sigWriteNow::sigWriteNow(Time& runTime, bool verbose)
 {
-    runTimePtr_ = &runTime; // Store runTime
+    runTimePtr_ = &runTime;  // Store Time reference
     set(verbose);
 }
 
@@ -126,18 +122,6 @@ Foam::sigWriteNow::~sigWriteNow()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::sigWriteNow::active()
-{
-    return signal_ > 0;
-}
-
-
-int Foam::sigWriteNow::signalNumber()
-{
-    return signal_;
-}
-
 
 void Foam::sigWriteNow::set(bool verbose)
 {

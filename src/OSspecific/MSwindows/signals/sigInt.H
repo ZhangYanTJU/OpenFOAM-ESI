@@ -45,8 +45,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sigInt_H
-#define sigInt_H
+#ifndef Foam_sigInt_H
+#define Foam_sigInt_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,7 +59,7 @@ namespace Foam
 
 class sigInt
 {
-    // Private data
+    // Private Data
 
         //- Signal trapping enabled?
         static bool sigActive_;
@@ -74,7 +74,7 @@ public:
 
     // Constructors
 
-        //- Construct null
+        //- Default construct
         sigInt();
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,8 +26,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "error.H"
 #include "timer.H"
+#include "error.H"
+#include "defineDebugSwitch.H"
 
 #include <unistd.h>
 
@@ -39,7 +40,8 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(timer, 0);
+    defineDebugSwitchWithName(timer, "timer", 0);
+    registerDebugSwitchWithName(timer, timer, "timer");
 }
 
 jmp_buf Foam::timer::envAlarm;
