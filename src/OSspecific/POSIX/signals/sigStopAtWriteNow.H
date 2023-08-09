@@ -34,10 +34,13 @@ Description
 SourceFiles
     sigStopAtWriteNow.C
 
+See also
+    Foam::JobInfo
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef sigStopAtWriteNow_H
-#define sigStopAtWriteNow_H
+#ifndef Foam_sigStopAtWriteNow_H
+#define Foam_sigStopAtWriteNow_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -73,11 +76,11 @@ public:
 
     // Constructors
 
-        //- Construct null
-        sigStopAtWriteNow();
+        //- Default construct
+        sigStopAtWriteNow() noexcept = default;
 
-        //- Construct from components
-        sigStopAtWriteNow(const Time& runTime, bool verbose=false);
+        //- Construct with Time reference
+        explicit sigStopAtWriteNow(const Time& runTime, bool verbose=false);
 
 
     //- Destructor
@@ -87,10 +90,10 @@ public:
     // Member Functions
 
         //- Is active?
-        static bool active();
+        static bool active() noexcept { return (signal_ > 0); }
 
         //- Signal number being used
-        static int signalNumber();
+        static int signalNumber() noexcept { return signal_; }
 
         //- Set/reset signal handler
         static void set(bool verbose=false);

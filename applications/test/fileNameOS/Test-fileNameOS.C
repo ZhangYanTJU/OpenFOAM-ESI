@@ -38,7 +38,6 @@ Description
 #include "OSspecific.H"
 #include "Switch.H"
 
-#include <csignal>
 #include <cstdlib>
 #include <iostream>
 

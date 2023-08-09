@@ -54,10 +54,11 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sigFpe_H
-#define sigFpe_H
+#ifndef Foam_sigFpe_H
+#define Foam_sigFpe_H
 
-#include "scalar.H"
+#include <cstddef>  // for std::size_t
+#include "scalarFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -118,16 +119,10 @@ public:
         static bool requested();
 
         //- True if SIGFPE handling is currently active.
-        static inline bool active()
-        {
-            return sigActive_;
-        }
+        static bool active() noexcept { return sigActive_; }
 
         //- True if NaN memory initialisation is currently active.
-        static inline bool nanActive()
-        {
-            return nanActive_;
-        }
+        static bool nanActive() noexcept { return nanActive_; }
 
         //- Activate SIGFPE signal handler when FOAM_SIGFPE is %set
         //  Fill memory with NaN when FOAM_SETNAN is %set

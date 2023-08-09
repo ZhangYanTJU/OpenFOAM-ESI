@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cpuTime_H
-#define cpuTime_H
+#ifndef Foam_cpuTime_H
+#define Foam_cpuTime_H
 
 #include "cpuTimePosix.H"
 #include "cpuTimeFwd.H"

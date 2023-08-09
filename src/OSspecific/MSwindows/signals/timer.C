@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
     Copyright (C) 2011 Symscape
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,7 @@ License
 
 #include "timer.H"
 #include "error.H"
+#include "defineDebugSwitch.H"
 #include "MSwindows.H"
 #undef DebugInfo        // Windows name clash with OpenFOAM messageStream
 
@@ -40,6 +41,7 @@ License
 // File-local functions
 #include "signalMacros.C"
 
+#undef  SIGALRM
 #define SIGALRM 14
 
 
@@ -47,7 +49,8 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(timer, 0);
+    defineDebugSwitchWithName(timer, "timer", 0);
+    registerDebugSwitchWithName(timer, timer, "timer");
 }
 
 jmp_buf Foam::timer::envAlarm;

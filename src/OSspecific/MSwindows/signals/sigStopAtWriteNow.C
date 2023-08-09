@@ -109,10 +109,6 @@ void Foam::sigStopAtWriteNow::sigHandler(int)
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::sigStopAtWriteNow::sigStopAtWriteNow()
-{}
-
-
 Foam::sigStopAtWriteNow::sigStopAtWriteNow(const Time& runTime, bool verbose)
 {
     runTimePtr_ = &runTime; // Store runTime
@@ -134,18 +130,6 @@ Foam::sigStopAtWriteNow::~sigStopAtWriteNow()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::sigStopAtWriteNow::active()
-{
-    return signal_ > 0;
-}
-
-
-int Foam::sigStopAtWriteNow::signalNumber()
-{
-    return signal_;
-}
-
 
 void Foam::sigStopAtWriteNow::set(bool verbose)
 {

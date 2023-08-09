@@ -34,11 +34,11 @@ License
 #include "UPstreamWrapping.H"
 #include "collatedFileOperation.H"
 
-#include <cstring>
 #include <cstdlib>
-#include <csignal>
+#include <cstring>
 #include <memory>
 #include <numeric>
+#include <string>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

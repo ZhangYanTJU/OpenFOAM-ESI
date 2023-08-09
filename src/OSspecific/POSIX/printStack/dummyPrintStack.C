@@ -30,12 +30,8 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-void Foam::error::safePrintStack(std::ostream& os, int size)
-{}
-
-
-void Foam::error::printStack(Ostream& os, int size)
-{}
+void Foam::error::safePrintStack(std::ostream& os, int size) {}
+void Foam::error::printStack(Ostream& os, int size) {}
 
 
 // ************************************************************************* //

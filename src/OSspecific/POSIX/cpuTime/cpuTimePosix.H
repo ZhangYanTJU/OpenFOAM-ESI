@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cpuTimePosix_H
-#define cpuTimePosix_H
+#ifndef Foam_cpuTimePosix_H
+#define Foam_cpuTimePosix_H
 
 #include <string>
 #include <ctime>

@@ -31,8 +31,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cpuTimeFwd_H
-#define cpuTimeFwd_H
+#ifndef Foam_cpuTimeFwd_H
+#define Foam_cpuTimeFwd_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

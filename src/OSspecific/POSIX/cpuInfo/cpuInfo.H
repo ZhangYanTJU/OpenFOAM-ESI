@@ -40,8 +40,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cpuInfo_H
-#define cpuInfo_H
+#ifndef Foam_cpuInfo_H
+#define Foam_cpuInfo_H
 
 #include <string>
 
@@ -89,6 +89,7 @@ public:
 
         //- Construct and populate with information
         cpuInfo();
+
 
     //- Destructor
     ~cpuInfo() = default;

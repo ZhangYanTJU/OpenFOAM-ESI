@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sigWriteNow_H
-#define sigWriteNow_H
+#ifndef Foam_sigWriteNow_H
+#define Foam_sigWriteNow_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -73,11 +73,11 @@ public:
 
     // Constructors
 
-        //- Construct null
-        sigWriteNow();
+        //- Default construct
+        sigWriteNow() noexcept = default;
 
-        //- Construct from components
-        sigWriteNow(Time& runTime, bool verbose=false);
+        //- Construct with Time reference
+        explicit sigWriteNow(Time& runTime, bool verbose=false);
 
 
     //- Destructor
@@ -87,14 +87,13 @@ public:
     // Member Functions
 
         //- Is active?
-        static bool active();
+        static bool active() noexcept { return (signal_ > 0); }
 
-        //- The signal number being used
-        static int signalNumber();
+        //- Signal number being used
+        static int signalNumber() noexcept { return signal_; }
 
         //- Set/reset signal handler
         static void set(bool verbose=false);
-
 };
 
 

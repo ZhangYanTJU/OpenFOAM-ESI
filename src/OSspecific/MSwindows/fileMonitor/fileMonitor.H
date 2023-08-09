@@ -42,11 +42,9 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fileMonitor_H
-#define fileMonitor_H
+#ifndef Foam_fileMonitor_H
+#define Foam_fileMonitor_H
 
-#include "Enum.H"
-#include "className.H"
 #include "DynamicList.H"
 #include <memory>
 #include <sys/types.h>
@@ -59,6 +57,7 @@ namespace Foam
 // Forward Declarations
 class fileMonitor;
 class fileMonitorWatcher;
+template<class EnumType> class Enum;
 
 /*---------------------------------------------------------------------------*\
                          Class fileMonitor Declaration
@@ -117,13 +116,14 @@ private:
 
 public:
 
-    // Declare name of the class and its debug switch
-    ClassName("fileMonitor");
+    //- Named/registered debug switch: 'fileMonitor'
+    static int debug;
+
 
     // Constructors
 
-        //- Construct null
-        fileMonitor(const bool useInotify);
+        //- Construct with specified inotify use
+        explicit fileMonitor(const bool useInotify);
 
 
     //- Destructor
