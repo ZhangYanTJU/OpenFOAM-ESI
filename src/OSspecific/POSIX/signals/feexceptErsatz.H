@@ -3,6 +3,7 @@
 //
 // 2018 Alexey Matveichev
 // 2021 Tatsuya Shimizu - ARM64 support
+// 2023 Guanyang Xue - improve ARM64 support
 // ----------------------------------------------------------------------------
 //
 // Original Author
@@ -19,11 +20,17 @@
 // http://www-personal.umich.edu/~williams/archive/computation/fe-handling-example.c
 // ============================================================================
 
-#ifndef feexceptErsatz_H
-#define feexceptErsatz_H
+#ifndef Foam_feexceptErsatz_H
+#define Foam_feexceptErsatz_H
 
 #ifdef __APPLE__
 #include <fenv.h>
+
+// Workaround for Apple Silicon - has SIGILL (illegal instruction) not SIGFPE
+#if defined __arm64__
+#undef  SIGFPE
+#define SIGFPE SIGILL
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,16 +46,13 @@ inline int feenableexcept(unsigned int excepts)
     }
 
 #if defined __arm64__
-    old_excepts = fenv.__fpcr & FE_ALL_EXCEPT;
+    old_excepts = fenv.__fpsr & FE_ALL_EXCEPT;
+
+    fenv.__fpsr |= new_excepts;
+    fenv.__fpcr |= (new_excepts << 8);
 #else
     old_excepts = fenv.__control & FE_ALL_EXCEPT;
-#endif
 
-    // unmask
-#if defined __arm64__
-    fenv.__fpcr &= ~new_excepts;
-    fenv.__fpsr &= ~(new_excepts << 7);
-#else
     fenv.__control &= ~new_excepts;
     fenv.__mxcsr   &= ~(new_excepts << 7);
 #endif
@@ -69,18 +73,15 @@ inline int fedisableexcept(unsigned int excepts)
     }
 
 #if defined __arm64__
-    old_excepts = fenv.__fpcr & FE_ALL_EXCEPT;
+    old_excepts = fenv.__fpsr & FE_ALL_EXCEPT;
+
+    fenv.__fpsr &= ~new_excepts;
+    fenv.__fpcr &= ~(new_excepts << 8);
 #else
     old_excepts = fenv.__control & FE_ALL_EXCEPT;
-#endif
 
-    // mask
-#if defined __arm64__
-    fenv.__fpcr |= new_excepts;
-    fenv.__fpsr |= new_excepts << 7;
-#else
     fenv.__control |= new_excepts;
-    fenv.__mxcsr   |= new_excepts << 7;
+    fenv.__mxcsr   |= (new_excepts << 7);
 #endif
 
     return fesetenv(&fenv) ? -1 : old_excepts;
