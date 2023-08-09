@@ -1,6 +1,10 @@
 #------------------------------------------------------------------------------
 include $(GENERAL_RULES)/Clang/c++
 
+ifneq (,$(findstring +xcrun,$(WM_COMPILE_CONTROL)))
+CC         := xcrun c++ -std=c++14
+endif
+
 c++ARCH    := -m64 -pthread -ftrapping-math
 
 ifneq (,$(strip $(WM_COMPILE_OPTION)))
