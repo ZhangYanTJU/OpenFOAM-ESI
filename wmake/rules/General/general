@@ -32,6 +32,11 @@ else
     COMPILER_VERSION :=
 endif
 
+# Enable additional compile-time checks
+ifneq (,$(findstring +strict,$(WM_COMPILE_CONTROL)))
+    GFLAGS += -DFOAM_COMPILE_STRICT
+endif
+
 # Default compilation is 'Opt' - never permit an empty value
 ifeq (,$(strip $(WM_COMPILE_OPTION)))
     WM_COMPILE_OPTION := Opt

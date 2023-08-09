@@ -46,12 +46,19 @@ Description
 #if (__cplusplus >= 201402L)
 # define FOAM_DEPRECATED(since) [[deprecated("Since " #since)]]
 # define FOAM_DEPRECATED_FOR(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
+# define FOAM_DEPRECATED_STRICT(since, replacement) [[deprecated("Since " #since "; use " #replacement)]]
 #elif defined(__GNUC__)
 # define FOAM_DEPRECATED(since) __attribute__((__deprecated__("Since " #since)))
 # define FOAM_DEPRECATED_FOR(since, replacement) __attribute__((__deprecated__("Since " #since "; use " #replacement)))
+# define FOAM_DEPRECATED_STRICT(since, replacement) __attribute__((__deprecated__("Since " #since "; use " #replacement)))
 #else
 # define FOAM_DEPRECATED(since)
 # define FOAM_DEPRECATED_FOR(since, replacement)
+# define FOAM_DEPRECATED_STRICT(since, replacement)
+#endif
+#ifndef FOAM_COMPILE_STRICT
+# undef  FOAM_DEPRECATED_STRICT
+# define FOAM_DEPRECATED_STRICT(since, replacement)
 #endif
 
 // Compile-time warning about unused result

@@ -51,10 +51,7 @@ public:
         i_(i)
     {}
 
-    const word& keyword() const
-    {
-        return keyword_;
-    }
+    const word& keyword() const noexcept { return keyword_; }
 
     friend Ostream& operator<<(Ostream& os, const ent& e)
     {
@@ -83,7 +80,7 @@ int main(int argc, char *argv[])
 
     dict.swapDown(dict.first());
 
-    forAllConstIter(UDictionary<ent>, dict, iter)
+    forAllConstIters(dict, iter)
     {
         Info<< "element : " << *iter;
     }

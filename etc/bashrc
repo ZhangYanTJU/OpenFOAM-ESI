@@ -92,6 +92,7 @@ export WM_COMPILE_OPTION=Opt
 #   ~openmp : without openmp
 #   +ccache : use ccache
 #   +xcrun  : use xcrun and native compilers [MacOS]
+#   +strict : more deprecation warnings (may generate *many* warnings)
 #   ccache=... : ccache command (unquoted, single/double or <> quoted)
 #   version=... : compiler suffix (eg, "11" for gcc-11)
 #export WM_COMPILE_CONTROL="+gold"

@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2017-2022 OpenCFD Ltd.
+#     Copyright (C) 2017-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -71,6 +71,7 @@ then
 cat<<HELP_FULL
   -debug            Add '-g -DFULLDEBUG' flags
   -debug-O[g0123]   Add '-g -DFULLDEBUG' flags and optimization level
+  -strict           More deprecation warnings ('+strict' WM_COMPILE_CONTROL)
   -build-root=PATH      Specify FOAM_BUILDROOT for compilation intermediates
   -module-prefix=PATH   Specify FOAM_MODULE_PREFIX as absolute/relative path
   -module-prefix=TYPE   Specify FOAM_MODULE_PREFIX as predefined type
@@ -209,7 +210,7 @@ allCores()
 
 # Default to compiling the local target only
 unset opt_all opt_update opt_quiet opt_show opt_pwd
-unset opt_debug opt_openmp opt_openfoam
+unset opt_debug opt_openmp opt_openfoam opt_strict
 
 # Consistency with inherited values
 if [ "$WM_QUIET" = true ]
@@ -265,6 +266,10 @@ do
 
         -debug-O[g0123])
             opt_debug="-g -${1##*-}"
+            ;;
+
+        -strict)
+            opt_strict="+strict"
             ;;
 
         -build-root=*)
@@ -519,6 +524,22 @@ case "$opt_openfoam" in
     export WM_COMPILE_CONTROL
     ;;
 esac
+
+# Handle -strict flag(s)
+if [ -n "$opt_strict" ]
+then
+    # Add +strict into WM_COMPILE_CONTROL
+    opt_strict="${WM_COMPILE_CONTROL:+ }+strict"
+    case "$WM_COMPILE_CONTROL" in
+    (*+strict*)
+        # Appears to have already been added
+    ;;
+    (*)
+        export WM_COMPILE_CONTROL="${WM_COMPILE_CONTROL}${opt_strict}"
+    ;;
+    esac
+fi
+
 
 # Debug:
 ##echo "WM_COMPILE_CONTROL='$WM_COMPILE_CONTROL'" 1>&2

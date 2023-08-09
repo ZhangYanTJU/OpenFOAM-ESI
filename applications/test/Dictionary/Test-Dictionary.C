@@ -55,7 +55,7 @@ public:
         i_(i)
     {}
 
-    word& keyword() const noexcept { return keyword_; }
+    const word& keyword() const noexcept { return keyword_; }
 
     friend Ostream& operator<<(Ostream& os, const ent& e)
     {
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
     dict.swapDown(dict.first());
 
-    forAllConstIter(Dictionary<ent>, dict, iter)
+    forAllConstIters(dict, iter)
     {
         Info<< "element : " << *iter;
     }
@@ -153,9 +153,9 @@ int main(int argc, char *argv[])
     }
 
     Info<< nl << "scalarDict1: " << endl;
-    forAllConstIter(PtrDictionary<Scalar>, scalarDict, iter)
+    forAllConstIters(scalarDict, iter)
     {
-        Info<< " = " << iter() << endl;
+        Info<< " = " << *iter << endl;
     }
 
     PtrDictionary<Scalar> scalarDict2;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
         scalarDict2.insert(key, new Scalar(1.3*i));
     }
     Info<< nl << "scalarDict2: " << endl;
-    forAllConstIter(PtrDictionary<Scalar>, scalarDict2, iter)
+    forAllConstIters(scalarDict2, iter)
     {
         std::cout<< "iter: " << typeid(*iter).name() << '\n';
 

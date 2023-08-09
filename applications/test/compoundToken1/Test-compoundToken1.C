@@ -110,6 +110,13 @@ public:
 
     //- Destructor
     ~IFstreamDelayed() = default;
+
+    // Testing deprecation warnings
+    FOAM_DEPRECATED_STRICT(2023-08, "direct calling")
+    Istream& operator()() const
+    {
+        return const_cast<IFstreamDelayed&>(*this);
+    }
 };
 
 
@@ -280,6 +287,9 @@ int main(int argc, char *argv[])
             Info<< "Read delay: " << args[argi] << endl;
 
             IFstreamDelayed is(args[argi]);
+
+            // Trigger strict warning?
+            Info<< "stream: " << is().name() << nl;
 
             dictionary dict(is);
             Info<< "read: " << dict << nl;
