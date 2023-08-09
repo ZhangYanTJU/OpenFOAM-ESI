@@ -165,7 +165,7 @@ inline void Foam::SubField<Type>::operator=(const Type& val)
 template<class Type>
 inline void Foam::SubField<Type>::operator=(const Foam::zero)
 {
-    SubList<Type>::operator=(Zero);
+    SubList<Type>::operator=(Foam::zero{});
 }
 
 

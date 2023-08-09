@@ -707,7 +707,12 @@ Foam::polyMesh::polyMesh
 }
 
 
-Foam::polyMesh::polyMesh(const IOobject& io, const zero, const bool syncPar)
+Foam::polyMesh::polyMesh
+(
+    const IOobject& io,
+    const Foam::zero,
+    const bool syncPar
+)
 :
     polyMesh(io, pointField(), faceList(), labelList(), labelList(), syncPar)
 {}

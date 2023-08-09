@@ -332,7 +332,7 @@ public:
 
         //- Construct from IOobject or as zero-sized mesh
         //  Boundary is added using addPatches() member function
-        polyMesh(const IOobject& io, const zero, const bool syncPar=true);
+        polyMesh(const IOobject& io, const Foam::zero, const bool syncPar=true);
 
         //- Construct from IOobject and components.
         //  Boundary is added using addPatches() member function

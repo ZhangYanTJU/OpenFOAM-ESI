@@ -51,7 +51,7 @@ inline Foam::SymmetricSquareMatrix<Type>::SymmetricSquareMatrix
     const Foam::zero
 )
 :
-    Matrix<SymmetricSquareMatrix<Type>, Type>(n, n, Zero)
+    Matrix<SymmetricSquareMatrix<Type>, Type>(n, n, Foam::zero{})
 {}
 
 
@@ -74,7 +74,7 @@ inline Foam::SymmetricSquareMatrix<Type>::SymmetricSquareMatrix
     const Identity<AnyType>
 )
 :
-    Matrix<SymmetricSquareMatrix<Type>, Type>(n, n, Zero)
+    SymmetricSquareMatrix<Type>(n, Foam::zero{})
 {
     for (label i=0; i < n; ++i)
     {
@@ -105,7 +105,7 @@ Foam::SymmetricSquareMatrix<Type>::clone() const
 template<class Type>
 inline void Foam::SymmetricSquareMatrix<Type>::operator=(const Foam::zero)
 {
-    Matrix<SymmetricSquareMatrix<Type>, Type>::operator=(Zero);
+    Matrix<SymmetricSquareMatrix<Type>, Type>::operator=(Foam::zero{});
 }
 
 

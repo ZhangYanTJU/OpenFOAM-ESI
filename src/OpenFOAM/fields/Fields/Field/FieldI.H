@@ -60,7 +60,7 @@ inline Foam::Field<Type>::Field(const label len, const Type& val)
 template<class Type>
 inline Foam::Field<Type>::Field(const label len, const Foam::zero)
 :
-    List<Type>(len, Zero)
+    List<Type>(len, Foam::zero{})
 {}
 
 
@@ -81,7 +81,7 @@ inline Foam::Field<Type>::Field(const Foam::one, Type&& val)
 template<class Type>
 inline Foam::Field<Type>::Field(const Foam::one, const Foam::zero)
 :
-    List<Type>(Foam::one{}, Zero)
+    List<Type>(Foam::one{}, Foam::zero{})
 {}
 
 
@@ -224,7 +224,7 @@ inline void Foam::Field<Type>::operator=(const Type& val)
 template<class Type>
 inline void Foam::Field<Type>::operator=(const Foam::zero)
 {
-    List<Type>::operator=(Zero);
+    List<Type>::operator=(Foam::zero{});
 }
 
 

@@ -171,7 +171,7 @@ inline Foam::DynamicList<T, SizeMin>::DynamicList
     const Foam::zero
 )
 :
-    List<T>(len, Zero),
+    List<T>(len, Foam::zero{}),
     capacity_(List<T>::size())
 {}
 
@@ -815,7 +815,7 @@ inline void Foam::DynamicList<T, SizeMin>::operator=
     const Foam::zero
 )
 {
-    UList<T>::operator=(Zero);
+    UList<T>::operator=(Foam::zero{});
 }
 
 

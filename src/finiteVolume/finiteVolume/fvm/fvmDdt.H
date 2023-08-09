@@ -61,7 +61,7 @@ namespace fvm
     template<class Type>
     tmp<fvMatrix<Type>> ddt
     (
-        const one&,
+        const Foam::one,
         const GeometricField<Type, fvPatchField, volMesh>&
     );
 
@@ -90,15 +90,15 @@ namespace fvm
     template<class Type>
     tmp<fvMatrix<Type>> ddt
     (
-        const one&,
-        const one&,
+        const Foam::one,
+        const Foam::one,
         const GeometricField<Type, fvPatchField, volMesh>&
     );
 
     template<class Type>
     tmp<fvMatrix<Type>> ddt
     (
-        const one&,
+        const Foam::one,
         const volScalarField&,
         const GeometricField<Type, fvPatchField, volMesh>&
     );
@@ -107,7 +107,7 @@ namespace fvm
     tmp<fvMatrix<Type>> ddt
     (
         const volScalarField&,
-        const one&,
+        const Foam::one,
         const GeometricField<Type, fvPatchField, volMesh>&
     );
 }

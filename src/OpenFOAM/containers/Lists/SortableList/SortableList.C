@@ -31,14 +31,6 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T>
-inline constexpr Foam::SortableList<T>::SortableList() noexcept
-:
-    List<T>(),
-    indices_()
-{}
-
-
-template<class T>
 inline Foam::SortableList<T>::SortableList(const label size)
 :
     List<T>(size)
@@ -48,7 +40,7 @@ inline Foam::SortableList<T>::SortableList(const label size)
 template<class T>
 inline Foam::SortableList<T>::SortableList(const label size, const Foam::zero)
 :
-    List<T>(size, Zero)
+    List<T>(size, Foam::zero{})
 {}
 
 

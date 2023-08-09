@@ -70,7 +70,7 @@ namespace fvm
     template<class Type>
     tmp<fvMatrix<Type>> laplacian
     (
-        const zero&,
+        const Foam::zero,
         const GeometricField<Type, fvPatchField, volMesh>&,
         const word&
     );
@@ -78,7 +78,7 @@ namespace fvm
     template<class Type>
     tmp<fvMatrix<Type>> laplacian
     (
-        const zero&,
+        const Foam::zero,
         const GeometricField<Type, fvPatchField, volMesh>&
     );
 
@@ -86,7 +86,7 @@ namespace fvm
     template<class Type>
     tmp<fvMatrix<Type>> laplacian
     (
-        const one&,
+        const Foam::one,
         const GeometricField<Type, fvPatchField, volMesh>&,
         const word&
     );
@@ -94,7 +94,7 @@ namespace fvm
     template<class Type>
     tmp<fvMatrix<Type>> laplacian
     (
-        const one&,
+        const Foam::one,
         const GeometricField<Type, fvPatchField, volMesh>&
     );
 

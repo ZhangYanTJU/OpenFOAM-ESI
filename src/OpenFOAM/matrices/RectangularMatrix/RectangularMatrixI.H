@@ -57,7 +57,7 @@ inline Foam::RectangularMatrix<Type>::RectangularMatrix
     const Foam::zero
 )
 :
-    Matrix<RectangularMatrix<Type>, Type>(m, n, Zero)
+    Matrix<RectangularMatrix<Type>, Type>(m, n, Foam::zero{})
 {}
 
 
@@ -81,7 +81,7 @@ inline Foam::RectangularMatrix<Type>::RectangularMatrix
     const Identity<AnyType>
 )
 :
-    Matrix<RectangularMatrix<Type>, Type>(dims.first(), dims.second(), Zero)
+    RectangularMatrix<Type>(dims.first(), dims.second(), Foam::zero{})
 {
     for (label i = 0; i < min(dims.first(), dims.second()); ++i)
     {
@@ -107,7 +107,7 @@ inline Foam::RectangularMatrix<Type>::RectangularMatrix
     const Foam::zero
 )
 :
-    RectangularMatrix<Type>(dims.first(), dims.second(), Zero)
+    RectangularMatrix<Type>(dims.first(), dims.second(), Foam::zero{})
 {}
 
 
@@ -184,7 +184,7 @@ inline void Foam::RectangularMatrix<Type>::operator=
 template<class Type>
 inline void Foam::RectangularMatrix<Type>::operator=(const Foam::zero)
 {
-    Matrix<RectangularMatrix<Type>, Type>::operator=(Zero);
+    Matrix<RectangularMatrix<Type>, Type>::operator=(Foam::zero{});
 }
 
 

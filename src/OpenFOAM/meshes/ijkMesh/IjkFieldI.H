@@ -78,7 +78,7 @@ inline Foam::IjkField<Type>::IjkField
     const Foam::zero
 )
 :
-    Field<Type>(cmptProduct(ijk), Zero),
+    Field<Type>(cmptProduct(ijk), Foam::zero{}),
     ijk_(ijk)
 {}
 
@@ -247,7 +247,7 @@ inline void Foam::IjkField<Type>::operator=(const Type& val)
 template<class Type>
 inline void Foam::IjkField<Type>::operator=(const Foam::zero)
 {
-    Field<Type>::operator=(Zero);
+    Field<Type>::operator=(Foam::zero{});
 }
 
 

@@ -146,7 +146,7 @@ template<class Type>
 tmp<GeometricField<Type, fvPatchField, volMesh>>
 ddt
 (
-    const one&,
+    const Foam::one,
     const GeometricField<Type, fvPatchField, volMesh>& vf
 )
 {
@@ -159,7 +159,7 @@ tmp<GeometricField<Type, fvPatchField, volMesh>>
 ddt
 (
     const GeometricField<Type, fvPatchField, volMesh>& vf,
-    const one&
+    const Foam::one
 )
 {
     return ddt(vf);

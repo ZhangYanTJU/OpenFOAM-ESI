@@ -64,7 +64,7 @@ inline Foam::Matrix<Form, Type>::Matrix(const labelPair& dims)
 template<class Form, class Type>
 inline Foam::Matrix<Form, Type>::Matrix(const labelPair& dims, const Foam::zero)
 :
-    Matrix<Form, Type>(dims.first(), dims.second(), Zero)
+    Matrix<Form, Type>(dims.first(), dims.second(), Foam::zero{})
 {}
 
 

@@ -99,7 +99,7 @@ namespace fvc
     template<class Type>
     tmp<GeometricField<Type, fvPatchField, volMesh>> ddt
     (
-        const one&,
+        const Foam::one,
         const GeometricField<Type, fvPatchField, volMesh>&
     );
 
@@ -107,13 +107,13 @@ namespace fvc
     tmp<GeometricField<Type, fvPatchField, volMesh>> ddt
     (
         const GeometricField<Type, fvPatchField, volMesh>&,
-        const one&
+        const Foam::one
     );
 
     inline geometricZeroField ddt
     (
-        const one&,
-        const one&
+        const Foam::one,
+        const Foam::one
     )
     {
         return geometricZeroField();

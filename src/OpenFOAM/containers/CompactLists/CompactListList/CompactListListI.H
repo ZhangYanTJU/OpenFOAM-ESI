@@ -507,7 +507,7 @@ inline void Foam::CompactListList<T>::operator=(const T& val)
 template<class T>
 inline void Foam::CompactListList<T>::operator=(const Foam::zero)
 {
-    values_ = Zero;
+    values_ = Foam::zero{};
 }
 
 
