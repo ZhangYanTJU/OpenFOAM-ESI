@@ -510,6 +510,9 @@ public:
         //- Token is COMPOUND
         inline bool isCompound() const noexcept;
 
+        //- True if token is not UNDEFINED or ERROR. Same as good().
+        explicit operator bool() const noexcept { return good(); }
+
 
     // Access
 
@@ -689,6 +692,7 @@ public:
         //  \deprecated(2017-11) - use move assign from string
         void operator=(string*) = delete;
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
