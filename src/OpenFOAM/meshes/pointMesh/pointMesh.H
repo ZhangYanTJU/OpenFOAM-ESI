@@ -117,7 +117,13 @@ public:
             return boundary_;
         }
 
-        //- Return parallel info
+        //- Is demand-driven parallel info available?
+        bool hasGlobalData() const noexcept
+        {
+            return GeoMesh<polyMesh>::mesh_.hasGlobalData();
+        }
+
+        //- Return parallel info (demand-driven)
         const globalMeshData& globalData() const
         {
             return GeoMesh<polyMesh>::mesh_.globalData();

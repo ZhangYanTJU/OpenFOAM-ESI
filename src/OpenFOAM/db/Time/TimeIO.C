@@ -412,10 +412,10 @@ void Foam::Time::readDict()
 
         if (writeStreamOption_.compression() == IOstreamOption::COMPRESSED)
         {
-            if (writeStreamOption_.format() == IOstreamOption::BINARY)
+            if (writeStreamOption_.format() != IOstreamOption::ASCII)
             {
                 IOWarningInFunction(controlDict_)
-                    << "Disabled binary format compression"
+                    << "Disabled output compression for non-ascii format"
                     << " (inefficient/ineffective)"
                     << endl;
 

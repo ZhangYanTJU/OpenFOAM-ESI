@@ -648,13 +648,19 @@ public:
         const fileName& facesInstance() const;
 
 
-    // Communication support
+    // Parallel
 
         //- Return communicator used for parallel communication
-        inline label comm() const noexcept;
+        label comm() const noexcept { return comm_; }
 
         //- Return communicator used for parallel communication
-        inline label& comm() noexcept;
+        label& comm() noexcept { return comm_; }
+
+        //- Is demand-driven parallel info available?
+        bool hasGlobalData() const noexcept;
+
+        //- Return parallel info (demand-driven)
+        const faGlobalMeshData& globalData() const;
 
 
     // Access: Mesh size parameters
@@ -735,9 +741,6 @@ public:
 
             //- The polyPatch/local-face for each faceLabels()
             inline const List<labelPair>& whichPatchFaces() const;
-
-            //- Return parallel info
-            const faGlobalMeshData& globalData() const;
 
             //- Return ldu addressing
             virtual const lduAddressing& lduAddr() const;
