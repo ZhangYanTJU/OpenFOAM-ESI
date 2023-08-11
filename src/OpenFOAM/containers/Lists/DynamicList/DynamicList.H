@@ -465,26 +465,32 @@ Ostream& operator<<(Ostream& os, const DynamicList<T, SizeMin>& list)
 }
 
 
-// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
-
-// Exchange contents of lists - see DynamicList::swap().
-template<class T, int SizeMinA, int SizeMinB>
-inline void Swap(DynamicList<T, SizeMinA>& a, DynamicList<T, SizeMinB>& b)
-{
-    a.swap(b);
-}
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Hashing for List data
 template<class T, int SizeMin>
 struct Hash<DynamicList<T, SizeMin>> : List<T>::hasher {};
 
+} // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+//- Exchange contents of lists - see DynamicList::swap().
+//  Works for lists with dissimilar SizeMin template parameters.
+//  If the SizeMin template parameters are identical, a regular std::swap
+//  works (since DynamicList is MoveConstructible and MoveAssignable)
+template<class T, int SizeMinA, int SizeMinB>
+inline void Swap(DynamicList<T, SizeMinA>& a, DynamicList<T, SizeMinB>& b)
+{
+    a.swap(b);
+}
 
 } // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -163,7 +163,11 @@ public:
 };
 
 
-// Note: uses default Foam::Swap (move construct/assignment)
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+// Does not need std::swap or Foam::Swap() specializaton
+// since SortableList is MoveConstructible and MoveAssignable
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

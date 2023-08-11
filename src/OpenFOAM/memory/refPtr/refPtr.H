@@ -366,16 +366,10 @@ public:
 };
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
-// Global Functions
-
-//- Specializes the Swap algorithm for refPtr (swaps pointers and types).
-template<class T>
-void Swap(refPtr<T>& lhs, refPtr<T>& rhs)
-{
-    lhs.swap(rhs);
-}
+// Does not need std::swap or Foam::Swap() specializaton
+// since refPtr is MoveConstructible and MoveAssignable
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

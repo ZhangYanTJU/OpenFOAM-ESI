@@ -254,8 +254,8 @@ int main(int argc, char *argv[])
         Info<< "mem: "
             << name(list1.data()) << " " << name(list2.data()) << nl;
 
-        Swap(list1, list2);
-        Info<< "The Swap() function" << nl;
+        Foam::Swap(list1, list2);
+        Info<< "Foam::Swap() function" << nl;
         Info<< "list1: " << list1 << nl
             << "list2: " << list2 << nl;
 

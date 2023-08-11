@@ -68,7 +68,7 @@ void runSwapTest
 
     for (label iLoop = 0; iLoop < nLoops; ++iLoop)
     {
-        Swap(list1, list2);
+        Foam::Swap(list1, list2);
     }
 
     Info<< "output 1: " << list1.first() << nl;

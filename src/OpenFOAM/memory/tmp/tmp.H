@@ -372,16 +372,10 @@ public:
 };
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
-// Global Functions
-
-//- Specializes the Swap algorithm for tmp (swaps pointers and types).
-template<class T>
-void Swap(tmp<T>& lhs, tmp<T>& rhs)
-{
-    lhs.swap(rhs);
-}
+// Does not need std::swap or Foam::Swap() specializaton
+// since tmp is MoveConstructible and MoveAssignable
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

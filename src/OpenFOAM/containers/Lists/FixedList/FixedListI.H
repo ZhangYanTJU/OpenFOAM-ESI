@@ -374,6 +374,7 @@ inline void Foam::FixedList<T, N>::swap(FixedList<T, N>& other)
         return;  // Self-swap is a no-op
     }
 
+    // Essentially std::swap_ranges
     for (unsigned i=0; i<N; ++i)
     {
         Foam::Swap(v_[i], other.v_[i]);

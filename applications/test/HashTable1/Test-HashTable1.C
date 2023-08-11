@@ -366,8 +366,8 @@ int main()
     Info<< nl << "input values" << nl;
     Info<<"table1 =  " << table1 << nl <<"table2 =  " << table2 << nl;
 
-    Info<<"global Swap function" << nl;
-    Swap(table1, table2);
+    Info<<"std::swap function" << nl;
+    std::swap(table1, table2);
     Info<<"table1 =  " << table1 << nl <<"table2 =  " << table2 << nl;
 
     Info<<"swap method" << nl;
