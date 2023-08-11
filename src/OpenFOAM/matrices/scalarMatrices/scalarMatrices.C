@@ -122,7 +122,7 @@ void Foam::LUDecompose
 
             for (label k = 0; k < m; ++k)
             {
-                Swap(matrixj[k], matrixiMax[k]);
+                std::swap(matrixj[k], matrixiMax[k]);
             }
 
             sign *= -1;

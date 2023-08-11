@@ -143,7 +143,11 @@ bool Foam::manualGAMGProcAgglomeration::agglomerate()
                             // This is my cluster. Make sure master index is
                             // first
                             agglomProcIDs = cluster;
-                            Swap(agglomProcIDs[0], agglomProcIDs[masterIndex]);
+                            std::swap
+                            (
+                                agglomProcIDs[0],
+                                agglomProcIDs[masterIndex]
+                            );
                         }
                     }
 

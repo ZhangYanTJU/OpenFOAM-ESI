@@ -154,7 +154,7 @@ void Foam::cyclicPointPatchField<Type>::swapAddSeparated
         {
             forAll(pairs, pairi)
             {
-                Swap(pf[pairs[pairi][0]], nbrPf[pairs[pairi][1]]);
+                Foam::Swap(pf[pairs[pairi][0]], nbrPf[pairs[pairi][1]]);
             }
         }
         this->addToInternalField(pField, pf);

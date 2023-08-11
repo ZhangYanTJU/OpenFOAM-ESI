@@ -415,6 +415,7 @@ public:
         static constexpr unsigned max_size() noexcept { return N; }
 
         //- Swap lists by swapping the content of the individual list elements
+        //  Essentially std::swap_ranges
         inline void swap(FixedList<T, N>& other);
 
 
@@ -547,17 +548,6 @@ template<class T, unsigned N>
 struct Hash<FixedList<T, N>> : FixedList<T, N>::hasher {};
 
 
-// * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * * //
-
-//- Swap FixedList contents - see FixedList::swap().
-//  Internally actually swaps the individual list elements
-template<class T, unsigned N>
-inline void Swap(FixedList<T, N>& a, FixedList<T, N>& b)
-{
-    a.swap(b);
-}
-
-
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 //- Read List contents from Istream, list must have the proper size!
@@ -578,6 +568,21 @@ Ostream& operator<<(Ostream& os, const FixedList<T, N>& list)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+//- Swap FixedList contents - see FixedList::swap().
+//  Essentially std::swap_ranges
+template<class T, unsigned N>
+inline void Swap(FixedList<T, N>& a, FixedList<T, N>& b)
+{
+    a.swap(b);
+}
 
 } // End namespace Foam
 

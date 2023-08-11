@@ -143,10 +143,10 @@ void Foam::fileFormats::ensightMeshReader::setHandedness
 //        if (((x ^ y) & z) < 0)
 //        {
 //            // Flipped hex
-//            Swap(verts[0], verts[4]);
-//            Swap(verts[1], verts[5]);
-//            Swap(verts[2], verts[6]);
-//            Swap(verts[3], verts[7]);
+//            std::swap(verts[0], verts[4]);
+//            std::swap(verts[1], verts[5]);
+//            std::swap(verts[2], verts[6]);
+//            std::swap(verts[3], verts[7]);
 //        }
 //    }
 
@@ -155,27 +155,27 @@ void Foam::fileFormats::ensightMeshReader::setHandedness
         if (verts.size() == 8)
         {
             // Flipped hex
-            Swap(verts[0], verts[4]);
-            Swap(verts[1], verts[5]);
-            Swap(verts[2], verts[6]);
-            Swap(verts[3], verts[7]);
+            std::swap(verts[0], verts[4]);
+            std::swap(verts[1], verts[5]);
+            std::swap(verts[2], verts[6]);
+            std::swap(verts[3], verts[7]);
         }
         else if (verts.size() == 4)
         {
             // Flipped tet. Change orientation of base
-            Swap(verts[0], verts[1]);
+            std::swap(verts[0], verts[1]);
         }
         else if (verts.size() == 5)
         {
             // Flipped pyr. Change orientation of base
-            Swap(verts[1], verts[3]);
+            std::swap(verts[1], verts[3]);
         }
         else if (verts.size() == 6)
         {
             // Flipped prism.
-            Swap(verts[0], verts[3]);
-            Swap(verts[1], verts[4]);
-            Swap(verts[2], verts[5]);
+            std::swap(verts[0], verts[3]);
+            std::swap(verts[1], verts[4]);
+            std::swap(verts[2], verts[5]);
         }
     }
 }

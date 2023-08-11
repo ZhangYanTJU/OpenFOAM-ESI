@@ -692,13 +692,6 @@ inline void reverse(UList<T>& list, const label n);
 template<class T>
 inline void reverse(UList<T>& list);
 
-//- Exchange contents of lists - see UList::swap().
-template<class T>
-inline void Swap(UList<T>& a, UList<T>& b)
-{
-    a.swap(b);
-}
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -735,6 +728,13 @@ struct sizeOp
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+// Does not need std::swap or Foam::Swap() specialization
+// since UList is MoveConstructible and MoveAssignable
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

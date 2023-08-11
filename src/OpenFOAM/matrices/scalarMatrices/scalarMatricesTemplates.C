@@ -59,9 +59,9 @@ void Foam::solve
         {
             for (label k = i; k < m; ++k)
             {
-                Swap(tmpMatrix(i, k), tmpMatrix(iMax, k));
+                Foam::Swap(tmpMatrix(i, k), tmpMatrix(iMax, k));
             }
-            Swap(sourceSol[i], sourceSol[iMax]);
+                Foam::Swap(sourceSol[i], sourceSol[iMax]);
         }
 
         // Check that the system of equations isn't singular
