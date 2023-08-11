@@ -6,7 +6,7 @@
 #   \\  /    A nd           | www.openfoam.com
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
-#     Copyright (C) 2020 OpenCFD Ltd.
+#     Copyright (C) 2020-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -116,11 +116,10 @@ export WM_PROJECT_DIR="$projectDir"
 #
 # parse this type of content
 # ----
-#     default_clang_version=llvm-3.7.1
-#     default_gcc_version=gcc-4.8.5
+#     default_clang_version=llvm-[digits].[digits].[digits]
+#     default_gcc_version=gcc-[digits].[digits].[digits]
 #
-#     Gcc48*) gcc_version=gcc-4.8.5 ;;
-#     Gcc49*) gcc_version=gcc-4.9.4 ;;
+#     Gcc121*) gcc_version=gcc-[digits].[digits].[digits] ;;
 # ----
 
 queryCompiler()

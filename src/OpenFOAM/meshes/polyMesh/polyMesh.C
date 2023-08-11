@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017, 2020 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -707,7 +707,12 @@ Foam::polyMesh::polyMesh
 }
 
 
-Foam::polyMesh::polyMesh(const IOobject& io, const zero, const bool syncPar)
+Foam::polyMesh::polyMesh
+(
+    const IOobject& io,
+    const Foam::zero,
+    const bool syncPar
+)
 :
     polyMesh(io, pointField(), faceList(), labelList(), labelList(), syncPar)
 {}
@@ -992,7 +997,7 @@ void Foam::polyMesh::addPatches
     // recalculation. Problem: should really be done in removeBoundary but
     // there is some info in parallelData which might be interesting inbetween
     // removeBoundary and addPatches.
-    globalMeshDataPtr_.clear();
+    globalMeshDataPtr_.reset(nullptr);
 
     if (validBoundary)
     {
@@ -1304,6 +1309,12 @@ void Foam::polyMesh::resetMotion() const
 }
 
 
+bool Foam::polyMesh::hasGlobalData() const noexcept
+{
+    return bool(globalMeshDataPtr_);
+}
+
+
 const Foam::globalMeshData& Foam::polyMesh::globalData() const
 {
     if (!globalMeshDataPtr_)
@@ -1319,18 +1330,6 @@ const Foam::globalMeshData& Foam::polyMesh::globalData() const
     }
 
     return *globalMeshDataPtr_;
-}
-
-
-Foam::label Foam::polyMesh::comm() const noexcept
-{
-    return comm_;
-}
-
-
-Foam::label& Foam::polyMesh::comm() noexcept
-{
-    return comm_;
 }
 
 

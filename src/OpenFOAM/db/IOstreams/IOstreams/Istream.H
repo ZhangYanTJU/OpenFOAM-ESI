@@ -77,10 +77,7 @@ protected:
     // Protected Member Functions
 
         //- True if putback token is in use
-        bool hasPutback() const noexcept
-        {
-            return putBackAvail_;
-        }
+        bool hasPutback() const noexcept { return putBackAvail_; }
 
 
 public:
@@ -124,15 +121,16 @@ public:
             //  if a putback is unavailable.
             const token& peekBack() const noexcept;
 
-            //- Fetch putback token without removing it.
-            //  \return false sets the token to undefined if no put-back
-            //  was available
-            bool peekBack(token& tok);
+            //- Drop the putback token
+            void putBackClear();
 
-            //- Put back a token. Only a single put back is permitted
+            //- Put back a token (copy). Only a single put back is permitted
             void putBack(const token& tok);
 
-            //- Get the put-back token if there is one.
+            //- Put back a token (move). Only a single put back is permitted
+            void putBack(token&& tok);
+
+            //- Retrieve the put-back token if there is one.
             //  \return false and sets token to undefined if no put-back
             //  was available
             bool getBack(token& tok);

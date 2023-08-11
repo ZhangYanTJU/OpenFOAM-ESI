@@ -538,6 +538,10 @@ Foam::Istream& Foam::ISstream::read(token& t)
         return *this;
     }
 
+    // Reset token, adjust its line number according to the stream
+    t.reset();
+    t.lineNumber(this->lineNumber());
+
     // Assume that the streams supplied are in working order.
     // Lines are counted by '\n'
 
@@ -545,9 +549,6 @@ Foam::Istream& Foam::ISstream::read(token& t)
     // and/or comments until a semantically valid character is found
 
     char c = nextValid();
-
-    // Set the line number of this token to the current stream line number
-    t.lineNumber(this->lineNumber());
 
     // Return on error
     if (!c)

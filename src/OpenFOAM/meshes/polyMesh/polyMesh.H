@@ -332,7 +332,7 @@ public:
 
         //- Construct from IOobject or as zero-sized mesh
         //  Boundary is added using addPatches() member function
-        polyMesh(const IOobject& io, const zero, const bool syncPar=true);
+        polyMesh(const IOobject& io, const Foam::zero, const bool syncPar=true);
 
         //- Construct from IOobject and components.
         //  Boundary is added using addPatches() member function
@@ -507,20 +507,29 @@ public:
                 return cellZones_;
             }
 
-            //- Return parallel info
-            const globalMeshData& globalData() const;
 
-            //- Return communicator used for parallel communication
-            label comm() const noexcept;
-
-            //- Return communicator used for parallel communication
-            label& comm() noexcept;
+        // Database
 
             //- Return the object registry
             const objectRegistry& thisDb() const noexcept
             {
                 return *this;
             }
+
+
+        // Parallel
+
+            //- The communicator used for parallel communication
+            label comm() const noexcept { return comm_; }
+
+            //- The communicator used for parallel communication
+            label& comm() noexcept { return comm_; }
+
+            //- Is demand-driven parallel info available?
+            bool hasGlobalData() const noexcept;
+
+            //- Return parallel info (demand-driven)
+            const globalMeshData& globalData() const;
 
 
         // Mesh motion

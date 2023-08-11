@@ -51,7 +51,7 @@ inline Foam::FixedList<T, N>::FixedList(const T& val)
 template<class T, unsigned N>
 inline Foam::FixedList<T, N>::FixedList(const Foam::zero)
 {
-    this->fill(Zero);
+    this->fill(Foam::zero{});
 }
 
 
@@ -500,7 +500,7 @@ inline void Foam::FixedList<T, N>::operator=(const T& val)
 template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::operator=(const Foam::zero)
 {
-    this->fill(Zero);
+    this->fill(Foam::zero{});
 }
 
 

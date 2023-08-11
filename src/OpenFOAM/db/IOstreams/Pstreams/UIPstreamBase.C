@@ -273,6 +273,12 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
         }
     }
 
+
+    // Reset token, adjust its line number according to the stream
+    t.reset();
+    t.lineNumber(this->lineNumber());
+
+
     // Read character, return on error
     // - with additional handling for special stream flags
 
@@ -302,9 +308,6 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
     }
     while (c == token::FLAG);
 
-
-    // Set the line number of this token to the current stream line number
-    t.lineNumber(this->lineNumber());
 
     // Analyse input starting with this character.
     switch (c)

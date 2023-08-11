@@ -51,7 +51,7 @@ inline Foam::SquareMatrix<Type>::SquareMatrix
     const Foam::zero
 )
 :
-    Matrix<SquareMatrix<Type>, Type>(n, n, Zero)
+    Matrix<SquareMatrix<Type>, Type>(n, n, Foam::zero{})
 {}
 
 
@@ -74,7 +74,7 @@ inline Foam::SquareMatrix<Type>::SquareMatrix
     const Identity<AnyType>
 )
 :
-    Matrix<SquareMatrix<Type>, Type>(n, n, Zero)
+    SquareMatrix<Type>(n, Foam::zero{})
 {
     for (label i = 0; i < n; ++i)
     {
@@ -91,7 +91,7 @@ inline Foam::SquareMatrix<Type>::SquareMatrix
     const Identity<AnyType>
 )
 :
-    Matrix<SquareMatrix<Type>, Type>(dims, Zero)
+    Matrix<SquareMatrix<Type>, Type>(dims, Foam::zero{})
 {
     CHECK_MATRIX_IS_SQUARE(dims.first(), dims.second());
 
@@ -121,7 +121,7 @@ inline Foam::SquareMatrix<Type>::SquareMatrix
     const Foam::zero
 )
 :
-    Matrix<SquareMatrix<Type>, Type>(dims, Zero)
+    Matrix<SquareMatrix<Type>, Type>(dims, Foam::zero{})
 {
     CHECK_MATRIX_IS_SQUARE(dims.first(), dims.second());
 }
@@ -148,7 +148,7 @@ inline Foam::SquareMatrix<Type>::SquareMatrix
     const Foam::zero
 )
 :
-    Matrix<SquareMatrix<Type>, Type>(m, n, Zero)
+    Matrix<SquareMatrix<Type>, Type>(m, n, Foam::zero{})
 {
     CHECK_MATRIX_IS_SQUARE(m, n);
 }
@@ -300,7 +300,7 @@ inline void Foam::SquareMatrix<Type>::operator=(SquareMatrix<Type>&& mat)
 template<class Type>
 inline void Foam::SquareMatrix<Type>::operator=(const Foam::zero)
 {
-    Matrix<SquareMatrix<Type>, Type>::operator=(Zero);
+    Matrix<SquareMatrix<Type>, Type>::operator=(Foam::zero{});
 }
 
 

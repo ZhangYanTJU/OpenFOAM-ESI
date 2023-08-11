@@ -953,16 +953,6 @@ void Foam::faMatrix<Type>::operator-=
 
 
 template<class Type>
-void Foam::faMatrix<Type>::operator+=(const Foam::zero)
-{}
-
-
-template<class Type>
-void Foam::faMatrix<Type>::operator-=(const Foam::zero)
-{}
-
-
-template<class Type>
 void Foam::faMatrix<Type>::operator*=
 (
     const areaScalarField::Internal& dsf

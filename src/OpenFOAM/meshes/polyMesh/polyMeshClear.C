@@ -185,7 +185,7 @@ void Foam::polyMesh::clearAddressing(const bool isMeshUpdate)
 
     // parallelData depends on the processorPatch ordering so force
     // recalculation
-    globalMeshDataPtr_.clear();
+    globalMeshDataPtr_.reset(nullptr);
 
     // Reset valid directions
     geometricD_ = Zero;

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,9 +30,12 @@ Description
 
 #include "IOstreams.H"
 #include "pTraits.H"
+#include "contiguous.H"
+#include "boolVector.H"  // A FixedList pretending to be a vector
 #include "vector.H"
 #include "tensor.H"
 #include "uLabel.H"
+#include "Switch.H"
 
 #include <type_traits>
 
@@ -40,14 +44,72 @@ using namespace Foam;
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // Main program:
 
+//- Test if Type has typeName member
+template<class T, class = void>
+struct has_typeName : std::false_type {};
+
+//- Test if Type has typeName member
+
+template<class T>
+struct has_typeName<T, stdFoam::void_t<decltype(pTraits<T>::typeName)>>
+:
+    std::true_type
+{};
+
+
+template<class T>
+typename std::enable_if<has_typeName<T>::value, void>::type
+printTypeName()
+{
+    Info<< pTraits<T>::typeName;
+}
+
+template<class T>
+typename std::enable_if<!has_typeName<T>::value, void>::type
+printTypeName()
+{
+    Info<< typeid(T).name();
+}
+
+
+template<class T, class = void>
+struct has_zero_one : std::false_type {};
+
+template<class T>
+struct has_zero_one
+<
+    T,
+    stdFoam::void_t<decltype(pTraits<T>::zero), decltype(pTraits<T>::one)>
+> : std::true_type {};
+
+
+template<class T>
+typename std::enable_if<has_zero_one<T>::value, void>::type
+printMinMaxRange()
+{
+    Info<< " zero=" << pTraits<T>::zero
+        << " one=" << pTraits<T>::one;
+}
+
+template<class T>
+typename std::enable_if<!has_zero_one<T>::value, void>::type
+printMinMaxRange()
+{}
+
+
 template<class T>
 void printTraits()
 {
-    Info<< pTraits<T>::typeName
-        << ": zero=" << pTraits<T>::zero
-        << " one=" << pTraits<T>::one
-        << " integral=" << std::is_integral<T>::value
+    printTypeName<T>();
+    printMinMaxRange<T>();
+
+    Info<< " integral=" << std::is_integral<T>::value
         << " floating=" << std::is_floating_point<T>::value
+        << " rank=" << pTraits_rank<T>::value
+        << " nComponents=" << pTraits_nComponents<T>::value
+        << " vector-space=" << Switch::name(is_vectorspace<T>::value)
+        << " is_label=" << Switch::name(is_contiguous_label<T>::value)
+        << " is_scalar=" << Switch::name(is_contiguous_scalar<T>::value)
         << endl;
 }
 
@@ -69,6 +131,9 @@ int main()
     printTraits<scalar>();
     printTraits<vector>();
     printTraits<tensor>();
+    printTraits<boolVector>();
+    printTraits<word>();
+    printTraits<std::string>();
 
     {
         pTraits<bool> b(true);

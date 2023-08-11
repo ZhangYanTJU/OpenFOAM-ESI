@@ -530,8 +530,8 @@ inline void Foam::CircularBuffer<T>::operator=(const T& val)
 template<class T>
 inline void Foam::CircularBuffer<T>::operator=(const Foam::zero)
 {
-    this->array_one() = Zero;
-    this->array_two() = Zero;
+    this->array_one() = Foam::zero{};
+    this->array_two() = Foam::zero{};
 }
 
 

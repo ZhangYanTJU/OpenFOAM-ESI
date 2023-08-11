@@ -51,19 +51,27 @@ const Foam::token& Foam::Istream::peekBack() const noexcept
     return (putBackAvail_ ? putBackToken_ : token::undefinedToken);
 }
 
+// Return the putback token if available or fetch a new token
+// from the stream.
+//
+// Foam::token& Foam::Istream::peekToken()
+// {
+//     if (!putBackAvail_)
+//     {
+//         putBackToken_.reset();
+//         token tok;
+//         this->read(tok);
+//         putBackToken_ = std::move(tok);
+//     }
+//
+//     return putBackToken_;
+// }
 
-bool Foam::Istream::peekBack(token& tok)
+
+void Foam::Istream::putBackClear()
 {
-    if (putBackAvail_)
-    {
-        tok = putBackToken_;
-    }
-    else
-    {
-        tok.reset();
-    }
-
-    return putBackAvail_;
+    putBackAvail_ = false;
+    putBackToken_.reset();
 }
 
 
@@ -89,6 +97,28 @@ void Foam::Istream::putBack(const token& tok)
 }
 
 
+void Foam::Istream::putBack(token&& tok)
+{
+    if (bad())
+    {
+        FatalIOErrorInFunction(*this)
+            << "Attempt to put back onto bad stream"
+            << exit(FatalIOError);
+    }
+    else if (putBackAvail_)
+    {
+        FatalIOErrorInFunction(*this)
+            << "Attempt to put back another token"
+            << exit(FatalIOError);
+    }
+    else
+    {
+        putBackAvail_ = true;
+        putBackToken_ = std::move(tok);
+    }
+}
+
+
 bool Foam::Istream::getBack(token& tok)
 {
     if (bad())
@@ -100,7 +130,7 @@ bool Foam::Istream::getBack(token& tok)
     else if (putBackAvail_)
     {
         putBackAvail_ = false;
-        tok = putBackToken_;
+        tok = std::move(putBackToken_);
         return true;
     }
 

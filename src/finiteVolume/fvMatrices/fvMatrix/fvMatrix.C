@@ -1764,16 +1764,6 @@ void Foam::fvMatrix<Type>::operator-=
 
 
 template<class Type>
-void Foam::fvMatrix<Type>::operator+=(const Foam::zero)
-{}
-
-
-template<class Type>
-void Foam::fvMatrix<Type>::operator-=(const Foam::zero)
-{}
-
-
-template<class Type>
 void Foam::fvMatrix<Type>::operator*=
 (
     const volScalarField::Internal& dsf

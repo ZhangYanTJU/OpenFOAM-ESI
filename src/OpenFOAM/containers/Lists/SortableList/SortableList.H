@@ -73,7 +73,7 @@ public:
     // Constructors
 
         //- Default construct
-        inline constexpr SortableList() noexcept;
+        SortableList() noexcept = default;
 
         //- Construct given size, sort later.
         //  The indices remain empty until the list is sorted

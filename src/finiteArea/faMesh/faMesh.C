@@ -970,6 +970,12 @@ Foam::faMesh::edgeTransformTensors() const
 }
 
 
+bool Foam::faMesh::hasGlobalData() const noexcept
+{
+    return bool(globalMeshDataPtr_);
+}
+
+
 const Foam::faGlobalMeshData& Foam::faMesh::globalData() const
 {
     if (!globalMeshDataPtr_)

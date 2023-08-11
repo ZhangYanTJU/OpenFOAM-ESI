@@ -41,18 +41,6 @@ inline const Foam::faBoundaryMesh& Foam::faMesh::boundary() const noexcept
 }
 
 
-inline Foam::label Foam::faMesh::comm() const noexcept
-{
-    return comm_;
-}
-
-
-inline Foam::label& Foam::faMesh::comm() noexcept
-{
-    return comm_;
-}
-
-
 inline Foam::label Foam::faMesh::nPoints() const noexcept
 {
     return nPoints_;

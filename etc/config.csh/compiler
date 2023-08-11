@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2022 OpenCFD Ltd.
+#     Copyright (C) 2016-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -58,8 +58,8 @@ switch ("$WM_COMPILER_TYPE")
 case ThirdParty:
     # Default/minimum versions (compiler, GMP, MPFR, MPC) - override as needed
 
-    set default_clang_version=llvm-3.7.1
-    set default_gcc_version=gcc-4.8.5
+    set default_clang_version=llvm-5.0.2
+    set default_gcc_version=gcc-7.5.0
 
     set default_gmp_version=gmp-system
     set default_mpfr_version=mpfr-system
@@ -127,6 +127,7 @@ case ThirdParty:
     case Gcc75*:
         set gcc_version=gcc-7.5.0
         breaksw
+    # Older : no assurance that they still work for OpenFOAM
     case Gcc74*:
         set gcc_version=gcc-7.4.0
         breaksw
@@ -159,24 +160,24 @@ case ThirdParty:
     case Gcc55*:
         set gcc_version=gcc-5.5.0
         breaksw
-    case Gcc54*:
-        set gcc_version=gcc-5.4.0
-        breaksw
-    case Gcc53*:
-        set gcc_version=gcc-5.3.0
-        breaksw
-    case Gcc52*:
-        set gcc_version=gcc-5.2.0
-        breaksw
-    case Gcc51*:
-        set gcc_version=gcc-5.1.0
-        breaksw
-    case Gcc49*:
-        set gcc_version=gcc-4.9.4
-        breaksw
-    case Gcc48*:
-        set gcc_version=gcc-4.8.5
-        breaksw
+    #ancient# case Gcc54*:
+    #ancient#     set gcc_version=gcc-5.4.0
+    #ancient#     breaksw
+    #ancient# case Gcc53*:
+    #ancient#     set gcc_version=gcc-5.3.0
+    #ancient#     breaksw
+    #ancient# case Gcc52*:
+    #ancient#     set gcc_version=gcc-5.2.0
+    #ancient#     breaksw
+    #ancient# case Gcc51*:
+    #ancient#     set gcc_version=gcc-5.1.0
+    #ancient#     breaksw
+    #ancient# case Gcc49*:
+    #ancient#     set gcc_version=gcc-4.9.4
+    #ancient#     breaksw
+    #ancient# case Gcc48*:
+    #ancient#     set gcc_version=gcc-4.8.5
+    #ancient#     breaksw
 
     case Clang:
         set clang_version="$default_clang_version"
@@ -217,18 +218,18 @@ case ThirdParty:
     case Clang50*:
         set clang_version=llvm-5.0.2
         breaksw
-    case Clang40*:
-        set clang_version=llvm-4.0.1
-        breaksw
-    case Clang39*:
-        set clang_version=llvm-3.9.1
-        breaksw
-    case Clang38*:
-        set clang_version=llvm-3.8.1
-        breaksw
-    case Clang37*:
-        set clang_version=llvm-3.7.1
-        breaksw
+    #ancient# case Clang40*:
+    #ancient#     set clang_version=llvm-4.0.1
+    #ancient#     breaksw
+    #ancient# case Clang39*:
+    #ancient#     set clang_version=llvm-3.9.1
+    #ancient#     breaksw
+    #ancient# case Clang38*:
+    #ancient#     set clang_version=llvm-3.8.1
+    #ancient#     breaksw
+    #ancient# case Clang37*:
+    #ancient#     set clang_version=llvm-3.7.1
+    #ancient#     breaksw
 
     endsw
 

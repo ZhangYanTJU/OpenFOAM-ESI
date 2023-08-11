@@ -165,7 +165,7 @@ inline Foam::DynamicField<T, SizeMin>::DynamicField
     const Foam::zero
 )
 :
-    Field<T>(len, Zero),
+    Field<T>(len, Foam::zero{}),
     capacity_(Field<T>::size())
 {}
 
@@ -696,7 +696,7 @@ inline void Foam::DynamicField<T, SizeMin>::operator=
     const Foam::zero
 )
 {
-    UList<T>::operator=(Zero);
+    UList<T>::operator=(Foam::zero{});
 }
 
 

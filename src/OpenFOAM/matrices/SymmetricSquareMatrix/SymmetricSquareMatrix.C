@@ -117,7 +117,7 @@ template<class Type>
 template<class AnyType>
 void Foam::SymmetricSquareMatrix<Type>::operator=(const Identity<AnyType>)
 {
-    Matrix<SymmetricSquareMatrix<Type>, Type>::operator=(Zero);
+    Matrix<SymmetricSquareMatrix<Type>, Type>::operator=(Foam::zero{});
 
     for (label i=0; i < this->n(); ++i)
     {
