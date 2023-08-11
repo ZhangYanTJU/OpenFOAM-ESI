@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2016-2022 OpenCFD Ltd.
+#     Copyright (C) 2016-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -58,8 +58,8 @@ case "$WM_COMPILER_TYPE" in
 ThirdParty)
     # Default/minimum versions (compiler, GMP, MPFR, MPC) - override as needed
 
-    default_clang_version=llvm-3.7.1
-    default_gcc_version=gcc-4.8.5
+    default_clang_version=llvm-5.0.2
+    default_gcc_version=gcc-7.5.0
 
     default_gmp_version=gmp-system
     default_mpfr_version=mpfr-system
@@ -92,6 +92,7 @@ ThirdParty)
     Gcc82*) gcc_version=gcc-8.2.0 ;;
     Gcc81*) gcc_version=gcc-8.1.0 ;;
     Gcc75*) gcc_version=gcc-7.5.0 ;;
+    # Older : no assurance that they still work for OpenFOAM
     Gcc74*) gcc_version=gcc-7.4.0 ;;
     Gcc73*) gcc_version=gcc-7.3.0 ;;
     Gcc72*) gcc_version=gcc-7.2.0 ;;
@@ -103,12 +104,12 @@ ThirdParty)
     Gcc62*) gcc_version=gcc-6.2.0 ;;
     Gcc61*) gcc_version=gcc-6.1.0 ;;
     Gcc55*) gcc_version=gcc-5.5.0 ;;
-    Gcc54*) gcc_version=gcc-5.4.0 ;;
-    Gcc53*) gcc_version=gcc-5.3.0 ;;
-    Gcc52*) gcc_version=gcc-5.2.0 ;;
-    Gcc51*) gcc_version=gcc-5.1.0 ;;
-    Gcc49*) gcc_version=gcc-4.9.4 ;;
-    Gcc48*) gcc_version=gcc-4.8.5 ;;
+    #ancient# Gcc54*) gcc_version=gcc-5.4.0 ;;
+    #ancient# Gcc53*) gcc_version=gcc-5.3.0 ;;
+    #ancient# Gcc52*) gcc_version=gcc-5.2.0 ;;
+    #ancient# Gcc51*) gcc_version=gcc-5.1.0 ;;
+    #ancient# Gcc49*) gcc_version=gcc-4.9.4 ;;
+    #ancient# Gcc48*) gcc_version=gcc-4.8.5 ;;
 
     Clang)    clang_version="$default_clang_version" ;;
     Clang140*) clang_version=llvm-14.0.5 ;;
@@ -123,10 +124,10 @@ ThirdParty)
     Clang70*) clang_version=llvm-7.0.1 ;;
     Clang60*) clang_version=llvm-6.0.1 ;;
     Clang50*) clang_version=llvm-5.0.2 ;;
-    Clang40*) clang_version=llvm-4.0.1 ;;
-    Clang39*) clang_version=llvm-3.9.1 ;;
-    Clang38*) clang_version=llvm-3.8.1 ;;
-    Clang37*) clang_version=llvm-3.7.1 ;;
+    #ancient# Clang40*) clang_version=llvm-4.0.1 ;;
+    #ancient# Clang39*) clang_version=llvm-3.9.1 ;;
+    #ancient# Clang38*) clang_version=llvm-3.8.1 ;;
+    #ancient# Clang37*) clang_version=llvm-3.7.1 ;;
 
     esac
 

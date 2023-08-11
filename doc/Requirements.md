@@ -1,10 +1,10 @@
 ## OpenFOAM&reg; System Requirements
 
-OpenFOAM requires a functioning C++11 compiler and GNU `make` build toolchain.
+OpenFOAM requires a functioning C++14 compiler and GNU `make` build toolchain.
 
 ### Minimum recommended versions
 
-- gcc : 4.8.5 (absolute minimum, not really recommended)
+- gcc : 7.5.0 (minimum, not necessarily recommended)
 - cmake: 3.8 (required for ParaView and CGAL build)
 - boost: 1.48 (required for CGAL build and some functionality)
 - fftw: 3.3.7 (recommended - required for FFT-related functionality)
@@ -217,4 +217,4 @@ at any later stage _without_ recompiling OpenFOAM itself.
 [wiki-config]: https://develop.openfoam.com/Development/openfoam/-/wikis/configuring
 
 ---
-Copyright 2019-2022 OpenCFD Ltd
+Copyright 2019-2023 OpenCFD Ltd
