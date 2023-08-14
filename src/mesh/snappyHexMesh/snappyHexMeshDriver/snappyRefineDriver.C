@@ -3472,7 +3472,7 @@ void Foam::snappyRefineDriver::doRefine
                 meshRefiner_.surfaces().surfZones()
             )
         );
-        if (unnamedSurfaces.size())
+        if (unnamedSurfaces.size() && !dryRun_)
         {
             meshRefiner_.blockLeakFaces
             (
