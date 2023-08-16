@@ -333,16 +333,10 @@ public:
 };
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
-// Global Functions
-
-//- Specializes the Swap algorithm for autoPtr (swaps pointers).
-template<class T>
-void Swap(autoPtr<T>& lhs, autoPtr<T>& rhs)
-{
-    lhs.swap(rhs);
-}
+// Does not need std::swap or Foam::Swap() specialization
+// since autoPtr is MoveConstructible and MoveAssignable
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

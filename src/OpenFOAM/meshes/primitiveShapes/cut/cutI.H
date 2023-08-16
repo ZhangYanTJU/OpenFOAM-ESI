@@ -269,7 +269,7 @@ inline FixedList<Type, 6> tetCutPrism23
     FixedList<Type, 6> result = tetCutPrism01(x, f);
     result[0] = x[2];
     result[3] = x[3];
-    Swap(result[2], result[4]);
+    std::swap(result[2], result[4]);
     return result;
 }
 

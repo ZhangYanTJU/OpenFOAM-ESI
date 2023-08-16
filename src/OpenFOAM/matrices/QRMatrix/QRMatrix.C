@@ -165,8 +165,8 @@ void Foam::QRMatrix<MatrixType>::decompose
             AT.subRow(k) = R2;
             AT.subRow(maxNormi + k) = R1;
 
-            Swap(p_[k], p_[maxNormi + k]);
-            Swap(norms[k], norms[maxNormi + k]);
+            std::swap(p_[k], p_[maxNormi + k]);
+            std::swap(norms[k], norms[maxNormi + k]);
         }
 
         {

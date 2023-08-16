@@ -2894,7 +2894,7 @@ void Foam::polyMeshAdder::add
                 bool flip = zoneFlip[facei];
                 if (newNei < newOwn)
                 {
-                    Swap(newOwn, newNei);
+                    std::swap(newOwn, newNei);
                     newFace = newFace.reverseFace();
                     flipFaceFlux = !flipFaceFlux;
                     flip = !flip;

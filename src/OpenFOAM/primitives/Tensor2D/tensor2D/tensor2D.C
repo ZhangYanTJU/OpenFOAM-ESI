@@ -134,7 +134,7 @@ Foam::Vector2D<Foam::complex> Foam::eigenValues(const tensor2D& T)
         // Sort the eigenvalues into ascending order
         if (eVals.x().real() > eVals.y().real())
         {
-            Swap(eVals.x(), eVals.y());
+            std::swap(eVals.x(), eVals.y());
         }
 
         return eVals;

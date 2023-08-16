@@ -48,9 +48,9 @@ SourceFiles
 #include "stdFoam.H"
 #include "autoPtr.H"
 #include "Hash.H"
-#include "SLListFwd.H"
 #include "ListPolicy.H"
 
+// <algorithm> already included by stdFoam.H
 #include <iterator>
 #include <limits>
 #include <type_traits>
@@ -154,9 +154,6 @@ public:
         //- Construct and initialize all entries to zero
         inline explicit FixedList(const Foam::zero);
 
-        //- Copy construct from C-array (deprecated)
-        inline explicit FixedList(const T list[N]);
-
         //- Copy construct
         inline FixedList(const FixedList<T, N>& list);
 
@@ -184,9 +181,6 @@ public:
             const UList<T>& list,
             const FixedList<label, N>& indices
         );
-
-        //- Construct from SLList. Runtime size check
-        inline explicit FixedList(const SLList<T>& list);
 
         //- Construct from Istream
         explicit FixedList(Istream& is);
@@ -245,7 +239,7 @@ public:
 
         //- Return the forward circular index, i.e. next index
         //- which returns to the first at the end of the list
-        inline label fcIndex(const label i) const;
+        inline label fcIndex(const label i) const noexcept;
 
         //- Return forward circular value (ie, next value in the list)
         inline const T& fcValue(const label i) const;
@@ -255,7 +249,7 @@ public:
 
         //- Return the reverse circular index, i.e. previous index
         //- which returns to the last at the beginning of the list
-        inline label rcIndex(const label i) const;
+        inline label rcIndex(const label i) const noexcept;
 
         //- Return reverse circular value (ie, previous value in the list)
         inline const T& rcValue(const label i) const;
@@ -303,9 +297,15 @@ public:
     // Edit
 
         //- Dummy function, to make FixedList consistent with List
+        //- Any resizing is ignored (Fatal with bad sizing in full debug).
         inline void resize(const label n);
 
+        //- Set val for \em all elements.
+        //- Any resizing is ignored (Fatal with bad sizing in full debug).
+        inline void resize_fill(const label n, const T& val);
+
         //- Dummy function, to make FixedList consistent with List
+        //- Any resizing is ignored (Fatal with bad sizing in full debug).
         inline void resize_nocopy(const label n);
 
         //- Dummy function, to make FixedList consistent with List
@@ -342,14 +342,8 @@ public:
         //- Return element of constant FixedList
         inline const T& operator[](const label i) const;
 
-        //- Assignment to array operator. Takes linear time
-        inline void operator=(const T list[N]);
-
         //- Assignment to UList operator. Takes linear time
         inline void operator=(const UList<T>& list);
-
-        //- Assignment to SLList operator. Takes linear time
-        inline void operator=(const SLList<T>& list);
 
         //- Assignment to an initializer list. Takes linear time
         inline void operator=(std::initializer_list<T> list);
@@ -427,6 +421,7 @@ public:
         static constexpr unsigned max_size() noexcept { return N; }
 
         //- Swap lists by swapping the content of the individual list elements
+        //  Essentially std::swap_ranges
         inline void swap(FixedList<T, N>& other);
 
 
@@ -529,6 +524,14 @@ public:
         {
             return this->contains(val, pos);
         }
+
+
+        //- Deprecated: copy construct from C-array
+        explicit FixedList(const T list[N]) { std::copy_n(list, N, v_); }
+
+        //- Deprecated: assignment from C-array
+        // \deprecated(2023-08) - use other assignment operators
+        void operator=(const T list[N]) { std::copy_n(list, N, v_); }
 };
 
 
@@ -551,17 +554,6 @@ template<class T, unsigned N>
 struct Hash<FixedList<T, N>> : FixedList<T, N>::hasher {};
 
 
-// * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * * //
-
-//- Swap FixedList contents - see FixedList::swap().
-//  Internally actually swaps the individual list elements
-template<class T, unsigned N>
-inline void Swap(FixedList<T, N>& a, FixedList<T, N>& b)
-{
-    a.swap(b);
-}
-
-
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 //- Read List contents from Istream, list must have the proper size!
@@ -582,6 +574,21 @@ Ostream& operator<<(Ostream& os, const FixedList<T, N>& list)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+//- Swap FixedList contents - see FixedList::swap().
+//  Essentially std::swap_ranges
+template<class T, unsigned N>
+inline void Swap(FixedList<T, N>& a, FixedList<T, N>& b)
+{
+    a.swap(b);
+}
 
 } // End namespace Foam
 

@@ -303,11 +303,21 @@ public:
         //- Move prepend an element to the front of the buffer
         inline void push_front(T&& val);
 
+        //- Construct an element at the front of the buffer,
+        //- return reference to the new element
+        template<class... Args>
+        inline T& emplace_front(Args&&... args);
+
         //- Copy append an element to the end of the buffer
         inline void push_back(const T& val);
 
-        //- Move Append an element to the end of the buffer
+        //- Move append an element to the end of the buffer
         inline void push_back(T&& val);
+
+        //- Construct an element at the end of the buffer,
+        //- return reference to the new element
+        template<class... Args>
+        inline T& emplace_back(Args&&... args);
 
         //- Shrink by moving the front of the buffer 1 or more times
         inline void pop_front(label n = 1);

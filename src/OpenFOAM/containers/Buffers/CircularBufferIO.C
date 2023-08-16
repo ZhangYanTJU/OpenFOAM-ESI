@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "List.H"
+#include "DynamicList.H"
 #include "Istream.H"
 #include "contiguous.H"
 
@@ -46,8 +46,8 @@ Foam::Ostream& Foam::CircularBuffer<T>::info(Ostream& os) const
     os  << "size=" << size() << '/' << capacity()
         << " begin=" << begin_
         << " end=" << end_
-        /// << " one=" << this->range_one() << this->array_one()
-        /// << " two=" << this->range_two() << this->array_two()
+        // << " one=" << this->range_one() << this->array_one()
+        // << " two=" << this->range_two() << this->array_two()
         << nl;
 
     return os;
@@ -57,91 +57,27 @@ Foam::Ostream& Foam::CircularBuffer<T>::info(Ostream& os) const
 template<class T>
 Foam::Istream& Foam::CircularBuffer<T>::readList(Istream& is)
 {
-    // Clear list
-    storage_.clear();
+    // Delegate to DynamicList for reading
+    DynamicList<T> elements(std::move(storage_));
+    elements.readList(is);
+
+    // Reset the list addressing range
     begin_ = 0;
-    end_ = 0;
+    end_ = elements.size();
 
-    // More work than it should be. We avoid completely filled buffers!
+    const label minLen = (end_ + min_size());
 
-    is.fatalCheck(FUNCTION_NAME);
-
-    token tok(is);
-
-    is.fatalCheck
-    (
-        "CircularBuffer<T>::readList(Istream&) : "
-        "reading first token"
-    );
-
-    if (tok.isCompound())
+    if (!elements.empty() && (elements.capacity() < minLen))
     {
-        // Compound: simply transfer contents
-
-        storage_.transfer
-        (
-            dynamicCast<token::Compound<List<T>>>
-            (
-                tok.transferCompoundToken(is)
-            )
-        );
-
-        end_ = storage_.size();
-        if (end_)
-        {
-            // Resize larger to avoid full buffer
-            storage_.resize(end_ + min_size());
-        }
+        // Avoid full buffer (beg/end ambiguity)
+        // Use setCapacity instead of resize to avoid additional doubling...
+        elements.setCapacity(minLen);
     }
-    else if (tok.isLabel())
-    {
-        // Label: could be int(..), int{...} or just a plain '0'
 
-        const label len = tok.labelToken();
+    // Use the entire storage
+    elements.resize(elements.capacity());
 
-        end_ = len;
-        if (end_)
-        {
-            // Resize larger to avoid full buffer
-            storage_.resize(end_ + min_size());
-        }
-
-        // Dispatch to UList reading...
-
-        UList<T> list(storage_.data(), end_);
-
-        is.putBack(tok);
-        list.readList(is);
-    }
-    else if (tok.isPunctuation(token::BEGIN_LIST))
-    {
-        // "(...)" : read as SLList and transfer contents
-
-        is.putBack(tok);    // Putback the opening bracket
-        SLList<T> sll(is);  // Read as singly-linked list
-
-        const label len = sll.size();
-
-        end_ = len;
-        if (end_)
-        {
-            // Resize larger to avoid full buffer
-            storage_.resize(end_ + min_size());
-
-            // Move assign each list element
-            for (label i = 0; i < len; ++i)
-            {
-                storage_[i] = std::move(sll.removeHead());
-            }
-        }
-    }
-    else
-    {
-        FatalIOErrorInFunction(is)
-            << "incorrect first token, expected <int> or '(', found "
-            << tok.info() << nl
-            << exit(FatalIOError);
-    }
+    storage_ = std::move(elements);
 
     return is;
 }

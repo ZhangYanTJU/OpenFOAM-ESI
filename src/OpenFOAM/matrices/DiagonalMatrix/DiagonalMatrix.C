@@ -131,7 +131,7 @@ void Foam::DiagonalMatrix<Type>::applyPermutation(const List<label>& p)
         label j = p[i];
         while (i != j)
         {
-            Swap((*this)[prev], (*this)[j]);
+            Foam::Swap((*this)[prev], (*this)[j]);
             pass[j] = true;
             prev = j;
             j = p[j];

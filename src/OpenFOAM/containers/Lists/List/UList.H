@@ -122,6 +122,10 @@ protected:
         //  Caution: method name subject to change
         inline void fill_uniform(const T& val);
 
+        //- Assign all entries to zero
+        //  Caution: method name subject to change
+        inline void fill_uniform(const Foam::zero);
+
         //- No copy assignment (default: shallow copy)
         //
         //  Assignment may need to be shallow (copy pointer)
@@ -628,15 +632,17 @@ public:
 template<>
 Istream& UList<char>::readList(Istream& is);
 
-//- Specialized writeEntry for character lists which always uses
-//- binary format.
+//- Character list writeEntry - always uses binary format.
 template<>
 void UList<char>::writeEntry(Ostream& os) const;
 
-//- Specialized writeList for character lists which always uses
-//- binary format.
+//- Character list writeList - always uses binary format.
 template<>
 Ostream& UList<char>::writeList(Ostream& os, const label /*unused*/) const;
+
+//- Character list assign zero - avoids Foam::zero casting ambiguities
+template<>
+void UList<char>::operator=(const Foam::zero);
 
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
@@ -692,13 +698,6 @@ inline void reverse(UList<T>& list, const label n);
 template<class T>
 inline void reverse(UList<T>& list);
 
-//- Exchange contents of lists - see UList::swap().
-template<class T>
-inline void Swap(UList<T>& a, UList<T>& b)
-{
-    a.swap(b);
-}
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -735,6 +734,13 @@ struct sizeOp
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+// Does not need std::swap or Foam::Swap() specialization
+// since UList is MoveConstructible and MoveAssignable
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

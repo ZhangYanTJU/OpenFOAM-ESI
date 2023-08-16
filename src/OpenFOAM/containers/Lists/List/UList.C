@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UList.H"
-#include "ListLoopM.H"
 #include "contiguous.H"
 #include "labelRange.H"
 
@@ -114,10 +113,9 @@ void Foam::UList<T>::deepCopy(const UList<T>& list)
     }
     else if (this->size_ > 0)
     {
-        // Can also dispatch with
+        // Can dispatch with
         // - std::execution::parallel_unsequenced_policy
         // - std::execution::unsequenced_policy
-
         std::copy(list.cbegin(), list.cend(), this->v_);
     }
 }
@@ -136,14 +134,18 @@ void Foam::UList<T>::deepCopy(const IndirectListBase<T, Addr>& list)
     }
     else if (this->size_)
     {
-        // copyList()
+        // Copy the indirect list contents
+
+        // NB: operator[] for list read access (eg, an indirect list)
+        // cannot replace with std::copy
 
         const label len = this->size_;
 
-        List_ACCESS(T, (*this), lhs);
-        for (label i = 0; i < len; ++i)
+        auto iter = this->v_;
+
+        for (label i = 0; i < len; (void)++i, (void)++iter)
         {
-            lhs[i] = list[i];
+            *iter = list[i];
         }
     }
 }
@@ -151,18 +153,11 @@ void Foam::UList<T>::deepCopy(const IndirectListBase<T, Addr>& list)
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
+// This is non-inlined to allow template specializations
 template<class T>
 void Foam::UList<T>::operator=(const Foam::zero)
 {
-    // fill_uniform()
-    const label len = this->size();
-
-    List_ACCESS(T, (*this), vp);
-
-    for (label i = 0; i < len; ++i)
-    {
-        vp[i] = Zero;
-    }
+    this->fill_uniform(Foam::zero{});
 }
 
 
@@ -186,13 +181,17 @@ Foam::label Foam::UList<T>::find(const T& val, label pos) const
 {
     const label len = this->size();
 
-    if (pos >= 0 && len)
+    if (pos >= 0)
     {
-        List_CONST_ACCESS(T, (*this), list);
+        // auto iter = std::find(this->begin(pos), this->end(), val);
+        // if (iter != this->end())
+        // {
+        //     return label(iter - this->begin());
+        // }
 
         while (pos < len)
         {
-            if (list[pos] == val)
+            if (this->v_[pos] == val)
             {
                 return pos;
             }
@@ -214,11 +213,9 @@ Foam::label Foam::UList<T>::rfind(const T& val, label pos) const
         pos = this->size()-1;
     }
 
-    List_CONST_ACCESS(T, (*this), list);
-
     while (pos >= 0)
     {
-        if (list[pos] == val)
+        if (this->v_[pos] == val)
         {
             return pos;
         }
@@ -235,28 +232,14 @@ Foam::label Foam::UList<T>::rfind(const T& val, label pos) const
 template<class T>
 bool Foam::UList<T>::operator==(const UList<T>& list) const
 {
-    /// OR:
-    /// return
-    /// (
-    ///     (this->size_ == list.size_)
-    //   && std::equal(cbegin(), cend(), list.cbegin())
-    /// );
-
-    const label len = this->size_;
-    if (len != list.size_)
-    {
-        return false;
-    }
-
-    List_CONST_ACCESS(T, (*this), lhs);
-    List_CONST_ACCESS(T, (list), rhs);
-
-    for (label i = 0; i < len; ++i)
-    {
-        if (!(lhs[i] == rhs[i])) return false;
-    }
-
-    return true;
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    return
+    (
+        (this->size_ == list.size_)
+     && std::equal(this->cbegin(), this->cend(), list.cbegin())
+    );
 }
 
 
@@ -270,35 +253,14 @@ bool Foam::UList<T>::operator!=(const UList<T>& list) const
 template<class T>
 bool Foam::UList<T>::operator<(const UList<T>& list) const
 {
-    /// OR:
-    /// return std::lexicographical_compare
-    /// (
-    ///     cbegin(), cend(),
-    ///     list.cbegin(), list.cend()
-    /// );
-
-    const const_iterator last1 = cend();
-    const const_iterator last2 = list.cend();
-
-    for
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    return std::lexicographical_compare
     (
-        const_iterator lhs = cbegin(), rhs = list.cbegin();
-        (lhs != last1) && (rhs != last2);
-        ++lhs, (void) ++rhs
-    )
-    {
-        if (*lhs < *rhs)
-        {
-            return true;
-        }
-        else if (*rhs < *lhs)
-        {
-            return false;
-        }
-    }
-
-    // Contents look to be identical, or lists have different sizes
-    return (this->size_ < list.size_);
+        this->cbegin(), this->cend(),
+        list.cbegin(), list.cend()
+    );
 }
 
 
@@ -328,6 +290,7 @@ bool Foam::UList<T>::operator>=(const UList<T>& list) const
 template<class T>
 void Foam::sort(UList<T>& list)
 {
+    // With which std::execution:: ?
     std::sort(list.begin(), list.end());
 }
 
@@ -335,6 +298,7 @@ void Foam::sort(UList<T>& list)
 template<class T, class Compare>
 void Foam::sort(UList<T>& list, const Compare& comp)
 {
+    // With which std::execution:: ?
     std::sort(list.begin(), list.end(), comp);
 }
 
@@ -342,6 +306,7 @@ void Foam::sort(UList<T>& list, const Compare& comp)
 template<class T>
 void Foam::stableSort(UList<T>& list)
 {
+    // With which std::execution:: ?
     std::stable_sort(list.begin(), list.end());
 }
 
@@ -349,6 +314,7 @@ void Foam::stableSort(UList<T>& list)
 template<class T, class Compare>
 void Foam::stableSort(UList<T>& list, const Compare& comp)
 {
+    // With which std::execution:: ?
     std::stable_sort(list.begin(), list.end(), comp);
 }
 

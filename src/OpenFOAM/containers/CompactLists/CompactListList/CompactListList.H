@@ -434,8 +434,6 @@ public:
 };
 
 
-// Note: uses default Foam::Swap (move construct/assignment)
-
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 template<class T>
@@ -449,6 +447,12 @@ Ostream& operator<<(Ostream& os, const CompactListList<T>& list)
 {
     return list.writeList(os, Detail::ListPolicy::short_length<T>::value);
 }
+
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+// Does not need std::swap or Foam::Swap() specialization
+// since CompactListList is MoveConstructible and MoveAssignable
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

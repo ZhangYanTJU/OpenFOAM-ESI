@@ -105,6 +105,10 @@ class DynamicList
         //  The 'nocopy' option will not attempt to recover old content
         inline void doResize(const bool nocopy, const label len);
 
+        //- Read List from Istream between '(' and ')' delimiters.
+        //- The size is not known a priori.
+        bool readBracketList(Istream& is);
+
 
 public:
 
@@ -212,8 +216,11 @@ public:
         //  setting values (as per List usage).
         inline void resize(const label len);
 
-        //- Alter addressable size and fill new entries with constant value
+        //- Alter addressable size and fill \em new entries with constant value
         inline void resize(const label len, const T& val);
+
+        //- Alter addressable size and set val for \em all addressed entries
+        inline void resize_fill(const label len, const T& val);
 
         //- Alter addressable list size, allocating new space if required
         //- \em without necessarily recovering old content.
@@ -324,7 +331,6 @@ public:
             //- Retain a (start,size) subset from the list.
             //  The range is subsetted with the list size itself to ensure
             //  result always addresses a valid section of the list.
-            //  Remaining elements are moved down.
             inline label subset(const labelRange& range);
 
             //- Retain a (start,size) subset from List.
@@ -461,26 +467,32 @@ Ostream& operator<<(Ostream& os, const DynamicList<T, SizeMin>& list)
 }
 
 
-// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
-
-// Exchange contents of lists - see DynamicList::swap().
-template<class T, int SizeMinA, int SizeMinB>
-inline void Swap(DynamicList<T, SizeMinA>& a, DynamicList<T, SizeMinB>& b)
-{
-    a.swap(b);
-}
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Hashing for List data
 template<class T, int SizeMin>
 struct Hash<DynamicList<T, SizeMin>> : List<T>::hasher {};
 
+} // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+//- Exchange contents of lists - see DynamicList::swap().
+//  Works for lists with dissimilar SizeMin template parameters.
+//  If the SizeMin template parameters are identical, a regular std::swap
+//  works (since DynamicList is MoveConstructible and MoveAssignable)
+template<class T, int SizeMinA, int SizeMinB>
+inline void Swap(DynamicList<T, SizeMinA>& a, DynamicList<T, SizeMinB>& b)
+{
+    a.swap(b);
+}
 
 } // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

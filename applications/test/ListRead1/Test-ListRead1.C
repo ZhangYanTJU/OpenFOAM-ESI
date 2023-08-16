@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,32 +23,44 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Application
+    Test-ListRead1
+
+Description
+    List reading
+
 \*---------------------------------------------------------------------------*/
 
-#include "List.H"
-#include "Istream.H"
-#include "token.H"
-#include "contiguous.H"
-#include <memory>
+#include "OSspecific.H"
+#include "argList.H"
+#include "wordRes.H"
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+#include "IOstreams.H"
+#include "Fstream.H"
+#include "StringStream.H"
+#include "scalar.H"
+#include "vector.H"
+
+#include "labelRange.H"
+#include "scalarList.H"
+#include "HashOps.H"
+#include "ListOps.H"
+#include "IndirectList.H"
+#include "SubList.H"
+#include "SliceList.H"
+#include "ListPolicy.H"
+
+#include <list>
+#include <numeric>
+#include <functional>
+
+using namespace Foam;
+
+label chunkSize = 128;
 
 template<class T>
-Foam::List<T>::List(Istream& is)
-:
-    UList<T>()
+bool readBracketList(List<T>& list, Istream& is)
 {
-    this->readList(is);
-}
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-template<class T>
-bool Foam::List<T>::readBracketList(Istream& is)
-{
-    List<T>& list = *this;
-
     is.fatalCheck(FUNCTION_NAME);
 
     token tok(is);
@@ -73,7 +84,7 @@ bool Foam::List<T>::readBracketList(Istream& is)
         // cleanup on failure.
 
         // The choice of chunk-size is somewhat arbitrary...
-        constexpr label chunkSize = 128;
+        // constexpr label chunkSize = 128;
         typedef std::unique_ptr<List<T>> chunkType;
 
         is >> tok;
@@ -87,7 +98,7 @@ bool Foam::List<T>::readBracketList(Istream& is)
         }
 
         // Use all storage
-        list.resize(list.capacity());
+        //private:// list.resize(list.capacity());
 
         // Start with a few slots, recover current memory where possible
         List<chunkType> chunks(16);
@@ -104,6 +115,9 @@ bool Foam::List<T>::readBracketList(Istream& is)
         label totalCount = 0;   // Total number of elements
         label localIndex = 0;   // Chunk-local index
 
+        InfoErr
+            << nl << "initial chunk: " << chunks[0]->size() << endl;
+
         while (!tok.isPunctuation(token::END_LIST))
         {
             is.putBack(tok);
@@ -116,6 +130,7 @@ bool Foam::List<T>::readBracketList(Istream& is)
                     chunks.resize(2*chunks.size());
                 }
 
+                InfoErr<< "new chunk" << endl;
                 chunks[nChunks] = chunkType(new List<T>(chunkSize));
                 ++nChunks;
                 localIndex = 0;
@@ -124,6 +139,11 @@ bool Foam::List<T>::readBracketList(Istream& is)
             is  >> chunks[nChunks-1]->operator[](localIndex);
             ++localIndex;
             ++totalCount;
+
+            InfoErr
+                << "    chunk=" << nChunks
+                << " index=" << localIndex
+                << " total=" << totalCount << nl;
 
             is.fatalCheck
             (
@@ -144,7 +164,7 @@ bool Foam::List<T>::readBracketList(Istream& is)
         }
 
         // Destination
-        list.setCapacity_nocopy(totalCount);
+        //private:// list.setCapacity_nocopy(totalCount);
         list.resize_nocopy(totalCount);
         auto dest = list.begin();
 
@@ -170,121 +190,45 @@ bool Foam::List<T>::readBracketList(Istream& is)
 }
 
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+//  Main program:
 
-template<class T>
-Foam::Istream& Foam::List<T>::readList(Istream& is)
+int main(int argc, char *argv[])
 {
-    List<T>& list = *this;
+    argList::noBanner();
+    argList::noParallel();
+    argList::noFunctionObjects();
+    argList::addOption("chunk-size",  "value", "change read chunk size");
+    argList::addArgument("file1 .. fileN");
 
-    is.fatalCheck(FUNCTION_NAME);
+    argList args(argc, argv, false, true);
 
-    token tok(is);
+    args.readIfPresent("chunk-size", chunkSize);
 
-    is.fatalCheck("List<T>::readList(Istream&) : reading first token");
+    Info<< "chunk-size: " << chunkSize << nl;
 
-    if (tok.isCompound())
+    if (args.size() <= 1)
     {
-        // Compound: simply transfer contents
-
-        list.clear();  // Clear old contents
-        list.transfer
-        (
-            dynamicCast<token::Compound<List<T>>>
-            (
-                tok.transferCompoundToken(is)
-            )
-        );
-    }
-    else if (tok.isLabel())
-    {
-        // Label: could be int(..), int{...} or just a plain '0'
-
-        const label len = tok.labelToken();
-
-        // Resize to length required
-        list.resize_nocopy(len);
-
-        if (is.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
-        {
-            // Binary and contiguous
-
-            if (len)
-            {
-                Detail::readContiguous<T>
-                (
-                    is,
-                    list.data_bytes(),
-                    list.size_bytes()
-                );
-
-                is.fatalCheck
-                (
-                    "List<T>::readList(Istream&) : "
-                    "reading binary block"
-                );
-            }
-        }
-        else
-        {
-            // Begin of contents marker
-            const char delimiter = is.readBeginList("List");
-
-            if (len)
-            {
-                if (delimiter == token::BEGIN_LIST)
-                {
-                    for (label i=0; i<len; ++i)
-                    {
-                        is >> list[i];
-
-                        is.fatalCheck
-                        (
-                            "List<T>::readList(Istream&) : "
-                            "reading entry"
-                        );
-                    }
-                }
-                else
-                {
-                    // Uniform content (delimiter == token::BEGIN_BLOCK)
-
-                    T elem;
-                    is >> elem;
-
-                    is.fatalCheck
-                    (
-                        "List<T>::readList(Istream&) : "
-                        "reading the single entry"
-                    );
-
-                    // Fill with the value
-                    UList<T>::operator=(elem);
-                }
-            }
-
-            // End of contents marker
-            is.readEndList("List");
-        }
-    }
-    else if (tok.isPunctuation(token::BEGIN_LIST))
-    {
-        // "(...)" : read as bracketed list
-        is.putBack(tok);
-        this->readBracketList(is);
+        InfoErr<< "Provide a file or files to test" << nl;
     }
     else
     {
-        list.clear();  // Clear old contents
+        for (label argi=1; argi < args.size(); ++argi)
+        {
+            const auto input = args.get<fileName>(argi);
+            IFstream is(input);
 
-        FatalIOErrorInFunction(is)
-            << "incorrect first token, expected <int> or '(', found "
-            << tok.info() << nl
-            << exit(FatalIOError);
+            while (!is.eof())
+            {
+                labelList list;
+
+                readBracketList(list, is);
+                Info<< "read: " << flatOutput(list) << endl;
+            }
+        }
     }
 
-    return is;
+    return 0;
 }
-
 
 // ************************************************************************* //

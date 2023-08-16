@@ -52,17 +52,41 @@ inline void Foam::List<T>::reAlloc(const label len)
 
 
 template<class T>
-template<class List2>
-inline void Foam::List<T>::copyList(const List2& list)
+template<class ListType>
+inline void Foam::List<T>::copyList(const ListType& list)
 {
     // NB: operator[] for list read access (eg, an indirect list)
     // cannot necessarily replace with std::copy
 
     const label len = this->size_;
 
-    for (label i = 0; i < len; ++i)
+    auto iter = this->v_;
+
+    for (label i = 0; i < len; (void)++i, (void)++iter)
     {
-        this->v_[i] = list[i];
+        *iter = list[i];
+    }
+}
+
+
+template<class T>
+template<class ListType, class ListIndices>
+inline void Foam::List<T>::copyList
+(
+    const ListType& list,
+    const ListIndices& indices
+)
+{
+    // NB: operator[] for list read access (eg, an indirect list)
+    // cannot necessarily replace with std::copy
+
+    const label len = this->size_;
+
+    auto iter = this->v_;
+
+    for (label i = 0; i < len; (void)++i, (void)++iter)
+    {
+        *iter = list[indices[i]];
     }
 }
 
@@ -71,8 +95,8 @@ template<class T>
 template<class InputIterator>
 inline Foam::List<T>::List
 (
-    InputIterator begIter,
-    InputIterator endIter,
+    InputIterator firstIter,
+    InputIterator lastIter,  // (unused)
     const label len
 )
 :
@@ -85,11 +109,9 @@ inline Foam::List<T>::List
         // Like std::copy() or std::copy_n()
         // but without any requirements on the iterator category
 
-        InputIterator iter = begIter;
-        for (label i = 0; i < len; ++i)
+        for (label i = 0; i < len; (void)++i, (void)++firstIter)
         {
-            this->v_[i] = *iter;
-            ++iter;
+            this->v_[i] = *firstIter;
         }
     }
 }
@@ -149,18 +171,18 @@ inline void Foam::List<T>::resize(const label len)
 
 
 template<class T>
+inline void Foam::List<T>::resize_fill(const label len, const T& val)
+{
+    this->reAlloc(len);
+    UList<T>::operator=(val);
+}
+
+
+template<class T>
 inline void Foam::List<T>::resize_nocopy(const label len)
 {
     this->reAlloc(len);
 }
-
-
-// template<class T>
-// inline void Foam::List<T>::resize_fill(const label len, const T& val)
-// {
-//     this->reAlloc(len);
-//     this->fill_uniform(val);
-// }
 
 
 template<class T>
@@ -196,9 +218,8 @@ inline T& Foam::List<T>::emplace_back(Args&&... args)
     const label idx = this->size();
     resize(idx + 1);
 
-    // move assign element
-    this->operator[](idx) = T(std::forward<Args>(args)...);
-    return this->back();
+    UList<T>::operator[](idx) = T(std::forward<Args>(args)...);
+    return UList<T>::operator[](idx);
 }
 
 
@@ -208,7 +229,7 @@ inline void Foam::List<T>::push_back(const T& val)
     const label idx = this->size();
     resize(idx + 1);
 
-    this->operator[](idx) = val;  // copy element
+    UList<T>::operator[](idx) = val;  // copy element
 }
 
 
@@ -218,7 +239,7 @@ inline void Foam::List<T>::push_back(T&& val)
     const label idx = this->size();
     resize(idx + 1);
 
-    this->operator[](idx) = std::move(val);  // move assign element
+    UList<T>::operator[](idx) = std::move(val);  // move assign element
 }
 
 
@@ -231,15 +252,10 @@ inline void Foam::List<T>::push_back(const UList<T>& list)
             << "Attempted push_back to self" << abort(FatalError);
     }
 
-    label idx = this->size();
-    const label n = list.size();
+    const label idx = this->size();
+    resize(idx + list.size());
 
-    resize(idx + n);
-
-    for (label i=0; i<n; ++i)
-    {
-        this->operator[](idx++) = list[i];  // copy element
-    }
+    std::copy(list.begin(), list.end(), this->begin(idx));
 }
 
 
@@ -247,14 +263,20 @@ template<class T>
 template<class Addr>
 inline void Foam::List<T>::push_back(const IndirectListBase<T, Addr>& list)
 {
-    label idx = this->size();
+    // Note: push_back will still work even if the indirect list
+    // actually references *this, since its source elements will not
+    // overlap the new destinations.
+
+    const label idx = this->size();
     const label n = list.size();
 
     resize(idx + n);
 
-    for (label i=0; i<n; ++i)
+    auto iter = this->begin(idx);
+
+    for (label i = 0; i < n; (void)++i, (void)++iter)
     {
-        this->operator[](idx++) = list[i];  // copy element
+        *iter = list[i];  // copy element
     }
 }
 

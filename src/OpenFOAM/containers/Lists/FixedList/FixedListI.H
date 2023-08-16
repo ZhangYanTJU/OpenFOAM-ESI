@@ -27,8 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UList.H"
-#include "SLList.H"
-// <algorithm> already included by stdFoam.H
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -56,32 +54,18 @@ inline Foam::FixedList<T, N>::FixedList(const Foam::zero)
 
 
 template<class T, unsigned N>
-inline Foam::FixedList<T, N>::FixedList(const T list[N])
-{
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list[i];
-    }
-}
-
-
-template<class T, unsigned N>
 inline Foam::FixedList<T, N>::FixedList(const FixedList<T, N>& list)
 {
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list.v_[i];
-    }
+    // std::execution::unsequenced_policy
+    std::copy(list.begin(), list.end(), v_);
 }
 
 
 template<class T, unsigned N>
 inline Foam::FixedList<T, N>::FixedList(FixedList<T, N>&& list)
 {
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = std::move(list.v_[i]);
-    }
+    // std::execution::unsequenced_policy
+    std::move(list.begin(), list.end(), v_);
 }
 
 
@@ -89,13 +73,7 @@ template<class T, unsigned N>
 inline Foam::FixedList<T, N>::FixedList(std::initializer_list<T> list)
 {
     checkSize(list.size());
-
-    auto iter = list.begin();
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = *iter;
-        ++iter;
-    }
+    std::copy_n(list.begin(), N, v_);
 }
 
 
@@ -103,11 +81,7 @@ template<class T, unsigned N>
 inline Foam::FixedList<T, N>::FixedList(const UList<T>& list)
 {
     checkSize(list.size());
-
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list[i];
-    }
+    std::copy_n(list.begin(), N, v_);
 }
 
 
@@ -119,7 +93,7 @@ inline Foam::FixedList<T, N>::FixedList
     const FixedList<label, N>& indices
 )
 {
-    for (unsigned i=0; i<N; ++i)
+    for (unsigned i = 0; i < N; ++i)
     {
         v_[i] = list[indices[i]];
     }
@@ -133,23 +107,9 @@ inline Foam::FixedList<T, N>::FixedList
     const FixedList<label, N>& indices
 )
 {
-    for (unsigned i=0; i<N; ++i)
+    for (unsigned i = 0; i < N; ++i)
     {
         v_[i] = list[indices[i]];
-    }
-}
-
-
-template<class T, unsigned N>
-inline Foam::FixedList<T, N>::FixedList(const SLList<T>& list)
-{
-    checkSize(list.size());
-
-    auto iter = list.begin();
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = *iter;
-        ++iter;
     }
 }
 
@@ -250,7 +210,7 @@ inline const T& Foam::FixedList<T, N>::back() const noexcept
 
 
 template<class T, unsigned N>
-inline Foam::label Foam::FixedList<T, N>::fcIndex(const label i) const
+inline Foam::label Foam::FixedList<T, N>::fcIndex(const label i) const noexcept
 {
     return (i == N-1 ? 0 : i+1);
 }
@@ -271,7 +231,7 @@ inline T& Foam::FixedList<T, N>::fcValue(const label i)
 
 
 template<class T, unsigned N>
-inline Foam::label Foam::FixedList<T, N>::rcIndex(const label i) const
+inline Foam::label Foam::FixedList<T, N>::rcIndex(const label i) const noexcept
 {
     return (i ? i-1 : N-1);
 }
@@ -333,6 +293,7 @@ inline bool Foam::FixedList<T, N>::uniform() const
 {
     if (empty()) return false;   // <- Compile-time disabled anyhow
 
+    // std::all_of()
     for (unsigned i=1; i<N; ++i)
     {
         if (v_[0] != v_[i])
@@ -362,6 +323,16 @@ inline void Foam::FixedList<T, N>::resize(const label n)
 
 
 template<class T, unsigned N>
+inline void Foam::FixedList<T, N>::resize_fill(const label n, const T& val)
+{
+    #ifdef FULLDEBUG
+    checkSize(n);
+    #endif
+    this->fill(val);
+}
+
+
+template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::resize_nocopy(const label n)
 {
     #ifdef FULLDEBUG
@@ -374,10 +345,7 @@ template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::fill(const T& val)
 {
     // Usually small enough that parallel execution is pointless...
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = val;
-    }
+    std::fill_n(v_, N, val);
 }
 
 
@@ -385,7 +353,9 @@ template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::fill(const Foam::zero)
 {
     // Usually small enough that parallel execution is pointless...
-    for (unsigned i=0; i<N; ++i)
+    // Cannot use std::fill (ambiguous conversions for bool, char, etc)
+
+    for (unsigned i = 0; i < N; ++i)
     {
         v_[i] = Zero;
     }
@@ -400,6 +370,7 @@ inline void Foam::FixedList<T, N>::swap(FixedList<T, N>& other)
         return;  // Self-swap is a no-op
     }
 
+    // Essentially std::swap_ranges
     for (unsigned i=0; i<N; ++i)
     {
         Foam::Swap(v_[i], other.v_[i]);
@@ -415,10 +386,8 @@ inline void Foam::FixedList<T, N>::transfer(FixedList<T, N>& list)
         return;  // Self-assignment is a no-op
     }
 
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = std::move(list[i]);
-    }
+    // std::execution::unsequenced_policy
+    std::move(list.begin(), list.end(), v_);
 }
 
 
@@ -445,50 +414,20 @@ inline const T& Foam::FixedList<T, N>::operator[](const label i) const
 
 
 template<class T, unsigned N>
-inline void Foam::FixedList<T, N>::operator=(const T list[N])
-{
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list[i];
-    }
-}
-
-template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::operator=(const UList<T>& list)
 {
     checkSize(list.size());
-
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list[i];
-    }
+    std::copy_n(list.begin(), N, v_);
 }
 
-template<class T, unsigned N>
-inline void Foam::FixedList<T, N>::operator=(const SLList<T>& list)
-{
-    checkSize(list.size());
-
-    auto iter = list.begin();
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = *iter;
-        ++iter;
-    }
-}
 
 template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::operator=(std::initializer_list<T> list)
 {
     checkSize(list.size());
-
-    auto iter = list.begin();
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = *iter;
-        ++iter;
-    }
+    std::copy_n(list.begin(), N, v_);
 }
+
 
 template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::operator=(const T& val)
@@ -512,11 +451,10 @@ inline void Foam::FixedList<T, N>::operator=(const FixedList<T, N>& list)
         return;  // Self-assignment is a no-op
     }
 
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = list.v_[i];
-    }
+    // std::execution::unsequenced_policy
+    std::copy(list.begin(), list.end(), v_);
 }
+
 
 template<class T, unsigned N>
 inline void Foam::FixedList<T, N>::operator=(FixedList<T, N>&& list)
@@ -526,10 +464,8 @@ inline void Foam::FixedList<T, N>::operator=(FixedList<T, N>&& list)
         return;  // Self-assignment is a no-op
     }
 
-    for (unsigned i=0; i<N; ++i)
-    {
-        v_[i] = std::move(list.v_[i]);
-    }
+    // std::execution::unsequenced_policy
+    std::move(list.begin(), list.end(), v_);
 }
 
 

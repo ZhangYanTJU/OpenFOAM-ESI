@@ -93,20 +93,6 @@ inline const Foam::Matrix<Form, Type>& Foam::Matrix<Form, Type>::null()
 
 
 template<class Form, class Type>
-inline Foam::label Foam::Matrix<Form, Type>::m() const noexcept
-{
-    return mRows_;
-}
-
-
-template<class Form, class Type>
-inline Foam::label Foam::Matrix<Form, Type>::n() const noexcept
-{
-    return nCols_;
-}
-
-
-template<class Form, class Type>
 inline Foam::label Foam::Matrix<Form, Type>::size() const
 {
     return mRows_ * nCols_;
@@ -181,11 +167,12 @@ inline bool Foam::Matrix<Form, Type>::uniform() const
 {
     const label len = size();
 
-    if (len == 0)
+    if (!len)
     {
         return false;
     }
 
+    // std::all_of()
     for (label idx = 1; idx < len; ++idx)
     {
         if (v_[0] != v_[idx])

@@ -202,12 +202,29 @@ int main(int argc, char *argv[])
         Info<< "get<3>: " << list1.get<3>() << nl;
 // Will not compile:  Info<< "get<4>: " << list1.get<4>() << nl;
 
-        label a[4] = {0, 1, 2, 3};
-        FixedList<label, 4> list2(a);
+        // Test deprecated form
+        label array2[4] = {0, 1, 2, 3};
+        FixedList<label, 4> list2(array2);
 
         Info<< "list2:" << list2
             << " hash:" << FixedList<label, 4>::hasher()(list2) << nl
             << " hash:" << Hash<FixedList<label, 4>>()(list2) << nl;
+
+
+        // Test deprecated form
+        SLList<label> sllist3;
+        {
+            sllist3.push_back(0);
+            sllist3.push_back(1);
+            sllist3.push_back(2);
+            sllist3.push_back(3);
+        }
+        FixedList<label, 4> list3(sllist3);
+
+        Info<< "list3:" << list3 << nl;
+        // Test deprecated forms
+        list3 = array2;
+        list2 = sllist3;
 
 
         // Using FixedList for content too
@@ -237,8 +254,8 @@ int main(int argc, char *argv[])
         Info<< "mem: "
             << name(list1.data()) << " " << name(list2.data()) << nl;
 
-        Swap(list1, list2);
-        Info<< "The Swap() function" << nl;
+        Foam::Swap(list1, list2);
+        Info<< "Foam::Swap() function" << nl;
         Info<< "list1: " << list1 << nl
             << "list2: " << list2 << nl;
 

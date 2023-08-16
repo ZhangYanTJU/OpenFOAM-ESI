@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,27 +36,28 @@ Foam::label Foam::DynamicList<T, SizeMin>::removeElements
     const labelRange& slice
 )
 {
-    if (!slice.size())
+    if (!slice.good())
     {
         // No-op
         return 0;
     }
-    else if (slice.end_value() >= this->size())
+
+    // Note: already checked for valid begin_value before
+    if (slice.end_value() >= this->size())
     {
         // Remove entire tail
         this->resize(slice.begin_value());
     }
     else
     {
-        // Copy (swap) down, from range rbegin() -> rend()
-        // followed by truncation
-        label j = slice.begin_value();
-        const label len = this->size();
-
-        for (label i = slice.end_value(); i < len; ++i, ++j)
-        {
-            Foam::Swap(this->operator[](i), this->operator[](j));
-        }
+        // Move all trailing elements down into space previously
+        // occupied by the slice. Truncate after
+        std::move
+        (
+            this->begin(slice.end_value()),
+            this->end(),
+            this->begin(slice.begin_value())
+        );
 
         this->resize(this->size() - slice.size());
     }
@@ -73,14 +74,14 @@ Foam::label Foam::DynamicList<T, SizeMin>::subsetElements
 {
     if (slice.begin_value() > 0)
     {
-        // Copy (swap) down
-        label j = slice.begin_value();
-        const label len = slice.size();
-
-        for (label i = 0; i < len; ++i, ++j)
-        {
-            Foam::Swap(this->operator[](i), this->operator[](j));
-        }
+        // Move elements down.
+        // Since begin_value > 0, the initial destination is non-overlapping
+        std::move
+        (
+            this->begin(slice.begin_value()),
+            this->begin(slice.end_value()),
+            this->begin()
+        );
     }
 
     // Don't need min size, since slice size was already checked before

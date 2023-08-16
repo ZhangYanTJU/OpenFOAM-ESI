@@ -35,10 +35,11 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef blockMeshTools_H
-#define blockMeshTools_H
+#ifndef Foam_blockMeshTools_H
+#define Foam_blockMeshTools_H
 
 #include "dictionary.H"
+#include "DynamicList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

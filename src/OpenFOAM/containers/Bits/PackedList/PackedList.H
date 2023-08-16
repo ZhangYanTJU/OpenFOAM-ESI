@@ -457,10 +457,10 @@ public:
         inline reference operator[](const label i);
 
         //- Copy assignment.
-        inline void operator=(const PackedList<Width>& lst);
+        inline void operator=(const PackedList<Width>& list);
 
         //- Move assignment.
-        inline void operator=(PackedList<Width>&& lst);
+        inline void operator=(PackedList<Width>&& list);
 
         //- Assign all entries to the given value. fill()
         inline void operator=(const unsigned int val);

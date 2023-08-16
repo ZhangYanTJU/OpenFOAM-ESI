@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,12 +40,14 @@ void Foam::blockMeshTools::read
 
     if (tok.isLabel())
     {
+        // Label: should be int(..)
+
         const label len = tok.labelToken();
 
-        // Set list length to that read
-        list.resize(len);
+        // Resize to length required
+        list.resize_nocopy(len);
 
-        // Read beginning of contents
+        // Begin of contents marker
         const char delimiter = is.readBeginList("List");
 
         if (len)
@@ -59,12 +61,15 @@ void Foam::blockMeshTools::read
             }
         }
 
-        // Read end of contents
+        // End of contents marker
         is.readEndList("List");
     }
     else if (tok.isPunctuation(token::BEGIN_LIST))
     {
-        SLList<T> sll;
+        // "(...)" : read with DynamicList and transfer contents
+
+        DynamicList<T> elements(std::move(list));
+        elements.clear();  // Reset addressing only
 
         is >> tok;
         is.fatalCheck(FUNCTION_NAME);
@@ -73,16 +78,14 @@ void Foam::blockMeshTools::read
         {
             is.putBack(tok);
 
-            T elem;
-            read(is, elem, dict);
-            sll.append(elem);
+            read(is, elements.emplace_back(), dict);
 
             is >> tok;
             is.fatalCheck(FUNCTION_NAME);
         }
 
-        // Convert the singly-linked list to this list
-        list = std::move(sll);
+        // Transfer back to regular list
+        list = std::move(elements);
     }
     else
     {

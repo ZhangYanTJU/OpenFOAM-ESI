@@ -128,7 +128,7 @@ Foam::Matrix<Form, Type>::Matrix(const label m, const label n, const Foam::zero)
 
     doAlloc();
 
-    std::fill(begin(), end(), Zero);
+    std::fill_n(begin(), size(), Zero);
 }
 
 
@@ -143,7 +143,7 @@ Foam::Matrix<Form, Type>::Matrix(const label m, const label n, const Type& val)
 
     doAlloc();
 
-    std::fill(begin(), end(), val);
+    std::fill_n(begin(), size(), val);
 }
 
 
@@ -244,10 +244,7 @@ inline Foam::Matrix<Form, Type>::Matrix
 template<class Form, class Type>
 Foam::Matrix<Form, Type>::~Matrix()
 {
-    if (v_)
-    {
-        delete[] v_;
-    }
+    delete[] v_;
 }
 
 
@@ -594,14 +591,14 @@ void Foam::Matrix<Form, Type>::operator=
 template<class Form, class Type>
 void Foam::Matrix<Form, Type>::operator=(const Type& val)
 {
-    std::fill(begin(), end(), val);
+    std::fill_n(begin(), size(), val);
 }
 
 
 template<class Form, class Type>
 void Foam::Matrix<Form, Type>::operator=(const Foam::zero)
 {
-    std::fill(begin(), end(), Zero);
+    std::fill_n(begin(), size(), Zero);
 }
 
 
