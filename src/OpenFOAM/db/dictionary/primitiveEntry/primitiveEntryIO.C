@@ -262,7 +262,7 @@ Foam::primitiveEntry::primitiveEntry
     ITstream
     (
         static_cast<IOstreamOption>(is),
-        is.name() + '.' + key
+        fileName::concat(is.name(), key, '/')
     )
 {
     readEntry(dict, is);

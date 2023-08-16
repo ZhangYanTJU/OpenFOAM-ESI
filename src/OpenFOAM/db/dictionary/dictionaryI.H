@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,15 +59,19 @@ inline Foam::fileName& Foam::dictionary::name() noexcept
 
 inline Foam::word Foam::dictionary::dictName() const
 {
-    word scopedName(name_.name());
+    // With other (non-slash) separator. Eg, with '.'
+    // word scopedName(name_.name());
+    //
+    // const auto i = scopedName.rfind('.');
+    // if (i == std::string::npos)
+    // {
+    //     return scopedName;
+    // }
+    //
+    // return scopedName.substr(i+1);
 
-    const auto i = scopedName.rfind('.');
-    if (i == std::string::npos)
-    {
-        return scopedName;
-    }
-
-    return scopedName.substr(i+1);
+    // With '/' separator, this is just fileName::name()
+    return name_.name();
 }
 
 

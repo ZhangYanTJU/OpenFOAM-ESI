@@ -267,7 +267,7 @@ Foam::primitiveEntry::primitiveEntry
     entry(key),
     ITstream(is)
 {
-    ITstream::name() += '.' + key;
+    ITstream::name() = fileName::concat(ITstream::name(), key, '/');
 }
 
 

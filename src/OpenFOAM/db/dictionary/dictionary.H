@@ -43,35 +43,44 @@ Description
     as a bootstrap dictionary for the objectRegistry data dictionaries.
 
 Note
-    Within dictionaries, entries can be referenced by using the '$' syntax
-    familiar from shell programming.
-    A '.' separator is used when referencing sub-dictionary entries.
-    Leading '.' prefixes can be used to specify an entry from a parent
-    dictionary.
-    An initial '^' anchor (or ':' for backward compatibility) specifies
-    starting from the top-level entry.
-    For example,
+    Within dictionaries, entries can be referenced by using the
+    \c '$' syntax familiar from shell programming.
+    Similarly, the \c '/' separator is used when referencing
+    sub-dictionary entries:
+    - <b> "./" </b> : the current dictionary
+    - <b> "../" </b> : the parent dictionary
+    - <b> "../../" </b> : the grandparent dictionary
+    .
 
+    An initial \c '/' anchor specifies that the path starts from the
+    top-level entry. It is also possible to use the '${}' syntax for clarity.
+
+    For example,
     \verbatim
     key1        val1;
-    key2        $key1;   // use key1 value from current scope
-    key3        $.key1;  // use key1 value from current scope
+    key2        $key1;    // Use key1 value from current scope
+    key3        $./key1;  // Use key1 value from current scope
 
     subdict1
     {
         key1        val1b;
-        key2        $..key1; // use key1 value from parent
+        key2        $../key1;  // Use key1 value from parent
         subdict2
         {
             key2    val2;
-            key3    $...key1; // use key1 value from grandparent
+            key3    $../../key1;  // Use key1 value from grandparent
         }
     }
 
-    key4        $^subdict1.subdict2.key3;  // lookup with absolute scoping
+    key4        $/subdict1/subdict2/key3;  // Lookup with absolute scoping
     \endverbatim
 
-    It is also possible to use the '${}' syntax for clarity.
+    Prior to OpenFOAM-v1712, a dot-scoping (.) syntax was used, which is
+    still supported (AUG-2023) but deprecated in favour of the
+    less ambiguous slash-scoping (/) syntax.
+    With dot-scoping, an initial \c '^' anchor, or an initial (:), was used
+    to specify that the path starts from the top-level entry.
+
 
 SourceFiles
     dictionary.C
