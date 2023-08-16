@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -78,23 +78,23 @@ Usage
 
       - Change solver:
         \verbatim
-           foamDictionary system/fvSolution -entry solvers.p.solver -set PCG
+           foamDictionary system/fvSolution -entry solvers/p/solver -set PCG
         \endverbatim
 
       - Print bc type:
         \verbatim
-           foamDictionary 0/U -entry boundaryField.movingWall.type
+           foamDictionary 0/U -entry boundaryField/movingWall/type
         \endverbatim
 
       - Change bc parameter:
         \verbatim
-           foamDictionary 0/U -entry boundaryField.movingWall.value \
+           foamDictionary 0/U -entry boundaryField/movingWall/value \
              -set "uniform (2 0 0)"
         \endverbatim
 
       - Change whole bc type:
         \verbatim
-          foamDictionary 0/U -entry boundaryField.movingWall \
+          foamDictionary 0/U -entry boundaryField/movingWall \
             -set "{type uniformFixedValue; uniformValue (2 0 0);}"
         \endverbatim
 
@@ -113,7 +113,7 @@ Usage
       - Change patch type:
         \verbatim
           foamDictionary constant/polyMesh/boundary \
-            -entry entry0.fixedWalls.type -set patch
+            -entry entry0/fixedWalls/type -set patch
         \endverbatim
         This uses special parsing of Lists which stores these in the
         dictionary with keyword 'entryDDD' where DDD is the position
@@ -140,21 +140,31 @@ using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- Convert older ':' scope syntax to newer '.' scope syntax,
+//- Convert very old ':' scope syntax to less old '.' scope syntax,
 //  but leave anything with '/' delimiters untouched
 bool upgradeScope(word& entryName)
 {
-    if (!entryName.contains('/') && entryName.contains(':'))
+    if (entryName.contains(':') && !entryName.contains('/'))
     {
-        const wordList names(fileName(entryName).components(':'));
+        InfoErr
+            << "Warning: upgrading very old ':' scope syntax: \""
+            << entryName << '"' << endl;
 
-        entryName.resize(0);
+        // Make copy - cannot use stringOps::split
+        const wordList cmpts(fileName(entryName).components(':'));
 
-        for (const word& name : names)
+        entryName.clear();
+
+        bool addSep = false;
+
+        for (const word& cmpt : cmpts)
         {
-            if (entryName.size()) entryName.append(".");
-
-            entryName.append(name);
+            if (addSep) entryName += '.';
+            if (!cmpt.empty())
+            {
+                addSep = true;
+                entryName += cmpt;
+            }
         }
 
         return true;
@@ -176,12 +186,12 @@ public:
     dictAndKeyword(const word& scopedName)
     {
         auto i = scopedName.rfind('/');
-        if (i == string::npos)
+        if (i == std::string::npos)
         {
             i = scopedName.rfind('.');
         }
 
-        if (i != string::npos)
+        if (i != std::string::npos)
         {
             dict_ = scopedName.substr(0, i);
             key_  = scopedName.substr(i+1);
@@ -192,15 +202,9 @@ public:
         }
     }
 
-    inline const word& dict() const
-    {
-        return dict_;
-    }
+    const word& dict() const noexcept { return dict_; }
 
-    inline const word& key() const
-    {
-        return key_;
-    }
+    const word& key() const noexcept { return key_; }
 };
 
 
@@ -347,7 +351,7 @@ int main(int argc, char *argv[])
     if (disableEntries)
     {
         // Report on stderr (once) to avoid polluting the output
-        if (Pstream::master())
+        if (UPstream::master())
         {
             Serr<< "Not expanding variables or dictionary directives" << endl;
         }
@@ -359,7 +363,7 @@ int main(int argc, char *argv[])
         const unsigned prec = args.getOrDefault<unsigned>("precision", 0u);
         if (prec)
         {
-            // if (Pstream::master())
+            // if (UPstream::master())
             // {
             //     Serr<< "Output write precision set to " << prec << endl;
             // }
@@ -479,12 +483,12 @@ int main(int argc, char *argv[])
             }
             changed = true;
 
-            // Print the changed entry
             const auto finder = dict.csearchScoped(scopedName, keyType::REGEX);
 
+            // Print the changed entry to stderr
             if (finder.good())
             {
-                Info<< finder.ref();
+                InfoErr<< finder.ref();
             }
         }
         else if (args.found("remove"))
@@ -539,6 +543,7 @@ int main(int argc, char *argv[])
             }
             else if (args.found("keywords"))
             {
+                // Report keywords to stdout
                 for (const entry& e : finder.dict())
                 {
                     Info<< e.keyword() << endl;
@@ -546,32 +551,36 @@ int main(int argc, char *argv[])
             }
             else if (args.found("value"))
             {
+                // Report value to stdout
                 if (finder.isDict())
                 {
                     Info<< finder.dict();
                 }
                 else if (finder.ref().isStream())
                 {
+                    bool addSep = false;
+
                     const tokenList& tokens = finder.ref().stream();
-                    forAll(tokens, i)
+
+                    for (const token& tok : tokens)
                     {
-                        Info<< tokens[i];
-                        if (i < tokens.size() - 1)
-                        {
-                            Info<< token::SPACE;
-                        }
+                        if (addSep) Info<< token::SPACE;
+                        addSep = true;
+                        Info<< tok;
                     }
                     Info<< endl;
                 }
             }
             else
             {
+                // Report entry to stdout
                 Info<< finder.ref();
             }
         }
     }
     else if (args.found("keywords"))
     {
+        // Report keywords to stdout
         for (const entry& e : dict)
         {
             Info<< e.keyword() << endl;
@@ -579,11 +588,13 @@ int main(int argc, char *argv[])
     }
     else if (optDiff)
     {
+        // Report difference to stdout
         removeDict(dict, diffDict);
         dict.write(Info, false);
     }
     else
     {
+        // Report dictionary to stdout
         dict.write(Info, false);
     }
 

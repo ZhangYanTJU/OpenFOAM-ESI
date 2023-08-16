@@ -153,7 +153,7 @@ Foam::dictionary::dictionary
     parent_(parentDict)
 {
     transfer(dict);
-    name() = fileName::concat(parentDict.name(), name(), '.');
+    name() = fileName::concat(parentDict.name(), name(), '/');
 }
 
 
@@ -658,7 +658,7 @@ Foam::entry* Foam::dictionary::add(entry* entryPtr, bool mergeEntry)
         if (hashedEntries_.insert(entryPtr->keyword(), entryPtr))
         {
             entryPtr->name() =
-                fileName::concat(name(), entryPtr->keyword(), '.');
+                fileName::concat(name(), entryPtr->keyword(), '/');
 
             if (entryPtr->keyword().isPattern())
             {
@@ -684,7 +684,7 @@ Foam::entry* Foam::dictionary::add(entry* entryPtr, bool mergeEntry)
     if (hashedEntries_.insert(entryPtr->keyword(), entryPtr))
     {
         entryPtr->name() =
-            fileName::concat(name(), entryPtr->keyword(), '.');
+            fileName::concat(name(), entryPtr->keyword(), '/');
 
         parent_type::push_back(entryPtr);
 

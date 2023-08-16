@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ namespace
     template<class WcIterator, class ReIterator>
     bool findInPatterns
     (
-        const bool patternMatch,
+        const bool literal,
         const Foam::word& keyword,
         WcIterator& wcIter,
         ReIterator& reIter
@@ -48,9 +48,9 @@ namespace
         {
             if
             (
-                patternMatch
-              ? reIter()->match(keyword)
-              : wcIter()->keyword() == keyword
+                literal
+              ? wcIter()->keyword() == keyword
+              : reIter()->match(keyword)
             )
             {
                 return true;
@@ -76,7 +76,7 @@ Foam::dictionary::const_searcher Foam::dictionary::csearchDotScoped
 {
     auto scopePos = keyword.find('.');
 
-    if (scopePos == string::npos)
+    if (scopePos == std::string::npos)
     {
         // Normal, non-scoped search
         return csearch(keyword, matchOpt);
@@ -141,7 +141,7 @@ Foam::dictionary::const_searcher Foam::dictionary::csearchDotScoped
             // Local entry:
             finder = csearch(keyword.substr(0, scopePos), matchOpt);
 
-            if (scopePos == string::npos)
+            if (scopePos == std::string::npos)
             {
                 // Parsed the whole word. Return entry or null.
                 return finder;
@@ -176,7 +176,7 @@ Foam::dictionary::const_searcher Foam::dictionary::csearchSlashScoped
 
     const auto slash = keyword.find('/');
 
-    if (slash == string::npos)
+    if (slash == std::string::npos)
     {
         // No slashes:
         // Can use normal (non-scoped) search at the current dictionary level
@@ -282,8 +282,8 @@ Foam::dictionary::const_searcher Foam::dictionary::csearch
         auto wcLink = patterns_.cbegin();
         auto reLink = regexps_.cbegin();
 
-        // Find in patterns using regular expressions only
-        if (findInPatterns(true, keyword, wcLink, reLink))
+        // Find in patterns : non-literal matching
+        if (findInPatterns(false, keyword, wcLink, reLink))
         {
             finder.set(*wcLink);
             return finder;
@@ -334,7 +334,7 @@ Foam::dictionary::const_searcher Foam::dictionary::csearchScoped
 
     if (keyword[0] == ':' || keyword[0] == '^')
     {
-        // It is ':' scoped - force non-recusive searching
+        // It is ':' scoped - force non-recursive searching
         matchOpt = keyType::option(matchOpt & ~(keyType::RECURSIVE));
 
         // Ascend to top-level
@@ -397,9 +397,9 @@ const Foam::dictionary* Foam::dictionary::cfindScopedDict
 
     fileName path(dictPath); // Work on copy
     path.clean();  // Remove unneeded ".."
-    const wordList dictCmpts(path.components()); // Split on '/'
+    auto dictCmpts = stringOps::split(path, '/');  // Split on '/'
 
-    for (const word& cmpt : dictCmpts)
+    for (const auto& cmpt : dictCmpts)
     {
         if (cmpt == ".")
         {
@@ -424,10 +424,12 @@ const Foam::dictionary* Foam::dictionary::cfindScopedDict
         }
         else
         {
-            // Non-recursive, no patternMatch
-            // -> can do direct lookup, without csearch(cmpt, false, false);
+            // Non-recursive, no patternMatch:
+            // do direct lookup, without csearch(cmpt, keyType::LITERAL)
 
-            auto iter = dictPtr->hashedEntries_.cfind(cmpt);
+            const word cmptName(cmpt.str(), false);
+
+            auto iter = dictPtr->hashedEntries_.cfind(cmptName);
 
             if (iter.good())
             {
@@ -440,7 +442,7 @@ const Foam::dictionary* Foam::dictionary::cfindScopedDict
                 else
                 {
                     FatalIOErrorInFunction(*dictPtr)
-                        << "Found entry '" << cmpt
+                        << "Found entry '" << cmptName
                         << "' but not a dictionary, while searching scoped"
                         << nl
                         << "    " << path
@@ -527,9 +529,9 @@ Foam::dictionary* Foam::dictionary::makeScopedDict(const fileName& dictPath)
         }
         else
         {
-            // Non-recursive, no patternMatch
-            // -> can do direct lookup,
-            // without csearch(cmptName, keyType::LITERAL);
+            // Non-recursive, no patternMatch:
+            // do direct lookup, without csearch(cmptName, keyType::LITERAL)
+
             const word cmptName(cmpt.str(), false);
 
             auto iter = dictPtr->hashedEntries_.find(cmptName);
@@ -589,8 +591,8 @@ bool Foam::dictionary::remove(const word& keyword)
         auto wcLink = patterns_.begin();
         auto reLink = regexps_.begin();
 
-        // Find in pattern using exact match only
-        if (findInPatterns(false, keyword, wcLink, reLink))
+        // Find in patterns : literal matching
+        if (findInPatterns(true, keyword, wcLink, reLink))
         {
             patterns_.remove(wcLink);
             regexps_.remove(reLink);
@@ -650,8 +652,8 @@ bool Foam::dictionary::changeKeyword
                 auto wcLink = patterns_.begin();
                 auto reLink = regexps_.begin();
 
-                // Find in patterns using exact match only
-                if (findInPatterns(false, iter2()->keyword(), wcLink, reLink))
+                // Find in patterns : literal matching
+                if (findInPatterns(true, iter2()->keyword(), wcLink, reLink))
                 {
                     patterns_.remove(wcLink);
                     regexps_.remove(reLink);
@@ -674,7 +676,7 @@ bool Foam::dictionary::changeKeyword
 
     // Change name and HashTable, but leave DL-List untouched
     iter()->keyword() = newKeyword;
-    iter()->name() = name() + '.' + newKeyword;
+    iter()->name() = fileName::concat(name(), newKeyword, '/');
     hashedEntries_.erase(oldKeyword);
     hashedEntries_.insert(newKeyword, iter());
 

@@ -39,7 +39,7 @@ Foam::dictionary::dictionary
     bool keepHeader
 )
 :
-    name_(fileName::concat(parentDict.name(), name, '.')),
+    name_(fileName::concat(parentDict.name(), name, '/')),
     parent_(parentDict)
 {
     read(is, keepHeader);
