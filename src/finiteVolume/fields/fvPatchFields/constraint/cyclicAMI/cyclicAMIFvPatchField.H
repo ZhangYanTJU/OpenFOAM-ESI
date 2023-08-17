@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,16 +41,24 @@ Usage
     <patchName>
     {
         type            cyclicAMI;
+        value           <initial value>;
+        neighbourValue  <initial value of neighbour patch cells>;
     }
     \endverbatim
 
 Note
     The outer boundary of the patch pairs must be similar, i.e. if the owner
-    patch is transformed to the neighbour patch, the outer perimiter of each
+    patch is transformed to the neighbour patch, the outer perimeter of each
     patch should be identical (or very similar).
+
+    The \c neighbourValue is only needed when running distributed,
+    i.e. the neighbour cells are on a different processor from the owner cells.
+    It guarantees consistent restart e.g. when doing a snGrad and avoids
+    additional communication.
 
 See also
     Foam::AMIInterpolation
+    Foam::processorFvPatchField
 
 SourceFiles
     cyclicAMIFvPatchField.C
@@ -79,13 +87,54 @@ class cyclicAMIFvPatchField
     virtual public cyclicAMILduInterfaceField,
     public coupledFvPatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicAMIFvPatch& cyclicAMIPatch_;
 
 
+        // Sending and receiving (distributed AMI)
+
+            //- Current range of send requests (non-blocking)
+            mutable labelRange sendRequests_;
+
+            //- Current range of recv requests (non-blocking)
+            mutable labelRange recvRequests_;
+
+            //- Send buffers
+            mutable PtrList<List<Type>> sendBufs_;
+
+            //- Receive buffers_
+            mutable PtrList<List<Type>> recvBufs_;
+
+            //- Scalar send buffers
+            mutable PtrList<List<solveScalar>> scalarSendBufs_;
+
+            //- Scalar receive buffers
+            mutable PtrList<List<solveScalar>> scalarRecvBufs_;
+
+            //- Neighbour coupled internal cell data
+            mutable autoPtr<Field<Type>> patchNeighbourFieldPtr_;
+
+
     // Private Member Functions
+
+        //- Return the AMI corresponding to the owner side
+        const AMIPatchToPatchInterpolation& ownerAMI() const
+        {
+            return
+            (
+                cyclicAMIPatch_.owner()
+              ? cyclicAMIPatch_.AMI()
+              : cyclicAMIPatch_.neighbPatch().AMI()
+            );
+        }
+
+        //- All receive/send requests have completed
+        virtual bool all_ready() const;
+
+        //- Return neighbour coupled internal cell data
+        tmp<Field<Type>> patchNeighbourField(const Field<Type>&) const;
 
         //- Return neighbour side field given internal fields
         template<class Type2>
@@ -102,7 +151,6 @@ class cyclicAMIFvPatchField
             const Field<scalar>&,
             const label
         ) const;
-
 
         template<class Type2>
         void collectStencilData
@@ -178,28 +226,54 @@ public:
         }
 
 
-    // Member functions
+    // Member Functions
 
-        // Access
-
-            //- Return local reference cast into the cyclic AMI patch
-            const cyclicAMIFvPatch& cyclicAMIPatch() const
-            {
-                return cyclicAMIPatch_;
-            }
+        //- Return local reference cast into the cyclic AMI patch
+        const cyclicAMIFvPatch& cyclicAMIPatch() const noexcept
+        {
+            return cyclicAMIPatch_;
+        }
 
 
-        // Evaluation functions
+    // Coupling
 
-            //- Return true if coupled. Note that the underlying patch
-            //  is not coupled() - the points don't align.
-            virtual bool coupled() const;
+        //- Return true if coupled. Note that the underlying patch
+        //  is not coupled() - the points don't align.
+        virtual bool coupled() const { return cyclicAMIPatch_.coupled(); }
 
-            //- Return neighbour coupled internal cell data
-            virtual tmp<Field<Type>> patchNeighbourField() const;
+        //- Are all (receive) data available?
+        virtual bool ready() const;
 
-            //- Return reference to neighbour patchField
-            const cyclicAMIFvPatchField<Type>& neighbourPatchField() const;
+        //- Return neighbour coupled internal cell data
+        virtual tmp<Field<Type>> patchNeighbourField() const;
+
+        //- Return reference to neighbour patchField
+        const cyclicAMIFvPatchField<Type>& neighbourPatchField() const;
+
+
+    // Evaluation
+
+        //- Initialise the evaluation of the patch field
+        virtual void initEvaluate(const Pstream::commsTypes commsType);
+
+        //- Evaluate the patch field
+        virtual void evaluate(const Pstream::commsTypes commsType);
+
+
+        // Coupled interface functionality
+
+            //- Initialise neighbour matrix update
+            virtual void initInterfaceMatrixUpdate
+            (
+                solveScalarField& result,
+                const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
+                const solveScalarField& psiInternal,
+                const scalarField& coeffs,
+                const direction cmpt,
+                const Pstream::commsTypes commsType
+            ) const;
 
             //- Update result field based on interface functionality
             virtual void updateInterfaceMatrix
@@ -211,6 +285,18 @@ public:
                 const solveScalarField& psiInternal,
                 const scalarField& coeffs,
                 const direction cmpt,
+                const Pstream::commsTypes commsType
+            ) const;
+
+            //- Initialise neighbour matrix update
+            virtual void initInterfaceMatrixUpdate
+            (
+                Field<Type>& result,
+                const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
+                const Field<Type>& psiInternal,
+                const scalarField& coeffs,
                 const Pstream::commsTypes commsType
             ) const;
 
@@ -236,7 +322,7 @@ public:
             );
 
 
-        // Cyclic AMI coupled interface functions
+        // Coupled interface functions
 
             //- Does the patch field perform the transformation
             virtual bool doTransform() const

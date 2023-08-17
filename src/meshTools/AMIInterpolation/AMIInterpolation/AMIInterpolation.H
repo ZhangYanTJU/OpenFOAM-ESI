@@ -506,6 +506,30 @@ public:
 
             // Low-level
 
+                //- Weighted sum of contributions
+                template<class Type, class CombineOp>
+                static void weightedSum
+                (
+                    const scalar lowWeightCorrection,
+                    const labelListList& allSlots,
+                    const scalarListList& allWeights,
+                    const scalarField& weightsSum,
+                    const UList<Type>& fld,
+                    const CombineOp& cop,
+                    List<Type>& result,
+                    const UList<Type>& defaultValues
+                );
+
+                //- Weighted sum of contributions
+                template<class Type>
+                void weightedSum
+                (
+                    const bool interpolateToSource,
+                    const UList<Type>& fld,
+                    List<Type>& result,
+                    const UList<Type>& defaultValues
+                ) const;
+
                 //- Interpolate from target to source with supplied op
                 //- to combine existing value with remote value and weight
                 template<class Type, class CombineOp>

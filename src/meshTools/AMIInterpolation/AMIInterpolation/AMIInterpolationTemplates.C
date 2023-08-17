@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2018 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,78 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type, class CombineOp>
+void Foam::AMIInterpolation::weightedSum
+(
+    const scalar lowWeightCorrection,
+    const labelListList& allSlots,
+    const scalarListList& allWeights,
+    const scalarField& weightsSum,
+    const UList<Type>& fld,
+    const CombineOp& cop,
+    List<Type>& result,
+    const UList<Type>& defaultValues
+)
+{
+    if (lowWeightCorrection > 0)
+    {
+        forAll(result, facei)
+        {
+            if (weightsSum[facei] < lowWeightCorrection)
+            {
+                result[facei] = defaultValues[facei];
+            }
+            else
+            {
+                const labelList& slots = allSlots[facei];
+                const scalarList& weights = allWeights[facei];
+
+                forAll(slots, i)
+                {
+                    cop(result[facei], facei, fld[slots[i]], weights[i]);
+                }
+            }
+        }
+    }
+    else
+    {
+        forAll(result, facei)
+        {
+            const labelList& slots = allSlots[facei];
+            const scalarList& weights = allWeights[facei];
+
+            forAll(slots, i)
+            {
+                cop(result[facei], facei, fld[slots[i]], weights[i]);
+            }
+        }
+    }
+}
+
+
+template<class Type>
+void Foam::AMIInterpolation::weightedSum
+(
+    const bool interpolateToSource,
+    const UList<Type>& fld,
+    List<Type>& result,
+    const UList<Type>& defaultValues
+) const
+{
+    weightedSum
+    (
+        lowWeightCorrection_,
+        (interpolateToSource ? srcAddress_ : tgtAddress_),
+        (interpolateToSource ? srcWeights_ : tgtWeights_),
+        (interpolateToSource ? srcWeightsSum_ : tgtWeightsSum_),
+        fld,
+        multiplyWeightedOp<Type, plusEqOp<Type>>(plusEqOp<Type>()),
+        result,
+        defaultValues
+    );
+}
+
+
+template<class Type, class CombineOp>
 void Foam::AMIInterpolation::interpolateToTarget
 (
     const UList<Type>& fld,
@@ -51,69 +123,43 @@ void Foam::AMIInterpolation::interpolateToTarget
             << "    supplied field = " << fld.size()
             << abort(FatalError);
     }
-
-    if (lowWeightCorrection_ > 0)
+    else if
+    (
+        (lowWeightCorrection_ > 0)
+     && (defaultValues.size() != tgtAddress_.size())
+    )
     {
-        if (defaultValues.size() != tgtAddress_.size())
-        {
-            FatalErrorInFunction
-                << "Employing default values when sum of weights falls below "
-                << lowWeightCorrection_
-                << " but supplied default field size is not equal to target "
-                << "patch size" << nl
-                << "    default values = " << defaultValues.size() << nl
-                << "    target patch   = " << tgtAddress_.size() << nl
-                << abort(FatalError);
-        }
+        FatalErrorInFunction
+            << "Employing default values when sum of weights falls below "
+            << lowWeightCorrection_
+            << " but supplied default field size is not equal to target "
+            << "patch size" << nl
+            << "    default values = " << defaultValues.size() << nl
+            << "    target patch   = " << tgtAddress_.size() << nl
+            << abort(FatalError);
     }
 
     result.setSize(tgtAddress_.size());
+    List<Type> work;
 
     if (distributed())
     {
         const mapDistribute& map = srcMapPtr_();
-
-        List<Type> work(fld);
+        work = fld;  // deep copy
         map.distribute(work);
-
-        forAll(result, facei)
-        {
-            if (tgtWeightsSum_[facei] < lowWeightCorrection_)
-            {
-                result[facei] = defaultValues[facei];
-            }
-            else
-            {
-                const labelList& faces = tgtAddress_[facei];
-                const scalarList& weights = tgtWeights_[facei];
-
-                forAll(faces, i)
-                {
-                    cop(result[facei], facei, work[faces[i]], weights[i]);
-                }
-            }
-        }
     }
-    else
-    {
-        forAll(result, facei)
-        {
-            if (tgtWeightsSum_[facei] < lowWeightCorrection_)
-            {
-                result[facei] = defaultValues[facei];
-            }
-            else
-            {
-                const labelList& faces = tgtAddress_[facei];
-                const scalarList& weights = tgtWeights_[facei];
 
-                forAll(faces, i)
-                {
-                    cop(result[facei], facei, fld[faces[i]], weights[i]);
-                }
-            }
-        }
-    }
+    weightedSum
+    (
+        lowWeightCorrection_,
+        tgtAddress_,
+        tgtWeights_,
+        tgtWeightsSum_,
+        (distributed() ? work : fld),
+        cop,
+        result,
+        defaultValues
+    );
 }
 
 
@@ -137,69 +183,43 @@ void Foam::AMIInterpolation::interpolateToSource
             << "    supplied field = " << fld.size()
             << abort(FatalError);
     }
-
-    if (lowWeightCorrection_ > 0)
+    else if
+    (
+        (lowWeightCorrection_ > 0)
+     && (defaultValues.size() != srcAddress_.size())
+    )
     {
-        if (defaultValues.size() != srcAddress_.size())
-        {
-            FatalErrorInFunction
-                << "Employing default values when sum of weights falls below "
-                << lowWeightCorrection_
-                << " but supplied default field size is not equal to source "
-                << "patch size" << nl
-                << "    default values = " << defaultValues.size() << nl
-                << "    source patch   = " << srcAddress_.size() << nl
-                << abort(FatalError);
-        }
+        FatalErrorInFunction
+            << "Employing default values when sum of weights falls below "
+            << lowWeightCorrection_
+            << " but number of default values is not equal to source "
+            << "patch size" << nl
+            << "    default values = " << defaultValues.size() << nl
+            << "    source patch   = " << srcAddress_.size() << nl
+            << abort(FatalError);
     }
 
     result.setSize(srcAddress_.size());
+    List<Type> work;
 
     if (distributed())
     {
         const mapDistribute& map = tgtMapPtr_();
-
-        List<Type> work(fld);
+        work = fld;  // deep copy
         map.distribute(work);
-
-        forAll(result, facei)
-        {
-            if (srcWeightsSum_[facei] < lowWeightCorrection_)
-            {
-                result[facei] = defaultValues[facei];
-            }
-            else
-            {
-                const labelList& faces = srcAddress_[facei];
-                const scalarList& weights = srcWeights_[facei];
-
-                forAll(faces, i)
-                {
-                    cop(result[facei], facei, work[faces[i]], weights[i]);
-                }
-            }
-        }
     }
-    else
-    {
-        forAll(result, facei)
-        {
-            if (srcWeightsSum_[facei] < lowWeightCorrection_)
-            {
-                result[facei] = defaultValues[facei];
-            }
-            else
-            {
-                const labelList& faces = srcAddress_[facei];
-                const scalarList& weights = srcWeights_[facei];
 
-                forAll(faces, i)
-                {
-                    cop(result[facei], facei, fld[faces[i]], weights[i]);
-                }
-            }
-        }
-    }
+    weightedSum
+    (
+        lowWeightCorrection_,
+        srcAddress_,
+        srcWeights_,
+        srcWeightsSum_,
+        (distributed() ? work : fld),
+        cop,
+        result,
+        defaultValues
+    );
 }
 
 

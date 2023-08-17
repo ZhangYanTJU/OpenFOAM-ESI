@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,96 +53,96 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
     const UList<Type>& defaultValues
 ) const
 {
-    if (pTraits<Type>::rank == 0)
+    autoPtr<coordSystem::cylindrical> cs;
+
+    // Similar to doTransform.
+    // - could also check if !std::is_same<sphericalTensor, Type>:value
+
+    if (is_vectorspace<Type>::value)
+    {
+        cs.reset(cylindricalCS());
+    }
+
+    if (!cs)
     {
         return interpolateUntransformed(fld, defaultValues);
     }
     else
     {
-        autoPtr<coordSystem::cylindrical> cs(cylindricalCS());
-        if (!cs)
-        {
-            return interpolateUntransformed(fld, defaultValues);
-        }
-        else
-        {
-            const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
+        const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
 
-            if (debug)
+        if (debug)
+        {
+            Pout<< "cyclicAMIPolyPatch::interpolate :"
+                << " patch:" << this->name()
+                << " size:" << this->size()
+                << " nbrPatch:" << nbrPp.name()
+                << " size:" << nbrPp.size()
+                << endl;
+        }
+
+        if (fld.size() != nbrPp.size())
+        {
+            FatalErrorInFunction
+                << "Patch:" << this->name()
+                << " size:" << this->size()
+                << " neighbour patch:" << nbrPp.name()
+                << " size:" << nbrPp.size()
+                << " fld size:" << fld.size()
+                << exit(FatalError);
+        }
+
+
+        Field<Type> localFld(fld.size());
+
+        // Transform to cylindrical coords
+        {
+            const tensorField nbrT(cs().R(nbrPp.faceCentres()));
+            Foam::invTransform(localFld, nbrT, fld);
+        }
+
+        if (debug&2)
+        {
+            const vectorField::subField nbrFc(nbrPp.faceCentres());
+
+            Pout<< "On patch:" << this->name()
+                << " size:" << this->size()
+                << " fc:" << gAverage(this->faceCentres())
+                << " getting remote data from:" << nbrPp.name()
+                << " size:" << nbrPp.size()
+                << " fc:" << gAverage(nbrFc)
+                << endl;
+
+            forAll(fld, i)
             {
-                Pout<< "cyclicAMIPolyPatch::interpolate :"
-                    << " patch:" << this->name()
-                    << " size:" << this->size()
-                    << " nbrPatch:" << nbrPp.name()
-                    << " size:" << nbrPp.size()
+                Pout<< "At:" << nbrFc[i] << nl
+                    << "    cart:" << fld[i] << nl
+                    << "    cyli:" << localFld[i] << nl
                     << endl;
             }
-
-            if (fld.size() != nbrPp.size())
-            {
-                FatalErrorInFunction
-                    << "Patch:" << this->name()
-                    << " size:" << this->size()
-                    << " neighbour patch:" << nbrPp.name()
-                    << " size:" << nbrPp.size()
-                    << " fld size:" << fld.size()
-                    << exit(FatalError);
-            }
-
-
-            auto tlocalFld(tmp<Field<Type>>::New(fld.size()));
-            Field<Type>& localFld = tlocalFld.ref();
-
-            // Transform to cylindrical coords
-            {
-                tmp<tensorField> nbrT(cs().R(nbrPp.faceCentres()));
-                localFld = Foam::invTransform(nbrT(), fld);
-            }
-
-            if (debug&2)
-            {
-                const vectorField::subField nbrFc(nbrPp.faceCentres());
-
-                Pout<< "On patch:" << this->name()
-                    << " size:" << this->size()
-                    << " fc:" << gAverage(this->faceCentres())
-                    << " getting remote data from:" << nbrPp.name()
-                    << " size:" << nbrPp.size()
-                    << " fc:" << gAverage(nbrFc)
-                    << endl;
-
-                forAll(fld, i)
-                {
-                    Pout<< "At:" << nbrFc[i] << nl
-                        << "    cart:" << fld[i] << nl
-                        << "    cyli:" << localFld[i] << nl
-                        << endl;
-                }
-            }
-
-
-            const tmp<tensorField> T(cs().R(this->faceCentres()));
-
-            List<Type> localDeflt(defaultValues.size());
-            if (defaultValues.size() == size())
-            {
-                // Transform default values into cylindrical coords (using
-                // *this faceCentres)
-                // We get in UList (why? Copied from cyclicAMI). Convert to
-                // Field so we can use transformField routines.
-                const SubField<Type> defaultSubFld(defaultValues);
-                const Field<Type>& defaultFld(defaultSubFld);
-                localDeflt = Foam::invTransform(T(), defaultFld);
-            }
-
-            // Do the actual interpolation and interpolate back to cartesian
-            // coords
-            return Foam::transform
-            (
-                T,
-                interpolateUntransformed(localFld, localDeflt)
-            );
         }
+
+
+        const tensorField ownT(cs().R(this->faceCentres()));
+
+        Field<Type> localDeflt(defaultValues.size());
+        if (defaultValues.size() == size())
+        {
+            // Transform default values into cylindrical coords (using
+            // *this faceCentres)
+            // We get in UList (why? Copied from cyclicAMI). Convert to
+            // Field so we can use transformField routines.
+            const SubField<Type> defaultSubFld(defaultValues);
+            const Field<Type>& defaultFld(defaultSubFld);
+            Foam::invTransform(localDeflt, ownT, defaultFld);
+        }
+
+        // Do the actual interpolation and interpolate back to cartesian
+        return Foam::transform
+        (
+            ownT,
+            interpolateUntransformed(localFld, localDeflt)
+        );
     }
 }
 
@@ -158,6 +158,160 @@ Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
 }
 
 
+template<class Type>
+void Foam::cyclicAMIPolyPatch::initInterpolateUntransformed
+(
+    const Field<Type>& fld,
+    labelRange& sendRequests,
+    PtrList<List<Type>>& sendBuffers,
+    labelRange& recvRequests,
+    PtrList<List<Type>>& recvBuffers
+) const
+{
+    const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
+
+    if (AMI.distributed())
+    {
+        const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
+
+        // Insert send/receive requests (non-blocking)
+        map.send(fld, sendRequests, sendBuffers, recvRequests, recvBuffers);
+    }
+}
+
+
+template<class Type>
+void Foam::cyclicAMIPolyPatch::initInterpolate
+(
+    const Field<Type>& fld,
+    labelRange& sendRequests,
+    PtrList<List<Type>>& sendBuffers,
+    labelRange& recvRequests,
+    PtrList<List<Type>>& recvBuffers
+) const
+{
+    const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
+
+    if (!AMI.distributed())
+    {
+        return;
+    }
+
+    autoPtr<coordSystem::cylindrical> cs;
+
+    if (is_vectorspace<Type>::value)
+    {
+        cs.reset(cylindricalCS());
+    }
+
+    if (!cs)
+    {
+        initInterpolateUntransformed
+        (
+            fld,
+            sendRequests,
+            sendBuffers,
+            recvRequests,
+            recvBuffers
+        );
+    }
+    else
+    {
+        const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
+
+        Field<Type> localFld(fld.size());
+
+        // Transform to cylindrical coords
+        {
+            const tensorField nbrT(cs().R(nbrPp.faceCentres()));
+            Foam::invTransform(localFld, nbrT, fld);
+        }
+
+        initInterpolateUntransformed
+        (
+            localFld,
+            sendRequests,
+            sendBuffers,
+            recvRequests,
+            recvBuffers
+        );
+    }
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::cyclicAMIPolyPatch::interpolate
+(
+    const Field<Type>& localFld,
+    const labelRange& requests,
+    const PtrList<List<Type>>& recvBuffers,
+    const UList<Type>& defaultValues
+) const
+{
+    const auto& AMI = (owner() ? this->AMI() : neighbPatch().AMI());
+    const auto& map = (owner() ? AMI.tgtMap() : AMI.srcMap());
+
+    Field<Type> work;
+    if (AMI.distributed())
+    {
+        // Receive (= copy) data from buffers into work. TBD: receive directly
+        // into slices of work.
+        map.receive(requests, recvBuffers, work);
+    }
+    const Field<Type>& fld = (AMI.distributed() ? work : localFld);
+
+    auto tresult = tmp<Field<Type>>::New(this->size(), Zero);
+
+    // Note: tresult is optionally in transformed coord system
+    autoPtr<coordSystem::cylindrical> cs;
+
+    if (is_vectorspace<Type>::value)
+    {
+        cs.reset(cylindricalCS());
+    }
+
+    if (!cs)
+    {
+        AMI.weightedSum
+        (
+            owner(),
+            fld,
+            tresult.ref(),
+            defaultValues
+        );
+    }
+    else
+    {
+        const tensorField ownT(cs().R(this->faceCentres()));
+
+        Field<Type> localDeflt(defaultValues.size());
+        if (defaultValues.size() == size())
+        {
+            // Transform default values into cylindrical coords (using
+            // *this faceCentres)
+            // We get in UList (why? Copied from cyclicAMI). Convert to
+            // Field so we can use transformField routines.
+            const SubField<Type> defaultSubFld(defaultValues);
+            const Field<Type>& defaultFld(defaultSubFld);
+            Foam::invTransform(localDeflt, ownT, defaultFld);
+        }
+
+        AMI.weightedSum
+        (
+            owner(),
+            fld,
+            tresult.ref(),
+            localDeflt
+        );
+
+        // Transform back
+        Foam::transform(tresult.ref(), ownT, tresult());
+    }
+
+    return tresult;
+}
+
+
 template<class Type, class CombineOp>
 void Foam::cyclicAMIPolyPatch::interpolate
 (
@@ -168,26 +322,37 @@ void Foam::cyclicAMIPolyPatch::interpolate
 ) const
 {
     //- Commented out for now since called with non-primitives (e.g. wallPoint
-    //  from FaceCellWave) - these are missing the pTraits<Type>::rank and
-    //  Foam::transform
+    //  from FaceCellWave) - missing Foam::transform, Foam::invTransform
     /*
-    autoPtr<coordSystem::cylindrical> cs(cylindricalCS());
+    autoPtr<coordSystem::cylindrical> cs;
 
-    if (cs && pTraits<Type>::rank > 0)
+    if (is_vectorspace<Type>::value)
+    {
+        cs.reset(cylindricalCS());
+    }
+
+    if (cs)
     {
         const cyclicAMIPolyPatch& nbrPp = this->neighbPatch();
 
-        tmp<tensorField> nbrT(cs().R(nbrPp.faceCentres()));
-
-        result = Foam::invTransform(nbrT, result);
-        List<Type> localDeflt(defaultValues.size());
-        if (defaultValues.size() == nbrT().size())
+        // Transform to cylindrical coords
         {
+            const tensorField nbrT(cs().R(nbrPp.faceCentres()));
+            Foam::invTransform(result, nbrT, result);
+        }
+
+        const tensorField ownT(cs().R(this->faceCentres()));
+
+        Field<Type> localDeflt(defaultValues.size());
+        if (defaultValues.size() == size())
+        {
+            // Transform default values into cylindrical coords (using
+            // *this faceCentres)
             // We get in UList (why? Copied from cyclicAMI). Convert to
             // Field so we can use transformField routines.
             const SubField<Type> defaultSubFld(defaultValues);
             const Field<Type>& defaultFld(defaultSubFld);
-            localDeflt = Foam::invTransform(nbrT, defaultFld);
+            Foam::invTransform(localDeflt, ownT, defaultFld);
         }
 
         // Do actual AMI interpolation
@@ -213,8 +378,7 @@ void Foam::cyclicAMIPolyPatch::interpolate
         }
 
         // Transform back. Result is now at *this
-        const vectorField::subField fc(this->faceCentres());
-        result = Foam::transform(cs().R(fc), result);
+        Foam::transform(result, ownT, result);
     }
     else
     */

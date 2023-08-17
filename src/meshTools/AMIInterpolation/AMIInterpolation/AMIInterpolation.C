@@ -762,24 +762,26 @@ bool Foam::AMIInterpolation::calculate
 
     if (srcTotalSize == 0)
     {
-        DebugInfo<< "AMI: no source faces present - no addressing constructed"
+        DebugInfo
+            << "AMI: no source faces present - no addressing constructed"
             << endl;
 
         return false;
     }
 
-    Info<< indent
-        << "AMI: Patch source faces: " << srcTotalSize << nl
-        << "AMI: Patch target faces: " << tgtTotalSize << endl;
-
     singlePatchProc_ = calcDistribution(srcPatch, tgtPatch);
 
-    if (debug)
+    Info<< indent << "AMI: Patch source faces: " << srcTotalSize << nl
+        << indent << "AMI: Patch target faces: " << tgtTotalSize << nl;
+
+    if (distributed())
     {
-        Info<< "AMIInterpolation:" << nl
-            << "    singlePatchProc:" << singlePatchProc_ << nl
-            << endl;
+        Info<< indent << "AMI: distributed" << endl;
     }
+
+    DebugInfo
+        << "AMI: patch proc:" << singlePatchProc_
+        << endl;
 
     return true;
 }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -294,30 +294,29 @@ Foam::cyclicAMIPolyPatch::cylindricalCS() const
     if (periodicID != -1)
     {
         // Get the periodic patch
-        const coupledPolyPatch& perPp
-        (
-            refCast<const coupledPolyPatch>
-            (
-                boundaryMesh()[periodicID]
-            )
-        );
+        const coupledPolyPatch& perPp =
+            refCast<const coupledPolyPatch>(boundaryMesh()[periodicID]);
+
         if (!perPp.parallel())
         {
             vector axis(Zero);
             point axisPoint(Zero);
-            if (isA<cyclicPolyPatch>(perPp))
+
+            if
+            (
+                const cyclicPolyPatch* cpp = isA<cyclicPolyPatch>(perPp)
+            )
             {
-                axis =
-                    refCast<const cyclicPolyPatch>(perPp).rotationAxis();
-                axisPoint =
-                    refCast<const cyclicPolyPatch>(perPp).rotationCentre();
+                axis = cpp->rotationAxis();
+                axisPoint = cpp->rotationCentre();
             }
-            else if (isA<cyclicAMIPolyPatch>(perPp))
+            else if
+            (
+                const cyclicAMIPolyPatch* cpp = isA<cyclicAMIPolyPatch>(perPp)
+            )
             {
-                axis =
-                    refCast<const cyclicAMIPolyPatch>(perPp).rotationAxis();
-                axisPoint =
-                    refCast<const cyclicAMIPolyPatch>(perPp).rotationCentre();
+                axis = cpp->rotationAxis();
+                axisPoint = cpp->rotationCentre();
             }
             else
             {
