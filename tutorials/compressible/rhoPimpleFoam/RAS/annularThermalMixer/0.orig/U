@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -25,28 +25,28 @@ boundaryField
     innerInlet
     {
         type            fixedValue;
-        value           uniform $:innerInlet.U;
+        value           uniform $/innerInlet/U;
     }
 
     outerInlet
     {
         type            fixedValue;
-        value           uniform $:outerInlet.U;
+        value           uniform $/outerInlet/U;
     }
 
     outlet
     {
-        $:outlet.U;
+        $/outlet/U;
     }
 
     staticWalls
     {
-        $:wall.U;
+        $/wall/U;
     }
 
     movingWalls
     {
-        $:movingWall.U;
+        $/movingWall/U;
     }
 
     #includeEtc "caseDicts/setConstraintTypes"

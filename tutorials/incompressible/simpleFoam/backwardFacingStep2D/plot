@@ -48,9 +48,9 @@ plot_tau() {
     href="0.0127"
 
     echo "    # ccx tau_xx tau_yy tau_zz" > tauw.dat
-    foamDictionary -entry boundaryField.lowerWall.value -value "$timeDir"/Cx | \
+    foamDictionary -entry boundaryField/lowerWall/value -value "$timeDir"/Cx | \
         sed -n '/(/,/)/p' | sed -e 's/[()]//g;/^\s*$/d' > Cx.$$
-    foamDictionary -entry boundaryField.lowerWall.value -value "$timeDir"/wallShearStress | \
+    foamDictionary -entry boundaryField/lowerWall/value -value "$timeDir"/wallShearStress | \
         sed -n '/(/,/)/p' | sed -e 's/[()]//g;/^\s*$/d' > tau.$$
     paste -d ' ' Cx.$$ tau.$$ >> tauw.dat
     rm -f Cx.$$ tau.$$

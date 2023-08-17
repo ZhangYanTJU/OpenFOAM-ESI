@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -33,29 +33,29 @@ geom
 
 vertices
 (
-    ( $:geom.r0         0 0)
-    (         0  $geom.r0 0)
-    ($:geom.mr0         0 0)
-    (         0 $geom.mr0 0)
-    ( $:geom.r1         0 0)
-    (         0  $geom.r1 0)
-    ($:geom.mr1         0 0)
-    (         0 $geom.mr1 0)
+    ( $/geom/r0         0 0)
+    (         0  $/geom/r0 0)
+    ($/geom/mr0         0 0)
+    (         0 $/geom/mr0 0)
+    ( $/geom/r1         0 0)
+    (         0  $/geom/r1 0)
+    ($/geom/mr1         0 0)
+    (         0 $/geom/mr1 0)
 
-    ( $:geom.r0         0 1)
-    (         0  $geom.r0 1)
-    ($:geom.mr0         0 1)
-    (         0 $geom.mr0 1)
-    ( $:geom.r1         0 1)
-    (         0  $geom.r1 1)
-    ($:geom.mr1         0 1)
-    (         0 $geom.mr1 1)
+    ( $/geom/r0         0 1)
+    (         0  $/geom/r0 1)
+    ($/geom/mr0         0 1)
+    (         0 $/geom/mr0 1)
+    ( $/geom/r1         0 1)
+    (         0  $/geom/r1 1)
+    ($/geom/mr1         0 1)
+    (         0 $/geom/mr1 1)
 );
 
 blockInfo
 all
-($:geom.ntheta $:geom.nr 1)
-simpleGrading (1 ((0.5 0.5 $:geom.g)(0.5 0.5 $:geom.invG)) 1);
+($/geom/ntheta $/geom/nr 1)
+simpleGrading (1 ((0.5 0.5 $/geom/g)(0.5 0.5 $/geom/invG)) 1);
 
 blocks
 (
@@ -122,5 +122,9 @@ boundary
 mergePatchPairs
 (
 );
+
+
+// Cleanup
+#remove ( geom blockInfo )
 
 // ************************************************************************* //

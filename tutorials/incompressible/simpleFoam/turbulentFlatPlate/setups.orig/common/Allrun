@@ -50,9 +50,9 @@ runApplication $(getApplication)
 endTime=$(foamListTimes -latestTime)
 
 # Create datasets for benchmark comparisons
-extractVal boundaryField.bottomWall.value "$endTime/Cx" Cx.$$
-extractVal boundaryField.bottomWall.value "$endTime/wallShearStress" tau.$$
-extractVal boundaryField.bottomWall.value "$endTime/yPlus" yPlus.$$
+extractVal boundaryField/bottomWall/value "$endTime/Cx" Cx.$$
+extractVal boundaryField/bottomWall/value "$endTime/wallShearStress" tau.$$
+extractVal boundaryField/bottomWall/value "$endTime/yPlus" yPlus.$$
 
 echo "# ccx tau_xx tau_yy tau_zz y+" > profiles.dat
 paste -d ' ' Cx.$$ tau.$$ yPlus.$$ >> profiles.dat
