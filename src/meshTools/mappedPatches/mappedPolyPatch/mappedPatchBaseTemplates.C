@@ -256,17 +256,10 @@ bool Foam::mappedPatchBase::writeIOField
     {
         const auto& fld = *fldPtr;
 
-        token tok;
-        tok = new token::Compound<List<Type>>(fld);
-
         primitiveEntry* pePtr = new primitiveEntry
         (
             fld.name(),
-            tokenList
-            (
-                one(),
-                std::move(tok)
-            )
+            token(new token::Compound<List<Type>>(fld))
         );
 
         dict.set(pePtr);
@@ -288,22 +281,12 @@ bool Foam::mappedPatchBase::constructIOField
     objectRegistry& obr
 )
 {
-    const word tag = "List<" + word(pTraits<Type>::typeName) + '>';
+    const word tag("List<" + word(pTraits<Type>::typeName) + '>');
 
-    if (tok.isCompound() && tok.compoundToken().type() == tag)
+    if (tok.isCompound(tag))
     {
-        IOField<Type>* fldPtr = obr.getObjectPtr<IOField<Type>>(name);
-        if (fldPtr)
-        {
-            fldPtr->transfer
-            (
-                dynamicCast<token::Compound<List<Type>>>
-                (
-                    tok.transferCompoundToken(is)
-                )
-            );
-        }
-        else
+        auto* fldPtr = obr.getObjectPtr<IOField<Type>>(name);
+        if (!fldPtr)
         {
             fldPtr = new IOField<Type>
             (
@@ -311,21 +294,20 @@ bool Foam::mappedPatchBase::constructIOField
                 (
                     name,
                     obr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::REGISTER
+                    IOobjectOption::NO_READ,
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::REGISTER
                 ),
-                label(0)
-            );
-            fldPtr->transfer
-            (
-                dynamicCast<token::Compound<List<Type>>>
-                (
-                    tok.transferCompoundToken(is)
-                )
+                Foam::zero{}
             );
             objectRegistry::store(fldPtr);
         }
+
+        fldPtr->transfer
+        (
+            tok.transferCompoundToken<List<Type>>(is)
+        );
+
         return true;
     }
     else
@@ -343,12 +325,8 @@ void Foam::mappedPatchBase::storeField
     const Field<Type>& values
 )
 {
-    IOField<Type>* fldPtr = obr.getObjectPtr<IOField<Type>>(fieldName);
-    if (fldPtr)
-    {
-        *fldPtr = values;
-    }
-    else
+    auto* fldPtr = obr.getObjectPtr<IOField<Type>>(fieldName);
+    if (!fldPtr)
     {
         fldPtr = new IOField<Type>
         (
@@ -356,14 +334,16 @@ void Foam::mappedPatchBase::storeField
             (
                 fieldName,
                 obr,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::REGISTER
+                IOobjectOption::NO_READ,
+                IOobjectOption::NO_WRITE,
+                IOobjectOption::REGISTER
             ),
-            values
+            Foam::zero{}
         );
         objectRegistry::store(fldPtr);
     }
+
+    *fldPtr = values;
 }
 
 

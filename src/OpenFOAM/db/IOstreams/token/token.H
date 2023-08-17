@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,8 +44,9 @@ SourceFiles
 #include "uLabel.H"
 #include "scalar.H"
 #include "word.H"
-#include "InfoProxy.H"
+#include "contiguous.H"
 #include "refCount.H"
+#include "InfoProxy.H"
 #include "typeInfo.H"
 
 #define NoHashTableC
@@ -170,28 +171,25 @@ public:
     :
         public refCount
     {
-        //- Has compound token already been transferred
-        bool moved_;
+    protected:
 
-        //- No copy construct
-        compound(const compound&) = delete;
-
-        //- No copy assignment
-        compound& operator=(const compound&) = delete;
+        //- The compound token state, internally used values only
+        //  (0: initial, 1: moved, 2: pending read...)
+        unsigned char state_;
 
     public:
 
-        //- Declare type-name, virtual type (with debug switch)
-        TypeName("compound");
+        //- Declare type-name, virtual type (without debug switch)
+        TypeNameNoDebug("compound");
 
         //- Declare run-time constructor selection table
         declareRunTimeSelectionTable
         (
             autoPtr,
             compound,
-            Istream,
-            (Istream& is),
-            (is)
+            empty,
+            (),
+            ()
         );
 
 
@@ -200,39 +198,93 @@ public:
             //- Default construct
             constexpr compound() noexcept
             :
-                moved_(false)
+                state_(0)
             {}
-
-            //- Construct compound from Istream
-            static autoPtr<compound> New(const word& type, Istream& is);
 
 
         //- Destructor
         virtual ~compound() noexcept = default;
 
 
+        // Selectors
+
+            //- Default construct specified compound type
+            static autoPtr<compound> New(const word& compoundType);
+
+            //- Default construct specified compound type
+            //- and read from stream
+            static autoPtr<compound> New
+            (
+                const word& compoundType,
+                Istream& is,
+                const bool readContent = true
+            );
+
+            //- Check if dynamic_cast to \c Type is possible.
+            template<class Type>
+            const Type* isA() const
+            {
+                return dynamic_cast<const Type*>(this);
+            }
+
+
         // Member Functions
 
-            //- Test if name is a known (registered) compound type
-            static bool isCompound(const word& name);
+            //- True if a known (registered) compound type
+            static bool isCompound(const word& compoundType);
 
             //- Get compound transferred status
-            bool moved() const noexcept
-            {
-                return moved_;
-            }
+            bool moved() const noexcept { return (state_ & 1); }
 
             //- Set compound transferred status
             void moved(bool b) noexcept
             {
-                moved_ = b;
+                if (b) { state_ |= 1; } else { state_ &= ~1; }
+            }
+
+            //- Get compound pending-read status
+            bool pending() const noexcept { return (state_ & 2); }
+
+            //- Set compound pending-read status
+            void pending(bool b) noexcept
+            {
+                if (b) { state_ |= 2; } else { state_ &= ~2; }
             }
 
             //- The size of the underlying content
             virtual label size() const = 0;
 
-            //- Redirect write to underlying content
+            //- Change the size of the underlying container content
+            virtual void resize(const label n) = 0;
+
+            //- Fill with zero values, or with default constructed
+            virtual void fill_zero() = 0;
+
+            //- Read from stream into the underlying content
+            virtual void read(Istream& is) = 0;
+
+            //- Write the underlying content
             virtual void write(Ostream& os) const = 0;
+
+
+        // Attributes and access methods
+
+            //- The token type (if any) corresponding to the contained
+            //- component type (LABEL, FLOAT, DOUBLE, etc).
+            virtual tokenType typeCode() const = 0;
+
+            //- The number of vector-space or other components
+            //- of the underlying data content
+            virtual direction nComponents() const = 0;
+
+            //- Pointer to the underlying data as byte data
+            virtual const char* cdata_bytes() const = 0;
+
+            //- Pointer to the underlying data as byte data
+            virtual char* data_bytes() = 0;
+
+            //- Size of the (contiguous) byte data
+            virtual std::streamsize size_bytes() const = 0;
 
 
         // Operators
@@ -242,30 +294,63 @@ public:
     };
 
 
-    //- A templated class for holding compound tokens
+    //- A templated class for holding compound tokens.
+    //- The underlying container is normally a List of values,
+    //- it must have a \c value_type typedef as well as
+    //- size(), resize(), cdata_bytes(), data_bytes(), size_bytes() methods
     template<class T>
     class Compound
     :
         public token::compound,
         public T
     {
+        // Private Member Functions
+
+            //- Fill with zero (contiguous types)
+            template<class ValT = typename T::value_type>
+            typename std::enable_if<pTraits_has_zero<ValT>::value, void>::type
+            _m_fill_zero()
+            {
+                T::operator=(pTraits<ValT>::zero);
+            }
+
+            //- Fill with default value initialized (non-contiguous types)
+            template<class ValT = typename T::value_type>
+            typename std::enable_if<!pTraits_has_zero<ValT>::value, void>::type
+            _m_fill_zero()
+            {
+                T::operator=(ValT());
+            }
+
     public:
 
-        //- Declare type-name, virtual type (with debug switch)
-        TypeName("Compound<T>");
+        //- The type of values held by the compound
+        typedef typename T::value_type value_type;
+
+        //- Declare type-name, virtual type (without debug switch)
+        TypeNameNoDebug("Compound<T>");
+
+        //- No copy construct
+        Compound<T>(const Compound<T>&) = delete;
+
+        //- No copy assignment
+        Compound<T>& operator=(const Compound<T>&) = delete;
 
         // Constructors
 
-            //- Copy construct
-            explicit Compound(const T& val)
+            //- Default construct
+            Compound() = default;
+
+            //- Copy construct from base content
+            explicit Compound(const T& content)
             :
-                T(val)
+                T(content)
             {}
 
-            //- Move construct
-            explicit Compound(T&& val)
+            //- Move construct from base content
+            explicit Compound(T&& content)
             :
-                T(std::move(val))
+                T(std::move(content))
             {}
 
             //- Read construct from Istream
@@ -273,6 +358,19 @@ public:
             :
                 T(is)
             {}
+
+
+        // Selectors
+
+            //- Construct autoPtr compound type with forwarding arguments
+            template<class... Args>
+            static autoPtr<Compound<T>> New(Args&&... args)
+            {
+                return autoPtr<Compound<T>>
+                (
+                    new Compound<T>(T(std::forward<Args>(args)...))
+                );
+            }
 
 
         // Member Functions
@@ -283,10 +381,58 @@ public:
                 return T::size();
             }
 
+            //- Change the size of the underlying container content
+            virtual void resize(const label n)
+            {
+                T::resize(n);
+            }
+
+            //- Fill with zero value or with default value initialized
+            virtual void fill_zero() { _m_fill_zero(); }
+
+            //- Redirect read to underlying content
+            virtual void read(Istream& is)
+            {
+                token::compound::state_ = 0;  // Clean state
+                operator>>(is, static_cast<T&>(*this));
+            }
+
             //- Redirect write to underlying content
             virtual void write(Ostream& os) const
             {
                 operator<<(os, static_cast<const T&>(*this));
+            }
+
+
+        // Attributes and access methods
+
+            //- The token type (if any) corresponding to the contained
+            //- component type (LABEL, FLOAT, DOUBLE, etc).
+            virtual tokenType typeCode() const;
+
+            //- The number of vector-space or other components
+            //- of the underlying data content
+            virtual direction nComponents() const
+            {
+                return pTraits_nComponents<value_type>();
+            }
+
+            //- Pointer to the underlying data as byte data
+            virtual const char* cdata_bytes() const
+            {
+                return T::cdata_bytes();
+            }
+
+            //- Pointer to the underlying data as byte data
+            virtual char* data_bytes()
+            {
+                return T::data_bytes();
+            }
+
+            //- Size of the (contiguous) byte data
+            virtual std::streamsize size_bytes() const
+            {
+                return T::size_bytes();
             }
     };
 
@@ -385,6 +531,9 @@ public:
         //- Construct from a compound pointer, taking ownership
         inline explicit token(token::compound* ptr, label lineNum=0);
 
+        //- Move construct from a compound pointer, taking ownership
+        inline explicit token(autoPtr<token::compound>&& ptr, label lineNum=0);
+
         //- Construct from Istream
         explicit token(Istream& is);
 
@@ -416,8 +565,11 @@ public:
 
     // Status
 
-        //- Return the name of the token type
-        word name() const;
+        //- Return the name for the token type
+        static word name(const token::tokenType tokType);
+
+        //- Return the name of the current token type
+        inline word name() const;
 
         //- Return the token type
         inline tokenType type() const noexcept;
@@ -510,6 +662,15 @@ public:
         //- Token is COMPOUND
         inline bool isCompound() const noexcept;
 
+        //- True if token is COMPOUND and its type() is equal to parameter
+        inline bool isCompound(const word& compoundType) const;
+
+        //- If token is COMPOUND and can be dynamic_cast to the \c Type
+        //- return a const pointer to the content.
+        //  Return nullptr on any failure.
+        template<class Type>
+        inline const Type* isCompound() const;
+
         //- True if token is not UNDEFINED or ERROR. Same as good().
         explicit operator bool() const noexcept { return good(); }
 
@@ -561,15 +722,35 @@ public:
         //  or an upcast WORD or DIRECTIVE
         inline const string& stringToken() const;
 
-        //- Read access for compound token
+        //- Const reference to compound token. Fatal if the wrong type.
         inline const compound& compoundToken() const;
 
+        //- Return reference to compound token. Fatal if the wrong type.
+        inline compound& refCompoundToken();
+
+        //- Default construct the specified compound type and read from stream.
+        //  A no-op and returns false if compound type is unknown.
+        //  Modify the token and return true on success.
+        bool readCompoundToken
+        (
+            const word& compoundType,
+            Istream& is,
+            const bool readContent = true
+        );
+
         //- Return reference to compound and mark internally as \em released.
-        compound& transferCompoundToken();
+        //  Optional Istream parameter only as reference for errors messages.
+        compound& transferCompoundToken(const Istream* is = nullptr);
 
         //- Return reference to compound and mark internally as \em released.
         //  The Istream is used for reference error messages only.
-        compound& transferCompoundToken(const Istream& is);
+        inline compound& transferCompoundToken(const Istream& is);
+
+        //- Mark the compound as \em released and return a reference
+        //- to the underlying encapsulated container - eg, \c List<label>
+        //  The Istream is used for reference error messages only.
+        template<class Type>
+        inline Type& transferCompoundToken(const Istream& is);
 
 
     // Edit
@@ -581,7 +762,7 @@ public:
         inline void setBad();
 
         //- Swap token contents: type, data, line-number
-        inline void swap(token& tok);
+        inline void swap(token& tok) noexcept;
 
 
     // Info
@@ -713,21 +894,21 @@ Ostream& operator<<(Ostream& os, const InfoProxy<token>& ip);
 
 //- Define compound using \a Type for its name
 #define defineCompoundTypeName(Type, UnusedTag)                                \
-    defineTemplateTypeNameAndDebugWithName(token::Compound<Type>, #Type, 0);
+    defineTemplateTypeNameWithName(token::Compound<Type>, #Type);
 
 //- Define compound using \a Name for its name
 #define defineNamedCompoundTypeName(Type, Name)                                \
-    defineTemplateTypeNameAndDebugWithName(token::Compound<Type>, #Name, 0);
+    defineTemplateTypeNameWithName(token::Compound<Type>, #Name);
 
-//- Add compound to selection table, lookup using typeName
+//- Add compound to selection tables, lookup using typeName
 #define addCompoundToRunTimeSelectionTable(Type, Tag)                          \
-    token::compound::addIstreamConstructorToTable<token::Compound<Type>>       \
-        add##Tag##IstreamConstructorToTable_;
+    token::compound::addemptyConstructorToTable<token::Compound<Type>>         \
+        add##Tag##emptyConstructorToTable_;
 
-//- Add compound to selection table, lookup as \a Name
+//- Add compound to selection tables, lookup as \a Name
 #define addNamedCompoundToRunTimeSelectionTable(Type, Tag, Name)               \
-    token::compound::addIstreamConstructorToTable<token::Compound<Type>>       \
-        add##Tag##IstreamConstructorToTable_(#Name);
+    token::compound::addemptyConstructorToTable<token::Compound<Type>>         \
+        add##Tag##emptyConstructorToTable_(#Name);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

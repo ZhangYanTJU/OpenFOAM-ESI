@@ -173,10 +173,7 @@ Foam::Istream& Foam::UList<T>::readList(Istream& is)
         List<T> elems;
         elems.transfer
         (
-            dynamicCast<token::Compound<List<T>>>
-            (
-                tok.transferCompoundToken(is)
-            )
+            tok.transferCompoundToken<List<T>>(is)
         );
 
         const label inputLen = elems.size();

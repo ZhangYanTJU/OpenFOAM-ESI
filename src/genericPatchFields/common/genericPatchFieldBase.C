@@ -190,20 +190,13 @@ bool Foam::genericPatchFieldBase::processEntry
 
         #undef  doLocalCode
         #define doLocalCode(ValueType, Member)                                \
-        if                                                                    \
-        (                                                                     \
-            tok.compoundToken().type()                                        \
-         == token::Compound<List<ValueType>>::typeName                        \
-        )                                                                     \
+        if (tok.isCompound<List<ValueType>>())                                \
         {                                                                     \
             auto fPtr = autoPtr<Field<ValueType>>::New();                     \
                                                                               \
             fPtr->transfer                                                    \
             (                                                                 \
-                dynamicCast<token::Compound<List<ValueType>>>                 \
-                (                                                             \
-                    tok.transferCompoundToken(is)                             \
-                )                                                             \
+                tok.transferCompoundToken<List<ValueType>>(is)                \
             );                                                                \
                                                                               \
             if (!checkFieldSize(fPtr->size(), patchSize, patchName, key, io)) \

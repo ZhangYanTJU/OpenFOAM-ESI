@@ -218,14 +218,21 @@ bool Foam::primitiveEntry::expandVariable
 Foam::primitiveEntry::primitiveEntry(const keyType& key)
 :
     entry(key),
-    ITstream(zero{}, key)
+    ITstream(Foam::zero{}, key)
 {}
 
 
 Foam::primitiveEntry::primitiveEntry(const keyType& key, const token& tok)
 :
     entry(key),
-    ITstream(key, tokenList(one{}, tok))
+    ITstream(key, tokenList(Foam::one{}, tok))
+{}
+
+
+Foam::primitiveEntry::primitiveEntry(const keyType& key, token&& tok)
+:
+    entry(key),
+    ITstream(key, tokenList(Foam::one{}, std::move(tok)))
 {}
 
 
@@ -251,7 +258,11 @@ Foam::primitiveEntry::primitiveEntry
 {}
 
 
-Foam::primitiveEntry::primitiveEntry(const keyType& key, const ITstream& is)
+Foam::primitiveEntry::primitiveEntry
+(
+    const keyType& key,
+    const ITstream& is
+)
 :
     entry(key),
     ITstream(is)
@@ -261,20 +272,6 @@ Foam::primitiveEntry::primitiveEntry(const keyType& key, const ITstream& is)
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::label Foam::primitiveEntry::startLineNumber() const
-{
-    const tokenList& tokens = *this;
-    return (tokens.empty() ? -1 : tokens.front().lineNumber());
-}
-
-
-Foam::label Foam::primitiveEntry::endLineNumber() const
-{
-    const tokenList& tokens = *this;
-    return (tokens.empty() ? -1 : tokens.back().lineNumber());
-}
-
 
 Foam::ITstream& Foam::primitiveEntry::stream() const
 {

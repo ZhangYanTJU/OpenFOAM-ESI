@@ -69,6 +69,19 @@ inline static label byteAlign(const label pos, const size_t align)
     );
 }
 
+
+// Read into compound token (assumed to be a known type)
+inline static bool readCompoundToken
+(
+    token& tok,
+    const word& compoundType,
+    Istream& is
+)
+{
+    // The isCompound() check is not needed (already checked by caller)
+    return tok.readCompoundToken(compoundType, is);
+}
+
 } // End namespace Foam
 
 
@@ -339,11 +352,11 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
             word val;
             if (readString(val))
             {
-                if (token::compound::isCompound(val))
-                {
-                    t = token::compound::New(val, *this).ptr();
-                }
-                else
+                if
+                (
+                    !token::compound::isCompound(val)
+                 || !readCompoundToken(t, val, *this)
+                )
                 {
                     t = std::move(val);
                     t.setType(token::tokenType(c));

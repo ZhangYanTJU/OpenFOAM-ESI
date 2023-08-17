@@ -414,8 +414,9 @@ public:
             bool keepHeader = false
         );
 
-        //- Construct top-level dictionary from Istream,
-        //- reading entries until EOF. Discards the header.
+        //- Construct top-level dictionary from Istream (discards the header).
+        //- Reads entries until EOF or when the first token is a
+        //- '{' character, it will stop reading at the matching '}' character.
         //  \note this constructor should be explicit
         dictionary(Istream& is);
 
@@ -970,10 +971,14 @@ public:
         //  Emits FatalIOError
         void checkITstream(const ITstream& is, const word& keyword) const;
 
-        //- Read dictionary from Istream. Discards the header.
+        //- Read dictionary from Istream (discards the header).
+        //- Reads entries until EOF or when the first token is a
+        //- '{' character, it will stop reading at the matching '}' character.
         bool read(Istream& is);
 
-        //- Read dictionary from Istream, optionally keeping the header
+        //- Read dictionary from Istream (optionally keeping the header)
+        //- Reads entries until EOF or when the first token is a
+        //- '{' character, it will stop reading at the matching '}' character.
         bool read(Istream& is, bool keepHeader);
 
 

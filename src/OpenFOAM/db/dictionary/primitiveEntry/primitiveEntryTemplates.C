@@ -35,11 +35,12 @@ template<class T>
 Foam::primitiveEntry::primitiveEntry(const keyType& key, const T& val)
 :
     entry(key),
-    ITstream(key, tokenList(10))
+    ITstream(IOstreamOption(), key)
 {
     OStringStream os;
     os  << val << token::END_STATEMENT;
-    readEntry(dictionary::null, IStringStream(os.str())());
+    IStringStream is(os.str());
+    readEntry(dictionary::null, is);
 }
 
 

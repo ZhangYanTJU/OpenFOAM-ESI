@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,10 +63,7 @@ Istream& List<char>::readList(Istream& is)
         list.clear();  // Clear old contents
         list.transfer
         (
-            dynamicCast<token::Compound<List<char>>>
-            (
-                tok.transferCompoundToken(is)
-            )
+            tok.transferCompoundToken<List<char>>(is)
         );
     }
     else if (tok.isLabel())

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,6 @@ License
 
 #include "error.H"
 #include "token.H"
-#include "scalar.H"
 #include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
@@ -96,6 +95,10 @@ static OS& printTokenInfo(OS& os, const token& tok)
 
         case token::tokenType::COMPOUND:
         {
+            if (tok.compoundToken().pending())
+            {
+                os  << "pending ";
+            }
             if (tok.compoundToken().moved())
             {
                 os  << "moved ";
@@ -129,11 +132,11 @@ Foam::token::token(Istream& is)
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-Foam::word Foam::token::name() const
+Foam::word Foam::token::name(const token::tokenType tokType)
 {
-    switch (type_)
+    switch (tokType)
     {
         case token::tokenType::UNDEFINED: return "undefined";
         case token::tokenType::BOOL: return "bool";
@@ -155,7 +158,7 @@ Foam::word Foam::token::name() const
             break;
     }
 
-    return "unknown(" + std::to_string(int(type_)) + ")";
+    return "unknown(" + std::to_string(int(tokType)) + ")";
 }
 
 
@@ -251,8 +254,13 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const token::punctuationToken& pt)
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const token::compound& ct)
 {
-    os << ct.type() << token::SPACE;
-    ct.write(os);
+    os  << ct.type();
+    if (!ct.pending())
+    {
+        // Do not write compound content if tagged as 'pending-read'
+        os  << token::SPACE;
+        ct.write(os);
+    }
 
     return os;
 }

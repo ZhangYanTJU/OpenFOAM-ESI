@@ -260,54 +260,17 @@ void Foam::dictionary::checkITstream
     const word& keyword
 ) const
 {
-    if (is.nRemainingTokens())
+    const label remaining = (is.size() ? is.nRemainingTokens() : -100);
+
+    if (!remaining)
     {
-        const label remaining = is.nRemainingTokens();
-
-        // Similar to SafeFatalIOError
-        if (JobInfo::constructed)
-        {
-            OSstream& err =
-                FatalIOError
-                (
-                    "",                 // functionName
-                    "",                 // sourceFileName
-                    0,                  // sourceFileLineNumber
-                    relativeName(),     // ioFileName == dictionary name
-                    is.lineNumber()     // ioStartLineNumber
-                );
-
-            err << "Entry '" << keyword << "' has "
-                << remaining << " excess tokens in stream" << nl << nl
-                << "    ";
-            is.writeList(err, 0);
-
-            err << exit(FatalIOError);
-        }
-        else
-        {
-            std::cerr
-                << nl
-                << "--> FOAM FATAL IO ERROR:" << nl;
-
-            std::cerr
-                << "Entry '" << keyword << "' has "
-                << remaining << " excess tokens in stream" << nl << nl;
-
-            std::cerr
-                // ioFileName == dictionary name
-                << "file: " << relativeName()
-                << " at line " << is.lineNumber() << '.' << nl
-                << std::endl;
-
-            std::exit(1);
-        }
+        return;
     }
-    else if (!is.size())
+
+    // Similar to SafeFatalIOError
+    if (JobInfo::constructed)
     {
-        // Similar to SafeFatalIOError
-        if (JobInfo::constructed)
-        {
+        OSstream& err =
             FatalIOError
             (
                 "",                 // functionName
@@ -315,27 +278,52 @@ void Foam::dictionary::checkITstream
                 0,                  // sourceFileLineNumber
                 relativeName(),     // ioFileName == dictionary name
                 is.lineNumber()     // ioStartLineNumber
-            )
-                << "Entry '" << keyword
-                << "' had no tokens in stream" << nl << nl
-                << exit(FatalIOError);
+            );
+
+        if (remaining > 0)
+        {
+            err
+                << "Entry '" << keyword << "' has "
+                << remaining << " excess tokens in stream" << nl << nl
+                << "    ";
+            is.writeList(err, 0);  // <- flatOutput
+        }
+        else
+        {
+            err << "Entry '" << keyword
+                << "' had no tokens in stream" << nl << nl;
+        }
+
+        err << exit(FatalIOError);
+    }
+    else
+    {
+        // Not yet constructed
+
+        std::cerr
+            << nl
+            << "--> FOAM FATAL IO ERROR:" << nl;
+
+        if (remaining > 0)
+        {
+            std::cerr
+                << "Entry '" << keyword << "' has "
+                << remaining << " excess tokens in stream" << nl << nl;
         }
         else
         {
             std::cerr
-                << nl
-                << "--> FOAM FATAL IO ERROR:" << nl
                 << "Entry '" << keyword
                 << "' had no tokens in stream" << nl << nl;
-
-            std::cerr
-                // ioFileName == dictionary name
-                << "file: " << relativeName()
-                << " at line " << is.lineNumber() << '.' << nl
-                << std::endl;
-
-            std::exit(1);
         }
+
+        std::cerr
+            // ioFileName == dictionary name
+            << "file: " << relativeName()
+            << " at line " << is.lineNumber() << '.' << nl
+            << std::endl;
+
+        std::exit(1);
     }
 }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,6 +69,9 @@ class ISstream
         //- Get the next valid (non-whitespace) character,
         //- after skipping any C/C++ comments.
         char nextValid();
+
+        //- Read into compound token (assumed to be a known type)
+        virtual bool readCompoundToken(token& tok, const word& compoundType);
 
         //- No copy assignment
         void operator=(const ISstream&) = delete;

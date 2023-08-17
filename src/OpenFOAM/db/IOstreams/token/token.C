@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +36,8 @@ Note
 namespace Foam
 {
     typedef token::compound tokenCompound;
-    defineTypeNameAndDebug(tokenCompound, 0);
-    defineRunTimeSelectionTable(tokenCompound, Istream);
+    defineTypeName(tokenCompound);
+    defineRunTimeSelectionTable(tokenCompound, empty);
 }
 
 const Foam::token Foam::token::undefinedToken;
@@ -57,11 +57,33 @@ void Foam::token::parseError(const char* expected) const
 
 Foam::autoPtr<Foam::token::compound> Foam::token::compound::New
 (
-    const word& compoundType,
-    Istream& is
+    const word& compoundType
 )
 {
-    auto* ctorPtr = IstreamConstructorTable(compoundType);
+    auto* ctorPtr = emptyConstructorTable(compoundType);
+
+    if (!ctorPtr)
+    {
+        FatalErrorInLookup
+        (
+            "compound",
+            compoundType,
+            *emptyConstructorTablePtr_
+        ) << abort(FatalError);
+    }
+
+    return autoPtr<token::compound>(ctorPtr());
+}
+
+
+Foam::autoPtr<Foam::token::compound> Foam::token::compound::New
+(
+    const word& compoundType,
+    Istream& is,
+    const bool readContent
+)
+{
+    auto* ctorPtr = emptyConstructorTable(compoundType);
 
     if (!ctorPtr)
     {
@@ -70,49 +92,76 @@ Foam::autoPtr<Foam::token::compound> Foam::token::compound::New
             is,
             "compound",
             compoundType,
-            *IstreamConstructorTablePtr_
+            *emptyConstructorTablePtr_
         ) << abort(FatalIOError);
     }
 
-    return autoPtr<Foam::token::compound>(ctorPtr(is));
+    autoPtr<token::compound> aptr(ctorPtr());
+
+    if (readContent)
+    {
+        aptr->read(is);
+    }
+    return aptr;
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::token::compound::isCompound(const word& name)
+bool Foam::token::compound::isCompound(const word& compoundType)
 {
+    // Could also return the constructor pointer directly
+    // and test as bool or use for construction
+    //
+    // token::compound::emptyConstructorPtr ctorPtr = nullptr;
+    // if (emptyConstructorTablePtr_)
+    // {
+    //     ctorPtr = emptyConstructorTablePtr_->cfind(compoundType);
+    //     if (iter.good()) ctorPtr = iter.val();
+    // }
+    // return ctorPtr;
+
     return
     (
-        IstreamConstructorTablePtr_
-     && IstreamConstructorTablePtr_->found(name)
+        emptyConstructorTablePtr_
+     && emptyConstructorTablePtr_->contains(compoundType)
     );
 }
 
 
-Foam::token::compound& Foam::token::transferCompoundToken()
+bool Foam::token::readCompoundToken
+(
+    const word& compoundType,
+    Istream& is,
+    const bool readContent
+)
 {
-    if (type_ != tokenType::COMPOUND)
+    // Like compound::New() but more failure tolerant.
+    // - a no-op if the compoundType is unknown
+
+    auto* ctorPtr = token::compound::emptyConstructorTable(compoundType);
+
+    if (!ctorPtr)
     {
-        parseError("compound");
+        return false;
     }
 
-    if (data_.compoundPtr->moved())
-    {
-        FatalErrorInFunction
-            << "compound has already been transferred from token\n    "
-            << info() << abort(FatalError);
-    }
-    else
-    {
-        data_.compoundPtr->moved(true);
-    }
+    autoPtr<token::compound> aptr(ctorPtr());
 
-    return *data_.compoundPtr;
+    if (readContent)
+    {
+        aptr->read(is);
+    }
+    // Could also set pending(false) for !readContent,
+    // but prefer to leave that to the caller.
+
+    (*this) = std::move(aptr);
+
+    return true;
 }
 
 
-Foam::token::compound& Foam::token::transferCompoundToken(const Istream& is)
+Foam::token::compound& Foam::token::transferCompoundToken(const Istream* is)
 {
     if (type_ != tokenType::COMPOUND)
     {
@@ -121,12 +170,38 @@ Foam::token::compound& Foam::token::transferCompoundToken(const Istream& is)
 
     if (data_.compoundPtr->moved())
     {
-        FatalIOErrorInFunction(is)
-            << "compound has already been transferred from token\n    "
-            << info() << abort(FatalIOError);
+        if (is)
+        {
+            FatalIOErrorInFunction(*is)
+                << "compound has already been transferred from token\n    "
+                << info() << abort(FatalIOError);
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "compound has already been transferred from token\n    "
+                << info() << abort(FatalError);
+        }
     }
+    // // TDB
+    // else if (data_.compoundPtr->pending())
+    // {
+    //     if (is)
+    //     {
+    //         FatalIOErrorInFunction(*is)
+    //             << "compound is pending (not yet read?)\n    "
+    //             << info() << abort(FatalIOError);
+    //     }
+    //     else
+    //     {
+    //         FatalErrorInFunction
+    //             << "compound is pending (not yet read?)\n    "
+    //             << info() << abort(FatalError);
+    //     }
+    // }
     else
     {
+        // TBD: reset pending?
         data_.compoundPtr->moved(true);
     }
 

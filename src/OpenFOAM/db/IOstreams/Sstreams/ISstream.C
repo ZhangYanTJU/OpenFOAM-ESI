@@ -74,6 +74,18 @@ inline void inplaceTrimRight(std::string& s)
 } // End anonymous namespace
 
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::ISstream::readCompoundToken
+(
+    token& tok,
+    const word& compoundType
+)
+{
+    return tok.readCompoundToken(compoundType, *this);
+}
+
+
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 bool Foam::ISstream::seekCommentEnd_Cstyle()
@@ -792,13 +804,13 @@ Foam::Istream& Foam::ISstream::read(token& t)
             {
                 t.setBad();
             }
-            else if (token::compound::isCompound(val))
+            else if
+            (
+                !token::compound::isCompound(val)
+             || !readCompoundToken(t, val)
+            )
             {
-                t = token::compound::New(val, *this).ptr();
-            }
-            else
-            {
-                t = std::move(val); // Move contents to token
+                t = std::move(val);  // Move contents to token
             }
 
             return *this;
