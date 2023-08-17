@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -54,21 +54,21 @@ outlet
     T
     {
         type            inletOutlet;
-        inletValue      uniform $:outerInlet.T;
+        inletValue      uniform $/outerInlet/T;
         value           $inletValue;
     }
 
     k
     {
         type            inletOutlet;
-        inletValue      uniform $:innerInlet.k;
+        inletValue      uniform $/innerInlet/k;
         value           $inletValue;
     }
 
     epsilon
     {
         type            inletOutlet;
-        inletValue      uniform $:innerInlet.epsilon;
+        inletValue      uniform $/innerInlet/epsilon;
         value           $inletValue;
     }
 }
@@ -94,13 +94,13 @@ wall
     k
     {
         type            kqRWallFunction;
-        value           uniform $:innerInlet.k;
+        value           uniform $/innerInlet/k;
     }
 
     epsilon
     {
         type            epsilonWallFunction;
-        value           uniform $:innerInlet.epsilon;
+        value           uniform $/innerInlet/epsilon;
     }
 
     nut
