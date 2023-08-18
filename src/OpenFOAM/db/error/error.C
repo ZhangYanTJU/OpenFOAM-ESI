@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,23 @@ License
 #include "Pstream.H"
 #include "foamVersion.H"
 #include "OSspecific.H"
+#include "Enum.H"
 #include "Switch.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+const Foam::Enum
+<
+    Foam::error::handlerTypes
+>
+Foam::error::handlerNames
+({
+    { handlerTypes::DEFAULT, "default" },
+    { handlerTypes::IGNORE, "ignore" },
+    { handlerTypes::WARN, "warn" },
+    { handlerTypes::STRICT, "strict" },
+});
+
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 

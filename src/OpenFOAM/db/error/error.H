@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,8 +53,8 @@ SeeAlso
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef error_H
-#define error_H
+#ifndef Foam_error_H
+#define Foam_error_H
 
 #include "messageStream.H"
 #include <memory>
@@ -63,6 +63,10 @@ SeeAlso
 
 namespace Foam
 {
+
+// Forward Declarations
+class OStringStream;
+template<class EnumType> class Enum;
 
 /*---------------------------------------------------------------------------*\
                             Class error Declaration
@@ -91,6 +95,21 @@ protected:
 
 
 public:
+
+    // Data Types
+
+        //- Handling of errors. The exact handling depends on the local context.
+        enum class handlerTypes : char
+        {
+            DEFAULT = 0,  //!< Default behaviour (local meaning)
+            IGNORE,       //!< Ignore on errors/problems
+            WARN,         //!< Warn on errors/problems
+            STRICT        //!< Fatal on errors/problems
+        };
+
+        //- Names of the error handler types
+        static const Enum<handlerTypes> handlerNames;
+
 
     // Constructors
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,11 +77,10 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjectList_H
-#define functionObjectList_H
+#ifndef Foam_functionObjectList_H
+#define Foam_functionObjectList_H
 
 #include "PtrList.H"
-#include "Enum.H"
 #include "functionObject.H"
 #include "SHA1Digest.H"
 #include "HashTable.H"
@@ -106,25 +105,10 @@ class functionObjectList
 :
     private PtrList<functionObject>
 {
-    // Data Types
-
-        //- Handling of construction or execution errors
-        enum class errorHandlingType : uint8_t
-        {
-            DEFAULT = 0,  //!< Warn on construct, Fatal on runtime
-            WARN,         //!< Warn on construct, Warn on runtime
-            IGNORE,       //!< Ignore on construct, Ignore on runtime
-            STRICT,       //!< Fatal on construct, Fatal on runtime
-        };
-
-        //- Names for error handling types
-        static const Enum<errorHandlingType> errorHandlingNames_;
-
-
     // Private Data
 
         //- A list of error/warning handling
-        List<errorHandlingType> errorHandling_;
+        List<error::handlerTypes> errorHandling_;
 
         //- A list of SHA1 digests for the function object dictionaries
         List<SHA1Digest> digests_;
@@ -135,7 +119,7 @@ class functionObjectList
         //- Track the number of warnings per function object and limit
         //  to a predefined number to avoid flooding the display.
         //  Clear on re-read of functions.
-        HashTable<uint32_t> warnings_;
+        HashTable<unsigned> warnings_;
 
         //- Reference to Time
         const Time& time_;
@@ -185,11 +169,11 @@ class functionObjectList
         //
         //  This additional treatment is to ensure that potentially existing
         //  code with an "errors" functionObject will continue to run.
-        errorHandlingType getOrDefaultErrorHandling
+        error::handlerTypes getOrDefaultErrorHandling
         (
             const word& key,
             const dictionary& dict,
-            const errorHandlingType deflt
+            const error::handlerTypes deflt
         ) const;
 
 
