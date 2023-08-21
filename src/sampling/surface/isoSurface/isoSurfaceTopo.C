@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -801,8 +801,7 @@ void Foam::isoSurfaceTopo::triangulateOutside
     {
         if (loop.size() > 2)
         {
-            compactFaces.append(face(loop.size()));
-            face& f = compactFaces.last();
+            face& f = compactFaces.emplace_back(loop.size());
 
             label fpi = 0;
             forAll(f, i)
@@ -1072,7 +1071,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
             );
         }
     }
-    startTri.last() = tetCutAddr.nFaces();
+    startTri.back() = tetCutAddr.nFaces();
 
     // Information not needed anymore:
     tetBasePtIs.clear();
@@ -1080,7 +1079,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
 
 
     // From list of vertices -> triangular faces
-    faceList allTriFaces(startTri.last());
+    faceList allTriFaces(startTri.back());
     {
         auto& verts = tetCutAddr.cutPoints();
 
@@ -1097,7 +1096,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
 
 
     // The cells cut by the triangular faces
-    meshCells_.resize(startTri.last());
+    meshCells_.resize(startTri.back());
     for (label celli = 0; celli < startTri.size()-1; ++celli)
     {
         // All triangles for the current cell

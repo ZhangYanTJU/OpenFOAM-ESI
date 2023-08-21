@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -225,9 +225,9 @@ public:
             autoPtr<sampledSurface> operator()(Istream& is) const
             {
                 word name(is);
-                capture_.append(dictionary(is));
+                dictionary& dict = capture_.emplace_back(is);
 
-                return sampledSurface::New(name, mesh_, capture_.last());
+                return sampledSurface::New(name, mesh_, dict);
             }
         };
 

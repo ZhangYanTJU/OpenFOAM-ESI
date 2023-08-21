@@ -148,21 +148,15 @@ void matchPatchFaces
                 // Mesh 0
                 //~~~~~~~
 
-                interfaceMesh0.append(labelList());
-                auto& intMesh0 = interfaceMesh0.last();
-                intMesh0.setSize(nSourcei, -1);
+                auto& intMesh0 = interfaceMesh0.emplace_back(nSourcei, -1);
                 intMesh0[sourcei] = meshi;
 
-                interfaceSource0.append(sourcei);
+                interfaceSource0.push_back(sourcei);
 
-                interfacePatch0.append(labelList());
-                auto& intPatch0 = interfacePatch0.last();
-                intPatch0.setSize(nSourcei, -1);
+                auto& intPatch0 = interfacePatch0.emplace_back(nSourcei, -1);
                 intPatch0[sourcei] = ppi.index();
 
-                interfaceNames0.append(wordList());
-                auto& intNames0 = interfaceNames0.last();
-                intNames0.setSize(nSourcei);
+                auto& intNames0 = interfaceNames0.emplace_back(nSourcei);
                 intNames0[sourcei] =
                     patchName(entryName, meshes[meshi], meshes[meshj]);
 
@@ -170,33 +164,23 @@ void matchPatchFaces
                 // Mesh 1
                 //~~~~~~~
 
-                interfaceMesh1.append(labelList());
-                auto& intMesh1 = interfaceMesh1.last();
-                intMesh1.setSize(nSourcej, -1);
+                auto& intMesh1 = interfaceMesh1.emplace_back(nSourcej, -1);
                 intMesh1[sourcej] = meshj;
 
-                interfaceSource1.append(sourcej);
+                interfaceSource1.push_back(sourcej);
 
-                interfacePatch1.append(labelList());
-                auto& intPatch1 = interfacePatch1.last();
-                intPatch1.setSize(nSourcej, -1);
+                auto& intPatch1 = interfacePatch1.emplace_back(nSourcej, -1);
                 intPatch1[sourcej] = ppj.index();
 
-                interfaceNames1.append(wordList());
-                auto& intNames1 = interfaceNames1.last();
-                intNames1.setSize(nSourcej);
+                auto& intNames1 = interfaceNames1.emplace_back(nSourcej);
                 intNames1[sourcej] =
                     patchName(entryName, meshes[meshj], meshes[meshi]);
 
-                interfaceFaces0.append(List<DynamicList<label>>());
-                auto& intFaces0 = interfaceFaces0.last();
-                intFaces0.setSize(nSourcei);
+                auto& intFaces0 = interfaceFaces0.emplace_back(nSourcei);
                 DynamicList<label>& faces0 = intFaces0[sourcei];
                 faces0.setCapacity(ppi.size());
 
-                interfaceFaces1.append(List<DynamicList<label>>());
-                auto& intFaces1 = interfaceFaces1.last();
-                intFaces1.setSize(nSourcej);
+                auto& intFaces1 = interfaceFaces1.emplace_back(nSourcej);
                 DynamicList<label>& faces1 = intFaces1[sourcej];
                 faces1.setCapacity(ppj.size());
 
@@ -249,7 +233,7 @@ void matchPatchFaces
                     {
                         if (weights[facei] > 0.5 || sourceMask[facei] > SMALL)
                         {
-                            faces0.append(ppi.start()+facei);
+                            faces0.push_back(ppi.start()+facei);
                         }
                     }
                 }
@@ -259,7 +243,7 @@ void matchPatchFaces
                     {
                         if (weights[facei] > 0.5 || targetMask[facei] > SMALL)
                         {
-                            faces1.append(ppj.start()+facei);
+                            faces1.push_back(ppj.start()+facei);
                         }
                     }
                 }
@@ -825,7 +809,7 @@ int main(int argc, char *argv[])
 
             if (pDict.get<word>("constructFrom") == "autoPatch")
             {
-                interRegionSources[meshi].append(sourcei);
+                interRegionSources[meshi].push_back(sourcei);
             }
         }
     }

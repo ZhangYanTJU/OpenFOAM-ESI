@@ -250,12 +250,7 @@ Foam::CollisionRecordList<PairType, WallType>::matchPairRecord
     // member of the list.  Setting the status of the record to be accessed
     // on construction.
 
-    pairRecords_.append
-    (
-        PairCollisionRecord<PairType>(true, origProcOfOther, origIdOfOther)
-    );
-
-    return pairRecords_.last();
+    return pairRecords_.emplace_back(true, origProcOfOther, origIdOfOther);
 }
 
 
@@ -307,9 +302,7 @@ Foam::CollisionRecordList<PairType, WallType>::matchWallRecord
     // member of the list.  Setting the status of the record to be accessed
     // on construction.
 
-    wallRecords_.append(WallCollisionRecord<WallType>(true, pRel));
-
-    return wallRecords_.last();
+    return wallRecords_.emplace_back(true, pRel);
 }
 
 

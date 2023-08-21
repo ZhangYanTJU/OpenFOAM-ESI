@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,7 +47,7 @@ Description
 #include "Time.H"
 #include "polyMesh.H"
 #include "cellSet.H"
-#include "SortableList.H"
+#include "SortList.H"
 #include "labelIOList.H"
 #include "fvMesh.H"
 #include "volFields.H"
@@ -128,71 +128,54 @@ int main(int argc, char *argv[])
 
     const scalarField& vols = mesh.cellVolumes();
 
-    SortableList<scalar> sortedVols(vols);
+    SortList<scalar> sortedVols(vols);
 
     // All cell labels, sorted per bin.
     DynamicList<DynamicList<label>> bins;
 
     // Lower/upper limits
-    DynamicList<scalar> lowerLimits;
-    DynamicList<scalar> upperLimits;
+    DynamicList<scalarMinMax> limits;
 
     // Create bin0. Have upperlimit as factor times lowerlimit.
-    bins.append(DynamicList<label>());
-    lowerLimits.append(sortedVols[0]);
-    upperLimits.append(1.1 * lowerLimits.last());
+    bins.emplace_back();
+    limits.emplace_back(sortedVols[0], 1.1*sortedVols[0]);
 
     forAll(sortedVols, i)
     {
-        if (sortedVols[i] > upperLimits.last())
+        if (sortedVols[i] > limits.back().max())
         {
             // New value outside of current bin
-
-            // Shrink old bin.
-            DynamicList<label>& bin = bins.last();
-
-            bin.shrink();
-
-            Info<< "Collected " << bin.size() << " elements in bin "
-                << lowerLimits.last() << " .. "
-                << upperLimits.last() << endl;
+            Info<< "Collected " << bins.back() << " elements in bin "
+                << limits.back().min() << " .. "
+                << limits.back().max() << endl;
 
             // Create new bin.
-            bins.append(DynamicList<label>());
-            lowerLimits.append(sortedVols[i]);
-            upperLimits.append(1.1 * lowerLimits.last());
+            bins.emplace_back();
+            limits.emplace_back(sortedVols[i], 1.1 * sortedVols[i]);
 
-            Info<< "Creating new bin " << lowerLimits.last()
-                << " .. " << upperLimits.last()
-                << endl;
+            Info<< "Creating new bin "
+                << limits.back().min() << " .. "
+                << limits.back().max() << endl;
         }
 
-        // Append to current bin.
-        DynamicList<label>& bin = bins.last();
-
-        bin.append(sortedVols.indices()[i]);
+        // Add to current bin.
+        bins.back().push_back(sortedVols.indices()[i]);
     }
     Info<< endl;
-
-    bins.last().shrink();
-    bins.shrink();
-    lowerLimits.shrink();
-    upperLimits.shrink();
-
 
     //
     // Write to cellSets.
     //
 
     Info<< "Volume bins:" << nl;
-    forAll(bins, binI)
+    forAll(bins, bini)
     {
-        const DynamicList<label>& bin = bins[binI];
+        const auto& bin = bins[bini];
 
-        cellSet cells(mesh, "vol" + name(binI), bin.size());
+        cellSet cells(mesh, "vol" + Foam::name(bini), bin.size());
         cells.insert(bin);
 
-        Info<< "    " << lowerLimits[binI] << " .. " << upperLimits[binI]
+        Info<< "    " << limits[bini].min() << " .. " << limits[bini].max()
             << "  : writing " << bin.size() << " cells to cellSet "
             << cells.name() << endl;
 
@@ -294,13 +277,13 @@ int main(int argc, char *argv[])
     );
 
     // Set cell values
-    forAll(bins, binI)
+    forAll(bins, bini)
     {
-        const DynamicList<label>& bin = bins[binI];
+        const auto& bin = bins[bini];
 
         forAll(bin, i)
         {
-            refLevel[bin[i]] = bins.size() - binI - 1;
+            refLevel[bin[i]] = bins.size() - bini - 1;
             postRefLevel[bin[i]] = refLevel[bin[i]];
         }
     }

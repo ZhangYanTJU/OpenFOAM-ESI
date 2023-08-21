@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1810,9 +1810,7 @@ bool Foam::hexRef8::matchHexShape
             {
                 reverse(verts);
             }
-            quads.append(face(0));
-            labelList& quadVerts = quads.last();
-            quadVerts.transfer(verts);
+            quads.emplace_back(verts);
         }
     }
 
@@ -1891,9 +1889,7 @@ bool Foam::hexRef8::matchHexShape
 
                     if (verts.size() == 4)
                     {
-                        quads.append(face(0));
-                        labelList& quadVerts = quads.last();
-                        quadVerts.transfer(verts);
+                        quads.emplace_back(verts);
                     }
                 }
             }
@@ -2372,6 +2368,8 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement
 
         const refinementData& ownData = allCellInfo[faceOwner[facei]];
 
+        label maxDataCount = ownData.count();
+
         if (mesh_.isInternalFace(facei))
         {
             // Seed face if neighbouring cell (after possible refinement)
@@ -2379,46 +2377,18 @@ Foam::labelList Foam::hexRef8::consistentSlowRefinement
 
             const refinementData& neiData = allCellInfo[faceNeighbour[facei]];
 
-            label faceCount;
-            label faceRefineCount;
-            if (neiData.count() > ownData.count())
+            if (maxDataCount < neiData.count())
             {
-                faceCount = neiData.count() + maxFaceDiff;
-                faceRefineCount = faceCount + maxFaceDiff;
+                maxDataCount = neiData.count();
             }
-            else
-            {
-                faceCount = ownData.count() + maxFaceDiff;
-                faceRefineCount = faceCount + maxFaceDiff;
-            }
-
-            seedFaces.append(facei);
-            seedFacesInfo.append
-            (
-                refinementData
-                (
-                    faceRefineCount,
-                    faceCount
-                )
-            );
-            allFaceInfo[facei] = seedFacesInfo.last();
         }
-        else
-        {
-            label faceCount = ownData.count() + maxFaceDiff;
-            label faceRefineCount = faceCount + maxFaceDiff;
 
-            seedFaces.append(facei);
-            seedFacesInfo.append
-            (
-                refinementData
-                (
-                    faceRefineCount,
-                    faceCount
-                )
-            );
-            allFaceInfo[facei] = seedFacesInfo.last();
-        }
+        label faceCount = maxDataCount + maxFaceDiff;
+        label faceRefineCount = faceCount + maxFaceDiff;
+
+        seedFaces.push_back(facei);
+        allFaceInfo[facei] =
+            seedFacesInfo.emplace_back(faceRefineCount, faceCount);
     }
 
 

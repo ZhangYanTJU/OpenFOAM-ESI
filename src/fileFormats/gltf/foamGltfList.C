@@ -32,11 +32,11 @@ License
 template<class Type>
 Type& Foam::glTF::List<Type>::create(const word& name)
 {
-    Type obj(name);
-    obj.id() = data_.size();
-    data_.append(obj);
+    const label id = data_.size();
+    Type& obj = data_.emplace_back(name);
+    obj.id() = id;
 
-    return data_.last();
+    return data_.back();
 }
 
 
