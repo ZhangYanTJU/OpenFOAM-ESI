@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -19,30 +19,30 @@ FoamFile
 
 dimensions      [0 2 -3 0 0 0 0];
 
-internalField   uniform $:innerInlet.epsilon;
+internalField   uniform $/innerInlet/epsilon;
 
 boundaryField
 {
     innerInlet
     {
         type            fixedValue;
-        value           uniform $:innerInlet.epsilon;
+        value           uniform $/innerInlet/epsilon;
     }
 
     outerInlet
     {
         type            fixedValue;
-        value           uniform $:outerInlet.epsilon;
+        value           uniform $/outerInlet/epsilon;
     }
 
     outlet
     {
-        $:outlet.epsilon;
+        $/outlet/epsilon;
     }
 
     staticWalls
     {
-        $:wall.epsilon;
+        $/wall/epsilon;
     }
 
     movingWalls

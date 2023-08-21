@@ -18,13 +18,13 @@ mkdir -p 0
 cp -f system/fvSchemes system/fvSchemes.bck
 
 # Run with basic
-foamDictionary system/fvSchemes -entry geometry.type -set basic
+foamDictionary system/fvSchemes -entry geometry/type -set basic
 runApplication -s basic snappyHexMesh
 runApplication -s basic checkMesh -writeAllFields
 foamListTimes -rm
 
 # Run with highAspectRatio
-foamDictionary system/fvSchemes -entry geometry.type -set highAspectRatio
+foamDictionary system/fvSchemes -entry geometry/type -set highAspectRatio
 runApplication -s highAspectRatio snappyHexMesh
 runApplication -s highAspectRatio checkMesh -writeAllFields
 

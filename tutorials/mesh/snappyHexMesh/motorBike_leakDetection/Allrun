@@ -18,14 +18,14 @@ runApplication decomposePar
 
 #- Run with leak-detection (writes postProcessing/leakPath) but no closure
 foamDictionary system/snappyHexMeshDict \
-    -entry castellatedMeshControls.useLeakClosure -set false
+    -entry castellatedMeshControls/useLeakClosure -set false
 runParallel -s leak snappyHexMesh
 runParallel -s leak checkMesh
 cleanTimeDirectories
 
 #- Run with leak-detection (writes postProcessing/leakPath) and closure
 foamDictionary system/snappyHexMeshDict \
-    -entry castellatedMeshControls.useLeakClosure -set true
+    -entry castellatedMeshControls/useLeakClosure -set true
 runParallel -s leak_and_closure snappyHexMesh
 runParallel -s leak_and_closure checkMesh
 

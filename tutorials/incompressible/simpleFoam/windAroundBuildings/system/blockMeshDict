@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -14,7 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-backgroundMesh
+domain
 {
     xMin   -20; // L = 350
     xMax   330;
@@ -29,26 +29,27 @@ backgroundMesh
 
 scale   1;
 
+// Note: uses older '.' syntax (to test compatibility)
 vertices
 (
-    ($:backgroundMesh.xMin $:backgroundMesh.yMin $:backgroundMesh.zMin)
-    ($:backgroundMesh.xMax $:backgroundMesh.yMin $:backgroundMesh.zMin)
-    ($:backgroundMesh.xMax $:backgroundMesh.yMax $:backgroundMesh.zMin)
-    ($:backgroundMesh.xMin $:backgroundMesh.yMax $:backgroundMesh.zMin)
+    ($:domain.xMin $:domain.yMin $:domain.zMin)
+    ($:domain.xMax $:domain.yMin $:domain.zMin)
+    ($:domain.xMax $:domain.yMax $:domain.zMin)
+    ($:domain.xMin $:domain.yMax $:domain.zMin)
 
-    ($:backgroundMesh.xMin $:backgroundMesh.yMin $:backgroundMesh.zMax)
-    ($:backgroundMesh.xMax $:backgroundMesh.yMin $:backgroundMesh.zMax)
-    ($:backgroundMesh.xMax $:backgroundMesh.yMax $:backgroundMesh.zMax)
-    ($:backgroundMesh.xMin $:backgroundMesh.yMax $:backgroundMesh.zMax)
+    ($:domain.xMin $:domain.yMin $:domain.zMax)
+    ($:domain.xMax $:domain.yMin $:domain.zMax)
+    ($:domain.xMax $:domain.yMax $:domain.zMax)
+    ($:domain.xMin $:domain.yMax $:domain.zMax)
 );
 
 blocks
 (
     hex (0 1 2 3 4 5 6 7)
     (
-        $:backgroundMesh.xCells
-        $:backgroundMesh.yCells
-        $:backgroundMesh.zCells
+        $:domain.xCells
+        $:domain.yCells
+        $:domain.zCells
     )
     simpleGrading (1 1 1)
 );
@@ -103,5 +104,8 @@ mergePatchPairs
 (
 );
 
+
+// Cleanup
+#remove ( domain )
 
 // ************************************************************************* //
