@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef zoneIdentifier_H
-#define zoneIdentifier_H
+#ifndef Foam_zoneIdentifier_H
+#define Foam_zoneIdentifier_H
 
 #include "wordList.H"
 
@@ -121,58 +121,46 @@ public:
     // Member Functions
 
         //- The zone name
-        const word& name() const noexcept
-        {
-            return name_;
-        }
+        const word& name() const noexcept { return name_; }
 
         //- Modifiable zone name
-        word& name() noexcept
-        {
-            return name_;
-        }
+        word& name() noexcept { return name_; }
 
         //- The index of this zone in the zone list
-        label index() const noexcept
-        {
-            return index_;
-        }
+        label index() const noexcept { return index_; }
 
         //- Modifiable index of this zone in the zone list
-        label& index() noexcept
-        {
-            return index_;
-        }
+        label& index() noexcept { return index_; }
 
         //- The (optional) type of the zone
-        const word& physicalType() const noexcept
-        {
-            return physicalType_;
-        }
+        const word& physicalType() const noexcept { return physicalType_; }
 
         //- Modifiable (optional) type of the zone
-        word& physicalType() noexcept
-        {
-            return physicalType_;
-        }
+        word& physicalType() noexcept { return physicalType_; }
 
         //- The (optional) groups that the zone belongs to
-        const wordList& inGroups() const noexcept
-        {
-            return inGroups_;
-        }
+        const wordList& inGroups() const noexcept { return inGroups_; }
 
         //- Modifiable (optional) groups that the zone belongs to
-        wordList& inGroups() noexcept
-        {
-            return inGroups_;
-        }
+        wordList& inGroups() noexcept { return inGroups_; }
 
         //- True if given name is in a group
         bool inGroup(const word& name) const
         {
-            return inGroups_.found(name);
+            return (!name.empty() && inGroups_.contains(name));
         }
+
+        //- Add (unique) group for the zone
+        void addGroup(const word& name)
+        {
+            if (!name.empty() && !inGroups_.contains(name))
+            {
+                inGroups_.push_back(name);
+            }
+        }
+
+        //- Remove group for the zone
+        void removeGroup(const word& name);
 
         //- Write (physicalType, inGroups) dictionary entries
         //- (without surrounding braces)

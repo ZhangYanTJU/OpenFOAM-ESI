@@ -86,11 +86,6 @@ class polyMeshAdder
             labelList& fromAllTo1Patches
         );
 
-        //- Get starts of patches
-        static labelList getPatchStarts(const polyBoundaryMesh&);
-        //- Get sizes of patches
-        static labelList getPatchSizes(const polyBoundaryMesh&);
-
         static List<polyPatch*> combinePatches
         (
             const polyMesh& mesh0,

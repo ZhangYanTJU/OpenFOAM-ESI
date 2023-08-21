@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,7 +56,7 @@ Foam::oversetPolyPatch::oversetPolyPatch
     masterPatchID_(-1)
 {
     //  'overset' is not constraint type so add to group explicitly
-    inGroups().appendUniq(typeName);
+    addGroup(typeName);
 }
 
 
@@ -73,7 +73,7 @@ Foam::oversetPolyPatch::oversetPolyPatch
     masterPatchID_(-1)
 {
     //  'overset' is not constraint type so add to group explicitly
-    inGroups().appendUniq(typeName);
+    addGroup(typeName);
 }
 
 

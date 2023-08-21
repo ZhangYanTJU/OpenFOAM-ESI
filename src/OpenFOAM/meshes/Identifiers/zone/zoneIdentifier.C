@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -91,6 +91,25 @@ Foam::zoneIdentifier::zoneIdentifier
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::zoneIdentifier::removeGroup(const word& name)
+{
+    label idx = name.empty() ? -1 : inGroups_.find(name);
+
+    if (idx >= 0)
+    {
+        for (label i = idx + 1; i < inGroups_.size(); ++i)
+        {
+            if (inGroups_[i] != name)
+            {
+                inGroups_[idx] = std::move(inGroups_[i]);
+                ++idx;
+            }
+        }
+        inGroups_.resize(idx);
+    }
+}
+
 
 void Foam::zoneIdentifier::write(Ostream& os) const
 {

@@ -93,6 +93,25 @@ Foam::patchIdentifier::patchIdentifier
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::patchIdentifier::removeGroup(const word& name)
+{
+    label idx = name.empty() ? -1 : inGroups_.find(name);
+
+    if (idx >= 0)
+    {
+        for (label i = idx + 1; i < inGroups_.size(); ++i)
+        {
+            if (inGroups_[i] != name)
+            {
+                inGroups_[idx] = std::move(inGroups_[i]);
+                ++idx;
+            }
+        }
+        inGroups_.resize(idx);
+    }
+}
+
+
 void Foam::patchIdentifier::write(Ostream& os) const
 {
     if (!physicalType_.empty())

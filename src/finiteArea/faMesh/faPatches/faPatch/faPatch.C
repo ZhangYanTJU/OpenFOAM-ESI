@@ -113,7 +113,7 @@ Foam::faPatch::faPatch
 {
     if (constraintType(patchType))
     {
-        inGroups().appendUniq(patchType);
+        addGroup(patchType);
     }
 }
 
@@ -137,7 +137,7 @@ Foam::faPatch::faPatch
 {
     if (constraintType(patchType))
     {
-        inGroups().appendUniq(patchType);
+        addGroup(patchType);
     }
 }
 

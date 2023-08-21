@@ -129,9 +129,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcGroupIDs() const
 
     forAll(zones, zonei)
     {
-        const wordList& groups = zones[zonei].inGroups();
-
-        for (const word& groupName : groups)
+        for (const word& groupName : zones[zonei].inGroups())
         {
             groupLookup(groupName).push_back(zonei);
         }
@@ -716,34 +714,24 @@ void Foam::ZoneMesh<ZoneType, MeshType>::setGroup
 
     PtrList<ZoneType>& zones = *this;
 
-    boolList doneZone(zones.size(), false);
+    boolList pending(zones.size(), true);
 
     // Add to specified zones
     for (const label zonei : zoneIDs)
     {
-        zones[zonei].inGroups().push_uniq(groupName);
-        doneZone[zonei] = true;
+        if (pending.test(zonei))
+        {
+            pending.unset(zonei);
+            zones[zonei].addGroup(groupName);
+        }
     }
 
     // Remove from other zones
     forAll(zones, zonei)
     {
-        if (!doneZone[zonei])
+        if (pending.test(zonei))
         {
-            wordList& groups = zones[zonei].inGroups();
-
-            if (groups.found(groupName))
-            {
-                label newi = 0;
-                forAll(groups, i)
-                {
-                    if (groups[i] != groupName)
-                    {
-                        groups[newi++] = groups[i];
-                    }
-                }
-                groups.resize(newi);
-            }
+            zones[zonei].removeGroup(groupName);
         }
     }
 }

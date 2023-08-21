@@ -87,11 +87,7 @@ label addPatch
             )
         );
         auto& pp = *ppPtr;
-
-        if (!groupName.empty())
-        {
-            pp.inGroups().appendUniq(groupName);
-        }
+        pp.addGroup(groupName);
 
 
         // Add patch, create calculated everywhere

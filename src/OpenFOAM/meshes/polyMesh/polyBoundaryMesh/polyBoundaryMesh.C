@@ -84,9 +84,7 @@ void Foam::polyBoundaryMesh::calcGroupIDs() const
 
     forAll(patches, patchi)
     {
-        const wordList& groups = patches[patchi].inGroups();
-
-        for (const word& groupName : groups)
+        for (const word& groupName : patches[patchi].inGroups())
         {
             groupLookup(groupName).push_back(patchi);
         }
@@ -504,34 +502,24 @@ void Foam::polyBoundaryMesh::setGroup
 
     polyPatchList& patches = *this;
 
-    boolList donePatch(patches.size(), false);
+    boolList pending(patches.size(), true);
 
     // Add to specified patches
     for (const label patchi : patchIDs)
     {
-        patches[patchi].inGroups().push_uniq(groupName);
-        donePatch[patchi] = true;
+        if (pending.test(patchi))
+        {
+            pending.unset(patchi);
+            patches[patchi].addGroup(groupName);
+        }
     }
 
     // Remove from other patches
     forAll(patches, patchi)
     {
-        if (!donePatch[patchi])
+        if (pending.test(patchi))
         {
-            wordList& groups = patches[patchi].inGroups();
-
-            if (groups.found(groupName))
-            {
-                label newi = 0;
-                forAll(groups, i)
-                {
-                    if (groups[i] != groupName)
-                    {
-                        groups[newi++] = groups[i];
-                    }
-                }
-                groups.resize(newi);
-            }
+            patches[patchi].removeGroup(groupName);
         }
     }
 }

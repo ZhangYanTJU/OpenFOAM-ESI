@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef patchIdentifier_H
-#define patchIdentifier_H
+#ifndef Foam_patchIdentifier_H
+#define Foam_patchIdentifier_H
 
 #include "wordList.H"
 
@@ -133,58 +133,46 @@ public:
     // Member Functions
 
         //- The patch name
-        const word& name() const noexcept
-        {
-            return name_;
-        }
+        const word& name() const noexcept { return name_; }
 
         //- Modifiable patch name
-        word& name() noexcept
-        {
-            return name_;
-        }
+        word& name() noexcept { return name_; }
 
         //- The index of this patch in the boundaryMesh
-        label index() const noexcept
-        {
-            return index_;
-        }
+        label index() const noexcept { return index_; }
 
         //- Modifiable index of this patch in the boundaryMesh
-        label& index() noexcept
-        {
-            return index_;
-        }
+        label& index() noexcept { return index_; }
 
         //- The (optional) physical type of the patch
-        const word& physicalType() const noexcept
-        {
-            return physicalType_;
-        }
+        const word& physicalType() const noexcept { return physicalType_; }
 
         //- Modifiable (optional) physical type of the patch
-        word& physicalType() noexcept
-        {
-            return physicalType_;
-        }
+        word& physicalType() noexcept { return physicalType_; }
 
         //- The (optional) groups that the patch belongs to
-        const wordList& inGroups() const noexcept
-        {
-            return inGroups_;
-        }
+        const wordList& inGroups() const noexcept { return inGroups_; }
 
         //- Modifiable (optional) groups that the patch belongs to
-        wordList& inGroups() noexcept
-        {
-            return inGroups_;
-        }
+        wordList& inGroups() noexcept { return inGroups_; }
 
         //- True if given name is in a group
         bool inGroup(const word& name) const
         {
-            return inGroups_.found(name);
+            return (!name.empty() && inGroups_.contains(name));
         }
+
+        //- Add (unique) group for the patch
+        void addGroup(const word& name)
+        {
+            if (!name.empty() && !inGroups_.contains(name))
+            {
+                inGroups_.push_back(name);
+            }
+        }
+
+        //- Remove group for the patch
+        void removeGroup(const word& name);
 
         //- Write (physicalType, inGroups) dictionary entries
         //- (without surrounding braces)

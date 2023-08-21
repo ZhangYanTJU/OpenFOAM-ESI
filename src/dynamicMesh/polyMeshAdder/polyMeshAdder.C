@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,41 +55,37 @@ Foam::label Foam::polyMeshAdder::patchIndex
     const word& pType = p.type();
     const word& pName = p.name();
 
-    const label patchi = allPatchNames.find(pName);
+    label patchi = allPatchNames.find(pName);
 
-    if (patchi == -1)
+    if (patchi < 0)
     {
-        // Patch not found. Append to the list
-        allPatchNames.append(pName);
-        allPatchTypes.append(pType);
+        // Not found - add to the lists
+        patchi = allPatchNames.size();
 
-        return allPatchNames.size() - 1;
+        allPatchNames.push_back(pName);
+        allPatchTypes.push_back(pType);
     }
-    else if (allPatchTypes[patchi] == pType)
-    {
-        // Found name and types match
-        return patchi;
-    }
-    else
+    else if (allPatchTypes[patchi] != pType)
     {
         // Found the name, but type is different
+        patchi = allPatchNames.size();
 
         // Duplicate name is not allowed.  Create a composite name from the
         // patch name and case name
         const word& caseName = p.boundaryMesh().mesh().time().caseName();
 
-        allPatchNames.append(pName + "_" + caseName);
-        allPatchTypes.append(pType);
+        allPatchNames.push_back(pName + "_" + caseName);
+        allPatchTypes.push_back(pType);
 
         Pout<< "label patchIndex(const polyPatch& p) : "
             << "Patch " << p.index() << " named "
             << pName << " in mesh " << caseName
             << " already exists, but patch types"
             << " do not match.\nCreating a composite name as "
-            << allPatchNames.last() << endl;
-
-        return allPatchNames.size() - 1;
+            << allPatchNames.back() << endl;
     }
+
+    return patchi;
 }
 
 
@@ -100,19 +96,17 @@ Foam::label Foam::polyMeshAdder::zoneIndex
     DynamicList<word>& names
 )
 {
-    const label zoneI = names.find(curName);
+    label zonei = names.find(curName);
 
-    if (zoneI != -1)
+    if (zonei < 0)
     {
-        return zoneI;
-    }
-    else
-    {
-        // Not found.  Add new name to the list
-        names.append(curName);
+        // Not found - add to the list
+        zonei = names.size();
 
-        return names.size() - 1;
+        names.push_back(curName);
     }
+
+    return zonei;
 }
 
 
@@ -129,8 +123,8 @@ void Foam::polyMeshAdder::mergePatchNames
 )
 {
     // Insert the mesh0 patches and zones
-    allPatchNames.append(patches0.names());
-    allPatchTypes.append(patches0.types());
+    allPatchNames.push_back(patches0.names());
+    allPatchTypes.push_back(patches0.types());
 
 
     // Patches
@@ -162,34 +156,6 @@ void Foam::polyMeshAdder::mergePatchNames
     {
         fromAllTo1Patches[from1ToAllPatches[i]] = i;
     }
-}
-
-
-Foam::labelList Foam::polyMeshAdder::getPatchStarts
-(
-    const polyBoundaryMesh& patches
-)
-{
-    labelList patchStarts(patches.size());
-    forAll(patches, patchi)
-    {
-        patchStarts[patchi] = patches[patchi].start();
-    }
-    return patchStarts;
-}
-
-
-Foam::labelList Foam::polyMeshAdder::getPatchSizes
-(
-    const polyBoundaryMesh& patches
-)
-{
-    labelList patchSizes(patches.size());
-    forAll(patches, patchi)
-    {
-        patchSizes[patchi] = patches[patchi].size();
-    }
-    return patchSizes;
 }
 
 
@@ -916,8 +882,7 @@ void Foam::polyMeshAdder::mergePointZones
             }
             else if (pointToZone[allPointi] != zoneI)
             {
-                labelList& pZones = addPointToZones[allPointi];
-                pZones.appendUniq(zoneI);
+                addPointToZones[allPointi].push_uniq(zoneI);
             }
         }
     }
@@ -939,8 +904,7 @@ void Foam::polyMeshAdder::mergePointZones
             }
             else if (pointToZone[allPointi] != allZoneI)
             {
-                labelList& pZones = addPointToZones[allPointi];
-                pZones.appendUniq(allZoneI);
+                addPointToZones[allPointi].push_uniq(allZoneI);
             }
         }
     }
@@ -1066,12 +1030,9 @@ void Foam::polyMeshAdder::mergeFaceZones
                 }
                 else if (faceToZone[allFacei] != zoneI)
                 {
-                    labelList& fZones = addFaceToZones[allFacei];
-                    boolList& flipZones = addFaceToFlips[allFacei];
-
-                    if (fZones.appendUniq(zoneI))
+                    if (addFaceToZones[allFacei].push_uniq(zoneI))
                     {
-                        flipZones.append(flip0);
+                        addFaceToFlips[allFacei].push_back(flip0);
                     }
                 }
             }
@@ -1108,12 +1069,9 @@ void Foam::polyMeshAdder::mergeFaceZones
                 }
                 else if (faceToZone[allFacei] != allZoneI)
                 {
-                    labelList& fZones = addFaceToZones[allFacei];
-                    boolList& flipZones = addFaceToFlips[allFacei];
-
-                    if (fZones.appendUniq(allZoneI))
+                    if (addFaceToZones[allFacei].push_uniq(allZoneI))
                     {
-                        flipZones.append(flip1);
+                        addFaceToFlips[allFacei].push_back(flip1);
                     }
                 }
             }
@@ -1231,8 +1189,7 @@ void Foam::polyMeshAdder::mergeCellZones
             }
             else if (cellToZone[cell0] != zoneI)
             {
-                labelList& cZones = addCellToZones[cell0];
-                cZones.appendUniq(zoneI);
+                addCellToZones[cell0].push_uniq(zoneI);
             }
         }
     }
@@ -1253,8 +1210,7 @@ void Foam::polyMeshAdder::mergeCellZones
             }
             else if (cellToZone[allCelli] != allZoneI)
             {
-                labelList& cZones = addCellToZones[allCelli];
-                cZones.appendUniq(allZoneI);
+                addCellToZones[allCelli].push_uniq(allZoneI);
             }
         }
     }
@@ -1625,8 +1581,8 @@ Foam::autoPtr<Foam::polyMesh> Foam::polyMeshAdder::add
 
             from0ToAllPatches,
             from1ToAllPatches,
-            getPatchSizes(patches0),
-            getPatchStarts(patches0)
+            patches0.patchSizes(),
+            patches0.patchStarts()
         )
     );
 
@@ -1793,8 +1749,8 @@ Foam::autoPtr<Foam::mapAddedPolyMesh> Foam::polyMeshAdder::add
 
 
     // Store mesh0 patch info before modifying patches0.
-    labelList mesh0PatchSizes(getPatchSizes(patches0));
-    labelList mesh0PatchStarts(getPatchStarts(patches0));
+    labelList mesh0PatchSizes(patches0.patchSizes());
+    labelList mesh0PatchStarts(patches0.patchStarts());
 
     // Map from 0 to all patches (since gets compacted)
     labelList from0ToAllPatches(patches0.size(), -1);

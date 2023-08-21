@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,7 +62,7 @@ Foam::mappedWallPolyPatch::mappedWallPolyPatch
     mappedPatchBase(static_cast<const polyPatch&>(*this))
 {
     //  mapped is not constraint type so add mapped group explicitly
-    inGroups().appendUniq(mappedPolyPatch::typeName);
+    addGroup(mappedPolyPatch::typeName);
 }
 
 
@@ -129,7 +129,7 @@ Foam::mappedWallPolyPatch::mappedWallPolyPatch
     mappedPatchBase(*this, dict)
 {
     //  mapped is not constraint type so add mapped group explicitly
-    inGroups().appendUniq(mappedPolyPatch::typeName);
+    addGroup(mappedPolyPatch::typeName);
 }
 
 
