@@ -46,8 +46,8 @@ void Foam::shortEdgeFilter2D::assignBoundaryPointRegions
         const edge& e = iter.key();
         const label regi = iter.val();
 
-        boundaryPointRegions[e.start()].appendUniq(regi);
-        boundaryPointRegions[e.end()].appendUniq(regi);
+        boundaryPointRegions[e.first()].push_uniq(regi);
+        boundaryPointRegions[e.second()].push_uniq(regi);
     }
 }
 
@@ -66,7 +66,7 @@ void Foam::shortEdgeFilter2D::updateEdgeRegionMap
     const edgeList& edges = surfMesh.edges();
     const labelList& meshPoints = surfMesh.meshPoints();
 
-    patchSizes.setSize(patchNames_.size(), 0);
+    patchSizes.resize_nocopy(patchNames_.size());
     patchSizes = 0;
 
     forAll(edges, edgeI)
@@ -78,15 +78,13 @@ void Foam::shortEdgeFilter2D::updateEdgeRegionMap
 
         const edge& e = edges[edgeI];
 
-        const label startI = meshPoints[e[0]];
-        const label endI = meshPoints[e[1]];
-
         label region = -1;
 
-        const DynamicList<label> startPtRegions =
-            boundaryPtRegions[surfPtToBoundaryPt[startI]];
-        const DynamicList<label> endPtRegions =
-            boundaryPtRegions[surfPtToBoundaryPt[endI]];
+        const DynamicList<label>& startPtRegions =
+            boundaryPtRegions[surfPtToBoundaryPt[meshPoints[e.first()]]];
+
+        const DynamicList<label>& endPtRegions =
+            boundaryPtRegions[surfPtToBoundaryPt[meshPoints[e.second()]]];
 
         if (startPtRegions.size() > 1 && endPtRegions.size() > 1)
         {

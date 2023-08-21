@@ -93,7 +93,7 @@ Foam::solidReaction<ReactionThermo>::solidReaction
     speciesTable allSpecies(species);
     for (const word& gasName : pyrolisisGases_)
     {
-        allSpecies.appendUniq(gasName);
+        allSpecies.push_uniq(gasName);
     }
     List<specieCoeffs> dummyLhs;
     List<specieCoeffs> dummyRhs;

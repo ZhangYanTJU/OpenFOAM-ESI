@@ -1065,14 +1065,9 @@ void Foam::ListOps::appendEqOp<T>::operator()
 {
     if (y.size())
     {
-        label len = x.size();
-        if (len)
+        if (x.size())
         {
-            x.resize(len + y.size());
-            for (const T& val : y)
-            {
-                x[len++] = val;
-            }
+            x.push_back(y);
         }
         else
         {
@@ -1095,11 +1090,7 @@ void Foam::ListOps::uniqueEqOp<T>::operator()
         {
             for (const T& val : y)
             {
-                // --> x.push_uniq(val)
-                if (!x.contains(val))
-                {
-                    x.push_back(val);
-                }
+                x.push_uniq(val);
             }
         }
         else

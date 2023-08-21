@@ -524,8 +524,8 @@ public:
         //FOAM_DEPRECATED_FOR(2022-10, "push_back()")
         void append(const UList<T>& list) { this->push_back(list); }
 
-        //- Append an element if not already in the buffer.
-        //FOAM_DEPRECATED_FOR(2022-10, "push_uniq()")
+        //- Same as push_uniq()
+        FOAM_DEPRECATED_STRICT(2022-10, "push_uniq()")
         label appendUniq(const T& val) { return this->push_uniq(val); }
 };
 

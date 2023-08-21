@@ -176,7 +176,7 @@ void Foam::CFCFaceToCellStencil::calcCellStencil
                         label nbrGlobali = globalNumbering().toGlobal(nbrFacei);
 
                         // Note:should use hashset?
-                        allGlobalFaces.appendUniq(nbrGlobali);
+                        allGlobalFaces.push_uniq(nbrGlobali);
                     }
                 }
             }
@@ -188,7 +188,7 @@ void Foam::CFCFaceToCellStencil::calcCellStencil
                 for (const label nbrGlobali : nbrGlobalFaces)
                 {
                     // Note:should use hashset?
-                    allGlobalFaces.appendUniq(nbrGlobali);
+                    allGlobalFaces.push_uniq(nbrGlobali);
                 }
             }
         }

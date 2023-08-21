@@ -239,7 +239,7 @@ Foam::List<Foam::labelPair> Foam::mapDistributeBase::schedule
 
             for (const labelPair& connection : nbrData)
             {
-                allComms.appendUniq(connection);
+                allComms.push_uniq(connection);
             }
         }
     }

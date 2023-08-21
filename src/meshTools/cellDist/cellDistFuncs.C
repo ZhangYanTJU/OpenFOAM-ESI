@@ -107,7 +107,7 @@ void Foam::cellDistFuncs::getPointNeighbours
 
     for (const label nbr : faceNeighbours)
     {
-        neighbours.appendUniq(nbr);
+        neighbours.push_uniq(nbr);
     }
 
     // Add all point-only neighbours by linear searching in edge neighbours.
@@ -125,7 +125,7 @@ void Foam::cellDistFuncs::getPointNeighbours
         for (const label facei : pointNbs)
         {
             // Check for facei in edge-neighbours part of neighbours
-            neighbours.appendUniq(facei);
+            neighbours.push_uniq(facei);
         }
     }
 

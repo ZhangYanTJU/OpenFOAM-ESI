@@ -166,9 +166,9 @@ void Foam::meshToMeshMethod::appendNbrCells
     // filter out cells already visited from cell neighbours
     for (const label nbrCelli : nbrCells)
     {
-        if (!visitedCells.found(nbrCelli))
+        if (!visitedCells.contains(nbrCelli))
         {
-            nbrCellIDs.appendUniq(nbrCelli);
+            nbrCellIDs.push_uniq(nbrCelli);
         }
     }
 }

@@ -57,12 +57,10 @@ void Foam::enrichedPatch::calcPointPoints() const
             DynamicList<label>& curPp = pp[curFace[pointi]];
 
             // Do next label
-            const label next = curFace.nextLabel(pointi);
-            curPp.appendUniq(next);
+            curPp.push_uniq(curFace.nextLabel(pointi));
 
             // Do previous label
-            const label prev = curFace.prevLabel(pointi);
-            curPp.appendUniq(prev);
+            curPp.push_uniq(curFace.prevLabel(pointi));
         }
     }
 

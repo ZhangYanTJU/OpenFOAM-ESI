@@ -262,7 +262,7 @@ bool Foam::combineFaces::faceNeighboursValid
                 }
                 else
                 {
-                    neighbourFaces.appendUniq(nbrI);
+                    neighbourFaces.push_uniq(nbrI);
                 }
             }
 

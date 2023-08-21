@@ -518,7 +518,7 @@ void Foam::meshDualiser::createFacesAroundEdge
 
                 if (startDual != -1)
                 {
-                    verts.appendUniq(startDual);
+                    verts.push_uniq(startDual);
                 }
             }
             break;

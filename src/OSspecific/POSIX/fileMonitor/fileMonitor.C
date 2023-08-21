@@ -493,7 +493,7 @@ bool Foam::fileMonitor::removeWatch(const label watchFd)
             << watchFile_[watchFd] << endl;
     }
 
-    freeWatchFds_.appendUniq(watchFd);
+    freeWatchFds_.push_uniq(watchFd);
 
     return watcher_->removeWatch(watchFd);
 }

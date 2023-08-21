@@ -212,7 +212,7 @@ Foam::wordList Foam::fvMeshDistribute::mergeWordList(const wordList& procNames)
         {
             for (const word& name : names)
             {
-                mergedNames.appendUniq(name);
+                mergedNames.push_uniq(name);
             }
         }
     }

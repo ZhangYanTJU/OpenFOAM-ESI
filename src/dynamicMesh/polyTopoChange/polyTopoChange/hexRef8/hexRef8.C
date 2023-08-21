@@ -1837,26 +1837,11 @@ bool Foam::hexRef8::matchHexShape
             {
                 // Add to pointFaces for any level+1 point (this might be
                 // a midpoint of a split face)
-                forAll(f, fp)
+                for (const label pointi : f)
                 {
-                    label pointi = f[fp];
                     if (pointLevel_[pointi] == cellLevel+1)
                     {
-                        auto iter = pointFaces.find(pointi);
-
-                        if (iter.good())
-                        {
-                            labelList& pFaces = iter.val();
-                            pFaces.appendUniq(facei);
-                        }
-                        else
-                        {
-                            pointFaces.insert
-                            (
-                                pointi,
-                                labelList(one{}, facei)
-                            );
-                        }
+                        pointFaces(pointi).push_uniq(facei);
                     }
                 }
             }

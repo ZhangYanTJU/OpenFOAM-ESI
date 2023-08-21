@@ -1967,16 +1967,8 @@ void Foam::snappyLayerDriver::getPatchDisplacement
 //                const label patchFacei = pFaces[pFacei];
 //                const label meshFacei = pp.addressing()[patchFacei];
 //                const label celli = mesh.faceOwner()[meshFacei];
-//                Map<labelList>::iterator faceFnd = cellToFaces.find(celli);
-//                if (faceFnd.good())
-//                {
-//                    labelList& faces = faceFnd();
-//                    faces.appendUniq(patchFacei);
-//                }
-//                else
-//                {
-//                    cellToFaces.insert(celli, labelList(one{}, patchFacei));
-//                }
+//
+//                cellToFaces(celli).push_uniq(patchFacei);
 //            }
 //
 //            forAllConstIters(cellToFaces, iter)

@@ -468,8 +468,8 @@ inline Foam::List<Foam::label> Foam::conformalVoronoiMesh::processorsAttached
 
     forAll(c1Procs, aPI)
     {
-        procsAttached.appendUniq(c1Procs[aPI]);
-        procsAttached.appendUniq(c2Procs[aPI]);
+        procsAttached.push_uniq(c1Procs[aPI]);
+        procsAttached.push_uniq(c2Procs[aPI]);
     }
 
     return List<label>(procsAttached);

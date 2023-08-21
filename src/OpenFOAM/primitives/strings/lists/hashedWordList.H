@@ -184,16 +184,16 @@ public:
         //- Same as contains(), searches the hash.
         bool found(const word& val) const { return this->contains(val); }
 
-        //- Append an element if not already in the list.
+        //- Same as push_uniq()
         FOAM_DEPRECATED_FOR(2022-05, "push_uniq method")
         void append(const word& val) { this->push_uniq(val); }
 
-        //- Append an element if not already in the list.
+        //- Same as push_uniq()
         FOAM_DEPRECATED_FOR(2022-10, "push_uniq method")
         void push_back(const word& val) { this->push_uniq(val); }
 
-        //- Append an element if not already in the list.
-        //FOAM_DEPRECATED_FOR(2022-10, "push_uniq method")
+        //- Same as push_uniq()
+        FOAM_DEPRECATED_STRICT(2022-10, "push_uniq method")
         label appendUniq(const word& val) { return this->push_uniq(val); }
 };
 
