@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,9 +28,10 @@ Class
     Foam::labelRanges
 
 Description
-    A list of labelRange.
+    A list of labelRange with constrained list capabilities.
 
 SourceFiles
+    labelRangesI.H
     labelRanges.C
 
 \*---------------------------------------------------------------------------*/
@@ -56,12 +57,11 @@ Ostream& operator<<(Ostream& is, const labelRanges& ranges);
 \*---------------------------------------------------------------------------*/
 
 class labelRanges
-:
-    private Foam::DynamicList<Foam::labelRange>
 {
-    // Private Typedefs
+    // Private Data
 
-        typedef Foam::DynamicList<Foam::labelRange> StorageContainer;
+        //- The list of ranges
+        DynamicList<labelRange> ranges_;
 
 
     // Private Member Functions
@@ -76,35 +76,69 @@ public:
 
     // STL type definitions
 
+        //- The value type the list contains
+        typedef labelRange value_type;
+
         //- Input iterator with const access
         class const_iterator;
 
 
-    // Constructors
+    // Generated Methods
 
         //- Default construct
         labelRanges() = default;
 
-        //- Construct given size
-        inline explicit labelRanges(const label nElem);
+        //- Default copy construct
+        labelRanges(const labelRanges&) = default;
+
+        //- Default move construct
+        labelRanges(labelRanges&&) = default;
+
+        //- Default copy assignment
+        labelRanges& operator=(const labelRanges&) = default;
+
+        //- Default move assignment
+        labelRanges& operator=(labelRanges&&) = default;
+
+
+    // Constructors
+
+        //- Construct an empty list with given initial capacity
+        inline explicit labelRanges(const label initialCapacity);
+
+        //- Copy construct from list of ranges
+        inline explicit labelRanges(const UList<labelRange>& list);
+
+        //- Move construct from list of ranges
+        inline labelRanges(List<labelRange>&& list);
+
+        //- Move construct from list of ranges
+        template<int AnySizeMin>
+        inline labelRanges(DynamicList<labelRange, AnySizeMin>&& list);
 
         //- Construct from Istream.
-        labelRanges(Istream& is);
+        explicit labelRanges(Istream& is);
 
 
     // Member Functions
 
-        //- Clear the addressed list
-        using DynamicList<labelRange>::clear;
+        //- The list of ranges
+        const UList<labelRange>& ranges() const noexcept { return ranges_; }
 
-        //- Return true if the list is empty
-        using DynamicList<labelRange>::empty;
+        //- Clear the addressable list of ranges
+        void clear() noexcept { ranges_.clear(); }
+
+        //- True if list of ranges is empty
+        bool empty() const noexcept { return ranges_.empty(); }
+
+        //- Reserve space for at least this size
+        void reserve(const label len) { ranges_.reserve(len); }
+
+        //- The linear size (sum of all the element sizes)
+        inline label totalSize() const noexcept;
 
         //- True if the value is contained within any of the sub-ranges
-        inline bool contains(const label value) const;
-
-        //- True if the value is contained within any of the sub-ranges
-        bool found(const label value) const { return contains(value); }
+        inline bool contains(const label value) const noexcept;
 
         //- Add the range to the list
         bool add(const labelRange& range);
@@ -112,14 +146,31 @@ public:
         //- Remove the range from the list
         bool remove(const labelRange& range);
 
+        //- Construct a range element at the end of the list,
+        //- return reference to the new element.
+        template<class... Args>
+        inline labelRange& emplace_back(Args&&... args);
+
+        //- Inplace sort of the range elements
+        inline void sort();
+
+        //- Return flattened list of all range labels
+        List<label> labels() const;
+
+
+    // Member Operators
+
+       //- Return the value at linear index 'i', -1 for out-of-range
+       label operator[](const label i) const;
+
 
     // STL iterator
 
         //- Forward input iterator with const access
         class const_iterator
         {
-            //- The list for which this is an iterator
-            const labelRanges* list_;
+            //- The list of ranges for which this is an iterator
+            const UList<labelRange>* list_;
 
             //- The index into the list
             label index_;
@@ -131,11 +182,12 @@ public:
 
         // Constructors
 
-            //- Construct from range list at given index
+            //- Construct from range list at given index (and sub-index)
             inline explicit constexpr const_iterator
             (
-                const labelRanges* list,
-                const label i = 0
+                const UList<labelRange>* list,
+                const label idx = 0,
+                const label subIdx = 0
             ) noexcept;
 
 
@@ -168,10 +220,39 @@ public:
         inline const const_iterator end() const noexcept;
 
 
+        //- Return const_iterator at linear offset i from begin,
+        //- clamped to [0,size] range
+        inline const_iterator cbegin(const label i) const;
+
+        //- Return const_iterator at linear offset i from begin,
+        //- clamped to [0,size] range
+        inline const_iterator begin(const label i) const;
+
+
+    // Reading/writing
+
+        //- Read List of labelRange from Istream, discarding contents
+        Istream& readList(Istream& is);
+
+        //- Write List of labelRange, with line-breaks in ASCII
+        //- when length exceeds shortLen.
+        //  Using '0' suppresses line-breaks entirely.
+        Ostream& writeList(Ostream& os, const label shortLen=0) const;
+
+
     // IOstream Operators
 
-        friend Istream& operator>>(Istream& is, labelRanges& ranges);
-        friend Ostream& operator<<(Ostream& os, const labelRanges& ranges);
+        //- Use the readList() method to read contents from Istream.
+        friend Istream& operator>>(Istream& is, labelRanges& list);
+
+        //- Write to Ostream. Uses the writeList() method
+        friend Ostream& operator<<(Ostream& os, const labelRanges& list);
+
+
+    // Housekeeping
+
+        //- Same as contains()
+        bool found(const label value) const { return contains(value); }
 };
 
 

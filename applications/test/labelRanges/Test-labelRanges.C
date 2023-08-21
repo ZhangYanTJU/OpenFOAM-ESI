@@ -68,25 +68,51 @@ int main(int argc, char *argv[])
         labelRange::debug = 1;
     }
 
+    Info<< nl;
     {
         labelRange range(5, 10);
         Info<< "identity: " << identity(range) << nl;
     }
 
     {
-        Info<<"test sorting" << endl;
-        DynamicList<labelRange> list1(10);
+        Info<< "test sorting" << endl;
+        labelRanges list1(10);
+
         list1.emplace_back(25, 8);
         list1.emplace_back(8);
         list1.emplace_back(15, 5);
         list1.emplace_back(50, -10, true);
 
-        sort(list1);
-        Info<<"sorted" << list1 << endl;
+        // Move construct
+        labelRanges ranges(std::move(list1));
+        if (!list1.empty())
+        {
+            Info<< "Move construct failed? "
+                << flatOutput(list1.ranges()) << nl;
+        }
+
+        Info<< "unsorted: ";
+        ranges.writeList(Info) << nl;
+
+        ranges.sort();
+        Info<< "sorted: ";
+        ranges.writeList(Info) << nl;
+
+        Info<< nl
+            << "list linear length = " << ranges.totalSize() << nl;
+
+        Info<< "list labels = ";
+        ranges.labels().writeList(Info) << nl;
+
+        Info<< nl;
+        for (int i : { -1, 0, 5, 8, 10, 20, 26 })
+        {
+            Info<< "value at [" << i << "] = " << ranges[i] << nl;
+        }
     }
 
     {
-        Info<<"test intersections" << endl;
+        Info<< "test intersections" << endl;
         labelRange range1(-15, 25);
         labelRange range2(7, 8);
         labelRange range3(-20, 8);
