@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,6 +37,9 @@ License
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+// Max number of warnings
+static constexpr const unsigned maxWarnings = 10u;
 
 namespace Foam
 {
@@ -136,38 +139,12 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setFaceZoneFaces()
         mesh_.faceZones().indices(selectionNames_)
     );
 
-    // Total number of faces selected
+    // Total number of faces that could be selected (before patch filtering)
     label numFaces = 0;
     for (const label zoneId : zoneIds)
     {
         numFaces += mesh_.faceZones()[zoneId].size();
     }
-
-    if (zoneIds.empty())
-    {
-        FatalErrorInFunction
-            << type() << ' ' << name() << ": "
-            << regionTypeNames_[regionType_] << '(' << regionName_ << "):" << nl
-            << "    No matching face zone(s): "
-            << flatOutput(selectionNames_)  << nl
-            << "    Known face zones: "
-            << flatOutput(mesh_.faceZones().names()) << nl
-            << exit(FatalError);
-    }
-
-    // Could also check this
-    #if 0
-    if (!returnReduce(bool(numFaces), orOp<bool>()))
-    {
-        WarningInFunction
-            << type() << ' ' << name() << ": "
-            << regionTypeNames_[regionType_] << '(' << regionName_ << "):" << nl
-            << "    The faceZone specification: "
-            << flatOutput(selectionNames_) << nl
-            << "    resulted in 0 faces" << nl
-            << exit(FatalError);
-    }
-    #endif
 
     faceId_.resize(numFaces);
     facePatchId_.resize(numFaces);
@@ -231,7 +208,73 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setFaceZoneFaces()
     faceId_.resize(numFaces);
     facePatchId_.resize(numFaces);
     faceFlip_.resize(numFaces);
-    nFaces_ = returnReduce(faceId_.size(), sumOp<label>());
+    nFaces_ = returnReduce(numFaces, sumOp<label>());
+
+    if (!nFaces_)
+    {
+        // Raise warning or error
+        refPtr<OSstream> os;
+        bool fatal = false;
+
+        switch (emptySurfaceError_)
+        {
+            case error::handlerTypes::IGNORE:
+            {
+                break;
+            }
+
+            case error::handlerTypes::WARN:
+            {
+                if (++nWarnings_ <= maxWarnings)
+                {
+                    os.ref(WarningInFunction);
+                }
+                break;
+            }
+
+            // STRICT / DEFAULT
+            default:
+            {
+                os.ref(FatalErrorInFunction);
+                fatal = true;
+                break;
+            }
+        }
+
+        if (os)
+        {
+            os.ref()
+                << type() << ' ' << name() << ": "
+                << regionTypeNames_[regionType_]
+                << '(' << regionName_ << "):" << nl;
+
+            if (zoneIds.empty())
+            {
+                os.ref()
+                    << "    No matching face zones: "
+                    << flatOutput(selectionNames_)  << nl
+                    << "    Known face zones: "
+                    << flatOutput(mesh_.faceZones().names()) << nl;
+            }
+            else
+            {
+                os.ref()
+                    << "    The face zones: "
+                    << flatOutput(selectionNames_) << nl
+                    << "    resulted in 0 faces" << nl;
+            }
+
+            if (fatal)
+            {
+                FatalError<< exit(FatalError);
+            }
+            else if (nWarnings_ == maxWarnings)
+            {
+                os.ref()
+                    << "... suppressing further warnings." << nl;
+            }
+        }
+    }
 }
 
 
@@ -307,36 +350,10 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setPatchFaces()
         patchIds = std::move(selected);
     }
 
-    if (patchIds.empty())
-    {
-        FatalErrorInFunction
-            << type() << ' ' << name() << ": "
-            << regionTypeNames_[regionType_] << '(' << regionName_ << "):" << nl
-            << "    No matching patch name(s): "
-            << flatOutput(selectionNames_)  << nl
-            << "    Known patch names:" << nl
-            << mesh_.boundaryMesh().names() << nl
-            << exit(FatalError);
-    }
-
-    // Could also check this
-    #if 0
-    if (!returnReduce(bool(numFaces), orOp<bool>()))
-    {
-        WarningInFunction
-            << type() << ' ' << name() << ": "
-            << regionTypeNames_[regionType_] << '(' << regionName_ << "):" << nl
-            << "    The patch specification: "
-            << flatOutput(selectionNames_) << nl
-            << "    resulted in 0 faces" << nl
-            << exit(FatalError);
-    }
-    #endif
-
     faceId_.resize(numFaces);
     facePatchId_.resize(numFaces);
     faceFlip_.resize(numFaces);
-    nFaces_ = returnReduce(faceId_.size(), sumOp<label>());
+    nFaces_ = returnReduce(numFaces, sumOp<label>());
 
     numFaces = 0;
     for (const label patchi : patchIds)
@@ -349,6 +366,72 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setPatchFaces()
         SubList<bool>(faceFlip_, len, numFaces) = false;
 
         numFaces += len;
+    }
+
+    if (!nFaces_)
+    {
+        refPtr<OSstream> os;
+        bool fatal = false;
+
+        // Raise warning or error
+        switch (emptySurfaceError_)
+        {
+            case error::handlerTypes::IGNORE:
+            {
+                break;
+            }
+
+            case error::handlerTypes::WARN:
+            {
+                if (++nWarnings_ <= maxWarnings)
+                {
+                    os.ref(WarningInFunction);
+                }
+                break;
+            }
+
+            // STRICT / DEFAULT
+            default:
+            {
+                os.ref(FatalErrorInFunction);
+                fatal = true;
+                break;
+            }
+        }
+
+        if (os)
+        {
+            os.ref()
+                << type() << ' ' << name() << ": "
+                << regionTypeNames_[regionType_]
+                << '(' << regionName_ << "):" << nl;
+
+            if (patchIds.empty())
+            {
+                os.ref()
+                    << "    No matching patches: "
+                    << flatOutput(selectionNames_)  << nl
+                    << "    Known patch names:" << nl
+                    << mesh_.boundaryMesh().names() << nl;
+            }
+            else
+            {
+                os.ref()
+                    << "    The patches: "
+                    << flatOutput(selectionNames_) << nl
+                    << "    resulted in 0 faces" << nl;
+            }
+
+            if (fatal)
+            {
+                FatalError<< exit(FatalError);
+            }
+            else if (nWarnings_ == maxWarnings)
+            {
+                os.ref()
+                    << "... suppressing further warnings." << nl;
+            }
+        }
     }
 }
 
@@ -583,20 +666,29 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
         return false;
     }
 
+    // Reset some values
+    totalArea_ = 0;
+    nFaces_ = 0;
+
     switch (regionType_)
     {
         case stFaceZone:
         {
+            // Raises warning or error internally
             setFaceZoneFaces();
+            if (!nFaces_) return true;
             break;
         }
         case stPatch:
         {
+            // Raises warning or error internally
             setPatchFaces();
+            if (!nFaces_) return true;
             break;
         }
         case stObject:
         {
+            // TBD: special handling of cast errors?
             const polySurface& s = dynamicCast<const polySurface>(obr());
             nFaces_ = returnReduce(s.size(), sumOp<label>());
             break;
@@ -610,12 +702,61 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
         // Compiler warning if we forgot an enumeration
     }
 
-    if (nFaces_ == 0)
+    if (nFaces_)
     {
-        FatalErrorInFunction
-            << type() << ' ' << name() << ": "
-            << regionTypeNames_[regionType_] << '(' << regionName_ << "):" << nl
-            << "    Region has no faces" << exit(FatalError);
+        // Appears to be successful - reset warnings counter
+        nWarnings_ = 0u;
+    }
+    else
+    {
+        // Raise warning or error
+        refPtr<OSstream> os;
+        bool fatal = false;
+
+        switch (emptySurfaceError_)
+        {
+            case error::handlerTypes::IGNORE:
+            {
+                break;
+            }
+
+            case error::handlerTypes::WARN:
+            {
+                if (++nWarnings_ <= maxWarnings)
+                {
+                    os.ref(WarningInFunction);
+                }
+                break;
+            }
+
+            // STRICT / DEFAULT
+            default:
+            {
+                os.ref(FatalErrorInFunction);
+                fatal = true;
+                break;
+            }
+        }
+
+        if (os)
+        {
+            os.ref()
+                << type() << ' ' << name() << ": "
+                << regionTypeNames_[regionType_]
+                << '(' << regionName_ << "):" << nl
+                << "    Region has no faces" << endl;
+
+            if (fatal)
+            {
+                FatalError<< exit(FatalError);
+            }
+            else if (nWarnings_ == maxWarnings)
+            {
+                os.ref()
+                    << "... suppressing further warnings." << nl;
+            }
+        }
+        return true;
     }
 
     totalArea_ = totalArea();
@@ -919,10 +1060,12 @@ Foam::functionObjects::fieldValues::surfaceFieldValue::surfaceFieldValue
     ),
     needsUpdate_(true),
     writeArea_(false),
+    emptySurfaceError_(error::handlerTypes::DEFAULT),
     selectionNames_(),
     weightFieldNames_(),
     totalArea_(0),
     nFaces_(0),
+    nWarnings_(0),
     faceId_(),
     facePatchId_(),
     faceFlip_()
@@ -953,10 +1096,12 @@ Foam::functionObjects::fieldValues::surfaceFieldValue::surfaceFieldValue
     ),
     needsUpdate_(true),
     writeArea_(false),
+    emptySurfaceError_(error::handlerTypes::DEFAULT),
     selectionNames_(),
     weightFieldNames_(),
     totalArea_(0),
     nFaces_(0),
+    nWarnings_(0),
     faceId_(),
     facePatchId_(),
     faceFlip_()
@@ -976,10 +1121,19 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::read
 
     needsUpdate_ = true;
     writeArea_ = dict.getOrDefault("writeArea", false);
+    emptySurfaceError_ = error::handlerNames.getOrDefault
+    (
+        "empty-surface",
+        dict,
+        error::handlerTypes::DEFAULT,
+        true  // Failsafe behaviour
+    );
+
     weightFieldNames_.clear();
 
     totalArea_ = 0;
     nFaces_ = 0;
+    nWarnings_ = 0;
     faceId_.clear();
     facePatchId_.clear();
     faceFlip_.clear();
@@ -1153,6 +1307,12 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::write()
     }
 
     update();
+
+    if (!nFaces_)
+    {
+        // Encountered an error
+        return true;
+    }
 
     if (operation_ != opNone)
     {
