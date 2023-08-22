@@ -147,7 +147,7 @@ protected:
 
     // Protected Member Functions
 
-        //- Fatal if expected and received size are not equal
+        //- Fatal if expected != received size
         static void checkReceivedSize
         (
             const label proci,
@@ -375,10 +375,10 @@ public:
     // Constructors
 
         //- Default construct (uses worldComm)
-        mapDistributeBase();
+        mapDistributeBase() noexcept;
 
         //- Default construct with specified communicator
-        explicit mapDistributeBase(const label comm);
+        explicit mapDistributeBase(const label comm) noexcept;
 
         //- Copy construct
         mapDistributeBase(const mapDistributeBase& map);
@@ -584,6 +584,12 @@ public:
 
         //- The sizes of the constructMap lists
         labelList constructMapSizes() const;
+
+        //- The sum of the subMap list sizes
+        label subMapTotalSize() const noexcept;
+
+        //- The sum of the constructMap list sizes
+        label constructMapTotalSize() const noexcept;
 
 
     // Schedule

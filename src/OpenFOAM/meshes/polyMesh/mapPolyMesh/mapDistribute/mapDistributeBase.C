@@ -173,9 +173,9 @@ void Foam::mapDistributeBase::checkReceivedSize
     if (receivedSize != expectedSize)
     {
         FatalErrorInFunction
-            << "Expected from processor " << proci
-            << " " << expectedSize << " but received "
-            << receivedSize << " elements."
+            << "From processor " << proci
+            << " : expected " << expectedSize
+            << " but received " << receivedSize << " elements" << nl
             << abort(FatalError);
     }
 }
@@ -651,13 +651,13 @@ void Foam::mapDistributeBase::exchangeAddressing
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::mapDistributeBase::mapDistributeBase()
+Foam::mapDistributeBase::mapDistributeBase() noexcept
 :
     mapDistributeBase(UPstream::worldComm)
 {}
 
 
-Foam::mapDistributeBase::mapDistributeBase(const label comm)
+Foam::mapDistributeBase::mapDistributeBase(const label comm) noexcept
 :
     constructSize_(0),
     subMap_(),
@@ -1014,7 +1014,6 @@ Foam::labelList Foam::mapDistributeBase::subMapSizes() const
     {
         sizes[i] = subMap_[i].size();
     }
-
     return sizes;
 }
 
@@ -1026,8 +1025,29 @@ Foam::labelList Foam::mapDistributeBase::constructMapSizes() const
     {
         sizes[i] = constructMap_[i].size();
     }
-
     return sizes;
+}
+
+
+Foam::label Foam::mapDistributeBase::subMapTotalSize() const noexcept
+{
+    label total = 0;
+    for (const auto& list : subMap_)
+    {
+        total += list.size();
+    }
+    return total;
+}
+
+
+Foam::label Foam::mapDistributeBase::constructMapTotalSize() const noexcept
+{
+    label total = 0;
+    for (const auto& list : constructMap_)
+    {
+        total += list.size();
+    }
+    return total;
 }
 
 
