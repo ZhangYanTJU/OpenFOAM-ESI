@@ -42,9 +42,10 @@ Description
     reverse the orientation of the target patch.
 
 SourceFiles
+    AMIInterpolationI.H
     AMIInterpolation.C
-    AMIInterpolationName.C
-    AMIInterpolationParallelOps.C
+    AMIInterpolationNew.C
+    AMIInterpolationTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
