@@ -669,21 +669,22 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
     // Reset some values
     totalArea_ = 0;
     nFaces_ = 0;
+    bool checkEmptyFaces = true;
 
     switch (regionType_)
     {
         case stFaceZone:
         {
-            // Raises warning or error internally
+            // Raises warning or error internally, don't check again
             setFaceZoneFaces();
-            if (!nFaces_) return true;
+            checkEmptyFaces = false;
             break;
         }
         case stPatch:
         {
-            // Raises warning or error internally
+            // Raises warning or error internally, don't check again
             setPatchFaces();
-            if (!nFaces_) return true;
+            checkEmptyFaces = false;
             break;
         }
         case stObject:
@@ -704,10 +705,12 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
 
     if (nFaces_)
     {
-        // Appears to be successful - reset warnings counter
-        nWarnings_ = 0u;
+        // Appears to be successful
+        needsUpdate_ = false;
+        totalArea_ = totalArea();   // Update the area
+        nWarnings_ = 0u;            // Reset the warnings counter
     }
-    else
+    else if (checkEmptyFaces)
     {
         // Raise warning or error
         refPtr<OSstream> os;
@@ -756,10 +759,7 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
                     << "... suppressing further warnings." << nl;
             }
         }
-        return true;
     }
-
-    totalArea_ = totalArea();
 
     Log << "    total faces   = " << nFaces_ << nl
         << "    total area    = " << totalArea_ << nl
@@ -767,7 +767,6 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
 
     writeFileHeader(file());
 
-    needsUpdate_ = false;
     return true;
 }
 
