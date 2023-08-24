@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,6 +66,7 @@ void Foam::attachDetach::checkDefinition()
     }
 
     const polyMesh& mesh = topoChanger().mesh();
+    const auto& bm = mesh.boundaryMesh();
 
     if (debug)
     {
@@ -76,11 +77,14 @@ void Foam::attachDetach::checkDefinition()
     }
 
     // Check the sizes and set up state
-    if
-    (
-        mesh.boundaryMesh()[masterPatchID_.index()].empty()
-     && mesh.boundaryMesh()[slavePatchID_.index()].empty()
-    )
+    const auto& mPatch = bm[masterPatchID_.index()];
+    const label nMasterFaces = returnReduce(mPatch.size(), sumOp<label>());
+    const auto& sPatch = bm[slavePatchID_.index()];
+    const label nSlaveFaces = returnReduce(sPatch.size(), sumOp<label>());
+    const auto& fZone = mesh.faceZones()[faceZoneID_.index()];
+    const label nZoneFaces = returnReduce(fZone.size(), sumOp<label>());
+
+    if (nMasterFaces == 0 && nSlaveFaces == 0)
     {
         // Boundary is attached
         if (debug)
@@ -91,17 +95,17 @@ void Foam::attachDetach::checkDefinition()
         state_ = ATTACHED;
 
         // Check if there are faces in the master zone
-        if (mesh.faceZones()[faceZoneID_.index()].empty())
+        if (nZoneFaces == 0)
         {
             FatalErrorInFunction
-                << "mesh definition."
-                << abort(FatalError);
+                << "Face zone " << fZone.name()
+                << " has zero faces" << abort(FatalError);
         }
 
         // Check that all the faces in the face zone are internal
         if (debug)
         {
-            const labelList& addr = mesh.faceZones()[faceZoneID_.index()];
+            const labelList& addr = fZone;
 
             DynamicList<label> bouFacesInZone(addr.size());
 
@@ -113,7 +117,7 @@ void Foam::attachDetach::checkDefinition()
                 }
             }
 
-            if (bouFacesInZone.size())
+            if (returnReduce(bouFacesInZone.size(), sumOp<label>()))
             {
                 FatalErrorInFunction
                     << "Found boundary faces in the zone defining "
@@ -137,42 +141,28 @@ void Foam::attachDetach::checkDefinition()
 
         // Check that the sizes of master and slave patch are identical
         // and identical to the size of the face zone
-        if
-        (
-            (
-                mesh.boundaryMesh()[masterPatchID_.index()].size()
-             != mesh.boundaryMesh()[slavePatchID_.index()].size()
-            )
-         || (
-                mesh.boundaryMesh()[masterPatchID_.index()].size()
-             != mesh.faceZones()[faceZoneID_.index()].size()
-            )
-        )
+        if ((nMasterFaces != nSlaveFaces) || (nMasterFaces != nZoneFaces))
         {
             FatalErrorInFunction
                 << "Problem with sizes in mesh modifier. The face zone,"
                 << " master and slave patch should have the same size"
                 << " for object " << name() << ". " << nl
-                << "Zone size: "
-                << mesh.faceZones()[faceZoneID_.index()].size()
-                << " Master patch size: "
-                << mesh.boundaryMesh()[masterPatchID_.index()].size()
-                << " Slave patch size: "
-                << mesh.boundaryMesh()[slavePatchID_.index()].size()
+                << "Zone size: " << nZoneFaces
+                << " Master patch size: " << nMasterFaces
+                << " Slave patch size: " << nSlaveFaces
                 << abort(FatalError);
         }
 
         // Check that all the faces belong to either master or slave patch
         if (debug)
         {
-            const labelList& addr = mesh.faceZones()[faceZoneID_.index()];
+            const labelList& addr = fZone;
 
             DynamicList<label> zoneProblemFaces(addr.size());
 
             forAll(addr, facei)
             {
-                label facePatch =
-                    mesh.boundaryMesh().whichPatch(addr[facei]);
+                label facePatch = bm.whichPatch(addr[facei]);
 
                 if
                 (
@@ -184,7 +174,7 @@ void Foam::attachDetach::checkDefinition()
                 }
             }
 
-            if (zoneProblemFaces.size())
+            if (returnReduce(zoneProblemFaces.size(), sumOp<label>()))
             {
                 FatalErrorInFunction
                     << "Found faces in the zone defining "
