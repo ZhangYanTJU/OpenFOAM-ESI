@@ -216,6 +216,8 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setFaceZoneFaces()
         refPtr<OSstream> os;
         bool fatal = false;
 
+        ++nWarnings_;  // Always increment (even if ignore etc)
+
         switch (emptySurfaceError_)
         {
             case error::handlerTypes::IGNORE:
@@ -225,7 +227,7 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setFaceZoneFaces()
 
             case error::handlerTypes::WARN:
             {
-                if (++nWarnings_ <= maxWarnings)
+                if (nWarnings_ <= maxWarnings)
                 {
                     os.ref(WarningInFunction);
                 }
@@ -370,10 +372,12 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setPatchFaces()
 
     if (!nFaces_)
     {
+        // Raise warning or error
         refPtr<OSstream> os;
         bool fatal = false;
 
-        // Raise warning or error
+        ++nWarnings_;  // Always increment (even if ignore etc)
+
         switch (emptySurfaceError_)
         {
             case error::handlerTypes::IGNORE:
@@ -383,7 +387,7 @@ void Foam::functionObjects::fieldValues::surfaceFieldValue::setPatchFaces()
 
             case error::handlerTypes::WARN:
             {
-                if (++nWarnings_ <= maxWarnings)
+                if (nWarnings_ <= maxWarnings)
                 {
                     os.ref(WarningInFunction);
                 }
@@ -716,6 +720,8 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
         refPtr<OSstream> os;
         bool fatal = false;
 
+        ++nWarnings_;  // Always increment (even if ignore etc)
+
         switch (emptySurfaceError_)
         {
             case error::handlerTypes::IGNORE:
@@ -725,7 +731,7 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
 
             case error::handlerTypes::WARN:
             {
-                if (++nWarnings_ <= maxWarnings)
+                if (nWarnings_ <= maxWarnings)
                 {
                     os.ref(WarningInFunction);
                 }
@@ -765,7 +771,11 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::update()
         << "    total area    = " << totalArea_ << nl
         << endl;
 
-    writeFileHeader(file());
+    // Emit file header on success or change of state
+    if (nWarnings_ <= 1)
+    {
+        writeFileHeader(file());
+    }
 
     return true;
 }
@@ -1307,12 +1317,6 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::write()
 
     update();
 
-    if (!nFaces_)
-    {
-        // Encountered an error
-        return true;
-    }
-
     if (operation_ != opNone)
     {
         writeCurrentTime(file());
@@ -1320,7 +1324,15 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::write()
 
     if (writeArea_)
     {
-        totalArea_ = totalArea();
+        // Update the area
+        if (!nFaces_)
+        {
+            totalArea_ = 0;
+        }
+        else
+        {
+            totalArea_ = totalArea();
+        }
         Log << "    total area = " << totalArea_ << endl;
 
         if (operation_ != opNone && Pstream::master())
@@ -1328,6 +1340,18 @@ bool Foam::functionObjects::fieldValues::surfaceFieldValue::write()
             file() << tab << totalArea_;
         }
     }
+
+    if (!nFaces_)
+    {
+        // Early exit on error
+        if (operation_ != opNone)
+        {
+            file() << endl;
+            Log << endl;
+        }
+        return true;
+    }
+
 
     // Many operations use the Sf field
     vectorField Sf;
