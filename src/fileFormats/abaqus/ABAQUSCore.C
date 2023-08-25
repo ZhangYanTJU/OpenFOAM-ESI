@@ -29,7 +29,7 @@ License
 #include "IFstream.H"
 #include "ListOps.H"
 #include "stringOps.H"
-#include "UIListStream.H"
+#include "SpanStream.H"
 #include "cellModel.H"
 #include <cctype>
 
@@ -328,15 +328,15 @@ Foam::fileFormats::ABAQUSCore::readHelper::readPoints
     // Read nodes (points) until next "*Section"
     while (is.peek() != '*' && is.peek() != EOF)
     {
-        // Grab the line and wrap as string-stream
+        // Grab the line and wrap as spanstream
         is.getLine(line);
-        UIListStream ss(line.data(), line.length());
 
         if (line.empty())
         {
             // Not sure if we should terminate on blank lines?
             continue;
         }
+        ISpanStream ss(line);
 
         // Parse line for ID, X, Y, Z
         ss >> id >> sep >> p.x() >> sep >> p.y() >> sep >> p.z();

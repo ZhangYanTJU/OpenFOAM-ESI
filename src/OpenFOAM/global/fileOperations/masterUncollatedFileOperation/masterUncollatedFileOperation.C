@@ -33,7 +33,7 @@ License
 #include "Time.H"
 #include "instant.H"
 #include "IFstream.H"
-#include "IListStream.H"
+#include "SpanStream.H"
 #include "masterOFstream.H"
 #include "decomposedBlockData.H"
 #include "registerSwitch.H"
@@ -630,7 +630,7 @@ Foam::fileOperations::masterUncollatedFileOperation::read
             // Construct with same parameters (ASCII, current version)
             // as the IFstream so that it has the same characteristics.
 
-            isPtr.reset(new IListStream(std::move(buf)));
+            isPtr.reset(new ICharStream(std::move(buf)));
 
             // With the proper file name
             isPtr->name() = filePaths[UPstream::myProcNo(comm)];
@@ -2493,7 +2493,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
             // Construct with same parameters (ASCII, current version)
             // as the IFstream so that it has the same characteristics.
 
-            isPtr.reset(new IListStream(std::move(buf)));
+            isPtr.reset(new ICharStream(std::move(buf)));
 
             // With the proper file name
             isPtr->name() = filePath;

@@ -37,7 +37,7 @@ License
 #include "charList.H"
 #include "labelPair.H"
 #include "masterUncollatedFileOperation.H"
-#include "ListStream.H"
+#include "SpanStream.H"
 #include "StringStream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -403,7 +403,7 @@ Foam::decomposedBlockData::readBlock
 
     if (blocki == 0)
     {
-        realIsPtr.reset(new IListStream(std::move(data)));
+        realIsPtr.reset(new ICharStream(std::move(data)));
         realIsPtr->name() = is.name();
 
         {
@@ -422,7 +422,7 @@ Foam::decomposedBlockData::readBlock
     {
         {
             // Read header from first block
-            UIListStream headerStream(data);
+            ISpanStream headerStream(data);
             if (!headerIO.readHeader(headerStream))
             {
                 FatalIOErrorInFunction(headerStream)
@@ -440,7 +440,7 @@ Foam::decomposedBlockData::readBlock
             // Read and discard data, only retain the last one
             decomposedBlockData::readBlockEntry(is, data);
         }
-        realIsPtr.reset(new IListStream(std::move(data)));
+        realIsPtr.reset(new ICharStream(std::move(data)));
         realIsPtr->name() = is.name();
 
         // Apply stream settings
@@ -585,7 +585,7 @@ Foam::autoPtr<Foam::ISstream> Foam::decomposedBlockData::readBlocks
         // Read master data
         decomposedBlockData::readBlockEntry(is, data);
 
-        realIsPtr.reset(new IListStream(std::move(data)));
+        realIsPtr.reset(new ICharStream(std::move(data)));
         realIsPtr->name() = fName;
 
         {
@@ -639,7 +639,7 @@ Foam::autoPtr<Foam::ISstream> Foam::decomposedBlockData::readBlocks
             );
             is >> data;
 
-            realIsPtr.reset(new IListStream(std::move(data)));
+            realIsPtr.reset(new ICharStream(std::move(data)));
             realIsPtr->name() = fName;
         }
     }
@@ -673,7 +673,7 @@ Foam::autoPtr<Foam::ISstream> Foam::decomposedBlockData::readBlocks
             UIPstream is(UPstream::masterNo(), pBufs);
             is >> data;
 
-            realIsPtr.reset(new IListStream(std::move(data)));
+            realIsPtr.reset(new ICharStream(std::move(data)));
             realIsPtr->name() = fName;
         }
     }
@@ -1090,7 +1090,7 @@ bool Foam::decomposedBlockData::writeData(Ostream& os) const
     // Re-read my own data to find out the header information
     if (Pstream::master(comm_))
     {
-        UIListStream headerStream(contentData_);
+        ISpanStream headerStream(contentData_);
         io.readHeader(headerStream);
 
         verValue = headerStream.version().canonical();

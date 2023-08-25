@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2018 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,15 +27,47 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "UListStream.H"
+#include "SpanStream.H"
 #include "wordList.H"
 #include "IOstreams.H"
 #include "argList.H"
 
+#include <cctype>
+#include <cstdio>
 #include <sstream>
 #include <vector>
 
 using namespace Foam;
+
+Ostream& writeList(Ostream& os, const UList<char>& list)
+{
+    char buf[4];
+    os << list.size() << '(';
+    for (const char c : list)
+    {
+        if (isprint(c))
+        {
+            os << c;
+        }
+        else if (c == '\t')
+        {
+            os << "\\t";
+        }
+        else if (c == '\n')
+        {
+            os << "\\n";
+        }
+        else
+        {
+            ::snprintf(buf, 4, "%02X", c);
+            os << "\\x" << buf;
+        }
+    }
+    os << ')';
+
+    return os;
+}
+
 
 Ostream& toString(Ostream& os, const UList<char>& list)
 {
@@ -108,7 +140,7 @@ int main(int argc, char *argv[])
     // Buffer storage
     DynamicList<char> storage(1000);
 
-    UOListStream obuf(storage);
+    OSpanStream obuf(storage);
     obuf << 1002 << "\n" << "abcd" << "\n" << "def" << "\n" << 3.14159 << ";\n";
 
     obuf.print(Info);
@@ -120,7 +152,7 @@ int main(int argc, char *argv[])
 
     // Attach input buffer - could also do without previous resize
     {
-        UIListStream ibuf(storage);
+        ISpanStream ibuf(storage);
 
         printTokens(ibuf);
 
@@ -135,13 +167,21 @@ int main(int argc, char *argv[])
     {
         Info<< "parse as std::istream\n";
 
-        uiliststream is(storage.cdata(), storage.size());
+        ispanstream is(storage.cdata(), storage.size());
+
+        Info<< "input: ";
+        writeList(Info, is.list()) << endl;
+
+        Info<< "where: "  << is.tellg() << endl;
+        Info<< "capacity: " << is.capacity() << endl;
+        Info<< "total: " << is.capacity() << endl;
 
         string tok;
 
         while (std::getline(is, tok))
         {
             std::cerr << "tok: " << tok << nl;
+            Info<< "where: "  << is.tellg() << endl;
         }
 
         Info<< nl << "Repeat..." << endl;
@@ -170,7 +210,7 @@ int main(int argc, char *argv[])
         toString(Info, chars);
         Info<< "----" << nl;
 
-        uiliststream is(chars.data(), chars.size());
+        ispanstream is(chars.data(), chars.size());
         string tok;
         std::cerr<< nl << "Parsed..." << nl;
         while (std::getline(is, tok))

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,12 +27,45 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "ListStream.H"
+#include "SpanStream.H"
 #include "wordList.H"
 #include "IOstreams.H"
 #include "argList.H"
 
+#include <cctype>
+#include <cstdio>
+
 using namespace Foam;
+
+Ostream& writeList(Ostream& os, const UList<char>& list)
+{
+    char buf[4];
+    os << list.size() << '(';
+    for (const char c : list)
+    {
+        if (isprint(c))
+        {
+            os << c;
+        }
+        else if (c == '\t')
+        {
+            os << "\\t";
+        }
+        else if (c == '\n')
+        {
+            os << "\\n";
+        }
+        else
+        {
+            ::snprintf(buf, 4, "%02X", c);
+            os << "\\x" << buf;
+        }
+    }
+    os << ')';
+
+    return os;
+}
+
 
 Ostream& toString(Ostream& os, const UList<char>& list)
 {
@@ -91,12 +124,12 @@ void outputDict(OS& os)
 
 int main(int argc, char *argv[])
 {
+    #include "setRootCase.H"
+
     // Buffer storage
     DynamicList<char> storage(16);
 
-    OListStream obuf(std::move(storage));
-
-    obuf.setBlockSize(100);
+    OCharStream obuf(std::move(storage));
 
     printInfo(obuf);
 
@@ -140,10 +173,10 @@ int main(int argc, char *argv[])
     Info<<"after overwrite" << nl;
     printInfo(obuf);
 
-    Info<< "transfer contents to a List or IListStream" << nl;
+    Info<< "transfer contents to a List or ICharStream" << nl;
 
-    IListStream ibuf;
-    // Reclaim data storage from OListStream -> IListStream
+    ICharStream ibuf;
+    // Reclaim data storage from OCharStream -> ICharStream
     {
         List<char> data;
         obuf.swap(data);
@@ -169,7 +202,7 @@ int main(int argc, char *argv[])
         Info<<"input:";
         toString(Info, list) << endl;
 
-        OListStream buf1(std::move(list));
+        OCharStream buf1(std::move(list));
 
         Info<<"orig:";
         toString(Info, list) << endl;
@@ -204,7 +237,7 @@ int main(int argc, char *argv[])
 
     Info<< nl << "Test dictionary" << nl;
     {
-        OListStream os1;
+        OCharStream os1;
 
         outputDict(os1);
 
@@ -213,7 +246,7 @@ int main(int argc, char *argv[])
     }
 
     {
-        OListStream os2;
+        OCharStream os2;
         os2.indentSize(0);
 
         outputDict(os2);

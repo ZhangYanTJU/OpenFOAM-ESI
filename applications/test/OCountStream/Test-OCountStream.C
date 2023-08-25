@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
     Info<< "counter state: " << (cnt.stdStream().rdstate()) << nl
         << "via string-stream: " << str.str().size() << " chars" << nl
-        << "via ocountstream: " << plain.size() << " chars" << endl;
+        << "via ocountstream: " << plain.count() << " chars" << endl;
 
     fileName outputName;
     args.readIfPresent("write", outputName);
