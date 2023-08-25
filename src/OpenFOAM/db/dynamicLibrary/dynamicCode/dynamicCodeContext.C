@@ -28,7 +28,6 @@ License
 
 #include "dynamicCodeContext.H"
 #include "stringOps.H"
-#include "OSHA1stream.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 

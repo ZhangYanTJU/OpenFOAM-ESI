@@ -28,8 +28,8 @@ License
 
 #include "error.H"
 #include "ITstream.H"
+#include "SpanStream.H"
 #include "StringStream.H"
-#include "UIListStream.H"
 #include <memory>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -94,7 +94,7 @@ Foam::tokenList Foam::ITstream::parse
     IOstreamOption streamOpt
 )
 {
-    UIListStream is(input, streamOpt);
+    ISpanStream is(input, streamOpt);
 
     tokenList tokens;
     parseStream(is, tokens);
@@ -108,7 +108,7 @@ Foam::tokenList Foam::ITstream::parse
     IOstreamOption streamOpt
 )
 {
-    UIListStream is(input.data(), input.length(), streamOpt);
+    ISpanStream is(input, streamOpt);
 
     tokenList tokens;
     parseStream(is, tokens);
@@ -122,7 +122,7 @@ Foam::tokenList Foam::ITstream::parse
     IOstreamOption streamOpt
 )
 {
-    UIListStream is(input, strlen(input), streamOpt);
+    ISpanStream is(input, strlen(input), streamOpt);
 
     tokenList tokens;
     parseStream(is, tokens);
@@ -261,7 +261,7 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    UIListStream is(input, streamOpt);
+    ISpanStream is(input, streamOpt);
 
     parseStream(is, static_cast<tokenList&>(*this));
     ITstream::seek(0);  // rewind(), but bypasss virtual
@@ -277,7 +277,7 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    UIListStream is(input.data(), input.length(), streamOpt);
+    ISpanStream is(input.data(), input.length(), streamOpt);
 
     parseStream(is, static_cast<tokenList&>(*this));
     ITstream::seek(0);  // rewind(), but bypasss virtual
@@ -293,7 +293,7 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    UIListStream is(input, strlen(input), streamOpt);
+    ISpanStream is(input, strlen(input), streamOpt);
 
     parseStream(is, static_cast<tokenList&>(*this));
     ITstream::seek(0);  // rewind(), but bypasss virtual

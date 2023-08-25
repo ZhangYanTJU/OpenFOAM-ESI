@@ -259,7 +259,6 @@ public:
         //- Rewind the output stream
         virtual void rewind()
         {
-            // pubseekpos() instead of seekp() for symmetry with other classes
             stream_.rdbuf()->pubseekpos(0, std::ios_base::out);
         }
 

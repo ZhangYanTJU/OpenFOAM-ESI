@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,7 +33,7 @@ Description
 
 #include "scalar.H"
 #include "FlatOutput.H"
-#include "ListStream.H"
+#include "SpanStream.H"
 #include "StringStream.H"
 #include "NASCore.H"
 #include "parsing.H"
@@ -443,22 +443,22 @@ int main(int argc, char *argv[])
             << " read " << sizeof(scalar) << nl;
 
         List<otherType> srcList(15);
+
         forAll(srcList, i)
         {
             srcList[i] = 1 + 10*i;
         }
 
-        DynamicList<char> buf;
-
-        OListStream os(std::move(buf), IOstreamOption::BINARY);
+        OCharStream os(IOstreamOption::BINARY);
         os << srcList;
 
-        os.swap(buf); // Recover buffer
+        DynamicList<char> buf;
+        os.swap(buf);  // Recover written contents
 
         // Read back
         List<scalar> dstList;
 
-        UIListStream is(buf, IOstreamOption::BINARY);
+        ISpanStream is(buf, IOstreamOption::BINARY);
         is.setScalarByteSize(sizeof(otherType));
 
         Info<< "Stream scalar-size ("

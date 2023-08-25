@@ -29,7 +29,7 @@ License
 #include "dictionary.H"
 #include "foamVersion.H"
 #include "objectRegistry.H"
-#include "ListStream.H"
+#include "SpanStream.H"
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
@@ -125,7 +125,7 @@ bool Foam::decomposedBlockData::readHeader(IOobject& io, Istream& is)
             List<char> charData;
             decomposedBlockData::readBlockEntry(is, charData);
 
-            UIListStream headerStream(charData);
+            ISpanStream headerStream(charData);
             headerStream.name() = is.name();
 
             ok = io.readHeader(headerStream);

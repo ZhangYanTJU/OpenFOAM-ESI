@@ -271,7 +271,7 @@ gzstream = $(Streams)/gzstream
 $(gzstream)/gzstream.C
 
 memstream = $(Streams)/memory
-$(memstream)/ListStream.C
+$(memstream)/SpanStreams.C
 
 Fstreams = $(Streams)/Fstreams
 $(Fstreams)/IFstream.C
