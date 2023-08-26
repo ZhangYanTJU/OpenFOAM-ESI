@@ -37,8 +37,8 @@ Description
     \table
         Property    | Description                       | Required  | Default
         points      | Per zone the list of points       | yes   |
-        faceSet     | Optional blocked faces            | no    | <empty>
-        cellSet     | Optional subset of cells to operate in | no    | <empty>
+        faceSet(s)  | Set(s) of blocked faces           | yes   | 
+        cellSet(s)  | Set(s) of cells to operate in     | yes   | <empty>
         erode       | Perform some cleanup on set       | no    | no
     \endtable
 
