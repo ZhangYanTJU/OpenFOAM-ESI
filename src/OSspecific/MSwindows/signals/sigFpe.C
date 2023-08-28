@@ -7,7 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
     Copyright (C) 2011 Symscape
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,6 +36,7 @@ License
 #include "Switch.H"
 
 #include <float.h>  // For *fp functions
+#include <algorithm>
 #include <limits>
 
 // File-local functions
@@ -98,18 +99,7 @@ void Foam::sigFpe::sigHandler(int)
 
 Foam::sigFpe::sigFpe()
 {
-    set(false);
-}
-
-
-Foam::sigFpe::ignore::ignore()
-:
-    wasActive_(sigFpe::active())
-{
-    if (wasActive_)
-    {
-        sigFpe::unset();
-    }
+    set(false);  // false = non-verbose
 }
 
 
@@ -117,27 +107,11 @@ Foam::sigFpe::ignore::ignore()
 
 Foam::sigFpe::~sigFpe()
 {
-    unset(false);
-}
-
-
-Foam::sigFpe::ignore::~ignore()
-{
-    restore();
+    unset(false);  // false = non-verbose
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::sigFpe::ignore::restore()
-{
-    if (wasActive_)
-    {
-        sigFpe::set();
-    }
-    wasActive_ = false;
-}
-
 
 bool Foam::sigFpe::requested()
 {
@@ -153,8 +127,8 @@ void Foam::sigFpe::set(bool verbose)
 
         if (verbose)
         {
-            Info<< "trapFpe: Floating point exception trapping ";
-            Info<< "- disabled on this platform" << endl;
+            Info<< "trapFpe: Floating point exception trapping "
+                << "- disabled on this platform" << endl;
         }
 
         #else
@@ -194,7 +168,7 @@ void Foam::sigFpe::set(bool verbose)
     {
         if (verbose)
         {
-            Info<< "setNaN : Initialise allocated memory to NaN "
+            Info<< "setNaN : Fill allocated memory with NaN "
                 << "- not supported on this platform" << endl;
         }
     }
@@ -222,9 +196,37 @@ void Foam::sigFpe::unset(bool verbose)
 }
 
 
+void Foam::sigFpe::fillNan(char* buf, size_t count)
+{
+    if (!buf || !count) return;
+
+    // Fill with signaling_NaN
+    const scalar val = std::numeric_limits<scalar>::signaling_NaN();
+
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    std::fill_n
+    (
+        reinterpret_cast<scalar*>(buf), (count/sizeof(scalar)), val
+    );
+}
+
+
 void Foam::sigFpe::fillNan(UList<scalar>& list)
 {
-    list = std::numeric_limits<scalar>::signaling_NaN();
+    if (list.empty()) return;
+
+    // Fill with signaling_NaN
+    const scalar val = std::numeric_limits<scalar>::signaling_NaN();
+
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    std::fill_n
+    (
+        list.data(), list.size(), val
+    );
 }
 
 

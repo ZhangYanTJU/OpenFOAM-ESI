@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,11 +33,11 @@ License
 #include "IOstreams.H"
 #include "UList.H"
 #include "Switch.H"
+#include <algorithm>
+#include <limits>
 
 // File-local functions
 #include "signalMacros.C"
-
-#include <limits>
 
 #if defined(__linux__) && defined(__GNUC__)
     #ifndef __USE_GNU
@@ -85,32 +85,32 @@ extern "C"
 {
     extern void* __libc_malloc(size_t size);
 
-    // Override the GLIBC malloc to support mallocNan
+    // Override the GLIBC malloc to support filling with NaN
     void* malloc(size_t size)
     {
+        // Call the low-level GLIBC malloc function
+        void* ptr = __libc_malloc(size);
+
         if (Foam::sigFpe::nanActive())
         {
-            return Foam::sigFpe::mallocNan(size);
+            // Fill with signaling_NaN
+            const auto val = std::numeric_limits<Foam::scalar>::signaling_NaN();
+
+            // Can dispatch with
+            // - std::execution::parallel_unsequenced_policy
+            // - std::execution::unsequenced_policy
+            std::fill_n
+            (
+                reinterpret_cast<Foam::scalar*>(ptr),
+                (size/sizeof(Foam::scalar)),
+                val
+            );
         }
-        else
-        {
-            return __libc_malloc(size);
-        }
+
+        return ptr;
     }
-}
+} // End extern C
 
-
-void* Foam::sigFpe::mallocNan(size_t size)
-{
-    // Call the low-level GLIBC malloc function
-    void* result = __libc_malloc(size);
-
-    // Initialize to signalling NaN
-    UList<scalar> list(reinterpret_cast<scalar*>(result), size/sizeof(scalar));
-    sigFpe::fillNan(list);
-
-    return result;
-}
 #endif  // __linux__
 
 
@@ -134,18 +134,7 @@ void Foam::sigFpe::sigHandler(int)
 
 Foam::sigFpe::sigFpe()
 {
-    set(false);
-}
-
-
-Foam::sigFpe::ignore::ignore()
-:
-    wasActive_(sigFpe::active())
-{
-    if (wasActive_)
-    {
-        sigFpe::unset();
-    }
+    set(false);  // false = non-verbose
 }
 
 
@@ -153,27 +142,11 @@ Foam::sigFpe::ignore::ignore()
 
 Foam::sigFpe::~sigFpe()
 {
-    unset(false);
-}
-
-
-Foam::sigFpe::ignore::~ignore()
-{
-    restore();
+    unset(false);  // false = non-verbose
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::sigFpe::ignore::restore()
-{
-    if (wasActive_)
-    {
-        sigFpe::set();
-    }
-    wasActive_ = false;
-}
-
 
 bool Foam::sigFpe::requested()
 {
@@ -224,7 +197,7 @@ void Foam::sigFpe::set(bool verbose)
 
         if (verbose)
         {
-            Info<< "setNaN : Initialise allocated memory to NaN ";
+            Info<< "setNaN : Fill allocated memory with NaN ";
 
             if (nanActive_)
             {
@@ -275,9 +248,37 @@ void Foam::sigFpe::unset(bool verbose)
 }
 
 
+void Foam::sigFpe::fillNan(char* buf, size_t count)
+{
+    if (!buf || !count) return;
+
+    // Fill with signaling_NaN
+    const auto val = std::numeric_limits<scalar>::signaling_NaN();
+
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    std::fill_n
+    (
+        reinterpret_cast<scalar*>(buf), (count/sizeof(scalar)), val
+    );
+}
+
+
 void Foam::sigFpe::fillNan(UList<scalar>& list)
 {
-    list = std::numeric_limits<scalar>::signaling_NaN();
+    if (list.empty()) return;
+
+    // Fill with signaling_NaN
+    const auto val = std::numeric_limits<scalar>::signaling_NaN();
+
+    // Can dispatch with
+    // - std::execution::parallel_unsequenced_policy
+    // - std::execution::unsequenced_policy
+    std::fill_n
+    (
+        list.data(), list.size(), val
+    );
 }
 
 

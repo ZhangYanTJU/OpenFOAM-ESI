@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,7 +57,7 @@ SourceFiles
 #ifndef Foam_sigFpe_H
 #define Foam_sigFpe_H
 
-#include <cstddef>  // for std::size_t
+#include <cstddef>  // For std::size_t
 #include "scalarFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -87,7 +87,7 @@ class sigFpe
         //- Floating point trapping currently active?
         static bool sigActive_;
 
-        //- Flag to indicate mallocNan is currently active
+        //- Is NaN memory initialisation currently active?
         static bool nanActive_;
 
 
@@ -124,23 +124,21 @@ public:
         //- True if NaN memory initialisation is currently active.
         static bool nanActive() noexcept { return nanActive_; }
 
-        //- Activate SIGFPE signal handler when FOAM_SIGFPE is %set
-        //  Fill memory with NaN when FOAM_SETNAN is %set
+        //- Activate SIGFPE handler when FOAM_SIGFPE is enabled.
+        //- Activate fill memory with signaling_NaN when FOAM_SETNAN is enabled
         static void set(bool verbose=false);
 
-        //- Deactivate SIGFPE signal handler and NaN memory initialisation
+        //- Deactivate SIGFPE handler and NaN memory initialisation
         static void unset(bool verbose=false);
 
-        #ifdef __linux__
-        //- Malloc function which initializes to NaN
-        static void* mallocNan(size_t size);
-        #endif
+        //- Fill data block with signaling_NaN values
+        static void fillNan(char* buf, size_t count);
 
-        //- Fill data block with NaN values
+        //- Fill data block with signaling_NaN values
         static void fillNan(UList<scalar>& list);
 
 
-    // Helper classes
+    // Helpers
 
         //- Helper to locally ignore SIGFPE handling.
         //  Restores the original state of the SIGFPE handler on destruction.
@@ -149,29 +147,46 @@ public:
             //- The signal handler state when entering
             bool wasActive_;
 
+        public:
+
             //- No copy construct
             ignore(const ignore&) = delete;
-
-            //- No copy assignment
-            void operator=(const ignore&) = delete;
 
             //- No move construct
             ignore(ignore&&) = delete;
 
+            //- No copy assignment
+            void operator=(const ignore&) = delete;
+
             //- No move assignment
             void operator=(ignore&&) = delete;
 
-
-        public:
-
             //- Constructor deactivates any previously active SIGFPE handler
-            ignore();
+            ignore()
+            :
+                wasActive_(Foam::sigFpe::active())
+            {
+                if (wasActive_)
+                {
+                    Foam::sigFpe::unset();
+                }
+            }
 
             //- Destructor restores the original state of SIGFPE handler
-            ~ignore();
+            ~ignore() { reset(); }
 
             //- Restore the original state of SIGFPE handler
-            void restore();
+            void reset()
+            {
+                if (wasActive_)
+                {
+                    wasActive_ = false;
+                    Foam::sigFpe::set();
+                }
+            }
+
+            //- Same as reset()
+            void restore() { reset(); }
         };
 };
 

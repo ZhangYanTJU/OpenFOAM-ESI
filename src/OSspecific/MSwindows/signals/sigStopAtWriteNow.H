@@ -77,7 +77,7 @@ public:
     // Constructors
 
         //- Default construct
-        sigStopAtWriteNow();
+        sigStopAtWriteNow() noexcept = default;
 
         //- Construct with Time reference
         explicit sigStopAtWriteNow(const Time& runTime, bool verbose=false);
