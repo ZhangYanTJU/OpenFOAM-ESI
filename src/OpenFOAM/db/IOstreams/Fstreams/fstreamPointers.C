@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,7 +60,22 @@ bool Foam::ofstreamPointer::supports_gz()
 }
 
 
+// Future: List<char> slurpFile(....);
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::ifstreamPointer::ifstreamPointer
+(
+    const fileName& pathname,
+    IOstreamOption streamOpt  // Currently unused
+)
+:
+    ptr_(nullptr)
+{
+    open(pathname, streamOpt);
+}
+
 
 Foam::ifstreamPointer::ifstreamPointer
 (
@@ -69,6 +84,162 @@ Foam::ifstreamPointer::ifstreamPointer
 :
     ptr_(nullptr)
 {
+    open(pathname);
+}
+
+
+Foam::ofstreamPointer::ofstreamPointer() noexcept
+:
+    ptr_(),
+    atomic_(false)
+{}
+
+
+Foam::ofstreamPointer::ofstreamPointer(std::nullptr_t)
+:
+    ptr_(new Foam::ocountstream),
+    atomic_(false)
+{}
+
+
+Foam::ofstreamPointer::ofstreamPointer
+(
+    const fileName& pathname,
+    IOstreamOption streamOpt,
+    const bool append,
+    const bool atomic
+)
+:
+    ptr_(nullptr),
+    atomic_(atomic)
+{
+    std::ios_base::openmode mode
+    (
+        std::ios_base::out | std::ios_base::binary
+    );
+
+    if (append)
+    {
+        mode |= std::ios_base::app;
+
+        // Cannot append to gzstream
+        streamOpt.compression(IOstreamOption::UNCOMPRESSED);
+
+        // Cannot use append + atomic operation, without lots of extra work
+        atomic_ = false;
+    }
+
+
+    // When opening new files, remove file variants out of the way.
+    // Eg, opening "file1"
+    // - remove old "file1.gz" (compressed)
+    // - also remove old "file1" if it is a symlink and we are not appending
+    //
+    // Not writing into symlinked files avoids problems with symlinked
+    // initial fields (eg, 0/U -> ../0.orig/U)
+
+    const fileName pathname_gz(pathname + ".gz");
+    const fileName pathname_tmp(pathname + "~tmp~");
+
+    fileName::Type fType = fileName::Type::UNDEFINED;
+
+    if (IOstreamOption::COMPRESSED == streamOpt.compression())
+    {
+        // Output compression requested.
+
+        #ifdef HAVE_LIBZ
+        // TBD:
+        // atomic_ = true;  // Always treat COMPRESSED like an atomic
+
+        const fileName& target = (atomic_ ? pathname_tmp : pathname_gz);
+
+        // Remove old uncompressed version (if any)
+        fType = Foam::type(pathname, false);
+        if (fType == fileName::SYMLINK || fType == fileName::FILE)
+        {
+            Foam::rm(pathname);
+        }
+
+        // Avoid writing into symlinked files (non-append mode)
+        if (!append || atomic_)
+        {
+            fType = Foam::type(target, false);
+            if (fType == fileName::SYMLINK)
+            {
+                Foam::rm(target);
+            }
+        }
+
+        ptr_.reset(new ogzstream(target, mode));
+
+        #else /* HAVE_LIBZ */
+
+        streamOpt.compression(IOstreamOption::UNCOMPRESSED);
+
+        Warning
+            << nl
+            << "No write support for gz compressed files (libz)"
+            << " : downgraded to UNCOMPRESSED" << nl
+            << "file: " << pathname_gz << endl;
+
+        #endif /* HAVE_LIBZ */
+    }
+
+    if (IOstreamOption::COMPRESSED != streamOpt.compression())
+    {
+        const fileName& target = (atomic_ ? pathname_tmp : pathname);
+
+        // Remove old compressed version (if any)
+        fType = Foam::type(pathname_gz, false);
+        if (fType == fileName::SYMLINK || fType == fileName::FILE)
+        {
+            Foam::rm(pathname_gz);
+        }
+
+        // Avoid writing into symlinked files (non-append mode)
+        if (!append || atomic_)
+        {
+            fType = Foam::type(target, false);
+            if (fType == fileName::SYMLINK)
+            {
+                Foam::rm(target);
+            }
+        }
+
+        ptr_.reset(new std::ofstream(target, mode));
+    }
+}
+
+
+Foam::ofstreamPointer::ofstreamPointer
+(
+    const fileName& pathname,
+    IOstreamOption::compressionType comp,
+    const bool append,
+    const bool atomic
+)
+:
+    ofstreamPointer
+    (
+        pathname,
+        IOstreamOption(IOstreamOption::ASCII, comp),
+        append,
+        atomic
+    )
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::ifstreamPointer::open
+(
+    const fileName& pathname,
+    IOstreamOption streamOpt  // Currently unused
+)
+{
+    // Forcibly close old stream (if any)
+    ptr_.reset(nullptr);
+
     const std::ios_base::openmode mode
     (
         std::ios_base::in | std::ios_base::binary
@@ -109,131 +280,6 @@ Foam::ifstreamPointer::ifstreamPointer
     }
 }
 
-
-Foam::ofstreamPointer::ofstreamPointer() noexcept
-:
-    ptr_(),
-    atomic_(false)
-{}
-
-
-Foam::ofstreamPointer::ofstreamPointer(std::nullptr_t)
-:
-    ptr_(new Foam::ocountstream),
-    atomic_(false)
-{}
-
-
-Foam::ofstreamPointer::ofstreamPointer
-(
-    const fileName& pathname,
-    IOstreamOption::compressionType comp,
-    const bool append,
-    const bool atomic
-)
-:
-    ptr_(nullptr),
-    atomic_(atomic)
-{
-    std::ios_base::openmode mode
-    (
-        std::ios_base::out | std::ios_base::binary
-    );
-
-    if (append)
-    {
-        mode |= std::ios_base::app;
-
-        // Cannot append to gzstream
-        comp = IOstreamOption::UNCOMPRESSED;
-
-        // Cannot use append + atomic operation, without lots of extra work
-        atomic_ = false;
-    }
-
-
-    // When opening new files, remove file variants out of the way.
-    // Eg, opening "file1"
-    // - remove old "file1.gz" (compressed)
-    // - also remove old "file1" if it is a symlink and we are not appending
-    //
-    // Not writing into symlinked files avoids problems with symlinked
-    // initial fields (eg, 0/U -> ../0.orig/U)
-
-    const fileName pathname_gz(pathname + ".gz");
-    const fileName pathname_tmp(pathname + "~tmp~");
-
-    fileName::Type fType = fileName::Type::UNDEFINED;
-
-    if (IOstreamOption::COMPRESSED == comp)
-    {
-        // Output compression requested.
-
-        #ifdef HAVE_LIBZ
-        // TBD:
-        // atomic_ = true;  // Always treat COMPRESSED like an atomic
-
-        const fileName& target = (atomic_ ? pathname_tmp : pathname_gz);
-
-        // Remove old uncompressed version (if any)
-        fType = Foam::type(pathname, false);
-        if (fType == fileName::SYMLINK || fType == fileName::FILE)
-        {
-            Foam::rm(pathname);
-        }
-
-        // Avoid writing into symlinked files (non-append mode)
-        if (!append || atomic_)
-        {
-            fType = Foam::type(target, false);
-            if (fType == fileName::SYMLINK)
-            {
-                Foam::rm(target);
-            }
-        }
-
-        ptr_.reset(new ogzstream(target, mode));
-
-        #else /* HAVE_LIBZ */
-
-        comp = IOstreamOption::UNCOMPRESSED;
-
-        Warning
-            << nl
-            << "No write support for gz compressed files (libz)"
-            << " : downgraded to UNCOMPRESSED" << nl
-            << "file: " << pathname_gz << endl;
-
-        #endif /* HAVE_LIBZ */
-    }
-
-    if (IOstreamOption::COMPRESSED != comp)
-    {
-        const fileName& target = (atomic_ ? pathname_tmp : pathname);
-
-        // Remove old compressed version (if any)
-        fType = Foam::type(pathname_gz, false);
-        if (fType == fileName::SYMLINK || fType == fileName::FILE)
-        {
-            Foam::rm(pathname_gz);
-        }
-
-        // Avoid writing into symlinked files (non-append mode)
-        if (!append || atomic_)
-        {
-            fType = Foam::type(target, false);
-            if (fType == fileName::SYMLINK)
-            {
-                Foam::rm(target);
-            }
-        }
-
-        ptr_.reset(new std::ofstream(target, mode));
-    }
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::ifstreamPointer::reopen_gz(const std::string& pathname)
 {

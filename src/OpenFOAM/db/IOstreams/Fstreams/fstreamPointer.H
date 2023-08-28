@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,7 +74,7 @@ class ifstreamPointer
 {
     // Private Data
 
-        //- The stream pointer (ifstream or igzstream)
+        //- The stream pointer (ifstream | igzstream, ...)
         std::unique_ptr<std::istream> ptr_;
 
 
@@ -114,7 +114,19 @@ public:
         //- Construct from pathname.
         //  Attempts to read the specified file.
         //  If that fails, try as a compressed file (.gz ending).
+        //  \param pathname The file name to open for reading
         explicit ifstreamPointer(const fileName& pathname);
+
+        //- Construct from pathname, option.
+        //  Attempts to read the specified file.
+        //  If that fails, try as a compressed file (.gz ending).
+        //  \param pathname The file name to open for reading
+        //  \param streamOpt  Currently unused
+        ifstreamPointer
+        (
+            const fileName& pathname,
+            IOstreamOption streamOpt
+        );
 
 
     // Member Functions
@@ -125,6 +137,9 @@ public:
 
     // Access
 
+        //- True if it holds a valid pointer
+        explicit operator bool() const noexcept { return bool(ptr_); }
+
         //- The stream pointer (ifstream or igzstream)
         std::istream* get() noexcept { return ptr_.get(); }
 
@@ -133,6 +148,19 @@ public:
 
         //- Which compression type?
         IOstreamOption::compressionType whichCompression() const;
+
+
+    // Wrapped Methods
+
+        //- Attempts to open the specified file for reading.
+        //  If that fails, try as a compressed file (.gz ending).
+        //  \param pathname The file name to open for reading
+        //  \param streamOpt  Currently unused
+        void open
+        (
+            const fileName& pathname,
+            IOstreamOption streamOpt = IOstreamOption()
+        );
 
 
     // Edit
@@ -168,7 +196,7 @@ class ofstreamPointer
 {
     // Private Data
 
-        //- The stream pointer (ofstream | ogzstream | ocountstream)
+        //- The stream pointer (ofstream | ogzstream | ocountstream, ...)
         std::unique_ptr<std::ostream> ptr_;
 
         //- Atomic file creation
@@ -211,8 +239,23 @@ public:
         //- Default construct (empty)
         ofstreamPointer() noexcept;
 
-        //- Construct as null output stream using Foam::ocountstream
+        //- Construct as null output stream (Foam::ocountstream)
         explicit ofstreamPointer(std::nullptr_t);
+
+        //- Construct from pathname, option, append, file handling atomic
+        //  \param pathname The file name to open for writing
+        //  \param streamOpt  Respects (UNCOMPRESSED | COMPRESSED)
+        //  \param append   Open in append mode
+        //  \param atomic   Write into temporary file (not target file).
+        //      This option should only be used with a stream wrapper
+        //      (eg, OFstream) that handles the final renaming.
+        explicit ofstreamPointer
+        (
+            const fileName& pathname,
+            IOstreamOption streamOpt = IOstreamOption(),
+            const bool append = false,
+            const bool atomic = false
+        );
 
         //- Construct from pathname, compression, append, file handling atomic
         //  \param pathname The file name to open for writing
@@ -221,10 +264,10 @@ public:
         //  \param atomic   Write into temporary file (not target file).
         //      This option should only be used with a stream wrapper
         //      (eg, OFstream) that handles the final renaming.
-        explicit ofstreamPointer
+        ofstreamPointer
         (
             const fileName& pathname,
-            IOstreamOption::compressionType comp = IOstreamOption::UNCOMPRESSED,
+            IOstreamOption::compressionType comp,
             const bool append = false,
             const bool atomic = false
         );
@@ -237,6 +280,9 @@ public:
 
 
     // Access
+
+        //- True if it holds a valid pointer
+        explicit operator bool() const noexcept { return bool(ptr_); }
 
         //- The stream pointer (ofstream or ogzstream)
         std::ostream* get() noexcept { return ptr_.get(); }
