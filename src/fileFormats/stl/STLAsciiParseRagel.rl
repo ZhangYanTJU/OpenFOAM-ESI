@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,7 +33,6 @@ Description
 
 #include "STLAsciiParse.H"
 #include "STLReader.H"
-#include "OSspecific.H"
 
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #pragma GCC diagnostic ignored "-Wunused-const-variable"
@@ -67,6 +66,7 @@ Description
 // - Only look for initial 'facet '. Ignore 'normal ...'
 // - Ignore name for 'endsolid'
 //
+// ------------------------------------------------------------------------- //
 
 // Ragel machine definition
 // Ragel variables (p, pe, eof, cs, top, stack, ts, te, act) defined later...
@@ -176,10 +176,10 @@ class STLAsciiParseRagel
 
 public:
 
-    //- From input stream and the approximate number of vertices in the STL
-    STLAsciiParseRagel(const label approxNpoints)
+    //- From input stream, with the estimated number of triangles in the STL
+    STLAsciiParseRagel(const label nTrisEstimated)
     :
-        Detail::STLAsciiParse(approxNpoints)
+        Detail::STLAsciiParse(nTrisEstimated)
     {}
 
     //- Execute lexer
@@ -232,7 +232,7 @@ void Foam::Detail::STLAsciiParseRagel::execute(std::istream& is)
 
         is.read(data, buflen);
         const std::streamsize gcount = is.gcount();
-        if (!gcount)
+        if (gcount <= 0)
         {
             break;
         }
@@ -303,9 +303,7 @@ void Foam::Detail::STLAsciiParseRagel::die
     const char *pe
 ) const
 {
-    auto error = FatalErrorInFunction;
-
-    error
+    FatalErrorInFunction
         << nl
         << "Parsing error at or near line " << lineNum_
         <<", while parsing for " << what << nl
@@ -317,22 +315,19 @@ void Foam::Detail::STLAsciiParseRagel::die
         for (unsigned i=0; i < 80; ++i)
         {
             if (*parsing == '\n' || parsing == pe) break;
-            error << *parsing;
+            FatalError << *parsing;
             ++parsing;
         }
     }
 
-    error
+    FatalError
         << "'\n"
         << exit(FatalError);
 }
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-//
-// Member Function
-//
 bool Foam::fileFormats::STLReader::readAsciiRagel
 (
     const fileName& filename
@@ -346,8 +341,20 @@ bool Foam::fileFormats::STLReader::readAsciiRagel
             << exit(FatalError);
     }
 
-    // Create with approx number of vertices in the STL (from file size)
-    Detail::STLAsciiParseRagel lexer(Foam::fileSize(filename)/400);
+    // Create with estimated number of triangles in the STL.
+    // 180 bytes / triangle. For simplicity, ignore compression
+
+    const auto fileLen = is.fileSize();
+
+    const label nTrisEstimated =
+    (
+        (fileLen > 0)
+      ? max(label(100), label(fileLen/180))
+      : label(100)
+    );
+
+
+    Detail::STLAsciiParseRagel lexer(nTrisEstimated);
     lexer.execute(is.stdStream());
 
     transfer(lexer);

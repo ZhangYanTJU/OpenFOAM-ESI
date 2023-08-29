@@ -76,9 +76,10 @@ inline int Foam::ISstream::peek()
 inline Foam::ISstream& Foam::ISstream::getLine(std::string& str, char delim)
 {
     std::getline(is_, str, delim);
+    std::streamsize count = is_.gcount();
     syncState();
 
-    if (delim == '\n')
+    if (delim == '\n' && count > 0)
     {
         ++lineNumber_;
     }
@@ -90,11 +91,10 @@ inline Foam::ISstream& Foam::ISstream::getLine(std::string& str, char delim)
 inline std::streamsize Foam::ISstream::getLine(std::nullptr_t, char delim)
 {
     is_.ignore(std::numeric_limits<std::streamsize>::max(), delim);
+    std::streamsize count = is_.gcount();
     syncState();
 
-    std::streamsize count = is_.gcount();
-
-    if (delim == '\n' && count)
+    if (delim == '\n' && count > 0)
     {
         ++lineNumber_;
     }

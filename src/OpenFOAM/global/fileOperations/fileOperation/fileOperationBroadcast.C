@@ -73,7 +73,11 @@ static void broadcastFile_single
     if (UPstream::master(comm))
     {
         // Read (see newIFstream)
-        lengthAndMode.first() = Foam::fileSize(srcName);
+        auto fileLen = Foam::fileSize(srcName);
+        if (fileLen > 0)
+        {
+            lengthAndMode.first() = uint64_t(fileLen);
+        }
         lengthAndMode.second() = Foam::mode(srcName);
 
         srcStream.reset
