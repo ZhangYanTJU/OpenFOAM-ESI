@@ -75,7 +75,7 @@ wmake $targetType lagrangian/distributionModels
 parallel/Allwmake $targetType $*
 
 wmake $targetType dynamicFvMesh
-wmake $targetType topoChangerFvMesh
+#HJ wmake $targetType topoChangerFvMesh
 
 wmake $targetType sampling
 transportModels/Allwmake $targetType $*
@@ -129,6 +129,9 @@ wmake $targetType rigidBodyDynamics
 wmake $targetType rigidBodyMeshMotion
 wmake $targetType atmosphericModels
 wmake $targetType optimisation/adjointOptimisation/adjoint
+
+# Moved by HJ
+wmake $targetType topoChangerFvMesh
 
 
 # interfaceTracking libs
