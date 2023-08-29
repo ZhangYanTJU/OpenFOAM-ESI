@@ -1051,20 +1051,7 @@ Foam::Istream& Foam::ISstream::readRaw(char* data, std::streamsize count)
         }
         else
         {
-            // Forward seek
-            // - use absolute positioning (see C++ notes about std::ifstream)
-            is_.seekg(is_.tellg() + std::istream::pos_type(count));
-
-            // Not sure if this is needed (as per rewind)
-            // some documentation indicates that ifstream needs
-            // seekg with values from a tellg
-            //
-            // stdStream().rdbuf()->pubseekpos
-            // (
-            //     count,
-            //     std::ios_base::seekdir::cur,
-            //     std::ios_base::in
-            // );
+            is_.ignore(count);
         }
     }
     syncState();
@@ -1102,8 +1089,11 @@ void Foam::ISstream::rewind()
     stdStream().clear();  // Clear the iostate error state flags
     setGood();            // Sync local copy of iostate
 
-    // pubseekpos() rather than seekg() so that it works with gzstream
     stdStream().rdbuf()->pubseekpos(0, std::ios_base::in);
+
+    // NOTE: this form of rewind does not work with igzstream.
+    // However, igzstream is usually wrapped as IFstream which has its
+    // own dedicated rewind treatment for igzstream.
 }
 
 

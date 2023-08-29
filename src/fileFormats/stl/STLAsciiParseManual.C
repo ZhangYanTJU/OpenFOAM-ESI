@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,7 +30,6 @@ Description
 
 #include "STLAsciiParse.H"
 #include "STLReader.H"
-#include "OSspecific.H"
 #include "stringOps.H"
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
@@ -127,10 +126,10 @@ class STLAsciiParseManual
 
 public:
 
-    //- From input stream and the approximate number of vertices in the STL
-    STLAsciiParseManual(const label approxNpoints)
+    //- Construct with the estimated number of triangles in the STL
+    STLAsciiParseManual(const label nTrisEstimated)
     :
-        Detail::STLAsciiParse(approxNpoints)
+        Detail::STLAsciiParse(nTrisEstimated)
     {}
 
     //- Execute parser
@@ -179,7 +178,7 @@ void Foam::Detail::STLAsciiParseManual::execute(std::istream& is)
         is.read(data, buflen);
         const std::streamsize gcount = is.gcount();
 
-        if (!gcount)
+        if (gcount <= 0)
         {
             // EOF
             // If scanning for next "solid" this is a valid way to exit, but
@@ -398,11 +397,8 @@ void Foam::Detail::STLAsciiParseManual::execute(std::istream& is)
 }
 
 
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-//
-// Member Function
-//
 bool Foam::fileFormats::STLReader::readAsciiManual
 (
     const fileName& filename
@@ -416,8 +412,20 @@ bool Foam::fileFormats::STLReader::readAsciiManual
             << exit(FatalError);
     }
 
-    // Create with the approximate number of vertices in the STL from file size
-    Detail::STLAsciiParseManual lexer(Foam::fileSize(filename)/400);
+    // Create with estimated number of triangles in the STL.
+    // 180 bytes / triangle. For simplicity, ignore compression
+
+    const auto fileLen = is.fileSize();
+
+    const label nTrisEstimated =
+    (
+        (fileLen > 0)
+      ? max(label(100), label(fileLen/180))
+      : label(100)
+    );
+
+
+    Detail::STLAsciiParseManual lexer(nTrisEstimated);
     lexer.execute(is.stdStream());
 
     transfer(lexer);

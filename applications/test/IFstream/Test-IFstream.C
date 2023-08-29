@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,7 @@ Description
 
 #include "argList.H"
 #include "Fstream.H"
+#include "OSspecific.H"
 #include "etcFiles.H"
 
 using namespace Foam;
@@ -44,11 +45,14 @@ int main(int argc, char *argv[])
 {
     argList::noBanner();
     argList::noParallel();
+    argList::noParallel();
+    argList::addOption("ignore", "file", "Test readRaw with ignore");
 
     #include "setRootCase.H"
 
     // Test with etc/controlDict (mandatory, from distribution)
 
+    if (!args.found("ignore"))
     {
         const fileName inputFile
         (
@@ -96,6 +100,43 @@ int main(int argc, char *argv[])
             }
         }
     }
+
+    fileName testFile;
+    if (args.readIfPresent("ignore", testFile))
+    {
+        if (testFile.has_ext("gz"))
+        {
+            testFile.remove_ext();
+            Info<< "stripping extraneous .gz ending" << endl;
+        }
+
+        IFstream is(testFile);
+        auto& stdStream = is.stdStream();
+
+        List<char> buffer(1000);
+
+        Info<< "Test readRaw with: " << is.name()
+            << " compressed:" << int(is.compression())
+            << " file-size:" << is.fileSize() << nl;
+
+        for (int iter = 0; is.good() && iter < 1000; ++iter)
+        {
+            Info<< "iter:" << iter;
+            if (iter % 2)
+            {
+                Info<< " [read]  ";
+                is.readRaw(buffer.data(), buffer.size());
+            }
+            else
+            {
+                Info<< " [ignore]";
+                is.readRaw(nullptr, buffer.size() / 2);
+            }
+
+            Info<< " : " << stdStream.gcount() << endl;
+        }
+    }
+
 
     Info<< "\nEnd\n" << endl;
     return 0;

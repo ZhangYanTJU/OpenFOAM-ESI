@@ -112,8 +112,8 @@ public:
 
     // Constructors
 
-        //- From input stream and the approximate number of vertices in the STL
-        inline STLAsciiParse(const label approxNpoints);
+        //- Construct with the estimated number of triangles in the STL
+        inline STLAsciiParse(const label nTrisEstimated);
 
 
     // Member Functions

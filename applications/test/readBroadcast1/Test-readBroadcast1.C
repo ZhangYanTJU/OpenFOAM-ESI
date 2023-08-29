@@ -130,7 +130,7 @@ static List<char> slurpFile
             // 66% compression = 3 iterations
             // ...
 
-            const off_t inputSize = Foam::fileSize(pathname + ".gz");
+            const auto inputSize = Foam::fileSize(pathname + ".gz");
 
             const uint64_t chunkSize =
             (
@@ -202,7 +202,7 @@ static List<char> slurpFile
         }
         else
         {
-            const off_t inputSize = Foam::fileSize(pathname);
+            const auto inputSize = Foam::fileSize(pathname);
 
             if (inputSize >= 0)
             {

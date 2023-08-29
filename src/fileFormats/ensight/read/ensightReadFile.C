@@ -50,12 +50,10 @@ Foam::ensightReadFile::detectBinaryHeader(const fileName& pathname)
         // Binary string is *exactly* 80 characters
         string buf(size_t(80), '\0');
         iss.read(&buf[0], 80);
+        const std::streamsize gcount = iss.gcount();
+        buf.erase(gcount <= 0 ? 0 : gcount);  // Truncated?
 
-        if (!iss)
-        {
-            // Truncated?
-            buf.erase(iss.gcount());
-        }
+        // Could exit on truncated input, but no real advantage
 
         // Truncate at the first embedded '\0'
         const auto endp = buf.find('\0');
@@ -119,14 +117,12 @@ Foam::Istream& Foam::ensightReadFile::read(string& value)
         // Binary string is *exactly* 80 characters
         value.resize(80, '\0');
         iss.read(&value[0], 80);
+        const std::streamsize gcount = iss.gcount();
+        value.erase(gcount <= 0 ? 0 : gcount);  // Truncated?
+
+        // Could exit on truncated input, but no real advantage
 
         syncState();
-
-        if (!iss)
-        {
-            // Truncated - could also exit here, but no real advantage
-            value.erase(iss.gcount());
-        }
 
         // Truncate at the first embedded '\0'
         auto endp = value.find('\0');
