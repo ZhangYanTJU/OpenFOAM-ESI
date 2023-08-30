@@ -172,7 +172,7 @@ public:
 
 #include "SubFieldI.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Implementations * * * * * * * * * * * * * * //
 
 template<class Type>
 Foam::SubField<Type>

@@ -222,6 +222,27 @@ Foam::Istream& Foam::DynamicList<T, SizeMin>::readList(Istream& is)
                 );
             }
         }
+        else if (std::is_same<char, T>::value)
+        {
+            // Special treatment for char data (always binary and contiguous)
+            // (see List<char>::readList)
+
+            if (len)
+            {
+                const auto oldFmt = is.format(IOstreamOption::BINARY);
+
+                // read(...) includes surrounding start/end delimiters
+                is.read(list.data_bytes(), list.size_bytes());
+
+                is.format(oldFmt);
+
+                is.fatalCheck
+                (
+                    "DynamicList<char>::readList(Istream&) : "
+                    "reading binary block"
+                );
+            }
+        }
         else
         {
             // Begin of contents marker

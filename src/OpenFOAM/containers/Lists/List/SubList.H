@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,7 +89,7 @@ public:
     // Constructors
 
         //- Construct from UList, the entire size
-        inline explicit SubList(const UList<T>& list);
+        inline explicit SubList(const UList<T>& list) noexcept;
 
         //- Construct from FixedList, the entire size
         template<unsigned N>
@@ -122,6 +122,47 @@ public:
         //- Construct from UList and a (start,size) range, but bypassing
         //- run-time range checking.
         inline SubList
+        (
+            const labelRange& range,
+            const UList<T>& list
+        );
+
+
+    // Member Functions
+
+        //- Reset to zero-sized and nullptr
+        inline UList<T>& reset(std::nullptr_t) noexcept;
+
+        //- Reset to use entire UList
+        inline UList<T>& reset(const UList<T>& list) noexcept;
+
+        //- Reset to use UList with sub-list size, start at 0
+        inline UList<T>& reset
+        (
+            const UList<T>& list,
+            const label subSize
+        );
+
+        //- Reset to use UList with sub-list size and start index
+        inline UList<T>& reset
+        (
+            const UList<T>& list,
+            const label subSize,
+            const label startIndex
+        );
+
+        //- Reset to use UList with a (start,size) range.
+        //  The range is subsetted with the list size itself to ensure that the
+        //  result always addresses a valid section of the list.
+        inline UList<T>& reset
+        (
+            const UList<T>& list,
+            const labelRange& range
+        );
+
+        //- Reset to use UList with a (start,size) range, but bypassing
+        //- run-time range checking.
+        inline UList<T>& reset
         (
             const labelRange& range,
             const UList<T>& list

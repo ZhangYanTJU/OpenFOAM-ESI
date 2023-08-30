@@ -177,26 +177,37 @@ std::streamsize Foam::UList<T>::byteSize() const
 
 
 template<class T>
-Foam::label Foam::UList<T>::find(const T& val, label pos) const
+Foam::label Foam::UList<T>::find(const T& val) const
 {
-    const label len = this->size();
+    const auto iter = std::find(this->cbegin(), this->cend(), val);
+    return (iter != this->cend() ? label(iter - this->cbegin()) : label(-1));
+}
 
-    if (pos >= 0)
+
+template<class T>
+Foam::label Foam::UList<T>::find(const T& val, label pos, label len) const
+{
+    if (pos >= 0 && pos < this->size())
     {
-        // auto iter = std::find(this->begin(pos), this->end(), val);
-        // if (iter != this->end())
-        // {
-        //     return label(iter - this->begin());
-        // }
+        // Change sub-length to (one-past) end position
+        // len == -1 (like std::string::npos) - search until end
 
-        while (pos < len)
+        if (len > 0) len += pos;
+        if (len < 0 || len > this->size())
         {
-            if (this->v_[pos] == val)
-            {
-                return pos;
-            }
+            len = this->size();
+        }
 
-            ++pos;
+        const auto iter = std::find
+        (
+            (this->cbegin() + pos),
+            (this->cbegin() + len),
+            val
+        );
+
+        if (iter != (this->cbegin() + len))
+        {
+            return label(iter - this->cbegin());
         }
     }
 
@@ -207,7 +218,8 @@ Foam::label Foam::UList<T>::find(const T& val, label pos) const
 template<class T>
 Foam::label Foam::UList<T>::rfind(const T& val, label pos) const
 {
-    // pos == -1 has same meaning as std::string::npos - search from end
+    // pos == -1 (like std::string::npos) - search from end
+
     if (pos < 0 || pos >= this->size())
     {
         pos = this->size()-1;

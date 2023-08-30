@@ -275,23 +275,33 @@ public:
 
     // Search
 
+        //- True if the value is contained in the list.
+        inline bool contains(const T& val) const;
+
+        //- Is the value contained in the list?
+        //  \param val The value to search for
+        //  \param pos The first position to examine (no-op if -ve)
+        //  \param len The length of the search region (-ve until the end)
+        //  \return true if found.
+        inline bool contains(const T& val, label pos, label len = -1) const;
+
         //- Find index of the first occurrence of the value.
-        //  Any occurrences before the start pos are ignored.
-        //  Linear search.
-        //  \return -1 if not found.
-        label find(const T& val, label pos = 0) const;
+        //  \param val The value to search for
+        //  \return position in list or -1 if not found.
+        label find(const T& val) const;
+
+        //- Find index of the first occurrence of the value.
+        //  \param val The value to search for
+        //  \param pos The first position to examine (no-op if -ve)
+        //  \param len The length of the search region (-ve until the end)
+        //  \return position in list or -1 if not found.
+        label find(const T& val, label pos, label len = -1) const;
 
         //- Find index of the last occurrence of the value.
         //  Any occurrences after the end pos are ignored.
         //  Linear search.
         //  \return position in list or -1 if not found.
         label rfind(const T& val, label pos = -1) const;
-
-        //- Is the value contained in the list?
-        //  Linear search from start pos until the end of the list.
-        //  Any occurrences before the start pos are ignored.
-        //  \return true if found.
-        inline bool contains(const T& val, label pos = 0) const;
 
 
     // Edit

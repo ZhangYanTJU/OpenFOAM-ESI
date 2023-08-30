@@ -31,13 +31,21 @@ template<class T, class Addr>
 Foam::label Foam::IndirectListBase<T, Addr>::find
 (
     const T& val,
-    label pos
+    label pos,
+    label len
 ) const
 {
-    const label len = addr_.size();
-
-    if (pos >= 0 && len)
+    if (pos >= 0 && pos < addr_.size())
     {
+        // Change sub-length to (one-past) end position
+        // len == -1 (like std::string::npos) - search until end
+
+        if (len > 0) len += pos;
+        if (len < 0 || len > addr_.size())
+        {
+            len = addr_.size();
+        }
+
         const T* const vals = values_.begin();
 
         while (pos < len)
@@ -62,7 +70,7 @@ Foam::label Foam::IndirectListBase<T, Addr>::rfind
     label pos
 ) const
 {
-    // pos == -1 has same meaning as std::string::npos - search from end
+    // pos == -1 (like std::string::npos) - search from end
 
     if (pos < 0 || pos >= addr_.size())
     {

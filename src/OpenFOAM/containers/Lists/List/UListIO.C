@@ -187,10 +187,7 @@ Foam::Istream& Foam::UList<T>::readList(Istream& is)
                 << exit(FatalIOError);
         }
 
-        for (label i = 0; i < len; ++i)
-        {
-            list[i] = std::move(elems[i]);
-        }
+        std::move(elems.begin(), elems.end(), list.begin());
     }
     else if (tok.isLabel())
     {

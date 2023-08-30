@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,13 +28,22 @@ License
 
 #include "FixedList.H"
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+template<class T>
+inline const Foam::SubList<T>& Foam::SubList<T>::null()
+{
+    return NullObjectRef<SubList<T>>();
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T>
 inline Foam::SubList<T>::SubList
 (
     const UList<T>& list
-)
+) noexcept
 :
     UList<T>(const_cast<T*>(list.cdata()), list.size())
 {}
@@ -113,9 +122,102 @@ inline Foam::SubList<T>::SubList
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-inline const Foam::SubList<T>& Foam::SubList<T>::null()
+inline Foam::UList<T>& Foam::SubList<T>::reset(std::nullptr_t) noexcept
 {
-    return NullObjectRef<SubList<T>>();
+    UList<T>::shallowCopy(nullptr, 0);
+    return *this;
+}
+
+
+template<class T>
+inline Foam::UList<T>& Foam::SubList<T>::reset
+(
+    const UList<T>& list
+) noexcept
+{
+    UList<T>::shallowCopy(list);
+    return *this;
+}
+
+
+template<class T>
+inline Foam::UList<T>& Foam::SubList<T>::reset
+(
+    const UList<T>& list,
+    const label subSize
+)
+{
+    #ifdef FULLDEBUG
+    list.checkSize(subSize);
+    #endif
+
+    UList<T>::shallowCopy(const_cast<T*>(list.cdata()), subSize);
+    return *this;
+}
+
+
+template<class T>
+inline Foam::UList<T>& Foam::SubList<T>::reset
+(
+    const UList<T>& list,
+    const label subSize,
+    const label startIndex
+)
+{
+    #ifdef FULLDEBUG
+    list.checkRange(startIndex, subSize);
+    #endif
+
+    UList<T>::shallowCopy
+    (
+        const_cast<T*>(list.cdata() + startIndex),
+        subSize
+    );
+    return *this;
+}
+
+
+template<class T>
+inline Foam::UList<T>& Foam::SubList<T>::reset
+(
+    const UList<T>& list,
+    const labelRange& range
+)
+{
+    #ifdef FULLDEBUG
+    // subset0() always produces valid ranges but want to check
+    // that the input itself was valid
+    list.checkRange(range.start(), range.size());
+    #endif
+
+    labelRange clamped(range.subset0(list.size()));
+
+    UList<T>::shallowCopy
+    (
+        const_cast<T*>(list.cdata() + clamped.start()),
+        clamped.size()
+    );
+    return *this;
+}
+
+
+template<class T>
+inline Foam::UList<T>& Foam::SubList<T>::reset
+(
+    const labelRange& range,
+    const UList<T>& list
+)
+{
+    #ifdef FULLDEBUG
+    list.checkRange(range.start(), range.size());
+    #endif
+
+    UList<T>::shallowCopy
+    (
+        const_cast<T*>(list.cdata() + range.start()),
+        range.size()
+    );
+    return *this;
 }
 
 

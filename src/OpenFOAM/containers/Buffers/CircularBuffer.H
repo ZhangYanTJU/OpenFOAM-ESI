@@ -282,17 +282,20 @@ public:
 
     // Search
 
+        //- True if the value is contained in the list.
+        inline bool contains(const T& val) const;
+
+        //- Is the value contained in the list?
+        //  \param val The value to search for
+        //  \param pos The first position to examine (no-op if -ve)
+        //  \return true if found.
+        inline bool contains(const T& val, label pos) const;
+
         //- Find index of the first occurrence of the value.
         //  Any occurrences before the start pos are ignored.
         //  Linear search.
         //  \return position in list or -1 if not found.
         label find(const T& val, label pos = 0) const;
-
-        //- Is the value contained in the list?
-        //  Linear search from start pos until the end of the list.
-        //  Any occurrences before the start pos are ignored.
-        //  \return true if found.
-        inline bool contains(const T& val, label pos = 0) const;
 
 
     // Stack-like Operations

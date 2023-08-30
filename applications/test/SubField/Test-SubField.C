@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,6 +37,7 @@ Description
 #include "scalarField.H"
 #include "SubField.H"
 #include "labelRange.H"
+#include "ListOps.H"
 #include <numeric>
 
 using namespace Foam;
@@ -57,26 +58,26 @@ int main(int argc, char *argv[])
     argList::noFunctionObjects();
 
     {
-        List<scalar> ident(25);
+        List<label> ident(25);
         std::iota(ident.begin(), ident.end(), 0);
 
         print(ident);
 
-        SubList<scalar>(ident, 10) = -10;
+        SubList<label>(ident, 10) = -10;
         print(ident);
 
-        SubField<scalar>(ident, 10) = 10;
+        SubField<label>(ident, 10) = 10;
         print(ident);
 
-        SubField<scalar>(ident, 10) += 10;
+        SubField<label>(ident, 10) += 10;
         print(ident);
 
-        SubField<scalar>{ident, 10, 10} *= 5;
+        SubField<label>{ident, 10, 10} *= 5;
         print(ident);
 
 
         // NOTE: Need {} instead of ()
-        // SubList<scalar>(ident) = 100;
+        // SubList<label>(ident) = 100;
 
         // GCC
         // error: conflicting declaration 'Foam::SubList<double> ident'
@@ -85,7 +86,30 @@ int main(int argc, char *argv[])
         // warning: parentheses were disambiguated as redundant parentheses
         // around declaration of variable named 'ident' [-Wvexing-parse]
 
-        SubList<scalar>{ident} = 100;
+        SubList<label>{ident} = 100;
+        print(ident);
+
+        SubList<label> sub(ident);
+        sub = 1;
+        print(sub);
+
+        sub.reset(ident, labelRange(4, 5)) = 5;
+        print(sub);
+        print(ident);
+
+        sub.reset(ident, labelRange(14, 5)) = 15;
+        print(sub);
+        print(ident);
+
+        // Cryptic, probably not a great idea to write this
+        sub.reset(ident, {20, 3}) = -1;
+        print(sub);
+        print(ident);
+
+        // This is also possible since we hold a concrete pointer/size
+        // and not an intermediate
+        ListOps::identity(sub.reset(ident, 8, 8));
+        print(sub);
         print(ident);
     }
 

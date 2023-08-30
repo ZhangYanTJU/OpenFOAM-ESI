@@ -102,10 +102,11 @@ template<class T, class Addr>
 inline bool Foam::IndirectListBase<T, Addr>::contains
 (
     const T& val,
-    label pos
+    label pos,
+    label len
 ) const
 {
-    return (this->find(val, pos) >= 0);
+    return (this->find(val, pos, len) >= 0);
 }
 
 
