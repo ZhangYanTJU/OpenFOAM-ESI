@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,6 +88,7 @@ Usage
         scaleFactor     1.0;
         writeArea       false;
         surfaceFormat   none;
+        empty-surface   warn;  // default | warn | ignore | strict
 
         // Optional (inherited) entries
         ...
@@ -111,6 +112,7 @@ Usage
       writeArea    | Write the surface area             | bool |  no   | false
       surfaceFormat | Output value format               | word <!--
                 --> | conditional on writeFields  | none
+      empty-surface | Error handling for empty surfaces | enum | no | default
     \endtable
 
     The inherited entries are elaborated in:
@@ -177,12 +179,11 @@ Note
         Instead specify the regionType 'functionObjectSurface' and provide
         the name.
     - Using \c sampledSurface:
-        - not available for surface fields
-        - if interpolate=true they use \c interpolationCellPoint
-          otherwise they use cell values
-        - each triangle in \c sampledSurface is logically only in one cell
-          so interpolation will be wrong when triangles are larger than
-          cells.  This can only happen for sampling on a \c triSurfaceMesh
+        - surface fields only supported by some surfaces
+        - default uses sampleScheme \c cell
+        - each face in \c sampledSurface is logically only in one cell
+          so sampling will be wrong when they are larger than cells.
+          This can only happen for sampling on a \c triSurfaceMesh
         - take care when using isoSurfaces - these might have duplicate
           triangles and so integration might be wrong
 
@@ -382,6 +383,21 @@ private:
         scalar totalArea() const;
 
 
+    // BACKPORT:
+
+        //- Handling of errors. The exact handling depends on the local context.
+        enum class error_handlerTypes : char
+        {
+            DEFAULT = 0,  //!< Default behaviour (local meaning)
+            IGNORE,       //!< Ignore on errors/problems
+            WARN,         //!< Warn on errors/problems
+            STRICT        //!< Fatal on errors/problems
+        };
+
+        //- Names of the error handler types
+        static const Enum<error_handlerTypes> error_handlerNames;
+
+
 protected:
 
     // Protected Data
@@ -401,6 +417,9 @@ protected:
         //- Optionally write the area of the surfaceFieldValue
         bool writeArea_;
 
+        //- Handling of empty surfaces (nFaces = 0). Default is Fatal.
+        error_handlerTypes emptySurfaceError_;  // BACKPORT
+
         //- Extended selections
         wordRes selectionNames_;
 
@@ -412,6 +431,9 @@ protected:
 
         //- Global number of faces
         label nFaces_;
+
+        //- Number of warnings emitted since the last valid update
+        unsigned nWarnings_;
 
 
     // If operating on mesh faces (faceZone, patch)
