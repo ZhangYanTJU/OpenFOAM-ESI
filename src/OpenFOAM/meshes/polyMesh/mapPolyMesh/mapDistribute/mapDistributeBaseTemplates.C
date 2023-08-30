@@ -35,41 +35,43 @@ License
 template<class T, class CombineOp, class NegateOp>
 void Foam::mapDistributeBase::flipAndCombine
 (
+    List<T>& lhs,
+    const UList<T>& rhs,
+
     const labelUList& map,
     const bool hasFlip,
-    const UList<T>& rhs,
     const CombineOp& cop,
-    const NegateOp& negOp,
-    List<T>& lhs
+    const NegateOp& negOp
 )
 {
+    const label len = map.size();
+
     if (hasFlip)
     {
-        forAll(map, i)
+        for (label i = 0; i < len; ++i)
         {
-            if (map[i] > 0)
+            const label index = map[i];
+
+            if (index > 0)
             {
-                label index = map[i]-1;
-                cop(lhs[index], rhs[i]);
+                cop(lhs[index-1], rhs[i]);
             }
-            else if (map[i] < 0)
+            else if (index < 0)
             {
-                label index = -map[i]-1;
-                cop(lhs[index], negOp(rhs[i]));
+                cop(lhs[-index-1], negOp(rhs[i]));
             }
             else
             {
                 FatalErrorInFunction
-                    << "At index " << i << " out of " << map.size()
-                    << " have illegal index " << map[i]
-                    << " for field " << rhs.size() << " with flipMap"
+                    << "Illegal flip index '0' at " << i << '/' << map.size()
+                    << " for list:" << rhs.size() << nl
                     << exit(FatalError);
             }
         }
     }
     else
     {
-        forAll(map, i)
+        for (label i = 0; i < len; ++i)
         {
             cop(lhs[map[i]], rhs[i]);
         }
@@ -78,56 +80,24 @@ void Foam::mapDistributeBase::flipAndCombine
 
 
 template<class T, class NegateOp>
-T Foam::mapDistributeBase::accessAndFlip
+void Foam::mapDistributeBase::accessAndFlip
 (
+    List<T>& output,
     const UList<T>& values,
-    const label index,
+    const labelUList& map,
     const bool hasFlip,
     const NegateOp& negOp
 )
 {
-    if (hasFlip)
-    {
-        if (index > 0)
-        {
-            return values[index-1];
-        }
-        else if (index < 0)
-        {
-            return negOp(values[-index-1]);
-        }
-        else
-        {
-            FatalErrorInFunction
-                << "Illegal index " << index
-                << " into field of size " << values.size()
-                << " with face-flipping"
-                << exit(FatalError);
-        }
-    }
+    const label len = map.size();
 
-    return values[index];
-}
-
-
-template<class T, class NegateOp>
-Foam::List<T> Foam::mapDistributeBase::accessAndFlip
-(
-    const UList<T>& values,
-    const labelUList& indices,
-    const bool hasFlip,
-    const NegateOp& negOp
-)
-{
-    const label len = indices.size();
-
-    List<T> output(len);
+    // FULLDEBUG: if (output.size() < len)  FatalError ...;
 
     if (hasFlip)
     {
         for (label i = 0; i < len; ++i)
         {
-            const label index = indices[i];
+            const label index = map[i];
 
             if (index > 0)
             {
@@ -140,9 +110,8 @@ Foam::List<T> Foam::mapDistributeBase::accessAndFlip
             else
             {
                 FatalErrorInFunction
-                    << "Illegal index " << index
-                    << " into field of size " << values.size()
-                    << " with flipping"
+                    << "Illegal flip index '0' at " << i << '/' << map.size()
+                    << " for list:" << values.size() << nl
                     << exit(FatalError);
             }
         }
@@ -152,10 +121,23 @@ Foam::List<T> Foam::mapDistributeBase::accessAndFlip
         // Like indirect list
         for (label i = 0; i < len; ++i)
         {
-            output[i] = values[indices[i]];
+            output[i] = values[map[i]];
         }
     }
+}
 
+
+template<class T, class NegateOp>
+Foam::List<T> Foam::mapDistributeBase::accessAndFlip
+(
+    const UList<T>& values,
+    const labelUList& map,
+    const bool hasFlip,
+    const NegateOp& negOp
+)
+{
+    List<T> output(map.size());
+    accessAndFlip(output, values, map, hasFlip, negOp);
     return output;
 }
 
@@ -168,9 +150,13 @@ void Foam::mapDistributeBase::send
     const labelListList& constructMap,
     const bool constructHasFlip,
     const UList<T>& field,
-    labelRange& requests,
+
+    labelRange& sendRequests,
     PtrList<List<T>>& sendFields,
+
+    labelRange& recvRequests,
     PtrList<List<T>>& recvFields,
+
     const negateOp& negOp,
     const int tag,
     const label comm
@@ -183,68 +169,81 @@ void Foam::mapDistributeBase::send
             << exit(FatalError);
     }
 
-    const label myRank = UPstream::myProcNo(comm);
-    const label nProcs = UPstream::nProcs(comm);
+    const auto myRank = UPstream::myProcNo(comm);
+    const auto nProcs = UPstream::nProcs(comm);
 
-    requests.start() = UPstream::nRequests();
-    requests.size() = 0;
 
     // Set up receives from neighbours
+    recvRequests.start() = UPstream::nRequests();
+    recvRequests.size() = 0;
 
-    recvFields.free();
     recvFields.resize(nProcs);
 
-    for (const int domain : UPstream::allProcs(comm))
+    for (const int proci : UPstream::allProcs(comm))
     {
-        const labelList& map = constructMap[domain];
+        const labelList& map = constructMap[proci];
 
-        if (domain != myRank && map.size())
+        if (proci == myRank)
         {
-            recvFields.set(domain, new List<T>(map.size()));
+            // No communication for myself - but recvFields may be used
+        }
+        else if (map.empty())
+        {
+            // No receive necessary
+            (void) recvFields.release(proci);
+        }
+        else
+        {
+            List<T>& subField = recvFields.try_emplace(proci);
+            subField.resize_nocopy(map.size());
+
             UIPstream::read
             (
                 UPstream::commsTypes::nonBlocking,
-                domain,
-                recvFields[domain].data_bytes(),
-                recvFields[domain].size_bytes(),
+                proci,
+                subField.data_bytes(),
+                subField.size_bytes(),
                 tag,
                 comm
             );
         }
     }
 
-    // TDB: save where recv finish and send start
-    // const label endRecvRequests = UPstream::nRequests();
+    // Finished setting up the receives
+    recvRequests.size() = (UPstream::nRequests() - recvRequests.start());
 
 
     // Set up sends to neighbours
+    sendRequests.start() = UPstream::nRequests();
+    sendRequests.size() = 0;
 
-    recvFields.free();
     sendFields.resize(nProcs);
 
-    for (const int domain : UPstream::allProcs(comm))
+    for (const int proci : UPstream::allProcs(comm))
     {
-        const labelList& map = subMap[domain];
+        const labelList& map = subMap[proci];
 
-        if (domain != myRank && map.size())
+        if (proci == myRank)
         {
-            sendFields.set(domain, new List<T>(map.size()));
-            List<T>& subField = sendFields[domain];
-            forAll(map, i)
-            {
-                subField[i] = accessAndFlip
-                (
-                    field,
-                    map[i],
-                    subHasFlip,
-                    negOp
-                );
-            }
+            // No communication - sendFields not needed
+            (void) sendFields.release(proci);
+        }
+        else if (map.empty())
+        {
+            // No send necessary
+            (void) sendFields.release(proci);
+        }
+        else
+        {
+            List<T>& subField = sendFields.try_emplace(proci);
+            subField.resize_nocopy(map.size());
+
+            accessAndFlip(subField, field, map, subHasFlip, negOp);
 
             UOPstream::write
             (
                 UPstream::commsTypes::nonBlocking,
-                domain,
+                proci,
                 subField.cdata_bytes(),
                 subField.size_bytes(),
                 tag,
@@ -253,26 +252,27 @@ void Foam::mapDistributeBase::send
         }
     }
 
-    // Set up 'send' to myself
+    // Finished setting up the sends
+    sendRequests.size() = (UPstream::nRequests() - sendRequests.start());
 
+
+    // Set up 'send' to myself - copy directly into recvFields
     {
         const labelList& map = subMap[myRank];
 
-        sendFields.set(myRank, new List<T>(map.size()));
-        List<T>& subField = sendFields[myRank];
-        forAll(map, i)
+        if (map.empty())
         {
-            subField[i] = accessAndFlip
-            (
-                field,
-                map[i],
-                subHasFlip,
-                negOp
-            );
+            // Nothing to send/recv
+            (void) recvFields.release(myRank);
+        }
+        else
+        {
+            List<T>& subField = recvFields.try_emplace(myRank);
+            subField.resize_nocopy(map.size());
+
+            accessAndFlip(subField, field, map, subHasFlip, negOp);
         }
     }
-
-    requests.size() = (UPstream::nRequests() - requests.start());
 }
 
 
@@ -280,8 +280,9 @@ template<class T>
 void Foam::mapDistributeBase::send
 (
     const UList<T>& field,
-    labelRange& requests,
+    labelRange& sendRequests,
     PtrList<List<T>>& sendFields,
+    labelRange& recvRequests,
     PtrList<List<T>>& recvFields,
     const int tag
 ) const
@@ -293,9 +294,8 @@ void Foam::mapDistributeBase::send
         constructMap_,
         constructHasFlip_,
         field,
-        requests,
-        sendFields,
-        recvFields,
+        sendRequests, sendFields,
+        recvRequests, recvFields,
         flipOp(),
         tag,
         comm_
@@ -309,9 +309,8 @@ void Foam::mapDistributeBase::receive
     const label constructSize,
     const labelListList& constructMap,
     const bool constructHasFlip,
-    const UPtrList<List<T>>& sendFields,
-    const UPtrList<List<T>>& recvFields,
     const labelRange& requests,
+    const UPtrList<List<T>>& recvFields,
     List<T>& field,
     const CombineOp& cop,
     const negateOp& negOp,
@@ -326,61 +325,91 @@ void Foam::mapDistributeBase::receive
             << exit(FatalError);
     }
 
-    const label myRank = UPstream::myProcNo(comm);
-
-    // Combine bits. Note that can reuse field storage
-
-    field.resize(constructSize);
+    const auto myRank = UPstream::myProcNo(comm);
+    const auto nProcs = UPstream::nProcs(comm);
 
 
-    // Receive sub field from myself (sendFields[myRank])
-    if (sendFields.set(myRank))
+    // Receiving from which procs - according to map information
+
+    DynamicList<int> recvProcs(nProcs);
+    for (const int proci : UPstream::allProcs(comm))
+    {
+        const labelList& map = constructMap[proci];
+
+        if (proci != myRank && map.size())
+        {
+            recvProcs.push_back(proci);
+
+            const auto* subFieldPtr = recvFields.get(proci);
+            if (subFieldPtr)
+            {
+                checkReceivedSize(proci, map.size(), subFieldPtr->size());
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "From processor " << proci
+                    << " : unallocated receive field" << nl
+                    << exit(FatalError);
+            }
+        }
+    }
+
+
+    // Combining bits - can reuse field storage
+    field.resize_nocopy(constructSize);
+
+
+    // Received sub field from myself : recvFields[myRank]
+    if (recvFields.test(myRank))
     {
         const labelList& map = constructMap[myRank];
-        const List<T>& subField = sendFields[myRank];
+        const List<T>& subField = recvFields[myRank];
+
+        // Unlikely to need a size check
+        // checkReceivedSize(myRank, map.size(), subField.size());
 
         flipAndCombine
         (
+            field,
+            subField,
             map,
             constructHasFlip,
-            subField,
             cop,
-            negOp,
-            field
+            negOp
         );
     }
 
 
-    // Wait for all to finish
-    // TBD. sliced-range (ie, only wait for receives)
+    // NB: do NOT use polling and dispatch here.
+    // There is no certainty if the listed requests are still pending or
+    // have already been waited on before calling this method.
+
+    // Wait for (receive) requests, but the range may also include
+    // other requests depending on what the caller provided
+
     UPstream::waitRequests(requests.start(), requests.size());
 
-    // Collect neighbour fields
-    for (const int domain : UPstream::allProcs(comm))
+
+    // Process received fields
+
     {
-        const labelList& map = constructMap[domain];
-
-        if (domain != myRank && map.size())
+        for (const int proci : recvProcs)
         {
-            if (!recvFields.set(domain))
-            {
-                FatalErrorInFunction
-                    << "Unallocated receive field from rank:" << domain
-                    << exit(FatalError);
-            }
+            const labelList& map = constructMap[proci];
+            const List<T>& subField = recvFields[proci];
 
-            const List<T>& subField = recvFields[domain];
-
-            checkReceivedSize(domain, map.size(), subField.size());
+            // Already checked the sizes previously
+            // checkReceivedSize(proci, map.size(), subField.size());
 
             flipAndCombine
             (
+                field,
+                subField,
                 map,
                 constructHasFlip,
-                subField,
                 cop,
-                negOp,
-                field
+                negOp
             );
         }
     }
@@ -391,7 +420,6 @@ template<class T>
 void Foam::mapDistributeBase::receive
 (
     const labelRange& requests,
-    const UPtrList<List<T>>& sendFields,
     const UPtrList<List<T>>& recvFields,
     List<T>& field,
     const int tag
@@ -402,477 +430,14 @@ void Foam::mapDistributeBase::receive
         constructSize_,
         constructMap_,
         constructHasFlip_,
-        sendFields,
-        recvFields,
         requests,
+        recvFields,
         field,
         eqOp<T>(),
         flipOp(),
         tag,
         comm_
     );
-}
-
-
-template<class T, class NegateOp>
-void Foam::mapDistributeBase::distribute
-(
-    const UPstream::commsTypes commsType,
-    const List<labelPair>& schedule,
-    const label constructSize,
-    const labelListList& subMap,
-    const bool subHasFlip,
-    const labelListList& constructMap,
-    const bool constructHasFlip,
-    List<T>& field,
-    const NegateOp& negOp,
-    const int tag,
-    const label comm
-)
-{
-    const label myRank = UPstream::myProcNo(comm);
-    const label nProcs = UPstream::nProcs(comm);
-
-    if (!UPstream::parRun())
-    {
-        // Do only me to me.
-
-        List<T> subField
-        (
-            accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
-        );
-
-        // Receive sub field from myself (subField)
-        const labelList& map = constructMap[myRank];
-
-        field.setSize(constructSize);
-
-        flipAndCombine
-        (
-            map,
-            constructHasFlip,
-            subField,
-            eqOp<T>(),
-            negOp,
-            field
-        );
-
-        return;
-    }
-
-    if (commsType == UPstream::commsTypes::blocking)
-    {
-        // Since buffered sending can reuse the field to collect the
-        // received data.
-
-        // Send sub field to neighbour
-        for (const int domain : UPstream::allProcs(comm))
-        {
-            const labelList& map = subMap[domain];
-
-            if (domain != myRank && map.size())
-            {
-                OPstream toNbr
-                (
-                    UPstream::commsTypes::blocking,
-                    domain,
-                    0,
-                    tag,
-                    comm
-                );
-
-                List<T> subField
-                (
-                    accessAndFlip(field, map, subHasFlip, negOp)
-                );
-
-                toNbr << subField;
-            }
-        }
-
-        {
-            // Subset myself
-            List<T> subField
-            (
-                accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
-            );
-
-            // Receive sub field from myself (subField)
-            const labelList& map = constructMap[myRank];
-
-            field.setSize(constructSize);
-
-            flipAndCombine
-            (
-                map,
-                constructHasFlip,
-                subField,
-                eqOp<T>(),
-                negOp,
-                field
-            );
-        }
-
-        // Receive sub field from neighbour
-        for (const int domain : UPstream::allProcs(comm))
-        {
-            const labelList& map = constructMap[domain];
-
-            if (domain != myRank && map.size())
-            {
-                IPstream fromNbr
-                (
-                    UPstream::commsTypes::blocking,
-                    domain,
-                    0,
-                    tag,
-                    comm
-                );
-                List<T> subField(fromNbr);
-
-                checkReceivedSize(domain, map.size(), subField.size());
-
-                flipAndCombine
-                (
-                    map,
-                    constructHasFlip,
-                    subField,
-                    eqOp<T>(),
-                    negOp,
-                    field
-                );
-            }
-        }
-    }
-    else if (commsType == UPstream::commsTypes::scheduled)
-    {
-        // Need to make sure I don't overwrite field with received data
-        // since the data might need to be sent to another processor. So
-        // allocate a new field for the results.
-        List<T> newField(constructSize);
-
-        // Receive sub field from myself
-        {
-            List<T> subField
-            (
-                accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
-            );
-
-            // Receive sub field from myself (subField)
-            const labelList& map = constructMap[myRank];
-
-            flipAndCombine
-            (
-                map,
-                constructHasFlip,
-                subField,
-                eqOp<T>(),
-                negOp,
-                newField
-            );
-        }
-
-        // Schedule will already have pruned 0-sized comms
-        for (const labelPair& twoProcs : schedule)
-        {
-            // twoProcs is a swap pair of processors. The first one is the
-            // one that needs to send first and then receive.
-
-            const label sendProc = twoProcs[0];
-            const label recvProc = twoProcs[1];
-
-            if (myRank == sendProc)
-            {
-                // I am send first, receive next
-                {
-                    OPstream toNbr
-                    (
-                        UPstream::commsTypes::scheduled,
-                        recvProc,
-                        0,
-                        tag,
-                        comm
-                    );
-
-                    const labelList& map = subMap[recvProc];
-                    List<T> subField
-                    (
-                        accessAndFlip(field, map, subHasFlip, negOp)
-                    );
-
-                    toNbr << subField;
-                }
-                {
-                    IPstream fromNbr
-                    (
-                        UPstream::commsTypes::scheduled,
-                        recvProc,
-                        0,
-                        tag,
-                        comm
-                    );
-                    List<T> subField(fromNbr);
-
-                    const labelList& map = constructMap[recvProc];
-
-                    checkReceivedSize(recvProc, map.size(), subField.size());
-
-                    flipAndCombine
-                    (
-                        map,
-                        constructHasFlip,
-                        subField,
-                        eqOp<T>(),
-                        negOp,
-                        newField
-                    );
-                }
-            }
-            else
-            {
-                // I am receive first, send next
-                {
-                    IPstream fromNbr
-                    (
-                        UPstream::commsTypes::scheduled,
-                        sendProc,
-                        0,
-                        tag,
-                        comm
-                    );
-                    List<T> subField(fromNbr);
-
-                    const labelList& map = constructMap[sendProc];
-
-                    checkReceivedSize(sendProc, map.size(), subField.size());
-
-                    flipAndCombine
-                    (
-                        map,
-                        constructHasFlip,
-                        subField,
-                        eqOp<T>(),
-                        negOp,
-                        newField
-                    );
-                }
-                {
-                    OPstream toNbr
-                    (
-                        UPstream::commsTypes::scheduled,
-                        sendProc,
-                        0,
-                        tag,
-                        comm
-                    );
-
-                    const labelList& map = subMap[sendProc];
-                    List<T> subField
-                    (
-                        accessAndFlip(field, map, subHasFlip, negOp)
-                    );
-
-                    toNbr << subField;
-                }
-            }
-        }
-        field.transfer(newField);
-    }
-    else if (commsType == UPstream::commsTypes::nonBlocking)
-    {
-        const label nOutstanding = UPstream::nRequests();
-
-        if (!is_contiguous<T>::value)
-        {
-            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
-
-            // Stream data into buffer
-            for (const int domain : UPstream::allProcs(comm))
-            {
-                const labelList& map = subMap[domain];
-
-                if (domain != myRank && map.size())
-                {
-                    // Put data into send buffer
-                    UOPstream toDomain(domain, pBufs);
-
-                    List<T> subField
-                    (
-                        accessAndFlip(field, map, subHasFlip, negOp)
-                    );
-
-                    toDomain << subField;
-                }
-            }
-
-            // Start receiving. Do not block.
-            pBufs.finishedSends(false);
-
-            {
-                // Set up 'send' to myself
-                List<T> mySubField
-                (
-                    accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
-                );
-
-                // Combine bits. Note that can reuse field storage
-                field.setSize(constructSize);
-
-                // Receive sub field from myself
-                const labelList& map = constructMap[myRank];
-
-                flipAndCombine
-                (
-                    map,
-                    constructHasFlip,
-                    mySubField,
-                    eqOp<T>(),
-                    negOp,
-                    field
-                );
-            }
-
-            // Block ourselves, waiting only for the current comms
-            UPstream::waitRequests(nOutstanding);
-
-            // Consume
-            for (const int domain : UPstream::allProcs(comm))
-            {
-                const labelList& map = constructMap[domain];
-
-                if (domain != myRank && map.size())
-                {
-                    UIPstream str(domain, pBufs);
-                    List<T> recvField(str);
-
-                    checkReceivedSize(domain, map.size(), recvField.size());
-
-                    flipAndCombine
-                    (
-                        map,
-                        constructHasFlip,
-                        recvField,
-                        eqOp<T>(),
-                        negOp,
-                        field
-                    );
-                }
-            }
-        }
-        else
-        {
-            // Set up sends to neighbours
-
-            List<List<T>> sendFields(nProcs);
-
-            for (const int domain : UPstream::allProcs(comm))
-            {
-                const labelList& map = subMap[domain];
-
-                if (domain != myRank && map.size())
-                {
-                    sendFields[domain] =
-                        accessAndFlip(field, map, subHasFlip, negOp);
-
-                    UOPstream::write
-                    (
-                        UPstream::commsTypes::nonBlocking,
-                        domain,
-                        sendFields[domain].cdata_bytes(),
-                        sendFields[domain].size_bytes(),
-                        tag,
-                        comm
-                    );
-                }
-            }
-
-            // Set up receives from neighbours
-
-            List<List<T>> recvFields(nProcs);
-
-            for (const int domain : UPstream::allProcs(comm))
-            {
-                const labelList& map = constructMap[domain];
-
-                if (domain != myRank && map.size())
-                {
-                    recvFields[domain].resize(map.size());
-                    UIPstream::read
-                    (
-                        UPstream::commsTypes::nonBlocking,
-                        domain,
-                        recvFields[domain].data_bytes(),
-                        recvFields[domain].size_bytes(),
-                        tag,
-                        comm
-                    );
-                }
-            }
-
-            // Set up 'send' to myself
-            {
-                sendFields[myRank] =
-                    accessAndFlip(field, subMap[myRank], subHasFlip, negOp);
-            }
-
-
-            // Combine bits. Note that can reuse field storage
-
-            field.setSize(constructSize);
-
-
-            // Receive sub field from myself (sendFields[myRank])
-            {
-                const labelList& map = constructMap[myRank];
-                const List<T>& subField = sendFields[myRank];
-
-                flipAndCombine
-                (
-                    map,
-                    constructHasFlip,
-                    subField,
-                    eqOp<T>(),
-                    negOp,
-                    field
-                );
-            }
-
-
-            // Wait for outstanding requests
-            UPstream::waitRequests(nOutstanding);
-
-
-            // Collect neighbour fields
-
-            for (const int domain : UPstream::allProcs(comm))
-            {
-                const labelList& map = constructMap[domain];
-
-                if (domain != myRank && map.size())
-                {
-                    const List<T>& subField = recvFields[domain];
-
-                    checkReceivedSize(domain, map.size(), subField.size());
-
-                    flipAndCombine
-                    (
-                        map,
-                        constructHasFlip,
-                        subField,
-                        eqOp<T>(),
-                        negOp,
-                        field
-                    );
-                }
-            }
-        }
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Unknown communication schedule " << int(commsType)
-            << abort(FatalError);
-    }
 }
 
 
@@ -894,8 +459,8 @@ void Foam::mapDistributeBase::distribute
     const label comm
 )
 {
-    const label myRank = UPstream::myProcNo(comm);
-    const label nProcs = UPstream::nProcs(comm);
+    const auto myRank = UPstream::myProcNo(comm);
+    const auto nProcs = UPstream::nProcs(comm);
 
     if (!UPstream::parRun())
     {
@@ -909,10 +474,19 @@ void Foam::mapDistributeBase::distribute
         // Receive sub field from myself (subField)
         const labelList& map = constructMap[myRank];
 
+        // Combining bits - can now reuse field storage
         field.resize_nocopy(constructSize);
         field = nullValue;
 
-        flipAndCombine(map, constructHasFlip, subField, cop, negOp, field);
+        flipAndCombine
+        (
+            field,
+            subField,
+            map,
+            constructHasFlip,
+            cop,
+            negOp
+        );
 
         return;
     }
@@ -923,16 +497,16 @@ void Foam::mapDistributeBase::distribute
         // received data.
 
         // Send sub field to neighbour
-        for (const int domain : UPstream::allProcs(comm))
+        for (const int proci : UPstream::allProcs(comm))
         {
-            const labelList& map = subMap[domain];
+            const labelList& map = subMap[proci];
 
-            if (domain != myRank && map.size())
+            if (proci != myRank && map.size())
             {
-                OPstream toNbr
+                OPstream os
                 (
                     UPstream::commsTypes::blocking,
-                    domain,
+                    proci,
                     0,
                     tag,
                     comm
@@ -942,7 +516,7 @@ void Foam::mapDistributeBase::distribute
                     accessAndFlip(field, map, subHasFlip, negOp)
                 );
 
-                toNbr << subField;
+                os  << subField;
             }
         }
 
@@ -956,47 +530,48 @@ void Foam::mapDistributeBase::distribute
             // Receive sub field from myself (subField)
             const labelList& map = constructMap[myRank];
 
+            // Combining bits - can now reuse field storage
             field.resize_nocopy(constructSize);
             field = nullValue;
 
             flipAndCombine
             (
+                field,
+                subField,
                 map,
                 constructHasFlip,
-                subField,
                 cop,
-                negOp,
-                field
+                negOp
             );
         }
 
-        // Receive sub field from neighbour
-        for (const int domain : UPstream::allProcs(comm))
+        // Receive and process sub-field from neighbours
+        for (const int proci : UPstream::allProcs(comm))
         {
-            const labelList& map = constructMap[domain];
+            const labelList& map = constructMap[proci];
 
-            if (domain != myRank && map.size())
+            if (proci != myRank && map.size())
             {
-                IPstream fromNbr
+                IPstream is
                 (
                     UPstream::commsTypes::blocking,
-                    domain,
+                    proci,
                     0,
                     tag,
                     comm
                 );
-                List<T> subField(fromNbr);
+                List<T> subField(is);
 
-                checkReceivedSize(domain, map.size(), subField.size());
+                checkReceivedSize(proci, map.size(), subField.size());
 
                 flipAndCombine
                 (
+                    field,
+                    subField,
                     map,
                     constructHasFlip,
-                    subField,
                     cop,
-                    negOp,
-                    field
+                    negOp
                 );
             }
         }
@@ -1006,8 +581,11 @@ void Foam::mapDistributeBase::distribute
         // Need to make sure I don't overwrite field with received data
         // since the data might need to be sent to another processor. So
         // allocate a new field for the results.
-        List<T> newField(constructSize, nullValue);
+        List<T> newField;
+        newField.resize_nocopy(constructSize);
+        newField = nullValue;
 
+        // First handle self
         {
             // Subset myself
             List<T> subField
@@ -1020,12 +598,12 @@ void Foam::mapDistributeBase::distribute
 
             flipAndCombine
             (
+                newField,
+                subField,
                 map,
                 constructHasFlip,
-                subField,
                 cop,
-                negOp,
-                newField
+                negOp
             );
         }
 
@@ -1036,101 +614,102 @@ void Foam::mapDistributeBase::distribute
             // twoProcs is a swap pair of processors. The first one is the
             // one that needs to send first and then receive.
 
-            const label sendProc = twoProcs[0];
-            const label recvProc = twoProcs[1];
-
-            if (myRank == sendProc)
+            if (twoProcs.first() == myRank)
             {
                 // I am send first, receive next
+                const label nbrProc = twoProcs.second();
+
                 {
-                    OPstream toNbr
+                    OPstream os
                     (
                         UPstream::commsTypes::scheduled,
-                        recvProc,
+                        nbrProc,
                         0,
                         tag,
                         comm
                     );
 
-                    const labelList& map = subMap[recvProc];
+                    const labelList& map = subMap[nbrProc];
 
                     List<T> subField
                     (
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
-                    toNbr << subField;
+                    os  << subField;
                 }
                 {
-                    IPstream fromNbr
+                    IPstream is
                     (
                         UPstream::commsTypes::scheduled,
-                        recvProc,
+                        nbrProc,
                         0,
                         tag,
                         comm
                     );
-                    List<T> subField(fromNbr);
-                    const labelList& map = constructMap[recvProc];
+                    List<T> subField(is);
+                    const labelList& map = constructMap[nbrProc];
 
-                    checkReceivedSize(recvProc, map.size(), subField.size());
+                    checkReceivedSize(nbrProc, map.size(), subField.size());
 
                     flipAndCombine
                     (
+                        newField,
+                        subField,
                         map,
                         constructHasFlip,
-                        subField,
                         cop,
-                        negOp,
-                        newField
+                        negOp
                     );
                 }
             }
             else
             {
                 // I am receive first, send next
+                const label nbrProc = twoProcs.first();
+
                 {
-                    IPstream fromNbr
+                    IPstream is
                     (
                         UPstream::commsTypes::scheduled,
-                        sendProc,
+                        nbrProc,
                         0,
                         tag,
                         comm
                     );
-                    List<T> subField(fromNbr);
-                    const labelList& map = constructMap[sendProc];
+                    List<T> subField(is);
+                    const labelList& map = constructMap[nbrProc];
 
-                    checkReceivedSize(sendProc, map.size(), subField.size());
+                    checkReceivedSize(nbrProc, map.size(), subField.size());
 
                     flipAndCombine
                     (
+                        newField,
+                        subField,
                         map,
                         constructHasFlip,
-                        subField,
                         cop,
-                        negOp,
-                        newField
+                        negOp
                     );
                 }
                 {
-                    OPstream toNbr
+                    OPstream os
                     (
                         UPstream::commsTypes::scheduled,
-                        sendProc,
+                        nbrProc,
                         0,
                         tag,
                         comm
                     );
 
-                    const labelList& map = subMap[sendProc];
+                    const labelList& map = subMap[nbrProc];
 
                     List<T> subField
                     (
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
-                    toNbr << subField;
+                    os  << subField;
                 }
             }
         }
@@ -1138,42 +717,41 @@ void Foam::mapDistributeBase::distribute
     }
     else if (commsType == UPstream::commsTypes::nonBlocking)
     {
-        const label nOutstanding = UPstream::nRequests();
+        const label startOfRequests = UPstream::nRequests();
 
         if (!is_contiguous<T>::value)
         {
             PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
 
             // Stream data into buffer
-            for (const int domain : UPstream::allProcs(comm))
+            for (const int proci : UPstream::allProcs(comm))
             {
-                const labelList& map = subMap[domain];
+                const labelList& map = subMap[proci];
 
-                if (domain != myRank && map.size())
+                if (proci != myRank && map.size())
                 {
-                    // Put data into send buffer
-                    UOPstream toDomain(domain, pBufs);
+                    UOPstream os(proci, pBufs);
 
                     List<T> subField
                     (
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
-                    toDomain << subField;
+                    os  << subField;
                 }
             }
 
-            // Start receiving. Do not block.
+            // Initiate receiving - do yet not block
             pBufs.finishedSends(false);
 
             {
                 // Set up 'send' to myself
-                List<T> mySubField
+                List<T> subField
                 (
                     accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
                 );
 
-                // Combine bits. Note that can reuse field storage
+                // Combining bits - can now reuse field storage
                 field.resize_nocopy(constructSize);
                 field = nullValue;
 
@@ -1182,148 +760,654 @@ void Foam::mapDistributeBase::distribute
 
                 flipAndCombine
                 (
+                    field,
+                    subField,
                     map,
                     constructHasFlip,
-                    mySubField,
                     cop,
-                    negOp,
-                    field
+                    negOp
                 );
             }
 
-            // Block ourselves, waiting only for the current comms
-            UPstream::waitRequests(nOutstanding);
+            // Wait for receive requests (and the send requests too)
+            UPstream::waitRequests(startOfRequests);
 
-            // Consume
-            for (const int domain : UPstream::allProcs(comm))
+            // Receive and process neighbour fields
+            for (const int proci : UPstream::allProcs(comm))
             {
-                const labelList& map = constructMap[domain];
+                const labelList& map = constructMap[proci];
 
-                if (domain != myRank && map.size())
+                if (proci != myRank && map.size())
                 {
-                    UIPstream str(domain, pBufs);
-                    List<T> recvField(str);
+                    UIPstream is(proci, pBufs);
+                    List<T> subField(is);
 
-                    checkReceivedSize(domain, map.size(), recvField.size());
+                    checkReceivedSize(proci, map.size(), subField.size());
 
                     flipAndCombine
                     (
+                        field,
+                        subField,
                         map,
                         constructHasFlip,
-                        recvField,
                         cop,
-                        negOp,
-                        field
+                        negOp
                     );
                 }
             }
         }
         else
         {
+            // Set up receives from neighbours
+
+            List<List<T>> recvFields(nProcs);
+            DynamicList<int> recvProcs(nProcs);
+
+            for (const int proci : UPstream::allProcs(comm))
+            {
+                const labelList& map = constructMap[proci];
+
+                if (proci != myRank && map.size())
+                {
+                    recvProcs.push_back(proci);
+                    List<T>& subField = recvFields[proci];
+                    subField.resize_nocopy(map.size());
+
+                    UIPstream::read
+                    (
+                        UPstream::commsTypes::nonBlocking,
+                        proci,
+                        subField.data_bytes(),
+                        subField.size_bytes(),
+                        tag,
+                        comm
+                    );
+                }
+            }
+
+
             // Set up sends to neighbours
 
             List<List<T>> sendFields(nProcs);
 
-            for (const int domain : UPstream::allProcs(comm))
+            for (const int proci : UPstream::allProcs(comm))
             {
-                const labelList& map = subMap[domain];
+                const labelList& map = subMap[proci];
 
-                if (domain != myRank && map.size())
+                if (proci != myRank && map.size())
                 {
-                    sendFields[domain] =
-                        accessAndFlip(field, map, subHasFlip, negOp);
+                    List<T>& subField = sendFields[proci];
+                    subField.resize_nocopy(map.size());
+
+                    accessAndFlip(subField, field, map, subHasFlip, negOp);
 
                     UOPstream::write
                     (
                         UPstream::commsTypes::nonBlocking,
-                        domain,
-                        sendFields[domain].cdata_bytes(),
-                        sendFields[domain].size_bytes(),
+                        proci,
+                        subField.cdata_bytes(),
+                        subField.size_bytes(),
                         tag,
                         comm
                     );
                 }
             }
 
-            // Set up receives from neighbours
-
-            List<List<T>> recvFields(nProcs);
-
-            for (const int domain : UPstream::allProcs(comm))
+            // Set up 'send' to myself - copy directly into recvFields
             {
-                const labelList& map = constructMap[domain];
+                const labelList& map = subMap[myRank];
+                List<T>& subField = recvFields[myRank];
+                subField.resize_nocopy(map.size());
 
-                if (domain != myRank && map.size())
-                {
-                    recvFields[domain].resize(map.size());
-                    UIPstream::read
-                    (
-                        UPstream::commsTypes::nonBlocking,
-                        domain,
-                        recvFields[domain].data_bytes(),
-                        recvFields[domain].size_bytes(),
-                        tag,
-                        comm
-                    );
-                }
-            }
-
-            // Set up 'send' to myself
-            {
-                sendFields[myRank] =
-                    accessAndFlip(field, subMap[myRank], subHasFlip, negOp);
+                accessAndFlip(subField, field, map, subHasFlip, negOp);
             }
 
 
-            // Combine bits. Note that can reuse field storage
-
+            // Combining bits - can now reuse field storage
             field.resize_nocopy(constructSize);
             field = nullValue;
 
-            // Receive sub field from myself (subField)
+            // Receive sub field from myself : recvFields[myRank]
             {
                 const labelList& map = constructMap[myRank];
-                const List<T>& subField = sendFields[myRank];
+                const List<T>& subField = recvFields[myRank];
+
+                // Probably don't need a size check
+                // checkReceivedSize(myRank, map.size(), subField.size());
 
                 flipAndCombine
                 (
+                    field,
+                    subField,
                     map,
                     constructHasFlip,
-                    subField,
                     cop,
-                    negOp,
-                    field
+                    negOp
                 );
             }
 
 
-            // Wait for outstanding requests
-            UPstream::waitRequests(nOutstanding);
-
-
-            // Collect neighbour fields
-
-            for (const int domain : UPstream::allProcs(comm))
+            // Poll for completed receive requests and dispatch
+            DynamicList<int> indices(recvProcs.size());
+            while
+            (
+                UPstream::waitSomeRequests
+                (
+                    startOfRequests,
+                    recvProcs.size(),
+                   &indices
+                )
+            )
             {
-                const labelList& map = constructMap[domain];
-
-                if (domain != myRank && map.size())
+                for (const int idx : indices)
                 {
-                    const List<T>& subField = recvFields[domain];
+                    const int proci = recvProcs[idx];
+                    const labelList& map = constructMap[proci];
+                    const List<T>& subField = recvFields[proci];
 
-                    checkReceivedSize(domain, map.size(), subField.size());
+                    // No size check - was dimensioned above
+                    // checkReceivedSize(proci, map.size(), subField.size());
 
                     flipAndCombine
                     (
+                        field,
+                        subField,
                         map,
                         constructHasFlip,
-                        subField,
                         cop,
-                        negOp,
-                        field
+                        negOp
                     );
                 }
             }
+
+            // Wait for any remaining requests
+            UPstream::waitRequests(startOfRequests);
+        }
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Unknown communication schedule " << int(commsType)
+            << abort(FatalError);
+    }
+}
+
+
+template<class T, class NegateOp>
+void Foam::mapDistributeBase::distribute
+(
+    const UPstream::commsTypes commsType,
+    const List<labelPair>& schedule,
+    const label constructSize,
+    const labelListList& subMap,
+    const bool subHasFlip,
+    const labelListList& constructMap,
+    const bool constructHasFlip,
+    List<T>& field,
+    const NegateOp& negOp,
+    const int tag,
+    const label comm
+)
+{
+    const auto myRank = UPstream::myProcNo(comm);
+    const auto nProcs = UPstream::nProcs(comm);
+
+    if (!UPstream::parRun())
+    {
+        // Do only me to me.
+
+        List<T> subField
+        (
+            accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
+        );
+
+        // Receive sub field from myself (subField)
+        const labelList& map = constructMap[myRank];
+
+        // Combining bits - can now reuse field storage
+        field.resize_nocopy(constructSize);
+
+        flipAndCombine
+        (
+            field,
+            subField,
+            map,
+            constructHasFlip,
+            eqOp<T>(),
+            negOp
+        );
+
+        return;
+    }
+
+    if (commsType == UPstream::commsTypes::blocking)
+    {
+        // Since buffered sending can reuse the field to collect the
+        // received data.
+
+        // Send sub field to neighbour
+        for (const int proci : UPstream::allProcs(comm))
+        {
+            const labelList& map = subMap[proci];
+
+            if (proci != myRank && map.size())
+            {
+                OPstream os
+                (
+                    UPstream::commsTypes::blocking,
+                    proci,
+                    0,
+                    tag,
+                    comm
+                );
+
+                List<T> subField
+                (
+                    accessAndFlip(field, map, subHasFlip, negOp)
+                );
+
+                os  << subField;
+            }
+        }
+
+        {
+            // Subset myself
+            List<T> subField
+            (
+                accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
+            );
+
+            // Receive sub field from myself (subField)
+            const labelList& map = constructMap[myRank];
+
+            // Combining bits - can now reuse field storage
+            field.resize_nocopy(constructSize);
+
+            flipAndCombine
+            (
+                field,
+                subField,
+                map,
+                constructHasFlip,
+                eqOp<T>(),
+                negOp
+            );
+        }
+
+        // Receive and process sub-field from neighbours
+        for (const int proci : UPstream::allProcs(comm))
+        {
+            const labelList& map = constructMap[proci];
+
+            if (proci != myRank && map.size())
+            {
+                IPstream is
+                (
+                    UPstream::commsTypes::blocking,
+                    proci,
+                    0,
+                    tag,
+                    comm
+                );
+                List<T> subField(is);
+
+                checkReceivedSize(proci, map.size(), subField.size());
+
+                flipAndCombine
+                (
+                    field,
+                    subField,
+                    map,
+                    constructHasFlip,
+                    eqOp<T>(),
+                    negOp
+                );
+            }
+        }
+    }
+    else if (commsType == UPstream::commsTypes::scheduled)
+    {
+        // Need to make sure I don't overwrite field with received data
+        // since the data might need to be sent to another processor. So
+        // allocate a new field for the results.
+        List<T> newField;
+        newField.resize_nocopy(constructSize);
+
+        // First handle self
+        {
+            // Subset myself
+            List<T> subField
+            (
+                accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
+            );
+
+            // Receive sub field from myself (subField)
+            const labelList& map = constructMap[myRank];
+
+            flipAndCombine
+            (
+                newField,
+                subField,
+                map,
+                constructHasFlip,
+                eqOp<T>(),
+                negOp
+            );
+        }
+
+        // Schedule will already have pruned 0-sized comms
+        for (const labelPair& twoProcs : schedule)
+        {
+            // twoProcs is a swap pair of processors. The first one is the
+            // one that needs to send first and then receive.
+
+            if (twoProcs.first() == myRank)
+            {
+                // I am send first, receive next
+                const label nbrProc = twoProcs.second();
+
+                {
+                    OPstream os
+                    (
+                        UPstream::commsTypes::scheduled,
+                        nbrProc,
+                        0,
+                        tag,
+                        comm
+                    );
+
+                    const labelList& map = subMap[nbrProc];
+                    List<T> subField
+                    (
+                        accessAndFlip(field, map, subHasFlip, negOp)
+                    );
+
+                    os  << subField;
+                }
+                {
+                    IPstream is
+                    (
+                        UPstream::commsTypes::scheduled,
+                        nbrProc,
+                        0,
+                        tag,
+                        comm
+                    );
+                    List<T> subField(is);
+
+                    const labelList& map = constructMap[nbrProc];
+
+                    checkReceivedSize(nbrProc, map.size(), subField.size());
+
+                    flipAndCombine
+                    (
+                        newField,
+                        subField,
+                        map,
+                        constructHasFlip,
+                        eqOp<T>(),
+                        negOp
+                    );
+                }
+            }
+            else
+            {
+                // I am receive first, send next
+                const label nbrProc = twoProcs.first();
+
+                {
+                    IPstream is
+                    (
+                        UPstream::commsTypes::scheduled,
+                        nbrProc,
+                        0,
+                        tag,
+                        comm
+                    );
+                    List<T> subField(is);
+
+                    const labelList& map = constructMap[nbrProc];
+
+                    checkReceivedSize(nbrProc, map.size(), subField.size());
+
+                    flipAndCombine
+                    (
+                        newField,
+                        subField,
+                        map,
+                        constructHasFlip,
+                        eqOp<T>(),
+                        negOp
+                    );
+                }
+                {
+                    OPstream os
+                    (
+                        UPstream::commsTypes::scheduled,
+                        nbrProc,
+                        0,
+                        tag,
+                        comm
+                    );
+
+                    const labelList& map = subMap[nbrProc];
+                    List<T> subField
+                    (
+                        accessAndFlip(field, map, subHasFlip, negOp)
+                    );
+
+                    os  << subField;
+                }
+            }
+        }
+        field.transfer(newField);
+    }
+    else if (commsType == UPstream::commsTypes::nonBlocking)
+    {
+        const label startOfRequests = UPstream::nRequests();
+
+        if (!is_contiguous<T>::value)
+        {
+            PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking, tag, comm);
+
+            // Stream data into buffer
+            for (const int proci : UPstream::allProcs(comm))
+            {
+                const labelList& map = subMap[proci];
+
+                if (proci != myRank && map.size())
+                {
+                    UOPstream os(proci, pBufs);
+
+                    List<T> subField
+                    (
+                        accessAndFlip(field, map, subHasFlip, negOp)
+                    );
+
+                    os  << subField;
+                }
+            }
+
+            // Initiate receiving - do yet not block
+            pBufs.finishedSends(false);
+
+            {
+                // Set up 'send' to myself
+                List<T> subField
+                (
+                    accessAndFlip(field, subMap[myRank], subHasFlip, negOp)
+                );
+
+                // Combining bits - can now reuse field storage
+                field.resize_nocopy(constructSize);
+
+                // Receive sub field from myself
+                const labelList& map = constructMap[myRank];
+
+                flipAndCombine
+                (
+                    field,
+                    subField,
+                    map,
+                    constructHasFlip,
+                    eqOp<T>(),
+                    negOp
+                );
+            }
+
+            // Wait for receive requests (and the send requests too)
+            UPstream::waitRequests(startOfRequests);
+
+            // Receive and process neighbour fields
+            for (const int proci : UPstream::allProcs(comm))
+            {
+                const labelList& map = constructMap[proci];
+
+                if (proci != myRank && map.size())
+                {
+                    UIPstream is(proci, pBufs);
+                    List<T> subField(is);
+
+                    checkReceivedSize(proci, map.size(), subField.size());
+
+                    flipAndCombine
+                    (
+                        field,
+                        subField,
+                        map,
+                        constructHasFlip,
+                        eqOp<T>(),
+                        negOp
+                    );
+                }
+            }
+        }
+        else
+        {
+            // Set up receives from neighbours
+
+            List<List<T>> recvFields(nProcs);
+            DynamicList<int> recvProcs(nProcs);
+
+            for (const int proci : UPstream::allProcs(comm))
+            {
+                const labelList& map = constructMap[proci];
+
+                if (proci != myRank && map.size())
+                {
+                    recvProcs.push_back(proci);
+                    List<T>& subField = recvFields[proci];
+                    subField.resize_nocopy(map.size());
+
+                    UIPstream::read
+                    (
+                        UPstream::commsTypes::nonBlocking,
+                        proci,
+                        subField.data_bytes(),
+                        subField.size_bytes(),
+                        tag,
+                        comm
+                    );
+                }
+            }
+
+
+            // Set up sends to neighbours
+
+            List<List<T>> sendFields(nProcs);
+
+            for (const int proci : UPstream::allProcs(comm))
+            {
+                const labelList& map = subMap[proci];
+
+                if (proci != myRank && map.size())
+                {
+                    List<T>& subField = sendFields[proci];
+                    subField.resize_nocopy(map.size());
+
+                    accessAndFlip(subField, field, map, subHasFlip, negOp);
+
+                    UOPstream::write
+                    (
+                        UPstream::commsTypes::nonBlocking,
+                        proci,
+                        subField.cdata_bytes(),
+                        subField.size_bytes(),
+                        tag,
+                        comm
+                    );
+                }
+            }
+
+            // Set up 'send' to myself - copy directly into recvFields
+            {
+                const labelList& map = subMap[myRank];
+                List<T>& subField = recvFields[myRank];
+                subField.resize_nocopy(map.size());
+
+                accessAndFlip(subField, field, map, subHasFlip, negOp);
+            }
+
+
+            // Combining bits - can now reuse field storage
+            field.resize_nocopy(constructSize);
+
+
+            // Receive sub field from myself : recvFields[myRank]
+            {
+                const labelList& map = constructMap[myRank];
+                const List<T>& subField = recvFields[myRank];
+
+                // Probably don't need a size check
+                // checkReceivedSize(myRank, map.size(), subField.size());
+
+                flipAndCombine
+                (
+                    field,
+                    subField,
+                    map,
+                    constructHasFlip,
+                    eqOp<T>(),
+                    negOp
+                );
+            }
+
+
+            // Poll for completed receive requests and dispatch
+            DynamicList<int> indices(recvProcs.size());
+            while
+            (
+                UPstream::waitSomeRequests
+                (
+                    startOfRequests,
+                    recvProcs.size(),
+                   &indices
+                )
+            )
+            {
+                for (const int idx : indices)
+                {
+                    const int proci = recvProcs[idx];
+                    const labelList& map = constructMap[proci];
+                    const List<T>& subField = recvFields[proci];
+
+                    // No size check - was dimensioned above
+                    // checkReceivedSize(proci, map.size(), subField.size());
+
+                    flipAndCombine
+                    (
+                        field,
+                        subField,
+                        map,
+                        constructHasFlip,
+                        eqOp<T>(),
+                        negOp
+                    );
+                }
+            }
+
+            // Wait for any remaining requests
+            UPstream::waitRequests(startOfRequests);
         }
     }
     else
@@ -1336,25 +1420,27 @@ void Foam::mapDistributeBase::distribute
 
 
 template<class T>
-void Foam::mapDistributeBase::send(PstreamBuffers& pBufs, const List<T>& field)
-const
+void Foam::mapDistributeBase::send
+(
+    PstreamBuffers& pBufs,
+    const List<T>& field
+) const
 {
     // Stream data into buffer
-    for (const int domain : UPstream::allProcs(comm_))
+    for (const int proci : UPstream::allProcs(comm_))
     {
-        const labelList& map = subMap_[domain];
+        const labelList& map = subMap_[proci];
 
         if (map.size())
         {
-            // Put data into send buffer
-            UOPstream toDomain(domain, pBufs);
+            UOPstream os(proci, pBufs);
 
             List<T> subField
             (
                 accessAndFlip(field, map, subHasFlip_, flipOp())
             );
 
-            toDomain << subField;
+            os  << subField;
         }
     }
 
@@ -1364,38 +1450,34 @@ const
 
 
 template<class T>
-void Foam::mapDistributeBase::receive(PstreamBuffers& pBufs, List<T>& field)
-const
+void Foam::mapDistributeBase::receive
+(
+    PstreamBuffers& pBufs,
+    List<T>& field
+) const
 {
     // Consume
     field.resize_nocopy(constructSize_);
 
-    for (const int domain : UPstream::allProcs(comm_))
+    for (const int proci : UPstream::allProcs(comm_))
     {
-        const labelList& map = constructMap_[domain];
+        const labelList& map = constructMap_[proci];
 
         if (map.size())
         {
-            UIPstream str(domain, pBufs);
-            List<T> recvField(str);
+            UIPstream is(proci, pBufs);
+            List<T> subField(is);
 
-            if (recvField.size() != map.size())
-            {
-                FatalErrorInFunction
-                    << "Expected from processor " << domain
-                    << " " << map.size() << " but received "
-                    << recvField.size() << " elements."
-                    << abort(FatalError);
-            }
+            checkReceivedSize(proci, map.size(), subField.size());
 
             flipAndCombine
             (
+                field,
+                subField,
                 map,
                 constructHasFlip_,
-                recvField,
                 eqOp<T>(),
-                flipOp(),
-                field
+                flipOp()
             );
         }
     }

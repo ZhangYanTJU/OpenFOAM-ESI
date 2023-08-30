@@ -26,8 +26,11 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "cyclicAMIFvPatchFields.H"
-#include "addToRunTimeSelectionTable.H"
+#include "cyclicAMIPolyPatch.H"
+#include "mapDistributeBase.H"
+#include "AMIInterpolation.H"
 #include "volFields.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

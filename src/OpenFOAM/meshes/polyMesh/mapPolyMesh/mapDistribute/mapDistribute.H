@@ -328,10 +328,10 @@ public:
         using mapDistributeBase::mapDistributeBase;
 
         //- Default construct - uses worldComm
-        mapDistribute();
+        mapDistribute() noexcept;
 
         //- Default construct with specified communicator
-        explicit mapDistribute(const label comm);
+        explicit mapDistribute(const label comm) noexcept;
 
         //- Move construct from base, no transforms
         explicit mapDistribute(mapDistributeBase&& map);

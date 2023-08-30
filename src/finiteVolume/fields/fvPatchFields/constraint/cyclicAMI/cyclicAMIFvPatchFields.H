@@ -25,8 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicAMIFvPatchFields_H
-#define cyclicAMIFvPatchFields_H
+#ifndef Foam_cyclicAMIFvPatchFields_H
+#define Foam_cyclicAMIFvPatchFields_H
 
 #include "cyclicAMIFvPatchField.H"
 #include "fieldTypes.H"

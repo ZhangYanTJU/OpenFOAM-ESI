@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "labelRanges.H"
-#include "ListOps.H"
+#include <numeric>
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
@@ -51,7 +51,6 @@ static Ostream& printRange(Ostream& os, const labelRange& range)
 } // End namespace Foam
 
 
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::labelRanges::insertBefore
@@ -60,7 +59,7 @@ void Foam::labelRanges::insertBefore
     const labelRange& range
 )
 {
-    auto& list = static_cast<StorageContainer&>(*this);
+    auto& list = ranges_;
 
     // Insert via copying up
     label nElem = list.size();
@@ -101,7 +100,7 @@ void Foam::labelRanges::insertBefore
 
 void Foam::labelRanges::purgeEmpty()
 {
-    auto& list = static_cast<StorageContainer&>(*this);
+    auto& list = ranges_;
 
     // Purge empty ranges by copying down
     label nElem = 0;
@@ -135,17 +134,17 @@ Foam::labelRanges::labelRanges(Istream& is)
 
 bool Foam::labelRanges::add(const labelRange& range)
 {
+    auto& list = ranges_;
+
     if (range.empty())
     {
         return false;
     }
-    else if (this->empty())
+    else if (list.empty())
     {
-        this->push_back(range);
+        list.push_back(range);
         return true;
     }
-
-    auto& list = static_cast<StorageContainer&>(*this);
 
     // Find the correct place for insertion
     forAll(list, elemi)
@@ -158,7 +157,7 @@ bool Foam::labelRanges::add(const labelRange& range)
             currRange.join(range);
 
             // Might connect with the next following range(s)
-            for (; elemi < this->size()-1; ++elemi)
+            for (; elemi < list.size()-1; ++elemi)
             {
                 labelRange& nextRange = list[elemi+1];
                 if (currRange.overlaps(nextRange, true))
@@ -187,7 +186,7 @@ bool Foam::labelRanges::add(const labelRange& range)
 
 
     // not found: simply append
-    this->push_back(range);
+    list.push_back(range);
 
     return true;
 }
@@ -195,13 +194,13 @@ bool Foam::labelRanges::add(const labelRange& range)
 
 bool Foam::labelRanges::remove(const labelRange& range)
 {
+    auto& list = ranges_;
     bool status = false;
-    if (range.empty() || this->empty())
+
+    if (range.empty() || list.empty())
     {
         return status;
     }
-
-    auto& list = static_cast<StorageContainer&>(*this);
 
     forAll(list, elemi)
     {
@@ -307,19 +306,97 @@ bool Foam::labelRanges::remove(const labelRange& range)
 }
 
 
-// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
-
-Foam::Istream& Foam::operator>>(Istream& is, labelRanges& ranges)
+Foam::List<Foam::label> Foam::labelRanges::labels() const
 {
-    is  >> static_cast<labelRanges::StorageContainer&>(ranges);
-    return is;
+    label total = 0;
+    for (const labelRange& range : ranges_)
+    {
+        if (range.size() > 0)  // Ignore negative size (paranoid)
+        {
+            total += range.size();
+        }
+    }
+
+    if (!total)
+    {
+        // Skip this check?
+        return List<label>();
+    }
+
+    List<label> result(total);
+
+    auto* iter = result.begin();
+
+    for (const labelRange& range : ranges_)
+    {
+        const label len = range.size();
+
+        if (len > 0)  // Ignore negative size (paranoid)
+        {
+            std::iota(iter, (iter + len), range.start());
+            iter += len;
+        }
+    }
+
+    return result;
 }
 
 
-Foam::Ostream& Foam::operator<<(Ostream& os, const labelRanges& ranges)
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+Foam::label Foam::labelRanges::operator[](const label i) const
 {
-    os  << static_cast<const labelRanges::StorageContainer&>(ranges);
-    return os;
+    if (i < 0) return -1;
+
+    label subIdx = i;
+
+    for (const labelRange& range : ranges_)
+    {
+        if (subIdx < range.size())
+        {
+            return (range.start() + subIdx);
+        }
+        else
+        {
+            subIdx -= range.size();
+        }
+    }
+
+    return -1;  // Not found
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+Foam::Istream& Foam::labelRanges::readList(Istream& is)
+{
+    return ranges_.readList(is);
+}
+
+
+Foam::Ostream& Foam::labelRanges::writeList
+(
+    Ostream& os,
+    const label shortLen
+) const
+{
+    return ranges_.writeList(os, shortLen);
+}
+
+
+Foam::Istream& Foam::operator>>(Istream& is, labelRanges& list)
+{
+    return list.readList(is);
+}
+
+
+Foam::Ostream& Foam::operator<<(Ostream& os, const labelRanges& list)
+{
+    return list.writeList
+    (
+        os,
+        Detail::ListPolicy::short_length<labelRange>::value
+    );
 }
 
 

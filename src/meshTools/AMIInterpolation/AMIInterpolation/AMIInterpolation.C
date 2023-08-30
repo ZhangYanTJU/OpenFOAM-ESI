@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,6 +33,7 @@ License
 #include "profiling.H"
 #include "triangle.H"
 #include "OFstream.H"
+#include <numeric>  // For std::iota
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -169,7 +170,7 @@ void Foam::AMIInterpolation::normaliseWeights
     addProfiling(ami, "AMIInterpolation::normaliseWeights");
 
     // Normalise the weights
-    wghtSum.setSize(wght.size(), 0.0);
+    wghtSum.resize_nocopy(wght.size());
     label nLowWeight = 0;
 
     forAll(wght, facei)
@@ -331,7 +332,7 @@ void Foam::AMIInterpolation::agglomerate
                 const labelList& elemsMap =
                     map.constructMap()[Pstream::myProcNo()];
                 labelList& newSubMap = tgtSubMap[proci];
-                newSubMap.setSize(elems.size());
+                newSubMap.resize_nocopy(elems.size());
 
                 labelList oldToNew(targetCoarseSize, -1);
                 label newi = 0;
@@ -347,7 +348,7 @@ void Foam::AMIInterpolation::agglomerate
                         ++newi;
                     }
                 }
-                newSubMap.setSize(newi);
+                newSubMap.resize(newi);
             }
         }
 
@@ -392,7 +393,7 @@ void Foam::AMIInterpolation::agglomerate
                 const labelList& elems = map.constructMap()[proci];
 
                 labelList& newConstructMap = tgtConstructMap[proci];
-                newConstructMap.setSize(elems.size());
+                newConstructMap.resize_nocopy(elems.size());
 
                 if (elems.size())
                 {
@@ -431,7 +432,7 @@ void Foam::AMIInterpolation::agglomerate
                             tgtCompactMap[fineElem] = newConstructMap[compacti];
                         }
                     }
-                    newConstructMap.setSize(newi);
+                    newConstructMap.resize(newi);
                 }
             }
         }
@@ -761,24 +762,26 @@ bool Foam::AMIInterpolation::calculate
 
     if (srcTotalSize == 0)
     {
-        DebugInfo<< "AMI: no source faces present - no addressing constructed"
+        DebugInfo
+            << "AMI: no source faces present - no addressing constructed"
             << endl;
 
         return false;
     }
 
-    Info<< indent
-        << "AMI: Patch source faces: " << srcTotalSize << nl
-        << "AMI: Patch target faces: " << tgtTotalSize << endl;
-
     singlePatchProc_ = calcDistribution(srcPatch, tgtPatch);
 
-    if (debug)
+    Info<< indent << "AMI: Patch source faces: " << srcTotalSize << nl
+        << indent << "AMI: Patch target faces: " << tgtTotalSize << nl;
+
+    if (distributed())
     {
-        Info<< "AMIInterpolation:" << nl
-            << "    singlePatchProc:" << singlePatchProc_ << nl
-            << endl;
+        Info<< indent << "AMI: distributed" << endl;
     }
+
+    DebugInfo
+        << "AMI: patch proc:" << singlePatchProc_
+        << endl;
 
     return true;
 }
@@ -802,13 +805,13 @@ void Foam::AMIInterpolation::reset
     tgtWeights_.transfer(tgtWeights);
 
     // Reset the sums of the weights
-    srcWeightsSum_.setSize(srcWeights_.size());
+    srcWeightsSum_.resize_nocopy(srcWeights_.size());
     forAll(srcWeights_, facei)
     {
         srcWeightsSum_[facei] = sum(srcWeights_[facei]);
     }
 
-    tgtWeightsSum_.setSize(tgtWeights_.size());
+    tgtWeightsSum_.resize_nocopy(tgtWeights_.size());
     forAll(tgtWeights_, facei)
     {
         tgtWeightsSum_[facei] = sum(tgtWeights_[facei]);
@@ -848,121 +851,133 @@ void Foam::AMIInterpolation::append
         labelListList& newTgtSubMap = newPtr->tgtMapPtr_->subMap();
         labelListList& newTgtConstructMap = newPtr->tgtMapPtr_->constructMap();
 
+        // Re-mapping/re-indexing - use max sizing
+        labelList oldMapMap
+        (
+            max
+            (
+                srcMapPtr_->constructMapTotalSize(),
+                tgtMapPtr_->constructMapTotalSize()
+            )
+        );
+        labelList newMapMap
+        (
+            max
+            (
+                newPtr->srcMapPtr_->constructMapTotalSize(),
+                newPtr->tgtMapPtr_->constructMapTotalSize()
+            )
+        );
+
         // Re-calculate the source indices
         {
-            labelList mapMap(0), newMapMap(0);
-            forAll(srcSubMap, proci)
-            {
-                mapMap.append
-                (
-                    identity
-                    (
-                        srcConstructMap[proci].size(),
-                        (mapMap.size() + newMapMap.size())
-                    )
-                );
-                newMapMap.append
-                (
-                    identity
-                    (
-                        newSrcConstructMap[proci].size(),
-                        (mapMap.size() + newMapMap.size())
-                    )
-                );
-            }
+            label total = 0;
+            auto iter1 = oldMapMap.begin();
+            auto iter2 = newMapMap.begin();
 
             forAll(srcSubMap, proci)
             {
-                forAll(srcConstructMap[proci], srci)
+                const label len1 = srcConstructMap[proci].size();
+                const label len2 = newSrcConstructMap[proci].size();
+
+                std::iota(iter1, (iter1 + len1), total);
+                iter1 += len1;
+                total += len1;
+
+                std::iota(iter2, (iter2 + len2), total);
+                iter2 += len2;
+                total += len2;
+            }
+        }
+
+        // Renumber the source indices
+        {
+            for (labelList& list : srcConstructMap)
+            {
+                for (label& value : list)
                 {
-                    srcConstructMap[proci][srci] =
-                        mapMap[srcConstructMap[proci][srci]];
+                    value = oldMapMap[value];
                 }
             }
 
-            forAll(srcSubMap, proci)
+            for (labelList& list : newSrcConstructMap)
             {
-                forAll(newSrcConstructMap[proci], srci)
+                for (label& value : list)
                 {
-                    newSrcConstructMap[proci][srci] =
-                        newMapMap[newSrcConstructMap[proci][srci]];
+                    value = newMapMap[value];
                 }
             }
 
-            forAll(tgtAddress_, tgti)
+            for (labelList& list : tgtAddress_)
             {
-                forAll(tgtAddress_[tgti], tgtj)
+                for (label& value : list)
                 {
-                    tgtAddress_[tgti][tgtj] = mapMap[tgtAddress_[tgti][tgtj]];
+                    value = oldMapMap[value];
                 }
             }
 
-            forAll(newPtr->tgtAddress_, tgti)
+            for (labelList& list : newPtr->tgtAddress_)
             {
-                forAll(newPtr->tgtAddress_[tgti], tgtj)
+                for (label& value : list)
                 {
-                    newPtr->tgtAddress_[tgti][tgtj] =
-                        newMapMap[newPtr->tgtAddress_[tgti][tgtj]];
+                    value = newMapMap[value];
                 }
             }
         }
 
+
         // Re-calculate the target indices
         {
-            labelList mapMap(0), newMapMap(0);
-            forAll(srcSubMap, proci)
-            {
-                mapMap.append
-                (
-                    identity
-                    (
-                        tgtConstructMap[proci].size(),
-                        (mapMap.size() + newMapMap.size())
-                    )
-                );
-                newMapMap.append
-                (
-                    identity
-                    (
-                        newTgtConstructMap[proci].size(),
-                        (mapMap.size() + newMapMap.size())
-                    )
-                );
-            }
+            label total = 0;
+            auto iter1 = oldMapMap.begin();
+            auto iter2 = newMapMap.begin();
 
             forAll(srcSubMap, proci)
             {
-                forAll(tgtConstructMap[proci], tgti)
+                const label len1 = tgtConstructMap[proci].size();
+                const label len2 = newTgtConstructMap[proci].size();
+
+                std::iota(iter1, (iter1 + len1), total);
+                iter1 += len1;
+                total += len1;
+
+                std::iota(iter2, (iter2 + len2), total);
+                iter2 += len2;
+                total += len2;
+            }
+        }
+
+        // Renumber the target indices
+        {
+            for (labelList& list : tgtConstructMap)
+            {
+                for (label& value : list)
                 {
-                    tgtConstructMap[proci][tgti] =
-                        mapMap[tgtConstructMap[proci][tgti]];
+                    value = oldMapMap[value];
                 }
             }
 
-            forAll(srcSubMap, proci)
+            for (labelList& list : newTgtConstructMap)
             {
-                forAll(newTgtConstructMap[proci], tgti)
+                for (label& value : list)
                 {
-                    newTgtConstructMap[proci][tgti] =
-                        newMapMap[newTgtConstructMap[proci][tgti]];
+                    value = newMapMap[value];
                 }
             }
 
-            forAll(srcAddress_, srci)
+            for (labelList& list : srcAddress_)
             {
-                forAll(srcAddress_[srci], srcj)
+                for (label& value : list)
                 {
-                    srcAddress_[srci][srcj] =
-                        mapMap[srcAddress_[srci][srcj]];
+                    value = oldMapMap[value];
                 }
             }
 
-            forAll(newPtr->srcAddress_, srci)
+            for (labelList& list : newPtr->srcAddress_)
             {
-                forAll(newPtr->srcAddress_[srci], srcj)
+                for (label& value : list)
                 {
-                    newPtr->srcAddress_[srci][srcj] =
-                        newMapMap[newPtr->srcAddress_[srci][srcj]];
+                    value = newMapMap[value];
                 }
             }
         }
@@ -974,27 +989,27 @@ void Foam::AMIInterpolation::append
         // Combine the maps
         forAll(srcSubMap, proci)
         {
-            srcSubMap[proci].append(newSrcSubMap[proci]);
-            srcConstructMap[proci].append(newSrcConstructMap[proci]);
+            srcSubMap[proci].push_back(newSrcSubMap[proci]);
+            srcConstructMap[proci].push_back(newSrcConstructMap[proci]);
 
-            tgtSubMap[proci].append(newTgtSubMap[proci]);
-            tgtConstructMap[proci].append(newTgtConstructMap[proci]);
+            tgtSubMap[proci].push_back(newTgtSubMap[proci]);
+            tgtConstructMap[proci].push_back(newTgtConstructMap[proci]);
         }
     }
 
     // Combine new and current source data
     forAll(srcMagSf_, srcFacei)
     {
-        srcAddress_[srcFacei].append(newPtr->srcAddress()[srcFacei]);
-        srcWeights_[srcFacei].append(newPtr->srcWeights()[srcFacei]);
+        srcAddress_[srcFacei].push_back(newPtr->srcAddress()[srcFacei]);
+        srcWeights_[srcFacei].push_back(newPtr->srcWeights()[srcFacei]);
         srcWeightsSum_[srcFacei] += newPtr->srcWeightsSum()[srcFacei];
     }
 
     // Combine new and current target data
     forAll(tgtMagSf_, tgtFacei)
     {
-        tgtAddress_[tgtFacei].append(newPtr->tgtAddress()[tgtFacei]);
-        tgtWeights_[tgtFacei].append(newPtr->tgtWeights()[tgtFacei]);
+        tgtAddress_[tgtFacei].push_back(newPtr->tgtAddress()[tgtFacei]);
+        tgtWeights_[tgtFacei].push_back(newPtr->tgtWeights()[tgtFacei]);
         tgtWeightsSum_[tgtFacei] += newPtr->tgtWeightsSum()[tgtFacei];
     }
 }

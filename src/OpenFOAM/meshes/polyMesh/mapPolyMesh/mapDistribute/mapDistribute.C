@@ -148,13 +148,13 @@ void Foam::mapDistribute::printLayout(Ostream& os) const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::mapDistribute::mapDistribute()
+Foam::mapDistribute::mapDistribute() noexcept
 :
-    mapDistribute(UPstream::worldComm)
+    mapDistributeBase(UPstream::worldComm)
 {}
 
 
-Foam::mapDistribute::mapDistribute(const label comm)
+Foam::mapDistribute::mapDistribute(const label comm) noexcept
 :
     mapDistributeBase(comm)
 {}

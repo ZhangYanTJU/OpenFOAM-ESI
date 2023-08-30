@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,9 +47,10 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicAMIPolyPatch_H
-#define cyclicAMIPolyPatch_H
+#ifndef Foam_cyclicAMIPolyPatch_H
+#define Foam_cyclicAMIPolyPatch_H
 
+#include "AMIInterpolation.H"
 #include "coupledPolyPatch.H"
 #include "AMIPatchToPatchInterpolation.H"
 #include "polyBoundaryMesh.H"
@@ -87,7 +88,7 @@ class cyclicAMIPolyPatch
 
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Name of other half
         mutable word nbrPatchName_;
@@ -286,7 +287,7 @@ public:
         }
 
         //- Construct and return a clone, resetting the face list
-        //  and boundary mesh
+        //- and boundary mesh
         virtual autoPtr<polyPatch> clone
         (
             const polyBoundaryMesh& bm,
@@ -467,7 +468,7 @@ public:
                 ) const;
 
                 //- Transform a patch-based direction from this side to
-                //  nbr side
+                //- nbr side
                 virtual void reverseTransformDirection
                 (
                     vector& d,
@@ -509,6 +510,38 @@ public:
                     const CombineOp& cop,
                     List<Type>& result,
                     const UList<Type>& defaultValues = UList<Type>()
+                ) const;
+
+
+            // Interpolations (non-blocking). Subject to change
+
+                template<class Type>
+                void initInterpolateUntransformed
+                (
+                    const Field<Type>& fld,
+                    labelRange& sendRequests,
+                    PtrList<List<Type>>& sendBuffers,
+                    labelRange& recvRequests,
+                    PtrList<List<Type>>& recvBuffers
+                ) const;
+
+                template<class Type>
+                void initInterpolate
+                (
+                    const Field<Type>& fld,
+                    labelRange& sendRequests,
+                    PtrList<List<Type>>& sendBuffers,
+                    labelRange& recvRequests,
+                    PtrList<List<Type>>& recvBuffers
+                ) const;
+
+                template<class Type>
+                tmp<Field<Type>> interpolate
+                (
+                    const Field<Type>& localFld,
+                    const labelRange& requests,  // The receive requests
+                    const PtrList<List<Type>>& recvBuffers,
+                    const UList<Type>& defaultValues
                 ) const;
 
 
