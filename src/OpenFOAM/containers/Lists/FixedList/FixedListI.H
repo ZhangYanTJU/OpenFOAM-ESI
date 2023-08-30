@@ -307,9 +307,14 @@ inline bool Foam::FixedList<T, N>::uniform() const
 
 
 template<class T, unsigned N>
-inline bool Foam::FixedList<T, N>::contains(const T& val, label pos) const
+inline bool Foam::FixedList<T, N>::contains
+(
+    const T& val,
+    label pos,
+    label len
+) const
 {
-    return (this->find(val, pos) >= 0);
+    return (this->find(val, pos, len) >= 0);
 }
 
 

@@ -177,26 +177,26 @@ std::streamsize Foam::UList<T>::byteSize() const
 
 
 template<class T>
-Foam::label Foam::UList<T>::find(const T& val, label pos) const
+Foam::label Foam::UList<T>::find(const T& val, label pos, label len) const
 {
-    const label len = this->size();
-
-    if (pos >= 0)
+    if (pos >= 0 && pos < this->size())
     {
-        // auto iter = std::find(this->begin(pos), this->end(), val);
-        // if (iter != this->end())
-        // {
-        //     return label(iter - this->begin());
-        // }
+        // Change length to end iterator position
+        // len == -1 has same meaning as std::string::npos - search until end
 
-        while (pos < len)
+        if (len > 0) len += pos;
+        if (len < 0 || len > this->size())
         {
-            if (this->v_[pos] == val)
-            {
-                return pos;
-            }
+            len = this->size();
+        }
 
-            ++pos;
+        auto iter = (this->cbegin() + pos);
+        const auto lastIter = (this->cbegin() + len);
+
+        iter = std::find(iter, lastIter, val);
+        if (iter != lastIter)
+        {
+            return label(iter - this->begin());
         }
     }
 
