@@ -150,6 +150,9 @@ public:
         //- Resize the matrix preserving the elements
         inline void resize(const label m);
 
+        //- Resize the matrix \em without preserving existing content
+        inline void resize_nocopy(const label n);
+
         //- Resize the matrix preserving the elements (compatibility)
         inline void resize(const label m, const label n);
 

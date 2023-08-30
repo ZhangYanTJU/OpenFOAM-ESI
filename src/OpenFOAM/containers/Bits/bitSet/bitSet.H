@@ -65,13 +65,6 @@ class bitSet
 :
     public PackedList<1>
 {
-    // Private Member Functions
-
-        //- Find the first block with a '0' bit
-        //  \return block number or -1 if the set is empty or all bits are on.
-        inline label first_not_block() const;
-
-
 protected:
 
     // Logic/Set Operations
@@ -138,7 +131,7 @@ public:
     // Constructors
 
         //- Default construct an empty, zero-sized bitSet
-        inline bitSet() noexcept;
+        inline constexpr bitSet() noexcept;
 
         //- Construct from Istream
         explicit bitSet(Istream& is);
@@ -245,9 +238,6 @@ public:
         //- True if no bits in this bitset are set.
         //  \note Method name compatibility with boost::dynamic_bitset
         inline bool none() const;
-
-        //- True if all entries have identical values, and the set is non-empty
-        inline bool uniform() const;
 
         //- Count number of bits set.
         //  \param on can be set to false to count the number of unset bits

@@ -219,6 +219,13 @@ inline void Foam::SquareMatrix<Type>::resize(const label m)
 
 
 template<class Type>
+inline void Foam::SquareMatrix<Type>::resize_nocopy(const label m)
+{
+    Matrix<SquareMatrix<Type>, Type>::resize_nocopy(m, m);
+}
+
+
+template<class Type>
 inline void Foam::SquareMatrix<Type>::resize(const label m, const label n)
 {
     if (m != n)

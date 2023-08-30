@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,6 +86,41 @@ template<> struct no_linebreak<word> : std::true_type {};
 
 //- Suppress line-breaks for wordRe
 template<> struct no_linebreak<wordRe> : std::true_type {};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Classification of list/container uniformity.
+//- The values can be used with bit-wise \c or reduction
+enum uniformity : unsigned char
+{
+    EMPTY = 0,          //!< An empty container
+    UNIFORM = 0x1,      //!< Container (non-empty) with identical values
+    NONUNIFORM = 0x2,   //!< Container (non-empty) with different values
+    MIXED = 0x3         //!< Mixed uniform/non-uniform (eg, after reduction)
+};
+
+//- Algorithm to determine list/container uniformity
+template<class InputIt>
+enum uniformity check_uniformity(InputIt first, InputIt last)
+{
+    if (first == last) return uniformity::EMPTY;
+
+    // Like std::all_of() with checking against element 0,
+    // but without using a lambda with auto type (pre C++14) etc.
+
+    const auto& elem0 = *first;
+
+    for ((void)++first; (first != last); (void)++first)
+    {
+        if (elem0 != *first)
+        {
+            return uniformity::NONUNIFORM;
+        }
+    }
+
+    return uniformity::UNIFORM;
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

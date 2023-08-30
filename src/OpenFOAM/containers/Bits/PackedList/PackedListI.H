@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,6 +144,73 @@ inline void Foam::PackedList<Width>::copyAssign(const PackedList<Width>& rhs)
     // Self-assignment silently ignored
     blocks_ = rhs.blocks_;
     size_ = rhs.size_;
+}
+
+
+template<unsigned Width>
+inline Foam::label Foam::PackedList<Width>::first_block() const
+{
+    if (size())
+    {
+        const label nblocks = num_blocks(size());
+
+        for (label blocki=0; blocki < nblocks; ++blocki)
+        {
+            if (blocks_[blocki])
+            {
+                return blocki;
+            }
+        }
+    }
+
+    return -1;
+}
+
+
+template<unsigned Width>
+inline Foam::label Foam::PackedList<Width>::first_not_block() const
+{
+    if (!size())
+    {
+        return -1;
+    }
+
+    // Check on complement (changes 0 <-> 1).
+    // If any 1's now appear, there was a 0 bit before
+
+    const label nblocks = num_blocks(size());
+
+    // Extra bits in the final block?
+    const unsigned int off = size() % elem_per_block;
+
+    if (!off)
+    {
+        for (label blocki=0; blocki < nblocks; ++blocki)
+        {
+            if (~(blocks_[blocki]))
+            {
+                return blocki;
+            }
+        }
+    }
+    else
+    {
+        for (label blocki=0; blocki < nblocks-1; ++blocki)
+        {
+            if (~(blocks_[blocki]))
+            {
+                return blocki;
+            }
+        }
+
+        // The final block needs masking
+        if (~(blocks_[nblocks-1]) & mask_lower(off))
+        {
+            return nblocks-1;
+        }
+    }
+
+    return -1;
 }
 
 

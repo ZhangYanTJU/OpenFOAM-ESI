@@ -25,56 +25,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-inline Foam::label Foam::bitSet::first_not_block() const
-{
-    if (empty())
-    {
-        return -1;
-    }
-
-    // Use complement to change 0 <-> 1 and check if any 1's now appear
-
-    const label nblocks = num_blocks(size());
-
-    // Extra bits in the final block?
-    const unsigned int off = size() % elem_per_block;
-
-    if (!off)
-    {
-        for (label blocki=0; blocki < nblocks; ++blocki)
-        {
-            if (~(blocks_[blocki]))
-            {
-                return blocki;
-            }
-        }
-    }
-    else
-    {
-        for (label blocki=0; blocki < nblocks-1; ++blocki)
-        {
-            if (~(blocks_[blocki]))
-            {
-                return blocki;
-            }
-        }
-
-        // The final block needs masking
-        if (~(blocks_[nblocks-1]) & mask_lower(off))
-        {
-            return nblocks-1;
-        }
-    }
-
-    return -1;
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-inline Foam::bitSet::bitSet() noexcept
+inline constexpr Foam::bitSet::bitSet() noexcept
 :
     PackedList<1>()
 {}
@@ -313,13 +266,13 @@ inline Foam::bitSet::const_iterator Foam::bitSet::cend() const noexcept
 
 inline Foam::label Foam::bitSet::find_first() const
 {
-    // Process block-wise, detecting any '1' bits
+    const label blocki = first_block();
 
-    const label nblocks = num_blocks(size());
-
-    for (label blocki = 0; blocki < nblocks; ++blocki)
+    if (blocki >= 0)
     {
         label pos = (blocki * elem_per_block);
+
+        // Detect first '1' bit within the block
 
         for
         (
@@ -348,7 +301,7 @@ inline Foam::label Foam::bitSet::find_first_not() const
     {
         label pos = (blocki * elem_per_block);
 
-        // Detect first '0' bit by checking the complement.
+        // Detect first '0' bit within the block (check the complement)
 
         // No special masking for the final block, that was already checked
         // in the first_not_block() call.
@@ -461,39 +414,19 @@ inline const Foam::bitSet& Foam::bitSet::null()
 inline bool Foam::bitSet::all() const
 {
     if (empty()) return true;  // SIC. boost convention
-
-    return -1 == first_not_block();
+    return (-1 == first_not_block());
 }
 
 
 inline bool Foam::bitSet::any() const
 {
-    if (size())
-    {
-        const label nblocks = num_blocks(size());
-
-        for (label blocki=0; blocki < nblocks; ++blocki)
-        {
-            if (blocks_[blocki])
-            {
-                return true;
-            }
-        }
-    }
-
-    return false;
+    return (-1 != first_block());
 }
 
 
 inline bool Foam::bitSet::none() const
 {
-    return !any();
-}
-
-
-inline bool Foam::bitSet::uniform() const
-{
-    return (size() == 1 || (size() > 1 && (test(0) ? all() : none())));
+    return (-1 == first_block());
 }
 
 

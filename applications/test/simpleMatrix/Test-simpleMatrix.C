@@ -51,13 +51,30 @@ int main(int argc, char *argv[])
     hmm.source()[1] = vector(1.0, 4.0, 3.0);
     hmm.source()[2] = vector(0.0, 5.0, 2.0);
 
-    Info<< hmm << endl;
-    Info<< hmm.solve() << endl;
-    Info<< hmm << endl;
-    Info<< hmm.LUsolve() << endl;
-    Info<< hmm << endl;
+    Info<< hmm << nl;
+    Info<< hmm.solve() << nl;
+    Info<< hmm << nl;
+    Info<< hmm.LUsolve() << nl;
+    Info<< hmm << nl;
 
-    Info<< "End\n" << endl;
+    {
+        scalarSquareMatrix mat0;
+        Info<< "empty: " << mat0 << endl;
+
+        mat0.resize_nocopy(1);
+        mat0 = Identity<scalar>();
+        Info<< "ident (1x1): " << mat0 << endl;
+
+        mat0.resize_nocopy(3);
+        mat0 = Identity<scalar>();
+        Info<< "ident (3x3): " << mat0 << endl;
+
+        mat0.resize_nocopy(5);
+        mat0 = Identity<scalar>();
+        Info<< "ident (5x5): " << mat0 << endl;
+    }
+
+    Info<< "\nEnd\n" << endl;
 
     return 0;
 }
