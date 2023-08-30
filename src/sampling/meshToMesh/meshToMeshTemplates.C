@@ -843,15 +843,15 @@ Foam::meshToMesh::mapTgtToSrc
         label srcPatchi = srcPatchID_[i];
         label tgtPatchi = tgtPatchID_[i];
 
-        if (!srcPatchFields.set(tgtPatchi))
+        if (!srcPatchFields.set(srcPatchi))
         {
             srcPatchFields.set
             (
                 srcPatchi,
                 fvPatchField<Type>::New
                 (
-                    tgtBfld[srcPatchi],
-                    srcMesh.boundary()[tgtPatchi],
+                    tgtBfld[tgtPatchi],
+                    srcMesh.boundary()[srcPatchi],
                     DimensionedField<Type, volMesh>::null(),
                     directFvPatchFieldMapper
                     (
