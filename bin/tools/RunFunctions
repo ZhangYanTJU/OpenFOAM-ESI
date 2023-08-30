@@ -304,16 +304,21 @@ runApplication()
 #
 runParallel()
 {
-    local appName appRun optValue logFile logMode nProcs
+    local appName appRun optValue logFile logMode
+    local mpiopts nProcs
 
     # Any additional parsed arguments (eg, decomposeParDict)
     local appArgs="-parallel"
 
     local mpirun="mpirun"
-    if [ "$FOAM_MPI" = msmpi ]
-    then
+    case "$FOAM_MPI" in
+    (msmpi*)
         mpirun="mpiexec"
-    fi
+        ;;
+    (*openmpi*)
+        mpiopts="--oversubscribe"
+        ;;
+    esac
 
     # Parse options until executable is encountered
     while [ "$#" -gt 0 ] && [ -z "$appRun" ]
@@ -378,11 +383,11 @@ runParallel()
         if [ "$logMode" = append ]
         then
         (
-            $mpirun -n $nProcs $appRun $appArgs "$@" </dev/null >> $logFile 2>&1
+            "$mpirun" $mpiopts -n "${nProcs:?}" $appRun $appArgs "$@" </dev/null >> $logFile 2>&1
         )
         else
         (
-            $mpirun -n $nProcs $appRun $appArgs "$@" </dev/null > $logFile 2>&1
+            "$mpirun" $mpiopts -n "${nProcs:?}" $appRun $appArgs "$@" </dev/null > $logFile 2>&1
         )
         fi
     fi

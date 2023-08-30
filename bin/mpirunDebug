@@ -429,7 +429,7 @@ unset cmd
 
 case "$WM_MPLIB" in
 *OPENMPI*)
-    cmd="mpirun -app $PWD/mpirun.schema </dev/null"
+    cmd="mpirun --oversubscribe -app $PWD/mpirun.schema </dev/null"
     ;;
 MPICH)
     cmd="mpiexec"
