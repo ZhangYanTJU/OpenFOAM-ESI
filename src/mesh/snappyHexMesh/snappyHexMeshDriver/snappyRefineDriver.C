@@ -1389,6 +1389,7 @@ Foam::label Foam::snappyRefineDriver::refinementInterfaceRefine
                                 (
                                     face2i != facei
                                  && surfaceIndex[face2i] != -1
+                                 && cutter.faceLevel(face2i) > cLevel
                                 )
                                 {
                                     // Get outwards pointing normal
