@@ -81,7 +81,7 @@ Foam::mapPolyMesh::mapPolyMesh(const polyMesh& mesh)
     forAll(faceZonePointMap_, zonei)
     {
         faceZonePointMap_[zonei] =
-            identity(mesh.faceZones()[zonei]().meshPoints().size());
+            identity(mesh.faceZones()[zonei].patch().meshPoints().size());
     }
 
     forAll(faceZoneFaceMap_, zonei)

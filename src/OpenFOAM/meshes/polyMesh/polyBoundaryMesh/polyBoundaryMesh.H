@@ -91,8 +91,9 @@ class polyBoundaryMesh
         //- Calculate group name to patch ids lookup
         void calcGroupIDs() const;
 
-        //- Read if IOobject flags set. Return true if read.
-        bool readContents(const bool allowReadIfPresent);
+        //- Return true if contents were read
+        //- (controlled by IOobject readOption flags).
+        bool readContents(const bool allowOptionalRead);
 
 public:
 
@@ -114,15 +115,24 @@ public:
 
     // Constructors
 
-        //- Read constructor given IOobject and a polyMesh reference
-        //  Note point pointers are unset, only used in copying meshes
+        //- Read construct given IOobject and a mesh reference.
+        //- It will only read for MUST_READ variants (not READ_IF_PRESENT).
         polyBoundaryMesh
         (
             const IOobject& io,
             const polyMesh& mesh
         );
 
-        //- Construct given size
+        //- Construct empty with IOobject properties and a mesh reference.
+        //- Does not read.
+        polyBoundaryMesh
+        (
+            const IOobject& io,
+            const polyMesh& mesh,
+            Foam::zero
+        );
+
+        //- Construct with specified size. Does not read.
         polyBoundaryMesh
         (
             const IOobject& io,
@@ -130,12 +140,13 @@ public:
             const label size
         );
 
-        //- Construct given polyPatchList
+        //- Read construct (mandatory, optional) based on IOobject properties
+        //- or use the fallback PtrList (with cloning).
         polyBoundaryMesh
         (
             const IOobject& io,
             const polyMesh& mesh,
-            const polyPatchList& ppl
+            const polyPatchList& list
         );
 
 

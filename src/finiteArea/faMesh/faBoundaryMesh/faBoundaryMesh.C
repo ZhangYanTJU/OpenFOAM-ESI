@@ -101,12 +101,12 @@ void Foam::faBoundaryMesh::calcGroupIDs() const
 }
 
 
-bool Foam::faBoundaryMesh::readContents(const bool allowReadIfPresent)
+bool Foam::faBoundaryMesh::readContents(const bool allowOptionalRead)
 {
     if
     (
         isReadRequired()
-     || (allowReadIfPresent && isReadOptional() && headerOk())
+     || (allowOptionalRead && this->isReadOptional() && this->headerOk())
     )
     {
         // Warn for MUST_READ_IF_MODIFIED
@@ -114,12 +114,11 @@ bool Foam::faBoundaryMesh::readContents(const bool allowReadIfPresent)
 
         faPatchList& patches = *this;
 
-        // Read faPatch list
+        // Read entries
         Istream& is = readStream(typeName);
 
-        // Read patches as entries
-        PtrList<entry> patchEntries(is);
-        patches.resize(patchEntries.size());
+        PtrList<entry> entries(is);
+        patches.resize_null(entries.size());
 
         // Transcribe
         forAll(patches, patchi)
@@ -129,8 +128,8 @@ bool Foam::faBoundaryMesh::readContents(const bool allowReadIfPresent)
                 patchi,
                 faPatch::New
                 (
-                    patchEntries[patchi].keyword(),
-                    patchEntries[patchi].dict(),
+                    entries[patchi].keyword(),
+                    entries[patchi].dict(),
                     patchi,
                     *this
                 )
@@ -142,6 +141,7 @@ bool Foam::faBoundaryMesh::readContents(const bool allowReadIfPresent)
         return true;
     }
 
+    // Nothing read
     return false;
 }
 
@@ -158,8 +158,21 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    readContents(false);  // READ_IF_PRESENT allowed: False
+    readContents(false);  // allowOptionalRead = false
 }
+
+
+Foam::faBoundaryMesh::faBoundaryMesh
+(
+    const IOobject& io,
+    const faMesh& pm,
+    Foam::zero
+)
+:
+    faPatchList(),
+    regIOobject(io),
+    mesh_(pm)
+{}
 
 
 Foam::faBoundaryMesh::faBoundaryMesh
@@ -173,6 +186,31 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(pm)
 {}
+
+
+Foam::faBoundaryMesh::faBoundaryMesh
+(
+    const IOobject& io,
+    const faMesh& fam,
+    const faPatchList& list
+)
+:
+    faPatchList(),
+    regIOobject(io),
+    mesh_(fam)
+{
+    if (!readContents(true))  // allowOptionalRead = true
+    {
+        // Nothing read. Use supplied patches
+        faPatchList& patches = *this;
+        patches.resize(list.size());
+
+        forAll(patches, patchi)
+        {
+            patches.set(patchi, list[patchi].clone(*this));
+        }
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -360,7 +398,7 @@ void Foam::faBoundaryMesh::setGroup
     const labelUList& patchIDs
 )
 {
-    groupIDsPtr_.clear();
+    groupIDsPtr_.reset(nullptr);
 
     faPatchList& patches = *this;
 

@@ -70,14 +70,6 @@ class fvBoundaryMesh
         //- Assign fvPatches corresponding to the given polyBoundaryMesh
         void addPatches(const polyBoundaryMesh& pbm);
 
-
-        //- No copy construct
-        fvBoundaryMesh(const fvBoundaryMesh&) = delete;
-
-        //- No copy assignment
-        void operator=(const fvBoundaryMesh&) = delete;
-
-
 protected:
 
         //- Update boundary based on new polyBoundaryMesh
@@ -86,7 +78,17 @@ protected:
 
 public:
 
+    //- Declare friendship with fvMesh
     friend class fvMesh;
+
+
+    // Generated Methods
+
+        //- No copy construct
+        fvBoundaryMesh(const fvBoundaryMesh&) = delete;
+
+        //- No copy assignment
+        void operator=(const fvBoundaryMesh&) = delete;
 
 
     // Constructors
@@ -101,10 +103,7 @@ public:
     // Member Functions
 
         //- Return the mesh reference
-        const fvMesh& mesh() const noexcept
-        {
-            return mesh_;
-        }
+        const fvMesh& mesh() const noexcept { return mesh_; }
 
         //- Return a list of faceCells for each patch
         UPtrList<const labelUList> faceCells() const;

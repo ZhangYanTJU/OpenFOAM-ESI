@@ -78,8 +78,14 @@ public:
         //- Copy construct
         zoneIdentifier(const zoneIdentifier&) = default;
 
+        //- Move construct
+        zoneIdentifier(zoneIdentifier&&) = default;
+
         //- Copy assignment
         zoneIdentifier& operator=(const zoneIdentifier&) = default;
+
+        //- Move assignment
+        zoneIdentifier& operator=(zoneIdentifier&&) = default;
 
         //- Destructor
         virtual ~zoneIdentifier() = default;
@@ -87,7 +93,7 @@ public:
 
     // Constructors
 
-        //- Default construct. Uses name="", index=0
+        //- Default construct: name="", index=0
         zoneIdentifier();
 
         //- Construct from mandatory components
@@ -110,11 +116,18 @@ public:
             const label index
         );
 
-        //- Copy construct, resetting the index
+        //- Copy construct, resetting the index (if non-negative)
         zoneIdentifier
         (
             const zoneIdentifier& ident,
-            const label index
+            const label newIndex
+        );
+
+        //- Move construct, resetting the index (if non-negative)
+        zoneIdentifier
+        (
+            zoneIdentifier&& ident,
+            const label newIndex
         );
 
 

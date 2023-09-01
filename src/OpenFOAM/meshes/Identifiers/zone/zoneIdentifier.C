@@ -80,14 +80,31 @@ Foam::zoneIdentifier::zoneIdentifier
 Foam::zoneIdentifier::zoneIdentifier
 (
     const zoneIdentifier& ident,
-    const label index
+    const label newIndex
 )
 :
-    name_(ident.name_),
-    index_(index),
-    physicalType_(ident.physicalType_),
-    inGroups_(ident.inGroups_)
-{}
+    zoneIdentifier(ident)
+{
+    if (newIndex >= 0)
+    {
+        index_ = newIndex;
+    }
+}
+
+
+Foam::zoneIdentifier::zoneIdentifier
+(
+    zoneIdentifier&& ident,
+    const label newIndex
+)
+:
+    zoneIdentifier(std::move(ident))
+{
+    if (newIndex >= 0)
+    {
+        index_ = newIndex;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

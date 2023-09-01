@@ -51,19 +51,19 @@ bool Foam::polyTopoChanger::readContents()
         // Read modifiers
         Istream& is = readStream(typeName);
 
-        PtrList<entry> patchEntries(is);
-        modifiers.setSize(patchEntries.size());
+        PtrList<entry> entries(is);
+        modifiers.resize_null(entries.size());
 
-        forAll(modifiers, modifierI)
+        forAll(modifiers, modifieri)
         {
             modifiers.set
             (
-                modifierI,
+                modifieri,
                 polyMeshModifier::New
                 (
-                    patchEntries[modifierI].keyword(),
-                    patchEntries[modifierI].dict(),
-                    modifierI,
+                    entries[modifieri].keyword(),
+                    entries[modifieri].dict(),
+                    modifieri,
                     *this
                 )
             );
@@ -101,7 +101,6 @@ Foam::polyTopoChanger::polyTopoChanger
 (
     polyMesh& mesh,
     IOobjectOption::readOption rOpt
-
 )
 :
     polyTopoChanger

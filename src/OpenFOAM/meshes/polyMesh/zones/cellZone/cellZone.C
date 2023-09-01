@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,6 +46,12 @@ const char * const Foam::cellZone::labelsName = "cellLabels";
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::cellZone::cellZone(const cellZoneMesh& zm)
+:
+    cellZone(word::null, 0, zm)
+{}
+
 
 Foam::cellZone::cellZone
 (
@@ -100,28 +106,56 @@ Foam::cellZone::cellZone
 
 Foam::cellZone::cellZone
 (
-    const cellZone& origZone,
-    const labelUList& addr,
-    const label index,
-    const cellZoneMesh& zm
+    const cellZone& originalZone,
+    const Foam::zero,
+    const cellZoneMesh& zm,
+    const label newIndex
 )
 :
-    zone(origZone, addr, index),
+    zone(originalZone, labelList(), newIndex),
     zoneMesh_(zm)
 {}
 
 
 Foam::cellZone::cellZone
 (
-    const cellZone& origZone,
+    const cellZone& originalZone,
+    const Foam::zero,
+    const label index,
+    const cellZoneMesh& zm
+)
+:
+    zone(originalZone, labelList(), index),
+    zoneMesh_(zm)
+{}
+
+
+Foam::cellZone::cellZone
+(
+    const cellZone& originalZone,
+    const labelUList& addr,
+    const label index,
+    const cellZoneMesh& zm
+)
+:
+    cellZone(originalZone, Foam::zero{}, index, zm)
+{
+    labelList::operator=(addr);
+}
+
+
+Foam::cellZone::cellZone
+(
+    const cellZone& originalZone,
     labelList&& addr,
     const label index,
     const cellZoneMesh& zm
 )
 :
-    zone(origZone, std::move(addr), index),
-    zoneMesh_(zm)
-{}
+    cellZone(originalZone, Foam::zero{}, index, zm)
+{
+    labelList::transfer(addr);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -150,12 +184,56 @@ void Foam::cellZone::writeDict(Ostream& os) const
 }
 
 
+void Foam::cellZone::resetAddressing(cellZone&& zn)
+{
+    if (this == &zn)
+    {
+        return;  // Self-assignment is a no-op
+    }
+
+    clearAddressing();
+    labelList::transfer(static_cast<labelList&>(zn));
+    zn.clearAddressing();
+}
+
+
+void Foam::cellZone::resetAddressing(const cellZone& zn)
+{
+    if (this == &zn)
+    {
+        return;  // Self-assignment is a no-op
+    }
+
+    clearAddressing();
+    labelList::operator=(static_cast<const labelList&>(zn));
+}
+
+
+void Foam::cellZone::resetAddressing(const labelUList& addr)
+{
+    clearAddressing();
+    labelList::operator=(addr);
+}
+
+
+void Foam::cellZone::resetAddressing(labelList&& addr)
+{
+    clearAddressing();
+    labelList::transfer(addr);
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 void Foam::cellZone::operator=(const cellZone& zn)
 {
+    if (this == &zn)
+    {
+        return;  // Self-assignment is a no-op
+    }
+
     clearAddressing();
-    labelList::operator=(zn);
+    labelList::operator=(static_cast<const labelList&>(zn));
 }
 
 

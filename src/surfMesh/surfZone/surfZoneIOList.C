@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,6 +36,56 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::surfZoneIOList::readContents()
+{
+    if
+    (
+        this->isReadRequired()
+    )
+    {
+        surfZoneList& zones = *this;
+
+        // Read entries
+        Istream& is = readStream(typeName);
+
+        PtrList<entry> entries(is);
+        zones.resize(entries.size());
+
+        // Transcribe
+        label startOffset = 0;
+        forAll(zones, zonei)
+        {
+            zones[zonei] = surfZone
+            (
+                entries[zonei].keyword(),
+                entries[zonei].dict(),
+                zonei
+            );
+
+            if (zones[zonei].start() != startOffset)
+            {
+                FatalErrorInFunction
+                    << "surfZones are not ordered. Start of zone " << zonei
+                    << " does not correspond to sum of preceding zones." << nl
+                    << "while reading " << this->objectRelPath() << endl
+                    << exit(FatalError);
+            }
+
+            startOffset += zones[zonei].size();
+        }
+
+        is.check(FUNCTION_NAME);
+        close();
+        return true;
+    }
+
+    // Nothing read
+    return false;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::surfZoneIOList::surfZoneIOList
@@ -46,40 +96,7 @@ Foam::surfZoneIOList::surfZoneIOList
     regIOobject(io),
     surfZoneList()
 {
-    if (isReadRequired())
-    {
-        surfZoneList& zones = *this;
-
-        Istream& is = readStream(typeName);
-
-        PtrList<entry> dictEntries(is);
-        zones.resize(dictEntries.size());
-
-        label facei = 0;
-        forAll(zones, zonei)
-        {
-            zones[zonei] = surfZone
-            (
-                dictEntries[zonei].keyword(),
-                dictEntries[zonei].dict(),
-                zonei
-            );
-
-            if (zones[zonei].start() != facei)
-            {
-                FatalErrorInFunction
-                    << "surfZones are not ordered. Start of zone " << zonei
-                    << " does not correspond to sum of preceding zones." << nl
-                    << "while reading " << io.objectPath() << endl
-                    << exit(FatalError);
-            }
-
-            facei += zones[zonei].size();
-        }
-
-        is.check(FUNCTION_NAME);
-        close();
-    }
+    readContents();  // allowOptionalRead = false
 }
 
 
@@ -110,11 +127,11 @@ Foam::surfZoneIOList::surfZoneIOList
 bool Foam::surfZoneIOList::writeData(Ostream& os) const
 {
     const surfZoneList& zones = *this;
-    const label sz = zones.size();
+    const label len = zones.size();
 
-    if (sz)
+    if (len)
     {
-        os  << sz << nl << token::BEGIN_LIST << incrIndent << nl;
+        os  << len << nl << token::BEGIN_LIST << incrIndent << nl;
 
         for (const surfZone& zn : zones)
         {
@@ -125,7 +142,7 @@ bool Foam::surfZoneIOList::writeData(Ostream& os) const
     }
     else
     {
-        os  << sz << token::BEGIN_LIST << token::END_LIST;
+        os  << len << token::BEGIN_LIST << token::END_LIST;
     }
 
     return os.good();

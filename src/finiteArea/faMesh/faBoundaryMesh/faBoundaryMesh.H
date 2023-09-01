@@ -87,8 +87,9 @@ class faBoundaryMesh
         //- Calculate group name to patch ids lookup
         void calcGroupIDs() const;
 
-        //- Read if IOobject flags set. Return true if read.
-        bool readContents(const bool allowReadIfPresent);
+        //- Return true if contents were read
+        //- (controlled by IOobject readOption flags).
+        bool readContents(const bool allowOptionalRead);
 
 
 public:
@@ -108,19 +109,38 @@ public:
 
     // Constructors
 
-        //- Construct from faMesh
+        //- Read construct given IOobject and a mesh reference.
+        //- It will only read for MUST_READ variants (not READ_IF_PRESENT).
         faBoundaryMesh
         (
             const IOobject& io,
             const faMesh& fam
         );
 
-        //- Construct from faMesh and given size
+        //- Construct empty with IOobject properties and a mesh reference.
+        //- Does not read.
+        faBoundaryMesh
+        (
+            const IOobject& io,
+            const faMesh& fam,
+            Foam::zero
+        );
+
+        //- Construct with specified size. Does not read.
         faBoundaryMesh
         (
             const IOobject& io,
             const faMesh& fam,
             const label size
+        );
+
+        //- Read construct (mandatory, optional) based on IOobject properties
+        //- or use the fallback PtrList (with cloning).
+        faBoundaryMesh
+        (
+            const IOobject& io,
+            const faMesh& fam,
+            const faPatchList& list
         );
 
 

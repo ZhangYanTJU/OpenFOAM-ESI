@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,12 +27,38 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "polyBoundaryMeshEntries.H"
+#include "processorPolyPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeName(polyBoundaryMeshEntries);
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::polyBoundaryMeshEntries::removeProcPatches()
+{
+    // Truncate at the first processor patch entry
+    PtrList<entry>& entries = *this;
+
+    label nNonProcessor = entries.size();
+
+    forAll(entries, patchi)
+    {
+        const dictionary& dict = entries[patchi].dict();
+
+        const word pType = dict.get<word>("type");
+        if (pType == processorPolyPatch::typeName)
+        {
+            nNonProcessor = patchi;
+            break;
+        }
+    }
+
+    entries.resize(nNonProcessor);
 }
 
 

@@ -105,12 +105,12 @@ void Foam::polyBoundaryMesh::calcGroupIDs() const
 }
 
 
-bool Foam::polyBoundaryMesh::readContents(const bool allowReadIfPresent)
+bool Foam::polyBoundaryMesh::readContents(const bool allowOptionalRead)
 {
     if
     (
         this->isReadRequired()
-     || (allowReadIfPresent && this->isReadOptional() && this->headerOk())
+     || (allowOptionalRead && this->isReadOptional() && this->headerOk())
     )
     {
         // Warn for MUST_READ_IF_MODIFIED
@@ -118,12 +118,11 @@ bool Foam::polyBoundaryMesh::readContents(const bool allowReadIfPresent)
 
         polyPatchList& patches = *this;
 
-        // Read polyPatchList
+        // Read entries
         Istream& is = readStream(typeName);
 
-        // Read patches as entries
-        PtrList<entry> patchEntries(is);
-        patches.resize(patchEntries.size());
+        PtrList<entry> entries(is);
+        patches.resize_null(entries.size());
 
         // Transcribe
         forAll(patches, patchi)
@@ -133,8 +132,8 @@ bool Foam::polyBoundaryMesh::readContents(const bool allowReadIfPresent)
                 patchi,
                 polyPatch::New
                 (
-                    patchEntries[patchi].keyword(),
-                    patchEntries[patchi].dict(),
+                    entries[patchi].keyword(),
+                    entries[patchi].dict(),
                     patchi,
                     *this
                 )
@@ -146,6 +145,7 @@ bool Foam::polyBoundaryMesh::readContents(const bool allowReadIfPresent)
         return true;
     }
 
+    // Nothing read
     return false;
 }
 
@@ -162,8 +162,21 @@ Foam::polyBoundaryMesh::polyBoundaryMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    readContents(false);  // READ_IF_PRESENT allowed: False
+    readContents(false);  // allowOptionalRead = false
 }
+
+
+Foam::polyBoundaryMesh::polyBoundaryMesh
+(
+    const IOobject& io,
+    const polyMesh& pm,
+    Foam::zero
+)
+:
+    polyPatchList(),
+    regIOobject(io),
+    mesh_(pm)
+{}
 
 
 Foam::polyBoundaryMesh::polyBoundaryMesh
@@ -183,20 +196,22 @@ Foam::polyBoundaryMesh::polyBoundaryMesh
 (
     const IOobject& io,
     const polyMesh& pm,
-    const polyPatchList& ppl
+    const polyPatchList& list
 )
 :
     polyPatchList(),
     regIOobject(io),
     mesh_(pm)
 {
-    if (!readContents(true))  // READ_IF_PRESENT allowed: True
+    if (!readContents(true))  // allowOptionalRead = true
     {
+        // Nothing read. Use supplied patches
         polyPatchList& patches = *this;
-        patches.resize(ppl.size());
+        patches.resize(list.size());
+
         forAll(patches, patchi)
         {
-            patches.set(patchi, ppl[patchi].clone(*this));
+            patches.set(patchi, list[patchi].clone(*this));
         }
     }
 }

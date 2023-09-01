@@ -90,8 +90,14 @@ public:
         //- Copy construct
         patchIdentifier(const patchIdentifier&) = default;
 
+        //- Move construct
+        patchIdentifier(patchIdentifier&&) = default;
+
         //- Copy assignment
         patchIdentifier& operator=(const patchIdentifier&) = default;
+
+        //- Move assignment
+        patchIdentifier& operator=(patchIdentifier&&) = default;
 
         //- Destructor
         virtual ~patchIdentifier() = default;
@@ -99,7 +105,7 @@ public:
 
     // Constructors
 
-        //- Default construct. Uses name="", index=0
+        //- Default construct: name="", index=0
         patchIdentifier();
 
         //- Construct from mandatory components
@@ -122,11 +128,18 @@ public:
             const label index
         );
 
-        //- Copy construct, resetting the index
+        //- Copy construct, resetting the index (if non-negative)
         patchIdentifier
         (
             const patchIdentifier& ident,
-            const label index
+            const label newIndex
+        );
+
+        //- Move construct, resetting the index (if non-negative)
+        patchIdentifier
+        (
+            patchIdentifier&& ident,
+            const label newIndex
         );
 
 

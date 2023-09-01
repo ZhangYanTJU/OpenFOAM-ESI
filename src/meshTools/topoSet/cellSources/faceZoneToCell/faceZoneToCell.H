@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,8 +28,8 @@ Class
     Foam::faceZoneToCell
 
 Description
-    A \c topoSetCellSource to select cells based on \c master
-    or \c slave side of given \c faceZone(s).
+    A \c topoSetCellSource to select cells based on \c front
+    or \c back side of given \c faceZone(s).
 
     Operands:
     \table
@@ -86,8 +86,9 @@ Usage
 
     Options for the \c option entry:
     \verbatim
-      master   | Master side of the faceZone
-      slave    | Slave side of the faceZone
+      front   | Cells on the front side of the faceZone (also as 'master')
+      back    | Cells on the back side of the faceZone (also as 'slave')
+      both    | Both front and back side of the faceZone
     \endverbatim
 
     Options for the conditional mandatory entries:
@@ -134,8 +135,11 @@ public:
         //- Enumeration defining the valid options
         enum faceAction
         {
-            MASTER,
-            SLAVE
+            FRONT,  //!< The front (positive normal) side of the faces
+            BACK,   //!< The back (negative normal) side of the faces
+            BOTH,   //!< Both front and back side of faces
+            // Compatibility
+            MASTER = FRONT, SLAVE = BACK
         };
 
 

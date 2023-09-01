@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,6 +46,12 @@ const char* const Foam::pointZone::labelsName = "pointLabels";
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::pointZone::pointZone(const pointZoneMesh& zm)
+:
+    pointZone(word::null, 0, zm)
+{}
+
 
 Foam::pointZone::pointZone
 (
@@ -100,28 +106,56 @@ Foam::pointZone::pointZone
 
 Foam::pointZone::pointZone
 (
-    const pointZone& origZone,
-    const labelUList& addr,
-    const label index,
-    const pointZoneMesh& zm
+    const pointZone& originalZone,
+    const Foam::zero,
+    const pointZoneMesh& zm,
+    const label newIndex
 )
 :
-    zone(origZone, addr, index),
+    zone(originalZone, labelList(), newIndex),
     zoneMesh_(zm)
 {}
 
 
 Foam::pointZone::pointZone
 (
-    const pointZone& origZone,
+    const pointZone& originalZone,
+    const Foam::zero,
+    const label index,
+    const pointZoneMesh& zm
+)
+:
+    zone(originalZone, labelList(), index),
+    zoneMesh_(zm)
+{}
+
+
+Foam::pointZone::pointZone
+(
+    const pointZone& originalZone,
+    const labelUList& addr,
+    const label index,
+    const pointZoneMesh& zm
+)
+:
+    pointZone(originalZone, Foam::zero{}, index, zm)
+{
+    labelList::operator=(addr);
+}
+
+
+Foam::pointZone::pointZone
+(
+    const pointZone& originalZone,
     labelList&& addr,
     const label index,
     const pointZoneMesh& zm
 )
 :
-    zone(origZone, std::move(addr), index),
-    zoneMesh_(zm)
-{}
+    pointZone(originalZone, Foam::zero{}, index, zm)
+{
+    labelList::transfer(addr);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -204,12 +238,56 @@ void Foam::pointZone::writeDict(Ostream& os) const
 }
 
 
+void Foam::pointZone::resetAddressing(pointZone&& zn)
+{
+    if (this == &zn)
+    {
+        return;  // Self-assignment is a no-op
+    }
+
+    clearAddressing();
+    labelList::transfer(static_cast<labelList&>(zn));
+    zn.clearAddressing();
+}
+
+
+void Foam::pointZone::resetAddressing(const pointZone& zn)
+{
+    if (this == &zn)
+    {
+        return;  // Self-assignment is a no-op
+    }
+
+    clearAddressing();
+    labelList::operator=(static_cast<const labelList&>(zn));
+}
+
+
+void Foam::pointZone::resetAddressing(const labelUList& addr)
+{
+    clearAddressing();
+    labelList::operator=(addr);
+}
+
+
+void Foam::pointZone::resetAddressing(labelList&& addr)
+{
+    clearAddressing();
+    labelList::transfer(addr);
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 void Foam::pointZone::operator=(const pointZone& zn)
 {
+    if (this == &zn)
+    {
+        return;  // Self-assignment is a no-op
+    }
+
     clearAddressing();
-    labelList::operator=(zn);
+    labelList::operator=(static_cast<const labelList&>(zn));
 }
 
 

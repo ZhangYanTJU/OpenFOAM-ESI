@@ -39,8 +39,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellFeatures_H
-#define cellFeatures_H
+#ifndef Foam_cellFeatures_H
+#define Foam_cellFeatures_H
 
 #include "faceList.H"
 #include "labelList.H"
@@ -54,7 +54,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward declaration of classes
+// Forward Declarations
 class primitiveMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -77,7 +77,7 @@ class cellFeatures
         labelHashSet featureEdge_;
 
         //- (demand driven) Faces after removing internal points&edges
-        mutable faceList* facesPtr_;
+        mutable std::unique_ptr<faceList> facesPtr_;
 
         //- New to old face mapping
         mutable List<DynamicList<label>> faceMap_;

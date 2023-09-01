@@ -86,13 +86,13 @@ class faPatch
         const faBoundaryMesh& boundaryMesh_;
 
         //- Demand-driven: edge-face addressing
-        mutable labelList::subList* edgeFacesPtr_;
+        mutable std::unique_ptr<labelList::subList> edgeFacesPtr_;
 
         //- Demand-driven: local points labels
-        mutable labelList* pointLabelsPtr_;
+        mutable std::unique_ptr<labelList> pointLabelsPtr_;
 
         //- Demand-driven: point-edge addressing
-        mutable labelListList* pointEdgesPtr_;
+        mutable std::unique_ptr<labelListList> pointEdgesPtr_;
 
 
     // Private Member Functions
