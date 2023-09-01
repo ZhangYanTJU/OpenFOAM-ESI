@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,103 +43,6 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class countstreambuf Declaration
-\*---------------------------------------------------------------------------*/
-
-//- A streambuf class for determining byte counts
-class countstreambuf
-:
-    public std::streambuf
-{
-    //- The number of bytes counted
-    std::streamsize size_;
-
-protected:
-
-    //- Set position pointer to relative position
-    virtual std::streampos seekoff
-    (
-        std::streamoff off,
-        std::ios_base::seekdir way,
-        std::ios_base::openmode which = std::ios_base::in|std::ios_base::out
-    )
-    {
-        if (which & std::ios_base::out)
-        {
-            if (way == std::ios_base::beg)
-            {
-                size_ = off;
-            }
-            else if (way == std::ios_base::cur)
-            {
-                size_ += off;
-            }
-            else if (way == std::ios_base::end)
-            {
-                // not really possible
-            }
-
-            return size_; // tellp()
-        }
-
-        return -1;
-    }
-
-
-    //- Set position pointer to absolute position
-    //  For the counter, adjust the count accordingly.
-    virtual std::streampos seekpos
-    (
-        std::streampos pos,
-        std::ios_base::openmode which = std::ios_base::in|std::ios_base::out
-    )
-    {
-        return seekoff(pos, std::ios_base::beg, which);
-    }
-
-
-    //- Handle output counting via overflow
-    virtual int overflow(int c = EOF)
-    {
-        if (c != EOF)
-        {
-            ++size_;
-        }
-        return c;
-    }
-
-
-    //- Put sequence of characters
-    virtual std::streamsize xsputn(const char* s, std::streamsize n)
-    {
-        size_ += n;
-        return n;
-    }
-
-
-public:
-
-    //- Default construct, or with precount size
-    explicit countstreambuf(std::streamsize precount=0)
-    :
-        size_(precount)
-    {}
-
-    //- \return The buffer put position == number of bytes counted.
-    std::streamsize tellp() const
-    {
-        return size_;
-    }
-
-    //- Some information about the number of bytes counted
-    void printBufInfo(Ostream& os) const
-    {
-        os << "count=" << size_;
-    }
-};
-
-
-/*---------------------------------------------------------------------------*\
                         Class ocountstream Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -149,34 +52,124 @@ public:
 class ocountstream
 :
     virtual public std::ios,
-    protected countstreambuf,
     public std::ostream
 {
+    //- A streambuf class for determining byte counts
+    class countbuf : public std::streambuf
+    {
+        //- The number of bytes counted
+        std::streamsize size_;
+
+    protected:
+
+        //- Set position pointer to relative position
+        virtual std::streampos seekoff
+        (
+            std::streamoff off,
+            std::ios_base::seekdir way,
+            std::ios_base::openmode which = std::ios_base::in|std::ios_base::out
+        )
+        {
+            if (which & std::ios_base::out)
+            {
+                if (way == std::ios_base::beg)
+                {
+                    size_ = off;
+                }
+                else if (way == std::ios_base::cur)
+                {
+                    size_ += off;
+                }
+                else if (way == std::ios_base::end)
+                {
+                    // not really possible
+                }
+
+                return size_;  // Like span_tellp()
+            }
+
+            return -1;
+        }
+
+        //- Set position pointer to absolute position
+        //  For the counter, adjust the count accordingly.
+        virtual std::streampos seekpos
+        (
+            std::streampos pos,
+            std::ios_base::openmode which = std::ios_base::in|std::ios_base::out
+        )
+        {
+            return seekoff(pos, std::ios_base::beg, which);
+        }
+
+        //- Output overflow handling - increment counter
+        virtual int overflow(int_type c = traits_type::eof())
+        {
+            if (c != traits_type::eof()) ++size_;
+            return c;
+        }
+
+        //- Put sequence of characters - increment counter
+        virtual std::streamsize xsputn(const char* s, std::streamsize n)
+        {
+            size_ += n;
+            return n;
+        }
+
+    public:
+
+        // Constructors
+
+            //- Default construct, count = 0
+            countbuf() : size_(0) {}
+
+
+        // Member Functions
+
+            //- The number of bytes counted.
+            std::streamsize count() const noexcept { return size_; }
+
+            //- Reset the count
+            void reset(std::streamsize n = 0) noexcept { size_ = n; }
+    };
+
+
+    // Private Data
+
+        typedef countbuf buffer_type;
+        typedef std::ostream stream_type;
+
+        //- Reference to the underlying buffer
+        buffer_type buf_;
+
 public:
 
-    //- Default construct
-    ocountstream()
-    :
-        countstreambuf(),
-        std::ostream(static_cast<countstreambuf*>(this))
-    {}
+    // Constructors
+
+        //- Default construct
+        ocountstream() : stream_type(&buf_) {}
 
 
-    //- \return The buffer put position == number of bytes counted.
-    using countstreambuf::tellp;
+    // Member Functions
 
-    //- \return The number of bytes counted
-    std::streamsize size() const
-    {
-        return countstreambuf::tellp();
-    }
+        //- This hides both signatures of std::basic_ios::rdbuf()
+        countbuf* rdbuf() { return &buf_; }
 
-    //- Rewind the stream, reset the count
-    void rewind()
-    {
-        this->pubseekpos(0, std::ios_base::out);
-        clear(); // for safety, clear any old errors
-    }
+        //- \return The number of bytes counted
+        std::streamsize count() const noexcept { return buf_.count(); }
+
+        //- Reset the count
+        void reset(std::streamsize n = 0) noexcept
+        {
+            buf_.reset(n);
+            stream_type::clear();  // Clear old errors
+        }
+
+        //- Some information about the output buffer position/capacity
+        void debug_info(Ostream& os) const
+        {
+            os  << "count=" << buf_.count();
+        }
 };
 
 
@@ -187,55 +180,21 @@ namespace Detail
                 Class Detail::OCountStreamAllocator Declaration
 \*---------------------------------------------------------------------------*/
 
-//- An stream/stream-buffer allocator for counting
+//- An allocator for holding Foam::ocountstream
 class OCountStreamAllocator
 {
 protected:
 
     // Protected Data
 
-        typedef std::ostream stream_type;
-
-        //- The stream buffer
-        countstreambuf buf_;
-
         //- The output stream
-        stream_type stream_;
+        Foam::ocountstream stream_;
 
 
     // Constructors
 
-        //- Default construct, or with precount size
-        OCountStreamAllocator(std::streamsize precount=0)
-        :
-            buf_(precount),
-            stream_(&buf_)
-        {}
-
-
-    // Protected Member Functions
-
-        void printBufInfo(Ostream& os) const
-        {
-            buf_.printBufInfo(os);
-        }
-
-public:
-
-    // Member Functions
-
-        //- The number of bytes counted
-        std::streamsize size() const
-        {
-            return buf_.tellp();
-        }
-
-        //- Rewind the stream, reset the count
-        void rewind()
-        {
-            buf_.pubseekpos(0);
-            stream_.clear(); // for safety, clear any old errors
-        }
+        //- Default construct
+        OCountStreamAllocator() = default;
 };
 
 } // End namespace Detail
@@ -270,35 +229,33 @@ public:
         //- Copy construct
         OCountStream(const OCountStream& str)
         :
-            allocator_type(str.size()),
+            allocator_type(),
             OSstream(stream_, str.name(), static_cast<IOstreamOption>(str))
-        {}
+        {
+            stream_.reset(str.count());
+        }
 
 
     // Member Functions
 
+        //- \return The number of bytes counted
+        std::streamsize count() const noexcept { return stream_.count(); }
+
+        //- \return The number of bytes counted
+        std::streamsize size() const noexcept { return stream_.count(); }
+
+        //- Reset the count
+        void reset(std::streamsize n = 0) noexcept { stream_.reset(n); }
+
         //- Rewind the stream, reset the count, clearing any old errors
         virtual void rewind()
         {
-            allocator_type::rewind();
-            setGood();  // resynchronize with internal state
+            stream_.reset();
+            syncState();
         }
 
         //- Print stream description to Ostream
         virtual void print(Ostream& os) const;
-
-
-    // Additional constructors and methods (as per v2012 and earlier)
-    #ifdef Foam_IOstream_extras
-
-        //- Construct empty with format
-        explicit OCountStream(IOstreamOption::streamFormat fmt)
-        :
-            OCountStream(IOstreamOption(fmt))
-        {}
-
-
-    #endif /* Foam_IOstream_extras */
 };
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -54,23 +54,21 @@ class osha1stream
     public std::ostream
 {
     //- A streambuf class for calculating SHA1 digests
-    class sha1buf
-    :
-        public std::streambuf
+    class sha1buf : public std::streambuf
     {
         //- This does all the work and has its own buffering
         SHA1 sha1_;
 
     protected:
 
-        //- Handle overflow
-        virtual int overflow(int c = EOF)
+        //- Output overflow handling - append to SHA1
+        virtual int overflow(int_type c = traits_type::eof())
         {
-            if (c != EOF) sha1_.append(c);
+            if (c != traits_type::eof()) sha1_.append(c);
             return c;
         }
 
-        //- Put sequence of characters
+        //- Put sequence of characters - append to SHA1
         virtual std::streamsize xsputn(const char* s, std::streamsize n)
         {
             if (n) sha1_.append(s, n);
@@ -83,10 +81,7 @@ class osha1stream
         sha1buf() = default;
 
         //- Full access to the sha1
-        SHA1& sha1() noexcept
-        {
-            return sha1_;
-        }
+        SHA1& sha1() noexcept { return sha1_; }
     };
 
 
@@ -100,25 +95,22 @@ public:
     // Constructors
 
         //- Default construct
-        osha1stream()
-        :
-            std::ostream(&buf_)
-        {}
+        osha1stream() : std::ostream(&buf_) {}
 
 
     // Member Functions
 
         //- This hides both signatures of std::basic_ios::rdbuf()
-        sha1buf* rdbuf()
-        {
-            return &buf_;
-        }
+        sha1buf* rdbuf() { return &buf_; }
 
         //- Full access to the sha1
-        SHA1& sha1() noexcept
-        {
-            return buf_.sha1();
-        }
+        SHA1& sha1() noexcept { return buf_.sha1(); }
+
+        //- Return SHA1::Digest for the data processed until now
+        SHA1Digest digest() { return buf_.sha1().digest(); }
+
+        //- Clear the SHA1 calculation
+        void reset() { buf_.sha1().clear(); }
 };
 
 
@@ -129,48 +121,21 @@ namespace Detail
                 Class Detail::OSHA1streamAllocator Declaration
 \*---------------------------------------------------------------------------*/
 
-//- Allocator for an osha1stream
+//- An allocator for holding Foam::osha1stream
 class OSHA1streamAllocator
 {
 protected:
 
     // Protected Data
 
-        typedef osha1stream stream_type;
-
         //- The output stream
-        stream_type stream_;
+        Foam::osha1stream stream_;
 
 
     // Constructors
 
         //- Default construct
         OSHA1streamAllocator() = default;
-
-
-public:
-
-    // Member Functions
-
-        //- Full access to the sha1
-        SHA1& sha1() noexcept
-        {
-            return stream_.sha1();
-        }
-
-
-        //- Return SHA1::Digest for the data processed until now
-        SHA1Digest digest()
-        {
-            return stream_.sha1().digest();
-        }
-
-
-        //- Clear the SHA1 calculation
-        void reset()
-        {
-            return stream_.sha1().clear();
-        }
 };
 
 } // End namespace Detail
@@ -188,15 +153,14 @@ class OSHA1stream
 {
     typedef Detail::OSHA1streamAllocator allocator_type;
 
-    // Private Member Functions
-
-        //- No copy construct
-        OSHA1stream(const OSHA1stream&) = delete;
-
-        //- No copy assignment
-        void operator=(const OSHA1stream&) = delete;
-
 public:
+
+    //- No copy construct
+    OSHA1stream(const OSHA1stream&) = delete;
+
+    //- No copy assignment
+    void operator=(const OSHA1stream&) = delete;
+
 
     // Constructors
 
@@ -209,6 +173,18 @@ public:
             allocator_type(),
             OSstream(stream_, "sha1", streamOpt.format(), streamOpt.version())
         {}
+
+
+    // Member Functions
+
+        //- Full access to the sha1
+        SHA1& sha1() noexcept { return stream_.sha1(); }
+
+        //- Return SHA1::Digest for the data processed until now
+        SHA1Digest digest() { return stream_.digest(); }
+
+        //- Clear the SHA1 calculation
+        void reset() { stream_.reset(); }
 
 
     // Write Functions
@@ -227,7 +203,7 @@ public:
         //  \deprecated(2017-07) - use reset() method
         void rewind()
         {
-            sha1().clear();
+            stream_.sha1().clear();
         }
 
 

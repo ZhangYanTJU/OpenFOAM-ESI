@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,6 +93,13 @@ public:
 
         //- Read/write access to the name of the stream
         using ISstream::name;
+
+        //- Return the size of the underlying file (-1 on error).
+        //- This corresponds to Foam::fileSize() but with extra handling of
+        //- compressed files.
+        //  The return type is \c std::streamsize instead of \c off_t.
+        //  \note Use sparingly since it involves a file stat()!
+        std::streamsize fileSize() const;
 
 
     // STL stream

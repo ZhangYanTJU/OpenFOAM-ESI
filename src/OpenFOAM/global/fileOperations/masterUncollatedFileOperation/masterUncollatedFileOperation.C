@@ -33,7 +33,7 @@ License
 #include "Time.H"
 #include "instant.H"
 #include "IFstream.H"
-#include "IListStream.H"
+#include "SpanStream.H"
 #include "masterOFstream.H"
 #include "decomposedBlockData.H"
 #include "registerSwitch.H"
@@ -81,6 +81,101 @@ namespace fileOperations
     );
 }
 }
+
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Get file contents (compressed or uncompressed)
+static DynamicList<char> slurpFile(IFstream& ifs)
+{
+    DynamicList<char> buffer;
+
+    auto& iss = ifs.stdStream();
+
+    const auto inputSize = ifs.fileSize();
+
+    if (IOstreamOption::COMPRESSED == ifs.compression())
+    {
+        // For compressed files, no idea how large the result will be.
+        // So read chunk-wise.
+        // Using the compressed size for the chunk size:
+        // 50% compression = 2 iterations
+        // 66% compression = 3 iterations
+        // ...
+
+        const uint64_t chunkSize =
+        (
+            (inputSize <= 1024)
+          ? uint64_t(4096)
+          : uint64_t(2*inputSize)
+        );
+
+        uint64_t beg = 0;
+
+        for (int iter = 1; iter < 100000; ++iter)
+        {
+            // Manual resizing to use incremental vs doubling
+            buffer.setCapacity(label(iter * chunkSize));
+            buffer.resize(buffer.capacity());
+
+            ifs.readRaw(buffer.data() + beg, chunkSize);
+            const std::streamsize nread = iss.gcount();
+
+            if
+            (
+                nread < 0
+             || nread == std::numeric_limits<std::streamsize>::max()
+            )
+            {
+                // Failed, but treat as normal 'done'
+                buffer.resize(label(beg));
+                break;
+            }
+            else
+            {
+                beg += uint64_t(nread);
+                if (nread >= 0 && uint64_t(nread) < chunkSize)
+                {
+                    // normalExit = true;
+                    buffer.resize(label(beg));
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        if (inputSize >= 0)
+        {
+            buffer.setCapacity(label(inputSize));
+            buffer.resize(buffer.capacity());
+
+            ifs.readRaw(buffer.data(), buffer.size_bytes());
+            const std::streamsize nread = iss.gcount();
+
+            if
+            (
+                nread < 0
+             || nread == std::numeric_limits<std::streamsize>::max()
+            )
+            {
+                // Failed, but treat as normal 'done'
+                buffer.clear();
+            }
+            else
+            {
+                buffer.resize(label(nread));  // Safety
+            }
+        }
+    }
+
+    return buffer;
+}
+
+} // End namespace Foam
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -447,56 +542,25 @@ void Foam::fileOperations::masterUncollatedFileOperation::readAndSend
 
     if (debug)
     {
-        Pout<< "masterUncollatedFileOperation::readAndSend :"
+        Info<< "masterUncollatedFileOperation::readAndSend :"
             << " compressed:" << bool(ifs.compression()) << " "
             << filePath << endl;
     }
 
-    if (ifs.compression() == IOstreamOption::COMPRESSED)
+    // Read file contents (compressed or uncompressed) into a character buffer
+    DynamicList<char> buf(slurpFile(ifs));
+
+    for (const label proci : recvProcs)
     {
-        // Could use Foam::fileSize, estimate uncompressed size (eg, 2x)
-        // and then string reserve followed by string assign...
-
-        // Uncompress and read file contents into a character buffer
-        const std::string buf
-        (
-            std::istreambuf_iterator<char>(ifs.stdStream()),
-            std::istreambuf_iterator<char>()
-        );
-
-        for (const label proci : recvProcs)
-        {
-            UOPstream os(proci, pBufs);
-            os.write(buf.data(), buf.length());
-        }
-
-        if (debug)
-        {
-            Pout<< "masterUncollatedFileOperation::readStream :"
-                << " From " << filePath <<  " sent " << buf.size()
-                << " bytes" << endl;
-        }
+        UOPstream os(proci, pBufs);
+        os.write(buf.cdata_bytes(), buf.size_bytes());
     }
-    else
+
+    if (debug)
     {
-        const off_t count(Foam::fileSize(filePath));
-
-        // Read file contents into a character buffer
-        List<char> buf(static_cast<label>(count));
-        ifs.stdStream().read(buf.data(), count);
-
-        for (const label proci : recvProcs)
-        {
-            UOPstream os(proci, pBufs);
-            os.write(buf.cdata(), count);
-        }
-
-        if (debug)
-        {
-            Pout<< "masterUncollatedFileOperation::readStream :"
-                << " From " << filePath <<  " sent " << buf.size()
-                << " bytes" << endl;
-        }
+        Info<< "masterUncollatedFileOperation::readStream :"
+            << " From " << filePath <<  " sent " << buf.size()
+            << " bytes" << endl;
     }
 }
 
@@ -630,7 +694,7 @@ Foam::fileOperations::masterUncollatedFileOperation::read
             // Construct with same parameters (ASCII, current version)
             // as the IFstream so that it has the same characteristics.
 
-            isPtr.reset(new IListStream(std::move(buf)));
+            isPtr.reset(new ICharStream(std::move(buf)));
 
             // With the proper file name
             isPtr->name() = filePaths[UPstream::myProcNo(comm)];
@@ -2493,7 +2557,7 @@ Foam::fileOperations::masterUncollatedFileOperation::NewIFstream
             // Construct with same parameters (ASCII, current version)
             // as the IFstream so that it has the same characteristics.
 
-            isPtr.reset(new IListStream(std::move(buf)));
+            isPtr.reset(new ICharStream(std::move(buf)));
 
             // With the proper file name
             isPtr->name() = filePath;

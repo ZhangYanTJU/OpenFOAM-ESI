@@ -4,8 +4,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OStringStream_H
-#define OStringStream_H
+#ifndef FoamCompat_IStringStream_H
+#define FoamCompat_IStringStream_H
 
 #include "StringStream.H"
 

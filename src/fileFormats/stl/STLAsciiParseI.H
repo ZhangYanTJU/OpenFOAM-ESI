@@ -131,15 +131,15 @@ inline void Foam::Detail::STLAsciiParse::endFacet()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-inline Foam::Detail::STLAsciiParse::STLAsciiParse(const label approxNpoints)
+inline Foam::Detail::STLAsciiParse::STLAsciiParse(const label nTrisEstimated)
 :
     sorted_(true),
     groupId_(-1),
     lineNum_(1),
     nFacetPoints_(0),
     nVertexCmpt_(0),
-    points_(approxNpoints),
-    facets_(approxNpoints/2)
+    points_(3*nTrisEstimated),
+    facets_(nTrisEstimated)
 {}
 
 

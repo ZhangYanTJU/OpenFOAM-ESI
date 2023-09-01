@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,17 +23,52 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    Input/output streams with managed List storage.
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef ListStream_H
-#define ListStream_H
+#include "SpanStream.H"
+#include "OCountStream.H"
 
-#include "IListStream.H"
-#include "OListStream.H"
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-#endif
+void Foam::ISpanStream::print(Ostream& os) const
+{
+    os  << "ISpanStream: ";
+    stream_.debug_info(os);
+    os  << Foam::endl;
+}
+
+
+void Foam::OSpanStream::print(Ostream& os) const
+{
+    os  << "OSpanStream: ";
+    stream_.debug_info(os);
+    os  << Foam::endl;
+}
+
+
+void Foam::ICharStream::print(Ostream& os) const
+{
+    os  << "ICharStream: ";
+    stream_.debug_info(os);
+    os  << Foam::endl;
+}
+
+
+void Foam::OCharStream::print(Ostream& os) const
+{
+    os  << "OCharStream: ";
+    stream_.debug_info(os);
+    os  << Foam::endl;
+}
+
+
+void Foam::OCountStream::print(Ostream& os) const
+{
+    os  << "OCountStream: ";
+    // os  << "count=" << stream_.count();
+    stream_.debug_info(os);
+    os  << Foam::endl;
+}
+
 
 // ************************************************************************* //

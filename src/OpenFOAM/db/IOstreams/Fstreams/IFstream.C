@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "IFstream.H"
-#include "OSspecific.H"
+#include "OSspecific.H"  // For isFile(), fileSize()
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -90,6 +90,45 @@ Foam::IFstream::IFstream
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+std::streamsize Foam::IFstream::fileSize() const
+{
+    const std::istream* ptr = ifstreamPointer::get();
+
+    if (!ptr || this->name().empty())
+    {
+        return std::streamsize(-1);
+    }
+
+    off_t fileLen = -1;
+
+    if (IOstreamOption::COMPRESSED == ifstreamPointer::whichCompression())
+    {
+        fileLen = Foam::fileSize(this->name() + ".gz");
+    }
+    else
+    {
+        // TBD: special handing for wrapped icharstream
+        // if
+        // (
+        //     const Foam::icharstream* charstr
+        //   = dynamic_cast<const Foam::icharstream*>(ptr)>(ptr)
+        // )
+        // {
+        //     return charstr->capacity();
+        // }
+
+        fileLen = Foam::fileSize(this->name());
+    }
+
+    if (fileLen >= 0)
+    {
+        return std::streamsize(fileLen);
+    }
+
+    return std::streamsize(-1);
+}
+
 
 std::istream& Foam::IFstream::stdStream()
 {

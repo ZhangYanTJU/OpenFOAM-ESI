@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,52 +23,19 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Description
+    Input/output streams with (internal or external) character storage.
+
 \*---------------------------------------------------------------------------*/
 
-#include "UListStream.H"
-#include "ListStream.H"
-#include "OCountStream.H"
+#ifndef Foam_SpanStream_H
+#define Foam_SpanStream_H
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+#include "ISpanStream.H"
+#include "ICharStream.H"
+#include "OSpanStream.H"
+#include "OCharStream.H"
 
-void Foam::IListStream::print(Ostream& os) const
-{
-    os  << "IListStream: ";
-    printBufInfo(os);
-    os  << Foam::endl;
-}
-
-
-void Foam::UIListStream::print(Ostream& os) const
-{
-    os  << "UIListStream: ";
-    printBufInfo(os);
-    os  << Foam::endl;
-}
-
-
-void Foam::OListStream::print(Ostream& os) const
-{
-    os  << "OListStream: ";
-    printBufInfo(os);
-    os  << Foam::endl;
-}
-
-
-void Foam::UOListStream::print(Ostream& os) const
-{
-    os  << "UOListStream: ";
-    printBufInfo(os);
-    os  << Foam::endl;
-}
-
-
-void Foam::OCountStream::print(Ostream& os) const
-{
-    os  << "OCountStream: ";
-    printBufInfo(os);
-    os  << Foam::endl;
-}
-
+#endif
 
 // ************************************************************************* //

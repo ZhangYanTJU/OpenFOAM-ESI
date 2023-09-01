@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -645,7 +645,8 @@ Foam::label Foam::vtk::seriesWriter::scan
 
         header.resize(1024);
         is.read(&(header.front()), header.size());
-        header.resize(is.gcount());
+        const std::streamsize gcount = is.gcount();
+        header.erase(gcount <= 0 ? 0 : gcount);
 
         // DebugInfo
         //     << "got header:\n=====\n" << header << "\n=====\n" << nl;

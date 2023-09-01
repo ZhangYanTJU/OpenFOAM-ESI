@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2018 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,10 +89,10 @@ public:
 
     // Constructors
 
-    //- From input stream and the approximate number of vertices in the STL
-    STLAsciiParseFlex(istream* is, const label approxNpoints)
+    //- From input stream, with the estimated number of triangles in the STL
+    STLAsciiParseFlex(istream* is, const label nTrisEstimated)
     :
-        Detail::STLAsciiParse(approxNpoints),
+        Detail::STLAsciiParse(nTrisEstimated),
         yySTLFlexLexer(is)
     {}
 
@@ -306,9 +306,8 @@ endsolid              {space}("endsolid"|"ENDSOLID")({some_space}{word})*
 %%
 
 
-//
-// Member Function
-//
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
 bool Foam::fileFormats::STLReader::readAsciiFlex
 (
     const fileName& filename
@@ -322,8 +321,20 @@ bool Foam::fileFormats::STLReader::readAsciiFlex
             << exit(FatalError);
     }
 
-    // Create with approx number of vertices in the STL (from file size)
-    STLAsciiParseFlex lexer(&(is.stdStream()), Foam::fileSize(filename)/400);
+    // Create with estimated number of triangles in the STL.
+    // 180 bytes / triangle. For simplicity, ignore compression
+
+    const auto fileLen = is.fileSize();
+
+    const label nTrisEstimated =
+    (
+        (fileLen > 0)
+      ? max(label(100), label(fileLen/180))
+      : label(100)
+    );
+
+
+    STLAsciiParseFlex lexer(&(is.stdStream()), nTrisEstimated);
     lexer.execute();
 
     transfer(lexer);
@@ -331,6 +342,5 @@ bool Foam::fileFormats::STLReader::readAsciiFlex
     return true;
 }
 
- /* ------------------------------------------------------------------------ *\
-    ------ End of STLReaderASCII.L
- \* ------------------------------------------------------------------------ */
+
+// ************************************************************************* //

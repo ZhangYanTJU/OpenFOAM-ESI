@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "UIListStream.H"
+#include "SpanStream.H"
 #include "ensightPTraits.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,7 +52,7 @@ void Foam::ensightSurfaceReader::readFromLine
     Type& value
 ) const
 {
-    UIListStream is(buffer.data(), buffer.length());
+    ISpanStream is(buffer.data(), buffer.length());
 
     readFromLine(nSkip, is, value);
 }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2018 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,13 +27,45 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "ListStream.H"
-#include "UListStream.H"
+#include "SpanStream.H"
 #include "wordList.H"
 #include "IOstreams.H"
 #include "argList.H"
 
+#include <cctype>
+#include <cstdio>
+
 using namespace Foam;
+
+Ostream& writeList(Ostream& os, const UList<char>& list)
+{
+    char buf[4];
+    os << list.size() << '(';
+    for (const char c : list)
+    {
+        if (isprint(c))
+        {
+            os << c;
+        }
+        else if (c == '\t')
+        {
+            os << "\\t";
+        }
+        else if (c == '\n')
+        {
+            os << "\\n";
+        }
+        else
+        {
+            ::snprintf(buf, 4, "%02X", c);
+            os << "\\x" << buf;
+        }
+    }
+    os << ')';
+
+    return os;
+}
+
 
 Ostream& toString(Ostream& os, const UList<char>& list)
 {
@@ -93,7 +125,7 @@ int main(int argc, char *argv[])
     // Buffer storage
     DynamicList<char> storage(16);
 
-    OListStream obuf(std::move(storage));
+    OCharStream obuf(std::move(storage));
     obuf << 1002 << " " << "abcd" << " " << "def" << " " << 3.14159 << ";\n";
 
     // Move contents to output buffer
@@ -104,9 +136,9 @@ int main(int argc, char *argv[])
 
     Info<< "transfer contents to a List" << endl;
 
-    IListStream ibuf;
+    ICharStream ibuf;
 
-    // Reclaim data storage from OListStream -> IListStream
+    // Reclaim data storage from OCharStream -> ICharStream
     {
         List<char> data;
         obuf.swap(data);
@@ -160,6 +192,43 @@ int main(int argc, char *argv[])
 
     Info<<nl << "swapped out:";
     printInfo(newvalues);
+
+    {
+        iliststream is(std::move(newvalues));
+
+        char c = 0;
+
+        Info<< nl
+            << "getting values from iliststream of "
+            << is.list() << endl;
+
+        // Info<< " (" << is.tellg() << " " << is.remaining() << ")";
+        // Info<< "get:";
+        while (is.get(c))
+        {
+            Info<< ' ' << c;
+            // Info<< " (" << is.tellg() << " " << is.remaining() << ")";
+        }
+        Info<< " - end" << nl;
+
+        // Info<< "remaining: " << is.list() << endl;
+        // Info<< "remaining: " << is.remaining() << endl;
+
+        // Manipulate the list view
+        {
+            UList<char> chars(is.list());
+            Foam::reverse(chars);
+        }
+
+        is.rewind();
+
+        Info<< "get:";
+        while (is.get(c))
+        {
+            Info<< ' ' << c;
+        }
+        Info<< " - end" << nl;
+    }
 
     Info<< "\nEnd\n" << endl;
 
