@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016, 2020 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,25 +38,19 @@ License
 
 Foam::labelListList Foam::polyMesh::cellShapePointCells
 (
-    const cellShapeList& c
+    const cellShapeList& shapes
 ) const
 {
     List<DynamicList<label>> pc(points().size());
 
     // For each cell
-    forAll(c, i)
+    forAll(shapes, celli)
     {
-        // For each vertex
-        const labelList& labels = c[i];
-
-        forAll(labels, j)
+        // For each cell vertex
+        for (const label pointi : shapes[celli])
         {
-            // Set working point label
-            label curPoint = labels[j];
-            DynamicList<label>& curPointCells = pc[curPoint];
-
             // Enter the cell label in the point's cell list
-            curPointCells.append(i);
+            pc[pointi].push_back(celli);
         }
     }
 
@@ -482,7 +476,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        0
+        Foam::zero{}
     ),
     owner_
     (
@@ -495,7 +489,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        0
+        Foam::zero{}
     ),
     neighbour_
     (
@@ -508,7 +502,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        0
+        Foam::zero{}
     ),
     clearedPrimitives_(false),
     boundary_
@@ -543,7 +537,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_WRITE
         ),
         *this,
-        0
+        Foam::zero{}
     ),
     faceZones_
     (
@@ -557,7 +551,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_WRITE
         ),
         *this,
-        0
+        Foam::zero{}
     ),
     cellZones_
     (
@@ -571,7 +565,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_WRITE
         ),
         *this,
-        0
+        Foam::zero{}
     ),
     globalMeshDataPtr_(nullptr),
     moving_(false),
@@ -763,7 +757,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        0
+        Foam::zero{}
     ),
     owner_
     (
@@ -776,7 +770,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        0
+        Foam::zero{}
     ),
     neighbour_
     (
@@ -789,7 +783,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        0
+        Foam::zero{}
     ),
     clearedPrimitives_(false),
     boundary_
@@ -824,7 +818,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_WRITE
         ),
         *this,
-        0
+        Foam::zero{}
     ),
     faceZones_
     (
@@ -838,7 +832,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_WRITE
         ),
         *this,
-        0
+        Foam::zero{}
     ),
     cellZones_
     (
@@ -852,7 +846,7 @@ Foam::polyMesh::polyMesh
             IOobject::NO_WRITE
         ),
         *this,
-        0
+        Foam::zero{}
     ),
     globalMeshDataPtr_(nullptr),
     moving_(false),
