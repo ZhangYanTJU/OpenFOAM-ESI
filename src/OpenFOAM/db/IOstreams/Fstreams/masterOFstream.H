@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,7 +41,7 @@ SourceFiles
 #ifndef Foam_masterOFstream_H
 #define Foam_masterOFstream_H
 
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "UPstream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -55,7 +55,7 @@ namespace Foam
 
 class masterOFstream
 :
-    public OStringStream
+    public OCharStream
 {
     // Private Data
 
@@ -80,7 +80,8 @@ class masterOFstream
 
     // Private Member Functions
 
-        //- Open file with checking and write append contents
+        //- Open file with checking and write append contents.
+        //  A no-op if str is null or len is zero
         void checkWrite
         (
             const fileName& fName,
@@ -89,9 +90,16 @@ class masterOFstream
         );
 
         //- Open file with checking and write append contents
-        void checkWrite(const fileName& fName, const std::string& s);
+        void checkWrite
+        (
+            const fileName& fName,
+            const UList<char>& charData
+        )
+        {
+            checkWrite(fName, charData.cdata(), charData.size_bytes());
+        }
 
-        //- Commit buffered information, including parallel gather as required
+        //- Commit buffered information, including communication as required
         void commit();
 
 
@@ -104,7 +112,8 @@ public:
         masterOFstream
         (
             IOstreamOption::atomicType atomic,
-            const label comm,
+            //! The communicator number (-1 == worldComm)
+            const int communicator,
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
             IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
@@ -115,7 +124,8 @@ public:
         //- from pathname, stream option, optional append
         masterOFstream
         (
-            const label comm,
+            //! The communicator number (-1 == worldComm)
+            const int communicator,
             const fileName& pathname,
             IOstreamOption streamOpt = IOstreamOption(),
             IOstreamOption::appendType append = IOstreamOption::NO_APPEND,
@@ -125,7 +135,7 @@ public:
             masterOFstream
             (
                 IOstreamOption::NON_ATOMIC,
-                comm,
+                communicator,
                 pathname,
                 streamOpt,
                 append,

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,7 +29,7 @@ License
 #include "masterOFstream.H"
 #include "OFstream.H"
 #include "OSspecific.H"
-#include "PstreamBuffers.H"
+#include "Pstream.H"
 #include "masterUncollatedFileOperation.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -41,9 +41,9 @@ void Foam::masterOFstream::checkWrite
     std::streamsize len
 )
 {
-    if (!len)
+    if (!str || !(len > 0))
     {
-        // Can probably skip all of this if there is nothing to write
+        // Can skip everything if there is nothing to write
         return;
     }
 
@@ -63,9 +63,7 @@ void Foam::masterOFstream::checkWrite
             << exit(FatalIOError);
     }
 
-    // Use writeRaw() instead of writeQuoted(string,false) to output
-    // characters directly.
-
+    // Write characters directly to std::ostream
     os.writeRaw(str, len);
 
     if (!os.good())
@@ -77,24 +75,29 @@ void Foam::masterOFstream::checkWrite
 }
 
 
-void Foam::masterOFstream::checkWrite
-(
-    const fileName& fName,
-    const std::string& s
-)
-{
-    checkWrite(fName, s.data(), s.length());
-}
-
-
 void Foam::masterOFstream::commit()
 {
-    if (UPstream::parRun())
+    // Take ownership of serialized content
+    DynamicList<char> charData(OCharStream::release());
+
+    if (!UPstream::parRun())
     {
+        // Write (non-empty) data
+        checkWrite(pathName_, charData);
+    }
+    else
+    {
+        // Ignore content if not writing
+        if (!writeOnProc_)
+        {
+            charData.clear();
+        }
+
         List<fileName> filePaths(UPstream::nProcs(comm_));
         filePaths[UPstream::myProcNo(comm_)] = pathName_;
         Pstream::gatherList(filePaths, UPstream::msgType(), comm_);
 
+        // Test for identical output paths
         bool uniform =
         (
             UPstream::master(comm_)
@@ -105,69 +108,136 @@ void Foam::masterOFstream::commit()
 
         if (uniform)
         {
+            // Identical file paths - write on master
             if (UPstream::master(comm_) && writeOnProc_)
             {
-                checkWrite(pathName_, this->str());
+                checkWrite(pathName_, charData);
             }
-
-            this->reset();
             return;
         }
 
         // Different files
-        PstreamBuffers pBufs(comm_);
+        // ---------------
+        //
+        // Non-sparse (most ranks have writeOnProc_ == true),
+        // so gather sizes first and use PEX-like handling,
+        // with polling for when data becomes available.
+        //
+        // Could also consider double buffering + write to reduce
+        // memory overhead.
 
-        if (!UPstream::master(comm_))
-        {
-            if (writeOnProc_)
-            {
-                // Send buffer to master
-                string s(this->str());
+        // Or int64_t
+        const label dataSize =
+        (
+            (UPstream::is_subrank(comm_) && writeOnProc_)
+          ? charData.size()
+          : 0
+        );
 
-                UOPstream os(UPstream::masterNo(), pBufs);
-                os.write(s.data(), s.length());
-            }
-            this->reset();  // Done with contents
-        }
+        const labelList recvSizes
+        (
+            UPstream::listGatherValues<label>(dataSize, comm_)
+        );
 
-        pBufs.finishedGathers();
-
+        // Receive from these procs
+        DynamicList<int> recvProcs;
 
         if (UPstream::master(comm_))
         {
-            if (writeOnProc_)
+            // Sorted by message size
+            labelList order(Foam::sortedOrder(recvSizes));
+            recvProcs.reserve_exact(order.size());
+
+            // Want to receive large messages first. Ignore empty slots
+            forAllReverse(order, i)
             {
-                // Write master data
-                checkWrite(filePaths[UPstream::masterNo()], this->str());
-            }
-            this->reset();  // Done with contents
+                const label proci = order[i];
 
-
-            // Allocate large enough to read without resizing
-            List<char> buf(pBufs.maxRecvCount());
-
-            for (const int proci : UPstream::subProcs(comm_))
-            {
-                const std::streamsize count(pBufs.recvDataCount(proci));
-
-                if (count)
+                // Ignore empty slots
+                if (recvSizes[proci] > 0)
                 {
-                    UIPstream is(proci, pBufs);
-
-                    is.read(buf.data(), count);
-                    checkWrite(filePaths[proci], buf.cdata(), count);
+                    recvProcs.push_back(proci);
                 }
             }
         }
-    }
-    else
-    {
-        checkWrite(pathName_, this->str());
-        this->reset();
-    }
 
-    // This method is only called once (internally)
-    // so no need to clear/flush old buffered data
+        // Non-blocking communication
+        const label startOfRequests = UPstream::nRequests();
+
+        // Some unique tag for this read/write grouping (extra precaution)
+        const int messageTag = (UPstream::msgType() + 256);
+
+        if (UPstream::is_subrank(comm_) && dataSize > 0)
+        {
+            // Send to content to master
+            UOPstream::write
+            (
+                UPstream::commsTypes::nonBlocking,
+                UPstream::masterNo(),
+                charData.cdata_bytes(),
+                charData.size_bytes(),
+                messageTag,
+                comm_
+            );
+        }
+        else if (UPstream::master(comm_))
+        {
+            // The receive slots
+            List<List<char>> recvBuffers(UPstream::nProcs(comm_));
+
+            // Receive from these procs (non-empty slots)
+            for (const int proci : recvProcs)
+            {
+                auto& slot = recvBuffers[proci];
+                slot.resize_nocopy(recvSizes[proci]);
+
+                // Receive content
+                UIPstream::read
+                (
+                    UPstream::commsTypes::nonBlocking,
+                    proci,
+                    slot.data_bytes(),
+                    slot.size_bytes(),
+                    messageTag,
+                    comm_
+                );
+            }
+
+            if (writeOnProc_)
+            {
+                // Write non-empty master data
+                checkWrite(pathName_, charData);
+                charData.clear();
+            }
+
+            // Poll for completed receive requests and dispatch
+            DynamicList<int> indices(recvProcs.size());
+            while
+            (
+                UPstream::waitSomeRequests
+                (
+                    startOfRequests,
+                    recvProcs.size(),
+                   &indices
+                )
+            )
+            {
+                for (const int i : indices)
+                {
+                    const int proci = recvProcs[i];
+                    auto& slot = recvBuffers[proci];
+
+                    // Write non-empty sub-proc data
+                    checkWrite(filePaths[proci], slot);
+
+                    // Eager cleanup
+                    slot.clear();
+                }
+            }
+        }
+
+        UPstream::waitRequests(startOfRequests);
+    }
 }
 
 
@@ -176,21 +246,24 @@ void Foam::masterOFstream::commit()
 Foam::masterOFstream::masterOFstream
 (
     IOstreamOption::atomicType atomic,
-    const label comm,
+    const int communicator,
     const fileName& pathName,
     IOstreamOption streamOpt,
     IOstreamOption::appendType append,
     const bool writeOnProc
 )
 :
-    OStringStream(streamOpt),
+    OCharStream(streamOpt),
     pathName_(pathName),
     atomic_(atomic),
     compression_(streamOpt.compression()),
     append_(append),
     writeOnProc_(writeOnProc),
-    comm_(comm)
-{}
+    comm_(communicator < 0 ? UPstream::worldComm : communicator)
+{
+    // Start with a slightly larger buffer
+    OCharStream::reserve(4*1024);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
