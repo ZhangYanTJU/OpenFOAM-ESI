@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,6 +88,7 @@ Usage
         scaleFactor     1.0;
         writeArea       false;
         surfaceFormat   none;
+        empty-surface   warn;  // default | warn | ignore | strict
 
         // Optional (inherited) entries
         ...
@@ -111,6 +112,7 @@ Usage
       writeArea    | Write the surface area             | bool |  no   | false
       surfaceFormat | Output value format               | word <!--
                 --> | conditional on writeFields  | none
+      empty-surface | Error handling for empty surfaces | enum | no | default
     \endtable
 
     The inherited entries are elaborated in:
@@ -400,6 +402,9 @@ protected:
         //- Optionally write the area of the surfaceFieldValue
         bool writeArea_;
 
+        //- Handling of empty surfaces (nFaces = 0). Default is Fatal.
+        error::handlerTypes emptySurfaceError_;
+
         //- Extended selections
         wordRes selectionNames_;
 
@@ -411,6 +416,9 @@ protected:
 
         //- Global number of faces
         label nFaces_;
+
+        //- Number of warnings emitted since the last valid update
+        unsigned nWarnings_;
 
 
     // If operating on mesh faces (faceZone, patch)

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,25 +44,12 @@ License
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
 //- Max number of warnings (per functionObject)
-static constexpr const uint32_t maxWarnings = 10u;
+static constexpr const unsigned maxWarnings = 10u;
 
 Foam::fileName Foam::functionObjectList::functionObjectDictPath
 (
     "caseDicts/postProcessing"
 );
-
-
-const Foam::Enum
-<
-    Foam::functionObjectList::errorHandlingType
->
-Foam::functionObjectList::errorHandlingNames_
-({
-    { errorHandlingType::DEFAULT, "default" },
-    { errorHandlingType::WARN, "warn" },
-    { errorHandlingType::IGNORE, "ignore" },
-    { errorHandlingType::STRICT, "strict" },
-});
 
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
@@ -350,12 +337,12 @@ bool Foam::functionObjectList::readFunctionObject
 }
 
 
-Foam::functionObjectList::errorHandlingType
+Foam::error::handlerTypes
 Foam::functionObjectList::getOrDefaultErrorHandling
 (
     const word& key,
     const dictionary& dict,
-    const errorHandlingType deflt
+    const error::handlerTypes deflt
 ) const
 {
     const entry* eptr = dict.findEntry(key, keyType::LITERAL);
@@ -372,16 +359,16 @@ Foam::functionObjectList::getOrDefaultErrorHandling
         {
             const word enumName(eptr->get<word>());
 
-            if (!errorHandlingNames_.found(enumName))
+            if (!error::handlerNames.found(enumName))
             {
                 // Failed the name lookup
                 FatalIOErrorInFunction(dict)
                     << enumName << " is not in enumeration: "
-                    << errorHandlingNames_ << nl
+                    << error::handlerNames << nl
                     << exit(FatalIOError);
             }
 
-            return errorHandlingNames_.get(enumName);
+            return error::handlerNames.get(enumName);
         }
     }
 
@@ -640,15 +627,15 @@ bool Foam::functionObjectList::execute()
 
         for (functionObject& funcObj : functions())
         {
-            const errorHandlingType errorHandling = *errIter;
+            const auto errorHandling = *errIter;
             ++errIter;
 
             const word& objName = funcObj.name();
 
             if
             (
-                errorHandling == errorHandlingType::WARN
-             || errorHandling == errorHandlingType::IGNORE
+                errorHandling == error::handlerTypes::WARN
+             || errorHandling == error::handlerTypes::IGNORE
             )
             {
                 // Throw FatalError, FatalIOError as exceptions
@@ -672,12 +659,12 @@ bool Foam::functionObjectList::execute()
                 catch (const Foam::error& err)
                 {
                     // Treat IOerror and error identically
-                    uint32_t nWarnings;
+                    unsigned nWarnings;
                     hadError = true;
 
                     if
                     (
-                        errorHandling != errorHandlingType::IGNORE
+                        (errorHandling != error::handlerTypes::IGNORE)
                      && (nWarnings = ++warnings_(objName)) <= maxWarnings
                     )
                     {
@@ -718,11 +705,11 @@ bool Foam::functionObjectList::execute()
                 catch (const Foam::error& err)
                 {
                     // Treat IOerror and error identically
-                    uint32_t nWarnings;
+                    unsigned nWarnings;
 
                     if
                     (
-                        errorHandling != errorHandlingType::IGNORE
+                        (errorHandling != error::handlerTypes::IGNORE)
                      && (nWarnings = ++warnings_(objName)) <= maxWarnings
                     )
                     {
@@ -851,7 +838,7 @@ bool Foam::functionObjectList::end()
 
         for (functionObject& funcObj : functions())
         {
-            const errorHandlingType errorHandling = *errIter;
+            const auto errorHandling = *errIter;
             ++errIter;
 
             const word& objName = funcObj.name();
@@ -870,11 +857,11 @@ bool Foam::functionObjectList::end()
             catch (const Foam::error& err)
             {
                 // Treat IOerror and error identically
-                uint32_t nWarnings;
+                unsigned nWarnings;
 
                 if
                 (
-                    errorHandling != errorHandlingType::IGNORE
+                    (errorHandling != error::handlerTypes::IGNORE)
                  && (nWarnings = ++warnings_(objName)) <= maxWarnings
                 )
                 {
@@ -982,7 +969,7 @@ bool Foam::functionObjectList::read()
         errorHandling_.resize
         (
             functionsDict.size(),
-            errorHandlingType::DEFAULT
+            error::handlerTypes::DEFAULT
         );
 
         HashTable<label> newIndices;
@@ -998,12 +985,12 @@ bool Foam::functionObjectList::read()
         );
 
         // Top-level "errors" specification (optional)
-        const errorHandlingType errorHandlingFallback =
+        const error::handlerTypes errorHandlingFallback =
             getOrDefaultErrorHandling
             (
                 "errors",
                 functionsDict,
-                errorHandlingType::DEFAULT
+                error::handlerTypes::DEFAULT
             );
 
         label nFunc = 0;
@@ -1045,7 +1032,7 @@ bool Foam::functionObjectList::read()
             bool enabled = dict.getOrDefault("enabled", true);
 
             // Per-function "errors" specification
-            const errorHandlingType errorHandling =
+            const error::handlerTypes errorHandling =
                 getOrDefaultErrorHandling
                 (
                     "errors",
@@ -1135,16 +1122,16 @@ bool Foam::functionObjectList::read()
 
                     switch (errorHandling)
                     {
-                        case errorHandlingType::IGNORE:
+                        case error::handlerTypes::IGNORE:
                             break;
 
-                        case errorHandlingType::STRICT:
+                        case error::handlerTypes::STRICT:
                         {
                             exitNow(err);
                             break;
                         }
 
-                        case errorHandlingType::DEFAULT:
+                        case error::handlerTypes::DEFAULT:
                         {
                             if (isA<Foam::IOerror>(err))
                             {
@@ -1157,7 +1144,7 @@ bool Foam::functionObjectList::read()
                             [[fallthrough]];
                         }
 
-                        case errorHandlingType::WARN:
+                        case error::handlerTypes::WARN:
                         {
                             // Trickery to get original message
                             err.write(Warning, false);
