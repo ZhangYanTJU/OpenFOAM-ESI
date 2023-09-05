@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -189,10 +189,9 @@ void Foam::decomposedBlockData::writeExtraHeaderContent
     dict.set("data.class", io.type());
 
     // Deep-copy of meta-data (if any)
-    const dictionary* metaDataDict = io.findMetaData();
-    if (metaDataDict && !metaDataDict->empty())
+    if (const auto* meta = io.findMetaData(); meta && !meta->empty())
     {
-        dict.add("meta", *metaDataDict);
+        dict.add("meta", *meta);
     }
 }
 
@@ -221,16 +220,16 @@ void Foam::decomposedBlockData::writeHeader
         io.name()
     );
 
+    // Same as writeExtraHeaderContent
     {
         writeHeaderEntry(os, "data.format", streamOptData.format());
         writeHeaderEntry(os, "data.class", io.type());
     }
 
     // Meta-data (if any)
-    const dictionary* metaDataDict = io.findMetaData();
-    if (metaDataDict && !metaDataDict->empty())
+    if (const auto* meta = io.findMetaData(); meta && !meta->empty())
     {
-        metaDataDict->writeEntry("meta", os);
+        meta->writeEntry("meta", os);
     }
 
     os.endBlock();
