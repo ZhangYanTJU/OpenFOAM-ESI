@@ -18,8 +18,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef PackedBoolList_H
-#define PackedBoolList_H
+#ifndef FoamCompat_PackedBoolList_H
+#define FoamCompat_PackedBoolList_H
 
 #include "bitSet.H"
 

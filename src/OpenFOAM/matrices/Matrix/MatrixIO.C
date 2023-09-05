@@ -146,9 +146,9 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
 ) const
 {
     const Matrix<Form, Type>& mat = *this;
+    const label len = mat.size();  // Total size (rows * cols)
 
-    // The total size
-    const label len = mat.size();
+    auto iter = mat.cbegin();  // element-wise iterator
 
     // Rows, columns size
     os  << mat.nRows() << token::SPACE << mat.nCols();
@@ -163,73 +163,101 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
             os.write(mat.cdata_bytes(), mat.size_bytes());
         }
     }
+    else if (len > 1 && is_contiguous<Type>::value && mat.uniform())
+    {
+        // Two or more entries, and all entries have identical values.
+        os  << token::BEGIN_BLOCK << *iter << token::END_BLOCK;
+    }
+    else if
+    (
+        (len <= 1 || !shortLen)
+     || (len <= shortLen && is_contiguous<Type>::value)
+    )
+    {
+        // Single-line output (entire matrix)
+
+        // Begin matrix
+        os  << token::BEGIN_LIST;
+
+        // Loop over rows
+        for (label i = 0; i < mat.nRows(); ++i)
+        {
+            // Begin row
+            os  << token::BEGIN_LIST;
+
+            // Write row
+            for (label j = 0; j < mat.nCols(); ++j)
+            {
+                if (j) os << token::SPACE;
+                os << *iter;
+                ++iter;
+            }
+
+            // End row
+            os << token::END_LIST;
+        }
+
+        // End matrix
+        os << token::END_LIST;
+    }
+    else if
+    (
+        (mat.nCols() <= 1 || !shortLen)
+     || (mat.nCols() <= shortLen && is_contiguous<Type>::value)
+    )
+    {
+        // Multi-line matrix, single-line rows
+
+        // Begin matrix
+        os  << nl << token::BEGIN_LIST;
+
+        // Loop over rows
+        for (label i = 0; i < mat.nRows(); ++i)
+        {
+            // Begin row
+            os  << nl << token::BEGIN_LIST;
+
+            // Write row
+            for (label j = 0; j < mat.nCols(); ++j)
+            {
+                if (j) os << token::SPACE;
+                os << *iter;
+                ++iter;
+            }
+
+            // End row
+            os << token::END_LIST;
+        }
+
+        // End matrix
+        os << nl << token::END_LIST << nl;
+    }
     else
     {
-        if (len)
+        // Multi-line output
+
+        // Begin matrix
+        os  << nl << token::BEGIN_LIST;
+
+        // Loop over rows
+        for (label i=0; i < mat.nRows(); ++i)
         {
-            const Type* v = mat.cdata();
+            // Begin row
+            os  << nl << token::BEGIN_LIST;
 
-            // Can the contents be considered 'uniform' (ie, identical)
-            if (len > 1 && is_contiguous<Type>::value && mat.uniform())
+            // Write row
+            for (label j = 0; j < mat.nCols(); ++j)
             {
-                // Two or more entries, and all entries have identical values.
-                os  << token::BEGIN_BLOCK << v[0] << token::END_BLOCK;
+                os << nl << *iter;
+                ++iter;
             }
-            else if (len < shortLen && is_contiguous<Type>::value)
-            {
-                // Write start contents delimiter
-                os  << token::BEGIN_LIST;
 
-                label idx = 0;
-
-                // Loop over rows
-                for (label i = 0; i < mat.nRows(); ++i)
-                {
-                    os  << token::BEGIN_LIST;
-
-                    // Write row
-                    for (label j = 0; j < mat.nCols(); ++j)
-                    {
-                        if (j) os << token::SPACE;
-                        os << v[idx++];
-                    }
-
-                    os << token::END_LIST;
-                }
-
-                // Write end of contents delimiter
-                os << token::END_LIST;
-            }
-            else
-            {
-                // Write start contents delimiter
-                os  << nl << token::BEGIN_LIST;
-
-                label idx = 0;
-
-                // Loop over rows
-                for (label i=0; i < mat.nRows(); ++i)
-                {
-                    os  << nl << token::BEGIN_LIST;
-
-                    // Write row
-                    for (label j = 0; j < mat.nCols(); ++j)
-                    {
-                        os << nl << v[idx++];
-                    }
-
-                    os << nl << token::END_LIST;
-                }
-
-                // Write end of contents delimiter
-                os << nl << token::END_LIST << nl;
-            }
+            // End row
+            os << nl << token::END_LIST;
         }
-        else
-        {
-            // Empty matrix
-            os  << token::BEGIN_LIST << token::END_LIST << nl;
-        }
+
+        // End matrix
+        os << nl << token::END_LIST << nl;
     }
 
     os.check(FUNCTION_NAME);

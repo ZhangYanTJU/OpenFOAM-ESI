@@ -108,6 +108,8 @@ const Foam::SubList<T> Foam::CircularBuffer<T>::array_two() const
 template<class T>
 Foam::label Foam::CircularBuffer<T>::find(const T& val, label pos) const
 {
+    if (pos < 0) return -1;  // no-op
+
     label i = -1;
 
     const auto list1 = this->array_one();

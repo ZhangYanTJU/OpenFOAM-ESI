@@ -256,6 +256,13 @@ inline void Foam::CircularBuffer<T>::reserve_nocopy(const label len)
 
 
 template<class T>
+bool Foam::CircularBuffer<T>::contains(const T& val) const
+{
+    return (this->array_one().contains(val) || this->array_two().contains(val));
+}
+
+
+template<class T>
 inline bool Foam::CircularBuffer<T>::contains(const T& val, label pos) const
 {
     return (this->find(val, pos) >= 0);

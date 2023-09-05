@@ -307,9 +307,22 @@ inline bool Foam::FixedList<T, N>::uniform() const
 
 
 template<class T, unsigned N>
-inline bool Foam::FixedList<T, N>::contains(const T& val, label pos) const
+inline bool Foam::FixedList<T, N>::contains(const T& val) const
 {
-    return (this->find(val, pos) >= 0);
+    const auto iter = std::find(this->cbegin(), this->cend(), val);
+    return (iter != this->cend());
+}
+
+
+template<class T, unsigned N>
+inline bool Foam::FixedList<T, N>::contains
+(
+    const T& val,
+    label pos,
+    label len
+) const
+{
+    return (this->find(val, pos, len) >= 0);
 }
 
 

@@ -42,11 +42,12 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const std::vector<T>& list)
 
     os << label(list.size()) << token::BEGIN_LIST;
 
+    // Contents
     if (iter != last)
     {
         os << *iter;
 
-        while (++iter != last)
+        for (++iter; (iter != last); (void)++iter)
         {
             os << token::SPACE << *iter;
         }

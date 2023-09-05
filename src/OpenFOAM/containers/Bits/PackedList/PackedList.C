@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,46 +102,49 @@ bool Foam::PackedList<Width>::uniform() const
         return true;
     }
 
-
     // The value of the first element for testing
     const unsigned int val = get(0);
-
-    const label nblocks = num_blocks(size());
 
     bool identical = true;
 
     if (!val)
     {
-        // Zero value: can just check block content directly
+        // No bits set: just check there are no non-zero blocks
+        // - like bitSet::none()
+        identical = (-1 == first_block());
+    }
+    else if (val == PackedList<Width>::max_value)
+    {
+        // All bits set: just check there are no zero blocks
+        // - like bitSet::all()
+        identical = (-1 == first_not_block());
+    }
+    else
+    {
+        const label nblocks = num_blocks(size());
 
-        for (label blocki = 0; identical && blocki < nblocks; ++blocki)
+        if (nblocks > 1)
         {
-            identical = !blocks_[blocki];
+            // Fill value for complete blocks
+            const unsigned int blockval = repeated_value(val);
+
+            // Check each complete block (nblocks-1)
+            for (label blocki = 0; identical && blocki < (nblocks-1); ++blocki)
+            {
+                identical = (blocks_[blocki] == blockval);
+            }
         }
 
-        return identical;
-    }
-    else if (nblocks > 1)
-    {
-        // Fill value for complete blocks
-        const unsigned int blockval = repeated_value(val);
-
-        // Check each complete block (nblocks-1)
-        for (label blocki = 0; identical && blocki < (nblocks-1); ++blocki)
+        // Partial block: check manually
+        for
+        (
+            label elemi = elem_per_block*(nblocks-1);
+            identical && elemi < size();
+            ++elemi
+        )
         {
-            identical = (blocks_[blocki] == blockval);
+            identical = (val == get(elemi));
         }
-    }
-
-    // Partial block: check manually
-    for
-    (
-        label elemi = elem_per_block*(nblocks-1);
-        identical && elemi < size();
-        ++elemi
-    )
-    {
-        identical = (val == get(elemi));
     }
 
     return identical;
@@ -194,16 +197,20 @@ Foam::PackedList<Width>::unpack() const
         "Width of IntType is too small to hold result"
     );
 
+    List<IntType> output(size());
+
     if (empty())
     {
-        return List<IntType>(0);
+        return output;
     }
     else if (uniform())
     {
-        return List<IntType>(size(), static_cast<IntType>(get(0)));
+        output = static_cast<IntType>(get(0));
+        return output;
     }
 
-    List<IntType> output(size());
+    // NON-UNIFORM and len > 0
+
     label outi = 0;
 
     // Process n-1 complete blocks
@@ -215,7 +222,7 @@ Foam::PackedList<Width>::unpack() const
 
         for (unsigned nget = elem_per_block; nget; --nget, ++outi)
         {
-            output[outi] = IntType(blockval & max_value);
+            output[outi] = IntType(blockval & PackedList<Width>::max_value);
             blockval >>= Width;
         }
     }

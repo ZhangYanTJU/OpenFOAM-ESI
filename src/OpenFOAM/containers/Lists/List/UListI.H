@@ -304,9 +304,29 @@ inline std::streamsize Foam::UList<T>::size_bytes() const noexcept
 
 
 template<class T>
-inline bool Foam::UList<T>::contains(const T& val, label pos) const
+inline bool Foam::UList<T>::contains(const T& val) const
 {
-    return (this->find(val, pos) >= 0);
+    const auto iter = std::find(this->begin(), this->end(), val);
+    return (iter != this->end());
+}
+
+
+template<class T>
+inline bool Foam::UList<T>::contains(const T& val, label pos, label len) const
+{
+    return (this->find(val, pos, len) >= 0);
+}
+
+
+template<class T>
+inline void Foam::UList<T>::shallowCopy
+(
+    T* __restrict__ ptr,
+    const label len
+) noexcept
+{
+    size_ = len;
+    v_ = ptr;
 }
 
 

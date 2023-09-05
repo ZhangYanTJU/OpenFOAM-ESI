@@ -221,6 +221,14 @@ protected:
         //- Copy assignment
         inline void copyAssign(const PackedList<Width>& rhs);
 
+        //- Find the first block with a '1' bit
+        //  \return block number or -1 for an list or if all bits are OFF.
+        inline label first_block() const;
+
+        //- Find the first block with a '0' bit
+        //  \return block number or -1 for an list or if all bits are ON.
+        inline label first_not_block() const;
+
 
 public:
 
@@ -292,7 +300,7 @@ public:
         //- Number of elements that can be stored without reallocating
         inline label capacity() const noexcept;
 
-        //- True if all entries have identical values, and list is non-empty
+        //- True if all entries have identical values (and list is non-empty)
         bool uniform() const;
 
         //- Test for equality of sizes and the bits set
