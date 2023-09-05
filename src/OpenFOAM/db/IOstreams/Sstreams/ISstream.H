@@ -59,8 +59,10 @@ class ISstream
 {
     // Private Data
 
+        //- The input stream path
         fileName name_;
 
+        //- The input stream
         std::istream& is_;
 
 
@@ -129,6 +131,8 @@ public:
         virtual const fileName& name() const override { return name_; }
 
         //- The name of the input serial stream, for modification.
+        //  Use with caution since some classes (eg, Fstream)
+        //  also use this for filesystem information!
         virtual fileName& name() { return name_; }
 
 
