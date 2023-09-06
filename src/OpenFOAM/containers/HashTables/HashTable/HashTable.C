@@ -499,8 +499,12 @@ bool Foam::HashTable<T, Key, Hash>::erase(const iterator& iter)
 template<class T, class Key, class Hash>
 bool Foam::HashTable<T, Key, Hash>::erase(const Key& key)
 {
-    iterator iter(find(key));
-    return iterator_erase(iter);
+    if (size_)
+    {
+        iterator iter(find(key));
+        if (iter.good()) return iterator_erase(iter);
+    }
+    return false;
 }
 
 

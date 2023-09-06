@@ -399,7 +399,7 @@ Foam::functionObjectList::functionObjectList
     errorHandling_(),
     digests_(),
     indices_(),
-    warnings_(),
+    warnings_(0),
     time_(runTime),
     parentDict_(parentDict),
     propsDictPtr_(nullptr),
@@ -664,7 +664,7 @@ bool Foam::functionObjectList::execute()
 
                     if
                     (
-                        (errorHandling != error::handlerTypes::IGNORE)
+                        (errorHandling == error::handlerTypes::WARN)
                      && (nWarnings = ++warnings_(objName)) <= maxWarnings
                     )
                     {
@@ -706,10 +706,11 @@ bool Foam::functionObjectList::execute()
                 {
                     // Treat IOerror and error identically
                     unsigned nWarnings;
+                    hadError = true;
 
                     if
                     (
-                        (errorHandling != error::handlerTypes::IGNORE)
+                        (errorHandling == error::handlerTypes::WARN)
                      && (nWarnings = ++warnings_(objName)) <= maxWarnings
                     )
                     {
@@ -731,6 +732,17 @@ bool Foam::functionObjectList::execute()
                 // Restore previous state
                 FatalError.throwing(oldThrowingError);
                 FatalIOError.throwing(oldThrowingIOerr);
+
+                // Reset the warning counter (if any)
+                // if no errors were encountered
+                if
+                (
+                    (errorHandling == error::handlerTypes::WARN)
+                 && !hadError && !warnings_.empty()
+                )
+                {
+                    warnings_.erase(objName);
+                }
             }
             else
             {
@@ -857,32 +869,35 @@ bool Foam::functionObjectList::end()
             catch (const Foam::error& err)
             {
                 // Treat IOerror and error identically
-                unsigned nWarnings;
+                // If it somehow failed, emit a warning (unless IGNORE).
+                // Unlike execute(), do not suppress further warning messages
+                // (we want to know about rare issues)
+                // but do reset the warnings counter for the next cycle.
 
-                if
-                (
-                    (errorHandling != error::handlerTypes::IGNORE)
-                 && (nWarnings = ++warnings_(objName)) <= maxWarnings
-                )
+                if (errorHandling != error::handlerTypes::IGNORE)
                 {
                     // Trickery to get original message
                     err.write(Warning, false);
                     Info<< nl
                         << "--> end() function object '"
-                        << objName << "'";
-
-                    if (nWarnings == maxWarnings)
-                    {
-                        Info<< nl << "... silencing further warnings";
-                    }
-
-                    Info<< nl << endl;
+                        << objName << "'"
+                        << nl << endl;
                 }
             }
 
             // Restore previous state
             FatalError.throwing(oldThrowingError);
             FatalIOError.throwing(oldThrowingIOerr);
+
+            // Reset the corresponding warning counter (if any)
+            if
+            (
+                (errorHandling == error::handlerTypes::WARN)
+             && !warnings_.empty()
+            )
+            {
+                warnings_.erase(objName);
+            }
         }
     }
 
