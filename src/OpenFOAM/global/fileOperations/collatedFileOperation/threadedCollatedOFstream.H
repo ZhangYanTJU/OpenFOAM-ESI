@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,7 @@ SourceFiles
 #define Foam_threadedCollatedOFstream_H
 
 #include "dictionary.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,7 +55,7 @@ class OFstreamCollator;
 
 class threadedCollatedOFstream
 :
-    public OStringStream
+    public OCharStream
 {
     // Private Data
 
@@ -77,6 +77,11 @@ class threadedCollatedOFstream
         //- Additional FoamFile entries for decomposed data
         dictionary headerEntries_;
 
+
+    // Private Member Functions
+
+        //- Commit buffered information
+        void commit();
 
 public:
 
@@ -102,11 +107,13 @@ public:
         );
 
 
-    //- Destructor
+    //- Destructor - commits buffered information to file
     ~threadedCollatedOFstream();
 
 
     // Member Functions
+
+        // -> using OCharStream::rewind
 
         //- Define the header entries for the data block(s)
         void setHeaderEntries(const dictionary& dict);

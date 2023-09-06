@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,13 +51,13 @@ SourceFiles
 #ifndef Foam_OFstreamCollator_H
 #define Foam_OFstreamCollator_H
 
-#include <thread>
-#include <mutex>
 #include "IOstream.H"
-#include "labelList.H"
-#include "FIFOStack.H"
-#include "SubList.H"
+#include "List.H"
+#include "CircularBuffer.H"  // As FIFO
 #include "dictionary.H"
+
+#include <mutex>
+#include <thread>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -72,26 +72,33 @@ class OFstreamCollator
 {
     // Private Class
 
+        //- Holds data to be written
         struct writeData
         {
             const label comm_;
             const word objectType_;
             const fileName pathName_;
-            const string data_;
+            DynamicList<char> localData_;
             const labelList sizes_;
-            PtrList<List<char>> slaveData_;
+            List<List<char>> procData_;
             const IOstreamOption streamOpt_;
             IOstreamOption::atomicType atomic_;
             IOstreamOption::appendType append_;
             const dictionary headerEntries_;
 
+            writeData() = delete;                      // No default construct
+            writeData(const writeData&) = delete;      // No copy construct
+            writeData(writeData&&) = delete;           // No move construct
+            void operator=(const writeData&) = delete; // No copy assign
+            void operator=(writeData&&) = delete;      // No move assign
+
+            //- Construct without local or proc data
             writeData
             (
                 const label comm,
                 const word& objectType,
                 const fileName& pathName,
-                const string& data,
-                const labelList& sizes,
+                const labelUList& sizes,
                 IOstreamOption streamOpt,
                 IOstreamOption::atomicType atomic,
                 IOstreamOption::appendType append,
@@ -101,27 +108,28 @@ class OFstreamCollator
                 comm_(comm),
                 objectType_(objectType),
                 pathName_(pathName),
-                data_(data),
                 sizes_(sizes),
-                slaveData_(),
                 streamOpt_(streamOpt),
                 atomic_(atomic),
                 append_(append),
                 headerEntries_(headerEntries)
             {}
 
-            //- The (approximate) size of master + any optional slave data
+            //- Move reset local data
+            void transfer(DynamicList<char>& localData)
+            {
+                localData_.transfer(localData);
+            }
+
+            //- The (approximate) size of local + any optional proc data
             off_t size() const
             {
-                off_t totalSize = data_.size();
-                forAll(slaveData_, i)
+                off_t total = localData_.size();
+                for (const auto& data : procData_)
                 {
-                    if (slaveData_.set(i))
-                    {
-                        totalSize += slaveData_[i].size();
-                    }
+                    total += data.size();
                 }
-                return totalSize;
+                return total;
             }
         };
 
@@ -135,8 +143,8 @@ class OFstreamCollator
 
         std::unique_ptr<std::thread> thread_;
 
-        //- Stack of files to write + contents
-        FIFOStack<writeData*> objects_;
+        //- FIFO of files to write and their contents
+        CircularBuffer<writeData*> objects_;
 
         //- Whether thread is running (and not exited)
         bool threadRunning_;
@@ -156,9 +164,9 @@ class OFstreamCollator
             const label comm,
             const word& objectType,
             const fileName& fName,
-            const string& masterData,
+            const UList<char>& localData,
             const labelUList& recvSizes,
-            const UPtrList<SubList<char>>& slaveData,
+            const UList<std::string_view>& procData,
             IOstreamOption streamOpt,
             IOstreamOption::atomicType atomic,
             IOstreamOption::appendType append,
@@ -181,7 +189,8 @@ public:
 
     // Constructors
 
-        //- Construct from buffer size. 0 = do not use thread
+        //- Construct from buffer size (0 = do not use thread)
+        //- and with worldComm
         explicit OFstreamCollator(const off_t maxBufferSize);
 
         //- Construct from buffer size (0 = do not use thread)
@@ -195,20 +204,52 @@ public:
 
     // Member Functions
 
-        //- Write file with contents.
-        //  Blocks until writethread has space available
+        //- Write file with contents, possibly taking ownership of the
+        //- content.
+        //  Blocks until write-thread has space available
         //  (total file sizes < maxBufferSize)
         bool write
         (
             const word& objectType,
-            const fileName&,
-            const string& data,
+            const fileName& fName,
+            DynamicList<char>&& localData,
             IOstreamOption streamOpt,
             IOstreamOption::atomicType atomic,
             IOstreamOption::appendType append,
             const bool useThread = true,
             const dictionary& headerEntries = dictionary::null
         );
+
+        //- Write file with contents.
+        FOAM_DEPRECATED_FOR(2023-09, "use write with movable content")
+        bool write
+        (
+            const word& objectType,
+            const fileName& fName,
+            const std::string& s,
+            IOstreamOption streamOpt,
+            IOstreamOption::atomicType atomic,
+            IOstreamOption::appendType append,
+            const bool useThread = true,
+            const dictionary& headerEntries = dictionary::null
+        )
+        {
+            DynamicList<char> charData(label(s.size()));
+            charData.resize(s.size());
+            std::copy(s.begin(), s.end(), charData.begin());
+
+            return write
+            (
+                objectType,
+                fName,
+                std::move(charData),
+                streamOpt,
+                atomic,
+                append,
+                useThread,
+                headerEntries
+            );
+        }
 
         //- Wait for all thread actions to have finished
         void waitAll();

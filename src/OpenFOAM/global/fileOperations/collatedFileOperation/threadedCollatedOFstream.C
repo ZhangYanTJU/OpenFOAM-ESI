@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,14 +41,17 @@ Foam::threadedCollatedOFstream::threadedCollatedOFstream
     const bool useThread
 )
 :
-    OStringStream(streamOpt),
+    OCharStream(streamOpt),
     writer_(writer),
     pathName_(pathName),
     atomic_(atomic),
     compression_(streamOpt.compression()),
     useThread_(useThread),
     headerEntries_()
-{}
+{
+    // Start with a slightly larger buffer
+    OCharStream::reserve(4*1024);
+}
 
 
 Foam::threadedCollatedOFstream::threadedCollatedOFstream
@@ -74,11 +77,22 @@ Foam::threadedCollatedOFstream::threadedCollatedOFstream
 
 Foam::threadedCollatedOFstream::~threadedCollatedOFstream()
 {
+    commit();
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::threadedCollatedOFstream::commit()
+{
+    // Take ownership of serialized content, without copying or reallocation
+    DynamicList<char> charData(OCharStream::release());
+
     writer_.write
     (
         decomposedBlockData::typeName,
         pathName_,
-        str(),
+        std::move(charData),
         IOstreamOption(IOstreamOption::BINARY, version(), compression_),
         atomic_,
         IOstreamOption::NO_APPEND,
