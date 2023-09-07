@@ -257,6 +257,13 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::polyTopoChanger::changeMesh
     const label nOldFaces = mesh.nFaces();
     const label nOldCells = mesh.nCells();
 
+    // Grab old cell volumes for mpm
+    autoPtr<scalarField> oldCellVolumes
+    (
+        new scalarField(mesh.cellVolumes())
+    );
+    
+    
     // Keep the old patch start labels
     labelList oldPatchStarts(boundary.size());
     forAll (boundary, patchi)
@@ -2168,12 +2175,24 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::polyTopoChanger::changeMesh
         }
 
         // HJ, HACKED
+        // mesh.resetPrimitives
+        // (
+        //     autoPtr<pointField>(&newPointsZeroVol),
+        //     autoPtr<faceList>(&newFaces),
+        //     autoPtr<labelList>(&allOwn),
+        //     autoPtr<labelList>(&allNei),
+        //     patchSizes,
+        //     patchStarts,
+        //     false         // The mesh is not complete: no parallel comms
+        //                   // HJ, 27/Nov/2009
+        // );
+
         mesh.resetPrimitives
         (
-            autoPtr<pointField>(&newPointsZeroVol),
-            autoPtr<faceList>(&newFaces),
-            autoPtr<labelList>(&allOwn),
-            autoPtr<labelList>(&allNei),
+            autoPtr<pointField>::New(std::move(newPointsZeroVol)),
+            autoPtr<faceList>::New(std::move(newFaces)),
+            autoPtr<labelList>::New(std::move(allOwn)),
+            autoPtr<labelList>::New(std::move(allNei)),
             patchSizes,
             patchStarts,
             false         // The mesh is not complete: no parallel comms
@@ -2314,9 +2333,6 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::polyTopoChanger::changeMesh
     // of boundary patches
     // HJ, 23/Apr/2018
     // boolList resetPatchFlag(boundary.size(), false);
-
-    // Dummy old cell volumes
-    autoPtr<scalarField> oldCellVolumes;
     
     autoPtr<mapPolyMesh> topoChangeMap
     (

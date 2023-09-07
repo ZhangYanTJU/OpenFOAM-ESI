@@ -1010,34 +1010,41 @@ void Foam::fvMesh::updateMesh(const mapPolyMesh& mpm)
 
     if (VPtr_)
     {
-        // Grab old time volumes if the time has been incremented
-        // This will update V0, V00
-        storeOldVol(mpm.oldCellVolumes());
+        if (mpm.hasOldCellVolumes())
+        {
+            // Grab old time volumes if the time has been incremented
+            // This will update V0, V00
+            storeOldVol(mpm.oldCellVolumes());
 
-        // Few checks
-        if (VPtr_ && (VPtr_->size() != mpm.nOldCells()))
-        {
-            FatalErrorInFunction
-                << "V:" << VPtr_->size()
-                << " not equal to the number of old cells "
-                << mpm.nOldCells()
-                << exit(FatalError);
+            // Few checks
+            if (VPtr_ && (VPtr_->size() != mpm.nOldCells()))
+            {
+                FatalErrorInFunction
+                    << "V:" << VPtr_->size()
+                        << " not equal to the number of old cells "
+                        << mpm.nOldCells()
+                        << exit(FatalError);
+            }
+            if (V0Ptr_ && (V0Ptr_->size() != mpm.nOldCells()))
+            {
+                FatalErrorInFunction
+                    << "V0:" << V0Ptr_->size()
+                        << " not equal to the number of old cells "
+                        << mpm.nOldCells()
+                        << exit(FatalError);
+            }
+            if (V00Ptr_ && (V00Ptr_->size() != mpm.nOldCells()))
+            {
+                FatalErrorInFunction
+                    << "V0:" << V00Ptr_->size()
+                        << " not equal to the number of old cells "
+                        << mpm.nOldCells()
+                        << exit(FatalError);
+            }
         }
-        if (V0Ptr_ && (V0Ptr_->size() != mpm.nOldCells()))
+        else
         {
-            FatalErrorInFunction
-                << "V0:" << V0Ptr_->size()
-                << " not equal to the number of old cells "
-                << mpm.nOldCells()
-                << exit(FatalError);
-        }
-        if (V00Ptr_ && (V00Ptr_->size() != mpm.nOldCells()))
-        {
-            FatalErrorInFunction
-                << "V0:" << V00Ptr_->size()
-                << " not equal to the number of old cells "
-                << mpm.nOldCells()
-                << exit(FatalError);
+            deleteDemandDrivenData(VPtr_);
         }
     }
 
