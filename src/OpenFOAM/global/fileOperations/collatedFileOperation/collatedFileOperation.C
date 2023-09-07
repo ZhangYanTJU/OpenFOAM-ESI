@@ -59,7 +59,7 @@ namespace fileOperations
 
     float collatedFileOperation::maxThreadFileBufferSize
     (
-        debug::floatOptimisationSwitch("maxThreadFileBufferSize", 1e9)
+        debug::floatOptimisationSwitch("maxThreadFileBufferSize", 0)
     );
     registerOptSwitch
     (
@@ -90,25 +90,40 @@ void Foam::fileOperations::collatedFileOperation::printBanner
     DetailInfo
         << "I/O    : " << this->type();
 
-    if (maxThreadFileBufferSize == 0)
+    if (mag(maxThreadFileBufferSize) > 1)
     {
-        DetailInfo
-            << " [unthreaded] (maxThreadFileBufferSize = 0)." << nl
-            << "         Writing may be slow for large file sizes."
-            << endl;
-    }
-    else
-    {
+        // FUTURE: deprecate or remove threading?
         DetailInfo
             << " [threaded] (maxThreadFileBufferSize = "
             << maxThreadFileBufferSize << ")." << nl
             << "         Requires buffer large enough to collect all data"
-               " or thread support" << nl
-            << "         enabled in MPI. If MPI thread support cannot be"
-               " enabled, deactivate" << nl
-            << "         threading by setting maxThreadFileBufferSize"
-               " to 0 in" << nl
+               " or MPI thread support." << nl
+            << "         To avoid MPI threading [slow], set"
+               " (maxThreadFileBufferSize = 0) in" << nl
             << "         OpenFOAM etc/controlDict" << endl;
+    }
+    else
+    {
+        DetailInfo
+            << " [unthreaded] (maxThreadFileBufferSize = 0)." << nl;
+
+        if (mag(maxMasterFileBufferSize) < 1)
+        {
+            DetailInfo
+                << "         With scheduled transfer" << nl;
+        }
+        else if (maxMasterFileBufferSize >= 1)
+        {
+            DetailInfo
+                << "         With non-blocking transfer,"
+                " buffer-size = " << maxMasterFileBufferSize << nl;
+        }
+        else
+        {
+            DetailInfo
+                << "         With non-blocking transfer,"
+                   " minimal buffer size" << nl;
+        }
     }
 
     if (withRanks)
@@ -455,7 +470,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
         {
             // Re-check static maxThreadFileBufferSize variable to see
             // if needs to use threading
-            const bool useThread = (maxThreadFileBufferSize != 0);
+            const bool useThread = (mag(maxThreadFileBufferSize) > 1);
 
             if (debug)
             {
