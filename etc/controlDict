@@ -114,7 +114,7 @@ OptimisationSwitches
     //  (sized with magnitude of value) is large enough to hold all
     //  outstanding writes so will not try to initialise the Pstream with
     //  threading support.
-    //  Default: 1e9
+    //  Default: 0
     maxThreadFileBufferSize 0;
 
     //- masterUncollated: non-blocking buffer size.
