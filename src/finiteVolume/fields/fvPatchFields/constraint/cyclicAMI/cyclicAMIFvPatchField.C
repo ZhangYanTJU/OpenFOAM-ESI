@@ -157,7 +157,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMIPatch_(ptf.cyclicAMIPatch_),
     sendRequests_(0),
     recvRequests_(0),
-    patchNeighbourFieldPtr_(ptf.patchNeighbourFieldPtr_.clone())
+    patchNeighbourFieldPtr_(ptf.patchNeighbourFieldPtr_)
 {
     if (debug && !ptf.all_ready())
     {
@@ -180,7 +180,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMIPatch_(ptf.cyclicAMIPatch_),
     sendRequests_(0),
     recvRequests_(0),
-    patchNeighbourFieldPtr_(ptf.patchNeighbourFieldPtr_.clone())
+    patchNeighbourFieldPtr_(nullptr)
 {
     if (debug && !ptf.all_ready())
     {
@@ -655,7 +655,7 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
         const labelUList& nbrFaceCells =
             lduAddr.patchAddr(cyclicAMIPatch_.neighbPatchID());
 
-        Field<Type> pnf(psiInternal, nbrFaceCells);
+        pnf = Field<Type>(psiInternal, nbrFaceCells);
 
         // Transform according to the transformation tensors
         transformCoupleField(pnf);
