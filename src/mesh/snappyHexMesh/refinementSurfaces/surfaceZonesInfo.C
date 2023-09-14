@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,7 +83,7 @@ Foam::surfaceZonesInfo::surfaceZonesInfo
     faceZoneNames_(),
     cellZoneName_(),
     zoneInside_(NONE),
-    zoneInsidePoint_(point::min),
+    zoneInsidePoints_(),
     faceType_(INTERNAL)
 {
     const label nRegions = surface.regions().size();
@@ -156,9 +156,31 @@ Foam::surfaceZonesInfo::surfaceZonesInfo
             zoneInside_ = areaSelectionAlgoNames[method];
             if (zoneInside_ == INSIDEPOINT)
             {
-                surfacesDict.readEntry("insidePoint", zoneInsidePoint_);
-            }
+                const bool foundPoints = surfacesDict.readIfPresent
+                (
+                    "insidePoints",
+                    zoneInsidePoints_,
+                    keyType::LITERAL
+                );
 
+                if (foundPoints)
+                {
+                    if (surfacesDict.found("insidePoint", keyType::LITERAL))
+                    {
+                        FatalIOErrorInFunction(surfacesDict)
+                            << "Cannot supply both 'insidePoint'"
+                            << " and 'insidePoints'" << exit(FatalIOError);
+                    }
+                }
+                else
+                {
+                    zoneInsidePoints_ = pointField
+                    (
+                        1,
+                        surfacesDict.get<point>("insidePoint", keyType::LITERAL)
+                    );
+                }
+            }
         }
         else
         {
@@ -216,14 +238,14 @@ Foam::surfaceZonesInfo::surfaceZonesInfo
     const wordList& faceZoneNames,
     const word& cellZoneName,
     const areaSelectionAlgo& zoneInside,
-    const point& zoneInsidePoint,
+    const pointField& zoneInsidePoints,
     const faceZoneType& faceType
 )
 :
     faceZoneNames_(faceZoneNames),
     cellZoneName_(cellZoneName),
     zoneInside_(zoneInside),
-    zoneInsidePoint_(zoneInsidePoint),
+    zoneInsidePoints_(zoneInsidePoints),
     faceType_(faceType)
 {}
 
@@ -233,7 +255,7 @@ Foam::surfaceZonesInfo::surfaceZonesInfo(const surfaceZonesInfo& surfZone)
     faceZoneNames_(surfZone.faceZoneNames()),
     cellZoneName_(surfZone.cellZoneName()),
     zoneInside_(surfZone.zoneInside()),
-    zoneInsidePoint_(surfZone.zoneInsidePoint()),
+    zoneInsidePoints_(surfZone.zoneInsidePoints()),
     faceType_(surfZone.faceType())
 {}
 

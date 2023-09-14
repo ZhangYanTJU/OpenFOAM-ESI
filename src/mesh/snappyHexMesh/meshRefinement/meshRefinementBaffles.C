@@ -3344,24 +3344,33 @@ void Foam::meshRefinement::zonify
             << nl << endl;
 
         // Collect per surface the -insidePoint -cellZone
-        pointField insidePoints(locationSurfaces.size());
-        labelList insidePointCellZoneIDs(locationSurfaces.size(), -1);
+        // Usually only a single inside point per surface so no clever
+        // counting - just use DynamicField
+        DynamicField<point> insidePoints(locationSurfaces.size());
+        DynamicList<label> insidePointCellZoneIDs(locationSurfaces.size());
         forAll(locationSurfaces, i)
         {
-            label surfI = locationSurfaces[i];
-            insidePoints[i] = surfZones[surfI].zoneInsidePoint();
+            const label surfI = locationSurfaces[i];
+            const auto& surfInsidePoints = surfZones[surfI].zoneInsidePoints();
 
             const word& name = surfZones[surfI].cellZoneName();
+            label zoneID = -1;
             if (name != "none")
             {
-                label zoneID = mesh_.cellZones().findZoneID(name);
+                zoneID = mesh_.cellZones().findZoneID(name);
                 if (zoneID == -1)
                 {
                     FatalErrorInFunction
-                        << "problem"
+                        << "Specified non-existing cellZone " << name
+                        << " for surface " << surfaces_.names()[surfI]
                         << abort(FatalError);
                 }
-                insidePointCellZoneIDs[i] = zoneID;
+            }
+
+            for (const auto& pt : surfInsidePoints)
+            {
+                insidePoints.append(pt);
+                insidePointCellZoneIDs.append(zoneID);
             }
         }
 

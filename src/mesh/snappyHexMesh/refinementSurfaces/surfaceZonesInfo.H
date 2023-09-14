@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014 OpenFOAM Foundation
-    Copyright (C) 2015 OpenCFD Ltd.
+    Copyright (C) 2015,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ SourceFiles
 #define surfaceZonesInfo_H
 
 #include "Enum.H"
-#include "point.H"
+#include "pointField.H"
 #include "word.H"
 #include "PtrList.H"
 #include "labelList.H"
@@ -110,7 +110,7 @@ private:
         areaSelectionAlgo zoneInside_;
 
         //- If zoneInside=location gives the corresponding inside point
-        point zoneInsidePoint_;
+        pointField zoneInsidePoints_;
 
         //- Per 'interface' surface :
         //  What to do with outside
@@ -142,7 +142,7 @@ public:
             const wordList& faceZoneNames,
             const word& cellZoneNames,
             const areaSelectionAlgo& zoneInside,
-            const point& zoneInsidePoints,
+            const pointField& zoneInsidePoints,
             const faceZoneType& faceType
         );
 
@@ -179,10 +179,16 @@ public:
                 return zoneInside_;
             }
 
-            //- Get specified inside locations for surfaces with a cellZone
-            const point& zoneInsidePoint() const
+            //- Get specified inside location for surfaces with a cellZone
+            const point zoneInsidePoint() const
             {
-                return zoneInsidePoint_;
+                return zoneInsidePoints_[0];
+            }
+
+            //- Get specified inside locations for surfaces with a cellZone
+            const pointField& zoneInsidePoints() const
+            {
+                return zoneInsidePoints_;
             }
 
             //- How to handle face of surfaces with a faceZone
