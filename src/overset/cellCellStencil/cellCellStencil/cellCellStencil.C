@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -756,7 +756,7 @@ Foam::Ostream& Foam::operator<<
     const labelUList& interpolationCells = e.interpolationCells();
     const labelListList& cellStencil = e.cellStencil();
 
-    labelList nCells(cellCellStencil::count(4, cellTypes));
+    labelList nCells(cellCellStencil::count(5, cellTypes));
 
     label nInvalidInterpolated = 0;
     label nLocal = 0;
@@ -808,7 +808,7 @@ Foam::Ostream& Foam::operator<<
     reduce(nRemote, sumOp<label>());
     reduce(nInvalidInterpolated, sumOp<label>());
 
-    Info<< "Overset analysis : nCells : "
+    os  << "Overset analysis : nCells : "
         << returnReduce(cellTypes.size(), sumOp<label>()) << nl
         << incrIndent
         << indent << "calculated   : " << nCells[cellCellStencil::CALCULATED]
@@ -818,9 +818,16 @@ Foam::Ostream& Foam::operator<<
         << "  mixed local/remote:" << nMixed
         << "  remote:" << nRemote
         << "  special:" << nInvalidInterpolated << ")" << nl
-        << indent << "hole         : " << nCells[cellCellStencil::HOLE] << nl
-        << indent << "special      : " << nCells[cellCellStencil::SPECIAL] << nl
-        << decrIndent << endl;
+        << indent << "hole         : " << nCells[cellCellStencil::HOLE] << nl;
+
+    if (nCells[cellCellStencil::SPECIAL] || nCells[cellCellStencil::POROUS])
+    {
+        os  << indent << "special      : " << nCells[cellCellStencil::SPECIAL]
+            << nl
+            << indent << "porous       : " << nCells[cellCellStencil::POROUS]
+            << nl;
+    }
+    os  << decrIndent << endl;
 
     return os;
 }

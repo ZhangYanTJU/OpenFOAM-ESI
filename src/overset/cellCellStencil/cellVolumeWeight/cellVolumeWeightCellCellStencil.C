@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2022 OpenCFD Ltd.
+    Copyright (C) 2014-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1100,16 +1100,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
         }
     }
 
-    {
-        labelList nCells(count(3, cellTypes_));
-        Info<< "Overset analysis : nCells : "
-            << returnReduce(cellTypes_.size(), sumOp<label>()) << nl
-            << incrIndent
-            << indent << "calculated   : " << nCells[CALCULATED] << nl
-            << indent << "interpolated : " << nCells[INTERPOLATED] << nl
-            << indent << "hole         : " << nCells[HOLE] << nl
-            << decrIndent << endl;
-    }
+    Info << this->info();
 
     return true;
 }

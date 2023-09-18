@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1136,60 +1136,8 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
 
 
     // Print some stats
-    {
-        labelList nCells(count(3, cellTypes_));
+    Info<< this->info();
 
-        label nLocal = 0;
-        label nMixed = 0;
-        label nRemote = 0;
-        forAll(interpolationCells_, i)
-        {
-            label celli = interpolationCells_[i];
-            const labelList& slots = cellStencil_[celli];
-
-            bool hasLocal = false;
-            bool hasRemote = false;
-
-            forAll(slots, sloti)
-            {
-                if (slots[sloti] >= mesh_.nCells())
-                {
-                    hasRemote = true;
-                }
-                else
-                {
-                    hasLocal = true;
-                }
-            }
-
-            if (hasRemote)
-            {
-                if (!hasLocal)
-                {
-                    nRemote++;
-                }
-                else
-                {
-                    nMixed++;
-                }
-            }
-            else if (hasLocal)
-            {
-                nLocal++;
-            }
-        }
-
-        Info<< "Overset analysis : nCells : "
-            << returnReduce(cellTypes_.size(), sumOp<label>()) << nl
-            << incrIndent
-            << indent << "calculated   : " << nCells[CALCULATED] << nl
-            << indent << "interpolated : " << nCells[INTERPOLATED]
-            << " (from local:" << returnReduce(nLocal, sumOp<label>())
-            << "  mixed local/remote:" << returnReduce(nMixed, sumOp<label>())
-            << "  remote:" << returnReduce(nRemote, sumOp<label>()) << ")" << nl
-            << indent << "hole         : " << nCells[HOLE] << nl
-            << decrIndent << endl;
-    }
     DebugInfo<< FUNCTION_NAME << " : Finished analysis" << endl;
 
     // Tbd: detect if anything changed. Most likely it did!
