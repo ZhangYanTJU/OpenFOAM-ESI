@@ -56,6 +56,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
+#include "dynamicFvMesh.H"
 #include "fvOptions.H"
 #include "simpleControl.H"
 
@@ -71,7 +72,7 @@ int main(int argc, char *argv[])
     #include "addCheckCaseOptions.H"
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createMesh.H"
+    #include "createDynamicFvMesh.H"
 
     simpleControl simple(mesh);
 
@@ -86,6 +87,16 @@ int main(int argc, char *argv[])
     while (simple.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
+
+        // Do any mesh changes
+        mesh.controlledUpdate();
+
+        if (mesh.changing())
+        {
+            // Calculate absolute flux
+            // from the mapped surface velocity
+            phi = mesh.Sf() & fvc::interpolate(U);
+        }
 
         while (simple.correctNonOrthogonal())
         {
