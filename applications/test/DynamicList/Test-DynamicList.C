@@ -348,6 +348,32 @@ int main(int argc, char *argv[])
             Info<< "input = " << flatOutput(input1) << nl
                 << "remove " << range << " = " << flatOutput(list1) << nl;
         }
+
+        {
+            input1 = identity(5);
+            list1 = identity(4, 5);
+            list1.reserve(10);
+
+            Info<< nl << "test swap(List)" << nl;
+            Info<< "  input: " << input1.size()
+                << '/' << input1.capacity() << ' '
+                << flatOutput(input1) << nl;
+            Info<< "  list:  " << list1.size() << '/'
+                << list1.capacity() << ' '
+                << flatOutput(list1) << nl;
+
+
+            // input1.swap(list1);   // This is wrong!
+            list1.swap(input1);   // Correct
+
+            Info<< "after swap:" << nl;
+            Info<< "  input: " << input1.size()
+                << '/' << input1.capacity() << ' '
+                << flatOutput(input1) << nl;
+            Info<< "  list:  " << list1.size() << '/'
+                << list1.capacity() << ' '
+                << flatOutput(list1) << nl;
+        }
     }
 
     Info<< "\nEnd\n";

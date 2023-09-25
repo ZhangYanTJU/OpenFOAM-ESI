@@ -186,6 +186,13 @@ inline void Foam::List<T>::resize_nocopy(const label len)
 
 
 template<class T>
+inline void Foam::List<T>::resize_unsafe(const label len) noexcept
+{
+    UList<T>::setAddressableSize(len);
+}
+
+
+template<class T>
 inline T& Foam::List<T>::newElmt(const label i)
 {
     label n = this->size();
