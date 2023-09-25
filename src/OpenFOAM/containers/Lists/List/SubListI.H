@@ -54,9 +54,9 @@ template<unsigned N>
 inline Foam::SubList<T>::SubList
 (
     const FixedList<T, N>& list
-)
+) noexcept
 :
-    UList<T>(const_cast<T*>(list.cdata()), static_cast<label>(N))
+    UList<T>(const_cast<T*>(list.cdata()), list.size())
 {}
 
 
@@ -64,13 +64,13 @@ template<class T>
 inline Foam::SubList<T>::SubList
 (
     const UList<T>& list,
-    const label subSize
+    const label len
 )
 :
-    UList<T>(const_cast<T*>(list.cdata()), subSize)
+    UList<T>(const_cast<T*>(list.cdata()), len)
 {
     #ifdef FULLDEBUG
-    list.checkSize(subSize);
+    list.checkSize(len);
     #endif
 }
 
@@ -79,14 +79,14 @@ template<class T>
 inline Foam::SubList<T>::SubList
 (
     const UList<T>& list,
-    const label subSize,
-    const label startIndex
+    const label len,
+    const label start
 )
 :
-    UList<T>(const_cast<T*>(list.cdata() + startIndex), subSize)
+    UList<T>(const_cast<T*>(list.cdata() + start), len)
 {
     #ifdef FULLDEBUG
-    list.checkRange(startIndex, subSize);
+    list.checkRange(start, len);
     #endif
 }
 
@@ -144,14 +144,14 @@ template<class T>
 inline Foam::UList<T>& Foam::SubList<T>::reset
 (
     const UList<T>& list,
-    const label subSize
+    const label len
 )
 {
     #ifdef FULLDEBUG
-    list.checkSize(subSize);
+    list.checkSize(len);
     #endif
 
-    UList<T>::shallowCopy(const_cast<T*>(list.cdata()), subSize);
+    UList<T>::shallowCopy(const_cast<T*>(list.cdata()), len);
     return *this;
 }
 
@@ -160,18 +160,18 @@ template<class T>
 inline Foam::UList<T>& Foam::SubList<T>::reset
 (
     const UList<T>& list,
-    const label subSize,
-    const label startIndex
+    const label len,
+    const label start
 )
 {
     #ifdef FULLDEBUG
-    list.checkRange(startIndex, subSize);
+    list.checkRange(start, len);
     #endif
 
     UList<T>::shallowCopy
     (
-        const_cast<T*>(list.cdata() + startIndex),
-        subSize
+        const_cast<T*>(list.cdata() + start),
+        len
     );
     return *this;
 }

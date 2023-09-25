@@ -187,7 +187,7 @@ public:
         List(std::initializer_list<T> list);
 
         //- Move construct from List
-        List(List<T>&& list);
+        List(List<T>&& list) noexcept;
 
         //- Move construct from DynamicList
         template<int SizeMin>

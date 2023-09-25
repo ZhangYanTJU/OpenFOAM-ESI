@@ -152,14 +152,14 @@ public:
         inline explicit DynamicList(const IndirectListBase<T, Addr>& lst);
 
         //- Move construct.
-        inline DynamicList(DynamicList<T, SizeMin>&& lst);
+        inline DynamicList(DynamicList<T, SizeMin>&& list) noexcept;
 
         //- Move construct with different sizing parameters
         template<int AnySizeMin>
-        inline DynamicList(DynamicList<T, AnySizeMin>&& lst);
+        inline DynamicList(DynamicList<T, AnySizeMin>&& list) noexcept;
 
         //- Move construct from List
-        inline DynamicList(List<T>&& lst);
+        inline DynamicList(List<T>&& list) noexcept;
 
         //- Construct from Istream. Size set to size of list read.
         explicit DynamicList(Istream& is);

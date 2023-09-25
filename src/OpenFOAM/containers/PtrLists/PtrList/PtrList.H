@@ -93,7 +93,7 @@ public:
         inline PtrList(const PtrList<T>& list);
 
         //- Move construct
-        inline PtrList(PtrList<T>&& list);
+        inline PtrList(PtrList<T>&& list) noexcept;
 
         //- Take ownership of pointers in the list, set old pointers to null.
         inline explicit PtrList(UList<T*>& list);

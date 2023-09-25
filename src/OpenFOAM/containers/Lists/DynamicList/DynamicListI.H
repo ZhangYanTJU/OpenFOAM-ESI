@@ -260,12 +260,13 @@ inline Foam::DynamicList<T, SizeMin>::DynamicList
 template<class T, int SizeMin>
 inline Foam::DynamicList<T, SizeMin>::DynamicList
 (
-    DynamicList<T, SizeMin>&& lst
-)
+    DynamicList<T, SizeMin>&& list
+) noexcept
 :
-    capacity_(0)
+    List<T>(std::move(static_cast<List<T>&>(list))),
+    capacity_(list.capacity())
 {
-    transfer(lst);
+    list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
 }
 
 
@@ -273,22 +274,23 @@ template<class T, int SizeMin>
 template<int AnySizeMin>
 inline Foam::DynamicList<T, SizeMin>::DynamicList
 (
-    DynamicList<T, AnySizeMin>&& lst
-)
+    DynamicList<T, AnySizeMin>&& list
+) noexcept
 :
-    capacity_(0)
+    List<T>(std::move(static_cast<List<T>&>(list))),
+    capacity_(list.capacity())
 {
-    transfer(lst);
+    list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
 }
 
 
 template<class T, int SizeMin>
 inline Foam::DynamicList<T, SizeMin>::DynamicList
 (
-    List<T>&& lst
-)
+    List<T>&& list
+) noexcept
 :
-    List<T>(std::move(lst)),
+    List<T>(std::move(list)),
     capacity_(List<T>::size())
 {}
 

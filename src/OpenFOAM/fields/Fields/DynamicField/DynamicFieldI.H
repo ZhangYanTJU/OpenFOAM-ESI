@@ -220,7 +220,7 @@ template<class T, int SizeMin>
 inline Foam::DynamicField<T, SizeMin>::DynamicField
 (
     List<T>&& content
-)
+) noexcept
 :
     Field<T>(std::move(content)),
     capacity_(Field<T>::size())
@@ -231,13 +231,13 @@ template<class T, int SizeMin>
 template<int AnySizeMin>
 inline Foam::DynamicField<T, SizeMin>::DynamicField
 (
-    DynamicList<T, AnySizeMin>&& list
-)
+    DynamicList<T, AnySizeMin>&& content
+) noexcept
 :
-    Field<T>(),
-    capacity_(0)
+    Field<T>(std::move(static_cast<List<T>&>(content))),
+    capacity_(content.capacity())
 {
-    transfer(list);
+    content.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
 }
 
 
@@ -245,12 +245,12 @@ template<class T, int SizeMin>
 inline Foam::DynamicField<T, SizeMin>::DynamicField
 (
     DynamicField<T, SizeMin>&& content
-)
+) noexcept
 :
-    Field<T>(),
-    capacity_(0)
+    Field<T>(std::move(static_cast<List<T>&>(content))),
+    capacity_(content.capacity())
 {
-    transfer(content);
+    content.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
 }
 
 
@@ -259,12 +259,12 @@ template<int AnySizeMin>
 inline Foam::DynamicField<T, SizeMin>::DynamicField
 (
     DynamicField<T, AnySizeMin>&& content
-)
+) noexcept
 :
-    Field<T>(),
-    capacity_(0)
+    Field<T>(std::move(static_cast<List<T>&>(content))),
+    capacity_(content.capacity())
 {
-    transfer(content);
+    content.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
 }
 
 

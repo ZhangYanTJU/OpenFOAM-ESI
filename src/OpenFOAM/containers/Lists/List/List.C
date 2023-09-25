@@ -282,12 +282,12 @@ Foam::List<T>::List(std::initializer_list<T> list)
 
 
 template<class T>
-Foam::List<T>::List(List<T>&& list)
+Foam::List<T>::List(List<T>&& list) noexcept
 :
-    UList<T>()
+    UList<T>(list.data(), list.size())
 {
-    // Can use transfer or swap to manage content
-    transfer(list);
+    list.size_ = 0;
+    list.v_ = nullptr;
 }
 
 

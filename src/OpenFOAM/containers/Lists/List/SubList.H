@@ -83,7 +83,7 @@ public:
         SubList() noexcept = default;
 
         //- Copy construct, shallow copy
-        SubList(const SubList&) noexcept = default;
+        SubList(const SubList<T>&) noexcept = default;
 
 
     // Constructors
@@ -93,21 +93,21 @@ public:
 
         //- Construct from FixedList, the entire size
         template<unsigned N>
-        inline explicit SubList(const FixedList<T, N>& list);
+        inline explicit SubList(const FixedList<T, N>& list) noexcept;
 
         //- Construct from UList and sub-list size, start at 0
         inline SubList
         (
             const UList<T>& list,
-            const label subSize
+            const label len
         );
 
         //- Construct from UList, sub-list size and start index
         inline SubList
         (
             const UList<T>& list,
-            const label subSize,
-            const label startIndex
+            const label len,
+            const label start
         );
 
         //- Construct from UList and a (start,size) range.
@@ -119,8 +119,8 @@ public:
             const labelRange& range
         );
 
-        //- Construct from UList and a (start,size) range, but bypassing
-        //- run-time range checking.
+        //- Construct from UList and a (start,size) range,
+        //- but bypassing run-time range checking.
         inline SubList
         (
             const labelRange& range,
@@ -140,15 +140,15 @@ public:
         inline UList<T>& reset
         (
             const UList<T>& list,
-            const label subSize
+            const label len
         );
 
         //- Reset to use UList with sub-list size and start index
         inline UList<T>& reset
         (
             const UList<T>& list,
-            const label subSize,
-            const label startIndex
+            const label len,
+            const label start
         );
 
         //- Reset to use UList with a (start,size) range.

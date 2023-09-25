@@ -134,18 +134,18 @@ public:
         inline explicit DynamicField(const IndirectListBase<T, Addr>& list);
 
         //- Move construct from List contents
-        inline explicit DynamicField(List<T>&& content);
+        inline explicit DynamicField(List<T>&& content) noexcept;
 
         //- Move construct from dynamic Field contents
-        inline DynamicField(DynamicField<T, SizeMin>&& content);
+        inline DynamicField(DynamicField<T, SizeMin>&& content) noexcept;
 
         //- Move construct with different sizing parameters
         template<int AnySizeMin>
-        inline DynamicField(DynamicField<T, AnySizeMin>&& content);
+        inline DynamicField(DynamicField<T, AnySizeMin>&& content) noexcept;
 
         //- Move construct from DynamicList
         template<int AnySizeMin>
-        inline DynamicField(DynamicList<T, AnySizeMin>&& list);
+        inline DynamicField(DynamicList<T, AnySizeMin>&& content) noexcept;
 
         //- Construct by 1 to 1 mapping from the given field
         inline DynamicField

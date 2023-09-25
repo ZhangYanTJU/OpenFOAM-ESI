@@ -67,9 +67,29 @@ inline Foam::PtrDynList<T, SizeMin>::PtrDynList
 )
 :
     PtrList<T>(std::move(list)),
-    capacity_(list.capacity_)
+    capacity_(list.capacity())
 {
-    list.clearStorage();
+    // FUTURE:
+    // list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
+
+    list.clearStorage();  // capacity=0 etc.
+}
+
+
+template<class T, int SizeMin>
+template<int AnySizeMin>
+inline Foam::PtrDynList<T, SizeMin>::PtrDynList
+(
+    PtrDynList<T, AnySizeMin>&& list
+)
+:
+    PtrList<T>(std::move(list)),
+    capacity_(list.capacity())
+{
+    // FUTURE:
+    // list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
+
+    list.clearStorage();  // capacity=0 etc.
 }
 
 
@@ -77,7 +97,7 @@ template<class T, int SizeMin>
 inline Foam::PtrDynList<T, SizeMin>::PtrDynList
 (
     PtrList<T>&& list
-)
+) noexcept
 :
     PtrList<T>(std::move(list)),
     capacity_(PtrList<T>::size())

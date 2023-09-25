@@ -54,7 +54,7 @@ inline Foam::PtrList<T>::PtrList(const PtrList<T>& list)
 
 
 template<class T>
-inline Foam::PtrList<T>::PtrList(PtrList<T>&& list)
+inline Foam::PtrList<T>::PtrList(PtrList<T>&& list) noexcept
 :
     UPtrList<T>(std::move(list))
 {}

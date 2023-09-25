@@ -85,8 +85,12 @@ public:
         //- Move construct
         inline PtrDynList(PtrDynList<T, SizeMin>&& list);
 
+        //- Move construct with different sizing parameters
+        template<int AnySizeMin>
+        inline PtrDynList(PtrDynList<T, AnySizeMin>&& list);
+
         //- Move construct from PtrList
-        inline PtrDynList(PtrList<T>&& list);
+        inline PtrDynList(PtrList<T>&& list) noexcept;
 
         //- Take ownership of pointers in the list, set old pointers to null.
         inline explicit PtrDynList(UList<T*>& list);
