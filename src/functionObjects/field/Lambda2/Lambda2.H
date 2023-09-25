@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,30 +37,39 @@ Description
     Operands:
     \table
       Operand          | Type           | Location
-      input            | volVectorField | $FOAM_CASE/\<time\>/\<inpField\>
+      input            | volVectorField | \<case\>/\<time\>/\<inpField\>
       output file      | -              | -
-      output field     | volScalarField | $FOAM_CASE/\<time\>/\<outField\>
+      output field     | volScalarField | \<case\>/\<time\>/\<outField\>
     \endtable
+
+    References:
+    \verbatim
+        Governing equation (tag:JH):
+            Jeong, J., & Hussain, F. (1995).
+            On the identification of a vortex.
+            Journal of Fluid Mechanics, 285, 69-94.
+            DOI:10.1017/S0022112095000462
+    \endverbatim
 
 Usage
     Minimal example by using \c system/controlDict.functions:
     \verbatim
     Lambda21
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type            Lambda2;
         libs            (fieldFunctionObjects);
 
-        // Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property     | Description                        | Type | Req'd | Dflt
-      type         | Type name: Lambda2                 | word |  yes  | -
-      libs         | Library name: fieldFunctionObjects | word |  yes  | -
+      Property     | Description                        | Type | Reqd | Deflt
+      type         | Type name: Lambda2                 | word | yes  | -
+      libs         | Library name: fieldFunctionObjects | word | yes  | -
     \endtable
 
     The inherited entries are elaborated in:
@@ -71,12 +80,6 @@ Usage
     \verbatim
         postProcess -func Lambda2
     \endverbatim
-
-See also
-    - Foam::functionObject
-    - Foam::functionObjects::fvMeshFunctionObject
-    - Foam::functionObjects::fieldExpression
-    - ExtendedCodeGuide::functionObjects::field::Lambda2
 
 SourceFiles
     Lambda2.C
