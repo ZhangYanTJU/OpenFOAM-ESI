@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,6 +144,29 @@ int main(int argc, char *argv[])
 
         list1.setCapacity(3);
         printInfo("", list1);
+
+        std::fill_n(std::back_inserter(list1), 10, 5);
+        Info<< "back_inserter to fill some values" << nl;
+        printInfo("", list1);
+
+        // Not very efficient, but just test for capability
+        DynamicList<label, 64> list2;
+
+        list2.resize(5);
+        ListOps::identity(list2);
+
+        Info<< "initial list" << nl;
+        printInfo("", list2);
+
+        labelRange range(10, 5);
+        std::copy(range.begin(), range.end(), std::back_inserter(list2));
+        Info<< "back_inserter to append some values" << nl;
+        printInfo("", list2);
+
+        range.reset(0, 4);
+        std::copy_n(range.begin(), range.size(), std::back_inserter(list2));
+        Info<< "back_inserter to append more values" << nl;
+        printInfo("", list2);
     }
 
     Info<< "\nEnd\n";

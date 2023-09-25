@@ -482,8 +482,11 @@ public:
         //- True if List is empty (ie, size() is zero)
         bool empty() const noexcept { return !size_; }
 
-        //- The number of elements in the List
+        //- The number of elements in the container
         label size() const noexcept { return size_; }
+
+        //- Size of the underlying storage.
+        label capacity() const noexcept { return size_; }
 
         //- The size of the largest possible UList
         static constexpr label max_size() noexcept { return labelMax; }
@@ -497,22 +500,22 @@ public:
         //- Equality operation on ULists of the same type.
         //  Returns true when the ULists are element-wise equal
         //  (using UList::value_type::operator==).  Takes linear time
-        bool operator==(const UList<T>& a) const;
+        bool operator==(const UList<T>& list) const;
 
         //- The opposite of the equality operation. Takes linear time
-        bool operator!=(const UList<T>& a) const;
+        bool operator!=(const UList<T>& list) const;
 
         //- Compare two ULists lexicographically. Takes linear time
         bool operator<(const UList<T>& list) const;
 
         //- Compare two ULists lexicographically. Takes linear time
-        bool operator>(const UList<T>& a) const;
+        bool operator>(const UList<T>& list) const;
 
         //- Return true if !(a > b). Takes linear time
-        bool operator<=(const UList<T>& a) const;
+        bool operator<=(const UList<T>& list) const;
 
         //- Return true if !(a < b). Takes linear time
-        bool operator>=(const UList<T>& a) const;
+        bool operator>=(const UList<T>& list) const;
 
 
     // Reading/writing

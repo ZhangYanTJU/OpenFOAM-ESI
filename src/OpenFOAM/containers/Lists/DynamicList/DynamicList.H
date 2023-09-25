@@ -167,7 +167,7 @@ public:
 
     // Member Functions
 
-    // Access
+    // Capacity
 
         //- Normal lower capacity limit - the SizeMin template parameter
         static constexpr label min_size() noexcept { return SizeMin; }
@@ -241,19 +241,22 @@ public:
         //- Clear the list and delete storage.
         inline void clearStorage();
 
-        //- Expand the addressable size to fit the allocated capacity.
-        //  Returns the previous addressable size.
-        inline label expandStorage() noexcept;
-
         //- Shrink the allocated space to the number of elements used.
-        inline void shrinkStorage();
+        inline void shrink_to_fit();
 
-        //- Shrink the allocated space to the number of elements used.
-        //  Returns a reference to the DynamicList.
+        //- Shrink the internal bookkeeping of the allocated space to the
+        //- number of addressed elements without affecting allocation.
+        //  \note when empty() it will delete any allocated memory.
+        inline void shrink_unsafe();
+
+        //- Calls shrink_to_fit() and returns a reference to the DynamicList.
         inline DynamicList<T, SizeMin>& shrink();
 
 
     // Edit
+
+        //- Swap with plain List content. Implies shrink_to_fit().
+        inline void swap(List<T>& list);
 
         //- Swap content, independent of sizing parameter
         template<int AnySizeMin>

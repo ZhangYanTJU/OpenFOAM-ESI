@@ -124,6 +124,13 @@ inline Foam::label Foam::UPtrList<T>::size() const noexcept
 
 
 template<class T>
+inline Foam::label Foam::UPtrList<T>::capacity() const noexcept
+{
+    return ptrs_.capacity();
+}
+
+
+template<class T>
 inline Foam::label Foam::UPtrList<T>::count() const noexcept
 {
     return ptrs_.count();
@@ -213,7 +220,7 @@ inline void Foam::UPtrList<T>::free()
 
 
 template<class T>
-inline void Foam::UPtrList<T>::swap(UPtrList<T>& list)
+inline void Foam::UPtrList<T>::swap(UPtrList<T>& list) noexcept
 {
     ptrs_.swap(list.ptrs_);
 }

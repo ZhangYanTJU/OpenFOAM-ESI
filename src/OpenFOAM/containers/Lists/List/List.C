@@ -351,12 +351,13 @@ template<class T>
 template<int SizeMin>
 void Foam::List<T>::transfer(DynamicList<T, SizeMin>& list)
 {
-    // Shrink the allocated space to the number of elements used
-    list.shrink();
-    transfer(static_cast<List<T>&>(list));
+    // Remove existing contents before anything else.
+    clear();
 
-    // Ensure DynamicList has proper capacity=0 too
-    list.clearStorage();
+    // Shrink the allocated space to the number of elements used
+    list.shrink_to_fit();
+    transfer(static_cast<List<T>&>(list));
+    list.clearStorage();  // Deletion, capacity=0 etc.
 }
 
 

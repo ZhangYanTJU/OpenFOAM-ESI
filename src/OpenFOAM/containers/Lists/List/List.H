@@ -116,9 +116,6 @@ class List
     // Methods as per DynamicList to simplify code maintenance
 
         //- Stub method for internal naming as per DynamicList
-        label capacity() const noexcept { return UList<T>::size(); }
-
-        //- Stub method for internal naming as per DynamicList
         void setCapacity_nocopy(const label len) { resize_nocopy(len); }
 
 
@@ -289,7 +286,7 @@ public:
     // Member Operators
 
         //- Assignment to UList operator. Takes linear time
-        void operator=(const UList<T>& a);
+        void operator=(const UList<T>& list);
 
         //- Assignment operator. Takes linear time
         void operator=(const List<T>& list);

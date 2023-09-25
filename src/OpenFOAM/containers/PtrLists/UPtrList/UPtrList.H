@@ -254,6 +254,9 @@ public:
         //- The number of entries in the list
         inline label size() const noexcept;
 
+        //- Size of the underlying storage.
+        inline label capacity() const noexcept;
+
         //- The number of non-null entries in the list
         inline label count() const noexcept;
 
@@ -322,7 +325,7 @@ public:
         inline void push_back(UPtrList<T>&& other);
 
         //- Swap content
-        inline void swap(UPtrList<T>& list);
+        inline void swap(UPtrList<T>& list) noexcept;
 
         //- Transfer contents into this list and annul the argument
         inline void transfer(UPtrList<T>& list);

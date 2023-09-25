@@ -121,12 +121,16 @@ public:
         //- Clear the list and delete storage.
         inline void clearStorage();
 
-        //- Expand the addressable size to fit the allocated capacity.
-        //  Returns the previous addressable size.
-        inline label expandStorage() noexcept;
-
         //- Shrink the allocated space to the number of elements used.
-        inline void shrink();
+        inline void shrink_to_fit();
+
+        //- Shrink the internal bookkeeping of the allocated space to the
+        //- number of addressed elements without affecting allocation.
+        //  \note when empty() it will delete any allocated memory.
+        inline void shrink_unsafe();
+
+        //- Calls shrink_to_fit()
+        void shrink() { shrink_to_fit(); }
 
 
     // Edit
@@ -136,9 +140,12 @@ public:
         //  \return the number of non-null entries
         inline label squeezeNull();
 
+        //- Swap with plain PtrList content. Implies shrink_to_fit().
+        inline void swap(PtrList<T>& list);
+
         //- Swap content, independent of sizing parameter
         template<int AnySizeMin>
-        inline void swap(PtrDynList<T, AnySizeMin>& other);
+        inline void swap(PtrDynList<T, AnySizeMin>& other) noexcept;
 
         //- Transfer contents of the argument PtrList into this.
         inline void transfer(PtrList<T>& list);
