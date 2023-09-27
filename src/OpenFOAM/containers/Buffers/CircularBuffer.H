@@ -232,15 +232,14 @@ public:
         //- The contents of the first internal array
         SubList<T> array_one();
 
-        //- The contents of the first internal array
+        //- The contents of the second internal array
         SubList<T> array_two();
 
-        //- The contents of the second internal array
+        //- The contents of the first internal array
         const SubList<T> array_one() const;
 
         //- The contents of the second internal array
         const SubList<T> array_two() const;
-
 
 
     // Access
@@ -351,9 +350,6 @@ public:
 
 
     // Member Operators
-
-        //- Return the buffer flattened as a single List. Use sparingly!
-        List<T> operator()() const { return this->list(); }
 
         //- Non-const access to an element in the list.
         //  The index is allowed to wrap in both directions
@@ -489,47 +485,6 @@ public:
 
         //- Return a const_iterator at end of buffer
         inline const_iterator end() const { return cend(); }
-
-
-    // Housekeeping
-
-        //- Same as contains()
-        bool found(const T& val, label pos = 0) const
-        {
-            return contains(val, pos);
-        }
-
-        //- Access the first element (front). Requires !empty().
-        //FOAM_DEPRECATED_FOR(2022-10, "front()")
-        T& first() { return front(); }
-
-        //- Access the first element (front). Requires !empty().
-        //FOAM_DEPRECATED_FOR(2022-10, "front()")
-        const T& first() const { return front(); }
-
-        //- Access the last element (back). Requires !empty().
-        //FOAM_DEPRECATED_FOR(2022-10, "back()")
-        T& last() { return back(); }
-
-        //- Access the last element (back). Requires !empty().
-        //FOAM_DEPRECATED_FOR(2022-10, "back()")
-        const T& last() const { return back(); }
-
-        //- Copy append an element to the end of the buffer
-        //FOAM_DEPRECATED_FOR(2022-10, "push_back()")
-        void append(const T& val) { this->push_back(val); }
-
-        //- Move append an element to the end of the buffer
-        //FOAM_DEPRECATED_FOR(2022-10, "push_back()")
-        void append(T&& val) { this->push_back(std::move(val)); }
-
-        //- Copy append multiple elements the end of the buffer
-        //FOAM_DEPRECATED_FOR(2022-10, "push_back()")
-        void append(const UList<T>& list) { this->push_back(list); }
-
-        //- Same as push_uniq()
-        FOAM_DEPRECATED_STRICT(2022-10, "push_uniq()")
-        label appendUniq(const T& val) { return this->push_uniq(val); }
 };
 
 

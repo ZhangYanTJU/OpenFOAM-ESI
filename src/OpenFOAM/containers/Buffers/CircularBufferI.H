@@ -160,6 +160,7 @@ inline Foam::CircularBuffer<T>::CircularBuffer
 template<class T>
 inline Foam::label Foam::CircularBuffer<T>::capacity() const noexcept
 {
+    // or storage_.capacity();
     return storage_.size();
 }
 

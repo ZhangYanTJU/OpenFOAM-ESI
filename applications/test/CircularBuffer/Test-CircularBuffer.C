@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
     Info<< buf1[-12] << nl;
 
-    Info<< "found: " << buf1.found(40) << nl;
+    Info<< "contains: " << buf1.contains(40) << nl;
     buf1.push_uniq(100); report(buf1);
 
     buf1 = Zero; report(buf1);
