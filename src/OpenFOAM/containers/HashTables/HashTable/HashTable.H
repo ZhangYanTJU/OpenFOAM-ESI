@@ -40,6 +40,12 @@ Description
     Internally the table uses closed addressing into a flat storage space
     with collisions handled by linked-list chaining.
 
+    - The max_load_factor is 0.8, but a load factor 0.5 is generally
+      assumed when initially creating a HashTable (ie, use an capacity
+      of twice the expected number elements).
+    - When inserting into a table without an initial capacity,
+      a default capacity (bucket count) of 128 is used.
+
     The end iterator of all hash-tables has a nullptr to the hash entry.
     Thus avoid separate allocation for each table and use a single one with
     a nullptr. The hash-table iterators always have an entry-pointer as the
@@ -185,10 +191,10 @@ private:
 
     // Private Data
 
-        //- The number of nodes currently stored in table
+        //- The number of elements currently stored in table
         label size_;
 
-        //- Number of nodes allocated in table
+        //- Number of buckets allocated in table
         label capacity_;
 
         //- The table of primary nodes
@@ -237,9 +243,8 @@ public:
         //- Construct empty with initial table capacity
         explicit HashTable(const label initialCapacity);
 
-        //- Construct from Istream,
-        //- with default or specified initial table capacity.
-        HashTable(Istream& is, const label initialCapacity = 128);
+        //- Construct from Istream
+        HashTable(Istream& is);
 
         //- Copy construct
         HashTable(const this_type& ht);
@@ -258,7 +263,7 @@ public:
 
     // Member Functions
 
-    // Access
+    // Capacity
 
         //- True if the hash table is empty
         bool empty() const noexcept { return !size_; }
@@ -266,8 +271,11 @@ public:
         //- The number of elements in table
         label size() const noexcept { return size_; }
 
-        //- The size of the underlying table
+        //- The size of the underlying table (the number of buckets)
         label capacity() const noexcept { return capacity_; }
+
+
+    // Access
 
         //- Find and return a hashed entry. FatalError if it does not exist.
         inline T& at(const Key& key);
@@ -526,15 +534,25 @@ public:
         );
 
 
-        //- Resize the hash table for efficiency
-        void resize(const label requestedCapacity);
-
         //- Remove all entries from table
         void clear();
 
         //- Remove all entries from table and the table itself.
-        //  Equivalent to clear() followed by resize(0)
+        //  Equivalent to clear() followed by setCapacity(0)
         void clearStorage();
+
+        //- Change the hash table capacity (number of buckets).
+        //  Setting a zero capacity will only remove the underlying
+        //  storage if the table is empty.
+        void setCapacity(label newCapacity);
+
+        //- Rehash the hash table with new number of buckets.
+        //- Currently identical to setCapacity()
+        void resize(label newCapacity);
+
+        //- Reserve space for at least the specified number of elements
+        //- (not the number of buckets) and regenerates the hash table.
+        void reserve(label numEntries);
 
         //- Swap contents into this table
         void swap(HashTable<T, Key, Hash>& rhs) noexcept;

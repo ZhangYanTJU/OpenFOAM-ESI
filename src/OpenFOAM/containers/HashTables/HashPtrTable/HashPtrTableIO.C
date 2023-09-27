@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,10 +61,7 @@ void Foam::HashPtrTable<T, Key, Hash>::readIstream
 
         if (len)
         {
-            if (2*len > this->capacity())
-            {
-                this->resize(2*len);
-            }
+            this->reserve(this->size() + len);
 
             if (delimiter == token::BEGIN_LIST)
             {
@@ -133,6 +130,7 @@ void Foam::HashPtrTable<T, Key, Hash>::read
     const INew& inew
 )
 {
+    this->reserve(this->size() + dict.size());
     for (const entry& e : dict)
     {
         this->set(e.keyword(), inew(e.dict()).ptr());

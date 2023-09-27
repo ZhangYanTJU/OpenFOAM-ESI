@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,7 +36,7 @@ Foam::labelHashSet Foam::HashSetOps::used(const bitSet& select)
 
     if (select.any())
     {
-        output.resize(2*select.count());
+        output.reserve(select.count());
 
         for (label i = select.find_first(); i >= 0; i = select.find_next(i))
         {
