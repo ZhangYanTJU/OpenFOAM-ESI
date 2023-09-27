@@ -252,11 +252,9 @@ void Foam::radiation::viewFactor::initialise()
 
         DebugInFunction<< "Number of procBound : " <<  nbri << endl;
 
-        PtrList<const lduPrimitiveProcessorInterface> primitiveInterfaces;
-
-        primitiveInterfaces.setSize(nbri);
-        internalCoeffs_.setSize(0);
-        boundaryCoeffs_.setSize(nbri);
+        PtrList<const lduPrimitiveProcessorInterface> primitiveInterfaces(nbri);
+        internalCoeffs_.clear();
+        boundaryCoeffs_.resize_null(nbri);
 
         nbri = 0;
 
@@ -368,8 +366,7 @@ void Foam::radiation::viewFactor::initialise()
             );
         }
 
-        lduInterfacePtrsList allInterfaces;
-        allInterfaces.setSize(primitiveInterfaces.size());
+        lduInterfacePtrsList allInterfaces(primitiveInterfaces.size());
 
         forAll(primitiveInterfaces, i)
         {

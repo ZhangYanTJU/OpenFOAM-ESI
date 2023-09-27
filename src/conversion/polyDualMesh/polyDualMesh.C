@@ -1229,20 +1229,20 @@ void Foam::polyDualMesh::calcDual
     // Create cells.
     cellList dualCells(mesh.nPoints());
 
-    forAll(dualCells, celli)
-    {
-        dualCells[celli].setSize(0);
-    }
+    // unnecessary...
+    // forAll(dualCells, celli)
+    // {
+    //     dualCells[celli].clear();
+    // }
 
     forAll(dualOwner, facei)
     {
         label celli = dualOwner[facei];
 
-        labelList& cFaces = dualCells[celli];
-
-        label sz = cFaces.size();
-        cFaces.setSize(sz+1);
-        cFaces[sz] = facei;
+        if (celli != -1)
+        {
+            dualCells[celli].push_back(facei);
+        }
     }
     forAll(dualNeighbour, facei)
     {
@@ -1250,11 +1250,7 @@ void Foam::polyDualMesh::calcDual
 
         if (celli != -1)
         {
-            labelList& cFaces = dualCells[celli];
-
-            label sz = cFaces.size();
-            cFaces.setSize(sz+1);
-            cFaces[sz] = facei;
+            dualCells[celli].push_back(facei);
         }
     }
 

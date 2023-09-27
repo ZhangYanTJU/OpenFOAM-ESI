@@ -71,8 +71,8 @@ bool uniform::sizeLocations
     scalarField& shapeSizes
 ) const
 {
-    shapePts.setSize(0);
-    shapeSizes.setSize(0);
+    shapePts.clear();
+    shapeSizes.clear();
 
     return true;
 }

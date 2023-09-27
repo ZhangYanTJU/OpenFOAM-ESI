@@ -2890,7 +2890,7 @@ void Foam::polyTopoChange::removeFace
             << abort(FatalError);
     }
 
-    faces_[facei].setSize(0);
+    faces_[facei].clear();
     region_[facei] = -1;
     faceOwner_[facei] = -1;
     faceNeighbour_[facei] = -1;

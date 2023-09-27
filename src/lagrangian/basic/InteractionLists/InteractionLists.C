@@ -445,7 +445,7 @@ void Foam::InteractionLists<ParticleType>::buildInteractionLists()
     // At this point, wallFaceBbsToExchange does not need to be
     // maintained or distributed as it is not longer needed.
 
-    wallFaceBbsToExchange.setSize(0);
+    wallFaceBbsToExchange.clear();
 
     wallFaceMap().reverseDistribute
     (
@@ -615,9 +615,9 @@ void Foam::InteractionLists<ParticleType>::findExtendedProcBbsInRange
     List<label>& extendedProcBbsOrigProc
 )
 {
-    extendedProcBbsInRange.setSize(0);
-    extendedProcBbsTransformIndex.setSize(0);
-    extendedProcBbsOrigProc.setSize(0);
+    extendedProcBbsInRange.clear();
+    extendedProcBbsTransformIndex.clear();
+    extendedProcBbsOrigProc.clear();
 
     DynamicList<treeBoundBox> tmpExtendedProcBbsInRange;
     DynamicList<label> tmpExtendedProcBbsTransformIndex;

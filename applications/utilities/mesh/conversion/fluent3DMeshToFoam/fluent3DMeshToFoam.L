@@ -1211,7 +1211,7 @@ int main(int argc, char *argv[])
     {
         meshMod.addPoint(points[pointi], pointi, -1, true);
     }
-    points.setSize(0);
+    points.clear();
 
     // Add all cells
     for (label celli = 0; celli < nCells; celli++)
@@ -1411,9 +1411,9 @@ int main(int argc, char *argv[])
     }
 
     // Reclaim storage
-    faces.setSize(0);
-    owner.setSize(0);
-    neighbour.setSize(0);
+    faces.clear();
+    owner.clear();
+    neighbour.clear();
 
 
     // Modify mesh

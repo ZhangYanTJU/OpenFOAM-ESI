@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
         )
         {
             patchMasterBlocks[patchi] = -1;
-            rawPatches[patchi].setSize(0);
+            rawPatches[patchi].clear();
         }
         else
         {
