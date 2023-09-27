@@ -84,7 +84,6 @@ bool Foam::Matrix<Form, Type>::readMatrix(Istream& is)
 
                 is.fatalCheck("readMatrix : reading the binary block");
             }
-
         }
         else
         {
@@ -95,16 +94,16 @@ bool Foam::Matrix<Form, Type>::readMatrix(Istream& is)
             {
                 if (listDelimiter == token::BEGIN_LIST)
                 {
-                    label idx = 0;
+                    auto iter = this->begin();
 
                     // Loop over rows
                     for (label i = 0; i < mRows_; ++i)
                     {
                         listDelimiter = is.readBeginList("MatrixRow");
 
-                        for (label j = 0; j < nCols_; ++j)
+                        for (label j = 0; j < nCols_; ++j, (void)++iter)
                         {
-                            is >> v_[idx++];
+                            is >> *iter;
                             is.fatalCheck("readMatrix : reading entry");
                         }
 
@@ -113,12 +112,12 @@ bool Foam::Matrix<Form, Type>::readMatrix(Istream& is)
                 }
                 else  // BEGIN_BLOCK
                 {
-                    Type element;
-                    is >> element;
+                    Type elem;
+                    is >> elem;
 
                     is.fatalCheck("readMatrix : reading the single entry");
 
-                    std::fill_n(begin(), size(), element);
+                    std::fill_n(begin(), size(), elem);
                 }
             }
 
@@ -163,7 +162,7 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
             os.write(mat.cdata_bytes(), mat.size_bytes());
         }
     }
-    else if (len > 1 && is_contiguous<Type>::value && mat.uniform())
+    else if (is_contiguous<Type>::value && len > 1 && mat.uniform())
     {
         // Two or more entries, and all entries have identical values.
         os  << token::BEGIN_BLOCK << *iter << token::END_BLOCK;
@@ -186,11 +185,10 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
             os  << token::BEGIN_LIST;
 
             // Write row
-            for (label j = 0; j < mat.nCols(); ++j)
+            for (label j = 0; j < mat.nCols(); ++j, (void)++iter)
             {
                 if (j) os << token::SPACE;
                 os << *iter;
-                ++iter;
             }
 
             // End row
@@ -218,11 +216,10 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
             os  << nl << token::BEGIN_LIST;
 
             // Write row
-            for (label j = 0; j < mat.nCols(); ++j)
+            for (label j = 0; j < mat.nCols(); ++j, (void)++iter)
             {
                 if (j) os << token::SPACE;
                 os << *iter;
-                ++iter;
             }
 
             // End row
@@ -246,10 +243,9 @@ Foam::Ostream& Foam::Matrix<Form, Type>::writeMatrix
             os  << nl << token::BEGIN_LIST;
 
             // Write row
-            for (label j = 0; j < mat.nCols(); ++j)
+            for (label j = 0; j < mat.nCols(); ++j, (void)++iter)
             {
                 os << nl << *iter;
-                ++iter;
             }
 
             // End row

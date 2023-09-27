@@ -261,16 +261,31 @@ public:
         (
             OSstream& os,
             const label blocki,
-            const UList<char>& charData
+            const char* str,
+            const size_t len
         );
+
+        //- Helper: write block of (binary) character data
+        static std::streamoff writeBlockEntry
+        (
+            OSstream& os,
+            const label blocki,
+            const UList<char>& s
+        )
+        {
+            return writeBlockEntry(os, blocki, s.cdata(), s.size_bytes());
+        }
 
         //- Helper: write block of (binary) character content
         static std::streamoff writeBlockEntry
         (
             OSstream& os,
             const label blocki,
-            const std::string& content
-        );
+            const std::string& s
+        )
+        {
+            return writeBlockEntry(os, blocki, s.data(), s.size());
+        }
 
         //- Helper: write block of (binary) character data
         //  \return -1 on error

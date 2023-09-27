@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,9 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "charList.H"
-#include "Istream.H"
-#include "Ostream.H"
-#include "token.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -38,76 +35,6 @@ namespace Foam
     defineCompoundTypeName(List<char>, charList);
     addCompoundToRunTimeSelectionTable(List<char>, charList);
 }
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-template<>
-Istream& List<char>::readList(Istream& is)
-{
-    List<char>& list = *this;
-
-    is.fatalCheck(FUNCTION_NAME);
-
-    token tok(is);
-
-    is.fatalCheck("List<char>::readList(Istream&) : reading first token");
-
-    if (tok.isCompound())
-    {
-        // Compound: simply transfer contents
-
-        list.clear();  // Clear old contents
-        list.transfer
-        (
-            tok.transferCompoundToken<List<char>>(is)
-        );
-    }
-    else if (tok.isLabel())
-    {
-        // Label: could be int(..) or just a plain '0'
-
-        const label len = tok.labelToken();
-
-        // Resize to length required
-        list.resize_nocopy(len);
-
-        // Binary, always contiguous
-
-        if (len)
-        {
-            const auto oldFmt = is.format(IOstreamOption::BINARY);
-
-            // read(...) includes surrounding start/end delimiters
-            is.read(list.data(), std::streamsize(len));
-
-            is.format(oldFmt);
-
-            is.fatalCheck
-            (
-                "List<char>::readList(Istream&) : "
-                "reading binary block"
-            );
-        }
-    }
-    else
-    {
-        list.clear();  // Clear old contents
-
-        FatalIOErrorInFunction(is)
-            << "incorrect first token, expected <int>, found "
-            << tok.info() << nl
-            << exit(FatalIOError);
-    }
-
-    return is;
-}
-
-
-} // End namespace Foam
 
 
 // ************************************************************************* //

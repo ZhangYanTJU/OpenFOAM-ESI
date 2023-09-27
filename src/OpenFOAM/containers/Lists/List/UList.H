@@ -643,18 +643,9 @@ public:
 
 // * * * * * * * * * * * * Template Specializations  * * * * * * * * * * * * //
 
-//- Specialized list reading for character lists which always uses
-//- binary format.
-template<>
-Istream& UList<char>::readList(Istream& is);
-
-//- Character list writeEntry - always uses binary format.
+//- Character list writeEntry
 template<>
 void UList<char>::writeEntry(Ostream& os) const;
-
-//- Character list writeList - always uses binary format.
-template<>
-Ostream& UList<char>::writeList(Ostream& os, const label /*unused*/) const;
 
 //- Character list assign zero - avoids Foam::zero casting ambiguities
 template<>

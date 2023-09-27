@@ -414,11 +414,6 @@ public:
 
 // * * * * * * * * * * * * Template Specializations  * * * * * * * * * * * * //
 
-//- Specialized list reading for character lists which always uses
-//- binary format.
-template<>
-Istream& List<char>::readList(Istream& is);
-
 //- Hashing for List data
 template<class T>
 struct Hash<List<T>> : List<T>::hasher {};

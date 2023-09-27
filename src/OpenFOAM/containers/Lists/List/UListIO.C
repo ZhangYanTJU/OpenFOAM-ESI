@@ -46,15 +46,20 @@ void Foam::UList<T>::writeEntry(Ostream& os) const
     {
         os << *this;
     }
-    else if (os.format() == IOstreamOption::ASCII)
+    else if
+    (
+        os.format() == IOstreamOption::BINARY
+     || std::is_same<char, typename std::remove_cv<T>::type>::value
+    )
     {
-        // Zero-sized ASCII - Write size and delimiters
-        os  << 0 << token::BEGIN_LIST << token::END_LIST;
+        // Zero-sized binary - Write size only
+        // NB: special treatment for char data (binary I/O only)
+        os << label(0);
     }
     else
     {
-        // Zero-sized binary - Write size only
-        os  << 0;
+        // Zero-sized ASCII - Write size and delimiters
+        os << label(0) << token::BEGIN_LIST << token::END_LIST;
     }
 }
 
@@ -96,7 +101,22 @@ Foam::Ostream& Foam::UList<T>::writeList
             os.write(list.cdata_bytes(), list.size_bytes());
         }
     }
-    else if (len > 1 && is_contiguous<T>::value && list.uniform())
+    else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
+    {
+        // Special treatment for char data (binary I/O only)
+
+        const auto oldFmt = os.format(IOstreamOption::BINARY);
+        os << nl << len << nl;
+
+        if (len)
+        {
+            // write(...) includes surrounding start/end delimiters
+            os.write(list.cdata_bytes(), list.size_bytes());
+        }
+
+        os.format(oldFmt);
+    }
+    else if (is_contiguous<T>::value && len > 1 && list.uniform())
     {
         // Two or more entries, and all entries have identical values.
         os  << len << token::BEGIN_BLOCK << list[0] << token::END_BLOCK;
@@ -120,11 +140,18 @@ Foam::Ostream& Foam::UList<T>::writeList
         // Size and start delimiter
         os << len << token::BEGIN_LIST;
 
+        auto iter = list.cbegin();
+        const auto last = list.cend();
+
         // Contents
-        for (label i=0; i < len; ++i)
+        if (iter != last)
         {
-            if (i) os << token::SPACE;
-            os << list[i];
+            os << *iter;
+
+            for (++iter; (iter != last); (void)++iter)
+            {
+                os << token::SPACE << *iter;
+            }
         }
 
         // End delimiter
@@ -135,16 +162,19 @@ Foam::Ostream& Foam::UList<T>::writeList
         // Multi-line output
 
         // Size and start delimiter
-        os << nl << len << nl << token::BEGIN_LIST << nl;
+        os << nl << len << nl << token::BEGIN_LIST;
+
+        auto iter = list.cbegin();
+        const auto last = list.cend();
 
         // Contents
-        for (label i=0; i < len; ++i)
+        for (/*nil*/; (iter != last); (void)++iter)
         {
-            os << list[i] << nl;
+            os << nl << *iter;
         }
 
         // End delimiter
-        os << token::END_LIST << nl;
+        os << nl << token::END_LIST << nl;
     }
 
     os.check(FUNCTION_NAME);
@@ -223,6 +253,25 @@ Foam::Istream& Foam::UList<T>::readList(Istream& is)
                     "reading binary block"
                 );
             }
+        }
+        else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
+        {
+            // Special treatment for char data (binary I/O only)
+            const auto oldFmt = is.format(IOstreamOption::BINARY);
+
+            if (len)
+            {
+                // read(...) includes surrounding start/end delimiters
+                is.read(list.data_bytes(), list.size_bytes());
+
+                is.fatalCheck
+                (
+                    "UList<char>::readList(Istream&) : "
+                    "reading binary block"
+                );
+            }
+
+            is.format(oldFmt);
         }
         else
         {
