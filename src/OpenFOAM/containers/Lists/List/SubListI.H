@@ -50,6 +50,16 @@ inline Foam::SubList<T>::SubList
 
 
 template<class T>
+inline Foam::SubList<T>::SubList
+(
+    const std::vector<T>& list
+) noexcept
+:
+    UList<T>(const_cast<T*>(list.data()), label(list.size()))
+{}
+
+
+template<class T>
 template<unsigned N>
 inline Foam::SubList<T>::SubList
 (

@@ -91,6 +91,9 @@ public:
         //- Construct from UList, the entire size
         inline explicit SubList(const UList<T>& list) noexcept;
 
+        //- Construct from std::vector, the entire size
+        inline explicit SubList(const std::vector<T>& list) noexcept;
+
         //- Construct from FixedList, the entire size
         template<unsigned N>
         inline explicit SubList(const FixedList<T, N>& list);

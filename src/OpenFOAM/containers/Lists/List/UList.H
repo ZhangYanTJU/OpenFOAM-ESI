@@ -676,7 +676,11 @@ Ostream& operator<<(Ostream& os, const UList<T>& list)
     return list.writeList(os, Detail::ListPolicy::short_length<T>::value);
 }
 
-//- Write std::vector to Ostream. ASCII only, no line-breaks
+//- Read std::vector contents from Istream
+template<class T>
+Istream& operator>>(Istream& is, std::vector<T>& list);
+
+//- Write std::vector to Ostream (via UList)
 template<class T>
 Ostream& operator<<(Ostream& os, const std::vector<T>& list);
 

@@ -26,36 +26,183 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UList.H"
+#include "Istream.H"
 #include "Ostream.H"
+#include "contiguous.H"
 #include "token.H"
 #include <vector>
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 template<class T>
-Foam::Ostream& Foam::operator<<(Ostream& os, const std::vector<T>& list)
+Foam::Istream& Foam::operator>>(Istream& is, std::vector<T>& list)
 {
-    auto iter = list.cbegin();
-    const auto last = list.cend();
+    is.fatalCheck(FUNCTION_NAME);
 
-    // Write ascii list contents, no line breaks
+    token tok(is);
 
-    os << label(list.size()) << token::BEGIN_LIST;
+    is.fatalCheck("Istream >> std::vector<T> : reading first token");
 
-    // Contents
-    if (iter != last)
+    if (tok.isCompound())
     {
-        os << *iter;
+        // No compound handling ...
 
-        for (++iter; (iter != last); (void)++iter)
+        list.clear();  // Clear old contents
+        FatalIOErrorInFunction(is)
+            << "Support for compoundToken - not implemented" << nl
+            << exit(FatalIOError);
+    }
+    else if (tok.isLabel())
+    {
+        // Label: could be int(..), int{...} or just a plain '0'
+
+        const label len = tok.labelToken();
+
+        // Resize to length required
+        list.resize(len);
+
+        if (is.format() == IOstreamOption::BINARY && is_contiguous<T>::value)
         {
-            os << token::SPACE << *iter;
+            // Binary and contiguous
+
+            if (len)
+            {
+                Detail::readContiguous<T>
+                (
+                    is,
+                    reinterpret_cast<char*>(list.data()),   // data_bytes()
+                    std::streamsize(list.size())*sizeof(T)  // size_bytes()
+                );
+
+                is.fatalCheck
+                (
+                    "Istream >> std::vector<T> : "
+                    "reading binary block"
+                );
+            }
+        }
+        else if (std::is_same<char, T>::value)
+        {
+            // Special treatment for char data (binary I/O only)
+            const auto oldFmt = is.format(IOstreamOption::BINARY);
+
+            if (len)
+            {
+                // read(...) includes surrounding start/end delimiters
+                is.read
+                (
+                    reinterpret_cast<char*>(list.data()),   // data_bytes()
+                    std::streamsize(list.size())*sizeof(T)  // size_bytes()
+                );
+
+                is.fatalCheck
+                (
+                    "Istream >> std::vector<char> : "
+                    "reading binary block"
+                );
+            }
+
+            is.format(oldFmt);
+        }
+        else
+        {
+            // Begin of contents marker
+            const char delimiter = is.readBeginList("List");
+
+            if (len)
+            {
+                if (delimiter == token::BEGIN_LIST)
+                {
+                    auto iter = list.begin();
+                    const auto last = list.end();
+
+                    // Contents
+                    for (/*nil*/; (iter != last); (void)++iter)
+                    {
+                        is >> *iter;
+
+                        is.fatalCheck
+                        (
+                            "Istream >> std::vector<char> : "
+                            "reading entry"
+                        );
+                    }
+                }
+                else
+                {
+                    // Uniform content (delimiter == token::BEGIN_BLOCK)
+
+                    T elem;
+                    is >> elem;
+
+                    is.fatalCheck
+                    (
+                        "Istream >> std::vector<char> : "
+                        "reading the single entry"
+                    );
+
+                    // Fill with the value
+                    list.assign(list.size(), elem);
+                }
+            }
+
+            // End of contents marker
+            is.readEndList("List");
         }
     }
+    else if (tok.isPunctuation(token::BEGIN_LIST))
+    {
+        // "(...)" : read as bracketed list
 
-    os << token::END_LIST;
+        // Slightly sub-optimal since it has intermediate resizing,
+        // however don't expect this as input very often.
 
-    os.check(FUNCTION_NAME);
+        list.clear();  // Clear addressing, leave storage intact (probably)
+
+        is >> tok;
+        is.fatalCheck(FUNCTION_NAME);
+
+        while (!tok.isPunctuation(token::END_LIST))
+        {
+            is.putBack(tok);
+
+            // C++17
+            // is >> list.emplace_back();
+
+            // C++11
+            list.emplace_back();
+            is >> list.back();
+
+            is.fatalCheck
+            (
+                "Istream >> std::vector<char> : "
+                "reading entry"
+            );
+
+            is >> tok;
+            is.fatalCheck(FUNCTION_NAME);
+        }
+    }
+    else
+    {
+        list.clear();  // Clear old contents
+
+        FatalIOErrorInFunction(is)
+            << "incorrect first token, expected <int> or '(', found "
+            << tok.info() << nl
+            << exit(FatalIOError);
+    }
+
+    return is;
+}
+
+
+template<class T>
+Foam::Ostream& Foam::operator<<(Ostream& os, const std::vector<T>& list)
+{
+    // Use UList for output
+    UList<T> proxy(const_cast<T*>(list.data()), label(list.size()));
+    os  << proxy;
     return os;
 }
 

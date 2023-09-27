@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -75,6 +75,16 @@ void testBroadcast(List<T>& values)
 }
 
 
+template<class T>
+void testBroadcast(std::vector<T>& values)
+{
+    Info<< nl << "is_contiguous:" << is_contiguous<T>::value << endl;
+    Pout<< "pre-broadcast: " << flatOutput(values) << endl;
+    Pstream::broadcast(values);
+    Pout<< "post-broadcast: " << flatOutput(values) << endl;
+}
+
+
 void testBroadcast(bitSet& values)
 {
     Pout<< "pre-broadcast: "
@@ -130,6 +140,20 @@ int main(int argc, char *argv[])
             forAll(values, i)
             {
                 values[i] = "value_" + Foam::name(i);
+            }
+        }
+        testBroadcast(values);
+    }
+
+    {
+        std::vector<word> values;
+        if (Pstream::master())
+        {
+            values.resize(UPstream::nProcs());
+
+            for (decltype(values.size()) i=0; i < values.size(); ++i)
+            {
+                values[i] = "vector_" + Foam::name(i);
             }
         }
         testBroadcast(values);
