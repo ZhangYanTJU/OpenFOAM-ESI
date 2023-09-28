@@ -37,7 +37,7 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
+Foam::HashTable<T, Key, Hash>::HashTable() noexcept
 :
     HashTableCore(),
     size_(0),
@@ -47,16 +47,16 @@ Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
 
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable()
+Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
 :
-    HashTable<T, Key, Hash>(128)
+    HashTable<T, Key, Hash>()
 {}
 
 
 template<class T, class Key, class Hash>
 Foam::HashTable<T, Key, Hash>::HashTable(const label initialCapacity)
 :
-    HashTable<T, Key, Hash>(Foam::zero{})
+    HashTable<T, Key, Hash>()
 {
     if (initialCapacity > 0)
     {

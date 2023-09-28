@@ -73,10 +73,10 @@ public:
 
     // Constructors
 
-        //- Default construct with default (128) initial table capacity
-        Map() = default;
+        //- Default construct: empty without allocation (capacity=0)
+        Map() noexcept = default;
 
-        //- Construct empty with zero initial table capacity
+        //- Construct empty without allocation (capacity=0)
         explicit Map(const Foam::zero) noexcept
         :
             parent_type(Foam::zero{})

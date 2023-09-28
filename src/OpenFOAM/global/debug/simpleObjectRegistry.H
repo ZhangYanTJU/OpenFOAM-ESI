@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef simpleObjectRegistry_H
-#define simpleObjectRegistry_H
+#ifndef Foam_simpleObjectRegistry_H
+#define Foam_simpleObjectRegistry_H
 
 #include "Dictionary.H"
 #include "simpleRegIOobject.H"
@@ -87,10 +87,13 @@ public:
 
     // Constructors
 
-        //- Construct with given or default (128) table capacity
-        explicit simpleObjectRegistry(const label size = 128)
+        //- Default construct: empty without allocation (capacity=0).
+        simpleObjectRegistry() = default;
+
+        //- Construct empty with initial table capacity
+        explicit simpleObjectRegistry(const label initialCapacity)
         :
-            Dictionary<simpleObjectRegistryEntry>(size)
+            Dictionary<simpleObjectRegistryEntry>(initialCapacity)
         {}
 
 

@@ -62,8 +62,11 @@ public:
 
     // Constructors
 
-        //- Default construct, or with initial table capacity
-        explicit PtrDictionary(const label initialCapacity = 128)
+        //- Default construct: empty without allocation (capacity=0).
+        PtrDictionary() = default;
+
+        //- Construct empty with initial table capacity
+        explicit PtrDictionary(const label initialCapacity)
         :
             dict_type(initialCapacity)
         {}

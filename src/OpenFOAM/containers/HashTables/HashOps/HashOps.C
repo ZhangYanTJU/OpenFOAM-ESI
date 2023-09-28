@@ -32,7 +32,7 @@ License
 
 Foam::labelHashSet Foam::HashSetOps::used(const bitSet& select)
 {
-    labelHashSet output(0);
+    labelHashSet output;
 
     if (select.any())
     {
