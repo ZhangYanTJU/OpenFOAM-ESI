@@ -76,14 +76,14 @@ label nCells = 0;
 
 bool hangingNodes = false;
 
-pointField points(0);
-faceList faces(0);
-labelList owner(0);
-labelList neighbour(0);
+pointField points;
+faceList faces;
+labelList owner;
+labelList neighbour;
 
 // Group type and name
-Map<word> groupType(128);
-Map<word> groupName(128);
+Map<word> groupType;
+Map<word> groupName;
 
 // Point groups
 DynamicList<label> pointGroupZoneID;

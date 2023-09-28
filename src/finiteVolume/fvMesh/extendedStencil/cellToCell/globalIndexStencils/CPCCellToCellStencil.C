@@ -38,7 +38,7 @@ void Foam::CPCCellToCellStencil::calcPointBoundaryData
     Map<labelList>& neiGlobal
 ) const
 {
-    neiGlobal.resize(2*boundaryPoints.size());
+    neiGlobal.reserve(boundaryPoints.size());
 
     labelHashSet pointGlobals;
 

@@ -102,7 +102,7 @@ void Foam::fileFormats::ensightMeshReader::readIDs
     foamToElem.resize(sz+nShapes);
     if (doRead)
     {
-        elemToFoam.resize(sz+nShapes);
+        elemToFoam.reserve(elemToFoam.size()+nShapes);
         for (label shapei = 0; shapei < nShapes; shapei++)
         {
             label elemi;

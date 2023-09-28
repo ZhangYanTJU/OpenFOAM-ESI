@@ -40,7 +40,7 @@ void Foam::FECCellToFaceStencil::calcEdgeBoundaryData
     EdgeMap<labelList>& neiGlobal
 ) const
 {
-    neiGlobal.resize(2*boundaryEdges.size());
+    neiGlobal.reserve(boundaryEdges.size());
 
     labelHashSet edgeGlobals;
 

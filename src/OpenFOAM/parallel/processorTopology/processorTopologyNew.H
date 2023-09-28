@@ -95,7 +95,7 @@ Foam::processorTopology Foam::processorTopology::New
         // - assumes single connections between processors
 
         auto& patchMap = topo.procPatchMap_;
-        patchMap.resize(2*numProcPatches);
+        patchMap.reserve(numProcPatches);
 
         forAll(patches, patchi)
         {

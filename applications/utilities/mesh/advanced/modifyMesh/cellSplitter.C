@@ -148,7 +148,7 @@ void Foam::cellSplitter::setRefinement
 )
 {
     addedPoints_.clear();
-    addedPoints_.resize(cellToMidPoint.size());
+    addedPoints_.reserve(cellToMidPoint.size());
 
 
     //
@@ -184,7 +184,7 @@ void Foam::cellSplitter::setRefinement
     // Add cells (first one is modified original cell)
     //
 
-    Map<labelList> cellToCells(cellToMidPoint.size());
+    Map<labelList> cellToCells(2*cellToMidPoint.size());
 
     forAllConstIters(cellToMidPoint, iter)
     {

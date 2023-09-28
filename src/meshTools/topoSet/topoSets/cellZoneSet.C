@@ -50,7 +50,7 @@ void Foam::cellZoneSet::updateSet()
     inplaceReorder(order, addressing_);
 
     cellSet::clearStorage();
-    cellSet::resize(2*addressing_.size());
+    cellSet::reserve(addressing_.size());
     cellSet::set(addressing_);
 }
 

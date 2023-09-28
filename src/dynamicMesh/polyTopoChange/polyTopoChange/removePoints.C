@@ -319,8 +319,8 @@ void Foam::removePoints::setRefinement
     // Size undo storage
     if (undoable_)
     {
-        savedPoints_.setSize(nDeleted);
-        pointToSaved.resize(2*nDeleted);
+        savedPoints_.resize(nDeleted);
+        pointToSaved.reserve(nDeleted);
     }
 
 

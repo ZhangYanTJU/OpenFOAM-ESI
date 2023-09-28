@@ -184,7 +184,7 @@ void Foam::dynamicRefineFvMesh::readDict()
     auto fluxVelocities = refineDict.get<List<Pair<word>>>("correctFluxes");
 
     // Rework into hashtable.
-    correctFluxes_.resize(fluxVelocities.size());
+    correctFluxes_.reserve(fluxVelocities.size());
     for (const auto& pr : fluxVelocities)
     {
         correctFluxes_.insert(pr.first(), pr.second());

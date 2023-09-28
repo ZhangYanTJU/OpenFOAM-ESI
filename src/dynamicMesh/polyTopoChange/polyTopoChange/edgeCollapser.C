@@ -1316,7 +1316,7 @@ bool Foam::edgeCollapser::setRefinement
         }
 
         // 2. Size
-        collapseStrings.resize(2*nPerIndex.size());
+        collapseStrings.reserve(nPerIndex.size());
         forAllConstIters(nPerIndex, iter)
         {
             collapseStrings.insert(iter.key(), DynamicList<label>(iter.val()));

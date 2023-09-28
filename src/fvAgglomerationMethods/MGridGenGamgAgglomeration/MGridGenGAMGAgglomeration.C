@@ -147,7 +147,7 @@ void Foam::MGridGenGAMGAgglomeration::detectSharedFaces
     const labelUList& upper = addr.upperAddr();
 
     sharedFaces.clear();
-    sharedFaces.resize(addr.lowerAddr().size()/100);
+    sharedFaces.reserve(addr.lowerAddr().size()/100);
 
     // Detect any faces inbetween same value
     forAll(lower, facei)

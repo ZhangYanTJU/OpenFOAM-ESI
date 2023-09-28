@@ -534,7 +534,7 @@ void Foam::topoSet::invert(const label maxLen)
     );
 
     clear();  // Maybe don't trust the previous move operation
-    resize(2*max(64, (maxLen - original.size())));
+    reserve(max(64, (maxLen - original.size())));
 
     for (label id=0; id < maxLen; ++id)
     {

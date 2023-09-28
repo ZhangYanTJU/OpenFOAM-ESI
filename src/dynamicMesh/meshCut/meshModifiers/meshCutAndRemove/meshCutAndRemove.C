@@ -583,10 +583,10 @@ void Foam::meshCutAndRemove::setRefinement
 {
     // Clear and size maps here since mesh size will change.
     addedFaces_.clear();
-    addedFaces_.resize(cuts.nLoops());
+    addedFaces_.reserve(cuts.nLoops());
 
     addedPoints_.clear();
-    addedPoints_.resize(cuts.nLoops());
+    addedPoints_.reserve(cuts.nLoops());
 
     if (cuts.nLoops() == 0)
     {

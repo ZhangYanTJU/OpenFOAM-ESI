@@ -1512,7 +1512,7 @@ bool Foam::primitiveMesh::checkFaceFaces
     label nBaffleFaces = 0;
     label nErrorDuplicate = 0;
     label nErrorOrder = 0;
-    Map<label> nCommonPoints(128);
+    Map<label> nCommonPoints;
 
     for (label facei = 0; facei < nFaces(); facei++)
     {

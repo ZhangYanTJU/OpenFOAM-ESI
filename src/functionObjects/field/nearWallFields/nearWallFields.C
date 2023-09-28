@@ -284,8 +284,8 @@ bool Foam::functionObjects::nearWallFields::read(const dictionary& dict)
     // Generate fields with mappedField boundary condition
 
     // Convert field to map
-    fieldMap_.resize(2*fieldSet_.size());
-    reverseFieldMap_.resize(2*fieldSet_.size());
+    fieldMap_.reserve(fieldSet_.size());
+    reverseFieldMap_.reserve(fieldSet_.size());
     forAll(fieldSet_, seti)
     {
         const word& fldName = fieldSet_[seti].first();

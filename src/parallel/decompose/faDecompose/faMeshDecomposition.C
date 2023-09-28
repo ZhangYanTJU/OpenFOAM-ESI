@@ -275,7 +275,7 @@ void Foam::faMeshDecomposition::decomposeMesh()
             ioAddr.rename("faceProcAddressing");
             labelIOList fvFaceProcAddressing(ioAddr);
 
-            fvFaceProcAddressingHash.resize(2*fvFaceProcAddressing.size());
+            fvFaceProcAddressingHash.reserve(fvFaceProcAddressing.size());
 
             forAll(fvFaceProcAddressing, facei)
             {
@@ -355,7 +355,7 @@ void Foam::faMeshDecomposition::decomposeMesh()
 
         Map<label>& curMap = procMeshEdgesMap_[procI];
         curMap.clear();
-        curMap.resize(2*procEdges.size());
+        curMap.reserve(procEdges.size());
 
         forAll(procEdges, edgeI)
         {

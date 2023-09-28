@@ -742,7 +742,7 @@ Foam::labelList Foam::polyBoundaryMesh::indices
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
     {
-        ids.resize(2*this->size());
+        ids.reserve(this->size());
 
         const auto& groupLookup = groupPatchIDs();
         forAllConstIters(groupLookup, iter)
@@ -787,7 +787,7 @@ Foam::labelList Foam::polyBoundaryMesh::indices
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
     {
-        ids.resize(2*this->size());
+        ids.reserve(this->size());
 
         const auto& groupLookup = groupPatchIDs();
         forAllConstIters(groupLookup, iter)
@@ -958,7 +958,7 @@ Foam::labelHashSet Foam::polyBoundaryMesh::patchSet
 
     const label len = patches.size();
 
-    ids.resize(2*len);
+    ids.reserve(len);
 
     // Only check groups if requested and they exist
     const bool checkGroups = (useGroups && this->hasGroupIDs());

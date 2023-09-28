@@ -408,7 +408,7 @@ void Foam::boundaryCutter::setRefinement
     edgeAddedPoints_.clear();
 
     faceAddedPoint_.clear();
-    faceAddedPoint_.resize(faceToFeaturePoint.size());
+    faceAddedPoint_.reserve(faceToFeaturePoint.size());
 
 
     //
@@ -813,7 +813,7 @@ void Foam::boundaryCutter::setRefinement
 
     // Convert edge to points storage from edge labels (not preserved)
     // to point labels
-    edgeAddedPoints_.resize(edgeToCuts.size());
+    edgeAddedPoints_.reserve(edgeToAddedPoints.size());
 
     forAllConstIters(edgeToAddedPoints, iter)
     {
@@ -832,7 +832,7 @@ void Foam::boundaryCutter::updateMesh(const mapPolyMesh& morphMap)
 
     {
         // Create copy since we're deleting entries.
-        Map<label> newAddedPoints(faceAddedPoint_.size());
+        Map<label> newAddedPoints(faceAddedPoint_.capacity());
 
         forAllConstIters(faceAddedPoint_, iter)
         {
@@ -860,7 +860,7 @@ void Foam::boundaryCutter::updateMesh(const mapPolyMesh& morphMap)
 
     {
         // Create copy since we're deleting entries
-        EdgeMap<labelList> newEdgeAddedPoints(edgeAddedPoints_.size());
+        EdgeMap<labelList> newEdgeAddedPoints(edgeAddedPoints_.capacity());
 
         forAllConstIters(edgeAddedPoints_, iter)
         {

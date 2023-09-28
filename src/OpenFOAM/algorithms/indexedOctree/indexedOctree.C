@@ -2517,12 +2517,9 @@ Foam::label Foam::indexedOctree<Type>::findBox
 
     if (!nodes_.empty())
     {
-        if (!elements.capacity())
-        {
-            // Some arbitrary minimal size estimate (eg, 1/100 are found)
-            label estimatedCapacity(max(256, 2*(shapes_.size() / 100)));
-            elements.resize(estimatedCapacity);
-        }
+        // Some arbitrary minimal size estimate (eg, 1/100 are found)
+        label estimatedCount(max(128, (shapes_.size() / 100)));
+        elements.reserve(estimatedCount);
 
         // start node=0, store results
         findBox(0, searchBox, &elements);
@@ -2576,12 +2573,9 @@ Foam::label Foam::indexedOctree<Type>::findSphere
 
     if (!nodes_.empty())
     {
-        if (!elements.capacity())
-        {
-            // Some arbitrary minimal size estimate (eg, 1/100 are found)
-            label estimatedCapacity(max(256, 2*(shapes_.size() / 100)));
-            elements.resize(estimatedCapacity);
-        }
+        // Some arbitrary minimal size estimate (eg, 1/100 are found)
+        label estimatedCount(max(128, (shapes_.size() / 100)));
+        elements.reserve(estimatedCount);
 
         // start node=0, store results
         findSphere(0, centre, radiusSqr, &elements);

@@ -801,7 +801,7 @@ void Foam::cellCellStencils::inverseDistance::markDonors
 //    {
 //        if (proci != Pstream::myProcNo())
 //        {
-//            nonLocal[proci].resize(2*nOriginating[proci]);
+//            nonLocal[proci].reserve(nOriginating[proci]);
 //        }
 //    }
 //

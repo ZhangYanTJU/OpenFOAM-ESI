@@ -684,7 +684,7 @@ Foam::List<Foam::labelPair> Foam::localPointRegion::findDuplicateFacePairs
 void Foam::localPointRegion::updateMesh(const mapPolyMesh& map)
 {
     {
-        Map<label> newMap(meshFaceMap_.size());
+        Map<label> newMap(2*meshFaceMap_.size());
 
         forAllConstIters(meshFaceMap_, iter)
         {
@@ -698,7 +698,7 @@ void Foam::localPointRegion::updateMesh(const mapPolyMesh& map)
         meshFaceMap_.transfer(newMap);
     }
     {
-        Map<label> newMap(meshPointMap_.size());
+        Map<label> newMap(2*meshPointMap_.size());
 
         forAllConstIters(meshPointMap_, iter)
         {

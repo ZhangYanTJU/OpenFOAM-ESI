@@ -43,6 +43,7 @@ static wordHashSet getAcceptableFunctionKeys
 )
 {
     wordHashSet acceptKeys(0);
+    wordHashSet rejectKeys(0);
 
     if (!dictPtr)
     {
@@ -51,8 +52,8 @@ static wordHashSet getAcceptableFunctionKeys
 
     const dictionary& dict = *dictPtr;
 
-    acceptKeys.resize(2*dict.size());
-    wordHashSet rejectKeys(2*dict.size());
+    acceptKeys.reserve(dict.size());
+    rejectKeys.reserve(dict.size());
 
     for (const entry& dEntry : dict)
     {
