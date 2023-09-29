@@ -211,22 +211,6 @@ int main(int argc, char *argv[])
             << " hash:" << Hash<FixedList<label, 4>>()(list2) << nl;
 
 
-        // Test deprecated form
-        SLList<label> sllist3;
-        {
-            sllist3.push_back(0);
-            sllist3.push_back(1);
-            sllist3.push_back(2);
-            sllist3.push_back(3);
-        }
-        FixedList<label, 4> list3(sllist3);
-
-        Info<< "list3:" << list3 << nl;
-        // Test deprecated forms
-        list3 = array2;
-        list2 = sllist3;
-
-
         // Using FixedList for content too
         {
             List<FixedList<label, 4>> twolists{list1, list2};

@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
         addr.emplace_back(2);
 
         // Can also use the return value
-        Info<< "adding " << addr.emplace_back(4) << endl;
+        Info<< "adding " << addr.emplace_back(4) << nl;
 
         forAll(dlE2, i)
         {
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
 
         input1 = list2;
 
-        Info<< nl << "test subset/remove with "
+        Info<< nl << "test remove with "
             << flatOutput(input1) << endl;
 
         for
@@ -344,11 +344,9 @@ int main(int argc, char *argv[])
             list2 = input1;
 
             list1.remove(range);
-            list2.subset(range);
 
             Info<< "input = " << flatOutput(input1) << nl
-                << "remove " << range << " = " << flatOutput(list1) << nl
-                << "subset " << range << " = " << flatOutput(list2) << nl;
+                << "remove " << range << " = " << flatOutput(list1) << nl;
         }
     }
 

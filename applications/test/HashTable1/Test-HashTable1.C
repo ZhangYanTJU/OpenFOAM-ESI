@@ -121,7 +121,7 @@ int main()
     {
         OStringStream os;
         os  << table1;
-        HashTable<scalar> readTable(IStringStream(os.str())(), 100);
+        HashTable<scalar> readTable(IStringStream(os.str())());
 
         Info<< "Istream constructor:" << readTable << endl;
     }

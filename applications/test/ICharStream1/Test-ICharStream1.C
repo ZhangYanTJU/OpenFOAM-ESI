@@ -194,12 +194,12 @@ int main(int argc, char *argv[])
     printInfo(newvalues);
 
     {
-        iliststream is(std::move(newvalues));
+        icharstream is(std::move(newvalues));
 
         char c = 0;
 
         Info<< nl
-            << "getting values from iliststream of "
+            << "getting values from icharstream of "
             << is.list() << endl;
 
         // Info<< " (" << is.tellg() << " " << is.remaining() << ")";
