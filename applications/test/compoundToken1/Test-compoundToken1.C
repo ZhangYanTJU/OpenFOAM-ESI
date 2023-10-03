@@ -57,7 +57,7 @@ class IFstreamDelayed
 :
     public IFstream
 {
-    virtual bool readCompoundToken(token& tok, const word& type)
+    virtual bool readCompoundToken(token& tok, const word& type) override
     {
         auto& is = *this;
 

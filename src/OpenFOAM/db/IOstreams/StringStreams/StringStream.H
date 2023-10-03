@@ -166,7 +166,7 @@ public:
         }
 
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Member Operators
@@ -263,7 +263,7 @@ public:
         }
 
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Older style, without stream option (including 2012 release)

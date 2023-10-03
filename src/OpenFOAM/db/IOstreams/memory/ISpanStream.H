@@ -319,14 +319,14 @@ public:
         }
 
         //- Rewind the stream, clearing any old errors
-        virtual void rewind()
+        virtual void rewind() override
         {
             stream_.rewind();
             syncState();
         }
 
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Member Operators

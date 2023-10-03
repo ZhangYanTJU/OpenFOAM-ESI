@@ -272,13 +272,6 @@ public:
         //- Span of the current output characters (is modifiable!)
         UList<char> list() const { return stream_.list(); }
 
-        //- Rewind the stream, clearing any old errors
-        virtual void rewind()
-        {
-            stream_.rewind();
-            syncState();
-        }
-
         //- Transfer list contents to List buffer
         void swap(List<char>& other)
         {
@@ -294,8 +287,15 @@ public:
             syncState();
         }
 
+        //- Rewind the stream, clearing any old errors
+        virtual void rewind()
+        {
+            stream_.rewind();
+            syncState();
+        }
+
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Houskeeping

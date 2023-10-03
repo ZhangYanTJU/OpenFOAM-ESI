@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -130,11 +130,11 @@ public:
 
     // STL stream
 
-        //- Access to underlying std::ostream
-        virtual std::ostream& stdStream();
-
         //- Const access to underlying std::ostream
-        virtual const std::ostream& stdStream() const;
+        virtual const std::ostream& stdStream() const override;
+
+        //- Access to underlying std::ostream
+        virtual std::ostream& stdStream() override;
 
         //- Rewind the stream so that it may be written again.
         //- Reopens the file (truncation)
@@ -144,7 +144,7 @@ public:
     // Print
 
         //- Print stream description
-        void print(Ostream& os) const;
+        void print(Ostream& os) const override;
 
 
     // Additional constructors and methods

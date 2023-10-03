@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,16 +48,26 @@ void Foam::Ostream::decrIndent()
 }
 
 
+Foam::Ostream& Foam::Ostream::writeQuoted
+(
+    const std::string& str,
+    const bool quoted
+)
+{
+    return writeQuoted(str.data(), str.size(), quoted);
+}
+
+
 Foam::Ostream& Foam::Ostream::write(const keyType& kw)
 {
-    return writeQuoted(kw, kw.isPattern());
+    return writeQuoted(kw.data(), kw.size(), kw.isPattern());
 }
 
 
 Foam::Ostream& Foam::Ostream::writeKeyword(const keyType& kw)
 {
     indent();
-    writeQuoted(kw, kw.isPattern());
+    writeQuoted(kw.data(), kw.size(), kw.isPattern());
 
     if (indentSize_ <= 1)
     {
@@ -86,7 +96,7 @@ Foam::Ostream& Foam::Ostream::writeKeyword(const keyType& kw)
 
 Foam::Ostream& Foam::Ostream::beginBlock(const keyType& kw)
 {
-    indent(); writeQuoted(kw, kw.isPattern()); write('\n');
+    indent(); writeQuoted(kw.data(), kw.size(), kw.isPattern()); write('\n');
     beginBlock();
 
     return *this;

@@ -105,20 +105,20 @@ public:
     // STL stream
 
         //- Access to underlying std::istream
-        virtual std::istream& stdStream();
+        virtual std::istream& stdStream() override;
 
         //- Const access to underlying std::istream
-        virtual const std::istream& stdStream() const;
+        virtual const std::istream& stdStream() const override;
 
         //- Rewind the stream so that it may be read again.
         //  Includes special handling for compressed streams.
-        virtual void rewind();
+        virtual void rewind() override;
 
 
     // Print
 
         //- Print stream description
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Member Operators

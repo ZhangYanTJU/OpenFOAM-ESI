@@ -296,13 +296,6 @@ public:
         //- Span of the input characters (is modifiable!)
         UList<char> list() const { return stream_.list(); }
 
-        //- Rewind the stream, clearing any old errors
-        virtual void rewind()
-        {
-            stream_.rewind();
-            syncState();
-        }
-
         //- Reset content (copy)
         void reset(const char* buffer, size_t nbytes)
         {
@@ -325,8 +318,15 @@ public:
             syncState();
         }
 
+        //- Rewind the stream, clearing any old errors
+        virtual void rewind() override
+        {
+            stream_.rewind();
+            syncState();
+        }
+
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Member Operators

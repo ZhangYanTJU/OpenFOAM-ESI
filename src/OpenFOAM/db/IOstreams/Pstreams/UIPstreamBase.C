@@ -137,7 +137,7 @@ inline void Foam::UIPstreamBase::readFromBuffer
 
 inline Foam::Istream& Foam::UIPstreamBase::readString(std::string& str)
 {
-    // Use std::string::assign() to copy content, including '\0'.
+    // Use std::string::assign() to copy content, including embedded nul chars.
     // Stripping (when desired) is the responsibility of the sending side.
 
     size_t len;
