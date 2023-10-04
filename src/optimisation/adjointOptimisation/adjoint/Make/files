@@ -178,6 +178,7 @@ $(updateMethod)/LBFGS/LBFGS.C
 $(updateMethod)/SR1/SR1.C
 $(updateMethod)/conjugateGradient/conjugateGradient.C
 $(updateMethod)/MMA/MMA.C
+$(updateMethod)/nullSpace/nullSpace.C
 $(updateMethod)/constraintProjection/constraintProjection.C
 $(updateMethod)/SQPBase/SQPBase.C
 $(updateMethod)/SQP/SQP.C
