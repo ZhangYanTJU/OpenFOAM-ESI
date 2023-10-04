@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,9 +44,12 @@ Description
     {
         type        rebound; // stick, escape
         e           1;       // optional - elasticity coeff
-        mu          0;       // optional - restitution coeff
+        mu          0;       // optional - (1 - restitution coeff)
     }
     \endverbatim
+
+Note
+  - \c mu=1 results in perfectly inelastic collisions.
 
 \*---------------------------------------------------------------------------*/
 
@@ -82,7 +85,7 @@ protected:
         //- Elasticity coefficient
         scalar e_;
 
-        //- Restitution coefficient
+        //- The unity minus the restitution coefficient
         scalar mu_;
 
 
