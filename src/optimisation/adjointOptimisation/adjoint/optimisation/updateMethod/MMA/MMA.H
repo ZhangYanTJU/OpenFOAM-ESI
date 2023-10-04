@@ -200,6 +200,9 @@ protected:
             //- Upper assymprote increase rate
             scalar asymIncr_;
 
+            //- Used to update the assymptotes in the first optimisation cycle
+            scalar sInit_;
+
             //- Movement of the unatainable upper and lower bounds
             scalar move_;
 
@@ -226,6 +229,24 @@ protected:
             //- might be too conservative. Multiply with this number to relax
             //- them
             scalar dynamicRhoMult_;
+
+
+        // Normalisation based on the gradient
+
+            //- Perform the normalisation
+            bool normalise_;
+
+            //- Perform the normalisation in each optimisation cycle
+            bool continuousNormalisation_;
+
+            //- Normalisation factor for the objective
+            autoPtr<scalar> Jnorm_;
+
+            //- Normalisation factors for the constraints
+            tmp<scalarField> Cnorm_;
+
+            //- Constaint weight after the normalisation
+            scalar cw_;
 
 
     // Protected Member Functions
@@ -334,6 +355,10 @@ protected:
 
             //- Compute and return residuals based on the current solution
             tmp<scalarField> computeResiduals();
+
+
+        //- Normalise the objective and constraints if necessary
+        void normalise();
 
 
 private:

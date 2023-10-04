@@ -208,8 +208,8 @@ void Foam::MMA::updateBounds()
     }
     else
     {
-        lower_ =  x - 0.5*span;
-        upper_ =  x + 0.5*span;
+        lower_ =  x - sInit_*span;
+        upper_ =  x + sInit_*span;
     }
 
     a_ = max(xMin, lower_ + 0.1*(x - lower_));
@@ -825,6 +825,42 @@ Foam::tmp<Foam::scalarField> Foam::MMA::computeResiduals()
 }
 
 
+void Foam::MMA::normalise()
+{
+    if (normalise_)
+    {
+        // Compute normalisation factors
+        if (!Jnorm_ || continuousNormalisation_)
+        {
+            scalarField activeSens(objectiveDerivatives_, activeDesignVars_);
+            Jnorm_.reset(new scalar(Foam::sqrt(globalSum(sqr(activeSens)))));
+            Cnorm_.reset(new scalarField(cValues_.size(), Zero));
+            scalarField& Cnorm = Cnorm_.ref();
+            forAll(constraintDerivatives_, cI)
+            {
+                scalarField activeConstrSens
+                    (constraintDerivatives_[cI], activeDesignVars_);
+                Cnorm[cI] = Foam::sqrt(globalSum(sqr(activeConstrSens)));
+            }
+            Info<< "Computed normalisation factors " << nl
+                << "J: " << Jnorm_() << nl
+                << "C: " << Cnorm_() << endl;
+        }
+
+        // Normalise objective values and gradients
+        objectiveValue_ /= Jnorm_() + SMALL;
+        objectiveDerivatives_ /= Jnorm_() + SMALL;
+
+        // Normalise constraint values and gradients
+        cValues_ *= cw_/(Cnorm_() + SMALL);
+        forAll(constraintDerivatives_, cI)
+        {
+            constraintDerivatives_[cI] *= cw_/(Cnorm_()[cI] + SMALL);
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::MMA::MMA
@@ -882,6 +918,7 @@ Foam::MMA::MMA
         (coeffsDict(type).getOrDefault<bool>("initializeEverySubproblem", false)),
     asymDecr_(coeffsDict(type).getOrDefault<scalar>("asymptoteDecrease", 0.7)),
     asymIncr_(coeffsDict(type).getOrDefault<scalar>("asymptoteIncrease", 1.2)),
+    sInit_(coeffsDict(type).getOrDefault<scalar>("sInit", 0.5)),
     move_(coeffsDict(type).getOrDefault<scalar>("move", 0.5)),
     raa0_(coeffsDict(type).getOrDefault<scalar>("raa0", 1.e-05)),
     maxInitRhoMult_(coeffsDict(type).getOrDefault<scalar>("maxInitRhoMult", 0.1)),
@@ -890,7 +927,13 @@ Foam::MMA::MMA
     dynamicRhoInitialisation_
         (coeffsDict(type).getOrDefault<bool>("dynamicRhoInitialisation", false)),
     dynamicRhoMult_
-        (coeffsDict(type).getOrDefault<scalar>("dynamicRhoMult", 0.1))
+        (coeffsDict(type).getOrDefault<scalar>("dynamicRhoMult", 0.1)),
+    normalise_(coeffsDict(type).getOrDefault<bool>("normalise", false)),
+    continuousNormalisation_
+        (coeffsDict(type).getOrDefault<bool>("continuousNormalisation", false)),
+    Jnorm_(nullptr),
+    Cnorm_(nullptr),
+    cw_(coeffsDict(type).getOrDefault<scalar>("constraintWeight", 1))
 {
     // Check that the design variables bounds have been set
     if (!designVars().lowerBounds() || !designVars().upperBounds())
@@ -926,6 +969,9 @@ void Foam::MMA::computeCorrection()
     {
         // Update sizes of fields related to the active design variables
         updateSizes();
+
+        // Perform normalisation of the objective and constraint values
+        normalise();
 
         // Initialize rho values in the p,q functions
         // These determine how aggressive or conservative the method will be
