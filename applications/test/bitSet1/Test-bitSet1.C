@@ -37,7 +37,7 @@ Description
 #include "HashSet.H"
 #include "ListOps.H"
 #include "cpuTime.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "FlatOutput.H"
 #include <vector>
 #include <unordered_set>
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
         Info<< "Test read/write (ASCII)" << nl;
 
-        OStringStream ostr;
+        OCharStream ostr;
 
         undecorated(ostr, set3a);  // like flatOutput
         ostr << bitSet();
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
         undecorated(ostr, set3a);  // like flatOutput
 
         {
-            IStringStream istr(ostr.str());
+            ISpanStream istr(ostr.view());
             Info<< "parse: " << istr.str() << nl;
 
             bitSet bset1(istr);

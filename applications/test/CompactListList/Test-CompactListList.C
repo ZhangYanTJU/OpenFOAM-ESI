@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,7 @@ Description
 #include "CompactListList.H"
 #include "IndirectList.H"
 #include "IOstreams.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "faceList.H"
 
 using namespace Foam;
@@ -126,20 +126,20 @@ int main(int argc, char *argv[])
 
     {
         // IO
-        OStringStream ostr;
+        OCharStream ostr;
         ostr << cll4;
 
-        IStringStream istr(ostr.str());
+        ISpanStream istr(ostr.view());
         CompactListList<label> cll5(istr);
         Info<< "cll5 = " << cll5 << endl;
     }
     {
         // IO
         cll4.clear();
-        OStringStream ostr;
+        OCharStream ostr;
         ostr << cll4;
 
-        IStringStream istr(ostr.str());
+        ISpanStream istr(ostr.view());
         CompactListList<label> cll5(istr);
         Info<< "cll5 = " << cll5 << endl;
     }

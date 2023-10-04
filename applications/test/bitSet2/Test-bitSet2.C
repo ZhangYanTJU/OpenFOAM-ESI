@@ -36,7 +36,7 @@ Description
 #include "DynamicList.H"
 #include "IOstreams.H"
 #include "ITstream.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "bitSet.H"
 #include "FlatOutput.H"
 
@@ -415,7 +415,7 @@ int main(int argc, char *argv[])
     Info<< "\nassign from indices\n";
     list4.readList
     (
-        IStringStream
+        ICharStream
         (
             "{0 1 2 3 12 13 14 19 20 21}"
         )()

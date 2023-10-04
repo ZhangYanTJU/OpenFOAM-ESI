@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +30,7 @@ License
 #include "fvMesh.H"
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "SpanStream.H"
 
 using namespace Foam;
 
@@ -76,9 +77,9 @@ int main(int argc, char *argv[])
         PtrList<dictionary> boundaryDicts(pbm.size());
         forAll(pbm, patchi)
         {
-            OStringStream os;
+            OCharStream os;
             os << pbm[patchi];
-            IStringStream is(os.str());
+            ISpanStream is(os.view());
             boundaryDicts.set(patchi, new dictionary(is));
         }
 

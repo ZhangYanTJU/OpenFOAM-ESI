@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ Description
 
 #include "charList.H"
 #include "labelList.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "ListOps.H"
 #include "SubList.H"
 #include "FlatOutput.H"
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     // Info<< "Known compound tokens: "
     //     << token::compound::emptyConstructorTablePtr_->sortedToc() << nl;
 
-    OStringStream ostr;
+    OCharStream ostr;
 
     {
         List<char> alphabet(64);
@@ -75,7 +75,8 @@ int main(int argc, char *argv[])
     }
 
     {
-        IStringStream istr(ostr.str());
+        // ICharStream istr(ostr.release());
+        ISpanStream istr(ostr.view());
         List<char> alphabet(istr);
 
         Info<< "re-read: " << alphabet << nl;
@@ -87,6 +88,8 @@ int main(int argc, char *argv[])
         // alphabet = '@';
         Info<< "blanked: " << alphabet << nl;
     }
+
+    Info<< "\nEnd\n" << nl;
 
     return 0;
 }

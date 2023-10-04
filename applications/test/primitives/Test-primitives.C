@@ -34,7 +34,6 @@ Description
 #include "scalar.H"
 #include "FlatOutput.H"
 #include "SpanStream.H"
-#include "StringStream.H"
 #include "NASCore.H"
 #include "parsing.H"
 #include "Tuple2.H"
@@ -443,6 +442,7 @@ int main(int argc, char *argv[])
             << " read " << sizeof(scalar) << nl;
 
         List<otherType> srcList(15);
+        List<scalar> dstList;  // Read back
 
         forAll(srcList, i)
         {
@@ -452,13 +452,8 @@ int main(int argc, char *argv[])
         OCharStream os(IOstreamOption::BINARY);
         os << srcList;
 
-        DynamicList<char> buf;
-        os.swap(buf);  // Recover written contents
-
-        // Read back
-        List<scalar> dstList;
-
-        ISpanStream is(buf, IOstreamOption::BINARY);
+        // Recover written contents
+        ICharStream is(os.release(), IOstreamOption::BINARY);
         is.setScalarByteSize(sizeof(otherType));
 
         Info<< "Stream scalar-size ("

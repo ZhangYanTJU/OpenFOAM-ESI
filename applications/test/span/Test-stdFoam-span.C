@@ -34,7 +34,6 @@ Description
 #include "argList.H"
 
 #include "IOstreams.H"
-#include "StringStream.H"
 #include "scalar.H"
 #include "vector.H"
 #include "labelRange.H"

@@ -34,7 +34,6 @@ Description
 #include "argList.H"
 #include "ListOps.H"
 #include "CircularBuffer.H"
-#include "StringStream.H"
 #include "FlatOutput.H"
 
 using namespace Foam;

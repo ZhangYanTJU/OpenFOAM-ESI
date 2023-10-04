@@ -37,7 +37,7 @@ Description
 #include "scalarPredicates.H"
 #include "FlatOutput.H"
 #include "Tuple2.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "ops.H"
 #include "bitSet.H"
 
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
     Info<< nl << "Construct from Istream" << nl;
     {
-        IStringStream is("((less 10) (greater 100) (less -8) (le -9))");
+        ICharStream is("((less 10) (greater 100) (less -8) (le -9))");
         predicates::scalars accept(is);
 
         doTest(values, accept);

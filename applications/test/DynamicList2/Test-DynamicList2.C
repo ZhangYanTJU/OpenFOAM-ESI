@@ -33,7 +33,6 @@ Description
 #include "IOstreams.H"
 #include "ITstream.H"
 #include "OTstream.H"
-#include "StringStream.H"
 #include "FlatOutput.H"
 #include "ListOps.H"
 #include "labelRange.H"

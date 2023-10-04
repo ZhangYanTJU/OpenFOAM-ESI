@@ -28,18 +28,15 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "IOstreams.H"
+#include "SpanStream.H"
 #include "StringStream.H"
 
 using namespace Foam;
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// Main program:
-
-int main(int argc, char *argv[])
+template<class OStreamType>
+void doTest()
 {
-    Info<< "Begin test OStringStream" << endl;
-
-    OStringStream os;
+    OStreamType os;
     os << "output with some values " << 1 << " entry" << endl;
 
     Info<< "contains:" << nl
@@ -59,8 +56,20 @@ int main(int argc, char *argv[])
 
     Info<< "after reset:" << nl
         << os.str() << endl;
+}
 
-    Info<< "End\n" << endl;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Main program:
+
+int main(int argc, char *argv[])
+{
+    Info<< "Begin test OStringStream" << endl;
+
+    doTest<OStringStream>();
+    // No reset() method:  doTest<OCharStream>();
+
+    Info<< "\nEnd\n" << endl;
 
     return 0;
 }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,8 +66,7 @@ Note
 #include "MeshedSurfaces.H"
 #include "ModifiableMeshedSurface.H"
 #include "UnsortedMeshedSurfaces.H"
-
-#include "StringStream.H"
+#include "SpanStream.H"
 
 using namespace Foam;
 
@@ -180,9 +179,9 @@ int main(int argc, char *argv[])
 
         // check: output to ostream, construct from istream
         {
-            OStringStream os;
+            OCharStream os;
             os << surf;
-            IStringStream is(os.str());
+            ISpanStream is(os.view());
 
             // both work:
             triSurface surf2(is);
@@ -245,9 +244,9 @@ int main(int argc, char *argv[])
 
         // check: output to ostream, construct from istream
         {
-            OStringStream os;
+            OCharStream os;
             os << surf;
-            IStringStream is(os.str());
+            ISpanStream is(os.view());
 
             // both work:
             UnsortedMeshedSurface<face> surf2(is);
@@ -309,9 +308,9 @@ int main(int argc, char *argv[])
 
         // check: output to ostream, construct from istream
         {
-            OStringStream os;
+            OCharStream os;
             os << surf;
-            IStringStream is(os.str());
+            ISpanStream is(os.view());
 
             // both work:
             MeshedSurface<face> surf2(is);
@@ -373,9 +372,9 @@ int main(int argc, char *argv[])
 
         // check: output to ostream, construct from istream
         {
-            OStringStream os;
+            OCharStream os;
             os << surf;
-            IStringStream is(os.str());
+            ISpanStream is(os.view());
 
             // both work:
             MeshedSurface<face> surf2(is);

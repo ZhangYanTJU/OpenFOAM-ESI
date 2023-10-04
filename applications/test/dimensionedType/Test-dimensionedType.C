@@ -29,6 +29,7 @@ License
 #include "dictionary.H"
 #include "primitiveEntry.H"
 #include "dimensionedTypes.H"
+#include "SpanStream.H"
 
 using namespace Foam;
 
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
 
     {
         string dimString("[Pa m^2 s^-2]");
-        IStringStream is("[Pa m^2 s^-2]");
+        ICharStream is("[Pa m^2 s^-2]");
 
         Pout<< nl;
         Pout<< "dimensionSet construct from (is) with contents "
@@ -70,23 +71,23 @@ int main(int argc, char *argv[])
     {
         Pout<< nl
             << "construct from (is) = "
-            << dimensionedScalar(IStringStream("bla [Pa mm^2 s^-2] 3.0")())
+            << dimensionedScalar(ICharStream("bla [Pa mm^2 s^-2] 3.0")())
             << endl;
         Pout<< "construct from (name,is) = "
             <<  dimensionedScalar
                 (
                     "ABC",
-                    IStringStream("[Pa mm^2 s^-2] 3.0")()
+                    ICharStream("[Pa mm^2 s^-2] 3.0")()
                 ) << endl;
         Pout<< "construct from (name,dims,is) = "
             <<  dimensionedScalar
                 (
                     "ABC",
                     dimLength,
-                    IStringStream("bla [mm] 3.0")()
+                    ICharStream("bla [mm] 3.0")()
                 ) << endl;
         {
-            IStringStream is("bla [mm] 3.0");
+            ICharStream is("bla [mm] 3.0");
             dimensionedScalar ds;
             is >> ds;
             Pout<< "read:" << ds << endl;

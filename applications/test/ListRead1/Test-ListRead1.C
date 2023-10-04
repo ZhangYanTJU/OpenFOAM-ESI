@@ -37,7 +37,6 @@ Description
 
 #include "IOstreams.H"
 #include "Fstream.H"
-#include "StringStream.H"
 #include "scalar.H"
 #include "vector.H"
 

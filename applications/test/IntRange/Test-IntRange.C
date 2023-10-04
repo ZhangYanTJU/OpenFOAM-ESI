@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -20,7 +20,7 @@ Description
 #include "argList.H"
 #include "labelPair.H"
 #include "IntRange.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 
 using namespace Foam;
 
@@ -75,9 +75,8 @@ int main(int argc, char *argv[])
 
     // Read from stream
     {
-        IStringStream is("(10 100)");
+        ICharStream is("(10 100)");
         intRange range;
-
         is >> range;
 
         Info<< "From stream int32_t: " << range << nl;

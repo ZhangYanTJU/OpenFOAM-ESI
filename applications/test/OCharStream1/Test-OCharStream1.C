@@ -290,8 +290,8 @@ int main(int argc, char *argv[])
 
         Info<< "address: " << Foam::name(os2.list().cdata()) << nl;
 
-        List<char> chars(os2.release());
-        Info<< "chars: " << chars.size() << nl;
+        DynamicList<char> chars(os2.release());
+        Info<< "chars: " << chars.size() << '/' << chars.capacity() << nl;
         Info<< "address: " << Foam::name(chars.cdata()) << nl;
         Info<< "release" << nl;
         printInfo(os2);

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,6 +36,7 @@ Description
 #include "IOobject.H"
 #include "IFstream.H"
 #include "dictionary.H"
+#include "SpanStream.H"
 #include "ops.H"
 #include "scalarRange.H"
 #include "stringOps.H"
@@ -348,7 +349,7 @@ int main(int argc, char *argv[])
         Info<< nl << "Test reading good/bad/empty scalar entries" << nl;
         dictionary dict2
         (
-            IStringStream
+            ICharStream
             (
                 "good 3.14159;\n"
                 "negative -3.14159;\n"
@@ -418,7 +419,7 @@ int main(int argc, char *argv[])
 
             dictionary mydict
             (
-                IStringStream
+                ICharStream
                 (
                     "scalar 3.14159;\n"
                     "label 10;\n"

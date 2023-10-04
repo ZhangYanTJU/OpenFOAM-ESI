@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "OSHA1stream.H"
+#include "SpanStream.H"
 #include "StringStream.H"
 #include "dictionary.H"
 
@@ -118,7 +119,7 @@ int main(int argc, char * argv[])
     {
         dictionary dict
         (
-            IStringStream
+            ICharStream
             (
                 "parent { Default_Boundary_Region { type zeroGradient; } }"
                 "inlet_1 { value inlet_1; }"

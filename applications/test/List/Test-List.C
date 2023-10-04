@@ -40,7 +40,7 @@ See also
 #include "wordRes.H"
 
 #include "IOstreams.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "scalar.H"
 #include "vector.H"
 
@@ -183,17 +183,17 @@ int main(int argc, char *argv[])
 
     if (false)
     {
-        labelList intlist(IStringStream("(0 1 2)")());
+        labelList intlist(ICharStream("(0 1 2)")());
         Info<<"construct from Istream: " << intlist << endl;
 
-        IStringStream("(3 4 5)")() >> static_cast<labelUList&>(intlist);
+        ICharStream("(3 4 5)")() >> static_cast<labelUList&>(intlist);
         Info<<"is >>: " << intlist << endl;
 
-        IStringStream("(6 7 8)")() >> intlist;
+        ICharStream("(6 7 8)")() >> intlist;
         Info<<"is >>: " << intlist << endl;
     }
 
-    List<vector> list1(IStringStream("1 ((0 1 2))")());
+    List<vector> list1(ICharStream("1 ((0 1 2))")());
     Info<< "list1: " << list1 << endl;
 
     List<vector> list2
