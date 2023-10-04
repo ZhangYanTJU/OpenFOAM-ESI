@@ -150,6 +150,13 @@ private:
         //- Storage of the dummy file handler (demand-driven)
         static refPtr<fileOperation> dummyHandlerPtr_;
 
+        //- Filtering of processorsDDD directories (in parallel):
+        //      - >0 : only accept processorsDDD (default)
+        //      -  0 : accept anything (e.g. when detecting nprocs from
+        //             directory naming)
+        //      - -1 : use nProcs(UPstream::worldComm)
+        static int nProcsFilter_;
+
 
 protected:
 
@@ -449,6 +456,21 @@ public:
         {
             int old(cacheLevel_);
             cacheLevel_ = level;
+            return old;
+        }
+
+        //- Return collated 'processorsDDD' filtering
+        static int nProcsFilter() noexcept
+        {
+            return nProcsFilter_;
+        }
+
+        //- Set collated 'processorsDDD' filtering (0 = off).
+        //  \return the previous value
+        static int nProcsFilter(int level) noexcept
+        {
+            int old(nProcsFilter_);
+            nProcsFilter_ = level;
             return old;
         }
 

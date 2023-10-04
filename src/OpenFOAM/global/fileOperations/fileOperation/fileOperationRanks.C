@@ -100,8 +100,6 @@ Foam::labelRange Foam::fileOperation::subRanks(const labelUList& mainIOranks)
         }
     }
 
-    Pout<< "subRanks: " << labelRange(begProc, (endProc-begProc)) << endl;
-
     return labelRange(begProc, (endProc-begProc));
 }
 
