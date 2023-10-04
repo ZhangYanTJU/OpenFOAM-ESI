@@ -121,12 +121,11 @@ Foam::fileName Foam::fileOperations::uncollatedFileOperation::filePathInfo
             // Check if parallel "procesors" directory
             if (io.time().processorCase())
             {
-                refPtr<dirIndexList> pDirs
+                const refPtr<dirIndexList> pDirs
                 (
-                    fileOperation::lookupAndCacheProcessorsPath
+                    lookupProcessorsPath
                     (
-                        io.objectPath(),
-                        false // No additional parallel synchronisation
+                        io.objectPath()
                     )
                 );
 

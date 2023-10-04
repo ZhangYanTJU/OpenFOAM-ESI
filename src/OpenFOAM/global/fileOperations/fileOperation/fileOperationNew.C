@@ -383,7 +383,9 @@ Foam::fileOperation::New_impl
 
         if (newHandler)
         {
-            newHandler->nProcs(origHandler.nProcs());
+            // Make sure that the output format uses the correct number of
+            // 'active' ranks (instead of that of the origHandler)
+            newHandler->nProcs(subProcs.size());
             newHandler->storeComm();
         }
     }
@@ -402,7 +404,30 @@ Foam::fileOperation::New
 {
     labelList subProcs = getSelectedProcs(useProc);
 
-    return fileOperation::New_impl(origHandler, subProcs, verbose);
+    // useProc subsets worldComm ranks. So we cannot use worldComm
+    // anywhere in file handler. Workaround: use temporary communicator
+    // so we can at least construct. TBD.
+
+    label oldWorldComm = -1;
+    autoPtr<UPstream::communicator> subWorldComm;
+    if (subProcs.size() != UPstream::nProcs(UPstream::worldComm))
+    {
+        subWorldComm.reset
+        (
+            new UPstream::communicator
+            (
+                UPstream::worldComm,
+                subProcs
+            )
+        );
+        oldWorldComm = UPstream::commWorld(subWorldComm());
+    }
+
+    autoPtr<fileOperation> fh(New_impl(origHandler, subProcs, verbose));
+
+    UPstream::commWorld(oldWorldComm);
+
+    return fh;
 }
 
 
@@ -416,7 +441,31 @@ Foam::fileOperation::New
 {
     labelList subProcs = getSelectedProcs(useProc);
 
-    return fileOperation::New_impl(origHandler, subProcs, verbose);
+    label oldWorldComm = -1;
+    autoPtr<UPstream::communicator> subWorldComm;
+
+    // useProc subsets worldComm ranks. So we cannot use worldComm
+    // anywhere in file handler. Workaround: use temporary communicator
+    // so we can at least construct. TBD.
+
+    if (subProcs.size() != UPstream::nProcs(UPstream::worldComm))
+    {
+        subWorldComm.reset
+        (
+            new UPstream::communicator
+            (
+                UPstream::worldComm,
+                subProcs
+            )
+        );
+        oldWorldComm = UPstream::commWorld(subWorldComm());
+    }
+
+    autoPtr<fileOperation> fh(New_impl(origHandler, subProcs, verbose));
+
+    UPstream::commWorld(oldWorldComm);
+
+    return fh;
 }
 
 

@@ -85,7 +85,7 @@ protected:
         //  \return empty fileName if not found.
         virtual refPtr<dirIndexList> lookupProcessorsPath
         (
-            const fileName&
+            const fileName& objectPath
         ) const;
 
 
