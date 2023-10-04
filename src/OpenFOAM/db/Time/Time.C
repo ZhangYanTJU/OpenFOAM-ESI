@@ -202,7 +202,8 @@ void Foam::Time::setControls()
     //       alternative processorsDDD directories naming
     //       - do not look for compressed (is directory)
 
-    if (fileHandler().filePath(timePath(), false).empty())
+    const fileName timeDir(fileHandler().filePath(timePath(), false));
+    if (returnReduceAnd(timeDir.empty()))
     {
         const int oldPrecision = precision_;
         int requiredPrecision = -1;
@@ -225,7 +226,8 @@ void Foam::Time::setControls()
             oldTime = std::move(newTime);
 
             // Does a time directory exist with the new format?
-            if (!fileHandler().filePath(timePath(), false).empty())
+            const fileName timeDir(fileHandler().filePath(timePath(), false));
+            if (returnReduceOr(!timeDir.empty()))
             {
                 requiredPrecision = precision_;
             }

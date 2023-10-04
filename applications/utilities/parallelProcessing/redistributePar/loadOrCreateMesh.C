@@ -162,9 +162,8 @@ Foam::boolList Foam::haveMeshFile
         handler.filePath(runTime.path()/meshPath/meshFile)
     );
 
-    bool found = (!fName.empty() && handler.isFile(fName));
-
-    if (found)
+    bool found = handler.isFile(fName);
+    if (returnReduceAnd(found)) // worldComm
     {
         autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fName));
         if (isPtr && isPtr->good())

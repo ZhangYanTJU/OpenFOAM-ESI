@@ -80,6 +80,7 @@ Foam::word Foam::fileOperation::processorsBaseDir = "processors";
 //- Caching (e.g. of time directories) - enabled by default
 int Foam::fileOperation::cacheLevel_(1);
 
+int Foam::fileOperation::nProcsFilter_(0);
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
@@ -179,8 +180,6 @@ static bool parseProcsNumRange
 } // End anonymous namespace
 
 
-#if 0
-
 // Sorting of processor directories
 #include "stringOpsSort.H"
 namespace
@@ -214,7 +213,6 @@ void sortProcessorDirs(Foam::UList<Foam::fileOperation::dirIndex>& dirs)
 }
 
 } // End anonymous namespace
-#endif
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
@@ -432,6 +430,16 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
     // - distributed() : different processors have different roots
     // - fileModificationChecking : (uncollated only) do IO on master only
 
+
+    // Collated : check whether/how to filter processorsXXX directory names
+    const label targetNProcs
+    (
+        (UPstream::parRun() && nProcsFilter_ < 0)
+      ? UPstream::nProcs(UPstream::worldComm)
+      : nProcsFilter_
+    );
+
+
     fileName path, pDir, local;
     procRangeType group;
     label numProcs;
@@ -528,6 +536,19 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
             }
             else if (rNum != -1)
             {
+                if (targetNProcs > 1 && (targetNProcs != rNum))
+                {
+                    // Current directory can never contain wanted proc
+                    //Pout<< "For fName:" << fName
+                    //    << "Ignoring directory " << dirN
+                    //    << " since parsed rNum:" << rNum
+                    //    << " targetNProcs:" << targetNProcs
+                    //   << endl;
+                    //error::printStack(Pout);
+
+                    continue;
+                }
+
                 // "processorsNN" or "processorsNN_start-end"
                 nProcs = max(nProcs, rNum);
 
@@ -571,7 +592,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
         if (debug)
         {
             Pout<< "fileOperation::lookupProcessorsPath " << procPath
-                << " detected:" << procDirs << endl;
+                << " detected:" << flatOutput(procDirs) << endl;
         }
 
         if (UPstream::parRun() && (!distributed() || syncPar))
@@ -655,7 +676,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
         }
 
         // Sort processor directory names (natural order)
-        /// sortProcessorDirs(procDirs);
+        sortProcessorDirs(procDirs);
 
         if (procDirsStatus & 2u)
         {
@@ -680,7 +701,6 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
 Foam::refPtr<Foam::fileOperation::dirIndexList>
 Foam::fileOperation::lookupProcessorsPath(const fileName& fName) const
 {
-    // Use parallel synchronisation
     return lookupAndCacheProcessorsPath(fName, true);
 }
 
@@ -844,6 +864,7 @@ Foam::fileName Foam::fileOperation::filePath
     }
 
     // Give preference to processors variant
+    fileName foundName;
     if (proci != -1)
     {
         // Get all processor directories
@@ -859,26 +880,40 @@ Foam::fileName Foam::fileOperation::filePath
                 {
                     Pout<< "fileOperation::filePath : " << collatedName << endl;
                 }
-                return collatedName;
+                foundName = collatedName;
             }
         }
     }
 
-    if (exists(fName, checkGzip, followLink))
+    //if (returnReduceOr(foundName.empty()))    // worldComm
+    if (foundName.empty())
+    {
+        // There is at least one processor that cannot find the processors
+        // directory. Re-do with straight supplied filename
+        if (exists(fName, checkGzip, followLink))
+        {
+            if (foundName.empty())
+            {
+                foundName = fName;
+            }
+        }
+    }
+
+    if (!foundName.empty())
     {
         if (debug)
         {
-            Pout<< "fileOperation::filePath : " << fName << endl;
+            Pout<< "fileOperation::filePath : " << foundName << endl;
         }
-        return fName;
     }
-
-    if (debug)
+    else
     {
-        Pout<< "fileOperation::filePath : Not found" << endl;
+        if (debug)
+        {
+            Pout<< "fileOperation::filePath : Not found" << endl;
+        }
     }
-
-    return fileName();
+    return foundName;
 }
 
 
