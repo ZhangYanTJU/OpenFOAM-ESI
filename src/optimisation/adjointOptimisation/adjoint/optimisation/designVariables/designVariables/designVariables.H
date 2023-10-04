@@ -204,6 +204,9 @@ public:
         //- been set
         inline bool isMaxInitChangeSet() const;
 
+        //- Get maxInitChange
+        inline const autoPtr<scalar>& getMaxInitChange();
+
         //- Set maxInitChange
         inline void setMaxInitChange(const scalar maxInitChange);
 

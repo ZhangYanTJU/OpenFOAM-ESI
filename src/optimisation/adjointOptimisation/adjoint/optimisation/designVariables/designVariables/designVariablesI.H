@@ -41,6 +41,12 @@ bool Foam::designVariables::isMaxInitChangeSet() const
 }
 
 
+const Foam::autoPtr<Foam::scalar>& Foam::designVariables::getMaxInitChange()
+{
+    return maxInitChange_;
+}
+
+
 void Foam::designVariables::setMaxInitChange(const scalar maxInitChange)
 {
     maxInitChange_.reset(new scalar(maxInitChange));
