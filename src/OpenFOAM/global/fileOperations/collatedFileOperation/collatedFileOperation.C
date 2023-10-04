@@ -113,43 +113,7 @@ void Foam::fileOperations::collatedFileOperation::printBanner
 
     if (withRanks)
     {
-        // Information about the ranks
-        stringList hosts(Pstream::nProcs());
-        if (Pstream::master(comm_))
-        {
-            hosts[Pstream::myProcNo()] = hostName();
-        }
-        Pstream::gatherList(hosts);
-
-        DynamicList<label> offsetMaster(Pstream::nProcs());
-
-        forAll(hosts, ranki)
-        {
-            if (!hosts[ranki].empty())
-            {
-                offsetMaster.append(ranki);
-            }
-        }
-
-        if (offsetMaster.size() > 1)
-        {
-            DetailInfo
-                << "IO nodes:" << nl << '(' << nl;
-
-            offsetMaster.append(Pstream::nProcs());
-
-            for (label group = 1; group < offsetMaster.size(); ++group)
-            {
-                const label beg = offsetMaster[group-1];
-                const label end = offsetMaster[group];
-
-                DetailInfo
-                    << "    (" << hosts[beg].c_str() << ' '
-                    << (end-beg) << ')' << nl;
-            }
-            DetailInfo
-                << ')' << nl;
-        }
+        fileOperation::printRanks();
     }
 
     //- fileModificationChecking already set by base class (masterUncollated)

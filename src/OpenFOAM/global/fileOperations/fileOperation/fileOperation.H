@@ -270,6 +270,13 @@ public:
         //- Name of the default fileHandler
         static word defaultFileHandler;
 
+        //- Filtering of processorsDDD directories (in parallel):
+        //      - >0 : only accept processorsDDD (default)
+        //      -  0 : accept anything (e.g. when detecting nprocs from
+        //             directory naming)
+        //      - -1 : use nProcs(UPstream::worldComm)
+        static label nProcsFilter_;
+
 
     // Public Data Types
 

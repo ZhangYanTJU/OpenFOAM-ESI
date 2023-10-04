@@ -373,6 +373,11 @@ Foam::fileOperation::New_impl
         // Allocate new handler with same type and similar IO ranks
         // but with different sub-ranks (and communicator)
 
+
+const label myWorldComm = commAndIORanks.first();
+Pout<< "** myWorldComm:" << myWorldComm
+    << " nProcs:" << UPstream::nProcs(myWorldComm) << endl;
+
         newHandler = fileOperation::New
         (
             origHandler.type(),
@@ -383,7 +388,9 @@ Foam::fileOperation::New_impl
 
         if (newHandler)
         {
-            newHandler->nProcs(origHandler.nProcs());
+            // Make sure that the output format uses the correct number of
+            // 'active' ranks (instead of that of the origHandler)
+            newHandler->nProcs(subProcs.size());
             newHandler->storeComm();
         }
     }
@@ -402,7 +409,33 @@ Foam::fileOperation::New
 {
     labelList subProcs = getSelectedProcs(useProc);
 
-    return fileOperation::New_impl(origHandler, subProcs, verbose);
+    // useProc subsets worldComm ranks. So we cannot use worldComm
+    // anywhere in file handler. Workaround: use temporary communicator
+    // so we can at least contruct. TBD.
+
+    label oldWorldComm = -1;
+    autoPtr<UPstream::communicator> subWorldComm;
+    if (subProcs.size() != UPstream::nProcs(UPstream::worldComm))
+    {
+        subWorldComm.reset
+        (
+            new UPstream::communicator
+            (
+                UPstream::worldComm,
+                subProcs
+            )
+        );
+        oldWorldComm = UPstream::commWorld(subWorldComm());
+    }
+
+    autoPtr<fileOperation> fh(New_impl(origHandler, subProcs, verbose));
+
+    if (oldWorldComm != -1)
+    {
+        UPstream::commWorld(oldWorldComm);
+    }
+
+    return fh;
 }
 
 
@@ -416,7 +449,34 @@ Foam::fileOperation::New
 {
     labelList subProcs = getSelectedProcs(useProc);
 
-    return fileOperation::New_impl(origHandler, subProcs, verbose);
+    label oldWorldComm = -1;
+    autoPtr<UPstream::communicator> subWorldComm;
+
+    // useProc subsets worldComm ranks. So we cannot use worldComm
+    // anywhere in file handler. Workaround: use temporary communicator
+    // so we can at least contruct. TBD.
+
+    if (subProcs.size() != UPstream::nProcs(UPstream::worldComm))
+    {
+        subWorldComm.reset
+        (
+            new UPstream::communicator
+            (
+                UPstream::worldComm,
+                subProcs
+            )
+        );
+        oldWorldComm = UPstream::commWorld(subWorldComm());
+    }
+
+    autoPtr<fileOperation> fh(New_impl(origHandler, subProcs, verbose));
+
+    if (oldWorldComm != -1)
+    {
+        UPstream::commWorld(oldWorldComm);
+    }
+
+    return fh;
 }
 
 
