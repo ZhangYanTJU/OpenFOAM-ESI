@@ -7,6 +7,7 @@
 #    \\/     M anipulation  |
 #-------------------------------------------------------------------------------
 #     Copyright (C) 2015 OpenFOAM Foundation
+#     Copyright (C) 2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -18,62 +19,164 @@
 #     Create a new case directory that includes time, system and constant
 #     directories from a source case.
 #     The time directory is the first time directory by default
-#     - requires foamListTimes v2.3.x and newer
+#
+# Requires
+#     foamListTimes
 #
 #------------------------------------------------------------------------------
-usage() {
-    exec 1>&2
-    while [ "$#" -ge 1 ]; do echo "$1"; shift; done
-    cat<<USAGE
+printHelp() {
+    cat <<USAGE
 
 Usage: ${0##*/} [OPTION] <sourceCase> <targetCase>
 options:
-  -l | -latestTime    clone the latest time directory
-  -h | -help          print the usage
+  -force              Force overwrite of existing target
+  -l | -latestTime    Select the latest time directory
+  -h | -help          Print the usage
 
-Create a new <targetCase> case directory that includes time, system and constant
-directories of <sourceCase> directory.
+Create a new <targetCase> case directory with a copy of time, system, constant
+directories from <sourceCase> directory.
 The time directory is the first time directory by default.
 
 USAGE
+    exit 0  # A clean exit
+}
+
+# Report error and exit
+die()
+{
+    exec 1>&2
+    echo
+    echo "Error encountered:"
+    while [ "$#" -ge 1 ]; do echo "    $1"; shift; done
+    echo
+    echo "See '${0##*/} -help' for usage"
+    echo
     exit 1
 }
 
-TIME_OPTION="head -1"
+
+#------------------------------------------------------------------------------
+
+# Default: use the first time, combined with -withZero this will likely
+# find the 0/ directory
+filter="head -1"
+unset optForce
 
 # parse options
 while [ "$#" -gt 0 ]
 do
     case "$1" in
-    -h | -help*)
-        usage
+    (- | --)
+        shift
+        break   # Stop option parsing
         ;;
-    -l | -latestTime)
-        TIME_OPTION="tail -1"
-        shift 1
+    (-h | -help* | --help*)
+        printHelp
+        ;;
+
+    -force)
+        optForce=true
+        ;;
+
+    -l | -latest*)
+        ## Also possible: opt_foamListTimes="-latestTime"
+        filter="tail -1"
         ;;
     -*)
-        usage "unknown option: '$*'"
+        die "unknown option: '$*'"
         ;;
     *)
         break
         ;;
     esac
+    shift
 done
 
-[ $# -eq 2 ] || usage "Incorrect arguments specified"
-if [ "$(foamListTimes -case $1 2>&1 >/dev/null | grep 'FOAM FATAL ERROR')" ]
+
+if [ "$#" -ne 2 ]
 then
-    usage "$1 is not does not a valid case directory"
+    die "Incorrect number of arguments specified"
 fi
-! [ -e $2 ] || usage "$2 file/directory already exists, delete and re-run"
 
-echo "Making $2 case directory"
-mkdir $2
+srcDir="$1"
+dstDir="$2"
 
-TIME_DIR="$(foamListTimes -withZero -case $1 | $TIME_OPTION)"
+#------------------------------------------------------------------------------
 
-echo "Copying case directories from $1 to $2"
-cp -r $1/system $1/constant $1/${TIME_DIR} $2
+if [ -d "$srcDir" ]
+then
+    unset missing
+    for dir in constant system
+    do
+        if [ ! -d "$srcDir/$dir" ]
+        then
+            missing="$missing${missing:+, }<$dir>"
+        fi
+    done
+    if [ -n "$missing" ]
+    then
+        die \
+            "Source directory is missing standard directories:" \
+             " -> $srcDir" \
+             "    $missing"
+    fi
+else
+    die \
+        "Source directory does not exist:" \
+        " -> $srcDir"
+fi
+
+command -v foamListTimes || die "Requires 'foamListTimes' (openfoam)"
+
+if [ -e "$dstDir" ]
+then
+    if [ "$optForce" = true ]
+    then
+        echo "------------" 1>&2
+        echo "Overwriting: $dstDir" 1>&2
+        echo "------------" 1>&2
+        rm -rf "$dstDir"  # Remove old directory
+    else
+        die "Destination already exists, remove and re-run" \
+            " -> $dstDir"
+    fi
+fi
+
+if [ "$(foamListTimes -case "$srcDir" 2>&1 >/dev/null | grep 'FATAL ERROR')" ]
+then
+    die "'$srcDir' does not appear to be a valid OpenFOAM case"
+fi
+
+
+timeDir="$(foamListTimes -withZero -case "$srcDir" | $filter)"
+
+# Fallback for missing timeDir
+if [ -z "$timeDir" ] && [ -d "$srcDir/0.orig" ]
+then
+    timeDir="0.orig"
+fi
+
+echo "Copying case directories" 1>&2
+echo "    $srcDir" 1>&2
+echo " -> $dstDir" 1>&2
+if [ -n "$timeDir" ]
+then
+    echo "    Time: $timeDir" 1>&2
+else
+    echo "    No time directories" 1>&2
+fi
+mkdir -p "$dstDir"
+echo "----" 1>&2
+
+for dir in system constant "$timeDir"
+do
+    if [ -n "$dir" ] && [ -d "$srcDir/$dir" ]
+    then
+        echo "    .../$dir" 1>&2
+        cp -r "$srcDir/$dir" "$dstDir"
+    fi
+done
+echo "----" 1>&2
+
 
 #------------------------------------------------------------------------------
