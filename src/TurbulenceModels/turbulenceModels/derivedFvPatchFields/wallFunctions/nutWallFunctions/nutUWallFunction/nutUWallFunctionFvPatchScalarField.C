@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,12 +68,11 @@ Foam::nutUWallFunctionFvPatchScalarField::calcNut() const
     forAll(yPlus, facei)
     {
         // Viscous sublayer contribution
-        const scalar nutVis = 0;
+        const scalar nutVis = nuw[facei];
 
         // Inertial sublayer contribution
         const scalar nutLog =
-            nuw[facei]
-           *(yPlus[facei]*kappa/log(max(E*yPlus[facei], 1 + 1e-4)) - 1.0);
+            nuw[facei]*yPlus[facei]*kappa/log(max(E*yPlus[facei], 1 + 1e-4));
 
         switch (blender_)
         {
@@ -132,6 +131,8 @@ Foam::nutUWallFunctionFvPatchScalarField::calcNut() const
                 break;
             }
         }
+
+        nutw[facei] -= nuw[facei];
     }
 
     return tnutw;
