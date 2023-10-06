@@ -54,7 +54,40 @@ inline Foam::word Foam::IOobject::scopedName
         return name;
     }
 
-    return scope + (IOobject::scopeSeparator + name);
+    word output;
+    output.reserve(scope.size() + name.size() + 1);
+
+    output += scope;
+    output += IOobject::scopeSeparator;
+    output += name;
+    return output;
+}
+
+
+inline Foam::word Foam::IOobject::scopedName
+(
+    const std::string& scope,
+    const word& name1,
+    const word& name2
+)
+{
+    if (scope.empty())
+    {
+        return IOobject::scopedName(name1, name2);
+    }
+
+    word output;
+    output.reserve(scope.size() + name1.size() + name2.size() + 2);
+
+    output += scope;
+    output += IOobject::scopeSeparator;
+    output += name1;
+    if (!name2.empty())
+    {
+        output += IOobject::scopeSeparator;
+        output += name2;
+    }
+    return output;
 }
 
 

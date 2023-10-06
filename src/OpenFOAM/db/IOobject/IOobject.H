@@ -307,6 +307,15 @@ public:
             const word& name
         );
 
+        //- Create scope:name1:name2 or scope_name1_name2 string
+        //  An empty scope is ignored.
+        static inline word scopedName
+        (
+            const std::string& scope,
+            const word& name1,
+            const word& name2
+        );
+
         //- Return the IOobject, but also consider an alternative file name.
         //
         //  \param io The expected IOobject to use
@@ -341,7 +350,7 @@ public:
     // Constructors
 
         //- Construct from name, instance, registry, io options
-        //  (default: NO_READ, NO_WRITE, register, non-global)
+        //  (default: NO_READ, NO_WRITE, REGISTER, non-global)
         IOobject
         (
             const word& name,
@@ -351,7 +360,7 @@ public:
         );
 
         //- Construct from name, instance, local, registry, io options
-        //  (default: NO_READ, NO_WRITE, register, non-global)
+        //  (default: NO_READ, NO_WRITE, REGISTER, non-global)
         IOobject
         (
             const word& name,
@@ -362,7 +371,7 @@ public:
         );
 
         //- Construct from path, registry, io options.
-        //  (default: NO_READ, NO_WRITE, register, non-global)
+        //  (default: NO_READ, NO_WRITE, REGISTER, non-global)
         //
         //  Uses fileNameComponents() to split path into components.
         //  A path that starts with a '/' is regarded as a file system path.
