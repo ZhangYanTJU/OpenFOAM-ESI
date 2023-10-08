@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,24 +94,14 @@ Foam::PDRDragModels::basic::~basic()
 
 Foam::tmp<Foam::volSymmTensorField> Foam::PDRDragModels::basic::Dcu() const
 {
-    tmp<volSymmTensorField> tDragDcu
+    auto tDragDcu = volSymmTensorField::New
     (
-        new volSymmTensorField
-        (
-            IOobject
-            (
-                "tDragDcu",
-                U_.mesh().time().constant(),
-                U_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            U_.mesh(),
-            dimensionedSymmTensor(dimMass/dimTime/dimVolume, Zero)
-        )
+        "tDragDcu",
+        IOobject::NO_REGISTER,
+        U_.mesh(),
+        dimensionedSymmTensor(dimMass/dimTime/dimVolume, Zero)
     );
-
-    volSymmTensorField& DragDcu = tDragDcu.ref();
+    auto& DragDcu = tDragDcu.ref();
 
     if (on_)
     {
@@ -127,24 +118,14 @@ Foam::tmp<Foam::volSymmTensorField> Foam::PDRDragModels::basic::Dcu() const
 
 Foam::tmp<Foam::volScalarField> Foam::PDRDragModels::basic::Gk() const
 {
-    tmp<volScalarField> tGk
+    auto tGk = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "tGk",
-                U_.mesh().time().constant(),
-                U_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            U_.mesh(),
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "tGk",
+        IOobject::NO_REGISTER,
+        U_.mesh(),
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
-
-    volScalarField& Gk = tGk.ref();
+    auto& Gk = tGk.ref();
 
     if (on_)
     {

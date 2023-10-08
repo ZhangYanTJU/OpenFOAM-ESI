@@ -1088,8 +1088,8 @@ tmp<pointField> calcOffset
 {
     vectorField::subField fc = pp.faceCentres();
 
-    tmp<pointField> toffsets(new pointField(fc.size()));
-    pointField& offsets = toffsets.ref();
+    auto toffsets = tmp<pointField>::New(fc.size());
+    auto& offsets = toffsets.ref();
 
     forAll(fc, i)
     {

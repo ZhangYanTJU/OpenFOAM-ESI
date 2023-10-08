@@ -310,8 +310,8 @@ tmp<scalarField> signedDistance
     const labelList& surfaces
 )
 {
-    tmp<scalarField> tfld(new scalarField(points.size(), Foam::sqr(GREAT)));
-    scalarField& fld = tfld.ref();
+    auto tfld = tmp<scalarField>::New(points.size(), Foam::sqr(GREAT));
+    auto& fld = tfld.ref();
 
     // Find nearest
     List<pointIndexHit> nearest;

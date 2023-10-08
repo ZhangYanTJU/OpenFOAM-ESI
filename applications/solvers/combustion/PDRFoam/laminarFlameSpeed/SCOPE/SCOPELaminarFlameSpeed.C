@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -255,24 +256,14 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
     scalar phi
 ) const
 {
-    tmp<volScalarField> tSu0
+    auto tSu0 = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Su0",
-                p.time().timeName(),
-                p.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            p.mesh(),
-            dimensionedScalar(dimVelocity, Zero)
-        )
+        "Su0",
+        IOobject::NO_REGISTER,
+        p.mesh(),
+        dimensionedScalar(dimVelocity, Zero)
     );
-
-    volScalarField& Su0 = tSu0.ref();
+    auto& Su0 = tSu0.ref();
 
     forAll(Su0, celli)
     {
@@ -304,24 +295,14 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Su0pTphi
     const volScalarField& phi
 ) const
 {
-    tmp<volScalarField> tSu0
+    auto tSu0 = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Su0",
-                p.time().timeName(),
-                p.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            p.mesh(),
-            dimensionedScalar(dimVelocity, Zero)
-        )
+        "Su0",
+        IOobject::NO_REGISTER,
+        p.mesh(),
+        dimensionedScalar(dimVelocity, Zero)
     );
-
-    volScalarField& Su0 = tSu0.ref();
+    auto& Su0 = tSu0.ref();
 
     forAll(Su0, celli)
     {
@@ -358,24 +339,14 @@ Foam::tmp<Foam::volScalarField> Foam::laminarFlameSpeedModels::SCOPE::Ma
     const volScalarField& phi
 ) const
 {
-    tmp<volScalarField> tMa
+    auto tMa = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Ma",
-                phi.time().timeName(),
-                phi.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            phi.mesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        "Ma",
+        IOobject::NO_REGISTER,
+        phi.mesh(),
+        dimensionedScalar(dimless, Zero)
     );
-
-    volScalarField& ma = tMa.ref();
+    auto& ma = tMa.ref();
 
     forAll(ma, celli)
     {
@@ -418,21 +389,12 @@ Foam::laminarFlameSpeedModels::SCOPE::Ma() const
     {
         const fvMesh& mesh = psiuReactionThermo_.p().mesh();
 
-        return tmp<volScalarField>
+        return volScalarField::New
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "Ma",
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("Ma", dimless, Ma(equivalenceRatio_))
-            )
+            "Ma",
+            IOobject::NO_REGISTER,
+            mesh,
+            dimensionedScalar("Ma", dimless, Ma(equivalenceRatio_))
         );
     }
 }

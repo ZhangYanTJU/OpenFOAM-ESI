@@ -360,8 +360,8 @@ tmp<scalarField> avg
     const scalarField& edgeWeights
 )
 {
-    tmp<scalarField> tres(new scalarField(s.nPoints(), Zero));
-    scalarField& res = tres.ref();
+    auto tres = tmp<scalarField>::New(s.nPoints(), Zero);
+    auto& res = tres.ref();
 
     scalarField sumWeight(s.nPoints(), Zero);
 
