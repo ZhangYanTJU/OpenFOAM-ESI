@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -407,7 +407,8 @@ Foam::radiation::laserDTRM::laserDTRM(const volScalarField& T)
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimPower/dimVolume, Zero)
@@ -504,7 +505,8 @@ Foam::radiation::laserDTRM::laserDTRM
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimPower/pow3(dimLength), Zero)
@@ -535,42 +537,23 @@ Foam::label Foam::radiation::laserDTRM::nBands() const
 
 void Foam::radiation::laserDTRM::calculate()
 {
-    tmp<volScalarField> treflectingCells
+    auto treflectingCells = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "reflectingCellsVol",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar("zero", dimless, -1)
-        )
+        "reflectingCellsVol",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar("zero", dimless, -1)
     );
-    volScalarField& reflectingCellsVol = treflectingCells.ref();
+    auto& reflectingCellsVol = treflectingCells.ref();
 
-
-    tmp<volVectorField> tnHat
+    auto tnHat = volVectorField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                "nHat",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedVector(dimless, Zero)
-        )
+        "nHat",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedVector(dimless, Zero)
     );
-    volVectorField& nHat = tnHat.ref();
+    auto& nHat = tnHat.ref();
 
 
     // Reset the field
@@ -686,9 +669,9 @@ void Foam::radiation::laserDTRM::calculate()
 
         globalIndex::gatherInplaceOp(lines);
 
-        if (Pstream::master())
+        if (UPstream::master())
         {
-            OBJstream os(type() + ":particlePath.obj");
+            OBJstream os(type() + "-particlePath.obj");
 
             for (label pointi = 0; pointi < lines.size(); pointi += 2)
             {

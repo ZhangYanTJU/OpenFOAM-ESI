@@ -268,8 +268,8 @@ Foam::tmp<Foam::pointField> Foam::DelaunayMeshTools::allPoints
     const Triangulation& t
 )
 {
-    tmp<pointField> tpts(new pointField(t.vertexCount(), point::max));
-    pointField& pts = tpts.ref();
+    auto tpts = tmp<pointField>::New(t.vertexCount(), point::max);
+    auto& pts = tpts.ref();
 
     for
     (

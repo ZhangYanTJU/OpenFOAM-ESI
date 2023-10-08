@@ -78,11 +78,10 @@ bool Foam::XiEqModel::read(const dictionary& XiEqProperties)
 void Foam::XiEqModel::writeFields() const
 {
     //***HGW It is not clear why B is written here
-    if (Su_.mesh().foundObject<volSymmTensorField>("B"))
+    const auto* B = Su_.mesh().cfindObject<volSymmTensorField>("B");
+    if (B)
     {
-        const volSymmTensorField& B =
-            Su_.mesh().lookupObject<volSymmTensorField>("B");
-        B.write();
+        B->write();
     }
 }
 
@@ -98,39 +97,26 @@ Foam::XiEqModel::calculateSchelkinEffect(const scalar uPrimeCoef) const
     const volSymmTensorField& nsv =
         mesh.lookupObject<volSymmTensorField>("nsv");
 
-    tmp<volScalarField> tN
+    auto tN = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "tN",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            dimensionedScalar(Nv.dimensions(), Zero)
-        )
+        "tN",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimensionedScalar(Nv.dimensions(), Zero)
     );
-    volScalarField& N = tN.ref();
+    auto& N = tN.ref();
+
     N.primitiveFieldRef() = Nv.primitiveField()*pow(mesh.V(), 2.0/3.0);
 
-    volSymmTensorField ns
+    auto tns = volSymmTensorField::New
     (
-        IOobject
-        (
-            "tns",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "tns",
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedSymmTensor(nsv.dimensions(), Zero)
     );
+    auto& ns = tns.ref();
+
     ns.primitiveFieldRef() = nsv.primitiveField()*pow(mesh.V(), 2.0/3.0);
 
     const volVectorField Uhat
