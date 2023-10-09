@@ -99,7 +99,10 @@ public:
             NO_REGISTER = 0,
 
             //! Request registration (bool: true)
-            REGISTER = 1
+            REGISTER = 1,
+
+            //! Legacy/default registration request (bool: true)
+            LEGACY_REGISTER = 2
         };
 
 
@@ -124,7 +127,7 @@ public:
 
     // Constructors
 
-        //- Default construct (NO_READ, NO_WRITE, register, non-global)
+        //- Default construct (NO_READ, NO_WRITE, REGISTER, non-global)
         //- or construct with specified options
         constexpr IOobjectOption
         (
@@ -267,7 +270,7 @@ public:
             return (opt != readOption::NO_READ);
         }
 
-        //- True if any reading may be required(ie, != NO_READ)
+        //- True if any reading may be required (ie, != NO_READ)
         bool isAnyRead() const noexcept
         {
             return (readOpt_ != readOption::NO_READ);

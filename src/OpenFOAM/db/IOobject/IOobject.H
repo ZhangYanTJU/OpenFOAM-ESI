@@ -393,7 +393,7 @@ public:
             const objectRegistry& registry,
             IOobjectOption::readOption rOpt,
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
-            bool registerObject = true,
+            bool registerObject = true,  // == IOobjectOption::LEGACY_REGISTER
             bool globalObject = false
         );
 
@@ -406,7 +406,7 @@ public:
             const objectRegistry& registry,
             IOobjectOption::readOption rOpt,
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
-            bool registerObject = true,
+            bool registerObject = true,  // == IOobjectOption::LEGACY_REGISTER
             bool globalObject = false
         );
 
@@ -422,7 +422,7 @@ public:
             const objectRegistry& registry,
             IOobjectOption::readOption rOpt,
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
-            bool registerObject = true,
+            bool registerObject = true,  // == IOobjectOption::LEGACY_REGISTER
             bool globalObject = false
         );
 
