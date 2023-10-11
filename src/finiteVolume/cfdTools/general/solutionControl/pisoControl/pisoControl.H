@@ -84,6 +84,9 @@ public:
 
         // Solution control
 
+            //- Read controls from fvSolution dictionary
+            virtual bool read();
+
             //- Return true if in the final inner (PISO) iteration
             inline bool finalInnerIter() const;
 };

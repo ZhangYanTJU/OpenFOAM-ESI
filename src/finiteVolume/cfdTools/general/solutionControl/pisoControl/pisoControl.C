@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,6 +50,14 @@ Foam::pisoControl::pisoControl(fvMesh& mesh, const word& dictName)
 
 Foam::pisoControl::~pisoControl()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::pisoControl::read()
+{
+    return pimpleControl::read();
+}
 
 
 // ************************************************************************* //
