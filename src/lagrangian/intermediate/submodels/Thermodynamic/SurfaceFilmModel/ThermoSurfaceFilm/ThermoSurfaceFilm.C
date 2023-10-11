@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,6 +61,53 @@ Foam::ThermoSurfaceFilm<CloudType>::ThermoSurfaceFilm
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class CloudType>
+template<class filmType>
+void Foam::ThermoSurfaceFilm<CloudType>::absorbInteraction
+(
+    filmType& film,
+    const parcelType& p,
+    const polyPatch& pp,
+    const label facei,
+    const scalar mass,
+    bool& keepParticle
+)
+{
+    DebugInfo<< "Parcel " << p.origId() << " absorbInteraction" << endl;
+
+    // Patch face normal
+    const vector& nf = pp.faceNormals()[facei];
+
+    // Patch velocity
+    const vector& Up = this->owner().U().boundaryField()[pp.index()][facei];
+
+    // Relative parcel velocity
+    const vector Urel(p.U() - Up);
+
+    // Parcel normal velocity
+    const vector Un(nf*(Urel & nf));
+
+    // Parcel tangential velocity
+    const vector Ut(Urel - Un);
+
+    film.addSources
+    (
+        pp.index(),
+        facei,
+        mass,                             // mass
+        mass*Ut,                          // tangential momentum
+        mass*mag(Un),                     // impingement pressure
+        mass*p.hs()                       // energy
+    );
+
+    this->nParcelsTransferred()++;
+
+    this->totalMassTransferred() += mass;
+
+    keepParticle = false;
+}
+
 
 template<class CloudType>
 bool Foam::ThermoSurfaceFilm<CloudType>::transferParcel
