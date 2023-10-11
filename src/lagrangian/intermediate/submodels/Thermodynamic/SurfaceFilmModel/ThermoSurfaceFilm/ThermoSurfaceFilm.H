@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -140,6 +140,21 @@ public:
 
 
     // Member Functions
+
+        // Interaction models
+
+            //- Absorb parcel into film
+            template<class filmType>
+            void absorbInteraction
+            (
+                filmType&,
+                const parcelType& p,
+                const polyPatch& pp,
+                const label facei,
+                const scalar mass,
+                bool& keepParticle
+            );
+
 
         // Evaluation
 
