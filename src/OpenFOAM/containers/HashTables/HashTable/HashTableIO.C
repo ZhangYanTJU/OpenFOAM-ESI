@@ -33,13 +33,9 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable
-(
-    Istream& is,
-    const label initialCapacity
-)
+Foam::HashTable<T, Key, Hash>::HashTable(Istream& is)
 :
-    HashTable(initialCapacity)
+    HashTable<T, Key, Hash>()
 {
     operator>>(is, *this);
 }
@@ -170,10 +166,7 @@ Foam::Istream& Foam::HashTable<T, Key, Hash>::readTable
                     << exit(FatalIOError);
             }
 
-            if (2*len > tbl.capacity())
-            {
-                tbl.resize(2*len);
-            }
+            tbl.reserve(tbl.size() + len);
 
             for (label i=0; i<len; ++i)
             {

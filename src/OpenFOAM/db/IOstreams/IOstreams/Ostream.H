@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +41,7 @@ SourceFiles
 
 #include "IOstream.H"
 #include "keyType.H"
+#include "stdFoam.H"  // For span etc.
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -118,27 +119,34 @@ public:
             //- Write character
             virtual Ostream& write(const char c) = 0;
 
+            //- Write character/string content, with/without surrounding quotes
+            virtual Ostream& writeQuoted
+            (
+                const char* str,
+                std::streamsize len,
+                const bool quoted=true
+            ) = 0;
+
+            //- Write string content, with/without surrounding quotes
+            virtual Ostream& writeQuoted
+            (
+                const std::string& str,
+                const bool quoted=true
+            );
+
             //- Write character string
             virtual Ostream& write(const char* str) = 0;
 
-            //- Write word
+            //- Write word (unquoted)
             virtual Ostream& write(const word& str) = 0;
+
+            //- Write string content (usually quoted)
+            virtual Ostream& write(const std::string& str) = 0;
 
             //- Write keyType
             //  A plain word is written unquoted.
             //  A regular expression is written as a quoted string.
             virtual Ostream& write(const keyType& kw);
-
-            //- Write string
-            virtual Ostream& write(const string& str) = 0;
-
-            //- Write std::string surrounded by quotes.
-            //  Optional write without quotes.
-            virtual Ostream& writeQuoted
-            (
-                const std::string& str,
-                const bool quoted=true
-            ) = 0;
 
             //- Write int32_t
             virtual Ostream& write(const int32_t val) = 0;
@@ -317,9 +325,38 @@ public:
 };
 
 
-// --------------------------------------------------------------------
-// ------ Manipulators (not taking arguments)
-// --------------------------------------------------------------------
+// * * * * * * * * * * * * * * * Global Operators  * * * * * * * * * * * * * //
+
+#if __cplusplus >= 201703L
+//- Write operator for std::string_view
+inline Ostream& operator<<(Ostream& os, std::string_view s)
+{
+    os.writeQuoted(s.data(), s.size(), true);  // quoted
+    os.check("Foam::operator<<(Ostream&, std::string_view)");
+    return os;
+}
+#endif
+
+//- Write operator for character span. Output like string data
+inline Ostream& operator<<(Ostream& os, stdFoam::span<char> s)
+{
+    os.writeQuoted(s.data(), s.size(), true);  // quoted
+    os.check("Foam::operator<<(Ostream&, stdFoam::span<char>)");
+    return os;
+}
+
+//- Write operator for const character span. Output like string data
+inline Ostream& operator<<(Ostream& os, stdFoam::span<const char> s)
+{
+    os.writeQuoted(s.data(), s.size(), true);  // quoted
+    os.check("Foam::operator<<(Ostream&, stdFoam::span<const char>)");
+    return os;
+}
+
+
+/*---------------------------------------------------------------------------*\
+                       Manipulators (without arguments)
+\*---------------------------------------------------------------------------*/
 
 //- An Ostream manipulator
 typedef Ostream& (*OstreamManip)(Ostream&);

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -196,6 +196,21 @@ public:
 
 
     // Static Member Functions
+
+        //- Avoid masking the normal std::string length() method
+        using std::string::length;
+
+        //- Length of the character sequence (with nullptr protection)
+        static inline std::string::size_type length(const char* s)
+        {
+            return (s ? strlen(s) : 0);
+        }
+
+        //- The length of the string
+        static inline std::string::size_type length(const std::string& s)
+        {
+            return s.size();
+        }
 
         //- Does the string contain valid characters only?
         template<class StringType>

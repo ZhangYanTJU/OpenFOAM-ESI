@@ -35,7 +35,7 @@ void Foam::hashedWordList::rehash() const
     const label len = list.size();
 
     lookup_.clear();
-    lookup_.resize(2*len);
+    lookup_.reserve(len);
 
     for (label i = 0; i < len; ++i)
     {
@@ -50,7 +50,7 @@ void Foam::hashedWordList::uniq()
     const label len = list.size();
 
     lookup_.clear();
-    lookup_.resize(2*len);
+    lookup_.reserve(len);
 
     label count = 0;
 

@@ -104,7 +104,7 @@ void Foam::syncTools::syncPointMap
         // global shared index per local index
         const labelList& sharedPtAddr = pd.sharedPointAddr();
 
-        sharedPointValues.resize(sharedPtAddr.size());
+        sharedPointValues.reserve(sharedPtAddr.size());
 
         // Fill my entries in the shared points
         forAll(sharedPtLabels, i)

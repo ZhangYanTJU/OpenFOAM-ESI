@@ -375,7 +375,7 @@ bool doCommand
 
                 topoSet& currentSet = currentSetPtr();
                 // Presize it according to current mesh data.
-                currentSet.resize(max(currentSet.size(), typSize));
+                currentSet.reserve(max(currentSet.size(), typSize));
             }
         }
 

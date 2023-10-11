@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,7 @@ Description
 #include "ListOps.H"
 #include "FlatOutput.H"
 #include "IOstreams.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 
 using namespace Foam;
 
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     };
     labelList matches;
 
-    wordRes matcher1(IStringStream("( okey \"[hy]e+.*\" )")());
+    wordRes matcher1(ICharStream("( okey \"[hy]e+.*\" )")());
 
     Info<< "stringList " << strings << nl;
 

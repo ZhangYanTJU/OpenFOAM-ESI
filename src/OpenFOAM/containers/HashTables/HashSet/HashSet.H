@@ -124,10 +124,10 @@ public:
 
     // Constructors
 
-        //- Default construct with default (128) initial table capacity
-        HashSet() = default;
+        //- Default construct: empty without allocation (capacity=0)
+        HashSet() noexcept = default;
 
-        //- Construct empty with zero table capacity
+        //- Construct empty without allocation (capacity=0)
         explicit HashSet(const Foam::zero) noexcept
         :
             parent_type(Foam::zero{})

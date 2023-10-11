@@ -36,10 +36,9 @@ Description
 #define Foam_memoryStreamBuffer_H
 
 #include "stdFoam.H"  // For span
-#include "UList.H"
+#include "DynamicList.H"
 
 #include <memory>
-#include <sstream>    // Possibly want stringstream too...
 #include <type_traits>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -208,17 +207,23 @@ public:
             return (gptr() < egptr()) ? (egptr() - gptr()) : 0;
         }
 
-        //- Span of the input characters (is modifiable!)
-        UList<char> span_list() const
-        {
-            return UList<char>(eback(), (egptr() - eback()));
-        }
+        //- The span data (start of input characters)
+        char* data_bytes() const { return eback(); }
 
-        // //- The span of input characters (is modifiable!)
-        // stdFoam::span<char> span() const
-        // {
-        //     return stdFoam::span<char>(eback(), (egptr() - eback()));
-        // }
+        //- The span size (number of input characters)
+        std::streamsize size_bytes() const { return (egptr() - eback()); }
+
+        #if __cplusplus >= 201703L
+        std::string_view view() const
+        {
+            return std::string_view(data_bytes(), size_bytes());
+        }
+        #else
+        stdFoam::span<const char> view() const
+        {
+            return stdFoam::span<const char>(data_bytes(), size_bytes());
+        }
+        #endif
 
         //- Some information about the input buffer position/capacity
         void info(Ostream& os) const
@@ -273,7 +278,7 @@ public:
         template<int SizeMin>
         in_dynamic(::Foam::DynamicList<char,SizeMin>&& buffer)
         {
-            storage_.transfer(buffer);
+            storage_.transfer(buffer);  // Implies shrink_to_fit
             sync_gbuffer();
         }
 
@@ -302,23 +307,28 @@ public:
             sync_gbuffer();
         }
 
-        //- Transfer list contents to List buffer
-        void swap(::Foam::List<char>& other)
+        //- Exchange buffer content and parameter contents, reset positions
+        void swap(List<char>& other)
         {
-            storage_.swap(other);  // Swap contents
+            other.swap(storage_);  // Swap contents
             sync_gbuffer();
         }
 
-        //- Transfer list contents to a DynamicList buffer
+        //- Exchange buffer content and parameter contents, reset positions
         template<int SizeMin>
         void swap(DynamicList<char,SizeMin>& other)
         {
-            List<char> tmp(std::move(storage_));
-
-            other.shrink();             // Use addressed length only
-            storage_.transfer(other);
-            other.transfer(tmp);
+            // NB: not storage_.swap(other)! - incorrect slicing
+            other.swap(storage_);  // Swap contents: implies shrink_to_fit
             sync_gbuffer();
+        }
+
+        //- Reset buffer and return contents
+        DynamicList<char> release()
+        {
+            DynamicList<char> chars(std::move(storage_));
+            sync_gbuffer();
+            return chars;
         }
 };
 
@@ -387,17 +397,23 @@ public:
         //- The put buffer capacity
         std::streamsize span_capacity() const { return (epptr() - pbase()); }
 
-        //- Span of the output characters (is modifiable!)
-        UList<char> span_list() const
-        {
-            return UList<char>(pbase(), (pptr() - pbase()));
-        }
+        //- The span data (start of output characters)
+        char* data_bytes() const { return pbase(); }
 
-        //- The span of output characters (is modifiable!)
-        // stdFoam::span<char> span() const
-        // {
-        //     return stdFoam::span<char>(pbase(), (pptr() - pbase()));
-        // }
+        //- The span size (size of output buffer)
+        std::streamsize size_bytes() const { return (pptr() - pbase()); }
+
+        #if __cplusplus >= 201703L
+        std::string_view view() const
+        {
+            return std::string_view(data_bytes(), size_bytes());
+        }
+        #else
+        stdFoam::span<const char> view() const
+        {
+            return stdFoam::span<const char>(data_bytes(), size_bytes());
+        }
+        #endif
 
         //- Some information about the output buffer position/capacity
         void info(Ostream& os) const
@@ -532,37 +548,47 @@ public:
         }
 
         //- Shrink storage to addressed storage
-        inline void shrink()
+        void shrink()
         {
-            const auto cur = span_tellp();   // Addressed length
+            const auto cur = span_tellp();  // Addressed length
 
             storage_.resize(cur);
             sync_pbuffer();
             pbump(cur);
         }
 
-        //- Transfer list contents to List buffer
-        inline void swap(List<char>& other)
+        //- Exchange buffer content and parameter contents, reset positions
+        void swap(List<char>& other)
         {
-            const auto cur = span_tellp(); // Addressed length
-
-            storage_.swap(other);       // Swap contents
-            other.resize(cur);          // Adjust to addressed length
+            const auto cur = span_tellp();  // Output length
+            other.swap(storage_);
+            other.resize(cur);              // Truncate to output length
             sync_pbuffer();
         }
 
-        //- Transfer list contents to a DynamicList buffer
+        //- Exchange buffer content and parameter contents, reset positions
         template<int SizeMin>
-        inline void swap(DynamicList<char,SizeMin>& other)
+        void swap(DynamicList<char,SizeMin>& other)
         {
-            const auto cur = span_tellp();   // Addressed length
-            List<char> tmp(std::move(storage_));
+            const auto cur = span_tellp();  // Output length
 
-            other.resize(other.capacity());  // Use entire space
-            storage_.transfer(other);
-            other.transfer(tmp);
-            other.resize(cur);          // Adjust to addressed length
+            other.resize(other.capacity()); // Use entire space
+            other.swap(storage_);  // NB: not storage_.swap(other)
+            other.resize(cur);              // Restrict to output length
             sync_pbuffer();
+        }
+
+        //- Reset buffer and return contents as a DynamicList.
+        //- The list size corresponds to the region of output.
+        DynamicList<char> release()
+        {
+            const auto cur = span_tellp();  // Output length
+            DynamicList<char> chars(std::move(storage_));
+            chars.resize(cur);              // Restrict to output length
+
+            if (chars.empty()) chars.clearStorage();  // Can destroy now
+            sync_pbuffer();
+            return chars;
         }
 };
 

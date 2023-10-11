@@ -31,7 +31,6 @@ Description
 #include "IOstreams.H"
 #include "MinMax.H"
 #include "Switch.H"
-#include "StringStream.H"
 
 using namespace Foam;
 

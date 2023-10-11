@@ -116,9 +116,6 @@ class List
     // Methods as per DynamicList to simplify code maintenance
 
         //- Stub method for internal naming as per DynamicList
-        label capacity() const noexcept { return UList<T>::size(); }
-
-        //- Stub method for internal naming as per DynamicList
         void setCapacity_nocopy(const label len) { resize_nocopy(len); }
 
 
@@ -190,7 +187,7 @@ public:
         List(std::initializer_list<T> list);
 
         //- Move construct from List
-        List(List<T>&& list);
+        List(List<T>&& list) noexcept;
 
         //- Move construct from DynamicList
         template<int SizeMin>
@@ -229,6 +226,13 @@ public:
         //  If no reallocation is required, the contents remain untouched.
         //  Otherwise the contents will be uninitialized.
         inline void resize_nocopy(const label len);
+
+        //- Change the addressed list size directly without affecting
+        //- any memory management (advanced usage).
+        //
+        //  It is left to the caller to avoid \em unsafe lengthening beyond
+        //  the allocated memory region.
+        inline void resize_unsafe(const label len) noexcept;
 
         //- Alias for resize()
         void setSize(const label n) { this->resize(n); }
@@ -289,7 +293,7 @@ public:
     // Member Operators
 
         //- Assignment to UList operator. Takes linear time
-        void operator=(const UList<T>& a);
+        void operator=(const UList<T>& list);
 
         //- Assignment operator. Takes linear time
         void operator=(const List<T>& list);
@@ -409,11 +413,6 @@ public:
 
 
 // * * * * * * * * * * * * Template Specializations  * * * * * * * * * * * * //
-
-//- Specialized list reading for character lists which always uses
-//- binary format.
-template<>
-Istream& List<char>::readList(Istream& is);
 
 //- Hashing for List data
 template<class T>

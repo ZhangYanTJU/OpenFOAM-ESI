@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,22 +96,22 @@ public:
         using Istream::read;
 
         //- Binary read
-        virtual Istream& read(char* buf, std::streamsize count);
+        virtual Istream& read(char* buf, std::streamsize count) override;
 
         //- Read string as "%80s" or as binary
-        virtual Istream& read(string& value);
+        virtual Istream& read(string& value) override;
 
         //- Read integer as "%10d" or as binary
-        virtual Istream& read(label& value);
+        virtual Istream& read(label& value) override;
 
         //- Read floating-point as "%12.5e" or as binary
-        virtual Istream& read(float& value);
+        virtual Istream& read(float& value) override;
 
         //- Read floating-point as "%12.5e" or as a binary (narrowed) float
-        virtual Istream& read(double& value);
+        virtual Istream& read(double& value) override;
 
-        //- Read element keyword
-        virtual Istream& readKeyword(string& key);
+        //- Read element keyword. Currently the same as read(string)
+        Istream& readKeyword(string& key);
 
         //- Read "C Binary" for binary files (eg, geometry/measured)
         Istream& readBinaryHeader();

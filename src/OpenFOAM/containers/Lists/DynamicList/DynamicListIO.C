@@ -222,19 +222,15 @@ Foam::Istream& Foam::DynamicList<T, SizeMin>::readList(Istream& is)
                 );
             }
         }
-        else if (std::is_same<char, T>::value)
+        else if (std::is_same<char, typename std::remove_cv<T>::type>::value)
         {
-            // Special treatment for char data (always binary and contiguous)
-            // (see List<char>::readList)
+            // Special treatment for char data (binary I/O only)
+            const auto oldFmt = is.format(IOstreamOption::BINARY);
 
             if (len)
             {
-                const auto oldFmt = is.format(IOstreamOption::BINARY);
-
                 // read(...) includes surrounding start/end delimiters
                 is.read(list.data_bytes(), list.size_bytes());
-
-                is.format(oldFmt);
 
                 is.fatalCheck
                 (
@@ -242,6 +238,8 @@ Foam::Istream& Foam::DynamicList<T, SizeMin>::readList(Istream& is)
                     "reading binary block"
                 );
             }
+
+            is.format(oldFmt);
         }
         else
         {
@@ -252,9 +250,13 @@ Foam::Istream& Foam::DynamicList<T, SizeMin>::readList(Istream& is)
             {
                 if (delimiter == token::BEGIN_LIST)
                 {
-                    for (label i=0; i<len; ++i)
+                    auto iter = list.begin();
+                    const auto last = list.end();
+
+                    // Contents
+                    for (/*nil*/; (iter != last); (void)++iter)
                     {
-                        is >> list[i];
+                        is >> *iter;
 
                         is.fatalCheck
                         (

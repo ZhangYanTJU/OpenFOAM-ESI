@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -150,7 +150,7 @@ inline Foam::string::string(const size_type len, const char c)
 {}
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 template<class StringType>
 inline bool Foam::string::valid(const std::string& str)
@@ -218,6 +218,8 @@ inline StringType Foam::string::validate(const std::string& str)
     return out;
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 inline bool Foam::string::match(const std::string& text) const
 {

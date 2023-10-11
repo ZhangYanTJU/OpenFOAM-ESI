@@ -45,13 +45,6 @@ inline Foam::label Foam::UPtrList<T>::find_next(label pos) const
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
 template<class T>
-inline constexpr Foam::UPtrList<T>::UPtrList() noexcept
-:
-    ptrs_()
-{}
-
-
-template<class T>
 inline Foam::UPtrList<T>::UPtrList(const label len)
 :
     ptrs_(len)
@@ -59,7 +52,7 @@ inline Foam::UPtrList<T>::UPtrList(const label len)
 
 
 template<class T>
-inline Foam::UPtrList<T>::UPtrList(Detail::PtrListDetail<T>&& ptrs)
+inline Foam::UPtrList<T>::UPtrList(Detail::PtrListDetail<T>&& ptrs) noexcept
 :
     ptrs_(std::move(ptrs))
 {}
@@ -73,7 +66,7 @@ inline Foam::UPtrList<T>::UPtrList(const UPtrList<T>& list)
 
 
 template<class T>
-inline Foam::UPtrList<T>::UPtrList(UPtrList<T>&& list)
+inline Foam::UPtrList<T>::UPtrList(UPtrList<T>&& list) noexcept
 :
     ptrs_(std::move(list.ptrs_))
 {}
@@ -120,6 +113,13 @@ template<class T>
 inline Foam::label Foam::UPtrList<T>::size() const noexcept
 {
     return ptrs_.size();
+}
+
+
+template<class T>
+inline Foam::label Foam::UPtrList<T>::capacity() const noexcept
+{
+    return ptrs_.capacity();
 }
 
 
@@ -213,7 +213,7 @@ inline void Foam::UPtrList<T>::free()
 
 
 template<class T>
-inline void Foam::UPtrList<T>::swap(UPtrList<T>& list)
+inline void Foam::UPtrList<T>::swap(UPtrList<T>& list) noexcept
 {
     ptrs_.swap(list.ptrs_);
 }

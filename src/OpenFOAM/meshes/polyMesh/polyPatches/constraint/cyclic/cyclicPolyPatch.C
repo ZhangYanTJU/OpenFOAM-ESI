@@ -294,7 +294,7 @@ void Foam::cyclicPolyPatch::calcTransforms
 
             const_cast<tensorField&>(forwardT()) = tensorField(1, revT.T());
             const_cast<tensorField&>(reverseT()) = tensorField(1, revT);
-            const_cast<vectorField&>(separation()).setSize(0);
+            const_cast<vectorField&>(separation()).clear();
             const_cast<boolList&>(collocated()) = boolList(1, false);
         }
         else

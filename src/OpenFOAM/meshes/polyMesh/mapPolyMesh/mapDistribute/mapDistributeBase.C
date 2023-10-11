@@ -413,7 +413,7 @@ void Foam::mapDistributeBase::calcCompactAddressing
         compactMap[proci].clear();
         if (proci != myRank)
         {
-            compactMap[proci].resize(2*nNonLocal[proci]);
+            compactMap[proci].reserve(nNonLocal[proci]);
         }
     }
 
@@ -464,7 +464,7 @@ void Foam::mapDistributeBase::calcCompactAddressing
         compactMap[proci].clear();
         if (proci != myRank)
         {
-            compactMap[proci].resize(2*nNonLocal[proci]);
+            compactMap[proci].reserve(nNonLocal[proci]);
         }
     }
 

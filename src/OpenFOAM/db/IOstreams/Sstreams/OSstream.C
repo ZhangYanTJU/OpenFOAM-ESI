@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,7 +29,7 @@ License
 #include "error.H"
 #include "token.H"
 #include "OSstream.H"
-#include "stringOps.H"
+#include <algorithm>
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -89,70 +89,67 @@ bool Foam::OSstream::write(const token& tok)
 Foam::Ostream& Foam::OSstream::write(const char c)
 {
     os_ << c;
-    if (c == token::NL)
-    {
-        ++lineNumber_;
-    }
     syncState();
-    return *this;
-}
 
-
-Foam::Ostream& Foam::OSstream::write(const char* str)
-{
-    lineNumber_ += stringOps::count(str, token::NL);
-    os_ << str;
-    syncState();
-    return *this;
-}
-
-
-Foam::Ostream& Foam::OSstream::write(const word& str)
-{
-    os_ << str;
-    syncState();
+    // Advance line number on newline
+    if (c == token::NL) ++lineNumber_;
     return *this;
 }
 
 
 Foam::Ostream& Foam::OSstream::writeQuoted
 (
-    const std::string& str,
+    const char* str,
+    std::streamsize len,
     const bool quoted
 )
 {
+    if (!str || len <= 0) return *this;
+
+    const char* last = (str + len);
+
     if (!quoted)
     {
-        // Output unquoted, only advance line number on newline
-        lineNumber_ += stringOps::count(str, token::NL);
-        os_ << str;
-
+        #if __cplusplus >= 201703L
+        os_ << std::string_view(str, len);
+        #else
+        for (const char* iter = str; iter != last; ++iter)
+        {
+            os_ << *iter;
+        }
+        #endif
         syncState();
+
+        // Unquoted, only advance line number on newline
+        lineNumber_ += std::count(str, last, '\n');
         return *this;
     }
 
 
     // Output with surrounding quotes and backslash escaping
+    // - functionality like std::quoted (from <iomanip>), while also
+    //   counting the newlines.
+
     os_ << token::DQUOTE;
 
     unsigned backslash = 0;
-    for (auto iter = str.cbegin(); iter != str.cend(); ++iter)
+    for (auto iter = str; iter != last; ++iter)
     {
         const char c = *iter;
 
         if (c == '\\')
         {
             ++backslash;
-            continue; // only output after escaped character is known
+            continue;       // Delay output until escaped character is known
         }
         else if (c == token::NL)
         {
-            ++lineNumber_;
-            ++backslash;    // backslash escape for newline
+            ++backslash;    // Add backslash escape for newline
+            ++lineNumber_;  // Advance line number on newline
         }
         else if (c == token::DQUOTE)
         {
-            ++backslash;    // backslash escape for quote
+            ++backslash;    // Add backslash escape for quote
         }
 
         // output all pending backslashes
@@ -174,9 +171,34 @@ Foam::Ostream& Foam::OSstream::writeQuoted
 }
 
 
-Foam::Ostream& Foam::OSstream::write(const string& str)
+Foam::Ostream& Foam::OSstream::write(const char* str)
 {
-    return writeQuoted(str, true);
+    if (!str) return *this;
+
+    const char* last = (str + strlen(str));
+
+    os_ << str;
+    syncState();
+
+    // Advance line number on newline
+    lineNumber_ += std::count(str, last, '\n');
+    return *this;
+}
+
+
+Foam::Ostream& Foam::OSstream::write(const word& str)
+{
+    // Unquoted, and no newlines expected.
+    os_ << str;
+    syncState();
+
+    return *this;
+}
+
+
+Foam::Ostream& Foam::OSstream::write(const std::string& str)
+{
+    return writeQuoted(str.data(), str.size(), true);
 }
 
 

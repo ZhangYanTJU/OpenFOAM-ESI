@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,7 +70,9 @@ class OBJstream
 
     // Private Member Functions
 
-        void writeAndCheck(const char c);
+        //- State engine to count number of vertices.
+        //- Triggered on newline and 'v' (vertex).
+        inline void vertex_state(const char c);
 
 public:
 
@@ -105,104 +107,107 @@ public:
 
     // Member Functions
 
+    // Access
+
         //- Return the number of vertices written
-        label nVertices() const noexcept
-        {
-            return nVertices_;
-        }
+        label nVertices() const noexcept { return nVertices_; }
 
 
-        // Ostream implementation
+    // Write Functions
 
-            //- Inherit write from Ostream
-            using Ostream::write;
+        //- Inherit write methods from OFstream
+        using OFstream::write;
+        using OFstream::writeQuoted;
 
-            //- Write character
-            virtual Ostream& write(const char c);
+        //- Write character
+        virtual Ostream& write(const char c) override;
 
-            //- Write character string
-            virtual Ostream& write(const char* str);
+        //- Write character/string content, with/without surrounding quotes
+        virtual Ostream& writeQuoted
+        (
+            const char* str,
+            std::streamsize len,
+            const bool quoted=true
+        ) override;
 
-            //- Write word
-            virtual Ostream& write(const word& str);
+        //- Write character string
+        virtual Ostream& write(const char* str) override;
 
-            //- Write string
-            virtual Ostream& write(const string& str);
+        //- Write word
+        virtual Ostream& write(const word& str) override;
 
-            //- Write std::string surrounded by quotes.
-            //  Optional write without quotes.
-            virtual Ostream& writeQuoted
-            (
-                const std::string& str,
-                const bool quoted=true
-            );
+        //- Write string
+        virtual Ostream& write(const std::string& str) override;
 
 
-        // Direct write functionality
+    // Direct write functionality
 
-            //- Write point
-            Ostream& write(const point& p);
+        //- Write comment (with '# ' prefix)
+        Ostream& writeComment(const std::string& str);
 
-            //- Write point and vector normal ('vn')
-            Ostream& write(const point& p, const vector& n);
+        //- Write point (vertex)
+        Ostream& write(const point& p);
 
-            //- Write multiple points
-            Ostream& write(const UList<point>& points);
+        //- Write point and vector normal ('vn')
+        Ostream& write(const point& p, const vector& n);
 
-            //- Write edge as points with line
-            Ostream& write(const edge& e, const UList<point>& points);
+        //- Write multiple points
+        Ostream& write(const UList<point>& points);
 
-            //- Write line
-            Ostream& write(const linePointRef& ln);
+        //- Write edge as points with line
+        Ostream& write(const edge& e, const UList<point>& points);
 
-            //- Write line with points and vector normals ('vn')
-            Ostream& write
-            (
-                const linePointRef& ln,
-                const vector& n0,
-                const vector& n1
-            );
+        //- Write line
+        Ostream& write(const linePointRef& ln);
 
-            //- Write line joining two points
-            Ostream& writeLine(const point& p0, const point& p1);
+        //- Write line with points and vector normals ('vn')
+        Ostream& write
+        (
+            const linePointRef& ln,
+            const vector& n0,
+            const vector& n1
+        );
 
-            //- Write triangle as points with lines/filled-polygon
-            Ostream& write(const triPointRef& f, const bool lines = true);
+        //- Write line joining two points
+        Ostream& writeLine(const point& p0, const point& p1);
 
-            //- Write face loop points with lines/filled-polygon
-            Ostream& writeFace
-            (
-                const UList<point>& points,
-                const bool lines = true
-            );
+        //- Write triangle as points with lines/filled-polygon
+        Ostream& write(const triPointRef& f, const bool lines = true);
 
-            //- Write face as points with lines/filled-polygon
-            Ostream& write
-            (
-                const face& f,
-                const UList<point>& points,
-                const bool lines = true
-            );
+        //- Write face loop points with lines/filled-polygon
+        Ostream& writeFace
+        (
+            const UList<point>& points,
+            const bool lines = true
+        );
 
-            //- Write patch faces as points with lines/filled-polygon
-            Ostream& write
-            (
-                const UList<face>& faces,
-                const pointField& points,
-                const bool lines = true
-            );
+        //- Write face as points with lines/filled-polygon
+        Ostream& write
+        (
+            const face& f,
+            const UList<point>& points,
+            const bool lines = true
+        );
 
-            //- Write edges as points with lines.
-            //  Optionally eliminate unused points.
-            Ostream& write
-            (
-                const UList<edge>& edges,
-                const UList<point>& points,
-                const bool compact = false
-            );
+        //- Write patch faces as points with lines/filled-polygon
+        Ostream& write
+        (
+            const UList<face>& faces,
+            const pointField& points,
+            const bool lines = true
+        );
 
-            //- Write tree-bounding box with lines/filled-polygons
-            Ostream& write(const treeBoundBox& bb, const bool lines = true);
+        //- Write edges as points with lines.
+        //  Optionally eliminate unused points.
+        Ostream& write
+        (
+            const UList<edge>& edges,
+            const UList<point>& points,
+            const bool compact = false
+        );
+
+        //- Write tree-bounding box with lines/filled-polygons
+        Ostream& write(const treeBoundBox& bb, const bool lines = true);
 };
 
 

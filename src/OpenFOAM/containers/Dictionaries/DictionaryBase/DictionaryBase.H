@@ -101,8 +101,11 @@ public:
 
     // Constructors
 
-        //- Construct with given or default (128) table capacity
-        explicit DictionaryBase(const label initialCapacity = 128)
+        //- Default construct: empty without allocation (capacity=0).
+        DictionaryBase() = default;
+
+        //- Construct empty with initial table capacity
+        explicit DictionaryBase(const label initialCapacity)
         :
             hashedTs_(initialCapacity)
         {}

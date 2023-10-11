@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,7 @@ Description
 #include "IOstreams.H"
 #include "dictionary.H"
 #include "vector.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 
 using namespace Foam;
 
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     argList::noParallel();
 
     {
-        IStringStream is
+        ICharStream is
         (
             "value   10;"
             "scalar1 $value;"

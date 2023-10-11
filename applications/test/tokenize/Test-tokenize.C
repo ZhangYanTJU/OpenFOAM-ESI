@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,7 @@ Description
 #include "IOobject.H"
 #include "IOstreams.H"
 #include "IFstream.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "cpuTime.H"
 #include "DynamicList.H"
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
                 Info<< "input string: " << rawArg << nl;
             }
 
-            IStringStream is(rawArg);
+            ISpanStream is(rawArg);
 
             DynamicList<token> tokens;
 

@@ -63,18 +63,18 @@ void Foam::fv::SemiImplicitSource<Type>::setFieldCoeffs
 
     Su_.clear();
     Sp_.clear();
-    Su_.resize(2*count);
-    Sp_.resize(2*count);
+    Su_.reserve(count);
+    Sp_.reserve(count);
 
     driverSu_.clear();
     driverSp_.clear();
-    driverSu_.resize(2*count);
-    driverSp_.resize(2*count);
+    driverSu_.reserve(count);
+    driverSp_.reserve(count);
 
     valueExprSu_.clear();
     valueExprSp_.clear();
-    valueExprSu_.resize(2*count);
-    valueExprSp_.resize(2*count);
+    valueExprSu_.reserve(count);
+    valueExprSp_.reserve(count);
 
     fv::option::resetApplied();
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -145,12 +145,11 @@ public:
 
     // Output
 
-        //- Write element keyword with trailing newline,
-        //- optionally with undef and the value for undefined
-        virtual Ostream& writeKeyword(const keyType& key);
-
         //- Write "C Binary" string for binary files (eg, geometry/measured)
         Ostream& writeBinaryHeader();
+
+        //- Write character/string content as "%79s" or as binary (max 80 chars)
+        Ostream& writeString(const char* str, size_t len);
 
         //- Write C-string as "%79s" or as binary (max 80 chars)
         Ostream& writeString(const char* str);
@@ -162,46 +161,50 @@ public:
         Ostream& writeUndef();
 
 
+        //- Write element keyword with trailing newline,
+        //- optionally with undef and the value for undefined
+        virtual Ostream& writeKeyword(const keyType& key) override;
+
         //- Writing token does not make sense
-        virtual bool write(const token&)
+        virtual bool write(const token&) override
         {
             NotImplemented;
             return false;
         }
 
         //- Writing single character does not make sense
-        virtual Ostream& write(const char)
+        virtual Ostream& write(const char) override
         {
             NotImplemented;
             return *this;
         }
 
         //- Binary write
-        virtual Ostream& write(const char* buf, std::streamsize count);
+        virtual Ostream& write(const char* buf, std::streamsize count) override;
 
         //- Write C-string, uses writeString()
-        virtual Ostream& write(const char* str);
+        virtual Ostream& write(const char* str) override;
 
         //- Write word, uses writeString()
-        virtual Ostream& write(const word& str);
+        virtual Ostream& write(const word& str) override;
 
         //- Write string, uses writeString()
-        virtual Ostream& write(const string& str);
+        virtual Ostream& write(const std::string& str) override;
 
         //- Write integer as "%10d" or as binary
-        virtual Ostream& write(const int32_t val);
+        virtual Ostream& write(const int32_t val) override;
 
         //- Write integer as "%10d" or as binary
-        virtual Ostream& write(const int64_t val);
+        virtual Ostream& write(const int64_t val) override;
 
         //- Write integer with specified width or as binary
         Ostream& write(const label value, const label fieldWidth);
 
         //- Write floating-point as "%12.5e" or as binary
-        virtual Ostream& write(const float val);
+        virtual Ostream& write(const float val) override;
 
         //- Write floating-point as "%12.5e" or as binary (narrowed to float)
-        virtual Ostream& write(const double val);
+        virtual Ostream& write(const double val) override;
 
         //- Add carriage return to ascii stream
         void newline();

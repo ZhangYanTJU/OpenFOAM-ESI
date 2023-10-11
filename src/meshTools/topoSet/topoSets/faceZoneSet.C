@@ -55,7 +55,7 @@ void Foam::faceZoneSet::updateSet()
     flipMap_ = boolUIndList(flipMap_, order)();
 
     faceSet::clearStorage();
-    faceSet::resize(2*addressing_.size());
+    faceSet::reserve(addressing_.size());
     faceSet::set(addressing_);
 }
 

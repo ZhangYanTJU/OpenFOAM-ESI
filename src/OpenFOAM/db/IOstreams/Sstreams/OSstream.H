@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -117,7 +117,7 @@ public:
 
         //- Get the name of the output serial stream.
         //- (eg, the name of the Fstream file name)
-        virtual const fileName& name() const { return name_; }
+        virtual const fileName& name() const override { return name_; }
 
 
     // STL stream
@@ -132,13 +132,13 @@ public:
     // Stream State
 
         //- Get stream flags
-        virtual ios_base::fmtflags flags() const
+        virtual ios_base::fmtflags flags() const override
         {
             return os_.flags();
         }
 
         //- Set stream flags
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags f)
+        virtual ios_base::fmtflags flags(const ios_base::fmtflags f) override
         {
             return os_.flags(f);
         }
@@ -152,101 +152,108 @@ public:
 
     // Write Functions
 
-            //- Write token to stream or otherwise handle it.
-            //  \return false if the token type was not handled by this method
-            virtual bool write(const token& tok);
+        //- Inherit write methods from Ostream
+        using Ostream::writeQuoted;
 
-            //- Write character
-            virtual Ostream& write(const char c);
+        //- Write token to stream or otherwise handle it.
+        //  \return false if the token type was not handled by this method
+        virtual bool write(const token& tok) override;
 
-            //- Write character string
-            virtual Ostream& write(const char* str);
+        //- Write character
+        virtual Ostream& write(const char c) override;
 
-            //- Write word
-            virtual Ostream& write(const word& str);
+        //- Write character/string content, with/without surrounding quotes
+        virtual Ostream& writeQuoted
+        (
+            const char* str,
+            std::streamsize len,
+            const bool quoted=true
+        ) override;
 
-            //- Write string (quoted)
-            //  In the rare case that the string contains a final trailing
-            //  backslash, it will be dropped to the appearance of an escaped
-            //  double-quote.
-            virtual Ostream& write(const string& str);
+        //- Write character string
+        virtual Ostream& write(const char* str) override;
 
-            //- Write std::string surrounded by quotes.
-            //  Optional write without quotes.
-            virtual Ostream& writeQuoted
-            (
-                const std::string& str,
-                const bool quoted=true
-            );
+        //- Write word
+        virtual Ostream& write(const word& str) override;
 
-            //- Write int32_t
-            virtual Ostream& write(const int32_t val);
+        //- Write string (quoted)
+        //  In the rare case that the string contains a final trailing
+        //  backslash, it will be dropped to the appearance of an escaped
+        //  double-quote.
+        virtual Ostream& write(const std::string& str) override;
 
-            //- Write int64_t
-            virtual Ostream& write(const int64_t val);
+        //- Write int32_t
+        virtual Ostream& write(const int32_t val) override;
 
-            //- Write float
-            virtual Ostream& write(const float val);
+        //- Write int64_t
+        virtual Ostream& write(const int64_t val) override;
 
-            //- Write double
-            virtual Ostream& write(const double val);
+        //- Write float
+        virtual Ostream& write(const float val) override;
 
-            //- Write binary block
-            virtual Ostream& write(const char* data, std::streamsize count);
+        //- Write double
+        virtual Ostream& write(const double val) override;
 
-            //- Low-level raw binary output
-            virtual Ostream& writeRaw
-            (
-                const char* data,
-                std::streamsize count
-            );
+        //- Write binary block
+        virtual Ostream& write
+        (
+            const char* data,
+            std::streamsize count
+        ) override;
 
-            //- Begin marker for low-level raw binary output.
-            //  The count indicates the number of bytes for subsequent
-            //  writeRaw calls.
-            virtual bool beginRawWrite(std::streamsize count);
+        //- Low-level raw binary output
+        virtual Ostream& writeRaw
+        (
+            const char* data,
+            std::streamsize count
+        ) override;
 
-            //- End marker for low-level raw binary output.
-            virtual bool endRawWrite();
+        //- Begin marker for low-level raw binary output.
+        //  The count indicates the number of bytes for subsequent
+        //  writeRaw calls.
+        virtual bool beginRawWrite(std::streamsize count) override;
 
-            //- Add indentation characters
-            virtual void indent();
+        //- End marker for low-level raw binary output.
+        virtual bool endRawWrite() override;
 
-
-        // Stream state functions
-
-            //- Flush stream
-            virtual void flush();
-
-            //- Add newline and flush stream
-            virtual void endl();
-
-            //- Get the current padding character
-            virtual char fill() const;
-
-            //- Set padding character for formatted field up to field width
-            //  \return previous padding character
-            virtual char fill(const char fillch);
-
-            //- Get width of output field
-            virtual int width() const;
-
-            //- Set width of output field
-            //  \return previous width
-            virtual int width(const int w);
-
-            //- Get precision of output field
-            virtual int precision() const;
-
-            //- Set precision of output field
-            //  \return old precision
-            virtual int precision(const int p);
+        //- Add indentation characters
+        virtual void indent() override;
 
 
-        // Print
+    // Stream state functions
 
-            //- Print stream description to Ostream
-            virtual void print(Ostream& os) const;
+        //- Flush stream
+        virtual void flush() override;
+
+        //- Add newline and flush stream
+        virtual void endl() override;
+
+        //- Get the current padding character
+        virtual char fill() const override;
+
+        //- Set padding character for formatted field up to field width
+        //  \return previous padding character
+        virtual char fill(const char fillch) override;
+
+        //- Get width of output field
+        virtual int width() const override;
+
+        //- Set width of output field
+        //  \return previous width
+        virtual int width(const int w) override;
+
+        //- Get precision of output field
+        virtual int precision() const override;
+
+        //- Set precision of output field
+        //  \return old precision
+        virtual int precision(const int p) override;
+
+
+    // Print
+
+        //- Print stream description to Ostream
+        virtual void print(Ostream& os) const override;
 };
 
 

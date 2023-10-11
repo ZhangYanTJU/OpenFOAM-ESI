@@ -124,12 +124,6 @@ public:
             buffer_type::reserve(n);
         }
 
-        //- Span of the current output characters (is modifiable!)
-        UList<char> list() const
-        {
-            return buffer_type::span_list();
-        }
-
         //- Rewind the stream, clearing any old errors
         void rewind()
         {
@@ -137,14 +131,41 @@ public:
             stream_type::clear();  // Clear old errors
         }
 
-        //- Transfer list contents to List buffer
+        //- Span of the current output characters (is modifiable!)
+        UList<char> list() const
+        {
+            return UList<char>
+            (
+                buffer_type::data_bytes(),
+                label(buffer_type::size_bytes())
+            );
+        }
+
+        //- A string_view (c++17) or span view (older c++) of buffer contents
+        auto view() const -> decltype(buffer_type::view())
+        {
+            return buffer_type::view();
+        }
+
+        //- For ostringstream compatibility, return the buffer as string copy.
+        //  Use sparingly - it creates a full copy!!
+        std::string str() const
+        {
+            return std::string
+            (
+                buffer_type::data_bytes(),
+                buffer_type::size_bytes()
+            );
+        }
+
+        //- Exchange stream content and parameter contents, reset positions
         void swap(List<char>& other)
         {
             buffer_type::swap(other);
             stream_type::clear();  // Clear old errors
         }
 
-        //- Transfer list contents to a DynamicList buffer
+        //- Exchange stream content and parameter contents, reset positions
         template<int SizeMin>
         void swap(DynamicList<char,SizeMin>& other)
         {
@@ -152,11 +173,18 @@ public:
             stream_type::clear();  // Clear old errors
         }
 
+        //- Reset buffer and return contents
+        DynamicList<char> release()
+        {
+            DynamicList<char> chars(buffer_type::release());
+            stream_type::clear();  // Clear old errors
+            return chars;
+        }
+
         //- Some information about the output buffer position/capacity
         void debug_info(Ostream& os) const
         {
-            os  << "put="
-                << output_pos() << '/' << capacity();
+            os  << "put=" << output_pos() << '/' << capacity();
         }
 };
 
@@ -214,19 +242,7 @@ public:
             OSstream(stream_, "output", streamOpt.format(), streamOpt.version())
         {}
 
-        //- Construct with initial reserved number of bytes
-        explicit OCharStream
-        (
-            size_t nbytes,
-            IOstreamOption streamOpt = IOstreamOption()
-        )
-        :
-            OCharStream(streamOpt)
-        {
-            stream_.reserve(nbytes);
-        }
-
-        //- Move construct from a List
+        //- Move construct from a List of initial storage
         explicit OCharStream
         (
             ::Foam::List<char>&& buffer,
@@ -238,7 +254,8 @@ public:
             stream_.swap(buffer);
         }
 
-        //- Move construct from a DynamicList (uses entire capacity)
+        //- Move construct from a DynamicList of initial storage
+        //- (uses entire capacity)
         template<int SizeMin>
         explicit OCharStream
         (
@@ -272,21 +289,27 @@ public:
         //- Span of the current output characters (is modifiable!)
         UList<char> list() const { return stream_.list(); }
 
-        //- Rewind the stream, clearing any old errors
-        virtual void rewind()
+        //- A string_view (c++17) or span view (older c++) of buffer contents
+        auto view() const -> decltype(stream_.view())
         {
-            stream_.rewind();
-            syncState();
+            return stream_.view();
         }
 
-        //- Transfer list contents to List buffer
+        //- For OStringStream compatibility, return the buffer as string copy.
+        //  Use sparingly - it creates a full copy!!
+        auto str() const -> decltype(stream_.str())
+        {
+            return stream_.str();
+        }
+
+        //- Exchange stream content and parameter contents, reset positions
         void swap(List<char>& other)
         {
             stream_.swap(other);
             syncState();
         }
 
-        //- Transfer list contents to a DynamicList buffer
+        //- Exchange stream content and parameter contents, reset positions
         template<int SizeMin>
         void swap(DynamicList<char,SizeMin>& other)
         {
@@ -294,8 +317,23 @@ public:
             syncState();
         }
 
+        //- Reset buffer and return contents
+        DynamicList<char> release()
+        {
+            DynamicList<char> chars(stream_.release());
+            syncState();
+            return chars;
+        }
+
+        //- Rewind the stream, clearing any old errors
+        virtual void rewind()
+        {
+            stream_.rewind();
+            syncState();
+        }
+
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Houskeeping

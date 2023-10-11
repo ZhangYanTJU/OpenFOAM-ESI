@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SubField_H
-#define SubField_H
+#ifndef Foam_SubField_H
+#define Foam_SubField_H
 
 #include "Field.H"
 #include "SubList.H"
@@ -79,27 +79,27 @@ public:
         SubField() noexcept = default;
 
         //- Copy construct (shallow copy)
-        inline SubField(const SubField<Type>& sfield);
+        inline SubField(const SubField<Type>& fld);
 
         //- Copy construct from SubList
         inline SubField(const SubList<Type>& list);
 
         //- Construct from UList, the entire size
-        inline explicit SubField(const UList<Type>& list);
+        inline explicit SubField(const UList<Type>& list) noexcept;
 
         //- Construct from UList with a given sub-list size, start at 0
         inline SubField
         (
             const UList<Type>& list,
-            const label subSize
+            const label len
         );
 
-        //- Construct from UList with a given size and start index
+        //- Construct from UList, sub-list size and start index
         inline SubField
         (
             const UList<Type>& list,
-            const label subSize,
-            const label startIndex
+            const label len,
+            const label start
         );
 
         //- Construct from UList and a (start,size) range.
@@ -111,8 +111,8 @@ public:
             const labelRange& range
         );
 
-        //- Construct from UList and a (start,size) range, but bypassing
-        //- run-time range checking.
+        //- Construct from UList and a (start,size) range,
+        //- but bypassing run-time range checking.
         inline SubField
         (
             const labelRange& range,

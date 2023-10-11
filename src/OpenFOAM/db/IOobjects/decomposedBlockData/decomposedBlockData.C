@@ -103,6 +103,76 @@ Foam::decomposedBlockData::decomposedBlockData
 
 // * * * * * * * * * * * * * * * Members Functions * * * * * * * * * * * * * //
 
+std::streamoff Foam::decomposedBlockData::writeBlockEntry
+(
+    OSstream& os,
+    const label blocki,
+    const char* str,
+    const size_t len
+)
+{
+    // Offset to the beginning of this output
+    // This should generally be OK for non-compressed streams
+    // (eg, std::ofstream)
+
+    std::streamoff blockOffset = os.stdStream().tellp();
+
+    const word procName("processor" + Foam::name(blocki));
+
+    // Write as commented content
+    // ----------------
+    // // processorN
+    // NCHARS
+    // (...)
+    // ----------------
+    {
+        os << nl << "// " << procName << nl;
+
+        if (str && len > 0)
+        {
+            // Special treatment for char data (binary I/O only)
+            const auto oldFmt = os.format(IOstreamOption::BINARY);
+
+            os << label(len) << nl;
+            os.write(str, len);
+            os << nl;
+
+            os.format(oldFmt);
+        }
+        else
+        {
+            os << label(0) << nl;
+        }
+    }
+
+    // Write as primitiveEntry
+    // {
+    //     // Like writeKeyword()
+    //     os << nl << procName << nl;
+    //
+    //     if (str && len > 0)
+    //     {
+    //         // Special treatment for char data (binary I/O only)
+    //         const auto oldFmt = os.format(IOstreamOption::BINARY);
+    //
+    //         os << label(len) << nl;
+    //         os.write(str, len);
+    //         os << nl;
+    //
+    //         os.format(oldFmt);
+    //     }
+    //     else
+    //     {
+    //         os << label(0) << nl;
+    //     }
+    //
+    //     os.endEntry();
+    // }
+
+    return blockOffset;
+}
+
+
 bool Foam::decomposedBlockData::readBlockEntry
 (
     Istream& is,
@@ -149,7 +219,7 @@ bool Foam::decomposedBlockData::readBlockEntry
 bool Foam::decomposedBlockData::skipBlockEntry(Istream& is)
 {
     // As per readBlockEntry but seeks instead of reading.
-    // Internals like charList::readList
+    // Internals like charList::readList - ie, always binary
 
     // Handle any of these:
     // 0.  NCHARS (...)
@@ -184,19 +254,17 @@ bool Foam::decomposedBlockData::skipBlockEntry(Istream& is)
 
         const label len = tok.labelToken();
 
-        // Binary, always contiguous
+        // Special treatment for char data (binary I/O only)
+        const auto oldFmt = is.format(IOstreamOption::BINARY);
 
         if (len)
         {
-            const auto oldFmt = is.format(IOstreamOption::BINARY);
-
             // read(...) includes surrounding start/end delimiters.
 
-            // Note: nullptr to seek instead of reading
+            // Note: nullptr to ignore instead of reading
             is.read(nullptr, std::streamsize(len));
-
-            is.format(oldFmt);
         }
+        is.format(oldFmt);
 
         handled = true;
     }
@@ -285,52 +353,6 @@ bool Foam::decomposedBlockData::hasBlock(Istream& is, const label blockNumber)
         blockNumber >= 0
      && (blockNumber < getNumBlocks(is, blockNumber+1))
     );
-}
-
-
-std::streamoff Foam::decomposedBlockData::writeBlockEntry
-(
-    OSstream& os,
-    const label blocki,
-    const UList<char>& charData
-)
-{
-    // Offset to the beginning of this output
-
-    std::streamoff blockOffset = os.stdStream().tellp();
-
-    const word procName("processor" + Foam::name(blocki));
-
-    // Write as commented content
-    {
-        os  << nl << "// " << procName << nl;
-        charData.writeList(os) << nl;
-    }
-    // Write as primitiveEntry
-    // {
-    //     os << nl << procName << nl;
-    //     charData.writeList(os);
-    //     os.endEntry();
-    // }
-
-    return blockOffset;
-}
-
-
-std::streamoff Foam::decomposedBlockData::writeBlockEntry
-(
-    OSstream& os,
-    const label blocki,
-    const std::string& content
-)
-{
-    UList<char> charData
-    (
-        const_cast<char*>(content.data()),
-        label(content.size())
-    );
-
-    return decomposedBlockData::writeBlockEntry(os, blocki, charData);
 }
 
 

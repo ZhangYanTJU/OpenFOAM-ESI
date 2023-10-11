@@ -40,10 +40,10 @@ inline const Foam::SubField<Type>& Foam::SubField<Type>::null()
 template<class Type>
 inline Foam::SubField<Type>::SubField
 (
-    const SubField<Type>& sfield
+    const SubField<Type>& fld
 )
 :
-    SubList<Type>(sfield)
+    SubList<Type>(fld)
 {}
 
 
@@ -61,7 +61,7 @@ template<class Type>
 inline Foam::SubField<Type>::SubField
 (
     const UList<Type>& list
-)
+) noexcept
 :
     SubList<Type>(list)
 {}
@@ -71,10 +71,10 @@ template<class Type>
 inline Foam::SubField<Type>::SubField
 (
     const UList<Type>& list,
-    const label subSize
+    const label len
 )
 :
-    SubList<Type>(list, subSize)
+    SubList<Type>(list, len)
 {}
 
 
@@ -82,11 +82,11 @@ template<class Type>
 inline Foam::SubField<Type>::SubField
 (
     const UList<Type>& list,
-    const label subSize,
-    const label startIndex
+    const label len,
+    const label start
 )
 :
-    SubList<Type>(list, subSize, startIndex)
+    SubList<Type>(list, len, start)
 {}
 
 

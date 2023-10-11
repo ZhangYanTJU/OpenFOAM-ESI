@@ -223,7 +223,7 @@ public:
     // Characteristics
 
         //- The name of the input token stream.
-        virtual const fileName& name() const { return name_; }
+        virtual const fileName& name() const override { return name_; }
 
         //- The name of the input token stream, for modification.
         virtual fileName& name() { return name_; }
@@ -371,13 +371,13 @@ public:
     // Stream State Functions
 
         //- Get stream flags - always 0
-        virtual ios_base::fmtflags flags() const
+        virtual ios_base::fmtflags flags() const override
         {
             return ios_base::fmtflags(0);
         }
 
         //- Set flags of stream - ignored
-        ios_base::fmtflags flags(const ios_base::fmtflags)
+        ios_base::fmtflags flags(const ios_base::fmtflags) override
         {
             return ios_base::fmtflags(0);
         }
@@ -386,47 +386,47 @@ public:
     // Read Functions
 
         //- Return next token from stream
-        virtual Istream& read(token& tok);
+        virtual Istream& read(token& tok) override;
 
         //- Read a character : triggers not implemented error
-        virtual Istream& read(char&);
+        virtual Istream& read(char&) override;
 
         //- Read a word : triggers not implemented error
-        virtual Istream& read(word&);
+        virtual Istream& read(word&) override;
 
         //- Read a string (including enclosing double-quotes) :
         //- triggers not implemented error
-        virtual Istream& read(string&);
+        virtual Istream& read(string&) override;
 
         //- Read a label : triggers not implemented error
-        virtual Istream& read(label&);
+        virtual Istream& read(label&) override;
 
         //- Read a float : triggers not implemented error
-        virtual Istream& read(float&);
+        virtual Istream& read(float&) override;
 
         //- Read a double : triggers not implemented error
-        virtual Istream& read(double&);
+        virtual Istream& read(double&) override;
 
         //- Read binary block : triggers not implemented error
-        virtual Istream& read(char* data, std::streamsize);
+        virtual Istream& read(char* data, std::streamsize) override;
 
         //- Low-level raw binary read : triggers not implemented error
-        virtual Istream& readRaw(char* data, std::streamsize count);
+        virtual Istream& readRaw(char* data, std::streamsize count) override;
 
         //- Start of low-level raw binary read : no-op
-        virtual bool beginRawRead() { return false; }
+        virtual bool beginRawRead() override { return false; }
 
         //- End of low-level raw binary read : no-op
-        virtual bool endRawRead() { return false; }
+        virtual bool endRawRead() override { return false; }
 
         //- Rewind the stream so that it may be read again. Same as seek(0)
-        virtual void rewind();
+        virtual void rewind() override;
 
 
     // Output
 
         //- Print stream description to Ostream
-        void print(Ostream& os) const;
+        void print(Ostream& os) const override;
 
         //- Concatenate tokens into a space-separated std::string.
         //- The resulting string may contain quote characters.

@@ -65,10 +65,10 @@ public:
 
     // Constructors
 
-        //- Default construct with default (128) initial table capacity
-        PtrMap() = default;
+        //- Default construct: empty without allocation (capacity=0)
+        PtrMap() noexcept = default;
 
-        //- Construct empty with zero initial table capacity
+        //- Construct empty without allocation (capacity=0)
         explicit PtrMap(const Foam::zero) noexcept
         :
             parent_type(Foam::zero{})

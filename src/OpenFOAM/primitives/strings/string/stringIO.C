@@ -74,7 +74,7 @@ Foam::Istream& Foam::operator>>(Istream& is, string& val)
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const string& val)
 {
-    os.write(val);
+    os.write(static_cast<const std::string&>(val));
     os.check(FUNCTION_NAME);
     return os;
 }
@@ -82,7 +82,7 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const string& val)
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const std::string& val)
 {
-    os.write(string(val));
+    os.write(val);
     os.check(FUNCTION_NAME);
     return os;
 }

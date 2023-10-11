@@ -121,11 +121,20 @@ inline void Foam::UOPstreamBase::putChar(const char c)
 }
 
 
+inline void Foam::UOPstreamBase::putString
+(
+    const char* str,
+    const size_t len
+)
+{
+    writeToBuffer(len);
+    writeToBuffer(str, len, 1);  // no-op when len == 0
+}
+
+
 inline void Foam::UOPstreamBase::putString(const std::string& str)
 {
-    const size_t len = str.size();
-    writeToBuffer(len);
-    writeToBuffer(str.data(), len, 1);  // no-op when len == 0
+    putString(str.data(), str.size());
 }
 
 
@@ -253,6 +262,27 @@ Foam::Ostream& Foam::UOPstreamBase::write(const char c)
 }
 
 
+Foam::Ostream& Foam::UOPstreamBase::writeQuoted
+(
+    const char* str,
+    std::streamsize len,
+    const bool quoted
+)
+{
+    if (quoted)
+    {
+        putChar(token::tokenType::STRING);
+    }
+    else
+    {
+        putChar(token::tokenType::WORD);
+    }
+    putString(str, len);
+
+    return *this;
+}
+
+
 Foam::Ostream& Foam::UOPstreamBase::write(const char* str)
 {
     const word nonWhiteChars(string::validate<word>(str));
@@ -279,29 +309,9 @@ Foam::Ostream& Foam::UOPstreamBase::write(const word& str)
 }
 
 
-Foam::Ostream& Foam::UOPstreamBase::write(const string& str)
+Foam::Ostream& Foam::UOPstreamBase::write(const std::string& str)
 {
     putChar(token::tokenType::STRING);
-    putString(str);
-
-    return *this;
-}
-
-
-Foam::Ostream& Foam::UOPstreamBase::writeQuoted
-(
-    const std::string& str,
-    const bool quoted
-)
-{
-    if (quoted)
-    {
-        putChar(token::tokenType::STRING);
-    }
-    else
-    {
-        putChar(token::tokenType::WORD);
-    }
     putString(str);
 
     return *this;

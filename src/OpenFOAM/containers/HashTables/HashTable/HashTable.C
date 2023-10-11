@@ -37,7 +37,7 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
+Foam::HashTable<T, Key, Hash>::HashTable() noexcept
 :
     HashTableCore(),
     size_(0),
@@ -47,30 +47,23 @@ Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
 
 
 template<class T, class Key, class Hash>
-Foam::HashTable<T, Key, Hash>::HashTable()
+Foam::HashTable<T, Key, Hash>::HashTable(const Foam::zero) noexcept
 :
-    HashTable<T, Key, Hash>(128)
+    HashTable<T, Key, Hash>()
 {}
 
 
 template<class T, class Key, class Hash>
 Foam::HashTable<T, Key, Hash>::HashTable(const label initialCapacity)
 :
-    HashTableCore(),
-    size_(0),
-    capacity_(0),
-    table_(nullptr)
+    HashTable<T, Key, Hash>()
 {
     if (initialCapacity > 0)
     {
         // Like resize() but no initial content to transfer
         capacity_ = HashTableCore::canonicalSize(initialCapacity);
         table_ = new node_type*[capacity_];
-
-        for (label i=0; i < capacity_; ++i)
-        {
-            table_[i] = nullptr;
-        }
+        std::fill_n(table_, capacity_, static_cast<node_type*>(nullptr));
     }
 }
 
@@ -78,7 +71,7 @@ Foam::HashTable<T, Key, Hash>::HashTable(const label initialCapacity)
 template<class T, class Key, class Hash>
 Foam::HashTable<T, Key, Hash>::HashTable(const HashTable<T, Key, Hash>& ht)
 :
-    HashTable<T, Key, Hash>(ht.capacity_)
+    HashTable<T, Key, Hash>(2*ht.size())
 {
     for (const_iterator iter = ht.cbegin(); iter != ht.cend(); ++iter)
     {
@@ -367,8 +360,7 @@ bool Foam::HashTable<T, Key, Hash>::setEntry
 {
     if (!capacity_)
     {
-        // Same as default sizing
-        resize(128);
+        setCapacity(128);  // Impose an initial capacity
     }
 
     const label index = hashKeyIndex(key);
@@ -393,9 +385,9 @@ bool Foam::HashTable<T, Key, Hash>::setEntry
             new node_type(table_[index], key, std::forward<Args>(args)...);
 
         ++size_;
-        if (0.8*capacity_ < size_)  // Resize after 80% fill factor
+        if (0.8*capacity_ < size_)  // Resize after 0.8 load factor
         {
-            if (capacity_ < maxTableSize) resize(2*capacity_);
+            if (capacity_ < maxTableSize) setCapacity(2*capacity_);
         }
     }
     else if (overwrite)
@@ -445,8 +437,7 @@ void Foam::HashTable<T, Key, Hash>::insert_node(node_type* entry)
 
     if (!capacity_)
     {
-        // Same as default sizing
-        resize(128);
+        setCapacity(128);  // Impose an initial capacity
     }
 
     const label index = hashKeyIndex(entry->key());
@@ -472,7 +463,7 @@ void Foam::HashTable<T, Key, Hash>::insert_node(node_type* entry)
         ++size_;
         if (0.8*capacity_ < size_)  // Resize after 80% fill factor
         {
-            if (capacity_ < maxTableSize) resize(2*capacity_);
+            if (capacity_ < maxTableSize) setCapacity(2*capacity_);
         }
     }
     else
@@ -648,44 +639,43 @@ Foam::label Foam::HashTable<T, Key, Hash>::retain
 
 
 template<class T, class Key, class Hash>
-void Foam::HashTable<T, Key, Hash>::resize(const label requestedCapacity)
+void Foam::HashTable<T, Key, Hash>::setCapacity(label newCapacity)
 {
-    const label newCapacity = HashTableCore::canonicalSize(requestedCapacity);
-    const label oldCapacity = capacity_;
+    newCapacity = HashTableCore::canonicalSize(newCapacity);
 
-    if (newCapacity == oldCapacity)
+    if (newCapacity == capacity_)
     {
         return;
     }
-    else if (!newCapacity)
+
+    if (!size_)
     {
-        // Special treatment for resize(0)
+        // Table is unpopulated - can already remove now
+        capacity_ = 0;
+        delete[] table_;
+        table_ = nullptr;
+    }
+
+    if (!newCapacity)
+    {
+        // Special handling for capacity = 0.
         if (size_)
         {
             WarningInFunction
                 << "HashTable contains " << size_
-                << " elements, cannot resize(0)" << nl;
+                << " elements, cannot set capacity to 0 buckets!" << nl;
         }
-        else
-        {
-            capacity_ = 0;
-            delete[] table_;
-            table_ = nullptr;
-        }
-
         return;
     }
 
     // Swap primary table entries: size_ is left untouched
 
     auto oldTable = table_;
-    capacity_ = newCapacity;
+    const label oldCapacity = capacity_;
 
+    capacity_ = newCapacity;
     table_ = new node_type*[capacity_];
-    for (label i=0; i < capacity_; ++i)
-    {
-        table_[i] = nullptr;
-    }
+    std::fill_n(table_, capacity_, static_cast<node_type*>(nullptr));
 
     if (!oldTable)
     {
@@ -715,6 +705,26 @@ void Foam::HashTable<T, Key, Hash>::resize(const label requestedCapacity)
     }
 
     delete[] oldTable;
+}
+
+
+template<class T, class Key, class Hash>
+void Foam::HashTable<T, Key, Hash>::resize(label newCapacity)
+{
+    setCapacity(newCapacity);
+}
+
+
+template<class T, class Key, class Hash>
+void Foam::HashTable<T, Key, Hash>::reserve(label numEntries)
+{
+    if (numEntries > size_)
+    {
+        // From number of entries to estimated capacity
+        // - initial load factor of 0.5
+        numEntries *= 2;
+        if (numEntries > capacity_) setCapacity(numEntries);
+    }
 }
 
 
@@ -917,15 +927,8 @@ void Foam::HashTable<T, Key, Hash>::operator=
         return;  // Self-assignment is a no-op
     }
 
-    if (!capacity_)
-    {
-        // Zero-sized from a previous transfer()?
-        resize(rhs.capacity_);
-    }
-    else
-    {
-        clear();
-    }
+    this->clear();
+    this->reserve(rhs.size());
 
     for (const_iterator iter = rhs.cbegin(); iter != rhs.cend(); ++iter)
     {
@@ -940,15 +943,8 @@ void Foam::HashTable<T, Key, Hash>::operator=
     std::initializer_list<std::pair<Key, T>> rhs
 )
 {
-    if (!capacity_)
-    {
-        // Zero-sized from a previous transfer()?
-        resize(2*rhs.size());
-    }
-    else
-    {
-        clear();
-    }
+    this->clear();
+    this->reserve(rhs.size());
 
     for (const auto& keyval : rhs)
     {

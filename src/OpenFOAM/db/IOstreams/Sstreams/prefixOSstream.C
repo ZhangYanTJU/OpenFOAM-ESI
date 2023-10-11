@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,11 +77,21 @@ Foam::Ostream& Foam::prefixOSstream::write(const char c)
     checkWritePrefix();
     OSstream::write(c);
 
-    if (c == token::NL)
-    {
-        printPrefix_ = true;
-    }
+    // Reset prefix state on newline
+    if (c == token::NL) printPrefix_ = true;
+    return *this;
+}
 
+
+Foam::Ostream& Foam::prefixOSstream::writeQuoted
+(
+    const char* str,
+    std::streamsize len,
+    const bool quoted
+)
+{
+    checkWritePrefix();
+    OSstream::writeQuoted(str, len, quoted);
     return *this;
 }
 
@@ -92,8 +102,9 @@ Foam::Ostream& Foam::prefixOSstream::write(const char* str)
     OSstream::write(str);
 
     const size_t len = strlen(str);
-    if (len && str[len-1] == token::NL)
+    if (len > 0 && str[len-1] == token::NL)
     {
+        // Reset prefix state on newline
         printPrefix_ = true;
     }
 
@@ -103,26 +114,15 @@ Foam::Ostream& Foam::prefixOSstream::write(const char* str)
 
 Foam::Ostream& Foam::prefixOSstream::write(const word& val)
 {
+    // Unquoted, and no newlines expected.
     checkWritePrefix();
     return OSstream::write(val);
 }
 
 
-Foam::Ostream& Foam::prefixOSstream::write(const string& val)
+Foam::Ostream& Foam::prefixOSstream::write(const std::string& str)
 {
-    checkWritePrefix();
-    return OSstream::write(val);
-}
-
-
-Foam::Ostream& Foam::prefixOSstream::writeQuoted
-(
-    const std::string& val,
-    const bool quoted
-)
-{
-    checkWritePrefix();
-    return OSstream::writeQuoted(val, quoted);
+    return writeQuoted(str.data(), str.size(), true);
 }
 
 

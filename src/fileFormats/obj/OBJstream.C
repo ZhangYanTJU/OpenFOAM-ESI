@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,7 +40,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::OBJstream::writeAndCheck(const char c)
+inline void Foam::OBJstream::vertex_state(const char c)
 {
     if (c == '\n')
     {
@@ -54,8 +54,6 @@ void Foam::OBJstream::writeAndCheck(const char c)
             ++nVertices_;
         }
     }
-
-    OFstream::write(c);
 }
 
 
@@ -77,16 +75,51 @@ Foam::OBJstream::OBJstream
 
 Foam::Ostream& Foam::OBJstream::write(const char c)
 {
-    writeAndCheck(c);
+    OFstream::write(c);
+    vertex_state(c);
+    return *this;
+}
+
+
+Foam::Ostream& Foam::OBJstream::writeQuoted
+(
+    const char* str,
+    std::streamsize len,
+    const bool quoted
+)
+{
+    OFstream::writeQuoted(str, len, quoted);
+
+    // NOTE:
+    // Since vertex_state() handling only tracks newline followed by
+    // an initial 'v' (vertex) character, it probably should not be possible
+    // to triggered from within a quoted string.
+
+    if (str && len >= 0)
+    {
+        if (quoted) vertex_state(0);  // Begin quote: reset state
+
+        const char* last = (str + len);
+
+        // std::for_each
+        for (const char* iter = str; iter != last; ++iter)
+        {
+            vertex_state(*iter);
+        }
+
+        if (quoted) vertex_state(0);  // End quote
+    }
+
     return *this;
 }
 
 
 Foam::Ostream& Foam::OBJstream::write(const char* str)
 {
+    OFstream::write(str);
     for (const char* iter = str; *iter; ++iter)
     {
-        writeAndCheck(*iter);
+        vertex_state(*iter);
     }
     return *this;
 }
@@ -94,68 +127,54 @@ Foam::Ostream& Foam::OBJstream::write(const char* str)
 
 Foam::Ostream& Foam::OBJstream::write(const word& str)
 {
-    return writeQuoted(str, false);
+    return writeQuoted(str.data(), str.size(), false);
 }
 
 
-Foam::Ostream& Foam::OBJstream::write(const string& str)
+Foam::Ostream& Foam::OBJstream::write(const std::string& str)
 {
-    return writeQuoted(str, true);
+    return writeQuoted(str.data(), str.size(), true);
 }
 
 
-Foam::Ostream& Foam::OBJstream::writeQuoted
-(
-    const std::string& str,
-    const bool quoted
-)
+Foam::Ostream& Foam::OBJstream::writeComment(const std::string& str)
 {
-    if (!quoted)
+    if (!startOfLine_)
     {
-        // Output unquoted, only advance line number on newline
-        for (auto iter = str.cbegin(); iter != str.cend(); ++iter)
-        {
-            writeAndCheck(*iter);
-        }
+        OFstream::write('\n');
+        startOfLine_ = true;
+    }
+
+    if (str.empty())
+    {
+        OFstream::write("#\n");
+        startOfLine_ = true;
         return *this;
     }
 
-    // Output with surrounding quotes and backslash escaping
-    OFstream::write(static_cast<char>(token::DQUOTE));
+    const char* iter = str.data();
+    const char* last = (str.data() + str.size());
 
-    unsigned backslash = 0;
-    for (auto iter = str.cbegin(); iter != str.cend(); ++iter)
+    // std::for_each
+    for (; iter != last; ++iter)
     {
         const char c = *iter;
 
-        if (c == '\\')
+        if (startOfLine_)
         {
-            ++backslash;
-            continue; // only output after escaped character is known
-        }
-        else if (c == token::NL)
-        {
-            ++lineNumber_;
-            ++backslash;    // backslash escape for newline
-        }
-        else if (c == token::DQUOTE)
-        {
-            ++backslash;    // backslash escape for quote
+            OFstream::write("# ");
+            startOfLine_ = false;
         }
 
-        // output all pending backslashes
-        while (backslash)
-        {
-            OFstream::write('\\');
-            --backslash;
-        }
-
-        writeAndCheck(c);
+        startOfLine_ = (c == '\n');
+        OFstream::write(c);
     }
 
-    // silently drop any trailing backslashes
-    // they would otherwise appear like an escaped end-quote
-    OFstream::write(static_cast<char>(token::DQUOTE));
+    if (!startOfLine_)
+    {
+        OFstream::write('\n');
+        startOfLine_ = true;
+    }
 
     return *this;
 }

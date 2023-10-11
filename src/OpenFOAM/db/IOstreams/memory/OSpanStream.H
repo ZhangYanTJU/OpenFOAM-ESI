@@ -132,13 +132,6 @@ public:
             stream_type(static_cast<buffer_type*>(this))
         {}
 
-        // //- Construct (shallow copy) from span character content
-        // ospanstream(stdFoam::span<char> s)
-        // :
-        //     buffer_type(const_cast<char*>(s.data()), s.size()),
-        //     stream_type(static_cast<buffer_type*>(this))
-        // {}
-
 
     // Member Functions
 
@@ -157,7 +150,28 @@ public:
         //- Span of the current output characters (is modifiable!)
         UList<char> list() const
         {
-            return buffer_type::span_list();
+            return UList<char>
+            (
+                buffer_type::data_bytes(),
+                label(buffer_type::size_bytes())
+            );
+        }
+
+        //- A string_view (c++17) or span view (older c++) of buffer contents
+        auto view() const -> decltype(buffer_type::view())
+        {
+            return buffer_type::view();
+        }
+
+        //- For ostringstream compatibility, return the buffer as string copy.
+        //  Use sparingly - it creates a full copy!!
+        std::string str() const
+        {
+            return std::string
+            (
+                buffer_type::data_bytes(),
+                buffer_type::size_bytes()
+            );
         }
 
         //- Rewind the stream, clearing any old errors
@@ -222,7 +236,6 @@ protected:
                          Class OSpanStream Declaration
 \*---------------------------------------------------------------------------*/
 
-//- An OSstream attached to an unallocated external buffer
 class OSpanStream
 :
     public Detail::OSpanStreamAllocator,
@@ -269,17 +282,6 @@ public:
             stream_.reset(buffer, nbytes);
         }
 
-        //- Construct using data area from a List and number of bytes
-        OSpanStream
-        (
-            ::Foam::UList<char>& buffer,
-            size_t nbytes,
-            IOstreamOption streamOpt = IOstreamOption()
-        )
-        :
-            OSpanStream(buffer.data(), nbytes, streamOpt)
-        {}
-
         //- Construct using data area from a List and its inherent storage size
         explicit OSpanStream
         (
@@ -321,6 +323,19 @@ public:
         //- Span of the current output characters (is modifiable!)
         UList<char> list() const { return stream_.list(); }
 
+        //- A string_view (c++17) or span view (older c++) of buffer contents
+        auto view() const -> decltype(stream_.view())
+        {
+            return stream_.view();
+        }
+
+        //- For OStringStream compatibility, return buffer as string copy.
+        //  Use sparingly - it creates a full copy!!
+        auto str() const -> decltype(stream_.str())
+        {
+            return stream_.str();
+        }
+
         //- Reset the put area
         void reset(char* buffer, size_t nbytes)
         {
@@ -343,7 +358,7 @@ public:
         }
 
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 };
 
 

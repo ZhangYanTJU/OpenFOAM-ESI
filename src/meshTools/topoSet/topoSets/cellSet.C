@@ -220,7 +220,7 @@ void Foam::cellSet::distribute(const mapDistributePolyMesh& map)
     // Update labelHashSet
 
     labels.clear();
-    labels.resize(2*n);
+    labels.reserve(n);
 
     for (label i=0; i < len; ++i)
     {

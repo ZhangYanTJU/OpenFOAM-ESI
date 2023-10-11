@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,7 +36,7 @@ See also
 
 #include "OSspecific.H"
 #include "IOstreams.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 
 #include "labelList.H"
 #include "ListOps.H"
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     {
         Info<<"Read from " << inputSLList << nl;
 
-        IStringStream is(inputSLList);
+        ISpanStream is(inputSLList);
         is >> ulist;
 
 //         Info<<"source: "; print(source);
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     {
         Info<<"Read from " << inputCompound << nl;
 
-        IStringStream is(inputCompound);
+        ISpanStream is(inputCompound);
         is >> ulist;
 
 //         Info<<"source: "; print(source);

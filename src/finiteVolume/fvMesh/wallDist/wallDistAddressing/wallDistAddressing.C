@@ -222,7 +222,7 @@ void Foam::wallDistAddressing::correct(volScalarField& y)
     Map<label> cellToWallFace;
     if (correctWalls_)
     {
-        cellToWallFace.resize(2*nWalls);
+        cellToWallFace.reserve(nWalls);
         correctBoundaryFaceCells
         (
             patchSet,

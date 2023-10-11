@@ -1006,7 +1006,7 @@ Foam::label Foam::polyMeshFilter::filterEdges
     label nOuterIterations = 0;
 
     minEdgeLen_.resize(mesh_.nEdges(), minLen());
-    faceFilterFactor_.resize(0);
+    faceFilterFactor_.clear();
 
     labelList pointErrorCount(mesh_.nPoints(), Zero);
 

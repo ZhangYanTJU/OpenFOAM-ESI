@@ -618,7 +618,7 @@ Foam::faceTriangulation::faceTriangulation
 
     if (!valid)
     {
-        setSize(0);
+        clear();
     }
 }
 
@@ -639,7 +639,7 @@ Foam::faceTriangulation::faceTriangulation
 
     if (!valid)
     {
-        setSize(0);
+        clear();
     }
 }
 

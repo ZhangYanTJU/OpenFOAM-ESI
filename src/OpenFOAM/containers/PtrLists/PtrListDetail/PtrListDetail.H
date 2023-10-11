@@ -81,7 +81,7 @@ public:
         inline PtrListDetail(const PtrListDetail<T>& list);
 
         //- Move construct
-        inline PtrListDetail(PtrListDetail<T>&& list);
+        inline PtrListDetail(PtrListDetail<T>&& list) noexcept;
 
         //- Copy or move (reuse) construct as specified
         inline PtrListDetail(PtrListDetail<T>& list, bool reuse);

@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
         addr.emplace_back(2);
 
         // Can also use the return value
-        Info<< "adding " << addr.emplace_back(4) << endl;
+        Info<< "adding " << addr.emplace_back(4) << nl;
 
         forAll(dlE2, i)
         {
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
 
         input1 = list2;
 
-        Info<< nl << "test subset/remove with "
+        Info<< nl << "test remove with "
             << flatOutput(input1) << endl;
 
         for
@@ -344,11 +344,35 @@ int main(int argc, char *argv[])
             list2 = input1;
 
             list1.remove(range);
-            list2.subset(range);
 
             Info<< "input = " << flatOutput(input1) << nl
-                << "remove " << range << " = " << flatOutput(list1) << nl
-                << "subset " << range << " = " << flatOutput(list2) << nl;
+                << "remove " << range << " = " << flatOutput(list1) << nl;
+        }
+
+        {
+            input1 = identity(5);
+            list1 = identity(4, 5);
+            list1.reserve(10);
+
+            Info<< nl << "test swap(List)" << nl;
+            Info<< "  input: " << input1.size()
+                << '/' << input1.capacity() << ' '
+                << flatOutput(input1) << nl;
+            Info<< "  list:  " << list1.size() << '/'
+                << list1.capacity() << ' '
+                << flatOutput(list1) << nl;
+
+
+            // input1.swap(list1);   // This is wrong!
+            list1.swap(input1);   // Correct
+
+            Info<< "after swap:" << nl;
+            Info<< "  input: " << input1.size()
+                << '/' << input1.capacity() << ' '
+                << flatOutput(input1) << nl;
+            Info<< "  list:  " << list1.size() << '/'
+                << list1.capacity() << ' '
+                << flatOutput(list1) << nl;
         }
     }
 

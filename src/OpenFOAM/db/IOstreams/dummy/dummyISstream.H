@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,98 +71,101 @@ public:
 
     // Member Functions
 
-        // Read Functions
+    // Stream-state
 
-            //- Return next token from stream
-            virtual Istream& read(token&)
-            {
-                NotImplemented;
-                return *this;
-            }
+        //- Return flags of stream
+        virtual ios_base::fmtflags flags() const override
+        {
+            return ios_base::fmtflags(0);
+        }
 
-            //- Read a character
-            virtual Istream& read(char&)
-            {
-                NotImplemented;
-                return *this;
-            }
+        //- Set flags of stream
+        virtual ios_base::fmtflags flags(const ios_base::fmtflags) override
+        {
+            return ios_base::fmtflags(0);
+        }
 
-            //- Read a word
-            virtual Istream& read(word&)
-            {
-                NotImplemented;
-                return *this;
-            }
 
-            // Read a string (including enclosing double-quotes)
-            virtual Istream& read(string&)
-            {
-                NotImplemented;
-                return *this;
-            }
+    // Read Functions
 
-            //- Read a label
-            virtual Istream& read(label&)
-            {
-                NotImplemented;
-                return *this;
-            }
+        //- Return next token from stream
+        virtual Istream& read(token&) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Read a float
-            virtual Istream& read(float&)
-            {
-                NotImplemented;
-                return *this;
-            }
+        //- Read a character
+        virtual Istream& read(char&) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Read a double
-            virtual Istream& read(double&)
-            {
-                NotImplemented;
-                return *this;
-            }
+        //- Read a word
+        virtual Istream& read(word&) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Read binary block
-            virtual Istream& read(char*, std::streamsize)
-            {
-                NotImplemented;
-                return *this;
-            }
+        // Read a string (including enclosing double-quotes)
+        virtual Istream& read(string&) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Low-level raw binary read
-            virtual Istream& readRaw(char*, std::streamsize)
-            {
-                NotImplemented;
-                return *this;
-            }
+        //- Read a label
+        virtual Istream& read(label&) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Start of low-level raw binary read
-            virtual bool beginRawRead()
-            {
-                return false;
-            }
+        //- Read a float
+        virtual Istream& read(float&) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- End of low-level raw binary read
-            virtual bool endRawRead()
-            {
-                return false;
-            }
+        //- Read a double
+        virtual Istream& read(double&) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Rewind the stream so that it may be read again
-            virtual void rewind()
-            {}
+        //- Read binary block
+        virtual Istream& read(char*, std::streamsize) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Return flags of stream
-            virtual ios_base::fmtflags flags() const
-            {
-                return ios_base::fmtflags(0);
-            }
+        //- Low-level raw binary read
+        virtual Istream& readRaw(char*, std::streamsize) override
+        {
+            NotImplemented;
+            return *this;
+        }
 
-            //- Set flags of stream
-            virtual ios_base::fmtflags flags(const ios_base::fmtflags)
-            {
-                return ios_base::fmtflags(0);
-            }
+        //- Start of low-level raw binary read
+        virtual bool beginRawRead() override
+        {
+            return false;
+        }
+
+        //- End of low-level raw binary read
+        virtual bool endRawRead() override
+        {
+            return false;
+        }
+
+        //- Rewind the stream so that it may be read again
+        virtual void rewind() override
+        {}
 };
 
 

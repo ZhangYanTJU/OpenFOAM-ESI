@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +31,7 @@ License
 #include "DynamicList.H"
 #include "FlatOutput.H"
 #include "IOstreams.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "ListOps.H"
 #include "stringListOps.H"
 
@@ -119,9 +119,9 @@ int main()
         << table1["aaa"] << nl;
 
     {
-        OStringStream os;
+        OCharStream os;
         os  << table1;
-        HashTable<scalar> readTable(IStringStream(os.str())(), 100);
+        HashTable<scalar> readTable(ISpanStream(os.view())());
 
         Info<< "Istream constructor:" << readTable << endl;
     }

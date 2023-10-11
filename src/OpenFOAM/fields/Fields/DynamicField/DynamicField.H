@@ -134,18 +134,18 @@ public:
         inline explicit DynamicField(const IndirectListBase<T, Addr>& list);
 
         //- Move construct from List contents
-        inline explicit DynamicField(List<T>&& content);
+        inline explicit DynamicField(List<T>&& content) noexcept;
 
         //- Move construct from dynamic Field contents
-        inline DynamicField(DynamicField<T, SizeMin>&& content);
+        inline DynamicField(DynamicField<T, SizeMin>&& content) noexcept;
 
         //- Move construct with different sizing parameters
         template<int AnySizeMin>
-        inline DynamicField(DynamicField<T, AnySizeMin>&& content);
+        inline DynamicField(DynamicField<T, AnySizeMin>&& content) noexcept;
 
         //- Move construct from DynamicList
         template<int AnySizeMin>
-        inline DynamicField(DynamicList<T, AnySizeMin>&& list);
+        inline DynamicField(DynamicList<T, AnySizeMin>&& content) noexcept;
 
         //- Construct by 1 to 1 mapping from the given field
         inline DynamicField
@@ -178,7 +178,7 @@ public:
 
     // Member Functions
 
-    // Sizing
+    // Capacity
 
         //- Normal lower capacity limit - the SizeMin template parameter
         static constexpr label min_size() noexcept { return SizeMin; }
@@ -189,6 +189,9 @@ public:
         //- Number of contiguous bytes of the underlying storage.
         //  \note Only meaningful for contiguous data
         inline std::streamsize capacity_bytes() const noexcept;
+
+
+    // Sizing
 
         //- Alter the size of the underlying storage.
         //  The addressed size will be truncated if needed to fit, but will
@@ -246,19 +249,22 @@ public:
         //- Clear the list and delete storage.
         inline void clearStorage();
 
-        //- Expand the addressable size to fit the allocated capacity.
-        //  Returns the previous addressable size.
-        inline label expandStorage() noexcept;
-
         //- Shrink the allocated space to the number of elements used.
-        inline void shrinkStorage();
+        inline void shrink_to_fit();
 
-        //- Shrink the allocated space to the number of elements used.
-        //  Returns a reference to the DynamicField.
+        //- Shrink the internal bookkeeping of the allocated space to the
+        //- number of addressed elements without affecting allocation.
+        //  \note when empty() it will delete any allocated memory.
+        inline void shrink_unsafe();
+
+        //- Calls shrink_to_fit() and returns a reference to the DynamicField.
         inline DynamicField<T, SizeMin>& shrink();
 
 
     // Edit
+
+        //- Swap with plain List content. Implies shrink_to_fit().
+        inline void swap(List<T>& list);
 
         //- Swap content, independent of sizing parameter
         template<int AnySizeMin>

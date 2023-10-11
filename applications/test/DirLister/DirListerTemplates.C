@@ -76,10 +76,10 @@ Foam::List<StringType> Foam::DirLister::csorted
     const bool prune
 ) const
 {
-    List<StringType> list(list<StringType>(pred, prune));
-    Foam::sort(list, stringOps::natural_sort());
+    List<StringType> result(list<StringType>(pred, prune));
+    Foam::sort(result, stringOps::natural_sort());
 
-    return list;
+    return result;
 }
 
 

@@ -37,12 +37,28 @@ Description
 
 using namespace Foam;
 
-Ostream& writeList(Ostream& os, const UList<char>& list)
+Ostream& printString(Ostream& os, const char* first, const char* last)
+{
+    os << '"';
+    for (; first != last; (void)++first)
+    {
+        os << *first;
+    }
+    os << '"';
+
+    return os;
+}
+
+
+Ostream& printView(Ostream& os, const char* first, const char* last)
 {
     char buf[4];
-    os << list.size() << '(';
-    for (const char c : list)
+    os << label(last-first) << '(';
+
+    for (; first != last; (void)++first)
     {
+        const char c = *first;
+
         if (isprint(c))
         {
             os << c;
@@ -67,16 +83,35 @@ Ostream& writeList(Ostream& os, const UList<char>& list)
 }
 
 
+#if __cplusplus >= 201703L
+Ostream& printView(Ostream& os, std::string_view s)
+{
+    return printView(os, s.begin(), s.end());
+}
+#endif
+
+
+Ostream& printView(Ostream& os, stdFoam::span<char> s)
+{
+    return printView(os, s.begin(), s.end());
+}
+
+
+Ostream& printView(Ostream& os, const UList<char>& list)
+{
+    return printView(os, list.begin(), list.end());
+}
+
+
+Ostream& writeList(Ostream& os, const UList<char>& list)
+{
+    return printView(os, list.begin(), list.end());
+}
+
+
 Ostream& toString(Ostream& os, const UList<char>& list)
 {
-    os << '"';
-    for (const char c : list)
-    {
-        os << c;
-    }
-    os << '"';
-
-    return os;
+    return printString(os, list.begin(), list.end());
 }
 
 
@@ -85,6 +120,7 @@ void printInfo(const BufType& buf)
 {
     Info<< nl << "=========================" << endl;
     buf.print(Info);
+    Info<< "addr: " << Foam::name(buf.list().cdata()) << nl;
     toString(Info, buf.list());
     Info<< nl << "=========================" << endl;
 }
@@ -136,14 +172,16 @@ int main(int argc, char *argv[])
 
     Info<< "transfer contents to a List" << endl;
 
-    ICharStream ibuf;
-
     // Reclaim data storage from OCharStream -> ICharStream
-    {
-        List<char> data;
-        obuf.swap(data);
-        ibuf.swap(data);
-    }
+    ICharStream ibuf(std::move(obuf));
+
+    // OLD
+    // ICharStream ibuf;
+    // {
+    //     List<char> data;
+    //     obuf.swap(data);
+    //     ibuf.swap(data);
+    // }
 
     Info<< nl;
     Info<< nl << "input string:";
@@ -194,12 +232,12 @@ int main(int argc, char *argv[])
     printInfo(newvalues);
 
     {
-        iliststream is(std::move(newvalues));
+        icharstream is(std::move(newvalues));
 
         char c = 0;
 
         Info<< nl
-            << "getting values from iliststream of "
+            << "getting values from icharstream of "
             << is.list() << endl;
 
         // Info<< " (" << is.tellg() << " " << is.remaining() << ")";

@@ -31,7 +31,6 @@ Description
 #include "IOobject.H"
 #include "IOstreams.H"
 #include "IFstream.H"
-#include "StringStream.H"
 #include "cpuTime.H"
 #include "labelList.H"
 #include "scalarList.H"

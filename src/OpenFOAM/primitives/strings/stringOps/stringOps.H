@@ -64,11 +64,11 @@ template<class T1, class T2> class Tuple2;
 namespace stringOps
 {
     //- Count the number of occurrences of the specified character
-    std::string::size_type count(const std::string& s, const char c);
-
-    //- Count the number of occurrences of the specified character
     //  Correctly handles nullptr.
     std::string::size_type count(const char* s, const char c);
+
+    //- Count the number of occurrences of the specified character
+    std::string::size_type count(const std::string& s, const char c);
 
     //- Return true if text matches one of the regular expressions.
     inline bool match(const UList<wordRe>& patterns, const std::string& text)

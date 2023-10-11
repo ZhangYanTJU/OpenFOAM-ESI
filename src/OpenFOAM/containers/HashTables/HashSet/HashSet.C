@@ -43,15 +43,8 @@ inline Foam::label Foam::HashSet<Key, Hash>::assignMany
     InputIter last
 )
 {
-    if (!this->capacity())
-    {
-        // Zero-sized from a previous transfer()?
-        this->resize(2*nItems);
-    }
-    else
-    {
-        this->clear();
-    }
+    this->clear();
+    this->reserve(nItems);
 
     return insert(first, last);
 }
@@ -104,7 +97,7 @@ Foam::HashSet<Key, Hash>::HashSet
     const HashTable<AnyType, Key, AnyHash>& tbl
 )
 :
-    parent_type(tbl.capacity())
+    parent_type(2*tbl.size())
 {
     for (auto iter = tbl.cbegin(); iter != tbl.cend(); ++iter)
     {

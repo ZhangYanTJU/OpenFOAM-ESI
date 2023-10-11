@@ -208,10 +208,10 @@ void Foam::polyMesh::clearPrimitives()
 {
     resetMotion();
 
-    points_.setSize(0);
-    faces_.setSize(0);
-    owner_.setSize(0);
-    neighbour_.setSize(0);
+    points_.clear();
+    faces_.clear();
+    owner_.clear();
+    neighbour_.clear();
 
     clearedPrimitives_ = true;
 }

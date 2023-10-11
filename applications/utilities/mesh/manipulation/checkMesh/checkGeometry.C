@@ -240,13 +240,13 @@ bool Foam::checkWedges
 
         if (setPtr)
         {
-            setPtr->resize(2*nEdgesInError);
+            setPtr->reserve(2*nEdgesInError);
             forAllConstIters(edgesInError, iter)
             {
-                if (iter() >= 0)
+                if (iter.val() >= 0)
                 {
-                    setPtr->insert(iter.key()[0]);
-                    setPtr->insert(iter.key()[1]);
+                    setPtr->insert(iter.key().first());
+                    setPtr->insert(iter.key().second());
                 }
             }
         }

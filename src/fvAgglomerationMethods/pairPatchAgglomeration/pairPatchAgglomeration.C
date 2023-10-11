@@ -175,7 +175,7 @@ void Foam::pairPatchAgglomeration::setEdgeWeights
 
     // Clean old weights
     facePairWeight_.clear();
-    facePairWeight_.resize(coarsePatch.nEdges());
+    facePairWeight_.reserve(coarsePatch.nEdges());
 
     for (label i = 0; i < coarsePatch.nInternalEdges(); i++)
     {

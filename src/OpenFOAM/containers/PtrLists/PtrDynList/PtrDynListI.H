@@ -67,9 +67,29 @@ inline Foam::PtrDynList<T, SizeMin>::PtrDynList
 )
 :
     PtrList<T>(std::move(list)),
-    capacity_(list.capacity_)
+    capacity_(list.capacity())
 {
-    list.clearStorage();
+    // FUTURE:
+    // list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
+
+    list.clearStorage();  // capacity=0 etc.
+}
+
+
+template<class T, int SizeMin>
+template<int AnySizeMin>
+inline Foam::PtrDynList<T, SizeMin>::PtrDynList
+(
+    PtrDynList<T, AnySizeMin>&& list
+)
+:
+    PtrList<T>(std::move(list)),
+    capacity_(list.capacity())
+{
+    // FUTURE:
+    // list.setCapacity_unsafe(0);  // Same as shrink_unsafe() but noexcept
+
+    list.clearStorage();  // capacity=0 etc.
 }
 
 
@@ -77,7 +97,7 @@ template<class T, int SizeMin>
 inline Foam::PtrDynList<T, SizeMin>::PtrDynList
 (
     PtrList<T>&& list
-)
+) noexcept
 :
     PtrList<T>(std::move(list)),
     capacity_(PtrList<T>::size())
@@ -177,29 +197,28 @@ inline void Foam::PtrDynList<T, SizeMin>::clearStorage()
 
 
 template<class T, int SizeMin>
-inline Foam::label Foam::PtrDynList<T, SizeMin>::expandStorage() noexcept
-{
-    const label currLen = PtrList<T>::size();
-
-    // Allow addressing into the entire list
-    PtrList<T>::setAddressableSize(capacity_);
-
-    return currLen;
-}
-
-
-template<class T, int SizeMin>
-inline void Foam::PtrDynList<T, SizeMin>::shrink()
+inline void Foam::PtrDynList<T, SizeMin>::shrink_to_fit()
 {
     const label currLen = PtrList<T>::size();
     if (currLen < capacity_)
     {
         // Adjust addressable size to trigger proper resizing
         PtrList<T>::setAddressableSize(currLen+1);
-
         PtrList<T>::resize(currLen);
         capacity_ = PtrList<T>::size();
     }
+}
+
+
+template<class T, int SizeMin>
+inline void Foam::PtrDynList<T, SizeMin>::shrink_unsafe()
+{
+    if (PtrList<T>::empty())
+    {
+        // Delete empty list
+        PtrList<T>::clear();
+    }
+    capacity_ = PtrList<T>::size();
 }
 
 
@@ -213,11 +232,34 @@ inline Foam::label Foam::PtrDynList<T, SizeMin>::squeezeNull()
 
 
 template<class T, int SizeMin>
+inline void Foam::PtrDynList<T, SizeMin>::swap(PtrList<T>& list)
+{
+    if
+    (
+        static_cast<const PtrList<T>*>(this)
+     == static_cast<const PtrList<T>*>(&list)
+    )
+    {
+        return;  // Self-swap is a no-op
+    }
+
+    // Remove unused storage
+    this->shrink_to_fit();
+
+    // Swap storage and addressable size
+    UPtrList<T>::swap(list);
+
+    // Update capacity
+    capacity_ = PtrList<T>::size();
+}
+
+
+template<class T, int SizeMin>
 template<int AnySizeMin>
 inline void Foam::PtrDynList<T, SizeMin>::swap
 (
     PtrDynList<T, AnySizeMin>& other
-)
+) noexcept
 {
     if
     (
@@ -248,9 +290,8 @@ inline void Foam::PtrDynList<T, SizeMin>::transfer(PtrList<T>& list)
         return;  // Self assignment is a no-op
     }
 
-    // Take over storage, clear addressing for list
-    capacity_ = list.size();
     PtrList<T>::transfer(list);
+    capacity_ = PtrList<T>::size();
 }
 
 
@@ -270,10 +311,11 @@ inline void Foam::PtrDynList<T, SizeMin>::transfer
         return;  // Self assignment is a no-op
     }
 
-    // Take over storage as-is (without shrink, without using SizeMin)
+    // Take over storage as-is (without shrink)
     capacity_ = list.capacity();
-    PtrList<T>::transfer(list);
-    list.clearStorage();  // Ensure capacity=0
+
+    PtrList<T>::transfer(static_cast<PtrList<T>&>(list));
+    list.clearStorage();  // capacity=0 etc.
 }
 
 
@@ -496,7 +538,7 @@ template<class T, int SizeMin>
 inline void Foam::PtrDynList<T, SizeMin>::reorder(const labelUList& oldToNew)
 {
     // Shrinking first is a bit annoying, but saves needing a special version.
-    shrink();
+    this->shrink_to_fit();
     PtrList<T>::reorder(oldToNew);
 }
 

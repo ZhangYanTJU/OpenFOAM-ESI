@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -147,13 +147,16 @@ float Foam::ensightFile::undefValue(float value) noexcept
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::Ostream& Foam::ensightFile::writeString(const char* str)
+Foam::Ostream& Foam::ensightFile::writeString(const char* str, size_t len)
 {
-    // Output 80 chars, but allocate for trailing nul character
-    // to avoid -Wstringop-truncation warnings/errors.
+    // Output 79 chars (ASCII) or 80 chars (BINARY)
+    char buf[80];
+    if (len > 80) len = 80;
 
-    char buf[80+1];
-    strncpy(buf, str, 80); // max 80 chars or padded with nul if smaller
+    // TBD: truncate at newline? (shouldn't really occur anyhow)
+
+    std::copy_n(str, len, buf);
+    std::fill_n(buf + len, (len - 80), '\0');  // Pad trailing with nul
 
     if (format() == IOstreamOption::BINARY)
     {
@@ -161,7 +164,7 @@ Foam::Ostream& Foam::ensightFile::writeString(const char* str)
     }
     else
     {
-        buf[79] = 0;  // max 79 in ASCII, ensure it is indeed nul-terminated
+        buf[79] = 0;  // Max 79 in ASCII
         stdStream() << buf;
         syncState();
     }
@@ -170,27 +173,33 @@ Foam::Ostream& Foam::ensightFile::writeString(const char* str)
 }
 
 
+Foam::Ostream& Foam::ensightFile::writeString(const char* str)
+{
+    return writeString(str, strlen(str));
+}
+
+
 Foam::Ostream& Foam::ensightFile::writeString(const std::string& str)
 {
-    return writeString(str.c_str());
+    return writeString(str.data(), str.size());
 }
 
 
 Foam::Ostream& Foam::ensightFile::write(const char* str)
 {
-    return writeString(str);
+    return writeString(str, strlen(str));
 }
 
 
 Foam::Ostream& Foam::ensightFile::write(const word& str)
 {
-    return writeString(str);
+    return writeString(str.data(), str.size());
 }
 
 
-Foam::Ostream& Foam::ensightFile::write(const string& str)
+Foam::Ostream& Foam::ensightFile::write(const std::string& str)
 {
-    return writeString(str);
+    return writeString(str.data(), str.size());
 }
 
 

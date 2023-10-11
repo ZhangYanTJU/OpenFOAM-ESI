@@ -514,7 +514,7 @@ void Foam::faceCoupleInfo::setCutEdgeToPoints(const labelList& cutToMasterEdges)
     const edgeList& cutEdges = cutFaces().edges();
 
     // Size extra big so searching is faster
-    cutEdgeToPoints_.resize
+    cutEdgeToPoints_.reserve
     (
         masterPatch().nEdges()
       + slavePatch().nEdges()
@@ -1254,7 +1254,7 @@ Foam::label Foam::faceCoupleInfo::matchEdgeFaces
 
     // For every unassigned cutFacei the possible list of master faces.
     candidates.clear();
-    candidates.resize(cutFaces().size());
+    candidates.reserve(cutFaces().size());
 
     label nChanged = 0;
 

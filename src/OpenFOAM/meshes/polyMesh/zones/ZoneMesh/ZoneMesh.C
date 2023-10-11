@@ -384,7 +384,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
 
     if (checkGroups)
     {
-        ids.resize(2*this->size());
+        ids.reserve(this->size());
     }
 
     if (matcher.isPattern())
@@ -459,7 +459,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
     {
-        ids.resize(2*this->size());
+        ids.reserve(this->size());
 
         const auto& groupLookup = groupZoneIDs();
         forAllConstIters(groupLookup, iter)
@@ -505,7 +505,7 @@ Foam::labelList Foam::ZoneMesh<ZoneType, MeshType>::indices
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
     {
-        ids.resize(2*this->size());
+        ids.reserve(this->size());
 
         const auto& groupLookup = groupZoneIDs();
         forAllConstIters(groupLookup, iter)

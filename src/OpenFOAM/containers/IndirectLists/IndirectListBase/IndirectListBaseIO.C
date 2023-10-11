@@ -69,7 +69,7 @@ Foam::Ostream& Foam::IndirectListBase<T, Addr>::writeList
             os.endRawWrite();
         }
     }
-    else if (len > 1 && is_contiguous<T>::value && list.uniform())
+    else if (is_contiguous<T>::value && len > 1 && list.uniform())
     {
         // Two or more entries, and all entries have identical values.
         os << len << token::BEGIN_BLOCK << list[0] << token::END_BLOCK;

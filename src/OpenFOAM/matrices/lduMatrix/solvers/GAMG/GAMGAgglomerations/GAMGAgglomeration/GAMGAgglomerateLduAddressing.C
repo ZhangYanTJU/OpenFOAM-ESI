@@ -245,10 +245,10 @@ void Foam::GAMGAgglomeration::agglomerateLduAddressing
 
 
     // Clear the temporary storage for the coarse cell data
-    cCellnFaces.setSize(0);
-    cCellFaces.setSize(0);
-    initCoarseNeighb.setSize(0);
-    coarseFaceMap.setSize(0);
+    cCellnFaces.clear();
+    cCellFaces.clear();
+    initCoarseNeighb.clear();
+    coarseFaceMap.clear();
 
 
     // Create coarse-level interfaces

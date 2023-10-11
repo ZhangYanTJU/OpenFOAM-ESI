@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,9 +55,31 @@ Foam::Ostream& Foam::OTstream::write(const char c)
 }
 
 
+Foam::Ostream& Foam::OTstream::writeQuoted
+(
+    const char* str,
+    std::streamsize len,
+    const bool quoted
+)
+{
+    if (quoted)
+    {
+        // tokenType::STRING
+        tokens().emplace_back() = string(str, len);
+    }
+    else if (len > 0)
+    {
+        // tokenType::WORD
+        tokens().emplace_back() = word(str, len, false);  // No stripping
+    }
+
+    return *this;
+}
+
+
 Foam::Ostream& Foam::OTstream::write(const char* str)
 {
-    const word nonWhiteChars(string::validate<word>(str));
+    word nonWhiteChars(string::validate<word>(str));
 
     if (nonWhiteChars.size() == 1)
     {
@@ -67,7 +89,7 @@ Foam::Ostream& Foam::OTstream::write(const char* str)
     else if (nonWhiteChars.size())
     {
         // As a word
-        write(nonWhiteChars);
+        tokens().emplace_back() = std::move(nonWhiteChars);  // Move assign
     }
 
     return *this;
@@ -76,34 +98,17 @@ Foam::Ostream& Foam::OTstream::write(const char* str)
 
 Foam::Ostream& Foam::OTstream::write(const word& str)
 {
-    tokens().push_back(token(str)); // tokenType::WORD
+    // tokenType::WORD
+    tokens().emplace_back() = str;  // Copy assign
 
     return *this;
 }
 
 
-Foam::Ostream& Foam::OTstream::write(const string& str)
+Foam::Ostream& Foam::OTstream::write(const std::string& str)
 {
-    tokens().push_back(token(str)); // tokenType::STRING
-
-    return *this;
-}
-
-
-Foam::Ostream& Foam::OTstream::writeQuoted
-(
-    const std::string& str,
-    const bool quoted
-)
-{
-    if (quoted)
-    {
-        tokens().push_back(token(string(str))); // tokenType::STRING
-    }
-    else if (!str.empty())
-    {
-        tokens().push_back(token(word(str, false))); // tokenType::WORD
-    }
+    // tokenType::STRING
+    tokens().emplace_back() = Foam::string(str);  // Move assign
 
     return *this;
 }

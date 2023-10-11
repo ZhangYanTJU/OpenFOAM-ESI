@@ -324,10 +324,10 @@ void Foam::coupledPolyPatch::calcTransformTensors
     if (Cf.size() == 0)
     {
         // Dummy geometry. Assume non-separated, parallel.
-        separation_.setSize(0);
+        separation_.clear();
         forwardT_.clear();
         reverseT_.clear();
-        collocated_.setSize(0);
+        collocated_.clear();
     }
     else
     {
@@ -352,7 +352,7 @@ void Foam::coupledPolyPatch::calcTransformTensors
 
             // Assume per-face differing transformation, correct later
 
-            separation_.setSize(0);
+            separation_.clear();
 
             forwardT_.setSize(Cf.size());
             reverseT_.setSize(Cf.size());
@@ -390,8 +390,8 @@ void Foam::coupledPolyPatch::calcTransformTensors
         {
             // Translational or (unknown and normals aligned)
 
-            forwardT_.setSize(0);
-            reverseT_.setSize(0);
+            forwardT_.clear();
+            reverseT_.clear();
 
             separation_ = Cr - Cf;
 
@@ -443,7 +443,7 @@ void Foam::coupledPolyPatch::calcTransformTensors
                             << ". Assuming zero separation." << endl;
                     }
 
-                    separation_.setSize(0);
+                    separation_.clear();
                     collocated_ = boolList(1, true);
                 }
                 else

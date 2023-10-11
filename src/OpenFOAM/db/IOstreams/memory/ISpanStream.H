@@ -64,9 +64,9 @@ See Also
 #ifndef Foam_ISpanStream_H
 #define Foam_ISpanStream_H
 
+#include "memoryStreamBuffer.H"
 #include "UList.H"
 #include "ISstream.H"
-#include "memoryStreamBuffer.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -117,12 +117,28 @@ public:
             stream_type(static_cast<buffer_type*>(this))
         {}
 
-        // //- Construct (shallow copy) from span character content
-        // ispanstream(stdFoam::span<char> s)
-        // :
-        //     buffer_type(const_cast<char*>(s.data()), s.size()),
-        //     stream_type(static_cast<buffer_type*>(this))
-        // {}
+        #if __cplusplus >= 201703L
+        //- Construct (shallow copy) from std::string_view content
+        explicit ispanstream(std::string_view s)
+        {
+            buffer_type(const_cast<char*>(s.data()), s.size()),
+            stream_type(static_cast<buffer_type*>(this))
+        }
+        #endif
+
+        //- Construct (shallow copy) from span character content
+        explicit ispanstream(stdFoam::span<char> s)
+        :
+            buffer_type(const_cast<char*>(s.data()), s.size()),
+            stream_type(static_cast<buffer_type*>(this))
+        {}
+
+        //- Construct (shallow copy) from span character content
+        explicit ispanstream(stdFoam::span<const char> s)
+        :
+            buffer_type(const_cast<char*>(s.data()), s.size()),
+            stream_type(static_cast<buffer_type*>(this))
+        {}
 
 
     // Member Functions
@@ -149,7 +165,28 @@ public:
         //- Span of the input characters (is modifiable!)
         UList<char> list() const
         {
-            return buffer_type::span_list();
+            return UList<char>
+            (
+                buffer_type::data_bytes(),
+                label(buffer_type::size_bytes())
+            );
+        }
+
+        //- A string_view (c++17) or span view (older c++) of buffer contents
+        auto view() const -> decltype(buffer_type::view())
+        {
+            return buffer_type::view();
+        }
+
+        //- For istringstream compatibility, return the buffer as string copy.
+        //  Use sparingly - it creates a full copy!!
+        std::string str() const
+        {
+            return std::string
+            (
+                buffer_type::data_bytes(),
+                buffer_type::size_bytes()
+            );
         }
 
         //- Rewind the stream, clearing any old errors
@@ -259,17 +296,6 @@ public:
             reset(buffer);
         }
 
-        //- Construct using data area from a List and number of bytes
-        ISpanStream
-        (
-            const ::Foam::UList<char>& buffer,
-            size_t nbytes,
-            IOstreamOption streamOpt = IOstreamOption()
-        )
-        :
-            ISpanStream(buffer.cdata(), nbytes, streamOpt)
-        {}
-
         //- Construct using data area from a List and its inherent storage size
         //  Uses addressed size, thus no special treatment for a DynamicList
         explicit ISpanStream
@@ -279,6 +305,38 @@ public:
         )
         :
             ISpanStream(buffer.cdata(), buffer.size(), streamOpt)
+        {}
+
+        #if __cplusplus >= 201703L
+        //- Construct (shallow copy) from std::string_view content
+        explicit ISpanStream
+        (
+            std::string_view s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ISpanStream(s.data(), s.size(), streamOpt)
+        {}
+        #endif
+
+        //- Construct (shallow copy) from span character content
+        explicit ISpanStream
+        (
+            stdFoam::span<const char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ISpanStream(s.data(), s.size(), streamOpt)
+        {}
+
+        //- Construct (shallow copy) from span character content
+        explicit ISpanStream
+        (
+            stdFoam::span<char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ISpanStream(s.data(), s.size(), streamOpt)
         {}
 
 
@@ -300,9 +358,21 @@ public:
         //- Same as (capacity() - input_pos())
         std::streamsize remaining() const { return stream_.remaining(); }
 
-
         //- Span of the current input characters (is modifiable!)
         UList<char> list() const { return stream_.list(); }
+
+        //- A string_view (c++17) or span view (older c++) of buffer contents
+        auto view() const -> decltype(stream_.view())
+        {
+            return stream_.view();
+        }
+
+        //- For IStringStream compatibility, return the buffer as string copy.
+        //  Use sparingly - it creates a full copy!!
+        auto str() const -> decltype(stream_.str())
+        {
+            return stream_.str();
+        }
 
         //- Reset input area, position to buffer start and clear errors
         void reset(const char* buffer, size_t nbytes)
@@ -318,15 +388,38 @@ public:
             syncState();
         }
 
+        #if __cplusplus >= 201703L
+        //- Reset input area to use data from a std::string_view
+        void reset(std::string_view s)
+        {
+            stream_.reset(s.data(), s.size());
+            syncState();
+        }
+        #endif
+
+        //- Reset input area to use data from span character content
+        void reset(stdFoam::span<char> s)
+        {
+            stream_.reset(s.data(), s.size());
+            syncState();
+        }
+
+        //- Reset input area to use data from span character content
+        void reset(stdFoam::span<const char> s)
+        {
+            stream_.reset(s.data(), s.size());
+            syncState();
+        }
+
         //- Rewind the stream, clearing any old errors
-        virtual void rewind()
+        virtual void rewind() override
         {
             stream_.rewind();
             syncState();
         }
 
         //- Print stream description to Ostream
-        virtual void print(Ostream& os) const;
+        virtual void print(Ostream& os) const override;
 
 
     // Member Operators

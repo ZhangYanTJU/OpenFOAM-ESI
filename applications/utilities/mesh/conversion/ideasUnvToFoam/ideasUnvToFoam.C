@@ -1059,7 +1059,7 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                patchFaces.setSize(0); // Assume that this is no patch at all
+                patchFaces.clear();  // Assume that this is no patch at all
 
                 if (cellCorrespondence[faceIndices[0]] >= 0)
                 {

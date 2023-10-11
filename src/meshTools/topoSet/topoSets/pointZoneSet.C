@@ -51,7 +51,7 @@ void Foam::pointZoneSet::updateSet()
     inplaceReorder(order, addressing_);
 
     pointSet::clearStorage();
-    pointSet::resize(2*addressing_.size());
+    pointSet::reserve(addressing_.size());
     pointSet::set(addressing_);
 }
 

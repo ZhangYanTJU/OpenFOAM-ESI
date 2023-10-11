@@ -126,7 +126,7 @@ public:
 
         //- The name of the input serial stream.
         //- (eg, the name of the Fstream file name)
-        virtual const fileName& name() const { return name_; }
+        virtual const fileName& name() const override { return name_; }
 
         //- The name of the input serial stream, for modification.
         virtual fileName& name() { return name_; }
@@ -144,13 +144,13 @@ public:
     // Stream State
 
         //- Return flags of output stream
-        virtual ios_base::fmtflags flags() const
+        virtual ios_base::fmtflags flags() const override
         {
             return is_.flags();
         }
 
         //- Set stream flags
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags f)
+        virtual ios_base::fmtflags flags(const ios_base::fmtflags f) override
         {
             return is_.flags(f);
         }
@@ -181,74 +181,81 @@ public:
         );
 
 
-        // Read Functions
+    // Serial-stream functions
 
-            //- Raw, low-level get character function.
-            inline ISstream& get(char& c);
+        //- Raw, low-level get character function.
+        inline ISstream& get(char& c);
 
-            //- Raw, low-level peek function.
-            //  Does not remove the character from the stream.
-            //  Returns the next character in the stream or EOF if the
-            //  end of file is read.
-            inline int peek();
+        //- Raw, low-level peek function.
+        //  Does not remove the character from the stream.
+        //  Returns the next character in the stream or EOF if the
+        //  end of file is read.
+        inline int peek();
 
-            //- Raw, low-level getline (until delimiter) into a string.
-            inline ISstream& getLine(std::string& str, char delim = '\n');
+        //- Raw, low-level getline (until delimiter) into a string.
+        inline ISstream& getLine(std::string& str, char delim = '\n');
 
-            //- Low-level discard until delimiter
-            //  \return the number of characters extracted
-            inline std::streamsize getLine(std::nullptr_t, char delim = '\n');
+        //- Low-level discard until delimiter
+        //  \return the number of characters extracted
+        inline std::streamsize getLine(std::nullptr_t, char delim = '\n');
 
-            //- Raw, low-level putback character function.
-            inline ISstream& putback(const char c);
-
-            //- Return next token from stream
-            virtual Istream& read(token& t);
-
-            //- Read a character
-            virtual Istream& read(char& c);
-
-            //- Read a word
-            virtual Istream& read(word& str);
-
-            //- Read a string (including enclosing double-quotes).
-            //  Backslashes are retained, except when escaping double-quotes
-            //  and an embedded newline character.
-            virtual Istream& read(string& str);
-
-            //- Read a label
-            virtual Istream& read(label& val);
-
-            //- Read a float
-            virtual Istream& read(float& val);
-
-            //- Read a double
-            virtual Istream& read(double& val);
-
-            //- Read binary block (with any possible block delimiters).
-            //- Reading into a null pointer behaves like a forward seek of
-            //- count characters.
-            virtual Istream& read(char* data, std::streamsize count);
-
-            //- Low-level raw binary read (without possible block delimiters).
-            //- Reading into a null pointer behaves like a forward seek of
-            //- count characters.
-            virtual Istream& readRaw(char* data, std::streamsize count);
-
-            //- Start of low-level raw binary read
-            virtual bool beginRawRead();
-
-            //- End of low-level raw binary read
-            virtual bool endRawRead();
-
-            //- Rewind the stream so that it may be read again
-            virtual void rewind();
+        //- Raw, low-level putback character function.
+        inline ISstream& putback(const char c);
 
 
-        // Print
+    // Read Functions
 
-            //- Print stream description to Ostream
-            virtual void print(Ostream& os) const;
+        //- Return next token from stream
+        virtual Istream& read(token& t) override;
+
+        //- Read a character
+        virtual Istream& read(char& c) override;
+
+        //- Read a word
+        virtual Istream& read(word& str) override;
+
+        //- Read a string (including enclosing double-quotes).
+        //  Backslashes are retained, except when escaping double-quotes
+        //  and an embedded newline character.
+        virtual Istream& read(string& str) override;
+
+        //- Read a label
+        virtual Istream& read(label& val) override;
+
+        //- Read a float
+        virtual Istream& read(float& val) override;
+
+        //- Read a double
+        virtual Istream& read(double& val) override;
+
+        //- Read binary block (with any possible block delimiters).
+        //- Reading into a null pointer behaves like a forward seek of
+        //- count characters.
+        virtual Istream& read(char* data, std::streamsize count) override;
+
+        //- Low-level raw binary read (without possible block delimiters).
+        //- Reading into a null pointer behaves like a forward seek of
+        //- count characters.
+        virtual Istream& readRaw
+        (
+            char* data,
+            std::streamsize count
+        ) override;
+
+        //- Start of low-level raw binary read
+        virtual bool beginRawRead() override;
+
+        //- End of low-level raw binary read
+        virtual bool endRawRead() override;
+
+        //- Rewind the stream so that it may be read again
+        virtual void rewind() override;
+
+
+    // Print
+
+        //- Print stream description to Ostream
+        virtual void print(Ostream& os) const override;
 };
 
 

@@ -117,8 +117,7 @@ void cell_labels
         nVerts += meshFaces[facei].size();
     }
 
-    // pointLabels.clear();
-    pointLabels.expandStorage();
+    pointLabels.resize(pointLabels.capacity());  // Use full storage
 
     // The first face has no duplicates, can copy in values
     const labelList& firstFace = meshFaces[cFaces[0]];

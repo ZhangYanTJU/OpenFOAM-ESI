@@ -206,7 +206,7 @@ Foam::isoSurfaceTopo::tetCutAddressing::tetCutAddressing
     if (useSnap)
     {
         // Some, but not all, cells may have point snapping
-        snapVertsLookup_.resize(4*nCutCells);
+        snapVertsLookup_.reserve(2*nCutCells);
     }
     if (debugCutTetsOn_)
     {
@@ -1390,7 +1390,7 @@ Foam::isoSurfaceTopo::isoSurfaceTopo
             const labelList& mp = s.meshPoints();
             const edgeList& surfEdges = s.edges();
             const labelListList& edgeFaces = s.edgeFaces();
-            openEdgeIds.resize(2*s.size());
+            openEdgeIds.reserve(s.size());
 
             forAll(edgeFaces, edgei)
             {

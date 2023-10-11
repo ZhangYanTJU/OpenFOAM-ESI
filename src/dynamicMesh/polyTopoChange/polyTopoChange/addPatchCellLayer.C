@@ -1884,7 +1884,7 @@ void Foam::addPatchCellLayer::setRefinement
     // For now just keep it connected to the original.
     {
         // Work space
-        Map<label> minPointValue(128);
+        Map<label> minPointValue;
         faceList oldBoundaryFaces(mesh_.nBoundaryFaces());
 
         while (true)

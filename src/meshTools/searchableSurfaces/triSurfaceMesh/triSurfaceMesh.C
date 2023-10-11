@@ -117,7 +117,7 @@ bool Foam::triSurfaceMesh::isSurfaceClosed() const
     // Every edge should be used by two faces exactly.
     // To prevent doing work twice per edge only look at edges to higher
     // point
-    EdgeMap<label> facesPerEdge(128);
+    EdgeMap<label> facesPerEdge;
     forAll(pointFaces, pointi)
     {
         const labelList& pFaces = pointFaces[pointi];

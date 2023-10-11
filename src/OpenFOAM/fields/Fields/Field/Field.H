@@ -162,10 +162,10 @@ public:
         inline explicit Field(const IndirectListBase<Type, Addr>& list);
 
         //- Move construct from Field
-        inline Field(Field<Type>&& fld);
+        inline Field(Field<Type>&& fld) noexcept;
 
         //- Move construct from List
-        inline Field(List<Type>&& list);
+        inline Field(List<Type>&& list) noexcept;
 
         //- Move construct from DynamicList
         template<int SizeMin>

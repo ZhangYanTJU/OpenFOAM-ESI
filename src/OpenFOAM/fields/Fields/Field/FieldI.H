@@ -108,21 +108,17 @@ inline Foam::Field<Type>::Field(const IndirectListBase<Type, Addr>& list)
 
 
 template<class Type>
-inline Foam::Field<Type>::Field(Field<Type>&& fld)
+inline Foam::Field<Type>::Field(Field<Type>&& fld) noexcept
 :
-    List<Type>()
-{
-    List<Type>::transfer(fld);
-}
+    List<Type>(std::move(static_cast<List<Type>&>(fld)))
+{}
 
 
 template<class Type>
-inline Foam::Field<Type>::Field(List<Type>&& list)
+inline Foam::Field<Type>::Field(List<Type>&& list) noexcept
 :
-    List<Type>()
-{
-    List<Type>::transfer(list);
-}
+    List<Type>(std::move(list))
+{}
 
 
 template<class Type>

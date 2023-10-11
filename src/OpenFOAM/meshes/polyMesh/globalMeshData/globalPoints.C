@@ -768,7 +768,7 @@ void Foam::globalPoints::remove
 
     // Save old ones.
     Map<label> oldMeshToProcPoint(std::move(meshToProcPoint_));
-    meshToProcPoint_.resize(oldMeshToProcPoint.size());
+    meshToProcPoint_.reserve(oldMeshToProcPoint.size());
     DynamicList<labelPairList> oldProcPoints(std::move(procPoints_));
     procPoints_.setCapacity(oldProcPoints.size());
 
@@ -867,7 +867,7 @@ void Foam::globalPoints::remove
     }
 
     procPoints_.shrink();
-    meshToProcPoint_.resize(2*procPoints_.size());
+    meshToProcPoint_.reserve(procPoints_.size());
 }
 
 

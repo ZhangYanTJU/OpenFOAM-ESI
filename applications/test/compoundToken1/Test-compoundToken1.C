@@ -31,7 +31,6 @@ Description
 #include "IOobject.H"
 #include "IOstreams.H"
 #include "IFstream.H"
-#include "StringStream.H"
 #include "cpuTime.H"
 #include "labelList.H"
 #include "DynamicList.H"
@@ -57,7 +56,7 @@ class IFstreamDelayed
 :
     public IFstream
 {
-    virtual bool readCompoundToken(token& tok, const word& type)
+    virtual bool readCompoundToken(token& tok, const word& type) override
     {
         auto& is = *this;
 

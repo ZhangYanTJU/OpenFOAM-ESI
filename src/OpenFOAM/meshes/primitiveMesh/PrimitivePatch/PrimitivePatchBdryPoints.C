@@ -51,7 +51,7 @@ Foam::PrimitivePatch<FaceList, PointField>::calcBdryPoints() const
             << "Calculating boundary points from existing addressing"
             << nl;
 
-        bp.resize(4*nBoundaryEdges());
+        bp.reserve(2*nBoundaryEdges());
 
         for (const edge& e : boundaryEdges())
         {
@@ -103,7 +103,7 @@ Foam::PrimitivePatch<FaceList, PointField>::calcBdryPoints() const
             }
         }
 
-        bp.resize(4*edgeCount);
+        bp.reserve(2*edgeCount);
 
         forAllConstIters(knownEdges, iter)
         {

@@ -67,10 +67,10 @@ void Foam::cuttingSurfaceBase::walkCellCuts
     DynamicList<label> localFaceLoop(16);
 
     // Local scratch space for edge to pointId
-    EdgeMap<label> localEdges(128);
+    EdgeMap<label> localEdges;
 
     // Local scratch space for edge to faceId
-    EdgeMap<edge>  localFaces(128);
+    EdgeMap<edge>  localFaces;
 
     // Avoid duplicates for cuts exactly through a mesh point.
     // No other way to distinguish them, since there is no single edge

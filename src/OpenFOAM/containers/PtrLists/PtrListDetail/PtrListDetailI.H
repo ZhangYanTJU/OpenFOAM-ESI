@@ -57,7 +57,7 @@ inline Foam::Detail::PtrListDetail<T>::PtrListDetail
     const PtrListDetail<T>& list
 )
 :
-    List<T*>(list)
+    List<T*>(static_cast<const List<T*>&>(list))
 {}
 
 
@@ -65,9 +65,9 @@ template<class T>
 inline Foam::Detail::PtrListDetail<T>::PtrListDetail
 (
     PtrListDetail<T>&& list
-)
+) noexcept
 :
-    List<T*>(std::move(list))
+    List<T*>(std::move(static_cast<List<T*>&>(list)))
 {}
 
 
@@ -78,7 +78,7 @@ inline Foam::Detail::PtrListDetail<T>::PtrListDetail
     bool reuse
 )
 :
-    List<T*>(list, reuse)
+    List<T*>(static_cast<List<T*>&>(list), reuse)
 {}
 
 

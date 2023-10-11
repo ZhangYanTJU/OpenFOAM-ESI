@@ -690,6 +690,14 @@ static void expandString
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
+std::string::size_type Foam::stringOps::count(const char* s, const char c)
+{
+    // or: size_t len = Foam::string::length(s);
+    size_t len = (s ? strlen(s) : 0);
+    return len ? std::count(s, (s + len), c) : 0;
+}
+
+
 std::string::size_type Foam::stringOps::count
 (
     const std::string& s,
@@ -697,13 +705,6 @@ std::string::size_type Foam::stringOps::count
 )
 {
     return std::count(s.cbegin(), s.cend(), c);
-}
-
-
-std::string::size_type Foam::stringOps::count(const char* s, const char c)
-{
-    size_t len = (s ? strlen(s) : 0);
-    return len ? std::count(s, (s + len), c) : 0;
 }
 
 

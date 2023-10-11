@@ -4163,7 +4163,7 @@ void Foam::hexRef8::storeData
 )
 {
     savedPointLevel_.clear();
-    savedPointLevel_.resize(2*pointsToStore.size());
+    savedPointLevel_.reserve(pointsToStore.size());
     forAll(pointsToStore, i)
     {
         label pointi = pointsToStore[i];
@@ -4171,7 +4171,7 @@ void Foam::hexRef8::storeData
     }
 
     savedCellLevel_.clear();
-    savedCellLevel_.resize(2*cellsToStore.size());
+    savedCellLevel_.reserve(cellsToStore.size());
     forAll(cellsToStore, i)
     {
         label celli = cellsToStore[i];

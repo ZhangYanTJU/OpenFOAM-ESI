@@ -191,9 +191,9 @@ public:
 
         //- Add (unquoted) string contents.
         //  Ensures that SHA1 of C-string or C++-string content are identical.
-        virtual Ostream& write(const string& str)
+        virtual Ostream& write(const std::string& str) override
         {
-            return writeQuoted(str, false); // Unquoted!
+            return writeQuoted(str, false);  // Unquoted!
         }
 
 

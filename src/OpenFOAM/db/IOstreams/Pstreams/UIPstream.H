@@ -149,77 +149,71 @@ public:
 
     // Member Functions
 
-        // Inquiry
+    // Stream State Functions
 
-            //- Return flags of output stream
-            virtual ios_base::fmtflags flags() const
-            {
-                return ios_base::fmtflags(0);
-            }
+        //- Return stream flags
+        virtual ios_base::fmtflags flags() const override
+        {
+            return ios_base::fmtflags(0);
+        }
 
-
-        // Read Functions
-
-            //- Return next token from stream
-            Istream& read(token& t);
-
-            //- Read a character
-            Istream& read(char& c);
-
-            //- Read a word
-            Istream& read(word& str);
-
-            // Read a string
-            Istream& read(string& str);
-
-            //- Read a label
-            Istream& read(label& val);
-
-            //- Read a float
-            Istream& read(float& val);
-
-            //- Read a double
-            Istream& read(double& val);
-
-            //- Read binary block with 8-byte alignment.
-            //- Reading into a null pointer behaves like a forward seek of
-            //- count characters.
-            Istream& read(char* data, std::streamsize count);
-
-            //- Low-level raw binary read.
-            //- Reading into a null pointer behaves like a forward seek of
-            //- count characters.
-            Istream& readRaw(char* data, std::streamsize count);
-
-            //- Start of low-level raw binary read
-            bool beginRawRead();
-
-            //- End of low-level raw binary read
-            bool endRawRead()
-            {
-                return true;
-            }
-
-
-    // Positioning
-
-        //- Rewind the receive stream position so that it may be read again
-        virtual void rewind();
-
-
-    // Edit
-
-        //- Set flags of stream
-        virtual ios_base::fmtflags flags(const ios_base::fmtflags)
+        //- Set flags of stream flags
+        virtual ios_base::fmtflags flags(const ios_base::fmtflags) override
         {
             return ios_base::fmtflags(0);
         }
 
 
+    // Read Functions
+
+        //- Return next token from stream
+        virtual Istream& read(token&) override;
+
+        //- Read a character
+        virtual Istream& read(char& c) override;
+
+        //- Read a word
+        virtual Istream& read(word& str) override;
+
+        // Read a string
+        virtual Istream& read(string& str) override;
+
+        //- Read a label
+        virtual Istream& read(label& val) override;
+
+        //- Read a float
+        virtual Istream& read(float& val) override;
+
+        //- Read a double
+        virtual Istream& read(double& val) override;
+
+        //- Read binary block with 8-byte alignment.
+        //- Reading into a null pointer behaves like a forward seek of
+        //- count characters.
+        virtual Istream& read(char* data, std::streamsize count) override;
+
+        //- Low-level raw binary read.
+        //- Reading into a null pointer behaves like a forward seek of
+        //- count characters.
+        virtual Istream& readRaw(char* data, std::streamsize count) override;
+
+        //- Start of low-level raw binary read
+        virtual bool beginRawRead() override;
+
+        //- End of low-level raw binary read
+        virtual bool endRawRead() override { return true; }
+
+
+    // Positioning
+
+        //- Rewind the receive stream position so that it may be read again
+        virtual void rewind() override;
+
+
     // Print
 
         //- Print stream description to Ostream
-        void print(Ostream& os) const;
+        void print(Ostream& os) const override;
 };
 
 

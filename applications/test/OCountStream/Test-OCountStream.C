@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "OCountStream.H"
+#include "SpanStream.H"
 #include "StringStream.H"
 #include "Fstream.H"
 #include "IOstreams.H"
@@ -63,9 +64,11 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
 
     OCountStream cnt;
+    OCharStream cstr;
     OStringStream str;
     ocountstream plain;
 
+    generateOutput(cstr);
     generateOutput(str);
     generateOutput(cnt);
     generateOutput(plain);
@@ -73,6 +76,7 @@ int main(int argc, char *argv[])
     cnt.print(Info);
 
     Info<< "counter state: " << (cnt.stdStream().rdstate()) << nl
+        << "via char-stream: " << label(cstr.view().size()) << " chars" << nl
         << "via string-stream: " << str.str().size() << " chars" << nl
         << "via ocountstream: " << plain.count() << " chars" << endl;
 

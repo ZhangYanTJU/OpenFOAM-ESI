@@ -490,7 +490,7 @@ Foam::labelList Foam::faBoundaryMesh::indices
     {
         if (checkGroups)
         {
-            ids.resize(2*this->size());
+            ids.reserve(this->size());
 
             const auto& groupLookup = groupPatchIDs();
             forAllConstIters(groupLookup, iter)
@@ -559,7 +559,7 @@ Foam::labelList Foam::faBoundaryMesh::indices
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
     {
-        ids.resize(2*this->size());
+        ids.reserve(this->size());
 
         const auto& groupLookup = groupPatchIDs();
         forAllConstIters(groupLookup, iter)
@@ -604,7 +604,7 @@ Foam::labelList Foam::faBoundaryMesh::indices
     // Only check groups if requested and they exist
     if (useGroups && this->hasGroupIDs())
     {
-        ids.resize(2*this->size());
+        ids.reserve(this->size());
 
         const auto& groupLookup = groupPatchIDs();
         forAllConstIters(groupLookup, iter)

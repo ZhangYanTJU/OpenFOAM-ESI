@@ -39,12 +39,28 @@ Description
 
 using namespace Foam;
 
-Ostream& writeList(Ostream& os, const UList<char>& list)
+Ostream& printString(Ostream& os, const char* first, const char* last)
+{
+    os << '"';
+    for (; first != last; (void)++first)
+    {
+        os << *first;
+    }
+    os << '"';
+
+    return os;
+}
+
+
+Ostream& printView(Ostream& os, const char* first, const char* last)
 {
     char buf[4];
-    os << list.size() << '(';
-    for (const char c : list)
+    os << label(last-first) << '(';
+
+    for (; first != last; (void)++first)
     {
+        const char c = *first;
+
         if (isprint(c))
         {
             os << c;
@@ -69,29 +85,41 @@ Ostream& writeList(Ostream& os, const UList<char>& list)
 }
 
 
+#if __cplusplus >= 201703L
+Ostream& printView(Ostream& os, std::string_view s)
+{
+    return printView(os, s.begin(), s.end());
+}
+#endif
+
+
+Ostream& printView(Ostream& os, stdFoam::span<char> s)
+{
+    return printView(os, s.begin(), s.end());
+}
+
+
+Ostream& printView(Ostream& os, const UList<char>& list)
+{
+    return printView(os, list.begin(), list.end());
+}
+
+
+Ostream& writeList(Ostream& os, const UList<char>& list)
+{
+    return printView(os, list.begin(), list.end());
+}
+
+
 Ostream& toString(Ostream& os, const UList<char>& list)
 {
-    os << '"';
-    for (const char c : list)
-    {
-        os << c;
-    }
-    os << '"';
-
-    return os;
+    return printString(os, list.begin(), list.end());
 }
 
 
 Ostream& toString(Ostream& os, const std::vector<char>& list)
 {
-    os << '"';
-    for (const char c : list)
-    {
-        os << c;
-    }
-    os << '"';
-
-    return os;
+    return printString(os, list.data(), list.data() + list.size());
 }
 
 

@@ -721,17 +721,16 @@ Foam::regionSplit::reduceRegionsImpl
     labelListList sendNonLocal(Pstream::nProcs());
 
     {
-        List<labelHashSet> nonLocal(Pstream::nProcs(), labelHashSet(0));
+        List<labelHashSet> nonLocal(Pstream::nProcs());
 
         // Use estimate of sizing for non-local regions
+        label estimatedCount((nLocalRegions-nCompact)/Pstream::nProcs());
+
         forAll(nonLocal, proci)
         {
             if (proci != Pstream::myProcNo())
             {
-                nonLocal[proci].resize
-                (
-                    2*((nLocalRegions-nCompact)/Pstream::nProcs())
-                );
+                nonLocal[proci].reserve(estimatedCount);
             }
         }
 
