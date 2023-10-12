@@ -96,7 +96,7 @@ Foam::ConeInjection<CloudType>::ConeInjection
             this->coeffDict().subDict("sizeDistribution"), owner.rndGen()
         )
     ),
-    nInjected_(this->parcelsAddedTotal()),
+    nInjected_(Pstream::master() ? this->parcelsAddedTotal() : 0),
     injectorOrder_(identity(positionAxis_.size())),
     tanVec1_(),
     tanVec2_()
@@ -233,7 +233,7 @@ Foam::label Foam::ConeInjection<CloudType>::parcelsToInject
         const label targetParcels =
             ceil(positionAxis_.size()*parcelsPerInjector_*volumeFraction);
 
-        return targetParcels - nInjected_;
+        return targetParcels - returnReduce(nInjected_, sumOp<label>());
     }
 
     return 0;
