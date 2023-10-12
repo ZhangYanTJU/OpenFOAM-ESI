@@ -95,19 +95,16 @@ public:
 
     // Public Data Types
 
-        //- Disambiguation tag (list construction dispatch)
-        enum accessType : char { OFFSETS, SIZES };
-
-        //- Dispatch tag.
+        //- Dispatch tag:
         //- Construct with a single (local size) entry, no communication.
         struct gatherNone{};
 
-        //- Dispatch tag.
+        //- Dispatch tag:
         //- Construct 'one-sided' from local sizes,
         //- using gather but no broadcast.
         struct gatherOnly{};
 
-        //- Dispatch tag.
+        //- Dispatch tag:
         //- Construct 'one-sided' from the non-master local sizes
         //- using gather but no broadcast.
         struct gatherNonLocal{};
@@ -126,12 +123,12 @@ public:
         //- No communication required
         inline explicit globalIndex(labelList&& listOffsets);
 
-        //- Copy construct from a list of offsets or sizes.
+        //- Copy construct from a list of sizes.
         //- No communication required
         inline globalIndex
         (
-            const labelUList& offsetsOrSizes,
-            enum accessType accType
+            const globalIndex::gatherNone,
+            const labelUList& localSizes
         );
 
         //- Construct from local size, using gather/broadcast
@@ -200,6 +197,9 @@ public:
 
         //- The local sizes
         labelList localSizes() const;
+
+        //- Return start/size ranges for all data
+        List<labelRange> ranges() const;
 
         //- Global max of localSizes
         inline label maxSize() const;
@@ -286,85 +286,80 @@ public:
         void setLocalSize(const label proci, const label len);
 
 
-    // Queries
+    // Queries and renumbering
 
-        // Queries relating to my processor (using world communicator)
+        //- Start of proci data
+        inline label localStart(const label proci) const;
 
-            //- My local start
-            inline label localStart() const;
+        //- Size of proci data
+        inline label localSize(const label proci) const;
 
-            //- My local size
-            inline label localSize() const;
+        //- The max of localSizes, excluding the specified processor
+        label maxNonLocalSize(const label proci) const;
 
-            //- The max of localSizes, excluding current processor
-            inline label maxNonLocalSize() const;
+        //- Return start/size range of proci data
+        inline labelRange range(const label proci) const;
 
-            //- Return start/size range of local processor data
-            inline labelRange range() const;
+        //- Is on processor proci
+        inline bool isLocal(const label proci, const label i) const;
 
-            //- Return start/size ranges for all data
-            List<labelRange> ranges() const;
+        //- From local to global on proci
+        inline label toGlobal(const label proci, const label i) const;
 
-            //- Is on local processor
-            inline bool isLocal(const label i) const;
+        //- From local to global on proci
+        inline labelList toGlobal
+        (
+            const label proci,
+            const labelUList& labels
+        ) const;
 
-            //- From local to global index
-            inline label toGlobal(const label i) const;
-
-            //- From local to global index
-            inline labelList toGlobal(const labelUList& labels) const;
-
-            //- From local to global index (inplace)
-            inline void inplaceToGlobal(labelUList& labels) const;
-
-            //- From global to local on current processor.
-            //  FatalError if not on local processor.
-            inline label toLocal(const label i) const;
-
-
-        // Global (off-processor) queries
-
-            //- Start of proci data
-            inline label localStart(const label proci) const;
-
-            //- Size of proci data
-            inline label localSize(const label proci) const;
-
-            //- The max of localSizes, excluding the specified processor
-            label maxNonLocalSize(const label proci) const;
-
-            //- Return start/size range of proci data
-            inline labelRange range(const label proci) const;
-
-            //- Is on processor proci
-            inline bool isLocal(const label proci, const label i) const;
-
-            //- From local to global on proci
-            inline label toGlobal(const label proci, const label i) const;
-
-            //- From local to global on proci
-            inline labelList toGlobal
-            (
-                const label proci,
-                const labelUList& labels
-            ) const;
-
-            //- From local to global index on proci (inplace)
-            inline void inplaceToGlobal
-            (
-                const label proci,
-                labelUList& labels
-            ) const;
+        //- From local to global index on proci (inplace)
+        inline void inplaceToGlobal
+        (
+            const label proci,
+            labelUList& labels
+        ) const;
 
 
-            //- From global to local on proci
-            inline label toLocal(const label proci, const label i) const;
+        //- From global to local on proci
+        inline label toLocal(const label proci, const label i) const;
 
-            //- Which processor does global id come from?
-            //  Does an initial check for isLocal first (assumed to occur
-            //  reasonably frequently) followed by a binary search.
-            //- Fatal for out of range ids (eg, negative or >= totalSize()
-            inline label whichProcID(const label i) const;
+        //- Which processor does global id come from?
+        //  Does an initial check for isLocal first (assumed to occur
+        //  reasonably frequently) followed by a binary search.
+        //- Fatal for out of range ids (eg, negative or >= totalSize()
+        inline label whichProcID(const label i) const;
+
+
+    // Queries relating to myProcNo (Caution: uses UPstream::worldComm)
+
+        //- Local start on myProcNo()
+        inline label localStart() const;
+
+        //- Local size on myProcNo()
+        inline label localSize() const;
+
+        //- The max of localSizes, excluding current (myProcNo) rank
+        inline label maxNonLocalSize() const;
+
+        //- Return start/size range of local (myProcNo) data
+        inline labelRange range() const;
+
+        //- Is on local processor
+        inline bool isLocal(const label i) const;
+
+        //- From local to global index
+        inline label toGlobal(const label i) const;
+
+        //- From local to global index
+        inline labelList toGlobal(const labelUList& labels) const;
+
+        //- From local to global index (inplace)
+        inline void inplaceToGlobal(labelUList& labels) const;
+
+        //- From global to local on current processor.
+        //  FatalError if not on local processor.
+        inline label toLocal(const label i) const;
 
 
     // Iteration
@@ -376,8 +371,7 @@ public:
             const globalIndex* parent_;
 
             //- The index into the parent
-            label proci_;
-
+            label index_;
 
         public:
 
@@ -387,14 +381,14 @@ public:
             explicit const_iterator
             (
                 const globalIndex* globalIdx,
-                const label proci = 0
+                const label i = 0
             ) noexcept;
 
 
         // Member Operators
 
-            //- The associated local proc
-            inline label proci() const noexcept;
+            //- The index into the arrays
+            inline label index() const noexcept;
 
             //- The local start
             inline label start() const;
@@ -430,6 +424,21 @@ public:
 
         //- A const_iterator set to beyond the end
         inline const const_iterator end() const noexcept;
+
+        //- Return const_iterator at offset proci from begin,
+        //- clamped to [0,nProcs] range
+        inline const_iterator cbegin(const label proci) const noexcept;
+
+        //- Return const_iterator at offset proci from begin,
+        //- clamped to [0,nProcs] range
+        inline const_iterator begin(const label proci) const noexcept;
+
+        // FUTURE?
+        // //- Return start/size range of proci data
+        // labelRange operator[](const label proci) const
+        // {
+        //     return this->range(proci);
+        // }
 
 
     // Helper Functions
@@ -897,28 +906,6 @@ public:
 
     // Housekeeping
 
-        //- Construct with a single (local size) entry, no communication
-        globalIndex
-        (
-            const label localSize,
-            const globalIndex::gatherNone,
-            const label comm = -1   //!< no communicator needed
-        )
-        :
-            globalIndex(gatherNone{}, localSize, comm)
-        {}
-
-        //- Construct 'one-sided' from local sizes.
-        globalIndex
-        (
-            const label localSize,
-            const globalIndex::gatherOnly,
-            const label comm = UPstream::worldComm
-        )
-        :
-            globalIndex(gatherOnly{}, localSize, comm)
-        {}
-
         //- Construct from local size, using gather/broadcast
         //- with default/specified communicator if parallel.
         FOAM_DEPRECATED_FOR(2022-03, "construct without message tag")
@@ -950,20 +937,6 @@ public:
         //- Prefer localStart() to avoid confusing with offsets()
         FOAM_DEPRECATED_FOR(2022-02, "use localStart()")
         label offset(const label proci) const { return localStart(proci); }
-
-        //- Reset as 'one-sided' from local sizes [gather, but no broadcast]
-        //- Will be empty on non-master processes.
-        //
-        //  \note can be used when Pstream::parRun() is false.
-        void reset
-        (
-            const label localSize,
-            const globalIndex::gatherOnly,
-            const label comm = UPstream::worldComm  //!< communicator
-        )
-        {
-            reset(globalIndex::gatherOnly{}, localSize, comm);
-        }
 };
 
 

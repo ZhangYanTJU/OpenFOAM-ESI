@@ -96,7 +96,7 @@ bool Foam::ensightOutput::writeCloudPositions
     // Total number of parcels on all processes
     const label nTotParcels = returnReduce(nLocalParcels, sumOp<label>());
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         os.beginParticleCoordinates(nTotParcels);
     }
@@ -108,11 +108,11 @@ bool Foam::ensightOutput::writeCloudPositions
 
 
     // Gather sizes (offsets irrelevant)
-    const globalIndex procAddr(nLocalParcels, globalIndex::gatherOnly{});
+    const globalIndex procAddr(globalIndex::gatherOnly{}, nLocalParcels);
 
 
     DynamicList<floatVector> positions;
-    positions.reserve(Pstream::master() ? procAddr.maxSize() : nLocalParcels);
+    positions.reserve(UPstream::master() ? procAddr.maxSize() : nLocalParcels);
 
     // Extract positions from parcel.
     // Store as floatVector, since that is what Ensight will write anyhow
@@ -150,7 +150,7 @@ bool Foam::ensightOutput::writeCloudPositions
         parcelsPtr.reset(nullptr);
     }
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         const bool isBinaryOutput = (os.format() == IOstreamOption::BINARY);
 

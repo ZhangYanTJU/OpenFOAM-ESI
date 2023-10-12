@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     }
 
 
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
         WarningInFunction
             << "globalIndex class is only useful in parallel code."
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
         label proci = globalNumbering.whichProcID(globalCelli);
         label localCelli = globalNumbering.toLocal(globalCelli);
 
-        if (proci != Pstream::myProcNo() || localCelli != celli)
+        if (proci != UPstream::myProcNo() || localCelli != celli)
         {
             FatalErrorInFunction
                 << "Problem. celli:" << celli << " localCelli:" << localCelli
@@ -109,18 +109,18 @@ int main(int argc, char *argv[])
             << " cell per processor." << abort(FatalError);
     }
 
-    if (Pstream::myProcNo() > 0)
+    if (UPstream::myProcNo() > 0)
     {
         // We already checked that toGlobal(0) maps back correctly to myProcNo
         // so now check that the index one before maps to the previous processor
         label prevProcCelli = globalNumbering.toGlobal(0)-1;
         label proci = globalNumbering.whichProcID(prevProcCelli);
 
-        if (proci != Pstream::myProcNo()-1)
+        if (proci != UPstream::myProcNo()-1)
         {
             FatalErrorInFunction
                 << "Problem. global:" << prevProcCelli
-                << " expected on processor:" << Pstream::myProcNo()-1
+                << " expected on processor:" << UPstream::myProcNo()-1
                 << " but is calculated to be on proci:" << proci
                 << abort(FatalError);
         }
@@ -142,16 +142,16 @@ int main(int argc, char *argv[])
     }
 
 
-    if (Pstream::myProcNo() < Pstream::nProcs()-1)
+    if (UPstream::myProcNo() < UPstream::nProcs()-1)
     {
         label nextProcCelli = globalNumbering.toGlobal(mesh.nCells()-1)+1;
         label proci = globalNumbering.whichProcID(nextProcCelli);
 
-        if (proci != Pstream::myProcNo()+1)
+        if (proci != UPstream::myProcNo()+1)
         {
             FatalErrorInFunction
                 << "Problem. global:" << nextProcCelli
-                << " expected on processor:" << Pstream::myProcNo()+1
+                << " expected on processor:" << UPstream::myProcNo()+1
                 << " but is calculated to be on proci:" << proci
                 << abort(FatalError);
         }
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
     // Get a few cell indices
     const label nTotalCells = globalNumbering.size();
 
-    Random rndGen(Pstream::myProcNo());
+    Random rndGen(UPstream::myProcNo());
     DynamicList<label> globalIDs;
     for (label i = 0; i < 100; i++)
     {

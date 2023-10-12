@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
             UPstream::listScatterValues<label>(sendSizes)
         );
 
-        const globalIndex subProcAddr(sendSizes, globalIndex::SIZES);
+        const globalIndex subProcAddr(globalIndex::gatherNone{}, sendSizes);
 
         Pout<< "listGather "
             << localValues.size() << " = " << flatOutput(sendSizes)
@@ -170,7 +170,8 @@ int main(int argc, char *argv[])
             label proci = 0;
             for (const labelRange& range : subProcAddr)
             {
-                Info<< proci << ": " << flatOutput(allValues.slice(range)) << nl;
+                Info<< proci << ": " << flatOutput(allValues.slice(range))
+                    << nl;
                 ++proci;
             }
 
@@ -185,7 +186,7 @@ int main(int argc, char *argv[])
                 }
             }
             {
-                globalIndex glob(labelList(Foam::one{}, 0), globalIndex::OFFSETS);
+                globalIndex glob(labelList(Foam::one{}, 0));
                 Info<< "degenerate:" << nl;
                 for (const labelRange& range : glob)
                 {
@@ -193,7 +194,11 @@ int main(int argc, char *argv[])
                 }
             }
             {
-                globalIndex glob(labelList(Foam::one{}, 0), globalIndex::SIZES);
+                globalIndex glob
+                (
+                    globalIndex:gatherNone{},
+                    labelList(Foam::one{}, 0)
+                );
                 Info<< "single:" << nl;
                 for (const labelRange& range : glob)
                 {

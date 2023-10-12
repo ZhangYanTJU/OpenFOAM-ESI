@@ -136,12 +136,12 @@ Foam::globalIndex::bin
     DynamicList<label>& validBins
 )
 {
-    sortedOrder(globalIds, order);
+    Foam::sortedOrder(globalIds, order);
     validBins.clear();
 
     CompactListList<label> bins;
 
-    if (globalIds.size())
+    if (!globalIds.empty())
     {
         labelList& binOffsets = bins.offsets();
         binOffsets.resize(offsets.size(), Zero);
@@ -152,7 +152,7 @@ Foam::globalIndex::bin
         const label id = binValues[0];
         label proci = findLower(offsets, id+1);
 
-        validBins.append(proci);
+        validBins.push_back(proci);
         label binSize = 1;
 
         for (label i = 1; i < order.size(); i++)
@@ -161,12 +161,12 @@ Foam::globalIndex::bin
 
             if (id < offsets[proci+1])
             {
-                binSize++;
+                ++binSize;
             }
             else
             {
                 // Not local. Reset proci
-                label oldProci = proci;
+                const label oldProci = proci;
                 proci = findLower(offsets, id+1);
 
                 // Set offsets
@@ -175,7 +175,7 @@ Foam::globalIndex::bin
                     binOffsets[j] = binOffsets[oldProci]+binSize;
                 }
                 binOffsets[proci] = i;
-                validBins.append(proci);
+                validBins.push_back(proci);
                 binSize = 1;
             }
         }
@@ -210,9 +210,11 @@ void Foam::globalIndex::reset
         else
         {
             // Non-parallel branch: use localSize on-proc, zero elsewhere
+            // TBD: check for (proci >= 0) ?
+            const auto proci = UPstream::myProcNo(comm);
 
             localLens.resize(len, Zero);
-            localLens[UPstream::myProcNo(comm)] = localSize;
+            localLens[proci] = localSize;
         }
 
         reset(localLens, true);  // checkOverflow = true
