@@ -7,7 +7,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,7 +99,7 @@ static const Enum<int>& fieldTokenEnums()
 
     if (enums_.empty())
     {
-        enums_.append
+        enums_.push_back
         ({
         #ifdef TOK_SCALAR_ID
             FIELD_PAIR(volScalarField, SCALAR_ID),

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
         << "    values: " << flatOutput(otherNames2.values())
         << nl << nl;
 
-    otherNames2.append
+    otherNames2.push_back
     ({
         { 15, "fifteen"},
         { 16, "sixteen"}
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
     Info<< nl;
 
     otherNames2.clear();
-    otherNames2.append
+    otherNames2.push_back
     ({
         { 1, "one"},
         { 2, "two"}
@@ -148,6 +148,18 @@ int main(int argc, char *argv[])
         << otherNames2 << nl
         << otherNames2.values() << nl
         << nl;
+
+    for (const auto& k : {"one", "two", "three", "four" })
+    {
+        const auto iter = otherNames2.find(k);
+
+        Info<< "find(" << k << ") good:" << iter.good();
+        if (iter.good())
+        {
+            Info<< " value:" << int(iter.val());
+        }
+        Info<< nl;
+    }
 
 
     dictionary testDict;
@@ -162,10 +174,10 @@ int main(int argc, char *argv[])
     {
         Info<< "dict: " << testDict << endl;
 
-        Info<< "lookupOrDefault(notFound) = "
+        Info<< "getOrDefault(notFound) = "
             <<  int
                 (
-                    testing::option1Names.lookupOrDefault
+                    testing::option1Names.getOrDefault
                     (
                         "notFound",
                         testDict,
@@ -174,10 +186,10 @@ int main(int argc, char *argv[])
                 )
             << nl;
 
-        Info<< "lookupOrDefault(lookup1) = "
+        Info<< "getOrDefault(lookup1) = "
             <<  int
                 (
-                    testing::option1Names.lookupOrDefault
+                    testing::option1Names.getOrDefault
                     (
                         "lookup1",
                         testDict,
@@ -186,10 +198,10 @@ int main(int argc, char *argv[])
                 )
             << nl;
 
-        Info<< "lookupOrDefault(lookup1) = "
+        Info<< "getOrDefault(lookup1) = "
             <<  int
                 (
-                    testing::option2Names.lookupOrDefault
+                    testing::option2Names.getOrDefault
                     (
                         "lookup1",
                         testDict,

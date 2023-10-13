@@ -86,20 +86,6 @@ inline void Foam::Enum<EnumType>::clear()
 
 
 template<class EnumType>
-inline Foam::label Foam::Enum<EnumType>::find(const word& enumName) const
-{
-    return keys_.find(enumName);
-}
-
-
-template<class EnumType>
-inline Foam::label Foam::Enum<EnumType>::find(const EnumType e) const
-{
-    return vals_.find(int(e));
-}
-
-
-template<class EnumType>
 inline bool Foam::Enum<EnumType>::contains(const word& enumName) const
 {
     return keys_.contains(enumName);
@@ -116,7 +102,7 @@ inline bool Foam::Enum<EnumType>::contains(const EnumType e) const
 template<class EnumType>
 inline const Foam::word& Foam::Enum<EnumType>::get(const EnumType e) const
 {
-    const label idx = find(e);
+    const label idx = vals_.find(int(e));
 
     if (idx < 0)
     {
@@ -132,18 +118,19 @@ inline bool Foam::Enum<EnumType>::readIfPresent
 (
     const word& key,
     const dictionary& dict,
-    EnumType& val
+    EnumType& val,
+    const bool warnOnly
 ) const
 {
     // Reading is non-mandatory
-    return readEntry(key, dict, val, false);
+    return readEntry(key, dict, val, false, warnOnly);
 }
 
 
 template<class EnumType>
 inline void Foam::Enum<EnumType>::write(const EnumType e, Ostream& os) const
 {
-    const label idx = find(e);
+    const label idx = vals_.find(int(e));
 
     if (idx >= 0)
     {
@@ -200,6 +187,13 @@ inline EnumType Foam::Enum<EnumType>::const_iterator::val() const
 
 
 template<class EnumType>
+inline bool Foam::Enum<EnumType>::const_iterator::good() const noexcept
+{
+    return (ptr_ && idx_ >= 0 && idx_ < ptr_->size());
+}
+
+
+template<class EnumType>
 inline typename Foam::Enum<EnumType>::const_iterator&
 Foam::Enum<EnumType>::const_iterator::operator++() noexcept
 {
@@ -241,6 +235,20 @@ inline typename Foam::Enum<EnumType>::const_iterator
 Foam::Enum<EnumType>::cend() const noexcept
 {
     return typename Enum<EnumType>::const_iterator(this, this->size());
+}
+
+
+template<class EnumType>
+inline typename Foam::Enum<EnumType>::const_iterator
+Foam::Enum<EnumType>::cfind(const word& key) const
+{
+    const label idx = keys_.find(key);
+
+    return typename Enum<EnumType>::const_iterator
+    (
+        this,
+        (idx >= 0 ? idx : this->size())
+    );
 }
 
 

@@ -38,7 +38,7 @@ SourceFiles
 #ifndef Foam_sliceRange_H
 #define Foam_sliceRange_H
 
-#include "label.H"
+#include "labelFwd.H"
 #include <iterator>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -47,6 +47,8 @@ namespace Foam
 {
 
 // Forward Declarations
+class Istream;
+class Ostream;
 template<class T> class List;
 template<class T, unsigned N> class FixedList;
 
@@ -122,6 +124,9 @@ public:
         //- True if range is empty (zero-sized)
         bool empty() const noexcept { return !size_; }
 
+        //- True if range has size greater than zero
+        bool good() const noexcept { return (size_ > 0); }
+
         //- The (inclusive) lower value of the range.
         constexpr label min() const noexcept { return start_; }
 
@@ -141,8 +146,8 @@ public:
             return start_ + i * stride_;
         }
 
-        //- True if range is non-empty
-        explicit operator bool() const noexcept { return bool(size_); }
+        //- True if range has size greater than zero. Same as good()
+        explicit operator bool() const noexcept { return (size_ > 0); }
 
 
     // Iteration / Generation

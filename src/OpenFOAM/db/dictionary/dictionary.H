@@ -1307,13 +1307,9 @@ public:
 
     // Housekeeping
 
-        //- Find and return a T, or return the given default value.
-        //- FatalIOError if it is found and the number of tokens is incorrect.
-        //
-        //  \param keyword the keyword to search for
-        //  \param deflt the default value to use
-        //  \param matchOpt search mode (default: non-recursive with patterns)
+        //- Same as getOrDefault()
         template<class T>
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrDefault()")
         T lookupOrDefault
         (
             const word& keyword,
@@ -1325,14 +1321,9 @@ public:
         }
 
 
-        //- Find and return a T, or return the given default value
-        //- and add it to dictionary.
-        //- FatalIOError if it is found and the number of tokens is incorrect.
-        //
-        //  \param keyword the keyword to search for
-        //  \param deflt the default value to use
-        //  \param matchOpt search mode (default: non-recursive with patterns)
+        //- Same as getOrAdd()
         template<class T>
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrAdd()")
         T lookupOrAddDefault
         (
             const word& keyword,

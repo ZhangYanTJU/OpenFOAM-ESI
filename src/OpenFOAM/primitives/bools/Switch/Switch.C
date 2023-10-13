@@ -160,6 +160,17 @@ bool Foam::Switch::contains(const std::string& str)
 }
 
 
+Foam::Switch Foam::Switch::getOrDefault
+(
+    const word& key,
+    const dictionary& dict,
+    const Switch deflt
+)
+{
+    return dict.getOrDefault<Switch>(key, deflt, keyType::LITERAL);
+}
+
+
 Foam::Switch Foam::Switch::getOrAddToDict
 (
     const word& key,
@@ -260,7 +271,7 @@ Foam::Switch::Switch
     const word& key,
     const dictionary& dict,
     const Switch deflt,
-    const bool failsafe
+    const bool warnOnly
 )
 :
     value_(deflt.value_)
@@ -275,10 +286,10 @@ Foam::Switch::Switch
         {
             (*this) = sw;
         }
-        else if (failsafe)
+        else if (warnOnly)
         {
             printTokenError(IOWarningInFunction(dict), tok)
-                << "using failsafe " << deflt.c_str() << endl;
+                << "using default " << deflt.c_str() << endl;
         }
         else
         {

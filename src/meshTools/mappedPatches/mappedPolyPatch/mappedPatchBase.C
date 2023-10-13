@@ -97,7 +97,7 @@ Foam::autoPtr<Foam::fileName> Foam::mappedPatchBase::readDatabase
         {
             return autoPtr<fileName>::New
             (
-                dict.lookupOrDefault<fileName>
+                dict.getOrDefault<fileName>
                 (
                     "sampleDatabasePath",
                     fileName::null

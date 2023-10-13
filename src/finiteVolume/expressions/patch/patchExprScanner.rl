@@ -98,7 +98,7 @@ static const Enum<int>& fieldTokenEnums()
 
     if (enums_.empty())
     {
-        enums_.append
+        enums_.push_back
         ({
         #ifdef TOK_SCALAR_ID
             FIELD_PAIR(volScalarField, SCALAR_ID),

@@ -469,8 +469,12 @@ int main(int argc, char *argv[])
 
 
     // Allow override of decomposeParDict location
-    fileName decompDictFile(args.get<fileName>("decomposeParDict", ""));
-    if (!decompDictFile.empty() && !decompDictFile.isAbsolute())
+    fileName decompDictFile;
+    if
+    (
+        args.readIfPresent("decomposeParDict", decompDictFile)
+     && !decompDictFile.empty() && !decompDictFile.isAbsolute()
+    )
     {
         decompDictFile = runTime.globalPath()/decompDictFile;
     }

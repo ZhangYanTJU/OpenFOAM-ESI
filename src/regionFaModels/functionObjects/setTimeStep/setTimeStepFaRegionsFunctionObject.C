@@ -96,7 +96,7 @@ bool Foam::functionObjects::setTimeStepFaRegionsFunctionObject::read
     if (timeFunctionObject::read(dict))
     {
         // Ensure that adjustTimeStep is active
-        if (!time_.controlDict().lookupOrDefault<bool>("adjustTimeStep", false))
+        if (!time_.controlDict().getOrDefault<bool>("adjustTimeStep", false))
         {
             FatalIOErrorInFunction(dict)
                 << "Need to set 'adjustTimeStep' true to allow timestep control"

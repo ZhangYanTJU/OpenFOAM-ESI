@@ -32,7 +32,7 @@ Description
     particular enumeration values.
 
     \deprecated(2017-05) This class is retained for compatibility only and
-    should be used for any new code.
+    should be NOT used for any new code.
     The Foam::Enum class is robuster, more flexible, easier to use.
 
 See Also
@@ -43,8 +43,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef NamedEnum_H
-#define NamedEnum_H
+#ifndef FoamCompat_NamedEnum_H
+#define FoamCompat_NamedEnum_H
 
 #include "HashTable.H"
 #include "wordList.H"

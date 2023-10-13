@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,7 +74,7 @@ void Foam::Enum<EnumType>::push_back
 template<class EnumType>
 EnumType Foam::Enum<EnumType>::get(const word& enumName) const
 {
-    const label idx = find(enumName);
+    const label idx = keys_.find(enumName);
 
     if (idx < 0)
     {
@@ -94,7 +94,7 @@ EnumType Foam::Enum<EnumType>::lookup
     const EnumType deflt
 ) const
 {
-    const label idx = find(enumName);
+    const label idx = keys_.find(enumName);
 
     if (idx < 0)
     {
@@ -110,7 +110,7 @@ EnumType Foam::Enum<EnumType>::read(Istream& is) const
 {
     const word enumName(is);
 
-    const label idx = find(enumName);
+    const label idx = keys_.find(enumName);
 
     if (idx < 0)
     {
@@ -133,7 +133,7 @@ bool Foam::Enum<EnumType>::read
 {
     const word enumName(is);
 
-    const label idx = find(enumName);
+    const label idx = keys_.find(enumName);
 
     if (idx >= 0)
     {
@@ -161,12 +161,13 @@ EnumType Foam::Enum<EnumType>::get
 {
     const word enumName(dict.get<word>(key, keyType::LITERAL));
 
-    const label idx = find(enumName);
+    const label idx = keys_.find(enumName);
 
     if (idx < 0)
     {
         FatalIOErrorInFunction(dict)
-            << enumName << " is not in enumeration: " << *this << nl
+            << "Lookup:" << key << " enumeration " << enumName
+            << " is not in enumeration: " << *this << nl
             << exit(FatalIOError);
     }
 
@@ -180,7 +181,7 @@ EnumType Foam::Enum<EnumType>::getOrDefault
     const word& key,
     const dictionary& dict,
     const EnumType deflt,
-    const bool failsafe
+    const bool warnOnly
 ) const
 {
     const entry* eptr = dict.findEntry(key, keyType::LITERAL);
@@ -189,26 +190,28 @@ EnumType Foam::Enum<EnumType>::getOrDefault
     {
         const word enumName(eptr->get<word>());
 
-        const label idx = find(enumName);
+        const label idx = keys_.find(enumName);
 
         if (idx >= 0)
         {
             return EnumType(vals_[idx]);
         }
 
-        // Found the entry, but failed the name lookup
+        // Found the dictionary entry, but the name not in enumeration
 
-        if (failsafe)
+        if (warnOnly)
         {
             IOWarningInFunction(dict)
-                << enumName << " is not in enumeration: " << *this << nl
-                << "using failsafe " << get(deflt)
+                << "Lookup:" << key << " enumeration " << enumName
+                << " is not in enumeration: " << *this << nl
+                << "using default " << get(deflt)
                 << " (value " << int(deflt) << ')' << endl;
         }
         else
         {
             FatalIOErrorInFunction(dict)
-                << enumName << " is not in enumeration: " << *this << nl
+                << "Lookup:" << key << " enumeration " << enumName
+                << " is not in enumeration: " << *this << nl
                 << exit(FatalIOError);
         }
     }
@@ -223,7 +226,8 @@ bool Foam::Enum<EnumType>::readEntry
     const word& key,
     const dictionary& dict,
     EnumType& val,
-    const bool mandatory
+    const bool mandatory,
+    const bool warnOnly
 ) const
 {
     const entry* eptr = dict.findEntry(key, keyType::LITERAL);
@@ -232,7 +236,7 @@ bool Foam::Enum<EnumType>::readEntry
     {
         const word enumName(eptr->get<word>());
 
-        const label idx = find(enumName);
+        const label idx = keys_.find(enumName);
 
         if (idx >= 0)
         {
@@ -240,14 +244,29 @@ bool Foam::Enum<EnumType>::readEntry
             return true;
         }
 
-        FatalIOErrorInFunction(dict)
-            << enumName << " is not in enumeration: " << *this << nl
-            << exit(FatalIOError);
+        // Found the dictionary entry, but the name not in enumeration
+
+        if (warnOnly)
+        {
+            IOWarningInFunction(dict)
+                << "Lookup:" << key << " enumeration " << enumName
+                << " is not in enumeration: " << *this << nl
+                << "leaving value unchanged"
+                << " (value " << int(val) << ')' << endl;
+        }
+        else
+        {
+            FatalIOErrorInFunction(dict)
+                << "Lookup:" << key << " enumeration " << enumName
+                << " is not in enumeration: " << *this << nl
+                << exit(FatalIOError);
+        }
     }
     else if (mandatory)
     {
         FatalIOErrorInFunction(dict)
-            << "'" << key << "' not found in dictionary " << dict.name() << nl
+            << "Lookup:" << key
+            << " not found in dictionary " << dict.name() << nl
             << exit(FatalIOError);
     }
 

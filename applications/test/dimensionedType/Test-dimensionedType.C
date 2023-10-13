@@ -136,13 +136,13 @@ int main(int argc, char *argv[])
     Info<< "test2 : " << dimensionedScalar("test2", dimless, 20, dict) << nl;
     Info<< "test2a : " << dimensionedScalar("test2a", dimless, 20, dict) << nl;
     Info<< "test3 : "
-        << dimensionedScalar::lookupOrDefault("test3", dict, 30) << nl;
+        << dimensionedScalar::getOrDefault("test3", dict, 30) << nl;
 
     Info<< "test4 : "
-        << dimensionedScalar::lookupOrAddToDict("test4", dict, 40) << nl;
+        << dimensionedScalar::getOrAddToDict("test4", dict, 40) << nl;
 
     Info<< "test5 : "
-        << dimensionedScalar::lookupOrAddToDict("test5", dict, -50) << nl;
+        << dimensionedScalar::getOrAddToDict("test5", dict, -50) << nl;
 
     // Deprecated
     Info<< "Deprecated constructors" << nl;

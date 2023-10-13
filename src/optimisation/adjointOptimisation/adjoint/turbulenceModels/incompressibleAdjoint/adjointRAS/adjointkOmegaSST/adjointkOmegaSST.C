@@ -1311,7 +1311,7 @@ adjointkOmegaSST::adjointkOmegaSST
     ),
     a1_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "a1",
             this->coeffDict_,
@@ -1320,7 +1320,7 @@ adjointkOmegaSST::adjointkOmegaSST
     ),
     b1_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "b1",
             this->coeffDict_,
@@ -1329,7 +1329,7 @@ adjointkOmegaSST::adjointkOmegaSST
     ),
     c1_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "c1",
             this->coeffDict_,
@@ -1338,7 +1338,7 @@ adjointkOmegaSST::adjointkOmegaSST
     ),
     F3_
     (
-        Switch::lookupOrAddToDict
+        Switch::getOrAddToDict
         (
             "F3",
             this->coeffDict_,

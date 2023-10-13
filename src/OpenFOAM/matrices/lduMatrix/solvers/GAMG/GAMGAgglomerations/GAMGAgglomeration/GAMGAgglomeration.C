@@ -425,7 +425,7 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
     {
         const word agglomeratorType
         (
-            controlDict.lookupOrDefault<word>("agglomerator", "faceAreaPair")
+            controlDict.getOrDefault<word>("agglomerator", "faceAreaPair")
         );
 
         const_cast<Time&>(mesh.thisDb().time()).libs().open

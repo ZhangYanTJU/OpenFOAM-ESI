@@ -81,7 +81,7 @@ liquidFilmBase::liquidFilmBase
 
     UName_(dict.get<word>("U")),
 
-    pName_(dict.lookupOrDefault<word>("p",  word::null)),
+    pName_(dict.getOrDefault<word>("p",  word::null)),
 
     pRef_(dict.get<scalar>("pRef")),
 

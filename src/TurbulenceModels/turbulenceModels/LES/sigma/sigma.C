@@ -80,7 +80,7 @@ template<class BasicTurbulenceModel> sigma<BasicTurbulenceModel>::sigma
 
     Ck_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "Ck",
             this->coeffDict_,
@@ -90,7 +90,7 @@ template<class BasicTurbulenceModel> sigma<BasicTurbulenceModel>::sigma
 
     Cw_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "Cw",
             this->coeffDict_,
@@ -100,7 +100,7 @@ template<class BasicTurbulenceModel> sigma<BasicTurbulenceModel>::sigma
 
     Csigma_
     (
-        dimensioned<scalar>::lookupOrAddToDict
+        dimensioned<scalar>::getOrAddToDict
         (
             "Csigma",
             this->coeffDict_,

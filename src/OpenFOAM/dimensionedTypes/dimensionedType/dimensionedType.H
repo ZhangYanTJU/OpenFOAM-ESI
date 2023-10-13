@@ -400,9 +400,8 @@ public:
         FOAM_DEPRECATED_FOR(2018-11, "construct from dictionary or entry")
         dimensioned(const word& name, const dimensionSet& dims, Istream& is);
 
-
-        //- Construct dimensioned from dictionary, with default value.
-        //- FatalIOError if there are excess tokens.
+        //- Same as getOrDefault()
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrDefault()")
         static dimensioned<Type> lookupOrDefault
         (
             const word& name,
@@ -414,8 +413,8 @@ public:
             return getOrDefault(name, dict, dims, deflt);
         }
 
-        //- Construct dimensionless from dictionary, with default value.
-        //  FatalIOError if it is found and there are excess tokens.
+        //- Same as getOrDefault()
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrDefault()")
         static dimensioned<Type> lookupOrDefault
         (
             const word& name,
@@ -426,9 +425,8 @@ public:
             return getOrDefault(name, dict, deflt);
         }
 
-        //- Construct dimensioned from dictionary, with default value.
-        //  If the value is not found, it is added into the dictionary.
-        //  FatalIOError if it is found and there are excess tokens.
+        //- Same as getOrAddToDict()
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrAddToDict()")
         static dimensioned<Type> lookupOrAddToDict
         (
             const word& name,
@@ -440,9 +438,8 @@ public:
             return getOrAddToDict(name, dict, dims, deflt);
         }
 
-        //- Construct dimensionless from dictionary, with default value.
-        //  If the value is not found, it is added into the dictionary.
-        //  FatalIOError if it is found and there are excess tokens.
+        //- Same as getOrAddToDict()
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrAddToDict()")
         static dimensioned<Type> lookupOrAddToDict
         (
             const word& name,

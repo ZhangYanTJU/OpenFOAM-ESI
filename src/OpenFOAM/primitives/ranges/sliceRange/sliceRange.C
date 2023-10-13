@@ -26,9 +26,12 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "sliceRange.H"
+#include "token.H"
 #include "FixedList.H"
 #include "List.H"
-#include "token.H"
+#include "Istream.H"
+#include "Ostream.H"
+#include <numeric>
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -46,14 +49,18 @@ Foam::List<Foam::label> Foam::sliceRange::labels() const
 {
     List<label> result(size_);
 
-    if (stride_)
+    if (stride_ > 1)
     {
         std::copy(cbegin(), cend(), result.begin());
+    }
+    else if (stride_ == 1)
+    {
+        std::iota(result.begin(), result.end(), start_);
     }
     else
     {
         // stride = 0 (identical values!)
-        std::fill(result.begin(), result.end(), start_);
+        std::fill_n(result.begin(), result.size(), start_);
     }
 
     return result;

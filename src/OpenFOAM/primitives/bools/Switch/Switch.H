@@ -179,13 +179,13 @@ public:
         //- switch value or the default if not found in dictionary.
         //
         //  FatalIOError if the switch name is incorrect.
-        //  Specifying failsafe downgrades the FatalIOError to an IOWarning.
+        //  Specifying warnOnly downgrades the FatalIOError to an IOWarning.
         Switch
         (
             const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
             const dictionary& dict, //!< dictionary
             const Switch deflt,     //!< fallback if not found
-            const bool failsafe = false  //!< Warn only on bad input
+            const bool warnOnly = false  //!< Warn (not fail) on bad input
         );
 
         //- Construct from Istream by reading a token
@@ -193,6 +193,14 @@ public:
 
 
     // Helpers
+
+        //- Construct Switch from dictionary, with default value
+        static Switch getOrDefault
+        (
+            const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
+            const dictionary& dict, //!< dictionary
+            const Switch deflt = switchType::FALSE  //!< fallback if not found
+        );
 
         //- Construct from dictionary, supplying default value so that if the
         //- value is not found, it is added into the dictionary.
@@ -290,6 +298,7 @@ public:
         bool valid() const noexcept { return good(); }
 
         //- Same as getOrAddToDict()
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrAddToDict()")
         static Switch lookupOrAddToDict
         (
             const word& name,

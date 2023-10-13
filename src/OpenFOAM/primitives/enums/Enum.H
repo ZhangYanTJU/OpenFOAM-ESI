@@ -145,14 +145,6 @@ public:
         //- True if there is a name corresponding to the given enumeration.
         inline bool contains(const EnumType e) const;
 
-        //- Find the index of the given name.
-        //  \return position in list or -1 if not found.
-        inline label find(const word& enumName) const;
-
-        //- Find the first index of given enumeration.
-        //  \return position in list or -1 if not found.
-        inline label find(const EnumType e) const;
-
         //- The enumeration corresponding to the given name.
         //  FatalError if not found.
         EnumType get(const word& enumName) const;
@@ -183,26 +175,28 @@ public:
         //
         //  \return The value found or default if not found in dictionary.
         //  FatalIOError if the enumeration is incorrect.
-        //  Specifying failsafe downgrades the FatalIOError to an IOWarning.
+        //  Specifying warnOnly downgrades the FatalIOError to an IOWarning.
         EnumType getOrDefault
         (
             const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
             const dictionary& dict, //!< dictionary
             const EnumType deflt,   //!< fallback if not found
-            const bool failsafe = false  //!< Warn only on bad enumeration
+            const bool warnOnly = false  //!< Warn (not fail) on bad enumeration
         ) const;
 
         //- Find entry and assign to T val.
         //  FatalIOError if the enumeration is incorrect,
         //  or when it is mandatory but was not found.
         //
+        //  (TDB: handle IOobjectOption::readOption instead)
         //  \return true if the entry was found.
         bool readEntry
         (
             const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
             const dictionary& dict, //!< dictionary
-            EnumType& val,          //!< the value to read into
-            const bool mandatory = true   //!< the keyword is mandatory
+            EnumType& val,          //!< The value to read into
+            const bool mandatory = true, //!< The keyword is mandatory
+            const bool warnOnly = false  //!< Warn (not fail) on bad enumeration
         ) const;
 
         //- Find an entry if present, and assign to T val.
@@ -214,7 +208,8 @@ public:
         (
             const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
             const dictionary& dict, //!< dictionary
-            EnumType& val           //!< the value to read into
+            EnumType& val,          //!< The value to read into
+            const bool warnOnly = false  //!< Warn (not fail) on bad enumeration
         ) const;
 
 
@@ -233,7 +228,7 @@ public:
         ) const;
 
         //- Write the name representation of the enumeration to an Ostream
-        //  A noop if the enumeration wasn't found.
+        //  A no-op if the enumeration does not have a corresponding name.
         inline void write(const EnumType e, Ostream& os) const;
 
         //- Write enumeration names as a list without line-breaks
@@ -276,6 +271,9 @@ public:
                 const label idx = 0
             ) noexcept;
 
+            //- True if iterator points to an entry
+            inline bool good() const noexcept;
+
             //- The name at the current index
             inline const word& key() const;
 
@@ -300,23 +298,25 @@ public:
         const_iterator begin() const noexcept { return cbegin(); }
         const_iterator end() const noexcept { return cend(); }
 
+        //- Find the enumeration by name.
+        //  Equal to cend() if not found, or test if good()
+        inline const_iterator cfind(const word& key) const;
+        const_iterator find(const word& key) const { return cfind(key); }
+
 
     // Housekeeping
 
-        //- Find the key in the dictionary and return the corresponding
-        //- enumeration element based on its name.
-        //
-        //  \return The value found or default if not found in dictionary.
-        //  FatalError (or Warning) if the enumeration was incorrect.
+        //- Same as getOrDefault()
+        FOAM_DEPRECATED_STRICT(2019-06, "getOrDefault() method")
         EnumType lookupOrDefault
         (
             const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
             const dictionary& dict, //!< dictionary
             const EnumType deflt,   //!< fallback if not found
-            const bool failsafe = false //!< Warn only on bad enumeration
+            const bool warnOnly = false  //!< Warn (not fail) on bad enumeration
         ) const
         {
-            return getOrDefault(key, dict, deflt, failsafe);
+            return getOrDefault(key, dict, deflt, warnOnly);
         }
 
         //- Deprecated(2020-11) use get() method
@@ -353,6 +353,7 @@ public:
 
         //- Append value/key pairs to the lists of known enumerations
         //  Does not check for duplicate entries
+        FOAM_DEPRECATED_STRICT(2023-06, "push_back() method")
         void append
         (
             std::initializer_list<std::pair<EnumType, const char*>> list
@@ -362,7 +363,7 @@ public:
         }
 
         //- Same as contains()
-        bool found(const word& enumName) const { return contains(enumName); }
+        bool found(const word& key) const { return contains(key); }
 
         //- Same as contains()
         bool found(const EnumType e) const { return contains(e); }

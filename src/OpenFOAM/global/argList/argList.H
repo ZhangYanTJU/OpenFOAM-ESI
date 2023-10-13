@@ -729,6 +729,7 @@ public:
         //- Deprecated(2020-05) identical to get(const word& optName)
         //  \deprecated(2020-05) - use get() method
         template<class T=string>
+        FOAM_DEPRECATED_STRICT(2020-06, "get()")
         T opt(const word& optName) const
         {
             return this->get<T>(optName);
@@ -737,6 +738,7 @@ public:
         //- Deprecated(2020-05) identical to getOrDefault(...)
         //  \deprecated(2020-05) - use getOrDefault() method
         template<class T>
+        FOAM_DEPRECATED_STRICT(2020-06, "getOrDefault()")
         T opt(const word& optName, const T& deflt) const
         {
             return this->getOrDefault<T>(optName, deflt);
@@ -745,6 +747,7 @@ public:
         //- Deprecated(2020-05) identical to getOrDefault(...)
         //  \deprecated(2020-05) - use getOrDefault() method
         template<class T>
+        FOAM_DEPRECATED_STRICT(2020-06, "getOrDefault()")
         T get(const word& optName, const T& deflt) const
         {
             return this->getOrDefault<T>(optName, deflt);
@@ -753,6 +756,7 @@ public:
         //- Deprecated(2020-05) identical to getOrDefault(...)
         //  \deprecated(2020-05) - use getOrDefault() method
         template<class T>
+        FOAM_DEPRECATED_STRICT(2020-06, "getOrDefault()")
         T lookupOrDefault(const word& optName, const T& deflt) const
         {
             return this->getOrDefault<T>(optName, deflt);
