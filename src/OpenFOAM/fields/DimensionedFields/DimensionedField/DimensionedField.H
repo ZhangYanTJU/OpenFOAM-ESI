@@ -117,6 +117,17 @@ private:
 
         void readIfPresent(const word& fieldDictEntry = "value");
 
+        //- Implementation for 'New' with specified registerObject preference.
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        template<class... Args>
+        static tmp<DimensionedField<Type, GeoMesh>> New_impl
+        (
+            IOobjectOption::registerOption regOpt,
+            const word& name,
+            const Mesh& mesh,
+            Args&&... args
+        );
 
 public:
 
@@ -298,10 +309,25 @@ public:
 
     // Factory Methods
 
-        //- Return tmp field from name, mesh, dimensions,
-        //- copy of internal field.
-        //  The field is NO_READ, NO_WRITE, unregistered and uses the
-        //  current timeName from the mesh registry
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, copy of internal field.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const Field<Type>& iField
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, copy of internal field.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
             const word& name,
@@ -310,10 +336,25 @@ public:
             const Field<Type>& iField
         );
 
-        //- Return tmp field from name, mesh, dimensions,
-        //- moved internal field contents.
-        //  The field is NO_READ, NO_WRITE, unregistered and uses the
-        //  current timeName from the mesh registry
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, move internal field contents.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            Field<Type>&& iField
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, move internal field contents.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
             const word& name,
@@ -322,9 +363,24 @@ public:
             Field<Type>&& iField
         );
 
-        //- Return tmp field from name, mesh, dimensions.
-        //  The field is NO_READ, NO_WRITE, unregistered and uses the
-        //  current timeName from the mesh registry
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensionSet& dims
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
             const word& name,
@@ -332,9 +388,25 @@ public:
             const dimensionSet& dims
         );
 
-        //- Return uniform value tmp field from name, mesh, dimensions, value.
-        //  The field is NO_READ, NO_WRITE, unregistered and uses the
-        //  current timeName from the mesh registry
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, value, dimensions.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const Type& value,
+            const dimensionSet& dims
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, value, dimensions.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
             const word& name,
@@ -343,9 +415,24 @@ public:
             const dimensionSet& dims
         );
 
-        //- Return tmp field from name, mesh, dimensioned\<Type\>.
-        //  The field is NO_READ, NO_WRITE, unregistered and uses the
-        //  current timeName from the mesh registry
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensioned-type.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensioned<Type>& dt
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensioned-type.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
             const word& name,
@@ -353,19 +440,21 @@ public:
             const dimensioned<Type>& dt
         );
 
-        //- Return renamed tmp field
-        //  The field is NO_READ, NO_WRITE, unregistered and uses the
-        //  current timeName from the mesh registry
+        //- Return renamed tmp field (NO_READ, NO_WRITE).
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
             const word& newName,
             const tmp<DimensionedField<Type, GeoMesh>>& tfld
         );
 
-        //- Construct tmp field based on mesh/registry information from
-        //- an existing field.
-        //  Created NO_READ, NO_WRITE, NO_REGISTER, using the instance
-        //  from the field
+        //- Construct tmp field (NO_READ, NO_WRITE)
+        //- based on mesh/registry information from an existing field.
+        //- [Takes instance from the field].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         template<class AnyType>
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
@@ -374,10 +463,11 @@ public:
             const dimensionSet& dims
         );
 
-        //- Construct tmp field based on mesh/registry information from
-        //- an existing field and initialise with value.
-        //  Created NO_READ, NO_WRITE, NO_REGISTER, using the instance
-        //  from the field
+        //- Construct tmp field (NO_READ, NO_WRITE)
+        //- based on mesh/registry information from an existing field
+        //- and initialise with value.
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
         template<class AnyType>
         static tmp<DimensionedField<Type, GeoMesh>> New
         (
@@ -388,7 +478,7 @@ public:
 
 
     //- Destructor
-    virtual ~DimensionedField() = default;
+    virtual ~DimensionedField();
 
 
     // Member Functions
@@ -469,11 +559,15 @@ public:
         ) const;
 
 
-        // Write
+    // Write
 
-            bool writeData(Ostream& os, const word& fieldDictEntry) const;
+        //- Write dimensions, oriented flag (if valid) and the
+        //- field data as a dictionary entry with the specified name.
+        bool writeData(Ostream& os, const word& fieldDictEntry) const;
 
-            bool writeData(Ostream& os) const;
+        //- The writeData function (required by regIOobject),
+        //- call writeData with dictionary entry name = "value"
+        bool writeData(Ostream& os) const;
 
 
     // Member Operators

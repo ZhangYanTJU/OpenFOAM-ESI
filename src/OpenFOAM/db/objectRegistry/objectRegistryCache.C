@@ -81,6 +81,8 @@ void Foam::objectRegistry::deleteCachedObject(regIOobject* io) const
     {
         io->release();     // Relinquish any ownership by registry
         io->checkOut();
+        // Additional safety - not certain this is actually needed...
+        io->rename(io->name() + "-Cache");
         delete io;
     }
 }

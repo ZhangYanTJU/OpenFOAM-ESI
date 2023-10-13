@@ -25,16 +25,17 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type, class GeoMesh>
+template<class... Args>
 Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
-Foam::DimensionedField<Type, GeoMesh>::New
+Foam::DimensionedField<Type, GeoMesh>::New_impl
 (
+    IOobjectOption::registerOption regOpt,
     const word& name,
     const Mesh& mesh,
-    const dimensionSet& dims,
-    const Field<Type>& iField
+    Args&&... args
 )
 {
     auto ptr = tmp<DimensionedField<Type, GeoMesh>>::New
@@ -49,19 +50,91 @@ Foam::DimensionedField<Type, GeoMesh>::New
             IOobjectOption::NO_REGISTER
         ),
         mesh,
-        dims,
-        iField
+        std::forward<Args>(args)...
     );
 
-    if
+    if (IOobjectOption::REGISTER == regOpt)
+    {
+        ptr->checkIn();
+    }
+    else if
     (
-        ptr->db().is_cacheTemporaryObject(ptr.get())
+        // LEGACY_REGISTER: detect if caching is desired
+        (IOobjectOption::LEGACY_REGISTER == regOpt)
+     && ptr->db().is_cacheTemporaryObject(ptr.get())
     )
     {
         ptr.protect(true);
         ptr->checkIn();
     }
     return ptr;
+}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const Field<Type>& iField
+)
+{
+    return DimensionedField<Type, GeoMesh>::New_impl
+    (
+        regOpt,
+        name,
+        mesh,
+        dims,
+        iField
+    );
+}
+
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const Field<Type>& iField
+)
+{
+    return DimensionedField<Type, GeoMesh>::New_impl
+    (
+        IOobjectOption::LEGACY_REGISTER,
+        name,
+        mesh,
+        dims,
+        iField
+    );
+}
+
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    Field<Type>&& iField
+)
+{
+    return DimensionedField<Type, GeoMesh>::New_impl
+    (
+        regOpt,
+        name,
+        mesh,
+        dims,
+        std::move(iField)
+    );
 }
 
 
@@ -75,31 +148,35 @@ Foam::DimensionedField<Type, GeoMesh>::New
     Field<Type>&& iField
 )
 {
-    auto ptr = tmp<DimensionedField<Type, GeoMesh>>::New
+    return DimensionedField<Type, GeoMesh>::New_impl
     (
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            IOobjectOption::NO_REGISTER
-        ),
+        IOobjectOption::LEGACY_REGISTER,
+        name,
         mesh,
         dims,
         std::move(iField)
     );
+}
 
-    if
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims
+)
+{
+    return DimensionedField<Type, GeoMesh>::New_impl
     (
-        ptr->db().is_cacheTemporaryObject(ptr.get())
-    )
-    {
-        ptr.protect(true);
-        ptr->checkIn();
-    }
-    return ptr;
+        regOpt,
+        name,
+        mesh,
+        dims,
+        false  // No checkIOFlags (is NO_READ anyhow)
+    );
 }
 
 
@@ -112,31 +189,37 @@ Foam::DimensionedField<Type, GeoMesh>::New
     const dimensionSet& dims
 )
 {
-    auto ptr = tmp<DimensionedField<Type, GeoMesh>>::New
+    return DimensionedField<Type, GeoMesh>::New_impl
     (
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            IOobjectOption::NO_REGISTER
-        ),
+        IOobjectOption::LEGACY_REGISTER,
+        name,
         mesh,
         dims,
-        false  // checkIOFlags off
+        false  // No checkIOFlags (is NO_READ anyhow)
     );
+}
 
-    if
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const Type& value,
+    const dimensionSet& dims
+)
+{
+    return DimensionedField<Type, GeoMesh>::New_impl
     (
-        ptr->db().is_cacheTemporaryObject(ptr.get())
-    )
-    {
-        ptr.protect(true);
-        ptr->checkIn();
-    }
-    return ptr;
+        regOpt,
+        name,
+        mesh,
+        value,
+        dims,
+        false  // No checkIOFlags (is NO_READ anyhow)
+    );
 }
 
 
@@ -150,32 +233,36 @@ Foam::DimensionedField<Type, GeoMesh>::New
     const dimensionSet& dims
 )
 {
-    auto ptr = tmp<DimensionedField<Type, GeoMesh>>::New
+    return DimensionedField<Type, GeoMesh>::New_impl
     (
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            IOobjectOption::NO_REGISTER
-        ),
+        IOobjectOption::LEGACY_REGISTER,
+        name,
         mesh,
         value,
         dims,
-        false  // checkIOFlags off
+        false  // No checkIOFlags (is NO_READ anyhow)
     );
+}
 
-    if
+
+template<class Type, class GeoMesh>
+Foam::tmp<Foam::DimensionedField<Type, GeoMesh>>
+Foam::DimensionedField<Type, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensioned<Type>& dt
+)
+{
+    return DimensionedField<Type, GeoMesh>::New
     (
-        ptr->db().is_cacheTemporaryObject(ptr.get())
-    )
-    {
-        ptr.protect(true);
-        ptr->checkIn();
-    }
-    return ptr;
+        name,
+        regOpt,
+        mesh,
+        dt.value(),
+        dt.dimensions()
+    );
 }
 
 

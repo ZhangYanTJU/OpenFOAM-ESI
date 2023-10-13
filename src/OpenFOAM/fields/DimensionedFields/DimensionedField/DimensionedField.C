@@ -376,6 +376,16 @@ Foam::DimensionedField<Type, GeoMesh>::clone() const
 }
 
 
+// * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * * * //
+
+template<class Type, class GeoMesh>
+Foam::DimensionedField<Type, GeoMesh>::~DimensionedField()
+{
+    // FUTURE: register cache field info
+    // // this->db().cacheTemporaryObject(*this);
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, class GeoMesh>
