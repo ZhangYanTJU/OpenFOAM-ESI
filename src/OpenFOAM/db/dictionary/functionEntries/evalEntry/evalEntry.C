@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -255,7 +255,7 @@ bool Foam::functionEntries::evalEntry::execute
 {
     tokenList toks(evaluate(parentDict, is));
 
-    entry.append(std::move(toks), true);  // Lazy resizing
+    entry.add_tokens(std::move(toks));   // Add at tokenIndex
 
     return true;
 }
@@ -272,7 +272,7 @@ bool Foam::functionEntries::evalEntry::execute
 {
     tokenList toks(evaluate(parentDict, inputExpr, fieldWidth, is));
 
-    entry.append(std::move(toks), true);  // Lazy resizing
+    entry.add_tokens(std::move(toks));   // Add at tokenIndex
 
     return true;
 }

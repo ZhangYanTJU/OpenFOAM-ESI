@@ -170,9 +170,9 @@ bool Foam::primitiveEntry::expandVariable
 
         // Parse string into a series of tokens
 
-        tokenList toks(ITstream::parse(str));  // ASCII
+        tokenList toks(ITstream::parse(str));   // ASCII
 
-        ITstream::append(std::move(toks), true);  // Lazy resizing
+        ITstream::add_tokens(std::move(toks));  // Add at tokenIndex
     }
     else if (eptr->isDict())
     {
@@ -185,10 +185,10 @@ bool Foam::primitiveEntry::expandVariable
             // Not found or empty:  use ":-" alternative value
             // Found and not empty: use ":+" alternative value
 
-            toks = ITstream::parse(altValue);  // ASCII
+            toks = ITstream::parse(altValue);   // ASCII
         }
 
-        ITstream::append(std::move(toks), true);  // Lazy resizing
+        ITstream::add_tokens(std::move(toks));  // Add at tokenIndex
     }
     else
     {
@@ -201,11 +201,11 @@ bool Foam::primitiveEntry::expandVariable
 
             tokenList toks(ITstream::parse(altValue));  // ASCII
 
-            ITstream::append(std::move(toks), true);  // Lazy resizing
+            ITstream::add_tokens(std::move(toks));  // Add at tokenIndex
         }
         else
         {
-            ITstream::append(eptr->stream(), true);  // Lazy resizing
+            ITstream::add_tokens(eptr->stream());   // Add at tokenIndex
         }
     }
 

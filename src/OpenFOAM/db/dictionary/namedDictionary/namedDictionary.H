@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2020 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +40,9 @@ Description
     );
     \endverbatim
 
-    In can also be used in situations where an individual dictionary entry
-    should be read.
+    The namedDictionary can also be used in situations where an individual
+    dictionary entry should be read. The keyword() and dict() methods
+    correspond to Foam::entry naming conventions.
     \verbatim
     actions
     (
@@ -113,28 +114,16 @@ public:
         bool empty() const noexcept;
 
         //- Return keyword
-        const keyType& keyword() const noexcept
-        {
-            return first();
-        }
+        const keyType& keyword() const noexcept { return first(); }
 
         //- Return non-const access to keyword
-        keyType& keyword() noexcept
-        {
-            return first();
-        }
+        keyType& keyword() noexcept { return first(); }
 
         //- Read-access to the dictionay
-        const dictionary& dict() const noexcept
-        {
-            return second();
-        }
+        const dictionary& dict() const noexcept { return second(); }
 
         //- Write access to the dictionay
-        dictionary& dict() noexcept
-        {
-            return second();
-        }
+        dictionary& dict() noexcept { return second(); }
 
 
     // IOstream Operators

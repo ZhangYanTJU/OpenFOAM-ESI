@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,7 +129,7 @@ bool Foam::functionEntries::wordDirective::execute
     if (tok.good())
     {
         // Can add evaluated value directly into primitiveEntry
-        entry.append(std::move(tok), true);  // Lazy resizing
+        entry.add_tokens(std::move(tok));   // Add at tokenIndex
     }
 
     return true;

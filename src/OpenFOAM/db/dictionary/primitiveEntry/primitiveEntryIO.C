@@ -198,7 +198,7 @@ bool Foam::primitiveEntry::read(const dictionary& dict, Istream& is)
 
         if (acceptToken(tok, dict, is))
         {
-            newElmt(tokenIndex()++) = std::move(tok);
+            ITstream::add_tokens(std::move(tok));   // Add at tokenIndex
         }
 
         // With/without move: clear any old content and force to have a

@@ -29,7 +29,7 @@ License
 #include "error.H"
 #include "ITstream.H"
 #include "SpanStream.H"
-#include "StringStream.H"
+#include <algorithm>
 #include <memory>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -132,35 +132,25 @@ Foam::tokenList Foam::ITstream::parse
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::ITstream::reserveCapacity
-(
-    const label nElem,
-    const bool lazy
-)
+void Foam::ITstream::reserveCapacity(const label newCapacity)
 {
-    if (lazy)
+    // Reserve - leave excess capacity for further appends
+
+    label len = tokenList::size();
+
+    if (len < newCapacity)
     {
-        // Reserve - leave excess capacity for further appends
+        // Min-size (16) when starting from zero
+        if (!len) len = 8;
 
-        label n = tokenList::size();
-
-        if (nElem > n)
+        // Increase capacity. Strict doubling
+        do
         {
-            if (!n) n = 1;  // Avoid dead-lock when starting from zero-sized
-
-            do
-            {
-                n *= 2;
-            }
-            while (nElem >= n);
-
-            tokenList::resize(n);
+            len *= 2;
         }
-    }
-    else
-    {
-        // Strict capacity
-        tokenList::resize(nElem);
+        while (len < newCapacity);
+
+        tokenList::resize(len);
     }
 }
 
@@ -277,7 +267,7 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    ISpanStream is(input.data(), input.length(), streamOpt);
+    ISpanStream is(input, streamOpt);
 
     parseStream(is, static_cast<tokenList&>(*this));
     ITstream::seek(0);  // rewind(), but bypasss virtual
@@ -329,26 +319,39 @@ void Foam::ITstream::print(Ostream& os) const
 
 std::string Foam::ITstream::toString() const
 {
-    const tokenList& toks = *this;
-    const label nToks = toks.size();
-
-    if (nToks == 1 && toks.front().isStringType())
+    if (tokenList::empty())
+    {
+        return std::string();
+    }
+    else if (tokenList::size() == 1 && tokenList::front().isStringType())
     {
         // Already a string-type (WORD, STRING, ...). Just copy.
-        return toks.front().stringToken();
+        return tokenList::front().stringToken();
     }
 
-    OStringStream buf;
+    // Stringify
+    OCharStream buf;
     buf.precision(16);      // Some reasonably high precision
-    bool addSpace = false;  // Separate from previous token with a space
-    for (const token& tok : toks)
+
+    auto iter = tokenList::cbegin();
+    const auto last = tokenList::cend();
+
+    // Note: could also just use the buffer token-wise
+
+    // Contents - space separated
+    if (iter != last)
     {
-        if (addSpace) buf << token::SPACE;
-        addSpace = true;
-        buf << tok;
+        buf << *iter;
+
+        for (++iter; (iter != last); (void)++iter)
+        {
+            buf << token::SPACE << *iter;
+        }
     }
 
-    return buf.str();
+    const auto view = buf.view();
+
+    return std::string(view.data(), view.size());
 }
 
 
@@ -733,51 +736,42 @@ void Foam::ITstream::rewind()
 }
 
 
-void Foam::ITstream::push_back(const token& t, const bool lazy)
+void Foam::ITstream::add_tokens(const token& tok)
 {
-    reserveCapacity(tokenIndex_ + 1, lazy);
-    tokenList& toks = *this;
+    reserveCapacity(tokenIndex_ + 1);
 
-    toks[tokenIndex_] = t;  // copy append
+    tokenList::operator[](tokenIndex_) = tok;
     ++tokenIndex_;
 }
 
 
-void Foam::ITstream::push_back(token&& t, const bool lazy)
+void Foam::ITstream::add_tokens(token&& tok)
 {
-    reserveCapacity(tokenIndex_ + 1, lazy);
-    tokenList& toks = *this;
+    reserveCapacity(tokenIndex_ + 1);
 
-    toks[tokenIndex_] = std::move(t);  // move append
+    tokenList::operator[](tokenIndex_) = std::move(tok);
     ++tokenIndex_;
 }
 
 
-void Foam::ITstream::push_back(const UList<token>& newTokens, const bool lazy)
+void Foam::ITstream::add_tokens(const UList<token>& toks)
 {
-    reserveCapacity(tokenIndex_ + newTokens.size(), lazy);
-    tokenList& toks = *this;
+    const label len = toks.size();
+    reserveCapacity(tokenIndex_ + len);
 
-    for (const token& t : newTokens)
-    {
-        toks[tokenIndex_] = t;  // copy append
-        ++tokenIndex_;
-    }
+    std::copy_n(toks.begin(), len, tokenList::begin(tokenIndex_));
+    tokenIndex_ += len;
 }
 
 
-void Foam::ITstream::push_back(List<token>&& newTokens, const bool lazy)
+void Foam::ITstream::add_tokens(List<token>&& toks)
 {
-    reserveCapacity(tokenIndex_ + newTokens.size(), lazy);
-    tokenList& toks = *this;
+    const label len = toks.size();
+    reserveCapacity(tokenIndex_ + len);
 
-    for (token& t : newTokens)
-    {
-        toks[tokenIndex_] = std::move(t);  // move append
-        ++tokenIndex_;
-    }
-
-    newTokens.clear();
+    std::move(toks.begin(), toks.end(), tokenList::begin(tokenIndex_));
+    tokenIndex_ += len;
+    toks.clear();
 }
 
 

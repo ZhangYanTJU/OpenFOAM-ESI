@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2020 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,6 +83,8 @@ Foam::Istream& Foam::operator>>(Istream& is, namedDictionary& obj)
     if (tok.isPunctuation(token::BEGIN_BLOCK))
     {
         obj.dict().read(is);
+        // Provide a name as context for error messages etc.
+        obj.dict().name() = is.relativeName();
     }
 
     is.check(FUNCTION_NAME);

@@ -30,6 +30,10 @@ Class
 Description
     An input stream of tokens.
 
+    Although ITstream is principally meant to be used as a read-only
+    input stream, it also provides additional methods to help when
+    composing its contents (eg, when parsing).
+
 SourceFiles
     ITstream.C
 
@@ -69,11 +73,9 @@ class ITstream
         //- An ad hoc combination of reserve and setCapacity somewhat
         //- similar to DynamicList.
         //
-        //  In lazy mode, increase list size if needed, but leave any
-        //  excess capacity - works like reserve.
-        //
-        //  In non-lazy mode, set exact capacity
-        void reserveCapacity(const label nElem, const bool lazy);
+        //  Increase list size if needed,
+        //  but leave any excess capacity (ie, like reserve).
+        void reserveCapacity(const label newCapacity);
 
         //- Failsafe read-access to token at specified location
         //- or undefinedToken
@@ -345,11 +347,11 @@ public:
 
         //- Copy append a token at the current tokenIndex,
         //- incrementing the index.
-        void push_back(const token& t, const bool lazy);
+        void add_tokens(const token& tok);
 
         //- Move append a token at the current tokenIndex,
         //- incrementing the index.
-        void push_back(token&& t, const bool lazy);
+        void add_tokens(token&& tok);
 
         //- Copy append a list of tokens at the current tokenIndex,
         //- incrementing the index.
@@ -357,7 +359,7 @@ public:
         //  \param newTokens the list of tokens to copy append
         //  \param lazy leaves any excess capacity for further appends.
         //      The caller will be responsible for resizing later.
-        void push_back(const UList<token>& newTokens, const bool lazy);
+        void add_tokens(const UList<token>& toks);
 
         //- Move append a list of tokens at the current tokenIndex,
         //- incrementing the index.
@@ -365,7 +367,7 @@ public:
         //  \param newTokens the list of tokens to move append
         //  \param lazy leaves any excess capacity for further appends.
         //      The caller will be responsible for resizing later.
-        void push_back(List<token>&& newTokens, const bool lazy);
+        void add_tokens(List<token>&& toks);
 
 
     // Stream State Functions
@@ -479,43 +481,32 @@ public:
     // Housekeeping
 
         //- Same as front()
+        FOAM_DEPRECATED_STRICT(2022-11, "front()")
         const token& peekFirst() const { return front(); }
 
-        //- Copy append a token at the current tokenIndex,
-        //- incrementing the index.
-        void append(const token& t, const bool lazy)
-        {
-            this->push_back(std::move(t), lazy);
-        }
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void append(const token& t, bool) { add_tokens(t); }
 
-        //- Move append a token at the current tokenIndex,
-        //- incrementing the index.
-        void append(token&& t, const bool lazy)
-        {
-            this->push_back(std::move(t), lazy);
-        }
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void append(token&& t, bool) { add_tokens(std::move(t)); }
 
-        //- Copy append a list of tokens at the current tokenIndex,
-        //- incrementing the index.
-        //
-        //  \param newTokens the list of tokens to copy append
-        //  \param lazy leaves any excess capacity for further appends.
-        //      The caller will be responsible for resizing later.
-        void append(const UList<token>& newTokens, const bool lazy)
-        {
-            this->push_back(newTokens, lazy);
-        }
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void append(const UList<token>& t, bool) { add_tokens(t); }
 
-        //- Move append a list of tokens at the current tokenIndex,
-        //- incrementing the index.
-        //
-        //  \param newTokens the list of tokens to move append
-        //  \param lazy leaves any excess capacity for further appends.
-        //      The caller will be responsible for resizing later.
-        void append(List<token>&& newTokens, const bool lazy)
-        {
-            this->push_back(std::move(newTokens), lazy);
-        }
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void append(List<token>&& t, bool) { add_tokens(std::move(t)); }
+
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void push_back(const token& t, bool) { add_tokens(t); }
+
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void push_back(token&& t, bool) { add_tokens(std::move(t)); }
+
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void push_back(const UList<token>& t, bool) { add_tokens(t); }
+
+        FOAM_DEPRECATED_STRICT(2023-10, "add_tokens()")
+        void push_back(List<token>&& t, bool) { add_tokens(std::move(t)); }
 };
 
 
