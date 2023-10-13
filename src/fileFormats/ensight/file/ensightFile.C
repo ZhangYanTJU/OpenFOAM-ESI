@@ -156,7 +156,7 @@ Foam::Ostream& Foam::ensightFile::writeString(const char* str, size_t len)
     // TBD: truncate at newline? (shouldn't really occur anyhow)
 
     std::copy_n(str, len, buf);
-    std::fill_n(buf + len, (len - 80), '\0');  // Pad trailing with nul
+    std::fill_n(buf + len, (80 - len), '\0');  // Pad trailing with nul
 
     if (format() == IOstreamOption::BINARY)
     {
