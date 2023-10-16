@@ -478,6 +478,10 @@ public:
             //- The communicator label
             label comm() const noexcept { return comm_; }
 
+            //- Release ownership of the communicator, return old value.
+            //  Leave further management to the caller
+            label release() noexcept { label c(comm_); comm_ = -1; return c; }
+
             //- Free allocated communicator
             void reset() { UPstream::freeCommunicator(comm_); comm_ = -1; }
 
@@ -496,6 +500,7 @@ public:
             }
 
             //- Take ownership, free allocated communicator
+            //  \caution do not call as self-assignment
             void reset(communicator&& c)
             {
                 if (comm_ != c.comm_) UPstream::freeCommunicator(comm_);
@@ -504,6 +509,7 @@ public:
             }
 
             //- Move assignment, takes ownership
+            //  \caution do not call as self-assignment
             void operator=(communicator&& c) { reset(std::move(c)); }
 
             //- Cast to label - the same as comm()
