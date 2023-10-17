@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -96,15 +96,21 @@ void surfaceNoise::initialise(const fileName& fName)
     // Note: all processors should call the windowing validate function
     label nRequiredTimes = windowModelPtr_->validate(nAvailableTimes);
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // Restrict times
-        times_.setSize(nRequiredTimes);
-        forAll(times_, timeI)
+        times_.resize_nocopy(nRequiredTimes);
+        forAll(times_, timei)
         {
-            times_[timeI] = allTimes[timeI + startTimeIndex_].value();
+            times_[timei] = allTimes[timei + startTimeIndex_].value();
         }
-        deltaT_ = checkUniformTimeStep(times_);
+
+        deltaT_ =
+        (
+            sampleFreq_ > 0
+          ? (1.0/sampleFreq_)
+          : checkUniformTimeStep(times_)
+        );
 
         // Read the surface geometry
         // Note: hard-coded to read mesh from first time index

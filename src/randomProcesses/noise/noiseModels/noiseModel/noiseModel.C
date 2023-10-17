@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -185,29 +185,34 @@ Foam::scalar Foam::noiseModel::checkUniformTimeStep
     const scalarList& times
 ) const
 {
-    scalar deltaT = -1.0;
+    scalar deltaT = 1;
 
     if (times.size() > 1)
     {
         // Uniform time step
-        deltaT = (times.last() - times.first())/scalar(times.size() - 1);
+        deltaT = (times.back() - times.front())/scalar(times.size() - 1);
 
-        for (label i = 1; i < times.size(); ++i)
+        bool nonUniform = false;
+        for (label i = 1; i < times.size() && !nonUniform; ++i)
         {
-            scalar dT = times[i] - times[i-1];
+            const scalar dT = times[i] - times[i-1];
 
-            if (mag(dT/deltaT - 1) > 1e-8)
-            {
-                FatalErrorInFunction
-                    << "Unable to process data with a variable time step"
-                    << exit(FatalError);
-            }
+            nonUniform = (mag(dT/deltaT - 1) > 1e-8);
+        }
+
+        if (nonUniform)
+        {
+            WarningInFunction
+                << "Detected non-uniform time step:"
+                << " resulting FFT may be incorrect"
+                << " (or the deltaT is just very small): " << deltaT
+                << endl;
         }
     }
     else
     {
         FatalErrorInFunction
-            << "Unable to create FFT with a single value"
+            << "Unable to create FFT with 0 or 1 values"
             << exit(FatalError);
     }
 
@@ -617,6 +622,7 @@ Foam::noiseModel::noiseModel
     nSamples_(65536),
     fLower_(25),
     fUpper_(10000),
+    sampleFreq_(0),
     startTime_(0),
     windowModelPtr_(),
     SPLweighting_(weightingType::none),
@@ -654,10 +660,16 @@ bool Foam::noiseModel::read(const dictionary& dict)
         return false;
     }
 
+    // Re-assign defaults (to avoid stickiness)
+    fLower_ = 25;
+    fUpper_ = 10000;
+    sampleFreq_ = 0;
+
     dict.readIfPresent("rhoRef", rhoRef_);
     dict.readIfPresent("N", nSamples_);
-    dict.readIfPresent("fl", fLower_);
-    dict.readIfPresent("fu", fUpper_);
+    dict.readIfPresentCompat("minFreq", {{"fl", 2312}}, fLower_);
+    dict.readIfPresentCompat("maxFreq", {{"fu", 2312}}, fUpper_);
+    dict.readIfPresent("sampleFreq", sampleFreq_);
     dict.readIfPresent("startTime", startTime_);
     dict.readIfPresent("minPressure", minPressure_);
     dict.readIfPresent("maxPressure", maxPressure_);
@@ -666,29 +678,39 @@ bool Foam::noiseModel::read(const dictionary& dict)
     if (fLower_ < 0)
     {
         FatalIOErrorInFunction(dict)
-            << "fl: lower frequency bound must be greater than zero"
+            << "Lower frequency bound must be greater than zero"
             << exit(FatalIOError);
     }
 
     if (fUpper_ < 0)
     {
         FatalIOErrorInFunction(dict)
-            << "fu: upper frequency bound must be greater than zero"
+            << "Upper frequency bound must be greater than zero"
             << exit(FatalIOError);
     }
 
     if (fUpper_ < fLower_)
     {
         FatalIOErrorInFunction(dict)
-            << "fu: upper frequency bound must be greater than lower "
-            << "frequency bound (fl)"
+            << "Upper frequency bound (" << fUpper_
+            << ") must be greater than lower frequency bound ("
+            << fLower_ << ")"
             << exit(FatalIOError);
-
     }
 
     Info<< "    Frequency bounds:" << nl
         << "        lower: " << fLower_ << nl
-        << "        upper: " << fUpper_ << endl;
+        << "        upper: " << fUpper_ << nl
+        << "       sample: ";
+
+    if (sampleFreq_ > 0)
+    {
+        Info<< sampleFreq_ << nl;
+    }
+    else
+    {
+        Info<< "auto" << nl;
+    }
 
     weightingTypeNames_.readIfPresent("SPLweighting", dict, SPLweighting_);
 

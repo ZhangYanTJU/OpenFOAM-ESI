@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +34,8 @@ Description
     \verbatim
     rhoRef          1;
     N               4096;
-    fl              25;
-    fu              10000;
+    minFreq         25;
+    maxFreq         10000;
     startTime       0;
 
     outputPrefix    "test1";
@@ -58,8 +58,9 @@ Description
         Property     | Description                   | Required  | Default value
         rhoRef       | Reference density             | no        | 1
         N            | Number of samples in sampling window | no | 65536 (2^16)
-        fl           | Lower frequency bounds        | no        | 25
-        fu           | Upper frequency bounds        | no        | 10000
+        minFreq      | Lower frequency bounds (fl)   | no        | 25
+        maxFreq      | Upper frequency bounds (fu)   | no        | 10000
+        sampleFreq   | Sample frequency              | no        | 0
         startTime    | Start time                    | no        | 0
         outputPrefix | Prefix applied to output files| no        | ''
         SPLweighting | Weighting: dBA, dBB, dBC, DBD | no        | none
@@ -70,6 +71,9 @@ Description
         writePSDf    | Write PSDf data               | no        | yes
         writeOctaves | Write octaves data            | no        | yes
     \endtable
+
+    If provided, the sampleFreq is used to define the deltaT between samples.
+    Otherwise the deltaT is determined from the time samples themselves.
 
 SourceFiles
     noiseModel.C
@@ -157,6 +161,9 @@ protected:
 
         //- Upper frequency limit, default = 10kHz
         scalar fUpper_;
+
+        //- Prescribed sample frequency
+        scalar sampleFreq_;
 
         //- Start time, default = 0s
         scalar startTime_;

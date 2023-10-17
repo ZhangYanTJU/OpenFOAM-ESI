@@ -101,7 +101,12 @@ void pointNoise::processData
 
     Info<< "Creating noise FFT" << endl;
 
-    const scalar deltaT = checkUniformTimeStep(t);
+    const scalar deltaT =
+    (
+        sampleFreq_ > 0
+      ? (1.0/sampleFreq_)
+      : checkUniformTimeStep(t)
+    );
 
     // Apply conversions
     p *= rhoRef_;
