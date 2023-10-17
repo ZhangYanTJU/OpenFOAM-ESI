@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,12 +44,14 @@ Description
     Format options for ensight:
     \table
         Property | Description                              | Required | Default
-        format   | ascii/binary                             | no  | ascii
+        format   | ascii/binary                             | no  | binary
         collateTimes | Use common geometry for times        | no  | true
         scale       | Output geometry scaling               | no  | 1
         transform   | Output coordinate transform           | no  |
         fieldLevel  | Subtract field level before scaling   | no  | empty dict
         fieldScale  | Output field scaling                  | no  | empty dict
+        timeFormat  | Time format (ensight case)            | no  | scientific
+        timePrecision | Time precision (ensight case)       | no  | 5
     \endtable
 
     The collated format maintains an internal list of the known times
@@ -65,6 +67,7 @@ SourceFiles
 #define Foam_surfaceWriters_ensightWriter_H
 
 #include "surfaceWriter.H"
+#include "ensightCase.H"
 #include "ensightWriterCaching.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -84,8 +87,8 @@ class ensightWriter
 {
     // Private Data
 
-        //- Output format option (default: ASCII)
-        IOstreamOption::streamFormat writeFormat_;
+        //- Ensight case options
+        ensightCase::options caseOpts_;
 
         //- Collate times (default: true)
         bool collateTimes_;

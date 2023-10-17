@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,13 +101,13 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeUncollated
         (
             baseDir,
             baseName + ".00000000.mesh",
-            writeFormat_
+            caseOpts_.format()
         );
         ensightFile osField
         (
             baseDir,
             baseName + ".00000000." + varName,
-            writeFormat_
+            caseOpts_.format()
         );
 
         writeGeometry(osGeom, elemOutput);
@@ -119,11 +119,7 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeUncollated
         // Update case file
         {
             OFstream osCase(outputFile, IOstreamOption::ASCII);
-
-            // Format options
-            osCase.setf(ios_base::left);
-            osCase.setf(ios_base::scientific, ios_base::floatfield);
-            osCase.precision(5);
+            ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             osCase
                 << "FORMAT" << nl

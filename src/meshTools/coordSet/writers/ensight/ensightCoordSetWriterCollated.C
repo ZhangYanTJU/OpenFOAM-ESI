@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -148,7 +148,7 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeCollated
             (
                 geomFile.path(),
                 geomFile.name(),
-                writeFormat_
+                caseOpts_.format()
             );
 
             writeGeometry(osGeom, elemOutput);
@@ -160,7 +160,7 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeCollated
         (
             dataDir,
             varName,
-            writeFormat_
+            caseOpts_.format()
         );
 
         if (verbose_)
@@ -177,11 +177,7 @@ Foam::fileName Foam::coordSetWriters::ensightWriter::writeCollated
         if (stateChanged)
         {
             OFstream osCase(outputFile, IOstreamOption::ASCII);
-
-            // Format options
-            osCase.setf(ios_base::left);
-            osCase.setf(ios_base::scientific, ios_base::floatfield);
-            osCase.precision(5);
+            ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             if (verbose_)
             {

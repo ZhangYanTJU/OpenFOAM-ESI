@@ -147,7 +147,7 @@ float Foam::ensightFile::undefValue(float value) noexcept
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::Ostream& Foam::ensightFile::writeString(const char* str, size_t len)
+void Foam::ensightFile::writeString(const char* str, size_t len)
 {
     // Output 79 chars (ASCII) or 80 chars (BINARY)
     char buf[80];
@@ -165,41 +165,47 @@ Foam::Ostream& Foam::ensightFile::writeString(const char* str, size_t len)
     else
     {
         buf[79] = 0;  // Max 79 in ASCII
+
+        // TBD: Extra safety - trap newline in ASCII?
+        // char* p = ::strchr(buf, '\n');
+        // if (p) *p = 0;
+
         stdStream() << buf;
         syncState();
     }
-
-    return *this;
 }
 
 
-Foam::Ostream& Foam::ensightFile::writeString(const char* str)
+void Foam::ensightFile::writeString(const char* str)
 {
-    return writeString(str, strlen(str));
+    writeString(str, strlen(str));
 }
 
 
-Foam::Ostream& Foam::ensightFile::writeString(const std::string& str)
+void Foam::ensightFile::writeString(const std::string& str)
 {
-    return writeString(str.data(), str.size());
+    writeString(str.data(), str.size());
 }
 
 
 Foam::Ostream& Foam::ensightFile::write(const char* str)
 {
-    return writeString(str, strlen(str));
+    writeString(str, strlen(str));
+    return *this;
 }
 
 
 Foam::Ostream& Foam::ensightFile::write(const word& str)
 {
-    return writeString(str.data(), str.size());
+    writeString(str.data(), str.size());
+    return *this;
 }
 
 
 Foam::Ostream& Foam::ensightFile::write(const std::string& str)
 {
-    return writeString(str.data(), str.size());
+    writeString(str.data(), str.size());
+    return *this;
 }
 
 
@@ -304,10 +310,9 @@ void Foam::ensightFile::newline()
 }
 
 
-Foam::Ostream& Foam::ensightFile::writeUndef()
+void Foam::ensightFile::writeUndef()
 {
     write(undefValue_);
-    return *this;
 }
 
 
@@ -330,14 +335,27 @@ Foam::Ostream& Foam::ensightFile::writeKeyword(const keyType& key)
 }
 
 
-Foam::Ostream& Foam::ensightFile::writeBinaryHeader()
+void Foam::ensightFile::writeBinaryHeader()
 {
     if (format() == IOstreamOption::BINARY)
     {
         writeString("C Binary");
+        // Is binary: newline() is a no-op
     }
+}
 
-    return *this;
+
+void Foam::ensightFile::beginTimeStep()
+{
+    writeString("BEGIN TIME STEP");
+    newline();
+}
+
+
+void Foam::ensightFile::endTimeStep()
+{
+    writeString("END TIME STEP");
+    newline();
 }
 
 

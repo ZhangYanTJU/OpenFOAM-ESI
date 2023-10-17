@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,21 +26,41 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ensightCase.H"
+#include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::ensightCase::options::options(IOstreamOption::streamFormat fmt)
 :
-    format_(fmt),
+    format_
+    (
+        // Can only be ASCII or BINARY
+        (fmt == IOstreamOption::streamFormat::ASCII)
+      ? IOstreamOption::streamFormat::ASCII
+      : IOstreamOption::streamFormat::BINARY
+    ),
     overwrite_(false),
     nodeValues_(false),
     separateCloud_(false),
+    timeFormat_(IOstreamOption::floatFormat::scientific),
+    timePrecision_(5),
     width_(0),
     mask_(),
     printf_()
 {
     width(8);  // Fill mask and setup printf-format
 }
+
+
+Foam::ensightCase::options::options
+(
+    const word& formatKeyword,
+    const dictionary& dict,
+    IOstreamOption::streamFormat fmt
+)
+:
+    options(IOstreamOption::formatEnum(formatKeyword, dict, fmt))
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -58,7 +78,7 @@ Foam::word Foam::ensightCase::options::padded(const label i) const
 }
 
 
-void Foam::ensightCase::options::width(const label n)
+void Foam::ensightCase::options::width(const int n)
 {
     // Enforce min/max sanity limits
     if (n < 1 || n > 31)
@@ -71,6 +91,29 @@ void Foam::ensightCase::options::width(const label n)
 
     // Appropriate printf format
     printf_ = "%0" + std::to_string(n) + "d";
+}
+
+
+void Foam::ensightCase::options::timeFormat
+(
+    const word& key,
+    const dictionary& dict
+)
+{
+    timeFormat_ = IOstreamOption::floatFormatEnum(key, dict, timeFormat_);
+}
+
+
+void Foam::ensightCase::options::timePrecision
+(
+    const word& key,
+    const dictionary& dict
+)
+{
+    if (!key.empty())
+    {
+        dict.readIfPresent(key, timePrecision_, keyType::LITERAL);
+    }
 }
 
 

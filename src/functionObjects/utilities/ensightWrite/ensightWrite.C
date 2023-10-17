@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -97,10 +97,7 @@ Foam::functionObjects::ensightWrite::ensightWrite
 :
     fvMeshFunctionObject(name, runTime, dict),
     writeOpts_(),
-    caseOpts_
-    (
-        IOstreamOption::formatEnum("format", dict, runTime.writeFormat())
-    ),
+    caseOpts_("format", dict, IOstreamOption::BINARY),
     outputDir_(),
     consecutive_(false),
     meshState_(polyMesh::TOPO_CHANGE),
@@ -179,6 +176,9 @@ bool Foam::functionObjects::ensightWrite::read(const dictionary& dict)
     caseOpts_.nodeValues(dict.getOrDefault("nodeValues", false));
     caseOpts_.width(dict.getOrDefault<label>("width", 8));
     caseOpts_.overwrite(dict.getOrDefault("overwrite", false));
+
+    caseOpts_.timeFormat("timeFormat", dict);
+    caseOpts_.timePrecision("timePrecision", dict);
 
 
     // Output directory

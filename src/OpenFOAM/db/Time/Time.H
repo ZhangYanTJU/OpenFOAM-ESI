@@ -104,15 +104,6 @@ public:
             saUnknown     //!< Dummy no-op. Do not change current value.
         };
 
-        //- Supported time directory name formats
-        enum fmtflags
-        {
-            general    = 0,                   //!< default float notation
-            fixed      = ios_base::fixed,     //!< fixed-point notation
-            scientific = ios_base::scientific //!< scientific notation
-        };
-
-
         //- Names for writeControls
         static const Enum<writeControls> writeControlNames;
 
@@ -179,9 +170,8 @@ protected:
         //- Signal handler for write and clean exit upon signal
         sigStopAtWriteNow sigStopAtWriteNow_;
 
-
-        //- Time directory name format
-        static fmtflags format_;
+        //- Format for time directory names (general | fixed | scientific)
+        static IOstreamOption::floatFormat format_;
 
         //- Time directory name precision
         static int precision_;

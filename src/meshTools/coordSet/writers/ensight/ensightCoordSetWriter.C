@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -176,7 +176,7 @@ void Foam::coordSetWriters::ensightWriter::writeGeometry
 Foam::coordSetWriters::ensightWriter::ensightWriter()
 :
     coordSetWriter(),
-    writeFormat_(IOstreamOption::ASCII),
+    caseOpts_(IOstreamOption::BINARY),
     collateTimes_(true),
     caching_("fieldsDict")  // Historic name
 {}
@@ -185,13 +185,13 @@ Foam::coordSetWriters::ensightWriter::ensightWriter()
 Foam::coordSetWriters::ensightWriter::ensightWriter(const dictionary& options)
 :
     coordSetWriter(options),
-    writeFormat_
-    (
-        IOstreamOption::formatEnum("format", options, IOstreamOption::ASCII)
-    ),
+    caseOpts_("format", options, IOstreamOption::BINARY),
     collateTimes_(options.getOrDefault("collateTimes", true)),
     caching_("fieldsDict")  // Historic name
-{}
+{
+    caseOpts_.timeFormat("timeFormat", options);
+    caseOpts_.timePrecision("timePrecision", options);
+}
 
 
 Foam::coordSetWriters::ensightWriter::ensightWriter

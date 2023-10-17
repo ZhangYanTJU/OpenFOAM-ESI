@@ -329,29 +329,8 @@ void Foam::Time::readDict()
         }
     }
 
-    if (controlDict_.found("timeFormat"))
-    {
-        const word formatName(controlDict_.get<word>("timeFormat"));
-
-        if (formatName == "general")
-        {
-            format_ = fmtflags::general;
-        }
-        else if (formatName == "fixed")
-        {
-            format_ = fmtflags::fixed;
-        }
-        else if (formatName == "scientific")
-        {
-            format_ = fmtflags::scientific;
-        }
-        else
-        {
-            WarningInFunction
-                << "Unsupported time format " << formatName
-                << endl;
-        }
-    }
+    format_ =
+        IOstreamOption::floatFormatEnum("timeFormat", controlDict_, format_);
 
     controlDict_.readIfPresent("timePrecision", precision_);
 

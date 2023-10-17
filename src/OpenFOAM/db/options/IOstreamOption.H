@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,6 +48,7 @@ SourceFiles
 #define Foam_IOstreamOption_H
 
 #include "word.H"
+#include <ios>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -97,6 +98,17 @@ public:
             ATOMIC              //!< atomic = true
         };
 
+        //- Float formats (eg, time directory name formats)
+        enum class floatFormat : unsigned
+        {
+            //! default float notation
+            general    = unsigned(0),
+            //! fixed-point notation
+            fixed      = unsigned(std::ios_base::fixed),
+            //! scientific notation
+            scientific = unsigned(std::ios_base::scientific)
+        };
+
 
         //- Representation of a major/minor version number
         class versionNumber
@@ -134,7 +146,7 @@ public:
             explicit versionNumber(const token& tok);
 
             //- Failsafe construct from dictionary lookup.
-            versionNumber(const word& keyword, const dictionary& dict);
+            versionNumber(const word& key, const dictionary& dict);
 
 
         // Member Functions
@@ -168,18 +180,90 @@ public:
             //  Positive when 'this' is greater than other.
             int compare(const versionNumber& other) const noexcept
             {
-                return number_ - other.number_;
+                return (number_ - other.number_);
             }
         };
 
 
     // Public Static Data
 
+        //- Names for float formats (general, fixed, scientific)
+        static const Enum<floatFormat> floatFormatNames;
+
         //- Stream format names (ascii, binary)
         static const Enum<streamFormat> formatNames;
 
         //- The current version number (2.0)
         static const versionNumber currentVersion;
+
+
+    // Static Helpers
+
+        //- Lookup floatFormat enum corresponding to the string
+        //- (general | fixed | scientific).
+        //
+        //  If the string is not recognized, emit warning and return default.
+        //  Silent if the string itself is empty.
+        //
+        //  \note Can be used as constructor substitute for the enumeration
+        static floatFormat floatFormatEnum
+        (
+            const word& fmtName,
+            const floatFormat deflt = floatFormat::general
+        );
+
+        //- getOrDefault floatFormat from dictionary,
+        //- warn only on bad enumeration.
+        static floatFormat floatFormatEnum
+        (
+            const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
+            const dictionary& dict, //!< dictionary
+            const floatFormat deflt = floatFormat::general
+        );
+
+        //- Lookup streamFormat enum corresponding to the string
+        //- (ascii | binary).
+        //
+        //  If the string is not recognized, emit warning and return default.
+        //  Silent if the string itself is empty.
+        //
+        //  \note Can be used as constructor substitute for the enumeration
+        static streamFormat formatEnum
+        (
+            const word& fmtName,
+            const streamFormat deflt = streamFormat::ASCII
+        );
+
+        //- getOrDefault streamFormat from dictionary,
+        //- warn only on bad enumeration.
+        static streamFormat formatEnum
+        (
+            const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
+            const dictionary& dict, //!< dictionary
+            const streamFormat deflt = streamFormat::ASCII
+        );
+
+        //- The compression enum corresponding to the string.
+        //  Expects switch values (true/false, on/off, ...)
+        //
+        //  If the string is not recognized, emit warning and return default.
+        //  Silent if the string itself is empty.
+        //
+        //  \note Can be used as constructor substitute for the enumeration
+        static compressionType compressionEnum
+        (
+            const word& compName,
+            const compressionType deflt = compressionType::UNCOMPRESSED
+        );
+
+        //- getOrDefault compressionType from dictionary,
+        //- warn only on bad enumeration.
+        static compressionType compressionEnum
+        (
+            const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
+            const dictionary& dict, //!< dictionary
+            const compressionType deflt = compressionType::UNCOMPRESSED
+        );
 
 
 private:
@@ -250,51 +334,6 @@ public:
             format_(fmt),
             compression_(opt.compression_)
         {}
-
-
-    // Static Member Functions
-
-        //- The stream format enum corresponding to the string
-        //- (ascii | binary).
-        //
-        //  If the string is not recognized, emit warning and return default.
-        //  Silent if the string itself is empty.
-        //
-        //  \note Can be used as constructor substitute for the enumeration
-        static streamFormat formatEnum
-        (
-            const word& formatName,
-            const streamFormat deflt = streamFormat::ASCII
-        );
-
-        //- Failsafe construct streamFormat from optional dictionary lookup
-        static streamFormat formatEnum
-        (
-            const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
-            const dictionary& dict, //!< dictionary
-            const streamFormat deflt = streamFormat::ASCII
-        );
-
-        //- The compression enum corresponding to the string.
-        //  Expects switch values (true/false, on/off, ...)
-        //
-        //  If the string is not recognized, emit warning and return default.
-        //  Silent if the string itself is empty.
-        //
-        //  \note Can be used as constructor substitute for the enumeration
-        static compressionType compressionEnum
-        (
-            const word& compName,
-            const compressionType deflt = compressionType::UNCOMPRESSED
-        );
-
-        //- Failsafe construct compressionType from optional dictionary lookup
-        static compressionType compressionEnum
-        (
-            const word& key,        //!< Lookup key. Uses LITERAL (not REGEX)
-            const dictionary& dict, //!< dictionary
-            const compressionType deflt = compressionType::UNCOMPRESSED
-        );
 
 
     // Member Functions

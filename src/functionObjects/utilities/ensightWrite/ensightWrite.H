@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +41,9 @@ Description
         writeControl    writeTime;
         writeInterval   1;
         format          binary;
+
+        timeFormat      scientific;
+        timePrecision   5;
 
         overwrite       true;
         width           12;
@@ -95,11 +98,13 @@ Description
     \heading Ensight Output Options
     \table
         Property    | Description                           | Required | Default
-        format      | ascii or binary format        | no | same as simulation
+        format      | ascii or binary format                | no  | binary
         width       | Mask width for \c data/XXXX           | no  | 8
         directory   | The output directory name     | no | postProcessing/NAME
         overwrite   | Remove existing directory             | no  | false
         consecutive | Consecutive output numbering          | no  | false
+        timeFormat  | Time format (ensight case)            | no  | scientific
+        timePrecision | Time precision (ensight case)       | no  | 5
     \endtable
 
     \heading Output Selection
