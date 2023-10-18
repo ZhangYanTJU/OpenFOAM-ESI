@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,7 +56,7 @@ Foam::regIOobject::regIOobject(const IOobject& io, const bool isTimeObject)
     metaDataPtr_(nullptr),
     isPtr_(nullptr)
 {
-    if (registerObject())
+    if (IOobject::registerObject())
     {
         // Register (check-in) with objectRegistry if requested
         checkIn();
@@ -137,7 +137,7 @@ Foam::regIOobject::regIOobject
     metaDataPtr_(rio.metaDataPtr_.clone()),
     isPtr_(nullptr)
 {
-    if (registerObject())
+    if (IOobject::registerObject())
     {
         checkIn();
     }
@@ -194,7 +194,7 @@ bool Foam::regIOobject::checkIn()
     {
         // multiple checkin of same object is disallowed - this would mess up
         // any mapping
-        registered_ = db().checkIn(*this);
+        registered_ = db().checkIn(this);
 
         // check-in on defaultRegion is allowed to fail, since subsetted meshes
         // are created with the same name as their originating mesh
@@ -205,17 +205,18 @@ bool Foam::regIOobject::checkIn()
                 // for ease of finding where attempted duplicate check-in
                 // originated
                 FatalErrorInFunction
-                    << "failed to register object " << objectPath()
-                    << " the name already exists in the objectRegistry" << endl
-                    << "Contents:" << db().sortedToc()
+                    << "Failed to register: " << name() << ' '
+                    << objectRelPath()
+                    << " : the name already exists in the registry" << nl
+                    << "Contents:" << db().sortedToc() << endl
                     << abort(FatalError);
             }
             else
             {
                 WarningInFunction
-                    << "failed to register object " << objectPath()
-                    << " the name already exists in the objectRegistry"
-                    << endl;
+                    << "Failed to register: " << name() << ' '
+                    << objectRelPath()
+                    << " : the name already exists in the registry" << endl;
             }
         }
     }
@@ -474,7 +475,7 @@ void Foam::regIOobject::rename(const word& newName)
 
     IOobject::rename(newName);
 
-    if (registerObject())
+    if (IOobject::registerObject())
     {
         // Re-register object with objectRegistry
         checkIn();
@@ -519,7 +520,7 @@ void Foam::regIOobject::operator=(const IOobject& io)
 
     IOobject::operator=(io);
 
-    if (registerObject())
+    if (IOobject::registerObject())
     {
         // Re-register object with objectRegistry
         checkIn();

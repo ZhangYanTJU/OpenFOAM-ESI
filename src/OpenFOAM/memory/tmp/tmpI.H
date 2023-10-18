@@ -91,15 +91,6 @@ inline Foam::tmp<T>::tmp(T* p)
 
 
 template<class T>
-inline Foam::tmp<T>::tmp(bool immovable, T* p)
-:
-    tmp<T>(p)
-{
-    if (ptr_ && immovable) type_ = CACHE_PTR;
-}
-
-
-template<class T>
 inline constexpr Foam::tmp<T>::tmp(const T& obj) noexcept
 :
     ptr_(const_cast<T*>(&obj)),
@@ -320,19 +311,33 @@ inline void Foam::tmp<T>::clear() const noexcept
 
 
 template<class T>
+inline void Foam::tmp<T>::protect(bool on) noexcept
+{
+    if (on)
+    {
+        // ON: from PTR -> CACHE_PTR, but not nullptr
+        if (ptr_ && type_ == PTR)
+        {
+            type_ = CACHE_PTR;
+        }
+    }
+    else
+    {
+        // OFF: from CACHE_PTR -> PTR
+        if (type_ == CACHE_PTR)
+        {
+            type_ = PTR;
+        }
+    }
+}
+
+
+template<class T>
 inline void Foam::tmp<T>::reset(T* p) noexcept
 {
     clear();
     ptr_ = p;
     type_ = PTR;
-}
-
-
-template<class T>
-inline void Foam::tmp<T>::reset(bool immovable, T* p) noexcept
-{
-    reset(p);
-    if (ptr_ && immovable) type_ = CACHE_PTR;
 }
 
 

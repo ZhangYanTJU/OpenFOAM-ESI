@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,10 +45,31 @@ Description
 
 using namespace Foam;
 
+enum loadTestTypes
+{
+    PLAIN_PTR, AUTO_PTR, REF_PTR, TMP_PTR, CACHE_PTR
+};
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+void printIOobject(const regIOobject* io)
+{
+    if (io)
+    {
+        Info<< io->name() << ' ' << "type=" << io->type()
+            << " registered=" << io->registered()
+            << " owned=" << io->ownedByRegistry() << endl;
+    }
+}
+
+
 template<class Type>
-bool loadField(fvMesh& mesh, const word& fieldName)
+bool loadField
+(
+    fvMesh& mesh,
+    const word& fieldName,
+    enum loadTestTypes wrapper = loadTestTypes::PLAIN_PTR
+)
 {
     typedef GeometricField<Type, fvPatchField, volMesh> VolFieldType;
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> SurfaceFieldType;
@@ -66,20 +87,67 @@ bool loadField(fvMesh& mesh, const word& fieldName)
         mesh,
         IOobject::MUST_READ,
         IOobject::NO_WRITE
+        // Value of register is fairly irrelevant
     );
 
     if (fieldHeader.typeHeaderOk<VolFieldType>(true, true, false))
     {
         // Store field on mesh database
-        VolFieldType* ptr = new VolFieldType(fieldHeader, mesh);
-        mesh.objectRegistry::store(ptr);
+        switch (wrapper)
+        {
+            case loadTestTypes::PLAIN_PTR :
+            {
+                auto* ptr = new VolFieldType(fieldHeader, mesh);
+                printIOobject(ptr);
+                regIOobject::store(ptr);
+                break;
+            }
+
+            case loadTestTypes::AUTO_PTR :
+            {
+                auto ptr = autoPtr<VolFieldType>::New(fieldHeader, mesh);
+                printIOobject(ptr.get());
+                regIOobject::store(ptr);
+                break;
+            }
+
+            case loadTestTypes::REF_PTR :
+            {
+                auto ptr = refPtr<VolFieldType>::New(fieldHeader, mesh);
+                printIOobject(ptr.get());
+                regIOobject::store(ptr);
+                break;
+            }
+
+            case loadTestTypes::TMP_PTR :
+            {
+                auto ptr = tmp<VolFieldType>::New(fieldHeader, mesh);
+                printIOobject(ptr.get());
+                Info<< "pointer:" << ptr.is_pointer()
+                    << " movable:" << ptr.movable() << nl;
+                regIOobject::store(ptr);
+                break;
+            }
+
+            case loadTestTypes::CACHE_PTR :
+            {
+                auto ptr = tmp<VolFieldType>::New(fieldHeader, mesh);
+                ptr.protect(true);
+                printIOobject(ptr.get());
+                Info<< "pointer:" << ptr.is_pointer()
+                    << " movable:" << ptr.movable() << nl;
+                regIOobject::store(ptr);
+                break;
+            }
+        }
+
         return true;
     }
     else if (fieldHeader.typeHeaderOk<SurfaceFieldType>(true, true, false))
     {
         // Store field on mesh database
         SurfaceFieldType* ptr = new SurfaceFieldType(fieldHeader, mesh);
-        mesh.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
         return true;
     }
 
@@ -87,28 +155,38 @@ bool loadField(fvMesh& mesh, const word& fieldName)
 }
 
 
-bool loadField(fvMesh& mesh, const word& fieldName)
+bool loadField
+(
+    fvMesh& mesh,
+    const word& fieldName,
+    enum loadTestTypes wrapper = loadTestTypes::PLAIN_PTR
+)
 {
     return
     (
         !mesh.objectRegistry::found(fieldName)
     &&
         (
-            loadField<scalar>(mesh, fieldName)
-         || loadField<vector>(mesh, fieldName)
-         || loadField<sphericalTensor>(mesh, fieldName)
-         || loadField<symmTensor>(mesh, fieldName)
-         || loadField<tensor>(mesh, fieldName)
+            loadField<scalar>(mesh, fieldName, wrapper)
+         || loadField<vector>(mesh, fieldName, wrapper)
+         || loadField<sphericalTensor>(mesh, fieldName, wrapper)
+         || loadField<symmTensor>(mesh, fieldName, wrapper)
+         || loadField<tensor>(mesh, fieldName, wrapper)
         )
     );
 }
 
 
-void loadFields(fvMesh& mesh, const IOobjectList& objects)
+void loadFields
+(
+    fvMesh& mesh,
+    const IOobjectList& objects,
+    enum loadTestTypes wrapper = loadTestTypes::PLAIN_PTR
+)
 {
     for (const word& fieldName : objects.names())
     {
-        loadField(mesh, fieldName);
+        loadField(mesh, fieldName, wrapper);
     }
 }
 
@@ -286,7 +364,45 @@ int main(int argc, char *argv[])
     // timeSelector::addOptions();
     timeSelector::addOptions(true, true);
 
+    argList::addBoolOption("plain", "Store from raw pointer (default)");
+    argList::addBoolOption("autoPtr", "Store from autoPtr");
+    argList::addBoolOption("refPtr", "Store from refPtr");
+    argList::addBoolOption("cacheTmp", "Store from tmp (cached)");
+    argList::addBoolOption("tmp",    "Store from tmp (regular)");
+
+    argList::addVerboseOption("increase debug value");
+
     #include "setRootCase.H"
+
+    const int optVerbose = args.verbose();
+
+    enum loadTestTypes loadWrapper = loadTestTypes::PLAIN_PTR;
+
+    if (args.found("autoPtr"))
+    {
+        Info<< "loading via autoPtr" << nl;
+        loadWrapper = loadTestTypes::AUTO_PTR;
+    }
+    else if (args.found("refPtr"))
+    {
+        Info<< "loading via refPtr" << nl;
+        loadWrapper = loadTestTypes::REF_PTR;
+    }
+    else if (args.found("cacheTmp"))
+    {
+        Info<< "loading via tmp (cached)" << nl;
+        loadWrapper = loadTestTypes::CACHE_PTR;
+    }
+    else if (args.found("tmp"))
+    {
+        Info<< "loading via tmp (regular)" << nl;
+        loadWrapper = loadTestTypes::TMP_PTR;
+    }
+    else
+    {
+        Info<< "loading via plain ptr" << nl;
+        loadWrapper = loadTestTypes::PLAIN_PTR;
+    }
 
 //    wordRes matcher;
 //    if (args.readListIfPresent<wordRe>("filter", matcher))
@@ -299,6 +415,12 @@ int main(int argc, char *argv[])
 
     instantList timeDirs = timeSelector::select0(runTime, args);
 
+    if (optVerbose)
+    {
+        objectRegistry::debug = optVerbose;
+        regIOobject::debug = optVerbose;
+    }
+
     forAll(timeDirs, timeI)
     {
         runTime.setTime(timeDirs[timeI], timeI);
@@ -309,7 +431,7 @@ int main(int argc, char *argv[])
         IOobjectList objects(mesh, runTime.timeName());
 
         // Read volFields
-        loadFields(mesh, objects);
+        loadFields(mesh, objects, loadWrapper);
 
         printRegistry(Info, mesh);
 

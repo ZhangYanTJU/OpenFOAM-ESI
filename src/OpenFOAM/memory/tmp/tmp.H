@@ -120,10 +120,6 @@ public:
         //- Construct, taking ownership of the pointer.
         inline explicit tmp(T* p);
 
-        //- Construct, taking ownership of the pointer,
-        //- with specified protection against moving.
-        inline tmp(bool immovable, T* p);
-
         //- Implicit construct for a const reference to an object.
         inline constexpr tmp(const T& obj) noexcept;
 
@@ -171,19 +167,6 @@ public:
         static tmp<T> New(Args&&... args)
         {
             return tmp<T>(new T(std::forward<Args>(args)...));
-        }
-
-        //- Construct movable/immovable tmp with forwarding arguments
-        //  \param immovable create as non-movable pointer
-        //  \param args list of arguments with which an instance of T
-        //      will be constructed.
-        //
-        //  \note Similar to std::make_shared, but the overload for
-        //      array types is not disabled.
-        template<class... Args>
-        static tmp<T> NewImmovable(bool immovable, Args&&... args)
-        {
-            return tmp<T>(immovable, new T(std::forward<Args>(args)...));
         }
 
         //- Construct tmp from derived type with forwarding arguments
@@ -256,15 +239,15 @@ public:
         //- delete object and set pointer to nullptr
         inline void clear() const noexcept;
 
+        //- Use specified protection against moving for the managed pointer.
+        //- No-op for references.
+        inline void protect(bool on) noexcept;
+
         //- Clear existing and transfer ownership.
         inline void reset(tmp<T>&& other) noexcept;
 
         //- Delete managed temporary object and set to new given pointer.
         inline void reset(T* p = nullptr) noexcept;
-
-        //- Delete managed temporary object and set to new given pointer,
-        //- with specified protection against moving.
-        inline void reset(bool immovable, T* p) noexcept;
 
         //- Avoid inadvertent casting (to object or pointer)
         void reset(const autoPtr<T>&) = delete;
