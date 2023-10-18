@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,7 @@ License
 
 #include "ensightWriterCaching.H"
 #include "ListOps.H"
+#include "OTstream.H"
 #include "Fstream.H"
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
@@ -129,15 +130,9 @@ Foam::label Foam::ensightOutput::writerCaching::readPreviousTimes
     const scalar timeValue
 )
 {
-    // In 1906 and earlier, the fieldsDict contained "meshes" and "times"
-    // entries, each with their own time values.
-    // This makes it more difficult to define the exact correspondence
-    // between geometry intervals and times.
-    //
-    // Now track the used geometry intervals as a bitSet.
+    // Track the used geometry intervals as a bitSet
 
-
-    // Only called from master
+    // Note: only called from master
     label timeIndex = 0;
     cache_.clear();
 
@@ -157,21 +152,6 @@ Foam::label Foam::ensightOutput::writerCaching::readPreviousTimes
         {
             // Convert indices to bitSet entries
             geoms_.set(geomIndices);
-        }
-        else if (cache_.readIfPresent("meshes", meshTimes))
-        {
-            WarningInFunction
-                << nl
-                << "Setting geometry timeset information from time values"
-                << " (cache from an older OpenFOAM version)." << nl
-                << "This may not be fully reliable." << nl
-                << nl;
-
-            for (const scalar meshTime : meshTimes)
-            {
-                const label geomIndex = findTimeIndex(times_, meshTime);
-                geoms_.set(geomIndex);
-            }
         }
 
         // Make length consistent with time information.
@@ -263,17 +243,19 @@ bool Foam::ensightOutput::writerCaching::update
         geoms_.set(timeIndex);
     }
 
-
     // Update time/geometry information in dictionary
-    cache_.set("times", times_);
-    cache_.set("geometry", geoms_.sortedToc());
 
-    // Debugging, or if needed for older versions:
-    //// cache_.set
-    //// (
-    ////     "meshes",
-    ////     IndirectList<scalar>(times_, geoms_.sortedToc())
-    //// );
+    // Note: to avoid inadvertent loss of precision,
+    // generate output tokens for the list of times directly
+    {
+        // Same as: cache_.set("times", times_);
+        OTstream os;
+        os << times_;
+
+        tokenList toks(std::move(os.tokens()));
+        cache_.set(new primitiveEntry("times", std::move(toks)));
+    }
+    cache_.set("geometry", geoms_.sortedToc());
 
     // Add field information to dictionary
     dictionary& dict = fieldDict(fieldName);
@@ -293,6 +275,7 @@ bool Foam::ensightOutput::writerCaching::update
     if (stateChanged)
     {
         OFstream os(dictFile);
+        os.precision(16);  // increased precision to avoid rounding
         os << "// State file for writer output" << nl << nl;
         cache_.write(os, false);
 
