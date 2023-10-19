@@ -26,34 +26,24 @@ License
 
 
 Class
-    Foam::betaMaxDarcy
+    Foam::betaMaxReynoldsDarcy
 
 Description
-    Compute betaMax through the definition of the Darcy number, quantifying
-    the viscous-to-porous forces ratio
-        Da = nu/betaMax/L/L
-    where nu is the bulk viscosity and L is a characteristic length.
+    Compute betaMax through the products of the Reynolds and Darcy numbers,
+    quantifying the momentum-to-porous forces ratio
+        ReDa = Uref/betaMax/L
+    where Uref is a reference velocity and L is a characteristic length.
     The latter is either supplied directly or computed as the
     - 2D: area of the inlet patches divided by the span in the empty direction
     - 3D: the hydraulic diameter of the inlet patches
 
-    Reference:
-    \verbatim
-        Olesen, L. H., Okkels, F., & Bruus H. (2006).
-        A high-level programming-language implementation of topology
-        optimization applied to steady-state Navier–Stokes flow.
-        International Journal for Numerical Methods in Engineering,
-        65(7), 975-1001.
-        https://doi.org/10.1002/nme.1468
-    \endverbatim
-
 SourceFiles
-    betaMaxDarcy.C
+    betaMaxReynoldsDarcy.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef betaMaxDarcy_H
-#define betaMaxDarcy_H
+#ifndef betaMaxReynoldsDarcy_H
+#define betaMaxReynoldsDarcy_H
 
 #include "betaMax.H"
 
@@ -63,10 +53,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                         Class betaMaxDarcy Declaration
+                         Class betaMaxReynoldsDarcy Declaration
 \*---------------------------------------------------------------------------*/
 
-class betaMaxDarcy
+class betaMaxReynoldsDarcy
 :
     public betaMax
 {
@@ -76,10 +66,10 @@ private:
     // Private Member Functions
 
         //- No copy construct
-        betaMaxDarcy(const betaMaxDarcy&) = delete;
+        betaMaxReynoldsDarcy(const betaMaxReynoldsDarcy&) = delete;
 
         //- No copy assignment
-        void operator=(const betaMaxDarcy&) = delete;
+        void operator=(const betaMaxReynoldsDarcy&) = delete;
 
 
 protected:
@@ -87,24 +77,27 @@ protected:
     // Protected Data
 
         //- The Darcy number expressing the ratio of viscous to porous forces
-        scalar DarcyNumber_;
+        scalar ReynoldsDarcyNumber_;
 
         //- Characteristic length of the case
         //  Either supplied directly or computed as the hydraulic diameter of
         //  the inlet
         scalar length_;
 
+        //- Reference velocity
+        scalar Uref_;
+
 
 public:
 
     //- Runtime type information
-    TypeName("Darcy");
+    TypeName("ReynoldsDarcy");
 
 
     // Constructors
 
         //- Construct from components
-        betaMaxDarcy
+        betaMaxReynoldsDarcy
         (
             const fvMesh& mesh,
             const dictionary& dict
@@ -112,7 +105,7 @@ public:
 
 
     //- Destructor
-    virtual ~betaMaxDarcy() = default;
+    virtual ~betaMaxReynoldsDarcy() = default;
 };
 
 

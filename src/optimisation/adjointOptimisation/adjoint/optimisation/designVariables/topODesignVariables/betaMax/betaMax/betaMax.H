@@ -75,6 +75,15 @@ protected:
         scalar value_;
 
 
+    // Protected Member Functions
+
+        //- Compute the characteristic length
+        scalar computeLength(const dictionary& dict) const;
+
+        //- Mark all common inlet - processor edges
+        boolList markProcessorEdges(const polyPatch& patch) const;
+
+
 public:
 
     //- Runtime type information
