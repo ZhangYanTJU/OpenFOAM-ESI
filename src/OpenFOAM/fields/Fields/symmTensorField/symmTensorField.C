@@ -54,6 +54,7 @@ UNARY_FUNCTION(symmTensor, symmTensor, cof)
 void inv(Field<symmTensor>& result, const UList<symmTensor>& f1)
 {
     // With 'failsafe' invert
+    // std::transform
     TFOR_ALL_F_OP_F_FUNC(symmTensor, result, =, symmTensor, f1, safeInv)
 }
 

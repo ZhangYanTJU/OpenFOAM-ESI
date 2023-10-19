@@ -68,6 +68,7 @@ void scalarField::replace(const direction, const scalar& s)
 
 void stabilise(scalarField& res, const UList<scalar>& sf, const scalar s)
 {
+    // std::transform
     TFOR_ALL_F_OP_FUNC_S_F
     (
         scalar, res, =, ::Foam::stabilise, scalar, s, scalar, sf
@@ -98,6 +99,7 @@ float sumProd(const UList<float>& f1, const UList<float>& f2)
     float result = 0.0;
     if (f1.size() && (f1.size() == f2.size()))
     {
+        // std::inner_product
         TFOR_ALL_S_OP_F_OP_F(float, result, +=, float, f1, *, float, f2)
     }
     return result;
@@ -110,6 +112,7 @@ double sumProd(const UList<double>& f1, const UList<double>& f2)
     double result = 0.0;
     if (f1.size() && (f1.size() == f2.size()))
     {
+        // std::inner_product
         TFOR_ALL_S_OP_F_OP_F(double, result, +=, double, f1, *, double, f2)
     }
     return result;

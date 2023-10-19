@@ -39,6 +39,7 @@ void Foam::transform
     const Field<Type>& fld
 )
 {
+    // std::transform
     TFOR_ALL_F_OP_FUNC_S_F
     (
         Type, result, =, transform, tensor, rot, Type, fld
@@ -59,6 +60,7 @@ void Foam::transform
         return transform(result, rot.front(), fld);
     }
 
+    // std::transform
     TFOR_ALL_F_OP_FUNC_F_F
     (
         Type, result, =, transform, tensor, rot, Type, fld
@@ -163,6 +165,7 @@ void Foam::invTransform
     const Field<Type>& fld
 )
 {
+    // std::transform
     TFOR_ALL_F_OP_FUNC_S_F
     (
         Type, result, =, invTransform, tensor, rot, Type, fld
@@ -183,6 +186,7 @@ void Foam::invTransform
         return invTransform(result, rot.front(), fld);
     }
 
+    // std::transform
     TFOR_ALL_F_OP_FUNC_F_F
     (
         Type, result, =, invTransform, tensor, rot, Type, fld

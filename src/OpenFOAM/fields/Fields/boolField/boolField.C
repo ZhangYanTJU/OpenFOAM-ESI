@@ -44,6 +44,7 @@ namespace Foam
 template<>
 void boolField::negate()
 {
+    // std::for_each, std::logical_not
     TFOR_ALL_F_OP_OP_F(bool, *this, =, !, bool, *this)
 }
 

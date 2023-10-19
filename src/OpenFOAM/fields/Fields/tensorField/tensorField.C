@@ -55,6 +55,7 @@ UNARY_FUNCTION(tensor, tensor, cof)
 void inv(Field<tensor>& result, const UList<tensor>& f1)
 {
     // With 'failsafe' invert
+    // std::transform
     TFOR_ALL_F_OP_F_FUNC(tensor, result, =, tensor, f1, safeInv)
 }
 

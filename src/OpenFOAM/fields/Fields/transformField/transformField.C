@@ -39,7 +39,8 @@ void Foam::transform
     const vectorField& tf
 )
 {
-    tensor rot = q.R();
+    const tensor rot = q.R();
+    // std::transform
     TFOR_ALL_F_OP_FUNC_S_F(vector, rtf, =, transform, tensor, rot, vector, tf)
 }
 
@@ -76,11 +77,12 @@ void Foam::transformPoints
     const vectorField& fld
 )
 {
-    vector trans = tr.t();
+    const vector trans = tr.t();
 
     // Check if any translation
     if (mag(trans) > VSMALL)
     {
+        // std::transform
         TFOR_ALL_F_OP_F_OP_S(vector, result, =, vector, fld, -, vector, trans);
     }
     else

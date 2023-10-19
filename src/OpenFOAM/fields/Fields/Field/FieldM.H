@@ -149,10 +149,10 @@ void checkFields
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Unary Free Function : f1 OP Func f2
+// Unary Free Function : f1 OP Func(f2)
 
 #define TFOR_ALL_F_OP_FUNC_F(typeF1, f1, OP, FUNC, typeF2, f2)                 \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP " " #FUNC "(f2)");                           \
                                                                                \
@@ -161,19 +161,20 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP FUNC(f2) */                                                 \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP FUNC(f2P[i]);                                              \
-    }
+    }                                                                          \
+}
 
 
 // Nullary Member Function : f1 OP f2.FUNC()
 
 #define TFOR_ALL_F_OP_F_FUNC(typeF1, f1, OP, typeF2, f2, FUNC)                 \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP " f2" #FUNC);                                \
                                                                                \
@@ -182,19 +183,20 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP f2.FUNC() */                                                \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP (f2P[i]).FUNC();                                           \
-    }
+    }                                                                          \
+}
 
 
 // Binary Free Function : f1 OP FUNC(f2, f3)
 
 #define TFOR_ALL_F_OP_FUNC_F_F(typeF1, f1, OP, FUNC, typeF2, f2, typeF3, f3)   \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, f3, "f1 " #OP " " #FUNC "(f2, f3)");                   \
                                                                                \
@@ -204,19 +206,20 @@ void checkFields
     List_CONST_ACCESS(typeF3, f3, f3P);                                        \
                                                                                \
     /* Loop: f1 OP FUNC(f2, f3) */                                             \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP FUNC((f2P[i]), (f3P[i]));                                  \
-    }
+    }                                                                          \
+}
 
 
 // [reduction] Binary Free Function : s OP FUNC(f1, f2)
 
 #define TFOR_ALL_S_OP_FUNC_F_F(typeS, s, OP, FUNC, typeF1, f1, typeF2, f2)     \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "s " #OP " " #FUNC "(f1, f2)");                        \
                                                                                \
@@ -225,19 +228,20 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: s OP FUNC(f1, f2) */                                              \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas, reduction... */                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (s) OP FUNC((f1P[i]), (f2P[i]));                                       \
-    }
+    }                                                                          \
+}
 
 
 // Binary Free Function : f1 OP FUNC(f2, s)
 
 #define TFOR_ALL_F_OP_FUNC_F_S(typeF1, f1, OP, FUNC, typeF2, f2, typeS, s)     \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP " " #FUNC "(f2, s)");                        \
                                                                                \
@@ -246,36 +250,38 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP FUNC(f2, s) */                                              \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP FUNC((f2P[i]), (s));                                       \
-    }
+    }                                                                          \
+}
 
 
 // [reduction] Binary Free Function : s1 OP FUNC(f, s2)
 
 #define TFOR_ALL_S_OP_FUNC_F_S(typeS1, s1, OP, FUNC, typeF, f, typeS2, s2)     \
-                                                                               \
+{                                                                              \
     /* Field access */                                                         \
     List_CONST_ACCESS(typeF, f, fP);                                           \
                                                                                \
     /* Loop: s1 OP FUNC(f, s2) */                                              \
-    const label loopLen = (f).size();                                          \
+    const label loop_len = (f).size();                                         \
                                                                                \
     /* pragmas, reduction... */                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (s1) OP FUNC((fP[i]), (s2));                                           \
-    }
+    }                                                                          \
+}
 
 
 // Binary Free Function : f1 OP FUNC(s, f2)
 
 #define TFOR_ALL_F_OP_FUNC_S_F(typeF1, f1, OP, FUNC, typeS, s, typeF2, f2)     \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP " " #FUNC "(s, f2)");                        \
                                                                                \
@@ -284,36 +290,38 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP1 f2 OP2 f3 */                                               \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP FUNC((s), (f2P[i]));                                       \
-    }
+    }                                                                          \
+}
 
 
 // Binary Free Function : f1 OP FUNC(s1, s2)
 
 #define TFOR_ALL_F_OP_FUNC_S_S(typeF1, f1, OP, FUNC, typeS1, s1, typeS2, s2)   \
-                                                                               \
+{                                                                              \
     /* Field access */                                                         \
     List_ACCESS(typeF1, f1, f1P);                                              \
                                                                                \
     /* Loop: f1 OP FUNC(s1, s2) */                                             \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP FUNC((s1), (s2));                                          \
-    }
+    }                                                                          \
+}
 
 
 // Unary Member Function : f1 OP f2 FUNC(s)
 
 #define TFOR_ALL_F_OP_F_FUNC_S(typeF1, f1, OP, typeF2, f2, FUNC, typeS, s)     \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP " f2 " #FUNC "(s)");                         \
                                                                                \
@@ -322,13 +330,14 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP f2 FUNC(s) */                                               \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP (f2P[i]) FUNC((s));                                        \
-    }
+    }                                                                          \
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -337,7 +346,7 @@ void checkFields
 
 #define TFOR_ALL_F_OP_FUNC_F_F_F\
 (typeF1, f1, OP, FUNC, typeF2, f2, typeF3, f3, typeF4, f4)                     \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, f3, f4, "f1 " #OP " " #FUNC "(f2, f3, f4)");           \
                                                                                \
@@ -348,19 +357,20 @@ void checkFields
     List_CONST_ACCESS(typeF4, f4, f4P);                                        \
                                                                                \
     /* Loop: f1 OP FUNC(f2, f3, f4) */                                         \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP FUNC((f2P[i]), (f3P[i]), (f4P[i]));                        \
-    }
+    }                                                                          \
+}
 
 // Ternary Free Function : f1 OP FUNC(f2, f3, s4)
 
 #define TFOR_ALL_F_OP_FUNC_F_F_S\
 (typeF1, f1, OP, FUNC, typeF2, f2, typeF3, f3, typeF4, s4)                     \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, f3, "f1 " #OP " " #FUNC "(f2, f3, s)");                \
                                                                                \
@@ -370,13 +380,14 @@ void checkFields
     List_CONST_ACCESS(typeF3, f3, f3P);                                        \
                                                                                \
     /* Loop: f1 OP FUNC(f2, f3, s4) */                                         \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP FUNC((f2P[i]), (f3P[i]), (s4));                            \
-    }
+    }                                                                          \
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -384,7 +395,7 @@ void checkFields
 // Member operator : this field f1 OP1 f2 OP2 f3
 
 #define TFOR_ALL_F_OP_F_OP_F(typeF1, f1, OP1, typeF2, f2, OP2, typeF3, f3)     \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, f3, "f1 " #OP1 " f2 " #OP2 " f3");                     \
                                                                                \
@@ -394,19 +405,20 @@ void checkFields
     List_CONST_ACCESS(typeF3, f3, f3P);                                        \
                                                                                \
     /* Loop: f1 OP1 f2 OP2 f3 */                                               \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP1 (f2P[i]) OP2 (f3P[i]);                                    \
-    }
+    }                                                                          \
+}
 
 
 // Member operator : this field f1 OP1 s OP2 f2
 
 #define TFOR_ALL_F_OP_S_OP_F(typeF1, f1, OP1, typeS, s, OP2, typeF2, f2)       \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP1 " s " #OP2 " f2");                          \
                                                                                \
@@ -415,19 +427,20 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP1 s OP2 f2 */                                                \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP1 (s) OP2 (f2P[i]);                                         \
-    }
+    }                                                                          \
+}
 
 
 // Member operator : this field f1 OP1 f2 OP2 s
 
 #define TFOR_ALL_F_OP_F_OP_S(typeF1, f1, OP1, typeF2, f2, OP2, typeS, s)       \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP1 " f2 " #OP2 " s");                          \
                                                                                \
@@ -436,19 +449,20 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop f1 OP1 s OP2 f2 */                                                 \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP1 (f2P[i]) OP2 (s);                                         \
-    }
+    }                                                                          \
+}
 
 
 // Member operator : this field f1 OP f2
 
 #define TFOR_ALL_F_OP_F(typeF1, f1, OP, typeF2, f2)                            \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, "f1 " #OP " f2");                                      \
                                                                                \
@@ -457,19 +471,20 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP f2 */                                                       \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP (f2P[i]);                                                  \
-    }
+    }                                                                          \
+}
 
 
 // Member operator : this field f1 OP1 OP2 f2
 
 #define TFOR_ALL_F_OP_OP_F(typeF1, f1, OP1, OP2, typeF2, f2)                   \
-                                                                               \
+{                                                                              \
     /* Check fields have same size */                                          \
     checkFields(f1, f2, #OP1 " " #OP2 " f2");                                  \
                                                                                \
@@ -478,30 +493,32 @@ void checkFields
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: f1 OP1 OP2 f2 */                                                  \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (f1P[i]) OP1 OP2 (f2P[i]);                                             \
-    }
+    }                                                                          \
+}
 
 
 // Member operator : this field f OP s
 
 #define TFOR_ALL_F_OP_S(typeF, f, OP, typeS, s)                                \
-                                                                               \
+{                                                                              \
     /* Field access */                                                         \
     List_ACCESS(typeF, f, fP);                                                 \
                                                                                \
     /* Loop: f OP s */                                                         \
-    const label loopLen = (f).size();                                          \
+    const label loop_len = (f).size();                                         \
                                                                                \
     /* pragmas... */                                                           \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (fP[i]) OP (s);                                                        \
-    }
+    }                                                                          \
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -509,53 +526,55 @@ void checkFields
 // Friend operator function : s OP f, allocates storage for s
 
 #define TFOR_ALL_S_OP_F(typeS, s, OP, typeF, f)                                \
-                                                                               \
+{                                                                              \
     /* Field access */                                                         \
     List_CONST_ACCESS(typeF, f, fP);                                           \
                                                                                \
     /* Loop: s OP f */                                                         \
-    const label loopLen = (f).size();                                          \
+    const label loop_len = (f).size();                                         \
                                                                                \
     /* pragmas, reduction... */                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (s) OP (fP[i]);                                                        \
-    }
+    }                                                                          \
+}
 
 
 // Friend operator function : s OP1 f1 OP2 f2, allocates storage for s
 
 #define TFOR_ALL_S_OP_F_OP_F(typeS, s, OP1, typeF1, f1, OP2, typeF2, f2)       \
-                                                                               \
+{                                                                              \
     /* Field access */                                                         \
     List_CONST_ACCESS(typeF1, f1, f1P);                                        \
     List_CONST_ACCESS(typeF2, f2, f2P);                                        \
                                                                                \
     /* Loop: s OP1 f1 OP2 f2 */                                                \
-    const label loopLen = (f1).size();                                         \
+    const label loop_len = (f1).size();                                        \
                                                                                \
     /* pragmas, reduction... */                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (s) OP1 (f1P[i]) OP2 (f2P[i]);                                         \
-    }
+    }                                                                          \
+}
 
 
 // Friend operator function : s OP FUNC(f), allocates storage for s
-
 #define TFOR_ALL_S_OP_FUNC_F(typeS, s, OP, FUNC, typeF, f)                     \
-                                                                               \
+{                                                                              \
     /* Field access */                                                         \
     List_CONST_ACCESS(typeF, f, fP);                                           \
                                                                                \
     /* Loop: s OP FUNC(f) */                                                   \
-    const label loopLen = (f).size();                                          \
+    const label loop_len = (f).size();                                         \
                                                                                \
     /* pragmas, reduction... */                                                \
-    for (label i = 0; i < loopLen; ++i)                                        \
+    for (label i = 0; i < loop_len; ++i)                                       \
     {                                                                          \
         (s) OP FUNC(fP[i]);                                                    \
-    }
+    }                                                                          \
+}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
