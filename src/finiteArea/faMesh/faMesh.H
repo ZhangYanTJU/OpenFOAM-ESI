@@ -60,6 +60,7 @@ Author
 #include "polyMesh.H"
 #include "lduMesh.H"
 #include "faBoundaryMesh.H"
+#include "faMeshRegistry.H"
 #include "edgeList.H"
 #include "faceList.H"
 #include "primitiveFieldsFwd.H"
@@ -92,7 +93,7 @@ class faPatchData;
 
 class faMesh
 :
-    public MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>,
+    public objectRegistry,
     public lduMesh,
     public edgeInterpolation,  // may need input from faSchemes
     public data
@@ -532,27 +533,41 @@ public:
 
     // Constructors
 
-        //- Read construct from polyMesh, using its IOobject properties
-        explicit faMesh(const polyMesh& pMesh, const bool doInit = true);
+        //- Construct zero-sized from polyMesh
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const word& meshName, const polyMesh&, Foam::zero);
 
         //- Construct zero-sized from polyMesh
         //  Boundary is added using addFaPatches() member function
-        faMesh(const polyMesh& pMesh, const Foam::zero);
+        faMesh(const polyMesh&, Foam::zero);
 
-        //- Construct as copy (for dictionaries) and zero-sized
-        //- without boundary, using IOobject properties from polyMesh.
-        //  Boundary is added using addFaPatches() member function
-        faMesh(const faMesh& baseMesh, const Foam::zero);
+        //- Read construct from polyMesh, using its IOobject properties
+        faMesh(const word& meshName, const polyMesh&, const bool doInit = true);
 
-        //- Construct as copy (for dictionaries) and faceLabels
-        //- without boundary, using IOobject properties from polyMesh.
-        //  Boundary is added using addFaPatches() member function
-        faMesh(const faMesh& baseMesh, labelList&& faceLabels);
+        //- Read construct from polyMesh, using its IOobject properties
+        explicit faMesh(const polyMesh&, const bool doInit = true);
 
         //- Construct from components (face labels) without boundary,
         //- using IOobject properties from polyMesh.
         //  Boundary is added using addFaPatches() member function.
-        faMesh(const polyMesh& pMesh, labelList&& faceLabels);
+        faMesh(const word& meshName, const polyMesh&, labelList&& faceLabels);
+
+        //- Construct from components (face labels) without boundary,
+        //- using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function.
+        faMesh(const polyMesh&, labelList&& faceLabels);
+
+        //- Construct from components (face labels) without boundary,
+        //- using alternative IOobject properties
+        //- (primarily the readOption).
+        //  Boundary is added using addFaPatches() member function.
+        faMesh
+        (
+            const word& meshName,
+            const polyMesh& pMesh,
+            labelList&& faceLabels,
+            const IOobject& io
+        );
 
         //- Construct from components (face labels) without boundary,
         //- using alternative IOobject properties
@@ -565,8 +580,50 @@ public:
             const IOobject& io
         );
 
+        //- Construct as copy (for dictionaries) and zero-sized
+        //- without boundary, using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const word& meshName, const faMesh& baseMesh, Foam::zero);
+
+        //- Construct as copy (for dictionaries) and zero-sized
+        //- without boundary, using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const faMesh& baseMesh, Foam::zero);
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function
+        faMesh
+        (
+            const word& meshName,
+            const faMesh& baseMesh,
+            labelList&& faceLabels
+        );
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using IOobject properties from polyMesh.
+        //  Boundary is added using addFaPatches() member function
+        faMesh(const faMesh& baseMesh, labelList&& faceLabels);
+
+        //- Construct from single polyPatch
+        faMesh
+        (
+            const word& meshName,
+            const polyPatch& pp,
+            const bool doInit = true
+        );
+
         //- Construct from single polyPatch
         explicit faMesh(const polyPatch& pp, const bool doInit = true);
+
+        //- Construct from definition
+        faMesh
+        (
+            const word& meshName,
+            const polyMesh& pMesh,
+            const dictionary& faMeshDefinition,
+            const bool doInit = true
+        );
 
         //- Construct from definition
         faMesh
@@ -631,8 +688,11 @@ public:
 
     // Database
 
+        //- Return the registry of all meshes
+        const faMeshRegistry& meshes() const;
+
         //- Return access to polyMesh
-        inline const polyMesh& mesh() const;
+        const polyMesh& mesh() const;
 
         //- Interface to referenced polyMesh (similar to GeoMesh)
         const polyMesh& operator()() const { return mesh(); }
@@ -743,8 +803,8 @@ public:
 
     // Database
 
-        //- Return true if thisDb() is a valid DB
-        virtual bool hasDb() const;
+        //- True - thisDb() is a valid registry
+        virtual bool hasDb() const { return true; }
 
         //- Return reference to the mesh database
         virtual const objectRegistry& thisDb() const;
