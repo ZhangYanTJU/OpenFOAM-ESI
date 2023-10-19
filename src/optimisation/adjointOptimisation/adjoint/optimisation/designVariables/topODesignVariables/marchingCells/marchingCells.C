@@ -185,7 +185,7 @@ Foam::marchingCells::marchingCells
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::marchingCells::update()
+void Foam::marchingCells::update(const label iters)
 {
     // If the first seeding has been performed, do it now
     if (!initialised_)
@@ -194,7 +194,7 @@ void Foam::marchingCells::update()
     }
 
     // Iterate the meshWave algorithm
-    meshWave_.iterate(marchingStep_);
+    meshWave_.iterate(iters*marchingStep_);
 
     // Grab the newly added cells
     addedCells_ = labelList(mesh_.nCells(), -1);
@@ -228,7 +228,7 @@ void Foam::marchingCells::update()
         activeCellList.write();
     }
 
-    ++nIters_;
+    nIters_ += iters;
 }
 
 

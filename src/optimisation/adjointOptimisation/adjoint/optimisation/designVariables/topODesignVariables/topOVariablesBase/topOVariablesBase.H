@@ -45,7 +45,7 @@ SourceFiles
 #include "topOZones.H"
 #include "topOInterpolationFunction.H"
 #include "FaceCellWave.H"
-#include "wallPoint.H"
+#include "wallPointData.H"
 #include "cutFaceIso.H"
 #include "cutCellIso.H"
 
@@ -73,6 +73,18 @@ protected:
         //- Folder name holding the zero level-set iso-surface
         fileName isoSurfFolder_;
 
+        //- Map between iso-surface and mesh faces (internal and boundary)
+        Map<label> meshFaceToChangedFace_;
+
+        //- Per cutting face, the changed faces owned by it
+        labelListList changedFacesPerCuttingFace_;
+
+        //- Iso-surface points
+        pointField surfPoints_;
+
+        //- Iso-surface faces
+        faceList surfFaces_;
+
 
     // Protected Member Functions
 
@@ -83,8 +95,11 @@ protected:
         (
             const volScalarField& y,
             labelList& changedFaces,
-            List<wallPoint>& changedFacesInfo
+            List<wallPointData<label>>& changedFacesInfo
         ) const;
+
+        //- Construct facesFaces for a given boundary face
+        DynamicList<label> faceFaces(const label facei) const;
 
         //- Check whether the cutFace intersects the boundary of the initial
         //- domain and add fluid part of the intersected face to the isoline
@@ -95,18 +110,29 @@ protected:
             DynamicList<vector>& isoSurfPts,
             DynamicList<face>& isoSurfFaces,
             DynamicList<label>& zoneIDs,
-            label& nIsoSurfPts
+            List<DynamicList<label>>& cuttingFacesPerMeshFace
+        ) const;
+
+        bool isDuplicatePoint
+        (
+            const label pointID,
+            const vector& pointi,
+            const DynamicList<label>& cuttingFaces,
+            const DynamicList<point>& isoSurfPts,
+            const DynamicList<face>& isoSurfFaces,
+            labelList& uniquePointIDs
         ) const;
 
         //- Add the cutting face to the zero level-set iso-surface
         bool addCuttingFaceToIsoline
         (
             const DynamicList<point>& facePoints,
+            const label nSerialPatches,
+            const DynamicList<label>& cellCutFaces,
+            const List<DynamicList<label>>& cuttingFacesPerMeshFace,
             DynamicList<vector>& isoSurfPts,
             DynamicList<face>& isoSurfFaces,
-            DynamicList<label>& zoneIDs,
-            label& nIsoSurfPts,
-            const label nSerialPatches
+            DynamicList<label>& zoneIDs
         ) const;
 
         //- Check whether the boundary faces of the initial domain belong
@@ -121,15 +147,19 @@ protected:
             DynamicList<vector>& isoSurfPts,
             DynamicList<face>& isoSurfFaces,
             DynamicList<label>& zoneIDs,
-            label& nIsoSurfPts
-        ) const;
+            label& nChangedFaces,
+            labelList& changedFaces,
+            List<wallPointData<label>>& changedFacesInfo,
+            labelList& changedFaceToCutFace,
+            List<DynamicList<label>>& cuttingFacesPerMeshFace
+        );
 
         //- Write the surface describing the fluid domain to stl and vtp files
         void writeSurfaceFiles
         (
-            DynamicList<vector>& patchPoints,
-            DynamicList<face>& patchFaces,
-            DynamicList<label>& zoneIDs,
+            const pointField& pts,
+            const faceList& faces,
+            const labelList& zoneIds,
             const label nSerialPatches
         ) const;
 
@@ -178,6 +208,21 @@ public:
             return zones_.getBetaMax();
         }
 
+        inline const labelListList& changedFacesPerCuttingFace() const
+        {
+            return changedFacesPerCuttingFace_;
+        }
+
+        inline const pointField& surfacePoints() const
+        {
+            return surfPoints_;
+        }
+
+        inline const faceList& surfaceFaces() const
+        {
+            return surfFaces_;
+        }
+
         //- Get field used for physical interpolations
         virtual const volScalarField& beta() const = 0;
 
@@ -213,7 +258,7 @@ public:
             const volScalarField& indicator,
             const scalar isoValue,
             labelList& changedFaces,
-            List<wallPoint>& changedFacesInfo
+            List<wallPointData<label>>& changedFacesInfo
         );
 };
 

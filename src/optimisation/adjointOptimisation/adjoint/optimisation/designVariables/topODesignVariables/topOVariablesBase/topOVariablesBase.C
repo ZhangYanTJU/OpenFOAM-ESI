@@ -31,7 +31,7 @@ License
 #include "topOZones.H"
 #include "volFields.H"
 #include "volPointInterpolation.H"
-#include "wallPolyPatch.H"
+#include "wallFvPatch.H"
 #include "coupledFvPatch.H"
 #include "emptyFvPatch.H"
 #include "MeshedSurfaceProxy.H"
@@ -49,6 +49,38 @@ namespace Foam
 
 // * * * * * * * * * * * Protected Members Functions * * * * * * * * * * * * //
 
+Foam::DynamicList<Foam::label> Foam::topOVariablesBase::faceFaces
+(
+    const label facei
+) const
+{
+    const fvMesh& mesh = zones_.mesh();
+    const labelListList& edgeFaces = mesh.edgeFaces();
+    DynamicList<label> neighs;
+    if (!mesh.isInternalFace(facei))
+    {
+        const labelList& faceEdges = mesh.faceEdges()[facei];
+        for (const label edgei: faceEdges)
+        {
+            const labelList& edgeIFaces = edgeFaces[edgei];
+            for (const label neiFacei : edgeIFaces)
+            {
+                if (neiFacei != facei && !mesh.isInternalFace(neiFacei))
+                {
+                    const label patchi =
+                        mesh.boundaryMesh().whichPatch(neiFacei);
+                    if (!isA<emptyFvPatch>(mesh.boundary()[patchi]))
+                    {
+                        neighs.push_back(neiFacei);
+                    }
+                }
+            }
+        }
+    }
+    return neighs;
+}
+
+
 bool Foam::topOVariablesBase::addCutBoundaryFaceToIsoline
 (
     const label facei,
@@ -56,7 +88,7 @@ bool Foam::topOVariablesBase::addCutBoundaryFaceToIsoline
     DynamicList<vector>& isoSurfPts,
     DynamicList<face>& isoSurfFaces,
     DynamicList<label>& zoneIDs,
-    label& nIsoSurfPts
+    List<DynamicList<label>>& cuttingFacesPerMeshFace
 ) const
 {
     const fvMesh& mesh = zones_.mesh();
@@ -65,20 +97,29 @@ bool Foam::topOVariablesBase::addCutBoundaryFaceToIsoline
     {
         const label cutPatchi = mesh.boundaryMesh().whichPatch(facei);
         const fvPatch& cutPatch = mesh.boundary()[cutPatchi];
-        if
-        (
-            !isA<coupledFvPatch>(cutPatch)
-         && !isA<emptyFvPatch>(cutPatch)
-         && (cutFace.subFacePoints().size() > 2)
-        )
+        if (!isA<coupledFvPatch>(cutPatch) && !isA<emptyFvPatch>(cutPatch))
         {
-            const DynamicList<point>& facePts = cutFace.subFacePoints();
-            face isoFace(identity(facePts.size(), nIsoSurfPts));
-            isoSurfPts.append(facePts);
-            isoSurfFaces.append(isoFace);
-            zoneIDs.append(cutPatchi);
-            nIsoSurfPts += facePts.size();
-            return true;
+            if
+            (
+                addCuttingFaceToIsoline
+                (
+                    cutFace.subFacePoints(),
+                    cutPatchi,
+                    faceFaces(facei),
+                    cuttingFacesPerMeshFace,
+                    isoSurfPts,
+                    isoSurfFaces,
+                    zoneIDs
+                )
+            )
+            {
+                cuttingFacesPerMeshFace[facei].push_back
+                (
+                    isoSurfFaces.size() - 1
+                );
+                return true;
+            }
+
         }
     }
     return false;
@@ -88,21 +129,86 @@ bool Foam::topOVariablesBase::addCutBoundaryFaceToIsoline
 bool Foam::topOVariablesBase::addCuttingFaceToIsoline
 (
     const DynamicList<point>& facePoints,
+    const label nSerialPatches,
+    const DynamicList<label>& cellCutFaces,
+    const List<DynamicList<label>>& cuttingFacesPerMeshFace,
     DynamicList<vector>& isoSurfPts,
     DynamicList<face>& isoSurfFaces,
-    DynamicList<label>& zoneIDs,
-    label& nIsoSurfPts,
-    const label nSerialPatches
+    DynamicList<label>& zoneIDs
 ) const
 {
     if (facePoints.size() > 2)
     {
-        face isoFace(identity(facePoints.size(), nIsoSurfPts));
-        isoSurfPts.append(facePoints);
+        // Check whether any of points of the new iso-surface face are already
+        // present in the surface. To reduce the number of comparisons, only
+        // points on iso-surface faces belonging to neighbouring cells are
+        // checked
+        labelList uniquePointIDs(facePoints.size(), -1);
+        DynamicList<point> uniqueFacePoints(facePoints.size());
+        DynamicList<label> uniqueFacePointEdges(facePoints.size());
+        label addedPoints = Zero;
+        forAll(facePoints, pi)
+        {
+            bool foundInNei = false;
+            for (const label cutMeshFacei : cellCutFaces)
+            {
+                if
+                (
+                    isDuplicatePoint
+                    (
+                        pi,
+                        facePoints[pi],
+                        cuttingFacesPerMeshFace[cutMeshFacei],
+                        isoSurfPts,
+                        isoSurfFaces,
+                        uniquePointIDs
+                    )
+                )
+                {
+                    foundInNei = true;
+                    break;
+                }
+            }
+            if (!foundInNei)
+            {
+                uniquePointIDs[pi] = isoSurfPts.size() + addedPoints;
+                ++addedPoints;
+                uniqueFacePoints.push_back(facePoints[pi]);
+            }
+        }
+
+        face isoFace(uniquePointIDs);
+        isoSurfPts.append(uniqueFacePoints);
         isoSurfFaces.append(isoFace);
         zoneIDs.append(nSerialPatches);
-        nIsoSurfPts += facePoints.size();
+
         return true;
+    }
+    return false;
+}
+
+
+bool Foam::topOVariablesBase::isDuplicatePoint
+(
+    const label pointID,
+    const vector& pointi,
+    const DynamicList<label>& cuttingFaces,
+    const DynamicList<point>& isoSurfPts,
+    const DynamicList<face>& isoSurfFaces,
+    labelList& uniquePointIDs
+) const
+{
+    for (const label cuttingFacei : cuttingFaces)
+    {
+        const face& cuttingFace = isoSurfFaces[cuttingFacei];
+        for (const label neiPi : cuttingFace)
+        {
+            if (mag(pointi - isoSurfPts[neiPi]) < SMALL)
+            {
+                uniquePointIDs[pointID] = neiPi;
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -116,8 +222,12 @@ void Foam::topOVariablesBase::addBoundaryFacesToIsoline
     DynamicList<vector>& isoSurfPts,
     DynamicList<face>& isoSurfFaces,
     DynamicList<label>& zoneIDs,
-    label& nIsoSurfPts
-) const
+    label& nChangedFaces,
+    labelList& changedFaces,
+    List<wallPointData<label>>& changedFacesInfo,
+    labelList& changedFaceToCutFace,
+    List<DynamicList<label>>& cuttingFacesPerMeshFace
+)
 {
     const fvMesh& mesh = zones_.mesh();
     const pointField& points = mesh.points();
@@ -125,11 +235,8 @@ void Foam::topOVariablesBase::addBoundaryFacesToIsoline
     forAll(mesh.boundary(), patchi)
     {
         const fvPatch& patch = mesh.boundary()[patchi];
-        if
-        (
-            !isA<emptyFvPatch>(patch)
-         && !isA<coupledFvPatch>(patch)
-        )
+        bool isWall = isA<wallFvPatch>(patch);
+        if (!isA<emptyFvPatch>(patch) && !isA<coupledFvPatch>(patch))
         {
             const label start = patch.start();
             forAll(patch, facei)
@@ -146,13 +253,44 @@ void Foam::topOVariablesBase::addBoundaryFacesToIsoline
                 }
                 if (isFluid && !addedFaces.found(gFacei))
                 {
-                    const pointField facePoints = faces[gFacei].points(points);
-                    const face isoFace
-                        (identity(facePoints.size(), nIsoSurfPts));
-                    isoSurfPts.append(facePoints);
-                    isoSurfFaces.append(isoFace);
-                    zoneIDs.append(patchi);
-                    nIsoSurfPts += facePoints.size();
+                    // Insert wall faces if they belong to the outer boundary
+                    if (isWall)
+                    {
+                        // Mesh face to changedFace addressing
+                        meshFaceToChangedFace_.insert(gFacei, nChangedFaces);
+                        // Set origin face for meshWave
+                        changedFacesInfo[nChangedFaces] =
+                            wallPointData<label>
+                            (
+                                patch.Cf()[facei],
+                                nChangedFaces,
+                                0
+                            );
+                        changedFaces[nChangedFaces] = gFacei;
+                        // Origin face-to-cut face
+                        changedFaceToCutFace.push_back(isoSurfFaces.size());
+                        ++nChangedFaces;
+                    }
+
+                    if
+                    (
+                        addCuttingFaceToIsoline
+                        (
+                            faces[gFacei].points(points),
+                            patchi,
+                            faceFaces(gFacei),
+                            cuttingFacesPerMeshFace,
+                            isoSurfPts,
+                            isoSurfFaces,
+                            zoneIDs
+                        )
+                    )
+                    {
+                        cuttingFacesPerMeshFace[gFacei].push_back
+                        (
+                            isoSurfFaces.size() - 1
+                        );
+                    }
                 }
             }
         }
@@ -162,17 +300,13 @@ void Foam::topOVariablesBase::addBoundaryFacesToIsoline
 
 void Foam::topOVariablesBase::writeSurfaceFiles
 (
-    DynamicList<vector>& patchPoints,
-    DynamicList<face>& patchFaces,
-    DynamicList<label>& zoneIDs,
+    const pointField& pts,
+    const faceList& faces,
+    const labelList& zoneIds,
     const label nSerialPatches
 ) const
 {
     const fvMesh& mesh = zones_.mesh();
-
-    pointField pts(std::move(patchPoints));
-    faceList faces(std::move(patchFaces));
-    labelList zoneIds(std::move(zoneIDs));
 
     // Write vtp file
     const word timeName = mesh.time().timeName();
@@ -317,7 +451,11 @@ Foam::topOVariablesBase::topOVariablesBase
     ),
     zones_(mesh, dict),
     isoSurfFolder_
-        (mesh.time().globalPath()/"optimisation"/"topOIsoSurfaces")
+        (mesh.time().globalPath()/"optimisation"/"topOIsoSurfaces"),
+    meshFaceToChangedFace_(),
+    changedFacesPerCuttingFace_(),
+    surfPoints_(),
+    surfFaces_()
 {
     mkDir(isoSurfFolder_);
 }
@@ -363,13 +501,13 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
     const volScalarField& indicator,
     const scalar isoValue,
     labelList& changedFaces,
-    List<wallPoint>& changedFacesInfo
+    List<wallPointData<label>>& changedFacesInfo
 )
 {
     const fvMesh& mesh = zones_.mesh();
 
-    // Current number of interface faces
-    label nSurfFaces(0);
+    // Current number of mesh faces being cut
+    label nChangedFaces(0);
 
     // Indicator at the mesh points, used to compute the iso-surface
     pointScalarField pointY(volPointInterpolation(mesh).interpolate(indicator));
@@ -385,16 +523,23 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
     DynamicList<face> isoSurfFaces(mesh.nFaces()/100);
     DynamicList<point> isoSurfPts(mesh.nPoints()/100);
     DynamicList<label> zoneIDs(mesh.nFaces()/100);
-    label nIsoSurfPts(0);
 
     // Number of patches before processor ones
     label nSerialPatches = mesh.boundaryMesh().nNonProcessor();
 
     // Map between iso-surface and mesh faces (internal and boundary)
-    Map<label> addedFaces;
+    meshFaceToChangedFace_.clearStorage();
+
+    // Map between changedFace and cutFace
+    // Index is the changedFaceID, output is the cutFaceID
+    DynamicList<label> changedFaceToCutFace;
+
+    // Per mesh face, its cutting faces
+    List<DynamicList<label>> cuttingFacesPerMeshFace(mesh.nFaces());
 
     // Loop over cells and check whether they are cut by zero iso-surface
     const cellList& cells = mesh.cells();
+
     forAll(cells, celli)
     {
         if (!cutCell.calcSubCell(celli, isoValue))
@@ -402,11 +547,13 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
             const vector& cuttingCf = cutCell.faceCentre();
             vector cuttingNf = cutCell.faceArea();
             cuttingNf.normalise();
+            DynamicList<label> cellCutFaces(cells[celli].size());
 
             // Loop over faces of the cut cell and check whether they are cut
             // too, setting their distance from the cutting face
-            for (const label facei : cells[celli])
+            forAll(cells[celli], fi)
             {
+                const label facei = cells[celli][fi];
                 if (!cutFace.calcSubFace(facei, isoValue))
                 {
                     const vector& Cf = mesh.Cf()[facei];
@@ -414,8 +561,9 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
                         magSqr((Cf - cuttingCf) & cuttingNf);
                     const vector lsPoint =
                         Cf + ((cuttingCf - Cf) & cuttingNf)*cuttingNf;
+                    cellCutFaces.push_back(facei);
 
-                    if (!addedFaces.found(facei))
+                    if (!meshFaceToChangedFace_.found(facei))
                     {
                         // If the face being cut is a boundary one, part of
                         // it belongs to the iso-surface
@@ -426,23 +574,42 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
                             isoSurfPts,
                             isoSurfFaces,
                             zoneIDs,
-                            nIsoSurfPts
+                            cuttingFacesPerMeshFace
                         );
                         if (mesh.isInternalFace(facei) || addedToIsoSurf)
                         {
-                            addedFaces.insert(facei, nSurfFaces);
+                            // Mesh face to changedFace addressing
+                            meshFaceToChangedFace_.insert(facei, nChangedFaces);
+                            // Set origin face for meshWave
+                            changedFacesInfo[nChangedFaces] =
+                                wallPointData<label>
+                                (
+                                    lsPoint,
+                                    nChangedFaces,
+                                    distSqr
+                                );
+                            changedFaces[nChangedFaces] = facei;
+                            // Origin face-to-cut face
+                            changedFaceToCutFace.push_back(isoSurfFaces.size());
+                            ++nChangedFaces;
                         }
-                        changedFacesInfo[nSurfFaces] =
-                            wallPoint(lsPoint, distSqr);
-                        changedFaces[nSurfFaces++] = facei;
                     }
                     else
                     {
-                        const label visitedFace = addedFaces.at(facei);
+                        label visitedFace = meshFaceToChangedFace_.at(facei);
                         if (distSqr < changedFacesInfo[visitedFace].distSqr())
                         {
+                            // Set origin face for meshWave
                             changedFacesInfo[visitedFace] =
-                                wallPoint(lsPoint, distSqr);
+                                wallPointData<label>
+                                (
+                                    lsPoint,
+                                    visitedFace,
+                                    distSqr
+                                );
+                            // Origin face-to-cut face
+                            changedFaceToCutFace[visitedFace] =
+                                isoSurfFaces.size();
                         }
                     }
                 }
@@ -451,37 +618,20 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
             addCuttingFaceToIsoline
             (
                 cutCell.facePoints(),
+                nSerialPatches,
+                cellCutFaces,
+                cuttingFacesPerMeshFace,
                 isoSurfPts,
                 isoSurfFaces,
-                zoneIDs,
-                nIsoSurfPts,
-                nSerialPatches
+                zoneIDs
             );
 
-        }
-    }
-
-    // Insert wall faces if they belong to the outer boundary
-    labelHashSet wallPatchIDs =
-        mesh.boundaryMesh().findPatchIDs<wallPolyPatch>();
-    for (const label patchi : wallPatchIDs)
-    {
-        const fvPatch& patch = mesh.boundary()[patchi];
-        const labelList& faceCells = patch.faceCells();
-        const label start = patch.start();
-        const vectorField& Cf = patch.Cf();
-
-        forAll(Cf, facei)
-        {
-            if
-            (
-                indicator[faceCells[facei]] >= 0 &&
-               !addedFaces.found(start + facei)
-            )
+            for (const label facei : cellCutFaces)
             {
-                changedFaces[nSurfFaces] = start + facei;
-                changedFacesInfo[nSurfFaces] = wallPoint(Cf[facei], 0);
-                ++nSurfFaces;
+                cuttingFacesPerMeshFace[facei].push_back
+                (
+                    isoSurfFaces.size() - 1
+                );
             }
         }
     }
@@ -491,19 +641,47 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
     addBoundaryFacesToIsoline
     (
         pointY,
-        addedFaces,
+        meshFaceToChangedFace_,
         isoValue,
         isoSurfPts,
         isoSurfFaces,
         zoneIDs,
-        nIsoSurfPts
+        nChangedFaces,
+        changedFaces,
+        changedFacesInfo,
+        changedFaceToCutFace,
+        cuttingFacesPerMeshFace
     );
 
-    changedFaces.setSize(nSurfFaces);
-    changedFacesInfo.setSize(nSurfFaces);
+    changedFaces.setSize(nChangedFaces);
+    changedFacesInfo.setSize(nChangedFaces);
 
     // vtp and multi-region stl files holding the current geometry
-    writeSurfaceFiles(isoSurfPts, isoSurfFaces, zoneIDs, nSerialPatches);
+    surfPoints_.transfer(isoSurfPts);
+    surfFaces_.transfer(isoSurfFaces);
+
+    const labelList zoneIds(std::move(zoneIDs));
+    writeSurfaceFiles(surfPoints_, surfFaces_, zoneIds, nSerialPatches);
+
+    // Invert changedFace-to-cuttingFace map for the sensitivity computations
+    changedFacesPerCuttingFace_ =
+        invertOneToMany(surfFaces_.size(), changedFaceToCutFace);
+
+    // Transform origin cut faces to a global numbering
+    labelList cuttingFacesPerProc(Pstream::nProcs(), Zero);
+    cuttingFacesPerProc[Pstream::myProcNo()] = changedFaces.size();
+    Pstream::listCombineReduce(cuttingFacesPerProc, plusEqOp<label>());
+
+    labelList passedFaces(Pstream::nProcs(), Zero);
+    for (label i = 1; i < Pstream::nProcs(); ++i)
+    {
+        passedFaces[i] = passedFaces[i - 1] + cuttingFacesPerProc[i - 1];
+    }
+
+    forAll(changedFacesInfo, facei)
+    {
+        changedFacesInfo[facei].data() += passedFaces[Pstream::myProcNo()];
+    }
 }
 
 

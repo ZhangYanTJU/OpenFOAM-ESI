@@ -65,6 +65,9 @@ protected:
         //- Mechanism for gradually activating design variables
         marchingCells marchCells_;
 
+        //- Number of times the design variables have evolved
+        label evolvedCount_;
+
 
     // Protected Member Functions
 
@@ -132,6 +135,9 @@ public:
 
         //- Update the active design variables
         virtual void evolveNumber();
+
+        //- The writeData function required by the regIOobject write operation
+        virtual bool writeData(Ostream&) const;
 };
 
 

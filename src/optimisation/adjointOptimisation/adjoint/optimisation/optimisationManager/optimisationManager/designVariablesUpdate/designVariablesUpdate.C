@@ -30,6 +30,7 @@ License
 #include "adjointSolverManager.H"
 #include "designVariablesUpdate.H"
 #include "constrainedOptimisationMethod.H"
+#include "adjointNull.H"
 #include "IOmanip.H"
 #include "runTimeSelectionTables.H"
 
@@ -68,9 +69,15 @@ Foam::label Foam::designVariablesUpdate::nConstraints
 Foam::label Foam::designVariablesUpdate::nAdjointSolvers() const
 {
     label n(0);
-    for (const adjointSolverManager& adjSolvManager : adjointSolvManagers_)
+    for (adjointSolverManager& adjSolvManager : adjointSolvManagers_)
     {
-        n += adjSolvManager.nAdjointSolvers();
+        for (adjointSolver& solver : adjSolvManager.adjointSolvers())
+        {
+            if (!isA<adjointNull>(solver))
+            {
+                ++n;
+            }
+        }
     }
     return n;
 }

@@ -176,7 +176,7 @@ public:
         // Edit
 
             //- Update active cells
-            void update();
+            void update(const label iters = 1);
 
             //- Set marching step
             inline void setMarchingStep(const label step)
