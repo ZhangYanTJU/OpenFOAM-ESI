@@ -59,7 +59,12 @@ void Foam::dynamicTopODesignVariables::setActiveDesignVariables
         marchCells_.addFixedCells(zones_.IOCells());
     }
 
-    marchCells_.update();
+    // Evolve the active design variables as many times as the passed
+    // optimisation cycles - 1 (the last evolution corresponds to the design
+    // variables of the next optimisation cycle).
+    // Ensure at least one evolution, to kick-start the optimisation
+    evolvedCount_ = max(evolvedCount_ - 1, 1);
+    marchCells_.update(evolvedCount_);
     activeDesignVariables_ = marchCells_.getActiveCells();
 }
 
@@ -84,11 +89,9 @@ Foam::dynamicTopODesignVariables::dynamicTopODesignVariables
 )
 :
     topODesignVariables(mesh, dict, size),
-    marchCells_(mesh, dict.subDict("marchingCoeffs"))
-{
-    // Rest of the constructor initialization
-    initialize();
-}
+    marchCells_(mesh, dict.subDict("marchingCoeffs")),
+    evolvedCount_(localIOdictionary::getOrDefault<label>("evolvedCount", 0))
+{}
 
 
 // * * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * //
@@ -110,6 +113,14 @@ void Foam::dynamicTopODesignVariables::evolveNumber()
 {
     marchCells_.update();
     activeDesignVariables_ = marchCells_.getActiveCells();
+    ++evolvedCount_;
+}
+
+
+bool Foam::dynamicTopODesignVariables::writeData(Ostream& os) const
+{
+    os.writeEntry("evolvedCount", evolvedCount_);
+    return topODesignVariables::writeData(os);
 }
 
 

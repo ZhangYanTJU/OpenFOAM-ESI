@@ -264,6 +264,11 @@ public:
             adjointSensitivity& sens
         );
 
+        //- Set initial values of the design variables
+        //  For design variables sets that need to be initialised after the
+        //  construction of the primal fields.
+        virtual void setInitialValues();
+
         //- Automatically add fvOptions depending on the design variables
         //- to the primal and adjoint solvers
         //  WIP

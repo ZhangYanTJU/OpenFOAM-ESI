@@ -139,21 +139,7 @@ void Foam::topODesignVariables::applyFixedValues()
 
 Foam::scalar Foam::topODesignVariables::computeEta(scalarField& correction)
 {
-    // Since the correction might want to increase values above 1 or
-    // reduce them below 0, using it directly to compute eta is a bad idea.
-    // Instead, do a pseudo-update and compute the max alpha change directly
-
-    // Back-up old design variables (dvs)
-    scalarField& dvs = getVars();
-    scalarField oldDVs(dvs);
-    // Do update to compute alpha field with eta 1
-    update(correction);
-    // Compute difference and through that, the max dv change
-    const scalar maxChange(gMax(mag(dvs - oldDVs)));
-    // Restore alpha back
-    dvs = oldDVs;
-
-    // Compute eta
+    const scalar maxChange(gMax(mag(correction)));
     Info<< "maxInitChange/maxChange \t"
         << maxInitChange_() << "/" << maxChange << endl;
     const scalar eta(maxInitChange_() / maxChange);
@@ -288,7 +274,6 @@ void Foam::topODesignVariables::initialize()
     // Make sure alpha has fixed values where it should
     scalarField dummyCorrection(mesh_.nCells(), Zero);
     update(dummyCorrection);
-    evolveNumber();
 
     // Read bounds for design variables, if present
     readBounds(autoPtr<scalar>::New(0), autoPtr<scalar>::New(1));
@@ -332,10 +317,7 @@ Foam::topODesignVariables::topODesignVariables
         )
     ),
     addFvOptions_(dict.getOrDefault<bool>("addFvOptions", false))
-{
-    // Rest of the contrsuctor initialisation
-    initialize();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * //
@@ -479,7 +461,7 @@ void Foam::topODesignVariables::update(scalarField& correction)
     // Write the 0.5 beta iso-line to files, as an indication of the
     // fluid-solid interface
     labelList changedFaces(mesh_.nFaces(), -1);
-    List<wallPoint> changedFacesInfo(mesh_.nFaces());
+    List<wallPointData<label>> changedFacesInfo(mesh_.nFaces());
     writeFluidSolidInterface(-beta(), -0.5, changedFaces, changedFacesInfo);
 }
 
@@ -507,6 +489,13 @@ Foam::tmp<Foam::scalarField> Foam::topODesignVariables::assembleSensitivities
     regularisation_.postProcessSens(objectiveSens);
 
     return tobjectiveSens;
+}
+
+
+void Foam::topODesignVariables::setInitialValues()
+{
+    // Rest of the contrsuctor initialisation
+    initialize();
 }
 
 
