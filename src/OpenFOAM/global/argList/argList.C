@@ -1526,6 +1526,9 @@ void Foam::argList::parse
                 // also have to protect the actual dictionary parsing since
                 // it might trigger file access (e.g. #include, #codeStream)
                 const bool oldParRun = Pstream::parRun(false);
+                // Note: non-parallel running might update
+                // fileOperation::nProcs() so store & restore below
+                const label nOldProcs = fileHandler().nProcs();
 
                 autoPtr<ISstream> dictStream
                 (
@@ -1584,6 +1587,7 @@ void Foam::argList::parse
                 }
 
                 Pstream::parRun(oldParRun);  // Restore parallel state
+                const_cast<fileOperation&>(fileHandler()).nProcs(nOldProcs);
 
                 if (Pstream::nProcs() == 1)
                 {
@@ -1819,6 +1823,9 @@ void Foam::argList::parse
                 if (UPstream::master())
                 {
                     const bool oldParRun = Pstream::parRun(false);
+                    // Note: non-parallel running might update
+                    // fileOperation::nProcs() so store & restore below
+                    const label nOldProcs = fileHandler().nProcs();
 
                     label rank = 0;
                     for (label proci = 1; proci < pathDirs.size(); ++proci)
@@ -1855,6 +1862,7 @@ void Foam::argList::parse
                     }
 
                     UPstream::parRun(oldParRun);
+                    const_cast<fileOperation&>(fileHandler()).nProcs(nOldProcs);
                 }
                 Pstream::broadcast(rankToDirs);
 

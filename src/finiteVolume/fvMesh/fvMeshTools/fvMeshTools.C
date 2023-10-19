@@ -793,31 +793,7 @@ Foam::fvMeshTools::loadOrCreateMeshImpl
     {
         // Non-null reference when a mesh exists on given processor
         haveLocalMesh = (*readHandlerPtr).good();
-
-//Pout<< "haveLocalMesh:" << haveLocalMesh << endl;
-
-
-
     }
-//     else
-//     {
-//         // No file handler.
-//         // Check for presence of the "faces" file,
-//         // but for 'decompose', only need mesh on master.
-// 
-//         haveLocalMesh =
-//         (
-//             decompose
-//           ? UPstream::master()
-//           : fileHandler().isFile
-//             (
-//                 fileHandler().filePath
-//                 (
-//                     io.time().path()/io.instance()/meshSubDir/"faces"
-//                 )
-//             )
-//         );
-//     }
 
     // Globally consistent information about who has a mesh
     boolList haveMesh

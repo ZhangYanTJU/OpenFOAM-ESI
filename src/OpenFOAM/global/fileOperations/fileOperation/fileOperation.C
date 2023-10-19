@@ -80,7 +80,7 @@ Foam::word Foam::fileOperation::processorsBaseDir = "processors";
 //- Caching (e.g. of time directories) - enabled by default
 int Foam::fileOperation::cacheLevel_(1);
 
-Foam::label Foam::fileOperation::nProcsFilter_(0);
+Foam::label Foam::fileOperation::nProcsFilter_(-1);
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
@@ -429,6 +429,11 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
     //             if directory status gets synchronised
     // - distributed() : different processors have different roots
     // - fileModificationChecking : (uncollated only) do IO on master only
+    // - nProcsFilter_ : if set to
+    //       0 : accept any directory (e.g. for redistributePar where we don't
+    //           know yet number of read/write procs)
+    //      -1 : accept only processorsDDD where DDD is nProcs(worldComm)
+    //      >0 : accept the exact mentioned number of prcessors
 
 
     // Collated : check whether/how to filter processorsXXX directory names
@@ -556,7 +561,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
                 {
                     // "processorsNN"
 
-                    if (proci < rNum)
+                    if (proci < rNum || (nProcsFilter_ == 0))
                     {
                         // And it is also in range.
                         // Eg for "processors4": 3 is ok, 10 is not
@@ -565,7 +570,7 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
                         pathTypeIdx.second() = proci;
                     }
                 }
-                else if (group.contains(proci))
+                else if (group.contains(proci) || (nProcsFilter_ == 0))
                 {
                     // "processorsNN_start-end"
                     // - save the local proc offset
@@ -580,6 +585,10 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
                 procDirs.append(dirIndex(dirN, pathTypeIdx));
             }
         }
+
+        // Sort processor directory names (natural order)
+        sortProcessorDirs(procDirs);
+
 
         // Global check of empty/exists.
         // 1 : empty directory
@@ -674,9 +683,6 @@ Foam::fileOperation::lookupAndCacheProcessorsPath
                 const_cast<fileOperation&>(*this).nProcs(nProcs);
             }
         }
-
-        // Sort processor directory names (natural order)
-        sortProcessorDirs(procDirs);
 
         if (procDirsStatus & 2u)
         {

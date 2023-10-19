@@ -735,6 +735,23 @@ masterUncollatedFileOperation
     managedComm_(getManagedComm(comm_))  // Possibly locally allocated
 {
     init(verbose);
+
+    if (comm_ == -1)
+    {
+        FatalErrorInFunction<< "Problem comm_:" << comm_ << exit(FatalError);
+    }
+    if (UPstream::nProcs(comm_) == -1)
+    {
+        FatalErrorInFunction<< "Problem comm_:" << comm_
+            << " nProcs:" << UPstream::nProcs(comm_)
+            << exit(FatalError);
+    }
+    if (UPstream::myProcNo(comm_) == -1)
+    {
+        FatalErrorInFunction<< "Problem comm_:" << comm_
+            << " myProcNo:" << UPstream::myProcNo(comm_)
+            << exit(FatalError);
+    }
 }
 
 
@@ -750,6 +767,23 @@ masterUncollatedFileOperation
     managedComm_(-1)  // Externally managed
 {
     init(verbose);
+
+    if (comm_ == -1)
+    {
+        FatalErrorInFunction<< "Problem comm_:" << comm_ << exit(FatalError);
+    }
+    if (UPstream::nProcs(comm_) == -1)
+    {
+        FatalErrorInFunction<< "Problem comm_:" << comm_
+            << " nProcs:" << UPstream::nProcs(comm_)
+            << exit(FatalError);
+    }
+    if (UPstream::myProcNo(comm_) == -1)
+    {
+        FatalErrorInFunction<< "Problem comm_:" << comm_
+            << " myProcNo:" << UPstream::myProcNo(comm_)
+            << exit(FatalError);
+    }
 }
 
 
@@ -1095,6 +1129,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
     {
         const bool oldParRun = UPstream::parRun(false);
         const int oldCache = fileOperation::cacheLevel(0);
+        const label oldNProcs = fileOperation::nProcs();
 
         // All masters search locally. Note that global objects might
         // fail (except on master). This gets handled later on (in PARENTOBJECT)
@@ -1111,6 +1146,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
                 newInstancePath
             );
 
+        const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
         fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);
 
@@ -1251,6 +1287,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
     {
         const bool oldParRun = UPstream::parRun(false);
         const int oldCache = fileOperation::cacheLevel(0);
+        const label oldNProcs = fileOperation::nProcs();
 
         objPath = filePathInfo
         (
@@ -1264,6 +1301,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
             newInstancePath
         );
 
+        const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
         fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);
 
@@ -1453,11 +1491,13 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
     {
         const bool oldParRun = UPstream::parRun(false);
         const int oldCache = fileOperation::cacheLevel(0);
+        const label oldNProcs = fileOperation::nProcs();
 
         if (exists(pDirs, io))
         {
             foundInstance = io.instance();
         }
+        const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
         fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);
     }
@@ -1492,6 +1532,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
     {
         const bool oldParRun = UPstream::parRun(false);
         const int oldCache = fileOperation::cacheLevel(0);
+        const label oldNProcs = fileOperation::nProcs();
 
         label instIndex = ts.size()-1;
 
@@ -1602,6 +1643,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
             }
         }
 
+        const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
         fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);  // Restore parallel state
     }
@@ -1677,6 +1719,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
         // (through call to filePath which triggers parallel )
         const bool oldParRun = UPstream::parRun(false);
         const int oldCache = fileOperation::cacheLevel(0);
+        const label oldNProcs = fileOperation::nProcs();
 
         //- Use non-time searching version
         objectNames = fileOperation::readObjects
@@ -1720,6 +1763,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
             }
         }
 
+        const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
         fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);  // Restore parallel state
     }
@@ -2164,11 +2208,13 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
             const int oldCache = fileOperation::cacheLevel(0);
+            const label oldNProcs = fileOperation::nProcs();
 
             auto& is = io.readStream(typeName);
             ok = io.readData(is);
             io.close();
 
+            const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
             fileOperation::cacheLevel(oldCache);
             UPstream::parRun(oldParRun);  // Restore parallel state
         }
@@ -2298,9 +2344,11 @@ Foam::instantList Foam::fileOperations::masterUncollatedFileOperation::findTimes
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
             const int oldCache = fileOperation::cacheLevel(0);
+            const label oldNProcs = fileOperation::nProcs();
 
             times = fileOperation::findTimes(directory, constantName);
 
+            const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
             fileOperation::cacheLevel(oldCache);
             UPstream::parRun(oldParRun);  // Restore parallel state
         }
@@ -2710,6 +2758,8 @@ void Foam::fileOperations::masterUncollatedFileOperation::addWatches
     {
         // Switch off comms inside findWatch/addWatch etc.
         const bool oldParRun = UPstream::parRun(false);
+        const int oldCache = fileOperation::cacheLevel(0);
+        const label oldNProcs = fileOperation::nProcs();
 
         labelHashSet removedWatches(watchIndices);
 
@@ -2735,6 +2785,8 @@ void Foam::fileOperations::masterUncollatedFileOperation::addWatches
             removeWatch(watchIndices[index]);
         }
 
+        const_cast<masterUncollatedFileOperation&>(*this).nProcs(oldNProcs);
+        fileOperation::cacheLevel(oldCache);
         UPstream::parRun(oldParRun);
     }
     Pstream::broadcast(newWatchIndices);
