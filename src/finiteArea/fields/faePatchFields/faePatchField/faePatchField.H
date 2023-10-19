@@ -516,6 +516,11 @@ public:
         virtual void operator==(const Field<Type>&);
         virtual void operator==(const Type&);
 
+        // Prevent automatic comparison rewriting (c++20)
+        bool operator!=(const faePatchField<Type>&) const = delete;
+        bool operator!=(const Field<Type>&) const = delete;
+        bool operator!=(const Type&) const = delete;
+
 
     // Ostream Operator
 

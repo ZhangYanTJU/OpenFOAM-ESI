@@ -83,8 +83,11 @@ public:
 
     // Public Typedefs
 
-        //- Type of mesh on which this DimensionedField is instantiated
+        //- The mesh type for the DimensionedField
         typedef typename GeoMesh::Mesh Mesh;
+
+        //- The DimensionedField is usually synonymous with an internal field
+        typedef DimensionedField<Type, GeoMesh> Internal;
 
         //- Type of the field from which this DimensionedField is derived
         typedef Field<Type> FieldType;

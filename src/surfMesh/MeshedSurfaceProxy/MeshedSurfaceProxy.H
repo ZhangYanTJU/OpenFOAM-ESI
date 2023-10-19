@@ -40,8 +40,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MeshedSurfaceProxy_H
-#define MeshedSurfaceProxy_H
+#ifndef Foam_MeshedSurfaceProxy_H
+#define Foam_MeshedSurfaceProxy_H
 
 #include "pointField.H"
 #include "surfZoneList.H"
@@ -160,60 +160,42 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- The surface size is the number of faces
-            label size() const
-            {
-                return faces_.size();
-            }
+        //- The surface size is the number of faces
+        label size() const noexcept { return faces_.size(); }
 
-            //- Return const access to the points
-            const pointField& points() const
-            {
-                return points_;
-            }
+        //- Return const access to the points
+        const pointField& points() const noexcept { return points_; }
 
-            //- Return const access to the faces
-            const UList<Face>& surfFaces() const
-            {
-                return faces_;
-            }
+        //- Return const access to the faces
+        const UList<Face>& surfFaces() const noexcept { return faces_; }
 
-            //- Const access to the surface zones.
-            //  If zones are defined, they must be contiguous and cover the
-            //  entire surface
-            const UList<surfZone>& surfZones() const
-            {
-                return zones_;
-            }
+        //- Const access to the surface zones.
+        //  If zones are defined, they must be contiguous and cover the
+        //  entire surface
+        const UList<surfZone>& surfZones() const noexcept { return zones_; }
 
-            //- Const access to the faceMap, zero-sized when unused
-            const labelUList& faceMap() const
-            {
-                return faceMap_;
-            }
+        //- Const access to the faceMap, zero-sized when unused
+        const labelUList& faceMap() const noexcept { return faceMap_; }
 
-            //- Const access to the faceIds, zero-sized when unused
-            const labelUList& faceIds() const
-            {
-                return faceIds_;
-            }
+        //- Const access to the faceIds, zero-sized when unused
+        const labelUList& faceIds() const noexcept { return faceIds_; }
 
-            //- Can/should use faceMap?
-            bool useFaceMap() const
-            {
-                return faceMap_.size() == faces_.size();
-            }
+        //- Can/should use faceMap?
+        bool useFaceMap() const noexcept
+        {
+            return faceMap_.size() == faces_.size();
+        }
 
-            //- Possible to use faceIds?
-            bool useFaceIds() const
-            {
-                return faceIds_.size() == faces_.size();
-            }
+        //- Possible to use faceIds?
+        bool useFaceIds() const noexcept
+        {
+            return faceIds_.size() == faces_.size();
+        }
 
-            //- Count number of triangles.
-            inline label nTriangles() const;
+        //- Count number of triangles.
+        inline label nTriangles() const;
 
 
     // Write

@@ -122,7 +122,7 @@ public:
         explicit ispanstream(std::string_view s)
         {
             buffer_type(const_cast<char*>(s.data()), s.size()),
-            stream_type(static_cast<buffer_type*>(this))
+            stream_type(static_cast<buffer_type*>(this));
         }
         #endif
 

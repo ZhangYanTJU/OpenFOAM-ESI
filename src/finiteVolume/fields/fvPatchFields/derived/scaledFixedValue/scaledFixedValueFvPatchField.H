@@ -198,11 +198,18 @@ public:
         virtual void write(Ostream&) const;
 
 
-        // Force an assignment irrespective of form of patch
+    // Member Operators
 
-            virtual void operator==(const fvPatchField<Type>& ptf);
-            virtual void operator==(const Field<Type>& tf);
-            virtual void operator==(const Type& t);
+        // Force an assignment, applying scaling to refValue
+
+        virtual void operator==(const fvPatchField<Type>&);
+        virtual void operator==(const Field<Type>&);
+        virtual void operator==(const Type&);
+
+        // Prevent automatic comparison rewriting (c++20)
+        bool operator!=(const fvPatchField<Type>&) const = delete;
+        bool operator!=(const Field<Type>&) const = delete;
+        bool operator!=(const Type&) const = delete;
 };
 
 

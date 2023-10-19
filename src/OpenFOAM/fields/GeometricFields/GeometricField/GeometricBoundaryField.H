@@ -214,6 +214,11 @@ public:
 
         //- Forced assignment to uniform value
         void operator==(const Type& val);
+
+        // Prevent automatic comparison rewriting (c++20)
+        bool operator!=(const GeometricBoundaryField&) = delete;
+        bool operator!=(const FieldField<PatchField, Type>&) = delete;
+        bool operator!=(const Type&) = delete;
 };
 
 

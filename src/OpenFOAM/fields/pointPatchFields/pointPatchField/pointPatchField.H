@@ -560,9 +560,14 @@ public:
         // By generic these do nothing unless the patch actually has boundary
         // values
 
-        virtual void operator==(const pointPatchField<Type>&){}
-        virtual void operator==(const Field<Type>&){}
-        virtual void operator==(const Type&){}
+        virtual void operator==(const pointPatchField<Type>&) {}
+        virtual void operator==(const Field<Type>&) {}
+        virtual void operator==(const Type&) {}
+
+        // Prevent automatic comparison rewriting (c++20)
+        bool operator!=(const pointPatchField<Type>&) const = delete;
+        bool operator!=(const Field<Type>&) const = delete;
+        bool operator!=(const Type&) const = delete;
 
 
     // Ostream Operator
