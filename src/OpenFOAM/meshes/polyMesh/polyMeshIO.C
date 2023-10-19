@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,10 +76,11 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
 {
     DebugInFunction << "Updating mesh based on saved data." << endl;
 
-    // Find the point and cell instance
-    fileName pointsInst(time().findInstance(meshDir(), "points"));
-    fileName facesInst(time().findInstance(meshDir(), "faces"));
-    //fileName boundaryInst(time().findInstance(meshDir(), "boundary"));
+    // Find point/faces instances
+    const fileName pointsInst(time().findInstance(meshDir(), "points"));
+    const fileName facesInst(time().findInstance(meshDir(), "faces"));
+    //const fileName boundInst
+    //(time().findInstance(meshDir(), "boundary", IOobject::MUST_READ, facesInst));
 
     if (debug)
     {
@@ -104,6 +105,7 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
         setInstance(facesInst);
         points_.instance() = pointsInst;
 
+        points_.clear();
         points_ = pointIOField
         (
             IOobject
@@ -118,6 +120,7 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
             )
         );
 
+        faces_.clear();
         faces_ = faceCompactIOList
         (
             IOobject
@@ -132,6 +135,11 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
             )
         );
 
+        // NOTE: owner_.hasHeaderClass() is probably sticky from before.
+        // Could potentially cause problems if constructed without reading
+        // and then using readUpdate() to create a new mesh
+
+        owner_.clear();
         owner_ = labelIOList
         (
             IOobject
@@ -146,6 +154,7 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
             )
         );
 
+        neighbour_.clear();
         neighbour_ = labelIOList
         (
             IOobject
@@ -185,18 +194,15 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
         }
         else
         {
-            wordList newTypes = newBoundary.types();
-            wordList newNames = newBoundary.names();
-
-            wordList oldTypes = boundary_.types();
-            wordList oldNames = boundary_.names();
-
-            forAll(oldTypes, patchi)
+            forAll(boundary_, patchi)
             {
+                const auto& oldPatch = boundary_[patchi];
+                const auto& newPatch = newBoundary[patchi];
+
                 if
                 (
-                    oldTypes[patchi] != newTypes[patchi]
-                 || oldNames[patchi] != newNames[patchi]
+                    (oldPatch.name() != newPatch.name())
+                 || (oldPatch.type() != newPatch.type())
                 )
                 {
                     boundaryChanged = true;
@@ -211,8 +217,7 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
                 << "Number of patches has changed.  This may have "
                 << "unexpected consequences.  Proceed with care." << endl;
 
-            boundary_.clear();
-            boundary_.resize(newBoundary.size());
+            boundary_.resize_null(newBoundary.size());
 
             forAll(newBoundary, patchi)
             {
@@ -280,119 +285,121 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
         geometricD_ = Zero;
         solutionD_ = Zero;
 
-        // Zones
-        pointZoneMesh newPointZones
-        (
-            IOobject
+
+        // Update point/face/cell zones, but primarily just the addressing.
+        // - this will be extremely fragile (not just here) if the names
+        //   or the order of the zones also change
+
+        // pointZones
+        {
+            pointZones_.clearAddressing();
+            pointZones_.clearPrimitives();
+
+            pointZoneMesh newZones
             (
-                "pointZones",
-                facesInst,
-                meshSubDir,
+                IOobject
+                (
+                    "pointZones",
+                    facesInst,
+                    meshSubDir,
+                    *this,
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                ),
                 *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this
-        );
-
-        label oldSize = pointZones_.size();
-
-        if (newPointZones.size() <= pointZones_.size())
-        {
-            pointZones_.setSize(newPointZones.size());
-        }
-
-        // Reset existing ones
-        forAll(pointZones_, czI)
-        {
-            pointZones_[czI] = newPointZones[czI];
-        }
-
-        // Extend with extra ones
-        pointZones_.setSize(newPointZones.size());
-
-        for (label czI = oldSize; czI < newPointZones.size(); czI++)
-        {
-            pointZones_.set(czI, newPointZones[czI].clone(pointZones_));
-        }
-
-
-        faceZoneMesh newFaceZones
-        (
-            IOobject
-            (
-                "faceZones",
-                facesInst,
-                meshSubDir,
-                *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this
-        );
-
-        oldSize = faceZones_.size();
-
-        if (newFaceZones.size() <= faceZones_.size())
-        {
-            faceZones_.setSize(newFaceZones.size());
-        }
-
-        // Reset existing ones
-        forAll(faceZones_, fzI)
-        {
-            faceZones_[fzI].resetAddressing
-            (
-                newFaceZones[fzI],
-                newFaceZones[fzI].flipMap()
+                PtrList<pointZone>()
             );
+            pointZones_.resize(newZones.size());
+
+            forAll(pointZones_, zonei)
+            {
+                // Existing or new empty zone
+                auto& zn =
+                    pointZones_.try_emplace
+                    (
+                        zonei,
+                        newZones[zonei], Foam::zero{}, pointZones_
+                    );
+
+                // Set addressing
+                zn.resetAddressing(std::move(newZones[zonei]));
+            }
         }
 
-        // Extend with extra ones
-        faceZones_.setSize(newFaceZones.size());
-
-        for (label fzI = oldSize; fzI < newFaceZones.size(); fzI++)
+        // faceZones
         {
-            faceZones_.set(fzI, newFaceZones[fzI].clone(faceZones_));
-        }
+            faceZones_.clearAddressing();
+            faceZones_.clearPrimitives();
 
-
-        cellZoneMesh newCellZones
-        (
-            IOobject
+            faceZoneMesh newZones
             (
-                "cellZones",
-                facesInst,
-                meshSubDir,
+                IOobject
+                (
+                    "faceZones",
+                    facesInst,
+                    meshSubDir,
+                    *this,
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                ),
                 *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this
-        );
+                PtrList<faceZone>()
+            );
+            faceZones_.resize(newZones.size());
 
-        oldSize = cellZones_.size();
+            forAll(faceZones_, zonei)
+            {
+                // Existing or new empty zone
+                auto& zn =
+                    faceZones_.try_emplace
+                    (
+                        zonei,
+                        newZones[zonei], Foam::zero{}, faceZones_
+                    );
 
-        if (newCellZones.size() <= cellZones_.size())
-        {
-            cellZones_.setSize(newCellZones.size());
+                // Set addressing
+                zn.resetAddressing(std::move(newZones[zonei]));
+            }
         }
 
-        // Reset existing ones
-        forAll(cellZones_, czI)
+        // cellZones
         {
-            cellZones_[czI] = newCellZones[czI];
-        }
+            cellZones_.clearAddressing();
+            cellZones_.clearPrimitives();
 
-        // Extend with extra ones
-        cellZones_.setSize(newCellZones.size());
+            cellZoneMesh newZones
+            (
+                IOobject
+                (
+                    "cellZones",
+                    facesInst,
+                    meshSubDir,
+                    *this,
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                ),
+                *this,
+                PtrList<cellZone>()
+            );
 
-        for (label czI = oldSize; czI < newCellZones.size(); czI++)
-        {
-            cellZones_.set(czI, newCellZones[czI].clone(cellZones_));
+            cellZones_.resize(newZones.size());
+
+            forAll(cellZones_, zonei)
+            {
+                // Existing or new empty zone
+                auto& zn =
+                    cellZones_.try_emplace
+                    (
+                        zonei,
+                        newZones[zonei], Foam::zero{}, cellZones_
+                    );
+
+                // Set addressing
+                zn.resetAddressing(std::move(newZones[zonei]));
+            }
         }
 
         // Re-read tet base points

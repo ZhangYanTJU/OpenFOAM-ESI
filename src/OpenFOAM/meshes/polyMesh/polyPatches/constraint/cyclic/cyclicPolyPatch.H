@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,8 +46,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cyclicPolyPatch_H
-#define cyclicPolyPatch_H
+#ifndef Foam_cyclicPolyPatch_H
+#define Foam_cyclicPolyPatch_H
 
 #include "coupledPolyPatch.H"
 #include "edgeList.H"
@@ -68,7 +68,7 @@ class cyclicPolyPatch
 :
     public coupledPolyPatch
 {
-    // Private data
+    // Private Data
 
         //- Name of other half
         mutable word neighbPatchName_;
@@ -93,16 +93,19 @@ class cyclicPolyPatch
             vector separationVector_;
 
 
-        //- List of edges formed from connected points. e[0] is the point on
-        //  the first half of the patch, e[1] the corresponding point on the
-        //  second half.
-        mutable edgeList* coupledPointsPtr_;
+        //- List of edges formed from connected points.
+        //  From first half of the patch to the corresponding point
+        //  on the second half.
+        mutable std::unique_ptr<edgeList> coupledPointsPtr_;
 
-        //- List of connected edges. e[0] is the edge on the first half of the
-        //  patch, e[1] the corresponding edge on the second half.
-        mutable edgeList* coupledEdgesPtr_;
+        //- List of connected edges.
+        //  From first half of the patch to the corresponding edge
+        //  on the second half.
+        mutable std::unique_ptr<edgeList> coupledEdgesPtr_;
 
         //- Temporary storage of owner side patch during ordering.
+        //  Saved as autoPtr instead of std::unique_ptr to allow
+        //  extra nullptr checking
         mutable autoPtr<primitivePatch> ownerPatchPtr_;
 
 
@@ -323,7 +326,7 @@ public:
 
         // Implicit Functions
 
-             //- Return number of new internal of this polyPatch faces
+            //- Return number of new internal of this polyPatch faces
             virtual void newInternalProcFaces
             (
                 label& newFaces,
@@ -424,19 +427,19 @@ public:
         }
 
         //- Axis of rotation for rotational cyclics
-        const vector& rotationAxis() const
+        const vector& rotationAxis() const noexcept
         {
             return rotationAxis_;
         }
 
         //- Point on axis of rotation for rotational cyclics
-        const point& rotationCentre() const
+        const point& rotationCentre() const noexcept
         {
             return rotationCentre_;
         }
 
         //- Translation vector for translational cyclics
-        const vector& separationVector() const
+        const vector& separationVector() const noexcept
         {
             return separationVector_;
         }

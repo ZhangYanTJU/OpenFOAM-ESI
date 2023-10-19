@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef surfZoneIOList_H
-#define surfZoneIOList_H
+#ifndef Foam_surfZoneIOList_H
+#define Foam_surfZoneIOList_H
 
 #include "surfZoneList.H"
 #include "regIOobject.H"
@@ -56,6 +56,13 @@ class surfZoneIOList
     public regIOobject,
     public surfZoneList
 {
+    // Private Member Functions
+
+        //- Return true if contents were read
+        //- (controlled by IOobject readOption flags).
+        bool readContents();
+
+
 public:
 
     //- Runtime type information

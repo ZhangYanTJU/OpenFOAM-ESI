@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,8 +45,8 @@ namespace Foam
 Foam::topoSetSource::addToUsageTable Foam::faceZoneToCell::usage_
 (
     faceZoneToCell::typeName,
-    "\n    Usage: faceZoneToCell zone master|slave\n\n"
-    "    Select master or slave side of the faceZone."
+    "\n    Usage: faceZoneToCell zone front|back|both\n\n"
+    "    Select front, back or both sides of the faceZone."
     " Note:accepts wildcards for zone.\n\n"
 );
 
@@ -57,9 +57,12 @@ const Foam::Enum
 >
 Foam::faceZoneToCell::faceActionNames_
 ({
-    { faceAction::MASTER, "master" },
-    { faceAction::SLAVE, "slave" },
-    //TBD: { faceAction::BOTH, "attached" },
+    { faceAction::FRONT, "front" },
+    { faceAction::BACK, "back" },
+    { faceAction::BOTH, "both" },
+    // Compatibility
+    { faceAction::FRONT, "master" },
+    { faceAction::BACK, "slave" },
 });
 
 
@@ -89,30 +92,65 @@ void Foam::faceZoneToCell::combine
 
         const auto& zone = mesh_.faceZones()[zonei];
 
-        const labelList& cellLabels =
-        (
-            option_ == MASTER
-          ? zone.masterCells()
-          : zone.slaveCells()
-        );
+        if (verbosity)
+        {
+            Info<< "    Using matching zone " << zone.name();
+
+            if (option_ == faceAction::FRONT)
+            {
+                Info<< " [front] cells:";
+            }
+            else if (option_ == faceAction::BACK)
+            {
+                Info<< " : [back] cells:";
+            }
+            if (option_ == faceAction::BOTH)
+            {
+                Info<< " : [front/back] cells:";
+            }
+        }
+
+        if (option_ == faceAction::FRONT || option_ == faceAction::BOTH)
+        {
+            const labelList& cellLabels = zone.frontCells();
+
+            if (verbosity)
+            {
+                Info<< ' ' << returnReduce(cellLabels.size(), sumOp<label>());
+            }
+
+            for (const label celli : cellLabels)
+            {
+                // Only do active cells
+                if (celli >= 0 && celli < mesh_.nCells())
+                {
+                    addOrDelete(set, celli, add);
+                }
+            }
+        }
+
+        if (option_ == faceAction::BACK || option_ == faceAction::BOTH)
+        {
+            const labelList& cellLabels = zone.backCells();
+
+            if (verbosity)
+            {
+                Info<< ' ' << returnReduce(cellLabels.size(), sumOp<label>());
+            }
+
+            for (const label celli : cellLabels)
+            {
+                // Only do active cells
+                if (celli >= 0 && celli < mesh_.nCells())
+                {
+                    addOrDelete(set, celli, add);
+                }
+            }
+        }
 
         if (verbosity)
         {
-            Info<< "    Using matching zone " << zone.name() << " with "
-                << returnReduce(cellLabels.size(), sumOp<label>())
-                << " cells on "
-                << faceActionNames_[option_] << " side" << endl;
-        }
-
-        // NOTE could also handle both sides directly if required
-
-        for (const label celli : cellLabels)
-        {
-            // Only do active cells
-            if (celli >= 0 && celli < mesh_.nCells())
-            {
-                addOrDelete(set, celli, add);
-            }
+            Info<< endl;
         }
     }
 }

@@ -53,8 +53,8 @@ namespace Foam
 
 class polyBoundaryMeshEntries
 :
-    public regIOobject,
-    public PtrList<entry>
+    public PtrList<entry>,
+    public regIOobject
 {
 public:
 
@@ -64,20 +64,28 @@ public:
 
     // Constructors
 
+        //- Read construct from IOobject
         explicit polyBoundaryMeshEntries(const IOobject& io)
         :
-            regIOobject(io),
-            PtrList<entry>()
+            regIOobject(io)
         {
             if (isReadRequired() || (isReadOptional() && headerOk()))
             {
-                readStream(typeName) >> *this;
+                // Read as entries
+                Istream& is = readStream(typeName);
+
+                is >> *this;
+                close();
             }
         }
 
 
    // Member Functions
 
+        //- Truncate at the first processor patch entry
+        void removeProcPatches();
+
+        //- The class is probably read-only
         bool writeData(Ostream&) const
         {
             NotImplemented;

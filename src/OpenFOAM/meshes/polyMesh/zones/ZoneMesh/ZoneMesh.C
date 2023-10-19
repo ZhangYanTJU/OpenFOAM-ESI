@@ -48,6 +48,22 @@ namespace Foam
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class ZoneType, class MeshType>
+Foam::label Foam::ZoneMesh<ZoneType, MeshType>::totalSize() const
+{
+    // Count number of objects in all zones
+    const PtrList<ZoneType>& zones = *this;
+
+    label total = 0;
+    for (const ZoneType& zn : zones)
+    {
+        total += zn.size();
+    }
+
+    return total;
+}
+
+
+template<class ZoneType, class MeshType>
 void Foam::ZoneMesh<ZoneType, MeshType>::calcZoneMap() const
 {
     if (zoneMapPtr_)
@@ -58,31 +74,22 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcZoneMap() const
     }
     else
     {
-        // Count number of objects in all zones
-        label nObjects = 0;
-
-        const PtrList<ZoneType>& zones = *this;
-
-        for (const ZoneType& zn : zones)
-        {
-            nObjects += zn.size();
-        }
-
-        zoneMapPtr_.emplace(2*nObjects);
-        auto& zm = *zoneMapPtr_;
+        zoneMapPtr_.reset(new Map<label>());
+        auto& map = *zoneMapPtr_;
 
         // Fill in objects of all zones into the map.
         // The key is the global object index, value is the zone index
 
+        map.reserve(this->totalSize());
+
+        const PtrList<ZoneType>& zones = *this;
         label zonei = 0;
 
         for (const ZoneType& zn : zones)
         {
-            const labelList& labels = zn;
-
-            for (const label idx : labels)
+            for (const label id : static_cast<const labelList&>(zn))
             {
-                zm.insert(idx, zonei);
+                map.insert(id, zonei);
             }
 
             ++zonei;
@@ -122,7 +129,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcGroupIDs() const
         return;  // Or FatalError
     }
 
-    groupIDsPtr_.emplace(16);
+    groupIDsPtr_.reset(new HashTable<labelList>(16));
     auto& groupLookup = *groupIDsPtr_;
 
     const PtrList<ZoneType>& zones = *this;
@@ -151,20 +158,27 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcGroupIDs() const
 
 
 template<class ZoneType, class MeshType>
-bool Foam::ZoneMesh<ZoneType, MeshType>::readContents()
+bool Foam::ZoneMesh<ZoneType, MeshType>::readContents
+(
+    const bool allowOptionalRead
+)
 {
-    if (isReadRequired() || (isReadOptional() && headerOk()))
+    if
+    (
+        isReadRequired()
+     || (allowOptionalRead && isReadOptional() && headerOk())
+    )
     {
         // Warn for MUST_READ_IF_MODIFIED
         warnNoRereading<ZoneMesh<ZoneType, MeshType>>();
 
         PtrList<ZoneType>& zones = *this;
 
-        // Read zones as entries
+        // Read entries
         Istream& is = readStream(typeName);
 
-        PtrList<entry> patchEntries(is);
-        zones.resize(patchEntries.size());
+        PtrList<entry> entries(is);
+        zones.resize_null(entries.size());
 
         // Transcribe
         forAll(zones, zonei)
@@ -174,8 +188,8 @@ bool Foam::ZoneMesh<ZoneType, MeshType>::readContents()
                 zonei,
                 ZoneType::New
                 (
-                    patchEntries[zonei].keyword(),
-                    patchEntries[zonei].dict(),
+                    entries[zonei].keyword(),
+                    entries[zonei].dict(),
                     zonei,
                     *this
                 )
@@ -205,8 +219,24 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    readContents();
+    // Note: this is inconsistent with polyBoundaryMesh
+    // which does not permit optional reading
+    readContents(true);  // allowOptionalRead = true
 }
+
+
+template<class ZoneType, class MeshType>
+Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
+(
+    const IOobject& io,
+    const MeshType& mesh,
+    Foam::zero
+)
+:
+    PtrList<ZoneType>(),
+    regIOobject(io),
+    mesh_(mesh)
+{}
 
 
 template<class ZoneType, class MeshType>
@@ -221,8 +251,9 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    // Optionally read contents, otherwise keep size
-    readContents();
+    // Note: this is inconsistent with polyBoundaryMesh
+    // which does not read all
+    readContents(true);  // allowOptionalRead = true
 }
 
 
@@ -231,33 +262,24 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
 (
     const IOobject& io,
     const MeshType& mesh,
-    const PtrList<ZoneType>& pzm
+    const PtrList<ZoneType>& list
 )
 :
     PtrList<ZoneType>(),
     regIOobject(io),
     mesh_(mesh)
 {
-    if (!readContents())
+    if (!readContents(true))  // allowOptionalRead = true
     {
         // Nothing read. Use supplied zones
         PtrList<ZoneType>& zones = *this;
-        zones.resize(pzm.size());
+        zones.resize(list.size());
 
         forAll(zones, zonei)
         {
-            zones.set(zonei, pzm[zonei].clone(*this));
+            zones.set(zonei, list[zonei].clone(*this));
         }
     }
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class ZoneType, class MeshType>
-Foam::ZoneMesh<ZoneType, MeshType>::~ZoneMesh()
-{
-    clearAddressing();
 }
 
 
@@ -710,7 +732,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::setGroup
     const labelUList& zoneIDs
 )
 {
-    groupIDsPtr_.clear();
+    groupIDsPtr_.reset(nullptr);
 
     PtrList<ZoneType>& zones = *this;
 
@@ -740,14 +762,26 @@ void Foam::ZoneMesh<ZoneType, MeshType>::setGroup
 template<class ZoneType, class MeshType>
 void Foam::ZoneMesh<ZoneType, MeshType>::clearAddressing()
 {
-    zoneMapPtr_.clear();
-    groupIDsPtr_.clear();
+    zoneMapPtr_.reset(nullptr);
+    groupIDsPtr_.reset(nullptr);
 
     PtrList<ZoneType>& zones = *this;
 
     for (ZoneType& zn : zones)
     {
         zn.clearAddressing();
+    }
+}
+
+
+template<class ZoneType, class MeshType>
+void Foam::ZoneMesh<ZoneType, MeshType>::clearPrimitives()
+{
+    PtrList<ZoneType>& zones = *this;
+
+    for (ZoneType& zn : zones)
+    {
+        zn.clearPrimitives();
     }
 }
 

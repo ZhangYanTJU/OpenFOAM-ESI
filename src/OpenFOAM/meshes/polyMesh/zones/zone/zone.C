@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,13 +30,12 @@ License
 #include "dictionary.H"
 #include "HashSet.H"
 #include "IOstream.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(zone, 0);
+    defineTypeName(zone);
 }
 
 
@@ -65,10 +64,10 @@ Foam::zone::zone
     const label index
 )
 :
-    zoneIdentifier(name, index),
-    labelList(addr),
-    lookupMapPtr_(nullptr)
-{}
+    zone(name, index)
+{
+    labelList::operator=(addr);
+}
 
 
 Foam::zone::zone
@@ -78,10 +77,10 @@ Foam::zone::zone
     const label index
 )
 :
-    zoneIdentifier(name, index),
-    labelList(std::move(addr)),
-    lookupMapPtr_(nullptr)
-{}
+    zone(name, index)
+{
+    labelList::transfer(addr);
+}
 
 
 Foam::zone::zone
@@ -100,32 +99,28 @@ Foam::zone::zone
 
 Foam::zone::zone
 (
-    const zone& origZone,
+    const zone& originalZone,
     const labelUList& addr,
-    const label index
+    const label newIndex
 )
 :
-    zone(origZone.name(), addr, index)
+    zoneIdentifier(originalZone, newIndex),
+    labelList(addr),
+    lookupMapPtr_(nullptr)
 {}
 
 
 Foam::zone::zone
 (
-    const zone& origZone,
+    const zone& originalZone,
     labelList&& addr,
-    const label index
+    const label newIndex
 )
 :
-    zone(origZone.name(), std::move(addr), index)
+    zoneIdentifier(originalZone, newIndex),
+    labelList(std::move(addr)),
+    lookupMapPtr_(nullptr)
 {}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::zone::~zone()
-{
-    clearAddressing();
-}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -134,16 +129,14 @@ const Foam::Map<Foam::label>& Foam::zone::lookupMap() const
 {
     if (!lookupMapPtr_)
     {
-        DebugInFunction << "Calculating lookup map" << endl;
-
         const labelList& addr = *this;
 
-        lookupMapPtr_ = new Map<label>(2*addr.size());
-        auto& lm = *lookupMapPtr_;
+        lookupMapPtr_.reset(new Map<label>(2*addr.size()));
+        auto& map = *lookupMapPtr_;
 
-        forAll(addr, i)
+        for (const label id : addr)
         {
-            lm.insert(addr[i], i);
+            map.insert(id, map.size());
         }
     }
 
@@ -159,7 +152,13 @@ Foam::label Foam::zone::localID(const label globalID) const
 
 void Foam::zone::clearAddressing()
 {
-    deleteDemandDrivenData(lookupMapPtr_);
+    lookupMapPtr_.reset(nullptr);
+}
+
+
+void Foam::zone::clearPrimitives()
+{
+    static_cast<labelList&>(*this).clear();
 }
 
 
@@ -170,11 +169,11 @@ bool Foam::zone::checkDefinition(const label maxSize, const bool report) const
     bool hasError = false;
 
     // To check for duplicate entries
-    labelHashSet elems(size());
+    labelHashSet elems(2*size());
 
-    for (const label idx : addr)
+    for (const label id : addr)
     {
-        if (idx < 0 || idx >= maxSize)
+        if (id < 0 || id >= maxSize)
         {
             hasError = true;
 
@@ -182,7 +181,7 @@ bool Foam::zone::checkDefinition(const label maxSize, const bool report) const
             {
                 SeriousErrorInFunction
                     << "Zone " << this->name()
-                    << " contains invalid index label " << idx << nl
+                    << " contains invalid index label " << id << nl
                     << "Valid index labels are 0.."
                     << maxSize-1 << endl;
             }
@@ -192,13 +191,13 @@ bool Foam::zone::checkDefinition(const label maxSize, const bool report) const
                 break;
             }
         }
-        else if (!elems.insert(idx))
+        else if (!elems.insert(id))
         {
             if (report)
             {
                 WarningInFunction
                     << "Zone " << this->name()
-                    << " contains duplicate index label " << idx << endl;
+                    << " contains duplicate index label " << id << endl;
             }
         }
     }

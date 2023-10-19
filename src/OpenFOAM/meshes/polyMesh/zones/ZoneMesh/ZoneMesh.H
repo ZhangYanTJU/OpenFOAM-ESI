@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,16 +74,20 @@ class ZoneMesh
         const MeshType& mesh_;
 
         //- Demand-driven: map of zone labels for given element
-        mutable autoPtr<Map<label>> zoneMapPtr_;
+        mutable std::unique_ptr<Map<label>> zoneMapPtr_;
 
         //- Demand-driven: list of zone ids per group
-        mutable autoPtr<HashTable<labelList>> groupIDsPtr_;
+        mutable std::unique_ptr<HashTable<labelList>> groupIDsPtr_;
 
 
     // Private Member Functions
 
-        //- Read if IOobject flags set. Return true if read.
-        bool readContents();
+        //- Return true if contents were read
+        //- (controlled by IOobject readOption flags).
+        bool readContents(const bool allowOptionalRead);
+
+        //- Total of number of addressed items (all zones)
+        label totalSize() const;
 
         //- Create zone map
         void calcZoneMap() const;
@@ -109,14 +113,25 @@ public:
 
     // Constructors
 
-        //- Read constructor given IOobject and a MeshType reference
+        //- Read construct from IOobject and mesh reference
+        //- Any reading (mandatory, optional) based on IOobject properties.
         ZoneMesh
         (
             const IOobject& io,
             const MeshType& mesh
         );
 
-        //- Construct given size
+        //- Construct empty with IOobject properties and a mesh reference.
+        //- Does not read.
+        ZoneMesh
+        (
+            const IOobject& io,
+            const MeshType& mesh,
+            Foam::zero
+        );
+
+        //- Construct with specified size if not read.
+        //- Any reading (mandatory, optional) based on IOobject properties.
         ZoneMesh
         (
             const IOobject& io,
@@ -124,26 +139,24 @@ public:
             const label size
         );
 
-        //- Construct given a PtrList
+        //- Read construct (mandatory, optional) based on IOobject properties
+        //- or use the fallback PtrList (with cloning).
         ZoneMesh
         (
             const IOobject& io,
             const MeshType& mesh,
-            const PtrList<ZoneType>& pzm
+            const PtrList<ZoneType>& list
         );
 
 
     //- Destructor
-    ~ZoneMesh();
+    ~ZoneMesh() = default;
 
 
     // Member Functions
 
         //- Return the mesh reference
-        const MeshType& mesh() const noexcept
-        {
-            return mesh_;
-        }
+        const MeshType& mesh() const noexcept { return mesh_; }
 
         //- Map of zones containing zone index for all zoned elements
         //  Return -1 if the object is not in the zone
@@ -279,6 +292,9 @@ public:
 
         //- Clear addressing
         void clearAddressing();
+
+        //- Clear primitive addressing
+        void clearPrimitives();
 
         //- Clear the zones
         void clear();

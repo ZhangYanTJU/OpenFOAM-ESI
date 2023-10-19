@@ -1865,7 +1865,7 @@ void Foam::polyTopoChange::calcFaceZonePointMap
     {
         const faceZone& newZone = faceZones[zonei];
 
-        const labelList& newZoneMeshPoints = newZone().meshPoints();
+        const labelList& newZoneMeshPoints = newZone.patch().meshPoints();
 
         const Map<label>& oldZoneMeshPointMap = oldFaceZoneMeshPointMaps[zonei];
 
@@ -2146,7 +2146,7 @@ void Foam::polyTopoChange::compactAndReorder
     {
         const faceZone& oldZone = mesh.faceZones()[zonei];
 
-        oldFaceZoneMeshPointMaps[zonei] = oldZone().meshPointMap();
+        oldFaceZoneMeshPointMaps[zonei] = oldZone.patch().meshPointMap();
     }
 }
 

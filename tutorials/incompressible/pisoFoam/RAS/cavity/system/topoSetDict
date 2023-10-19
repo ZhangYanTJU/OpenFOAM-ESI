@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -589,7 +589,7 @@ actions
         type    cellSet;
         action  new;
         source  faceZoneToCell;
-        option  slave;
+        option  back;
         zones
         (
             faceZone1
@@ -601,7 +601,7 @@ actions
         type    cellSet;
         action  new;
         source  faceZoneToCell;
-        option  master;
+        option  front;
         zone    faceZone1;
     }
 

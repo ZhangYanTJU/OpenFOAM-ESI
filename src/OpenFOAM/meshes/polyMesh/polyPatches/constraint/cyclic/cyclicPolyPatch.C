@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,7 +30,6 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "polyBoundaryMesh.H"
 #include "polyMesh.H"
-#include "demandDrivenData.H"
 #include "OFstream.H"
 #include "matchPoints.H"
 #include "edgeHashes.H"
@@ -50,7 +49,7 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 Foam::label Foam::cyclicPolyPatch::findMaxArea
 (
@@ -813,10 +812,7 @@ Foam::cyclicPolyPatch::cyclicPolyPatch
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::cyclicPolyPatch::~cyclicPolyPatch()
-{
-    deleteDemandDrivenData(coupledPointsPtr_);
-    deleteDemandDrivenData(coupledEdgesPtr_);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -1022,8 +1018,8 @@ void Foam::cyclicPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
 void Foam::cyclicPolyPatch::updateMesh(PstreamBuffers& pBufs)
 {
     polyPatch::updateMesh(pBufs);
-    deleteDemandDrivenData(coupledPointsPtr_);
-    deleteDemandDrivenData(coupledEdgesPtr_);
+    coupledPointsPtr_.reset(nullptr);
+    coupledEdgesPtr_.reset(nullptr);
 }
 
 
@@ -1063,8 +1059,8 @@ const Foam::edgeList& Foam::cyclicPolyPatch::coupledPoints() const
             }
         }
 
-        coupledPointsPtr_ = new edgeList(nPoints());
-        edgeList& connected = *coupledPointsPtr_;
+        coupledPointsPtr_.reset(new edgeList(nPoints()));
+        auto& connected = *coupledPointsPtr_;
 
         // Extract coupled points.
         label connectedI = 0;
@@ -1153,8 +1149,8 @@ const Foam::edgeList& Foam::cyclicPolyPatch::coupledEdges() const
         const labelList& mp = meshPoints();
 
 
-        coupledEdgesPtr_ = new edgeList(edgeMap.size());
-        edgeList& coupledEdges = *coupledEdgesPtr_;
+        coupledEdgesPtr_.reset(new edgeList(edgeMap.size()));
+        auto& coupledEdges = *coupledEdgesPtr_;
         label coupleI = 0;
 
         forAll(neighbPatch, patchFacei)
@@ -1275,10 +1271,10 @@ bool Foam::cyclicPolyPatch::order
             << " neighbour:" << neighbPatchName()
             << endl;
     }
-    faceMap.setSize(pp.size());
+    faceMap.resize_nocopy(pp.size());
     faceMap = -1;
 
-    rotation.setSize(pp.size());
+    rotation.resize_nocopy(pp.size());
     rotation = 0;
 
     if (transform() == NOORDERING)
@@ -1434,7 +1430,7 @@ bool Foam::cyclicPolyPatch::order
             }
         }
 
-        ownerPatchPtr_.clear();
+        ownerPatchPtr_.reset(nullptr);
 
         // Return false if no change necessary, true otherwise.
 

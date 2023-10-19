@@ -35,7 +35,6 @@ License
 #include "entry.H"
 #include "dictionary.H"
 #include "pointPatchField.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -260,7 +259,7 @@ Foam::polyPatch::polyPatch
 :
     polyPatch(p)
 {
-    faceCellsPtr_ = new labelList::subList(faceCells, faceCells.size());
+    faceCellsPtr_.reset(new labelList::subList(faceCells, faceCells.size()));
 }
 
 
@@ -374,9 +373,12 @@ const Foam::labelUList& Foam::polyPatch::faceCells() const
 {
     if (!faceCellsPtr_)
     {
-        faceCellsPtr_ = new labelList::subList
+        faceCellsPtr_.reset
         (
-            patchSlice(boundaryMesh().mesh().faceOwner())
+            new labelList::subList
+            (
+                patchSlice(boundaryMesh().mesh().faceOwner())
+            )
         );
     }
 
@@ -388,7 +390,8 @@ const Foam::labelList& Foam::polyPatch::meshEdges() const
 {
     if (!mePtr_)
     {
-        mePtr_ =
+        mePtr_.reset
+        (
             new labelList
             (
                 primitivePatch::meshEdges
@@ -396,7 +399,8 @@ const Foam::labelList& Foam::polyPatch::meshEdges() const
                     boundaryMesh().mesh().edges(),
                     boundaryMesh().mesh().pointEdges()
                 )
-            );
+            )
+        );
     }
 
     return *mePtr_;
@@ -407,8 +411,8 @@ void Foam::polyPatch::clearAddressing()
 {
     primitivePatch::clearTopology();
     primitivePatch::clearPatchMeshAddr();
-    deleteDemandDrivenData(faceCellsPtr_);
-    deleteDemandDrivenData(mePtr_);
+    faceCellsPtr_.reset(nullptr);
+    mePtr_.reset(nullptr);
 }
 
 

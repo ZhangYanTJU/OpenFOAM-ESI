@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -81,14 +81,31 @@ Foam::patchIdentifier::patchIdentifier
 Foam::patchIdentifier::patchIdentifier
 (
     const patchIdentifier& ident,
-    const label index
+    const label newIndex
 )
 :
-    name_(ident.name_),
-    index_(index),
-    physicalType_(ident.physicalType_),
-    inGroups_(ident.inGroups_)
-{}
+    patchIdentifier(ident)
+{
+    if (newIndex >= 0)
+    {
+        index_ = newIndex;
+    }
+}
+
+
+Foam::patchIdentifier::patchIdentifier
+(
+    patchIdentifier&& ident,
+    const label newIndex
+)
+:
+    patchIdentifier(std::move(ident))
+{
+    if (newIndex >= 0)
+    {
+        index_ = newIndex;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

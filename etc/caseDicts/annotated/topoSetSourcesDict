@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -71,14 +71,14 @@ cellSet_doc
     }
 
 
-    //- Cells on master or slave side of faceZone
+    //- Cells on front/back/both side of faceZone
     {
         source  faceZoneToCell;
         zones   (".*Zone");     // Names of faceZones, word or regex
         // or
         zone    ".*Zone";       // Name of faceZone, word or regex
 
-        option  master;         // master/slave
+        option  front;          // front/back/both
     }
 
 

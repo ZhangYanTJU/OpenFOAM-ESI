@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,8 +43,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef pointZone_H
-#define pointZone_H
+#ifndef Foam_pointZone_H
+#define Foam_pointZone_H
 
 #include "zone.H"
 #include "pointZoneMeshFwd.H"
@@ -71,13 +71,6 @@ class pointZone
 
         //- Reference to zone list
         const pointZoneMesh& zoneMesh_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        pointZone(const pointZone&) = delete;
-
 
 public:
 
@@ -111,7 +104,13 @@ public:
 
     // Constructors
 
-        //- Construct an empty zone
+        //- No copy construct
+        pointZone(const pointZone&) = delete;
+
+        //- Construct an empty zone - name="", index=0
+        explicit pointZone(const pointZoneMesh& zm);
+
+        //- Construct an empty zone with specified name and index
         pointZone
         (
             const word& name,
@@ -146,11 +145,31 @@ public:
             const pointZoneMesh& zm
         );
 
-        //- Construct with a new index and zone mesh information, the name
-        //- of the original zone, resetting the point addressing.
+        //- Construct empty with original zone information (name, index, groups)
+        //- and mesh reference. Optionally specify a new index.
         pointZone
         (
-            const pointZone& origZone,
+            const pointZone& originalZone,
+            const Foam::zero,
+            const pointZoneMesh& zm,
+            const label newIndex = -1
+        );
+
+        //- Construct empty with original zone information (name, groups),
+        //- resetting the index and zone mesh reference.
+        pointZone
+        (
+            const pointZone& originalZone,
+            const Foam::zero,
+            const label index,
+            const pointZoneMesh& zm
+        );
+
+        //- Construct with original zone information (name, groups),
+        //- resetting the point addressing, the index and zone mesh reference.
+        pointZone
+        (
+            const pointZone& originalZone,
             const labelUList& addr,
             const label index,
             const pointZoneMesh& zm
@@ -160,7 +179,7 @@ public:
         //- of the original zone, (move) resetting the point addressing.
         pointZone
         (
-            const pointZone& origZone,
+            const pointZone& originalZone,
             labelList&& addr,
             const label index,
             const pointZoneMesh& zm
@@ -206,9 +225,12 @@ public:
     // Member Functions
 
         //- Return reference to the zone mesh
-        const pointZoneMesh& zoneMesh() const noexcept
+        const pointZoneMesh& zoneMesh() const noexcept { return zoneMesh_; }
+
+        //- The addressing (point IDs) used for the zone
+        const labelList& addressing() const noexcept
         {
-            return zoneMesh_;
+            return static_cast<const labelList&>(*this);
         }
 
         //- Helper function to re-direct to zone::localID(...)
@@ -230,7 +252,19 @@ public:
         virtual void writeDict(Ostream& os) const;
 
 
-    // Member Operators
+    // Assign addressing
+
+        //- Move reset addressing from another zone.
+        virtual void resetAddressing(pointZone&& zn);
+
+        //- Copy reset addressing from another zone
+        virtual void resetAddressing(const pointZone& zn);
+
+        //- Copy assign addressing
+        virtual void resetAddressing(const labelUList& addr);
+
+        //- Move assign addressing
+        virtual void resetAddressing(labelList&& addr);
 
         //- Assign addressing, clearing demand-driven data
         void operator=(const pointZone& zn);

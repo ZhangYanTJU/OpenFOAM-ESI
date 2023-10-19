@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,6 +66,16 @@ class faceZone
 :
     public zone
 {
+    // // Public Data Types
+    //
+    //     //- Side of the face zone
+    //     enum side
+    //     {
+    //         FRONT = 1,  //!< The front (positive normal) side of the face
+    //         BACK  = -1, //!< The back (negative normal) side of the face
+    //     };
+
+
     // Private Data
 
         //- Flip map for all faces in the zone.
@@ -76,16 +86,16 @@ class faceZone
         const faceZoneMesh& zoneMesh_;
 
         //- Demand-driven: Primitive patch of correctly flipped faces
-        mutable primitiveFacePatch* patchPtr_;
+        mutable std::unique_ptr<primitiveFacePatch> patchPtr_;
 
-        //- Demand-driven: Master cell layer
-        mutable labelList* masterCellsPtr_;
+        //- Demand-driven: front cell layer (positive normal) side of faces
+        mutable std::unique_ptr<labelList> frontCellsPtr_;
 
-        //- Demand-driven: Slave cell layer
-        mutable labelList* slaveCellsPtr_;
+        //- Demand-driven: back cell layer (negative normal) side of faces
+        mutable std::unique_ptr<labelList> backCellsPtr_;
 
         //- Demand-driven: Global edge addressing
-        mutable labelList* mePtr_;
+        mutable std::unique_ptr<labelList> mePtr_;
 
 
     // Private Member Functions
@@ -96,19 +106,14 @@ class faceZone
         //- Build primitive patch
         void calcFaceZonePatch() const;
 
-        //- Calculate master and slave face layer
+        //- Calculate front/back cell layers
         void calcCellLayers() const;
 
         //- Check addressing
         void checkAddressing() const;
 
-
-        //- No copy construct
-        faceZone(const faceZone&) = delete;
-
-        //- No copy assignment
-        void operator=(const faceZone&) = delete;
-
+        //- Clear out geometry and demand-driven data
+        void clearGeom();
 
 public:
 
@@ -142,7 +147,13 @@ public:
 
     // Constructors
 
-        //- Construct an empty zone
+        //- No copy construct
+        faceZone(const faceZone&) = delete;
+
+        //- Construct an empty zone - name="", index=0
+        explicit faceZone(const faceZoneMesh& zm);
+
+        //- Construct an empty zone with specified name and index
         faceZone
         (
             const word& name,
@@ -171,7 +182,7 @@ public:
             const faceZoneMesh& zm
         );
 
-        //- Construct from components
+        //- Construct from components, copying addressing
         faceZone
         (
             const word& name,
@@ -200,12 +211,32 @@ public:
             const faceZoneMesh& zm
         );
 
+        //- Construct empty with original zone information (name, index, groups)
+        //- and mesh reference. Optionally specify a new index.
+        faceZone
+        (
+            const faceZone& originalZone,
+            const Foam::zero,
+            const faceZoneMesh& zm,
+            const label newIndex = -1
+        );
+
+        //- Construct empty with original zone information (name, groups),
+        //- resetting the index and zone mesh reference.
+        faceZone
+        (
+            const faceZone& originalZone,
+            const Foam::zero,
+            const label index,
+            const faceZoneMesh& zm
+        );
+
         //- Construct with a new index and zone mesh information, the name
         //- of the original zone, resetting the face addressing
         //- and flip-map.
         faceZone
         (
-            const faceZone& origZone,
+            const faceZone& originalZone,
             const labelUList& addr,
             const boolUList& fm,
             const label index,
@@ -217,7 +248,7 @@ public:
         //- and flip-map.
         faceZone
         (
-            const faceZone& origZone,
+            const faceZone& originalZone,
             labelList&& addr,
             boolList&& fm,
             const label index,
@@ -258,70 +289,45 @@ public:
 
 
     //- Destructor
-    virtual ~faceZone();
+    virtual ~faceZone() = default;
 
 
     // Member Functions
 
         //- Return reference to the zone mesh
-        const faceZoneMesh& zoneMesh() const noexcept
+        const faceZoneMesh& zoneMesh() const noexcept { return zoneMesh_; }
+
+        //- The addressing (face IDs) used for the zone
+        const labelList& addressing() const noexcept
         {
-            return zoneMesh_;
+            return static_cast<const labelList&>(*this);
         }
 
         //- Return face flip map
-        const boolList& flipMap() const noexcept
-        {
-            return flipMap_;
-        }
+        const boolList& flipMap() const noexcept { return flipMap_; }
 
         //- Helper function to re-direct to zone::localID(...)
         label whichFace(const label globalCellID) const;
 
-        //- Return reference to primitive patch
-        const primitiveFacePatch& operator()() const;
+        //- Return [demand-driven] reference to an equivalent primitive patch,
+        //- with faces oriented according to flipMap()
+        const primitiveFacePatch& patch() const;
 
 
     // Addressing into mesh
 
-        //- Return labels of master cells (cells next to the master face
-        //- zone in the prescribed direction)
-        const labelList& masterCells() const;
+        //- The front cells layer.
+        //- Cells on the positive normal side of faces.
+        //  \warning may contain negative indices for boundary faces!
+        const labelList& frontCells() const;
 
-        //- Return labels of slave cells
-        const labelList& slaveCells() const;
+        //- The back cells layer.
+        //- Cells on the negative normal side of faces.
+        //  \warning may contain negative indices for boundary faces!
+        const labelList& backCells() const;
 
         //- Return global edge index for local edges
         const labelList& meshEdges() const;
-
-
-        //- Clear addressing
-        virtual void clearAddressing();
-
-        //- Reset addressing - use uniform flip map value
-        //  Clears demand-driven data.
-        virtual void resetAddressing
-        (
-            const labelUList& addr,
-            const bool flipMapValue
-        );
-
-        //- Reset addressing and flip map.
-        //  Clears demand-driven data.
-        virtual void resetAddressing
-        (
-            const labelUList& addr,
-            const boolUList& flipMap
-        );
-
-        //- Move reset addressing - use uniform flip map value
-        //  Clears demand-driven data.
-        virtual void resetAddressing
-        (
-            labelList&& addr,
-            const bool flipMapValue
-        );
-
 
         //- Check zone definition. Return true if in error.
         virtual bool checkDefinition(const bool report = false) const;
@@ -343,10 +349,68 @@ public:
         virtual void writeDict(Ostream& os) const;
 
 
+    // Assign addressing
+
+        //- Clear addressing
+        //- (remove lookup maps, patch/geometric information)
+        virtual void clearAddressing();
+
+        //- Clear primitive addressing
+        virtual void clearPrimitives();
+
+        //- Move reset addressing and flip map from another zone
+        virtual void resetAddressing(faceZone&& zn);
+
+        //- Copy reset addressing and flip map from another zone
+        virtual void resetAddressing(const faceZone& zn);
+
+        //- Reset addressing - use uniform flip map value
+        //  Clears demand-driven data.
+        virtual void resetAddressing
+        (
+            const labelUList& addr,
+            const bool flipMapValue
+        );
+
+        //- Move reset addressing - use uniform flip map value
+        //  Clears demand-driven data.
+        virtual void resetAddressing
+        (
+            labelList&& addr,
+            const bool flipMapValue
+        );
+
+        //- Copy reset addressing and flip map.
+        //  Clears demand-driven data.
+        virtual void resetAddressing
+        (
+            const labelUList& addr,
+            const boolUList& flipMap
+        );
+
+        //- Assign addressing, clearing demand-driven data
+        void operator=(const faceZone& zn);
+
+
     // I-O
 
         //- Ostream Operator
         friend Ostream& operator<<(Ostream& os, const faceZone& zn);
+
+
+    // Housekeeping
+
+        //- Deprecated(2023-09) same as patch()
+        //  \deprecated(2023-09) same as patch()
+        const primitiveFacePatch& operator()() const { return this->patch(); }
+
+        //- Deprecated(2023-09) same as frontCells
+        //  \deprecated(2023-09) same as frontCells #1832
+        const labelList& masterCells() const { return frontCells(); }
+
+        //- Deprecated(2023-09) same as backCells
+        //  \deprecated(2023-09) same as backCells #1832
+        const labelList& slaveCells() const { return backCells(); }
 };
 
 

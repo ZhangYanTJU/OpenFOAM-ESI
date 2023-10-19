@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,8 +41,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cellZone_H
-#define cellZone_H
+#ifndef Foam_cellZone_H
+#define Foam_cellZone_H
 
 #include "zone.H"
 #include "cellZoneMeshFwd.H"
@@ -68,12 +68,6 @@ class cellZone
 
         //- Reference to zone list
         const cellZoneMesh& zoneMesh_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        cellZone(const cellZone&) = delete;
 
 
 public:
@@ -108,7 +102,13 @@ public:
 
     // Constructors
 
-        //- Construct an empty zone
+        //- No copy construct
+        cellZone(const cellZone&) = delete;
+
+        //- Construct an empty zone - name="", index=0
+        explicit cellZone(const cellZoneMesh& zm);
+
+        //- Construct an empty zone with specified name and index
         cellZone
         (
             const word& name,
@@ -143,21 +143,41 @@ public:
             const cellZoneMesh& zm
         );
 
-        //- Construct given the original zone (name is used),
-        //- and resetting the cell list and zone mesh information
+        //- Construct empty with original zone information (name, index, groups)
+        //- and mesh reference. Optionally specify a new index.
         cellZone
         (
-            const cellZone& origZone,
+            const cellZone& originalZone,
+            const Foam::zero,
+            const cellZoneMesh& zm,
+            const label newIndex = -1
+        );
+
+        //- Construct empty with original zone information (name, groups),
+        //- resetting the index and zone mesh reference.
+        cellZone
+        (
+            const cellZone& originalZone,
+            const Foam::zero,
+            const label index,
+            const cellZoneMesh& zm
+        );
+
+        //- Construct with original zone information (name, groups),
+        //- resetting the cell list, the index and zone mesh reference.
+        cellZone
+        (
+            const cellZone& originalZone,
             const labelUList& addr,
             const label index,
             const cellZoneMesh& zm
         );
 
-        //- Construct with a new index and zone mesh information, the name
-        //- of the original zone, resetting the cell addressing.
+        //- Construct with original zone information (name, groups),
+        //- resetting the cell list, the index and zone mesh reference.
         cellZone
         (
-            const cellZone& origZone,
+            const cellZone& originalZone,
             labelList&& addr,
             const label index,
             const cellZoneMesh& zm
@@ -203,9 +223,12 @@ public:
     // Member Functions
 
         //- Return reference to the zone mesh
-        const cellZoneMesh& zoneMesh() const noexcept
+        const cellZoneMesh& zoneMesh() const noexcept { return zoneMesh_; }
+
+        //- The addressing (cell IDs) used for the zone
+        const labelList& addressing() const noexcept
         {
-            return zoneMesh_;
+            return static_cast<const labelList&>(*this);
         }
 
         //- Helper function to re-direct to zone::localID(...)
@@ -226,7 +249,19 @@ public:
         virtual void writeDict(Ostream& os) const;
 
 
-    // Member Operators
+    // Assign addressing
+
+        //- Move reset addressing from another zone
+        virtual void resetAddressing(cellZone&& zn);
+
+        //- Copy reset addressing from another zone
+        virtual void resetAddressing(const cellZone& zn);
+
+        //- Copy assign addressing
+        virtual void resetAddressing(const labelUList& addr);
+
+        //- Move assign addressing
+        virtual void resetAddressing(labelList&& addr);
 
         //- Assign addressing, clearing demand-driven data
         void operator=(const cellZone& zn);

@@ -83,10 +83,10 @@ class polyPatch
         const polyBoundaryMesh& boundaryMesh_;
 
         //- Demand-driven: face-cell addressing
-        mutable labelList::subList* faceCellsPtr_;
+        mutable std::unique_ptr<labelList::subList> faceCellsPtr_;
 
         //- Demand-driven: global edge addressing
-        mutable labelList* mePtr_;
+        mutable std::unique_ptr<labelList> mePtr_;
 
 
 protected:
@@ -500,8 +500,8 @@ public:
 
     // Member Operators
 
-        //- Assignment
-        void operator=(const polyPatch&);
+        //- Copy assignment
+        void operator=(const polyPatch& p);
 
 
     // Ostream Operator

@@ -30,7 +30,6 @@ License
 #include "primitiveMesh.H"
 #include "HashSet.H"
 #include "Map.H"
-#include "demandDrivenData.H"
 #include "ListOps.H"
 #include "meshTools.H"
 
@@ -257,9 +256,8 @@ void Foam::cellFeatures::calcSuperFaces() const
 
     // Construct superFaces
 
-    facesPtr_ = new faceList(superFacei);
-
-    faceList& faces = *facesPtr_;
+    facesPtr_.reset(new faceList(superFacei));
+    auto& faces = *facesPtr_;
 
     forAll(cFaces, cFacei)
     {
@@ -390,16 +388,13 @@ Foam::cellFeatures::cellFeatures
             featureEdge_.insert(edgeI);
         }
     }
-
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::cellFeatures::~cellFeatures()
-{
-    deleteDemandDrivenData(facesPtr_);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
