@@ -24,7 +24,8 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Test TimePaths and timeSelectop
+    Test TimePaths and timeSelector
+
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"

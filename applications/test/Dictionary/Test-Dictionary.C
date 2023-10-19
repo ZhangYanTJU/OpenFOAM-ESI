@@ -25,8 +25,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
+    Test-Dictionary
 
 Description
+    Tests for Dictionary (not dictionary)
 
 \*---------------------------------------------------------------------------*/
 

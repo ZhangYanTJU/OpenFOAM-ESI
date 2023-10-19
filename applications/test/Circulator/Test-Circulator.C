@@ -24,9 +24,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    Test-circulator
+    Test-Circulator
 
 Description
+    Tests for Circulator and ConstCirculator
 
 \*---------------------------------------------------------------------------*/
 

@@ -25,8 +25,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
+    Test-DLList
 
 Description
+    Tests for doubly-linked lists
 
 \*---------------------------------------------------------------------------*/
 

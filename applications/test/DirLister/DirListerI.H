@@ -25,24 +25,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-inline bool Foam::DirLister::accept(const word& name) const
-{
-    return true;
-}
-
-
-template<class UnaryPredicate>
-inline bool Foam::DirLister::Filtered<UnaryPredicate>::accept
-(
-    const word& name
-) const
-{
-    return (pred_(name) ? !prune_ : prune_);
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 inline Foam::DirLister::DirLister
@@ -103,14 +85,6 @@ Foam::DirLister::where(const UnaryPredicate& pred, const bool prune) const
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-inline const Foam::fileName& Foam::DirLister::dirName() const
-{
-    return dirName_;
-}
-
-
 // * * * * * * * * * * * * * * * Const Iterator  * * * * * * * * * * * * * * //
 
 inline Foam::DirLister::const_iterator::const_iterator()
@@ -140,12 +114,6 @@ inline Foam::DirLister::const_iterator::const_iterator
 inline Foam::DirLister::const_iterator::~const_iterator()
 {
     close();
-}
-
-
-inline const Foam::word& Foam::DirLister::const_iterator::operator*() const
-{
-    return name_;
 }
 
 

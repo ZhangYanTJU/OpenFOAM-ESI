@@ -95,13 +95,13 @@ See Also
 
 SourceFiles
     DirListerI.H
-    DirLister.C
-    DirListerTemplates.C
+    DirLister.cxx
+    DirLister.txx
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef DirLister_H
-#define DirLister_H
+#ifndef Foam_DirLister_H
+#define Foam_DirLister_H
 
 #include "fileNameList.H"
 #include "wordList.H"
@@ -134,7 +134,7 @@ protected:
     // Protected Member Functions
 
         //- Placeholder for additional selection filters
-        virtual inline bool accept(const word& name) const;
+        virtual inline bool accept(const word& name) const { return true; }
 
         //- Traverse to next entry
         word next(DIR* dirPtr) const;
@@ -189,8 +189,7 @@ public:
     // Member Functions
 
         //- Return the directory name
-        inline const fileName& dirName() const;
-
+        const fileName& dirName() const noexcept { return dirName_; }
 
         //- Return a complete list of names
         template<class StringType=Foam::word>
@@ -246,7 +245,7 @@ public:
             inline ~const_iterator();
 
             inline const_iterator& operator++();
-            inline const word& operator*() const;
+            const word& operator*() const noexcept { return name_; }
 
             inline bool operator==(const const_iterator& iter) const;
             inline bool operator!=(const const_iterator& iter) const;
@@ -275,7 +274,10 @@ protected:
 
     friend class DirLister;
 
-    virtual inline bool accept(const word& name) const;
+    virtual inline bool accept(const word& name) const
+    {
+        return (pred_(name) ? !prune_ : prune_);
+    }
 
     //- Constructor
     inline Filtered
@@ -295,10 +297,7 @@ protected:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "DirListerI.H"
-
-#ifdef NoRepository
-    #include "DirListerTemplates.C"
-#endif
+#include "DirLister.txx"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
