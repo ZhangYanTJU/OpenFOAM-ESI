@@ -29,6 +29,7 @@ License
 #include "objectivePowerDissipation.H"
 #include "incompressibleAdjointSolver.H"
 #include "createZeroField.H"
+#include "topOVariablesBase.H"
 #include "IOmanip.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -50,6 +51,8 @@ addToRunTimeSelectionTable
     dictionary
 );
 
+
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
 void objectivePowerDissipation::populateFieldNames()
 {
@@ -134,6 +137,9 @@ objectivePowerDissipation::objectivePowerDissipation
             sqr(dimLength)/pow3(dimTime)
         )
     );
+
+    // Allocate direct sensitivity contributions for topology optimisation
+    dJdbPtr_.reset(createZeroFieldPtr<scalar>(mesh_, "dJdb", dimless));
 }
 
 
@@ -157,6 +163,19 @@ scalar objectivePowerDissipation::J()
         scalarField integrandZone(integrand.primitiveField(), zoneI);
 
         J_ += 0.5*gSum(integrandZone*VZone);
+        if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+        {
+            const topOVariablesBase& vars =
+                mesh_.lookupObject<topOVariablesBase>("topoVars");
+            const volScalarField& beta = vars.beta();
+            scalar porosityContr = Zero;
+            for (const label cellI : zoneI)
+            {
+                porosityContr += beta[cellI]*magSqr(U[cellI])*V[cellI];
+            }
+            porosityContr *= vars.getBetaMax();
+            J_ += returnReduce(porosityContr, sumOp<scalar>());
+        }
     }
 
     return J_;
@@ -202,6 +221,23 @@ void objectivePowerDissipation::update_dJdv()
         for (const label cellI : zoneI)
         {
             dJdvPtr_()[cellI] += integrand[cellI];
+        }
+    }
+
+    // Add source from porosity dependencies
+    if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+    {
+        const topOVariablesBase& vars =
+            mesh_.lookupObject<topOVariablesBase>("topoVars");
+        const volScalarField& beta = vars.beta();
+        const scalar betaMax = vars.getBetaMax();
+        for (const label zI : zones_)
+        {
+            const cellZone& zoneI = mesh_.cellZones()[zI];
+            for (const label cellI : zoneI)
+            {
+                dJdvPtr_()[cellI] += 2*betaMax*beta[cellI]*U[cellI];
+            }
         }
     }
 }
@@ -274,6 +310,30 @@ void objectivePowerDissipation::update_gradDxDbMultiplier()
     }
     gradDxDbMult.correctBoundaryConditions();
 }
+
+
+void objectivePowerDissipation::update_dJdb()
+{
+    if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+    {
+        scalarField& dJdb = dJdbPtr_().primitiveFieldRef();
+        dJdb = Zero;
+        const volVectorField& U = vars_.UInst();
+        const topOVariablesBase& vars =
+            mesh_.lookupObject<topOVariablesBase>("topoVars");
+        const scalar betaMax = vars.getBetaMax();
+        for (const label zI : zones_)
+        {
+            const cellZone& zoneI = mesh_.cellZones()[zI];
+            for (const label cellI : zoneI)
+            {
+                dJdb[cellI] += betaMax*magSqr(U[cellI]);
+            }
+        }
+    }
+}
+
+
 
 
 void objectivePowerDissipation::addSource(fvScalarMatrix& matrix)

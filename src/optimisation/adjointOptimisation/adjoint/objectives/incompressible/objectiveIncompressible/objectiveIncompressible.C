@@ -373,7 +373,7 @@ void objectiveIncompressible::update_dJdTMvar
     const labelList& zones
 )
 {
-    if (dJdTMvarPtr)
+    if (dJdTMvarPtr.good())
     {
         // nut Jacobians are currently computed in the adjoint turbulence
         // models, though they would be better placed within the primal

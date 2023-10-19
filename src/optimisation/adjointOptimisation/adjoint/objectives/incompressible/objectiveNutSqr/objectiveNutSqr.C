@@ -51,6 +51,8 @@ addToRunTimeSelectionTable
 );
 
 
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
+
 void objectiveNutSqr::populateFieldNames()
 {
     if (adjointTurbulenceNames_.empty())
