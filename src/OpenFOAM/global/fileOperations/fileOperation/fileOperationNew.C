@@ -373,6 +373,11 @@ Foam::fileOperation::New_impl
         // Allocate new handler with same type and similar IO ranks
         // but with different sub-ranks (and communicator)
 
+
+        // Temporarily override world comm to get through the initialisation
+        // (e.g. fileOperation::printRanks() which uses worldComm)
+        const label oldWorldComm = UPstream::commWorld(commAndIORanks.first());
+
         newHandler = fileOperation::New
         (
             origHandler.type(),
@@ -380,6 +385,8 @@ Foam::fileOperation::New_impl
             origHandler.distributed(),
             verbose
         );
+
+        UPstream::commWorld(oldWorldComm);
 
         if (newHandler)
         {
@@ -402,32 +409,9 @@ Foam::fileOperation::New
     bool verbose
 )
 {
-    labelList subProcs = getSelectedProcs(useProc);
+    const labelList subProcs = getSelectedProcs(useProc);
 
-    // useProc subsets worldComm ranks. So we cannot use worldComm
-    // anywhere in file handler. Workaround: use temporary communicator
-    // so we can at least construct. TBD.
-
-    label oldWorldComm = -1;
-    autoPtr<UPstream::communicator> subWorldComm;
-    if (subProcs.size() != UPstream::nProcs(UPstream::worldComm))
-    {
-        subWorldComm.reset
-        (
-            new UPstream::communicator
-            (
-                UPstream::worldComm,
-                subProcs
-            )
-        );
-        oldWorldComm = UPstream::commWorld(subWorldComm());
-    }
-
-    autoPtr<fileOperation> fh(New_impl(origHandler, subProcs, verbose));
-
-    UPstream::commWorld(oldWorldComm);
-
-    return fh;
+    return New_impl(origHandler, subProcs, verbose);
 }
 
 
@@ -439,33 +423,9 @@ Foam::fileOperation::New
     bool verbose
 )
 {
-    labelList subProcs = getSelectedProcs(useProc);
+    const labelList subProcs = getSelectedProcs(useProc);
 
-    label oldWorldComm = -1;
-    autoPtr<UPstream::communicator> subWorldComm;
-
-    // useProc subsets worldComm ranks. So we cannot use worldComm
-    // anywhere in file handler. Workaround: use temporary communicator
-    // so we can at least construct. TBD.
-
-    if (subProcs.size() != UPstream::nProcs(UPstream::worldComm))
-    {
-        subWorldComm.reset
-        (
-            new UPstream::communicator
-            (
-                UPstream::worldComm,
-                subProcs
-            )
-        );
-        oldWorldComm = UPstream::commWorld(subWorldComm());
-    }
-
-    autoPtr<fileOperation> fh(New_impl(origHandler, subProcs, verbose));
-
-    UPstream::commWorld(oldWorldComm);
-
-    return fh;
+    return New_impl(origHandler, subProcs, verbose);
 }
 
 
