@@ -26,48 +26,37 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "betaMaxDarcy.H"
+#include "betaMaxReynoldsDarcy.H"
+#include "EdgeMap.H"
+#include "syncTools.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(betaMaxDarcy, 0);
-    addToRunTimeSelectionTable(betaMax, betaMaxDarcy, dictionary);
+    defineTypeNameAndDebug(betaMaxReynoldsDarcy, 0);
+    addToRunTimeSelectionTable(betaMax, betaMaxReynoldsDarcy, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::betaMaxDarcy::betaMaxDarcy
+Foam::betaMaxReynoldsDarcy::betaMaxReynoldsDarcy
 (
     const fvMesh& mesh,
     const dictionary& dict
 )
 :
     betaMax(mesh, dict),
-    DarcyNumber_
+    ReynoldsDarcyNumber_
     (
-        dict.subDict(type() + "Coeffs").getOrDefault<scalar>("Da", 1.e-5)
+        dict.subDict(type() + "Coeffs").getOrDefault<scalar>("ReDa", 1.e-5)
     ),
-    length_(computeLength(dict))
+    length_(computeLength(dict)),
+    Uref_(dict.subDict(type() + "Coeffs").get<scalar>("Uref"))
 {
-    scalar nu =
-        IOdictionary
-        (
-            IOobject
-            (
-                 "transportProperties",
-                 mesh.time().constant(),
-                 mesh,
-                 IOobject::MUST_READ,
-                 IOobject::NO_WRITE,
-                 false
-            )
-        ).get<dimensionedScalar>("nu").value();
-
-    value_ = nu/DarcyNumber_/length_/length_;
+    value_ = Uref_/ReynoldsDarcyNumber_/length_;
     Info
         << "Computed a betaMax value of " << value_
         << " based on a length of " << length_ << nl << endl;

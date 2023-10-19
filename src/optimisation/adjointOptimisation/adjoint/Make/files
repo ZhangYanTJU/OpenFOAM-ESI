@@ -193,6 +193,7 @@ $(topoVars)/dynamicTopODesignVariables/dynamicTopODesignVariables.C
 $(topoVars)/betaMax/betaMax/betaMax.C
 $(topoVars)/betaMax/value/betaMaxValue.C
 $(topoVars)/betaMax/Darcy/betaMaxDarcy.C
+$(topoVars)/betaMax/ReynoldsDarcy/betaMaxReynoldsDarcy.C
 $(topoVars)/betaMax/stepRamp/betaMaxStepRamp.C
 $(topoVars)/topOZones/topOZones.C
 $(topoVars)/regularisation/fieldRegularisation.C
