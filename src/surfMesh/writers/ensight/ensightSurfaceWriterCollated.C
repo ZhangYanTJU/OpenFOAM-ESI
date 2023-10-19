@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -163,7 +163,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
             (
                 geomFile.path(),
                 geomFile.name(),
-                writeFormat_
+                caseOpts_.format()
             );
             part.write(osGeom); // serial
         }
@@ -173,7 +173,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
         (
             dataDir,
             varName,
-            writeFormat_
+            caseOpts_.format()
         );
 
         if (verbose_)
@@ -191,11 +191,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
         if (stateChanged)
         {
             OFstream osCase(outputFile, IOstreamOption::ASCII);
-
-            // Format options
-            osCase.setf(ios_base::left);
-            osCase.setf(ios_base::scientific, ios_base::floatfield);
-            osCase.precision(5);
+            ensightCase::setTimeFormat(osCase, caseOpts_);  // time-format
 
             if (verbose_)
             {

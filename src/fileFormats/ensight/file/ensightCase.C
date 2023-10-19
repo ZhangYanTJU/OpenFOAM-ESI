@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,6 +53,44 @@ Foam::word Foam::ensightCase::padded(const int nwidth, const label value)
     oss << std::setfill('0') << std::setw(nwidth) << value;
 
     return word(oss.str(), false);  // stripping=false
+}
+
+
+void Foam::ensightCase::setTimeFormat
+(
+    OSstream& os,
+    IOstreamOption::floatFormat timeFmt,
+    const int timePrec
+)
+{
+    os.setf(std::ios_base::left);
+    os.setf
+    (
+        std::ios_base::fmtflags(timeFmt),
+        std::ios_base::floatfield
+    );
+
+    if (timePrec > 0)
+    {
+        os.precision(timePrec);
+    }
+}
+
+
+void Foam::ensightCase::setTimeFormat
+(
+    OSstream& os,
+    const ensightCase::options& opts
+)
+{
+    os.setf(std::ios_base::left);
+    os.setf
+    (
+        std::ios_base::fmtflags(opts.timeFormat()),
+        std::ios_base::floatfield
+    );
+
+    os.precision(opts.timePrecision());
 }
 
 
@@ -184,7 +222,7 @@ Foam::fileName Foam::ensightCase::dataDir() const
 
 void Foam::ensightCase::initialize()
 {
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // EnSight and EnSight/data directories must exist
 
@@ -211,11 +249,7 @@ void Foam::ensightCase::initialize()
 
         // The case file is always ASCII
         os_.reset(new OFstream(ensightDir_/caseName_, IOstreamOption::ASCII));
-
-        // Format options
-        os_->setf(ios_base::left);
-        os_->setf(ios_base::scientific, ios_base::floatfield);
-        os_->precision(5);
+        ensightCase::setTimeFormat(*os_, *options_);  // Format options
 
         writeHeader();
     }
@@ -468,7 +502,7 @@ Foam::ensightCase::createDataFile
     const word& name
 ) const
 {
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // The data/ITER subdirectory must exist
         // Note that data/ITER is indeed a valid ensight::FileName
@@ -490,7 +524,7 @@ Foam::ensightCase::createCloudFile
     const word& name
 ) const
 {
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // Write
         // eg -> "data/********/lagrangian/<cloudName>/positions"
@@ -584,7 +618,7 @@ void Foam::ensightCase::setTime(const scalar value, const label index)
     timeIndex_ = index;
     timeValue_ = value;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // The data/ITER subdirectory must exist
         // Note that data/ITER is indeed a valid ensight::FileName
@@ -810,7 +844,7 @@ Foam::ensightCase::newGeometry
 {
     autoPtr<Foam::ensightGeoFile> output;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // Set the path of the ensight file
         fileName path;
@@ -844,7 +878,7 @@ Foam::ensightCase::newCloud
 {
     autoPtr<Foam::ensightFile> output;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         output = createCloudFile(cloudName, "positions");
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,19 +40,16 @@ Foam::ensightCase::newData
 {
     autoPtr<ensightFile> output;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         const ensight::VarName varName(name);
         output = createDataFile(varName);
 
         // Description
-        output().write
+        output().writeString
         (
-            string
-            (
-                padded(timeIndex_) / varName
-              + " <" + pTraits<Type>::typeName + ">"
-            )
+            padded(timeIndex_) / varName
+          + " <" + pTraits<Type>::typeName + ">"
         );
         output().newline();
 
@@ -91,19 +88,16 @@ Foam::ensightCase::newCloudData
 {
     autoPtr<ensightFile> output;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         const ensight::VarName varName(name);
         output = createCloudFile(cloudName, varName);
 
         // Description
-        output().write
+        output().writeString
         (
-            string
-            (
-                padded(timeIndex_) / cloudName / varName
-              + " <" + pTraits<Type>::typeName + ">"
-            )
+            padded(timeIndex_) / cloudName / varName
+          + " <" + pTraits<Type>::typeName + ">"
         );
         output().newline();
 

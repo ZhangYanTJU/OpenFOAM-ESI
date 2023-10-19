@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,8 +44,11 @@ Description
     Format options:
     \table
         Property | Description                              | Required | Default
-        format   | ascii/binary                             | no  | ascii
+        format   | ascii/binary                             | no  | binary
         collateTimes | use common geometry for times        | no  | true
+        timeFormat    | Time format (ensight case)          | no  | scientific
+        timePrecision | Time precision (ensight case)       | no  | 5
+     \endtable
     \endtable
 
 SourceFiles
@@ -57,6 +60,7 @@ SourceFiles
 #define Foam_coordSetWriters_ensightWriter_H
 
 #include "coordSetWriter.H"
+#include "ensightCase.H"
 #include "ensightWriterCaching.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -91,8 +95,8 @@ class ensightWriter
 
     // Private Data
 
-        //- Output format option (default: ASCII)
-        IOstreamOption::streamFormat writeFormat_;
+        //- Ensight case options
+        ensightCase::options caseOpts_;
 
         //- Collate times (default: true)
         bool collateTimes_;

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,6 +37,17 @@ const Foam::IOstreamOption::versionNumber Foam::IOstreamOption::currentVersion;
 
 const Foam::Enum
 <
+    Foam::IOstreamOption::floatFormat
+>
+Foam::IOstreamOption::floatFormatNames
+({
+    { floatFormat::general, "general" },
+    { floatFormat::fixed, "fixed" },
+    { floatFormat::scientific, "scientific" },
+});
+
+const Foam::Enum
+<
     Foam::IOstreamOption::streamFormat
 >
 Foam::IOstreamOption::formatNames
@@ -48,27 +59,72 @@ Foam::IOstreamOption::formatNames
 
 // * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * * //
 
-Foam::IOstreamOption::streamFormat
-Foam::IOstreamOption::formatEnum
+Foam::IOstreamOption::floatFormat
+Foam::IOstreamOption::floatFormatEnum
 (
-    const word& formatName,
-    const streamFormat deflt
+    const word& fmtName,
+    const floatFormat deflt
 )
 {
     // Handle bad input graciously. A no-op for an empty string
 
-    if (!formatName.empty())
+    if (!fmtName.empty())
     {
-        if (formatNames.contains(formatName))
+        const auto iter = floatFormatNames.cfind(fmtName);
+
+        if (iter.good())
         {
-            return formatNames[formatName];
+            return iter.val();
         }
 
         // Fall-through to warning
 
         WarningInFunction
-            << "Unknown format specifier '" << formatName
-            << "', using '" << formatNames[deflt] << "'\n";
+            << "Unknown float format specifier '" << fmtName
+            << "' using '" << floatFormatNames[deflt]
+            << "' from " << floatFormatNames << nl;
+    }
+
+    return deflt;
+}
+
+
+Foam::IOstreamOption::floatFormat
+Foam::IOstreamOption::floatFormatEnum
+(
+    const word& key,
+    const dictionary& dict,
+    const floatFormat deflt
+)
+{
+    return floatFormatNames.getOrDefault(key, dict, deflt, true);  // warnOnly
+}
+
+
+Foam::IOstreamOption::streamFormat
+Foam::IOstreamOption::formatEnum
+(
+    const word& fmtName,
+    const streamFormat deflt
+)
+{
+    // Handle bad input graciously. A no-op for an empty string
+
+    if (!fmtName.empty())
+    {
+        const auto iter = formatNames.cfind(fmtName);
+
+        if (iter.good())
+        {
+            return iter.val();
+        }
+
+        // Fall-through to warning
+
+        WarningInFunction
+            << "Unknown stream format specifier '" << fmtName
+            << "' using '" << formatNames[deflt]
+            << "' from " << formatNames << nl;
     }
 
     return deflt;
@@ -83,7 +139,7 @@ Foam::IOstreamOption::formatEnum
     const streamFormat deflt
 )
 {
-    return formatNames.getOrDefault(key, dict, deflt, true); // failsafe=true
+    return formatNames.getOrDefault(key, dict, deflt, true);  // warnOnly
 }
 
 
@@ -114,8 +170,7 @@ Foam::IOstreamOption::compressionEnum
 
         WarningInFunction
             << "Unknown compression specifier '" << compName
-            << "', using compression "
-            << (deflt ? "on" : "off" ) << nl;
+            << "' using compression " << (deflt ? "on" : "off") << nl;
     }
 
     return deflt;
@@ -132,7 +187,7 @@ Foam::IOstreamOption::compressionEnum
 {
     return
     (
-        Switch(key, dict, Switch(bool(deflt)), true) // failsafe=true
+        Switch(key, dict, Switch(bool(deflt)), true)  // warnOnly
       ? compressionType::COMPRESSED
       : compressionType::UNCOMPRESSED
     );

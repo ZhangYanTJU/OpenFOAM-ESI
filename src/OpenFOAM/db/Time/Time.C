@@ -73,7 +73,10 @@ Foam::Time::writeControlNames
 });
 
 
-Foam::Time::fmtflags Foam::Time::format_(Foam::Time::fmtflags::general);
+Foam::IOstreamOption::floatFormat Foam::Time::format_
+(
+    IOstreamOption::floatFormat::general
+);
 
 int Foam::Time::precision_(6);
 

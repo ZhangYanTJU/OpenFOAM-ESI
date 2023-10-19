@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,6 +57,7 @@ namespace Foam
 
 // Forward Declarations
 class bitSet;
+class dictionary;
 class ensightCase;
 class instant;
 class OSstream;
@@ -333,6 +334,21 @@ public:
 
     // Output Helpers
 
+        //- Set output time format for ensight case file
+        static void setTimeFormat
+        (
+            OSstream& os,
+            IOstreamOption::floatFormat timeFmt,
+            const int timePrec
+        );
+
+        //- Set output time format for ensight case file
+        static void setTimeFormat
+        (
+            OSstream& os,
+            const ensightCase::options& opts
+        );
+
         //- Print time-set for ensight case file with a single time
         static void printTimeset
         (
@@ -388,7 +404,7 @@ class ensightCase::options
 {
     // Private Data
 
-        //- Ascii/Binary file output
+        //- The output file format (ascii/binary)
         IOstreamOption::streamFormat format_;
 
         //- Remove existing directory and sub-directories on creation
@@ -400,8 +416,14 @@ class ensightCase::options
         //- Write clouds into their own directory
         bool separateCloud_;
 
+        //- Time format for case file (default: scientific)
+        IOstreamOption::floatFormat timeFormat_;
+
+        //- Time precision for case file (default: 5)
+        int timePrecision_;
+
         //- Width of mask for subdirectories
-        label width_;
+        int width_;
 
         //- The '*' mask appropriate for subdirectories
         word mask_;
@@ -415,15 +437,38 @@ public:
     // Constructors
 
         //- Construct with the specified format (default is binary)
-        options(IOstreamOption::streamFormat fmt = IOstreamOption::BINARY);
+        explicit options
+        (
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        );
+
+        //- If present, construct with the format specified in the dictionary
+        //- or use default (binary)
+        options
+        (
+            //! The lookup name for the format, typically 'format'
+            //! or 'writeFormat' etc.
+            const word& formatKeyword,
+            const dictionary& dict,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        );
 
 
     // Member Functions
 
     // Access
 
-        //- Ascii/Binary file output
+        //- The output file format (ascii/binary)
         IOstreamOption::streamFormat format() const noexcept { return format_; }
+
+        //- Time format for case file (general/fixed/scientific)
+        IOstreamOption::floatFormat timeFormat() const noexcept
+        {
+            return timeFormat_;
+        }
+
+        //- Time precision for case file
+        int timePrecision() const noexcept { return timePrecision_; }
 
         //- The '*' mask appropriate for sub-directories
         const word& mask() const noexcept { return mask_; }
@@ -432,7 +477,7 @@ public:
         word padded(const label i) const;
 
         //- Return current width of mask and padded.
-        label width() const noexcept { return width_; }
+        int width() const noexcept { return width_; }
 
         //- Remove existing directory and sub-directories on creation
         bool overwrite() const noexcept { return overwrite_; }
@@ -445,7 +490,22 @@ public:
 
         //- Set width of mask and padded.
         //  Default width is 8 digits, max width is 31 digits.
-        void width(const label i);
+        void width(const int i);
+
+        //- Set the time format for case file
+        void timeFormat(IOstreamOption::floatFormat fmt) noexcept
+        {
+            timeFormat_ = fmt;
+        }
+
+        //- Set the time precision for case file
+        void timePrecision(int prec) noexcept { timePrecision_ = prec; }
+
+        //- Set the time format for case file
+        void timeFormat(const word& key, const dictionary& dict);
+
+        //- Set the time precision for case file
+        void timePrecision(const word& key, const dictionary& dict);
 
         //- Remove existing directory and sub-directories on creation
         void overwrite(bool on) noexcept { overwrite_ = on; }

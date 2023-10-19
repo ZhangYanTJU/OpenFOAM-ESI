@@ -52,15 +52,20 @@ class ensightGeoFile
 {
     // Private Member Functions
 
-        //- Initialize outputs the header information
+        //- Initialize outputs the header information and beginGeometry
         void init();
+
+        //- Start of geometry information
+        void beginGeometry();
+
+        //- End of geometry information
+        void endGeometry();
 
         //- No copy construct
         ensightGeoFile(const ensightGeoFile&) = delete;
 
         //- No copy assignment
         void operator=(const ensightGeoFile&) = delete;
-
 
 public:
 
@@ -111,7 +116,7 @@ public:
         using ensightFile::beginPart;
 
         //- Begin a "part" (0-based index), with a description.
-        void beginPart(const label index, const string& description);
+        void beginPart(const label index, const std::string& description);
 
         //- Begin a "coordinates" block
         void beginCoordinates(const label npoints);

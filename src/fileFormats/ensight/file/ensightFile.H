@@ -146,19 +146,25 @@ public:
     // Output
 
         //- Write "C Binary" string for binary files (eg, geometry/measured)
-        Ostream& writeBinaryHeader();
+        void writeBinaryHeader();
+
+        //- Write "BEGIN TIME STEP" string and newline
+        void beginTimeStep();
+
+        //- Write "END TIME STEP" string and newline
+        void endTimeStep();
 
         //- Write character/string content as "%79s" or as binary (max 80 chars)
-        Ostream& writeString(const char* str, size_t len);
+        void writeString(const char* str, size_t len);
 
         //- Write C-string as "%79s" or as binary (max 80 chars)
-        Ostream& writeString(const char* str);
+        void writeString(const char* str);
 
         //- Write string as "%79s" or as binary (max 80 chars)
-        Ostream& writeString(const std::string& str);
+        void writeString(const std::string& str);
 
         //- Write undef value
-        Ostream& writeUndef();
+        void writeUndef();
 
 
         //- Write element keyword with trailing newline,

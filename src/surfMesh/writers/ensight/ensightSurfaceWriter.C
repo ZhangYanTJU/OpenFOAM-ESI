@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,7 +55,7 @@ namespace surfaceWriters
 Foam::surfaceWriters::ensightWriter::ensightWriter()
 :
     surfaceWriter(),
-    writeFormat_(IOstreamOption::ASCII),
+    caseOpts_(IOstreamOption::BINARY),
     collateTimes_(true),
     caching_("fieldsDict")  // Historic name
 {}
@@ -67,13 +67,13 @@ Foam::surfaceWriters::ensightWriter::ensightWriter
 )
 :
     surfaceWriter(options),
-    writeFormat_
-    (
-        IOstreamOption::formatEnum("format", options, IOstreamOption::ASCII)
-    ),
+    caseOpts_("format", options, IOstreamOption::BINARY),
     collateTimes_(options.getOrDefault("collateTimes", true)),
     caching_("fieldsDict")  // Historic name
-{}
+{
+    caseOpts_.timeFormat("timeFormat", options);
+    caseOpts_.timePrecision("timePrecision", options);
+}
 
 
 Foam::surfaceWriters::ensightWriter::ensightWriter

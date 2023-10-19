@@ -34,21 +34,30 @@ License
 void Foam::ensightGeoFile::init()
 {
     writeBinaryHeader();
+    beginGeometry();
+}
 
+
+void Foam::ensightGeoFile::beginGeometry()
+{
     // Description line 1
-    write("Ensight Geometry File");
+    writeString("Ensight Geometry File");
     newline();
 
     // Description line 2
-    write(string("Written by OpenFOAM " + std::to_string(foamVersion::api)));
+    writeString("Written by OpenFOAM " + std::to_string(foamVersion::api));
     newline();
 
-    write("node id assign");
+    writeString("node id assign");
     newline();
 
-    write("element id assign");
+    writeString("element id assign");
     newline();
 }
+
+
+void Foam::ensightGeoFile::endGeometry()
+{}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -96,7 +105,7 @@ Foam::Ostream& Foam::ensightGeoFile::writeKeyword(const keyType& key)
 void Foam::ensightGeoFile::beginPart
 (
     const label index,
-    const string& description
+    const std::string& description
 )
 {
     beginPart(index);
