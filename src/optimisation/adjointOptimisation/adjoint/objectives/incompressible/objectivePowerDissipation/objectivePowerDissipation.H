@@ -114,6 +114,9 @@ public:
         //- Update grad(dx/db multiplier). Volume-based sensitivity term
         virtual void update_gradDxDbMultiplier();
 
+        //- Contribution to field sensitivities
+        virtual void update_dJdb();
+
         //- Add source terms to the adjoint turbulence model equations
         virtual void addSource(fvScalarMatrix& matrix);
 };

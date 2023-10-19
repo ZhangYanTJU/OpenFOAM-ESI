@@ -380,6 +380,13 @@ const wordList& adjointRASModel::getAdjointTMVariablesBaseNames() const
 
 tmp<volScalarField> adjointRASModel::nutJacobianTMVar1() const
 {
+    dimensionSet dims
+    (
+        bool(adjointTMVariable1Ptr_)
+      ? dimViscosity/adjointTMVariable1Ptr_().dimensions()
+      : dimless
+    );
+
     return
         tmp<volScalarField>::New
         (
@@ -392,17 +399,20 @@ tmp<volScalarField> adjointRASModel::nutJacobianTMVar1() const
                 IOobject::NO_WRITE
             ),
             mesh_,
-            dimensionedScalar
-            (
-               dimViscosity/adjointTMVariable1Ptr_().dimensions(),
-               Zero
-            )
+            dimensionedScalar(dims, Zero)
         );
 }
 
 
 tmp<volScalarField> adjointRASModel::nutJacobianTMVar2() const
 {
+    dimensionSet dims
+    (
+        bool(adjointTMVariable2Ptr_)
+      ? dimViscosity/adjointTMVariable2Ptr_().dimensions()
+      : dimless
+    );
+
     return
         tmp<volScalarField>::New
         (
@@ -415,11 +425,7 @@ tmp<volScalarField> adjointRASModel::nutJacobianTMVar2() const
                 IOobject::NO_WRITE
             ),
             mesh_,
-            dimensionedScalar
-            (
-                dimViscosity/adjointTMVariable2Ptr_().dimensions(),
-                Zero
-            )
+            dimensionedScalar(dims, Zero)
         );
 }
 
