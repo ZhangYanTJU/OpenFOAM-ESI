@@ -77,38 +77,30 @@ public:
 
 
     //- Return false (0) for bool
-    constexpr operator bool() const noexcept
-    {
-        return false;
-    }
+    constexpr operator bool() const noexcept { return false; }
 
     //- Return 0 for label
-    constexpr operator label() const noexcept
-    {
-        return 0;
-    }
+    constexpr operator label() const noexcept { return 0; }
 
     //- Return 0 for float
-    constexpr operator float() const noexcept
-    {
-        return 0;
-    }
+    constexpr operator float() const noexcept { return 0; }
 
     //- Return 0 for double
-    constexpr operator double() const noexcept
-    {
-        return 0;
-    }
+    constexpr operator double() const noexcept { return 0; }
 
     //- Component-wise or element-wise access returns zero
-    zero operator[](const label) const noexcept
-    {
-        return zero{};
-    }
+    zero operator[](const label) const noexcept { return zero{}; }
 
     // FUTURE?: Swallow assignment (as per std::ignore)
     // template<class T>
     // constexpr const zero& operator=(const T&) const { return *this; }
+
+    //- Unary functor returns zero
+    template<class T>
+    constexpr zero operator()(const T&) const noexcept
+    {
+        return zero{};
+    }
 };
 
 

@@ -73,28 +73,16 @@ public:
 
 
     //- Return 1 for label
-    constexpr operator label() const noexcept
-    {
-        return 1;
-    }
+    constexpr operator label() const noexcept { return 1; }
 
     //- Return 1 for float
-    constexpr operator float() const noexcept
-    {
-        return 1;
-    }
+    constexpr operator float() const noexcept { return 1; }
 
     //- Return 1 for double
-    constexpr operator double() const noexcept
-    {
-        return 1;
-    }
+    constexpr operator double() const noexcept { return 1; }
 
     //- Component-wise or element-wise access returns one
-    one operator[](const label) const noexcept
-    {
-        return one{};
-    }
+    one operator[](const label) const noexcept { return one{}; }
 };
 
 

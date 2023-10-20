@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -81,31 +81,34 @@ int main(int argc, char *argv[])
 
     labelList values(identity(40, -10));
 
-    Info<<"words:  " << flatOutput(words) << endl;
-    Info<<"values: " << flatOutput(values)  << endl;
+    Info<< "words:  " << flatOutput(words) << endl;
+    Info<< "values: " << flatOutput(values)  << endl;
 
     regExp matcher(".*_.*");
 
-    Info<<"With '_': ";
+    Info<< "With '_': ";
     printMatching(words, matcher);
 
-    Info<<"All: ";
+    Info<< "All: ";
     printMatching(words, predicates::always());
 
-    Info<<"None: ";
+    Info<< "None: ";
     printMatching(words, predicates::never());
 
-    Info<<"Neg values: ";
+    Info<< "Neg values: ";
     printMatching(values, [](const label v) { return v < 0; });
 
-    Info<<"Even values: ";
+    Info<< "Even values: ";
     printMatching(values, [](const label v) { return !(v % 2); });
 
-    Info<<"All: ";
+    Info<< "All: ";
     printMatching(values, predicates::always());
 
-    Info<<"None: ";
+    Info<< "None: ";
     printMatching(values, predicates::never());
+
+    Info<< "zero:";
+    Info<< static_cast<label>(Foam::zero{}(values)) << nl;
 
     return 0;
 }
