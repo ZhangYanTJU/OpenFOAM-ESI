@@ -94,9 +94,7 @@ class faMesh
 :
     public MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>,
     public lduMesh,
-    public faSchemes,
     public edgeInterpolation,  // may need input from faSchemes
-    public faSolution,
     public data
 {
     // Private (internal) classes/structures
@@ -309,6 +307,12 @@ class faMesh
 
         //- Whether point normals must be corrected for a patch
         mutable boolList* correctPatchPointNormalsPtr_;
+
+        //- The faSchemes (demand-driven)
+        mutable std::unique_ptr<faSchemes> schemesPtr_;
+
+        //- The faSolution (demand-driven)
+        mutable std::unique_ptr<faSolution> solutionPtr_;
 
 
     // Other mesh-related data
@@ -663,6 +667,37 @@ public:
         const faGlobalMeshData& globalData() const;
 
 
+    // Solution Control
+
+        //- True if faSchemes have been created
+        bool hasSchemes() const noexcept { return bool(schemesPtr_); }
+
+        //- True if faSolution has been created
+        bool hasSolution() const noexcept { return bool(solutionPtr_); }
+
+        //- Read-access to the faSchemes controls
+        //- (demand-driven create from disk)
+        const faSchemes& schemes() const;
+
+        //- Read/write-access to the faSchemes controls
+        //- (demand-driven create from disk)
+        faSchemes& schemes();
+
+        //- Read-access to the faSolution controls
+        //- (demand-driven create from disk)
+        const faSolution& solution() const;
+
+        //- Read/write-access to the faSolution controls
+        //- (demand-driven create from disk)
+        faSolution& solution();
+
+        //- Read/create faSchemes unless it already exists and has entries.
+        void schemes(IOobjectOption::readOption rOpt);
+
+        //- Read/create faSolution unless it already exists and has entries.
+        void solution(IOobjectOption::readOption rOpt);
+
+
     // Access: Mesh size parameters
 
         //- Number of local mesh points
@@ -964,6 +999,231 @@ public:
         bool operator!=(const faMesh& m) const;
 
         bool operator==(const faMesh& m) const;
+
+
+    // -------------------------------------------------------------------- //
+    // Housekeeping
+    // -------------------------------------------------------------------- //
+
+    // faSchemes : legacy access names
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().dict()")
+    const dictionary& schemesDict() const { return schemes().dict(); }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().steady()")
+    bool steady() const { return schemes().steady(); }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().transient()")
+    bool transient() const { return schemes().transient(); }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().ddt()")
+    ITstream& ddtScheme(const word& name) const
+    {
+        return schemes().ddt(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().d2dt2()")
+    ITstream& d2dt2Scheme(const word& name) const
+    {
+        return schemes().d2dt2(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().interpolation()")
+    ITstream& interpolationScheme(const word& name) const
+    {
+        return schemes().interpolation(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().div()")
+    ITstream& divScheme(const word& name) const
+    {
+        return schemes().div(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().grad()")
+    ITstream& gradScheme(const word& name) const
+    {
+        return schemes().grad(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().lnGrad()")
+    ITstream& lnGradScheme(const word& name) const
+    {
+        return schemes().lnGrad(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().laplacian()")
+    ITstream& laplacianScheme(const word& name) const
+    {
+        return schemes().laplacian(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().setFluxRequired()")
+    void setFluxRequired(const word& name) const
+    {
+        schemes().setFluxRequired(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().fluxRequired()")
+    bool fluxRequired(const word& name) const
+    {
+        return schemes().fluxRequired(name);
+    }
+
+
+    // Read Access
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().ddtSchemes()")
+    const dictionary& ddtSchemes() const
+    {
+        return schemes().ddtSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().d2dt2Schemes()")
+    const dictionary& d2dt2Schemes() const
+    {
+        return schemes().d2dt2Schemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().interpolationSchemes()")
+    const dictionary& interpolationSchemes() const
+    {
+        return schemes().interpolationSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().divSchemes()")
+    const dictionary& divSchemes() const
+    {
+        return schemes().divSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().gradSchemes()")
+    const dictionary& gradSchemes() const
+    {
+        return schemes().gradSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().lnGradSchemes()")
+    const dictionary& lnGradSchemes() const
+    {
+        return schemes().lnGradSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().laplacianSchemes()")
+    const dictionary& laplacianSchemes() const
+    {
+        return schemes().laplacianSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().fluxRequired()")
+    const dictionary& fluxRequired() const
+    {
+        return schemes().fluxRequired();
+    }
+
+
+    // Edit Access
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().ddtSchemes()")
+    dictionary& ddtSchemes()
+    {
+        return schemes().ddtSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().d2dt2Schemes()")
+    dictionary& d2dt2Schemes()
+    {
+        return schemes().d2dt2Schemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().interpolationSchemes()")
+    dictionary& interpolationSchemes()
+    {
+        return schemes().interpolationSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().divSchemes()")
+    dictionary& divSchemes()
+    {
+        return schemes().divSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().gradSchemes()")
+    dictionary& gradSchemes()
+    {
+        return schemes().gradSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().lnGradSchemes()")
+    dictionary& lnGradSchemes()
+    {
+        return schemes().lnGradSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().laplacianSchemes()")
+    dictionary& laplacianSchemes()
+    {
+        return schemes().laplacianSchemes();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "schemes().fluxRequired()")
+    dictionary& fluxRequired()
+    {
+        return schemes().fluxRequired();
+    }
+
+
+    // faSolution : legacy access names
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().cache()")
+    bool cache(const word& name) const
+    {
+        return solution().cache(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().relaxField()")
+    bool relaxField(const word& name) const
+    {
+        return solution().relaxField(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().relaxEquation()")
+    bool relaxEquation(const word& name) const
+    {
+        return solution().relaxEquation(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().fieldRelaxationFactor()")
+    scalar fieldRelaxationFactor(const word& name) const
+    {
+        return solution().fieldRelaxationFactor(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().equationRelaxationFactor()")
+    scalar equationRelaxationFactor(const word& name) const
+    {
+        return solution().equationRelaxationFactor(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().dict() | solutionDict()")
+    const dictionary& solutionDict() const
+    {
+        return solution().dict();
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().solverDict(...)")
+    const dictionary& solverDict(const word& name) const
+    {
+        return solution().solverDict(name);
+    }
+
+    FOAM_DEPRECATED_STRICT(2023-12, "solution().solverDict(...)")
+    const dictionary& solver(const word& name) const
+    {
+        return solution().solverDict(name);
+    }
+
+    // -------------------------------------------------------------------- //
 };
 
 

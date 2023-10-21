@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,7 +95,7 @@ Foam::wallDist::wallDist
     patchTypeName_(patchTypeName),
     dict_
     (
-        static_cast<const fvSchemes&>(mesh).subOrEmptyDict
+        mesh.schemes().subOrEmptyDict
         (
             patchTypeName_ & "Dist"
         )

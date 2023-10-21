@@ -255,8 +255,8 @@ void Foam::functionObjects::momentumError::calcMomentError()
 
         fvMesh& subMesh = zoneSubSetPtr_->subsetter().subMesh();
 
-        subMesh.fvSchemes::readOpt(mesh_.fvSchemes::readOpt());
-        subMesh.fvSchemes::read();
+        // Need schemes, despite NO_READ on subMesh
+        subMesh.schemes(IOobject::MUST_READ);
 
         auto& momentErrMap =
             subMesh.lookupObjectRef<volVectorField>

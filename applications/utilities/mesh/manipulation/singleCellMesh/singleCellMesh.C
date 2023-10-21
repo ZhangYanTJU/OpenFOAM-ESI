@@ -118,18 +118,25 @@ int main(int argc, char *argv[])
     );
     scMesh().setInstance(mesh.pointsInstance());
 
-    // For convenience create any fv* files
-    if (!exists(scMesh().fvSolution::objectPath()))
-    {
-        mkDir(scMesh().fvSolution::path());
-        ln("../fvSolution", scMesh().fvSolution::objectPath());
-    }
-    if (!exists(scMesh().fvSchemes::objectPath()))
-    {
-        mkDir(scMesh().fvSolution::path());
-        ln("../fvSchemes", scMesh().fvSchemes::objectPath());
-    }
+    // Since singleCellFvMesh::interpolate only does mapping,
+    // it doesn't need fvSchemes or fvSolution either.
 
+    // --------------------------------------------------------------------- //
+    // Old code (OpenFOAM-v2306 and earlier)
+    // was broken in parallel as well:
+    //
+    // // For convenience create any fvSchemes/fvSolution files
+    // if (!exists(scMesh().fvSolution::objectPath()))
+    // {
+    //     mkDir(scMesh().fvSolution::path());
+    //     ln("../fvSolution", scMesh().fvSolution::objectPath());
+    // }
+    // if (!exists(scMesh().fvSchemes::objectPath()))
+    // {
+    //     mkDir(scMesh().fvSolution::path());
+    //     ln("../fvSchemes", scMesh().fvSchemes::objectPath());
+    // }
+    // --------------------------------------------------------------------- //
 
     forAll(timeDirs, timeI)
     {
