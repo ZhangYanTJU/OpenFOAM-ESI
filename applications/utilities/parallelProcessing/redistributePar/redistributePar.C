@@ -1598,7 +1598,8 @@ int main(int argc, char *argv[])
             );
             const fileName areaMeshSubDir
             (
-                polyMesh::regionName(regionName) / faMesh::meshSubDir
+                // Assume single-region area mesh
+                faMesh::meshDir(regionName, word::null)
             );
 
             InfoOrPout
@@ -2501,7 +2502,8 @@ int main(int argc, char *argv[])
             );
             const fileName areaMeshSubDir
             (
-                polyMesh::regionName(regionName) / faMesh::meshSubDir
+                // Assume single-region area mesh
+                faMesh::meshDir(regionName, word::null)
             );
 
             InfoOrPout

@@ -28,13 +28,6 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline const Foam::polyMesh& Foam::faMesh::mesh() const
-{
-    return
-        MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>::mesh();
-}
-
-
 inline const Foam::faBoundaryMesh& Foam::faMesh::boundary() const noexcept
 {
     return boundary_;

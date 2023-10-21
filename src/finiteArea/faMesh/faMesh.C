@@ -28,6 +28,7 @@ License
 
 #include "faMesh.H"
 #include "faMeshBoundaryHalo.H"
+#include "faMeshRegistry.H"
 #include "faGlobalMeshData.H"
 #include "Time.H"
 #include "polyMesh.H"
@@ -61,20 +62,104 @@ namespace Foam
 }
 
 
-const Foam::word Foam::faMesh::prefix("finite-area");
+const Foam::word Foam::faMesh::prefix_("finite-area");
 
-Foam::word Foam::faMesh::meshSubDir = "faMesh";
+Foam::word Foam::faMesh::meshSubDir("faMesh");
 
 const int Foam::faMesh::quadricsFit_ = 0;  // Tuning (experimental)
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
+const Foam::word& Foam::faMesh::prefix() noexcept
+{
+    return prefix_;
+}
+
+
+Foam::fileName Foam::faMesh::dbDir(const word& areaRegion)
+{
+    if (areaRegion.empty() || areaRegion == polyMesh::defaultRegion)
+    {
+        return faMesh::prefix();
+    }
+
+    return (faMesh::prefix() / areaRegion);
+}
+
+
+Foam::fileName Foam::faMesh::dbDir
+(
+    const word& volRegion,
+    const word& areaRegion
+)
+{
+    return
+    (
+        polyMesh::regionName(volRegion)
+      / faMesh::prefix()
+      / polyMesh::regionName(areaRegion)
+    );
+}
+
+
+Foam::fileName Foam::faMesh::dbDir
+(
+    const polyMesh& pMesh,
+    const word& areaRegion
+)
+{
+    return faMesh::dbDir(pMesh.regionName(), areaRegion);
+}
+
+
+Foam::fileName Foam::faMesh::meshDir(const word& areaRegion)
+{
+    if (areaRegion.empty() || areaRegion == polyMesh::defaultRegion)
+    {
+        return faMesh::meshSubDir;
+    }
+
+    return (areaRegion / faMesh::meshSubDir);
+}
+
+
+Foam::fileName Foam::faMesh::meshDir
+(
+    const word& volRegion,
+    const word& areaRegion
+)
+{
+    return
+    (
+        polyMesh::regionName(volRegion)
+      / faMesh::prefix()
+      / polyMesh::regionName(areaRegion)
+      / faMesh::meshSubDir
+    );
+}
+
+
+Foam::fileName Foam::faMesh::meshDir
+(
+    const polyMesh& pMesh,
+    const word& areaRegion
+)
+{
+    return faMesh::meshDir(pMesh.regionName(), areaRegion);
+}
+
+
 const Foam::objectRegistry* Foam::faMesh::registry(const polyMesh& pMesh)
 {
-    // This will change in the near future
-    return &static_cast<const objectRegistry&>(pMesh);
+    return pMesh.cfindObject<objectRegistry>(faMesh::prefix());
 }
+
+
+// const Foam::objectRegistry* Foam::faMesh::registry(const objectRegistry& obr)
+// {
+//     return obr.cfindObject<objectRegistry>(faMesh::prefix());
+// }
 
 
 const Foam::faMesh& Foam::faMesh::mesh
@@ -82,8 +167,30 @@ const Foam::faMesh& Foam::faMesh::mesh
     const polyMesh& pMesh
 )
 {
-    // This will change in the near future
-    return pMesh.lookupObject<faMesh>("faMesh");
+    return faMesh::mesh(pMesh, polyMesh::defaultRegion);
+}
+
+
+const Foam::faMesh& Foam::faMesh::mesh
+(
+    const polyMesh& pMesh,
+    const word& areaRegion
+)
+{
+    const objectRegistry* obr = faMesh::registry(pMesh);
+
+    if (!obr)
+    {
+        // Fallback - not really valid, but will fail at the next stage
+        obr = &(pMesh.thisDb());
+    }
+
+    if (areaRegion.empty())
+    {
+        return obr->lookupObject<faMesh>(polyMesh::defaultRegion);
+    }
+
+    return obr->lookupObject<faMesh>(areaRegion);
 }
 
 
@@ -340,33 +447,124 @@ bool Foam::faMesh::init(const bool doInit)
 }
 
 
-Foam::faMesh::faMesh(const polyMesh& pMesh, const Foam::zero)
-:
-    faMesh(pMesh, labelList(), static_cast<IOobjectOption>(pMesh))
-{}
+// * * * * * * * * * * * * * Forwarding Constructors * * * * * * * * * * * * //
 
-
-Foam::faMesh::faMesh(const faMesh& baseMesh, const Foam::zero)
+Foam::faMesh::faMesh
+(
+    const word& meshName,
+    const polyMesh& pMesh,
+    Foam::zero
+)
 :
-    faMesh
-    (
-        baseMesh,
-        labelList(),
-        IOobjectOption(IOobjectOption::NO_READ, IOobjectOption::NO_WRITE)
-    )
+    faMesh(meshName, pMesh, labelList())
 {}
 
 
 Foam::faMesh::faMesh
 (
     const polyMesh& pMesh,
+    Foam::zero
+)
+:
+    faMesh(polyMesh::defaultRegion, pMesh, labelList())
+{}
+
+
+Foam::faMesh::faMesh(const polyMesh& pMesh, const bool doInit)
+:
+    faMesh(polyMesh::defaultRegion, pMesh, doInit)
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const word& meshName,
+    const faMesh& baseMesh,
+    Foam::zero
+)
+:
+    faMesh(meshName, baseMesh, labelList())
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const faMesh& baseMesh,
+    Foam::zero
+)
+:
+    faMesh(polyMesh::defaultRegion, baseMesh, labelList())
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const faMesh& baseMesh,
+    labelList&& faceLabels
+)
+:
+    faMesh(polyMesh::defaultRegion, baseMesh, std::move(faceLabels))
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const polyMesh& pMesh,
+    labelList&& faceLabels
+)
+:
+    faMesh(polyMesh::defaultRegion, pMesh, std::move(faceLabels))
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const polyPatch& pp,
     const bool doInit
 )
 :
-    MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>(pMesh),
-    faSchemes(mesh()),
+    faMesh(polyMesh::defaultRegion, pp, doInit)
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const polyMesh& pMesh,
+    const dictionary& faMeshDefinition,
+    const bool doInit
+)
+:
+    faMesh
+    (
+        polyMesh::defaultRegion,
+        pMesh,
+        faMeshDefinition,
+        doInit
+    )
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::faMesh::faMesh
+(
+    const word& meshName,
+    const polyMesh& pMesh,
+    const bool doInit
+)
+:
+    objectRegistry
+    (
+        IOobject
+        (
+            meshName,
+            faMeshRegistry::New(pMesh).thisDb(),
+            IOobjectOption::NO_READ,
+            IOobjectOption::AUTO_WRITE,
+            IOobjectOption::REGISTER
+        )
+    ),
     edgeInterpolation(*this),
-    faSolution(mesh()),
     faceLabels_
     (
         IOobject
@@ -418,7 +616,7 @@ Foam::faMesh::faMesh
 
         IOobject rio
         (
-            "name",
+            "any-name",
             time().timeName(),
             faMesh::meshSubDir,
             faMesh::thisDb(),
@@ -444,36 +642,29 @@ Foam::faMesh::faMesh
 
 Foam::faMesh::faMesh
 (
+    const word& meshName,
     const polyMesh& pMesh,
     labelList&& faceLabels
 )
 :
-    faMesh
+    objectRegistry
     (
-        pMesh,
-        std::move(faceLabels),
-        static_cast<IOobjectOption>(pMesh)
-    )
-{}
-
-
-Foam::faMesh::faMesh
-(
-    const polyMesh& pMesh,
-    labelList&& faceLabels,
-    IOobjectOption ioOpt
-)
-:
-    MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>(pMesh),
-    faSchemes(mesh(), ioOpt.readOpt()),
+        IOobject
+        (
+            meshName,
+            faMeshRegistry::New(pMesh).thisDb(),
+            IOobjectOption::NO_READ,
+            IOobjectOption::AUTO_WRITE,
+            IOobjectOption::REGISTER
+        )
+    ),
     edgeInterpolation(*this),
-    faSolution(mesh(), ioOpt.readOpt()),
     faceLabels_
     (
         IOobject
         (
             "faceLabels",
-            mesh().facesInstance(),
+            pMesh.facesInstance(),
             faMesh::meshSubDir,
             faMesh::thisDb(),
             IOobject::NO_READ,
@@ -486,14 +677,14 @@ Foam::faMesh::faMesh
         IOobject
         (
             "faBoundary",
-            mesh().facesInstance(),
+            faceLabels_.instance(),
             faMesh::meshSubDir,
             faMesh::thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
         *this,
-        label(0)
+        Foam::zero{}
     ),
     comm_(UPstream::worldComm),
     curTimeIndex_(time().timeIndex())
@@ -503,36 +694,41 @@ Foam::faMesh::faMesh
     nEdges_ = 0;
     nInternalEdges_ = 0;
     nFaces_ = faceLabels_.size();
+
+    // TDB: can we make a NO_READ readOption persistent for
+    // faSchemes/faSolution? Or not needed anymore?
 }
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
 Foam::faMesh::faMesh
 (
+    const word& meshName,
     const faMesh& baseMesh,
     labelList&& faceLabels,
     IOobjectOption ioOpt
 )
 :
-    MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>(baseMesh.mesh()),
-    faSchemes
+    objectRegistry
     (
-        faMesh::thisDb(),
-        ioOpt.readOpt(),
-        static_cast<const dictionary*>(baseMesh.hasSchemes())
+        IOobject
+        (
+            meshName,
+            faMeshRegistry::New(baseMesh.mesh()).thisDb(),
+            IOobjectOption::NO_READ,
+            IOobjectOption::AUTO_WRITE,
+            IOobjectOption::REGISTER
+        )
     ),
     edgeInterpolation(*this),
-    faSolution
-    (
-        faMesh::thisDb(),
-        ioOpt.readOpt(),
-        static_cast<const dictionary*>(baseMesh.hasSolution())
-    ),
     faceLabels_
     (
         IOobject
         (
             "faceLabels",
-            mesh().facesInstance(),
+            // Topological instance from polyMesh
+            baseMesh.mesh().facesInstance(),
             faMesh::meshSubDir,
             faMesh::thisDb(),
             IOobject::NO_READ,
@@ -545,14 +741,14 @@ Foam::faMesh::faMesh
         IOobject
         (
             "faBoundary",
-            mesh().facesInstance(),
+            faceLabels_.instance(),
             faMesh::meshSubDir,
             faMesh::thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
         *this,
-        label(0)
+        Foam::zero{}
     ),
     comm_(UPstream::worldComm),
     curTimeIndex_(time().timeIndex())
@@ -562,13 +758,46 @@ Foam::faMesh::faMesh
     nEdges_ = 0;
     nInternalEdges_ = 0;
     nFaces_ = faceLabels_.size();
+
+    // Copy existing
+    if (baseMesh.schemesPtr_)
+    {
+        schemesPtr_.reset
+        (
+            new faSchemes
+            (
+                faMesh::thisDb(),
+                ioOpt.readOpt(),  // IOobjectOption::NO_READ,
+                static_cast<const dictionary*>(baseMesh.hasSchemes())
+            )
+        );
+    }
+
+    if (baseMesh.solutionPtr_)
+    {
+        solutionPtr_.reset
+        (
+            new faSolution
+            (
+                faMesh::thisDb(),
+                ioOpt.readOpt(),  // IOobjectOption::NO_READ,
+                static_cast<const dictionary*>(baseMesh.hasSolution())
+            )
+        );
+    }
 }
 
 
-Foam::faMesh::faMesh(const polyPatch& pp, const bool doInit)
+Foam::faMesh::faMesh
+(
+    const word& meshName,
+    const polyPatch& pp,
+    const bool doInit
+)
 :
     faMesh
     (
+        meshName,
         pp.boundaryMesh().mesh(),
         identity(pp.range())
     )
@@ -594,6 +823,7 @@ Foam::faMesh::faMesh(const polyPatch& pp, const bool doInit)
 
 Foam::faMesh::faMesh
 (
+    const word& meshName,
     const polyMesh& pMesh,
     const dictionary& faMeshDefinition,
     const bool doInit
@@ -601,6 +831,7 @@ Foam::faMesh::faMesh
 :
     faMesh
     (
+        meshName,
         pMesh,
         selectPatchFaces
         (
@@ -639,7 +870,7 @@ Foam::faMesh::faMesh
 
         IOobject rio
         (
-            "name",
+            "any-name",
             time().timeName(),
             faMesh::meshSubDir,
             faMesh::thisDb(),
@@ -673,51 +904,148 @@ Foam::faMesh::~faMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::faSchemes* Foam::faMesh::hasSchemes() const
-{
-    return static_cast<const faSchemes*>(this);
-}
-
-
-const Foam::faSolution* Foam::faMesh::hasSolution() const
-{
-    return static_cast<const faSolution*>(this);
-}
-
-
 const Foam::faSchemes& Foam::faMesh::schemes() const
 {
-    return static_cast<const faSchemes&>(*this);
+    if (!schemesPtr_)
+    {
+        // Likely really want schemes: promote NO_READ to LAZY_READ
+
+        const auto& obr = faMesh::thisDb();
+        IOobjectOption::readOption rOpt(obr.readOpt());
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        schemesPtr_.reset(new faSchemes(obr, rOpt));
+    }
+    return *schemesPtr_;
 }
 
 
 Foam::faSchemes& Foam::faMesh::schemes()
 {
-    return static_cast<faSchemes&>(*this);
+    if (!schemesPtr_)
+    {
+        // Likely really want schemes: promote NO_READ to LAZY_READ
+
+        const auto& obr = faMesh::thisDb();
+        IOobjectOption::readOption rOpt(obr.readOpt());
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        schemesPtr_.reset(new faSchemes(obr, rOpt));
+    }
+    return *schemesPtr_;
+}
+
+
+void Foam::faMesh::schemes(IOobjectOption::readOption rOpt)
+{
+    if
+    (
+        IOobjectOption::isAnyRead(rOpt)
+     && (!schemesPtr_ || schemesPtr_->dict().empty())
+    )
+    {
+        const auto& obr = faMesh::thisDb();
+
+        schemesPtr_.reset(nullptr);  // Discard existing (forces unregister)
+        schemesPtr_.reset(new faSchemes(obr, rOpt));
+    }
 }
 
 
 const Foam::faSolution& Foam::faMesh::solution() const
 {
-    return static_cast<const faSolution&>(*this);
+    if (!solutionPtr_)
+    {
+        // Likely really want solution: promote NO_READ to LAZY_READ
+
+        const auto& obr = faMesh::thisDb();
+        IOobjectOption::readOption rOpt(obr.readOpt());
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        solutionPtr_.reset(new faSolution(obr, rOpt));
+    }
+    return *solutionPtr_;
 }
 
 
 Foam::faSolution& Foam::faMesh::solution()
 {
-    return static_cast<faSolution&>(*this);
+    if (!solutionPtr_)
+    {
+        // Likely really want solution: promote NO_READ to LAZY_READ
+
+        const auto& obr = faMesh::thisDb();
+        IOobjectOption::readOption rOpt(obr.readOpt());
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        solutionPtr_.reset(new faSolution(obr, rOpt));
+    }
+    return *solutionPtr_;
+}
+
+
+void Foam::faMesh::solution(IOobjectOption::readOption rOpt)
+{
+    if
+    (
+        IOobjectOption::isAnyRead(rOpt)
+     && (!solutionPtr_ || solutionPtr_->dict().empty())
+    )
+    {
+        const auto& obr = faMesh::thisDb();
+
+        solutionPtr_.reset(nullptr);  // Discard existing (forces unregister)
+        solutionPtr_.reset(new faSolution(obr, rOpt));
+    }
+}
+
+
+const Foam::polyMesh& Foam::faMesh::mesh() const
+{
+    return refCast<const polyMesh>(objectRegistry::parent().parent());
+}
+
+
+const Foam::fileName& Foam::faMesh::dbDir() const
+{
+    // In the usual case, the objectRegistry::dbDir() will be something
+    // like finite-area/{region0,film} etc with the "finite-area/"
+    // prefix coming from the enclosing registry of registries.
+    //
+    // So always check the name() portion, not the dbDir() itself
+    // - either,    objectRegistry::dbDir().name()
+    // - or (same), objectRegistry::name()
+
+    if (objectRegistry::name() == polyMesh::defaultRegion)
+    {
+        return objectRegistry::parent().dbDir();
+    }
+
+    return objectRegistry::dbDir();
 }
 
 
 Foam::fileName Foam::faMesh::meshDir() const
 {
-    return mesh().dbDir()/faMesh::meshSubDir;
+    return dbDir()/faMesh::meshSubDir;
 }
 
 
 const Foam::Time& Foam::faMesh::time() const
 {
-    return mesh().time();
+    return objectRegistry::time();
 }
 
 
@@ -733,21 +1061,15 @@ const Foam::fileName& Foam::faMesh::facesInstance() const
 }
 
 
-bool Foam::faMesh::hasDb() const
-{
-    return true;
-}
-
-
 const Foam::objectRegistry& Foam::faMesh::thisDb() const
 {
-    return mesh().thisDb();
+    return objectRegistry::thisDb();
 }
 
 
 const Foam::word& Foam::faMesh::regionName() const
 {
-    return polyMesh::regionName(thisDb().name());
+    return polyMesh::regionName(objectRegistry::name());
 }
 
 
@@ -874,7 +1196,7 @@ Foam::faMesh::S00() const
             (
                 "S00",
                 time().timeName(),
-                faMesh::thisDb(),
+                *this,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),
@@ -1008,7 +1330,7 @@ bool Foam::faMesh::movePoints()
                 (
                     "S0",
                     time().timeName(),
-                    faMesh::thisDb(),
+                    *this,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
                     IOobject::NO_REGISTER
