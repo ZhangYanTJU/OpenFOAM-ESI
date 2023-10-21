@@ -217,6 +217,9 @@ public:
         //- Fatal if not found.
         scalar equationRelaxationFactor(const word& name) const;
 
+        //- Same as solutionDict()
+        const dictionary& dict() const { return solutionDict(); }
+
         //- The entire dictionary or the optional "select" sub-dictionary.
         const dictionary& solutionDict() const;
 

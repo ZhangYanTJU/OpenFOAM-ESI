@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2011-2015,2022 OpenFOAM Foundation
     Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -221,6 +221,9 @@ public:
         //- True if default ddt scheme is not steady-state
         bool transient() const noexcept { return !steady_; }
 
+        //- Same as schemesDict()
+        const dictionary& dict() const { return schemesDict(); }
+
         //- The entire dictionary or the optional "select" sub-dictionary.
         const dictionary& schemesDict() const;
 
@@ -228,28 +231,28 @@ public:
     // Lookup Access
 
         //- Get ddt scheme for given name, or default
-        ITstream& ddtScheme(const word& name) const;
+        ITstream& ddt(const word& name) const;
 
         //- Get d2dt2 scheme for given name, or default
-        ITstream& d2dt2Scheme(const word& name) const;
+        ITstream& d2dt2(const word& name) const;
 
         //- Get interpolation scheme for given name, or default
-        ITstream& interpolationScheme(const word& name) const;
+        ITstream& interpolation(const word& name) const;
 
         //- Get div scheme for given name, or default
-        ITstream& divScheme(const word& name) const;
+        ITstream& div(const word& name) const;
 
         //- Get grad scheme for given name, or default
-        ITstream& gradScheme(const word& name) const;
+        ITstream& grad(const word& name) const;
 
         //- Get (finiteArea) lnGrad scheme for given name, or default
-        ITstream& lnGradScheme(const word& name) const;
+        ITstream& lnGrad(const word& name) const;
 
         //- Get (finiteVolume) snGrad scheme for given name, or default
-        ITstream& snGradScheme(const word& name) const;
+        ITstream& snGrad(const word& name) const;
 
         //- Get laplacian scheme for given name, or default
-        ITstream& laplacianScheme(const word& name) const;
+        ITstream& laplacian(const word& name) const;
 
         //- Set flux-required for given name (mutable)
         void setFluxRequired(const word& name) const;

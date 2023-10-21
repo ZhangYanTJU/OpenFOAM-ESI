@@ -243,9 +243,7 @@ void Foam::fvMesh::clearOut()
 Foam::fvMesh::fvMesh(const IOobject& io, const bool doInit)
 :
     polyMesh(io, doInit),
-    fvSchemes(static_cast<const objectRegistry&>(*this)),
     surfaceInterpolation(*this),
-    fvSolution(static_cast<const objectRegistry&>(*this)),
     boundary_(*this, boundaryMesh()),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -380,9 +378,7 @@ Foam::fvMesh::fvMesh
         std::move(allNeighbour),
         syncPar
     ),
-    fvSchemes(static_cast<const objectRegistry&>(*this)),
     surfaceInterpolation(*this),
-    fvSolution(static_cast<const objectRegistry&>(*this)),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -416,9 +412,7 @@ Foam::fvMesh::fvMesh
         std::move(cells),
         syncPar
     ),
-    fvSchemes(static_cast<const objectRegistry&>(*this)),
     surfaceInterpolation(*this),
-    fvSolution(static_cast<const objectRegistry&>(*this)),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -482,17 +476,7 @@ Foam::fvMesh::fvMesh
         std::move(allNeighbour),
         syncPar
     ),
-    fvSchemes
-    (
-        static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSchemes&>(baseMesh)
-    ),
     surfaceInterpolation(*this),
-    fvSolution
-    (
-        static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSolution&>(baseMesh)
-    ),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -509,6 +493,30 @@ Foam::fvMesh::fvMesh
 
     // Reset mesh data
     data().reset(baseMesh.data());
+    // TBD
+    // if (baseMesh.schemesPtr_)
+    // {
+    //     schemesPtr_.reset
+    //     (
+    //         new fvSchemes
+    //         (
+    //             static_cast<const objectRegistry&>(*this)
+    //            *(baseMesh.schemesPtr_)
+    //         )
+    //     );
+    // }
+    //
+    // if (baseMesh.solutionPtr_)
+    // {
+    //     solutionPtr_.reset
+    //     (
+    //         new fvSolution
+    //         (
+    //             static_cast<const objectRegistry&>(*this)
+    //            *(baseMesh.solutionPtr_)
+    //         )
+    //     );
+    // }
 }
 
 
@@ -530,17 +538,7 @@ Foam::fvMesh::fvMesh
         std::move(cells),
         syncPar
     ),
-    fvSchemes
-    (
-        static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSchemes&>(baseMesh)
-    ),
     surfaceInterpolation(*this),
-    fvSolution
-    (
-        static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSolution&>(baseMesh)
-    ),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -557,6 +555,30 @@ Foam::fvMesh::fvMesh
 
     // Reset mesh data
     data().reset(baseMesh.data());
+    // TBD
+    // if (baseMesh.schemesPtr_)
+    // {
+    //     schemesPtr_.reset
+    //     (
+    //         new fvSchemes
+    //         (
+    //             static_cast<const objectRegistry&>(*this)
+    //            *(baseMesh.schemesPtr_)
+    //         )
+    //     );
+    // }
+    //
+    // if (baseMesh.solutionPtr_)
+    // {
+    //     solutionPtr_.reset
+    //     (
+    //         new fvSolution
+    //         (
+    //             static_cast<const objectRegistry&>(*this)
+    //            *(baseMesh.solutionPtr_)
+    //         )
+    //     );
+    // }
 }
 
 
@@ -569,6 +591,117 @@ Foam::fvMesh::~fvMesh()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+const Foam::fvSchemes& Foam::fvMesh::schemes() const
+{
+    if (!schemesPtr_)
+    {
+        // Likely really want schemes: promote NO_READ to LAZY_READ
+
+        const auto& obr = fvMesh::thisDb();
+
+        IOobjectOption::readOption rOpt(obr.readOpt());
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        schemesPtr_.reset(new fvSchemes(obr, rOpt));
+    }
+    return *schemesPtr_;
+}
+
+
+Foam::fvSchemes& Foam::fvMesh::schemes()
+{
+    if (!schemesPtr_)
+    {
+        // Likely really want schemes: promote NO_READ to LAZY_READ
+
+        const auto& obr = fvMesh::thisDb();
+
+        IOobjectOption::readOption rOpt(obr.readOpt());
+
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        schemesPtr_.reset(new fvSchemes(obr, rOpt));
+    }
+    return *schemesPtr_;
+}
+
+
+void Foam::fvMesh::schemes(IOobjectOption::readOption rOpt)
+{
+    if
+    (
+        IOobjectOption::isAnyRead(rOpt)
+     && (!schemesPtr_ || schemesPtr_->dict().empty())
+    )
+    {
+        const auto& obr = fvMesh::thisDb();
+
+        schemesPtr_.reset(nullptr);  // Discard existing (forces unregister)
+        schemesPtr_.reset(new fvSchemes(obr, rOpt));
+    }
+}
+
+
+const Foam::fvSolution& Foam::fvMesh::solution() const
+{
+    if (!solutionPtr_)
+    {
+        // Likely really want solution: promote NO_READ to LAZY_READ
+
+        const auto& obr = fvMesh::thisDb();
+        IOobjectOption::readOption rOpt(obr.readOpt());
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        solutionPtr_.reset(new fvSolution(obr, rOpt));
+    }
+    return *solutionPtr_;
+}
+
+
+Foam::fvSolution& Foam::fvMesh::solution()
+{
+    if (!solutionPtr_)
+    {
+        // Likely really want solution: promote NO_READ to LAZY_READ
+
+        const auto& obr = fvMesh::thisDb();
+        IOobjectOption::readOption rOpt(obr.readOpt());
+        if (!IOobjectOption::isAnyRead(rOpt))
+        {
+            rOpt = IOobjectOption::LAZY_READ;
+        }
+
+        solutionPtr_.reset(new fvSolution(obr, rOpt));
+    }
+    return *solutionPtr_;
+}
+
+
+void Foam::fvMesh::solution(IOobjectOption::readOption rOpt)
+{
+    if
+    (
+        IOobjectOption::isAnyRead(rOpt)
+     && (!solutionPtr_ || solutionPtr_->dict().empty())
+    )
+    {
+        const auto& obr = fvMesh::thisDb();
+
+        solutionPtr_.reset(nullptr);  // Discard existing (forces unregister)
+        solutionPtr_.reset(new fvSolution(obr, rOpt));
+    }
+}
+
 
 Foam::SolverPerformance<Foam::scalar> Foam::fvMesh::solve
 (

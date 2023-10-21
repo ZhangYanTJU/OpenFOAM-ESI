@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -326,13 +326,11 @@ void Foam::simplifiedMeshes::columnFvMeshInfo::addLocalPatches
     fvMesh& mesh
 ) const
 {
-    const label nPatch = patchEntries_.size();
-
-    List<polyPatch*> patches(nPatch + 1);
+    polyPatchList patches(patchEntries_.size() + 1);
 
     label nInternalFace = nPatchWithFace_ - 1;
     label startFace = nInternalFace;
-    label entryi = 0;
+    label patchi = 0;
     for (const entry& e : patchEntries_)
     {
         // Re-create boundary types, but reset nFaces and startFace settings
@@ -351,27 +349,35 @@ void Foam::simplifiedMeshes::columnFvMeshInfo::addLocalPatches
         }
 
         patchDict.set("startFace", startFace);
-        patches[entryi] =
+
+        patches.set
+        (
+            patchi,
             polyPatch::New
             (
                 patchName,
                 patchDict,
-                entryi,
+                patchi,
                 mesh.boundaryMesh()
-            ).ptr();
+            )
+        );
 
-        ++entryi;
+        ++patchi;
         startFace += nFaces0;
     }
 
-    patches.last() = new emptyPolyPatch
+    patches.set
     (
-        typeName + ":default",              // name
-        2,                                  // number of faces
-        nInternalFace + 4*nPatchWithFace_,  // start face
-        nPatch - 1,                         // index in boundary list
-        mesh.boundaryMesh(),                // polyBoundaryMesh
-        emptyPolyPatch::typeName            // patchType
+        patchi,
+        new emptyPolyPatch
+        (
+            typeName + ":default",              // name
+            2,                                  // nFaces
+            nInternalFace + 4*nPatchWithFace_,  // startFace
+            patchi,                             // index
+            mesh.boundaryMesh(),                // polyBoundaryMesh
+            emptyPolyPatch::typeName            // patchType
+        )
     );
 
     mesh.addFvPatches(patches);
@@ -458,14 +464,9 @@ Foam::simplifiedMeshes::columnFvMesh::columnFvMesh
         std::move(neighbour1D_)
     )
 {
-    // Workaround to read fvSchemes and fvSolution after setting NO_READ
-    // when creating the mesh
-    {
-        fvSchemes::readOpt(IOobject::MUST_READ);
-        fvSchemes::read();
-        fvSolution::readOpt(IOobject::MUST_READ);
-        fvSolution::read();
-    }
+    // Read fvSchemes and fvSolution despite NO_READ when creating the mesh
+    fvMesh::schemes(IOobject::MUST_READ);
+    fvMesh::solution(IOobject::MUST_READ);
 
     // Add the patches
     addLocalPatches(*this);

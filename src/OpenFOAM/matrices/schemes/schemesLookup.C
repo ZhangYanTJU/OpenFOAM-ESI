@@ -199,56 +199,56 @@ bool Foam::schemesLookup::read()
 }
 
 
-Foam::ITstream& Foam::schemesLookup::ddtScheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::ddt(const word& name) const
 {
     DebugInfo<< "Lookup ddt scheme for " << name << endl;
     return ddtSchemes_.lookup(name);
 }
 
 
-Foam::ITstream& Foam::schemesLookup::d2dt2Scheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::d2dt2(const word& name) const
 {
     DebugInfo<< "Lookup d2dt2 scheme for " << name << endl;
     return d2dt2Schemes_.lookup(name);
 }
 
 
-Foam::ITstream& Foam::schemesLookup::interpolationScheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::interpolation(const word& name) const
 {
     DebugInfo<< "Lookup interpolation scheme for " << name << endl;
     return interpSchemes_.lookup(name);
 }
 
 
-Foam::ITstream& Foam::schemesLookup::divScheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::div(const word& name) const
 {
     DebugInfo<< "Lookup div scheme for " << name << endl;
     return divSchemes_.lookup(name);
 }
 
 
-Foam::ITstream& Foam::schemesLookup::gradScheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::grad(const word& name) const
 {
     DebugInfo<< "Lookup grad scheme for " << name << endl;
     return gradSchemes_.lookup(name);
 }
 
 
-Foam::ITstream& Foam::schemesLookup::lnGradScheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::lnGrad(const word& name) const
 {
     DebugInfo<< "Lookup lnGrad scheme for " << name << endl;
     return lnGradSchemes_.lookup(name);
 }
 
 
-Foam::ITstream& Foam::schemesLookup::snGradScheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::snGrad(const word& name) const
 {
     DebugInfo<< "Lookup snGrad scheme for " << name << endl;
     return snGradSchemes_.lookup(name);
 }
 
 
-Foam::ITstream& Foam::schemesLookup::laplacianScheme(const word& name) const
+Foam::ITstream& Foam::schemesLookup::laplacian(const word& name) const
 {
     DebugInfo<< "Lookup laplacian scheme for " << name << endl;
     return laplacianSchemes_.lookup(name);

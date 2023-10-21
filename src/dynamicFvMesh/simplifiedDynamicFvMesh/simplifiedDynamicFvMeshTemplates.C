@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,14 +53,9 @@ SimplifiedDynamicFvMesh
         std::move(neighbour1D_)
     )
 {
-    // Workaround to read fvSchemes and fvSolution after setting NO_READ
-    // when creating the mesh
-    {
-        fvSchemes::readOpt(IOobject::MUST_READ);
-        fvSchemes::read();
-        fvSolution::readOpt(IOobject::MUST_READ);
-        fvSolution::read();
-    }
+    // Read fvSchemes and fvSolution despite NO_READ when creating the mesh
+    fvMesh::schemes(IOobject::MUST_READ);
+    fvMesh::solution(IOobject::MUST_READ);
 
     // Add the patches
     addLocalPatches(*this);
