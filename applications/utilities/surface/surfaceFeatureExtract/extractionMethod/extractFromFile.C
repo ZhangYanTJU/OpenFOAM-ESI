@@ -63,14 +63,7 @@ Foam::surfaceFeaturesExtraction::extractFromFile::extractFromFile
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * //
-
-Foam::surfaceFeaturesExtraction::extractFromFile::~extractFromFile()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
 
 Foam::autoPtr<Foam::surfaceFeatures>
 Foam::surfaceFeaturesExtraction::extractFromFile::features

@@ -67,14 +67,10 @@ public:
     extractFromFile(const dictionary& dict);
 
     //- Destructor
-    virtual ~extractFromFile();
+    virtual ~extractFromFile() = default;
 
     //- Features loaded (extracted) from featureEdgeFile
-    virtual autoPtr<surfaceFeatures> features
-    (
-        const triSurface& surf
-    ) const override;
-
+    autoPtr<surfaceFeatures> features(const triSurface& surf) const override;
 };
 
 

@@ -58,22 +58,16 @@ class extractFromNone
 :
     public method
 {
-
 public:
 
     //- Construct from dictionary
-    extractFromNone(const dictionary& dict);
+    explicit extractFromNone(const dictionary& dict);
 
     //- Destructor
-    virtual ~extractFromNone();
+    virtual ~extractFromNone() = default;
 
     //- Extracted features from surface (no-op)
-    virtual autoPtr<surfaceFeatures> features
-    (
-        const triSurface& surf
-    ) const override;
-
-
+    autoPtr<surfaceFeatures> features(const triSurface& surf) const override;
 };
 
 

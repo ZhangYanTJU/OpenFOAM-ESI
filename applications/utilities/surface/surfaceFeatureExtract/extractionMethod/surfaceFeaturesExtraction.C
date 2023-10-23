@@ -56,10 +56,14 @@ Foam::surfaceFeaturesExtraction::method::method()
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * //
-
-Foam::surfaceFeaturesExtraction::method::~method()
-{}
+Foam::surfaceFeaturesExtraction::method::method(const dictionary& dict)
+:
+    includedAngle_(0),
+    geometricTestOnly_(Switch::NO)
+{
+    dict.readIfPresent("includedAngle", includedAngle_);
+    dict.readIfPresent("geometricTestOnly", geometricTestOnly_);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

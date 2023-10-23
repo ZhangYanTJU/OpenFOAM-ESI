@@ -61,12 +61,6 @@ Foam::surfaceFeaturesExtraction::extractFromNone::extractFromNone
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * //
-
-Foam::surfaceFeaturesExtraction::extractFromNone::~extractFromNone()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::surfaceFeatures>

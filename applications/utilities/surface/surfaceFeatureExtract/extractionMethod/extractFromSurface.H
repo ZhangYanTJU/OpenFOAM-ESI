@@ -65,14 +65,10 @@ public:
     extractFromSurface(const dictionary& dict);
 
     //- Destructor
-    virtual ~extractFromSurface();
+    virtual ~extractFromSurface() = default;
 
     //- Features extracted from surface
-    virtual autoPtr<surfaceFeatures> features
-    (
-        const triSurface& surf
-    ) const override;
-
+    autoPtr<surfaceFeatures> features(const triSurface& surf) const override;
 };
 
 

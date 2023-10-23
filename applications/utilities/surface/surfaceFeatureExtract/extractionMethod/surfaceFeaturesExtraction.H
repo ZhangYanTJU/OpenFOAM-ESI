@@ -66,7 +66,7 @@ protected:
     scalar includedAngle_;
     Switch geometricTestOnly_;
 
-    //- Construct null
+    //- Default construct
     method();
 
 
@@ -79,7 +79,7 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        method(const dictionary& dict);
+        explicit method(const dictionary& dict);
 
 
     // Declare run-time constructor selection table
@@ -98,36 +98,26 @@ public:
     // Selectors
 
         //- Select constructed from dictionary
-        static autoPtr<method> New
-        (
-            const dictionary& dict
-        );
+        static autoPtr<method> New(const dictionary& dict);
 
 
     //- Destructor
-    virtual ~method();
+    virtual ~method() = default;
 
 
     // Member Functions
 
         //- The included angle, if set
-        inline scalar includedAngle() const
-        {
-            return includedAngle_;
-        }
+        scalar includedAngle() const noexcept { return includedAngle_; }
 
         //- Use geometric test only
-        inline Switch geometricTestOnly() const
-        {
-            return geometricTestOnly_;
-        }
+        Switch geometricTestOnly() const noexcept { return geometricTestOnly_; }
 
         //- Extracted features
         virtual autoPtr<surfaceFeatures> features
         (
             const triSurface& surf
         ) const = 0;
-
 };
 
 
