@@ -120,6 +120,9 @@ inline Foam::scalar Foam::Vector<Cmpt>::dist(const Vector<Cmpt>& v2) const
 template<class Cmpt>
 inline Foam::Vector<Cmpt>& Foam::Vector<Cmpt>::normalise(const scalar tol)
 {
+    #ifdef __clang__
+    volatile  // Use volatile to avoid aggressive branch optimization
+    #endif
     const scalar s = this->mag();
 
     if (s < tol)

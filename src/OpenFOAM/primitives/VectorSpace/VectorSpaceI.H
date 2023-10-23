@@ -490,6 +490,9 @@ inline VectorSpace<Form, Cmpt, Ncmpts> normalised
     const VectorSpace<Form, Cmpt, Ncmpts>& vs
 )
 {
+    #ifdef __clang__
+    volatile  // Use volatile to avoid aggressive branch optimization
+    #endif
     const scalar s(mag(vs));
     return s < ROOTVSMALL ? Zero : vs/s;
 }

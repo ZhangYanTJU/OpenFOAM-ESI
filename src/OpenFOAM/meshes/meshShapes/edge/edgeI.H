@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -417,10 +417,9 @@ inline Foam::vector Foam::edge::unitVec(const UList<point>& pts) const
     }
     #endif
 
-    const vector v = (pts[second()] - pts[first()]);
-    const scalar s(Foam::mag(v));
-
-    return s < ROOTVSMALL ? Zero : v/s;
+    vector v = (pts[second()] - pts[first()]);
+    (void) v.normalise(ROOTVSMALL);
+    return v;
 }
 
 

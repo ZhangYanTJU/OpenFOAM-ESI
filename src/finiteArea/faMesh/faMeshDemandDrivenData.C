@@ -68,6 +68,7 @@ static inline vector areaInvDistSqrWeightedNormal
     const vector& b
 )
 {
+    // TBD: Use volatile to avoid aggressive branch optimization
     const scalar s(2*magSqr(a)*magSqr(b));
 
     return s < ROOTVSMALL ? Zero : (a ^ b) / s;

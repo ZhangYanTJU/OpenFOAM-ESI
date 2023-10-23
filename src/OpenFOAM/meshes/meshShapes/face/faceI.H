@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -103,9 +103,9 @@ inline Foam::pointField Foam::face::points(const UList<point>& pts) const
 
 inline Foam::vector Foam::face::unitNormal(const UList<point>& p) const
 {
-    const vector n(areaNormal(p));
-    const scalar s(Foam::mag(n));
-    return s < ROOTVSMALL ? Zero : n/s;
+    vector n(areaNormal(p));
+    (void) n.normalise(ROOTVSMALL);
+    return n;
 }
 
 

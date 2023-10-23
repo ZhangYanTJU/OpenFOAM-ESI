@@ -129,6 +129,10 @@ template<class Point, class PointRef>
 inline Point Foam::line<Point, PointRef>::unitVec() const
 {
     const Point v = (b_ - a_);
+
+    #ifdef __clang__
+    volatile  // Use volatile to avoid aggressive branch optimization
+    #endif
     const scalar s(::Foam::mag(v));
 
     return s < ROOTVSMALL ? Zero : v/s;

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -175,9 +175,9 @@ inline Foam::vector Foam::triangle<Point, PointRef>::unitNormal
     const Point& p2
 )
 {
-    const vector n(areaNormal(p0, p1, p2));
-    const scalar s(::Foam::mag(n));
-    return s < ROOTVSMALL ? Zero : n/s;
+    vector n(areaNormal(p0, p1, p2));
+    (void) n.normalise(ROOTVSMALL);
+    return n;
 }
 
 

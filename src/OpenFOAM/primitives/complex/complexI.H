@@ -210,6 +210,7 @@ inline complex sqr(const complex& c)
 //- sgn() https://en.wikipedia.org/wiki/Sign_function#Complex_signum
 inline complex sign(const complex& c)
 {
+    // TBD: Use volatile to avoid aggressive branch optimization
     const scalar s(mag(c));
     return s < ROOTVSMALL ? Zero : c/s;
 }
