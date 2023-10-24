@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020,2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,13 +25,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "WeberNumberReacting.H"
+#include "ReactingWeberNumber.H"
 #include "SLGThermo.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class CloudType>
-Foam::WeberNumberReacting<CloudType>::WeberNumberReacting
+Foam::ReactingWeberNumber<CloudType>::ReactingWeberNumber
 (
     const dictionary& dict,
     CloudType& owner,
@@ -43,9 +43,9 @@ Foam::WeberNumberReacting<CloudType>::WeberNumberReacting
 
 
 template<class CloudType>
-Foam::WeberNumberReacting<CloudType>::WeberNumberReacting
+Foam::ReactingWeberNumber<CloudType>::ReactingWeberNumber
 (
-    const WeberNumberReacting<CloudType>& we
+    const ReactingWeberNumber<CloudType>& we
 )
 :
     CloudFunctionObject<CloudType>(we)
@@ -55,7 +55,7 @@ Foam::WeberNumberReacting<CloudType>::WeberNumberReacting
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::WeberNumberReacting<CloudType>::postEvolve
+void Foam::ReactingWeberNumber<CloudType>::postEvolve
 (
     const typename parcelType::trackingData& td
 )
