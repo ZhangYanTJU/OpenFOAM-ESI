@@ -306,6 +306,9 @@ public:
         //  \return old value
         bool verbose(const bool on) noexcept;
 
+        //- Return names of fields to sample
+        const wordRes& fieldNames() const noexcept { return fieldSelection_; }
+
         //- Read the sampledSets
         virtual bool read(const dictionary&);
 

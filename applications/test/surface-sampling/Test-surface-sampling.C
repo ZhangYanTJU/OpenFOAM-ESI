@@ -184,7 +184,15 @@ int main(int argc, char *argv[])
     // Construct from Time and dictionary, without loadFromFiles
     sampledSurfaces sampling("test-sample", runTime, *sampleDict);
 
-    Info<< "Loaded " << sampling.size() << " surface samplers" << nl;
+    #if (OPENFOAM <= 2306)
+    Info<< "Loaded " << sampling.size() << " surface samplers, fields: "
+        << flatOutput(sampleDict->getOrDefault<wordRes>("fields", wordRes()))
+        << nl;
+    #else
+    Info<< "Loaded " << sampling.size() << " surface samplers, fields: "
+        << flatOutput(sampling.fieldNames())
+        << nl;
+    #endif
 
     if (sampling.empty())
     {
