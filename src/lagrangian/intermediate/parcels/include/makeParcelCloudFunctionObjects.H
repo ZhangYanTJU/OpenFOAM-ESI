@@ -45,6 +45,7 @@ License
 #include "RemoveParcels.H"
 #include "VoidFraction.H"
 #include "KinematicReynoldsNumber.H"
+#include "KinematicWeberNumber.H"
 #include "ParticleDose.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -67,6 +68,7 @@ License
     makeCloudFunctionObjectType(RemoveParcels, CloudType);                     \
     makeCloudFunctionObjectType(VoidFraction, CloudType);                      \
     makeCloudFunctionObjectType(KinematicReynoldsNumber, CloudType);           \
+    makeCloudFunctionObjectType(KinematicWeberNumber, CloudType);              \
     makeCloudFunctionObjectType(ParticleDose, CloudType);
 
 
