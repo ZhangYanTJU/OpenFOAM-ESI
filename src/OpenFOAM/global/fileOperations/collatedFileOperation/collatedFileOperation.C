@@ -448,6 +448,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
                     << " appending to " << pathName << endl;
             }
 
+            mkDir(path);
             return appendObject(io, pathName, streamOpt);
         }
         else
