@@ -215,10 +215,10 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
         const scalar w = cornerWeights[facei];
 
         // Contribution from the viscous sublayer
-        const scalar omegaVis = 6.0*nuw[facei]/(beta1_*sqr(y[facei]));
+        const scalar omegaVis = w*6.0*nuw[facei]/(beta1_*sqr(y[facei]));
 
         // Contribution from the inertial sublayer
-        const scalar omegaLog = sqrt(k[celli])/(Cmu25*kappa*y[facei]);
+        const scalar omegaLog = w*sqrt(k[celli])/(Cmu25*kappa*y[facei]);
 
         switch (blender_)
         {
@@ -226,11 +226,11 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
             {
                 if (yPlus > yPlusLam)
                 {
-                    omega0[celli] += w*omegaLog;
+                    omega0[celli] += omegaLog;
                 }
                 else
                 {
-                    omega0[celli] += w*omegaVis;
+                    omega0[celli] += omegaVis;
                 }
                 break;
             }
@@ -238,7 +238,7 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
             case blenderType::BINOMIAL:
             {
                 omega0[celli] +=
-                    w*pow
+                    pow
                     (
                         pow(omegaVis, n_) + pow(omegaLog, n_),
                         scalar(1)/n_
@@ -249,7 +249,7 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
             case blenderType::MAX:
             {
                 // (PH:Eq. 27)
-                omega0[celli] += w*max(omegaVis, omegaLog);
+                omega0[celli] += max(omegaVis, omegaLog);
                 break;
             }
 
@@ -260,7 +260,7 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
                 const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
 
                 omega0[celli] +=
-                    w*(omegaVis*exp(-Gamma) + omegaLog*exp(-invGamma));
+                    (omegaVis*exp(-Gamma) + omegaLog*exp(-invGamma));
                 break;
             }
 
