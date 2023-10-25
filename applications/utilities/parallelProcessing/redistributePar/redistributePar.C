@@ -1040,7 +1040,8 @@ autoPtr<mapDistributePolyMesh> redistributeAndWrite
             mesh,
             distMap(),
             decompose,
-            writeHandler
+            mesh.facesInstance(),    //oldFacesInstance,
+            writeHandler             // to write *ProcAddressing
         );
     }
     else if (reconstruct)
@@ -1054,6 +1055,7 @@ autoPtr<mapDistributePolyMesh> redistributeAndWrite
             mesh,
             distMap(),
             decompose,
+            volMeshInstance,    //oldFacesInstance,
             readHandler //writeHandler
         );
     }

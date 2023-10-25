@@ -303,6 +303,7 @@ void Foam::fvMeshTools::writeProcAddressing
     const fvMesh& mesh,
     const mapDistributePolyMesh& map,
     const bool decompose,
+    const fileName& writeHandlerInstance,
     refPtr<fileOperation>& writeHandler
 )
 {
@@ -317,7 +318,7 @@ void Foam::fvMeshTools::writeProcAddressing
     // been done independently (as a registered object)
     IOobject ioAddr
     (
-        "procAddressing",
+        "proc-addressing",
         mesh.facesInstance(),
         polyMesh::meshSubDir,
         mesh.thisDb(),
@@ -421,23 +422,43 @@ void Foam::fvMeshTools::writeProcAddressing
         );
     }
 
-    auto oldHandler = fileOperation::fileHandler(writeHandler);
 
-    const bool cellOk = cellMap.write();
-    const bool faceOk = faceMap.write();
-    const bool pointOk = pointMap.write();
-    const bool patchOk = patchMap.write();
+    // Switch to using the correct
+    // - fileHandler
+    // - instance
+    // to write to the original mesh/time in the original format. Clunky!
+    // Bypass regIOobject writing to avoid taking over the current time
+    // as instance so instead of e.g. 'celllMap.write()' directly call
+    // the chosen file-handler.
 
-    writeHandler = fileOperation::fileHandler(oldHandler);
-
-    if (!cellOk || !faceOk || !pointOk || !patchOk)
+    const auto& tm = cellMap.time();
+    const IOstreamOption opt(tm.writeFormat(), tm.writeCompression());
     {
-        WarningInFunction
-            << "Failed to write some of "
-            << cellMap.objectRelPath() << ", "
-            << faceMap.objectRelPath() << ", "
-            << pointMap.objectRelPath() << ", "
-            << patchMap.objectRelPath() << endl;
+        auto oldHandler = fileOperation::fileHandler(writeHandler);
+
+        cellMap.instance() = writeHandlerInstance;
+        const bool cellOk = fileHandler().writeObject(cellMap, opt, true);
+
+        faceMap.instance() = writeHandlerInstance;
+        const bool faceOk = fileHandler().writeObject(faceMap, opt, true);
+
+        pointMap.instance() = writeHandlerInstance;
+        const bool pointOk = fileHandler().writeObject(pointMap, opt, true);
+
+        patchMap.instance() = writeHandlerInstance;
+        const bool patchOk = fileHandler().writeObject(patchMap, opt, true);
+
+        writeHandler = fileOperation::fileHandler(oldHandler);
+
+        if (!cellOk || !faceOk || !pointOk || !patchOk)
+        {
+            WarningInFunction
+                << "Failed to write some of "
+                << cellMap.objectRelPath() << ", "
+                << faceMap.objectRelPath() << ", "
+                << pointMap.objectRelPath() << ", "
+                << patchMap.objectRelPath() << endl;
+        }
     }
 }
 
