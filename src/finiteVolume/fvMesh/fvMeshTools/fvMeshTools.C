@@ -760,12 +760,19 @@ Foam::fvMeshTools::loadOrCreateMeshImpl
         const label oldNumProcs = fileHandler().nProcs();
         const int oldCache = fileOperation::cacheLevel(0);
 
+        const fileName facesInstance = io.time().findInstance
+        (
+            meshSubDir,
+            "faces",
+            IOobject::MUST_READ
+        );
+
         patchEntries = polyBoundaryMeshEntries
         (
             IOobject
             (
                 "boundary",
-                io.instance(),
+                facesInstance,
                 meshSubDir,
                 io.db(),
                 IOobject::MUST_READ,

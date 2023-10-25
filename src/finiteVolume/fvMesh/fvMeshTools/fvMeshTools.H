@@ -220,6 +220,7 @@ public:
         const fvMesh& procMesh,
         const mapDistributePolyMesh& map,
         const bool decompose,
+        const fileName& writeHandlerInstance,
         refPtr<fileOperation>& writeHandler
     );
 };
