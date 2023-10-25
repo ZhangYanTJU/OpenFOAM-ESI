@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -446,21 +446,27 @@ inline int Foam::triFace::edgeDirection(const Foam::edge& e) const
 {
     if (e.first() == a())
     {
-        if (e.second() == b()) return 1;    // Forward
-        if (e.second() == c()) return -1;   // Reverse
+        if (e.second() == b()) return 1;    // edge 0 - forward
+        if (e.second() == c()) return -1;   // edge 2 - reverse
     }
     if (e.first() == b())
     {
-        if (e.second() == c()) return 1;    // Forward
-        if (e.second() == a()) return -1;   // Reverse
+        if (e.second() == c()) return 1;    // edge 1 - forward
+        if (e.second() == a()) return -1;   // edge 0 - reverse
     }
     if (e.first() == c())
     {
-        if (e.second() == a()) return 1;    // Forward
-        if (e.second() == b()) return -1;   // Reverse
+        if (e.second() == a()) return 1;    // edge 2 - forward
+        if (e.second() == b()) return -1;   // edge 1 - reverse
     }
 
     return 0;  // Not found
+}
+
+
+inline bool Foam::triFace::contains(const Foam::edge& e) const
+{
+    return (edgeDirection(e) != 0);
 }
 
 

@@ -232,6 +232,12 @@ inline bool Foam::face::connected(const FixedList<label, N>& other) const
 }
 
 
+inline bool Foam::face::contains(const Foam::edge& e) const
+{
+    return (edgeDirection(e) != 0);
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 inline void Foam::face::operator+=(const label vertexOffset)

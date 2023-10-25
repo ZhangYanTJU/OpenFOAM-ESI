@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -364,6 +364,15 @@ public:
         //  The rcEdge 0 is from [0] to [n-1]
         //  and rcEdge 1 is from [n-1] to [n-2]
         edgeList rcEdges() const;
+
+
+    // Searching
+
+        //- Regular contains(pointi) tests
+        using labelList::contains;
+
+        //- True if face contains(edge)
+        inline bool contains(const Foam::edge& e) const;
 
         //- Test the edge direction on the face
         //  \return

@@ -1174,8 +1174,7 @@ Foam::label Foam::distributedTriSurfaceMesh::findOtherFace
     {
         if (facei != nearFacei)
         {
-            int dir = surf[facei].edgeDirection(e);
-            if (dir != 0)
+            if (surf[facei].contains(e))
             {
                 return facei;
             }
@@ -1211,7 +1210,7 @@ void Foam::distributedTriSurfaceMesh::calcFaceFaces
             {
                 if (otherFacei != facei)
                 {
-                    if (s[otherFacei].edgeDirection(e) != 0)
+                    if (s[otherFacei].contains(e))
                     {
                         if (!nbrs.find(otherFacei))
                         {

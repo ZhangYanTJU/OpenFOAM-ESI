@@ -106,7 +106,7 @@ void Foam::wallBoundedParticle::crossEdgeConnectedFace
 
         const Foam::face& otherFace = pFaces[facei];
 
-        label edDir = otherFace.edgeDirection(e);
+        const auto edDir = otherFace.edgeDirection(e);
 
         if (edDir == 0)
         {
@@ -128,7 +128,7 @@ void Foam::wallBoundedParticle::crossEdgeConnectedFace
 
             label eIndex = -1;
 
-            if (edDir == 1)
+            if (edDir > 0)
             {
                 // Edge is in the forward circulation of this face, so
                 // work with the start point of the edge
@@ -136,7 +136,7 @@ void Foam::wallBoundedParticle::crossEdgeConnectedFace
             }
             else
             {
-                // edDir == -1, so the edge is in the reverse
+                // (edge-direction < 0) - edge is in the reverse
                 // circulation of this face, so work with the end
                 // point of the edge
                 eIndex = otherFace.find(e.end());

@@ -587,7 +587,7 @@ Foam::surfaceFeatures::surfaceFeatures::checkFlatRegionEdge
         forAll(bin0, i)
         {
             const labelledTri& t = surf.localFaces()[eFaces[bin0[i]]];
-            int dir = t.edgeDirection(e);
+            const auto dir = t.edgeDirection(e);
 
             if (dir > 0)
             {
@@ -610,7 +610,7 @@ Foam::surfaceFeatures::surfaceFeatures::checkFlatRegionEdge
         forAll(bin1, i)
         {
             const labelledTri& t = surf.localFaces()[eFaces[bin1[i]]];
-            int dir = t.edgeDirection(e);
+            const auto dir = t.edgeDirection(e);
 
             label myRegionAndNormal;
             if (dir > 0)

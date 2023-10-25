@@ -1026,11 +1026,12 @@ void Foam::refinementSurfaces::setCurvatureMinLevelFields
                             const auto& f1 = ts[eFaces[1]];
 
                             const vector n0 = f0.unitNormal(points);
-
-                            const int dir0 = f0.edgeDirection(meshE);
-                            const int dir1 = f1.edgeDirection(meshE);
                             vector n1 = f1.unitNormal(points);
-                            if (dir0 == dir1)
+
+                            const auto dir0 = f0.edgeDirection(meshE);
+                            const auto dir1 = f1.edgeDirection(meshE);
+
+                            if (dir0 && ((dir0 > 0) == (dir1 > 0)))
                             {
                                 // Flip since use edge in same direction
                                 // (should not be the case for 'proper'

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -812,7 +812,7 @@ Foam::edgeList Foam::face::rcEdges() const
 
 int Foam::face::edgeDirection(const Foam::edge& e) const
 {
-    const label idx = find(e.first());
+    const label idx = labelList::find(e.first());
 
     if (idx != -1)
     {
