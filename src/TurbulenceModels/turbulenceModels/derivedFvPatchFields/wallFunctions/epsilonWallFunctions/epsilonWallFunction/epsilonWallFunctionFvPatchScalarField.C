@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -189,10 +189,14 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
 {
     const label patchi = patch.index();
 
-    const tmp<scalarField> tnutw = turbModel.nut(patchi);
-    const scalarField& nutw = tnutw();
+    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
+    const scalar Cmu75 = pow(wallCoeffs_.Cmu(), 0.75);
+    const scalar kappa = wallCoeffs_.kappa();
+    const scalar yPlusLam = wallCoeffs_.yPlusLam();
 
     const scalarField& y = turbModel.y()[patchi];
+
+    const labelUList& faceCells = patch.faceCells();
 
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
     const scalarField& nuw = tnuw();
@@ -200,94 +204,135 @@ void Foam::epsilonWallFunctionFvPatchScalarField::calculate
     const tmp<volScalarField> tk = turbModel.k();
     const volScalarField& k = tk();
 
-    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
-
-    const scalarField magGradUw(mag(Uw.snGrad()));
-
-    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
-    const scalar Cmu75 = pow(wallCoeffs_.Cmu(), 0.75);
-    const scalar kappa = wallCoeffs_.kappa();
-    const scalar yPlusLam = wallCoeffs_.yPlusLam();
-
-    // Set epsilon and G
-    forAll(nutw, facei)
+    // Calculate y-plus
+    const auto yPlus = [&](const label facei) -> scalar
     {
-        const label celli = patch.faceCells()[facei];
+        return
+        (
+            Cmu25*y[facei]*sqrt(k[faceCells[facei]])/nuw[facei]
+        );
+    };
 
-        const scalar yPlus = Cmu25*y[facei]*sqrt(k[celli])/nuw[facei];
+    // Contribution from the viscous sublayer
+    const auto epsilonVis = [&](const label facei) -> scalar
+    {
+        return
+        (
+            cornerWeights[facei]*2.0*k[faceCells[facei]]*nuw[facei]
+          / sqr(y[facei])
+        );
+    };
 
-        const scalar w = cornerWeights[facei];
+    // Contribution from the inertial sublayer
+    const auto epsilonLog = [&](const label facei) -> scalar
+    {
+        return
+        (
+            cornerWeights[facei]*Cmu75*pow(k[faceCells[facei]], 1.5)
+          / (kappa*y[facei])
+        );
+    };
 
-        // Contribution from the viscous sublayer
-        const scalar epsilonVis = w*2.0*k[celli]*nuw[facei]/sqr(y[facei]);
-
-        // Contribution from the inertial sublayer
-        const scalar epsilonLog = w*Cmu75*pow(k[celli], 1.5)/(kappa*y[facei]);
-
-        switch (blender_)
+    switch (blender_)
+    {
+        case blenderType::STEPWISE:
         {
-            case blenderType::STEPWISE:
+            forAll(faceCells, facei)
             {
-                if (lowReCorrection_ && yPlus < yPlusLam)
+                if (lowReCorrection_ && yPlus(facei) < yPlusLam)
                 {
-                    epsilon0[celli] += epsilonVis;
+                    epsilon0[faceCells[facei]] += epsilonVis(facei);
                 }
                 else
                 {
-                    epsilon0[celli] += epsilonLog;
+                    epsilon0[faceCells[facei]] += epsilonLog(facei);
                 }
-                break;
             }
-
-            case blenderType::BINOMIAL:
-            {
-                // (ME:Eqs. 15-16)
-                epsilon0[celli] +=
-                    pow
-                    (
-                        pow(epsilonVis, n_) + pow(epsilonLog, n_),
-                        scalar(1)/n_
-                    );
-                break;
-            }
-
-            case blenderType::MAX:
-            {
-                // (PH:Eq. 27)
-                epsilon0[celli] += max(epsilonVis, epsilonLog);
-                break;
-            }
-
-            case blenderType::EXPONENTIAL:
-            {
-                // (PH:p. 193)
-                const scalar Gamma = 0.001*pow4(yPlus)/(scalar(1) + yPlus);
-                const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
-                epsilon0[celli] +=
-                    epsilonVis*exp(-Gamma) + epsilonLog*exp(-invGamma);
-                break;
-            }
-
-            case blenderType::TANH:
-            {
-                // (KAS:Eqs. 33-34)
-                const scalar phiTanh = tanh(pow4(0.1*yPlus));
-                const scalar b1 = epsilonVis + epsilonLog;
-                const scalar b2 =
-                    pow(pow(epsilonVis, 1.2) + pow(epsilonLog, 1.2), 1.0/1.2);
-
-                epsilon0[celli] += phiTanh*b1 + (1 - phiTanh)*b2;
-                break;
-            }
+            break;
         }
 
-        if (!lowReCorrection_ || (yPlus > yPlusLam))
+        case blenderType::BINOMIAL:
         {
-            G0[celli] +=
-                w
+            forAll(faceCells, facei)
+            {
+                // (ME:Eqs. 15-16)
+                epsilon0[faceCells[facei]] +=
+                    pow
+                    (
+                        pow(epsilonVis(facei), n_) + pow(epsilonLog(facei), n_),
+                        scalar(1)/n_
+                    );
+            }
+            break;
+        }
+
+        case blenderType::MAX:
+        {
+            forAll(faceCells, facei)
+            {
+                // (PH:Eq. 27)
+                epsilon0[faceCells[facei]] +=
+                    max(epsilonVis(facei), epsilonLog(facei));
+            }
+            break;
+        }
+
+        case blenderType::EXPONENTIAL:
+        {
+            forAll(faceCells, facei)
+            {
+                // (PH:p. 193)
+                const scalar yPlusFace = yPlus(facei);
+                const scalar Gamma =
+                    0.001*pow4(yPlusFace)/(scalar(1) + yPlusFace);
+                const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
+
+                epsilon0[faceCells[facei]] +=
+                (
+                    epsilonVis(facei)*exp(-Gamma)
+                  + epsilonLog(facei)*exp(-invGamma)
+                );
+            }
+            break;
+        }
+
+        case blenderType::TANH:
+        {
+            forAll(faceCells, facei)
+            {
+                // (KAS:Eqs. 33-34)
+                const scalar epsilonVisFace = epsilonVis(facei);
+                const scalar epsilonLogFace = epsilonLog(facei);
+                const scalar b1 = epsilonVisFace + epsilonLogFace;
+                const scalar b2 =
+                    pow
+                    (
+                        pow(epsilonVisFace, 1.2) + pow(epsilonLogFace, 1.2),
+                        1.0/1.2
+                    );
+                const scalar phiTanh = tanh(pow4(0.1*yPlus(facei)));
+
+                epsilon0[faceCells[facei]] += phiTanh*b1 + (1 - phiTanh)*b2;
+            }
+            break;
+        }
+    }
+
+    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
+    const scalarField magGradUw(mag(Uw.snGrad()));
+
+    const tmp<scalarField> tnutw = turbModel.nut(patchi);
+    const scalarField& nutw = tnutw();
+
+    forAll(faceCells, facei)
+    {
+        if (!lowReCorrection_ || (yPlus(facei) > yPlusLam))
+        {
+            G0[faceCells[facei]] +=
+                cornerWeights[facei]
                *(nutw[facei] + nuw[facei])
                *magGradUw[facei]
-               *Cmu25*sqrt(k[celli])
+               *Cmu25*sqrt(k[faceCells[facei]])
                /(kappa*y[facei]);
         }
     }

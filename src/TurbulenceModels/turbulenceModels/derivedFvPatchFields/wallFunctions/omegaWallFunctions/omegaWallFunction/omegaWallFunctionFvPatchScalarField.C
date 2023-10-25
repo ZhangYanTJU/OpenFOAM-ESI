@@ -188,10 +188,16 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
 {
     const label patchi = patch.index();
 
-    const tmp<scalarField> tnutw = turbModel.nut(patchi);
-    const scalarField& nutw = tnutw();
+    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
+    const scalar kappa = wallCoeffs_.kappa();
+    const scalar yPlusLam = wallCoeffs_.yPlusLam();
 
     const scalarField& y = turbModel.y()[patchi];
+
+    const labelUList& faceCells = patch.faceCells();
+
+    const tmp<scalarField> tnutw = turbModel.nut(patchi);
+    const scalarField& nutw = tnutw();
 
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
     const scalarField& nuw = tnuw();
@@ -199,91 +205,129 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
     const tmp<volScalarField> tk = turbModel.k();
     const volScalarField& k = tk();
 
-    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
-
-    const scalarField magGradUw(mag(Uw.snGrad()));
-
-    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
-    const scalar kappa = wallCoeffs_.kappa();
-    const scalar yPlusLam = wallCoeffs_.yPlusLam();
-
-    // Set omega and G
-    forAll(nutw, facei)
+    // Calculate y-plus
+    const auto yPlus = [&](const label facei) -> scalar
     {
-        const label celli = patch.faceCells()[facei];
-        const scalar yPlus = Cmu25*y[facei]*sqrt(k[celli])/nuw[facei];
-        const scalar w = cornerWeights[facei];
+        return
+        (
+            Cmu25*y[facei]*sqrt(k[faceCells[facei]])/nuw[facei]
+        );
+    };
 
-        // Contribution from the viscous sublayer
-        const scalar omegaVis = w*6.0*nuw[facei]/(beta1_*sqr(y[facei]));
+    // Contribution from the viscous sublayer
+    const auto omegaVis = [&](const label facei) -> scalar
+    {
+        return
+        (
+            cornerWeights[facei]*6.0*nuw[facei]/(beta1_*sqr(y[facei]))
+        );
+    };
 
-        // Contribution from the inertial sublayer
-        const scalar omegaLog = w*sqrt(k[celli])/(Cmu25*kappa*y[facei]);
+    // Contribution from the inertial sublayer
+    const auto omegaLog = [&](const label facei) -> scalar
+    {
+        return
+        (
+            cornerWeights[facei]*sqrt(k[faceCells[facei]])
+          / (Cmu25*kappa*y[facei])
+        );
+    };
 
-        switch (blender_)
+    switch (blender_)
+    {
+        case blenderType::STEPWISE:
         {
-            case blenderType::STEPWISE:
+            forAll(faceCells, facei)
             {
-                if (yPlus > yPlusLam)
+                if (yPlus(facei) > yPlusLam)
                 {
-                    omega0[celli] += omegaLog;
+                    omega0[faceCells[facei]] += omegaLog(facei);
                 }
                 else
                 {
-                    omega0[celli] += omegaVis;
+                    omega0[faceCells[facei]] += omegaVis(facei);
                 }
-                break;
             }
-
-            case blenderType::BINOMIAL:
-            {
-                omega0[celli] +=
-                    pow
-                    (
-                        pow(omegaVis, n_) + pow(omegaLog, n_),
-                        scalar(1)/n_
-                    );
-                break;
-            }
-
-            case blenderType::MAX:
-            {
-                // (PH:Eq. 27)
-                omega0[celli] += max(omegaVis, omegaLog);
-                break;
-            }
-
-            case blenderType::EXPONENTIAL:
-            {
-                // (PH:Eq. 31)
-                const scalar Gamma = 0.01*pow4(yPlus)/(1 + 5*yPlus);
-                const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
-
-                omega0[celli] +=
-                    (omegaVis*exp(-Gamma) + omegaLog*exp(-invGamma));
-                break;
-            }
-
-            case blenderType::TANH:
-            {
-                // (KAS:Eqs. 33-34)
-                const scalar phiTanh = tanh(pow4(0.1*yPlus));
-                const scalar b1 = omegaVis + omegaLog;
-                const scalar b2 =
-                    pow(pow(omegaVis, 1.2) + pow(omegaLog, 1.2), 1.0/1.2);
-
-                omega0[celli] += phiTanh*b1 + (1 - phiTanh)*b2;
-                break;
-            }
+            break;
         }
 
-        if (!(blender_ == blenderType::STEPWISE) || yPlus > yPlusLam)
+        case blenderType::BINOMIAL:
         {
-            G0[celli] +=
-                w
+            forAll(faceCells, facei)
+            {
+                omega0[faceCells[facei]] +=
+                    pow
+                    (
+                        pow(omegaVis(facei), n_) + pow(omegaLog(facei), n_),
+                        scalar(1)/n_
+                    );
+            }
+            break;
+        }
+
+        case blenderType::MAX:
+        {
+            forAll(faceCells, facei)
+            {
+                // (PH:Eq. 27)
+                omega0[faceCells[facei]] +=
+                    max(omegaVis(facei), omegaLog(facei));
+            }
+            break;
+        }
+
+        case blenderType::EXPONENTIAL:
+        {
+            forAll(faceCells, facei)
+            {
+                // (PH:Eq. 31)
+                const scalar yPlusFace = yPlus(facei);
+                const scalar Gamma = 0.01*pow4(yPlusFace)/(1 + 5*yPlusFace);
+                const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
+
+                omega0[faceCells[facei]] +=
+                (
+                    omegaVis(facei)*exp(-Gamma)
+                  + omegaLog(facei)*exp(-invGamma)
+                );
+            }
+            break;
+        }
+
+        case blenderType::TANH:
+        {
+            forAll(faceCells, facei)
+            {
+                // (KAS:Eqs. 33-34)
+                const scalar omegaVisFace = omegaVis(facei);
+                const scalar omegaLogFace = omegaLog(facei);
+                const scalar b1 = omegaVisFace + omegaLogFace;
+                const scalar b2 =
+                    pow
+                    (
+                        pow(omegaVisFace, 1.2) + pow(omegaLogFace, 1.2),
+                        1.0/1.2
+                    );
+                const scalar phiTanh = tanh(pow4(0.1*yPlus(facei)));
+
+                omega0[faceCells[facei]] += phiTanh*b1 + (1 - phiTanh)*b2;
+            }
+            break;
+        }
+    }
+
+    const fvPatchVectorField& Uw = turbModel.U().boundaryField()[patchi];
+    const scalarField magGradUw(mag(Uw.snGrad()));
+
+    forAll(faceCells, facei)
+    {
+        if (!(blender_ == blenderType::STEPWISE) || yPlus(facei) > yPlusLam)
+        {
+            G0[faceCells[facei]] +=
+                cornerWeights[facei]
                *(nutw[facei] + nuw[facei])
                *magGradUw[facei]
-               *Cmu25*sqrt(k[celli])
+               *Cmu25*sqrt(k[faceCells[facei]])
                /(kappa*y[facei]);
         }
     }

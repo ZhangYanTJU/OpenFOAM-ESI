@@ -32,13 +32,16 @@ License
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 Foam::tmp<Foam::scalarField>
 Foam::nutUWallFunctionFvPatchScalarField::calcNut() const
 {
     const label patchi = patch().index();
+
+    const scalar kappa = wallCoeffs_.kappa();
+    const scalar E = wallCoeffs_.E();
+    const scalar yPlusLam = wallCoeffs_.yPlusLam();
 
     const auto& turbModel = db().lookupObject<turbulenceModel>
     (
@@ -52,88 +55,106 @@ Foam::nutUWallFunctionFvPatchScalarField::calcNut() const
     const fvPatchVectorField& Uw = U(turbModel).boundaryField()[patchi];
     const scalarField magUp(mag(Uw.patchInternalField() - Uw));
 
-    const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
-
-    const scalar kappa = wallCoeffs_.kappa();
-    const scalar E = wallCoeffs_.E();
-    const scalar yPlusLam = wallCoeffs_.yPlusLam();
-
     tmp<scalarField> tyPlus = calcYPlus(magUp);
     const scalarField& yPlus = tyPlus();
+
+    // Viscous sublayer contribution
+    const tmp<scalarField> tnutVis = turbModel.nu(patchi);
+    const scalarField& nutVis = tnutVis();
+
+    // Inertial sublayer contribution
+    const auto nutLog = [&](const label facei) -> scalar
+    {
+        const scalar yPlusFace = yPlus[facei];
+        return
+        (
+            nutVis[facei]*yPlusFace*kappa/log(max(E*yPlusFace, 1 + 1e-4))
+        );
+    };
 
     auto tnutw = tmp<scalarField>::New(patch().size(), Zero);
     auto& nutw = tnutw.ref();
 
-    forAll(yPlus, facei)
+    switch (blender_)
     {
-        // Viscous sublayer contribution
-        const scalar nutVis = nuw[facei];
-
-        // Inertial sublayer contribution
-        const scalar nutLog =
-            nuw[facei]*yPlus[facei]*kappa/log(max(E*yPlus[facei], 1 + 1e-4));
-
-        switch (blender_)
+        case blenderType::STEPWISE:
         {
-            case blenderType::STEPWISE:
+            forAll(nutw, facei)
             {
                 if (yPlus[facei] > yPlusLam)
                 {
-                    nutw[facei] = nutLog;
+                    nutw[facei] = nutLog(facei);
                 }
                 else
                 {
-                    nutw[facei] = nutVis;
+                    nutw[facei] = nutVis[facei];
                 }
-                break;
             }
+            break;
+        }
 
-            case blenderType::MAX:
+        case blenderType::MAX:
+        {
+            forAll(nutw, facei)
             {
                 // (PH:Eq. 27)
-                nutw[facei] = max(nutVis, nutLog);
-                break;
+                nutw[facei] = max(nutVis[facei], nutLog(facei));
             }
+            break;
+        }
 
-            case blenderType::BINOMIAL:
+        case blenderType::BINOMIAL:
+        {
+            forAll(nutw, facei)
             {
                 // (ME:Eqs. 15-16)
                 nutw[facei] =
                     pow
                     (
-                        pow(nutVis, n_) + pow(nutLog, n_),
+                        pow(nutVis[facei], n_) + pow(nutLog(facei), n_),
                         scalar(1)/n_
                     );
-                break;
             }
+            break;
+        }
 
-            case blenderType::EXPONENTIAL:
+        case blenderType::EXPONENTIAL:
+        {
+            forAll(nutw, facei)
             {
                 // (PH:Eq. 31)
                 const scalar Gamma =
                     0.01*pow4(yPlus[facei])/(1 + 5*yPlus[facei]);
                 const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
 
-                nutw[facei] = nutVis*exp(-Gamma) + nutLog*exp(-invGamma);
-                break;
+                nutw[facei] =
+                    nutVis[facei]*exp(-Gamma) + nutLog(facei)*exp(-invGamma);
             }
-
-            case blenderType::TANH:
-            {
-                // (KAS:Eqs. 33-34)
-                const scalar phiTanh = tanh(pow4(0.1*yPlus[facei]));
-                const scalar b1 = nutVis + nutLog;
-                const scalar b2 =
-                    pow(pow(nutVis, 1.2) + pow(nutLog, 1.2), 1.0/1.2);
-
-                nutw[facei] = phiTanh*b1 + (1 - phiTanh)*b2;
-                break;
-            }
+            break;
         }
 
-        nutw[facei] -= nuw[facei];
+        case blenderType::TANH:
+        {
+            forAll(nutw, facei)
+            {
+                // (KAS:Eqs. 33-34)
+                const scalar nutLogFace = nutLog(facei);
+                const scalar b1 = nutVis[facei] + nutLogFace;
+                const scalar b2 =
+                    pow
+                    (
+                        pow(nutVis[facei], 1.2) + pow(nutLogFace, 1.2),
+                        1.0/1.2
+                    );
+                const scalar phiTanh = tanh(pow4(0.1*yPlus[facei]));
+
+                nutw[facei] = phiTanh*b1 + (1 - phiTanh)*b2;
+            }
+            break;
+        }
     }
+
+    nutw -= nutVis;
 
     return tnutw;
 }
