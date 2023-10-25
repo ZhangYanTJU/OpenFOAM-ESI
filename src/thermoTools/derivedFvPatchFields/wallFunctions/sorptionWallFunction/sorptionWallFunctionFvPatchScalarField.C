@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,9 +64,16 @@ static scalar calcYStarLam
 
 tmp<scalarField> sorptionWallFunctionFvPatchScalarField::yPlus() const
 {
-    // Calculate fields of interest
     const label patchi = patch().index();
 
+    // Calculate the empirical constant given by (Jayatilleke, 1966) (FDC:Eq. 6)
+    const scalar Pc =
+        9.24*(pow(Sc_/Sct_, 0.75) - 1)*(1 + 0.28*exp(-0.007*Sc_/Sct_));
+    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
+    const scalar kappa = wallCoeffs_.kappa();
+    const scalar E = wallCoeffs_.E();
+
+    // Calculate fields of interest
     const auto& k = db().lookupObject<volScalarField>(kName_);
     tmp<scalarField> tkwc = k.boundaryField()[patchi].patchInternalField();
     const scalarField& kwc = tkwc.cref();
@@ -79,86 +86,116 @@ tmp<scalarField> sorptionWallFunctionFvPatchScalarField::yPlus() const
     tmp<scalarField> tywc = y.boundaryField()[patchi].patchInternalField();
     const scalarField& ywc = tywc.cref();
 
+    // (FDC:Eq. 3)
+    const auto yStar = [&](const label facei) -> scalar
+    {
+        return
+        (
+            Cmu25*sqrt(kwc[facei])*ywc[facei]/nuwc[facei]
+        );
+    };
 
-    // Calculate the empirical constant given by (Jayatilleke, 1966) (FDC:Eq. 6)
-    const scalar Pc =
-        9.24*(pow(Sc_/Sct_, 0.75) - 1)*(1 + 0.28*exp(-0.007*Sc_/Sct_));
-    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
-    const scalar kappa = wallCoeffs_.kappa();
-    const scalar E = wallCoeffs_.E();
+    // (FDC:Eq. 4)
+    const auto yPlusVis = [&](const label facei) -> scalar
+    {
+        return (Sc_*yStar(facei));
+    };
 
-    auto tyPlus = tmp<scalarField>::New(patch().size(), Zero);
+    // (FDC:Eq. 5)
+    const auto yPlusLog = [&](const label facei) -> scalar
+    {
+        return
+        (
+            Sct_*(log(max(E*yStar(facei), 1 + 1e-4))/kappa + Pc)
+        );
+    };
+
+    auto tyPlus = tmp<scalarField>::New(patch().size());
     auto& yPlus = tyPlus.ref();
 
-    forAll(yPlus, facei)
+    switch (blender_)
     {
-        // (FDC:Eq. 3)
-        const scalar yStar = Cmu25*sqrt(kwc[facei])*ywc[facei]/nuwc[facei];
-
-        // (FDC:Eq. 4)
-        const scalar yPlusVis = Sc_*yStar;
-
-        // (FDC:Eq. 5)
-        const scalar yPlusLog = Sct_*(log(max(E*yStar, 1 + 1e-4))/kappa + Pc);
-
-        switch (blender_)
+        case blenderType::EXPONENTIAL:
         {
-            case blenderType::EXPONENTIAL:
+            forAll(yPlus, facei)
             {
                 // (FDC:Eq. 2)
+                const scalar yStarFace = yStar(facei);
                 const scalar Gamma =
-                    0.01*pow4(Sc_*yStar)/(1 + 5*pow3(Sc_)*yStar);
+                    0.01*pow4(Sc_*yStarFace)/(1 + 5*pow3(Sc_)*yStarFace);
                 const scalar invGamma = scalar(1)/max(Gamma, ROOTVSMALL);
 
                 // (FDC:Eq. 1)
-                yPlus[facei] = yPlusVis*exp(-Gamma) + yPlusLog*exp(-invGamma);
-                break;
+                yPlus[facei] =
+                (
+                    yPlusVis(facei)*exp(-Gamma)
+                  + yPlusLog(facei)*exp(-invGamma)
+                );
             }
+            break;
+        }
 
-            case blenderType::STEPWISE:
+        case blenderType::STEPWISE:
+        {
+            static const scalar yStarLam =
+                calcYStarLam(kappa, E, Sc_, Sct_, Pc);
+
+            forAll(yPlus, facei)
             {
-                static const scalar yStarLam =
-                    calcYStarLam(kappa, E, Sc_, Sct_, Pc);
-
                 // (F:Eq. 5.3)
-                if (yStar < yStarLam)
+                if (yStar(facei) < yStarLam)
                 {
-                    yPlus[facei] = yPlusVis;
+                    yPlus[facei] = yPlusVis(facei);
                 }
                 else
                 {
-                    yPlus[facei] = yPlusLog;
+                    yPlus[facei] = yPlusLog(facei);
                 }
-                break;
             }
+            break;
+        }
 
-            case blenderType::BINOMIAL:
+        case blenderType::BINOMIAL:
+        {
+            forAll(yPlus, facei)
             {
                 yPlus[facei] =
                     pow
                     (
-                        pow(yPlusVis, n_) + pow(yPlusLog, n_),
+                        pow(yPlusVis(facei), n_) + pow(yPlusLog(facei), n_),
                         scalar(1)/n_
                     );
-                break;
             }
+            break;
+        }
 
-            case blenderType::MAX:
+        case blenderType::MAX:
+        {
+            forAll(yPlus, facei)
             {
-                yPlus[facei] = max(yPlusVis, yPlusLog);
-                break;
+                yPlus[facei] = max(yPlusVis(facei), yPlusLog(facei));
             }
+            break;
+        }
 
-            case blenderType::TANH:
+        case blenderType::TANH:
+        {
+            forAll(yPlus, facei)
             {
-                const scalar phiTanh = tanh(pow4(0.1*yStar));
-                const scalar b1 = yPlusVis + yPlusLog;
+                const scalar yPlusVisFace = yPlusVis(facei);
+                const scalar yPlusLogFace = yPlusLog(facei);
+                const scalar b1 = yPlusVisFace + yPlusLogFace;
                 const scalar b2 =
-                    pow(pow(yPlusVis, 1.2) + pow(yPlusLog, 1.2), 1.0/1.2);
+                    pow
+                    (
+                        pow(yPlusVisFace, 1.2) + pow(yPlusLogFace, 1.2),
+                        1.0/1.2
+                    );
+                const scalar phiTanh = tanh(pow4(0.1*yStar(facei)));
 
                 yPlus[facei] = phiTanh*b1 + (1 - phiTanh)*b2;
-                break;
             }
+            break;
         }
     }
 
