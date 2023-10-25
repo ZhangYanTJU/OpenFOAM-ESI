@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016, 2019 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -249,7 +249,7 @@ void Foam::omegaWallFunctionFvPatchScalarField::calculate
             case blenderType::MAX:
             {
                 // (PH:Eq. 27)
-                omega0[celli] += max(omegaVis, omegaLog);
+                omega0[celli] += w*max(omegaVis, omegaLog);
                 break;
             }
 
