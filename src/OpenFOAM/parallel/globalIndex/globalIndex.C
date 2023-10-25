@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "globalIndex.H"
+#include "Pair.H"
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
@@ -49,6 +50,132 @@ void Foam::globalIndex::reportOverflowAndExit
         << nl
         << "Please recompile with larger datatype for label." << nl
         << exit(FatalError);
+}
+
+
+Foam::labelRange
+Foam::globalIndex::calcRange
+(
+    const label localSize,
+    const label comm,
+    const bool checkOverflow
+)
+{
+    // Range with 0-offset initially
+    labelRange myRange(0, localSize);
+
+    if (!UPstream::is_parallel(comm))
+    {
+        return myRange;
+    }
+
+    const label myProci = UPstream::myProcNo(comm);
+    const labelList localLens = UPstream::allGatherValues(localSize, comm);
+
+    if (checkOverflow)
+    {
+        const label len = localLens.size();
+
+        label start = 0;
+
+        for (label i = 0; i < len; ++i)
+        {
+            if (i == myProci)
+            {
+                myRange.start() = start;
+            }
+
+            const label prev = start;
+            start += localLens[i];
+
+            if (start < prev)
+            {
+                reportOverflowAndExit(i, localLens);
+            }
+        }
+    }
+    else
+    {
+        // std::accumulate
+        // (
+        //     localLens.cbegin(),
+        //     localLens.cbegin(myProci),
+        //     label(0)
+        // );
+
+        label start = 0;
+
+        for (label i = 0; i < myProci; ++i)
+        {
+            start += localLens[i];
+        }
+        myRange.start() = start;
+    }
+
+    return myRange;
+}
+
+
+Foam::label
+Foam::globalIndex::calcOffset
+(
+    const label localSize,
+    const label comm,
+    const bool checkOverflow
+)
+{
+    // Placeholder value
+    label myOffset = 0;
+
+    if (!UPstream::is_parallel(comm))
+    {
+        return myOffset;
+    }
+
+    const label myProci = UPstream::myProcNo(comm);
+    const labelList localLens = UPstream::allGatherValues(localSize, comm);
+
+    if (checkOverflow)
+    {
+        const label len = localLens.size();
+
+        label start = 0;
+
+        for (label i = 0; i < len; ++i)
+        {
+            if (i == myProci)
+            {
+                myOffset = start;
+            }
+
+            const label prev = start;
+            start += localLens[i];
+
+            if (start < prev)
+            {
+                reportOverflowAndExit(i, localLens);
+            }
+        }
+    }
+    else
+    {
+        // std::accumulate
+        // (
+        //     localLens.cbegin(),
+        //     localLens.cbegin(myProci),
+        //     label(0)
+        // );
+
+        label start = 0;
+
+        for (label i = 0; i < myProci; ++i)
+        {
+            start += localLens[i];
+        }
+        myOffset = start;
+    }
+
+    return myOffset;
 }
 
 
@@ -197,13 +324,13 @@ void Foam::globalIndex::reset
     const bool parallel
 )
 {
-    labelList localLens;
-
     const label len = UPstream::nProcs(comm);
 
     if (len)
     {
-        if (parallel && UPstream::parRun())  // or UPstream::is_parallel()
+        labelList localLens;
+
+        if (parallel && UPstream::parRun())  // or UPstream::is_parallel(comm)
         {
             localLens = UPstream::allGatherValues(localSize, comm);
         }
@@ -347,6 +474,35 @@ Foam::label Foam::globalIndex::maxNonLocalSize(const label proci) const
     }
 
     return maxLen;
+}
+
+
+Foam::labelRange Foam::globalIndex::front() const
+{
+    return
+    (
+        (offsets_.size() < 2)
+      ? labelRange()
+      : labelRange(Pair<label>(offsets_[0], offsets_[1]))
+    );
+}
+
+
+Foam::labelRange Foam::globalIndex::back() const
+{
+    return
+    (
+        (offsets_.size() < 2)
+      ? labelRange()
+      : labelRange
+        (
+            Pair<label>
+            (
+                offsets_[offsets_.size()-2],
+                offsets_[offsets_.size()-1]
+            )
+        )
+    );
 }
 
 

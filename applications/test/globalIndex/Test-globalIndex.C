@@ -55,6 +55,16 @@ int main(int argc, char *argv[])
     // Global numbering of cells (proc0 elements first, then proc1, etc.)
     globalIndex globalNumbering(mesh.nCells());
 
+    Pout<< "local-offset: " << globalIndex::calcOffset(mesh.nCells()) << nl;
+    Pout<< "local-range: " << globalIndex::calcRange(mesh.nCells()) << nl;
+
+    Info<< "cells from:" << globalNumbering.begin_value()
+        << " to:" << globalNumbering.end_value()
+        << " span:" << globalNumbering.span() << nl;
+
+    Info<< "front: " << globalNumbering.front()
+        << " back: " << globalNumbering.back() << nl;
+
     if (globalNumbering.localSize() != mesh.nCells())
     {
         FatalErrorInFunction

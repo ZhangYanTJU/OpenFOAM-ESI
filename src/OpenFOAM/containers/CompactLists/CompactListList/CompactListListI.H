@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -146,34 +146,6 @@ Foam::CompactListList<T>::clone() const
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-inline const Foam::labelList& Foam::CompactListList<T>::offsets() const noexcept
-{
-    return offsets_;
-}
-
-
-template<class T>
-inline Foam::labelList& Foam::CompactListList<T>::offsets() noexcept
-{
-    return offsets_;
-}
-
-
-template<class T>
-inline const Foam::List<T>& Foam::CompactListList<T>::values() const noexcept
-{
-    return values_;
-}
-
-
-template<class T>
-inline Foam::List<T>& Foam::CompactListList<T>::values() noexcept
-{
-    return values_;
-}
-
-
-template<class T>
 inline const T* Foam::CompactListList<T>::cdata() const noexcept
 {
     return values_.cdata();
@@ -211,7 +183,17 @@ inline std::streamsize Foam::CompactListList<T>::size_bytes() const noexcept
 template<class T>
 inline bool Foam::CompactListList<T>::empty() const noexcept
 {
+    // Note: could (should?) also check (offsets_.back() == 0)
+    // return offsets_.empty()
+    // || (*(offsets_.cdata() + offsets_.size()-1) == 0);
     return (offsets_.size() <= 1);
+}
+
+
+template<class T>
+inline bool Foam::CompactListList<T>::single() const noexcept
+{
+    return (offsets_.size() == 2);
 }
 
 
@@ -231,10 +213,9 @@ inline Foam::labelList Foam::CompactListList<T>::sizes() const
 
 
 template<class T>
-inline Foam::label Foam::CompactListList<T>::totalSize() const
+inline Foam::label Foam::CompactListList<T>::totalSize() const noexcept
 {
-    const label len = (offsets_.size() - 1);
-    return (len < 1) ? static_cast<label>(0) : offsets_[len];
+    return offsets_.empty() ? 0 : *(offsets_.cdata() + offsets_.size()-1);
 }
 
 

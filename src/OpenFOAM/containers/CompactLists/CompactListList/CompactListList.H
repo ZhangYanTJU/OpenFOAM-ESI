@@ -28,7 +28,7 @@ Class
     Foam::CompactListList
 
 Description
-    A packed storage unstructured matrix of objects of type \<T\>
+    A packed storage of objects of type \<T\>
     using an offset table for access.
 
     The offset table is the size of the number of rows+1
@@ -91,7 +91,7 @@ class CompactListList
 
         //- Construct by packing together the list of lists
         template<class ListListType>
-        static CompactListList<T> packImpl
+        static CompactListList<T> pack_impl
         (
             const ListListType& lists,
             const bool checkOverflow = false
@@ -197,23 +197,29 @@ public:
         //- True if the number of rows/sublists is zero
         inline bool empty() const noexcept;
 
+        //- True if content is a single row/sublist only.
+        //- Such content could be flattened out into a straight list
+        //- (for example).
+        inline bool single() const noexcept;
+
         //- The primary size (the number of rows/sublists)
         inline label size() const noexcept;
 
-        //- The total addressed size
-        inline label totalSize() const;
+        //- The total addressed size, which corresponds to the
+        //- end (back) offset and also the sum of all localSizes.
+        inline label totalSize() const noexcept;
 
         //- Return the offset table (= size()+1)
-        inline const labelList& offsets() const noexcept;
+        const labelList& offsets() const noexcept { return offsets_; }
 
         //- Return non-const access to the offset table
-        inline labelList& offsets() noexcept;
+        labelList& offsets() noexcept { return offsets_; }
 
-        //- Return the packed matrix of values
-        inline const List<T>& values() const noexcept;
+        //- Return the packed values
+        const List<T>& values() const noexcept { return values_; }
 
-        //- Return non-const access to the packed matrix of values
-        inline List<T>& values() noexcept;
+        //- Return non-const access to the packed values
+        List<T>& values() noexcept { return values_; }
 
 
         //- Return const pointer to the first data in values()
@@ -414,10 +420,12 @@ public:
 
     // Housekeeping
 
-        //- Const access to the packed matrix of values
+        //- Const access to the packed values
+        //FOAM_DEPRECATED_STRICT(2022-03, "values()")
         const List<T>& m() const noexcept { return values_; }
 
-        //- Non-const access to the packed matrix of values
+        //- Non-const access to the packed values
+        //FOAM_DEPRECATED_STRICT(2022-03, "values()")
         List<T>& m() noexcept { return values_; }
 
         //- Return flat index into packed values

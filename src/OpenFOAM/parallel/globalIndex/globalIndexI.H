@@ -35,7 +35,7 @@ inline Foam::globalIndex::globalIndex
     const labelUList& listOffsets
 )
 {
-    if (listOffsets.size() > 1)
+    if (listOffsets.size() > 1)  // Enforce sizing sanity
     {
         offsets_ = listOffsets;
     }
@@ -49,7 +49,7 @@ inline Foam::globalIndex::globalIndex
 :
     offsets_(std::move(listOffsets))
 {
-    if (offsets_.size() == 1)
+    if (offsets_.size() == 1)  // Enforce sizing sanity
     {
         offsets_.clear();
     }
@@ -124,16 +124,35 @@ inline Foam::globalIndex::globalIndex
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-inline bool Foam::globalIndex::empty() const
+inline bool Foam::globalIndex::empty() const noexcept
 {
-    return offsets_.empty() || offsets_.back() == 0;
+    const label len = (offsets_.size() - 1);
+    return (len < 1) || (*(offsets_.cdata() + len) == 0);
 }
 
 
-inline Foam::label Foam::globalIndex::totalSize() const
+inline Foam::label Foam::globalIndex::span() const noexcept
+{
+    return (end_value() - begin_value());
+}
+
+
+inline Foam::label Foam::globalIndex::begin_value() const noexcept
+{
+    return (offsets_.empty() ? 0 : *(offsets_.cdata()));
+}
+
+
+inline Foam::label Foam::globalIndex::end_value() const noexcept
 {
     const label len = (offsets_.size() - 1);
-    return (len < 1) ? 0 : offsets_[len];
+    return (len < 1) ? 0 : *(offsets_.cdata() + len);
+}
+
+
+inline Foam::label Foam::globalIndex::totalSize() const noexcept
+{
+    return end_value();
 }
 
 
@@ -146,6 +165,12 @@ inline Foam::label Foam::globalIndex::size() const
 inline Foam::labelList Foam::globalIndex::sizes() const
 {
     return localSizes();
+}
+
+
+inline bool Foam::globalIndex::single() const noexcept
+{
+    return (offsets_.size() == 2);
 }
 
 
@@ -212,6 +237,18 @@ inline Foam::label Foam::globalIndex::localStart() const
 }
 
 
+inline Foam::label Foam::globalIndex::localEnd(const label proci) const
+{
+    return offsets_[proci+1];
+}
+
+
+inline Foam::label Foam::globalIndex::localEnd() const
+{
+    return localEnd(UPstream::myProcNo(UPstream::worldComm));
+}
+
+
 inline Foam::label Foam::globalIndex::localSize(const label proci) const
 {
     return offsets_[proci+1] - offsets_[proci];
@@ -251,6 +288,7 @@ inline Foam::labelRange Foam::globalIndex::range() const
 
 inline bool Foam::globalIndex::isLocal(const label proci, const label i) const
 {
+    // range contains()
     return i >= offsets_[proci] && i < offsets_[proci+1];
 }
 

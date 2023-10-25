@@ -59,9 +59,8 @@ class globalIndex;
 Istream& operator>>(Istream& is, globalIndex& gi);
 Ostream& operator<<(Ostream& os, const globalIndex& gi);
 
-
 /*---------------------------------------------------------------------------*\
-                           Class globalIndex Declaration
+                         Class globalIndex Declaration
 \*---------------------------------------------------------------------------*/
 
 class globalIndex
@@ -180,14 +179,18 @@ public:
 
     // Member Functions
 
-        //- Check for default constructed or global sum == 0
-        inline bool empty() const;
+        //- Check for default constructed or total-size == 0
+        inline bool empty() const noexcept;
 
         //- Global sum of localSizes. Same as totalSize()
         inline label size() const;
 
-        //- Global sum of localSizes.
-        inline label totalSize() const;
+        //- The span size covered by the offsets, zero if empty
+        inline label span() const noexcept;
+
+        //- The total addressed size, which corresponds to the
+        //- end offset and also the sum of all localSizes.
+        inline label totalSize() const noexcept;
 
         //- The local sizes. Same as localSizes()
         inline labelList sizes() const;
@@ -216,6 +219,10 @@ public:
 
     // Dimensions
 
+        //- True if local-only content (ie, nProcs == 1).
+        //- Such content is often created with gatherNone.
+        inline bool single() const noexcept;
+
         //- The number of processors covered by the offsets
         inline label nProcs() const noexcept;
 
@@ -224,6 +231,19 @@ public:
 
         //- Range of process indices for addressed sub-offsets (processes)
         inline labelRange subProcs() const noexcept;
+
+        //- The value corresponding to the first offset
+        inline label begin_value() const noexcept;
+
+        //- The value corresponding to the last offset (end offset),
+        //- which is 1 beyond the end of the range.
+        inline label end_value() const noexcept;
+
+        //- The first offset range. It is (0,0) if globalIndex is empty
+        labelRange front() const;
+
+        //- The last offset range. It is (0,0) if globalIndex is empty
+        labelRange back() const;
 
 
     // Edit
@@ -291,6 +311,9 @@ public:
         //- Start of proci data
         inline label localStart(const label proci) const;
 
+        //- End of proci data
+        inline label localEnd(const label proci) const;
+
         //- Size of proci data
         inline label localSize(const label proci) const;
 
@@ -335,6 +358,9 @@ public:
 
         //- Local start on myProcNo()
         inline label localStart() const;
+
+        //- Local end on myProcNo()
+        inline label localEnd() const;
 
         //- Local size on myProcNo()
         inline label localSize() const;
@@ -442,6 +468,28 @@ public:
 
 
     // Helper Functions
+
+        //- Calculate globally-consistent local range (offset/size)
+        //- based on the local input size(s).
+        //  Effectively the same as globalIndex(localSize).range()
+        //  but without constructing an extra intermediate list of offsets
+        static labelRange calcRange
+        (
+            const label localSize,
+            const label comm = UPstream::worldComm,  //!< communicator
+            const bool checkOverflow = false
+        );
+
+        //- Calculate globally-consistent local start offset
+        //- based on the local input size(s).
+        //  Effectively the same as globalIndex(localSize).localStart()
+        //  but without constructing an extra intermediate list of offsets
+        static label calcOffset
+        (
+            const label localSize,
+            const label comm = UPstream::worldComm,  //!< communicator
+            const bool checkOverflow = false
+        );
 
         //- Calculate offsets from a list of local sizes,
         //- with optional check for label overflow

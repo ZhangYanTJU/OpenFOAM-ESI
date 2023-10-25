@@ -56,7 +56,7 @@ void Foam::CompactListList<T>::reportOverflowAndExit
 
 template<class T>
 template<class ListListType>
-Foam::CompactListList<T> Foam::CompactListList<T>::packImpl
+Foam::CompactListList<T> Foam::CompactListList<T>::pack_impl
 (
     const ListListType& lists,
     const bool checkOverflow
@@ -89,17 +89,21 @@ Foam::CompactListList<T> Foam::CompactListList<T>::packImpl
 
     if (total)
     {
-        // Copy in the data
+        // Make a deepCopy of data
         newValues.resize(total);
 
-        auto outIter = newValues.begin();
+        auto iter = newValues.begin();
+
+        // NB: operator[] for sub-list read access (eg, an indirect list)
+        // cannot replace with std::copy
 
         for (const auto& list : lists)
         {
-            forAll(list, i)
+            const label sublen = list.size();
+
+            for (label i = 0; i < sublen; (void)++i, (void)++iter)
             {
-                *outIter = list[i];
-                ++outIter;
+                *iter = list[i];
             }
         }
     }
@@ -116,7 +120,7 @@ Foam::CompactListList<T> Foam::CompactListList<T>::pack
     const bool checkOverflow
 )
 {
-    return CompactListList<T>::packImpl<UList<SubListType>>
+    return CompactListList<T>::pack_impl<UList<SubListType>>
     (
         lists,
         checkOverflow
@@ -132,7 +136,7 @@ Foam::CompactListList<T> Foam::CompactListList<T>::pack
     const bool checkOverflow
 )
 {
-    return CompactListList<T>::packImpl<IndirectListBase<SubListType, Addr>>
+    return CompactListList<T>::pack_impl<IndirectListBase<SubListType, Addr>>
     (
         lists,
         checkOverflow
@@ -404,12 +408,12 @@ Foam::CompactListList<T>::unpack(const labelRange& range) const
 {
     List<SubListType> lists(range.size());
 
-    auto outIter = lists.begin();
+    auto iter = lists.begin();
 
     for (const label i : range)
     {
-        *outIter = SubListType(this->localList(i));
-        ++outIter;
+        *iter = SubListType(this->localList(i));
+        ++iter;
     }
 
     return lists;
