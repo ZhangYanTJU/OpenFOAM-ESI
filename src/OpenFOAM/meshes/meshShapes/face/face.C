@@ -810,14 +810,47 @@ Foam::edgeList Foam::face::rcEdges() const
 }
 
 
+Foam::label Foam::face::find(const Foam::edge& e) const
+{
+    const label idx = labelList::find(e.first());
+
+    // NB: the point index is simultaneously the edge index.
+    // ie, face point 0 starts edge 0, point 1 starts edge 1, ...
+
+    if (idx != -1)
+    {
+        if (e.second() == nextLabel(idx))
+        {
+            // Current edge matches forward
+            return idx;
+        }
+        if (e.second() == prevLabel(idx))
+        {
+            // Previous edge matches reverse
+            return rcIndex(idx);
+        }
+    }
+
+    return -1;  // Not found
+}
+
+
 int Foam::face::edgeDirection(const Foam::edge& e) const
 {
     const label idx = labelList::find(e.first());
 
     if (idx != -1)
     {
-        if (e.second() == nextLabel(idx)) return 1;  // Forward
-        if (e.second() == prevLabel(idx)) return -1; // Reverse
+        if (e.second() == nextLabel(idx))
+        {
+            // Current edge matches forward. Could encode: (idx+1)
+            return 1;
+        }
+        if (e.second() == prevLabel(idx))
+        {
+            // Previous edge matches reverse. Could encode: -(rcIndex(idx)+1)
+            return -1;
+        }
     }
 
     return 0;  // Not found

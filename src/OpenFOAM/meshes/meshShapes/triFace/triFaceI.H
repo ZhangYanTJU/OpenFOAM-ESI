@@ -446,26 +446,49 @@ inline int Foam::triFace::edgeDirection(const Foam::edge& e) const
 {
     if (e.first() == a())
     {
-        if (e.second() == b()) return 1;    // edge 0 - forward
-        if (e.second() == c()) return -1;   // edge 2 - reverse
+        if (e.second() == b()) return 1;    // Forward edge 0 (encoded 1)
+        if (e.second() == c()) return -1;   // Reverse edge 2 (encoded -3)
     }
     if (e.first() == b())
     {
-        if (e.second() == c()) return 1;    // edge 1 - forward
-        if (e.second() == a()) return -1;   // edge 0 - reverse
+        if (e.second() == c()) return 1;    // Forward edge 1 (encoded 2)
+        if (e.second() == a()) return -1;   // Reverse edge 0 (encoded -1)
     }
     if (e.first() == c())
     {
-        if (e.second() == a()) return 1;    // edge 2 - forward
-        if (e.second() == b()) return -1;   // edge 1 - reverse
+        if (e.second() == a()) return 1;    // Forward edge 2 (encoded 3)
+        if (e.second() == b()) return -1;   // Reverse edge 1 (encoded -2)
     }
 
     return 0;  // Not found
 }
 
 
+inline Foam::label Foam::triFace::find(const Foam::edge& e) const
+{
+    if (e.first() == a())
+    {
+        if (e.second() == b()) return 0;    // Forward edge 0
+        if (e.second() == c()) return 2;    // Reverse edge 2
+    }
+    if (e.first() == b())
+    {
+        if (e.second() == c()) return 1;    // Forward edge 1
+        if (e.second() == a()) return 0;    // Reverse edge 0
+    }
+    if (e.first() == c())
+    {
+        if (e.second() == a()) return 2;    // Forward edge 2
+        if (e.second() == b()) return 1;    // Reverse edge 1
+    }
+
+    return -1;  // Not found
+}
+
+
 inline bool Foam::triFace::contains(const Foam::edge& e) const
 {
+    // or (find(e) >= 0)
     return (edgeDirection(e) != 0);
 }
 

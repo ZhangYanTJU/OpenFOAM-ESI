@@ -234,6 +234,7 @@ inline bool Foam::face::connected(const FixedList<label, N>& other) const
 
 inline bool Foam::face::contains(const Foam::edge& e) const
 {
+    // or (find(e) >= 0)
     return (edgeDirection(e) != 0);
 }
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -128,6 +128,25 @@ int main(int argc, char *argv[])
     Info<< "face:"; faceInfo(f1, points1); Info << nl;
     testSign(f1, points1, testPoints);
 
+    Info<< "find within " << f1 << nl;
+    for
+    (
+        const edge& e
+      : edgeList
+        ({
+            {0, 1},
+            {2, 1},
+            {4, 1},
+            f1.edge(1),
+            {4, 3},
+            {8, 1},
+        }))
+    {
+        Info<< "    edge:" << e << " = " << f1.find(e)
+            << " direction:" << f1.edgeDirection(e)
+            << " contains:" << f1.contains(e) << nl;
+    }
+
     Info<< "face:"; faceInfo(f1, points2); Info << nl;
     testSign(f1, points2, testPoints);
     Info<< nl;
@@ -145,6 +164,25 @@ int main(int argc, char *argv[])
     triFace t1(1, 2, 3);
     Info<< "triFace:"; faceInfo(t1, points1); Info << nl;
     testSign(t1, points1, testPoints);
+
+    Info<< "find within " << t1 << nl;
+    for
+    (
+        const edge& e
+      : edgeList
+        ({
+            {0, 1},
+            {2, 1},
+            {4, 1},
+            t1.edge(1),
+            {4, 3},
+            {8, 1},
+        }))
+    {
+        Info<< "    edge:" << e << " = " << t1.find(e)
+            << " direction:" << t1.edgeDirection(e)
+            << " contains:" << t1.contains(e) << nl;
+    }
 
     {
         scalarField fld({0, 20, 20, 30});

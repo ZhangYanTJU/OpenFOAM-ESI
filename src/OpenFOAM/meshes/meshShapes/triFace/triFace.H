@@ -328,6 +328,13 @@ public:
         //- True if face contains(edge)
         inline bool contains(const Foam::edge& e) const;
 
+        //- Regular find pointi within face
+        using FixedList<label, 3>::find;
+
+        //- Find the edge within the face.
+        //  \return the edge index or -1 if not found
+        inline label find(const Foam::edge& e) const;
+
         //- Test the edge direction on the face
         //  \return
         //  - +1: forward (counter-clockwise) on the face
