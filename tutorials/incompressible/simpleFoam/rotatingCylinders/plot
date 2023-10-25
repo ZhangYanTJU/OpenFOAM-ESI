@@ -26,17 +26,19 @@ gnuplot<<EOF
     C = 0.5*A*A*R1*R1 + 2.*A*B*log(R1) - 0.5*B*B/R1/R1
     analytical_p(r) = 0.5*A*A*r*r + 2.*A*B*log(r) - 0.5*B*B/r/r - C
 
+    samples="postProcessing/sample1/1000/centreLine_p_U_U:Transformed.xy"
+
     set ylabel "Pressure, p"
     set output "p.png"
     set samples 20
     set key bottom right
-    plot "postProcessing/sample1/1000/centreLine_p.xy" w lines lw 2 lc "black" t "OpenFOAM", \
+    plot samples u 1:2 w lines lw 2 lc "black" t "OpenFOAM", \
         analytical_p(x) w p ps 2 pt 6 lw 2 lc rgb "red" t "analytical"
 
     set ylabel "U_{/Symbol q}, rad/s"
     set output "Utheta.png"
     set samples 20
     set key top right
-    plot "postProcessing/sample1/1000/centreLine_U_U:Transformed.xy" u 1:6 w lines lw 2 lc "black" t "OpenFOAM", \
+    plot samples u 1:7 w lines lw 2 lc "black" t "OpenFOAM", \
         analytical_utheta(x) w p ps 2 pt 6 lw 2 lc rgb "red" t "analytical"
 EOF

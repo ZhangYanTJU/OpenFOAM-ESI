@@ -28,9 +28,8 @@ plot_yPlus_vs_uPlus() {
     set key spacing 0.75
     set xlabel "y^+"
     set ylabel "u^+"
-    set offset .05, .05
     set parametric
-    set trange [0:1.5]
+    set trange [0:30]
     set logscale x
     set format x "10^{%T}"
     set output "$image"

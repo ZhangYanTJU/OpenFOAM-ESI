@@ -375,7 +375,7 @@ do
 
     endTime=$( \
         foamDictionary results/$setup/system/controlDict \
-            -disableFunctionEntries -entry endTime -value \
+            -entry endTime -value \
         )
 
 

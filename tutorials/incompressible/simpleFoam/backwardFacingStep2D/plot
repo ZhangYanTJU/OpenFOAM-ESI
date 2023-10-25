@@ -14,16 +14,12 @@ plot_U() {
     gnuplot<<EOF1
     set terminal pngcairo font "helvetica,20" size 1000, 1000
     set grid
-    set key top left
+    set key top right
     set xrange [-0.4:1.2]
     set yrange [0:3]
     set xlabel "U/U_0"
     set ylabel "y/h"
     set output "$image"
-    set lmargin 7.5
-    set rmargin 1.5
-    set tmargin 0.1
-    set bmargin 3.2
     set format x "%.1f"
     set format y "%.1f"
 
@@ -31,12 +27,13 @@ plot_U() {
         samples="$sampleDir"
         Uref="$Uref"
         href="$href"
+        fields="p_U_turbulenceProperties:devReff.xy"
 
     plot \
-        "$sampleDir/x_by_h_01_U.xy" u (\$2/Uref):(\$1/href) w l lw 2 lc rgb "red" t "x/h = 1", \
-        "$sampleDir/x_by_h_04_U.xy" u (\$2/Uref):(\$1/href) w l lw 2 lc rgb "green" t "x/h = 4", \
-        "$sampleDir/x_by_h_06_U.xy" u (\$2/Uref):(\$1/href) w l lw 2 lc rgb "blue" t "x/h = 6", \
-        "$sampleDir/x_by_h_10_U.xy" u (\$2/Uref):(\$1/href) w l lw 2 lc rgb "black" t "x/h = 10"
+        samples."/x_by_h_01_".fields u (\$3/Uref):(\$1/href) w l lw 2 lc rgb "red" t "x/h = 1", \
+        samples."/x_by_h_04_".fields u (\$3/Uref):(\$1/href) w l lw 2 lc rgb "green" t "x/h = 4", \
+        samples."/x_by_h_06_".fields u (\$3/Uref):(\$1/href) w l lw 2 lc rgb "blue" t "x/h = 6", \
+        samples."/x_by_h_10_".fields u (\$3/Uref):(\$1/href) w l lw 2 lc rgb "black" t "x/h = 10"
 EOF1
 }
 
@@ -66,10 +63,6 @@ plot_tau() {
     set xlabel "x/h"
     set ylabel "C_f"
     set output "$image"
-    set lmargin 10
-    set rmargin 1.5
-    set tmargin 0.1
-    set bmargin 3.2
 
     # OpenFOAM
         Uref="$Uref"
@@ -107,7 +100,7 @@ sampleDir=postProcessing/sample/"$timeDir"
 
 #------------------------------------------------------------------------------
 
-Uref=$(awk '{print $2}' $sampleDir/Uref_U.xy)
+Uref=$(awk '{print $2}' $sampleDir/Uref_p_U_turbulenceProperties:devReff.xy)
 
 echo ""
 echo "# Plots the U profiles"

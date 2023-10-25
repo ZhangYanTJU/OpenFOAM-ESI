@@ -31,65 +31,46 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 #------------------------------------------------------------------------------
 
-plot_T()
+plot_x_vs_T_U()
 {
     index="$1"
     sampleFile="$2"
-    benchmarkFile="$3"
+    benchmarkDir="$3"
 
-    image="OF_vs_EXPT_T$index.png"
-
-    gnuplot<<PLT_T
+    gnuplot<<PLT_T_U
     set terminal pngcairo font "helvetica,20" size 1000, 1000
     set grid
     set key left top
     set xrange [0:0.08]
+    set xlabel "Channel width, x [m]"
+
+    # Benchmark - Experimental
+        benchmarkT="$benchmarkDir/mt_z0_${index}0_lo.dat"
+        benchmarkU="$benchmarkDir/mv_z0_${index}0_lo.dat"
+
+    # OpenFOAM
+        samples="$sampleFile"
+
+
+    # plot temperature profiles
     set yrange [285:310]
-    set xlabel "Channel width, x / [m]"
-    set ylabel "Temperature / [K]"
-    set output "$image"
-
-    # Benchmark - Experimental
-        benchmark="$benchmarkFile"
-
-    # OpenFOAM
-        samples="$sampleFile"
+    set ylabel "Temperature [K]"
+    set output "OF_vs_EXPT_T$index.png"
 
     plot \
-        benchmark u (\$1/1000):(\$2+273.15) t "Expt 0.$index" w p lt 1 pt 6, \
-        samples t "OpenFOAM 0.$index" w l lt -1
-PLT_T
-}
+        benchmarkT u (\$1/1000):(\$2+273.15) t "Expt 0.$index" w p lt 1 pt 6, \
+        samples u 1:2 t "OpenFOAM 0.$index" w l lt -1
 
 
-plot_U()
-{
-    index=$1
-    sampleFile="$2"
-    benchmarkFile="$3"
-
-    image="OF_vs_EXPT_U$index.png"
-
-    gnuplot<<PLT_U
-    set terminal pngcairo font "helvetica,20" size 1000, 1000
-    set grid
-    set key left top
-    set xrange [0:0.08]
+    # plot velocity profiles
     set yrange [-0.2:0.2]
-    set xlabel "Channel width, x / [m]"
-    set ylabel "Vertical velocity component, Uy / [m/s]"
-    set output "$image"
-
-    # Benchmark - Experimental
-        benchmark="$benchmarkFile"
-
-    # OpenFOAM
-        samples="$sampleFile"
-
+    set ylabel "Vertical velocity component, Uy [m/s]"
+    set output "OF_vs_EXPT_U$index.png"
     plot \
-        benchmark u (\$1/1000):(\$2) t "Expt 0.$index" w p lt 1 pt 6, \
-        samples u 1:3 title "OpenFOAM 0.$index" w l lt -1
-PLT_U
+        benchmarkU u (\$1/1000):(\$2) t "Expt 0.$index" w p lt 1 pt 6, \
+        samples u 1:4 title "OpenFOAM 0.$index" w l lt -1
+
+PLT_T_U
 }
 
 
@@ -121,34 +102,16 @@ OFDATAROOT="$SETSDIR/$LATESTTIME"
 
 EXPTDATAROOT=./exptData
 
-# generate temperature profiles
-TSets="1 3 4 5 6 7 9"
-for i in $TSets
+# generate temperature and velocity profiles
+set="1 3 4 5 6 7 9"
+for i in $set
 do
 
-    echo "    processing temperature profile at y/yMax of 0.$i"
+    echo "    processing temperature and velocity profiles at y/yMax of 0.$i"
 
-    OF="$OFDATAROOT/y0.${i}_T.xy"
+    OF="$OFDATAROOT/y0.${i}_T_U.xy"
 
-    EXPT="$EXPTDATAROOT/mt_z0_${i}0_lo.dat"
-
-    plot_T "$i" "$OF" "$EXPT"
-
-done
-
-
-# generate velocity profiles
-USets="1 3 4 5 6 7 9"
-for i in $USets
-do
-
-    echo "    processing velocity profile at y/yMax of 0.$i"
-
-    OF="$OFDATAROOT/y0.${i}_U.xy"
-
-    EXPT="$EXPTDATAROOT/mv_z0_${i}0_lo.dat"
-
-    plot_U "$i" "$OF" "$EXPT"
+    plot_x_vs_T_U "$i" "$OF" "$EXPTDATAROOT"
 
 done
 
