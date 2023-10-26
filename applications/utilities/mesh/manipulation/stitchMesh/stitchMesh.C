@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -523,8 +523,8 @@ int main(int argc, char *argv[])
         labelList faceIds;
 
         // Markup master face ids
-        faceIds.setSize(masterPatch.size());
-        std::iota(faceIds.begin(), faceIds.end(), masterPatch.start());
+        faceIds.resize_nocopy(masterPatch.size());
+        Foam::identity(faceIds, masterPatch.start());
 
         stitcher.clear();
         stitcher.setSize(1);
@@ -569,8 +569,8 @@ int main(int argc, char *argv[])
             ).resetAddressing(std::move(faceIds), false);
 
             // Markup slave face ids
-            faceIds.setSize(slavePatch.size());
-            std::iota(faceIds.begin(), faceIds.end(), slavePatch.start());
+            faceIds.resize_nocopy(slavePatch.size());
+            Foam::identity(faceIds, slavePatch.start());
 
             mesh.faceZones()
             (

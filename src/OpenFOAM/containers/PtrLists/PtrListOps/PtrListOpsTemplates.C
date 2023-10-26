@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,13 +63,7 @@ void Foam::sortedOrder
     // List lengths must be identical. Old content is overwritten
     order.resize_nocopy(list.size());
 
-    // Same as std::iota and ListOps::identity
-    label value = 0;
-    for (label& item : order)
-    {
-        item = value;
-        ++value;
-    }
+    Foam::identity(order, 0);
 
     std::stable_sort(order.begin(), order.end(), comp);
 }

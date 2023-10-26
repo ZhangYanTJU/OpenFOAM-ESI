@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -161,16 +161,16 @@ Foam::label Foam::ensightCells::meshPointMapppings
         // Non-parallel
 
         nPoints = mesh.nPoints();
-        pointToGlobal.resize(nPoints);
+        pointToGlobal.resize_nocopy(nPoints);
 
         if (allCells)
         {
             // All cells used, and thus all points
 
-            uniqueMeshPointLabels.resize(nPoints);
+            uniqueMeshPointLabels.resize_nocopy(nPoints);
 
-            ListOps::identity(pointToGlobal);
-            ListOps::identity(uniqueMeshPointLabels);
+            Foam::identity(pointToGlobal);
+            Foam::identity(uniqueMeshPointLabels);
         }
         else
         {

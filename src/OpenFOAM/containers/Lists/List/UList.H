@@ -201,7 +201,7 @@ public:
 
             bool operator()(const label a, const label b) const
             {
-                return values[a] < values[b];
+                return (values[a] < values[b]);
             }
         };
 
@@ -217,7 +217,7 @@ public:
 
             bool operator()(const label a, const label b) const
             {
-                return values[b] < values[a];
+                return (values[b] < values[a]);
             }
         };
 
@@ -676,6 +676,14 @@ Ostream& operator<<(Ostream& os, const std::vector<T>& list);
 
 
 // * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * * //
+
+//- Fill an identity map with (map[i] == i), works like std::iota().
+//  Optionally with an alternative start index, so that (map[i] == i+start)
+void identity(UList<int32_t>& map, int32_t start = 0);
+
+//- Fill an identity map with (map[i] == i), works like std::iota().
+//  Optionally with an alternative start index, so that (map[i] == i+start)
+void identity(UList<int64_t>& map, int64_t start = 0);
 
 //- Sort the list
 template<class T>

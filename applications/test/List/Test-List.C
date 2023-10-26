@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
     {
         List<label> ident(15);
-        std::iota(ident.begin(), ident.end(), 0);
+        Foam::identity(ident, 0);
 
         Info<<"Ident:";
         forAllConstIters(ident, iter)
@@ -546,10 +546,10 @@ int main(int argc, char *argv[])
             Info<< "scalars: " << flatOutput(scalars) << endl;
         }
 
-        #if WM_LABEL_SIZE == 32
+        // #if WM_LABEL_SIZE == 32
         {
             List<int64_t> input(10);
-            std::iota(input.begin(), input.end(), 50);
+            Foam::identity(input, 50);
 
             auto output = ListOps::create<label>
             (
@@ -558,10 +558,10 @@ int main(int argc, char *argv[])
             );
             Info<< "label (from int64): " << flatOutput(output) << endl;
         }
-        #elif WM_LABEL_SIZE == 64
+        // #elif WM_LABEL_SIZE == 64
         {
             List<int32_t> input(10);
-            std::iota(input.begin(), input.end(), 50);
+            Foam::identity(input, 50);
 
             auto output = ListOps::create<label>
             (
@@ -570,7 +570,7 @@ int main(int argc, char *argv[])
             );
             Info<< "label (from int32): " << flatOutput(output) << endl;
         }
-        #endif
+        // #endif
 
 
         labelHashSet locations{ -15, 5, 10, 15, 25, 35 };

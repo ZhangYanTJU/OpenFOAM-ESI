@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "ListOps.H"  // sortedOrder, ListOps::identity
+#include "ListOps.H"  // sortedOrder
 
 // * * * * * * * * * * * * * * * Implementation  * * * * * * * * * * * * * * //
 
@@ -230,7 +230,7 @@ Foam::label Foam::Detail::mergePoints
     // Setup initial identity +1 mapping for pointToUnique
     // The +1 allows negatives to mark duplicates
 
-    ListOps::identity(pointToUnique, 1);
+    Foam::identity(pointToUnique, 1);
 
     // The newPointCounts is an offsets table that we use to walk
     // across the adjacency list (lookupMerged), picking the original

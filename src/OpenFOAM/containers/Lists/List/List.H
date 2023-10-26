@@ -431,7 +431,8 @@ Istream& operator>>(Istream& is, List<T>& list)
 
 // * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * * //
 
-//- Return an identity map of the given length with (map[i] == i)
+//- Return an identity map of the given length with (map[i] == i),
+//- works like std::iota() but returning a list of label values.
 //  Optionally with an alternative start index, so that (map[i] == i+start)
 labelList identity(const label len, label start=0);
 

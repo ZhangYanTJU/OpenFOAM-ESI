@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
     {
         List<label> ident(25);
-        std::iota(ident.begin(), ident.end(), 0);
+        Foam::identity(ident, 0);
 
         print(ident);
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
         // This is also possible since we hold a concrete pointer/size
         // and not an intermediate
-        ListOps::identity(sub.reset(ident, 8, 8));
+        Foam::identity(sub.reset(ident, 8, 8));
         print(sub);
         print(ident);
     }

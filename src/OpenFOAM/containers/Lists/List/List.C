@@ -481,14 +481,7 @@ void Foam::sortedOrder
     // List lengths must be identical. Old content is overwritten
     order.resize_nocopy(list.size());
 
-    // Same as std::iota and ListOps::identity
-    label value = 0;
-    for (label& item : order)
-    {
-        item = value;
-        ++value;
-    }
-
+    Foam::identity(order, 0);
     Foam::stableSort(order, comp);
 }
 

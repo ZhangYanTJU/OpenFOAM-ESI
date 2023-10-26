@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,8 +24,6 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
-
-#include "ListOps.H"  // For identity
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -77,7 +75,7 @@ inline void Foam::SortList<T>::reset()
     auto& addr = this->indices();
 
     addr.resize_nocopy(this->values().size());
-    ListOps::identity(addr);
+    Foam::identity(addr, 0);
 }
 
 
@@ -89,7 +87,7 @@ inline void Foam::SortList<T>::sort(const Compare& comp)
     auto& addr = this->indices();
 
     addr.resize_nocopy(vals.size());
-    ListOps::identity(addr);
+    Foam::identity(addr, 0);
 
     std::stable_sort
     (

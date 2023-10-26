@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,19 +28,17 @@ License
 
 #include "SquareMatrix.H"
 #include "RectangularMatrix.H"
-#include "labelList.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
 template<class CompOp>
-Foam::List<Foam::label> Foam::SquareMatrix<Type>::sortPermutation
+Foam::labelList Foam::SquareMatrix<Type>::sortPermutation
 (
     CompOp& compare
 ) const
 {
-    List<label> p(this->m());
-    std::iota(p.begin(), p.end(), 0);
+    labelList p = Foam::identity(this->m());
     std::sort
     (
         p.begin(),
@@ -53,7 +51,7 @@ Foam::List<Foam::label> Foam::SquareMatrix<Type>::sortPermutation
 
 
 template<class Type>
-void Foam::SquareMatrix<Type>::applyPermutation(const List<label>& p)
+void Foam::SquareMatrix<Type>::applyPermutation(const labelUList& p)
 {
     #ifdef FULLDEBUG
     if (this->m() != p.size())

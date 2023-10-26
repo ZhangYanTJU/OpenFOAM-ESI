@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,8 +88,8 @@ void Foam::ensightFaces::write
         nPoints = pp.meshPoints().size();
         uniqueMeshPointLabels = pp.meshPoints();
 
-        pointToGlobal.resize(nPoints);
-        ListOps::identity(pointToGlobal);
+        pointToGlobal.resize_nocopy(nPoints);
+        Foam::identity(pointToGlobal);
     }
 
     ensightOutput::Detail::writeCoordinates

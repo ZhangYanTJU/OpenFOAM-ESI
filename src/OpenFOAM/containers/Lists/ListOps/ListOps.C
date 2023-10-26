@@ -200,12 +200,6 @@ void Foam::inplaceReorder
 }
 
 
-void Foam::ListOps::identity(labelUList& map, label start)
-{
-    std::iota(map.begin(), map.end(), start);
-}
-
-
 void Foam::ListOps::unionEqOp::operator()
 (
     labelList& x,

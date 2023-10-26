@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,8 +25,6 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
-
-#include "ListOps.H"  // For identity
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -136,7 +134,7 @@ template<class T>
 void Foam::SortableList<T>::partialSort(label n, label start)
 {
     indices_.resize_nocopy(this->size());
-    ListOps::identity(indices_);
+    Foam::identity(indices_, 0);
 
     // Forward partial sort of indices
     std::partial_sort
@@ -156,7 +154,7 @@ template<class T>
 void Foam::SortableList<T>::partialReverseSort(label n, label start)
 {
     indices_.resize_nocopy(this->size());
-    ListOps::identity(indices_);
+    Foam::identity(indices_, 0);
 
     // Reverse partial sort of indices
     std::partial_sort

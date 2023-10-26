@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,10 +30,23 @@ License
 
 // * * * * * * * * * * * * * * Global Data Members * * * * * * * * * * * * * //
 
+// This was deprecated (2019-02) in favour of labelList::null()
 const Foam::labelList Foam::emptyLabelList;
 
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+void Foam::identity(Foam::UList<int32_t>& map, int32_t start)
+{
+    std::iota(map.begin(), map.end(), start);
+}
+
+
+void Foam::identity(Foam::UList<int64_t>& map, int64_t start)
+{
+    std::iota(map.begin(), map.end(), start);
+}
+
 
 Foam::labelList Foam::identity(const label len, label start)
 {

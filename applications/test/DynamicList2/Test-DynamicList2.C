@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
         DynamicList<label, 64> list1;
 
         list1.resize(4);
-        ListOps::identity(list1);
+        Foam::identity(list1);
 
         list1.resize(3);
         printInfo("", list1);
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
         DynamicList<label, 64> list2;
 
         list2.resize(5);
-        ListOps::identity(list2);
+        Foam::identity(list2);
 
         Info<< "initial list" << nl;
         printInfo("", list2);

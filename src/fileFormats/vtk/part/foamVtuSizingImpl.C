@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -858,7 +858,7 @@ void Foam::vtk::vtuSizing::populateArrays
 
     // May have been done by caller,
     // but for additional safety set an identity mapping
-    ListOps::identity(cellMap);
+    Foam::identity(cellMap);
 
     // ===========================================
     // Adjust vertOffset for all cells

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +40,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SquareMatrix_H
-#define SquareMatrix_H
+#ifndef Foam_SquareMatrix_H
+#define Foam_SquareMatrix_H
 
 #include "Matrix.H"
 #include "Identity.H"
@@ -65,7 +65,6 @@ class SquareMatrix
 :
     public Matrix<SquareMatrix<Type>, Type>
 {
-
 public:
 
     // Generated Methods
@@ -172,14 +171,13 @@ public:
 
     // Sort
 
-        //- Return a sort permutation labelList according to
-        //- a given comparison on the diagonal entries
+        //- Return a sort permutation using the given comparison operator
+        //- on the diagonal entries
         template<class CompOp>
-        List<label> sortPermutation(CompOp& compare) const;
+        labelList sortPermutation(CompOp& compare) const;
 
-        //- Column-reorder this Matrix according to
-        //- a given permutation labelList
-        void applyPermutation(const List<label>& p);
+        //- Column-reorder this Matrix according to the given permutation
+        void applyPermutation(const labelUList& p);
 
 
     // Member Operators

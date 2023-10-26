@@ -62,7 +62,7 @@ $(ints)/int32/int32IO.C
 $(ints)/int64/int64.C
 $(ints)/int64/int64IO.C
 $(ints)/label/label.C
-$(ints)/lists/labelList.C
+$(ints)/lists/labelLists.C
 $(ints)/lists/labelIOList.C
 $(ints)/lists/labelListIOList.C
 

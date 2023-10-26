@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -593,7 +593,7 @@ struct less
 
     bool operator()(const label a, const label b) const
     {
-        return values[a] < values[b];
+        return (values[a] < values[b]);
     }
 };
 
@@ -611,14 +611,19 @@ struct greater
 
     bool operator()(const label a, const label b) const
     {
-        return values[b] < values[a];
+        return (values[b] < values[a]);
     }
 };
 
 
-//- Set identity map with (map[i] == i)
+//- Fill an identity map with (map[i] == i)
 //  Optionally with an alternative start index, so that (map[i] == i+start)
-void identity(labelUList& map, label start=0);
+FOAM_DEPRECATED_STRICT(2023-10, "Foam::identity(...)")
+inline void identity(labelUList& map, label start = 0)
+{
+    Foam::identity(map, start);
+}
+
 
 //- Count the number of matching entries.
 //  When start is specified, any occurrences before start are ignored.
