@@ -541,10 +541,13 @@ public:
         inline word member() const;
 
         //- Return the Time::rootPath()
-        const fileName& rootPath() const;
+        const fileName& rootPath() const noexcept;
 
         //- Return the Time::caseName()
-        const fileName& caseName() const;
+        const fileName& caseName() const noexcept;
+
+        //- Return the Time::globalCaseName()
+        const fileName& globalCaseName() const noexcept;
 
         //- Read access to instance path component
         inline const fileName& instance() const noexcept;
@@ -555,8 +558,11 @@ public:
         //- Read access to local path component
         inline const fileName& local() const noexcept;
 
-        //- The complete path
+        //- The complete path for the object (with instance, local,...).
         fileName path() const;
+
+        //- The complete global path for the object (with instance, local,...)
+        fileName globalPath() const;
 
         //- The complete path with alternative instance and local
         fileName path
@@ -565,8 +571,18 @@ public:
             const fileName& local = fileName::null
         ) const;
 
+        //- The complete global path with alternative instance and local
+        fileName globalPath
+        (
+            const word& instance,
+            const fileName& local = fileName::null
+        ) const;
+
         //- The complete path + object name
         inline fileName objectPath() const;
+
+        //- The complete global path + object name
+        inline fileName globalObjectPath() const;
 
         //- The object path relative to the root
         fileName objectRelPath() const;

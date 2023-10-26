@@ -294,6 +294,12 @@ inline Foam::fileName Foam::IOobject::objectPath() const
 }
 
 
+inline Foam::fileName Foam::IOobject::globalObjectPath() const
+{
+    return globalPath()/name();
+}
+
+
 // Error Handling
 
 inline bool Foam::IOobject::good() const noexcept
