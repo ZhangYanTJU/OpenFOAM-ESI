@@ -29,6 +29,7 @@ License
 #include "labelRange.H"
 #include "List.H"
 #include "MinMax.H"
+#include "Pair.H"
 #include <numeric>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -45,10 +46,24 @@ Foam::labelRange::labelRange(const MinMax<label>& range) noexcept
 :
     labelRange()
 {
-    if (range.min() < range.max())
+    if (range.min() <= range.max())
     {
+        // max is inclusive, so size with +1. Hope for no overflow
         start() = range.min();
-        size()  = (range.max() - range.min()); // Hope for no overflow?
+        size()  = 1 + (range.max() - range.min());
+    }
+}
+
+
+Foam::labelRange::labelRange(const Pair<label>& start_end) noexcept
+:
+    labelRange()
+{
+    if (start_end.first() <= start_end.second())
+    {
+        // second is exclusive, so size directly. Hope for no overflow
+        start() = start_end.first();
+        size()  = (start_end.second() - start_end.first());
     }
 }
 
@@ -65,14 +80,13 @@ Foam::labelRange::labelRange(Istream& is)
 
 Foam::List<Foam::label> Foam::labelRange::labels() const
 {
-    if (size() < 0)
-    {
-        // Skip this check?
-        return List<label>();
-    }
+    List<label> result;
 
-    List<label> result(this->size());
-    std::iota(result.begin(), result.end(), this->start());
+    if (this->size() > 0)
+    {
+        result.resize(this->size());
+        std::iota(result.begin(), result.end(), this->start());
+    }
 
     return result;
 }

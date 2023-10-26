@@ -99,7 +99,7 @@ public:
             template<class Int>
             constexpr bool operator()(const Int val) const noexcept
             {
-                return val > 0;
+                return (val > 0);
             }
         };
 
@@ -109,7 +109,7 @@ public:
             template<class Int>
             constexpr bool operator()(const Int val) const noexcept
             {
-                return val < 0;
+                return (val < 0);
             }
         };
 
@@ -119,7 +119,7 @@ public:
             template<class Int>
             constexpr bool operator()(const Int val) const noexcept
             {
-                return val >= 0;
+                return (val >= 0);
             }
         };
 
@@ -129,7 +129,7 @@ public:
             template<class Int>
             constexpr bool operator()(const Int val) const noexcept
             {
-                return val <= 0;
+                return (val <= 0);
             }
         };
 

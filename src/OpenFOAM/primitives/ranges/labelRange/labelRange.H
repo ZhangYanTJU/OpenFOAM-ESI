@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,6 +48,7 @@ namespace Foam
 
 // Forward Declarations
 template<class T> class MinMax;
+template<class T> class Pair;
 
 /*---------------------------------------------------------------------------*\
                          Class labelRange Declaration
@@ -98,10 +99,15 @@ public:
             const bool adjustStart
         ) noexcept;
 
-        //- Construct from a min/max range, enforces non-negative size.
-        //- Does not adjust the start.
-        //  Passing an invalid min/max range results in an empty labelRange
+        //- Construct from a min/max range (both inclusive),
+        //- enforces non-negative size.
+        //  Passing an invalid range results in an empty labelRange
         explicit labelRange(const MinMax<label>& range) noexcept;
+
+        //- Construct from start (inclusive) and end (exclusive) values,
+        //- enforces non-negative size.
+        //  Passing an invalid range results in an empty labelRange
+        explicit labelRange(const Pair<label>& start_end) noexcept;
 
         //- Construct from Istream.
         explicit labelRange(Istream& is);

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,20 +37,6 @@ namespace Foam
 {
 
 template<class T>
-inline static List<label> makeIdentity(const IntRange<T>& range)
-{
-    if (range.size() < 1)
-    {
-        return List<label>();
-    }
-
-    List<label> result(range.size());
-    std::iota(result.begin(), result.end(), range.start());
-
-    return result;
-}
-
-template<class T>
 inline static Istream& input(Istream& is, IntRange<T>& range)
 {
     is.readBegin("IntRange");
@@ -79,14 +65,30 @@ inline static Ostream& output(Ostream& os, const IntRange<T>& range)
 
 Foam::List<Foam::label> Foam::identity(const IntRange<int32_t>& range)
 {
-    return makeIdentity(range);
+    List<label> result;
+
+    if (range.size() > 0)
+    {
+        result.resize(range.size());
+        std::iota(result.begin(), result.end(), range.start());
+    }
+
+    return result;
 }
 
 
 #if defined(WM_LABEL_SIZE) && (WM_LABEL_SIZE >= 64)
 Foam::List<Foam::label> Foam::identity(const IntRange<int64_t>& range)
 {
-    return makeIdentity(range);
+    List<label> result;
+
+    if (range.size() > 0)
+    {
+        result.resize(range.size());
+        std::iota(result.begin(), result.end(), range.start());
+    }
+
+    return result;
 }
 #endif
 
