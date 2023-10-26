@@ -891,7 +891,8 @@ Foam::fileName Foam::fileOperation::filePath
         }
     }
 
-    if (returnReduceOr(foundName.empty()))    // worldComm
+    //if (returnReduceOr(foundName.empty()))    // worldComm
+    if (foundName.empty())
     {
         // There is at least one processor that cannot find the processors
         // directory. Re-do with straight supplied filename
