@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +40,19 @@ Foam::Ostream& Foam::Detail::PtrListDetail<T>::write
 {
     const label len = this->size();
 
+    // The net length (after trimming any nullptr)
+    const label netLen = (trimNull ? this->count() : len);
+
+    if (!netLen)
+    {
+        // 0-sized : can write with less vertical space
+        os  << nl << indent << netLen
+            << token::BEGIN_LIST << token::END_LIST << nl;
+        return os;
+    }
+
     // The (output) size and start delimiter
-    os  << nl << indent << (trimNull ? this->count() : len) << nl
+    os  << nl << indent << netLen << nl
         << indent << token::BEGIN_LIST << incrIndent << nl;
 
     // Contents

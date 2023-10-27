@@ -105,8 +105,40 @@ void Foam::polyBoundaryMesh::calcGroupIDs() const
 }
 
 
+void Foam::polyBoundaryMesh::populate(PtrList<entry>&& entries)
+{
+    clearLocalAddressing();
+
+    polyPatchList& patches = *this;
+
+    patches.resize_null(entries.size());
+
+    // Transcribe.
+    // Does not handle nullptr at all (what could possibly be done?)
+    forAll(patches, patchi)
+    {
+        patches.set
+        (
+            patchi,
+            polyPatch::New
+            (
+                entries[patchi].keyword(),
+                entries[patchi].dict(),
+                patchi,
+                *this
+            )
+        );
+    }
+
+    entries.clear();
+}
+
+
 bool Foam::polyBoundaryMesh::readContents(const bool allowOptionalRead)
 {
+    bool updated = false;
+    PtrList<entry> entries;
+
     if
     (
         this->isReadRequired()
@@ -116,37 +148,23 @@ bool Foam::polyBoundaryMesh::readContents(const bool allowOptionalRead)
         // Warn for MUST_READ_IF_MODIFIED
         warnNoRereading<polyBoundaryMesh>();
 
-        polyPatchList& patches = *this;
-
         // Read entries
         Istream& is = readStream(typeName);
 
-        PtrList<entry> entries(is);
-        patches.resize_null(entries.size());
-
-        // Transcribe
-        forAll(patches, patchi)
-        {
-            patches.set
-            (
-                patchi,
-                polyPatch::New
-                (
-                    entries[patchi].keyword(),
-                    entries[patchi].dict(),
-                    patchi,
-                    *this
-                )
-            );
-        }
+        is >> entries;
 
         is.check(FUNCTION_NAME);
         close();
-        return true;
+        updated = true;
+    }
+    // Future: support master-only and broadcast?
+
+    if (updated)
+    {
+        populate(std::move(entries));
     }
 
-    // Nothing read
-    return false;
+    return updated;
 }
 
 
@@ -217,6 +235,25 @@ Foam::polyBoundaryMesh::polyBoundaryMesh
 }
 
 
+Foam::polyBoundaryMesh::polyBoundaryMesh
+(
+    const IOobject& io,
+    const polyMesh& pm,
+    PtrList<entry>&& entries
+)
+:
+    polyPatchList(),
+    regIOobject(io),
+    mesh_(pm)
+{
+    if (!readContents(true))  // allowOptionalRead = true
+    {
+        populate(std::move(entries));
+    }
+    entries.clear();
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 void Foam::polyBoundaryMesh::clear()
@@ -237,11 +274,18 @@ void Foam::polyBoundaryMesh::clearGeom()
 }
 
 
-void Foam::polyBoundaryMesh::clearAddressing()
+// Private until it is more generally required (and gets a better name?)
+void Foam::polyBoundaryMesh::clearLocalAddressing()
 {
     neighbourEdgesPtr_.reset(nullptr);
     patchIDPtr_.reset(nullptr);
     groupIDsPtr_.reset(nullptr);
+}
+
+
+void Foam::polyBoundaryMesh::clearAddressing()
+{
+    clearLocalAddressing();
 
     polyPatchList& patches = *this;
 
@@ -1367,22 +1411,56 @@ void Foam::polyBoundaryMesh::reorder
 }
 
 
-bool Foam::polyBoundaryMesh::writeData(Ostream& os) const
+void Foam::polyBoundaryMesh::writeEntry(Ostream& os) const
 {
-    const polyPatchList& patches = *this;
+    const polyPatchList& entries = *this;
 
-    os  << patches.size() << nl << token::BEGIN_LIST << incrIndent << nl;
+    os  << entries.size();
 
-    for (const polyPatch& pp : patches)
+    if (entries.empty())
     {
-        os.beginBlock(pp.name());
-        os  << pp;
-        os.endBlock();
+        // 0-sized : can write with less vertical space
+        os  << token::BEGIN_LIST << token::END_LIST;
+    }
+    else
+    {
+        os  << nl << token::BEGIN_LIST << incrIndent << nl;
+
+        for (const auto& pp : entries)
+        {
+            os.beginBlock(pp.name());
+            os  << pp;
+            os.endBlock();
+        }
+        os  << decrIndent << token::END_LIST;
+    }
+    os.check(FUNCTION_NAME);
+}
+
+
+void Foam::polyBoundaryMesh::writeEntry
+(
+    const keyType& keyword,
+    Ostream& os
+) const
+{
+    const polyPatchList& entries = *this;
+
+    if (!keyword.empty())
+    {
+        os.write(keyword);
+        os << (entries.empty() ? token::SPACE : token::NL);
     }
 
-    os  << decrIndent << token::END_LIST;
+    writeEntry(os);
 
-    os.check(FUNCTION_NAME);
+    if (!keyword.empty()) os.endEntry();
+}
+
+
+bool Foam::polyBoundaryMesh::writeData(Ostream& os) const
+{
+    writeEntry(os);
     return os.good();
 }
 

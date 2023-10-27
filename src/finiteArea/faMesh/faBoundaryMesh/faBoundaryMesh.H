@@ -55,6 +55,7 @@ namespace Foam
 {
 
 // Forward Declarations
+class entry;
 class faMesh;
 class faBoundaryMesh;
 class wordRes;
@@ -87,10 +88,15 @@ class faBoundaryMesh
         //- Calculate group name to patch ids lookup
         void calcGroupIDs() const;
 
+        //- Clear addressing at this level
+        void clearLocalAddressing();
+
+        //- Populate/recreate from dictionary entries
+        void populate(PtrList<entry>&& entries);
+
         //- Return true if contents were read
         //- (controlled by IOobject readOption flags).
         bool readContents(const bool allowOptionalRead);
-
 
 public:
 
@@ -141,6 +147,15 @@ public:
             const IOobject& io,
             const faMesh& fam,
             const faPatchList& list
+        );
+
+        //- Read construct (mandatory, optional) based on IOobject properties
+        //- or fallback to constructing from a list of dictionary entries
+        faBoundaryMesh
+        (
+            const IOobject& io,
+            const faMesh& fam,
+            PtrList<entry>&& entries
         );
 
 
@@ -278,14 +293,24 @@ public:
         //- Correct faBoundaryMesh after topology update
         void updateMesh();
 
-        //- The writeData member function required by regIOobject
-        bool writeData(Ostream& os) const;
 
-        //- Write using stream options
+    // Write
+
+        //- Write as a plain list of entries
+        void writeEntry(Ostream& os) const;
+
+        //- Write as a primitive entry with given name.
+        //- If the keyword is empty, revert to a plain list.
+        void writeEntry(const keyType& keyword, Ostream& os) const;
+
+        //- The writeData member function required by regIOobject
+        virtual bool writeData(Ostream& os) const;
+
+        //- Write using stream options, but always UNCOMPRESSED
         virtual bool writeObject
         (
             IOstreamOption streamOpt,
-            const bool writeOnProc
+            const bool writeOnProc = true
         ) const;
 
 

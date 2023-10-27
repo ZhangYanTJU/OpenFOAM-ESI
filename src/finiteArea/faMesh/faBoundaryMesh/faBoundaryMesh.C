@@ -101,8 +101,40 @@ void Foam::faBoundaryMesh::calcGroupIDs() const
 }
 
 
+void Foam::faBoundaryMesh::populate(PtrList<entry>&& entries)
+{
+    clearLocalAddressing();
+
+    faPatchList& patches = *this;
+
+    patches.resize_null(entries.size());
+
+    // Transcribe.
+    // Does not handle nullptr at all (what could possibly be done?)
+    forAll(patches, patchi)
+    {
+        patches.set
+        (
+            patchi,
+            faPatch::New
+            (
+                entries[patchi].keyword(),
+                entries[patchi].dict(),
+                patchi,
+                *this
+            )
+        );
+    }
+
+    entries.clear();
+}
+
+
 bool Foam::faBoundaryMesh::readContents(const bool allowOptionalRead)
 {
+    bool updated = false;
+    PtrList<entry> entries;
+
     if
     (
         isReadRequired()
@@ -112,37 +144,23 @@ bool Foam::faBoundaryMesh::readContents(const bool allowOptionalRead)
         // Warn for MUST_READ_IF_MODIFIED
         warnNoRereading<faBoundaryMesh>();
 
-        faPatchList& patches = *this;
-
         // Read entries
         Istream& is = readStream(typeName);
 
-        PtrList<entry> entries(is);
-        patches.resize_null(entries.size());
-
-        // Transcribe
-        forAll(patches, patchi)
-        {
-            patches.set
-            (
-                patchi,
-                faPatch::New
-                (
-                    entries[patchi].keyword(),
-                    entries[patchi].dict(),
-                    patchi,
-                    *this
-                )
-            );
-        }
+        is >> entries;
 
         is.check(FUNCTION_NAME);
         close();
-        return true;
+        updated = true;
+    }
+    // Future: support master-only and broadcast?
+
+    if (updated)
+    {
+        populate(std::move(entries));
     }
 
-    // Nothing read
-    return false;
+    return updated;
 }
 
 
@@ -213,11 +231,36 @@ Foam::faBoundaryMesh::faBoundaryMesh
 }
 
 
+Foam::faBoundaryMesh::faBoundaryMesh
+(
+    const IOobject& io,
+    const faMesh& fam,
+    PtrList<entry>&& entries
+)
+:
+    faPatchList(),
+    regIOobject(io),
+    mesh_(fam)
+{
+    if (!readContents(true))  // allowOptionalRead = true
+    {
+        populate(std::move(entries));
+    }
+    entries.clear();
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 void Foam::faBoundaryMesh::clear()
 {
+    clearLocalAddressing();
     faPatchList::clear();
+}
+
+
+void Foam::faBoundaryMesh::clearLocalAddressing()
+{
     groupIDsPtr_.reset(nullptr);
 }
 
@@ -987,22 +1030,56 @@ void Foam::faBoundaryMesh::updateMesh()
 }
 
 
-bool Foam::faBoundaryMesh::writeData(Ostream& os) const
+void Foam::faBoundaryMesh::writeEntry(Ostream& os) const
 {
-    const faPatchList& patches = *this;
+    const faPatchList& entries = *this;
 
-    os  << patches.size() << nl << token::BEGIN_LIST << incrIndent << nl;
+    os  << entries.size();
 
-    for (const faPatch& p : patches)
+    if (entries.empty())
     {
-        os.beginBlock(p.name());
-        os << p;
-        os.endBlock();
+        // 0-sized : can write with less vertical space
+        os << token::BEGIN_LIST << token::END_LIST;
+    }
+    else
+    {
+        os  << nl << token::BEGIN_LIST << incrIndent << nl;
+
+        for (const auto& pp : entries)
+        {
+            os.beginBlock(pp.name());
+            os  << pp;
+            os.endBlock();
+        }
+        os  << decrIndent << token::END_LIST;
+    }
+    os.check(FUNCTION_NAME);
+}
+
+
+void Foam::faBoundaryMesh::writeEntry
+(
+    const keyType& keyword,
+    Ostream& os
+) const
+{
+    const faPatchList& entries = *this;
+
+    if (!keyword.empty())
+    {
+        os.write(keyword);
+        os << (entries.empty() ? token::SPACE : token::NL);
     }
 
-    os  << decrIndent << token::END_LIST;
+    writeEntry(os);
 
-    os.check(FUNCTION_NAME);
+    if (!keyword.empty()) os.endEntry();
+}
+
+
+bool Foam::faBoundaryMesh::writeData(Ostream& os) const
+{
+    writeEntry(os);
     return os.good();
 }
 
@@ -1013,10 +1090,7 @@ bool Foam::faBoundaryMesh::writeObject
     const bool writeOnProc
 ) const
 {
-    // Allow/disallow compression?
-    // 1. keep readable
-    // 2. save some space
-    // ??? streamOpt.compression(IOstreamOption::UNCOMPRESSED);
+    streamOpt.compression(IOstreamOption::UNCOMPRESSED);
     return regIOobject::writeObject(streamOpt, writeOnProc);
 }
 

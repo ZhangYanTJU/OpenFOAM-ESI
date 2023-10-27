@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +41,7 @@ SourceFiles
 #define Foam_boundaryPatch_H
 
 #include "patchIdentifier.H"
+#include "labelRange.H"
 #include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -58,8 +59,10 @@ class boundaryPatch
 {
     // Private Data
 
+        //- The size of the patch
         label size_;
 
+        //- Start label of the patch
         label start_;
 
 public:
@@ -100,24 +103,22 @@ public:
 
     // Member Functions
 
-        label size() const
-        {
-            return size_;
-        }
+        //- The start of the patch
+        label start() const noexcept { return start_; }
 
-        label& size()
-        {
-            return size_;
-        }
+        //- The start of the patch (modifiable)
+        label& start() noexcept { return start_; }
 
-        label start() const
-        {
-            return start_;
-        }
+        //- The size of the patch
+        label size() const noexcept { return size_; }
 
-        label& start()
+        //- The size of the patch (modifiable)
+        label& size() noexcept { return size_; }
+
+        //- Return start/size range of this patch
+        labelRange range() const noexcept
         {
-            return start_;
+            return labelRange(start_, size_);
         }
 
 

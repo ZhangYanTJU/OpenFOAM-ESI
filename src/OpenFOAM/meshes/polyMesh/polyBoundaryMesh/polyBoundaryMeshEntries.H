@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,9 @@ Class
 
 Description
     Read and store dictionary entries for boundary patches
+    The object is *never* registered to avoid registry name clashes with
+    polyBoundaryMesh, which may either already have been registered, or
+    which should subsequently be registered.
 
 SourceFiles
     polyBoundaryMeshEntries.C
@@ -41,6 +44,7 @@ SourceFiles
 #include "regIOobject.H"
 #include "PtrList.H"
 #include "entry.H"
+#include "wordList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,33 +68,70 @@ public:
 
     // Constructors
 
-        //- Read construct from IOobject
-        explicit polyBoundaryMeshEntries(const IOobject& io)
-        :
-            regIOobject(io)
-        {
-            if (isReadRequired() || (isReadOptional() && headerOk()))
-            {
-                // Read as entries
-                Istream& is = readStream(typeName);
-
-                is >> *this;
-                close();
-            }
-        }
+        //- Read construct from IOobject. Never register!
+        explicit polyBoundaryMeshEntries(const IOobject& io);
 
 
-   // Member Functions
+    // Factory Methods
+
+        //- Read and return contents. The IOobject is never registered
+        static PtrList<entry> readContents(const IOobject& io);
+
+
+    // Static Functions
+
+        //- Truncate entries at the first processor patch entry
+        static void removeProcPatches(PtrList<entry>& entries);
+
+        //- Write list of entries
+        static bool writeEntries(Ostream& os, const UPtrList<entry>& entries);
+
+        //- Return a list of patch types, uses the "patch" entry
+        static wordList types(const UPtrList<entry>& entries);
+
+        //- Return a list of patch start face indices, uses "startFace" entry
+        static labelList patchStarts(const UPtrList<entry>& entries);
+
+        //- Return a list of patch sizes, uses "nFaces" entry
+        static labelList patchSizes(const UPtrList<entry>& entries);
+
+
+    // Member Functions
 
         //- Truncate at the first processor patch entry
         void removeProcPatches();
 
-        //- The class is probably read-only
-        bool writeData(Ostream&) const
-        {
-            NotImplemented;
-            return false;
-        }
+
+    // Characteristics
+
+        //- Return a list of patch types, uses the "patch" entry
+        wordList types() const;
+
+        //- Return a list of patch start face indices, uses "startFace" entry
+        labelList patchStarts() const;
+
+        //- Return a list of patch sizes, uses "nFaces" entry
+        labelList patchSizes() const;
+
+
+    // Write
+
+        //- Write as a plain list of entries
+        void writeEntry(Ostream& os) const;
+
+        //- Write as a primitive entry with given name.
+        //- If the keyword is empty, revert to a plain list.
+        void writeEntry(const keyType& keyword, Ostream& os) const;
+
+        //- The writeData member function required by regIOobject
+        virtual bool writeData(Ostream& os) const;
+
+        //- Write using stream options, forces UNCOMPRESSED
+        virtual bool writeObject
+        (
+            IOstreamOption streamOpt,
+            const bool writeOnProc = true
+        ) const;
 };
 
 

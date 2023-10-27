@@ -135,39 +135,58 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
             )
         );
 
-        // NOTE: owner_.hasHeaderClass() is probably sticky from before.
-        // Could potentially cause problems if constructed without reading
-        // and then using readUpdate() to create a new mesh
+        // owner
+        {
+            owner_.clear();
 
-        owner_.clear();
-        owner_ = labelIOList
-        (
-            IOobject
+            labelIOList list
             (
-                "owner",
-                facesInst,
-                meshSubDir,
-                *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            )
-        );
+                IOobject
+                (
+                    "owner",
+                    facesInst,
+                    meshSubDir,
+                    *this,
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                )
+            );
 
-        neighbour_.clear();
-        neighbour_ = labelIOList
-        (
-            IOobject
+            // Update owner headerClassName.
+            // The "cells" logic below may rely on it!
+
+            owner_ = std::move(static_cast<labelList&>(list));
+            owner_.headerClassName() = std::move(list.headerClassName());
+            owner_.note() = std::move(list.note());
+        }
+
+        // neighbour
+        {
+            neighbour_.clear();
+
+            labelIOList list
             (
-                "neighbour",
-                facesInst,
-                meshSubDir,
-                *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            )
-        );
+                IOobject
+                (
+                    "neighbour",
+                    facesInst,
+                    meshSubDir,
+                    *this,
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
+                )
+            );
+
+            // Update neighbour headerClassName.
+            // - not currently needed, but for symmetry with owner
+            // The "cells" logic below may rely on it!
+
+            neighbour_ = std::move(static_cast<labelList&>(list));
+            neighbour_.headerClassName() = std::move(list.headerClassName());
+            neighbour_.note() = std::move(list.note());
+        }
 
         // Reset the boundary patches
         polyBoundaryMesh newBoundary
@@ -290,117 +309,49 @@ Foam::polyMesh::readUpdateState Foam::polyMesh::readUpdate()
         // - this will be extremely fragile (not just here) if the names
         //   or the order of the zones also change
 
-        // pointZones
-        {
-            pointZones_.clearAddressing();
-            pointZones_.clearPrimitives();
-
-            pointZoneMesh newZones
-            (
-                IOobject
-                (
-                    "pointZones",
-                    facesInst,
-                    meshSubDir,
-                    *this,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                *this,
-                PtrList<pointZone>()
-            );
-            pointZones_.resize(newZones.size());
-
-            forAll(pointZones_, zonei)
-            {
-                // Existing or new empty zone
-                auto& zn =
-                    pointZones_.try_emplace
-                    (
-                        zonei,
-                        newZones[zonei], Foam::zero{}, pointZones_
-                    );
-
-                // Set addressing
-                zn.resetAddressing(std::move(newZones[zonei]));
-            }
+        #undef  update_meshZones
+        #define update_meshZones(DataMember)                                  \
+        {                                                                     \
+            (DataMember).clearAddressing();                                   \
+            (DataMember).clearPrimitives();                                   \
+                                                                              \
+            decltype(DataMember) newZones                                     \
+            (                                                                 \
+                IOobject                                                      \
+                (                                                             \
+                    (DataMember).name(),                                      \
+                    facesInst,                                                \
+                    meshSubDir,                                               \
+                    *this,                                                    \
+                    IOobject::READ_IF_PRESENT,                                \
+                    IOobject::NO_WRITE,                                       \
+                    IOobject::NO_REGISTER                                     \
+                ),                                                            \
+                *this,                                                        \
+                PtrList<entry>()                                              \
+            );                                                                \
+            const label numZones = newZones.size();                           \
+            (DataMember).resize(numZones);                                    \
+                                                                              \
+            for (label zonei = 0; zonei < numZones; ++zonei)                  \
+            {                                                                 \
+                /* Existing or new empty zone */                              \
+                auto& zn = (DataMember).try_emplace                           \
+                (                                                             \
+                    zonei,                                                    \
+                    newZones[zonei], Foam::zero{}, (DataMember)               \
+                );                                                            \
+                                                                              \
+                /* Set addressing */                                          \
+                zn.resetAddressing(std::move(newZones[zonei]));               \
+            }                                                                 \
         }
 
-        // faceZones
-        {
-            faceZones_.clearAddressing();
-            faceZones_.clearPrimitives();
+        update_meshZones(pointZones_);
+        update_meshZones(faceZones_);
+        update_meshZones(cellZones_);
+        #undef update_meshZones
 
-            faceZoneMesh newZones
-            (
-                IOobject
-                (
-                    "faceZones",
-                    facesInst,
-                    meshSubDir,
-                    *this,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                *this,
-                PtrList<faceZone>()
-            );
-            faceZones_.resize(newZones.size());
-
-            forAll(faceZones_, zonei)
-            {
-                // Existing or new empty zone
-                auto& zn =
-                    faceZones_.try_emplace
-                    (
-                        zonei,
-                        newZones[zonei], Foam::zero{}, faceZones_
-                    );
-
-                // Set addressing
-                zn.resetAddressing(std::move(newZones[zonei]));
-            }
-        }
-
-        // cellZones
-        {
-            cellZones_.clearAddressing();
-            cellZones_.clearPrimitives();
-
-            cellZoneMesh newZones
-            (
-                IOobject
-                (
-                    "cellZones",
-                    facesInst,
-                    meshSubDir,
-                    *this,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                *this,
-                PtrList<cellZone>()
-            );
-
-            cellZones_.resize(newZones.size());
-
-            forAll(cellZones_, zonei)
-            {
-                // Existing or new empty zone
-                auto& zn =
-                    cellZones_.try_emplace
-                    (
-                        zonei,
-                        newZones[zonei], Foam::zero{}, cellZones_
-                    );
-
-                // Set addressing
-                zn.resetAddressing(std::move(newZones[zonei]));
-            }
-        }
 
         // Re-read tet base points
         tetBasePtIsPtr_ = readTetBasePtIs();

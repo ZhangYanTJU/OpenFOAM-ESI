@@ -158,11 +158,54 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcGroupIDs() const
 
 
 template<class ZoneType, class MeshType>
+void Foam::ZoneMesh<ZoneType, MeshType>::populate
+(
+    PtrList<entry>&& entries
+)
+{
+    clearLocalAddressing();
+
+    PtrList<ZoneType>& zones = *this;
+
+    zones.resize_null(entries.size());
+
+    // Transcribe
+    // Does not handle nullptr at all
+    forAll(zones, zonei)
+    {
+        // Possible handling for nullptr:
+        // zones.emplace_set
+        // (
+        //     zonei,
+        //     "missing_" + ::Foam::name(zonei), zonei, *this
+        // );
+
+        zones.set
+        (
+            zonei,
+            ZoneType::New
+            (
+                entries[zonei].keyword(),
+                entries[zonei].dict(),
+                zonei,
+                *this
+            )
+        );
+    }
+
+    entries.clear();
+}
+
+
+template<class ZoneType, class MeshType>
 bool Foam::ZoneMesh<ZoneType, MeshType>::readContents
 (
     const bool allowOptionalRead
 )
 {
+    bool updated = false;
+    PtrList<entry> entries;
+
     if
     (
         isReadRequired()
@@ -172,37 +215,24 @@ bool Foam::ZoneMesh<ZoneType, MeshType>::readContents
         // Warn for MUST_READ_IF_MODIFIED
         warnNoRereading<ZoneMesh<ZoneType, MeshType>>();
 
-        PtrList<ZoneType>& zones = *this;
-
         // Read entries
         Istream& is = readStream(typeName);
 
-        PtrList<entry> entries(is);
-        zones.resize_null(entries.size());
-
-        // Transcribe
-        forAll(zones, zonei)
-        {
-            zones.set
-            (
-                zonei,
-                ZoneType::New
-                (
-                    entries[zonei].keyword(),
-                    entries[zonei].dict(),
-                    zonei,
-                    *this
-                )
-            );
-        }
+        is >> entries;
 
         is.check(FUNCTION_NAME);
         close();
-        return true;
+        updated = true;
     }
 
-    // Nothing read
-    return false;
+    // Future: support master-only and broadcast?
+
+    if (updated)
+    {
+        populate(std::move(entries));
+    }
+
+    return updated;
 }
 
 
@@ -280,6 +310,26 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
             zones.set(zonei, list[zonei].clone(*this));
         }
     }
+}
+
+
+template<class ZoneType, class MeshType>
+Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
+(
+    const IOobject& io,
+    const MeshType& mesh,
+    PtrList<entry>&& entries
+)
+:
+    PtrList<ZoneType>(),
+    regIOobject(io),
+    mesh_(mesh)
+{
+    if (!readContents(true))  // allowOptionalRead = true
+    {
+        populate(std::move(entries));
+    }
+    entries.clear();
 }
 
 
@@ -759,11 +809,19 @@ void Foam::ZoneMesh<ZoneType, MeshType>::setGroup
 }
 
 
+// Private until it is more generally required (and gets a better name?)
 template<class ZoneType, class MeshType>
-void Foam::ZoneMesh<ZoneType, MeshType>::clearAddressing()
+void Foam::ZoneMesh<ZoneType, MeshType>::clearLocalAddressing()
 {
     zoneMapPtr_.reset(nullptr);
     groupIDsPtr_.reset(nullptr);
+}
+
+
+template<class ZoneType, class MeshType>
+void Foam::ZoneMesh<ZoneType, MeshType>::clearAddressing()
+{
+    clearLocalAddressing();
 
     PtrList<ZoneType>& zones = *this;
 
