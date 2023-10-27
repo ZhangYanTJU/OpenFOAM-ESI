@@ -355,10 +355,14 @@ void Foam::Time::readDict()
     // Adjust the TimeState name
     dimensionedScalar::name() = timeName(value());
 
+    // Specifying the write version doesn't make sense (2023-10)
     if (controlDict_.found("writeVersion"))
     {
         writeStreamOption_.version(controlDict_.get<token>("writeVersion"));
     }
+
+    // FUTURE? optional control to support command-line option to
+    // set the write format and ignore this dictionary entry.
 
     if (controlDict_.found("writeFormat"))
     {

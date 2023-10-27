@@ -348,7 +348,7 @@ public:
         );
 
 
-    // Selectors
+    // Factory Methods
 
         //- Construct (dummy) Time - no functionObjects or libraries
         static autoPtr<Time> New();
@@ -358,6 +358,15 @@ public:
 
         //- Construct (dummy) Time - no functionObjects or libraries
         static autoPtr<Time> New(const argList& args);
+
+        //- Construct (dummy) global Time - no functionObjects or libraries,
+        //- using the global path information stored in the FOAM_CASE
+        //- environment. See argList::envGlobalPath()
+        static autoPtr<Time> NewGlobalTime();
+
+        //- Construct (dummy) global Time - no functionObjects or libraries,
+        //- using the global path information from the referenced Time.
+        static autoPtr<Time> NewGlobalTime(const Time& runTime);
 
 
     //- Destructor
@@ -376,119 +385,136 @@ public:
         static word timeName(const scalar t, const int precision = precision_);
 
 
-        // Database Functions
+    // Database names and paths
 
-            //- Return name from objectRegistry and not TimePaths
-            using objectRegistry::name;
+        //- Use name from objectRegistry, not TimePaths
+        using objectRegistry::name;
 
-            //- Return root path
-            using TimePaths::rootPath;
+        //- Return the rootPath
+        using TimePaths::rootPath;
 
-            //- Return case name
-            using TimePaths::caseName;
+        //- Return global case name
+        using TimePaths::globalCaseName;
 
-            //- Return path
-            fileName path() const
-            {
-                return rootPath()/caseName();
-            }
+        //- Return case name
+        using TimePaths::caseName;
 
-            //- Return read access to the controlDict dictionary
-            const dictionary& controlDict() const noexcept
-            {
-                return controlDict_;
-            }
+        //- Return path = rootPath/caseName. Same as TimePaths::path()
+        fileName path() const
+        {
+            return TimePaths::rootPath()/TimePaths::caseName();
+        }
 
-            virtual const fileName& dbDir() const
-            {
-                return fileName::null;
-            }
+        //- Return global path for the case = rootPath/globalCaseName.
+        //- Same as TimePaths::globalPath()
+        fileName globalPath() const
+        {
+            return TimePaths::rootPath()/TimePaths::globalCaseName();
+        }
 
-            //- Return current time path
-            fileName timePath() const
-            {
-                return path()/timeName();
-            }
+        //- Return current time path = path/timeName
+        fileName timePath() const
+        {
+            return TimePaths::path()/TimeState::timeName();
+        }
 
-            //- The write stream option (format, compression, version)
-            IOstreamOption writeStreamOption() const noexcept
-            {
-                return writeStreamOption_;
-            }
+        //- Return current time global path = globalPath/timeName
+        fileName globalTimePath() const
+        {
+            return TimePaths::globalPath()/TimeState::timeName();
+        }
 
-            //- The write stream format
-            IOstreamOption::streamFormat writeFormat() const noexcept
-            {
-                return writeStreamOption_.format();
-            }
 
-            //- The write stream compression
-            IOstreamOption::compressionType writeCompression() const noexcept
-            {
-                return writeStreamOption_.compression();
-            }
+    // Database Functions
 
-            //- The write stream version
-            IOstreamOption::versionNumber writeVersion() const noexcept
-            {
-                return writeStreamOption_.version();
-            }
+        //- Return read access to the controlDict dictionary
+        const dictionary& controlDict() const noexcept { return controlDict_; }
 
-            //- Default graph format
-            const word& graphFormat() const noexcept
-            {
-                return graphFormat_;
-            }
+        virtual const fileName& dbDir() const { return fileName::null; }
 
-            //- Supports re-reading
-            Switch runTimeModifiable() const noexcept
-            {
-                return runTimeModifiable_;
-            }
+        //- Get write stream option (format, compression, version)
+        inline IOstreamOption writeStreamOption() const noexcept;
 
-            //- Set re-reading support on/off (use with caution).
-            //  \return the previous value
-            Switch runTimeModifiable(const Switch sw) noexcept
-            {
-                Switch old(runTimeModifiable_);
-                runTimeModifiable_ = sw;
-                return old;
-            }
+        //- Get write stream format
+        inline IOstreamOption::streamFormat writeFormat() const noexcept;
 
-            //- Read control dictionary, update controls and time
-            virtual bool read();
+        //- Set the write stream format and return the previous value.
+        //  This change will only effective until the next readModified.
+        //  As a side-effect (eg, changing from ASCII to BINARY)
+        //  it may also disable compression
+        inline IOstreamOption::streamFormat
+        writeFormat(IOstreamOption::streamFormat fmt) noexcept;
 
-            //- Read the objects that have been modified
-            void readModifiedObjects();
+        //- Get the write stream compression
+        inline IOstreamOption::compressionType writeCompression()
+        const noexcept;
 
-            //- Return time instance (location) of \em dir that contains
-            //- the file \em name (eg, used in reading mesh data).
-            //  When \em is empty, searches for directory \em dir only.
-            //  Does not search beyond stopInstance (if set) or \em constant.
-            //
-            //  \note If the instance cannot be found, returns the
-            //  stopInstance (if set and reached) or \em constant.
-            //  FatalError if it cannot be found and readOpt is
-            //  (MUST_READ or READ_MODIFIED).
-            word findInstance
-            (
-                const fileName& dir,
-                const word& name = word::null,
-                IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-                const word& stopInstance = word::null
-            ) const;
+        //- Get the write stream version
+        inline IOstreamOption::versionNumber writeVersion() const noexcept;
 
-            //- Search the case for the time directory path
-            //- corresponding to the given instance
-            word findInstancePath
-            (
-                const fileName& directory,
-                const instant& t
-            ) const;
+        //- Default graph format
+        const word& graphFormat() const noexcept { return graphFormat_; }
 
-            //- Search the case for the time directory path
-            //- corresponding to the given instance
-            word findInstancePath(const instant& t) const;
+
+    // Reading
+
+        //- Supports re-reading
+        Switch runTimeModifiable() const noexcept
+        {
+            return runTimeModifiable_;
+        }
+
+        //- Set re-reading support on/off (use with caution).
+        //  \return the previous value
+        Switch runTimeModifiable(Switch sw) noexcept
+        {
+            Switch old(runTimeModifiable_);
+            runTimeModifiable_ = sw;
+            return old;
+        }
+
+        //- Read control dictionary, update controls and time
+        virtual bool read();
+
+        //- Read the objects that have been modified
+        void readModifiedObjects();
+
+
+    // Searching
+
+        //- Return time instance (location) of \em dir that contains
+        //- the file \em name (eg, used in reading mesh data).
+        //  When \em is empty, searches for directory \em dir only.
+        //  Does not search beyond stopInstance (if set) or \em constant.
+        //
+        //  \note If the instance cannot be found, returns the
+        //  stopInstance (if set and reached) or \em constant.
+        //  FatalError if it cannot be found and readOpt is
+        //  (MUST_READ or READ_MODIFIED).
+        word findInstance
+        (
+            const fileName& dir,
+            const word& name = word::null,
+            IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
+            const word& stopInstance = word::null
+        ) const;
+
+        //- Search the case for the time directory path
+        //- corresponding to the given instance
+        word findInstancePath
+        (
+            const fileName& directory,
+            const instant& t
+        ) const;
+
+        //- Search the case for the time directory path
+        //- corresponding to the given instance
+        word findInstancePath(const instant& t) const;
+
+
+    // Member Functions
+
+        // Writing
 
             //- Write time dictionary to the \<time\>/uniform directory
             virtual bool writeTimeDict() const;

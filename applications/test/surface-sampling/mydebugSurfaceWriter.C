@@ -317,7 +317,11 @@ Foam::fileName Foam::surfaceWriters::mydebugWriter::write()
 
     if (enableWrite_)
     {
+        #if (OPENFOAM <= 2306)
         dummyTimePtr = Time::New(argList::envGlobalPath());
+        #else
+        dummyTimePtr = Time::NewGlobalTime();
+        #endif
     }
     else if (verbose_)
     {
@@ -392,7 +396,11 @@ Foam::fileName Foam::surfaceWriters::mydebugWriter::writeTemplate
 
     if (enableWrite_)
     {
+        #if (OPENFOAM <= 2306)
         dummyTimePtr = Time::New(argList::envGlobalPath());
+        #else
+        dummyTimePtr = Time::NewGlobalTime();
+        #endif
     }
     else if (verbose_)
     {

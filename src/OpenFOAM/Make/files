@@ -395,6 +395,7 @@ $(Time)/TimePaths.C
 $(Time)/TimeState.C
 $(Time)/Time.C
 $(Time)/TimeIO.C
+$(Time)/TimeNew.C
 $(Time)/subCycleTime.C
 $(Time)/subLoopTime.C
 $(Time)/timeSelector.C

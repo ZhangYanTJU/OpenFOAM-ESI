@@ -117,4 +117,47 @@ inline Foam::Time::Time
 {}
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+inline Foam::IOstreamOption
+Foam::Time::writeStreamOption() const noexcept
+{
+    return writeStreamOption_;
+}
+
+
+inline Foam::IOstreamOption::streamFormat
+Foam::Time::writeFormat() const noexcept
+{
+    return writeStreamOption_.format();
+}
+
+
+inline Foam::IOstreamOption::streamFormat
+Foam::Time::writeFormat(IOstreamOption::streamFormat fmt) noexcept
+{
+    auto old(writeStreamOption_.format(fmt));
+    if (writeStreamOption_.format() != IOstreamOption::ASCII)
+    {
+        // Disable output compression for non-ASCII
+        writeStreamOption_.compression(IOstreamOption::UNCOMPRESSED);
+    }
+    return old;
+}
+
+
+inline Foam::IOstreamOption::compressionType
+Foam::Time::writeCompression() const noexcept
+{
+    return writeStreamOption_.compression();
+}
+
+
+inline Foam::IOstreamOption::versionNumber
+Foam::Time::writeVersion() const noexcept
+{
+    return writeStreamOption_.version();
+}
+
+
 // ************************************************************************* //
