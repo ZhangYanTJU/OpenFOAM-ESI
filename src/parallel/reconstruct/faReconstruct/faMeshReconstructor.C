@@ -454,7 +454,7 @@ void Foam::faMeshReconstructor::createMesh()
     const Time& runTime = procMesh_.thisDb().time();
 
     // Time for non-parallel case (w/o functionObjects or libs)
-    serialRunTime_ = Time::New(runTime.globalPath().toAbsolute());
+    serialRunTime_ = Time::NewGlobalTime(runTime);
 
 
     // Trivial polyMesh only containing points and faces.

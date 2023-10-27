@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -376,12 +376,14 @@ Foam::fileName::Type Foam::fileName::type
 
 Foam::fileName& Foam::fileName::toAbsolute()
 {
-    if (!isAbsolute(*this))
+    fileName& f = *this;
+
+    if (!f.isAbsolute())
     {
-        fileName& f = *this;
-        f = cwd()/f;
-        f.clean();  // Remove unneeded ".."
+        f = Foam::cwd()/f;
     }
+
+    f.clean();  // Remove unneeded ".."
 
     return *this;
 }

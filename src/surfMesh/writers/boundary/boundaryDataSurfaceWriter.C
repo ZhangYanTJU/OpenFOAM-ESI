@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "boundaryDataSurfaceWriter.H"
-#include "argList.H"
 #include "OFstream.H"
 #include "OSspecific.H"
 #include "IOmanip.H"
@@ -203,7 +202,7 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::write()
     fileName surfaceDir = outputPath_;
 
     // Dummy Time to use as objectRegistry
-    refPtr<Time> timePtr(Time::New(argList::envGlobalPath()));
+    refPtr<Time> timePtr(Time::NewGlobalTime());
 
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();
@@ -265,7 +264,7 @@ Foam::fileName Foam::surfaceWriters::boundaryDataWriter::writeTemplate
 
 
     // Dummy Time to use as objectRegistry
-    refPtr<Time> timePtr(Time::New(argList::envGlobalPath()));
+    refPtr<Time> timePtr(Time::NewGlobalTime());
 
     // const meshedSurf& surf = surface();
     const meshedSurfRef& surf = adjustSurface();

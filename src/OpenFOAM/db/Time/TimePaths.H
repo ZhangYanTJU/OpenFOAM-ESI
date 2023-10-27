@@ -133,10 +133,10 @@ public:
         //- The case name for modification (use with caution)
         inline fileName& caseName() noexcept;
 
-        //- Return path for the case
+        //- Return path for the case = rootPath/caseName
         inline fileName path() const;
 
-        //- Return global path for the case
+        //- Return global path for the case = rootPath/globalCaseName
         inline fileName globalPath() const;
 
         //- Return the input relative to the globalPath by stripping off
