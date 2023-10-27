@@ -72,6 +72,7 @@ Foam::boundaryPatch::boundaryPatch(const boundaryPatch& p, const label index)
 
 void Foam::boundaryPatch::write(Ostream& os) const
 {
+    // if (!type_.empty()) os.writeEntry("type", type_);
     patchIdentifier::write(os);
     os.writeEntry("nFaces", size_);
     os.writeEntry("startFace", start_);
