@@ -62,7 +62,7 @@ $(nucleation)/wallBoiling/wallBoiling.C
 blending = BlendedInterfacialModel/blendingMethods
 $(blending)/blendingMethod/blendingMethod.C
 $(blending)/noBlending/noBlending.C
-$(blending)/linear/linear.C
+$(blending)/linear/linearBlendingMethod.C
 $(blending)/hyperbolic/hyperbolic.C
 
 
@@ -179,7 +179,7 @@ $(partitioning)/partitioningModel/partitioningModel.C
 $(partitioning)/phaseFraction/phaseFraction.C
 $(partitioning)/Lavieville/Lavieville.C
 $(partitioning)/cosine/cosine.C
-$(partitioning)/linear/linear.C
+$(partitioning)/linear/linearPartitioningModel.C
 
 nucleationSite = $(wallBoilingSubModels)/nucleationSiteModels
 $(nucleationSite)/nucleationSiteModel/nucleationSiteModel.C

@@ -29,7 +29,7 @@ Class
 Description
 
 SourceFiles
-    linear.C
+    linearBlendingMethod.C
 
 \*---------------------------------------------------------------------------*/
 

@@ -70,7 +70,7 @@ Note
       - alphaLiquid0 0.05
 
 SourceFiles
-    linear.C
+    linearPartitioningModel.C
 
 \*---------------------------------------------------------------------------*/
 
