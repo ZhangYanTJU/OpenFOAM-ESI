@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,7 +101,7 @@ void Foam::fluentFvMesh::writeFluentMesh() const
 
     // Writing points
     fluentMeshFile
-            << "(10 (1 1 ";
+            << "(10 (3 1 ";
 
     fluentMeshFile.setf(ios::hex, ios::basefield);
     fluentMeshFile
