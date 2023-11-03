@@ -217,6 +217,7 @@ Foam::functionObjects::electricPotential::electricPotential
             IOobject::scopedName(typeName, "E")
         )
     ),
+    fvOptions_(mesh_),
     nCorr_(1),
     writeDerivedFields_(false),
     electricField_(false)
@@ -341,7 +342,12 @@ bool Foam::functionObjects::electricPotential::read(const dictionary& dict)
         }
     }
 
-    return false;
+    if (const dictionary* dictptr = dict.findDict("fvOptions"))
+    {
+        fvOptions_.reset(*dictptr);
+    }
+
+    return true;
 }
 
 
@@ -362,6 +368,8 @@ bool Foam::functionObjects::electricPotential::execute()
         );
 
         eVEqn.relax();
+
+        fvOptions_.constrain(eVEqn);
 
         eVEqn.solve();
     }
