@@ -5,7 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,129 +26,126 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "randomDecomp.H"
-#include "Random.H"
+#include "scotchDecomp.H"
 #include "addToRunTimeSelectionTable.H"
+#include "Time.H"
+
+static const char* notImplementedMessage =
+"Attempted to use <scotch> without the scotchDecomp library loaded.\n"
+"This message is from the dummy scotchDecomp stub library instead.\n\n"
+"Please install <scotch> and ensure libscotch.so is in LD_LIBRARY_PATH.\n"
+"The scotchDecomp library can then be built from "
+"src/parallel/decompose/scotchDecomp.\n"
+"Dynamically loading or linking this library will add "
+"<scotch> as a decomposition method.\n";
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeName(randomDecomp);
+    defineTypeNameAndDebug(scotchDecomp, 0);
     addToRunTimeSelectionTable
     (
         decompositionMethod,
-        randomDecomp,
+        scotchDecomp,
         dictionary
     );
 }
 
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::labelList Foam::randomDecomp::randomMap(const label nCells) const
+Foam::label Foam::scotchDecomp::decomposeSerial
+(
+    const labelList& adjncy,
+    const labelList& xadj,
+    const List<scalar>& cWeights,
+    labelList& decomp
+) const
 {
-    Random rndGen(0);
+    FatalErrorInFunction
+        << notImplementedMessage << nl
+        << exit(FatalError);
 
-    labelList finalDecomp(nCells);
-
-    if (agglom_ > 1)
-    {
-        label cached = 0;
-        label repeat = 0;
-
-        for (label& val : finalDecomp)
-        {
-            if (!repeat)
-            {
-                cached = rndGen.position<label>(0, nDomains_ - 1);
-                repeat = agglom_;
-            }
-            --repeat;
-
-            val = cached;
-        }
-    }
-    else
-    {
-        for (label& val : finalDecomp)
-        {
-            val = rndGen.position<label>(0, nDomains_ - 1);
-        }
-    }
-
-    return finalDecomp;
+    return -1;
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::randomDecomp::randomDecomp(const label numDomains)
+Foam::scotchDecomp::scotchDecomp(const label numDomains)
 :
-    decompositionMethod(numDomains),
-    agglom_(0)
+    metisLikeDecomp(numDomains)
 {}
 
 
-Foam::randomDecomp::randomDecomp
+Foam::scotchDecomp::scotchDecomp
 (
     const dictionary& decompDict,
-    const word& regionName,
-    int select
+    const word& regionName
 )
 :
-    decompositionMethod(decompDict, regionName),
-    agglom_(0)
-{
-    const dictionary& coeffs = findCoeffsDict(typeName + "Coeffs", select);
-
-    // No sanity check needed here (done in randomMap routine)
-    coeffs.readIfPresent("agglom", agglom_);
-}
+    metisLikeDecomp("scotch", decompDict, regionName)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::labelList Foam::randomDecomp::decompose
-(
-    const pointField& points,
-    const scalarField&
-) const
-{
-    return randomMap(points.size());
-}
-
-
-Foam::labelList Foam::randomDecomp::decompose
+Foam::labelList Foam::scotchDecomp::decompose
 (
     const polyMesh& mesh,
-    const pointField&,
-    const scalarField&
+    const pointField& points,
+    const scalarField& pointWeights
 ) const
 {
-    return randomMap(mesh.nCells());
+    FatalErrorInFunction
+        << notImplementedMessage << exit(FatalError);
+
+    return labelList();
 }
 
 
-Foam::labelList Foam::randomDecomp::decompose
+Foam::labelList Foam::scotchDecomp::decompose
+(
+    const polyMesh& mesh,
+    const labelList& agglom,
+    const pointField& agglomPoints,
+    const scalarField& agglomWeights
+) const
+{
+    FatalErrorInFunction
+        << notImplementedMessage << exit(FatalError);
+
+    return labelList();
+}
+
+
+Foam::labelList Foam::scotchDecomp::decompose
 (
     const CompactListList<label>& globalCellCells,
     const pointField&,
     const scalarField&
 ) const
 {
-    return randomMap(globalCellCells.size());
+    FatalErrorInFunction
+        << notImplementedMessage << exit(FatalError);
+
+    return labelList();
 }
 
 
-Foam::labelList Foam::randomDecomp::decompose
+Foam::labelList Foam::scotchDecomp::decompose
 (
     const labelListList& globalCellCells,
     const pointField&,
     const scalarField&
 ) const
 {
-    return randomMap(globalCellCells.size());
+    FatalErrorInFunction
+        << notImplementedMessage << exit(FatalError);
+
+    return labelList();
 }
 
 

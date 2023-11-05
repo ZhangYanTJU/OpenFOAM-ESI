@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,8 +59,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kahipDecomp_H
-#define kahipDecomp_H
+#ifndef Foam_kahipDecomp_H
+#define Foam_kahipDecomp_H
 
 #include "metisLikeDecomp.H"
 #include "Enum.H"
@@ -90,13 +90,6 @@ protected:
         ) const;
 
 
-        //- No copy construct
-        kahipDecomp(const kahipDecomp&) = delete;
-
-        //- No copy assignment
-        void operator=(const kahipDecomp&) = delete;
-
-
 public:
 
     //- The predefined KaHIP configuration types
@@ -115,11 +108,23 @@ public:
     static const Enum<configs> configNames;
 
 
+    // Generated Methods
+
+        //- No copy construct
+        kahipDecomp(const kahipDecomp&) = delete;
+
+        //- No copy assignment
+        void operator=(const kahipDecomp&) = delete;
+
+
     //- Runtime type information
     TypeName("kahip");
 
 
     // Constructors
+
+        //- Construct with number of domains (no coefficients or constraints)
+        explicit kahipDecomp(const label numDomains);
 
         //- Construct given decomposition dictionary and optional region name
         explicit kahipDecomp
@@ -135,6 +140,7 @@ public:
 
     // Member Functions
 
+        //- Method is parallel aware
         virtual bool parallelAware() const
         {
             return true;

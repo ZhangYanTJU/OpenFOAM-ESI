@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "renumberMethod.H"
-#include "decompositionMethod.H"
+#include "globalMeshData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -74,7 +74,7 @@ Foam::labelList Foam::renumberMethod::renumber
 ) const
 {
     CompactListList<label> cellCells;
-    decompositionMethod::calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh,
         identity(mesh.nCells()),
@@ -117,7 +117,7 @@ Foam::labelList Foam::renumberMethod::renumber
 ) const
 {
     CompactListList<label> coarseCellCells;
-    decompositionMethod::calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh,
         fineToCoarse,
@@ -132,15 +132,8 @@ Foam::labelList Foam::renumberMethod::renumber
         renumber(coarseCellCells, coarsePoints)
     );
 
-    // Rework back into renumbering for original mesh_
-    labelList fineDistribution(fineToCoarse.size());
-
-    forAll(fineDistribution, i)
-    {
-        fineDistribution[i] = coarseDistribution[fineToCoarse[i]];
-    }
-
-    return fineDistribution;
+    // From coarse back to fine for original mesh
+    return labelList(coarseDistribution, fineToCoarse);
 }
 
 

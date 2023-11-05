@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,7 +36,7 @@ Description
     Coefficients:
     \table
         Property  | Description                             | Required | Default
-        agglom    | Number of cells to agglomerate          | no  | 1
+        agglom    | Number of cells to agglomerate          | no  | 0
     \endtable
 
 SourceFiles
@@ -62,7 +62,7 @@ class randomDecomp
 {
     // Private Data
 
-        //- Number of cells to agglomerate per random value (default: 1)
+        //- Number of cells to agglomerate per random value (default: 0)
         label agglom_;
 
 
@@ -71,20 +71,25 @@ class randomDecomp
         //- Random distribution on the 0-nCells interval
         labelList randomMap(const label nCells) const;
 
-        //- No copy construct
-        void operator=(const randomDecomp&) = delete;
+public:
 
-        //- No copy assignment
+    // Generated Methods
+
+        //- No copy construct
         randomDecomp(const randomDecomp&) = delete;
 
+        //- No copy assignment
+        void operator=(const randomDecomp&) = delete;
 
-public:
 
     //- Runtime type information
     TypeNameNoDebug("random");
 
 
     // Constructors
+
+        //- Construct with number of domains (no coefficients or constraints)
+        explicit randomDecomp(const label numDomains);
 
         //- Construct for decomposition dictionary and optional region name
         explicit randomDecomp
@@ -107,25 +112,28 @@ public:
             return true;
         }
 
-
-    // No topology (implemented by geometric decomposers)
-
         //- Return for every coordinate the wanted processor number.
         virtual labelList decompose
         (
             const pointField& points,
-            const scalarField& pointWeights
+            const scalarField& pointWeights_unused = scalarField::null()
         ) const;
-
-        //- Decompose with uniform weights on the points
-        virtual labelList decompose(const pointField& points) const;
 
         //- Return for every coordinate the wanted processor number.
         virtual labelList decompose
         (
             const polyMesh& mesh,
-            const pointField& cc,
-            const scalarField& cWeights
+            const pointField& cc_unused = pointField::null(),
+            const scalarField& cWeights_unused = scalarField::null()
+        ) const;
+
+        //- Return for every coordinate the wanted processor number.
+        //  Explicitly provided connectivity - does not use mesh_.
+        virtual labelList decompose
+        (
+            const CompactListList<label>& globalCellCells,
+            const pointField& cc_unused = pointField::null(),
+            const scalarField& cWeights_unused = scalarField::null()
         ) const;
 
         //- Return for every coordinate the wanted processor number.
@@ -133,8 +141,8 @@ public:
         virtual labelList decompose
         (
             const labelListList& globalCellCells,
-            const pointField& cc,
-            const scalarField& cWeights
+            const pointField& cc_unused = pointField::null(),
+            const scalarField& cWeights_unused = scalarField::null()
         ) const;
 };
 

@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,29 +25,27 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "scotchDecomp.H"
+#include "kahipDecomp.H"
 #include "addToRunTimeSelectionTable.H"
-#include "Time.H"
 
 static const char* notImplementedMessage =
-"Attempted to use <scotch> without the scotchDecomp library loaded.\n"
-"This message is from the dummy scotchDecomp stub library instead.\n\n"
-"Please install <scotch> and ensure libscotch.so is in LD_LIBRARY_PATH.\n"
-"The scotchDecomp library can then be built from "
-"src/parallel/decompose/scotchDecomp.\n"
+"Attempted to use <kahip> without the kahipDecomp library loaded.\n"
+"This message is from the dummy kahipDecomp stub library instead.\n\n"
+"Please install <kahip> and ensure libkahip.so is in LD_LIBRARY_PATH.\n"
+"The kahipDecomp library can then be built from "
+"src/parallel/decompose/kahipDecomp.\n"
 "Dynamically loading or linking this library will add "
-"<scotch> as a decomposition method.\n";
+"<kahip> as a decomposition method.\n";
 
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(scotchDecomp, 0);
+    defineTypeNameAndDebug(kahipDecomp, 0);
     addToRunTimeSelectionTable
     (
         decompositionMethod,
-        scotchDecomp,
+        kahipDecomp,
         dictionary
     );
 }
@@ -56,17 +53,16 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::label Foam::scotchDecomp::decomposeSerial
+Foam::label Foam::kahipDecomp::decomposeSerial
 (
     const labelList& adjncy,
     const labelList& xadj,
-    const List<scalar>& cWeights,
+    const List<scalar>& cellWeights,
     labelList& decomp
 ) const
 {
     FatalErrorInFunction
-        << notImplementedMessage << nl
-        << exit(FatalError);
+        << notImplementedMessage << exit(FatalError);
 
     return -1;
 }
@@ -74,59 +70,20 @@ Foam::label Foam::scotchDecomp::decomposeSerial
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::scotchDecomp::scotchDecomp
+Foam::kahipDecomp::kahipDecomp(const label numDomains)
+:
+    metisLikeDecomp(numDomains)
+{}
+
+
+Foam::kahipDecomp::kahipDecomp
 (
     const dictionary& decompDict,
     const word& regionName
 )
 :
-    metisLikeDecomp("scotch", decompDict, regionName)
+    metisLikeDecomp("kahip", decompDict, regionName)
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::labelList Foam::scotchDecomp::decompose
-(
-    const polyMesh& mesh,
-    const pointField& points,
-    const scalarField& pointWeights
-) const
-{
-    FatalErrorInFunction
-        << notImplementedMessage << exit(FatalError);
-
-    return labelList();
-}
-
-
-Foam::labelList Foam::scotchDecomp::decompose
-(
-    const polyMesh& mesh,
-    const labelList& agglom,
-    const pointField& agglomPoints,
-    const scalarField& pointWeights
-) const
-{
-    FatalErrorInFunction
-        << notImplementedMessage << exit(FatalError);
-
-    return labelList();
-}
-
-
-Foam::labelList Foam::scotchDecomp::decompose
-(
-    const labelListList& globalCellCells,
-    const pointField& cellCentres,
-    const scalarField& cWeights
-) const
-{
-    FatalErrorInFunction
-        << notImplementedMessage << exit(FatalError);
-
-    return labelList();
-}
 
 
 // ************************************************************************* //

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef structuredDecomp_H
-#define structuredDecomp_H
+#ifndef Foam_structuredDecomp_H
+#define Foam_structuredDecomp_H
 
 #include "decompositionMethod.H"
 #include "wordRes.H"
@@ -61,7 +61,9 @@ class structuredDecomp
         autoPtr<decompositionMethod> method_;
 
 
-    // Private Member Functions
+public:
+
+    // Generated Methods
 
         //- No copy construct
         structuredDecomp(const structuredDecomp&) = delete;
@@ -69,8 +71,6 @@ class structuredDecomp
         //- No copy assignment
         void operator=(const structuredDecomp&) = delete;
 
-
-public:
 
     //- Runtime type information
     TypeName("structured");
@@ -102,8 +102,21 @@ public:
         (
             const polyMesh& mesh,
             const pointField& points,
-            const scalarField& pointWeights
+            const scalarField& pointWeights = scalarField::null()
         ) const;
+
+        //- Return for every coordinate the wanted processor number.
+        //  Explicitly provided connectivity - does not use mesh_.
+        virtual labelList decompose
+        (
+            const CompactListList<label>& globalCellCells,
+            const pointField& cc,
+            const scalarField& cWeights = scalarField::null()
+        ) const
+        {
+            NotImplemented;
+            return labelList();
+        }
 
         //- Return for every coordinate the wanted processor number.
         //  Explicitly provided connectivity - does not use mesh_.
@@ -111,7 +124,7 @@ public:
         (
             const labelListList& globalCellCells,
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
         ) const
         {
             NotImplemented;

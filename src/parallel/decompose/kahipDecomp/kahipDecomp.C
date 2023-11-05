@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,7 +108,7 @@ Foam::label Foam::kahipDecomp::decomposeSerial
     ConstPrecisionAdaptor<int, label, List> xadj_param(xadj);
 
     // Output: cell -> processor addressing
-    decomp.resize(numCells);
+    decomp.resize_nocopy(numCells);
     decomp = 0;
     PrecisionAdaptor<int, label, List> decomp_param(decomp, false);
 
@@ -149,8 +149,8 @@ Foam::label Foam::kahipDecomp::decomposeSerial
     else if (hasWeights && (cWeights.size() != numCells))
     {
         FatalErrorInFunction
-            << "Number of cell weights " << cWeights.size()
-            << " does not equal number of cells " << numCells
+            << "Number of weights (" << cWeights.size()
+            << ") != number of cells (" << numCells << ")"
             << exit(FatalError);
     }
 
@@ -160,7 +160,7 @@ Foam::label Foam::kahipDecomp::decomposeSerial
     if (hasWeights)
     {
         // Convert to integers.
-        cellWeights.resize(cWeights.size());
+        cellWeights.resize_nocopy(cWeights.size());
         forAll(cellWeights, i)
         {
             cellWeights[i] = static_cast<int>
@@ -298,6 +298,12 @@ Foam::label Foam::kahipDecomp::decomposeSerial
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::kahipDecomp::kahipDecomp(const label numDomains)
+:
+    metisLikeDecomp(numDomains)
+{}
+
 
 Foam::kahipDecomp::kahipDecomp
 (

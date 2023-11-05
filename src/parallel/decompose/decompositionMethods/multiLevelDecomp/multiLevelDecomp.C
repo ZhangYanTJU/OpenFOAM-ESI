@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +30,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "IFstream.H"
 #include "globalIndex.H"
+#include "globalMeshData.H"
 #include "mapDistribute.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -194,8 +195,7 @@ void Foam::multiLevelDecomp::setMethods()
 
     label nLevels = 0;
 
-    methods_.clear();
-    methods_.setSize(methodsDict_.size());
+    methods_.resize_null(methodsDict_.size());
     for (const entry& dEntry : methodsDict_)
     {
         // Dictionary entries only
@@ -211,7 +211,7 @@ void Foam::multiLevelDecomp::setMethods()
         }
     }
 
-    methods_.setSize(nLevels);
+    methods_.resize(nLevels);
 
     // Verify that nTotal is correct based on what each method delivers
 
@@ -280,7 +280,7 @@ void Foam::multiLevelDecomp::subsetGlobalCellCells
     // Now subCellCells contains indices into oldToNew which are the
     // new locations of the neighbouring cells.
 
-    cutConnections.setSize(nDomains);
+    cutConnections.resize_nocopy(nDomains);
     cutConnections = 0;
 
     forAll(subCellCells, subCelli)
@@ -399,7 +399,12 @@ void Foam::multiLevelDecomp::decompose
 
             // Subset point-wise data.
             pointField subPoints(points, domainPoints);
-            scalarField subWeights(pointWeights, domainPoints);
+            scalarField subWeights;
+            if (pointWeights.size() == points.size())
+            {
+                subWeights = scalarField(pointWeights, domainPoints);
+            }
+
             labelList subPointMap(labelUIndList(pointMap, domainPoints));
             // Subset point-point addressing (adapt global numbering)
             labelListList subPointPoints;
@@ -607,9 +612,16 @@ Foam::labelList Foam::multiLevelDecomp::decompose
 ) const
 {
     CompactListList<label> cellCells;
-    calcCellCells(mesh, identity(cc.size()), cc.size(), true, cellCells);
+    globalMeshData::calcCellCells
+    (
+        mesh,
+        identity(cc.size()),
+        cc.size(),
+        true,
+        cellCells
+    );
 
-    labelList finalDecomp(cc.size(), Zero);
+    labelList finalDecomp(cc.size(), Foam::zero{});
     labelList cellMap(identity(cc.size()));
 
     decompose
@@ -617,9 +629,9 @@ Foam::labelList Foam::multiLevelDecomp::decompose
         cellCells.unpack(),
         cc,
         cWeights,
-        cellMap,      // map back to original cells
-        0,
-        0,
+        cellMap,      // map back to original cell points
+        0,            // currLevel
+        0,            // leafOffset
 
         finalDecomp
     );
@@ -630,22 +642,48 @@ Foam::labelList Foam::multiLevelDecomp::decompose
 
 Foam::labelList Foam::multiLevelDecomp::decompose
 (
-    const labelListList& globalPointPoints,
-    const pointField& points,
-    const scalarField& pointWeights
+    const CompactListList<label>& globalCellCells,
+    const pointField& cc,
+    const scalarField& cWeights
 ) const
 {
-    labelList finalDecomp(points.size(), Zero);
-    labelList pointMap(identity(points.size()));
+    labelList finalDecomp(cc.size(), Foam::zero{});
+    labelList cellMap(identity(cc.size()));
 
     decompose
     (
-        globalPointPoints,
-        points,
-        pointWeights,
-        pointMap,       // map back to original points
-        0,
-        0,
+        globalCellCells.unpack(),
+        cc,
+        cWeights,
+        cellMap,      // map back to original cell points
+        0,            // currLevel
+        0,            // leafOffset
+
+        finalDecomp
+    );
+
+    return finalDecomp;
+}
+
+
+Foam::labelList Foam::multiLevelDecomp::decompose
+(
+    const labelListList& globalCellCells,
+    const pointField& cc,
+    const scalarField& cWeights
+) const
+{
+    labelList finalDecomp(cc.size(), Foam::zero{});
+    labelList cellMap(identity(cc.size()));
+
+    decompose
+    (
+        globalCellCells,
+        cc,
+        cWeights,
+        cellMap,      // map back to original cell points
+        0,            // currLevel
+        0,            // leafOffset
 
         finalDecomp
     );

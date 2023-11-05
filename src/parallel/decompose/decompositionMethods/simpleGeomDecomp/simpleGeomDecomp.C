@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,7 +76,7 @@ struct vectorLessOp
 } // End namespace Foam
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
 // assignToProcessorGroup : given nCells cells and nProcGroup processor
 // groups to share them, how do we share them out? Answer : each group
@@ -84,15 +84,18 @@ struct vectorLessOp
 // extra to make up the numbers. This should produce almost
 // perfect load balancing
 
-void Foam::simpleGeomDecomp::assignToProcessorGroup
+namespace Foam
+{
+
+static void assignToProcessorGroup
 (
     labelList& processorGroup,
     const label nProcGroup
 )
 {
-    label jump = processorGroup.size()/nProcGroup;
-    label jumpb = jump + 1;
-    label fstProcessorGroup = processorGroup.size() - jump*nProcGroup;
+    const label jump = processorGroup.size()/nProcGroup;
+    const label jumpb = jump + 1;
+    const label fstProcessorGroup = processorGroup.size() - jump*nProcGroup;
 
     label ind = 0;
     label j = 0;
@@ -118,7 +121,7 @@ void Foam::simpleGeomDecomp::assignToProcessorGroup
 }
 
 
-void Foam::simpleGeomDecomp::assignToProcessorGroup
+static void assignToProcessorGroup
 (
     labelList& processorGroup,
     const label nProcGroup,
@@ -139,6 +142,7 @@ void Foam::simpleGeomDecomp::assignToProcessorGroup
 
     const scalar jump = summedWeights/nProcGroup;
     const label nProcGroupM1 = nProcGroup - 1;
+
     scalar sumWeights = 0;
     label ind = 0;
     label j = 0;
@@ -160,6 +164,10 @@ void Foam::simpleGeomDecomp::assignToProcessorGroup
     }
 }
 
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 Foam::labelList Foam::simpleGeomDecomp::decomposeOneProc
 (
@@ -231,6 +239,11 @@ Foam::labelList Foam::simpleGeomDecomp::decomposeOneProc
     const scalarField& weights
 ) const
 {
+    if (weights.empty())
+    {
+        return decomposeOneProc(points);
+    }
+
     // construct a list for the final result
     labelList finalDecomp(points.size());
 
@@ -314,6 +327,12 @@ Foam::labelList Foam::simpleGeomDecomp::decomposeOneProc
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::simpleGeomDecomp::simpleGeomDecomp(const Vector<label>& divisions)
+:
+    geomDecomp(divisions)
+{}
+
+
 Foam::simpleGeomDecomp::simpleGeomDecomp
 (
     const dictionary& decompDict,
@@ -328,57 +347,49 @@ Foam::simpleGeomDecomp::simpleGeomDecomp
 
 Foam::labelList Foam::simpleGeomDecomp::decompose
 (
-    const pointField& points
-) const
-{
-    if (!Pstream::parRun())
-    {
-        return decomposeOneProc(points);
-    }
-    else
-    {
-        const globalIndex globalNumbers(points.size());
-
-        pointField allPoints(globalNumbers.gather(points));
-
-        labelList allDecomp;
-        if (Pstream::master())
-        {
-            allDecomp = decomposeOneProc(allPoints);
-            allPoints.clear();  // Not needed anymore
-        }
-
-        return globalNumbers.scatter(allDecomp);
-    }
-}
-
-
-Foam::labelList Foam::simpleGeomDecomp::decompose
-(
     const pointField& points,
     const scalarField& weights
 ) const
 {
-    if (returnReduceOr(points.size() != weights.size()))
+    // Uniform weighting if weights are empty or poorly sized
+    const bool hasWeights = returnReduceAnd(points.size() == weights.size());
+
+    if (!UPstream::parRun())
     {
-        // Ignore zero-sized weights ... and poorly sized ones too
-        return decompose(points);
-    }
-    else if (!Pstream::parRun())
-    {
-        return decomposeOneProc(points, weights);
+        if (hasWeights)
+        {
+            return decomposeOneProc(points, weights);
+        }
+        else
+        {
+            return decomposeOneProc(points);
+        }
     }
     else
     {
+        // Parallel
         const globalIndex globalNumbers(points.size());
 
-        pointField allPoints(globalNumbers.gather(points));
-        scalarField allWeights(globalNumbers.gather(weights));
-
         labelList allDecomp;
-        if (Pstream::master())
+        pointField allPoints(globalNumbers.gather(points));
+        scalarField allWeights;
+
+        if (hasWeights)
         {
-            allDecomp = decomposeOneProc(allPoints, allWeights);
+            // Non-uniform weighting
+            allWeights = globalNumbers.gather(weights);
+        }
+
+        if (UPstream::master())
+        {
+            if (hasWeights)
+            {
+                allDecomp = decomposeOneProc(allPoints, allWeights);
+            }
+            else
+            {
+                allDecomp = decomposeOneProc(allPoints);
+            }
             allPoints.clear();  // Not needed anymore
             allWeights.clear(); // ...
         }

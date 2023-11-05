@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef noDecomp_H
-#define noDecomp_H
+#ifndef Foam_noDecomp_H
+#define Foam_noDecomp_H
 
 #include "decompositionMethod.H"
 
@@ -53,7 +53,9 @@ class noDecomp
 :
     public decompositionMethod
 {
-    // Private Member Functions
+public:
+
+    // Generated Methods
 
         //- No copy construct
         noDecomp(const noDecomp&) = delete;
@@ -62,13 +64,14 @@ class noDecomp
         void operator=(const noDecomp&) = delete;
 
 
-public:
-
     //- Runtime type information
     TypeNameNoDebug("none");
 
 
     // Constructors
+
+        //- Construct with number of domains (ignored)
+        explicit noDecomp(const label numDomains);
 
         //- Construct given decomposition dictionary and optional region name
         explicit noDecomp
@@ -91,33 +94,35 @@ public:
         }
 
         //- Return for every coordinate the wanted processor number.
-        //  Use the mesh connectivity (if needed)
+        virtual labelList decompose
+        (
+            const pointField& points,
+            const scalarField& pointWeights_unused = scalarField::null()
+        ) const;
+
+        //- Return for every cell the current local processor rank.
         virtual labelList decompose
         (
             const polyMesh& mesh,
-            const pointField& cc,
-            const scalarField& cWeights
-        ) const
-        {
-            return labelList(cc.size(), Pstream::myProcNo());
-        }
+            const pointField& cc_unused = pointField::null(),
+            const scalarField& cWeights_unused = scalarField::null()
+        ) const;
 
-        //- Return for every coordinate the wanted processor number.
-        //  Explicitly provided connectivity - does not use mesh_.
-        //  The connectivity is equal to mesh.cellCells() except for
-        //  - in parallel the cell numbers are global cell numbers (starting
-        //    from 0 at processor0 and then incrementing all through the
-        //    processors)
-        //  - the connections are across coupled patches
+        //- Return for every cell the current local processor rank.
+        virtual labelList decompose
+        (
+            const CompactListList<label>& globalCellCells,
+            const pointField& cc_unused = pointField::null(),
+            const scalarField& cWeights_unused = scalarField::null()
+        ) const;
+
+        //- Return for every cell the current local processor rank.
         virtual labelList decompose
         (
             const labelListList& globalCellCells,
-            const pointField& cc,
-            const scalarField& cWeights
-        ) const
-        {
-            return labelList(globalCellCells.size(), Pstream::myProcNo());
-        }
+            const pointField& cc_unused = pointField::null(),
+            const scalarField& cWeights_unused = scalarField::null()
+        ) const;
 };
 
 

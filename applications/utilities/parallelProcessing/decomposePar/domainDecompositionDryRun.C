@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,7 @@ License
 
 #include "domainDecompositionDryRun.H"
 #include "volFields.H"
+#include "globalMeshData.H"
 #include "decompositionModel.H"
 #include "decompositionInformation.H"
 
@@ -112,12 +113,12 @@ void Foam::domainDecompositionDryRun::execute
     decompositionMethod& method = model.decomposer();
 
     CompactListList<label> cellCells;
-    decompositionMethod::calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh_,
         identity(mesh_.nCells()),
         mesh_.nCells(),
-        false,
+        false,  // false = local only
         cellCells
     );
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,8 +44,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef geomDecomp_H
-#define geomDecomp_H
+#ifndef Foam_geomDecomp_H
+#define Foam_geomDecomp_H
 
 #include "decompositionMethod.H"
 #include "cartesianCS.H"
@@ -105,10 +105,13 @@ protected:
         //- Check that mesh directions are compatible with decomposition
         void checkDecompositionDirections(const Vector<label>&) const;
 
-
 public:
 
     // Constructors
+
+        //- Construct with number of x/y/z division
+        //- (no coefficients or constraints)
+        explicit geomDecomp(const Vector<label>& divisions);
 
         //- Construct for derived type name and decomposition dictionary
         geomDecomp
@@ -131,15 +134,15 @@ public:
 
     // Member Functions
 
+        //- Purely geometric methods
+        virtual bool geometric() const { return true; }
+
         //- Return for every coordinate the wanted processor number.
         virtual labelList decompose
         (
             const pointField& points,
-            const scalarField& pointWeights
+            const scalarField& pointWeights = scalarField::null()
         ) const = 0;
-
-        //- Decompose with uniform weights on the points
-        virtual labelList decompose(const pointField& points) const = 0;
 };
 
 

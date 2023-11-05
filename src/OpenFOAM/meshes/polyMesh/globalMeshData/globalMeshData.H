@@ -96,6 +96,7 @@ namespace Foam
 // Forward Declarations
 class polyMesh;
 class mapDistribute;
+template<class T> class CompactListList;
 template<class T> class EdgeMap;
 class globalIndex;
 class globalIndexAndTransform;
@@ -305,6 +306,9 @@ class globalMeshData
 
             void calcGlobalCoPointSlaves() const;
 
+public:
+
+    // Generated Methods
 
         //- No copy construct
         globalMeshData(const globalMeshData&) = delete;
@@ -312,8 +316,6 @@ class globalMeshData
         //- No copy assignment
         void operator=(const globalMeshData&) = delete;
 
-
-public:
 
     //- Runtime type information
     ClassName("globalMeshData");
@@ -606,6 +608,39 @@ public:
             //  full parallel analysis to determine shared points and
             //  boundaries.
             void updateMesh();
+
+
+    // Mesh Topology Calculation
+
+        //- Determine (local or global) cellCells from mesh agglomeration.
+        //  Agglomeration is local to the processor.
+        //  - parallel = false
+        //    Resulting connections are in local cell indices.
+        //    Coupled across cyclics but not processor patches.
+        //  - parallel = true
+        //    Resulting connections are in global cell indices.
+        //    Coupled across cyclics and processor patches.
+        static void calcCellCells
+        (
+            const polyMesh& mesh,
+            const labelList& agglom,
+            const label nLocalCoarse,
+            const bool parallel,  //!< Use global cell ids in parallel
+            CompactListList<label>& cellCells
+        );
+
+        //- Determine (local or global) cellCells and face weights
+        //- from mesh agglomeration.
+        //  Uses mag of faceArea as weights
+        static void calcCellCells
+        (
+            const polyMesh& mesh,
+            const labelList& agglom,
+            const label nLocalCoarse,
+            const bool parallel,  //!< Use global cell ids in parallel
+            CompactListList<label>& cellCells,
+            CompactListList<scalar>& cellCellWeights
+        );
 };
 
 

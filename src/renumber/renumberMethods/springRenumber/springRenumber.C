@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,8 +27,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "springRenumber.H"
+#include "globalMeshData.H"
 #include "addToRunTimeSelectionTable.H"
-#include "decompositionMethod.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -164,7 +164,7 @@ Foam::labelList Foam::springRenumber::renumber
 ) const
 {
     CompactListList<label> cellCells;
-    decompositionMethod::calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh,
         identity(mesh.nCells()),

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef multiLevelDecomp_H
-#define multiLevelDecomp_H
+#ifndef Foam_multiLevelDecomp_H
+#define Foam_multiLevelDecomp_H
 
 #include "decompositionMethod.H"
 
@@ -99,14 +99,16 @@ class multiLevelDecomp
         ) const;
 
 
+public:
+
+    // Generated Methods
+
         //- No copy construct
         multiLevelDecomp(const multiLevelDecomp&) = delete;
 
         //- No copy assignment
         void operator=(const multiLevelDecomp&) = delete;
 
-
-public:
 
     //- Runtime type information
     TypeName("multiLevel");
@@ -128,8 +130,7 @@ public:
 
     // Member Functions
 
-        //- Is method parallel aware?
-        //  i.e. does it synchronize domains across proc boundaries
+        //- Is parallel aware when all sub-methods are also parallel-aware
         virtual bool parallelAware() const;
 
         //- Inherit decompose from decompositionMethod
@@ -141,7 +142,16 @@ public:
         (
             const polyMesh& mesh,
             const pointField& points,
-            const scalarField& pointWeights
+            const scalarField& pointWeights = scalarField::null()
+        ) const;
+
+        //- Return for every coordinate the wanted processor number.
+        //  Explicitly provided connectivity - does not use mesh_.
+        virtual labelList decompose
+        (
+            const CompactListList<label>& globalCellCells,
+            const pointField& cc,
+            const scalarField& cWeights = scalarField::null()
         ) const;
 
         //- Return for every coordinate the wanted processor number.
@@ -150,7 +160,7 @@ public:
         (
             const labelListList& globalCellCells,
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
         ) const;
 };
 

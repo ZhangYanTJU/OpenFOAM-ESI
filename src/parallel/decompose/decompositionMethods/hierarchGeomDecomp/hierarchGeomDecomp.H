@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,8 +62,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef hierarchGeomDecomp_H
-#define hierarchGeomDecomp_H
+#ifndef Foam_hierarchGeomDecomp_H
+#define Foam_hierarchGeomDecomp_H
 
 #include "geomDecomp.H"
 
@@ -169,11 +169,16 @@ public:
     //- No copy assignment
     void operator=(const hierarchGeomDecomp&) = delete;
 
+
     //- Runtime type information
     TypeName("hierarchical");
 
 
     // Constructors
+
+        //- Construct with number of x/y/z division
+        //- (no coefficients or constraints)
+        explicit hierarchGeomDecomp(const Vector<label>& divisions);
 
         //- Construct given decomposition dictionary and optional region name
         explicit hierarchGeomDecomp
@@ -196,42 +201,36 @@ public:
         }
 
         //- Return for every coordinate the wanted processor number.
+        //- using uniform or specified point weights.
         virtual labelList decompose
         (
-            const pointField&,
-            const scalarField& weights
+            const pointField& points,
+            const scalarField& weights = scalarField::null()
         ) const;
-
-        //- Decompose with uniform weights.
-        //  Code for weighted decomposition is a bit complex,
-        //  so kept separate for now.
-        virtual labelList decompose(const pointField&) const;
-
 
         //- Return for every coordinate the wanted processor number.
         //  Use the mesh connectivity (if needed).
+        //  With uniform or specified point weights.
         virtual labelList decompose
         (
             const polyMesh& mesh,
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
         ) const
         {
             checkDecompositionDirections(mesh.geometricD());
             return decompose(cc, cWeights);
         }
 
-        //- Decompose with uniform weights.
-        //  Code for weighted decomposition is a bit complex,
-        //  so kept separate for now.
+        //- Explicitly provided connectivity
         virtual labelList decompose
         (
-            const polyMesh& mesh,
-            const pointField& cc
+            const CompactListList<label>& globalCellCells,  //!< unused
+            const pointField& cc,
+            const scalarField& cWeights = scalarField::null()
         ) const
         {
-            checkDecompositionDirections(mesh.geometricD());
-            return decompose(cc);
+            return decompose(cc, cWeights);
         }
 
         //- Return for every coordinate the wanted processor number.
@@ -243,21 +242,12 @@ public:
         //  - the connections are across coupled patches
         virtual labelList decompose
         (
-            const labelListList& globalCellCells,  // unused
+            const labelListList& globalCellCells,  //!< unused
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
         ) const
         {
             return decompose(cc, cWeights);
-        }
-
-        virtual labelList decompose
-        (
-            const labelListList& globalCellCells,  // unused
-            const pointField& cc
-        ) const
-        {
-            return decompose(cc);
         }
 };
 

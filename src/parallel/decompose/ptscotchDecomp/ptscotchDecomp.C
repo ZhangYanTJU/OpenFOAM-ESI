@@ -29,6 +29,7 @@ License
 #include "ptscotchDecomp.H"
 #include "addToRunTimeSelectionTable.H"
 #include "floatScalar.H"
+#include "globalMeshData.H"
 #include "Time.H"
 #include "PrecisionAdaptor.H"
 #include "OFstream.H"
@@ -123,7 +124,7 @@ Foam::label Foam::ptscotchDecomp::decompose
     ConstPrecisionAdaptor<SCOTCH_Num, label, List> xadj_param(xadj);
 
     // Output: cell -> processor addressing
-    decomp.resize(numCells);
+    decomp.resize_nocopy(numCells);
     decomp = 0;
     PrecisionAdaptor<SCOTCH_Num, label, List> decomp_param(decomp, false);
 
@@ -497,6 +498,13 @@ Foam::label Foam::ptscotchDecomp::decompose
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::ptscotchDecomp::ptscotchDecomp(const label numDomains)
+:
+    decompositionMethod(numDomains),
+    coeffsDict_(dictionary::null)
+{}
+
+
 Foam::ptscotchDecomp::ptscotchDecomp
 (
     const dictionary& decompDict,
@@ -520,23 +528,20 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     // Where to write graph
     graphPath_ = getGraphPathBase(mesh);
 
-    if (points.size() != mesh.nCells())
+    if (!points.empty() && (points.size() != mesh.nCells()))
     {
         FatalErrorInFunction
-            << "Can only use this decomposition method for entire mesh" << nl
-            << "and supply one coordinate (cellCentre) for every cell." << nl
-            << "The number of coordinates " << points.size() << nl
-            << "The number of cells in the mesh " << mesh.nCells() << nl
+            << "Number of cell centres (" << points.size()
+            << ") != number of cells (" << mesh.nCells() << ")"
             << exit(FatalError);
     }
-
 
     // Make Metis CSR (Compressed Storage Format) storage
     //   adjncy      : contains neighbours (= edges in graph)
     //   xadj(celli) : start of information in adjncy for celli
 
     CompactListList<label> cellCells;
-    calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh,
         identity(mesh.nCells()),
@@ -564,7 +569,7 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     const polyMesh& mesh,
     const labelList& agglom,
     const pointField& agglomPoints,
-    const scalarField& pointWeights
+    const scalarField& agglomWeights
 ) const
 {
     // Where to write graph
@@ -573,8 +578,8 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     if (agglom.size() != mesh.nCells())
     {
         FatalErrorInFunction
-            << "Size of cell-to-coarse map " << agglom.size()
-            << " differs from number of cells in mesh " << mesh.nCells()
+            << "Agglomeration size (" << agglom.size()
+            << ") != number of cells (" << mesh.nCells() << ")"
             << exit(FatalError);
     }
 
@@ -583,7 +588,7 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     //   adjncy      : contains neighbours (= edges in graph)
     //   xadj(celli) : start of information in adjncy for celli
     CompactListList<label> cellCells;
-    calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh,
         agglom,
@@ -598,19 +603,49 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     (
         cellCells.values(),
         cellCells.offsets(),
-        pointWeights,
+        agglomWeights,
         decomp
     );
 
-    // Rework back into decomposition for original mesh
-    labelList fineDistribution(agglom.size());
+    // From coarse back to fine for original mesh
+    return labelList(decomp, agglom);
+}
 
-    forAll(fineDistribution, i)
+
+Foam::labelList Foam::ptscotchDecomp::decompose
+(
+    const CompactListList<label>& globalCellCells,
+    const pointField& cellCentres,
+    const scalarField& cWeights
+) const
+{
+    // Where to write graph
+    graphPath_ = "ptscotch";
+
+    if (!cellCentres.empty() && (cellCentres.size() != globalCellCells.size()))
     {
-        fineDistribution[i] = decomp[agglom[i]];
+        FatalErrorInFunction
+            << "Number of cell centres (" << cellCentres.size()
+            << ") != number of cells (" << globalCellCells.size() << ")"
+            << exit(FatalError);
     }
 
-    return fineDistribution;
+    // CompactListList is already
+    // Metis CSR (Compressed Storage Format) storage
+    //   adjncy      : contains neighbours (= edges in graph)
+    //   xadj(celli) : start of information in adjncy for celli
+
+    // Decompose using default weights
+    labelList decomp;
+    decompose
+    (
+        globalCellCells.values(),
+        globalCellCells.offsets(),
+        cWeights,
+        decomp
+    );
+
+    return decomp;
 }
 
 
@@ -624,14 +659,13 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     // Where to write graph
     graphPath_ = "ptscotch";
 
-    if (cellCentres.size() != globalCellCells.size())
+    if (!cellCentres.empty() && (cellCentres.size() != globalCellCells.size()))
     {
         FatalErrorInFunction
-            << "Inconsistent number of cells (" << globalCellCells.size()
-            << ") and number of cell centres (" << cellCentres.size()
-            << ")." << exit(FatalError);
+            << "Number of cell centres (" << cellCentres.size()
+            << ") != number of cells (" << globalCellCells.size() << ")"
+            << exit(FatalError);
     }
-
 
     // Make Metis CSR (Compressed Storage Format) storage
     //   adjncy      : contains neighbours (= edges in graph)
@@ -639,7 +673,7 @@ Foam::labelList Foam::ptscotchDecomp::decompose
 
     auto cellCells(CompactListList<label>::pack(globalCellCells));
 
-    // Decompose using weights
+    // Decompose using default weights
     labelList decomp;
     decompose
     (

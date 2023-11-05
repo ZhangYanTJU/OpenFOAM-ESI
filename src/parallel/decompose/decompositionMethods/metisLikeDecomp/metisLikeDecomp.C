@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +28,7 @@ License
 #include "metisLikeDecomp.H"
 #include "Time.H"
 #include "globalIndex.H"
+#include "globalMeshData.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -39,8 +40,9 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
     labelList& decomp
 ) const
 {
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
+        // Treat zero-sized weights as uniform weighting
         return decomposeSerial
         (
             adjncy,
@@ -75,10 +77,10 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
 
 
     List<label> allXadj;
-    if (Pstream::master())
+    if (UPstream::master())
     {
         allXadj.resize(globalCells.totalSize()+1);
-        allXadj.last() = globalAdjncy.totalSize();  // Final end offset
+        allXadj.back() = globalAdjncy.totalSize();  // Final end offset
 
         // My values - no renumbering required
         SubList<label>(allXadj, globalCells.localSize(0)) =
@@ -137,7 +139,7 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
     }
 
     // Local to global renumbering
-    if (Pstream::master())
+    if (UPstream::master())
     {
         for (const int proci : globalCells.subProcs())
         {
@@ -147,10 +149,12 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
         }
     }
 
-    // Ignore zero-sized weights ... and poorly sized ones too
+    // Uniform weighting if weights are empty or poorly sized
+
     List<scalar> allWeights;
     if (returnReduceAnd(cWeights.size() == globalCells.localSize()))
     {
+        // ie, hasWeights
         allWeights = globalCells.gather(cWeights);
     }
 
@@ -158,7 +162,7 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
     // Global decomposition
     labelList allDecomp;
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         decomposeSerial
         (
@@ -183,6 +187,13 @@ Foam::label Foam::metisLikeDecomp::decomposeGeneral
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::metisLikeDecomp::metisLikeDecomp(const label numDomains)
+:
+    decompositionMethod(numDomains),
+    coeffsDict_(dictionary::null)
+{}
+
+
 Foam::metisLikeDecomp::metisLikeDecomp
 (
     const word& derivedType,
@@ -205,18 +216,16 @@ Foam::labelList Foam::metisLikeDecomp::decompose
     const scalarField& pointWeights
 ) const
 {
-    if (points.size() != mesh.nCells())
+    if (!points.empty() && (points.size() != mesh.nCells()))
     {
         FatalErrorInFunction
-            << "Can only use this decomposition method for entire mesh" << nl
-            << "and supply one coordinate (cellCentre) for every cell." << nl
-            << "The number of coordinates " << points.size() << nl
-            << "The number of cells in the mesh " << mesh.nCells() << nl
+            << "Number of cell centres (" << points.size()
+            << ") != number of cells (" << mesh.nCells() << ")"
             << exit(FatalError);
     }
 
     CompactListList<label> cellCells;
-    calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh,
         identity(mesh.nCells()),
@@ -250,8 +259,8 @@ Foam::labelList Foam::metisLikeDecomp::decompose
     if (agglom.size() != mesh.nCells())
     {
         FatalErrorInFunction
-            << "Size of cell-to-coarse map " << agglom.size()
-            << " differs from number of cells in mesh " << mesh.nCells()
+            << "Agglomeration size (" << agglom.size()
+            << ") != number of cells (" << mesh.nCells() << ")"
             << exit(FatalError);
     }
 
@@ -260,7 +269,7 @@ Foam::labelList Foam::metisLikeDecomp::decompose
     //   xadj(celli) : start of information in adjncy for celli
 
     CompactListList<label> cellCells;
-    calcCellCells
+    globalMeshData::calcCellCells
     (
         mesh,
         agglom,
@@ -279,16 +288,42 @@ Foam::labelList Foam::metisLikeDecomp::decompose
         decomp
     );
 
+    // From coarse back to fine for original mesh
+    return labelList(decomp, agglom);
+}
 
-    // Rework back into decomposition for original mesh
-    labelList fineDistribution(agglom.size());
 
-    forAll(fineDistribution, i)
+Foam::labelList Foam::metisLikeDecomp::decompose
+(
+    const CompactListList<label>& globalCellCells,
+    const pointField& cellCentres,
+    const scalarField& cellWeights
+) const
+{
+    if (!cellCentres.empty() && (cellCentres.size() != globalCellCells.size()))
     {
-        fineDistribution[i] = decomp[agglom[i]];
+        FatalErrorInFunction
+            << "Number of cell centres (" << cellCentres.size()
+            << ") != number of cells (" << globalCellCells.size() << ")"
+            << exit(FatalError);
     }
 
-    return fineDistribution;
+    // CompactListList is already
+    // Metis CSR (Compressed Storage Format) storage
+    //   adjncy      : contains neighbours (= edges in graph)
+    //   xadj(celli) : start of information in adjncy for celli
+
+    // Decompose using default weights
+    labelList decomp;
+    decomposeGeneral
+    (
+        globalCellCells.values(),
+        globalCellCells.offsets(),
+        cellWeights,
+        decomp
+    );
+
+    return decomp;
 }
 
 
@@ -299,12 +334,12 @@ Foam::labelList Foam::metisLikeDecomp::decompose
     const scalarField& cellWeights
 ) const
 {
-    if (cellCentres.size() != globalCellCells.size())
+    if (!cellCentres.empty() && (cellCentres.size() != globalCellCells.size()))
     {
         FatalErrorInFunction
-            << "Inconsistent number of cells (" << globalCellCells.size()
-            << ") and number of cell centres (" << cellCentres.size()
-            << ")." << exit(FatalError);
+            << "Number of cell centres (" << cellCentres.size()
+            << ") != number of cells (" << globalCellCells.size() << ")"
+            << exit(FatalError);
     }
 
     // Make Metis CSR (Compressed Storage Format) storage

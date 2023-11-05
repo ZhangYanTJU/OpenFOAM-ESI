@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,7 +102,11 @@ Foam::labelList Foam::structuredDecomp::decompose
     );
     const fvMesh& subMesh = subsetter.subMesh();
     pointField subCc(cc, subsetter.cellMap());
-    scalarField subWeights(cWeights, subsetter.cellMap());
+    scalarField subWeights;
+    if (cWeights.size() == cc.size())
+    {
+        subWeights = scalarField(cWeights, subsetter.cellMap());
+    }
 
     // Decompose the layer of cells
     labelList subDecomp(method_().decompose(subMesh, subCc, subWeights));

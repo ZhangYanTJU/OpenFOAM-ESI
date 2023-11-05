@@ -614,6 +614,7 @@ $(polyBoundaryMesh)/polyBoundaryMeshEntries.C
 
 globalMeshData = $(polyMesh)/globalMeshData
 $(globalMeshData)/globalMeshData.C
+$(globalMeshData)/globalMeshDataTopology.C
 $(globalMeshData)/globalPoints.C
 
 $(polyMesh)/syncTools/syncTools.C

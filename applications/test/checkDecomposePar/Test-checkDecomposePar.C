@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,6 +40,7 @@ Description
 #include "cpuTime.H"
 #include "IFstream.H"
 #include "regionProperties.H"
+#include "globalMeshData.H"
 #include "decompositionInformation.H"
 #include "decompositionModel.H"
 
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
         const label nDomains = max(cellToProc) + 1;
 
         CompactListList<label> cellCells;
-        decompositionMethod::calcCellCells
+        globalMeshData::calcCellCells
         (
             mesh,
             identity(mesh.nCells()),

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -73,6 +73,13 @@ Foam::label Foam::ptscotchDecomp::decompose
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::ptscotchDecomp::ptscotchDecomp(const label numDomains)
+:
+    decompositionMethod(numDomains),
+    coeffsDict_()
+{}
+
+
 Foam::ptscotchDecomp::ptscotchDecomp
 (
     const dictionary& decompDict,
@@ -105,7 +112,21 @@ Foam::labelList Foam::ptscotchDecomp::decompose
     const polyMesh& mesh,
     const labelList& agglom,
     const pointField& agglomPoints,
-    const scalarField& pointWeights
+    const scalarField& agglomWeights
+) const
+{
+    FatalErrorInFunction
+        << notImplementedMessage << exit(FatalError);
+
+    return labelList();
+}
+
+
+Foam::labelList Foam::ptscotchDecomp::decompose
+(
+    const CompactListList<label>& globalCellCells,
+    const pointField&,
+    const scalarField&
 ) const
 {
     FatalErrorInFunction
