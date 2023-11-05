@@ -131,6 +131,19 @@ inline bool Foam::globalIndex::empty() const noexcept
 }
 
 
+inline bool Foam::globalIndex::single() const noexcept
+{
+    return (offsets_.size() == 2);
+}
+
+
+inline Foam::label Foam::globalIndex::length() const noexcept
+{
+    const label len = (offsets_.size() - 1);
+    return (len < 1) ? 0 : len;
+}
+
+
 inline Foam::label Foam::globalIndex::span() const noexcept
 {
     return (end_value() - begin_value());
@@ -168,16 +181,9 @@ inline Foam::labelList Foam::globalIndex::sizes() const
 }
 
 
-inline bool Foam::globalIndex::single() const noexcept
-{
-    return (offsets_.size() == 2);
-}
-
-
 inline Foam::label Foam::globalIndex::nProcs() const noexcept
 {
-    const label len = (offsets_.size() - 1);
-    return (len < 1) ? 0 : len;
+    return length();
 }
 
 
@@ -390,7 +396,11 @@ inline Foam::label Foam::globalIndex::toLocal(const label i) const
 }
 
 
-inline Foam::label Foam::globalIndex::whichProcID(const label i) const
+inline Foam::label Foam::globalIndex::whichProcID
+(
+    const label proci,
+    const label i
+) const
 {
     if (i < 0 || i >= totalSize())
     {
@@ -400,9 +410,16 @@ inline Foam::label Foam::globalIndex::whichProcID(const label i) const
             << abort(FatalError);
     }
 
-    const auto proci = UPstream::myProcNo(UPstream::worldComm);
-
     return isLocal(proci, i) ? proci : findLower(offsets_, i+1);
+}
+
+
+inline Foam::label Foam::globalIndex::whichProcID
+(
+    const label i
+) const
+{
+    return whichProcID(UPstream::myProcNo(UPstream::worldComm), i);
 }
 
 
@@ -571,7 +588,7 @@ Foam::globalIndex::cbegin() const noexcept
 inline const Foam::globalIndex::const_iterator
 Foam::globalIndex::cend() const noexcept
 {
-    return const_iterator(this, this->nProcs());
+    return const_iterator(this, this->length());
 }
 
 
@@ -585,14 +602,14 @@ Foam::globalIndex::begin() const noexcept
 inline const Foam::globalIndex::const_iterator
 Foam::globalIndex::end() const noexcept
 {
-    return const_iterator(this, this->nProcs());
+    return const_iterator(this, this->length());
 }
 
 
 inline Foam::globalIndex::const_iterator
 Foam::globalIndex::cbegin(const label i) const noexcept
 {
-    const label len = this->nProcs();
+    const label len = this->length();
     return const_iterator(this, (i < 0 ? 0 : len < i ? len : i));
 }
 

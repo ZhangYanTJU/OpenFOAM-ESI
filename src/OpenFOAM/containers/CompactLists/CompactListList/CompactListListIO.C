@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,6 +61,36 @@ Foam::Ostream& Foam::CompactListList<T>::writeList
 {
     offsets_.writeList(os, shortLen);
     values_.writeList(os, shortLen);
+    return os;
+}
+
+
+template<class T>
+Foam::Ostream& Foam::CompactListList<T>::writeMatrix
+(
+    Ostream& os,
+    const label shortLen
+) const
+{
+    const CompactListList<T>& mat = *this;
+
+    const auto oldFmt = os.format(IOstreamOption::ASCII);
+
+    // Write like multi-line matrix of rows (ASCII)
+    // TBD: with/without indenting?
+
+    const label nRows = mat.length();
+
+    os  << nRows << nl << token::BEGIN_LIST << nl;
+
+    for (label i = 0; i < nRows; ++i)
+    {
+        mat.localList(i).writeList(os, shortLen) << nl;
+    }
+
+    os  << token::END_LIST << nl;
+    os.format(oldFmt);
+
     return os;
 }
 

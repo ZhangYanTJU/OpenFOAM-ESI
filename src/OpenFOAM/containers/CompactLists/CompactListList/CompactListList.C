@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,34 +144,54 @@ Foam::CompactListList<T> Foam::CompactListList<T>::pack
 }
 
 
-// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class T>
-Foam::CompactListList<T>::CompactListList(const labelUList& listSizes)
+Foam::label Foam::CompactListList<T>::resize_offsets
+(
+    const labelUList& listSizes,
+    const bool checkOverflow
+)
 {
     const label len = listSizes.size();
+    label total = 0;
 
     if (len)
     {
         offsets_.resize(len+1);
 
-        label total = 0;
         for (label i = 0; i < len; ++i)
         {
             offsets_[i] = total;
             total += listSizes[i];
 
-#ifdef FULLDEBUG
-            if (total < offsets_[i])
+            if (checkOverflow && total < offsets_[i])
             {
                 reportOverflowAndExit(i, listSizes);
             }
-#endif
         }
 
         offsets_[len] = total;
-        values_.resize(total);
     }
+    else
+    {
+        clear();
+    }
+    return total;
+}
+
+
+// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
+
+template<class T>
+Foam::CompactListList<T>::CompactListList(const labelUList& listSizes)
+{
+    #ifdef FULLDEBUG
+    const label total = resize_offsets(listSizes, true);
+    #else
+    const label total = resize_offsets(listSizes, false);
+    #endif
+    values_.resize(total);
 }
 
 
@@ -182,29 +202,12 @@ Foam::CompactListList<T>::CompactListList
     const T& val
 )
 {
-    const label len = listSizes.size();
-
-    if (len)
-    {
-        offsets_.resize(len+1);
-
-        label total = 0;
-        for (label i = 0; i < len; ++i)
-        {
-            offsets_[i] = total;
-            total += listSizes[i];
-
-#ifdef FULLDEBUG
-            if (total < offsets_[i])
-            {
-                reportOverflowAndExit(i, listSizes);
-            }
-#endif
-        }
-
-        offsets_[len] = total;
-        values_.resize(total, val);
-    }
+    #ifdef FULLDEBUG
+    const label total = resize_offsets(listSizes, true);
+    #else
+    const label total = resize_offsets(listSizes, false);
+    #endif
+    values_.resize(total, val);
 }
 
 
@@ -282,32 +285,24 @@ Foam::CompactListList<T>::ranges() const
 template<class T>
 void Foam::CompactListList<T>::resize(const labelUList& listSizes)
 {
-    const label len = listSizes.size();
+    #ifdef FULLDEBUG
+    const label total = resize_offsets(listSizes, true);
+    #else
+    const label total = resize_offsets(listSizes, false);
+    #endif
+    values_.resize(total);
+}
 
-    if (len)
-    {
-        offsets_.resize(len+1);
 
-        label total = 0;
-        for (label i = 0; i < len; ++i)
-        {
-            offsets_[i] = total;
-            total += listSizes[i];
-#if 0
-            if (checkOverflow && total < offsets_[i])
-            {
-                reportOverflowAndExit(i, listSizes);
-            }
-#endif
-        }
-
-        offsets_[len] = total;
-        values_.resize(total);
-    }
-    else
-    {
-        clear();
-    }
+template<class T>
+void Foam::CompactListList<T>::resize_nocopy(const labelUList& listSizes)
+{
+    #ifdef FULLDEBUG
+    const label total = resize_offsets(listSizes, true);
+    #else
+    const label total = resize_offsets(listSizes, false);
+    #endif
+    values_.resize_nocopy(total);
 }
 
 

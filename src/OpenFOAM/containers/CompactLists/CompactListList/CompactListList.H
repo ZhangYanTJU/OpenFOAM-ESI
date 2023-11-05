@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -98,11 +98,19 @@ class CompactListList
         );
 
         //- Avoid poorly sized offsets/values
-        void enforceSizeSanity();
+        inline void enforceSizeSanity();
 
         //- The max of localSizes, excluding the specified row
         label maxNonLocalSize(const label rowi) const;
 
+        //- Change the offset table based on the sizes
+        //- and return the total number of values to be stored but
+        //- does not touch the values array (unless the list is empty)
+        label resize_offsets
+        (
+            const labelUList& listSizes,
+            const bool checkOverflow = false
+        );
 
 public:
 
@@ -203,6 +211,9 @@ public:
         inline bool single() const noexcept;
 
         //- The primary size (the number of rows/sublists)
+        inline label length() const noexcept;
+
+        //- The primary size (the number of rows/sublists)
         inline label size() const noexcept;
 
         //- The total addressed size, which corresponds to the
@@ -299,6 +310,10 @@ public:
         //- Reset dimensions of CompactListList
         void resize(const labelUList& listSizes);
 
+        //- Reset dimensions of CompactListList
+        //- \em without preserving existing content
+        void resize_nocopy(const labelUList& listSizes);
+
         //- Alter local addressing size for given row, does not change content
         void setLocalSize(const label rowi, const label len);
 
@@ -390,6 +405,9 @@ public:
         inline const T& operator()(const label i, const label j) const;
 
 
+    // Iteration (FUTURE)
+
+
     // Reading/writing
 
         //- Read CompactListList as offsets/values pair from Istream,
@@ -398,6 +416,9 @@ public:
 
         //- Write CompactListList as offsets/values pair
         Ostream& writeList(Ostream& os, const label shortLen=0) const;
+
+        //- Write CompactListList as a formatted matrix of values (ASCII)
+        Ostream& writeMatrix(Ostream& os, const label shortLen=0) const;
 
 
     // IO Operators

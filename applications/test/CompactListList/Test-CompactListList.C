@@ -171,7 +171,8 @@ int main(int argc, char *argv[])
             CompactListList<label>::pack(subfaces)
         );
         Info<< "compact faces:" << subCompact << endl;
-        Info<< "deserialized:" << subCompact.unpack() << endl;
+        Info<< "matrix content:" << nl;
+        subCompact.writeMatrix(Info) << endl;
     }
 
     return 0;

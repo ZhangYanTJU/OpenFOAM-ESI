@@ -183,9 +183,9 @@ inline std::streamsize Foam::CompactListList<T>::size_bytes() const noexcept
 template<class T>
 inline bool Foam::CompactListList<T>::empty() const noexcept
 {
-    // Note: could (should?) also check (offsets_.back() == 0)
-    // return offsets_.empty()
-    // || (*(offsets_.cdata() + offsets_.size()-1) == 0);
+    // Note: could (should?) also check total size??
+    // const label len = (offsets_.size() - 1);
+    // return (len < 1) || (*(offsets_.cdata() + len) == 0);
     return (offsets_.size() <= 1);
 }
 
@@ -194,6 +194,14 @@ template<class T>
 inline bool Foam::CompactListList<T>::single() const noexcept
 {
     return (offsets_.size() == 2);
+}
+
+
+template<class T>
+inline Foam::label Foam::CompactListList<T>::length() const noexcept
+{
+    const label len = (offsets_.size() - 1);
+    return (len < 1) ? static_cast<label>(0) : len;
 }
 
 
@@ -375,6 +383,7 @@ inline void Foam::CompactListList<T>::resize
 {
     offsets_.resize(mRows+1, Zero);
     values_.resize(nVals);
+    // Optionally: enforceSizeSanity();
 }
 
 
@@ -387,6 +396,7 @@ inline void Foam::CompactListList<T>::resize_nocopy
 {
     offsets_.resize(mRows+1, Zero);
     values_.resize_nocopy(nVals);
+    // Optionally: enforceSizeSanity();
 }
 
 

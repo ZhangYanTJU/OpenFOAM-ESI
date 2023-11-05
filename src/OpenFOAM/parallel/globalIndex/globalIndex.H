@@ -67,7 +67,7 @@ class globalIndex
 {
     // Private Data
 
-        //- Start of proci. Size is nProcs()+1. (so like CompactListList)
+        //- Offset (addressing) table - like CompactListList
         labelList offsets_;
 
 
@@ -182,7 +182,11 @@ public:
         //- Check for default constructed or total-size == 0
         inline bool empty() const noexcept;
 
+        //- The number of items covered by the offsets
+        inline label length() const noexcept;
+
         //- Global sum of localSizes. Same as totalSize()
+        FOAM_DEPRECATED_STRICT(2022-10, "totalSize() - less ambiguous")
         inline label size() const;
 
         //- The span size covered by the offsets, zero if empty
@@ -223,7 +227,8 @@ public:
         //- Such content is often created with gatherNone.
         inline bool single() const noexcept;
 
-        //- The number of processors covered by the offsets
+        //- The number of processors covered by the offsets,
+        //- same as the primary length()
         inline label nProcs() const noexcept;
 
         //- Range of process indices for all addressed offsets (processes)
@@ -352,6 +357,10 @@ public:
         //  reasonably frequently) followed by a binary search.
         //- Fatal for out of range ids (eg, negative or >= totalSize()
         inline label whichProcID(const label i) const;
+
+        //- Which processor does global id come from?
+        //- Checks proci first.
+        inline label whichProcID(const label proci, const label i) const;
 
 
     // Queries relating to myProcNo (Caution: uses UPstream::worldComm)
