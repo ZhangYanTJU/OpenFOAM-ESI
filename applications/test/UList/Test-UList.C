@@ -115,7 +115,22 @@ int main(int argc, char *argv[])
         Info<<"UList: "; print(ulist);
     }
 
+    {
+        Foam::identityOp ident;
+
+        Info<< nl << "identityOp as functor or array/map" << nl;
+
+        for (const label val : labelRange(5))
+        {
+            Info<< "value:" << val
+                << " () = " << ident(val)
+                << " [] = " << ident[val] << nl;
+        }
+    }
+
+    Info<< "\nEnd\n" << nl;
     return 0;
 }
+
 
 // ************************************************************************* //

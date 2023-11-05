@@ -60,6 +60,12 @@ class boolVector
 {
 public:
 
+    // Typedefs
+
+        //- The component type is bool
+        typedef bool cmptType;
+
+
     // Member Constants
 
         //- Rank of a vector is 1
@@ -174,6 +180,22 @@ public:
 
 //- A boolVector is contiguous (FixedList of bool)
 template<> struct is_contiguous<boolVector> : std::true_type {};
+
+
+/*---------------------------------------------------------------------------*\
+                      Specialization pTraits<boolVector>
+\*---------------------------------------------------------------------------*/
+
+//- A boolVector has bool data components.
+template<>
+struct pTraits_cmptType<boolVector> { typedef bool type; };
+
+//- A boolVector has three data components
+template<>
+struct pTraits_nComponents<boolVector>
+:
+    std::integral_constant<Foam::direction, 3>
+{};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -94,6 +94,13 @@ struct identityOp
     {
         return std::forward<T>(val);
     }
+
+    // Allow use as an identity array/map
+    template<class T>
+    constexpr T&& operator[](T&& val) const noexcept
+    {
+        return std::forward<T>(val);
+    }
 };
 
 
@@ -129,10 +136,10 @@ void Swap(T (&a)[N], T (&b)[N])
 //- or that are in a state of change.
 //
 // SeeAlso
-//     - http://en.cppreference.com/w/cpp/iterator/begin
-//     - http://en.cppreference.com/w/cpp/iterator/end
-//     - http://en.cppreference.com/w/cpp/iterator/rbegin
-//     - http://en.cppreference.com/w/cpp/iterator/rend
+//     - https://en.cppreference.com/w/cpp/iterator/begin
+//     - https://en.cppreference.com/w/cpp/iterator/end
+//     - https://en.cppreference.com/w/cpp/iterator/rbegin
+//     - https://en.cppreference.com/w/cpp/iterator/rend
 
 namespace stdFoam
 {

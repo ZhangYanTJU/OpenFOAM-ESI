@@ -52,7 +52,7 @@ namespace stdFoam
 template<class... >
 using void_t = void;
 
-} // End namespace Foam
+} // End namespace stdFoam
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -129,6 +129,21 @@ struct pTraits_rank
 :
     std::integral_constant<Foam::direction, pTraits<T>::rank>
 {};
+
+
+//- The underlying component data type: default is pass-through.
+template<class T, class = void>
+struct pTraits_cmptType { typedef T type; };
+
+//- The underlying component data type for vector-space (or complex).
+//  Enabled when pTraits<T>:zero has a defined type (ie, exists),
+//  such as for arithmetic primitives, vector-space etc. where the concept
+//  of a component type also makes sense.
+template<class T>
+struct pTraits_cmptType<T, stdFoam::void_t<decltype(pTraits<T>::zero)>>
+{
+    typedef typename pTraits<T>::cmptType type;
+};
 
 
 //- The vector-space number of components: default is 1.

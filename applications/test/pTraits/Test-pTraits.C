@@ -34,6 +34,7 @@ Description
 #include "boolVector.H"  // A FixedList pretending to be a vector
 #include "vector.H"
 #include "tensor.H"
+#include "complex.H"
 #include "uLabel.H"
 #include "Switch.H"
 
@@ -110,6 +111,7 @@ void printTraits()
         << " vector-space=" << Switch::name(is_vectorspace<T>::value)
         << " is_label=" << Switch::name(is_contiguous_label<T>::value)
         << " is_scalar=" << Switch::name(is_contiguous_scalar<T>::value)
+        << " cmptType=" << typeid(typename pTraits_cmptType<T>::type).name()
         << endl;
 }
 
@@ -118,6 +120,12 @@ template<class T>
 void printTraits(const pTraits<T>& p)
 {
     Info<< p.typeName << " == " << p << endl;
+}
+
+template<class T>
+void printDecltype()
+{
+    Info<< "cmptType : " << typeid(T).name() << nl;
 }
 
 
@@ -129,11 +137,15 @@ int main()
     printTraits<bool>();
     printTraits<label>();
     printTraits<scalar>();
-    printTraits<vector>();
+    printTraits<complex>();     // Uses specialized pTraits_...
+    printTraits<floatVector>();
+    printTraits<doubleVector>();
     printTraits<tensor>();
-    printTraits<boolVector>();
+    printTraits<boolVector>();  // Uses specialized pTraits_...
     printTraits<word>();
     printTraits<std::string>();
+
+    Info<< nl;
 
     {
         pTraits<bool> b(true);
@@ -146,6 +158,8 @@ int main()
     }
 
     printTraits(pTraits<scalar>(3.14159));
+
+    Info<< nl;
 
     label abc;
     Info<< "uninitialized primitive:"<< abc << endl;

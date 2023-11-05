@@ -226,6 +226,20 @@ public:
                         Specialization pTraits<complex>
 \*---------------------------------------------------------------------------*/
 
+//- The underlying component data type for complex is scalar.
+//  The regular pTraits<T>:cmptType as complex is currently (2023-11)
+//  likely not quite correct (issue #3018)
+template<>
+struct pTraits_cmptType<complex> { typedef scalar type; };
+
+//- A complex has two scalar components
+template<>
+struct pTraits_nComponents<complex>
+:
+    std::integral_constant<Foam::direction, 2>
+{};
+
+
 //- Template specialisation for pTraits<complex>
 template<>
 class pTraits<complex>
@@ -274,7 +288,7 @@ public:
     // Constructors
 
         //- Copy construct from primitive
-        explicit pTraits(const complex& val)
+        explicit pTraits(const complex& val) noexcept
         :
             p_(val)
         {}
