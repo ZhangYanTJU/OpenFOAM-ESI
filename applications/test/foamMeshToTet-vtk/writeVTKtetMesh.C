@@ -52,9 +52,9 @@ void writeVTKtetMesh(const fileName& output, const polyMesh& mesh_)
     {
         nTets += 2 * faces[facei].nTriangles();
     }
-    for (label facei = mesh_.nInternalFaces(); facei < mesh_.nFaces(); ++facei)
+    for (const face& f : mesh_.boundaryMesh().faces())
     {
-        nTets += faces[facei].nTriangles();
+        nTets += f.nTriangles();
     }
     const label nPoints = (mesh_.nPoints() + mesh_.nCells());
 

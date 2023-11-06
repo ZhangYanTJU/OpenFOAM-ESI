@@ -300,6 +300,34 @@ void Foam::polyBoundaryMesh::calcGeometry()
 }
 
 
+const Foam::faceList::subList Foam::polyBoundaryMesh::faces() const
+{
+    return faceList::subList
+    (
+        mesh_.faces(),
+        mesh_.nBoundaryFaces(),
+        mesh_.nInternalFaces()
+    );
+}
+
+
+const Foam::labelList::subList Foam::polyBoundaryMesh::faceOwner() const
+{
+    return labelList::subList
+    (
+        mesh_.faceOwner(),
+        mesh_.nBoundaryFaces(),
+        mesh_.nInternalFaces()
+    );
+}
+
+// Potentially useful to simplify logic elsewhere?
+// const Foam::labelList::subList Foam::polyBoundaryMesh::faceNeighbour() const
+// {
+//     return labelList::subList();
+// }
+
+
 Foam::UPtrList<const Foam::labelUList>
 Foam::polyBoundaryMesh::faceCells() const
 {

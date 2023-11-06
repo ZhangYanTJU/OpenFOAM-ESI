@@ -171,6 +171,12 @@ public:
             return mesh_;
         }
 
+        //- Return mesh faces for the entire boundary
+        const faceList::subList faces() const;
+
+        //- Return face owner for the entire boundary
+        const labelList::subList faceOwner() const;
+
         //- Return a list of faceCells for each patch
         UPtrList<const labelUList> faceCells() const;
 
