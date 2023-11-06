@@ -80,7 +80,7 @@ Foam::word Foam::fileOperation::processorsBaseDir = "processors";
 //- Caching (e.g. of time directories) - enabled by default
 int Foam::fileOperation::cacheLevel_(1);
 
-Foam::label Foam::fileOperation::nProcsFilter_(-1);
+int Foam::fileOperation::nProcsFilter_(-1);
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
