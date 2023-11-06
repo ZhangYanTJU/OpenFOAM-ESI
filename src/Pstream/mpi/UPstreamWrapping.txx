@@ -1,4 +1,4 @@
-/*---------------------------------------------------------------------------*\
+/*--------------------------------*- C++ -*----------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
@@ -797,19 +797,6 @@ void Foam::PstreamDetail::allToAllConsensus
         int flag = 0;
         MPI_Status status;
 
-#if defined(MPI_VERSION) && (MPI_VERSION >= 3)
-        // MPI-3 : eg, openmpi-1.7 (2013) and later
-        MPI_Message message;
-        MPI_Improbe
-        (
-            MPI_ANY_SOURCE,
-            tag,
-            PstreamGlobals::MPICommunicators_[comm],
-           &flag,
-           &message,
-           &status
-        );
-#else
         MPI_Iprobe
         (
             MPI_ANY_SOURCE,
@@ -818,7 +805,6 @@ void Foam::PstreamDetail::allToAllConsensus
            &flag,
            &status
         );
-#endif
 
         if (flag)
         {
@@ -841,17 +827,6 @@ void Foam::PstreamDetail::allToAllConsensus
 
             // Regular blocking receive [the data are small]
 
-#if defined(MPI_VERSION) && (MPI_VERSION >= 3)
-            // MPI-3 : eg, openmpi-1.7 (2013) and later
-            MPI_Mrecv
-            (
-               &recvData,
-                count,          // count=1 (see above)
-                datatype,
-               &message,
-                MPI_STATUS_IGNORE
-            );
-#else
             MPI_Recv
             (
                &recvData,
@@ -862,7 +837,6 @@ void Foam::PstreamDetail::allToAllConsensus
                 PstreamGlobals::MPICommunicators_[comm],
                 MPI_STATUS_IGNORE
             );
-#endif
         }
 
         if (barrier_active)

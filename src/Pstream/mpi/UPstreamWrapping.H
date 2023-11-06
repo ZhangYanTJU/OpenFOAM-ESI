@@ -31,7 +31,7 @@ Description
     Functions to wrap MPI_Bcast, MPI_Allreduce, MPI_Iallreduce etc.
 
 SourceFiles
-    UPstreamWrappingTemplates.C
+    UPstreamWrapping.txx
 
 \*---------------------------------------------------------------------------*/
 
@@ -253,9 +253,7 @@ void allGather
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#ifdef NoRepository
-    #include "UPstreamWrappingTemplates.C"
-#endif
+#include "UPstreamWrapping.txx"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
