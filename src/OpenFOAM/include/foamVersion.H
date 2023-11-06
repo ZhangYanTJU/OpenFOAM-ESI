@@ -50,8 +50,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef foamVersion_H
-#define foamVersion_H
+#ifndef Foam_foamVersion_H
+#define Foam_foamVersion_H
 
 #include <iostream>
 #include <string>

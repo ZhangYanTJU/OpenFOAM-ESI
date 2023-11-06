@@ -23,41 +23,22 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    Help with architecture-specific aspects.
+Class
+    Foam::endian
 
-    Defines WM_BIG_ENDIAN or WM_LITTLE_ENDIAN as well as providing a
-    few runtime methods. Primarily used as a namespace, but defined as
-    a class to allow pTraits specialization.
+Description
+    Help with architecture-specific aspects, primarily used
+    as a namespace, but defined as a class to allow pTraits specialization.
 
 SourceFiles
-    endianI.H
+    foamEndianI.H
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_endian_H
-#define Foam_endian_H
+#ifndef Foam_foamEndian_H
+#define Foam_foamEndian_H
 
-#include <cstdint>
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef __BYTE_ORDER__
-    // Clang, Gcc, Icc, Pgi
-    #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-        #define WM_LITTLE_ENDIAN
-    #elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-        #define WM_BIG_ENDIAN
-    #else
-        #error "__BYTE_ORDER__ is not BIG or LITTLE endian"
-    #endif
-#endif
-
-// Could downgrade to a warning, but then user always needs runtime check.
-#if !defined(WM_BIG_ENDIAN) && !defined(WM_LITTLE_ENDIAN)
-    #error "Cannot determine BIG or LITTLE endian."
-    #error "Please add to compilation options"
-#endif
+#include "foamEndianFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -73,6 +54,15 @@ class endian
 public:
 
     // Public Methods
+
+        // FUTURE?
+        // #if defined (WM_BIG_ENDIAN)
+        // //- The endian name as a string
+        // static constexpr const char* name() noexcept { return "MSB"; }
+        // #else
+        // //- The endian name as a string
+        // static constexpr const char* name() noexcept { return "LSB"; }
+        // #endif
 
         //- Runtime check for big endian.
         inline static bool isBig() noexcept;
@@ -94,7 +84,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "endianI.H"
+#include "foamEndianI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -24,14 +24,16 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
+    Test-sysInfo
 
 Description
+    Simple output of endian and system-information
 
 \*---------------------------------------------------------------------------*/
 
 #include "profilingSysInfo.H"
 #include "IOstreams.H"
-#include "endian.H"
+#include "foamEndian.H"  // For run-time tests
 #include "cpuInfo.H"
 
 using namespace Foam;

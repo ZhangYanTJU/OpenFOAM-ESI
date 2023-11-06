@@ -23,54 +23,49 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Description
+    Define WM_BIG_ENDIAN or WM_LITTLE_ENDIAN
+    and forward declare Foam::endian class.
+
 \*---------------------------------------------------------------------------*/
 
-#include "foamVtkPTraits.H"
-#include "foamEndianFwd.H"  // For big/little endian defines
+#ifndef Foam_foamEndianFwd_H
+#define Foam_foamEndianFwd_H
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+#include <cstdint>
 
-template<>
-const char* const
-Foam::vtkPTraits<uint8_t>::typeName = "UInt8";
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-template<>
-const char * const
-Foam::vtkPTraits<int32_t>::typeName = "Int32";
-
-template<>
-const char * const
-Foam::vtkPTraits<uint32_t>::typeName = "UInt32";
-
-template<>
-const char * const
-Foam::vtkPTraits<int64_t>::typeName = "Int64";
-
-template<>
-const char * const
-Foam::vtkPTraits<uint64_t>::typeName = "UInt64";
-
-template<>
-const char * const
-Foam::vtkPTraits<float>::typeName = "Float32";
-
-template<>
-const char * const
-Foam::vtkPTraits<double>::typeName = "Float64";
-
-#ifdef WM_LITTLE_ENDIAN
-template<>
-const char* const
-Foam::vtkPTraits<Foam::endian>::typeName = "LittleEndian";
-#else
-template<>
-const char* const
-Foam::vtkPTraits<Foam::endian>::typeName = "BigEndian";
+#ifdef __BYTE_ORDER__
+    // Clang, Gcc, Icc, Pgi
+    #if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+        #define WM_LITTLE_ENDIAN
+    #elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+        #define WM_BIG_ENDIAN
+    #else
+        #error "__BYTE_ORDER__ is not BIG or LITTLE endian"
+    #endif
 #endif
 
-template<>
-const char* const
-Foam::vtkPTraits<std::string>::typeName = "String";
+// Could downgrade to a warning, but then user always needs runtime check.
+#if !defined(WM_BIG_ENDIAN) && !defined(WM_LITTLE_ENDIAN)
+    #error "Cannot determine BIG or LITTLE endian."
+    #error "Please add to compilation options"
+#endif
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+class endian;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

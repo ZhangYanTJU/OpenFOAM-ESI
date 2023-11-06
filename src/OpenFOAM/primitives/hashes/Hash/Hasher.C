@@ -29,7 +29,7 @@ Description
 
 #include "Hasher.H"
 #include "HasherInt.H"
-#include "endian.H"
+#include "foamEndianFwd.H"  // For big/little endian defines
 
 // Left-rotate a 32-bit value and carry by nBits
 #define bitRotateLeft(x, nBits)  (((x) << (nBits)) | ((x) >> (32 - (nBits))))
