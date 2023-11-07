@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,6 +58,12 @@ namespace fileFormats
 class NASCore
 {
 public:
+
+    // Public Data
+
+        //- Named/registered debug switch: 'nastran.debug'
+        static int debug;
+
 
         //- File field formats
         enum fieldFormat

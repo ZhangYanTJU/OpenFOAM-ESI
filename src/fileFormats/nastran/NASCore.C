@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,8 +29,22 @@ License
 #include "IOmanip.H"
 #include "Ostream.H"
 #include "parsing.H"
+#include "defineDebugSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace fileFormats
+{
+    defineDebugSwitchWithName(NASCore, "nastran.debug", 0);
+    registerDebugSwitchWithName
+    (
+        NASCore, Nastran, "nastran.debug"
+    );
+}
+}
+
 
 const Foam::Enum
 <
