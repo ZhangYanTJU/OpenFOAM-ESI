@@ -125,6 +125,16 @@ bool Foam::functionObjects::stateFunctionObject::getObjectDict
 }
 
 
+bool Foam::functionObjects::stateFunctionObject::getObjectResultDict
+(
+    const word& objectName,
+    dictionary& dict
+) const
+{
+    return stateDict().getObjectResultDict(objectName, dict);
+}
+
+
 Foam::word Foam::functionObjects::stateFunctionObject::resultType
 (
     const word& entryName

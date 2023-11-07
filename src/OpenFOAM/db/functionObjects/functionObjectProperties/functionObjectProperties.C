@@ -147,6 +147,29 @@ bool Foam::functionObjects::properties::getObjectDict
 }
 
 
+bool Foam::functionObjects::properties::getObjectResultDict
+(
+    const word& objectName,
+    dictionary& dict
+) const
+{
+    const dictionary* dictptr = findDict(resultsName_);
+
+    if (dictptr)
+    {
+        const dictionary* objptr = dictptr->findDict(objectName);
+
+        if (objptr)
+        {
+            dict = *objptr;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 bool Foam::functionObjects::properties::hasResultObject
 (
     const word& objectName

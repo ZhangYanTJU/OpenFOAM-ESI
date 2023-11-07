@@ -189,6 +189,12 @@ public:
 
         // Results
 
+            bool getObjectResultDict
+            (
+                const word& objectName,
+                dictionary& dict
+            ) const;
+
             //- Add result
             template<class Type>
             void setResult

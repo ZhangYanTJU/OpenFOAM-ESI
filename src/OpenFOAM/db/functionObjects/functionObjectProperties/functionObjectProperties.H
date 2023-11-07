@@ -165,6 +165,13 @@ public:
 
         // Results
 
+            //- Get dictionary of object results, return true if set
+            bool getObjectResultDict
+            (
+                const word& objectName,
+                dictionary& dict
+            ) const;
+
             //- Add result from named object
             template<class Type>
             void setObjectResult
