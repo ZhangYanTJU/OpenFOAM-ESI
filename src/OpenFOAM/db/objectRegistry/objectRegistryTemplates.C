@@ -209,7 +209,7 @@ Foam::objectRegistry::objectsTypeImpl
         (
             ptr
          && (!strict || Foam::isType<BaseType>(*obj))
-         && matchName(ptr->name())
+         && matchName(obj->name())
         )
         {
             result.set(count, const_cast<BaseType*>(ptr));
