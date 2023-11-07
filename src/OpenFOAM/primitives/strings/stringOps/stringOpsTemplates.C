@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -120,7 +120,7 @@ Foam::SubStrings<StringType> Foam::stringOps::split
     }
 
     // Trailing element
-    if (keepEmpty ? (beg == str.size()) : (beg < str.size()))
+    if (keepEmpty ? (beg <= str.size()) : (beg < str.size()))
     {
         lst.append(str.cbegin() + beg, str.cend());
     }
@@ -156,7 +156,7 @@ Foam::SubStrings<StringType> Foam::stringOps::split
     }
 
     // Trailing element
-    if (keepEmpty ? (beg == str.size()) : (beg < str.size()))
+    if (keepEmpty ? (beg <= str.size()) : (beg < str.size()))
     {
         lst.append(str.cbegin() + beg, str.cend());
     }
