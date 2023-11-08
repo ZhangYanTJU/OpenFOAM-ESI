@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,8 +41,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef manualDecomp_H
-#define manualDecomp_H
+#ifndef Foam_manualDecomp_H
+#define Foam_manualDecomp_H
 
 #include "decompositionMethod.H"
 
@@ -61,8 +61,9 @@ class manualDecomp
 
         fileName dataFile_;
 
+public:
 
-    // Private Member Functions
+    // Generated Methods
 
         //- No copy construct
         manualDecomp(const manualDecomp&) = delete;
@@ -70,8 +71,6 @@ class manualDecomp
         //- No copy assignment
         void operator=(const manualDecomp&) = delete;
 
-
-public:
 
     //- Runtime type information
     TypeName("manual");
@@ -106,8 +105,21 @@ public:
         (
             const polyMesh& mesh,
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
         ) const;
+
+        //- Return for every coordinate the wanted processor number.
+        //  Explicitly provided connectivity - does not use mesh_.
+        virtual labelList decompose
+        (
+            const CompactListList<label>& globalCellCells,
+            const pointField& cc,
+            const scalarField& cWeights = scalarField::null()
+        ) const
+        {
+            NotImplemented;
+            return labelList();
+        }
 
         //- Return for every coordinate the wanted processor number.
         //  Explicitly provided connectivity - does not use mesh_.
@@ -115,7 +127,7 @@ public:
         (
             const labelListList& globalCellCells,
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
         ) const
         {
             NotImplemented;

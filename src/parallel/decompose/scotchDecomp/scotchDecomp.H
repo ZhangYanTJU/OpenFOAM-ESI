@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021,2023 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -249,8 +249,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef scotchDecomp_H
-#define scotchDecomp_H
+#ifndef Foam_scotchDecomp_H
+#define Foam_scotchDecomp_H
 
 #include "metisLikeDecomp.H"
 
@@ -284,6 +284,9 @@ protected:
             labelList& decomp
         ) const;
 
+public:
+
+    // Generated Methods
 
         //- No copy construct
         scotchDecomp(const scotchDecomp&) = delete;
@@ -292,13 +295,14 @@ protected:
         void operator=(const scotchDecomp&) = delete;
 
 
-public:
-
     //- Runtime type information
     TypeName("scotch");
 
 
     // Constructors
+
+        //- Construct with number of domains (no coefficients or constraints)
+        explicit scotchDecomp(const label numDomains);
 
         //- Construct given decomposition dictionary and optional region name
         explicit scotchDecomp
@@ -327,25 +331,33 @@ public:
         virtual labelList decompose
         (
             const polyMesh& mesh,
-            const pointField& points,
-            const scalarField& pointWeights
+            const pointField& points = pointField::null(),
+            const scalarField& pointWeights = scalarField::null()
         ) const;
 
         //- Return for every coordinate the wanted processor number.
         virtual labelList decompose
         (
             const polyMesh& mesh,
-            const labelList& agglom,
-            const pointField& regionPoints,
-            const scalarField& regionWeights
+            const labelList& agglom,  //!< agglomeration: fine-to-coarse
+            const pointField& agglomPoints,
+            const scalarField& agglomWeights = scalarField::null()
         ) const;
 
-        //- Return for every coordinate the wanted processor number.
+        //- Return the wanted processor number for every cell.
+        virtual labelList decompose
+        (
+            const CompactListList<label>& globalCellCells,
+            const pointField& cc = pointField::null(),
+            const scalarField& cWeights = scalarField::null()
+        ) const;
+
+        //- Return the wanted processor number for every cell.
         virtual labelList decompose
         (
             const labelListList& globalCellCells,
-            const pointField& cc,
-            const scalarField& cWeights
+            const pointField& cc = pointField::null(),
+            const scalarField& cWeights = scalarField::null()
         ) const;
 };
 

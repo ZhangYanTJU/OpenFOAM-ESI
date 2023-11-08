@@ -33,6 +33,7 @@ Description
 
 SourceFiles
     polyBoundaryMesh.C
+    polyBoundaryMeshTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -50,6 +51,7 @@ namespace Foam
 {
 
 // Forward Declarations
+class entry;
 class polyMesh;
 class wordRe;
 class wordRes;
@@ -90,6 +92,12 @@ class polyBoundaryMesh
 
         //- Calculate group name to patch ids lookup
         void calcGroupIDs() const;
+
+        //- Clear addressing at this level
+        void clearLocalAddressing();
+
+        //- Populate/recreate from dictionary entries
+        void populate(PtrList<entry>&& entries);
 
         //- Return true if contents were read
         //- (controlled by IOobject readOption flags).
@@ -147,6 +155,15 @@ public:
             const IOobject& io,
             const polyMesh& mesh,
             const polyPatchList& list
+        );
+
+        //- Read construct (mandatory, optional) based on IOobject properties
+        //- or fallback to constructing from a list of dictionary entries
+        polyBoundaryMesh
+        (
+            const IOobject& io,
+            const polyMesh& mesh,
+            PtrList<entry>&& entries
         );
 
 
@@ -354,14 +371,24 @@ public:
         //  sync in that case)
         void reorder(const labelUList& oldToNew, const bool validBoundary);
 
-        //- writeData member function required by regIOobject
+
+    // Write
+
+        //- Write as a plain list of entries
+        void writeEntry(Ostream& os) const;
+
+        //- Write as a primitive entry with given name.
+        //- If the keyword is empty, revert to a plain list.
+        void writeEntry(const keyType& keyword, Ostream& os) const;
+
+        //- The writeData member function required by regIOobject
         virtual bool writeData(Ostream& os) const;
 
-        //- Write using stream options
+        //- Write using stream options, but always UNCOMPRESSED
         virtual bool writeObject
         (
             IOstreamOption streamOpt,
-            const bool writeOnProc
+            const bool writeOnProc = true
         ) const;
 
 

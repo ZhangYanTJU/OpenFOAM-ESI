@@ -82,10 +82,6 @@ class ZoneMesh
 
     // Private Member Functions
 
-        //- Return true if contents were read
-        //- (controlled by IOobject readOption flags).
-        bool readContents(const bool allowOptionalRead);
-
         //- Total of number of addressed items (all zones)
         label totalSize() const;
 
@@ -98,17 +94,36 @@ class ZoneMesh
         //- Calculate group name to zone ids lookup
         void calcGroupIDs() const;
 
+        //- Clear addressing at this level
+        void clearLocalAddressing();
+
+        //- Populate/recreate from dictionary entries
+        void populate(PtrList<entry>&& entries);
+
+        //- Return true if contents were read
+        //- (controlled by IOobject readOption flags).
+        bool readContents(const bool allowOptionalRead);
+
+
+public:
+
+    // Public Typedefs
+
+        //- The zone type. Same as PtrList<ZoneType>::value_type
+        typedef ZoneType zone_type;
+
+
+    //- Debug switch to disallow the use of generic zones
+    static int disallowGenericZones;
+
+
+    // Generated Methods
+
         //- No copy construct
         ZoneMesh(const ZoneMesh&) = delete;
 
         //- No copy assignment
         void operator=(const ZoneMesh<ZoneType, MeshType>&) = delete;
-
-
-public:
-
-    //- Debug switch to disallow the use of generic zones
-    static int disallowGenericZones;
 
 
     // Constructors
@@ -146,6 +161,15 @@ public:
             const IOobject& io,
             const MeshType& mesh,
             const PtrList<ZoneType>& list
+        );
+
+        //- Read construct (mandatory, optional) based on IOobject properties
+        //- or use the fallback PtrList (with cloning).
+        ZoneMesh
+        (
+            const IOobject& io,
+            const MeshType& mesh,
+            PtrList<entry>&& entries
         );
 
 

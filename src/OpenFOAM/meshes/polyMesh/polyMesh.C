@@ -259,7 +259,7 @@ Foam::polyMesh::polyMesh(const IOobject& io, const bool doInit)
             IOobject::NO_WRITE
         ),
         *this,
-        PtrList<pointZone>()
+        PtrList<entry>()
     ),
     faceZones_
     (
@@ -273,7 +273,7 @@ Foam::polyMesh::polyMesh(const IOobject& io, const bool doInit)
             IOobject::NO_WRITE
         ),
         *this,
-        PtrList<faceZone>()
+        PtrList<entry>()
     ),
     cellZones_
     (
@@ -287,7 +287,7 @@ Foam::polyMesh::polyMesh(const IOobject& io, const bool doInit)
             IOobject::NO_WRITE
         ),
         *this,
-        PtrList<cellZone>()
+        PtrList<entry>()
     ),
     globalMeshDataPtr_(nullptr),
     moving_(false),

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -674,6 +674,12 @@ Foam::label Foam::hierarchGeomDecomp::sortComponent
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::hierarchGeomDecomp::hierarchGeomDecomp(const Vector<label>& divisions)
+:
+    geomDecomp(divisions)
+{}
+
+
 Foam::hierarchGeomDecomp::hierarchGeomDecomp
 (
     const dictionary& decompDict,
@@ -688,51 +694,13 @@ Foam::hierarchGeomDecomp::hierarchGeomDecomp
 
 Foam::labelList Foam::hierarchGeomDecomp::decompose
 (
-    const pointField& points
-) const
-{
-    // construct a list for the final result
-    labelList finalDecomp(points.size(), Zero);
-
-    // Start off with every point sorted onto itself.
-    labelList slice(identity(points.size()));
-
-    const pointField rotatedPoints(adjustPoints(points));
-
-    // Calculate tolerance of cell distribution. For large cases finding
-    // distribution to the cell exact would cause too many iterations so allow
-    // some slack.
-    const label allSize = returnReduce(points.size(), sumOp<label>());
-    const label sizeTol = max(1, label(1e-3*allSize/nDomains_));
-
-    // Sort recursive
-    const label nWarnings = sortComponent
-    (
-        sizeTol,
-        rotatedPoints,
-        slice,
-        0,              // Sort first component in order_
-        1,              // Offset for different x bins.
-        finalDecomp
-    );
-
-    if (nWarnings)
-    {
-        WarningInFunction
-            << "\nEncountered " << nWarnings << " occurrences where the desired"
-               " decomposition split could not be properly satisfied" << endl;
-    }
-
-    return finalDecomp;
-}
-
-
-Foam::labelList Foam::hierarchGeomDecomp::decompose
-(
     const pointField& points,
     const scalarField& weights
 ) const
 {
+    // Uniform weighting if weights are empty or poorly sized
+    const bool hasWeights = returnReduceAnd(points.size() == weights.size());
+
     // Construct a list for the final result
     labelList finalDecomp(points.size(), Zero);
 
@@ -748,16 +716,32 @@ Foam::labelList Foam::hierarchGeomDecomp::decompose
     const label sizeTol = max(1, label(1e-3*allSize/nDomains_));
 
     // Sort recursive
-    const label nWarnings = sortComponent
-    (
-        sizeTol,
-        weights,
-        rotatedPoints,
-        slice,
-        0,              // Sort first component in order_
-        1,              // Offset for different x bins.
-        finalDecomp
-    );
+    label nWarnings = 0;
+    if (hasWeights)
+    {
+        nWarnings = sortComponent
+        (
+            sizeTol,
+            weights,
+            rotatedPoints,
+            slice,
+            0,              // Sort first component in order_
+            1,              // Offset for different x bins.
+            finalDecomp
+        );
+    }
+    else
+    {
+        nWarnings = sortComponent
+        (
+            sizeTol,
+            rotatedPoints,
+            slice,
+            0,              // Sort first component in order_
+            1,              // Offset for different x bins.
+            finalDecomp
+        );
+    }
 
     if (nWarnings)
     {

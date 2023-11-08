@@ -141,6 +141,31 @@ namespace Foam
 //! \endcond
 
 
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+// A file is 'outside' of the case if it has been specified using an
+// absolute path.
+//
+// Like 'fileName::isAbsolute' but with even fewer checks since the
+// swapping of '\\' with '/' will have already occurred.
+static inline bool file_isOutsideCase(const std::string& str)
+{
+    return !str.empty() &&
+    (
+        // Starts with '/'
+        (str[0] == '/')
+
+#ifdef _WIN32
+         // Filesytem root - eg, d:/path
+     || (
+            (str.length() > 2 && str[1] == ':')
+         && (str[2] == '/')
+        )
+#endif
+    );
+}
+
+
 // * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * * //
 
 bool Foam::IOobject::fileNameComponents
@@ -441,38 +466,43 @@ const Foam::Time& Foam::IOobject::time() const noexcept
 }
 
 
-const Foam::fileName& Foam::IOobject::rootPath() const
+const Foam::fileName& Foam::IOobject::rootPath() const noexcept
 {
     return time().rootPath();
 }
 
 
-const Foam::fileName& Foam::IOobject::caseName() const
+const Foam::fileName& Foam::IOobject::caseName() const noexcept
 {
     return time().caseName();
 }
 
 
+const Foam::fileName& Foam::IOobject::globalCaseName() const noexcept
+{
+    return time().globalCaseName();
+}
+
+
 Foam::fileName Foam::IOobject::path() const
 {
-    // A file is 'outside' of the case if it has been specified using an
-    // absolute path
-
-    const auto first = instance().find('/');
-
-    if
-    (
-        first == 0
-        #ifdef _WIN32
-     || (first == 2 && instance()[1] == ':')  // Eg, d:/path
-        #endif
-    )
+    if (file_isOutsideCase(instance()))
     {
-        // Absolute path (starts with '/' or 'd:/')
         return instance();
     }
 
     return rootPath()/caseName()/instance()/db_.dbDir()/local();
+}
+
+
+Foam::fileName Foam::IOobject::globalPath() const
+{
+    if (file_isOutsideCase(instance()))
+    {
+        return instance();
+    }
+
+    return rootPath()/globalCaseName()/instance()/db_.dbDir()/local();
 }
 
 
@@ -487,22 +517,21 @@ Foam::fileName Foam::IOobject::path
 }
 
 
+Foam::fileName Foam::IOobject::globalPath
+(
+    const word& instance,
+    const fileName& local
+) const
+{
+    // Note: can only be called with relative instance since is word type
+    return rootPath()/globalCaseName()/instance/db_.dbDir()/local;
+}
+
+
 Foam::fileName Foam::IOobject::objectRelPath() const
 {
-    // A file is 'outside' of the case if it has been specified using an
-    // absolute path
-
-    const auto first = instance().find('/');
-
-    if
-    (
-        first == 0
-        #ifdef _WIN32
-     || (first == 2 && instance()[1] == ':')  // Eg, d:/path
-        #endif
-    )
+    if (file_isOutsideCase(instance()))
     {
-        // Absolute path (starts with '/' or 'd:/')
         return instance()/name();
     }
 

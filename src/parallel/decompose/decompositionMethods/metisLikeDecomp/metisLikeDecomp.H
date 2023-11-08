@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef metisLikeDecomp_H
-#define metisLikeDecomp_H
+#ifndef Foam_metisLikeDecomp_H
+#define Foam_metisLikeDecomp_H
 
 #include "decompositionMethod.H"
 
@@ -91,6 +91,9 @@ protected:
 
     // Constructors
 
+        //- Construct with number of domains (no coefficients or constraints)
+        explicit metisLikeDecomp(const label numDomains);
+
         //- Construct for derived type name and decomposition dictionary.
         metisLikeDecomp
         (
@@ -134,8 +137,8 @@ public:
         virtual labelList decompose
         (
             const polyMesh& mesh,
-            const pointField& points,
-            const scalarField& pointWeights
+            const pointField& points = pointField::null(),
+            const scalarField& pointWeights = scalarField::null()
         ) const;
 
         //- Return for every coordinate the wanted processor number.
@@ -147,8 +150,23 @@ public:
         (
             const polyMesh& mesh,
             const labelList& agglom,
-            const pointField& regionPoints,
-            const scalarField& regionWeights
+            const pointField& agglomPoints,
+            const scalarField& agglomWeights = scalarField::null()
+        ) const;
+
+        //- Return for every coordinate the wanted processor number.
+        //  Explicitly provided mesh connectivity.
+        //  The connectivity is equal to mesh.cellCells() except for
+        //  - in parallel the cell numbers are global cell numbers (starting
+        //    from 0 at processor0 and then incrementing all through the
+        //    processors)
+        //  - the connections are across coupled patches
+        //  See note on weights above.
+        virtual labelList decompose
+        (
+            const CompactListList<label>& globalCellCells,
+            const pointField& cellCentres = pointField::null(),
+            const scalarField& cellWeights = scalarField::null()
         ) const;
 
         //- Return for every coordinate the wanted processor number.
@@ -162,8 +180,8 @@ public:
         virtual labelList decompose
         (
             const labelListList& globalCellCells,
-            const pointField& cellCentres,
-            const scalarField& cellWeights
+            const pointField& cellCentres = pointField::null(),
+            const scalarField& cellWeights = scalarField::null()
         ) const;
 };
 

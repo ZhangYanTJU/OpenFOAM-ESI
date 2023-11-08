@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,6 +46,12 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::noDecomp::noDecomp(const label numDomains)
+:
+    decompositionMethod(numDomains)
+{}
+
+
 Foam::noDecomp::noDecomp
 (
     const dictionary& decompDict,
@@ -54,6 +60,51 @@ Foam::noDecomp::noDecomp
 :
     decompositionMethod(decompDict, regionName)
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::labelList Foam::noDecomp::decompose
+(
+    const pointField& points,
+    const scalarField&
+) const
+{
+    return labelList(points.size(), UPstream::myProcNo());
+}
+
+
+Foam::labelList Foam::noDecomp::decompose
+(
+    const polyMesh& mesh,
+    const pointField&,
+    const scalarField&
+) const
+{
+    return labelList(mesh.nCells(), UPstream::myProcNo());
+}
+
+
+Foam::labelList Foam::noDecomp::decompose
+(
+    const CompactListList<label>& globalCellCells,
+    const pointField&,
+    const scalarField&
+) const
+{
+    return labelList(globalCellCells.size(), UPstream::myProcNo());
+}
+
+
+Foam::labelList Foam::noDecomp::decompose
+(
+    const labelListList& globalCellCells,
+    const pointField&,
+    const scalarField&
+) const
+{
+    return labelList(globalCellCells.size(), UPstream::myProcNo());
+}
 
 
 // ************************************************************************* //

@@ -31,14 +31,14 @@ Description
     Only implements the absolute minimum we are using.
 
 SourceFiles
-    dummyMGridGen.C
+    dummyMGridGen.cxx
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef mgridgen_H
 #define mgridgen_H
 
-#include "scalar.H"
+#include "scalarFwd.H"
 
 #ifndef idxtype
 #define idxtype int

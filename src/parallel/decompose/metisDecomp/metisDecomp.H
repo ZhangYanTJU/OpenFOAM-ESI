@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,8 +60,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef metisDecomp_H
-#define metisDecomp_H
+#ifndef Foam_metisDecomp_H
+#define Foam_metisDecomp_H
 
 #include "metisLikeDecomp.H"
 
@@ -90,6 +90,10 @@ protected:
         ) const;
 
 
+public:
+
+    // Generated Methods
+
         //- No copy construct
         metisDecomp(const metisDecomp&) = delete;
 
@@ -97,13 +101,14 @@ protected:
         void operator=(const metisDecomp&) = delete;
 
 
-public:
-
     //- Runtime type information
     TypeName("metis");
 
 
     // Constructors
+
+        //- Construct with number of domains (no coefficients or constraints)
+        explicit metisDecomp(const label numDomains);
 
         //- Construct given decomposition dictionary and optional region name
         explicit metisDecomp
@@ -119,6 +124,7 @@ public:
 
     // Member Functions
 
+        //- Knows about coupled boundaries
         virtual bool parallelAware() const
         {
             return true;

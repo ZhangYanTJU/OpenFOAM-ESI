@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2021,2023 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -120,7 +120,7 @@ Foam::label Foam::scotchDecomp::decomposeSerial
     ConstPrecisionAdaptor<SCOTCH_Num, label, List> xadj_param(xadj);
 
     // Output: cell -> processor addressing
-    decomp.resize(numCells);
+    decomp.resize_nocopy(numCells);
     decomp = 0;
     PrecisionAdaptor<SCOTCH_Num, label, List> decomp_param(decomp, false);
 
@@ -512,6 +512,12 @@ Foam::label Foam::scotchDecomp::decomposeSerial
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::scotchDecomp::scotchDecomp(const label numDomains)
+:
+    metisLikeDecomp(numDomains)
+{}
+
+
 Foam::scotchDecomp::scotchDecomp
 (
     const dictionary& decompDict,
@@ -548,7 +554,7 @@ Foam::labelList Foam::scotchDecomp::decompose
     const polyMesh& mesh,
     const labelList& agglom,
     const pointField& agglomPoints,
-    const scalarField& pointWeights
+    const scalarField& agglomWeights
 ) const
 {
     // Where to write graph
@@ -559,7 +565,26 @@ Foam::labelList Foam::scotchDecomp::decompose
         mesh,
         agglom,
         agglomPoints,
-        pointWeights
+        agglomWeights
+    );
+}
+
+
+Foam::labelList Foam::scotchDecomp::decompose
+(
+    const CompactListList<label>& globalCellCells,
+    const pointField& cellCentres,
+    const scalarField& cWeights
+) const
+{
+    // Where to write graph
+    graphPath_ = "scotch.grf";
+
+    return metisLikeDecomp::decompose
+    (
+        globalCellCells,
+        cellCentres,
+        cWeights
     );
 }
 

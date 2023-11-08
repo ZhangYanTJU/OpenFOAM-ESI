@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -122,11 +122,10 @@ int main(int argc, char *argv[])
     // Fallback (eg, no runTime)
     if (!timePtr.good())
     {
-        timePtr.reset(Time::New(argList::envGlobalPath()));
+        timePtr.reset(Time::NewGlobalTime());
     }
 
-
-    const auto& tm = timePtr();
+    const auto& tm = *timePtr;
 
     fileName resolvedName(inputName);
     resolvedName.toAbsolute();

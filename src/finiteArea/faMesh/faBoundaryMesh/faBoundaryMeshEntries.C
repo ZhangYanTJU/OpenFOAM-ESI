@@ -36,12 +36,72 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
-void Foam::faBoundaryMeshEntries::removeProcPatches()
+Foam::faBoundaryMeshEntries::faBoundaryMeshEntries(const IOobject& io)
+:
+    regIOobject
+    (
+        IOobject(io, IOobjectOption::NO_REGISTER)
+    )
+{
+    // readContents()
+
+    if (isReadRequired() || (isReadOptional() && headerOk()))
+    {
+        // Read as entries
+        Istream& is = readStream(typeName);
+
+        is >> *this;
+        close();
+    }
+}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::PtrList<Foam::entry>
+Foam::faBoundaryMeshEntries::readContents(const IOobject& io)
+{
+    faBoundaryMeshEntries reader(io);
+
+    return PtrList<entry>(std::move(static_cast<PtrList<entry>&>(reader)));
+}
+
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Extract optional entry from dictionaries and return as a list
+template<class T>
+static inline List<T> extract
+(
+    const word& key,
+    const UPtrList<entry>& entries,
+    const T& initValue
+)
+{
+    List<T> result(entries.size(), initValue);
+
+    forAll(entries, i)
+    {
+        const dictionary& dict = entries[i].dict();
+        dict.readIfPresent(key, result[i]);
+    }
+
+    return result;
+}
+
+}  // End namespace
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+void Foam::faBoundaryMeshEntries::removeProcPatches(PtrList<entry>& entries)
 {
     // Truncate at the first processor patch entry
-    PtrList<entry>& entries = *this;
 
     label nNonProcessor = entries.size();
 
@@ -58,6 +118,104 @@ void Foam::faBoundaryMeshEntries::removeProcPatches()
     }
 
     entries.resize(nNonProcessor);
+}
+
+
+bool Foam::faBoundaryMeshEntries::writeEntries
+(
+    Ostream& os,
+    const UPtrList<entry>& entries
+)
+{
+    os  << entries.size();
+
+    if (entries.empty())
+    {
+        // 0-sized : can write with less vertical space
+        os  << token::BEGIN_LIST << token::END_LIST;
+    }
+    else
+    {
+        os  << nl << token::BEGIN_LIST << incrIndent << nl;
+
+        forAll(entries, patchi)
+        {
+            const auto& key = entries[patchi].keyword();
+            const auto& dict = entries[patchi].dict();
+
+            dict.writeEntry(key, os);
+        }
+        os  << decrIndent << token::END_LIST;
+    }
+
+    os.check(FUNCTION_NAME);
+    return os.good();
+}
+
+
+Foam::wordList Foam::faBoundaryMeshEntries::types
+(
+    const UPtrList<entry>& entries
+)
+{
+    return extract<word>("type", entries, "patch");
+}
+
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+void Foam::faBoundaryMeshEntries::removeProcPatches()
+{
+    removeProcPatches(*this);
+}
+
+
+Foam::wordList Foam::faBoundaryMeshEntries::types() const
+{
+    return extract<word>("type", *this, "patch");
+}
+
+
+void Foam::faBoundaryMeshEntries::writeEntry(Ostream& os) const
+{
+    writeEntries(os, *this);
+}
+
+
+void Foam::faBoundaryMeshEntries::writeEntry
+(
+    const keyType& keyword,
+    Ostream& os
+) const
+{
+    const PtrList<entry>& entries = *this;
+
+    if (!keyword.empty())
+    {
+        os.write(keyword);
+        os << (entries.empty() ? token::SPACE : token::NL);
+    }
+
+    writeEntries(os, entries);
+
+    if (!keyword.empty()) os.endEntry();
+}
+
+
+bool Foam::faBoundaryMeshEntries::writeData(Ostream& os) const
+{
+    return writeEntries(os, *this);
+}
+
+
+bool Foam::faBoundaryMeshEntries::writeObject
+(
+    IOstreamOption streamOpt,
+    const bool writeOnProc
+) const
+{
+    streamOpt.compression(IOstreamOption::UNCOMPRESSED);
+    return regIOobject::writeObject(streamOpt, writeOnProc);
 }
 
 

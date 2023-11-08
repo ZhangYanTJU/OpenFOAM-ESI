@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -148,6 +148,17 @@ void Foam::geomDecomp::checkDecompositionDirections
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::geomDecomp::geomDecomp(const Vector<label>& divisions)
+:
+    decompositionMethod(divisions.x()*divisions.y()*divisions.z()),
+    delta_(0.001),
+    csys_(),
+    n_(divisions),
+    order_(0,1,2),
+    coeffsDict_(dictionary::null)
+{}
+
 
 Foam::geomDecomp::geomDecomp
 (

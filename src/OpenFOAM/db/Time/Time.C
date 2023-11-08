@@ -690,48 +690,6 @@ Foam::Time::Time
 }
 
 
-// * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
-
-Foam::autoPtr<Foam::Time> Foam::Time::New()
-{
-    return
-        autoPtr<Time>::New
-        (
-            fileName("."),  // root-path
-            fileName("."),  // case-name
-            false,          // No enableFunctionObjects
-            false           // No enableLibs
-        );
-}
-
-
-Foam::autoPtr<Foam::Time> Foam::Time::New(const fileName& caseDir)
-{
-    return
-        autoPtr<Time>::New
-        (
-            caseDir.path(), // root-path
-            caseDir.name(), // case-name
-            false,          // No enableFunctionObjects
-            false           // No enableLibs
-        );
-}
-
-
-Foam::autoPtr<Foam::Time> Foam::Time::New(const argList& args)
-{
-    return
-        autoPtr<Time>::New
-        (
-            Time::controlDictName,
-            args,
-            false,          // No enableFunctionObjects
-            false,          // No enableLibs
-            IOobjectOption::MUST_READ  // No re-reading
-        );
-}
-
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::Time::~Time()

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2021 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef decompositionMethod_H
-#define decompositionMethod_H
+#ifndef Foam_decompositionMethod_H
+#define Foam_decompositionMethod_H
 
 #include "polyMesh.H"
 #include "CompactListList.H"
@@ -63,12 +63,6 @@ class decompositionMethod
         //- Set PtrList of constraints by reading decompDict_.
         void readConstraints();
 
-        //- No copy construct
-        decompositionMethod(const decompositionMethod&) = delete;
-
-        //- No copy assignment
-        void operator=(const decompositionMethod&) = delete;
-
 
 protected:
 
@@ -84,7 +78,7 @@ protected:
         };
 
 
-    // Protected data
+    // Protected Data
 
         //- Top-level decomposition dictionary (eg, decomposeParDict)
         const dictionary& decompDict_;
@@ -137,7 +131,23 @@ protected:
         ) const;
 
 
+    // Constructors
+
+        //- Construct with specified number of domains,
+        //- no coefficients or constraints
+        explicit decompositionMethod(const label numDomains);
+
+
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        decompositionMethod(const decompositionMethod&) = delete;
+
+        //- No copy assignment
+        void operator=(const decompositionMethod&) = delete;
+
 
     //- Runtime type information
     TypeName("decompositionMethod");
@@ -207,51 +217,49 @@ public:
     // Member Functions
 
         //- Number of domains
-        inline label nDomains() const noexcept
+        label nDomains() const noexcept
         {
             return nDomains_;
         }
+
+        //- True if the method is purely geometric,
+        //- often using cell centre points
+        virtual bool geometric() const { return false; }
 
         //- Is method parallel aware?
         //  (i.e. does it synchronize domains across proc boundaries)
         virtual bool parallelAware() const = 0;
 
+        // //- Is internally method parallel aware
+        // virtual bool parallelNative() const  { return false; }
+
 
     // No topology (implemented by geometric decomposers)
 
-        //- Return the wanted processor number for every coordinate.
+        //- Return the wanted processor number for every coordinate,
+        //- using uniform or specified point weights.
         virtual labelList decompose
         (
             const pointField& points,
-            const scalarField& pointWeights
+            const scalarField& pointWeights = scalarField::null()
         ) const;
-
-        //- Decompose with uniform weights on the points
-        virtual labelList decompose(const pointField& points) const;
 
 
     // Topology provided by mesh
 
-        //- Return for every coordinate the wanted processor number.
+        //- Return for every coordinate the wanted processor number,
+        //- using uniform or specified point weights.
         //  Use the mesh connectivity (if needed)
         virtual labelList decompose
         (
             const polyMesh& mesh,
             const pointField& points,
-            const scalarField& pointWeights
+            const scalarField& pointWeights = scalarField::null()
         ) const = 0;
 
-        //- Decompose with uniform weights on the points
-        virtual labelList decompose
-        (
-            const polyMesh& mesh,
-            const pointField& points
-        ) const;
-
-
-        //- Return for every coordinate the wanted processor number. Gets
-        //  passed agglomeration map (from fine to coarse cells) and coarse
-        //  cell
+        //- Return for every coordinate the wanted processor number.
+        //  Gets passed agglomeration map (from fine to coarse cells)
+        //  and coarse cell
         //  location. Can be overridden by decomposers that provide this
         //  functionality natively. Coarse cells are local to the processor
         //  (if in parallel). If you want to have coarse cells spanning
@@ -261,19 +269,25 @@ public:
             const polyMesh& mesh,
             const labelList& cellToRegion,
             const pointField& regionPoints,
-            const scalarField& regionWeights
+            const scalarField& regionWeights = scalarField::null()
         ) const;
 
-        //- Like decompose but with uniform weights on the regions
+
+    // Topology provided explicitly
+
+        //- Return for every coordinate the wanted processor number.
+        //  The connectivity is equal to mesh.cellCells() except for
+        //  - in parallel the cell numbers are global cell numbers
+        //    (starting
+        //    from 0 at processor0 and then incrementing all through the
+        //    processors)
+        //  - the connections are across coupled patches
         virtual labelList decompose
         (
-            const polyMesh& mesh,
-            const labelList& cellToRegion,
-            const pointField& regionPoints
-        ) const;
-
-
-    // Topology provided explicitly addressing
+            const CompactListList<label>& globalCellCells,
+            const pointField& cc,
+            const scalarField& cWeights = scalarField::null()
+        ) const = 0;
 
         //- Return for every coordinate the wanted processor number.
         //  The connectivity is equal to mesh.cellCells() except for
@@ -286,46 +300,11 @@ public:
         (
             const labelListList& globalCellCells,
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
         ) const = 0;
-
-        //- Like decompose but with uniform weights on the cells
-        virtual labelList decompose
-        (
-            const labelListList& globalCellCells,
-            const pointField& cc
-        ) const;
 
 
     // Other
-
-        //- Helper: determine (local or global) cellCells from mesh
-        //  agglomeration. Agglomeration is local to the processor.
-        //  local  : connections are in local indices. Coupled across
-        //           cyclics but not processor patches.
-        //  global : connections are in global indices. Coupled across
-        //            cyclics and processor patches.
-        static void calcCellCells
-        (
-            const polyMesh& mesh,
-            const labelList& agglom,
-            const label nLocalCoarse,
-            const bool global,
-            CompactListList<label>& cellCells
-        );
-
-        //- Helper: determine (local or global) cellCells and face weights
-        //  from mesh agglomeration.
-        //  Uses mag of faceArea as weights
-        static void calcCellCells
-        (
-            const polyMesh& mesh,
-            const labelList& agglom,
-            const label nLocalCoarse,
-            const bool parallel,
-            CompactListList<label>& cellCells,
-            CompactListList<scalar>& cellCellWeights
-        );
 
         //- Helper: extract constraints:
         //  blockedface: existing faces where owner and neighbour on same
@@ -390,6 +369,39 @@ public:
             const polyMesh& mesh,
             const scalarField& cWeights
         ) const;
+
+
+    // Housekeeping
+
+        //- Determine (local or global) cellCells from mesh agglomeration.
+        //  Agglomeration is local to the processor.
+        //  local  : connections are in local indices. Coupled across
+        //           cyclics but not processor patches.
+        //  global : connections are in global indices. Coupled across
+        //            cyclics and processor patches.
+        FOAM_DEPRECATED_STRICT(2023-11, "globalMeshData::calcCellCells()")
+        static void calcCellCells
+        (
+            const polyMesh& mesh,
+            const labelList& agglom,
+            const label nLocalCoarse,
+            const bool parallel,  //!< Use global cell ids in parallel
+            CompactListList<label>& cellCells
+        );
+
+        //- Determine (local or global) cellCells and face weights
+        //- from mesh agglomeration.
+        //  Uses mag of faceArea as weights
+        FOAM_DEPRECATED_STRICT(2023-11, "globalMeshData::calcCellCells()")
+        static void calcCellCells
+        (
+            const polyMesh& mesh,
+            const labelList& agglom,
+            const label nLocalCoarse,
+            const bool parallel,  //!< Use global cell ids in parallel
+            CompactListList<label>& cellCells,
+            CompactListList<scalar>& cellCellWeights
+        );
 };
 
 

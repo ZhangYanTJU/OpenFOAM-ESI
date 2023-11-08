@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,29 +101,31 @@ Foam::label Foam::metisDecomp::decomposeSerial
     // Face weights (so on the edges of the dual)
     List<idx_t> faceWeights;
 
-    // Check for externally provided cellweights and if so initialise weights
+    bool hasWeights = !cWeights.empty();
+
     // Note: min, not gMin since routine runs on master only.
-    const scalar minWeights = min(cWeights);
+    const scalar minWeights = hasWeights ? min(cWeights) : scalar(1);
 
-    if (!cWeights.empty())
+    if (minWeights <= 0)
     {
-        if (minWeights <= 0)
-        {
-            WarningInFunction
-                << "Illegal minimum weight " << minWeights
-                << endl;
-        }
+        hasWeights = false;
+        WarningInFunction
+            << "Illegal minimum weight " << minWeights
+            << " ... ignoring"
+            << endl;
+    }
+    else if (hasWeights && (cWeights.size() != numCells))
+    {
+        FatalErrorInFunction
+            << "Number of weights (" << cWeights.size()
+            << ") != number of cells (" << numCells << ")"
+            << exit(FatalError);
+    }
 
-        if (cWeights.size() != numCells)
-        {
-            FatalErrorInFunction
-                << "Number of cell weights " << cWeights.size()
-                << " does not equal number of cells " << numCells
-                << exit(FatalError);
-        }
-
+    if (hasWeights)
+    {
         // Convert to integers.
-        cellWeights.setSize(cWeights.size());
+        cellWeights.resize_nocopy(cWeights.size());
         forAll(cellWeights, i)
         {
             cellWeights[i] = idx_t(cWeights[i]/minWeights);
@@ -260,6 +262,12 @@ Foam::label Foam::metisDecomp::decomposeSerial
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::metisDecomp::metisDecomp(const label numDomains)
+:
+    metisLikeDecomp(numDomains)
+{}
+
 
 Foam::metisDecomp::metisDecomp
 (

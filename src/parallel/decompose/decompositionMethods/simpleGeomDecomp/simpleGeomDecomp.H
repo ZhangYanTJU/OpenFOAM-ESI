@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -44,8 +44,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef simpleGeomDecomp_H
-#define simpleGeomDecomp_H
+#ifndef Foam_simpleGeomDecomp_H
+#define Foam_simpleGeomDecomp_H
 
 #include "geomDecomp.H"
 
@@ -62,21 +62,6 @@ class simpleGeomDecomp
 {
     // Private Member Functions
 
-        static void assignToProcessorGroup
-        (
-            labelList& processorGroup,
-            const label nProcGroup
-        );
-
-        static void assignToProcessorGroup
-        (
-            labelList& processorGroup,
-            const label nProcGroup,
-            const labelList& indices,
-            const scalarField& weights,
-            const scalar summedWeights
-        );
-
         labelList decomposeOneProc(const pointField& points) const;
 
         labelList decomposeOneProc
@@ -88,17 +73,24 @@ class simpleGeomDecomp
 
 public:
 
-    //- No copy construct
-    void operator=(const simpleGeomDecomp&) = delete;
+    // Generated Methods
 
-    //- No copy assignment
-    simpleGeomDecomp(const simpleGeomDecomp&) = delete;
+        //- No copy construct
+        simpleGeomDecomp(const simpleGeomDecomp&) = delete;
+
+        //- No copy assignment
+        void operator=(const simpleGeomDecomp&) = delete;
+
 
     //- Runtime type information
     TypeName("simple");
 
 
     // Constructors
+
+        //- Construct with number of x/y/z division
+        //- (no coefficients or constraints)
+        explicit simpleGeomDecomp(const Vector<label>& divisions);
 
         //- Construct given decomposition dictionary and optional region name
         explicit simpleGeomDecomp
@@ -114,51 +106,49 @@ public:
 
     // Member Functions
 
-        //- Simple sends all points to the master for decomposition.
+        //- Sends all points to the master for decomposition.
         virtual bool parallelAware() const
         {
             return true;
         }
 
-        //- Decompose with uniform weights.
-        virtual labelList decompose(const pointField& points) const;
-
         //- Return for every coordinate the wanted processor number.
+        //- using uniform or specified point weights.
         virtual labelList decompose
         (
             const pointField& points,
-            const scalarField& weights
+            const scalarField& weights = scalarField::null()
         ) const;
 
-        //- Decompose with uniform weights.
+        //- Decompose with uniform or specified point weights.
         virtual labelList decompose
         (
-            const polyMesh& mesh,
-            const pointField& points
-        ) const
-        {
-            checkDecompositionDirections(mesh.geometricD());
-            return decompose(points);
-        }
-
-        //- Return for every coordinate the wanted processor number.
-        virtual labelList decompose
-        (
-            const polyMesh& mesh,
+            const polyMesh& mesh,  //!< To check mesh dimensions
             const pointField& points,
-            const scalarField& weights
+            const scalarField& pointWeights = scalarField::null()
         ) const
         {
             checkDecompositionDirections(mesh.geometricD());
-            return decompose(points, weights);
+            return decompose(points, pointWeights);
         }
 
         //- Explicitly provided connectivity
         virtual labelList decompose
         (
-            const labelListList& globalCellCells,  // unused
+            const CompactListList<label>& globalCellCells,  //!< unused
             const pointField& cc,
-            const scalarField& cWeights
+            const scalarField& cWeights = scalarField::null()
+        ) const
+        {
+            return decompose(cc, cWeights);
+        }
+
+        //- Explicitly provided connectivity
+        virtual labelList decompose
+        (
+            const labelListList& globalCellCells,  //!< unused
+            const pointField& cc,
+            const scalarField& cWeights = scalarField::null()
         ) const
         {
             return decompose(cc, cWeights);

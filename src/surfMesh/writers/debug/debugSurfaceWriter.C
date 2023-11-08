@@ -27,7 +27,6 @@ License
 
 #include "debugSurfaceWriter.H"
 #include "globalIndex.H"
-#include "argList.H"
 #include "OFstream.H"
 #include "OSspecific.H"
 #include "IOmanip.H"
@@ -212,7 +211,7 @@ Foam::fileName Foam::surfaceWriters::debugWriter::write()
 
     if (enableWrite_)
     {
-        dummyTimePtr = Time::New(argList::envGlobalPath());
+        dummyTimePtr = Time::NewGlobalTime();
     }
     else if (verbose_)
     {
@@ -287,7 +286,7 @@ Foam::fileName Foam::surfaceWriters::debugWriter::writeTemplate
 
     if (enableWrite_)
     {
-        dummyTimePtr = Time::New(argList::envGlobalPath());
+        dummyTimePtr = Time::NewGlobalTime();
     }
     else if (verbose_)
     {
