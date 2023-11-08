@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2019-2022 OpenCFD Ltd.
+#     Copyright (C) 2019-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -19,18 +19,20 @@
 #     wmakeLnInclude [OPTION] [-pwd | dir [.. dirN]]
 #
 # Description
-#     Link source files in the specified dir(s) into their respective
+#     Link header/template files from specified dir(s) into their respective
 #     lnInclude directories
 #
-#     Header files    : .h .H  .hh .hpp .hxx
-#     Template files  :    .C .tcc .tpp .txx
+#     Header files    : .h .H .hh  .hpp .hxx
+#     Source files    : .c .C .cc  .cpp .cxx
+#     Template files  : -- .C .tcc .tpp .txx
 #
 # Note
-#     OpenFOAM has historically used '.C' files both for compiled code
-#     and templated code.
+#     OpenFOAM has historically used the '.C' extension for both compiled
+#     and templated C++ code (may change in the future).
 #
-# GNU make suffixes : .c .cc .C .cpp
+# GNU make suffixes : .c .cc .C .cpp  (.cxx is however frequently used)
 #
+# https://develop.openfoam.com/Development/openfoam/wikis/coding/style/filenames
 #------------------------------------------------------------------------------
 Script="${0##*/}"                   # Need 'Script' for wmakeFunctions messages
 scriptsDir="${0%/*}"/scripts        # wmake/scripts directory
@@ -42,14 +44,15 @@ printHelp() {
 Usage: ${0##*/} [OPTION] [-pwd | dir [.. dirN]]
 
 options:
-  -f | -force       Force remove of existing lnInclude before recreating
+  -f | -force       Force remove of existing lnInclude/ before recreating
   -u | -update      Update existing lnInclude directories
   -s | -silent      Silent mode (do not echo command)
+  -extra            Include additional files (eg, source files)
   -pwd              Locate root directory containing Make/ directory
   -help             Print the usage
 
-Link source files in specified dir(s) into their respective
-lnInclude directories. With '-update', items are relinked with 'ln -sf'
+Link header/template files from specified dir(s) into their respective
+lnInclude/ directories. With '-update', items are relinked with 'ln -sf'
 
 USAGE
     exit 0 # clean exit
@@ -75,9 +78,9 @@ die()
 #------------------------------------------------------------------------------
 
 # Option for 'ln'
-optLink="-s"
+link_option="-s"
 
-unset optForce optUpdate optPwd
+unset opt_extra opt_force opt_pwd opt_update
 
 while [ "$#" -gt 0 ]
 do
@@ -88,19 +91,22 @@ do
         -h | -help*)
             printHelp
             ;;
+        -extra)
+            opt_extra=true      # Include additional files
+            ;;
         -f | -force)
-            optForce=true
-            optLink="-sf"
+            opt_force=true
+            link_option="-sf"
             ;;
         -u | -update)
-            optUpdate=true
-            optLink="-sf"
+            opt_update=true
+            link_option="-sf"
             ;;
         -s | -silent | -quiet)
             export WM_QUIET=true
             ;;
         -pwd)
-            optPwd=true
+            opt_pwd=true
             ;;
         -*)
             die "unknown option: '$1'"
@@ -112,7 +118,7 @@ do
     shift
 done
 
-[ -n "$optPwd" ] || [ "$#" -ge 1 ] || \
+[ -n "$opt_pwd" ] || [ "$#" -ge 1 ] || \
     die "incorrect number of arguments"
 
 #------------------------------------------------------------------------------
@@ -120,7 +126,7 @@ done
 baseDir="$1"
 
 # With -pwd, go on discovery
-if [ -n "$optPwd" ]
+if [ -n "$opt_pwd" ]
 then
     if [ -n "$baseDir" ]
     then
@@ -181,13 +187,13 @@ do
 
     incDir="$baseDir/lnInclude"
 
-    if [ "$optForce" = true ]
+    if [ "$opt_force" = true ]
     then
         rm -rf -- "$incDir"
         mkdir "$incDir"
     elif [ -d "$incDir" ]
     then
-        if [ "$optUpdate" != true ]
+        if [ "$opt_update" != true ]
         then
             continue
         fi
@@ -214,9 +220,19 @@ do
             # -exec rm (not -delete) to remove names with '/' in their name
             # with \+ instead of \; to pack into a single command
             find -L . -type l -exec rm -- {} \+
+            ## TBD: Remove remnant source files too?
+            ## if [ -z "$opt_extra" ]
+            ## then
+            ##     find -L \( -name '*.cpp' -o -name '*.cxx' \) -exec rm -- {} \+
+            ## fi
             ;;
         (*)
             find -L . -type l -delete
+            ## TBD: Remove remnant source files too?
+            ## if [ -z "$opt_extra" ]
+            ## then
+            ##     find -L \( -name '*.cpp' -o -name '*.cxx' \) -print
+            ## fi
             ;;
         esac
 
@@ -230,10 +246,10 @@ do
                    -name '*.[CHh]' \
                 -o -name '*.hh' \
                 -o -name '*.tcc' \
-                -o -name '*.[ht]pp' \
-                -o -name '*.[ht]xx' \
+                -o -name '*.[ht]pp' ${opt_extra:+-o -name '*.cpp'} \
+                -o -name '*.[ht]xx' ${opt_extra:+-o -name '*.cxx'} \
             \)  \
-            -exec ln "$optLink" {} . \;
+            -exec ln "$link_option" {} . \;
     )
     else
         echo "$Script error: failed to create include directory $incDir" 1>&2
