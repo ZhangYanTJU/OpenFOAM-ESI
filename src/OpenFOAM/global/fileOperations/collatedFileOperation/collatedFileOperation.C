@@ -573,11 +573,16 @@ Foam::word Foam::fileOperations::collatedFileOperation::processorsDir
                         break;
                     }
                 }
-                procDir +=
-                  + "_"
-                  + Foam::name(minProc)
-                  + "-"
-                  + Foam::name(maxProc);
+
+                // Add range if not all processors
+                if (maxProc-minProc+1 != nProcs_)
+                {
+                    procDir +=
+                      + "_"
+                      + Foam::name(minProc)
+                      + "-"
+                      + Foam::name(maxProc);
+                }
             }
         }
 
