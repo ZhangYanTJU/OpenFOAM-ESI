@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef processorCyclicPolyPatch_H
-#define processorCyclicPolyPatch_H
+#ifndef Foam_processorCyclicPolyPatch_H
+#define Foam_processorCyclicPolyPatch_H
 
 #include "processorPolyPatch.H"
 
@@ -54,7 +54,7 @@ class processorCyclicPolyPatch
 :
     public processorPolyPatch
 {
-    // Private data
+    // Private Data
 
         //- Name of originating patch
         const word referPatchName_;
@@ -257,19 +257,13 @@ public:
 
 
     // Destructor
-    virtual ~processorCyclicPolyPatch();
+    virtual ~processorCyclicPolyPatch() = default;
 
 
-    // Member functions
+    // Static Functions
 
-        //- Return name of originating cyclicPolyPatch patch
-        const word& referPatchName() const
-        {
-            return referPatchName_;
-        }
-
-        //- Return the name of a processorCyclicPolyPatch
-        //  constructed from cyclicPolyPatch name and the processor IDs
+        //- Return the name of a processorCyclicPolyPatch constructed from
+        //- the cyclicPolyPatch name and the pair of processor IDs.
         static word newName
         (
             const word& cyclicPolyPatchName,
@@ -285,27 +279,20 @@ public:
             const polyBoundaryMesh& bm
         );
 
-        //- Referring patchID.
-        label referPatchID() const
+
+    // Member Functions
+
+        //- Return name of originating cyclicPolyPatch patch
+        const word& referPatchName() const
         {
-            if (referPatchID_ == -1)
-            {
-                referPatchID_ = this->boundaryMesh().findPatchID
-                (
-                    referPatchName_
-                );
-                if (referPatchID_ == -1)
-                {
-                    FatalErrorInFunction
-                        << "Illegal referPatch name " << referPatchName_
-                        << endl << "Valid patch names are "
-                        << this->boundaryMesh().names()
-                        << exit(FatalError);
-                }
-            }
-            return referPatchID_;
+            return referPatchName_;
         }
 
+        //- The referring patchID.
+        //- Searches for referPatchName() on the first call.
+        virtual label referPatchID() const;
+
+        //- The referred coupled patch
         const coupledPolyPatch& referPatch() const
         {
             const polyPatch& pp = this->boundaryMesh()[referPatchID()];

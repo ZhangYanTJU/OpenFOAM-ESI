@@ -792,6 +792,17 @@ public:
                 const point& p,
                 const cellDecomposition = CELL_TETS
             ) const;
+
+
+    // Write
+
+        //- Write items held in the objectRegistry. Normally includes mesh
+        //- components (points, faces, etc) and any registered fields.
+        virtual bool writeObject
+        (
+            IOstreamOption streamOpt,
+            const bool writeOnProc = true
+        ) const;
 };
 
 

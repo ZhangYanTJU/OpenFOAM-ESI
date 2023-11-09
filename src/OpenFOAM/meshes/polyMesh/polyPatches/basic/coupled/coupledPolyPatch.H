@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef coupledPolyPatch_H
-#define coupledPolyPatch_H
+#ifndef Foam_coupledPolyPatch_H
+#define Foam_coupledPolyPatch_H
 
 #include "polyPatch.H"
 #include "diagTensorField.H"
@@ -242,7 +242,6 @@ public:
 
     // Member Functions
 
-
         // Access
 
             //- Return true because this patch is coupled
@@ -258,6 +257,12 @@ public:
             virtual bool neighbour() const
             {
                 return !owner();
+            }
+
+            //- The referring patchID (eg, for cyclics).
+            virtual label referPatchID() const
+            {
+                return -1;
             }
 
             //- Type of transform

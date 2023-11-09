@@ -38,7 +38,7 @@ License
 #include "PstreamBuffers.H"
 #include "Circulator.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
@@ -47,7 +47,24 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::word Foam::processorPolyPatch::newName
+(
+    const label myProcNo,
+    const label neighbProcNo
+)
+{
+    return word
+    (
+        "procBoundary"
+      + std::to_string(myProcNo) + "to" + std::to_string(neighbProcNo),
+        false  // No stripping needed
+    );
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::processorPolyPatch::processorPolyPatch
 (
@@ -180,20 +197,6 @@ Foam::processorPolyPatch::~processorPolyPatch()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::word Foam::processorPolyPatch::newName
-(
-    const label myProcNo,
-    const label neighbProcNo
-)
-{
-    return
-        "procBoundary"
-      + Foam::name(myProcNo)
-      + "to"
-      + Foam::name(neighbProcNo);
-}
-
 
 void Foam::processorPolyPatch::initGeometry(PstreamBuffers& pBufs)
 {

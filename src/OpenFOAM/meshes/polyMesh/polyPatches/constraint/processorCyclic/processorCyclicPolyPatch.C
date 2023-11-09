@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,12 +31,47 @@ License
 #include "SubField.H"
 #include "cyclicPolyPatch.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(processorCyclicPolyPatch, 0);
     addToRunTimeSelectionTable(polyPatch, processorCyclicPolyPatch, dictionary);
+}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::word Foam::processorCyclicPolyPatch::newName
+(
+    const word& cyclicPolyPatchName,
+    const label myProcNo,
+    const label neighbProcNo
+)
+{
+    return word
+    (
+        processorPolyPatch::newName(myProcNo, neighbProcNo)
+      + "through"
+      + cyclicPolyPatchName
+    );
+}
+
+
+Foam::labelList Foam::processorCyclicPolyPatch::patchIDs
+(
+    const word& cyclicPolyPatchName,
+    const polyBoundaryMesh& bm
+)
+{
+    return bm.indices
+    (
+        wordRe
+        (
+            "procBoundary.*to.*through" + cyclicPolyPatchName,
+            wordRe::REGEX
+        )
+    );
 }
 
 
@@ -151,42 +186,28 @@ Foam::processorCyclicPolyPatch::processorCyclicPolyPatch
 {}
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::processorCyclicPolyPatch::~processorCyclicPolyPatch()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::word Foam::processorCyclicPolyPatch::newName
-(
-    const word& cyclicPolyPatchName,
-    const label myProcNo,
-    const label neighbProcNo
-)
+Foam::label Foam::processorCyclicPolyPatch::referPatchID() const
 {
-    return
-        processorPolyPatch::newName(myProcNo, neighbProcNo)
-      + "through"
-      + cyclicPolyPatchName;
-}
-
-
-Foam::labelList Foam::processorCyclicPolyPatch::patchIDs
-(
-    const word& cyclicPolyPatchName,
-    const polyBoundaryMesh& bm
-)
-{
-    return bm.indices
-    (
-        wordRe
+    if (referPatchID_ == -1)
+    {
+        referPatchID_ = this->boundaryMesh().findPatchID
         (
-            "procBoundary.*to.*through" + cyclicPolyPatchName,
-            wordRe::REGEX
-        )
-    );
+            referPatchName_
+        );
+
+        if (referPatchID_ == -1)
+        {
+            FatalErrorInFunction
+                << "Illegal referPatch name " << referPatchName_ << nl
+                << "Valid patch names: "
+                << this->boundaryMesh().names() << nl
+                << exit(FatalError);
+        }
+    }
+
+    return referPatchID_;
 }
 
 
@@ -242,9 +263,8 @@ void Foam::processorCyclicPolyPatch::calcGeometry(PstreamBuffers& pBufs)
     // Receive and initialise processorPolyPatch data
     processorPolyPatch::calcGeometry(pBufs);
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
-
         // Where do we store the calculated transformation?
         // - on the processor patch?
         // - on the underlying cyclic patch?

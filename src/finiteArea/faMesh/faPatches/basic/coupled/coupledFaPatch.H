@@ -160,6 +160,13 @@ public:
                 return !owner();
             }
 
+            //- The referring patchID (eg, for cyclics).
+            //  Here for consistency with coupledPolyPatch
+            virtual label referPatchID() const
+            {
+                return -1;
+            }
+
             //- Are the coupled planes separated?
             bool separated() const
             {

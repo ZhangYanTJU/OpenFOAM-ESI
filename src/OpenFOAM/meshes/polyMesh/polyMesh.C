@@ -1578,4 +1578,18 @@ Foam::label Foam::polyMesh::findCell
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+bool Foam::polyMesh::writeObject
+(
+    IOstreamOption streamOpt,
+    const bool writeOnProc
+) const
+{
+    // Currently no special treatment. Just write the objects
+
+    return objectRegistry::writeObject(streamOpt, writeOnProc);
+}
+
+
 // ************************************************************************* //

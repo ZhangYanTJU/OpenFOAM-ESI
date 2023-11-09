@@ -250,7 +250,18 @@ public:
     virtual ~processorPolyPatch();
 
 
-    // Member functions
+    // Static Functions
+
+        //- Return the name of a processorPolyPatch ("procBoundary..")
+        //- constructed from the pair of processor IDs.
+        static word newName
+        (
+            const label myProcNo,
+            const label neighbProcNo
+        );
+
+
+    // Member Functions
 
         //- Return true only if this is a parallel run
         virtual bool coupled() const
@@ -281,14 +292,6 @@ public:
         {
             return !owner();
         }
-
-        //- Return the name of a processorPolyPatch
-        //  constructed from the processor IDs
-        static word newName
-        (
-            const label myProcNo,
-            const label neighbProcNo
-        );
 
         //- Return processor-neighbour patch face centres
         const vectorField& neighbFaceCentres() const noexcept
