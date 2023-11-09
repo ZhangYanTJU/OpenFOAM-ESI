@@ -110,6 +110,33 @@ Foam::word Foam::cellCellStencil::baseName(const word& name)
 }
 
 
+void Foam::cellCellStencil::suppressMotionFields()
+{
+    // Protect local fields from interpolation
+    nonInterpolatedFields_.insert("cellInterpolationWeight");
+    nonInterpolatedFields_.insert("cellTypes");
+    nonInterpolatedFields_.insert("maxMagWeight");
+
+    // For convenience also suppress frequently used displacement field
+    {
+        nonInterpolatedFields_.insert("cellDisplacement");
+        nonInterpolatedFields_.insert("grad(cellDisplacement)");
+        const word w("snGradCorr(cellDisplacement)");
+        const word d("((viscosity*faceDiffusivity)*magSf)");
+        nonInterpolatedFields_.insert("surfaceIntegrate(("+d+"*"+w+"))");
+    }
+
+    // For convenience also suppress frequently used displacement field
+    {
+        nonInterpolatedFields_.insert("cellMotionU");
+        nonInterpolatedFields_.insert("grad(cellMotionU)");
+        const word w("snGradCorr(cellMotionU)");
+        const word d("((viscosity*faceDiffusivity)*magSf)");
+        nonInterpolatedFields_.insert("surfaceIntegrate(("+d+"*"+w+"))");
+    }
+}
+
+
 const Foam::labelIOList& Foam::cellCellStencil::zoneID(const fvMesh& mesh)
 {
     labelIOList* zoneIDPtr = mesh.getObjectPtr<labelIOList>("zoneID");

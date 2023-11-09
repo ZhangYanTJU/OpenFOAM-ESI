@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1739,17 +1739,8 @@ Foam::cellCellStencils::inverseDistance::inverseDistance
         fvPatchFieldBase::zeroGradientType()
     )
 {
-    // Protect local fields from interpolation
-    nonInterpolatedFields_.insert("cellInterpolationWeight");
-    nonInterpolatedFields_.insert("cellTypes");
-    nonInterpolatedFields_.insert("maxMagWeight");
-
-    // For convenience also suppress frequently used displacement field
-    nonInterpolatedFields_.insert("cellDisplacement");
-    nonInterpolatedFields_.insert("grad(cellDisplacement)");
-    const word w("snGradCorr(cellDisplacement)");
-    const word d("((viscosity*faceDiffusivity)*magSf)");
-    nonInterpolatedFields_.insert("surfaceIntegrate(("+d+"*"+w+"))");
+    // Add motion-solver fields to non-interpolated fields
+    suppressMotionFields();
 
     // Read zoneID
     this->zoneID();

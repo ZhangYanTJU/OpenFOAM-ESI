@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,6 +116,10 @@ protected:
 
         //- Helper: strip off trailing _0
         static word baseName(const word& name);
+
+        //- Helper: populate nonInterpolatedFields_ with motion solver
+        //  fields
+        void suppressMotionFields();
 
 
 private:

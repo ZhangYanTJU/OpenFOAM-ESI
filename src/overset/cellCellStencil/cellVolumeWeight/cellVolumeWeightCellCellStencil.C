@@ -541,16 +541,8 @@ Foam::cellCellStencils::cellVolumeWeight::cellVolumeWeight
         dict.getOrDefault("allowInterpolatedDonors", true)
     )
 {
-    // Protect local fields from interpolation
-    nonInterpolatedFields_.insert("cellTypes");
-    nonInterpolatedFields_.insert("cellInterpolationWeight");
-
-    // For convenience also suppress frequently used displacement field
-    nonInterpolatedFields_.insert("cellDisplacement");
-    nonInterpolatedFields_.insert("grad(cellDisplacement)");
-    const word w("snGradCorr(cellDisplacement)");
-    const word d("((viscosity*faceDiffusivity)*magSf)");
-    nonInterpolatedFields_.insert("surfaceIntegrate(("+d+"*"+w+"))");
+    // Add motion-solver fields to non-interpolated fields
+    suppressMotionFields();
 
     // Read zoneID
     this->zoneID();
