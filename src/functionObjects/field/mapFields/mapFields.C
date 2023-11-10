@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -112,10 +112,105 @@ void Foam::functionObjects::mapFields::createInterpolation
     else
     {
         HashTable<word> patchMap;
-        wordList cuttingPatches;
 
-        dict.readEntry("patchMap", patchMap);
-        dict.readEntry("cuttingPatches", cuttingPatches);
+        bool createPatchMap = dict.getOrDefault<bool>("createPatchMap", false);
+
+        const entry* ePtr = dict.findEntry("patchMap");
+
+        if (createPatchMap && ePtr)
+        {
+            FatalIOErrorInFunction(dict)
+                << "Requested 'createPatchMap' but 'patchMap' entry provided. "
+                << "Please remove one of these entries"
+                << exit(FatalIOError);
+        }
+
+        if (!createPatchMap && !ePtr)
+        {
+            FatalIOErrorInFunction(dict)
+                << "Either the 'createPatchMap' or 'patchMap' entry must be "
+                << "provided when not using the 'consistent' mapping option"
+                << exit(FatalIOError);
+        }
+
+        const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
+        const polyBoundaryMesh& pbmT = mapRegion.boundaryMesh();
+
+        if (createPatchMap)
+        {
+            Info<< "    Creating patchMap" << endl;
+
+            forAll(pbmT, patchiT)
+            {
+                const polyPatch& pp = pbmT[patchiT];
+
+                if (!polyPatch::constraintType(pp.type()))
+                {
+                    const word& patchName = pp.name();
+                    const label patchi = pbm.findPatchID(patchName);
+                    const label patchSize =
+                        returnReduce(pp.size(), sumOp<label>());
+
+                    if (patchi != -1 && patchSize > 0)
+                    {
+                        Info<< "        Adding patch:" << pp.name() << endl;
+                        patchMap.set(patchName, patchName);
+                    }
+                }
+            }
+        }
+        else
+        {
+            patchMap = HashTable<word>(ePtr->stream());
+        }
+
+        // Cutting patches specified using wordRe's
+        const wordRes cuttingPatchRes = dict.get<wordRes>("cuttingPatches");
+        const labelList cuttingIndices = pbmT.indices(cuttingPatchRes);
+        const wordList cuttingPatches(pbmT.names(), cuttingIndices);
+
+        // Checks
+        {
+            // Find patch names that exist on target mesh that are not included
+            // in the patchMap
+            wordHashSet unknownPatchNames;
+            for (const auto& pp : pbmT)
+            {
+                if
+                (
+                    !polyPatch::constraintType(pp.type())
+                 && !patchMap.found(pp.name())
+                 && returnReduce(pp.size(), sumOp<label>()) > 0
+                )
+                {
+                    unknownPatchNames.insert(pp.name());
+                }
+            }
+
+            for (const label patchiT : cuttingIndices)
+            {
+                const word& patchName = pbmT[patchiT].name();
+
+                unknownPatchNames.erase(patchName);
+
+                if (patchMap.found(patchName))
+                {
+                    Info<< "        Removing cutting patch:" << patchName
+                        << endl;
+
+                    patchMap.erase(patchName);
+                }
+            }
+
+            if (unknownPatchNames.size())
+            {
+                FatalErrorInFunction
+                    << "Patches not present in source mesh. "
+                    << "Add to cuttingPatches? Patches: "
+                    << unknownPatchNames
+                    << exit(FatalError);
+            }
+        }
 
         interpPtr_.reset
         (

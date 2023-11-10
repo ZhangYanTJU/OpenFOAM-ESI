@@ -148,6 +148,7 @@ bool Foam::functionObjects::mapFields::mapFieldType() const
 
             mapFieldPtr->store();
         }
+
         auto& mappedField = *mapFieldPtr;
 
         mappedField = interpPtr_->mapTgtToSrc(field);
