@@ -66,7 +66,8 @@ int main(int argc, char *argv[])
 
         // Test that buffer resizing works as expected
 
-        Info<< "buf: " << buf.size() << '/' << buf.capacity() << nl;
+        Info<< "buf: " << buf.size() << '/' << buf.capacity()
+            << nl << nl;
 
         bool skipDoc = true;
 
@@ -89,14 +90,13 @@ int main(int argc, char *argv[])
                         << nl;
 
                     auto n = is.getLine(nullptr, '}');
-                    Info<< is.lineNumber() << ": [" << label(n) << "]" << nl;
+                    Info<< is.lineNumber() << ": [" << label(n) << ']' << nl;
                 }
             }
             else
             {
-                auto n = is.getLine(nullptr);
-
-                Info<< is.lineNumber() << ": [" << label(n) << "]" << nl;
+                auto n = is.getLine(nullptr);  // default: '\n'
+                Info<< is.lineNumber() << ": [" << label(n) << ']' << nl;
             }
         }
     }

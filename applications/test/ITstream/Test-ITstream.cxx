@@ -24,6 +24,8 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
+    Basic test for ITstream, which is the input token stream used by
+    primitiveEntry (dictionary).
 
 \*---------------------------------------------------------------------------*/
 
@@ -473,6 +475,15 @@ int main(int argc, char *argv[])
 
         reverse(listInput);
         doTest("List<char>", listInput, true);
+
+
+        {
+            auto& empty = ITstream::emptyStream();
+            Info<< "The empty stream:" << nl
+                << "    name: " << empty.name()
+                << " good:" << empty.good()
+                << " content:" << empty << nl;
+        }
     }
 
     if (args.found("rewrite"))

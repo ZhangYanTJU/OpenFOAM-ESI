@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,10 +76,10 @@ inline int Foam::ISstream::peek()
 inline Foam::ISstream& Foam::ISstream::getLine(std::string& str, char delim)
 {
     std::getline(is_, str, delim);
-    std::streamsize count = is_.gcount();
     syncState();
 
-    if (delim == '\n' && count > 0)
+    // Unlike with ignore(), cannot use gcount() to test success
+    if (delim == '\n')
     {
         ++lineNumber_;
     }

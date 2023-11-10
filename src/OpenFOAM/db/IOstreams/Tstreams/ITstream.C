@@ -84,6 +84,9 @@ Foam::ITstream& Foam::ITstream::emptyStream()
         emptyStreamPtr_.reset(new ITstream(Foam::zero{}, "empty-stream"));
     }
 
+    // Set stream as bad to indicate that this is an invald stream
+    emptyStreamPtr_->setBad();
+
     return *emptyStreamPtr_;
 }
 
@@ -296,14 +299,14 @@ void Foam::ITstream::print(Ostream& os) const
 {
     os  << "ITstream : " << name_.c_str() << ", line ";
 
-    const tokenList& toks = *this;
-
-    if (toks.empty())
+    if (tokenList::empty())
     {
         os  << lineNumber();
     }
     else
     {
+        const tokenList& toks = *this;
+
         os  << toks.front().lineNumber();
 
         if (toks.front().lineNumber() < toks.back().lineNumber())

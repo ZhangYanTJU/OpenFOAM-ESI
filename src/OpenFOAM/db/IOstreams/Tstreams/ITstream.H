@@ -190,9 +190,15 @@ public:
 
     // Static Functions
 
-        //- Return readable reference to an empty ITstream.
-        //- For functions needing to return an ITstream reference
-        //- that don't have anything valid.
+        //- Return reference to an empty ITstream, for functions needing to
+        //- return an ITstream reference but which don't have anything valid
+        //- of their own. <b>The stream shall be considered \em read-only.</b>
+        //
+        //  The returned stream has no tokens and has a 'bad' state,
+        //  to indicate that it is invalid for reading.
+        //
+        //  \caution the caller can still modify the its contents,
+        //      but they should not do that!
         static ITstream& emptyStream();
 
         //- Create token list by parsing the input character sequence
