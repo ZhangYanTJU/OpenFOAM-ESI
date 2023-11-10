@@ -323,12 +323,12 @@ void Foam::ParticleZoneInfo<CloudType>::postEvolve
 
 
 template<class CloudType>
-void Foam::ParticleZoneInfo<CloudType>::postMove
+bool Foam::ParticleZoneInfo<CloudType>::postMove
 (
     parcelType& p,
     const scalar dt,
     const point&,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     if (inZone(p.cell()))
@@ -346,6 +346,8 @@ void Foam::ParticleZoneInfo<CloudType>::postMove
 
         movedParticles_.append(newData);
     }
+
+    return true;
 }
 
 

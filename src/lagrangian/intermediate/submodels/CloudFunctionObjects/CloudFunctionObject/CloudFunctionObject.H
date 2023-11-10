@@ -159,27 +159,27 @@ public:
             );
 
             //- Post-move hook
-            virtual void postMove
+            virtual bool postMove
             (
                 parcelType& p,
                 const scalar dt,
                 const point& position0,
-                bool& keepParticle
+                const typename parcelType::trackingData& td
             );
 
             //- Post-patch hook
-            virtual void postPatch
+            virtual bool postPatch
             (
                 const parcelType& p,
                 const polyPatch& pp,
-                bool& keepParticle
+                const typename parcelType::trackingData& td
             );
 
             //- Post-face hook
-            virtual void postFace
+            virtual bool postFace
             (
                 const parcelType& p,
-                bool& keepParticle
+                const typename parcelType::trackingData& td
             );
 
 

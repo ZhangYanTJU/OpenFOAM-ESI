@@ -191,6 +191,19 @@ Foam::ThermoCloud<CloudType>::radAreaPT4() const
 
 
 template<class CloudType>
+inline void Foam::ThermoCloud<CloudType>::transferToCarrier
+(
+    const parcelType& p,
+    const typename parcelType::trackingData& td
+)
+{
+    CloudType::transferToCarrier(p, td);
+
+    hsTrans()[p.cell()] += p.nParticle()*p.mass()*p.hs();
+}
+
+
+template<class CloudType>
 inline Foam::DimensionedField<Foam::scalar, Foam::volMesh>&
 Foam::ThermoCloud<CloudType>::hsTrans()
 {

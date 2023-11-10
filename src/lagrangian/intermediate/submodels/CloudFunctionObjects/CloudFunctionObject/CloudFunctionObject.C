@@ -109,33 +109,39 @@ void Foam::CloudFunctionObject<CloudType>::postEvolve
 
 
 template<class CloudType>
-void Foam::CloudFunctionObject<CloudType>::postMove
+bool Foam::CloudFunctionObject<CloudType>::postMove
 (
     parcelType&,
     const scalar,
     const point&,
-    bool&
+    const typename parcelType::trackingData& td
 )
-{}
+{
+    return true;
+}
 
 
 template<class CloudType>
-void Foam::CloudFunctionObject<CloudType>::postPatch
+bool Foam::CloudFunctionObject<CloudType>::postPatch
 (
     const parcelType&,
     const polyPatch&,
-    bool&
+    const typename parcelType::trackingData& td
 )
-{}
+{
+    return true;
+}
 
 
 template<class CloudType>
-void Foam::CloudFunctionObject<CloudType>::postFace
+bool Foam::CloudFunctionObject<CloudType>::postFace
 (
     const parcelType&,
-    bool&
+    const typename parcelType::trackingData& td
 )
-{}
+{
+    return true;
+}
 
 
 template<class CloudType>

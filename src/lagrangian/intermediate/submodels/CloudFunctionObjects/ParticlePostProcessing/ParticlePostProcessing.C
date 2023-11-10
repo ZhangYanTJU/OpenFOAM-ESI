@@ -111,16 +111,16 @@ Foam::ParticlePostProcessing<CloudType>::ParticlePostProcessing
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::ParticlePostProcessing<CloudType>::postPatch
+bool Foam::ParticlePostProcessing<CloudType>::postPatch
 (
     const parcelType& p,
     const polyPatch& pp,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     if (!collector_.isPatch())
     {
-        return;
+        return true;
     }
 
     const label patchi = pp.index();
@@ -143,19 +143,21 @@ void Foam::ParticlePostProcessing<CloudType>::postPatch
 
         data_[localPatchi].append(data.str());
     }
+
+    return true;
 }
 
 
 template<class CloudType>
-void Foam::ParticlePostProcessing<CloudType>::postFace
+bool Foam::ParticlePostProcessing<CloudType>::postFace
 (
     const parcelType& p,
-    bool&
+    const typename parcelType::trackingData& td
 )
 {
     if (collector_.isPatch())
     {
-        return;
+        return true;
     }
 
     const labelList& IDs = collector_.IDs();
@@ -191,6 +193,8 @@ void Foam::ParticlePostProcessing<CloudType>::postFace
             data_[i].append(data.str());
         }
     }
+
+    return true;
 }
 
 

@@ -263,12 +263,14 @@ Foam::FaceInteraction<CloudType>::FaceInteraction
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::FaceInteraction<CloudType>::postFace
+bool Foam::FaceInteraction<CloudType>::postFace
 (
     const parcelType& p,
-    bool& keepParticle
+    const typename parcelType::trackingData& td
 )
 {
+    bool keepParticle = true;
+
     const auto& fzm = this->owner().mesh().faceZones();
 
     forAll(faceZoneIDs_, i)
@@ -322,8 +324,9 @@ void Foam::FaceInteraction<CloudType>::postFace
             }
         }
     }
+
+    return keepParticle;
 }
 
 
 // ************************************************************************* //
-

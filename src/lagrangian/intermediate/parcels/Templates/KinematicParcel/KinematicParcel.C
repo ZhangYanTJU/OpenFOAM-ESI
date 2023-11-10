@@ -311,9 +311,8 @@ bool Foam::KinematicParcel<ParcelType>::move
     const scalar trackTime
 )
 {
-    typename TrackCloudType::parcelType& p =
-        static_cast<typename TrackCloudType::parcelType&>(*this);
-    typename TrackCloudType::parcelType::trackingData& ttd =
+    auto& p = static_cast<typename TrackCloudType::parcelType&>(*this);
+    auto& ttd =
         static_cast<typename TrackCloudType::parcelType::trackingData&>(td);
 
     ttd.switchProcessor = false;
@@ -383,9 +382,10 @@ bool Foam::KinematicParcel<ParcelType>::move
 
         if (p.active() && p.onFace())
         {
-            cloud.functions().postFace(p, ttd.keepParticle);
+            ttd.keepParticle = cloud.functions().postFace(p, ttd);
         }
-        cloud.functions().postMove(p, dt, start, ttd.keepParticle);
+
+        ttd.keepParticle = cloud.functions().postMove(p, dt, start, ttd);
 
         if (p.active() && p.onFace() && ttd.keepParticle)
         {
@@ -405,13 +405,14 @@ bool Foam::KinematicParcel<ParcelType>::hitPatch
     trackingData& td
 )
 {
-    typename TrackCloudType::parcelType& p =
-        static_cast<typename TrackCloudType::parcelType&>(*this);
+    auto& p = static_cast<typename TrackCloudType::parcelType&>(*this);
+    auto& ttd =
+        static_cast<typename TrackCloudType::parcelType::trackingData&>(td);
 
     const polyPatch& pp = p.mesh().boundaryMesh()[p.patch()];
 
     // Invoke post-processing model
-    cloud.functions().postPatch(p, pp, td.keepParticle);
+    td.keepParticle = cloud.functions().postPatch(p, pp, ttd);
 
     if (isA<processorPolyPatch>(pp))
     {

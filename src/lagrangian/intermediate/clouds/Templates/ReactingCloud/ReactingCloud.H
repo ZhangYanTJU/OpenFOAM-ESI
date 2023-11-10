@@ -233,7 +233,15 @@ public:
 
             // Sources
 
-                //- Mass
+                //- Transfer the effect of parcel to the carrier phase
+                inline void transferToCarrier
+                (
+                    const parcelType& p,
+                    const typename parcelType::trackingData& td
+                );
+
+
+                // Mass
 
                     //- Return reference to mass source for field i
                     inline volScalarField::Internal&
