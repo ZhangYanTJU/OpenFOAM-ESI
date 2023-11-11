@@ -246,7 +246,7 @@ void Foam::cellCellStencil::globalCellCells
 
     // 1. Determine global cell number on other side of coupled patches
 
-    labelList globalCellIDs(identity(gi.localSize(), gi.localStart()));
+    labelList globalCellIDs(Foam::identity(gi.range()));
 
     labelList nbrGlobalCellIDs;
     syncTools::swapBoundaryCellList

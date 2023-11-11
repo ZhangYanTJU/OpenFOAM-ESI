@@ -244,7 +244,7 @@ void Foam::vtk::coordSetWriter::writeVerts()
 
         /// label off =
         /// (
-        ///     parallel_ ? globalIndex(nLocalConns).localStart() : 0
+        ///     parallel_ ? globalIndex::calcOffset(nLocalConns) : 0
         /// );
 
         auto iter = vertOffsets.begin();
@@ -356,7 +356,7 @@ void Foam::vtk::coordSetWriter::writeLines()
 
         /// label off =
         /// (
-        ///     parallel_ ? globalIndex(nLocalConns).localStart() : 0
+        ///     parallel_ ? globalIndex::calcOffset(nLocalConns) : 0
         /// );
 
         auto iter = vertOffsets.begin();
@@ -539,7 +539,7 @@ bool Foam::vtk::coordSetWriter::writeGeometry()
 
     //const label pointOffset =
     //(
-    //   parallel_ ? globalIndex(nLocalPoints_).localStart() : 0
+    //   parallel_ ? globalIndex::calcOffset(nLocalPoints_) : 0
     //);
 
     if (legacy())

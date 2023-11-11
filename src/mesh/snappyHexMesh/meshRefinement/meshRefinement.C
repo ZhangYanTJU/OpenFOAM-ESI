@@ -3437,11 +3437,12 @@ Foam::bitSet Foam::meshRefinement::getMasterPoints
     const labelList& meshPoints
 )
 {
+    const label myProci = UPstream::myProcNo();
     const globalIndex globalPoints(meshPoints.size());
 
     labelList myPoints
     (
-        identity(globalPoints.localSize(), globalPoints.localStart())
+        Foam::identity(globalPoints.range(myProci))
     );
 
     syncTools::syncPointList
@@ -3457,7 +3458,7 @@ Foam::bitSet Foam::meshRefinement::getMasterPoints
     bitSet isPatchMasterPoint(meshPoints.size());
     forAll(meshPoints, pointi)
     {
-        if (myPoints[pointi] == globalPoints.toGlobal(pointi))
+        if (myPoints[pointi] == globalPoints.toGlobal(myProci, pointi))
         {
             isPatchMasterPoint.set(pointi);
         }
@@ -3473,11 +3474,12 @@ Foam::bitSet Foam::meshRefinement::getMasterEdges
     const labelList& meshEdges
 )
 {
+    const label myProci = UPstream::myProcNo();
     const globalIndex globalEdges(meshEdges.size());
 
     labelList myEdges
     (
-        identity(globalEdges.localSize(), globalEdges.localStart())
+        Foam::identity(globalEdges.range(myProci))
     );
 
     syncTools::syncEdgeList
@@ -3493,7 +3495,7 @@ Foam::bitSet Foam::meshRefinement::getMasterEdges
     bitSet isMasterEdge(meshEdges.size());
     forAll(meshEdges, edgei)
     {
-        if (myEdges[edgei] == globalEdges.toGlobal(edgei))
+        if (myEdges[edgei] == globalEdges.toGlobal(myProci, edgei))
         {
             isMasterEdge.set(edgei);
         }

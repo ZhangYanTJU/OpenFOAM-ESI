@@ -312,7 +312,7 @@ void Foam::vtk::patchMeshWriter::writePolys(const label pointOffset)
         // processor-local connectivity offsets
         label off =
         (
-            parallel_ ? globalIndex(nLocalPolyConn_).localStart() : 0
+            parallel_ ? globalIndex::calcOffset(nLocalPolyConn_) : 0
         );
 
 
@@ -470,7 +470,7 @@ bool Foam::vtk::patchMeshWriter::writeGeometry()
 
     const label pointOffset =
     (
-        parallel_ ? globalIndex(nLocalPoints_).localStart() : 0
+        parallel_ ? globalIndex::calcOffset(nLocalPoints_) : 0
     );
 
     if (legacy())

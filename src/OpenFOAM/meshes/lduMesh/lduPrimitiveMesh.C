@@ -105,12 +105,14 @@ Foam::labelListList Foam::lduPrimitiveMesh::globalCellCells
     const lduAddressing& addr = mesh.lduAddr();
     lduInterfacePtrsList interfaces = mesh.interfaces();
 
+    const label myProci = UPstream::myProcNo(mesh.comm());
+
     const labelList globalIndices
     (
-        identity
+        Foam::identity
         (
             addr.size(),
-            globalNumbering.localStart(UPstream::myProcNo(mesh.comm()))
+            globalNumbering.localStart(myProci)
         )
     );
 

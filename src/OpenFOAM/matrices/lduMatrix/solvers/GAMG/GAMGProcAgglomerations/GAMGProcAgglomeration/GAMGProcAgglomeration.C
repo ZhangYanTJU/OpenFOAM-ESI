@@ -127,7 +127,7 @@ Foam::labelListList Foam::GAMGProcAgglomeration::globalCellCells
     const lduAddressing& addr = mesh.lduAddr();
     lduInterfacePtrsList interfaces = mesh.interfaces();
 
-    const label myProcID = UPstream::myProcNo(mesh.comm());
+    const label myProci = UPstream::myProcNo(mesh.comm());
 
     const globalIndex globalNumbering
     (
@@ -138,11 +138,7 @@ Foam::labelListList Foam::GAMGProcAgglomeration::globalCellCells
 
     const labelList globalIndices
     (
-        identity
-        (
-            globalNumbering.localSize(myProcID),
-            globalNumbering.localStart(myProcID)
-        )
+        Foam::identity(globalNumbering.range(myProci))
     );
 
     // Get the interface cells

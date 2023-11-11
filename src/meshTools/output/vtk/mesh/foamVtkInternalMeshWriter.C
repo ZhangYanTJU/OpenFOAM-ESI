@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -262,7 +262,7 @@ void Foam::vtk::internalMeshWriter::writeCellsConnectivity
             // processor-local connectivity offsets
             const globalIndex procOffset
             (
-                vertOffsets.empty() ? 0 : vertOffsets.last()
+                vertOffsets.empty() ? 0 : vertOffsets.back()
             );
 
             vtk::writeListParallel(format_.ref(), vertOffsets, procOffset);
@@ -431,17 +431,19 @@ void Foam::vtk::internalMeshWriter::writeCellsFaces
             const List<uint8_t>& cellTypes = vtuCells_.cellTypes();
             const label nLocalCells = cellTypes.size();
 
-            const globalIndex procOffset(faceLabels.size());
+            // processor-local offsets for faceLabels
+            const label labelsOffset =
+                globalIndex::calcOffset(faceLabels.size());
 
             labelList faceOffsetsRenumber;
 
-            if (faceOffsets.size()) // Or check procOffset.localSize()
+            if (faceOffsets.size())  // Or check faceLabels.size()
             {
                 faceOffsetsRenumber =
                     vtk::vtuSizing::copyFaceOffsetsXml
                     (
                         faceOffsets,
-                        procOffset.localStart()
+                        labelsOffset
                     );
             }
             else
@@ -567,7 +569,7 @@ bool Foam::vtk::internalMeshWriter::writeGeometry()
     // Include addPointCellLabels for the point offsets
     const label pointOffset =
     (
-        parallel_ ? globalIndex(vtuCells_.nFieldPoints()).localStart() : 0
+        parallel_ ? globalIndex::calcOffset(vtuCells_.nFieldPoints()) : 0
     );
 
     if (legacy())
@@ -670,13 +672,13 @@ void Foam::vtk::internalMeshWriter::writePointIDs()
     // Point offset for regular mesh points (without decomposed)
     const label pointOffset =
     (
-        parallel_ ? globalIndex(vtuCells_.nPoints()).localStart() : 0
+        parallel_ ? globalIndex::calcOffset(vtuCells_.nPoints()) : 0
     );
 
     // Cell offset for *regular* mesh cells (without decomposed)
     const label cellOffset =
     (
-        parallel_ ? globalIndex(vtuCells_.nCells()).localStart() : 0
+        parallel_ ? globalIndex::calcOffset(vtuCells_.nCells()) : 0
     );
 
 
