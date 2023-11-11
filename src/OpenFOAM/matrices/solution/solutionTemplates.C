@@ -34,15 +34,14 @@ void Foam::solution::cachePrintMessage
 (
     const char* message,
     const word& name,
-    const FieldType& vf
+    const FieldType& fld  // == regIOobject
 )
 {
-    if (solution::debug)
+    if (Foam::solution::debug)
     {
-        Info<< "Cache: " << message << token::SPACE << name
-            << ", originating from " << vf.name()
-            << " event No. " << vf.eventNo()
-            << endl;
+        Info<< "Cache: " << message << ' ' << name
+            << ", originating from " << fld.name()
+            << " event:" << fld.eventNo() << endl;
     }
 }
 

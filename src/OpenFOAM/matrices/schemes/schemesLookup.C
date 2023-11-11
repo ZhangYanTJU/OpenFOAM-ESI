@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -102,6 +102,19 @@ void Foam::schemesLookup::read(const dictionary& dict)
 }
 
 
+const Foam::dictionary& Foam::schemesLookup::selectedDict() const
+{
+    word select;
+
+    if (readIfPresent("select", select, keyType::LITERAL))
+    {
+        return subDict(select);
+    }
+
+    return *this;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::schemesLookup::schemesLookup
@@ -136,7 +149,7 @@ Foam::schemesLookup::schemesLookup
     snGradSchemes_("snGradSchemes", objectPath()),
     laplacianSchemes_("laplacianSchemes", objectPath()),
 
-    fluxRequired_(objectPath() + ".fluxRequired"),
+    fluxRequired_(objectPath() / "fluxRequired"),
     fluxRequiredDefault_(false),
     steady_(false)
 {
@@ -153,7 +166,7 @@ Foam::schemesLookup::schemesLookup
 
     if (readOpt() == IOobject::MUST_READ_IF_MODIFIED)
     {
-        read(schemesDict());
+        read(selectedDict());
     }
 }
 
@@ -177,7 +190,7 @@ bool Foam::schemesLookup::read()
     {
         clear();  // Clear current settings except fluxRequired
 
-        read(schemesDict());
+        read(selectedDict());
 
         return true;
     }
@@ -186,68 +199,58 @@ bool Foam::schemesLookup::read()
 }
 
 
-const Foam::dictionary& Foam::schemesLookup::schemesDict() const
-{
-    if (found("select"))
-    {
-        return subDict(word(lookup("select")));
-    }
-    return *this;
-}
-
-
 Foam::ITstream& Foam::schemesLookup::ddtScheme(const word& name) const
 {
-    DebugInfo<< "Lookup ddtScheme for " << name << endl;
+    DebugInfo<< "Lookup ddt scheme for " << name << endl;
     return ddtSchemes_.lookup(name);
 }
 
 
 Foam::ITstream& Foam::schemesLookup::d2dt2Scheme(const word& name) const
 {
-    DebugInfo<< "Lookup d2dt2Scheme for " << name << endl;
+    DebugInfo<< "Lookup d2dt2 scheme for " << name << endl;
     return d2dt2Schemes_.lookup(name);
 }
 
 
 Foam::ITstream& Foam::schemesLookup::interpolationScheme(const word& name) const
 {
-    DebugInfo<< "Lookup interpolationScheme for " << name << endl;
+    DebugInfo<< "Lookup interpolation scheme for " << name << endl;
     return interpSchemes_.lookup(name);
 }
 
 
 Foam::ITstream& Foam::schemesLookup::divScheme(const word& name) const
 {
-    DebugInfo<< "Lookup divScheme for " << name << endl;
+    DebugInfo<< "Lookup div scheme for " << name << endl;
     return divSchemes_.lookup(name);
 }
 
 
 Foam::ITstream& Foam::schemesLookup::gradScheme(const word& name) const
 {
-    DebugInfo<< "Lookup gradScheme for " << name << endl;
+    DebugInfo<< "Lookup grad scheme for " << name << endl;
     return gradSchemes_.lookup(name);
 }
 
 
 Foam::ITstream& Foam::schemesLookup::lnGradScheme(const word& name) const
 {
-    DebugInfo<< "Lookup lnGradScheme for " << name << endl;
+    DebugInfo<< "Lookup lnGrad scheme for " << name << endl;
     return lnGradSchemes_.lookup(name);
 }
 
 
 Foam::ITstream& Foam::schemesLookup::snGradScheme(const word& name) const
 {
-    DebugInfo<< "Lookup snGradScheme for " << name << endl;
+    DebugInfo<< "Lookup snGrad scheme for " << name << endl;
     return snGradSchemes_.lookup(name);
 }
 
 
 Foam::ITstream& Foam::schemesLookup::laplacianScheme(const word& name) const
 {
-    DebugInfo<< "Lookup laplacianScheme for " << name << endl;
+    DebugInfo<< "Lookup laplacian scheme for " << name << endl;
     return laplacianSchemes_.lookup(name);
 }
 
@@ -263,6 +266,12 @@ bool Foam::schemesLookup::fluxRequired(const word& name) const
 {
     DebugInfo<< "Lookup fluxRequired for " << name << endl;
     return (fluxRequired_.found(name) || fluxRequiredDefault_);
+}
+
+
+const Foam::dictionary& Foam::schemesLookup::schemesDict() const
+{
+    return selectedDict();
 }
 
 
