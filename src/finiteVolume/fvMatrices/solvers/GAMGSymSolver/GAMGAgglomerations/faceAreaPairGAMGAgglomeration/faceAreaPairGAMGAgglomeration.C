@@ -30,6 +30,9 @@ License
 #include "fvMesh.H"
 #include "surfaceFields.H"
 #include "addToRunTimeSelectionTable.H"
+#include "cyclicAMIGAMGInterface.H"
+#include "cyclicACMIGAMGInterface.H"
+#include "processorGAMGInterface.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -112,6 +115,196 @@ Foam::faceAreaPairGAMGAgglomeration::faceAreaPairGAMGAgglomeration
         ),
         true
     );
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
+{
+    const bool ok = pairGAMGAgglomeration::movePoints();
+
+    if (!requireUpdate_)
+    {
+        // movePoints lower down did not trigger update. Update in case of
+        // cyclicAMI since contains addressing across patches and patches
+        // have moved.
+
+        bool hasCyclicAMI = false;
+        if (!processorAgglomerate())
+        {
+            const auto& fineInterfaces = interfaceLevel(0);
+            forAll(fineInterfaces, inti)
+            {
+                if (fineInterfaces.set(inti))
+                {
+                    const auto& intf = fineInterfaces[inti];
+                    if
+                    (
+                        isA<cyclicAMIGAMGInterface>(intf)
+                     || isA<cyclicAMILduInterface>(intf)
+                     || isA<cyclicACMIGAMGInterface>(intf)
+                     || isA<cyclicACMILduInterface>(intf)
+                    )
+                    {
+                        hasCyclicAMI = true;
+
+                        DebugPoutInFunction
+                            << "Detected cyclicA(C)MI at interface " << inti
+                            << ".Redoing patch agglomeration" << endl;
+
+                        break;
+                    }
+                }
+            }
+        }
+
+
+        if (hasCyclicAMI)
+        {
+            // Redo the interface agglomeration. For now redo all the interfaces
+
+            for
+            (
+                label fineLevelIndex = 0;
+                fineLevelIndex < size();
+                fineLevelIndex++
+            )
+            {
+                // Near complete copy of boundary handling in
+                // GAMGAgglomeration::agglomerateLduAddressing
+
+                const auto& fineMesh = meshLevel(fineLevelIndex);
+                const auto& fineInterfaces = interfaceLevel(fineLevelIndex);
+                const lduAddressing& fineMeshAddr = fineMesh.lduAddr();
+
+                // Get restriction map for current level
+                const labelField& restrictMap =
+                    restrictAddressing(fineLevelIndex);
+
+                const label startOfRequests = UPstream::nRequests();
+                forAll(fineInterfaces, inti)
+                {
+                    if (fineInterfaces.set(inti))
+                    {
+                        const auto& intf = fineInterfaces[inti];
+
+                        if
+                        (
+                            isA<cyclicAMIGAMGInterface>(intf)
+                         || isA<cyclicAMILduInterface>(intf)
+                         || isA<cyclicACMIGAMGInterface>(intf)
+                         || isA<cyclicACMILduInterface>(intf)
+                        )
+                        {
+                            if (fineLevelIndex == 0)
+                            {
+                                intf.initInternalFieldTransfer
+                                (
+                                    Pstream::commsTypes::nonBlocking,
+                                    restrictMap,
+                                    fineMeshAddr.patchAddr(inti)
+                                );
+                            }
+                            else
+                            {
+                                intf.initInternalFieldTransfer
+                                (
+                                    Pstream::commsTypes::nonBlocking,
+                                    restrictMap
+                                );
+                            }
+                        }
+                    }
+                }
+
+                // Wait for comms to finised
+                UPstream::waitRequests(startOfRequests);
+
+                // New coarse-level interfaces
+                lduInterfacePtrsList coarseInterfaces(fineInterfaces.size());
+
+                forAll(fineInterfaces, inti)
+                {
+                    if (fineInterfaces.set(inti))
+                    {
+                        const auto& intf = fineInterfaces[inti];
+
+                        if
+                        (
+                            isA<cyclicAMIGAMGInterface>(intf)
+                         || isA<cyclicAMILduInterface>(intf)
+                         || isA<cyclicACMIGAMGInterface>(intf)
+                         || isA<cyclicACMILduInterface>(intf)
+                        )
+                        {
+                            tmp<labelField> restrictMapInternalField;
+
+                            // The finest mesh uses patchAddr from the
+                            // original lduAdressing.
+                            // the coarser levels create thei own adressing for
+                            // faceCells
+                            if (fineLevelIndex == 0)
+                            {
+                                restrictMapInternalField =
+                                    intf.interfaceInternalField
+                                    (
+                                        restrictMap,
+                                        fineMeshAddr.patchAddr(inti)
+                                    );
+                            }
+                            else
+                            {
+                                restrictMapInternalField =
+                                    intf.interfaceInternalField
+                                    (
+                                        restrictMap
+                                    );
+                            }
+
+                            tmp<labelField> nbrRestrictMapInternalField =
+                                intf.internalFieldTransfer
+                                (
+                                    Pstream::commsTypes::nonBlocking,
+                                    restrictMap
+                                );
+
+
+                            autoPtr<GAMGInterface> coarseIntf
+                            (
+                                GAMGInterface::New
+                                (
+                                    inti,
+                                    meshLevels_[fineLevelIndex].rawInterfaces(),
+                                    intf,
+                                    restrictMapInternalField(),
+                                    nbrRestrictMapInternalField(),
+                                    fineLevelIndex,
+                                    fineMesh.comm()
+                                )
+                            );
+
+                            coarseInterfaces.set(inti, coarseIntf.ptr());
+                        }
+                    }
+                }
+
+                meshLevels_[fineLevelIndex].addInterfaces
+                (
+                    coarseInterfaces,
+                    lduPrimitiveMesh::nonBlockingSchedule
+                    <
+                        processorGAMGInterface
+                    >
+                    (
+                        coarseInterfaces
+                    )
+                );
+            }
+        }
+    }
+
+    return ok;
 }
 
 
