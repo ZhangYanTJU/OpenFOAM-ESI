@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,6 +60,10 @@ Foam::fv::iterativeGaussGrad<Type>::calcGrad
 
     const skewCorrectionVectors& skv = skewCorrectionVectors::New(vsf.mesh());
 
+    scalar relax = 1;
+    const bool useRelax =
+        vsf.mesh().relaxField("grad(" + vsf.name() + ")", relax);
+
     for (label i = 0; i < nIter_; ++i)
     {
         tmp<GradSurfFieldType> tsgGrad = linearInterpolate(gGrad);
@@ -68,11 +72,8 @@ Foam::fv::iterativeGaussGrad<Type>::calcGrad
 
         tcorr.ref().dimensions().reset(vsf.dimensions());
 
-        if (vsf.mesh().relaxField("grad(" + vsf.name() + ")"))
+        if (useRelax)
         {
-            const scalar relax =
-                vsf.mesh().fieldRelaxationFactor("grad(" + vsf.name() + ")");
-
             // relax*prediction + (1-relax)*old
             gGrad *= (1.0 - relax);
             gGrad += relax*fv::gaussGrad<Type>::gradf(tcorr + ssf, name);

@@ -1257,13 +1257,14 @@ void Foam::fvMatrix<Type>::relax()
 {
     word name = psi_.select
     (
-        psi_.mesh().data::template getOrDefault<bool>
-        ("finalIteration", false)
+        psi_.mesh().data::getOrDefault("finalIteration", false)
     );
 
-    if (psi_.mesh().relaxEquation(name))
+    scalar relaxCoeff = 0;
+
+    if (psi_.mesh().relaxEquation(name, relaxCoeff))
     {
-        relax(psi_.mesh().equationRelaxationFactor(name));
+        relax(relaxCoeff);
     }
 }
 
@@ -1534,8 +1535,7 @@ const Foam::dictionary& Foam::fvMatrix<Type>::solverDict() const
     (
         psi_.select
         (
-            psi_.mesh().data::template getOrDefault<bool>
-            ("finalIteration", false)
+            psi_.mesh().data::getOrDefault("finalIteration", false)
         )
     );
 }

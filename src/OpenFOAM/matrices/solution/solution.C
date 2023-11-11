@@ -325,59 +325,91 @@ bool Foam::solution::relaxEquation(const word& name) const
 }
 
 
-Foam::scalar Foam::solution::fieldRelaxationFactor(const word& name) const
+bool Foam::solution::relaxField(const word& name, scalar& factor) const
 {
-    DebugInfo<< "Lookup variable relaxation factor for " << name << endl;
+    DebugInfo<< "Lookup field relaxation factor for " << name << endl;
 
     if (fieldRelaxDict_.found(name))
     {
-        return Function1<scalar>::New
+        factor = Function1<scalar>::New
         (
             fieldRelaxCache_,  // cache
             name,
             fieldRelaxDict_,
             keyType::REGEX
         )().value(time().timeOutputValue());
+
+        return true;
     }
-    else if (fieldRelaxDefault_)
+    else if (fieldRelaxDict_.found("default") && fieldRelaxDefault_)
     {
-        return fieldRelaxDefault_().value(time().timeOutputValue());
+        factor = fieldRelaxDefault_->value(time().timeOutputValue());
+        return true;
     }
 
-    FatalIOErrorInFunction(fieldRelaxDict_)
-        << "Cannot find variable relaxation factor for '" << name
-        << "' or a suitable default value." << nl
-        << exit(FatalIOError);
-
-    return 0;
+    // Fallthrough - nothing found
+    return false;
 }
 
 
-Foam::scalar Foam::solution::equationRelaxationFactor(const word& name) const
+bool Foam::solution::relaxEquation(const word& name, scalar& factor) const
 {
     DebugInfo<< "Lookup equation relaxation factor for " << name << endl;
 
     if (eqnRelaxDict_.found(name))
     {
-        return Function1<scalar>::New
+        factor = Function1<scalar>::New
         (
             eqnRelaxCache_,  // cache
             name,
             eqnRelaxDict_,
             keyType::REGEX
         )().value(time().timeOutputValue());
+
+        return true;
     }
-    else if (eqnRelaxDefault_)
+    else if (eqnRelaxDict_.found("default") && eqnRelaxDefault_)
     {
-        return eqnRelaxDefault_().value(time().timeOutputValue());
+        factor = eqnRelaxDefault_->value(time().timeOutputValue());
+        return true;
     }
 
-    FatalIOErrorInFunction(eqnRelaxDict_)
-        << "Cannot find equation relaxation factor for '" << name
-        << "' or a suitable default value."
-        << exit(FatalIOError);
+    // Fallthrough - nothing found
+    return false;
+}
 
-    return 0;
+
+Foam::scalar Foam::solution::fieldRelaxationFactor(const word& name) const
+{
+    // Any initial value
+    scalar factor = 0;
+
+    if (!relaxField(name, factor))
+    {
+        FatalIOErrorInFunction(fieldRelaxDict_)
+            << "Cannot find field relaxation factor for '" << name
+            << "' or a suitable default value." << nl
+            << exit(FatalIOError);
+    }
+
+    return factor;
+}
+
+
+Foam::scalar Foam::solution::equationRelaxationFactor(const word& name) const
+{
+    // Any initial value
+    scalar factor = 0;
+
+    if (!relaxEquation(name, factor))
+    {
+        FatalIOErrorInFunction(eqnRelaxDict_)
+            << "Cannot find equation relaxation factor for '" << name
+            << "' or a suitable default value."
+            << exit(FatalIOError);
+    }
+
+    return factor;
 }
 
 

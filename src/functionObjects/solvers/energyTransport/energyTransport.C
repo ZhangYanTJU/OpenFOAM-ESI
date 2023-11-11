@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -371,11 +371,8 @@ bool Foam::functionObjects::energyTransport::execute()
     );
 
     // Set under-relaxation coeff
-    scalar relaxCoeff = 0.0;
-    if (mesh_.relaxEquation(schemesField_))
-    {
-        relaxCoeff = mesh_.equationRelaxationFactor(schemesField_);
-    }
+    scalar relaxCoeff = 0;
+    mesh_.relaxEquation(schemesField_, relaxCoeff);
 
     if (phi.dimensions() == dimMass/dimTime)
     {

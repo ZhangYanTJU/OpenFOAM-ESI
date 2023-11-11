@@ -192,13 +192,29 @@ public:
         //- True if the relaxation factor is given for the field
         bool relaxField(const word& name) const;
 
+        //- Get the relaxation factor specified for the field
+        //- or the specified "default" entry, if present.
+        //- Does not change \p factor if neither direct nor "default"
+        //- can be used,
+        //  \return True if found
+        bool relaxField(const word& name, scalar& factor) const;
+
         //- True if the relaxation factor is given for the equation
         bool relaxEquation(const word& name) const;
 
-        //- The relaxation factor for the given field
+        //- Get the relaxation factor specified for the equation
+        //- or the specified "default" entry, if present.
+        //- Does not change \p factor if neither direct nor "default"
+        //- can be used,
+        //  \return True if found
+        bool relaxEquation(const word& name, scalar& factor) const;
+
+        //- Get the relaxation factor for the given field.
+        //- Fatal if not found.
         scalar fieldRelaxationFactor(const word& name) const;
 
-        //- The relaxation factor for the given equation
+        //- Get the relaxation factor for the given equation.
+        //- Fatal if not found.
         scalar equationRelaxationFactor(const word& name) const;
 
         //- The entire dictionary or the optional "select" sub-dictionary.

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,10 +61,7 @@ tmp<GeometricField<scalar, fvsPatchField, surfaceMesh>> alphaCorr
     const word fieldName = U.select(finalIter);
 
     scalar alpha = 1;
-    if (mesh.relaxEquation(fieldName))
-    {
-        alpha = mesh.equationRelaxationFactor(fieldName);
-    }
+    mesh.relaxEquation(fieldName, alpha);
 
     return
         (1 - alpha)

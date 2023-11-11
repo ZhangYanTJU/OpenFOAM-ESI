@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -595,15 +595,16 @@ void Foam::faMatrix<Type>::relax(const scalar alpha)
 template<class Type>
 void Foam::faMatrix<Type>::relax()
 {
-    if (psi_.mesh().relaxEquation(psi_.name()))
+    scalar relaxCoeff = 0;
+
+    if (psi_.mesh().relaxEquation(psi_.name(), relaxCoeff))
     {
-        relax(psi_.mesh().equationRelaxationFactor(psi_.name()));
+        relax(relaxCoeff);
     }
     else
     {
         DebugInFunction
-            << "Relaxation factor for field " << psi_.name()
-            << " not found.  Relaxation will not be used." << endl;
+            << "No relaxation specified for field " << psi_.name() << nl;
     }
 }
 
