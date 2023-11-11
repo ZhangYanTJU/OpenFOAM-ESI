@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018-2021 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -173,10 +173,7 @@ bool Foam::functionObjects::age::execute()
 
     // Set under-relaxation coeff
     scalar relaxCoeff = 0;
-    if (mesh_.relaxEquation(schemesField_))
-    {
-        relaxCoeff = mesh_.equationRelaxationFactor(schemesField_);
-    }
+    mesh_.relaxEquation(schemesField_, relaxCoeff);
 
     Foam::fv::options& fvOptions(Foam::fv::options::New(mesh_));
 

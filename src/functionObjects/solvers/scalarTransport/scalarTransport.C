@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -263,11 +263,8 @@ bool Foam::functionObjects::scalarTransport::execute()
     word laplacianScheme("laplacian(" + D.name() + "," + schemesField_ + ")");
 
     // Set under-relaxation coeff
-    scalar relaxCoeff = 0.0;
-    if (mesh_.relaxEquation(schemesField_))
-    {
-        relaxCoeff = mesh_.equationRelaxationFactor(schemesField_);
-    }
+    scalar relaxCoeff = 0;
+    mesh_.relaxEquation(schemesField_, relaxCoeff);
 
     // Two phase scalar transport
     if (phaseName_ != "none")
