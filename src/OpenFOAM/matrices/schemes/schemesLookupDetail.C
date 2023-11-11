@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,9 +50,9 @@ Foam::schemesLookup::lookupDetail::lookupDetail
     }
     else
     {
-        dict_.name() = parentDictPath + "." + name_;
+        dict_.name() = fileName::concat(parentDictPath, name_, '/');
     }
-    default_.name() = dict_.name() + ".default";
+    default_.name() = fileName::concat(dict_.name(), "default", '/');
 }
 
 

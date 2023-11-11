@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,10 +30,29 @@ Class
 Description
     Selector class for finite area/finite volume differencing schemes.
 
-    The schemes data are treated as MUST_READ_IF_MODIFIED even if
-    the requested readOption is nominally MUST_READ or READ_IF_PRESENT.
-    This allows run-time modifications to behave as expected.
+    The file will contain these types of entries:
+    \table
+      Name         | Description                        | Type | Reqd | Default
+      ddtSchemes   | ddt                                | dict | no   | none
+      d2dt2Schemes | d2dt2 (currently only finite-area) | dict | no   | none
+      interpolationSchemes | interpolation              | dict | no   | linear
+      divSchemes   | div                                | dict | yes  | -
+      gradSchemes  | grad                               | dict | yes  | -
+      lnGradSchemes | line-normal grad (finite-area)    | dict | no | corrected
+      snGradSchemes | surface-normal grad               | dict | no | corrected
+      laplacianSchemes | laplacian                      | dict | yes  | -
+      fluxRequired |                                    | dict | no | -
+    \endtable
 
+    \par select
+    This is a rarely used feature to select between different groups of
+    settings within the file. If unspecified, the file contents are used
+    directly.
+
+Note
+    The schemes data are treated as \c READ_MODIFIED even if the
+    requested \p readOption is nominally MUST_READ or READ_IF_PRESENT.
+    This allows run-time modifications to behave as expected. <br>
     The optional fallback dictionary content for constructors is used
     when a file is missing or for a NO_READ, with a null pointer being
     treated like an empty dictionary.
@@ -154,6 +173,12 @@ class schemesLookup
         //- Read settings from the dictionary
         void read(const dictionary& dict);
 
+        //- The entire dictionary or the optional "select" sub-dictionary.
+        const dictionary& selectedDict() const;
+
+
+    // Generated Methods
+
         //- No copy construct
         schemesLookup(const schemesLookup&) = delete;
 
@@ -190,20 +215,14 @@ public:
 
     // Member Functions
 
-        //- The current schemes dictionary, respects the "select" keyword
+        //- True if default ddt scheme is steady-state
+        bool steady() const noexcept { return steady_; }
+
+        //- True if default ddt scheme is not steady-state
+        bool transient() const noexcept { return !steady_; }
+
+        //- The entire dictionary or the optional "select" sub-dictionary.
         const dictionary& schemesDict() const;
-
-        //- True if default ddtScheme is steady-state
-        bool steady() const noexcept
-        {
-            return steady_;
-        }
-
-        //- True if default ddtScheme is not steady-state
-        bool transient() const noexcept
-        {
-            return !steady_;
-        }
 
 
     // Lookup Access
@@ -232,10 +251,10 @@ public:
         //- Get laplacian scheme for given name, or default
         ITstream& laplacianScheme(const word& name) const;
 
-        //- Get flux-required for given name, or default
+        //- Set flux-required for given name (mutable)
         void setFluxRequired(const word& name) const;
 
-        //- Set flux-required for given name (mutable)
+        //- Get flux-required for given name, or default
         bool fluxRequired(const word& name) const;
 
 
@@ -289,7 +308,7 @@ public:
             return laplacianSchemes_.dict_;
         }
 
-        //- Access to flux required dictionary
+        //- Access flux-required dictionary
         const dictionary& fluxRequired() const noexcept
         {
             return fluxRequired_;
@@ -346,7 +365,7 @@ public:
             return laplacianSchemes_.dict_;
         }
 
-        //- Access to flux required dictionary
+        //- Access flux-required dictionary
         dictionary& fluxRequired() noexcept
         {
             return fluxRequired_;

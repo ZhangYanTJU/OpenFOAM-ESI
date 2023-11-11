@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,7 +41,8 @@ namespace Foam
 // List of sub-dictionaries to rewrite
 static const Foam::List<Foam::word> subDictNames
 ({
-    "preconditioner", "smoother"
+    "preconditioner",
+    "smoother"
 });
 
 
@@ -142,6 +143,19 @@ void Foam::solution::read(const dictionary& dict)
 }
 
 
+const Foam::dictionary& Foam::solution::selectedDict() const
+{
+    word select;
+
+    if (readIfPresent("select", select, keyType::LITERAL))
+    {
+        return subDict(select);
+    }
+
+    return *this;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::solution::solution
@@ -183,7 +197,7 @@ Foam::solution::solution
 
     if (readOpt() == IOobject::MUST_READ_IF_MODIFIED)
     {
-        read(solutionDict());
+        read(selectedDict());
     }
 }
 
@@ -201,7 +215,7 @@ Foam::solution::solution
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-// A non-default destructor since we had incomplete types in the header
+// No default destructor in header (incomplete types)
 Foam::solution::~solution()
 {}
 
@@ -283,6 +297,17 @@ bool Foam::solution::cache(const word& name) const
 }
 
 
+// void Foam::solution::enableCache(const word& name) const
+// {
+//     if (!cache_.found(name))
+//     {
+//         DebugInfo<< "Cache: enable cache for " << name << endl;
+//         cache_.add(name, true);
+//         caching_ = true;
+//     }
+// }
+
+
 bool Foam::solution::relaxField(const word& name) const
 {
     DebugInfo
@@ -358,12 +383,20 @@ Foam::scalar Foam::solution::equationRelaxationFactor(const word& name) const
 
 const Foam::dictionary& Foam::solution::solutionDict() const
 {
-    if (found("select"))
-    {
-        return subDict(get<word>("select"));
-    }
+    return selectedDict();
+}
 
-    return *this;
+
+const Foam::dictionary& Foam::solution::solutionDict(const word& name) const
+{
+    DebugInfo<< "Lookup subDict : " << name << endl;
+    return selectedDict().subDict(name);
+}
+
+
+const Foam::dictionary& Foam::solution::solversDict() const
+{
+    return solvers_;
 }
 
 
@@ -385,7 +418,7 @@ bool Foam::solution::read()
 {
     if (regIOobject::read())
     {
-        read(solutionDict());
+        read(selectedDict());
 
         return true;
     }

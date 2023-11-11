@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,10 +30,43 @@ Class
 Description
     Selector class for relaxation factors, solver type and solution.
 
-    The solution data are treated as MUST_READ_IF_MODIFIED even if
-    the requested readOption is nominally MUST_READ or READ_IF_PRESENT.
-    This allows run-time modifications to behave as expected.
+    The file will contain these types of entries:
 
+    \par solvers { }
+    A sub-dictionary listing of linear solver settings. For example,
+    \verbatim
+    solvers
+    {
+        p
+        {
+            solver          PCG;
+            preconditioner  DIC;
+            tolerance       1e-06;
+            relTol          0.05;
+        }
+    }
+    \endverbatim
+
+    \par select
+    This is a rarely used feature to select between different groups of
+    settings within the file. If unspecified, the file contents are used
+    directly.
+
+    There are currently no other specified entries, but the file will
+    often also contain other solution specifications. For example,
+    \verbatim
+    PIMPLE
+    {
+        nOuterCorrectors 2;
+        nCorrectors     1;
+        nNonOrthogonalCorrectors 0;
+    }
+    \endverbatim
+
+Note
+    The solution data are treated as \c READ_MODIFIED even if the
+    requested \p readOption is nominally MUST_READ or READ_IF_PRESENT.
+    This allows run-time modifications to behave as expected. <br>
     The optional fallback dictionary content for constructors is used
     when a file is missing or for a NO_READ, with a null pointer being
     treated like an empty dictionary.
@@ -100,6 +133,12 @@ class solution
         //- Read settings from the dictionary
         void read(const dictionary&);
 
+        //- The entire dictionary or the optional "select" sub-dictionary.
+        const dictionary& selectedDict() const;
+
+
+    // Generated Methods
+
         //- No copy construct
         solution(const solution&) = delete;
 
@@ -114,7 +153,7 @@ public:
     //  Returns the number of settings changed
     static label upgradeSolverDict(dictionary& dict, const bool verbose=true);
 
-    //- Debug switch
+    //- Debug switch (registered name: "solution")
     static int debug;
 
 
@@ -139,56 +178,64 @@ public:
         );
 
 
-    //- Destructor
+    //- Destructor. Non-default in header (incomplete types)
     virtual ~solution();
 
 
     // Member Functions
 
-        // Access
+    // Access
 
-            //- Return true if the given field should be cached
-            bool cache(const word& name) const;
+        //- True if the given field should be cached
+        bool cache(const word& name) const;
 
-            //- Return true if the relaxation factor is given for the field
-            bool relaxField(const word& name) const;
+        //- True if the relaxation factor is given for the field
+        bool relaxField(const word& name) const;
 
-            //- Return true if the relaxation factor is given for the equation
-            bool relaxEquation(const word& name) const;
+        //- True if the relaxation factor is given for the equation
+        bool relaxEquation(const word& name) const;
 
-            //- Return the relaxation factor for the given field
-            scalar fieldRelaxationFactor(const word& name) const;
+        //- The relaxation factor for the given field
+        scalar fieldRelaxationFactor(const word& name) const;
 
-            //- Return the relaxation factor for the given equation
-            scalar equationRelaxationFactor(const word& name) const;
+        //- The relaxation factor for the given equation
+        scalar equationRelaxationFactor(const word& name) const;
 
-            //- Return the selected sub-dictionary of solvers if the "select"
-            //- keyword is given, otherwise return the complete dictionary
-            const dictionary& solutionDict() const;
+        //- The entire dictionary or the optional "select" sub-dictionary.
+        const dictionary& solutionDict() const;
 
-            //- Return the solver controls dictionary for the given field
-            const dictionary& solverDict(const word& name) const;
+        //- Return \p name sub-dictionary within the solutionDict().
+        //  Same as \c solutionDict().subDict(...)
+        const dictionary& solutionDict(const word& name) const;
 
-            //- Return the solver controls dictionary for the given field
-            const dictionary& solver(const word& name) const;
+        //- The solver controls dictionary (all fields)
+        const dictionary& solversDict() const;
+
+        //- The solver controls dictionary for the given field.
+        //- Same as \c solversDict().subDict(...)
+        const dictionary& solverDict(const word& name) const;
+
+        //- The solver controls dictionary for the given field.
+        //- Same as solverDict(...)
+        const dictionary& solver(const word& name) const;
 
 
-        // Read
+    // Read
 
-            //- Read the solution dictionary
-            bool read();
+        //- Read the solution dictionary
+        bool read();
 
 
-        // Other
+    // Other
 
-            //- Helper for printing cache message
-            template<class FieldType>
-            static void cachePrintMessage
-            (
-                const char* message,
-                const word& name,
-                const FieldType& vf
-            );
+        //- Helper for printing cache message
+        template<class FieldType>
+        static void cachePrintMessage
+        (
+            const char* message,
+            const word& name,
+            const FieldType& fld
+        );
 };
 
 
