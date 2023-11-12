@@ -141,9 +141,7 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
                     const auto& intf = fineInterfaces[inti];
                     if
                     (
-                        isA<cyclicAMIGAMGInterface>(intf)
-                     || isA<cyclicAMILduInterface>(intf)
-                     || isA<cyclicACMIGAMGInterface>(intf)
+                        isA<cyclicAMILduInterface>(intf)
                      || isA<cyclicACMILduInterface>(intf)
                     )
                     {
@@ -162,8 +160,7 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
 
         if (hasCyclicAMI)
         {
-            // Redo the interface agglomeration. For now redo all the interfaces
-
+            // Redo the interface agglomeration
             for
             (
                 label fineLevelIndex = 0;
@@ -191,9 +188,7 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
 
                         if
                         (
-                            isA<cyclicAMIGAMGInterface>(intf)
-                         || isA<cyclicAMILduInterface>(intf)
-                         || isA<cyclicACMIGAMGInterface>(intf)
+                            isA<cyclicAMILduInterface>(intf)
                          || isA<cyclicACMILduInterface>(intf)
                         )
                         {
@@ -222,7 +217,7 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
                 UPstream::waitRequests(startOfRequests);
 
                 // New coarse-level interfaces
-                lduInterfacePtrsList coarseInterfaces(fineInterfaces.size());
+                //lduInterfacePtrsList coarseInterfaces(fineInterfaces.size());
 
                 forAll(fineInterfaces, inti)
                 {
@@ -232,9 +227,7 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
 
                         if
                         (
-                            isA<cyclicAMIGAMGInterface>(intf)
-                         || isA<cyclicAMILduInterface>(intf)
-                         || isA<cyclicACMIGAMGInterface>(intf)
+                            isA<cyclicAMILduInterface>(intf)
                          || isA<cyclicACMILduInterface>(intf)
                         )
                         {
@@ -269,13 +262,15 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
                                     restrictMap
                                 );
 
+                            lduPrimitiveMesh& coarseMesh =
+                                meshLevels_[fineLevelIndex];
 
                             autoPtr<GAMGInterface> coarseIntf
                             (
                                 GAMGInterface::New
                                 (
                                     inti,
-                                    meshLevels_[fineLevelIndex].rawInterfaces(),
+                                    coarseMesh.rawInterfaces(),
                                     intf,
                                     restrictMapInternalField(),
                                     nbrRestrictMapInternalField(),
@@ -284,22 +279,32 @@ bool Foam::faceAreaPairGAMGAgglomeration::movePoints()
                                 )
                             );
 
-                            coarseInterfaces.set(inti, coarseIntf.ptr());
+                            //coarseInterfaces.set(inti, coarseIntf.ptr());
+                            coarseMesh.interfaces().set
+                            (
+                                inti,
+                                coarseIntf.ptr()
+                            );
+                            coarseMesh.primitiveInterfaces().set
+                            (
+                                inti,
+                               &coarseMesh.interfaces()[inti]
+                            );    
                         }
                     }
                 }
 
-                meshLevels_[fineLevelIndex].addInterfaces
-                (
-                    coarseInterfaces,
-                    lduPrimitiveMesh::nonBlockingSchedule
-                    <
-                        processorGAMGInterface
-                    >
-                    (
-                        coarseInterfaces
-                    )
-                );
+                //meshLevels_[fineLevelIndex].addInterfaces
+                //(
+                //    coarseInterfaces,
+                //    lduPrimitiveMesh::nonBlockingSchedule
+                //    <
+                //        processorGAMGInterface
+                //    >
+                //    (
+                //        coarseInterfaces
+                //    )
+                //);
             }
         }
     }
