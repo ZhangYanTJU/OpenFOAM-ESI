@@ -163,6 +163,12 @@ inline Foam::label Foam::globalIndex::end_value() const noexcept
 }
 
 
+inline bool Foam::globalIndex::contains(const label i) const noexcept
+{
+    return (begin_value() <= i) && (i < end_value());
+}
+
+
 inline Foam::label Foam::globalIndex::totalSize() const noexcept
 {
     return end_value();
@@ -295,7 +301,7 @@ inline Foam::labelRange Foam::globalIndex::range() const
 inline bool Foam::globalIndex::isLocal(const label proci, const label i) const
 {
     // range contains()
-    return i >= offsets_[proci] && i < offsets_[proci+1];
+    return (offsets_[proci] <= i) && (i < offsets_[proci+1]);
 }
 
 
@@ -377,16 +383,16 @@ inline void Foam::globalIndex::inplaceToGlobal(labelUList& labels) const
 inline Foam::label
 Foam::globalIndex::toLocal(const label proci, const label i) const
 {
-    const label locali = i - offsets_[proci];
-
-    if (locali < 0 || i >= offsets_[proci+1])
+    // range !contains()
+    if (i < offsets_[proci] || i >= offsets_[proci+1])
     {
         FatalErrorInFunction
-            << "Global " << i << " does not belong on processor "
-            << proci << nl << "Offsets:" << offsets_
+            << "Global id:" << i << " does not belong on processor "
+            << proci << nl
+            << " Offsets:" << offsets_
             << abort(FatalError);
     }
-    return locali;
+    return (i - offsets_[proci]);
 }
 
 
@@ -396,21 +402,109 @@ inline Foam::label Foam::globalIndex::toLocal(const label i) const
 }
 
 
+inline Foam::label Foam::globalIndex::findProc
+(
+    const label proci,
+    const label i
+) const
+{
+    // Simple checks first
+    if
+    (
+        (proci < 0)                     // Invalid proc
+     || (proci+1 > offsets_.size())     // Invalid proc
+     || (i < offsets_.front())          // Below the start
+     || (i >= offsets_.back())          // Beyond the end
+    )
+    {
+        return -1;
+    }
+
+    // Assume that in many cases we have many queries for the local proci,
+    // so query that first but also make it the split point for
+    // restricting the binary searches
+
+    if (isLocal(proci, i))
+    {
+        return proci;
+    }
+
+    if (i < offsets_[proci])
+    {
+        // Can restrict search to procs below proci
+        const labelList::subList slice(offsets_, proci);
+        return findLower(slice, i+1);
+    }
+
+    // Search starts at proci+1 (and above)
+    return findLower(offsets_, i+1, proci+1);
+}
+
+
+inline Foam::label Foam::globalIndex::findProcAbove
+(
+    const label proci,
+    const label i
+) const
+{
+    // Simple checks first
+    if
+    (
+        (proci < 0)                     // Invalid proci
+     || (proci+1 >= offsets_.size())    // Nothing above last proc
+     || (i < offsets_[proci+1])         // Exclude proc-local and below
+     || (i >= offsets_.back())          // Beyond the end
+    )
+    {
+        return -1;
+    }
+
+    // Search starts at proci+1 (and above)
+    return findLower(offsets_, i+1, (proci+1));
+}
+
+
+inline Foam::label Foam::globalIndex::findProcBelow
+(
+    const label proci,
+    const label i
+) const
+{
+    if
+    (
+        (proci <= 0)                    // Nothing below first proc
+     || (proci >= offsets_.size())      // Invalid proci
+     || (i >= offsets_[proci])          // Exclude proc-local and above
+     || (i < offsets_[0])               // Beyond the begin
+    )
+    {
+        return -1;
+    }
+
+    // Restrict search to procs below proci
+    const labelList::subList slice(offsets_, proci);
+    return findLower(slice, i+1);
+}
+
+
+// Note: could split this into failsafe/non-failsafe versions
 inline Foam::label Foam::globalIndex::whichProcID
 (
     const label proci,
     const label i
 ) const
 {
-    if (i < 0 || i >= totalSize())
+    label foundProc = findProc(proci, i);
+
+    if (foundProc < 0)
     {
         FatalErrorInFunction
-            << "Global " << i << " does not belong on any processor."
-            << " Offsets:" << offsets_
+            << "Global id:" << i << " does not belong on any processor." << nl
+            << "Offsets:" << offsets_
             << abort(FatalError);
     }
 
-    return isLocal(proci, i) ? proci : findLower(offsets_, i+1);
+    return foundProc;
 }
 
 

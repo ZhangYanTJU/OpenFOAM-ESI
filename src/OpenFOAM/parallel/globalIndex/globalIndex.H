@@ -321,6 +321,9 @@ public:
 
     // Queries and renumbering
 
+        //- True if contained within the offsets range
+        inline bool contains(const label i) const noexcept;
+
         //- Start of proci data
         inline label localStart(const label proci) const;
 
@@ -360,14 +363,26 @@ public:
         //- From global to local on proci
         inline label toLocal(const label proci, const label i) const;
 
-        //- Which processor does global id come from?
-        //  Does an initial check for isLocal first (assumed to occur
-        //  reasonably frequently) followed by a binary search.
-        //- Fatal for out of range ids (eg, negative or >= totalSize()
-        inline label whichProcID(const label i) const;
+        //- Find processor with specified global id.
+        //- Check proci first, followed by binary search.
+        //  \return the processor number or -1 (not found)
+        inline label findProc(const label proci, const label i) const;
+
+        //- Find processor above proci with specified global id - binary search.
+        //  \return the processor above proci or -1 otherwise
+        //  (including for out-of-range indices)
+        inline label findProcAbove(const label proci, const label i) const;
+
+        //- Find processor below proci with specified global id - binary search.
+        //  Binary search.
+        //  \return the processor below proci or -1 otherwise
+        //  (including for out-of-range indices)
+        inline label findProcBelow(const label proci, const label i) const;
 
         //- Which processor does global id come from?
-        //- Checks proci first.
+        //- Checks proci first (assumed to occur reasonably frequently)
+        //- followed by a binary search.
+        //- Fatal for out-of-range indices
         inline label whichProcID(const label proci, const label i) const;
 
 
@@ -404,10 +419,17 @@ public:
         //  FatalError if not on local processor.
         inline label toLocal(const label i) const;
 
+        //- Which processor does global id come from?
+        //  Uses myProcNo for the initial local check.
+        inline label whichProcID(const label i) const;
+
 
     // Iteration
 
-        //- Forward input iterator with const access
+        //- Forward input iterator with const access that is used to
+        //- iterate across the globalIndex offsets() table.
+        //  The de-referenced value is the range() with (start, size),
+        //  but it also provides separate index, start, size information.
         class const_iterator
         {
             //- The parent class for which this is an iterator

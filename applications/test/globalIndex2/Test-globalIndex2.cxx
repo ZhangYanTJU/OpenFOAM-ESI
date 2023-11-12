@@ -42,6 +42,21 @@ Description
 using namespace Foam;
 
 
+void printTest1
+(
+    const globalIndex& gi,
+    const label proci,
+    const label value
+)
+{
+    // With range check
+    Info<< "  value:" << value << " on:" << gi.findProc(proci, value)
+        << " below/above: ("
+        << gi.findProcBelow(proci, value) << ' '
+        << gi.findProcAbove(proci, value) << ')' << nl;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //  Main program:
 
@@ -85,6 +100,52 @@ int main(int argc, char *argv[])
             << "       offsets: "
             << flatOutput(globalIndex::calcOffsets(sliceSizes))
             << nl;
+    }
+
+    {
+        // From some offsets
+        globalIndex gi;
+
+        globalIndex gi0
+        (
+            labelList({ 0, 10, 20, 30, 40, 50, 60 })
+        );
+
+        Info<< "offsets: " << gi0.offsets() << nl;
+
+        // Alternative to copy assigment
+        gi.reset(gi0);
+
+        Info<< "globalIndex :"; gi.offsets().writeList(Info) << nl;
+
+        // Resizing is fine, but also check the binary search results!
+        gi.resize(10);
+        Info<< "globalIndex :"; gi.offsets().writeList(Info) << nl;
+
+        // NB: these routines are mostly failsafe on bad addresses
+        // for (const label proci : { 4, 8, -1 })
+
+        for (const label proci : { 4 })
+        {
+            Info<< "proc:" << proci
+                << " : [" << gi.localStart(proci)
+                << "," << gi.localEnd(proci) << ")"  << nl;
+
+            for (label i = 0; i < 25; ++i)
+            {
+                const label value = rnd.position<label>(-8, 100);
+
+                printTest1(gi, proci, value);
+            }
+
+            Info<< "other on proc:" << proci << nl;
+            printTest1(gi, proci, gi.localStart(proci));
+            printTest1(gi, proci, gi.localEnd(proci));
+
+            Info<< "other on proc:0" << nl;
+            printTest1(gi, 0, gi.localStart(proci));
+            printTest1(gi, 0, gi.localEnd(proci));
+        }
     }
 
     Info<< "\nEnd\n" << endl;
