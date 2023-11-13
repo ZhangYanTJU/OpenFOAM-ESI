@@ -167,79 +167,79 @@ inline const Foam::volTensorField& Foam::objective::gradDxDbMultiplier() const
 }
 
 
-inline bool Foam::objective::hasdJdb() const
+inline bool Foam::objective::hasdJdb() const noexcept
 {
     return bool(dJdbPtr_);
 }
 
 
-inline bool Foam::objective::hasdJdbField() const
+inline bool Foam::objective::hasdJdbField() const noexcept
 {
     return bool(dJdbFieldPtr_);
 }
 
 
-inline bool Foam::objective::hasBoundarydJdb() const
+inline bool Foam::objective::hasBoundarydJdb() const noexcept
 {
     return bool(bdJdbPtr_);
 }
 
 
-inline bool Foam::objective::hasdSdbMult() const
+inline bool Foam::objective::hasdSdbMult() const noexcept
 {
     return bool(bdSdbMultPtr_);
 }
 
 
-inline bool Foam::objective::hasdndbMult() const
+inline bool Foam::objective::hasdndbMult() const noexcept
 {
     return bool(bdndbMultPtr_);
 }
 
 
-inline bool Foam::objective::hasdxdbMult() const
+inline bool Foam::objective::hasdxdbMult() const noexcept
 {
     return bool(bdxdbMultPtr_);
 }
 
 
-inline bool Foam::objective::hasdxdbDirectMult() const
+inline bool Foam::objective::hasdxdbDirectMult() const noexcept
 {
     return bool(bdxdbDirectMultPtr_);
 }
 
 
-inline bool Foam::objective::hasBoundaryEdgeContribution() const
+inline bool Foam::objective::hasBoundaryEdgeContribution() const noexcept
 {
     return bool(bEdgeContribution_);
 }
 
 
-inline bool Foam::objective::hasDivDxDbMult() const
+inline bool Foam::objective::hasDivDxDbMult() const noexcept
 {
     return bool(divDxDbMultPtr_);
 }
 
 
-inline bool Foam::objective::hasGradDxDbMult() const
+inline bool Foam::objective::hasGradDxDbMult() const noexcept
 {
     return bool(gradDxDbMultPtr_);
 }
 
 
-inline bool Foam::objective::hasIntegrationStartTime() const
+inline bool Foam::objective::hasIntegrationStartTime() const noexcept
 {
     return bool(integrationStartTimePtr_);
 }
 
 
-inline bool Foam::objective::hasIntegrationEndTime() const
+inline bool Foam::objective::hasIntegrationEndTime() const noexcept
 {
     return bool(integrationEndTimePtr_);
 }
 
 
-inline void Foam::objective::setComputed(const bool isComputed)
+inline void Foam::objective::setComputed(const bool isComputed) noexcept
 {
     computed_ = isComputed;
 }

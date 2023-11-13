@@ -81,7 +81,7 @@ protected:
 
     // Protected data
 
-        //- A subfield of the design variables correponding to the porosity
+        //- A subfield of the design variables corresponding to the porosity
         //- field.
         //  Usually the same as *this
         SubField<scalar> alpha_;

@@ -213,85 +213,85 @@ Foam::objectiveIncompressible::boundarydJdGradU()
 }
 
 
-inline bool Foam::objectiveIncompressible::hasdJdv() const
+inline bool Foam::objectiveIncompressible::hasdJdv() const noexcept
 {
     return bool(dJdvPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasdJdp() const
+inline bool Foam::objectiveIncompressible::hasdJdp() const noexcept
 {
     return bool(dJdpPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasdJdT() const
+inline bool Foam::objectiveIncompressible::hasdJdT() const noexcept
 {
     return bool(dJdTPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasdJdTMVar1() const
+inline bool Foam::objectiveIncompressible::hasdJdTMVar1() const noexcept
 {
     return bool(dJdTMvar1Ptr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasdJdTMVar2() const
+inline bool Foam::objectiveIncompressible::hasdJdTMVar2() const noexcept
 {
     return bool(dJdTMvar2Ptr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdv() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdv() const noexcept
 {
     return bool(bdJdvPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdvn() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdvn() const noexcept
 {
     return bool(bdJdvnPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdvt() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdvt() const noexcept
 {
     return bool(bdJdvtPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdp() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdp() const noexcept
 {
     return bool(bdJdpPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdT() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdT() const noexcept
 {
     return bool(bdJdTPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdTMVar1() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdTMVar1() const noexcept
 {
     return bool(bdJdTMvar1Ptr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdTMVar2() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdTMVar2() const noexcept
 {
     return bool(bdJdTMvar2Ptr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdnut() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdnut() const noexcept
 {
     return bool(bdJdnutPtr_);
 }
 
 
-inline bool Foam::objectiveIncompressible::hasBoundarydJdGradU() const
+inline bool Foam::objectiveIncompressible::hasBoundarydJdGradU() const noexcept
 {
     return bool(bdJdGradUPtr_);
 }

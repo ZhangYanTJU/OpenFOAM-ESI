@@ -97,30 +97,30 @@ public:
     // Member Functions
 
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Update mean drag and lift values
-        void update_meanValues();
+        virtual void update_meanValues();
 
         //- Update values to be added to the adjoint wall velocity
-        void update_boundarydJdp();
+        virtual void update_boundarydJdp();
 
         //- Update delta(n dS)/delta b multiplier
-        void update_dSdbMultiplier();
+        virtual void update_dSdbMultiplier();
 
         //- Update delta(x)/delta b multiplier
-        void update_dxdbMultiplier();
+        virtual void update_dxdbMultiplier();
 
         //- Update delta(x)/delta b multiplier coming directly from the
         //- objective
-        void update_dxdbDirectMultiplier();
+        virtual void update_dxdbDirectMultiplier();
 
         //- Update dJ/dnut multiplier
-        void update_boundarydJdnut();
+        virtual void update_boundarydJdnut();
 
         //- Update dJ/dGradU multiplier
         /* WIP
-        void update_boundarydJdGradU();
+        virtual void update_boundarydJdGradU();
         */
 };
 

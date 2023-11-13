@@ -354,20 +354,20 @@ public:
         virtual bool write(const bool valid = true) const;
 
         //- Inline functions for checking whether pointers are set or not
-        inline bool hasdJdv() const;
-        inline bool hasdJdp() const;
-        inline bool hasdJdT() const;
-        inline bool hasdJdTMVar1() const;
-        inline bool hasdJdTMVar2() const;
-        inline bool hasBoundarydJdv() const;
-        inline bool hasBoundarydJdvn() const;
-        inline bool hasBoundarydJdvt() const;
-        inline bool hasBoundarydJdp() const;
-        inline bool hasBoundarydJdT() const;
-        inline bool hasBoundarydJdTMVar1() const;
-        inline bool hasBoundarydJdTMVar2() const;
-        inline bool hasBoundarydJdnut() const;
-        inline bool hasBoundarydJdGradU() const;
+        inline bool hasdJdv() const noexcept;
+        inline bool hasdJdp() const noexcept;
+        inline bool hasdJdT() const noexcept;
+        inline bool hasdJdTMVar1() const noexcept;
+        inline bool hasdJdTMVar2() const noexcept;
+        inline bool hasBoundarydJdv() const noexcept;
+        inline bool hasBoundarydJdvn() const noexcept;
+        inline bool hasBoundarydJdvt() const noexcept;
+        inline bool hasBoundarydJdp() const noexcept;
+        inline bool hasBoundarydJdT() const noexcept;
+        inline bool hasBoundarydJdTMVar1() const noexcept;
+        inline bool hasBoundarydJdTMVar2() const noexcept;
+        inline bool hasBoundarydJdnut() const noexcept;
+        inline bool hasBoundarydJdGradU() const noexcept;
 };
 
 

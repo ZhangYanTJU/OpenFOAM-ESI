@@ -30,7 +30,6 @@ Class
     Foam::adjointOutletVelocityFluxFvPatchVectorField
 
 Description
-
     An outlet boundary condition for patches in which the primal flow exhibits
     recirculation. Adds the contribution of the objective as an adjoint
     momentum flux directly to the PDEs, without the need to first compute an

@@ -89,7 +89,7 @@ protected:
         //- Get zone IDs corresponding to a wordList, read from a dict.
         //  Avoid going through ZoneMesh.indices() since this practically sorts
         //  the IDs from smallest to largest while we need to keep them in the
-        //  same order as that perscribed in the wordList
+        //  same order as that prescribed in the wordList
         labelList getZoneIDs(const dictionary& dict, const word& zoneGroup);
 
         //- Add a cellZone containing the cells next to IO patches

@@ -91,7 +91,7 @@ public:
     // Member Functions
 
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Contribution to field sensitivities
         virtual void update_dJdb();

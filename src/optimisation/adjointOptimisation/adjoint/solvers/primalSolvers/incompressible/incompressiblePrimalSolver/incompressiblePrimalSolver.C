@@ -167,7 +167,7 @@ void Foam::incompressiblePrimalSolver::correctBoundaryConditions()
     // including averaged ones, if present
     vars.correctBoundaryConditions();
 
-    // phi cannot be updated through correctBoundayrConditions.
+    // phi cannot be updated through correctBoundaryConditions.
     // Re-compute based on the Rhie-Chow interpolation scheme.
     // This is a non-linear process
     // (phi depends on UEqn().A() which depends on phi)
