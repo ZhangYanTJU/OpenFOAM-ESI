@@ -43,14 +43,14 @@ Description
     \endverbatim
 
     The implemented approach borrows from the references therein, but does not
-    follow any of them exactly. The underlaying field of the design variables
+    follow any of them exactly. The underlying field of the design variables
     is not the level-set field but affects the latter through:
     a) a regularisation approach similar to that used in porosity-based topO
     (see the regularisation class and references therein) and
     b) a re-initialisation strategy. Since solving a modified Hamilton-Jacobi
     equation poses a number of numerical challenges, the signed distance field
     is obtained by identifying the zero level-set contour using the
-    cutFaceIso, cutCellIso infrastucture (see references therein for the
+    cutFaceIso, cutCellIso infrastructure (see references therein for the
     methodology) and using these "cut-faces" as seeds for meshWave.
 
 SourceFiles
@@ -96,7 +96,7 @@ protected:
         //- into signed distances
         volScalarField aTilda_;
 
-        //- Function to transorm signed distances to the indicator field beta_
+        //- Function to transform signed distances to the indicator field beta_
         autoPtr<topOInterpolationFunction> interpolation_;
 
         //- The indicator field
@@ -105,7 +105,7 @@ protected:
         //- Fix aTilda values in fixed{Zero}PorousZones and IOcells
         bool fixATildaValues_;
 
-        //- Write all fields related to the distance calculation (debuging)
+        //- Write all fields related to the distance calculation (debugging)
         bool writeAllDistanceFields_;
 
 

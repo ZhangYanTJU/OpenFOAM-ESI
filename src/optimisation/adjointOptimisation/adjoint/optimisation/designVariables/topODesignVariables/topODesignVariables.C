@@ -174,7 +174,7 @@ void Foam::topODesignVariables::setActiveDesignVariables
     label varI(activeDesignVariables_.size());
     activeDesignVariables_.setSize(offset + mesh_.nCells(), -1);
     // Set active design variables
-    // If specific porosity zones are perscribed, use them directly
+    // If specific porosity zones are prescribed, use them directly
     if (!zones_.adjointPorousZoneIDs().empty())
     {
         for (label cellZoneID : zones_.adjointPorousZoneIDs())
@@ -346,10 +346,7 @@ Foam::autoPtr<Foam::topODesignVariables> Foam::topODesignVariables::New
     const dictionary& dict
 )
 {
-    return autoPtr<topODesignVariables>
-    (
-        new topODesignVariables(mesh, dict)
-    );
+    return autoPtr<topODesignVariables>::New(mesh, dict);
 }
 
 

@@ -69,7 +69,6 @@ private:
 
 protected:
 
-
     // Protected Data
 
         //- Solve the regularisationPDE only on a subset mesh made of the

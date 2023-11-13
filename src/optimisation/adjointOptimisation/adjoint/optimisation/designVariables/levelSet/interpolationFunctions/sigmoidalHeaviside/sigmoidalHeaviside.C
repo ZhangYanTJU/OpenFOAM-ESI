@@ -119,7 +119,7 @@ tmp<scalarField> sigmoidalHeaviside::derivative(const scalarField& arg) const
     const scalar pi = constant::mathematical::pi;
     scalarField argLimited(max(min(dNB_, arg), -dNB_));
     DebugInfo
-        << type() << "::interpolate:: t, dNB " << t << ", " << dNB_ << endl;
+        << type() << "::derivative:: t, dNB " << t << ", " << dNB_ << endl;
 
     deriv = 0.5*(scalar(1) + cos(pi*argLimited/dNB_))/dNB_;
 

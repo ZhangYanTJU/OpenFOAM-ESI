@@ -96,28 +96,28 @@ public:
     // Member Functions
 
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Update values to be added to the adjoint wall velocity
-        void update_boundarydJdp();
+        virtual void update_boundarydJdp();
 
         //- Update delta(n dS)/delta b multiplier
-        void update_dSdbMultiplier();
+        virtual void update_dSdbMultiplier();
 
         //- Update delta(x)/delta b multiplier
-        void update_dxdbMultiplier();
+        virtual void update_dxdbMultiplier();
 
         //- Update dJ/dnut multiplier
-        void update_boundarydJdnut();
+        virtual void update_boundarydJdnut();
 
         //- Update dJ/dGradU multiplier
-        void update_boundarydJdGradU();
+        virtual void update_boundarydJdGradU();
 
         //- Return denominator, without density
         virtual scalar denom() const;
 
         //- Return force direction
-        const vector& forceDirection() const;
+        virtual const vector& forceDirection() const;
 };
 
 

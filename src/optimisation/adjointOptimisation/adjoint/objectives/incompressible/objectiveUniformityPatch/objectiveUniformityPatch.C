@@ -51,32 +51,7 @@ addToRunTimeSelectionTable
 );
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-objectiveUniformityPatch::objectiveUniformityPatch
-(
-    const fvMesh& mesh,
-    const dictionary& dict,
-    const word& adjointSolverName,
-    const word& primalSolverName
-)
-:
-    objectiveIncompressible(mesh, dict, adjointSolverName, primalSolverName),
-    patches_(),
-    UMean_(),
-    UVar_()
-{
-    // Find inlet/outlet patches
-    initialize();
-
-    // Allocate boundary field pointers
-    bdJdvPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    bdJdvnPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    bdJdvtPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void objectiveUniformityPatch::initialize()
 {
@@ -131,6 +106,33 @@ void objectiveUniformityPatch::initialize()
     }
 }
 
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+objectiveUniformityPatch::objectiveUniformityPatch
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& adjointSolverName,
+    const word& primalSolverName
+)
+:
+    objectiveIncompressible(mesh, dict, adjointSolverName, primalSolverName),
+    patches_(),
+    UMean_(),
+    UVar_()
+{
+    // Find inlet/outlet patches
+    initialize();
+
+    // Allocate boundary field pointers
+    bdJdvPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
+    bdJdvnPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
+    bdJdvtPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 scalar objectiveUniformityPatch::J()
 {

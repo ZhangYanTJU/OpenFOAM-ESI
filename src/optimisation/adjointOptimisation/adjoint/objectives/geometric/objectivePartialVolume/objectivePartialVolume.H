@@ -88,15 +88,15 @@ public:
     // Member Functions
 
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Update d (x) / db multiplier. Surface and volume-based sensitivity
         //- term
-        void update_dxdbDirectMultiplier();
+        virtual void update_dxdbDirectMultiplier();
 
         //- Update d (normal dS) / db multiplier. Surface and volume-based
         //- sensitivity term
-        void update_dSdbMultiplier();
+        virtual void update_dSdbMultiplier();
 
         //- Write initial volume for continuation
         virtual bool writeData(Ostream& os) const;

@@ -66,7 +66,7 @@ protected:
 
     // Protected data
 
-        //- Cell zones usefull for defining the constant and changing parts
+        //- Cell zones useful for defining the constant and changing parts
         //- of the domain in topO
         topOZones zones_;
 
@@ -206,7 +206,7 @@ public:
         //  field
         //  - 0 distance contour for levelSet or
         //  - 0.5 beta contour for porosity-based topO.
-        //  For levelSet topO, the process of identitying the contour sets also
+        //  For levelSet topO, the process of identifying the contour sets also
         //  the seeds for computing the distance field in the entire domain
         void writeFluidSolidInterface
         (

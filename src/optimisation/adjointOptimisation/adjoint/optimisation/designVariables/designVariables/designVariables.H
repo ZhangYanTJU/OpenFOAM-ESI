@@ -73,7 +73,7 @@ protected:
         //- Which of the design variables will be updated
         labelList activeDesignVariables_;
 
-        //- Copy of old design variables. Usefull when performing line-search
+        //- Copy of old design variables. Useful when performing line-search
         autoPtr<scalarField> oldDesignVariables_;
 
         //- Maximum design variables' change in the first optimisation cycle

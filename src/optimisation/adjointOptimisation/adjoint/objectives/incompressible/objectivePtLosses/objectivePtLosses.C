@@ -52,32 +52,7 @@ addToRunTimeSelectionTable
 );
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-objectivePtLosses::objectivePtLosses
-(
-    const fvMesh& mesh,
-    const dictionary& dict,
-    const word& adjointSolverName,
-    const word& primalSolverName
-)
-:
-    objectiveIncompressible(mesh, dict, adjointSolverName, primalSolverName),
-    patches_(0),
-    patchPt_(0)
-{
-    // Find inlet/outlet patches
-    initialize();
-
-    // Allocate boundary field pointers
-    bdJdpPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    bdJdvPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-    bdJdvnPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
-    bdJdvtPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void objectivePtLosses::initialize()
 {
@@ -131,6 +106,33 @@ void objectivePtLosses::initialize()
     }
 }
 
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+objectivePtLosses::objectivePtLosses
+(
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& adjointSolverName,
+    const word& primalSolverName
+)
+:
+    objectiveIncompressible(mesh, dict, adjointSolverName, primalSolverName),
+    patches_(0),
+    patchPt_(0)
+{
+    // Find inlet/outlet patches
+    initialize();
+
+    // Allocate boundary field pointers
+    bdJdpPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
+    bdJdvPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
+    bdJdvnPtr_.reset(createZeroBoundaryPtr<scalar>(mesh_));
+    bdJdvtPtr_.reset(createZeroBoundaryPtr<vector>(mesh_));
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 scalar objectivePtLosses::J()
 {

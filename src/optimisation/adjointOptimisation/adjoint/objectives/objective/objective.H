@@ -266,36 +266,31 @@ public:
         //- Return the objective function of the optimisation cycle.
         //  This corresponds to the mean value, if it exists, or the
         //  instantaneous value otherwise
-        scalar JCycle(bool negate = false) const;
+        virtual scalar JCycle(bool negate = false) const;
 
         //- Accumulate contribution for the mean objective value
         //  For steady-state runs
-        void accumulateJMean(solverControl& solverControl);
+        virtual void accumulateJMean(solverControl& solverControl);
+        
 
         //- Accumulate contribution for the mean objective value
         //  For unsteady runs
-        void accumulateJMean();
+        virtual void accumulateJMean();
 
         //- Return the objective function weight
-        scalar weight() const;
-
-        //- Return the normalization factor
-        const autoPtr<scalar>& normFactor() const;
-
-        //- Return the objective target value
-        const autoPtr<scalar>& target() const;
+        virtual scalar weight() const;
 
         //- Is the objective normalized
-        bool normalize() const;
+        virtual bool normalize() const;
 
         //- Normalize all fields allocated by the objective
         virtual void doNormalization();
 
         //- Check whether this is an objective integration time
-        bool isWithinIntegrationTime() const;
+        virtual bool isWithinIntegrationTime() const;
 
         //- Increment integration times
-        void incrementIntegrationTimes(const scalar timeSpan);
+        virtual void incrementIntegrationTimes(const scalar timeSpan);
 
         //- Contribution to field sensitivities
         inline const volScalarField& dJdb() const;
@@ -450,22 +445,23 @@ public:
         inline void setWrite(const bool shouldWrite);
 
         // Inline functions for checking whether pointers are set or not
-        inline bool hasdJdb() const;
-        inline bool hasdJdbField() const;
-        inline bool hasBoundarydJdb() const;
-        inline bool hasdSdbMult() const;
-        inline bool hasdndbMult() const;
-        inline bool hasdxdbMult() const;
-        inline bool hasdxdbDirectMult() const;
-        inline bool hasBoundaryEdgeContribution() const;
-        inline bool hasDivDxDbMult() const;
-        inline bool hasGradDxDbMult() const;
+        inline bool hasdJdb() const noexcept;
+        inline bool hasdJdbField() const noexcept;
+        inline bool hasBoundarydJdb() const noexcept;
+        inline bool hasdSdbMult() const noexcept;
+        inline bool hasdndbMult() const noexcept;
+        inline bool hasdxdbMult() const noexcept;
+        inline bool hasdxdbDirectMult() const noexcept;
+        inline bool hasBoundaryEdgeContribution() const noexcept;
+        inline bool hasDivDxDbMult() const noexcept;
+        inline bool hasGradDxDbMult() const noexcept;
 
         // Inline functions for checking whether integration times are set
-        inline bool hasIntegrationStartTime() const;
-        inline bool hasIntegrationEndTime() const;
-        // Set the computed status of the objective
-        inline void setComputed(const bool isComputed);
+        inline bool hasIntegrationStartTime() const noexcept;
+        inline bool hasIntegrationEndTime() const noexcept;
+
+        //- Set the computed status of the objective
+        inline void setComputed(const bool isComputed) noexcept;
 
         //- Return objective dictionary
         const dictionary& dict() const;

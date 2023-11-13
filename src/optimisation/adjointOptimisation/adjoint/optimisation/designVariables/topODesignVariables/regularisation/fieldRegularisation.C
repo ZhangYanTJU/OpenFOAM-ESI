@@ -100,8 +100,7 @@ Foam::fieldRegularisation::fieldRegularisation
     )
 {
     DebugInfo
-        << "Regularise " << Switch(regularise_) << endl;
-    DebugInfo
+        << "Regularise " << Switch(regularise_) << nl
         << "Project " << Switch(project_) << endl;
 }
 
@@ -160,7 +159,7 @@ void Foam::fieldRegularisation::postProcessSens(scalarField& sens)
     {
         sens *= sharpenFunction_->derivative(betaArg_);
     }
-    // Add part due to regulatisation
+    // Add part due to regularisation
     if (regularise_)
     {
         // Solve the adjoint to the regularisation equation

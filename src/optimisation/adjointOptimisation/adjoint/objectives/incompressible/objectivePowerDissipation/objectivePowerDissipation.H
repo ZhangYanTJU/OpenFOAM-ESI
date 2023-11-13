@@ -97,16 +97,16 @@ public:
     // Member Functions
 
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Update values to be added to the adjoint outlet velocity
-        void update_dJdv();
+        virtual void update_dJdv();
 
         //- Update field to be added to the first adjoint turbulence model PDE
-        void update_dJdTMvar1();
+        virtual void update_dJdTMvar1();
 
         //- Update field to be added to the second adjoint turbulence model PDE
-        void update_dJdTMvar2();
+        virtual void update_dJdTMvar2();
 
         //- Update div(dx/db multiplier). Volume-based sensitivity term
         virtual void update_divDxDbMultiplier();

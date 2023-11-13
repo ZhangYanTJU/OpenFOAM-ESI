@@ -86,7 +86,7 @@ Foam::dynamicTopODesignVariables::dynamicTopODesignVariables
     topODesignVariables(mesh, dict, size),
     marchCells_(mesh, dict.subDict("marchingCoeffs"))
 {
-    // Rest of the contrsuctor initialization
+    // Rest of the constructor initialization
     initialize();
 }
 
@@ -100,10 +100,7 @@ Foam::dynamicTopODesignVariables::New
     const dictionary& dict
 )
 {
-    return autoPtr<dynamicTopODesignVariables>
-    (
-        new dynamicTopODesignVariables(mesh, dict)
-    );
+    return autoPtr<dynamicTopODesignVariables>::New(mesh, dict);
 }
 
 

@@ -31,7 +31,7 @@ Group
     grpFvOptionsSources
 
 Description
-    Impelements Brinkman penalisation terms for topology optimisation.
+    Implements Brinkman penalisation terms for topology optimisation.
     Looks up the indicator field (beta) from the registry, through
     topOVariablesBase
 
