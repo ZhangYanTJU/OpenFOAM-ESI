@@ -135,38 +135,59 @@ void Foam::functionObjects::mapFields::createInterpolation
 
         const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
         const polyBoundaryMesh& pbmT = mapRegion.boundaryMesh();
+        DynamicList<label> cuttingIndices;
 
         if (createPatchMap)
         {
-            Info<< "    Creating patchMap" << endl;
+            Info<< "    Creating patchMap and cuttingPatches" << endl;
+
+            if (dict.found("cuttingPatches"))
+            {
+                WarningInFunction
+                    << "Ignoring user supplied cuttingPatches when "
+                    << "createPatchMap option is active"
+                    << endl;
+            }
 
             forAll(pbmT, patchiT)
             {
-                const polyPatch& pp = pbmT[patchiT];
+                const polyPatch& ppT = pbmT[patchiT];
 
-                if (!polyPatch::constraintType(pp.type()))
+                if (!polyPatch::constraintType(ppT.type()))
                 {
-                    const word& patchName = pp.name();
-                    const label patchi = pbm.findPatchID(patchName);
-                    const label patchSize =
-                        returnReduce(pp.size(), sumOp<label>());
+                    const word& patchNameT = ppT.name();
+                    const label patchi = pbm.findPatchID(patchNameT);
 
-                    if (patchi != -1 && patchSize > 0)
+                    if (patchi == -1)
                     {
-                        Info<< "        Adding patch:" << pp.name() << endl;
-                        patchMap.set(patchName, patchName);
+                        Info<< "        Adding to cuttingPatches: "
+                            << ppT.name() << endl;
+
+                        cuttingIndices.push_back(ppT.index());
+                    }
+                    else
+                    {
+                        if (returnReduce(ppT.size(), sumOp<label>()) > 0)
+                        {
+                            Info<< "        Adding to patchMap: " << ppT.name()
+                                << endl;
+
+                            patchMap.set(patchNameT, patchNameT);
+                        }
                     }
                 }
             }
         }
         else
         {
+            // Read patch map
             patchMap = HashTable<word>(ePtr->stream());
+
+            // Read cutting patches using wordRe's
+            const wordRes cuttingPatchRes = dict.get<wordRes>("cuttingPatches");
+            cuttingIndices.push_back(pbmT.indices(cuttingPatchRes));
         }
 
-        // Cutting patches specified using wordRe's
-        const wordRes cuttingPatchRes = dict.get<wordRes>("cuttingPatches");
-        const labelList cuttingIndices = pbmT.indices(cuttingPatchRes);
         const wordList cuttingPatches(pbmT.names(), cuttingIndices);
 
         // Checks
@@ -174,16 +195,16 @@ void Foam::functionObjects::mapFields::createInterpolation
             // Find patch names that exist on target mesh that are not included
             // in the patchMap
             wordHashSet unknownPatchNames;
-            for (const auto& pp : pbmT)
+            for (const auto& ppT : pbmT)
             {
                 if
                 (
-                    !polyPatch::constraintType(pp.type())
-                 && !patchMap.found(pp.name())
-                 && returnReduce(pp.size(), sumOp<label>()) > 0
+                    !polyPatch::constraintType(ppT.type())
+                 && !patchMap.found(ppT.name())
+                 && returnReduce(ppT.size(), sumOp<label>()) > 0
                 )
                 {
-                    unknownPatchNames.insert(pp.name());
+                    unknownPatchNames.insert(ppT.name());
                 }
             }
 
@@ -195,8 +216,8 @@ void Foam::functionObjects::mapFields::createInterpolation
 
                 if (patchMap.found(patchName))
                 {
-                    Info<< "        Removing cutting patch:" << patchName
-                        << endl;
+                    Info<< "        Removing cutting patch from patchMap: "
+                        << patchName << endl;
 
                     patchMap.erase(patchName);
                 }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,9 +61,15 @@ Usage
 
         // Optional entries (runtime modifiable)
         // patchMapMethod  direct;  // AMI-related entry
-        // enabled if consistent=false
-        // patchMap        (<patchSrc> <patchTgt>);
-        // cuttingPatches  (<patchTgt1> <patchTgt2> ... <patchTgtN>);
+
+        // When consistent=false
+
+            // Manual: createPatchMap false;
+            // patchMap        (<patchSrc> <patchTgt>);
+            // cuttingPatches  (<patchTgt1> <patchTgt2> ... <patchTgtN>);
+
+            // Automatic: createPatchMap true;
+            // Creates the patchMap and cuttingPatches automatically
 
         // Optional (inherited) entries
         ...
@@ -80,8 +86,10 @@ Usage
       mapMethod    | Mapping method                     | word |  yes  | -
       consistent   | Mapping meshes have consistent boundaries | bool  | yes | -
       patchMapMethod | Patch mapping method for AMI cases | word |  no  | -
-      patchMap   | Coincident source/target patches in two cases <!--
-             --> | wordHashTable | no | -
+      createPatchMap | Automatically create patchMap and cuttingPatches|  <!--
+                 --> | bool | no | -
+      patchMap     | Mapping between coincident source and target patches <!--
+               --> | wordHashTable | no | -
       cuttingPatches | Target patches cutting the source domain <!--
                  --> | wordList | no | -
     \endtable
