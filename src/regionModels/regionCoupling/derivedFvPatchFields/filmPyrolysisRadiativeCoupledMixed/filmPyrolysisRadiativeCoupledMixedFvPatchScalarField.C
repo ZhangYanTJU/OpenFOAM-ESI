@@ -6,7 +6,11 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+<<<<<<< HEAD
     Copyright (C) 2019-2023 OpenCFD Ltd.
+=======
+    Copyright (C) 2019-202i3 OpenCFD Ltd.
+>>>>>>> origin/master
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,8 +42,7 @@ namespace Foam
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 const filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::filmModelType&
-filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::
-filmModel() const
+filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::filmModel() const
 {
     typedef filmModelType ModelType;
 
@@ -73,8 +76,7 @@ filmModel() const
 
 const filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::
 pyrolysisModelType&
-filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::
-pyrModel() const
+filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::pyrModel() const
 {
     typedef pyrolysisModelType ModelType;
 
@@ -90,7 +92,7 @@ pyrModel() const
             return mdl;
         }
     }
-
+    
     DynamicList<word> modelNames(models.size());
     for (const ModelType& mdl : models)
     {
@@ -241,13 +243,9 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::rmap
 {
     mixedFvPatchScalarField::rmap(ptf, addr);
 
-    const filmPyrolysisRadiativeCoupledMixedFvPatchScalarField& tiptf =
-        refCast
-        <
-            const filmPyrolysisRadiativeCoupledMixedFvPatchScalarField
-        >(ptf);
+    const auto& fpptf = refCast<const myType>(ptf);
 
-    temperatureCoupledBase::rmap(tiptf, addr);
+    temperatureCoupledBase::rmap(fpptf, addr);
 }
 
 
@@ -259,8 +257,7 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
     }
 
     // Get the coupling information from the mappedPatchBase
-    const mappedPatchBase& mpp =
-        refCast<const mappedPatchBase>(patch().patch());
+    const auto& mpp = refCast<const mappedPatchBase>(patch().patch());
 
     const label patchi = patch().index();
     const label nbrPatchi = mpp.samplePolyPatch().index();
@@ -272,10 +269,7 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
     scalarField intFld(patchInternalField());
 
     const auto& nbrField =
-        refCast
-        <
-            const filmPyrolysisRadiativeCoupledMixedFvPatchScalarField
-        >
+        refCast<const myType>
         (
             nbrPatch.lookupPatchField<volScalarField>(TnbrName_)
         );
@@ -293,7 +287,7 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
     scalarField KDeltaNbr(nbrK*nbrPatch.deltaCoeffs());
     mpp.distribute(KDeltaNbr);
 
-    scalarField myKDelta(K*patch().deltaCoeffs());
+    const scalarField myKDelta(K*patch().deltaCoeffs());
 
     scalarList Tfilm(patch().size(), Zero);
     scalarList htcwfilm(patch().size(), Zero);
@@ -306,22 +300,78 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
     scalarField qr(patch().size(), Zero);
 
     label coupledPatchi = -1;
+    label filmPatchi = -1;
     if (pyrolysisRegionName_ == mesh.name())
     {
+        // Working on the pyrolysis mesh
+
         coupledPatchi = patchi;
         if (qrName_ != "none")
         {
             qr = nbrPatch.lookupPatchField<volScalarField>(qrName_);
             mpp.distribute(qr);
         }
+
+        filmPatchi = pyrolysis.nbrCoupledPatchID(film, coupledPatchi);
+
+        const scalarField htcw(film.htcw().h()().boundaryField()[filmPatchi]);
+
+        // Obtain htcw
+        htcwfilm =
+            pyrolysis.mapRegionPatchField
+            (
+                film,
+                coupledPatchi,
+                filmPatchi,
+                htcw,
+                true
+            );
+
+        // Obtain Tfilm at the boundary through Ts.
+        // NOTE: Tf is not good as at the boundary it will retrieve Tp
+        const scalarField Ts(film.Ts().boundaryField()[filmPatchi]);
+        Tfilm =
+            pyrolysis.mapRegionPatchField
+            (
+                 film,
+                 coupledPatchi,
+                 filmPatchi,
+                 Ts,
+                 true
+            );
+
+        // Obtain delta
+        filmDelta =
+            pyrolysis.mapRegionPatchField<scalar>
+            (
+                film,
+                "deltaf",
+                coupledPatchi,
+                true
+            );
     }
     else if (pyrolysis.primaryMesh().name() == mesh.name())
     {
+        // Working on the primary mesh
+
         coupledPatchi = nbrPatch.index();
         if (qrName_ != "none")
         {
             qr = patch().lookupPatchField<volScalarField>(qrName_);
         }
+
+        filmPatchi = pyrolysis.nbrCoupledPatchID(film, coupledPatchi);
+
+        htcwfilm = film.htcw().h()().boundaryField()[filmPatchi];
+        film.toPrimary(filmPatchi, htcwfilm);
+
+        // Obtain Tfilm at the boundary through Ts.
+        // NOTE: Tf is not good as at the boundary it will retrieve Tp
+        Tfilm = film.Ts().boundaryField()[filmPatchi];
+        film.toPrimary(filmPatchi, Tfilm);
+
+        filmDelta = film.delta().boundaryField()[filmPatchi];
+        film.toPrimary(filmPatchi, filmDelta);
     }
     else
     {
@@ -331,39 +381,8 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
             << exit(FatalError);
     }
 
-    const label filmPatchi = pyrolysis.nbrCoupledPatchID(film, coupledPatchi);
-
-    const scalarField htcw(film.htcw().h()().boundaryField()[filmPatchi]);
-
-    // Obtain htcw
-    htcwfilm =
-        pyrolysis.mapRegionPatchField
-        (
-            film,
-            coupledPatchi,
-            filmPatchi,
-            htcw,
-            true
-        );
-
-
-    // Obtain Tfilm at the boundary through Ts.
-    // NOTE: Tf is not good as at the boundary it will retrieve Tp
-    Tfilm = film.Ts().boundaryField()[filmPatchi];
-    film.toPrimary(filmPatchi, Tfilm);
-
-    // Obtain delta
-    filmDelta =
-        pyrolysis.mapRegionPatchField<scalar>
-        (
-            film,
-            "deltaf",
-            coupledPatchi,
-            true
-        );
-
      // Estimate wetness of the film (1: wet , 0: dry)
-     scalarField ratio
+     const scalarField ratio
      (
         min
         (
@@ -376,14 +395,11 @@ void filmPyrolysisRadiativeCoupledMixedFvPatchScalarField::updateCoeffs()
         )
      );
 
-    scalarField qConv(ratio*htcwfilm*(Tfilm - Tp)*convectiveScaling_);
-
-    scalarField qRad((1.0 - ratio)*qr);
-
-    scalarField alpha(KDeltaNbr - (qRad + qConv)/Tp);
+    const scalarField qConv(ratio*htcwfilm*(Tfilm - Tp)*convectiveScaling_);
+    const scalarField qRad((1.0 - ratio)*qr);
+    const scalarField alpha(KDeltaNbr - (qRad + qConv)/Tp);
 
     valueFraction() = alpha/(alpha + (1.0 - ratio)*myKDelta);
-
     refValue() = ratio*Tfilm + (1.0 - ratio)*(KDeltaNbr*nbrIntFld)/alpha;
 
     mixedFvPatchScalarField::updateCoeffs();

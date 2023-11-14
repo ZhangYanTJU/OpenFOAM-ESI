@@ -19,7 +19,7 @@ solvers
     "pcorr.*"
     {
         solver          GAMG;
-        smoother        GaussSeidel;
+        smoother        DICGaussSeidel;
         cacheAgglomeration no;
         tolerance        0.02;
         relTol           0;

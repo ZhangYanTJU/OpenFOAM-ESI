@@ -382,8 +382,8 @@ void Foam::cyclicAMIPolyPatch::resetAMI(const UList<point>& points) const
     }
 
     const cyclicAMIPolyPatch& nbr = neighbPatch();
-    pointField srcPoints(localPoints());
-    pointField nbrPoints(nbr.localPoints());
+    const pointField srcPoints(points, meshPoints());
+    pointField nbrPoints(points, nbr.meshPoints());
 
     Info<< "AMI: Creating AMI for source:" << name()
         << " and target:" << nbr.name() << endl;
