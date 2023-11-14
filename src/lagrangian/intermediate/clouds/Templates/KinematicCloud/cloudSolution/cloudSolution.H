@@ -120,6 +120,9 @@ class cloudSolution
 
 public:
 
+    //- Debug switch
+    static int debug;
+
     // Constructors
 
         //- Construct null from mesh reference
@@ -133,7 +136,7 @@ public:
 
 
     //- Destructor
-    virtual ~cloudSolution();
+    ~cloudSolution() = default;
 
 
     // Member functions

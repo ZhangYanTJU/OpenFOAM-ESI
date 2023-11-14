@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,13 @@ License
 #include "cloudSolution.H"
 #include "Time.H"
 #include "localEulerDdtScheme.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineDebugSwitchWithName(cloudSolution, "cloudSolution", 0);
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -113,12 +120,6 @@ Foam::cloudSolution::cloudSolution(const fvMesh& mesh)
     maxTrackTime_(0.0),
     resetSourcesOnStartup_(false),
     schemes_()
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::cloudSolution::~cloudSolution()
 {}
 
 
@@ -209,17 +210,20 @@ void Foam::cloudSolution::read()
 
 Foam::scalar Foam::cloudSolution::relaxCoeff(const word& fieldName) const
 {
-    forAll(schemes_, i)
+    for (const auto& scheme : schemes_)
     {
-        if (fieldName == schemes_[i].first())
+        if (fieldName == scheme.first())
         {
-            return schemes_[i].second().second();
+            return scheme.second().second();
         }
     }
 
-    FatalErrorInFunction
-        << "Field name " << fieldName << " not found in schemes"
-        << abort(FatalError);
+    if (debug)
+    {
+        WarningInFunction
+            << "Field name " << fieldName << " not found in schemes. "
+            << "Setting relaxation factor to 1" << endl;
+    }
 
     return 1.0;
 }
@@ -227,17 +231,20 @@ Foam::scalar Foam::cloudSolution::relaxCoeff(const word& fieldName) const
 
 bool Foam::cloudSolution::semiImplicit(const word& fieldName) const
 {
-    forAll(schemes_, i)
+    for (const auto& scheme : schemes_)
     {
-        if (fieldName == schemes_[i].first())
+        if (fieldName == scheme.first())
         {
-            return schemes_[i].second().first();
+            return scheme.second().first();
         }
     }
 
-    FatalErrorInFunction
-        << "Field name " << fieldName << " not found in schemes"
-        << abort(FatalError);
+    if (debug)
+    {
+        WarningInFunction
+            << "Field name " << fieldName << " not found in schemes. "
+            << "Setting relaxation factor to 1" << endl;
+    }
 
     return false;
 }
