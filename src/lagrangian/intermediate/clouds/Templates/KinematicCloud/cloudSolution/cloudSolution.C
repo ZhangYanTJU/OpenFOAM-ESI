@@ -142,7 +142,7 @@ void Foam::cloudSolution::read()
             transient_ = false;
         }
 
-        if (mesh_.steady())
+        if (mesh_.schemes().steady())
         {
             IOWarningInFunction(dict_)
                 << "Transient tracking is not supported for steady-state"

@@ -56,7 +56,7 @@ if (mesh.changing())
         pcorrTypes
     );
 
-    mesh.setFluxRequired(pcorr.name());
+    mesh.schemes().setFluxRequired(pcorr.name());
 
 {
     dimensionedScalar rAUf("rAUf", dimTime, 1.0);

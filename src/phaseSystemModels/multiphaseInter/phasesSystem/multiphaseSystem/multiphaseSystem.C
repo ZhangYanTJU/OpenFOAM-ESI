@@ -77,7 +77,7 @@ Foam::multiphaseInter::multiphaseSystem::multiphaseSystem
         phases_.set(phasei++, &pm);
     }
 
-    mesh.solverDict("alpha").readEntry("cAlphas", cAlphas_);
+    mesh.solution().solverDict("alpha").readEntry("cAlphas", cAlphas_);
 
     // Initiate Su and Sp
     forAllConstIters(phaseModels_, iter)
@@ -129,7 +129,7 @@ void Foam::multiphaseInter::multiphaseSystem::calculateSuSp()
 
 void Foam::multiphaseInter::multiphaseSystem::solve()
 {
-    const dictionary& alphaControls = mesh_.solverDict("alpha");
+    const dictionary& alphaControls = mesh_.solution().solverDict("alpha");
     label nAlphaSubCycles(alphaControls.get<label>("nAlphaSubCycles"));
 
     volScalarField& alpha = phases_.first();
@@ -172,7 +172,7 @@ void Foam::multiphaseInter::multiphaseSystem::solve()
 void Foam::multiphaseInter::multiphaseSystem::solveAlphas()
 {
 
-    const dictionary& alphaControls = mesh_.solverDict("alpha");
+    const dictionary& alphaControls = mesh_.solution().solverDict("alpha");
     alphaControls.readEntry("cAlphas", cAlphas_);
     label nAlphaCorr(alphaControls.get<label>("nAlphaCorr"));
 

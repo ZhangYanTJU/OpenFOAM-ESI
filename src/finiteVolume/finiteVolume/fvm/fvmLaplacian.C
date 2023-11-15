@@ -217,7 +217,7 @@ laplacian
     return fv::laplacianScheme<Type, GType>::New
     (
         vf.mesh(),
-        vf.mesh().laplacianScheme(name)
+        vf.mesh().schemes().laplacian(name)
     ).ref().fvmLaplacian(gamma, vf);
 }
 
@@ -282,7 +282,7 @@ laplacian
     return fv::laplacianScheme<Type, GType>::New
     (
         vf.mesh(),
-        vf.mesh().laplacianScheme(name)
+        vf.mesh().schemes().laplacian(name)
     ).ref().fvmLaplacian(gamma, vf);
 }
 

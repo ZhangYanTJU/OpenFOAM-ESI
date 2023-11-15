@@ -87,7 +87,7 @@ const Foam::fvGeometryScheme& Foam::surfaceInterpolation::geometry() const
         geometryPtr_ = fvGeometryScheme::New
         (
             mesh_,
-            mesh_.schemesDict().subOrEmptyDict("geometry"),
+            mesh_.schemes().dict().subOrEmptyDict("geometry"),
             basicFvGeometryScheme::typeName
         );
     }

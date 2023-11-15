@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
         //    mesh.relaxationFactor("alpha")
         //   *(lambda*max(Ua & U, zeroSensitivity) - alpha);
         alpha +=
-            mesh.fieldRelaxationFactor("alpha")
+            mesh.solution().fieldRelaxationFactor("alpha")
            *(min(max(alpha + lambda*(Ua & U), zeroAlpha), alphaMax) - alpha);
 
         zeroCells(alpha, inletCells);

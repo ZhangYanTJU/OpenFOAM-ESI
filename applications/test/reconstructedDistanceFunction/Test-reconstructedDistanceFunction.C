@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     Info<< "create field phi\n" << endl;
     surfaceScalarField phi(fvc::interpolate(U) & mesh.Sf());
 
-    dictionary dict = mesh.solverDict(alpha1.name());
+    dictionary dict = mesh.solution().solverDict(alpha1.name());
 
     autoPtr<reconstructionSchemes> surf =
         reconstructionSchemes::New(alpha1,phi,U,dict);

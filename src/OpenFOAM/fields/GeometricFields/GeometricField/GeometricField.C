@@ -1160,7 +1160,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::relax()
 
     scalar relaxCoeff = 1;
 
-    if (this->mesh().relaxField(name, relaxCoeff))
+    if (this->mesh().solution().relaxField(name, relaxCoeff))
     {
         relax(relaxCoeff);
     }

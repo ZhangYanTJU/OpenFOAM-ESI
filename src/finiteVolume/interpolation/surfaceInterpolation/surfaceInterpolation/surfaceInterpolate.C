@@ -57,7 +57,7 @@ Foam::tmp<Foam::surfaceInterpolationScheme<Type>> Foam::fvc::scheme
     (
         faceFlux.mesh(),
         faceFlux,
-        faceFlux.mesh().interpolationScheme(name)
+        faceFlux.mesh().schemes().interpolation(name)
     );
 }
 
@@ -87,7 +87,7 @@ Foam::tmp<Foam::surfaceInterpolationScheme<Type>> Foam::fvc::scheme
     return surfaceInterpolationScheme<Type>::New
     (
         mesh,
-        mesh.interpolationScheme(name)
+        mesh.schemes().interpolation(name)
     );
 }
 

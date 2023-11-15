@@ -189,7 +189,7 @@ void Foam::timeVaryingMassSorptionFvPatchScalarField::updateCoeffs()
     const volScalarField& fld0 = fld.oldTime();
 
     // Lookup d/dt scheme from database
-    const word ddtSchemeName(fld.mesh().ddtScheme(fld.name()));
+    const word ddtSchemeName(fld.mesh().schemes().ddt(fld.name()));
     const ddtSchemeType& ddtScheme = ddtSchemeTypeNames_[ddtSchemeName];
 
     const scalarField cp(*this);

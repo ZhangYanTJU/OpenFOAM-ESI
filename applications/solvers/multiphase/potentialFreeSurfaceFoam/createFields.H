@@ -74,7 +74,7 @@ p_gh =  p - (g & mesh.C());
 label p_ghRefCell = 0;
 scalar p_ghRefValue = 0.0;
 setRefCell(p_gh, pimple.dict(), p_ghRefCell, p_ghRefValue);
-mesh.setFluxRequired(p_gh.name());
+mesh.schemes().setFluxRequired(p_gh.name());
 
 #include "createMRF.H"
 #include "createFvOptions.H"

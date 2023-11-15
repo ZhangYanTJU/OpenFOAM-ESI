@@ -1,1 +1,1 @@
-loopControl iters(runTime, aMesh.solutionDict(), "solution");
+loopControl iters(runTime, aMesh.solution().solutionDict(), "solution");

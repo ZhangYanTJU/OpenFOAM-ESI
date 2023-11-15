@@ -545,7 +545,7 @@ Foam::multiphaseSystem::multiphaseSystem
     forAll(phases(), phasei)
     {
         volScalarField& alphai = phases()[phasei];
-        mesh_.setFluxRequired(alphai.name());
+        mesh_.schemes().setFluxRequired(alphai.name());
     }
 }
 
@@ -627,7 +627,7 @@ void Foam::multiphaseSystem::solve()
 {
     const Time& runTime = mesh_.time();
 
-    const dictionary& alphaControls = mesh_.solverDict("alpha");
+    const dictionary& alphaControls = mesh_.solution().solverDict("alpha");
     label nAlphaSubCycles(alphaControls.get<label>("nAlphaSubCycles"));
 
     bool LTS = fv::localEulerDdt::enabled(mesh_);

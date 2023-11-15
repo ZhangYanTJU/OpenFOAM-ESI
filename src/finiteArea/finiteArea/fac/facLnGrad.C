@@ -52,7 +52,7 @@ lnGrad
     return fa::lnGradScheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().lnGradScheme(name)
+        vf.mesh().schemes().lnGrad(name)
     ).ref().lnGrad(vf);
 }
 

@@ -384,7 +384,7 @@ void kinematicSingleLayer::solveThickness
         fvc::interpolate(delta_)*deltarUAf*rhof*fvc::interpolate(pp)
     );
 
-    regionMesh().setFluxRequired(delta_.name());
+    regionMesh().schemes().setFluxRequired(delta_.name());
 
     for (int nonOrth=0; nonOrth<=nNonOrthCorr_; nonOrth++)
     {

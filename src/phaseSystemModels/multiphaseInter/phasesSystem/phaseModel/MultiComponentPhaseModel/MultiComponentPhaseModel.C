@@ -213,7 +213,7 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
 
     const fvMesh& mesh = alpha1.mesh();
 
-    const dictionary& MULEScontrols = mesh.solverDict(alpha1.name());
+    const dictionary& MULEScontrols = mesh.solution().solverDict(alpha1.name());
 
     scalar cAlpha(MULEScontrols.get<scalar>("cYi"));
 

@@ -60,7 +60,7 @@
         fvc::makeAbsolute(phi, U);
     }
 
-    mesh.setFluxRequired(pcorr.name());
+    mesh.schemes().setFluxRequired(pcorr.name());
 
     dimensionedScalar rAUf("rAUf", dimTime/rho.dimensions(), 1.0);
 

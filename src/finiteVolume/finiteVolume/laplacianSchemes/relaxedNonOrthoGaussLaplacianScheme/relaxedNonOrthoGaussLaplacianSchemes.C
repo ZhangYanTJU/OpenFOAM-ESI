@@ -69,7 +69,10 @@ fvmLaplacian                                                                   \
         tmp<SType> trelaxedCorrection(new SType(tfaceFluxCorrection()));       \
                                                                                \
         const word oldName(corrName + "_0");                                   \
-        const scalar relax(vf.mesh().equationRelaxationFactor(corrName));      \
+        const scalar relax                                                     \
+        (                                                                      \
+            vf.mesh().solution().equationRelaxationFactor(corrName)            \
+        );                                                                     \
         const objectRegistry& obr = vf.db();                                   \
         if (obr.foundObject<SType>(oldName))                                   \
         {                                                                      \
@@ -96,7 +99,7 @@ fvmLaplacian                                                                   \
                                                                                \
         fvm.source() -= tcorr();                                               \
                                                                                \
-        if (mesh.fluxRequired(vf.name()))                                      \
+        if (mesh.schemes().fluxRequired(vf.name()))                            \
         {                                                                      \
             fvm.faceFluxCorrectionPtr() = trelaxedCorrection.ptr();            \
         }                                                                      \

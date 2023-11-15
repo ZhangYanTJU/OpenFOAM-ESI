@@ -839,7 +839,7 @@ void Foam::multiphaseSystem::solve()
 
     const Time& runTime = mesh_.time();
 
-    const dictionary& alphaControls = mesh_.solverDict("alpha");
+    const dictionary& alphaControls = mesh_.solution().solverDict("alpha");
     label nAlphaSubCycles(alphaControls.get<label>("nAlphaSubCycles"));
 
     if (nAlphaSubCycles > 1)

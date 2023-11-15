@@ -299,7 +299,7 @@ void Foam::pressurePIDControlInletVelocityFvPatchVectorField::updateCoeffs()
     // Target and measured flow rates
     scalar QTarget, QMeasured;
     const scalar a = (1/sqr(Ab) - 1/sqr(Aa))/(2*rho);
-    if (!mesh.steady() && db().foundObject<volScalarField>(pName_))
+    if (!mesh.schemes().steady() && db().foundObject<volScalarField>(pName_))
     {
         const scalar b = LbyA/deltaT;
         const scalar c = - LbyA/deltaT*oldQ_ /* - deltaP */;

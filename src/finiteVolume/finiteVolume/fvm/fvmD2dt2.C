@@ -52,7 +52,7 @@ d2dt2
     return fv::d2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme("d2dt2(" + vf.name() + ')')
+        vf.mesh().schemes().d2dt2("d2dt2(" + vf.name() + ')')
     ).ref().fvmD2dt2(vf);
 }
 
@@ -68,7 +68,7 @@ d2dt2
     return fv::d2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme("d2dt2(" + rho.name() + ',' + vf.name() + ')')
+        vf.mesh().schemes().d2dt2("d2dt2(" + rho.name() + ',' + vf.name() + ')')
     ).ref().fvmD2dt2(rho, vf);
 }
 
@@ -84,7 +84,7 @@ d2dt2
     return fv::d2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme("d2dt2(" + rho.name() + ',' + vf.name() + ')')
+        vf.mesh().schemes().d2dt2("d2dt2(" + rho.name() + ',' + vf.name() + ')')
     ).ref().fvmD2dt2(rho, vf);
 }
 

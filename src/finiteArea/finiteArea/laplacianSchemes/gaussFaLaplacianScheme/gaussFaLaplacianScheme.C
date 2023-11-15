@@ -80,7 +80,7 @@ gaussLaplacianScheme<Type>::famLaplacian
 
     if (this->tlnGradScheme_().corrected())
     {
-        if (this->mesh().fluxRequired(vf.name()))
+        if (this->mesh().schemes().fluxRequired(vf.name()))
         {
             fam.faceFluxCorrectionPtr() = new
             GeometricField<Type, faePatchField, edgeMesh>

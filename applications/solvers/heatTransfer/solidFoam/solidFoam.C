@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 
     Info<< "\nEvolving thermodynamics\n" << endl;
 
-    if (mesh.solutionDict().found("SIMPLE"))
+    if (mesh.solution().solutionDict().found("SIMPLE"))
     {
         simpleControl simple(mesh);
 

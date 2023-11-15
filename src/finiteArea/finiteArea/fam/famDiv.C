@@ -59,7 +59,7 @@ div
         (
             vf.mesh(),
             flux,
-            vf.mesh().divScheme(name)
+            vf.mesh().schemes().div(name)
         ).ref().famDiv(flux, vf)
     );
     faMatrix<Type>& M = tM.ref();
@@ -70,7 +70,7 @@ div
         (
             vf.mesh(),
             flux,
-            vf.mesh().divScheme(name)
+            vf.mesh().schemes().div(name)
         ).ref().facDiv(flux, vf)
     );
 

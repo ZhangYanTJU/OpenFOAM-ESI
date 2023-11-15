@@ -97,9 +97,10 @@ ndiv
     tmp<GeometricField<Type, faPatchField, areaMesh>> tDiv
     (
         fa::divScheme<Type>::New
-            (
-                vf.mesh(), vf.mesh().divScheme(name)
-            ).ref().facDiv(vf)
+        (
+            vf.mesh(),
+            vf.mesh().schemes().div(name)
+        ).ref().facDiv(vf)
     );
     GeometricField<Type, faPatchField, areaMesh>& Div = tDiv.ref();
 
@@ -192,7 +193,7 @@ ndiv
         (
             vf.mesh(),
             flux,
-            vf.mesh().divScheme(name)
+            vf.mesh().schemes().div(name)
         ).ref().facDiv(flux, vf)
     );
 

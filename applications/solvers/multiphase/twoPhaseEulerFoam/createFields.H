@@ -60,8 +60,8 @@ setRefCell
     pRefCell,
     pRefValue
 );
-mesh.setFluxRequired(p_rgh.name());
-mesh.setFluxRequired(alpha1.name());
+mesh.schemes().setFluxRequired(p_rgh.name());
+mesh.schemes().setFluxRequired(alpha1.name());
 
 Info<< "Creating field dpdt\n" << endl;
 volScalarField dpdt

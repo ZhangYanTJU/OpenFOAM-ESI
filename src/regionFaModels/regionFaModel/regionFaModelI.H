@@ -95,7 +95,7 @@ Foam::regionModels::regionFaModel::outputProperties()
 inline const Foam::dictionary&
 Foam::regionModels::regionFaModel::solution() const
 {
-    return regionMesh().solutionDict();
+    return regionMesh().solution().dict();
 }
 
 

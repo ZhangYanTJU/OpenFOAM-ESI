@@ -60,7 +60,7 @@ Foam::isoAdvection::isoAdvection
 )
 :
     mesh_(alpha1.mesh()),
-    dict_(mesh_.solverDict(alpha1.name())),
+    dict_(mesh_.solution().solverDict(alpha1.name())),
     alpha1_(alpha1),
     alpha1In_(alpha1.primitiveFieldRef()),
     phi_(phi),

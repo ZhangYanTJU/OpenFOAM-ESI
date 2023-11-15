@@ -210,7 +210,7 @@ void Foam::MULES::limiter
 
     const fvMesh& mesh = psi.mesh();
 
-    const dictionary& MULEScontrols = mesh.solverDict(psi.name());
+    const dictionary& MULEScontrols = mesh.solution().solverDict(psi.name());
 
     const label nLimiterIter
     (

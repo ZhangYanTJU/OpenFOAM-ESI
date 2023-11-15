@@ -299,7 +299,7 @@ Foam::solutionControl::solutionControl(fvMesh& mesh, const word& algorithmName)
 
 const Foam::dictionary Foam::solutionControl::dict() const
 {
-    return mesh_.solutionDict().subOrEmptyDict(algorithmName_);
+    return mesh_.solution().dict().subOrEmptyDict(algorithmName_);
 }
 
 

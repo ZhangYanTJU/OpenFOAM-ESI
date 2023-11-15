@@ -96,7 +96,7 @@ p_rgh = p - rho*gh;
 
 pressureControl pressureControl(p, rho, pimple.dict(), false);
 
-mesh.setFluxRequired(p_rgh.name());
+mesh.schemes().setFluxRequired(p_rgh.name());
 
 Info<< "Creating multi-variate interpolation scheme\n" << endl;
 multivariateSurfaceInterpolationScheme<scalar>::fieldTable fields;

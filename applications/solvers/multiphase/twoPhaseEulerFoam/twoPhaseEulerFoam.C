@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
     bool implicitPhasePressure
     (
-        mesh.solverDict(alpha1.name()).getOrDefault
+        mesh.solution().solverDict(alpha1.name()).getOrDefault
         (
             "implicitPhasePressure", false
         )

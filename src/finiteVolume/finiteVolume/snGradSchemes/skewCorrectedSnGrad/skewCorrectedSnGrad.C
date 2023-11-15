@@ -155,7 +155,7 @@ Foam::fv::skewCorrectedSnGrad<Type>::fullGradCorrection
             gradScheme<typename pTraits<Type>::cmptType>::New
             (
                 mesh,
-                mesh.gradScheme("grad(" + vf.name() + ')')
+                mesh.schemes().grad("grad(" + vf.name() + ')')
             )()
            .grad(vf.component(cmpt))
         );
@@ -208,7 +208,7 @@ Foam::fv::skewCorrectedSnGrad<Type>::fullGradCorrection
     //         gradScheme<Type>::New
     //         (
     //             mesh,
-    //             mesh.gradScheme("grad(" + vf.name() + ')')
+    //             mesh.schemes().grad("grad(" + vf.name() + ')')
     //         )().grad(vf, "grad(" + vf.name() + ')')
     //     );
     //

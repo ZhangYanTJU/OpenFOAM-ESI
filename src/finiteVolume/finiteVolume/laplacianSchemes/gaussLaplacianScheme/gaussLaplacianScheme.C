@@ -192,7 +192,7 @@ gaussLaplacianScheme<Type, GType>::fvmLaplacian
 
     fvm.source() -= mesh.V()*fvc::div(tfaceFluxCorrection())().primitiveField();
 
-    if (mesh.fluxRequired(vf.name()))
+    if (mesh.schemes().fluxRequired(vf.name()))
     {
         fvm.faceFluxCorrectionPtr() = tfaceFluxCorrection.ptr();
     }

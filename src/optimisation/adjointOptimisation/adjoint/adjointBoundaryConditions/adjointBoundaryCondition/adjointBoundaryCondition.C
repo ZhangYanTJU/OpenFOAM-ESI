@@ -69,7 +69,7 @@ adjointBoundaryCondition<Type>::computePatchGrad(word name)
     // Interpolation scheme is now read through interpolation schemes.
     /*
     word gradSchemeName("grad(" + name + ')');
-    ITstream& is = mesh.gradScheme(gradSchemeName);
+    ITstream& is = mesh.schemes().grad(gradSchemeName);
     word schemeData(is);
     */
 
@@ -89,7 +89,8 @@ adjointBoundaryCondition<Type>::computePatchGrad(word name)
         surfFieldPtr =
             surfaceInterpolationScheme<Type2>::New
             (
-                mesh, mesh.interpolationScheme("interpolate(" + name + ")")
+                mesh,
+                mesh.schemes().interpolation("interpolate(" + name + ")")
             )().interpolate(field).ptr();
         surfFieldPtr->rename(surfFieldName);
         regIOobject::store(surfFieldPtr);
@@ -108,7 +109,8 @@ adjointBoundaryCondition<Type>::computePatchGrad(word name)
             surfFieldPtr =
                 surfaceInterpolationScheme<Type2>::New
                 (
-                    mesh, mesh.interpolationScheme("interpolate(" + name + ")")
+                    mesh,
+                    mesh.schemes().interpolation("interpolate(" + name + ")")
                 )().interpolate(field).ptr();
             surfFieldPtr->rename(surfFieldName);
             regIOobject::store(surfFieldPtr);

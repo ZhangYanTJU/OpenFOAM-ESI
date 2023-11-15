@@ -67,7 +67,7 @@ Foam::twoPhaseSystem::twoPhaseSystem
     phase2_.volScalarField::operator=(scalar(1) - phase1_);
 
     volScalarField& alpha1 = phase1_;
-    mesh.setFluxRequired(alpha1.name());
+    mesh.schemes().setFluxRequired(alpha1.name());
 }
 
 
@@ -126,7 +126,8 @@ void Foam::twoPhaseSystem::solve()
     volScalarField& alpha1 = phase1_;
     volScalarField& alpha2 = phase2_;
 
-    const dictionary& alphaControls = mesh_.solverDict(alpha1.name());
+    const dictionary& alphaControls =
+        mesh_.solution().solverDict(alpha1.name());
 
     label nAlphaSubCycles(alphaControls.get<label>("nAlphaSubCycles"));
     label nAlphaCorr(alphaControls.get<label>("nAlphaCorr"));

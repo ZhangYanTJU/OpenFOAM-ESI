@@ -90,7 +90,7 @@ if (p_rgh.needReference())
     );
 }
 
-mesh.setFluxRequired(p_rgh.name());
+mesh.schemes().setFluxRequired(p_rgh.name());
 
 #include "createMRF.H"
 #include "createFvOptions.H"

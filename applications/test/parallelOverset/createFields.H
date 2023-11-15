@@ -20,7 +20,7 @@
 
         const_cast<dictionary&>
         (
-            mesh.schemesDict()
+            mesh.schemes().dict()
         ).add
         (
             "oversetInterpolationRequired",

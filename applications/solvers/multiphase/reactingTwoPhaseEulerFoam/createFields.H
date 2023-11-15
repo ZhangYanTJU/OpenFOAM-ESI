@@ -45,4 +45,4 @@ setRefCell
     pRefCell,
     pRefValue
 );
-mesh.setFluxRequired(p_rgh.name());
+mesh.schemes().setFluxRequired(p_rgh.name());

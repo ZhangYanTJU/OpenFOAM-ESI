@@ -78,7 +78,7 @@ Foam::volScalarField& Foam::functionObjects::scalarTransport::transportedField()
 
         if (phaseName_ != "none")
         {
-            mesh_.setFluxRequired(fieldName_);
+            mesh_.schemes().setFluxRequired(fieldName_);
         }
     }
 
@@ -264,7 +264,7 @@ bool Foam::functionObjects::scalarTransport::execute()
 
     // Set under-relaxation coeff
     scalar relaxCoeff = 0;
-    mesh_.relaxEquation(schemesField_, relaxCoeff);
+    mesh_.solution().relaxEquation(schemesField_, relaxCoeff);
 
     // Two phase scalar transport
     if (phaseName_ != "none")

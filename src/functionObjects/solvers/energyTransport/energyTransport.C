@@ -372,7 +372,7 @@ bool Foam::functionObjects::energyTransport::execute()
 
     // Set under-relaxation coeff
     scalar relaxCoeff = 0;
-    mesh_.relaxEquation(schemesField_, relaxCoeff);
+    mesh_.solution().relaxEquation(schemesField_, relaxCoeff);
 
     if (phi.dimensions() == dimMass/dimTime)
     {

@@ -47,7 +47,7 @@ volScalarField& p = thermo.p();
 
 pressureControl pressureControl(p, rho, pimple.dict(), false);
 
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());
 
 Info << "Creating turbulence model.\n" << nl;
 autoPtr<compressible::turbulenceModel> turbulence

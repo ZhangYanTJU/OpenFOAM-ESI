@@ -1187,7 +1187,7 @@ tmp<surfaceInterpolationScheme<scalar>> adjointkOmegaSST::convectionScheme
     const surfaceScalarField& phi = primalVars_.phi();
     const surfaceScalarField& phiInst = primalVars_.phiInst();
     word divEntry("div(" + phiInst.name() + ',' + varName +')');
-    ITstream& divScheme = mesh_.divScheme(divEntry);
+    ITstream& divScheme = mesh_.schemes().div(divEntry);
     // Skip the first entry which might be 'bounded' or 'Gauss'.
     // If it is 'bounded', skip the second entry as well
     word discarded(divScheme);

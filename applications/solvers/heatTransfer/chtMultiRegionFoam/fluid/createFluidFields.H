@@ -189,7 +189,7 @@ forAll(fluidRegions, i)
     // Force p_rgh to be consistent with p
     p_rghFluid[i] = thermoFluid[i].p() - rhoFluid[i]*ghFluid[i];
 
-    fluidRegions[i].setFluxRequired(p_rghFluid[i].name());
+    fluidRegions[i].schemes().setFluxRequired(p_rghFluid[i].name());
 
     Info<< "    Adding to radiationFluid\n" << endl;
     radiation.set
@@ -260,7 +260,8 @@ forAll(fluidRegions, i)
     );
 
     const dictionary& pimpleDict =
-        fluidRegions[i].solutionDict().subDict("PIMPLE");
+        fluidRegions[i].solution().solutionDict("PIMPLE");
+
     pimpleDict.readIfPresent("frozenFlow", frozenFlowFluid[i]);
 
     rhoMaxFluid.set

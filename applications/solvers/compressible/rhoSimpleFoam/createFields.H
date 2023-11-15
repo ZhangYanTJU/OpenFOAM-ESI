@@ -40,7 +40,7 @@ volVectorField U
 
 pressureControl pressureControl(p, rho, simple.dict());
 
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());
 
 Info<< "Creating turbulence model\n" << endl;
 autoPtr<compressible::turbulenceModel> turbulence

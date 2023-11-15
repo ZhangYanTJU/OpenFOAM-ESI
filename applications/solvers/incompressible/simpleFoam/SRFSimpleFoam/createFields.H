@@ -43,7 +43,7 @@ surfaceScalarField phi
 label pRefCell = 0;
 scalar pRefValue = 0.0;
 setRefCell(p, simple.dict(), pRefCell, pRefValue);
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());
 
 Info<< "Creating SRF model\n" << endl;
 autoPtr<SRF::SRFModel> SRF(SRF::SRFModel::New(Urel));

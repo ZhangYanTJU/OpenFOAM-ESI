@@ -50,7 +50,7 @@ volVectorField U
 
 #include "compressibleCreatePhi.H"
 
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());
 
 const dimensionedScalar rhoMax("rhoMax", dimDensity, GREAT, pimple.dict());
 const dimensionedScalar rhoMin("rhoMin", dimDensity, Zero, pimple.dict());

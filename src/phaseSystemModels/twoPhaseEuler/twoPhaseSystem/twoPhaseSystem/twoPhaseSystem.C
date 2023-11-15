@@ -359,7 +359,7 @@ void Foam::twoPhaseSystem::solve()
     const surfaceScalarField& phi1 = phase1_.phi();
     const surfaceScalarField& phi2 = phase2_.phi();
 
-    const dictionary& alphaControls = mesh_.solverDict
+    const dictionary& alphaControls = mesh_.solution().solverDict
     (
         alpha1.name()
     );

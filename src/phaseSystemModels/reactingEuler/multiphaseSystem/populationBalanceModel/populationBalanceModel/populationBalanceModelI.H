@@ -30,7 +30,7 @@ License
 
 inline Foam::label Foam::diameterModels::populationBalanceModel::nCorr() const
 {
-    return mesh_.solverDict(name_).get<label>("nCorr");
+    return mesh_.solution().solverDict(name_).get<label>("nCorr");
 }
 
 
@@ -38,7 +38,7 @@ inline Foam::label
 Foam::diameterModels::populationBalanceModel::sourceUpdateInterval() const
 {
     return
-        mesh_.solverDict(name_)
+        mesh_.solution().solverDict(name_)
        .getOrDefault<label>("sourceUpdateInterval", 1);
 }
 

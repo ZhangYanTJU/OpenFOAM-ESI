@@ -72,7 +72,7 @@ Foam::linearUpwind<Type>::correction
         fv::gradScheme<scalar>::New
         (
             mesh,
-            mesh.gradScheme(gradSchemeName_)
+            mesh.schemes().grad(gradSchemeName_)
         )
     );
 
@@ -183,7 +183,7 @@ Foam::linearUpwind<Foam::vector>::correction
         fv::gradScheme<vector>::New
         (
             mesh,
-            mesh.gradScheme(gradSchemeName_)
+            mesh.schemes().grad(gradSchemeName_)
         )
     );
 

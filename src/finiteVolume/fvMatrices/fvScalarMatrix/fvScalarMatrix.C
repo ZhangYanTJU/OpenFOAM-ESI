@@ -190,7 +190,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
     {
         createOrUpdateLduPrimitiveAssembly();
 
-        if (psi_.mesh().fluxRequired(psi_.name()))
+        if (psi_.mesh().schemes().fluxRequired(psi_.name()))
         {
             // Save lower/upper for flux calculation
             if (asymmetric())
@@ -292,7 +292,7 @@ Foam::solverPerformance Foam::fvMatrix<Foam::scalar>::solveSegregated
 
     if (useImplicit_)
     {
-        if (psi_.mesh().fluxRequired(psi_.name()))
+        if (psi_.mesh().schemes().fluxRequired(psi_.name()))
         {
             // Restore lower/upper
             if (asymmetric())

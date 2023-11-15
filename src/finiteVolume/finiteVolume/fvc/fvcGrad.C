@@ -99,7 +99,7 @@ grad
     return fv::gradScheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().gradScheme(name)
+        vf.mesh().schemes().grad(name)
     )().grad(vf, name);
 }
 

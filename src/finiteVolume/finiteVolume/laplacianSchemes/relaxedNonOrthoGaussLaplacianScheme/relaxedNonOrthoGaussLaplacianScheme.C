@@ -195,7 +195,10 @@ relaxedNonOrthoGaussLaplacianScheme<Type, GType>::fvmLaplacian
     tmp<SType> trelaxedCorrection(new SType(tfaceFluxCorrection()));
 
     const word oldName(corrName + "_0");
-    const scalar relax(vf.mesh().equationRelaxationFactor(oldName));
+    const scalar relax
+    (
+        vf.mesh().solution().equationRelaxationFactor(oldName)
+    );
 
     const objectRegistry& obr = vf.db();
     if (obr.foundObject<SType>(oldName))
@@ -220,7 +223,7 @@ relaxedNonOrthoGaussLaplacianScheme<Type, GType>::fvmLaplacian
             trelaxedCorrection()
         )().primitiveField();
 
-    if (mesh.fluxRequired(vf.name()))
+    if (mesh.schemes().fluxRequired(vf.name()))
     {
         fvm.faceFluxCorrectionPtr() = trelaxedCorrection.ptr();
     }

@@ -278,14 +278,14 @@ forAll(fluidRegions, i)
         phaseSystemFluid[i].phase1().thermo().p()
      -  phaseSystemFluid[i].phase1().thermo().rho()*ghFluid[i];
 
-    fluidRegions[i].setFluxRequired(p_rghFluid[i].name());
+    fluidRegions[i].schemes().setFluxRequired(p_rghFluid[i].name());
 
     Info<< "    Correcting initialMassFluid\n" << endl;
     initialMassFluid[i] =
         fvc::domainIntegrate(phaseSystemFluid[i].rho()).value();
 
     const dictionary& pimpleDict =
-        fluidRegions[i].solutionDict().subDict("PIMPLE");
+        fluidRegions[i].solution().solutionDict("PIMPLE");
 
     pimpleDict.readIfPresent("frozenFlow", frozenFlowFluid[i]);
 

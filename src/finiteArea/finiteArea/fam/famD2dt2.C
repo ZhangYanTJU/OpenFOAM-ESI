@@ -51,7 +51,7 @@ tmp<faMatrix<Type>> d2dt2
     return fa::faD2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme("d2dt2(" + vf.name() + ')')
+        vf.mesh().schemes().d2dt2("d2dt2(" + vf.name() + ')')
     ).ref().famD2dt2(vf);
 }
 
@@ -66,7 +66,7 @@ tmp<faMatrix<Type>> d2dt2
     return fa::faD2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme
+        vf.mesh().schemes().d2dt2
         (
             "d2dt2(" + rho.name() + ',' + vf.name() + ')'
         )
@@ -84,7 +84,7 @@ tmp<faMatrix<Type>> d2dt2
     return fa::faD2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme
+        vf.mesh().schemes().d2dt2
         (
             "d2dt2(" + rho.name() + ',' + vf.name() + ')'
         )

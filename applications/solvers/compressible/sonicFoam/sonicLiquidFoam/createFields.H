@@ -46,4 +46,4 @@ volScalarField rho
 
 #include "compressibleCreatePhi.H"
 
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());

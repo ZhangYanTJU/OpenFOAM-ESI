@@ -79,7 +79,7 @@ autoPtr<compressible::turbulenceModel> turbulence
     )
 );
 
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());
 
 #include "createMRF.H"
 

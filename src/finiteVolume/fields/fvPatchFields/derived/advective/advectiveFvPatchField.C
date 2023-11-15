@@ -179,7 +179,7 @@ void Foam::advectiveFvPatchField<Type>::updateCoeffs()
 
     word ddtScheme
     (
-        mesh.ddtScheme(this->internalField().name())
+        mesh.schemes().ddt(this->internalField().name())
     );
     scalar deltaT = this->db().time().deltaTValue();
 

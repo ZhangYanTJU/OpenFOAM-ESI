@@ -61,7 +61,7 @@ inline Foam::fvMesh& Foam::regionModels::regionModel::regionMesh()
 inline const Foam::dictionary&
 Foam::regionModels::regionModel::solution() const
 {
-    return regionMesh().solutionDict();
+    return regionMesh().solution().dict();
 }
 
 

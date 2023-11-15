@@ -61,7 +61,7 @@ tmp<GeometricField<scalar, fvsPatchField, surfaceMesh>> alphaCorr
     const word fieldName = U.select(finalIter);
 
     scalar alpha = 1;
-    mesh.relaxEquation(fieldName, alpha);
+    mesh.solution().relaxEquation(fieldName, alpha);
 
     return
         (1 - alpha)

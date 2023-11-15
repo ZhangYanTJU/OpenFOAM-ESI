@@ -59,7 +59,7 @@ Foam::MultiComponentPhaseModel<BasePhaseModel>::MultiComponentPhaseModel
     (
         "residualAlpha",
         dimless,
-        fluid.mesh().solverDict("Yi")
+        fluid.mesh().solution().solverDict("Yi")
     ),
     inertIndex_(-1)
 {
