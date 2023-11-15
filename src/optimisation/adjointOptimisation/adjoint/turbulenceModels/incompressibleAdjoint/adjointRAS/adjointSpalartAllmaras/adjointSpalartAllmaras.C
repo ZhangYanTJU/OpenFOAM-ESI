@@ -1123,8 +1123,10 @@ void adjointSpalartAllmaras::correct()
         dimensionedScalar maxDeltaNuaTilda =
             max(mag(nuaTilda() - nuaTilda().prevIter())());
         dimensionedScalar maxNuaTilda = max(mag(nuaTilda()));
-        Info<< "Max mag of nuaTilda = " << maxNuaTilda.value() << endl;
-        Info<< "Max mag of delta nuaTilda = " << maxDeltaNuaTilda.value()
+        Info<< "Max mag (" << nuaTilda().name() << ") = "
+            << maxNuaTilda.value() << endl;
+        Info<< "Max mag (Delta " << nuaTilda().name() << ") = "
+            << maxDeltaNuaTilda.value()
             << endl;
     }
 }

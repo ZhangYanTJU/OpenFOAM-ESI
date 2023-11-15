@@ -2213,8 +2213,8 @@ void adjointkOmegaSST::correct()
     {
         dimensionedScalar maxwa = max(mag(wa()));
         dimensionedScalar maxka = max(mag(ka()));
-        Info<< "Max mag of adjoint dissipation = " << maxwa.value() << endl;
-        Info<< "Max mag of adjoint kinetic energy = " << maxka.value() << endl;
+        Info<< "Max mag (" << wa().name() << ") = " << maxwa.value() << endl;
+        Info<< "Max mag (" << ka().name() << ") = " << maxka.value() << endl;
     }
 }
 
