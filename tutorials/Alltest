@@ -36,6 +36,7 @@ options:
   -default      Sets up a default scheme on all schemes
   -git          Use git to retrieve the tutorials
   -no-git       Do not use git to retrieve the tutorials
+  -print-context Print git context for tutorials
   -root=DIR     Root directory to start tests from (non-git only)
   -help         Print the usage
 
@@ -65,15 +66,16 @@ rootDir="./"
 adjustDebugSwitches=false
 useDefaultSchemes=false
 useGit=auto
-unset optBackup
+unset opt_backup opt_printContext
 
 # Parse options
 while [ "$#" -gt 0 ]
 do
     case "$1" in
     -h* | -help*)   printHelp ;;
-    -f | -force)    optBackup='force' ;;
-    -backup)        optBackup='backup' ;;
+    -f | -force)    opt_backup='force' ;;
+    -backup)        opt_backup='backup' ;;
+    -print-cont*)   opt_printContext=true ;;
 
     -root=*)
         rootDir="${1#*=}"
@@ -161,6 +163,49 @@ modifyCaseControlDict()
 
 #------------------------------------------------------------------------------
 
+# Summary information about how the tutorials were created
+# - provide full commit information since the SHA1 changes if rebased
+printContext_git()
+{
+cat << '__HEADER_TEXT__'
+# ===================================
+# Tutorials based on following commit
+# ===================================
+
+__HEADER_TEXT__
+    git log -1
+
+    # - some additional context about previous commits
+cat << '__CONTEXT_TEXT__'
+
+# ==============
+# within context
+# ==============
+
+__CONTEXT_TEXT__
+    git log --oneline -8
+cat << '__FOOTER_TEXT__'
+
+# ===========
+# end-of-file
+# ===========
+__FOOTER_TEXT__
+}
+
+
+#------------------------------------------------------------------------------
+
+# Early exit
+
+if [ "$opt_printContext" = true ]
+then
+    printContext_git
+    exit 0 # A clean exit
+fi
+
+
+#------------------------------------------------------------------------------
+
 # Locate the user or project controlDict to adjust
 unset ETC_CONTROL_DICT
 if [ "$adjustDebugSwitches" = true ]
@@ -209,7 +254,7 @@ SOLVERS_TEMP="FvSolution.temp"
 if [ -d "$TEST_RUN_DIR" ]
 then
     echo "Directory already exists: $TEST_RUN_DIR" 1>&2
-    case "$optBackup" in
+    case "$opt_backup" in
     (backup)
         unset failed newName
         # Max of ten backups should be plenty
@@ -290,31 +335,7 @@ then
     ( cd "$gitbase/tutorials" && git archive --format=tar HEAD . ) | \
     ( cd "$TEST_RUN_DIR" && tar -xf - )
 
-    # How the tutorials were created
-    # - provide full commit information since the SHA1 changes if rebased
-cat << '__HEADER_TEXT__' >| "$TEST_RUN_DIR/commit-info"
-# ===================================
-# Tutorials based on following commit
-# ===================================
-
-__HEADER_TEXT__
-    git log -1 >> "$TEST_RUN_DIR/commit-info"
-
-    # - some additional context about previous commits
-cat << '__CONTEXT_TEXT__' >> "$TEST_RUN_DIR/commit-info"
-
-# ==============
-# within context
-# ==============
-
-__CONTEXT_TEXT__
-    git log --oneline -8 >> "$TEST_RUN_DIR/commit-info"
-cat << '__FOOTER_TEXT__' >> "$TEST_RUN_DIR/commit-info"
-
-# ===========
-# end-of-file
-# ===========
-__FOOTER_TEXT__
+    printContext_git >| "$TEST_RUN_DIR/commit-info"
 
 else
     echo "Copying the tutorials directory" 1>&2
