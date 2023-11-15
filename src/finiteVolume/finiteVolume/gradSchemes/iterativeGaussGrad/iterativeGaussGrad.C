@@ -62,7 +62,7 @@ Foam::fv::iterativeGaussGrad<Type>::calcGrad
 
     scalar relax = 1;
     const bool useRelax =
-        vsf.mesh().relaxField("grad(" + vsf.name() + ")", relax);
+        vsf.mesh().solution().relaxField("grad(" + vsf.name() + ")", relax);
 
     for (label i = 0; i < nIter_; ++i)
     {

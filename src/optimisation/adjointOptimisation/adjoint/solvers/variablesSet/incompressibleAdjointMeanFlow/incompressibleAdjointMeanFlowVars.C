@@ -54,7 +54,7 @@ void incompressibleAdjointMeanFlowVars::setFields()
         useSolverNameForFields_
     );
 
-    mesh_.setFluxRequired(paPtr_->name());
+    mesh_.schemes().setFluxRequired(paPtr_->name());
 }
 
 void incompressibleAdjointMeanFlowVars::setMeanFields()

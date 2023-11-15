@@ -1262,7 +1262,7 @@ void Foam::fvMatrix<Type>::relax()
 
     scalar relaxCoeff = 0;
 
-    if (psi_.mesh().relaxEquation(name, relaxCoeff))
+    if (psi_.mesh().solution().relaxEquation(name, relaxCoeff))
     {
         relax(relaxCoeff);
     }
@@ -1428,7 +1428,7 @@ Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::fvMatrix<Type>::
 flux() const
 {
-    if (!psi_.mesh().fluxRequired(psi_.name()))
+    if (!psi_.mesh().schemes().fluxRequired(psi_.name()))
     {
         FatalErrorInFunction
             << "flux requested but " << psi_.name()
@@ -1534,14 +1534,14 @@ const Foam::dictionary& Foam::fvMatrix<Type>::solverDict
     const word& name
 ) const
 {
-    return psi_.mesh().solverDict(name);
+    return psi_.mesh().solution().solverDict(name);
 }
 
 
 template<class Type>
 const Foam::dictionary& Foam::fvMatrix<Type>::solverDict() const
 {
-    return psi_.mesh().solverDict
+    return psi_.mesh().solution().solverDict
     (
         psi_.select(psi_.mesh().data().isFinalIteration())
     );

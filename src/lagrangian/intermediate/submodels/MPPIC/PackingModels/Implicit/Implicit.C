@@ -128,7 +128,7 @@ void Foam::PackingModels::Implicit<CloudType>::cacheFields(const bool store)
                 cloudName + ":uSqrAverage"
             );
 
-        mesh.setFluxRequired(alpha_.name());
+        mesh.schemes().setFluxRequired(alpha_.name());
 
         // Property fields
         // ~~~~~~~~~~~~~~~

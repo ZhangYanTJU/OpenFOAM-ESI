@@ -89,7 +89,7 @@ volScalarField p_rgh
     mesh
 );
 
-mesh.setFluxRequired(p_rgh.name());
+mesh.schemes().setFluxRequired(p_rgh.name());
 
 #include "phrghEqn.H"
 

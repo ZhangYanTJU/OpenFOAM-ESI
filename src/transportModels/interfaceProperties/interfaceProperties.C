@@ -178,12 +178,12 @@ Foam::interfaceProperties::interfaceProperties
     transportPropertiesDict_(dict),
     nAlphaSmoothCurvature_
     (
-        alpha1.mesh().solverDict(alpha1.name()).
+        alpha1.mesh().solution().solverDict(alpha1.name()).
             getOrDefault<int>("nAlphaSmoothCurvature", 0)
     ),
     cAlpha_
     (
-        alpha1.mesh().solverDict(alpha1.name()).get<scalar>("cAlpha")
+        alpha1.mesh().solution().solverDict(alpha1.name()).get<scalar>("cAlpha")
     ),
 
     sigmaPtr_(surfaceTensionModel::New(dict, alpha1.mesh())),
@@ -256,7 +256,8 @@ void Foam::interfaceProperties::correct()
 
 bool Foam::interfaceProperties::read()
 {
-    alpha1_.mesh().solverDict(alpha1_.name()).readEntry("cAlpha", cAlpha_);
+    alpha1_.mesh().solution()
+        .solverDict(alpha1_.name()).readEntry("cAlpha", cAlpha_);
     sigmaPtr_->readDict(transportPropertiesDict_);
 
     return true;

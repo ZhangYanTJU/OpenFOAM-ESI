@@ -9,7 +9,7 @@ if (Y.size())
             mesh,
             fields,
             phi,
-            mesh.divScheme("div(phi,Yi_h)")
+            mesh.schemes().div("div(phi,Yi_h)")
         )
     );
 }

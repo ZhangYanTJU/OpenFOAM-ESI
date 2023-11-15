@@ -436,7 +436,10 @@ Foam::ThermalPhaseChangePhaseSystem<BasePhaseSystem>::correctInterfaceThermo()
             << ", max = " << gMax(Tf.primitiveField())
             << endl;
 
-        scalar iDmdtRelax(this->mesh().fieldRelaxationFactor("iDmdt"));
+        scalar iDmdtRelax
+        (
+            this->mesh().solution().fieldRelaxationFactor("iDmdt")
+        );
         iDmdt = (1 - iDmdtRelax)*iDmdt + iDmdtRelax*iDmdtNew;
 
         if (phaseChange_)

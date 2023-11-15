@@ -261,7 +261,7 @@ const Foam::volScalarField::Internal& Foam::fvMesh::V00() const
 
 Foam::tmp<Foam::volScalarField::Internal> Foam::fvMesh::Vsc() const
 {
-    if (!steady() && moving() && time().subCycling())
+    if (!schemes().steady() && moving() && time().subCycling())
     {
         const TimeState& ts = time();
         const TimeState& ts0 = time().prevTimeState();
@@ -283,7 +283,7 @@ Foam::tmp<Foam::volScalarField::Internal> Foam::fvMesh::Vsc() const
 
 Foam::tmp<Foam::volScalarField::Internal> Foam::fvMesh::Vsc0() const
 {
-    if (!steady() && moving() && time().subCycling())
+    if (!schemes().steady() && moving() && time().subCycling())
     {
         const TimeState& ts = time();
         const TimeState& ts0 = time().prevTimeState();

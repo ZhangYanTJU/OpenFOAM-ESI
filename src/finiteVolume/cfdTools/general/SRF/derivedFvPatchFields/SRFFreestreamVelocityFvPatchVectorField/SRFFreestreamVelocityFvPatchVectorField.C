@@ -123,7 +123,7 @@ void Foam::SRFFreestreamVelocityFvPatchVectorField::updateCoeffs()
     word ddtScheme
     (
         this->internalField().mesh()
-       .ddtScheme(this->internalField().name())
+       .schemes().ddt(this->internalField().name())
     );
 
     if (ddtScheme == fv::steadyStateDdtScheme<scalar>::typeName)

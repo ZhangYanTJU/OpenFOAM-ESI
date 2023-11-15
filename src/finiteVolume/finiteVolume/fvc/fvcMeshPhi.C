@@ -40,7 +40,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fvc::meshPhi
     return fv::ddtScheme<vector>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme("ddt(" + vf.name() + ')')
+        vf.mesh().schemes().ddt("ddt(" + vf.name() + ')')
     ).ref().meshPhi(vf);
 }
 
@@ -54,7 +54,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fvc::meshPhi
     return fv::ddtScheme<vector>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme("ddt(" + rho.name() + ',' + vf.name() + ')')
+        vf.mesh().schemes().ddt("ddt(" + rho.name() + ',' + vf.name() + ')')
     ).ref().meshPhi(vf);
 }
 
@@ -68,7 +68,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fvc::meshPhi
     return fv::ddtScheme<vector>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme("ddt(" + rho.name() + ',' + vf.name() + ')')
+        vf.mesh().schemes().ddt("ddt(" + rho.name() + ',' + vf.name() + ')')
     ).ref().meshPhi(vf);
 }
 

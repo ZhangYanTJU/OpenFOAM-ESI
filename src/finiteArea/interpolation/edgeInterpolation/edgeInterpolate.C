@@ -56,7 +56,7 @@ Foam::tmp<Foam::edgeInterpolationScheme<Type>> Foam::fac::scheme
     (
         faceFlux.mesh(),
         faceFlux,
-        faceFlux.mesh().interpolationScheme(name)
+        faceFlux.mesh().schemes().interpolation(name)
     );
 }
 
@@ -86,7 +86,7 @@ Foam::tmp<Foam::edgeInterpolationScheme<Type>> Foam::fac::scheme
     return edgeInterpolationScheme<Type>::New
     (
         mesh,
-        mesh.interpolationScheme(name)
+        mesh.schemes().interpolation(name)
     );
 }
 

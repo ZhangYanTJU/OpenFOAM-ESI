@@ -2183,14 +2183,14 @@ bool Foam::cellCellStencils::inverseDistance::update()
 
 
     label useLayer = dict_.getOrDefault("useLayer", -1);
-    const dictionary& fvSchemes = mesh_.schemesDict();
-    if (fvSchemes.found("oversetInterpolation"))
     {
-        const dictionary& intDict = fvSchemes.subDict
-        (
-            "oversetInterpolation"
-        );
-        useLayer = intDict.getOrDefault("useLayer", -1);
+        const dictionary* interpDict =
+            mesh_.schemes().dict().findDict("oversetInterpolation");
+
+        if (interpDict)
+        {
+            useLayer = interpDict->getOrDefault("useLayer", -1);
+        }
     }
 
     walkFront

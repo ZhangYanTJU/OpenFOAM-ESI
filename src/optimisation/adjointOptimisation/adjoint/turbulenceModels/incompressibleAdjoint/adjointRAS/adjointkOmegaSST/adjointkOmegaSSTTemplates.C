@@ -48,11 +48,11 @@ tmp<surfaceInterpolationScheme<Type>> adjointkOmegaSST::interpolationScheme
     return
         tmp<surfaceInterpolationScheme<Type>>
         (
-            mesh_.interpolationSchemes().found(schemeName) ?
+            mesh_.schemes().interpolationSchemes().found(schemeName) ?
             surfaceInterpolationScheme<Type>::New
             (
                 mesh_,
-                mesh_.interpolationScheme(schemeName)
+                mesh_.schemes().interpolation(schemeName)
             ) :
             tmp<surfaceInterpolationScheme<Type>>
                 (new reverseLinear<Type>(mesh_))

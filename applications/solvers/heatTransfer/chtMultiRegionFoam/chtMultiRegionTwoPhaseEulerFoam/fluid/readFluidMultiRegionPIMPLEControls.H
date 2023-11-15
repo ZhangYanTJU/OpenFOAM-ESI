@@ -1,4 +1,5 @@
-    const dictionary& pimpleDict = mesh.solutionDict().subDict("PIMPLE");
+    const dictionary& pimpleDict =
+        mesh.solution().solutionDict("PIMPLE");
 
     Switch faceMomentum
     (

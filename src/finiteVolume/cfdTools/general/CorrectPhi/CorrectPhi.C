@@ -92,7 +92,7 @@ void Foam::CorrectPhi
         fvc::makeAbsolute(phi, U);
     }
 
-    mesh.setFluxRequired(pcorr.name());
+    mesh.schemes().setFluxRequired(pcorr.name());
 
     while (pimple.correctNonOrthogonal())
     {
@@ -165,7 +165,7 @@ void Foam::CorrectPhi
         pcorrTypes
     );
 
-    mesh.setFluxRequired(pcorr.name());
+    mesh.schemes().setFluxRequired(pcorr.name());
 
     while (pimple.correctNonOrthogonal())
     {

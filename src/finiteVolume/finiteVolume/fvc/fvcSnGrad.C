@@ -52,7 +52,7 @@ snGrad
     return fv::snGradScheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().snGradScheme(name)
+        vf.mesh().schemes().snGrad(name)
     )().snGrad(vf);
 }
 

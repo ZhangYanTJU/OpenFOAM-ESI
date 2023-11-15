@@ -48,7 +48,7 @@ Foam::fv::relaxedSnGrad<Type>::correction
     const word fieldName(vf.name());
     const word oldFieldName(fieldName + "_0");
     const scalar relax =
-        vf.mesh().fieldRelaxationFactor("snGrad("+fieldName+")");
+        vf.mesh().solution().fieldRelaxationFactor("snGrad("+fieldName+")");
 
     // Return explicit correction field if
     // previous-time step correction is unavailable

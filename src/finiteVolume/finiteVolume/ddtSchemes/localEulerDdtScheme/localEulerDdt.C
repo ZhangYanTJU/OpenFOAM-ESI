@@ -39,7 +39,7 @@ Foam::word Foam::fv::localEulerDdt::rSubDeltaTName("rSubDeltaT");
 bool Foam::fv::localEulerDdt::enabled(const fvMesh& mesh)
 {
     return
-        word(mesh.ddtScheme("default"))
+        word(mesh.schemes().ddt("default"))
      == fv::localEulerDdtScheme<scalar>::typeName;
 }
 

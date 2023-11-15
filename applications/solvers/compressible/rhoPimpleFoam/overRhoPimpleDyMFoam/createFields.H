@@ -44,7 +44,7 @@ pressureControl pressureControl(p, rho, pimple.dict(), false);
 const dimensionedScalar rhoMax("rhoMax", dimDensity, GREAT, pimple.dict());
 const dimensionedScalar rhoMin("rhoMin", dimDensity, Zero, pimple.dict());
 
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());
 
 #include "createDpdt.H"
 

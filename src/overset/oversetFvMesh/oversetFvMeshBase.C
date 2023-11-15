@@ -606,7 +606,7 @@ bool Foam::oversetFvMeshBase::interpolateFields()
     // Use whatever the solver has set up as suppression list
     const dictionary* dictPtr
     (
-        mesh_.schemesDict().findDict("oversetInterpolationSuppressed")
+        mesh_.schemes().dict().findDict("oversetInterpolationSuppressed")
     );
     if (dictPtr)
     {

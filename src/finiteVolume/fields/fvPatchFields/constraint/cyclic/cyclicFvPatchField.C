@@ -295,7 +295,13 @@ void Foam::cyclicFvPatchField<Type>::manipulateMatrix
             }
         }
 
-        if (matrix.psi(mat).mesh().fluxRequired(this->internalField().name()))
+        if
+        (
+            matrix.psi(mat).mesh().schemes().fluxRequired
+            (
+                this->internalField().name()
+            )
+        )
         {
             matrix.internalCoeffs().set
             (

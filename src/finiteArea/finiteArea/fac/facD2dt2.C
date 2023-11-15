@@ -51,7 +51,7 @@ tmp<GeometricField<Type, faPatchField, areaMesh>> d2dt2
     return fa::faD2dt2Scheme<Type>::New
     (
         mesh,
-        mesh.d2dt2Scheme("d2dt2(" + dt.name() + ')')
+        mesh.schemes().d2dt2("d2dt2(" + dt.name() + ')')
     ).ref().facD2dt2(dt);
 }
 
@@ -65,7 +65,7 @@ tmp<GeometricField<Type, faPatchField, areaMesh>> d2dt2
     return fa::faD2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme("d2dt2(" + vf.name() + ')')
+        vf.mesh().schemes().d2dt2("d2dt2(" + vf.name() + ')')
     ).ref().facD2dt2(vf);
 }
 
@@ -80,7 +80,7 @@ tmp<GeometricField<Type, faPatchField, areaMesh>> d2dt2
     return fa::faD2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme
+        vf.mesh().schemes().d2dt2
         (
             "d2dt2(" + rho.name() + ',' + vf.name() + ')'
         )
@@ -98,7 +98,7 @@ tmp<GeometricField<Type, faPatchField, areaMesh>> d2dt2
     return fa::faD2dt2Scheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().d2dt2Scheme
+        vf.mesh().schemes().d2dt2
         (
             "d2dt2(" + rho.name() + ',' + vf.name() + ')'
         )

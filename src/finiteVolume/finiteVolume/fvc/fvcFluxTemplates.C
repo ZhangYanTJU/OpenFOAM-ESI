@@ -54,7 +54,7 @@ flux
     (
         vf.mesh(),
         phi,
-        vf.mesh().divScheme(name)
+        vf.mesh().schemes().div(name)
     )().flux(phi, vf);
 }
 

@@ -172,7 +172,9 @@ void Foam::solarCalculator::initialise()
         }
         case mSunDirTracking:
         {
-            if (word(mesh_.ddtScheme("default")) == "steadyState")
+            const word ddtScheme(mesh_.schemes().ddt("default"));
+
+            if (ddtScheme == "steady" || ddtScheme == "steadyState")
             {
                 FatalErrorInFunction
                     << " Sun direction model can not be sunDirtracking if the "

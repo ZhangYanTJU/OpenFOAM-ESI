@@ -96,7 +96,7 @@ Foam::fv::gradScheme<Type>::grad
     GradFieldType* pgGrad =
         mesh().objectRegistry::template getObjectPtr<GradFieldType>(name);
 
-    if (!this->mesh().cache(name) || this->mesh().changing())
+    if (!this->mesh().solution().cache(name) || this->mesh().changing())
     {
         // Delete any old occurrences to avoid double registration
         if (pgGrad && pgGrad->ownedByRegistry())

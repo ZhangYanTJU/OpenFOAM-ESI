@@ -1,4 +1,5 @@
-const dictionary& pimple = mesh.solutionDict().subDict("PIMPLE");
+const dictionary& pimple =
+    mesh.solution().solutionDict("PIMPLE");
 
 int nNonOrthCorr =
     pimple.getOrDefault<int>("nNonOrthogonalCorrectors", 0);

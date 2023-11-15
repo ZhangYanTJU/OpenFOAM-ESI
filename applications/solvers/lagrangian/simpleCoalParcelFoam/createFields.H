@@ -51,7 +51,7 @@ volVectorField U
 
 #include "compressibleCreatePhi.H"
 
-mesh.setFluxRequired(p.name());
+mesh.schemes().setFluxRequired(p.name());
 
 const dimensionedScalar rhoMax("rhoMax", dimDensity, GREAT, simple.dict());
 const dimensionedScalar rhoMin("rhoMin", dimDensity, Zero, simple.dict());

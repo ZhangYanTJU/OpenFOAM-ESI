@@ -68,7 +68,7 @@ void adjointEikonalSolver::read()
     tolerance_ = dict_.getOrDefault<scalar>("tolerance", 1e-6);
     epsilon_ = dict_.getOrDefault<scalar>("epsilon", 0.1);
     const scalar defaultEps =
-        mesh_.schemesDict().subDict("wallDist").
+        mesh_.schemes().dict().subDict("wallDist").
             subOrEmptyDict("advectionDiffusionCoeffs").
                 getOrDefault<scalar>("epsilon", 0.1);
     epsilon_ = dict_.getOrDefault<scalar>("epsilon", defaultEps);

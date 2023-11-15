@@ -52,7 +52,7 @@ ddt
     return fv::ddtScheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme("ddt(" + vf.name() + ')')
+        vf.mesh().schemes().ddt("ddt(" + vf.name() + ')')
     ).ref().fvmDdt(vf);
 }
 
@@ -80,7 +80,7 @@ ddt
     return fv::ddtScheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme("ddt(" + rho.name() + ',' + vf.name() + ')')
+        vf.mesh().schemes().ddt("ddt(" + rho.name() + ',' + vf.name() + ')')
     ).ref().fvmDdt(rho, vf);
 }
 
@@ -96,7 +96,7 @@ ddt
     return fv::ddtScheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme("ddt(" + rho.name() + ',' + vf.name() + ')')
+        vf.mesh().schemes().ddt("ddt(" + rho.name() + ',' + vf.name() + ')')
     ).ref().fvmDdt(rho, vf);
 }
 
@@ -113,7 +113,7 @@ ddt
     return fv::ddtScheme<Type>::New
     (
         vf.mesh(),
-        vf.mesh().ddtScheme
+        vf.mesh().schemes().ddt
         (
             "ddt("
           + alpha.name() + ','

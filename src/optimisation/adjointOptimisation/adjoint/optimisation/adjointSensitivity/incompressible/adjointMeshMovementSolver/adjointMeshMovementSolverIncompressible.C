@@ -155,7 +155,11 @@ void adjointMeshMovementSolver::solve()
 
         //scalar residual = max(maEqn.solve().initialResidual());
         scalar residual =
-            mag(Foam::solve(maEqn, mesh_.solverDict("ma")).initialResidual());
+            mag
+            (
+                Foam::solve(maEqn, mesh_.solution().solverDict("ma"))
+                .initialResidual()
+            );
 
         Info<< "Max ma " << gMax(mag(ma_)()) << endl;
 

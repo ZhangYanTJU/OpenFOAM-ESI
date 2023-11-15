@@ -36,5 +36,11 @@ singlePhaseTransportModel fluid(U, phi);
 
 label pRefCell = 0;
 scalar pRefValue = 0.0;
-setRefCell(p, mesh.solutionDict().subDict("PISO"), pRefCell, pRefValue);
-mesh.setFluxRequired(p.name());
+setRefCell
+(
+    p,
+    mesh.solution().solutionDict("PISO"),
+    pRefCell,
+    pRefValue
+);
+mesh.schemes().setFluxRequired(p.name());

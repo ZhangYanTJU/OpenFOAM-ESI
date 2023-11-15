@@ -2112,10 +2112,7 @@ bool Foam::interfaceTrackingFvMesh::update()
 
         word ddtScheme
         (
-            mesh().ddtScheme
-            (
-                "ddt(" + U().name() + ')'
-            )
+            mesh().schemes().ddt("ddt(" + U().name() + ')')
         );
 
         if

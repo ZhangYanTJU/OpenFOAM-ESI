@@ -90,10 +90,7 @@ public:
                 cellCellStencil::New
                 (
                     mesh,
-                    mesh.schemesDict().subDict
-                    (
-                        "oversetInterpolation"
-                    ),
+                    mesh.schemes().dict().subDict("oversetInterpolation"),
                     update
                 )
             )

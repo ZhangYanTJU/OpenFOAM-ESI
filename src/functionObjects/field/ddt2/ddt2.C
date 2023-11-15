@@ -129,7 +129,8 @@ bool Foam::functionObjects::ddt2::read(const dictionary& dict)
 {
     fvMeshFunctionObject::read(dict);
 
-    if (word(mesh_.ddtScheme("default")) == "steadyState")
+    word ddtScheme(mesh_.schemes().ddt("default"));
+    if (ddtScheme == "steady" || ddtScheme == "steadyState")
     {
         WarningInFunction
             << typeName << " function object not appropriate for steady-state"

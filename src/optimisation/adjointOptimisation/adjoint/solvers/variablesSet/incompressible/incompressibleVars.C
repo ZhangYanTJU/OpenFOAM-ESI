@@ -55,7 +55,7 @@ void incompressibleVars::setFields()
         useSolverNameForFields_
     );
 
-    mesh_.setFluxRequired(pPtr_->name());
+    mesh_.schemes().setFluxRequired(pPtr_->name());
 
     // if required, correct boundary conditions of mean flow fields here in
     // order to have the correct bcs for e.g. turbulence models that follow.

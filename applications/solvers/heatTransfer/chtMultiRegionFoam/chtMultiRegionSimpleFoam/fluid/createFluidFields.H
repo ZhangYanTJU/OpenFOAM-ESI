@@ -174,7 +174,7 @@ forAll(fluidRegions, i)
     // Force p_rgh to be consistent with p
     p_rghFluid[i] = thermoFluid[i].p() - rhoFluid[i]*ghFluid[i];
 
-    fluidRegions[i].setFluxRequired(p_rghFluid[i].name());
+    fluidRegions[i].schemes().setFluxRequired(p_rghFluid[i].name());
 
     radiation.set
     (
@@ -185,7 +185,7 @@ forAll(fluidRegions, i)
     initialMassFluid[i] = fvc::domainIntegrate(rhoFluid[i]).value();
 
     const dictionary& simpleDict =
-        fluidRegions[i].solutionDict().subDict("SIMPLE");
+        fluidRegions[i].solution().solutionDict("SIMPLE");
 
     setRefCell
     (

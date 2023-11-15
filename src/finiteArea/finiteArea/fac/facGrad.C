@@ -108,7 +108,7 @@ grad
         fa::gradScheme<Type>::New
         (
             vf.mesh(),
-            vf.mesh().gradScheme(name)
+            vf.mesh().schemes().grad(name)
         )
         .cref()  // const ref to tmp contents
         .grad(vf).ptr()  // steal ptr or deep copy of cached gradient

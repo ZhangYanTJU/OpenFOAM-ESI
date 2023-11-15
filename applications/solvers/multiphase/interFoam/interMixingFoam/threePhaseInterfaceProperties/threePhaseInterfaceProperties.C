@@ -157,7 +157,7 @@ Foam::threePhaseInterfaceProperties::threePhaseInterfaceProperties
     mixture_(mixture),
     cAlpha_
     (
-        mixture.U().mesh().solverDict
+        mixture.U().mesh().solution().solverDict
         (
             mixture_.alpha1().name()
         ).get<scalar>("cAlpha")

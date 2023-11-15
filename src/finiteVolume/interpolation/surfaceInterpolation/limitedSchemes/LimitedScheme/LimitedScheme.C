@@ -149,7 +149,7 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
 
     const word limiterFieldName(type() + "Limiter(" + phi.name() + ')');
 
-    if (this->mesh().cache("limiter"))
+    if (this->mesh().solution().cache("limiter"))
     {
         auto* fldptr = mesh.getObjectPtr<surfaceScalarField>(limiterFieldName);
 

@@ -602,7 +602,7 @@ void Foam::oversetFvPatchField<Type>::initEvaluate
     {
         // Trigger interpolation
         const fvMesh& mesh = this->internalField().mesh();
-        const dictionary& fvSchemes = mesh.schemesDict();
+        const dictionary& fvSchemes = mesh.schemes().dict();
         const word& fldName = this->internalField().name();
 
         if (&mesh.lduAddr() != &mesh.fvMesh::lduAddr())

@@ -1,4 +1,5 @@
-    const dictionary& pimple = mesh.solutionDict().subDict("PIMPLE");
+    const dictionary& pimple =
+        mesh.solution().solutionDict("PIMPLE");
 
     const int nCorr =
         pimple.getOrDefault<int>("nCorrectors", 1);

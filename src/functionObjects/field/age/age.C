@@ -173,7 +173,7 @@ bool Foam::functionObjects::age::execute()
 
     // Set under-relaxation coeff
     scalar relaxCoeff = 0;
-    mesh_.relaxEquation(schemesField_, relaxCoeff);
+    mesh_.solution().relaxEquation(schemesField_, relaxCoeff);
 
     Foam::fv::options& fvOptions(Foam::fv::options::New(mesh_));
 

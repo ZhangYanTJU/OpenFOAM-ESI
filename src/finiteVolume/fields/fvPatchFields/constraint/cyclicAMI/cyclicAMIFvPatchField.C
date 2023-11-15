@@ -758,7 +758,13 @@ void Foam::cyclicAMIFvPatchField<Type>::manipulateMatrix
         // Set internalCoeffs and boundaryCoeffs in the assembly matrix
         // on clyclicAMI patches to be used in the individual matrix by
         // matrix.flux()
-        if (matrix.psi(mat).mesh().fluxRequired(this->internalField().name()))
+        if
+        (
+            matrix.psi(mat).mesh().schemes().fluxRequired
+            (
+                this->internalField().name()
+            )
+        )
         {
             matrix.internalCoeffs().set
             (

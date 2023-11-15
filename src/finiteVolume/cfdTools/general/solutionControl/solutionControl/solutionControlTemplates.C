@@ -41,7 +41,11 @@ void Foam::solutionControl::storePrevIter() const
     {
         const word& fldName = fld.name();
 
-        if (!fldName.contains("PrevIter") && mesh_.relaxField(fldName))
+        if
+        (
+            !fldName.contains("PrevIter")
+         && mesh_.solution().relaxField(fldName)
+        )
         {
             DebugInfo
                 << algorithmName_ << ": storing previous iter for "

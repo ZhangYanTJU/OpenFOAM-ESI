@@ -151,7 +151,7 @@ void Foam::waveSurfacePressureFvPatchScalarField::updateCoeffs()
     vectorField& zetap = zeta.boundaryFieldRef()[patchi];
 
     // Lookup d/dt scheme from database for zeta
-    const word ddtSchemeName(zeta.mesh().ddtScheme(zeta.name()));
+    const word ddtSchemeName(zeta.mesh().schemes().ddt(zeta.name()));
     ddtSchemeType ddtScheme(ddtSchemeTypeNames_[ddtSchemeName]);
 
     // Retrieve the flux field from the database

@@ -804,7 +804,7 @@ void Foam::multiphaseMixtureThermo::solve()
 {
     const Time& runTime = mesh_.time();
 
-    const dictionary& alphaControls = mesh_.solverDict("alpha");
+    const dictionary& alphaControls = mesh_.solution().solverDict("alpha");
     label nAlphaSubCycles(alphaControls.get<label>("nAlphaSubCycles"));
     scalar cAlpha(alphaControls.get<scalar>("cAlpha"));
 

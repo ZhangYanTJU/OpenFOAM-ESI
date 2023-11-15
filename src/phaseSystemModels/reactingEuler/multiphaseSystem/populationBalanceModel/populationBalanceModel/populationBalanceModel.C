@@ -1233,7 +1233,7 @@ Foam::diameterModels::populationBalanceModel::continuousTurbulence() const
 
 void Foam::diameterModels::populationBalanceModel::solve()
 {
-    const dictionary& solutionControls = mesh_.solverDict(name_);
+    const dictionary& solutionControls = mesh_.solution().solverDict(name_);
     const bool solveOnFinalIterOnly =
         solutionControls.getOrDefault("solveOnFinalIterOnly", false);
 
