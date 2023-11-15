@@ -335,7 +335,7 @@ public:
         //- Called at each ++ or += of the time-loop.
         //  postProcess overrides the usual executeControl behaviour and
         //  forces execution (used in post-processing mode)
-        bool execute();
+        bool execute(bool writeProperties = true);
 
         //- Execute function objects using the specified subIndex.
         //  \param subIndex an execution sub-index corresponding to a

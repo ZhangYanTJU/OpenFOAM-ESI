@@ -244,6 +244,13 @@ void Foam::simple::mainIter()
 
 void Foam::simple::postIter()
 {
+    // Execute function objects in optimisation cases
+    // Disabled in Time since we are subsycling
+    if (managerType_ == "steadyOptimisation")
+    {
+        const_cast<Time&>(mesh_.time()).functionObjects().execute(false);
+    }
+
     solverControl_().write();
 
     // Print objective values to screen and compute mean value
