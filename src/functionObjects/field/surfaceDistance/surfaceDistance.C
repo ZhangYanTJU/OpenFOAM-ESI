@@ -144,7 +144,7 @@ bool Foam::functionObjects::surfaceDistance::execute()
 
     if (doCells_)
     {
-        const pointField& cc = mesh_.C();
+        const pointField& cc = mesh_.C().internalField();
 
         labelList surfaces;
         List<pointIndexHit> nearestInfo;
@@ -203,7 +203,7 @@ bool Foam::functionObjects::surfaceDistance::write()
 //
 //    if (doCells_)
 //    {
-//        const pointField& cc = mesh_.C();
+//        const pointField& cc = mesh_.C().internalField();
 //
 //        labelList surfaces;
 //        List<pointIndexHit> nearestInfo;

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,159 @@ License
 #include "emptyPolyPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<class CheckPatchFieldType>
+bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
+(
+    const scalar tol,
+    const bool doExit
+) const
+{
+    if (!this->size())
+    {
+        return true;
+    }
+
+    if (debug&2)
+    {
+        const auto& pfld0 = this->operator[](0);
+        PoutInFunction
+            << " Checking boundary consistency for field "
+            << pfld0.internalField().name()
+            << endl;
+    }
+
+    auto& bfld = const_cast<GeometricBoundaryField<Type, PatchField, GeoMesh>&>
+    (
+        *this
+    );
+
+
+    // Store old value
+    List<Field<Type>> oldBfld(this->size());
+    boolList oldUpdated(this->size());
+    //Note: areaFields (finiteArea) do not have manipulatedMatrix() flag. TBD.
+    //boolList oldManipulated(this->size());
+
+    for (auto& pfld : bfld)
+    {
+        if (isA<CheckPatchFieldType>(pfld))
+        {
+            const label patchi = pfld.patch().index();
+            oldUpdated[patchi] = pfld.updated();
+            oldBfld[patchi] = pfld;
+            //oldManipulated[patchi] = pfld.manipulatedMatrix();
+        }
+    }
+
+
+    // Re-evaluate
+    {
+        const label startOfRequests = UPstream::nRequests();
+
+        for (auto& pfld : bfld)
+        {
+            if (isA<CheckPatchFieldType>(pfld))
+            {
+                pfld.initEvaluate(UPstream::commsTypes::nonBlocking);
+            }
+        }
+
+        // Wait for outstanding requests
+        UPstream::waitRequests(startOfRequests);
+
+        for (auto& pfld : bfld)
+        {
+            if (isA<CheckPatchFieldType>(pfld))
+            {
+                pfld.evaluate(UPstream::commsTypes::nonBlocking);
+            }
+        }
+    }
+
+
+    // Check
+    bool ok = true;
+    for (auto& pfld : bfld)
+    {
+        if (isA<CheckPatchFieldType>(pfld))
+        {
+            const label patchi = pfld.patch().index();
+            const auto& oldPfld = oldBfld[patchi];
+
+            forAll(pfld, facei)
+            {
+                if (mag(pfld[facei]-oldPfld[facei]) > tol)
+                {
+                    ok = false;
+                    break;
+                }
+            }
+
+            if (!ok)
+            {
+                if (doExit)
+                {
+                    FatalErrorInFunction << "Field "
+                        << pfld.internalField().name()
+                        << " is not evaluated?"
+                        << " On patch " << pfld.patch().name()
+                        << " type " << pfld.type()
+                        << " : average of field = "
+                        << average(oldPfld)
+                        << ". Average of evaluated field = "
+                        << average(pfld)
+                        << ". Difference:" << average(pfld-oldPfld)
+                        << ". Tolerance:" << tol
+                        << exit(FatalError);
+                }
+                else
+                {
+                    WarningInFunction << "Field "
+                        << pfld.internalField().name()
+                        << " is not evaluated?"
+                        << " On patch " << pfld.patch().name()
+                        << " type " << pfld.type()
+                        << " : average of field = "
+                        << average(oldPfld)
+                        << ". Average of evaluated field = "
+                        << average(pfld)
+                        << ". Difference:" << average(pfld-oldPfld)
+                        << ". Tolerance:" << tol
+                        << endl;
+
+                    // Skip other patches
+                    break;
+                }
+            }
+        }
+    }
+
+    // Restore bfld, updated
+    for (auto& pfld : bfld)
+    {
+        if (isA<CheckPatchFieldType>(pfld))
+        {
+            const label patchi = pfld.patch().index();
+            pfld.setUpdated(oldUpdated[patchi]);
+            Field<Type>& vals = pfld;
+            vals = std::move(oldBfld[patchi]);
+            //pfld.setManipulated(oldManipulated[patchi]);
+        }
+    }
+
+    if (debug&2)
+    {
+        const auto& pfld0 = this->operator[](0);
+        PoutInFunction
+            << " Result of checking for field "
+            << pfld0.internalField().name() << " : " << ok << endl;
+    }
+
+    return ok;
+}
+
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
@@ -493,8 +646,78 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate()
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
+{
+    ///if (GeometricField<Type, PatchField, GeoMesh::debug)
+    ///{
+    ///    InfoInFunction << nl;
+    ///}
+
+    if (!localConsistency)
+    {
+        return;
+    }
+
+    const UPstream::commsTypes commsType = UPstream::defaultCommsType;
+    const label startOfRequests = UPstream::nRequests();
+
+    if
+    (
+        commsType == UPstream::commsTypes::blocking
+     || commsType == UPstream::commsTypes::nonBlocking
+    )
+    {
+        for (auto& pfld : *this)
+        {
+            pfld.initEvaluateLocal(commsType);
+        }
+
+        // Wait for outstanding requests
+        if (commsType == Pstream::commsTypes::nonBlocking)
+        {
+            UPstream::waitRequests(startOfRequests);
+        }
+
+        for (auto& pfld : *this)
+        {
+            pfld.evaluateLocal(commsType);
+        }
+    }
+    else if (commsType == UPstream::commsTypes::scheduled)
+    {
+        const lduSchedule& patchSchedule =
+            bmesh_.mesh().globalData().patchSchedule();
+
+        for (const auto& schedEval : patchSchedule)
+        {
+            const label patchi = schedEval.patch;
+            auto& pfld = (*this)[patchi];
+
+            if (schedEval.init)
+            {
+                pfld.initEvaluateLocal(commsType);
+            }
+            else
+            {
+                pfld.evaluateLocal(commsType);
+            }
+        }
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Unsupported communications type "
+            << UPstream::commsTypeNames[commsType]
+            << exit(FatalError);
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 template<class CoupledPatchType>
-void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateCoupled()
+void
+Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
+::evaluateCoupled()
 {
     ///if (GeometricField<Type, PatchField, GeoMesh::debug)
     ///{
@@ -674,6 +897,17 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::writeEntries
         os << pfld;
         os.endBlock();
     }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::check
+(
+) const
+{
+    // Dummy op - template specialisations provide logic (usually call
+    // to checkConsistency)
+    return true;
 }
 
 

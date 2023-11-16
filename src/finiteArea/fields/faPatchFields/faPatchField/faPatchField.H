@@ -103,16 +103,6 @@ protected:
         //  Useful when initially constructed without a dictionary
         virtual void readDict(const dictionary& dict);
 
-        //- Set updated state
-        void setUpdated(bool state) noexcept
-        {
-            updated_ = state;
-        }
-
-        //- Set matrix manipulated state. Currently a no-op for faPatchField.
-        void setManipulated(bool state) noexcept
-        {}
-
 
 public:
 
@@ -224,11 +214,10 @@ public:
             return updated_;
         }
 
-        //- True if the matrix has already been manipulated.
-        //- Currently ignored (always false) for faPatchField
-        bool manipulatedMatrix() const noexcept
+        //- Set updated state
+        void setUpdated(bool state) noexcept
         {
-            return false;
+            updated_ = state;
         }
 
 
@@ -535,6 +524,23 @@ public:
                 const Pstream::commsTypes commsType =
                     Pstream::commsTypes::blocking
             );
+
+            //- Initialise the evaluation of the patch field after a local
+            //  operation
+            virtual void initEvaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
+
+            //- Evaluate the patch field after a local operation (e.g. *=)
+            virtual void evaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
 
             //- Return the matrix diagonal coefficients corresponding to the
             //- evaluation of the value of this patchField with given weights

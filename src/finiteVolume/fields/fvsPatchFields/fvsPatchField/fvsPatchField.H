@@ -475,24 +475,41 @@ public:
         );
 
 
-    // Evaluation Functions
+        // Evaluation Functions
 
-        //- Initialise the evaluation of the patch field, generally a no-op
-        virtual void initEvaluate
-        (
-            const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
-        )
-        {}
+            //- Initialise the evaluation of the patch field
+            virtual void initEvaluate
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
 
-        //- Evaluate the patch field, generally a no-op
-        virtual void evaluate
-        (
-            const Pstream::commsTypes commsType = Pstream::commsTypes::blocking
-        )
-        {}
+            //- Evaluate the patch field, sets Updated to false
+            virtual void evaluate
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
 
+            //- Initialise the evaluation of the patch field after a local
+            //  operation
+            virtual void initEvaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
 
-    // Other
+            //- Evaluate the patch field after a local operation (e.g. *=)
+            virtual void evaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {}
+
 
         //- Write
         virtual void write(Ostream& os) const;
