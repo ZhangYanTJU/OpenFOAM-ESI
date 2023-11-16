@@ -55,6 +55,10 @@ void component
     component(result.primitiveFieldRef(), f1.primitiveField(), d);
     component(result.boundaryFieldRef(), f1.boundaryField(), d);
     result.oriented() = f1.oriented();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -68,6 +72,10 @@ void T
     T(result.primitiveFieldRef(), f1.primitiveField());
     T(result.boundaryFieldRef(), f1.boundaryField());
     result.oriented() = f1.oriented();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -88,6 +96,11 @@ void pow
     pow(result.primitiveFieldRef(), f1.primitiveField(), r);
     pow(result.boundaryFieldRef(), f1.boundaryField(), r);
     result.oriented() = pow(f1.oriented(), r);
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -167,6 +180,11 @@ void sqr
     sqr(result.primitiveFieldRef(), f1.primitiveField());
     sqr(result.boundaryFieldRef(), f1.boundaryField());
     result.oriented() = sqr(f1.oriented());
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -239,6 +257,11 @@ void magSqr
     magSqr(result.primitiveFieldRef(), f1.primitiveField());
     magSqr(result.boundaryFieldRef(), f1.boundaryField());
     result.oriented() = magSqr(f1.oriented());
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -288,6 +311,11 @@ void mag
     mag(result.primitiveFieldRef(), f1.primitiveField());
     mag(result.boundaryFieldRef(), f1.boundaryField());
     result.oriented() = mag(f1.oriented());
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 
@@ -342,6 +370,10 @@ void cmptAv
     cmptAv(result.primitiveFieldRef(), f1.primitiveField());
     cmptAv(result.boundaryFieldRef(), f1.boundaryField());
     result.oriented() = cmptAv(f1.oriented());
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 template<class Type, template<class> class PatchField, class GeoMesh>
@@ -497,6 +529,11 @@ void clamp
     clamp(result.primitiveFieldRef(), f1.primitiveField(), range);
     clamp(result.boundaryFieldRef(), f1.boundaryField(), range);
     result.oriented() = f1.oriented();
+    result.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)
+    {
+        result.boundaryField().check();
+    }
 }
 
 template<class Type, template<class> class PatchField, class GeoMesh>
@@ -596,6 +633,11 @@ void OpFunc                                                                    \
     );                                                                         \
                                                                                \
     result.oriented() = (f1.oriented() Op f2.oriented());                      \
+    result.correctLocalBoundaryConditions();                                   \
+    if (GeometricBoundaryField<Type1, PatchField, GeoMesh>::debug)             \
+    {                                                                          \
+        result.boundaryField().check();                                        \
+    }                                                                          \
 }                                                                              \
                                                                                \
                                                                                \
@@ -734,6 +776,10 @@ void OpFunc                                                                    \
     Foam::OpFunc(result.primitiveFieldRef(), f1.primitiveField(), dvs.value());\
     Foam::OpFunc(result.boundaryFieldRef(), f1.boundaryField(), dvs.value());  \
     result.oriented() = f1.oriented();                                         \
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)              \
+    {                                                                          \
+        result.boundaryField().check();                                        \
+    }                                                                          \
 }                                                                              \
                                                                                \
 template                                                                       \
@@ -838,6 +884,10 @@ void OpFunc                                                                    \
     Foam::OpFunc(result.primitiveFieldRef(), dvs.value(), f2.primitiveField());\
     Foam::OpFunc(result.boundaryFieldRef(), dvs.value(), f2.boundaryField());  \
     result.oriented() = f2.oriented();                                         \
+    if (GeometricBoundaryField<Type, PatchField, GeoMesh>::debug)              \
+    {                                                                          \
+        result.boundaryField().check();                                        \
+    }                                                                          \
 }                                                                              \
                                                                                \
 template                                                                       \

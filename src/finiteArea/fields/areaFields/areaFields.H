@@ -70,6 +70,17 @@ void GeometricField<scalar, faPatchField, areaMesh>::replace
     const GeometricField<scalar, faPatchField, areaMesh>& sf
 );
 
+template<>
+bool GeometricBoundaryField<scalar, faPatchField, areaMesh>::check() const;
+template<>
+bool GeometricBoundaryField<vector, faPatchField, areaMesh>::check() const;
+template<>
+bool GeometricBoundaryField<sphericalTensor, faPatchField, areaMesh>::check
+() const;
+template<>
+bool GeometricBoundaryField<symmTensor, faPatchField, areaMesh>::check() const;
+template<>
+bool GeometricBoundaryField<tensor, faPatchField, areaMesh>::check() const;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

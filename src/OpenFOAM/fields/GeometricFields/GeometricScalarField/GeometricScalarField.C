@@ -121,6 +121,11 @@ void pow
 {
     pow(Pow.primitiveFieldRef(), gsf1.primitiveField(), gsf2.primitiveField());
     pow(Pow.boundaryFieldRef(), gsf1.boundaryField(), gsf2.boundaryField());
+    Pow.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<scalar, PatchField, GeoMesh>::debug)
+    {
+        Pow.boundaryField().check();
+    }
 }
 
 
@@ -326,6 +331,11 @@ void pow
 {
     pow(tPow.primitiveFieldRef(), gsf.primitiveField(), ds.value());
     pow(tPow.boundaryFieldRef(), gsf.boundaryField(), ds.value());
+    tPow.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<scalar, PatchField, GeoMesh>::debug)
+    {
+        tPow.boundaryField().check();
+    }
 }
 
 
@@ -429,6 +439,11 @@ void pow
 {
     pow(tPow.primitiveFieldRef(), ds.value(), gsf.primitiveField());
     pow(tPow.boundaryFieldRef(), ds.value(), gsf.boundaryField());
+    tPow.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<scalar, PatchField, GeoMesh>::debug)
+    {
+        tPow.boundaryField().check();
+    }
 }
 
 
@@ -565,6 +580,13 @@ void atan2
         gsf1.boundaryField(),
         gsf2.boundaryField()
     );
+
+    Atan2.correctLocalBoundaryConditions();
+
+    if (GeometricBoundaryField<scalar, PatchField, GeoMesh>::debug)
+    {
+        Atan2.boundaryField().check();
+    }
 }
 
 
@@ -682,6 +704,11 @@ void atan2
 {
     atan2(tAtan2.primitiveFieldRef(), gsf.primitiveField(), ds.value());
     atan2(tAtan2.boundaryFieldRef(), gsf.boundaryField(), ds.value());
+    tAtan2.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<scalar, PatchField, GeoMesh>::debug)
+    {
+        tAtan2.boundaryField().check();
+    }
 }
 
 
@@ -761,6 +788,11 @@ void atan2
 {
     atan2(tAtan2.primitiveFieldRef(), ds.value(), gsf.primitiveField());
     atan2(tAtan2.boundaryFieldRef(), ds.value(), gsf.boundaryField());
+    tAtan2.correctLocalBoundaryConditions();
+    if (GeometricBoundaryField<scalar, PatchField, GeoMesh>::debug)
+    {
+        tAtan2.boundaryField().check();
+    }
 }
 
 
@@ -886,6 +918,11 @@ void func                                                                      \
 {                                                                              \
     func(gsf.primitiveFieldRef(), n, gsf1.primitiveField());                   \
     func(gsf.boundaryFieldRef(), n, gsf1.boundaryField());                     \
+    gsf.correctLocalBoundaryConditions();                                      \
+    if (GeometricBoundaryField<scalar, PatchField, GeoMesh>::debug)            \
+    {                                                                          \
+        gsf.boundaryField().check();                                           \
+    }                                                                          \
 }                                                                              \
                                                                                \
 template<template<class> class PatchField, class GeoMesh>                      \

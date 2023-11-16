@@ -27,6 +27,7 @@ License
 
 #include "faMesh.H"
 #include "edgeFields.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -44,6 +45,115 @@ defineTemplateTypeNameAndDebug(edgeVectorField, 0);
 defineTemplateTypeNameAndDebug(edgeSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(edgeSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(edgeTensorField, 0);
+
+defineTemplateDebugSwitchWithName
+(
+    edgeScalarField::Boundary,
+    "edgeScalarField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeVectorField::Boundary,
+    "edgeVectorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeSphericalTensorField::Boundary,
+    "edgeSphericalTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeSymmTensorField::Boundary,
+    "edgeSymmTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    edgeTensorField::Boundary,
+    "edgeTensorField::Boundary",
+    0
+);
+
+template<> scalar edgeScalarField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeVectorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeSphericalTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeSymmTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+template<> scalar edgeTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("tolerance", 0)
+);
+
+// Local-ops consistency enforcing
+
+template<> int edgeScalarField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeScalarField::Boundary::localConsistency",
+    int,
+    Foam::edgeScalarField::Boundary::localConsistency
+);
+
+template<> int edgeVectorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeVectorField::Boundary::localConsistency",
+    int,
+    Foam::edgeVectorField::Boundary::localConsistency
+);
+
+template<> int edgeSphericalTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeSphericalTensorField::Boundary::localConsistency",
+    int,
+    Foam::edgeSphericalTensorField::Boundary::localConsistency
+);
+
+template<> int edgeSymmTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeSymmTensorField::Boundary::localConsistency",
+    int,
+    Foam::edgeSymmTensorField::Boundary::localConsistency
+);
+
+template<> int edgeTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "edgeTensorField::Boundary::localConsistency",
+    int,
+    Foam::edgeTensorField::Boundary::localConsistency
+);
 
 } // End namespace Foam
 

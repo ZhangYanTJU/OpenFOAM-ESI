@@ -151,7 +151,7 @@ Foam::SRF::SRFModel::Fcentrifugal() const
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),
-            omega_ ^ (omega_ ^ (mesh_.C() - origin_))
+            omega_ ^ (omega_ ^ (mesh_.C().internalField() - origin_))
         )
     );
 }
@@ -182,7 +182,10 @@ Foam::vectorField Foam::SRF::SRFModel::velocity
 
 Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::U() const
 {
-    return tmp<volVectorField>
+    const int oldLocal = volVectorField::Boundary::localConsistency;
+    volVectorField::Boundary::localConsistency = 0;
+    tmp<volVectorField> relPos(mesh_.C() - origin_);
+    tmp<volVectorField> tU
     (
         new volVectorField
         (
@@ -194,10 +197,12 @@ Foam::tmp<Foam::volVectorField> Foam::SRF::SRFModel::U() const
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),
-            omega_
-          ^ ((mesh_.C() - origin_) - axis_*(axis_ & (mesh_.C() - origin_)))
+            omega_ ^ (relPos - axis_*(axis_ & relPos))
         )
     );
+    volVectorField::Boundary::localConsistency = oldLocal;
+
+    return tU;
 }
 
 

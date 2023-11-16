@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,7 +86,26 @@ private:
         const BoundaryMesh& bmesh_;
 
 
+    // Private Member Functions
+
+        //- Helper: check if patchfields have been evaluated. If not:
+        //      exit = true  : FatalError
+        //      exit = false : return bool
+        template<class CheckPatchField>
+        bool checkConsistency(const scalar tol, const bool exitIfBad) const;
+
+
 public:
+
+    //- Enable debug
+    static int debug;
+
+    //- User-defined tolerance (for consistency checks)
+    static scalar tolerance;
+
+    //- Enable local consistency
+    static int localConsistency;
+
 
     // Constructors
 
@@ -170,6 +189,9 @@ public:
         //- Evaluate boundary conditions
         void evaluate();
 
+        //- Evaluate boundary conditions after change in local values
+        void evaluateLocal();
+
         //- Evaluate boundary conditions on a subset of coupled patches
         template<class CoupledPatchType>
         void evaluateCoupled();
@@ -193,6 +215,9 @@ public:
 
         //- Write dictionary entries of the individual boundary fields.
         void writeEntries(Ostream& os) const;
+
+        //- Helper: check if field has been evaluated. See instantiations.
+        bool check() const;
 
 
     // Member Operators

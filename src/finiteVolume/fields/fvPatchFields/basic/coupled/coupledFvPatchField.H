@@ -182,6 +182,27 @@ public:
                 const Pstream::commsTypes commsType
             );
 
+            //- Initialise the evaluation of the patch field after a local
+            //  operation
+            virtual void initEvaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {
+                initEvaluate(commsType);
+            }
+
+            //- Evaluate the patch field after a local operation (e.g. *=)
+            virtual void evaluateLocal
+            (
+                const Pstream::commsTypes commsType =
+                    Pstream::commsTypes::blocking
+            )
+            {
+                evaluate(commsType);
+            }
+
             //- Return the matrix diagonal coefficients corresponding to the
             //  evaluation of the value of this patchField with given weights
             virtual tmp<Field<Type>> valueInternalCoeffs

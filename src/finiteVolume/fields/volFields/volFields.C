@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,6 +27,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "volFields.H"
+#include "coupledFvPatchField.H"
+#include "registerSwitch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -44,6 +46,162 @@ defineTemplateTypeNameAndDebug(volVectorField, 0);
 defineTemplateTypeNameAndDebug(volSphericalTensorField, 0);
 defineTemplateTypeNameAndDebug(volSymmTensorField, 0);
 defineTemplateTypeNameAndDebug(volTensorField, 0);
+
+defineTemplateDebugSwitchWithName
+(
+    volScalarField::Boundary,
+    "volScalarField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volVectorField::Boundary,
+    "volVectorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volSphericalTensorField::Boundary,
+    "volSphericalTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volSymmTensorField::Boundary,
+    "volSymmTensorField::Boundary",
+    0
+);
+defineTemplateDebugSwitchWithName
+(
+    volTensorField::Boundary,
+    "volTensorField::Boundary",
+    0
+);
+
+
+// Tolerance optimisation switch
+
+template<> scalar volScalarField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("volScalarField::Boundary::tolerance", 0)
+);
+registerOptSwitch
+(
+    "volScalarField::Boundary::tolerance",
+    scalar,
+    Foam::volScalarField::Boundary::tolerance
+);
+
+template<> scalar volVectorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("volScalarField::Boundary::tolerance", 0)
+);
+registerOptSwitch
+(
+    "volVectorField::Boundary::tolerance",
+    scalar,
+    Foam::volVectorField::Boundary::tolerance
+);
+
+template<> scalar volSphericalTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch
+    (
+        "volSphericalTensorField::Boundary::tolerance",
+        0
+    )
+);
+registerOptSwitch
+(
+    "volSphericalTensorField::Boundary::tolerance",
+    scalar,
+    Foam::volSphericalTensorField::Boundary::tolerance
+);
+
+template<> scalar volSymmTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch
+    (
+        "volSymmTensorField::Boundary::tolerance",
+        0
+    )
+);
+registerOptSwitch
+(
+    "volSymmTensorField::Boundary::tolerance",
+    scalar,
+    Foam::volSymmTensorField::Boundary::tolerance
+);
+
+template<> scalar volTensorField::Boundary::tolerance
+(
+    debug::floatOptimisationSwitch("volTensorField::Boundary::tolerance", 0)
+);
+registerOptSwitch
+(
+    "volTensorField::Boundary::tolerance",
+    scalar,
+    Foam::volTensorField::Boundary::tolerance
+);
+
+
+// Local-ops consistency enforcing
+
+template<> int volScalarField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volScalarField::Boundary::localConsistency",
+    int,
+    Foam::volScalarField::Boundary::localConsistency
+);
+
+template<> int volVectorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volVectorField::Boundary::localConsistency",
+    int,
+    Foam::volVectorField::Boundary::localConsistency
+);
+
+template<> int volSphericalTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volSphericalTensorField::Boundary::localConsistency",
+    int,
+    Foam::volSphericalTensorField::Boundary::localConsistency
+);
+
+template<> int volSymmTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volSymmTensorField::Boundary::localConsistency",
+    int,
+    Foam::volSymmTensorField::Boundary::localConsistency
+);
+
+template<> int volTensorField::Boundary::localConsistency
+(
+    debug::optimisationSwitch("localConsistency", 1)
+);
+registerOptSwitch
+(
+    "volTensorField::Boundary::localConsistency",
+    int,
+    Foam::volTensorField::Boundary::localConsistency
+);
+
 
 } // End namespace Foam
 
@@ -74,6 +232,60 @@ void GeometricField<scalar, fvPatchField, volMesh>::replace
 )
 {
     *this == gsf;
+}
+
+
+template<>
+bool GeometricBoundaryField<scalar, fvPatchField, volMesh>::check() const
+{
+    return checkConsistency<coupledFvPatchField<scalar>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
+}
+
+template<>
+bool GeometricBoundaryField<vector, fvPatchField, volMesh>::check() const
+{
+    return checkConsistency<coupledFvPatchField<vector>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
+}
+
+template<>
+bool GeometricBoundaryField<sphericalTensor, fvPatchField, volMesh>::check
+() const
+{
+    return checkConsistency<coupledFvPatchField<sphericalTensor>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
+}
+
+template<>
+bool GeometricBoundaryField<symmTensor, fvPatchField, volMesh>::check
+() const
+{
+    return checkConsistency<coupledFvPatchField<symmTensor>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
+}
+
+template<>
+bool GeometricBoundaryField<tensor, fvPatchField, volMesh>::check
+() const
+{
+    return checkConsistency<coupledFvPatchField<tensor>>
+    (
+        Foam::volScalarField::Boundary::tolerance,
+       !(debug&4)       // make into warning if debug&4
+    );
 }
 
 } // End namespace Foam

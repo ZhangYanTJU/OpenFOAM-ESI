@@ -204,6 +204,9 @@ void Foam::functionObjects::pressure::addHydrostaticContribution
         (g_ & (cmptMag(g_.value())/mag(g_.value())))*hRef_
     );
 
+    const int oldLocal = volScalarField::Boundary::localConsistency;
+    volScalarField::Boundary::localConsistency = 0;
+
     tmp<volScalarField> rgh = rhoScale(p, (g_ & mesh_.C()) - ghRef);
 
     switch (hydrostaticMode_)
@@ -221,6 +224,8 @@ void Foam::functionObjects::pressure::addHydrostaticContribution
         default:
         {}
     }
+
+    volScalarField::Boundary::localConsistency = oldLocal;
 }
 
 
