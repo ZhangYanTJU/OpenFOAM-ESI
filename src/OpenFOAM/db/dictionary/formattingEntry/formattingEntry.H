@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2023 Sergey Lesnik
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,20 +53,68 @@ class formattingEntry
 {
 public:
 
+    // Static Member Functions
+
+        //- Generate a default entry keyword: "__format-entry__NNN"
+        //  The generated names are unlikely to collide with user dictionaries
+        static keyType defaultName(label n)
+        {
+            return keyType
+            (
+                "__format-entry__" + std::to_string(n),
+                keyType::LITERAL
+            );
+        }
+
+
     // Constructors
 
         //- Inherit all constructors from primitiveEntry
         using primitiveEntry::primitiveEntry;
 
+        //- Construct with character data, using the provided keyword
+        formattingEntry(const keyType& key, const char* s, std::streamsize len);
+
+        //- Construct with character data, using the provided keyword
+        formattingEntry(const keyType& key, const std::string& content);
+
+        //- Construct with character data, using the provided keyword
+        formattingEntry(const keyType& key, std::string&& content);
+
+        //- Construct with character data, using a generated keyword
+        formattingEntry(const label n, const char* s, std::streamsize len)
+        :
+            formattingEntry(defaultName(n), s, len)
+        {}
+
+        //- Construct with character data, using a generated keyword
+        formattingEntry(const label n, const std::string& content)
+        :
+            formattingEntry(defaultName(n), content)
+        {}
+
+        //- Construct with character data, using a generated keyword
+        formattingEntry(const label n, std::string&& content)
+        :
+            formattingEntry(defaultName(n), std::move(content))
+        {}
+
+
+        //- Clone the entry
         virtual autoPtr<entry> clone(const dictionary&) const
         {
             return autoPtr<entry>(new formattingEntry(*this));
         }
 
 
+    // Factory Methods
+
+
     // Member Functions
 
-        //- Write
+        //- Write content without the keyword.
+        //  Special properties:
+        //  - ignores any bad tokens on output.
         virtual void write(Ostream& os) const;
 };
 

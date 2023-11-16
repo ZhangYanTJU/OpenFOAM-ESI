@@ -236,6 +236,7 @@ bool Foam::UOPstreamBase::write(const token& tok)
         case token::tokenType::EXPRESSION :
         case token::tokenType::VARIABLE :
         case token::tokenType::VERBATIM :
+        case token::tokenType::CHAR_DATA :
         {
             putChar(tok.type());
             putString(tok.stringToken());

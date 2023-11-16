@@ -284,11 +284,20 @@ void Foam::primitiveEntry::write(Ostream& os, const bool contentsOnly) const
         os.writeKeyword(keyword());
     }
 
-    bool addSpace = false;  // Separate from previous token with a space
+    // Like FlatOutput::OutputAdaptor write()
+    // with open/close = '\0', separator = token::SPACE
+
+    bool started = false;  // Separate from previous token?
     for (const token& tok : *this)
     {
-        if (addSpace) os << token::SPACE;
-        addSpace = true;
+        if (started)
+        {
+            os << token::SPACE;
+        }
+        else
+        {
+            started = true;
+        }
 
         // Output token with direct handling in Ostream(s),
         // or use normal '<<' output operator

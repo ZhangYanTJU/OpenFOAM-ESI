@@ -374,6 +374,7 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
         case token::tokenType::EXPRESSION :
         case token::tokenType::VARIABLE :
         case token::tokenType::VERBATIM :
+        case token::tokenType::CHAR_DATA :
         {
             string val;
             if (readString(val))

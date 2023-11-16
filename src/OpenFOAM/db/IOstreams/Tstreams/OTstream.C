@@ -69,8 +69,12 @@ Foam::Ostream& Foam::OTstream::writeQuoted
     }
     else if (len > 0)
     {
-        // tokenType::WORD
-        tokens().emplace_back() = word(str, len, false);  // No stripping
+        // Create from std::string with specified type never strips
+        tokens().emplace_back
+        (
+            token::tokenType::WORD,  // or perhaps tokenType::CHAR_DATA ?
+            std::string(str, len)
+        );
     }
 
     return *this;

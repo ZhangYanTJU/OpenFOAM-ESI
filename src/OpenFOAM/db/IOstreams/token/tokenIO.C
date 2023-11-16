@@ -93,6 +93,10 @@ static OS& printTokenInfo(OS& os, const token& tok)
             os  << "verbatim " << tok.stringToken();
         break;
 
+        case token::tokenType::CHAR_DATA:
+            os  << "char_data " << tok.stringToken();
+        break;
+
         case token::tokenType::COMPOUND:
         {
             if (tok.compoundToken().pending())
@@ -149,8 +153,9 @@ Foam::word Foam::token::name(const token::tokenType tokType)
         case token::tokenType::DIRECTIVE: return "directive";
         case token::tokenType::STRING: return "string";
         case token::tokenType::EXPRESSION: return "expression";
-        case token::tokenType::VERBATIM: return "verbatim";
         case token::tokenType::VARIABLE: return "variable";
+        case token::tokenType::VERBATIM: return "verbatim";
+        case token::tokenType::CHAR_DATA: return "char_data";
         case token::tokenType::COMPOUND: return "compound";
         case token::tokenType::ERROR: return "error";
 
@@ -207,7 +212,8 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const token& tok)
         case token::tokenType::DIRECTIVE:
         case token::tokenType::EXPRESSION:
         case token::tokenType::VARIABLE:
-        case token::tokenType::VERBATIMSTRING:
+        case token::tokenType::VERBATIM:
+        case token::tokenType::CHAR_DATA:
             os.write(tok);
         break;
 

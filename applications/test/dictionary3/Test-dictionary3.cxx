@@ -33,9 +33,11 @@ Description
 
 #include "argList.H"
 #include "IOstreams.H"
+#include "IOobject.H"
 #include "dictionary.H"
 #include "vector.H"
 #include "SpanStream.H"
+#include "formattingEntry.H"
 
 using namespace Foam;
 
@@ -60,7 +62,41 @@ int main(int argc, char *argv[])
 
         dictionary dict(is);
 
-        Info<< "input dictionary:" << dict << nl;
+        // Add some more entries
+        {
+            dictionary subdict;
+
+            subdict.add("key", 100);
+
+            // subdict.comment("this would be cool!");
+
+            subdict.add
+            (
+                new formattingEntry(10, "// comment - without newline.")
+            );
+
+            subdict.add
+            (
+                // NB newline must be part of the content!
+                new formattingEntry(11, "// some comment - with newline?\n")
+            );
+
+            subdict.add
+            (
+                // NB newline must be part of the content!
+                new formattingEntry(12, "/* other comment */\n")
+            );
+
+            subdict.add("val", 42);
+
+            dict.add("subdict", std::move(subdict));
+        }
+
+        Info<< "input dictionary:" << nl;
+        IOobject::writeDivider(Info);
+        dict.write(Info, false);
+        IOobject::writeDivider(Info);
+        Info << nl;
 
         Info<< "value: " << dict.get<scalar>("value") << nl;
 

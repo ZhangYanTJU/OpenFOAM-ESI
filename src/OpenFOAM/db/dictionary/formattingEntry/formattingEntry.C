@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2023 Sergey Lesnik
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,11 +27,122 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "formattingEntry.H"
+#include "IOstreams.H"
+
+// * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// Write tokens without keyword, suppress/ignore bad tokens.
+// Mostly like primitiveEntry::write(os, false);
+
+static void writeTokens(Ostream& os, const tokenList& toks)
+{
+    bool started = false;  // Separate from previous token?
+
+    for (const token& tok : toks)
+    {
+        if (!tok.good())  // silently ignore bad tokens
+        {
+            continue;
+        }
+        if (started)
+        {
+            os << token::SPACE;
+        }
+        else
+        {
+            started = true;
+        }
+
+        // Output token with direct handling in Ostream(s),
+        // or use normal '<<' output operator
+        if (!os.write(tok))
+        {
+            os  << tok;
+        }
+
+        if (tok.isCharData())
+        {
+            // If content appears to be a C++ comment
+            // - better make certain that it gets a newline
+            //   or later parsing of it will be a problem
+
+            const auto& s = tok.stringToken();
+            if (s.starts_with("//") && !s.ends_with('\n'))
+            {
+                os << '\n';
+                started = false;  // already have newline as separator
+            }
+        }
+    }
+
+    // Always finish up with a newline?
+    // eg,
+    //
+    //   if (started)
+    //   {
+    //       os  << nl;
+    //   }
+}
+
+} // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::formattingEntry::formattingEntry
+(
+    const keyType& key,
+    const char* s,
+    std::streamsize len
+)
+:
+    primitiveEntry(key, token::undefinedToken)  // Construct with one token
+{
+    if (s)
+    {
+        tokenList::front() =
+            token(token::tokenType::CHAR_DATA, std::string(s, len));
+    }
+}
+
+
+Foam::formattingEntry::formattingEntry
+(
+    const keyType& key,
+    const std::string& content
+)
+:
+    primitiveEntry
+    (
+        key,
+        token(token::tokenType::CHAR_DATA, std::move(content))
+    )
+{}
+
+
+Foam::formattingEntry::formattingEntry
+(
+    const keyType& key,
+    std::string&& content
+)
+:
+    primitiveEntry
+    (
+        key,
+        token(token::tokenType::CHAR_DATA, std::move(content))
+    )
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::formattingEntry::write(Ostream& os) const
 {
-    // os << "This is a formattingEntry\n";
-    primitiveEntry::write(os, true);
+    writeTokens(os, *this);
 }
+
 
 // ************************************************************************* //

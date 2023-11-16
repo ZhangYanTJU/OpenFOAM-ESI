@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -178,6 +178,7 @@ bool Foam::functionEntries::ifeqEntry::equalToken
 
         case token::VARIABLE:
         case token::VERBATIM:
+        case token::CHAR_DATA:
             if (t2.isStringType())
             {
                 return t1.stringToken() == t2.stringToken();

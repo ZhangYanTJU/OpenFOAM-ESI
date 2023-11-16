@@ -35,6 +35,8 @@ Description
 #include "labelList.H"
 #include "scalarList.H"
 #include "DynamicList.H"
+#include "SpanStream.H"
+#include "formattingEntry.H"
 
 using namespace Foam;
 
@@ -240,6 +242,89 @@ int main(int argc, char *argv[])
                 Info<< "assigned: " << ctok1 << nl;
             }
         }
+    }
+
+
+    Info << nl << "Assign / output of CHAR_DATA" << nl << nl;
+
+    {
+        OCharStream obuf;
+
+        // Some content
+        obuf
+            << "// some char data content\n"
+            << 1002 << " " << "abcd" << " "
+            << "def" << " " << 3.14159 << ";\n"
+            << "/* done */";
+
+        token tok;
+
+        {
+            auto v = obuf.view();
+            if (!v.empty())
+            {
+                tok = string(v.data(), v.size());
+                tok.setType(token::tokenType::CHAR_DATA);
+            }
+        }
+
+        Info<< "tok: " << tok.name() << nl << nl;
+
+        // Output like xml:
+        Info<< "<![CDATA[" << tok << "]]>" << endl;
+
+        obuf.rewind();
+
+        obuf.beginBlock("dict1");
+        obuf.writeEntry("entry0", 123);
+        obuf.writeEntry("entry1", 3.14159);
+
+        obuf.beginBlock("subDict");
+        obuf.writeEntry("entry2", 1993);
+        obuf.endBlock();
+
+        obuf.endBlock();
+
+        {
+            auto v = obuf.view();
+            if (!v.empty())
+            {
+                tok = string(v.data(), v.size());
+                tok.setType(token::tokenType::CHAR_DATA);
+            }
+        }
+
+        // Output like xml:
+        Info<< "<![CDATA[" << tok << "]]>" << endl;
+
+
+        formattingEntry entry0(123, string(obuf.view().data(), obuf.size()));
+
+        primitiveEntry entry1
+        (
+            "other",
+            token
+            (
+                token::tokenType::CHAR_DATA,
+                string(obuf.view().data(), obuf.size())
+            )
+        );
+
+        Info<< "printing entry0: " << entry0.keyword() << nl;
+        Info<< "content" << nl << entry0 << nl;
+
+        Info<< "other content" << nl
+            << entry1 << nl;
+
+        // From pointer/length
+        formattingEntry entry2(456, nullptr, 0);
+        Info<< "printing entry2: " << entry2.keyword() << nl;
+        Info<< "content" << nl << entry2 << nl;
+
+        // From pointer/length
+        formattingEntry entry3(23345, obuf.view().data(), obuf.view().size());
+        Info<< "printing entry3: " << entry3.keyword() << nl;
+        Info<< "content" << nl << entry3 << nl;
     }
 
     return 0;

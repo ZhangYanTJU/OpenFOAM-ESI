@@ -78,6 +78,13 @@ bool Foam::OSstream::write(const token& tok)
             return true;
         }
 
+        case token::tokenType::CHAR_DATA :
+        {
+            // Character content - written without quotes
+            writeQuoted(tok.stringToken(), false);
+            return true;
+        }
+
         default:
             break;
     }

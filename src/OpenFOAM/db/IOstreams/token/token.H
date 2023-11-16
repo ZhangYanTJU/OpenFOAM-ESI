@@ -95,12 +95,14 @@ public:
 
         DIRECTIVE,        //!< Word-variant: dictionary \c \#directive
                           //!< stored with sigil
+
         EXPRESSION,       //!< String-variant: math expression for evaluation
                           //!< stored with delimiters
         VARIABLE,         //!< String-variant: dictionary \c \$variable
                           //!< stored with sigil
         VERBATIM,         //!< String-variant: verbatim string content
                           //!< stored without delimiters
+        CHAR_DATA,        //!< String-variant: plain character content
 
         // Aliases
         FLOAT_SCALAR = FLOAT,
@@ -481,6 +483,12 @@ private:
         //- Set as UNDEFINED and zero the union content without any checking
         inline void setUndefined() noexcept;
 
+        //- True if token type corresponds to WORD or WORD-variant.
+        inline static bool is_wordToken(tokenType tokType) noexcept;
+
+        //- True if token type corresponds to STRING or STRING-variant
+        inline static bool is_stringToken(tokenType tokType) noexcept;
+
         // Parse error, expected 'expected', found ...
         void parseError(const char* expected) const;
 
@@ -527,6 +535,16 @@ public:
 
         //- Move construct string token
         inline explicit token(string&& str, label lineNum=0);
+
+        //- Copy construct word/string token with the specified variant.
+        //  A invalid word/string variant type is silently treated as STRING.
+        //  No character stripping
+        inline explicit token(tokenType typ, const std::string&, label line=0);
+
+        //- Copy construct word/string token with the specified variant.
+        //  A invalid word/string variant type is silently treated as STRING.
+        //  No character stripping
+        inline explicit token(tokenType typ, std::string&&, label line=0);
 
         //- Construct from a compound pointer, taking ownership
         inline explicit token(token::compound* ptr, label lineNum=0);
@@ -643,7 +661,8 @@ public:
         //- Token is (quoted) STRING (string variant)
         inline bool isQuotedString() const noexcept;
 
-        //- Token is string-variant (STRING, EXPRESSION, VARIABLE, VERBATIM)
+        //- Token is string-variant
+        //- (STRING, EXPRESSION, VARIABLE, VERBATIM, CHAR_DATA)
         inline bool isString() const noexcept;
 
         //- Token is EXPRESSION (string variant)
@@ -655,8 +674,11 @@ public:
         //- Token is VERBATIM string (string variant)
         inline bool isVerbatim() const noexcept;
 
+        //- Token is CHAR_DATA (string variant)
+        inline bool isCharData() const noexcept;
+
         //- Token is word-variant or string-variant
-        //- (WORD, DIRECTIVE, STRING, EXPRESSION, VARIABLE, VERBATIM)
+        //- (WORD, DIRECTIVE, STRING, EXPRESSION, VARIABLE, VERBATIM, CHAR_DATA)
         inline bool isStringType() const noexcept;
 
         //- Token is COMPOUND
@@ -718,7 +740,7 @@ public:
 
         //- Return const reference to the string contents.
         //  Report FatalIOError and return \b "" if token is not a
-        //  STRING, EXPRESSION, VARIABLE, VERBATIM
+        //  STRING, EXPRESSION, VARIABLE, VERBATIM, CHAR_DATA
         //  or an upcast WORD or DIRECTIVE
         inline const string& stringToken() const;
 

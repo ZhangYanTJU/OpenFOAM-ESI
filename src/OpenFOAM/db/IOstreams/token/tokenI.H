@@ -50,6 +50,29 @@ inline Foam::token Foam::token::flag(int bitmask) noexcept
 }
 
 
+inline bool Foam::token::is_wordToken(tokenType tokType) noexcept
+{
+    return
+    (
+        tokType == tokenType::WORD
+     || tokType == tokenType::DIRECTIVE
+    );
+}
+
+
+inline bool Foam::token::is_stringToken(tokenType tokType) noexcept
+{
+    return
+    (
+        tokType == tokenType::STRING
+     || tokType == tokenType::EXPRESSION
+     || tokType == tokenType::VARIABLE
+     || tokType == tokenType::VERBATIM
+     || tokType == tokenType::CHAR_DATA
+    );
+}
+
+
 inline bool Foam::token::isseparator(int c) noexcept
 {
     // NOTE: keep synchronized with ISstream::read(token&)
@@ -113,6 +136,7 @@ inline Foam::token::token(const token& tok)
 
     switch (type_)
     {
+        // token::isWord()
         case tokenType::WORD:
         case tokenType::DIRECTIVE:
         {
@@ -120,10 +144,12 @@ inline Foam::token::token(const token& tok)
             break;
         }
 
+        // token::isString()
         case tokenType::STRING:
         case tokenType::EXPRESSION:
         case tokenType::VARIABLE:
         case tokenType::VERBATIM:
+        case tokenType::CHAR_DATA:
         {
             data_.stringPtr = new string(*tok.data_.stringPtr);
             break;
@@ -234,6 +260,54 @@ inline Foam::token::token(string&& str, label lineNum)
 }
 
 
+inline Foam::token::token
+(
+    tokenType tokType,
+    const std::string& str,
+    label lineNum
+)
+:
+    data_(),
+    type_(tokenType::STRING),
+    line_(lineNum)
+{
+    if (is_wordToken(tokType))
+    {
+        type_ = tokType;
+        data_.wordPtr = new word(str, false);  // no stripping
+    }
+    else
+    {
+        if (is_stringToken(tokType)) type_ = tokType;
+        data_.stringPtr = new string(str);  // never strips
+    }
+}
+
+
+inline Foam::token::token
+(
+    tokenType tokType,
+    std::string&& str,
+    label lineNum
+)
+:
+    data_(),
+    type_(tokenType::STRING),
+    line_(lineNum)
+{
+    if (is_wordToken(tokType))
+    {
+        type_ = tokType;
+        data_.wordPtr = new word(std::move(str), false);  // no stripping
+    }
+    else
+    {
+        if (is_stringToken(tokType)) type_ = tokType;
+        data_.stringPtr = new string(std::move(str));  // never strips
+    }
+}
+
+
 inline Foam::token::token(token::compound* ptr, label lineNum)
 :
     data_(),
@@ -269,6 +343,7 @@ inline void Foam::token::reset()
 {
     switch (type_)
     {
+        // token::isWord()
         case tokenType::WORD:
         case tokenType::DIRECTIVE:
         {
@@ -276,10 +351,12 @@ inline void Foam::token::reset()
             break;
         }
 
+        // token::isString()
         case tokenType::STRING:
         case tokenType::EXPRESSION:
         case tokenType::VARIABLE:
         case tokenType::VERBATIM:
+        case tokenType::CHAR_DATA:
         {
             delete data_.stringPtr;
             break;
@@ -365,11 +442,13 @@ inline bool Foam::token::setType(token::tokenType tokType) noexcept
         }
         break;
 
+        // token::isWord()
         case tokenType::WORD:
         case tokenType::DIRECTIVE:
         {
             switch (type_)
             {
+                // token::isWord()
                 case tokenType::WORD:
                 case tokenType::DIRECTIVE:
                     type_ = tokType;
@@ -382,18 +461,24 @@ inline bool Foam::token::setType(token::tokenType tokType) noexcept
         }
         break;
 
+        // token::isString()
         case tokenType::STRING:
         case tokenType::EXPRESSION:
         case tokenType::VARIABLE:
         case tokenType::VERBATIM:
+        case tokenType::CHAR_DATA:
         {
             switch (type_)
             {
+                // token::isWord()
                 // could also go from WORD to STRING etc - to be decided
+
+                // token::isString()
                 case tokenType::STRING:
                 case tokenType::EXPRESSION:
                 case tokenType::VARIABLE:
                 case tokenType::VERBATIM:
+                case tokenType::CHAR_DATA:
                     type_ = tokType;
                     return true;
                     break;
@@ -632,11 +717,7 @@ inline Foam::scalar Foam::token::number() const
 
 inline bool Foam::token::isWord() const noexcept
 {
-    return
-    (
-        type_ == tokenType::WORD
-     || type_ == tokenType::DIRECTIVE
-    );
+    return is_wordToken(type_);
 }
 
 
@@ -654,11 +735,7 @@ inline bool Foam::token::isDirective() const noexcept
 
 inline const Foam::word& Foam::token::wordToken() const
 {
-    if
-    (
-        type_ == tokenType::WORD
-     || type_ == tokenType::DIRECTIVE
-    )
+    if (isWord())
     {
         return *data_.wordPtr;
     }
@@ -676,13 +753,7 @@ inline bool Foam::token::isQuotedString() const noexcept
 
 inline bool Foam::token::isString() const noexcept
 {
-    return
-    (
-        type_ == tokenType::STRING
-     || type_ == tokenType::EXPRESSION
-     || type_ == tokenType::VARIABLE
-     || type_ == tokenType::VERBATIM
-    );
+    return is_stringToken(type_);
 }
 
 
@@ -704,6 +775,12 @@ inline bool Foam::token::isVerbatim() const noexcept
 }
 
 
+inline bool Foam::token::isCharData() const noexcept
+{
+    return (type_ == tokenType::CHAR_DATA);
+}
+
+
 inline bool Foam::token::isStringType() const noexcept
 {
     return (isWord() || isString());
@@ -712,21 +789,11 @@ inline bool Foam::token::isStringType() const noexcept
 
 inline const Foam::string& Foam::token::stringToken() const
 {
-    if
-    (
-        type_ == tokenType::STRING
-     || type_ == tokenType::EXPRESSION
-     || type_ == tokenType::VARIABLE
-     || type_ == tokenType::VERBATIM
-    )
+    if (isString())
     {
         return *data_.stringPtr;
     }
-    else if
-    (
-        type_ == tokenType::WORD
-     || type_ == tokenType::DIRECTIVE
-    )
+    else if (isWord())
     {
         // Foam::word derives from Foam::string, no need to cast.
         return *data_.wordPtr;
@@ -736,6 +803,9 @@ inline const Foam::string& Foam::token::stringToken() const
     return string::null;
 }
 
+
+// Could also have reference to stringToken() - eg refStringToken() ?
+// but not really sure where this would be useful...
 
 inline bool Foam::token::isCompound() const noexcept
 {
@@ -869,6 +939,7 @@ inline void Foam::token::operator=(const token& tok)
 
     switch (type_)
     {
+        // token::isWord()
         case tokenType::WORD:
         case tokenType::DIRECTIVE:
         {
@@ -876,10 +947,12 @@ inline void Foam::token::operator=(const token& tok)
         }
         break;
 
+        // token::isString()
         case tokenType::STRING:
         case tokenType::EXPRESSION:
         case tokenType::VARIABLE:
         case tokenType::VERBATIM:
+        case tokenType::CHAR_DATA:
         {
             data_.stringPtr = new string(*tok.data_.stringPtr);
         }
@@ -1022,14 +1095,17 @@ inline bool Foam::token::operator==(const token& tok) const
         case tokenType::DOUBLE:
             return equal(data_.doubleVal, tok.data_.doubleVal);
 
+        // token::isWord()
         case tokenType::WORD:
         case tokenType::DIRECTIVE:
             return *data_.wordPtr == *tok.data_.wordPtr;
 
+        // token::isString()
         case tokenType::STRING:
         case tokenType::EXPRESSION:
         case tokenType::VARIABLE:
         case tokenType::VERBATIM:
+        case tokenType::CHAR_DATA:
             return *data_.stringPtr == *tok.data_.stringPtr;
 
         case tokenType::COMPOUND:
