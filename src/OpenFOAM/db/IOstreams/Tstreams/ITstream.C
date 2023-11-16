@@ -72,7 +72,7 @@ static label parseStream(ISstream& is, tokenList& tokens)
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-Foam::ITstream& Foam::ITstream::emptyStream()
+Foam::ITstream& Foam::ITstream::empty_stream()
 {
     if (emptyStreamPtr_)
     {

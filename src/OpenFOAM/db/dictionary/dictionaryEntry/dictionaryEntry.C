@@ -74,7 +74,7 @@ Foam::ITstream& Foam::dictionaryEntry::stream() const
         << abort(FatalIOError);
 
     // Need to return something - send back an empty stream
-    return ITstream::emptyStream();
+    return ITstream::empty_stream();
 }
 
 

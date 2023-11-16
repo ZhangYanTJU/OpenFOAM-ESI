@@ -478,11 +478,14 @@ int main(int argc, char *argv[])
 
 
         {
-            auto& empty = ITstream::emptyStream();
+            auto& empty = ITstream::empty_stream();
             Info<< "The empty stream:" << nl
                 << "    name: " << empty.name()
                 << " good:" << empty.good()
                 << " content:" << empty << nl;
+
+            const token& tok0 = empty.peek();
+            Info<< "First token from empty:" << tok0.info() << nl;
         }
     }
 

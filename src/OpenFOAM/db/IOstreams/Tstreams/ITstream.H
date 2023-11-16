@@ -197,9 +197,9 @@ public:
         //  The returned stream has no tokens and has a 'bad' state,
         //  to indicate that it is invalid for reading.
         //
-        //  \caution the caller can still modify the its contents,
+        //  \caution the caller is still able to modify its contents,
         //      but they should not do that!
-        static ITstream& emptyStream();
+        static ITstream& empty_stream();
 
         //- Create token list by parsing the input character sequence
         //- until no good tokens remain.
