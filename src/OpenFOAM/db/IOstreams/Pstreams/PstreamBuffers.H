@@ -32,7 +32,7 @@ Description
 
     Use UOPstream to stream data into buffers, call finishedSends() to
     notify that data is in buffers and then use IUPstream to get data out
-    of received buffers. Works with both blocking and nonBlocking. Does
+    of received buffers. Works with both blocking and non-blocking. Does
     not make much sense with scheduled since there you would not need these
     explicit buffers.
 
@@ -151,6 +151,19 @@ class bitSet;
 
 class PstreamBuffers
 {
+    // Private Data Types
+
+        //- Private enumeration for handling PEX stage 1 (sizing) modes
+        enum class modeOption : unsigned char
+        {
+            DEFAULT,    //!< Use statically configured algorithm
+            GATHER,     //!< Use all-to-one (gather) of sizes
+            SCATTER,    //!< Use one-to-all (scatter) of sizes
+            ALL_TO_ALL, //!< Use allToAll to obtain sizes
+            NBX_PEX     //!< Use consensus exchange (NBX) to obtain sizes
+        };
+
+
     // Private Data
 
         //- Track if sends are complete
@@ -190,32 +203,28 @@ class PstreamBuffers
 
     // Private Member Functions
 
+        //- Change status of finished sends called
+        inline void setFinished(bool on) noexcept;
+
         //- Clear 'unregistered' send buffers, tag as being send-ready
         inline void initFinalExchange();
 
         //- Mark all sends as having been done.
-        //  This will start receives (nonBlocking comms).
+        //  This will start receives (non-blocking comms).
         void finalExchange
         (
+            enum modeOption mode,
             const bool wait,
             labelList& recvSizes
         );
 
         //- Mark sends as done.
         //  Only exchange sizes using the neighbour ranks
-        //  (nonBlocking comms).
+        //  (non-blocking comms).
         void finalExchange
         (
             const labelUList& sendProcs,
             const labelUList& recvProcs,
-            const bool wait,
-            labelList& recvSizes
-        );
-
-        //- For all-to-one or one-to-all
-        void finalGatherScatter
-        (
-            const bool isGather,
             const bool wait,
             labelList& recvSizes
         );
@@ -343,17 +352,11 @@ public:
     // Queries
 
         //- True if finishedSends() or finishedNeighbourSends() has been called
-        bool finished() const noexcept
-        {
-            return finishedSendsCalled_;
-        }
+        bool finished() const noexcept;
 
         //- Is clearStorage of individual receive buffer by external hooks
         //- allowed? (default: true)
-        bool allowClearRecv() const noexcept
-        {
-            return allowClearRecv_;
-        }
+        bool allowClearRecv() const noexcept;
 
         //- True if any (local) send buffers have data
         bool hasSendData() const;
@@ -436,74 +439,96 @@ public:
 
     // Regular Functions
 
-        //- Mark sends as done
+        //- Mark the send phase as being finished.
         //
-        //  Non-blocking mode: populates receive buffers (all-to-all).
-        //  \param wait wait for requests to complete (in nonBlocking mode)
+        //  Non-blocking mode: populates receive buffers using all-to-all
+        //  or NBX (depending on tuning parameters).
+        //  \param wait wait for requests to complete (in non-blocking mode)
         void finishedSends(const bool wait = true);
 
-        //- Mark sends as done.
+        //- Mark the send phase as being finished.
+        //
+        //  Non-blocking mode: populates receive buffers using NBX.
+        //  \param wait wait for requests to complete (in non-blocking mode)
+        void finishedSendsNBX(const bool wait = true);
+
+        //- Mark the send phase as being finished.
         //- Recovers the sizes (bytes) received.
         //
-        //  Non-blocking mode: populates receive buffers (all-to-all).
-        //  \param[out] recvSizes the sizes (bytes) received
-        //  \param wait wait for requests to complete (in nonBlocking mode)
+        //  Non-blocking mode: populates receive buffers using all-to-all
+        //  or NBX (depending on tuning parameters).
+        //  \warning currently only valid for non-blocking comms.
+        void finishedSends
+        (
+            //! [out] the sizes (bytes) received
+            labelList& recvSizes,
+            //! wait for requests to complete (in non-blocking mode)
+            const bool wait = true
+        );
+
+        //- Mark the send phase as being finished.
+        //- Recovers the sizes (bytes) received.
         //
-        //  \warning currently only valid for nonBlocking comms.
-        void finishedSends(labelList& recvSizes, const bool wait = true);
+        //  Non-blocking mode: populates receive buffers using NBX.
+        //  \warning currently only valid for non-blocking comms.
+        void finishedSendsNBX
+        (
+            //! [out] the sizes (bytes) received
+            labelList& recvSizes,
+            //! wait for requests to complete (in non-blocking mode)
+            const bool wait = true
+        );
 
 
     // Functions with restricted neighbours
 
-        //- Mark sends as done using subset of send/recv ranks
-        //- and recover the sizes (bytes) received.
+        //- Mark the send phase as being finished, with communication
+        //- being limited to a known subset of send/recv ranks.
         //
         //  Non-blocking mode: populates receive buffers.
         //
-        //  \param neighProcs ranks used for sends/recvs
-        //  \param wait wait for requests to complete (in nonBlocking mode)
-        //
-        //  \warning currently only valid for nonBlocking comms.
+        //  \warning currently only valid for non-blocking comms.
         //  \note Same as finishedSends with identical sendProcs/recvProcs
         void finishedNeighbourSends
         (
+            //! ranks used for sends/recvs
             const labelUList& neighProcs,
+            //! wait for requests to complete (in non-blocking mode)
             const bool wait = true
         );
 
-        //- Mark sends as done using subset of send/recv ranks
-        //- and recover the sizes (bytes) received.
+        //- Mark the send phase as being finished, with communication
+        //- being limited to a known subset of send/recv ranks.
+        //- Recovers the sizes (bytes) received.
         //
         //  Non-blocking mode: it will populate receive buffers.
         //
-        //  \param neighProcs ranks used for sends/recvs
-        //  \param[out] recvSizes the sizes (bytes) received
-        //  \param wait wait for requests to complete (in nonBlocking mode)
-        //
-        //  \warning currently only valid for nonBlocking mode.
+        //  \warning currently only valid for non-blocking mode.
         void finishedNeighbourSends
         (
+            //! ranks used for sends/recvs
             const labelUList& neighProcs,
+            //! [out] the sizes (bytes) received
             labelList& recvSizes,
+            //! wait for requests to complete (in non-blocking mode)
             const bool wait = true
         );
 
         //- A caching version that uses a limited send/recv connectivity.
         //
         //  Non-blocking mode: populates receive buffers.
-        //  \param sendConnections on/off for sending ranks
-        //  \param sendProcs ranks used for sends
-        //  \param recvProcs ranks used for recvs
-        //  \param wait wait for requests to complete (in nonBlocking mode)
-        //
         //  \return True if the send/recv connectivity changed
         //
-        //  \warning currently only valid for nonBlocking comms.
+        //  \warning currently only valid for non-blocking comms.
         bool finishedSends
         (
+            //! inter-rank connections (on/off) for sending ranks
             bitSet& sendConnections,
+            //! ranks used for sends
             DynamicList<label>& sendProcs,
+            //! ranks used for recvs
             DynamicList<label>& recvProcs,
+            //! wait for requests to complete (in non-blocking mode)
             const bool wait = true
         );
 
@@ -515,40 +540,46 @@ public:
         //  Non-blocking mode: populates receive buffers.
         //  Can use recvDataCount, maxRecvCount etc to recover sizes received.
         //
-        //  \param wait wait for requests to complete (in nonBlocking mode)
+        //  \param wait wait for requests to complete (in non-blocking mode)
         //
-        //  \warning currently only valid for nonBlocking comms.
+        //  \warning currently only valid for non-blocking comms.
         void finishedGathers(const bool wait = true);
 
         //- Mark all sends to master as done.
         //- Recovers the sizes (bytes) received.
         //
         //  Non-blocking mode: populates receive buffers (all-to-one).
-        //  \param[out] recvSizes the sizes (bytes) received
-        //  \param wait wait for requests to complete (in nonBlocking mode)
-        //
-        //  \warning currently only valid for nonBlocking comms.
-        void finishedGathers(labelList& recvSizes, const bool wait = true);
+        //  \warning currently only valid for non-blocking comms.
+        void finishedGathers
+        (
+            //! [out] the sizes (bytes) received
+            labelList& recvSizes,
+            //! wait for requests to complete (in non-blocking mode)
+            const bool wait = true
+        );
 
         //- Mark all sends to sub-procs as done.
         //
         //  Non-blocking mode: populates receive buffers.
         //  Can use recvDataCount, maxRecvCount etc to recover sizes received.
         //
-        //  \param wait wait for requests to complete (in nonBlocking mode)
+        //  \param wait wait for requests to complete (in non-blocking mode)
         //
-        //  \warning currently only valid for nonBlocking comms.
+        //  \warning currently only valid for non-blocking comms.
         void finishedScatters(const bool wait = true);
 
         //- Mark all sends to sub-procs as done.
         //- Recovers the sizes (bytes) received.
         //
         //  Non-blocking mode: populates receive buffers (all-to-one).
-        //  \param[out] recvSizes the sizes (bytes) received
-        //  \param wait wait for requests to complete (in nonBlocking mode)
-        //
-        //  \warning currently only valid for nonBlocking comms.
-        void finishedScatters(labelList& recvSizes, const bool wait = true);
+        //  \warning currently only valid for non-blocking comms.
+        void finishedScatters
+        (
+            //! [out] the sizes (bytes) received
+            labelList& recvSizes,
+            //! wait for requests to complete (in non-blocking mode)
+            const bool wait = true
+        );
 };
 
 
