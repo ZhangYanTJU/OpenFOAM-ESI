@@ -63,17 +63,9 @@ void Foam::UPstream::mpiAllGather                                             \
     int count,                                                                \
     const label comm                                                          \
 )                                                                             \
-{}
-
-Pstream_CommonRoutines(char);
-
-#undef Pstream_CommonRoutines
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#undef  Pstream_CommonRoutines
-#define Pstream_CommonRoutines(Native)                                        \
+{}                                                                            \
+                                                                              \
+                                                                              \
 void Foam::UPstream::gather                                                   \
 (                                                                             \
     const Native* sendData,                                                   \

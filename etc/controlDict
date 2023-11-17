@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     | Version:  v2312                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -174,12 +174,13 @@ OptimisationSwitches
     nbx.tuning      0;
 
     // Additional PstreamBuffers tuning parameters (experimental)
-    //   -1 : PEX with all-to-all for buffer sizes and point-to-point
-    //        for contents (legacy approach)
-    //    0 : hybrid PEX with NBX for buffer sizes and point-to-point
-    //        for contents (proposed new approach)
-    //    1 : full NBX for buffer sizes and contents (very experimental)
-    pbufs.tuning   -1;
+    //    0 : (legacy PEX)
+    //        * all-to-all for buffer sizes [legacy approach]
+    //        * point-to-point for contents
+    //    1 : (hybrid PEX)
+    //        * NBX for buffer sizes [new approach]
+    //        * point-to-point for contents
+    pbufs.tuning    0;
 
 
     // =====

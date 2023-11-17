@@ -507,7 +507,7 @@ void Foam::PstreamDetail::allToAllConsensus
 
     if (!UPstream::is_rank(comm))
     {
-        return;
+        return;  // Process not in communicator
     }
 
     const label myProci = UPstream::myProcNo(comm);
@@ -539,11 +539,15 @@ void Foam::PstreamDetail::allToAllConsensus
 
     if (!UPstream::is_parallel(comm))
     {
-        // deep copy
+        // Non-parallel : deep copy
         recvData.deepCopy(sendData);
         return;
     }
 
+    // Fake send/recv for myself
+    {
+        recvData[myProci] = sendData[myProci];
+    }
 
     // Implementation description
     // --------------------------
@@ -562,7 +566,10 @@ void Foam::PstreamDetail::allToAllConsensus
     // This is because we are dealing with a flat list of entries to
     // send and not a sparse Map etc.
 
-    DynamicList<MPI_Request> sendRequests(sendData.size());
+
+    // ------------------------------------------------------------------------
+    // Setup sends
+    // ------------------------------------------------------------------------
 
     profilingPstream::beginTiming();
 
@@ -573,20 +580,16 @@ void Foam::PstreamDetail::allToAllConsensus
         MPI_Barrier(PstreamGlobals::MPICommunicators_[comm]);
     }
 
+    DynamicList<MPI_Request> sendRequests(sendData.size());
 
-    // Start nonblocking synchronous send to process dest
+    // Start nonblocking synchronous send to destination rank
     for (label proci = 0; proci < numProc; ++proci)
     {
         if (sendData[proci] == zeroValue)
         {
             // Do not send/recv empty data
         }
-        else if (proci == myProci)
-        {
-            // Do myself
-            recvData[proci] = sendData[proci];
-        }
-        else
+        else if (proci != myProci)
         {
             // Has data to send
 
@@ -604,7 +607,9 @@ void Foam::PstreamDetail::allToAllConsensus
     }
 
 
+    // ------------------------------------------------------------------------
     // Probe and receive
+    // ------------------------------------------------------------------------
 
     MPI_Request barrierRequest;
 
@@ -721,21 +726,28 @@ void Foam::PstreamDetail::allToAllConsensus
     }
 
     // Initial: clear out everything
-    const Type zeroValue = pTraits<Type>::zero;
     recvBufs.clear();
 
-    if (!UPstream::is_parallel(comm))
+    // Fake send/recv for myself - parallel or non-parallel
     {
-        // Do myself
         const auto iter = sendBufs.find(myProci);
-        if (iter.good() && (iter.val() != zeroValue))
+        if (iter.good())
         {
             // Do myself: insert_or_assign
             recvBufs(iter.key()) = iter.val();
         }
+    }
+
+    if (!UPstream::is_parallel(comm))
+    {
+        // Nothing left to do
         return;
     }
 
+
+    // ------------------------------------------------------------------------
+    // Setup sends
+    // ------------------------------------------------------------------------
 
     // Algorithm NBX: Nonblocking consensus
     // Implementation like above, but sending map data.
@@ -752,7 +764,7 @@ void Foam::PstreamDetail::allToAllConsensus
     }
 
 
-    // Start nonblocking synchronous send to process dest
+    // Start nonblocking synchronous send to destination ranks
 
     // Same as forAllConstIters()
     const auto endIter = sendBufs.cend();
@@ -761,19 +773,8 @@ void Foam::PstreamDetail::allToAllConsensus
         const label proci = iter.key();
         const auto& sendData = iter.val();
 
-        if (sendData == zeroValue)
+        if (proci != myProci && proci >= 0 && proci < numProc)
         {
-            // Do not send/recv empty/zero data
-        }
-        else if (proci == myProci)
-        {
-            // Do myself: insert_or_assign
-            recvBufs(proci) = sendData;
-        }
-        else
-        {
-            // Has data to send
-
             MPI_Issend
             (
                &sendData,
@@ -788,7 +789,9 @@ void Foam::PstreamDetail::allToAllConsensus
     }
 
 
+    // ------------------------------------------------------------------------
     // Probe and receive
+    // ------------------------------------------------------------------------
 
     MPI_Request barrierRequest;
 

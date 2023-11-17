@@ -599,7 +599,7 @@ public:
 
     // Non-blocking exchange
 
-        //- Exchange \em contiguous data using non-blocking consensus
+        //- Exchange \em contiguous data using non-blocking consensus (NBX)
         //- Sends sendData, receives into recvData.
         //
         //  Each entry of the recvBufs list is cleared before receipt.
@@ -614,10 +614,10 @@ public:
             List<Container>& recvBufs,
             const int tag,
             const label comm,
-            const bool wait = true  //!< Wait for requests to complete
+            const bool wait = true  //!< (ignored)
         );
 
-        //- Exchange \em contiguous data using non-blocking consensus
+        //- Exchange \em contiguous data using non-blocking consensus (NBX)
         //- Sends sendData, receives into recvData.
         //
         //  Each \em entry of the recvBufs map is cleared before receipt,
@@ -636,7 +636,23 @@ public:
             Map<Container>& recvBufs,
             const int tag,
             const label comm,
-            const bool wait = true  //!< Wait for requests to complete
+            const bool wait = true  //!< (ignored)
+        );
+
+        //- Exchange \em contiguous data using non-blocking consensus (NBX)
+        //- Sends sendData returns receive information.
+        //
+        //  For \b non-parallel : copy own rank (if it exists and non-empty)
+        //
+        //  \note The message tag should be chosen to be a unique value
+        //  since the implementation uses probing with ANY_SOURCE !!
+        template<class Container, class Type>
+        static Map<Container> exchangeConsensus
+        (
+            const Map<Container>& sendBufs,
+            const int tag,
+            const label comm,
+            const bool wait = true  //!< (ignored)
         );
 };
 

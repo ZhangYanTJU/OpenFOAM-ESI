@@ -44,6 +44,7 @@ SourceFiles
 #include "labelList.H"
 #include "DynamicList.H"
 #include "HashTable.H"
+#include "Map.H"
 #include "Enum.H"
 #include "ListOps.H"
 
@@ -54,9 +55,6 @@ namespace Foam
 
 //- Implementation details for UPstream/Pstream/MPI etc.
 namespace PstreamDetail {}
-
-// Forward Declarations
-template<class T> class Map;
 
 /*---------------------------------------------------------------------------*\
                           Class UPstream Declaration
@@ -968,119 +966,76 @@ public:
         //- Shutdown (finalize) MPI as required and exit program with errNo.
         static void exit(int errNo = 1);
 
-        //- Exchange integer data with all processors (in the communicator).
-        //  \c sendData[proci] is the value to send to proci.
-        //  After return recvData contains the data from the other processors.
-        //  \n
-        //  For \b non-parallel : does a simple copy of sendData to recvData
-        static void allToAll
-        (
-            const UList<int32_t>& sendData,
-            UList<int32_t>& recvData,
-            const label communicator = worldComm
-        );
 
-        //- Exchange integer data with all processors (in the communicator).
-        //  \c sendData[proci] is the value to send to proci.
-        //  After return recvData contains the data from the other processors.
-        //  \n
-        //  For \b non-parallel : does a simple copy of sendData to recvData
-        static void allToAll
-        (
-            const UList<int64_t>& sendData,
-            UList<int64_t>& recvData,
-            const label communicator = worldComm
-        );
+        #undef  Pstream_CommonRoutines
+        #define Pstream_CommonRoutines(Native)                                \
+                                                                              \
+        /*!\brief Exchange \c Native data with all ranks in communicator   */ \
+        /*! \em non-parallel : simple copy of \p sendData to \p recvData   */ \
+        static void allToAll                                                  \
+        (                                                                     \
+            /*! [in] The value at [proci] is sent to proci */                 \
+            const UList<Native>& sendData,                                    \
+            /*! [out] The data received from the other ranks */               \
+            UList<Native>& recvData,                                          \
+            const label communicator = worldComm                              \
+        );                                                                    \
+                                                                              \
+        /*!\brief Exchange \em non-zero \c Native data between ranks [NBX] */ \
+        /*! \p recvData is always initially assigned zero and no non-zero  */ \
+        /*! values are sent/received from other ranks.                     */ \
+        /*! \em non-parallel : simple copy of \p sendData to \p recvData   */ \
+        /*! \note The message tag should be chosen to be a unique value    */ \
+        /*! since the implementation uses probing with ANY_SOURCE !!       */ \
+        /*! An initial barrier may help to avoid synchronisation problems  */ \
+        /*! caused elsewhere (See "nbx.tuning" opt switch)                 */ \
+        static void allToAllConsensus                                         \
+        (                                                                     \
+            /*! [in] The \em non-zero value at [proci] is sent to proci */    \
+            const UList<Native>& sendData,                                    \
+            /*! [out] The non-zero value received from each rank */           \
+            UList<Native>& recvData,                                          \
+            /*! Message tag for the communication */                          \
+            const int tag,                                                    \
+            const label communicator = worldComm                              \
+        );                                                                    \
+                                                                              \
+        /*!\brief Exchange \c Native data between ranks [NBX]              */ \
+        /*! \p recvData map is always cleared initially so a simple check  */ \
+        /*! of its keys is sufficient to determine connectivity.           */ \
+        /*! \em non-parallel : copy own rank (if it exists)                */ \
+        /*! See notes about message tags and "nbx.tuning" opt switch       */ \
+        static void allToAllConsensus                                         \
+        (                                                                     \
+            /*! [in] The value at [proci] is sent to proci. */                \
+            const Map<Native>& sendData,                                      \
+            /*! [out] The values received from given ranks. */                \
+            Map<Native>& recvData,                                            \
+            /*! Message tag for the communication */                          \
+            const int tag,                                                    \
+            const label communicator = worldComm                              \
+        );                                                                    \
+                                                                              \
+        /*!\brief Exchange \c Native data between ranks [NBX]              */ \
+        /*! \returns any received data as a Map                            */ \
+        static Map<Native> allToAllConsensus                                  \
+        (                                                                     \
+            /*! [in] The value at [proci] is sent to proci. */                \
+            const Map<Native>& sendData,                                      \
+            /*! Message tag for the communication */                          \
+            const int tag,                                                    \
+            const label communicator = worldComm                              \
+        )                                                                     \
+        {                                                                     \
+            Map<Native> recvData;                                             \
+            allToAllConsensus(sendData, recvData, tag, communicator);         \
+            return recvData;                                                  \
+        }
 
-        //- Exchange \b non-zero integer data with all ranks in the communicator
-        //- using non-blocking consensus exchange.
-        //  The \c sendData[proci] is the (non-zero) value to send to proci.
-        //  After return recvData contains the non-zero values sent from the
-        //  other processors. The recvData list is always assigned zero before
-        //  receipt and values of zero are never transmitted.
-        //  After return recvData contains the data from the other processors.
-        //  \n
-        //  For \b non-parallel : does a simple copy of sendData to recvData
-        //
-        //  \note The message tag should be chosen to be a unique value
-        //  since the implementation uses probing with ANY_SOURCE !!
-        //  An initial barrier may help to avoid synchronisation problems
-        //  caused elsewhere (See "nbx.tuning" opt switch)
-        static void allToAllConsensus
-        (
-            const UList<int32_t>& sendData,
-            UList<int32_t>& recvData,
-            const int tag,
-            const label communicator = worldComm
-        );
+        Pstream_CommonRoutines(int32_t);
+        Pstream_CommonRoutines(int64_t);
 
-        //- Exchange \b non-zero integer data with all ranks in the communicator
-        //- using non-blocking consensus exchange.
-        //  The \c sendData[proci] is the (non-zero) value to send to proci.
-        //  After return recvData contains the non-zero values sent from the
-        //  other processors. The recvData list is always assigned zero before
-        //  receipt and values of zero are never transmitted.
-        //  After return recvData contains the data from the other processors.
-        //  \n
-        //  For \b non-parallel : does a simple copy of sendData to recvData
-        //
-        //  \note The message tag should be chosen to be a unique value
-        //  since the implementation uses probing with ANY_SOURCE !!
-        //  An initial barrier may help to avoid synchronisation problems
-        //  caused elsewhere (See "nbx.tuning" opt switch)
-        static void allToAllConsensus
-        (
-            const UList<int64_t>& sendData,
-            UList<int64_t>& recvData,
-            const int tag,
-            const label communicator = worldComm
-        );
-
-        //- Exchange \b non-zero integer data with all ranks in the communicator
-        //- using non-blocking consensus exchange.
-        //  The \c sendData[proci] is the (non-zero) value to send to proci.
-        //  After return recvData contains the non-zero values sent from the
-        //  other processors. Since the recvData map always cleared before
-        //  receipt and values of zero are never transmitted, a simple check
-        //  of its keys is sufficient to determine connectivity.
-        //  \n
-        //  For \b non-parallel : copy own rank (if it exists and non-zero)
-        //  from sendData to recvData.
-        //
-        //  \note The message tag should be chosen to be a unique value
-        //  since the implementation uses probing with ANY_SOURCE !!
-        //  An initial barrier may help to avoid synchronisation problems
-        //  caused elsewhere (See "nbx.tuning" opt switch)
-        static void allToAllConsensus
-        (
-            const Map<int32_t>& sendData,
-            Map<int32_t>& recvData,
-            const int tag,
-            const label communicator = worldComm
-        );
-
-        //- Exchange \b non-zero integer data with all ranks in the communicator
-        //- using non-blocking consensus exchange.
-        //  The \c sendData[proci] is the (non-zero) value to send to proci.
-        //  After return recvData contains the non-zero values sent from the
-        //  other processors. Since the recvData map always cleared before
-        //  receipt and values of zero are never transmitted, a simple check
-        //  of its keys is sufficient to determine connectivity.
-        //  \n
-        //  For \b non-parallel : copy own rank (if it exists and non-zero)
-        //  from sendData to recvData.
-        //
-        //  \note The message tag should be chosen to be a unique value
-        //  since the implementation uses probing with ANY_SOURCE !!
-        //  An initial barrier may help to avoid synchronisation problems
-        //  caused elsewhere (See "nbx.tuning" opt switch)
-        static void allToAllConsensus
-        (
-            const Map<int64_t>& sendData,
-            Map<int64_t>& recvData,
-            const int tag,
-            const label communicator = worldComm
-        );
+        #undef Pstream_CommonRoutines
 
 
     // Low-level gather/scatter routines
@@ -1121,13 +1076,7 @@ public:
             /*! Number of send/recv data per rank. Globally consistent! */    \
             int count,                                                        \
             const label communicator = worldComm                              \
-        );
-
-        Pstream_CommonRoutines(char);
-
-
-        #undef  Pstream_CommonRoutines
-        #define Pstream_CommonRoutines(Native)                                \
+        );                                                                    \
                                                                               \
         /*! \brief Receive variable length \c Native data from all ranks */   \
         static void gather                                                    \
