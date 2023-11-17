@@ -300,6 +300,51 @@ bool Foam::expressions::exprValue::read(ITstream& is)
 }
 
 
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+bool Foam::expressions::exprValue::operator==(const exprValue& rhs) const
+{
+    if (typeCode_ != rhs.typeCode_)
+    {
+        // Types must match
+        return false;
+    }
+    else if (this == &rhs)
+    {
+        return true;
+    }
+
+    switch (typeCode_)
+    {
+        #undef  doLocalCode
+        #define doLocalCode(Type, UnusedParam)                        \
+                                                                      \
+        case expressions::valueTypeCode::type_##Type :                \
+        {                                                             \
+            const Type* a = data_.get<Type>();                        \
+            const Type* b = rhs.data_.get<Type>();                    \
+            return (a && b && (*a == *b));                            \
+            break;                                                    \
+        }
+
+        FOR_ALL_EXPR_VALUE_TYPES(doLocalCode);
+        #undef doLocalCode
+
+        // exprValue may only be a subset of valueTypeCode types
+        default: break;
+    }
+
+    return false;
+}
+
+
+bool Foam::expressions::exprValue::operator<(const exprValue& rhs) const
+{
+    // Not yet sortable
+    return false;
+}
+
+
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 Foam::Ostream& Foam::operator<<

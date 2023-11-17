@@ -44,13 +44,14 @@ SourceFiles
 
 #include "exprTraits.H"
 #include "error.H"
+#include "contiguous.H"
 #include "tokenList.H"
 #include "InfoProxy.H"
 #include <typeinfo>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Execute macro for known exprValue types, with more probably ones first
+// Execute macro for known exprValue types, with more frequent ones first
 #undef  FOR_ALL_EXPR_VALUE_TYPES
 #define FOR_ALL_EXPR_VALUE_TYPES(Macro, ...)                                  \
     Macro(scalar, __VA_ARGS__)                                                \
@@ -306,6 +307,40 @@ public:
         void operator=(const Foam::zero) { fill_zero(); }
 
 
+    // Low-level access
+
+        //- Pointer to the data content as byte data
+        const char* cdata_bytes() const noexcept
+        {
+            return reinterpret_cast<const char*>(this);
+        }
+
+        //- Pointer to the data content as byte data
+        char* data_bytes() noexcept
+        {
+            return reinterpret_cast<char*>(this);
+        }
+
+        //- Size of the (contiguous) data content as byte data
+        //- is compile-time constant
+        static constexpr unsigned size_bytes() noexcept
+        {
+            return sizeof(exprValue);
+        }
+
+
+    // Member Functions
+
+        //- Compare (type,value) for equality
+        bool operator==(const exprValue& rhs) const;
+
+        //- Compare (type,value) for inequality
+        bool operator!=(const exprValue& rhs) const { return !(*this == rhs); }
+
+        //- Compare (type,value) - currently not implemented.
+        bool operator<(const exprValue& rhs) const;
+
+
     // Output
 
         //- Return info proxy for printing information to a stream
@@ -323,10 +358,13 @@ public:
 
 } // End namespace expressions
 
+//- The data content are contiguous
+template<> struct is_contiguous<expressions::exprValue> : std::true_type {};
+
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-//- Write value to output stream in ASCII format
+//- Write value to output stream in ASCII format. No output for !good().
 Ostream& operator<<(Ostream& os, const expressions::exprValue& val);
 
 template<>

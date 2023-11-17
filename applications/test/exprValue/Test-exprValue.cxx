@@ -22,12 +22,13 @@ Description
 #include "IOstreams.H"
 #include "ITstream.H"
 #include "exprValue.H"
+#include "Pstream.H"
 
 using namespace Foam;
 
 void printInfo(const expressions::exprValue& val)
 {
-    Info<< "Boxed type:" << int(val.typeCode())
+    Pout<< "Boxed type:" << int(val.typeCode())
         << " (" << val.valueTypeName() << ") good:"
         << val.good() << " => " << val << nl;
 }
@@ -74,15 +75,27 @@ expressions::exprValue tryParse(const std::string& str)
 int main(int argc, char *argv[])
 {
     argList::noBanner();
-    argList::noParallel();
+    argList::noCheckProcessorDirectories();
 
     #include "setRootCase.H"
 
     // Aborts
     // expressions::exprValue value(std::string(""));
 
+    // Regular broadcast doesn't work
+    Info<< "exprValue"
+        << " sizeof:" << sizeof(expressions::exprValue)
+        << " contiguous:" << is_contiguous<expressions::exprValue>::value
+        << nl << nl;
+
     {
         expressions::exprValue value;
+
+        Info<< "exprValue"
+            << " sizeof:" << value.size_bytes()
+            << nl << nl;
+
+        // Info<< "value: " << value << nl;
 
         // Nothing
         printInfo(value);
@@ -102,8 +115,47 @@ int main(int argc, char *argv[])
         value.clear();
         printInfo(value);
 
-        value = 100 * vector(1,0,0);
+        if (UPstream::parRun())
+        {
+            Info<< "Before broadcast" << nl;
+        }
+
+        if (UPstream::master())
+        {
+            value = 100 * vector(1,0,0);
+        }
         printInfo(value);
+
+        expressions::exprValue oldValue(value);
+
+        // Since the IO serialization is not symmetric (in ASCII) there
+        // is no 'operator>>' defined and thus the regular Pstream::broadcast
+        // will not compile.
+        // Even although the data are contiguous and that code branch is never
+        // used.
+
+        // Fails to compile: Pstream::broadcast(value);
+
+        // Broadcast manually
+        UPstream::broadcast
+        (
+            value.data_bytes(),
+            value.size_bytes(),
+            UPstream::worldComm
+        );
+
+        Pout<< "same values: " << (oldValue == value) << nl;
+
+        // Can put them in a Map and write, but reading will not work...
+        Map<expressions::exprValue> map;
+        map(1) = value;
+        Info<< "map: " << map << nl;
+
+        if (UPstream::parRun())
+        {
+            Info<< "After broadcast" << nl;
+            printInfo(value);
+        }
     }
 
 
