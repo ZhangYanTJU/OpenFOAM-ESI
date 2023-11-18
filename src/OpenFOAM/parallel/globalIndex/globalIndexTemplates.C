@@ -30,6 +30,42 @@ License
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
+template<class Addr>
+Foam::labelList
+Foam::globalIndex::calcOffsets
+(
+    const IndirectListBase<label, Addr>& counts,
+    const bool checkOverflow
+)
+{
+    labelList values;
+
+    const label len = counts.size();
+
+    if (len)
+    {
+        values.resize(len+1);
+
+        label start = 0;
+        for (label i = 0; i < len; ++i)
+        {
+            const label count = counts[i];
+
+            values[i] = start;
+            start += count;
+
+            if (checkOverflow && start < values[i])
+            {
+                reportOverflowAndExit(i, values[i], count);
+            }
+        }
+        values[len] = start;
+    }
+
+    return values;
+}
+
+
 template<class SubListType>
 Foam::labelList
 Foam::globalIndex::calcListOffsets

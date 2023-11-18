@@ -257,6 +257,10 @@ public:
         //- Reset to be empty (no offsets)
         inline void clear();
 
+        //- Change the number of entries (nProcs) in the offsets table.
+        //- Extending will fill with empty local sizes.
+        void resize(const label n);
+
         //- Reset from local size, using gather/broadcast
         //- with default/specified communicator if parallel.
         void reset
@@ -509,6 +513,15 @@ public:
         static labelList calcOffsets
         (
             const labelUList& counts,
+            const bool checkOverflow = false
+        );
+
+        //- Calculate offsets from an indirect list of local sizes,
+        //- with optional check for label overflow
+        template<class Addr>
+        static labelList calcOffsets
+        (
+            const IndirectListBase<label, Addr>& counts,
             const bool checkOverflow = false
         );
 

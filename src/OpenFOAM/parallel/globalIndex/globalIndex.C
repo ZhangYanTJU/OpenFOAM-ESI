@@ -336,6 +336,19 @@ Foam::globalIndex::bin
 }
 
 
+void Foam::globalIndex::resize(const label n)
+{
+    if (n < 1)
+    {
+        offsets_.clear();
+    }
+    else
+    {
+        offsets_.resize(n+1, end_value());
+    }
+}
+
+
 void Foam::globalIndex::reset
 (
     const label localSize,

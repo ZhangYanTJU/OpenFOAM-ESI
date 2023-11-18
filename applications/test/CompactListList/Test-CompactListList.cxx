@@ -38,6 +38,8 @@ Description
 #include "SpanStream.H"
 #include "faceList.H"
 
+#include <iterator>  // for back_inserter
+
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -160,6 +162,25 @@ int main(int argc, char *argv[])
 
         faceList fcs2 = compactFcs.unpack<face>();
         Info<< "deserialized:" << fcs2 << endl;
+
+        // Unpack some faces
+        DynamicList<face> extracted(compactFcs.size());
+
+        compactFcs.copy_unpack<face>
+        (
+            std::back_inserter(extracted),
+            2, 2
+        );
+
+        Info<< "copy_unpack 1: " << extracted << nl;
+
+        compactFcs.copy_unpack<face>
+        (
+            std::back_inserter(extracted)
+            // labelRange(2, 1)
+        );
+
+        Info<< "copy_unpack 2: " << extracted << nl;
 
         // From some faces
         IndirectList<face> subfaces(fcs, labelList({2, 4, 1}));
