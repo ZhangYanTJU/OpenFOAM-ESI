@@ -25,6 +25,7 @@ License
 
 Description
     Test slice range
+
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
@@ -157,7 +158,7 @@ int main(int argc, char *argv[])
 
     // Some iterator tests
     {
-        const sliceRange range(25, 8, 3);
+        sliceRange range(25, 8, 3);
 
         auto iter1 = range.begin();
         Info<< nl << "Forward iterator for " << range << nl;
@@ -166,6 +167,16 @@ int main(int argc, char *argv[])
         auto iter2 = range.rbegin();
         Info<< nl << "Reverse iterator for " << range << nl;
         printIteratorTest(iter2);
+
+
+        // Change the start, size
+        range.start() = 5;
+        range.size() = 4;
+
+        iter1 = range.begin();
+
+        Info<< nl << "Forward iterator for " << range << nl;
+        printIteratorTest(iter1);
     }
 
 

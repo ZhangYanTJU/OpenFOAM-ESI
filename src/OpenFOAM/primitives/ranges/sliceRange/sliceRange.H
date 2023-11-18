@@ -112,23 +112,33 @@ public:
 
     // Access
 
-        //- The start value in the range
-        constexpr label start() const noexcept { return start_; }
-
-        //- The size of the range
-        constexpr label size() const noexcept { return size_; }
-
-        //- The stride for the range
-        constexpr label stride() const noexcept { return stride_; }
-
         //- True if range is empty (zero-sized)
         bool empty() const noexcept { return !size_; }
 
         //- True if range has size greater than zero
         bool good() const noexcept { return (size_ > 0); }
 
-        //- The (inclusive) lower value of the range.
-        constexpr label min() const noexcept { return start_; }
+        //- The size of the range
+        label size() const noexcept { return size_; }
+
+        //- Non-const access to size of the range
+        label& size() noexcept { return size_; }
+
+        //- The (inclusive) lower value of the range
+        label start() const noexcept { return start_; }
+
+        //- Non-const access to start of the range
+        label& start() noexcept { return start_; }
+
+        //- The stride for the range
+        label stride() const noexcept { return stride_; }
+
+        //- Non-const access to the stride
+        label& stride() noexcept { return stride_; }
+
+        //- The (inclusive) lower value of the range,
+        //- same as start()
+        label min() const noexcept { return start_; }
 
         //- The (inclusive) upper value of the range.
         //- Ill-defined for an empty range
@@ -195,7 +205,7 @@ public:
         class indexer
         {
             //- The stride when indexing
-            const label stride_;
+            label stride_;
 
             //- The global value
             label value_;
