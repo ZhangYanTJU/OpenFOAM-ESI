@@ -512,6 +512,15 @@ public:
             const bool checkOverflow = false
         );
 
+        //- Calculate offsets from an indirect list of local sizes,
+        //- with optional check for label overflow
+        template<class Addr>
+        static labelList calcOffsets
+        (
+            const IndirectListBase<label, Addr>& counts,
+            const bool checkOverflow = false
+        );
+
         //- Calculate offsets from list of lists,
         //- with optional check for label overflow
         template<class SubListType>

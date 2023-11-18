@@ -358,6 +358,49 @@ public:
 
     // Pack / Unpack
 
+        //- Unpack sub-list copies in the range defined by \p pos and \p len
+        //- with bounding behaviour like List::slice() by copy constructing
+        //- begin at the destination iterator \p d_iter.
+        //
+        // \returns Output iterator to the element in the destination range,
+        //  one past the last element copied.
+        template<class SubListType, class OutputIter>
+        OutputIter copy_unpack
+        (
+            //! [out] The output destination
+            OutputIter d_iter,
+            //! The start of sub-region to copy (no-op if -ve or out-of-range)
+            const label pos = 0,
+            //! The length of sub-region to copy (-ve = until the end)
+            label len = -1
+        ) const;
+
+        //- Unpack sub-list copies in the specified range.
+        //
+        // \returns Output iterator to the element in the destination range,
+        //  one past the last element copied.
+        template<class SubListType, class OutputIter>
+        OutputIter copy_unpack
+        (
+            //! [out] The output destination
+            OutputIter d_iter,
+            //! The sub-region to copy
+            const labelRange& range
+        ) const;
+
+        //- Unpack sub-list copies for the specified indices
+        //
+        // \returns Output iterator to the element in the destination range,
+        //  one past the last element copied.
+        template<class SubListType, class OutputIter>
+        OutputIter copy_unpack
+        (
+            //! [out] The output destination
+            OutputIter d_iter,
+            //! The sub-regions to copy
+            const labelUList& indices
+        ) const;
+
         //- Return non-compact list of lists
         template<class SubListType = List<T>>
         List<SubListType> unpack() const;
@@ -365,6 +408,10 @@ public:
         //- Return non-compact list of lists for the range of sub-lists
         template<class SubListType = List<T>>
         List<SubListType> unpack(const labelRange& range) const;
+
+        //- Return non-compact list of lists for specified indices
+        template<class SubListType = List<T>>
+        List<SubListType> unpack(const labelUList& indices) const;
 
 
     // Assignment
