@@ -83,11 +83,12 @@ class globalIndex
             DynamicList<label>& validBins
         );
 
-        //- Report overflow at specified index
+        //- Report overflow at specified (non-negative) index
         static void reportOverflowAndExit
         (
             const label idx,
-            const labelUList& localLens = labelUList::null()
+            const label prevOffset = -1,  // The last valid offset value
+            const label count = 0         // The count to add to prevOffset
         );
 
 public:
@@ -122,7 +123,7 @@ public:
         //- No communication required
         inline explicit globalIndex(labelList&& listOffsets);
 
-        //- Copy construct from a list of sizes.
+        //- Construct from a list of sizes and calculate the offsets.
         //- No communication required
         inline globalIndex
         (
@@ -265,12 +266,12 @@ public:
             const bool parallel = UPstream::parRun()  //!< use parallel comms
         );
 
-        //- Reset from list of local sizes,
+        //- Reset offsets from a list of local sizes,
         //- with optional check for label overflow.
         //- No communication required
         void reset
         (
-            const labelUList& localLens,
+            const labelUList& counts,
             const bool checkOverflow = false
         );
 
@@ -306,6 +307,9 @@ public:
             const label localSize,
             const label comm = UPstream::worldComm  //!< communicator
         );
+
+        //- Reset the globalIndex. Same as copy assignment.
+        inline void reset(const globalIndex& gi);
 
         //- Alter local size for given processor
         void setLocalSize(const label proci, const label len);
@@ -504,7 +508,7 @@ public:
         //- with optional check for label overflow
         static labelList calcOffsets
         (
-            const labelUList& localLens,
+            const labelUList& counts,
             const bool checkOverflow = false
         );
 
@@ -521,7 +525,7 @@ public:
         //- with optional check for label overflow
         static List<labelRange> calcRanges
         (
-            const labelUList& localLens,
+            const labelUList& counts,
             const bool checkOverflow = false
         );
 
@@ -953,6 +957,27 @@ public:
             const label comm = UPstream::worldComm,  //!< communicator
             const int tag = UPstream::msgType()
         ) const;
+
+
+    // Member Operators
+
+        //- Compare for equality - uses the offsets
+        bool operator==(const globalIndex& rhs) const
+        {
+            return (this->offsets() == rhs.offsets());
+        }
+
+        //- Compare for inequality - uses the offsets
+        bool operator!=(const globalIndex& rhs) const
+        {
+            return !(*this == rhs);
+        }
+
+        //- Compare for less-than - uses the offsets
+        bool operator<(const globalIndex& rhs) const
+        {
+            return (this->offsets() < rhs.offsets());
+        }
 
 
     // IOstream Operators

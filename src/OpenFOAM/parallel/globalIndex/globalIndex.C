@@ -34,16 +34,25 @@ License
 void Foam::globalIndex::reportOverflowAndExit
 (
     const label idx,
-    const labelUList& localLens
+    const label prevOffset,
+    const label count
 )
 {
+    if (idx < 0)
+    {
+        // No overflow tagged
+        return;
+    }
+
     FatalErrorInFunction
         << "Overflow : sum of sizes exceeds labelMax ("
         << labelMax << ") after index " << idx;
 
-    if (!localLens.empty())
+    if (prevOffset >= 0 && count >= 0)
     {
-        FatalError << " of " << flatOutput(localLens);
+        FatalError
+            << " while trying to add (" << count
+            << ") to offset (" << prevOffset << ")";
     }
 
     FatalError
@@ -70,27 +79,29 @@ Foam::globalIndex::calcRange
     }
 
     const label myProci = UPstream::myProcNo(comm);
-    const labelList localLens = UPstream::allGatherValues(localSize, comm);
+    const labelList counts = UPstream::allGatherValues(localSize, comm);
 
     if (checkOverflow)
     {
-        const label len = localLens.size();
+        const label len = counts.size();
 
         label start = 0;
 
         for (label i = 0; i < len; ++i)
         {
+            const label count = counts[i];
+
             if (i == myProci)
             {
                 myRange.start() = start;
             }
 
             const label prev = start;
-            start += localLens[i];
+            start += count;
 
             if (start < prev)
             {
-                reportOverflowAndExit(i, localLens);
+                reportOverflowAndExit(i, prev, count);
             }
         }
     }
@@ -98,8 +109,8 @@ Foam::globalIndex::calcRange
     {
         // std::accumulate
         // (
-        //     localLens.cbegin(),
-        //     localLens.cbegin(myProci),
+        //     counts.cbegin(),
+        //     counts.cbegin(myProci),
         //     label(0)
         // );
 
@@ -107,7 +118,7 @@ Foam::globalIndex::calcRange
 
         for (label i = 0; i < myProci; ++i)
         {
-            start += localLens[i];
+            start += counts[i];
         }
         myRange.start() = start;
     }
@@ -133,27 +144,28 @@ Foam::globalIndex::calcOffset
     }
 
     const label myProci = UPstream::myProcNo(comm);
-    const labelList localLens = UPstream::allGatherValues(localSize, comm);
+    const labelList counts = UPstream::allGatherValues(localSize, comm);
 
     if (checkOverflow)
     {
-        const label len = localLens.size();
+        const label len = counts.size();
 
         label start = 0;
 
         for (label i = 0; i < len; ++i)
         {
+            const label count = counts[i];
             if (i == myProci)
             {
                 myOffset = start;
             }
 
             const label prev = start;
-            start += localLens[i];
+            start += count;
 
             if (start < prev)
             {
-                reportOverflowAndExit(i, localLens);
+                reportOverflowAndExit(i, prev, count);
             }
         }
     }
@@ -161,8 +173,8 @@ Foam::globalIndex::calcOffset
     {
         // std::accumulate
         // (
-        //     localLens.cbegin(),
-        //     localLens.cbegin(myProci),
+        //     counts.cbegin(),
+        //     counts.cbegin(myProci),
         //     label(0)
         // );
 
@@ -170,7 +182,7 @@ Foam::globalIndex::calcOffset
 
         for (label i = 0; i < myProci; ++i)
         {
-            start += localLens[i];
+            start += counts[i];
         }
         myOffset = start;
     }
@@ -182,13 +194,13 @@ Foam::globalIndex::calcOffset
 Foam::labelList
 Foam::globalIndex::calcOffsets
 (
-    const labelUList& localLens,
+    const labelUList& counts,
     const bool checkOverflow
 )
 {
     labelList values;
 
-    const label len = localLens.size();
+    const label len = counts.size();
 
     if (len)
     {
@@ -197,12 +209,13 @@ Foam::globalIndex::calcOffsets
         label start = 0;
         for (label i = 0; i < len; ++i)
         {
+            const label count = counts[i];
             values[i] = start;
-            start += localLens[i];
+            start += count;
 
             if (checkOverflow && start < values[i])
             {
-                reportOverflowAndExit(i, localLens);
+                reportOverflowAndExit(i, values[i], count);
             }
         }
         values[len] = start;
@@ -215,13 +228,13 @@ Foam::globalIndex::calcOffsets
 Foam::List<Foam::labelRange>
 Foam::globalIndex::calcRanges
 (
-    const labelUList& localLens,
+    const labelUList& counts,
     const bool checkOverflow
 )
 {
     List<labelRange> values;
 
-    const label len = localLens.size();
+    const label len = counts.size();
 
     if (len)
     {
@@ -230,12 +243,18 @@ Foam::globalIndex::calcRanges
         label start = 0;
         for (label i = 0; i < len; ++i)
         {
-            values[i].reset(start, localLens[i]);
-            start += localLens[i];
+            const label count = counts[i];
+            values[i].reset(start, count);
+            start += count;
 
-            if (checkOverflow && start < values[i].start())
+            if
+            (
+                checkOverflow
+             && (start < values[i].start())
+             && (i < len-1)  // Do not check the one beyond the end range
+            )
             {
-                reportOverflowAndExit(i, localLens);
+                reportOverflowAndExit(i, values[i].start(), count);
             }
         }
     }
@@ -328,11 +347,11 @@ void Foam::globalIndex::reset
 
     if (len)
     {
-        labelList localLens;
+        labelList counts;
 
         if (parallel && UPstream::parRun())  // or UPstream::is_parallel(comm)
         {
-            localLens = UPstream::allGatherValues(localSize, comm);
+            counts = UPstream::allGatherValues(localSize, comm);
         }
         else
         {
@@ -340,11 +359,11 @@ void Foam::globalIndex::reset
             // TBD: check for (proci >= 0) ?
             const auto proci = UPstream::myProcNo(comm);
 
-            localLens.resize(len, Zero);
-            localLens[proci] = localSize;
+            counts.resize(len, Zero);
+            counts[proci] = localSize;
         }
 
-        reset(localLens, true);  // checkOverflow = true
+        reset(counts, true);  // checkOverflow = true
     }
     else
     {
@@ -356,11 +375,11 @@ void Foam::globalIndex::reset
 
 void Foam::globalIndex::reset
 (
-    const labelUList& localLens,
+    const labelUList& counts,
     const bool checkOverflow
 )
 {
-    const label len = localLens.size();
+    const label len = counts.size();
 
     if (len)
     {
@@ -369,12 +388,13 @@ void Foam::globalIndex::reset
         label start = 0;
         for (label i = 0; i < len; ++i)
         {
+            const label count = counts[i];
             offsets_[i] = start;
-            start += localLens[i];
+            start += count;
 
             if (checkOverflow && start < offsets_[i])
             {
-                reportOverflowAndExit(i, localLens);
+                reportOverflowAndExit(i, offsets_[i], count);
             }
         }
         offsets_[len] = start;
@@ -468,8 +488,8 @@ Foam::label Foam::globalIndex::maxNonLocalSize(const label proci) const
     {
         if (i != proci)
         {
-            const label localLen = (offsets_[i+1] - offsets_[i]);
-            maxLen = max(maxLen, localLen);
+            const label count = (offsets_[i+1] - offsets_[i]);
+            maxLen = max(maxLen, count);
         }
     }
 
@@ -506,17 +526,17 @@ Foam::labelRange Foam::globalIndex::back() const
 }
 
 
-// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
 Foam::Istream& Foam::operator>>(Istream& is, globalIndex& gi)
 {
-    return is >> gi.offsets_;
+    return is >> gi.offsets();
 }
 
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const globalIndex& gi)
 {
-    return os << gi.offsets_;
+    return os << gi.offsets();
 }
 
 

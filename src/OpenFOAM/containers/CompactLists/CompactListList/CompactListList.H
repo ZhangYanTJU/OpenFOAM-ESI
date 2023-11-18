@@ -82,11 +82,12 @@ class CompactListList
 
     // Private Member Functions
 
-        //- Report overflow at specified index
+        //- Report overflow at specified (non-negative) index
         static void reportOverflowAndExit
         (
             const label idx,
-            const labelUList& listSizes = labelUList::null()
+            const label prevOffset = -1,  // The last valid offset value
+            const label count = 0         // The count to add to prevOffset
         );
 
         //- Construct by packing together the list of lists
