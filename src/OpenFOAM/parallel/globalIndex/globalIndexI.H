@@ -467,6 +467,16 @@ inline void Foam::globalIndex::reset
 }
 
 
+inline void Foam::globalIndex::reset(const globalIndex& rhs)
+{
+    if (this == &rhs)
+    {
+        return;  // Self-assignment is a no-op
+    }
+    this->offsets_ = rhs.offsets_;
+}
+
+
 // * * * * * * * * * * * * * * * * Iterators * * * * * * * * * * * * * * * * //
 
 inline Foam::globalIndex::const_iterator::
