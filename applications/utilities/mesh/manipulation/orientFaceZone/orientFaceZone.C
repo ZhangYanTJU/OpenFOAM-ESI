@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
     if (nChanged > 0)
     {
         Info<< "Flipping " << nChanged << " out of "
-            << globalFaces.size() << " faces." << nl << endl;
+            << globalFaces.totalSize() << " faces." << nl << endl;
 
         mesh.faceZones()[zoneName].resetAddressing(faceLabels, newFlipMap);
         if (!mesh.faceZones().write())

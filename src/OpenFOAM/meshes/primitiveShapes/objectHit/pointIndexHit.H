@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -276,19 +276,19 @@ public:
 
         friend Ostream& operator<<(Ostream& os, const PointIndexHit& pHit)
         {
-            if (os.format() == IOstreamOption::ASCII)
-            {
-                os  << pHit.hit_ << token::SPACE
-                    << pHit.point_ << token::SPACE
-                    << pHit.index_;
-            }
-            else
+            if (os.format() == IOstreamOption::BINARY)
             {
                 os.write
                 (
                     reinterpret_cast<const char*>(&pHit),
                     sizeof(PointIndexHit)
                 );
+            }
+            else
+            {
+                os  << pHit.hit_ << token::SPACE
+                    << pHit.point_ << token::SPACE
+                    << pHit.index_;
             }
 
             os.check(FUNCTION_NAME);
@@ -298,11 +298,7 @@ public:
 
         friend Istream& operator>>(Istream& is, PointIndexHit& pHit)
         {
-            if (is.format() == IOstreamOption::ASCII)
-            {
-                is >> pHit.hit_ >> pHit.point_ >> pHit.index_;
-            }
-            else
+            if (is.format() == IOstreamOption::BINARY)
             {
                 // TODO (2019-08-06):
                 // cannot properly handle mixed-precision reading
@@ -313,6 +309,10 @@ public:
                     reinterpret_cast<char*>(&pHit),
                     sizeof(PointIndexHit)
                 );
+            }
+            else
+            {
+                is >> pHit.hit_ >> pHit.point_ >> pHit.index_;
             }
 
             is.check(FUNCTION_NAME);

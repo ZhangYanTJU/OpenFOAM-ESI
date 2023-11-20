@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -462,17 +462,17 @@ void Foam::boundBox::operator&=(const boundBox& bb)
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const boundBox& bb)
 {
-    if (os.format() == IOstreamOption::ASCII)
-    {
-        os << bb.min_ << token::SPACE << bb.max_;
-    }
-    else
+    if (os.format() == IOstreamOption::BINARY)
     {
         os.write
         (
             reinterpret_cast<const char*>(&bb.min_),
             sizeof(boundBox)
         );
+    }
+    else
+    {
+        os << bb.min_ << token::SPACE << bb.max_;
     }
 
     os.check(FUNCTION_NAME);
@@ -482,11 +482,7 @@ Foam::Ostream& Foam::operator<<(Ostream& os, const boundBox& bb)
 
 Foam::Istream& Foam::operator>>(Istream& is, boundBox& bb)
 {
-    if (is.format() == IOstreamOption::ASCII)
-    {
-        is >> bb.min_ >> bb.max_;
-    }
-    else
+    if (is.format() == IOstreamOption::BINARY)
     {
         Detail::readContiguous<boundBox>
         (
@@ -494,6 +490,10 @@ Foam::Istream& Foam::operator>>(Istream& is, boundBox& bb)
             reinterpret_cast<char*>(&bb.min_),
             sizeof(boundBox)
         );
+    }
+    else
+    {
+        is >> bb.min_ >> bb.max_;
     }
 
     is.check(FUNCTION_NAME);

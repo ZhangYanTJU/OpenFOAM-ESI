@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -139,15 +139,7 @@ inline Foam::labelledTri::labelledTri(Istream& is)
 
 inline Foam::Istream& Foam::operator>>(Istream& is, labelledTri& t)
 {
-    if (is.format() == IOstreamOption::ASCII)
-    {
-        is.readBegin("labelledTri");
-
-        is  >> static_cast<triFace&>(t) >> t.index();
-
-        is.readEnd("labelledTri");
-    }
-    else
+    if (is.format() == IOstreamOption::BINARY)
     {
         Detail::readContiguous<labelledTri>
         (
@@ -155,6 +147,14 @@ inline Foam::Istream& Foam::operator>>(Istream& is, labelledTri& t)
             reinterpret_cast<char*>(&t),
             sizeof(labelledTri)
         );
+    }
+    else
+    {
+        is.readBegin("labelledTri");
+
+        is  >> static_cast<triFace&>(t) >> t.index();
+
+        is.readEnd("labelledTri");
     }
 
     is.check(FUNCTION_NAME);
@@ -164,19 +164,19 @@ inline Foam::Istream& Foam::operator>>(Istream& is, labelledTri& t)
 
 inline Foam::Ostream& Foam::operator<<(Ostream& os, const labelledTri& t)
 {
-    if (os.format() == IOstreamOption::ASCII)
-    {
-        os  << token::BEGIN_LIST
-            << static_cast<const triFace&>(t) << token::SPACE << t.index()
-            << token::END_LIST;
-    }
-    else
+    if (os.format() == IOstreamOption::BINARY)
     {
         os.write
         (
             reinterpret_cast<const char*>(&t),
             sizeof(labelledTri)
         );
+    }
+    else
+    {
+        os  << token::BEGIN_LIST
+            << static_cast<const triFace&>(t) << token::SPACE << t.index()
+            << token::END_LIST;
     }
 
     os.check(FUNCTION_NAME);
