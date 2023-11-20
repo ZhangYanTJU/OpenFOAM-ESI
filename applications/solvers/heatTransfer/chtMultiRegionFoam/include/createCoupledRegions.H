@@ -1,6 +1,8 @@
-fvSolution solutionDict(runTime);
-
-bool coupled(solutionDict.getOrDefault("coupledEnergyField", false));
+bool coupled = false;
+{
+    fvSolution solutionDict(runTime);
+    solutionDict.readIfPresent("coupledEnergyField", coupled);
+}
 
 autoPtr<fvMatrix<scalar>> fvMatrixAssemblyPtr;
 
