@@ -480,7 +480,7 @@ Ostream& operator<<(Ostream& os, const sliceRange& range);
 // * * * * * * * * * * * * * * * Global Operators  * * * * * * * * * * * * * //
 
 //- Test for equality of begin/size/slice values
-inline constexpr bool operator==
+inline bool operator==
 (
     const sliceRange& a,
     const sliceRange& b
@@ -498,7 +498,7 @@ inline constexpr bool operator==
 //- Comparison function for sorting, compares the start.
 //  If the start values are equal, compare the sizes.
 //  If the sizes are also equal, compare the strides.
-inline constexpr bool operator<
+inline bool operator<
 (
     const sliceRange& a,
     const sliceRange& b
@@ -526,7 +526,7 @@ inline constexpr bool operator<
 
 // Derived comparisons
 
-inline constexpr bool operator!=
+inline bool operator!=
 (
     const sliceRange& a,
     const sliceRange& b
@@ -536,7 +536,7 @@ inline constexpr bool operator!=
 }
 
 
-inline constexpr bool operator<=
+inline bool operator<=
 (
     const sliceRange& a,
     const sliceRange& b
@@ -545,7 +545,7 @@ inline constexpr bool operator<=
     return !(b < a);
 }
 
-inline constexpr bool operator>
+inline bool operator>
 (
     const sliceRange& a,
     const sliceRange& b
@@ -554,7 +554,7 @@ inline constexpr bool operator>
     return (b < a);
 }
 
-inline constexpr bool operator>=
+inline bool operator>=
 (
     const sliceRange& a,
     const sliceRange& b
