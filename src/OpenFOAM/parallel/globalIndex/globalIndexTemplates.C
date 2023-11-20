@@ -30,6 +30,42 @@ License
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
+template<class Addr>
+Foam::labelList
+Foam::globalIndex::calcOffsets
+(
+    const IndirectListBase<label, Addr>& counts,
+    const bool checkOverflow
+)
+{
+    labelList values;
+
+    const label len = counts.size();
+
+    if (len)
+    {
+        values.resize(len+1);
+
+        label start = 0;
+        for (label i = 0; i < len; ++i)
+        {
+            const label count = counts[i];
+
+            values[i] = start;
+            start += count;
+
+            if (checkOverflow && start < values[i])
+            {
+                reportOverflowAndExit(i, values[i], count);
+            }
+        }
+        values[len] = start;
+    }
+
+    return values;
+}
+
+
 template<class SubListType>
 Foam::labelList
 Foam::globalIndex::calcListOffsets
@@ -49,12 +85,14 @@ Foam::globalIndex::calcListOffsets
         label start = 0;
         for (label i = 0; i < len; ++i)
         {
+            const label count = lists[i].size();
+
             values[i] = start;
-            start += lists[i].size();
+            start += count;
 
             if (checkOverflow && start < values[i])
             {
-                reportOverflowAndExit(i);
+                reportOverflowAndExit(i, values[i], count);
             }
         }
         values[len] = start;
@@ -1005,12 +1043,12 @@ OutputContainer Foam::globalIndex::scatter
         // The globalIndex might be correct on master only,
         // so scatter local sizes to ensure consistency
 
-        const label localLen
+        const label count
         (
             UPstream::listScatterValues<label>(this->localSizes(), comm)
         );
 
-        OutputContainer localData(localLen);
+        OutputContainer localData(count);
         this->scatter(allData, localData, tag, commsType, comm);
 
         return localData;

@@ -82,11 +82,12 @@ class CompactListList
 
     // Private Member Functions
 
-        //- Report overflow at specified index
+        //- Report overflow at specified (non-negative) index
         static void reportOverflowAndExit
         (
             const label idx,
-            const labelUList& listSizes = labelUList::null()
+            const label prevOffset = -1,  // The last valid offset value
+            const label count = 0         // The count to add to prevOffset
         );
 
         //- Construct by packing together the list of lists
@@ -318,18 +319,6 @@ public:
         void setLocalSize(const label rowi, const label len);
 
 
-        //- Redimension - same as resize()
-        inline void setSize(const label mRows);
-
-        //- Redimension - same as resize()
-        inline void setSize(const label mRows, const label nVals);
-
-        //- Redimension - same as resize()
-        inline void setSize(const label mRows, const label nVals, const T&);
-
-        //- Reset sizes - same as resize()
-        inline void setSize(const labelUList& listSizes);
-
         //- Swap contents
         void swap(CompactListList<T>& other);
 
@@ -357,6 +346,49 @@ public:
 
     // Pack / Unpack
 
+        //- Unpack sub-list copies in the range defined by \p pos and \p len
+        //- with bounding behaviour like List::slice() by copy constructing
+        //- begin at the destination iterator \p d_iter.
+        //
+        // \returns Output iterator to the element in the destination range,
+        //  one past the last element copied.
+        template<class SubListType, class OutputIter>
+        OutputIter copy_unpack
+        (
+            //! [out] The output destination
+            OutputIter d_iter,
+            //! The start of sub-region to copy (no-op if -ve or out-of-range)
+            const label pos = 0,
+            //! The length of sub-region to copy (-ve = until the end)
+            label len = -1
+        ) const;
+
+        //- Unpack sub-list copies in the specified range.
+        //
+        // \returns Output iterator to the element in the destination range,
+        //  one past the last element copied.
+        template<class SubListType, class OutputIter>
+        OutputIter copy_unpack
+        (
+            //! [out] The output destination
+            OutputIter d_iter,
+            //! The sub-region to copy
+            const labelRange& range
+        ) const;
+
+        //- Unpack sub-list copies for the specified indices
+        //
+        // \returns Output iterator to the element in the destination range,
+        //  one past the last element copied.
+        template<class SubListType, class OutputIter>
+        OutputIter copy_unpack
+        (
+            //! [out] The output destination
+            OutputIter d_iter,
+            //! The sub-regions to copy
+            const labelUList& indices
+        ) const;
+
         //- Return non-compact list of lists
         template<class SubListType = List<T>>
         List<SubListType> unpack() const;
@@ -364,6 +396,10 @@ public:
         //- Return non-compact list of lists for the range of sub-lists
         template<class SubListType = List<T>>
         List<SubListType> unpack(const labelRange& range) const;
+
+        //- Return non-compact list of lists for specified indices
+        template<class SubListType = List<T>>
+        List<SubListType> unpack(const labelUList& indices) const;
 
 
     // Assignment
@@ -442,11 +478,11 @@ public:
     // Housekeeping
 
         //- Const access to the packed values
-        //FOAM_DEPRECATED_STRICT(2022-03, "values()")
+        FOAM_DEPRECATED_STRICT(2022-03, "values()")
         const List<T>& m() const noexcept { return values_; }
 
         //- Non-const access to the packed values
-        //FOAM_DEPRECATED_STRICT(2022-03, "values()")
+        FOAM_DEPRECATED_STRICT(2022-03, "values()")
         List<T>& m() noexcept { return values_; }
 
         //- Return flat index into packed values
@@ -459,6 +495,30 @@ public:
         label whichColumn(const label rowi, const label i) const
         {
             return this->toLocal(rowi, i);
+        }
+
+        //- Redimension - same as resize()
+        void setSize(const label mRows)
+        {
+            this->resize(mRows);
+        }
+
+        //- Redimension - same as resize()
+        void setSize(const label mRows, const label nVals)
+        {
+            this->resize(mRows, nVals);
+        }
+
+        //- Redimension - same as resize()
+        void setSize(const label mRows, const label nVals, const T& val)
+        {
+            this->resize(mRows, nVals, val);
+        }
+
+        //- Reset sizes - same as resize()
+        void setSize(const labelUList& listSizes)
+        {
+            this->resize(listSizes);
         }
 };
 

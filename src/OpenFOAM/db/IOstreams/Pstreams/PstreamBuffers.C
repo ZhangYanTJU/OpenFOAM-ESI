@@ -36,7 +36,7 @@ License
 int Foam::PstreamBuffers::algorithm
 (
     // Name may change in the future (JUN-2023)
-    Foam::debug::optimisationSwitch("pbufs.tuning", -1)
+    Foam::debug::optimisationSwitch("pbufs.tuning", 0)
 );
 registerOptSwitch
 (
@@ -46,20 +46,19 @@ registerOptSwitch
 );
 
 
-// Simple enumerations
-// -------------------
-static constexpr int algorithm_PEX_allToAll = -1;  // Traditional PEX
-//static constexpr int algorithm_PEX_hybrid = 0;   // Possible new default?
-static constexpr int algorithm_full_NBX = 1;       // Very experimental
-
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+inline void Foam::PstreamBuffers::setFinished(bool on) noexcept
+{
+    finishedSendsCalled_ = on;
+}
+
 
 inline void Foam::PstreamBuffers::initFinalExchange()
 {
     // Could also check that it is not called twice
     // but that is used for overlapping send/recv (eg, overset)
-    finishedSendsCalled_ = true;
+    setFinished(true);
 
     clearUnregistered();
 }
@@ -67,64 +66,148 @@ inline void Foam::PstreamBuffers::initFinalExchange()
 
 void Foam::PstreamBuffers::finalExchange
 (
+    enum modeOption mode,
     const bool wait,
     labelList& recvSizes
 )
 {
     initFinalExchange();
 
+    // Pre-flight checks
+    switch (mode)
+    {
+        case modeOption::DEFAULT :
+        {
+            // Choose (ALL_TO_ALL | NBX_PEX) from static settings
+            mode =
+            (
+                (algorithm <= 0)
+              ? modeOption::ALL_TO_ALL
+              : modeOption::NBX_PEX
+            );
+            break;
+        }
+
+        case modeOption::GATHER :
+        {
+            // gather mode (all-to-one) : master [0] <- everyone
+            // - only send to master [0]
+            // note: master [0] is also allowed to 'send' to itself
+
+            for (label proci = 1; proci < sendBuffers_.size(); ++proci)
+            {
+                sendBuffers_[proci].clear();
+            }
+            break;
+        }
+
+        case modeOption::SCATTER :
+        {
+            // scatter mode (one-to-all) : master [0] -> everyone
+
+            if (!UPstream::master(comm_))
+            {
+                // Non-master: has no sends
+                clearSends();
+            }
+            break;
+        }
+
+        default :
+            break;
+    }
+
+
     if (commsType_ == UPstream::commsTypes::nonBlocking)
     {
-        if
-        (
-            wait
-         && (algorithm >= algorithm_full_NBX)
-         && (UPstream::maxCommsSize <= 0)
-        )
+        // PEX algorithm with different flavours of exchanging sizes
+        // PEX stage 1: exchange sizes
+
+        labelList sendSizes;  // Not used by gather/scatter
+
+        switch (mode)
         {
-            // NBX algorithm (nonblocking exchange)
-            // - when requested and waiting, no data chunking etc
+            case modeOption::GATHER :
+            {
+                // gather mode (all-to-one): master [0] <- everyone
+                // - presumed that MPI_Gather will be the most efficient
 
-            PstreamDetail::exchangeConsensus<DynamicList<char>, char>
-            (
-                sendBuffers_,
-                recvBuffers_,
-                recvSizes,
-                (tag_ + 271828),  // some unique tag?
-                comm_,
-                wait
-            );
+                recvSizes =
+                    UPstream::listGatherValues(sendBuffers_[0].size(), comm_);
 
-            return;
+                if (!UPstream::master(comm_))
+                {
+                    recvSizes.resize_nocopy(nProcs_);
+                    recvSizes = Zero;
+                }
+
+                break;
+            }
+
+            case modeOption::SCATTER :
+            {
+                // scatter mode (one-to-all): master [0] -> everyone
+                // - presumed that MPI_Scatter will be the most efficient
+
+                recvSizes.resize_nocopy(nProcs_);
+
+                if (UPstream::master(comm_))
+                {
+                    forAll(sendBuffers_, proci)
+                    {
+                        recvSizes[proci] = sendBuffers_[proci].size();
+                    }
+                }
+
+                const label myRecv
+                (
+                    UPstream::listScatterValues(recvSizes, comm_)
+                );
+
+                recvSizes = Zero;
+                recvSizes[0] = myRecv;
+
+                break;
+            }
+
+            case modeOption::NBX_PEX :
+            {
+                // Assemble the send sizes (cf. Pstream::exchangeSizes)
+                sendSizes.resize_nocopy(nProcs_);
+                forAll(sendBuffers_, proci)
+                {
+                    sendSizes[proci] = sendBuffers_[proci].size();
+                }
+                recvSizes.resize_nocopy(nProcs_);
+
+                // Exchange sizes (non-blocking consensus)
+                UPstream::allToAllConsensus
+                (
+                    sendSizes,
+                    recvSizes,
+                    (tag_ + 314159),  // some unique tag?
+                    comm_
+                );
+                break;
+            }
+
+            case modeOption::DEFAULT :
+            case modeOption::ALL_TO_ALL :
+            {
+                // Assemble the send sizes (cf. Pstream::exchangeSizes)
+                sendSizes.resize_nocopy(nProcs_);
+                forAll(sendBuffers_, proci)
+                {
+                    sendSizes[proci] = sendBuffers_[proci].size();
+                }
+                recvSizes.resize_nocopy(nProcs_);
+
+                // Exchange sizes (all-to-all)
+                UPstream::allToAll(sendSizes, recvSizes, comm_);
+                break;
+            }
         }
 
-
-        // PEX algorithm with two different flavours of exchanging sizes
-
-        // Assemble the send sizes (cf. Pstream::exchangeSizes)
-        labelList sendSizes(nProcs_);
-        forAll(sendBuffers_, proci)
-        {
-            sendSizes[proci] = sendBuffers_[proci].size();
-        }
-        recvSizes.resize_nocopy(nProcs_);
-
-        if (algorithm == algorithm_PEX_allToAll)
-        {
-            // PEX stage 1: exchange sizes (all-to-all)
-            UPstream::allToAll(sendSizes, recvSizes, comm_);
-        }
-        else
-        {
-            // PEX stage 1: exchange sizes (non-blocking consensus)
-            UPstream::allToAllConsensus
-            (
-                sendSizes,
-                recvSizes,
-                (tag_ + 314159),  // some unique tag?
-                comm_
-            );
-        }
 
         // PEX stage 2: point-to-point data exchange
         Pstream::exchange<DynamicList<char>, char>
@@ -166,7 +249,7 @@ void Foam::PstreamBuffers::finalExchange
                 recvSizes[proci] = 1;  // Connected
             }
 
-            for (label proci=0; proci < nProcs_; ++proci)
+            for (label proci = 0; proci < nProcs_; ++proci)
             {
                 if (!recvSizes[proci])  // Not connected
                 {
@@ -185,93 +268,6 @@ void Foam::PstreamBuffers::finalExchange
             tag_,
             comm_
         );
-
-        // PEX stage 2: point-to-point data exchange
-        Pstream::exchange<DynamicList<char>, char>
-        (
-            sendBuffers_,
-            recvSizes,
-            recvBuffers_,
-            tag_,
-            comm_,
-            wait
-        );
-    }
-}
-
-
-void Foam::PstreamBuffers::finalGatherScatter
-(
-    const bool isGather,
-    const bool wait,
-    labelList& recvSizes
-)
-{
-    initFinalExchange();
-
-    if (isGather)
-    {
-        // gather mode (all-to-one)
-
-        // Only send to master [0]. Master is also allowed to 'send' to itself
-
-        for (label proci=1; proci < sendBuffers_.size(); ++proci)
-        {
-            sendBuffers_[proci].clear();
-        }
-    }
-    else
-    {
-        // scatter mode (one-to-all)
-
-        if (!UPstream::master(comm_))
-        {
-            // Non-master: has no sends
-            clearSends();
-        }
-    }
-
-
-    if (commsType_ == UPstream::commsTypes::nonBlocking)
-    {
-        // Use PEX algorithm
-        // - for a non-sparse gather/scatter, it is presumed that
-        // MPI_Gather/MPI_Scatter will be the most efficient way to
-        // communicate the sizes.
-
-        // PEX stage 1: exchange sizes (gather or scatter)
-        if (isGather)
-        {
-            // gather mode (all-to-one): master [0] <- everyone
-
-            recvSizes =
-                UPstream::listGatherValues(sendBuffers_[0].size(), comm_);
-
-            if (!UPstream::master(comm_))
-            {
-                recvSizes.resize_nocopy(nProcs_);
-                recvSizes = Zero;
-            }
-        }
-        else
-        {
-            // scatter mode (one-to-all): master [0] -> everyone
-
-            recvSizes.resize_nocopy(nProcs_);
-
-            if (UPstream::master(comm_))
-            {
-                forAll(sendBuffers_, proci)
-                {
-                    recvSizes[proci] = sendBuffers_[proci].size();
-                }
-            }
-
-            const label myRecv(UPstream::listScatterValues(recvSizes, comm_));
-
-            recvSizes = Zero;
-            recvSizes[0] = myRecv;
-        }
 
         // PEX stage 2: point-to-point data exchange
         Pstream::exchange<DynamicList<char>, char>
@@ -382,7 +378,7 @@ void Foam::PstreamBuffers::clear()
 {
     clearSends();
     clearRecvs();
-    finishedSendsCalled_ = false;
+    setFinished(false);
 }
 
 
@@ -431,13 +427,13 @@ void Foam::PstreamBuffers::clearStorage()
     }
     recvPositions_ = Zero;
 
-    finishedSendsCalled_ = false;
+    setFinished(false);
 }
 
 
 void Foam::PstreamBuffers::initRegisterSend()
 {
-    if (!finishedSendsCalled_)
+    if (!finished())
     {
         for (label proci = 0; proci < nProcs_; ++proci)
         {
@@ -474,7 +470,7 @@ bool Foam::PstreamBuffers::hasSendData() const
 
 bool Foam::PstreamBuffers::hasRecvData() const
 {
-    if (finishedSendsCalled_)
+    if (finished())
     {
         forAll(recvBuffers_, proci)
         {
@@ -504,7 +500,7 @@ Foam::label Foam::PstreamBuffers::sendDataCount(const label proci) const
 
 Foam::label Foam::PstreamBuffers::recvDataCount(const label proci) const
 {
-    if (finishedSendsCalled_)
+    if (finished())
     {
         const label len(recvBuffers_[proci].size() - recvPositions_[proci]);
 
@@ -529,7 +525,7 @@ Foam::labelList Foam::PstreamBuffers::recvDataCounts() const
 {
     labelList counts(nProcs_, Zero);
 
-    if (finishedSendsCalled_)
+    if (finished())
     {
         forAll(recvBuffers_, proci)
         {
@@ -560,7 +556,7 @@ Foam::label Foam::PstreamBuffers::maxNonLocalRecvCount
 {
     label maxLen = 0;
 
-    if (finishedSendsCalled_)
+    if (finished())
     {
         forAll(recvBuffers_, proci)
         {
@@ -599,7 +595,7 @@ Foam::label Foam::PstreamBuffers::maxNonLocalRecvCount() const
 const Foam::UList<char>
 Foam::PstreamBuffers::peekRecvData(const label proci) const
 {
-    if (finishedSendsCalled_)
+    if (finished())
     {
         const label pos = recvPositions_[proci];
         const label len = recvBuffers_[proci].size();
@@ -625,18 +621,17 @@ Foam::PstreamBuffers::peekRecvData(const label proci) const
 }
 
 
-bool Foam::PstreamBuffers::allowClearRecv(bool on) noexcept
-{
-    bool old(allowClearRecv_);
-    allowClearRecv_ = on;
-    return old;
-}
-
-
 void Foam::PstreamBuffers::finishedSends(const bool wait)
 {
     labelList recvSizes;
-    finalExchange(wait, recvSizes);
+    finalExchange(modeOption::DEFAULT, wait, recvSizes);
+}
+
+
+void Foam::PstreamBuffers::finishedSendsNBX(const bool wait)
+{
+    labelList recvSizes;
+    finalExchange(modeOption::NBX_PEX, wait, recvSizes);
 }
 
 
@@ -649,7 +644,7 @@ void Foam::PstreamBuffers::finishedSends
     // Resize for copying back
     recvSizes.resize_nocopy(sendBuffers_.size());
 
-    finalExchange(wait, recvSizes);
+    finalExchange(modeOption::DEFAULT, wait, recvSizes);
 
     if (commsType_ != UPstream::commsTypes::nonBlocking)
     {
@@ -717,8 +712,9 @@ bool Foam::PstreamBuffers::finishedSends
     if (changed)
     {
         // Update send/recv topology
+
         labelList recvSizes;
-        finishedSends(recvSizes, wait);  // eg, using all-to-all
+        finishedSends(recvSizes, wait);  // modeOption::DEFAULT (eg all-to-all)
 
         // The send ranks
         sendProcs.clear();
@@ -754,14 +750,14 @@ bool Foam::PstreamBuffers::finishedSends
 void Foam::PstreamBuffers::finishedGathers(const bool wait)
 {
     labelList recvSizes;
-    finalGatherScatter(true, wait, recvSizes);
+    finalExchange(modeOption::GATHER, wait, recvSizes);
 }
 
 
 void Foam::PstreamBuffers::finishedScatters(const bool wait)
 {
     labelList recvSizes;
-    finalGatherScatter(false, wait, recvSizes);
+    finalExchange(modeOption::SCATTER, wait, recvSizes);
 }
 
 
@@ -771,7 +767,7 @@ void Foam::PstreamBuffers::finishedGathers
     const bool wait
 )
 {
-    finalGatherScatter(true, wait, recvSizes);
+    finalExchange(modeOption::GATHER, wait, recvSizes);
 
     if (commsType_ != UPstream::commsTypes::nonBlocking)
     {
@@ -793,7 +789,7 @@ void Foam::PstreamBuffers::finishedScatters
     const bool wait
 )
 {
-    finalGatherScatter(false, wait, recvSizes);
+    finalExchange(modeOption::SCATTER, wait, recvSizes);
 
     if (commsType_ != UPstream::commsTypes::nonBlocking)
     {
@@ -806,6 +802,29 @@ void Foam::PstreamBuffers::finishedScatters
         // Note: maybe possible only if using different tag from write started
         // by ~UOPstream. Needs some work.
     }
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Controls
+
+bool Foam::PstreamBuffers::finished() const noexcept
+{
+    return finishedSendsCalled_;
+}
+
+
+bool Foam::PstreamBuffers::allowClearRecv() const noexcept
+{
+    return allowClearRecv_;
+}
+
+
+bool Foam::PstreamBuffers::allowClearRecv(bool on) noexcept
+{
+    bool old(allowClearRecv_);
+    allowClearRecv_ = on;
+    return old;
 }
 
 

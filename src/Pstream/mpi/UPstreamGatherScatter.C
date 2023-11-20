@@ -79,17 +79,8 @@ void Foam::UPstream::mpiAllGather                                             \
         allData, count,                                                       \
         TaggedType, comm                                                      \
     );                                                                        \
-}
-
-Pstream_CommonRoutines(char, MPI_BYTE);
-
-#undef Pstream_CommonRoutines
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#undef  Pstream_CommonRoutines
-#define Pstream_CommonRoutines(Native, TaggedType)                            \
+}                                                                             \
+                                                                              \
 void Foam::UPstream::gather                                                   \
 (                                                                             \
     const Native* sendData,                                                   \

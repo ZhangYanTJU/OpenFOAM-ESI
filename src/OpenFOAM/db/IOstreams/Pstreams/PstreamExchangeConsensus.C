@@ -46,21 +46,19 @@ namespace Foam
 namespace PstreamDetail
 {
 
-//- Exchange \em contiguous data using non-blocking consensus exchange
+//- Exchange \em contiguous data using non-blocking consensus exchange (NBX)
 //- with optional tracking of the receive sizes.
 //
 //  No internal guards or resizing - data containers are all properly
 //  sized before calling.
 //
-//  \param[in]  sendBufs  The send buffers list (size: numProcs)
-//  \param[out] recvBufs  The recv buffers list (size: numProcs)
-//  \param[out] recvSizes The recv sizes (size: 0 or numProcs).
+//  \param[in]  sendBufs  The send buffers list (size: numProc)
+//  \param[out] recvBufs  The recv buffers list (size: numProc)
+//  \param[out] recvSizes The recv sizes (size: 0 or numProc).
 //     This parameter can be an empty list, in which case the receive sizes
 //     are not returned.
 //  \param tag   The message tag
 //  \param comm  The communicator
-//  \param wait  Wait for non-blocking receives to complete
-//  \param recvCommType If blocking or (default) non-blocking
 
 template<class Container, class Type>
 void exchangeConsensus
@@ -69,20 +67,17 @@ void exchangeConsensus
     UList<Container>& recvBufs,
     labelUList& recvSizes,
     const int tag,
-    const label comm,
-    const bool wait = true,
-    const UPstream::commsTypes recvCommType = UPstream::commsTypes::nonBlocking
+    const label comm
 )
 {
     static_assert(is_contiguous<Type>::value, "Contiguous data only!");
 
     const bool initialBarrier = (UPstream::tuning_NBX_ > 0);
 
-    const label startOfRequests = UPstream::nRequests();
     const label myProci = UPstream::myProcNo(comm);
     const label numProc = UPstream::nProcs(comm);
 
-    // Initial: clear all receive information
+    // Initial: clear all receive locations
     for (auto& buf : recvBufs)
     {
         buf.clear();
@@ -98,27 +93,36 @@ void exchangeConsensus
     if (sendBufs.size() > numProc)
     {
         FatalErrorInFunction
-            << "Send buffers:" << sendBufs.size() << " > numProcs:" << numProc
+            << "Send buffers:" << sendBufs.size() << " > numProc:" << numProc
             << Foam::abort(FatalError);
     }
     if (recvBufs.size() < numProc)
     {
         FatalErrorInFunction
-            << "Recv buffers:" << recvBufs.size() << " < numProcs:" << numProc
+            << "Recv buffers:" << recvBufs.size() << " < numProc:" << numProc
             << Foam::abort(FatalError);
     }
     // #endif
 
-    if (!UPstream::is_parallel(comm))
+    // Fake send/recv for myself - parallel or non-parallel
     {
-        // Do myself
         recvBufs[myProci] = sendBufs[myProci];
         if (myProci < recvSizes.size())
         {
             recvSizes[myProci] = recvBufs.size();
         }
+    }
+
+    if (!UPstream::is_parallel(comm))
+    {
+        // Nothing left to do
         return;
     }
+
+
+    // ------------------------------------------------------------------------
+    // Setup sends
+    // ------------------------------------------------------------------------
 
     // An initial barrier may help to avoid synchronisation problems
     // caused elsewhere
@@ -127,11 +131,12 @@ void exchangeConsensus
         UPstream::barrier(comm);
     }
 
+
     // Algorithm NBX: Nonblocking consensus with List containers
 
     DynamicList<UPstream::Request> sendRequests(sendBufs.size());
 
-    // Start nonblocking synchronous send to processor dest
+    // Start nonblocking synchronous send to destination ranks
     for (label proci = 0; proci < numProc; ++proci)
     {
         const auto& sendData = sendBufs[proci];
@@ -140,19 +145,8 @@ void exchangeConsensus
         {
             // Do not send/recv empty data
         }
-        else if (proci == myProci)
+        else if (proci != myProci)
         {
-            // Do myself
-            recvBufs[proci] = sendData;
-            if (proci < recvSizes.size())
-            {
-                recvSizes[proci] = sendData.size();
-            }
-        }
-        else
-        {
-            // Has data to send.
-            // The MPI send requests are tracked on a local list
             UOPstream::write
             (
                 sendRequests.emplace_back(),
@@ -167,7 +161,15 @@ void exchangeConsensus
     }
 
 
+    // ------------------------------------------------------------------------
     // Probe and receive
+    // ------------------------------------------------------------------------
+    //
+    // When receiving can use resize() instead of resize_nocopy() since the
+    // slots were already initially cleared.
+    // The resize() also works fine with FixedList since it will
+    // corresponds to a no-op: send and recv sizes will always be
+    // identical to its fixed size() / max_size()
 
     UPstream::Request barrierRequest;
 
@@ -191,17 +193,16 @@ void exchangeConsensus
             const label count = (probed.second / sizeof(Type));
 
             auto& recvData = recvBufs[proci];
-            recvData.resize_nocopy(count);
+            recvData.resize(count);  // OK with resize() instead of _nocopy()
 
             if (proci < recvSizes.size())
             {
                 recvSizes[proci] = count;
             }
 
-            // Any non-blocking MPI recv requests are tracked on internal stack
             UIPstream::read
             (
-                recvCommType,
+                UPstream::commsTypes::blocking,
                 proci,
                 recvData.data_bytes(),
                 recvData.size_bytes(),
@@ -229,26 +230,18 @@ void exchangeConsensus
             }
         }
     }
-
-    // Wait for non-blocking receives to finish
-    if (wait && recvCommType == UPstream::commsTypes::nonBlocking)
-    {
-        UPstream::waitRequests(startOfRequests);
-    }
 }
 
 
-//- Exchange \em contiguous data using non-blocking consensus exchange.
+//- Exchange \em contiguous data using non-blocking consensus exchange (NBX)
 //
 //  No internal guards - the sending Map corresponds to a segment of
-//  0-numProcs.
+//  0-numProc.
 //
-//  \param[in]  sendBufs  The send buffers map (addr: 0-numProcs)
+//  \param[in]  sendBufs  The send buffers map (addr: 0-numProc)
 //  \param[out] recvBufs  The recv buffers map
 //  \param tag   The message tag
 //  \param comm  The communicator
-//  \param wait  Wait for non-blocking receives to complete
-//  \param recvCommType If blocking or (default) non-blocking
 
 template<class Container, class Type>
 void exchangeConsensus
@@ -256,17 +249,17 @@ void exchangeConsensus
     const Map<Container>& sendBufs,
     Map<Container>& recvBufs,
     const int tag,
-    const label comm,
-    const bool wait = true,
-    const UPstream::commsTypes recvCommType = UPstream::commsTypes::nonBlocking
+    const label comm
 )
 {
     static_assert(is_contiguous<Type>::value, "Contiguous data only!");
 
-    const label startOfRequests = UPstream::nRequests();
-    const label myProci = UPstream::myProcNo(comm);
+    // TDB: const bool initialBarrier = (UPstream::tuning_NBX_ > 0);
 
-    // Initial: clear out receive 'slots'
+    const label myProci = UPstream::myProcNo(comm);
+    const label numProc = UPstream::myProcNo(comm);
+
+    // Initial: clear all receive locations
     // Preferrable to clear out the map entries instead of the map itself
     // since this can potentially preserve allocated space
     // (eg DynamicList entries) between calls
@@ -276,9 +269,13 @@ void exchangeConsensus
         iter.val().clear();
     }
 
-    if (!UPstream::is_parallel(comm))
+    if (!UPstream::is_rank(comm))
     {
-        // Do myself
+        return;  // Process not in communicator
+    }
+
+    // Fake send/recv for myself - parallel or non-parallel
+    {
         const auto iter = sendBufs.find(myProci);
         if (iter.good())
         {
@@ -290,43 +287,38 @@ void exchangeConsensus
                 recvBufs(iter.key()) = sendData;
             }
         }
+    }
+
+    if (!UPstream::is_parallel(comm))
+    {
+        // Nothing left to do
         return;
     }
+
+
+    // ------------------------------------------------------------------------
+    // Setup sends
+    // ------------------------------------------------------------------------
+
+    // TDB: initialBarrier ...
 
 
     // Algorithm NBX: Nonblocking consensus with Map (HashTable) containers
 
     DynamicList<UPstream::Request> sendRequests(sendBufs.size());
 
-    // Start nonblocking synchronous send to process dest
+    // Start nonblocking synchronous send to destination ranks
     forAllConstIters(sendBufs, iter)
     {
         const label proci = iter.key();
         const auto& sendData = iter.val();
 
-        #ifdef FULLDEBUG
-        if (proci >= UPstream::nProcs(comm))
+        if (sendData.empty() || proci < 0 || proci >= numProc)
         {
-            FatalErrorInFunction
-                << "Send buffer:" << proci << " >= numProcs:"
-                << UPstream::nProcs(comm)
-                << Foam::abort(FatalError);
+            // Do not send/recv empty data or invalid destinations
         }
-        #endif
-
-        if (sendData.empty())
+        else if (proci != myProci)
         {
-            // Do not send/recv empty data
-        }
-        else if (proci == myProci)
-        {
-            // Do myself: insert_or_assign
-            recvBufs(proci) = sendData;
-        }
-        else
-        {
-            // Has data to send.
-            // The MPI send requests are tracked on a local list
             UOPstream::write
             (
                 sendRequests.emplace_back(),
@@ -341,7 +333,15 @@ void exchangeConsensus
     }
 
 
+    // ------------------------------------------------------------------------
     // Probe and receive
+    // ------------------------------------------------------------------------
+    //
+    // When receiving can use resize() instead of resize_nocopy() since the
+    // slots were already initially cleared.
+    // The resize() also works fine with FixedList since it will
+    // corresponds to a no-op: send and recv sizes will always be
+    // identical to its fixed size() / max_size()
 
     UPstream::Request barrierRequest;
 
@@ -365,12 +365,11 @@ void exchangeConsensus
             const label count = (probed.second / sizeof(Type));
 
             auto& recvData = recvBufs(proci);
-            recvData.resize_nocopy(count);
+            recvData.resize(count);  // OK with resize() instead of _nocopy()
 
-            // Any non-blocking MPI recv requests are tracked on internal stack
             UIPstream::read
             (
-                recvCommType,
+                UPstream::commsTypes::blocking,
                 proci,
                 recvData.data_bytes(),
                 recvData.size_bytes(),
@@ -397,12 +396,6 @@ void exchangeConsensus
             }
         }
     }
-
-    // Wait for non-blocking receives to finish
-    if (wait && recvCommType == UPstream::commsTypes::nonBlocking)
-    {
-        UPstream::waitRequests(startOfRequests);
-    }
 }
 
 } // namespace PstreamDetail
@@ -418,7 +411,7 @@ void Foam::Pstream::exchangeConsensus
     List<Container>& recvBufs,
     const int tag,
     const label comm,
-    const bool wait
+    const bool /* wait (ignored) */
 )
 {
     static_assert(is_contiguous<Type>::value, "Contiguous data only!");
@@ -427,7 +420,7 @@ void Foam::Pstream::exchangeConsensus
     {
         FatalErrorInFunction
             << "Send buffers size:" << sendBufs.size()
-            << " != numProcs:" << UPstream::nProcs(comm)
+            << " != numProc:" << UPstream::nProcs(comm)
             << Foam::abort(FatalError);
     }
 
@@ -435,14 +428,13 @@ void Foam::Pstream::exchangeConsensus
     recvBufs.resize_nocopy(sendBufs.size());
     labelList dummyRecvSizes;
 
-    PstreamDetail::exchangeConsensus
+    PstreamDetail::exchangeConsensus<Container, Type>
     (
         sendBufs,
         recvBufs,
         dummyRecvSizes,
         tag,
-        comm,
-        wait
+        comm
     );
 }
 
@@ -454,19 +446,44 @@ void Foam::Pstream::exchangeConsensus
     Map<Container>& recvBufs,
     const int tag,
     const label comm,
-    const bool wait
+    const bool  /* wait (ignored) */
 )
 {
     static_assert(is_contiguous<Type>::value, "Contiguous data only!");
 
-    PstreamDetail::exchangeConsensus
+    PstreamDetail::exchangeConsensus<Container, Type>
     (
         sendBufs,
         recvBufs,
         tag,
-        comm,
-        wait
+        comm
     );
+}
+
+
+template<class Container, class Type>
+Foam::Map<Container>
+Foam::Pstream::exchangeConsensus
+(
+    const Map<Container>& sendBufs,
+    const int tag,
+    const label comm,
+    const bool  /* wait (ignored) */
+)
+{
+    Map<Container> recvBufs;
+
+    static_assert(is_contiguous<Type>::value, "Contiguous data only!");
+
+    PstreamDetail::exchangeConsensus<Container, Type>
+    (
+        sendBufs,
+        recvBufs,
+        tag,
+        comm
+    );
+
+    return recvBufs;
 }
 
 

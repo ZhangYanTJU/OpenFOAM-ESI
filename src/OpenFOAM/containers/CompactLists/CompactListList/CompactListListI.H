@@ -364,12 +364,10 @@ inline void Foam::CompactListList<T>::resize(const label mRows)
     }
     else if (mRows > size())
     {
-        // Grow
-        FatalErrorInFunction
-            << "Cannot be used to extend the list from " << size()
-            << " to " << mRows << nl
-            << "    Please use a different resize() function"
-            << abort(FatalError);
+        // Extend number of rows, each with local size of 0
+        const label endOffset = offsets_.empty() ? 0 : offsets_.back();
+
+        offsets_.resize(mRows+1, endOffset);
     }
 }
 
@@ -381,9 +379,17 @@ inline void Foam::CompactListList<T>::resize
     const label nVals
 )
 {
-    offsets_.resize(mRows+1, Zero);
-    values_.resize(nVals);
-    // Optionally: enforceSizeSanity();
+    if (mRows < 1)
+    {
+        // Enforce sizing sanity
+        offsets_.clear();
+        values_.clear();
+    }
+    else
+    {
+        offsets_.resize(mRows+1, Zero);
+        values_.resize(nVals);
+    }
 }
 
 
@@ -394,9 +400,17 @@ inline void Foam::CompactListList<T>::resize_nocopy
     const label nVals
 )
 {
-    offsets_.resize(mRows+1, Zero);
-    values_.resize_nocopy(nVals);
-    // Optionally: enforceSizeSanity();
+    if (mRows < 1)
+    {
+        // Enforce sizing sanity
+        offsets_.clear();
+        values_.clear();
+    }
+    else
+    {
+        offsets_.resize(mRows+1, Zero);
+        values_.resize_nocopy(nVals);
+    }
 }
 
 
@@ -408,49 +422,17 @@ inline void Foam::CompactListList<T>::resize
     const T& val
 )
 {
-    offsets_.resize(mRows+1, Zero);
-    values_.resize(nVals, val);
-    // Optionally: enforceSizeSanity();
-}
-
-
-template<class T>
-inline void Foam::CompactListList<T>::setSize(const label mRows)
-{
-    this->resize(mRows);
-}
-
-
-template<class T>
-inline void Foam::CompactListList<T>::setSize
-(
-    const label mRows,
-    const label nVals
-)
-{
-    this->resize(mRows+1, nVals);
-}
-
-
-template<class T>
-inline void Foam::CompactListList<T>::setSize
-(
-    const label mRows,
-    const label nVals,
-    const T& val
-)
-{
-    this->resize(mRows+1, nVals, val);
-}
-
-
-template<class T>
-inline void Foam::CompactListList<T>::setSize
-(
-    const labelUList& listSizes
-)
-{
-    this->resize(listSizes);
+    if (mRows < 1)
+    {
+        // Enforce sizing sanity
+        offsets_.clear();
+        values_.clear();
+    }
+    else
+    {
+        offsets_.resize(mRows+1, Zero);
+        values_.resize(nVals, val);
+    }
 }
 
 

@@ -35,16 +35,25 @@ template<class T>
 void Foam::CompactListList<T>::reportOverflowAndExit
 (
     const label idx,
-    const labelUList& localLens
+    const label prevOffset,
+    const label count
 )
 {
+    if (idx < 0)
+    {
+        // No overflow tagged
+        return;
+    }
+
     FatalErrorInFunction
         << "Overflow : sum of sizes exceeds labelMax ("
         << labelMax << ") after index " << idx;
 
-    if (!localLens.empty())
+    if (prevOffset >= 0 && count >= 0)
     {
-        FatalError << " of " << flatOutput(localLens);
+        FatalError
+            << " while trying to add (" << count
+            << ") to offset (" << prevOffset << ")";
     }
 
     FatalError
@@ -76,12 +85,14 @@ Foam::CompactListList<T> Foam::CompactListList<T>::pack_impl
 
         for (label i = 0; i < len; ++i)
         {
+            const label count = lists[i].size();
+
             newOffsets[i] = total;
-            total += lists[i].size();
+            total += count;
 
             if (checkOverflow && total < newOffsets[i])
             {
-                reportOverflowAndExit(i);
+                reportOverflowAndExit(i, newOffsets[i], count);
             }
         }
         newOffsets[len] = total;
@@ -162,12 +173,14 @@ Foam::label Foam::CompactListList<T>::resize_offsets
 
         for (label i = 0; i < len; ++i)
         {
+            const label count = listSizes[i];
+
             offsets_[i] = total;
-            total += listSizes[i];
+            total += count;
 
             if (checkOverflow && total < offsets_[i])
             {
-                reportOverflowAndExit(i, listSizes);
+                reportOverflowAndExit(i, offsets_[i], count);
             }
         }
 
@@ -229,8 +242,8 @@ Foam::label Foam::CompactListList<T>::maxNonLocalSize(const label rowi) const
     {
         if (i != rowi)
         {
-            const label localLen = (offsets_[i+1] - offsets_[i]);
-            maxLen = max(maxLen, localLen);
+            const label count = (offsets_[i+1] - offsets_[i]);
+            maxLen = max(maxLen, count);
         }
     }
 
@@ -381,16 +394,79 @@ void Foam::CompactListList<T>::transfer
 
 
 template<class T>
+template<class SubListType, class OutputIter>
+OutputIter Foam::CompactListList<T>::copy_unpack
+(
+    OutputIter d_iter,
+    const label pos,
+    label len
+) const
+{
+    if (pos >= 0 && pos < this->size())
+    {
+        // Change sub-length to (one-past) end position
+        // len == -1 (like std::string::npos) - search until end
+
+        if (len > 0) len += pos;
+        if (len < 0 || len > this->size())
+        {
+            len = this->size();
+        }
+
+        for (label i = pos; i < len; ++i)
+        {
+            *d_iter = SubListType(this->localList(i));
+            ++d_iter;
+        }
+    }
+
+    return d_iter;
+}
+
+
+template<class T>
+template<class SubListType, class OutputIter>
+OutputIter Foam::CompactListList<T>::copy_unpack
+(
+    OutputIter d_iter,
+    const labelRange& range
+) const
+{
+    return this->copy_unpack<SubListType>(d_iter, range.start(), range.size());
+}
+
+
+template<class T>
+template<class SubListType, class OutputIter>
+OutputIter Foam::CompactListList<T>::copy_unpack
+(
+    OutputIter d_iter,
+    const labelUList& indices
+) const
+{
+    for (label i : indices)
+    {
+        *d_iter = SubListType(this->localList(i));
+        ++d_iter;
+    }
+
+    return d_iter;
+}
+
+
+// Could also support copy_unpack() with IndirectListBase, as required...
+// or the caller can also just use copy_unpack with len = 1 and the
+// desired position
+
+
+template<class T>
 template<class SubListType>
 Foam::List<SubListType>
 Foam::CompactListList<T>::unpack() const
 {
     List<SubListType> lists(size());
 
-    forAll(lists, i)
-    {
-        lists[i] = SubListType(this->localList(i));
-    }
+    this->copy_unpack<SubListType>(lists.begin());
 
     return lists;
 }
@@ -403,16 +479,24 @@ Foam::CompactListList<T>::unpack(const labelRange& range) const
 {
     List<SubListType> lists(range.size());
 
-    auto iter = lists.begin();
-
-    for (const label i : range)
-    {
-        *iter = SubListType(this->localList(i));
-        ++iter;
-    }
+    this->copy_unpack<SubListType>(lists.begin(), range.start(), range.size());
 
     return lists;
 }
+
+
+template<class T>
+template<class SubListType>
+Foam::List<SubListType>
+Foam::CompactListList<T>::unpack(const labelUList& indices) const
+{
+    List<SubListType> lists(indices.size());
+
+    this->copy_unpack<SubListType>(lists.begin(), indices);
+
+    return lists;
+}
+
 
 
 // ************************************************************************* //

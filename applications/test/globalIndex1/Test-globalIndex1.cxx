@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    globalIndexTest
+    Test-globalIndex1
 
 Description
     Simple tests for the globalIndex class.
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     #include "createPolyMesh.H"
 
     // Global numbering of cells (proc0 elements first, then proc1, etc.)
-    globalIndex globalNumbering(mesh.nCells());
+    const globalIndex globalNumbering(mesh.nCells());
 
     Pout<< "local-offset: " << globalIndex::calcOffset(mesh.nCells()) << nl;
     Pout<< "local-range: " << globalIndex::calcRange(mesh.nCells()) << nl;
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 
 
     // Get a few cell indices
-    const label nTotalCells = globalNumbering.size();
+    const label nTotalCells = globalNumbering.totalSize();
 
     Random rndGen(UPstream::myProcNo());
     DynamicList<label> globalIDs;
