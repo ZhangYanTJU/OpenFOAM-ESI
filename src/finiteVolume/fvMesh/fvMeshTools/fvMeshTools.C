@@ -760,12 +760,19 @@ Foam::fvMeshTools::loadOrCreateMeshImpl
         const label oldNumProcs = fileHandler().nProcs();
         const int oldCache = fileOperation::cacheLevel(0);
 
+        const fileName facesInstance = io.time().findInstance
+        (
+            meshSubDir,
+            "faces",
+            IOobject::MUST_READ
+        );
+
         patchEntries = polyBoundaryMeshEntries
         (
             IOobject
             (
                 "boundary",
-                io.instance(),
+                facesInstance,
                 meshSubDir,
                 io.db(),
                 IOobject::MUST_READ,
@@ -794,31 +801,17 @@ Foam::fvMeshTools::loadOrCreateMeshImpl
         // Non-null reference when a mesh exists on given processor
         haveLocalMesh = (*readHandlerPtr).good();
     }
-    else
-    {
-        // No file handler.
-        // Check for presence of the "faces" file,
-        // but for 'decompose', only need mesh on master.
-
-        haveLocalMesh =
-        (
-            decompose
-          ? UPstream::master()
-          : fileHandler().isFile
-            (
-                fileHandler().filePath
-                (
-                    io.time().path()/io.instance()/meshSubDir/"faces"
-                )
-            )
-        );
-    }
 
     // Globally consistent information about who has a mesh
     boolList haveMesh
     (
         UPstream::allGatherValues<bool>(haveLocalMesh)
     );
+
+    // Make sure all have the same number of processors
+    label masterNProcs = fileHandler().nProcs();
+    Pstream::broadcast(masterNProcs);
+    const_cast<fileOperation&>(fileHandler()).nProcs(masterNProcs);
 
 
     autoPtr<fvMesh> meshPtr;
@@ -960,6 +953,7 @@ Foam::fvMeshTools::loadOrCreateMeshImpl
             )
         )
         {
+            const_cast<fileOperation&>(fileHandler()).nProcs(UPstream::nProcs(oldWorldComm));
             // Can use the handler communicator as is.
             UPstream::commWorld(fileHandler().comm());
         }

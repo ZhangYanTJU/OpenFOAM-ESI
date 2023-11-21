@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,8 +30,103 @@ License
 #include "faMesh.H"
 #include "Pstream.H"
 #include "OSspecific.H"
+#include "decomposedBlockData.H"
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+bool Foam::checkFileExistence(const fileName& fName)
+{
+    // Trimmed-down version of lookupAndCacheProcessorsPath
+    // with Foam::exists() check. No caching.
+
+    // Check for two conditions:
+    // - file has to exist
+    // - if collated the entry has to exist inside the file
+
+    // Note: bypass fileOperation::filePath(IOobject&) since has problems
+    //       with going to a different number of processors
+    //       (in collated format). Use file-based searching instead
+
+    const auto& handler = Foam::fileHandler();
+    typedef fileOperation::procRangeType procRangeType;
+
+    fileName path, pDir, local;
+    procRangeType group;
+    label numProcs;
+    const label proci =
+        fileOperation::splitProcessorPath
+        (fName, path, pDir, local, group, numProcs);
+
+    bool found = false;
+
+    if (proci != -1)
+    {
+        // Read all directories to see any beginning with processor
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        const fileNameList dirEntries
+        (
+            handler.readDir(path, fileName::Type::DIRECTORY)
+        );
+
+        // Extract info from processorN or processorsNN
+        // - highest processor number
+        // - directory+offset containing data for proci
+
+        // label nProcs = 0;
+        for (const fileName& dirN : dirEntries)
+        {
+            // Analyse directory name
+            fileName rp, rd, rl;
+            label rNum;
+            const label readProci =
+                fileOperation::splitProcessorPath
+                (dirN, rp, rd, rl, group, rNum);
+
+            if (proci == readProci)
+            {
+                // Found "processorN"
+                if (Foam::exists(path/dirN/local))
+                {
+                    found = true;
+                    break;
+                }
+            }
+            else if (rNum != -1)
+            {
+                // "processorsNN" or "processorsNN_start-end"
+                if (group.empty())
+                {
+                    // "processorsNN"
+                    if (proci < rNum && Foam::exists(path/dirN/local))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                else if (group.contains(proci))
+                {
+                    // "processorsNN_start-end"
+                    // - save the local proc offset
+
+                    if (Foam::exists(path/dirN/local))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!found)
+    {
+        found = Foam::exists(fName);
+    }
+
+    return found;
+}
+
 
 Foam::boolList Foam::haveMeshFile
 (
@@ -41,18 +136,83 @@ Foam::boolList Foam::haveMeshFile
     const bool verbose
 )
 {
+    #if 0
+
+    // Simple directory scanning - too fragile
+    bool found = checkFileExistence(runTime.path()/meshPath/meshFile);
+
+    #else
+
+    // Trimmed-down version of lookupAndCacheProcessorsPath
+    // with Foam::exists() check. No caching.
+
+    // Check for two conditions:
+    // - file has to exist
+    // - if collated the entry has to exist inside the file
+
+    // Note: bypass fileOperation::filePath(IOobject&) since has problems
+    //       with going to a different number of processors
+    //       (in collated format). Use file-based searching instead
+
+    const auto& handler = Foam::fileHandler();
+    typedef fileOperation::procRangeType procRangeType;
+
+    const fileName fName
+    (
+        handler.filePath(runTime.path()/meshPath/meshFile)
+    );
+
+    bool found = handler.isFile(fName);
+    if (returnReduceAnd(found)) // worldComm
+    {
+        autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fName));
+        if (isPtr && isPtr->good())
+        {
+            auto& is = *isPtr;
+
+            IOobject io(meshFile, meshPath, runTime);
+            io.readHeader(is);
+
+            if (decomposedBlockData::isCollatedType(io))
+            {
+                fileName path, pDir, local;
+                procRangeType group;
+                label numProcs;
+                label proci = fileOperation::splitProcessorPath
+                (
+                    fName,
+                    path,
+                    pDir,
+                    local,
+                    group,
+                    numProcs
+                );
+
+                label myBlockNumber = 0;
+                if (proci == -1 && group.empty())
+                {
+                    // 'processorsXXX' format so contains all ranks
+                    // according to worldComm
+                    myBlockNumber = UPstream::myProcNo(UPstream::worldComm);
+                }
+                else
+                {
+                    // 'processorsXXX_n-m' format so check for the
+                    // relative rank
+                    myBlockNumber = UPstream::myProcNo(fileHandler().comm());
+                }
+
+                // Check if block for the local rank is inside file
+                found = decomposedBlockData::hasBlock(is, myBlockNumber);
+            }
+        }
+    }
+    #endif
+
+    // Globally consistent information about who has a mesh
     boolList haveFileOnProc
     (
-        UPstream::listGatherValues<bool>
-        (
-            fileHandler().isFile
-            (
-                fileHandler().filePath
-                (
-                    runTime.path()/meshPath/meshFile
-                )
-            )
-        )
+        UPstream::allGatherValues<bool>(found, UPstream::worldComm)
     );
 
     if (verbose)
@@ -62,7 +222,6 @@ Foam::boolList Foam::haveMeshFile
             << "    " << flatOutput(haveFileOnProc) << nl << endl;
     }
 
-    Pstream::broadcast(haveFileOnProc);
     return haveFileOnProc;
 }
 
@@ -107,38 +266,52 @@ void Foam::removeProcAddressing(const polyMesh& mesh)
 }
 
 
-void Foam::removeEmptyDir(const fileName& path)
+void Foam::masterMeshInstance
+(
+    const IOobject& io,
+    fileName& facesInstance,
+    fileName& pointsInstance
+)
 {
-    // Remove directory: silent, emptyOnly
-    Foam::rmDir(path, true, true);
-}
+    const fileName meshSubDir
+    (
+        polyMesh::regionName(io.name()) / polyMesh::meshSubDir
+    );
 
-
-void Foam::removeEmptyDirs(const fileName& meshPath)
-{
-    // Delete resulting directory if empty
-    fileName path(meshPath);
-    path.clean();
-
-    // Do subdirectories
+    if (UPstream::master())
     {
-        const fileNameList dirs
+        const bool oldParRun = UPstream::parRun(false);
+        const label oldNumProcs = fileHandler().nProcs();
+        const int oldCache = fileOperation::cacheLevel(0);
+
+        facesInstance = io.time().findInstance
         (
-            Foam::readDir
-            (
-                path,
-                fileName::DIRECTORY,
-                false,                  // filterGz
-                false                   // followLink
-            )
+            meshSubDir,
+            "faces",
+            IOobjectOption::MUST_READ
         );
-        for (const auto& dir : dirs)
+        pointsInstance = io.time().findInstance
+        (
+            meshSubDir,
+            "points",
+            IOobjectOption::MUST_READ
+        );
+
+        fileOperation::cacheLevel(oldCache);
+        if (oldParRun)
         {
-            removeEmptyDirs(path/dir);
+            const_cast<fileOperation&>(fileHandler()).nProcs(oldNumProcs);
         }
+        UPstream::parRun(oldParRun);
     }
 
-    removeEmptyDir(path);
+    // Broadcast information to all
+    Pstream::broadcasts
+    (
+        UPstream::worldComm,
+        facesInstance,
+        pointsInstance
+    );
 }
 
 

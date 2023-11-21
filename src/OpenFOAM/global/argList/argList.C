@@ -1526,6 +1526,9 @@ void Foam::argList::parse
                 // also have to protect the actual dictionary parsing since
                 // it might trigger file access (e.g. #include, #codeStream)
                 const bool oldParRun = Pstream::parRun(false);
+                // Note: non-parallel running might update
+                // fileOperation::nProcs() so store & restore below
+                const label nOldProcs = fileHandler().nProcs();
 
                 autoPtr<ISstream> dictStream
                 (
@@ -1584,6 +1587,7 @@ void Foam::argList::parse
                 }
 
                 Pstream::parRun(oldParRun);  // Restore parallel state
+                const_cast<fileOperation&>(fileHandler()).nProcs(nOldProcs);
 
                 if (Pstream::nProcs() == 1)
                 {
@@ -1763,16 +1767,148 @@ void Foam::argList::parse
     }
 
     // If needed, adjust fileHandler for distributed roots
-    if (runControl_.distributed())
+    if (runControl_.distributed() && fileOperation::fileHandlerPtr_)
     {
-        if (fileOperation::fileHandlerPtr_)
+        fileOperation::fileHandlerPtr_->distributed(true);
+
+        const labelList& ranks = fileHandler().ioRanks();
+
+        if (runControl_.parRun() && ranks.size())
         {
-            fileOperation::fileHandlerPtr_->distributed(true);
+            // Detect processor directories both on local proc and on
+            // (world) master proc. If the local proc doesn't have them
+            // but the master has it will attempt to copy them.
+
+            // Expected local directory name
+            const fileName procDir
+            (
+                rootPath_
+              / globalCase_
+              / ("processor" + Foam::name(UPstream::myProcNo()))
+            );
+
+            // Try and find my local directory using the fileHandler. This
+            // will check the local disk on the IO rank
+            // (since running distributed)
+            fileNameList pathDirs(UPstream::nProcs());
+            auto& pathDir = pathDirs[UPstream::myProcNo()];
+            pathDir = fileHandler().filePath(procDir, false);
+
+            if (returnReduceOr(pathDir.empty()))
+            {
+                // There is at least one processor that cannot find
+                // the processor directory. Look for it on the master.
+                // E.g. decomposed into 4 processors, two roots:
+                //      processors4_0-1/
+                //      processors4_2-3/
+                // So:
+                // - processor0 reads the same disk as processor0
+                // - processor2 needs the whole directory sent over
+                // - processor3 reads the same disk as processor2
+                if (UPstream::master() && bannerEnabled())
+                {
+                    Info<< "I/O    :"
+                        << " distributed - copying missing directories"
+                        << nl;
+                }
+
+                // Collect all wanted directories (or empty). Note: could
+                // just collect missing ones ...
+
+                Pstream::gatherList(pathDirs);
+                fileName masterRootPath(rootPath_);
+                Pstream::broadcast(masterRootPath);
+
+                List<fileNameList> rankToDirs(UPstream::nProcs());
+                if (UPstream::master())
+                {
+                    const bool oldParRun = Pstream::parRun(false);
+                    // Note: non-parallel running might update
+                    // fileOperation::nProcs() so store & restore below
+                    const label nOldProcs = fileHandler().nProcs();
+
+                    label rank = 0;
+                    for (label proci = 1; proci < pathDirs.size(); ++proci)
+                    {
+                        if (ranks.contains(proci))
+                        {
+                            rank = proci;
+                        }
+
+                        if (pathDirs[proci].empty())
+                        {
+                            // Synthesise corresponding name on the master
+                            // processor
+                            const fileName procDir
+                            (
+                                rootPath_
+                              / globalCase_
+                              / ("processor" + Foam::name(proci))
+                            );
+                            const fileName foundDir
+                            (
+                                fileHandler().filePath(procDir, false)
+                            );
+
+                            if
+                            (
+                                !foundDir.empty()
+                             && !rankToDirs[rank].contains(foundDir)
+                            )
+                            {
+                                rankToDirs[rank].push_back(foundDir);
+                            }
+                        }
+                    }
+
+                    UPstream::parRun(oldParRun);
+                    const_cast<fileOperation&>(fileHandler()).nProcs(nOldProcs);
+                }
+                Pstream::broadcast(rankToDirs);
+
+                // Copy missing directories on all the IOranks.
+                // Note: instead of passing 'writeOnProc' flag we could create
+                // communicator just between master and IOrank, but that is
+                // also expensive.
+
+                forAll(rankToDirs, proci)
+                {
+                    // Am I the reponsible IOrank for this processor
+                    const bool amIO = (UPstream::myProcNo() == proci);
+
+                    // Construct equivalent directory on proci
+                    for (const auto& srcDir : rankToDirs[proci])
+                    {
+                        const fileName tgtDir
+                        (
+                            rootPath_
+                          / srcDir.relative(masterRootPath)
+                        );
+
+                        if (amIO)
+                        {
+                            // I am the IO rank
+                            Pout<< "On rank " << proci << nl
+                                << "    copying : " << srcDir << nl
+                                << "    to      : " << tgtDir << endl;
+                        }
+
+                        fileHandler().broadcastCopy
+                        (
+                            UPstream::worldComm,
+                            amIO,
+                            tgtDir,
+                            tgtDir
+                        );
+                    }
+                }
+            }
         }
     }
 
+
     // Keep/discard sub-process host/root information for reporting:
-    if (Pstream::master() && runControl_.parRun())
+    if (UPstream::master() && runControl_.parRun())
     {
         if (!writeHostsSwitch)
         {
@@ -1785,7 +1921,7 @@ void Foam::argList::parse
         }
     }
 
-    if (Pstream::master() && bannerEnabled())
+    if (UPstream::master() && bannerEnabled())
     {
         Info<< "Case   : " << (rootPath_/globalCase_).c_str() << nl
             << "nProcs : " << nProcs << nl;

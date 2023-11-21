@@ -113,43 +113,7 @@ void Foam::fileOperations::collatedFileOperation::printBanner
 
     if (withRanks)
     {
-        // Information about the ranks
-        stringList hosts(Pstream::nProcs());
-        if (Pstream::master(comm_))
-        {
-            hosts[Pstream::myProcNo()] = hostName();
-        }
-        Pstream::gatherList(hosts);
-
-        DynamicList<label> offsetMaster(Pstream::nProcs());
-
-        forAll(hosts, ranki)
-        {
-            if (!hosts[ranki].empty())
-            {
-                offsetMaster.append(ranki);
-            }
-        }
-
-        if (offsetMaster.size() > 1)
-        {
-            DetailInfo
-                << "IO nodes:" << nl << '(' << nl;
-
-            offsetMaster.append(Pstream::nProcs());
-
-            for (label group = 1; group < offsetMaster.size(); ++group)
-            {
-                const label beg = offsetMaster[group-1];
-                const label end = offsetMaster[group];
-
-                DetailInfo
-                    << "    (" << hosts[beg].c_str() << ' '
-                    << (end-beg) << ')' << nl;
-            }
-            DetailInfo
-                << ')' << nl;
-        }
+        fileOperation::printRanks();
     }
 
     //- fileModificationChecking already set by base class (masterUncollated)
@@ -386,8 +350,10 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
 
     if (inst.isAbsolute() || !tm.processorCase())
     {
-        mkDir(io.path());
-        fileName pathName(io.objectPath());
+        // Note: delay mkdir to masterOFstream so it does not get created
+        //       if not needed (e.g. when running distributed)
+
+        const fileName pathName(io.objectPath());
 
         if (debug)
         {
@@ -427,10 +393,12 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
     else
     {
         // Construct the equivalent processors/ directory
-        fileName path(processorsPath(io, inst, processorsDir(io)));
+        const fileName path(processorsPath(io, inst, processorsDir(io)));
 
-        mkDir(path);
-        fileName pathName(path/io.name());
+        // Note: delay mkdir to masterOFstream so it does not get created
+        //       if not needed (e.g. when running distributed)
+
+        const fileName pathName(path/io.name());
 
         if (io.global() || io.globalObject())
         {
@@ -480,6 +448,7 @@ bool Foam::fileOperations::collatedFileOperation::writeObject
                     << " appending to " << pathName << endl;
             }
 
+            mkDir(path);
             return appendObject(io, pathName, streamOpt);
         }
         else
@@ -604,11 +573,16 @@ Foam::word Foam::fileOperations::collatedFileOperation::processorsDir
                         break;
                     }
                 }
-                procDir +=
-                  + "_"
-                  + Foam::name(minProc)
-                  + "-"
-                  + Foam::name(maxProc);
+
+                // Add range if not all processors
+                if (maxProc-minProc+1 != nProcs_)
+                {
+                    procDir +=
+                      + "_"
+                      + Foam::name(minProc)
+                      + "-"
+                      + Foam::name(maxProc);
+                }
             }
         }
 

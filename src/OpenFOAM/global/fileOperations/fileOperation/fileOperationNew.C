@@ -373,6 +373,11 @@ Foam::fileOperation::New_impl
         // Allocate new handler with same type and similar IO ranks
         // but with different sub-ranks (and communicator)
 
+
+        // Temporarily override world comm to get through the initialisation
+        // (e.g. fileOperation::printRanks() which uses worldComm)
+        const label oldWorldComm = UPstream::commWorld(commAndIORanks.first());
+
         newHandler = fileOperation::New
         (
             origHandler.type(),
@@ -381,9 +386,13 @@ Foam::fileOperation::New_impl
             verbose
         );
 
+        UPstream::commWorld(oldWorldComm);
+
         if (newHandler)
         {
-            newHandler->nProcs(origHandler.nProcs());
+            // Make sure that the output format uses the correct number of
+            // 'active' ranks (instead of that of the origHandler)
+            newHandler->nProcs(subProcs.size());
             newHandler->storeComm();
         }
     }
@@ -400,9 +409,9 @@ Foam::fileOperation::New
     bool verbose
 )
 {
-    labelList subProcs = getSelectedProcs(useProc);
+    const labelList subProcs = getSelectedProcs(useProc);
 
-    return fileOperation::New_impl(origHandler, subProcs, verbose);
+    return New_impl(origHandler, subProcs, verbose);
 }
 
 
@@ -414,9 +423,9 @@ Foam::fileOperation::New
     bool verbose
 )
 {
-    labelList subProcs = getSelectedProcs(useProc);
+    const labelList subProcs = getSelectedProcs(useProc);
 
-    return fileOperation::New_impl(origHandler, subProcs, verbose);
+    return New_impl(origHandler, subProcs, verbose);
 }
 
 

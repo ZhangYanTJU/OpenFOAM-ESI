@@ -52,7 +52,7 @@ Foam::parLagrangianDistributor::parLagrangianDistributor
     const mapDistribute& cellMap = distMap_.cellMap();
 
     // Get destination processors and cells
-    destinationProcID_ = labelList(tgtMesh_.nCells(), Pstream::myProcNo());
+    destinationProcID_ = labelList(tgtMesh_.nCells(), UPstream::myProcNo());
     cellMap.reverseDistribute(nSrcCells, destinationProcID_);
 
     destinationCell_ = identity(tgtMesh_.nCells());
@@ -67,21 +67,39 @@ Foam::parLagrangianDistributor::parLagrangianDistributor
 void Foam::parLagrangianDistributor::findClouds
 (
     const fvMesh& mesh,
-    wordList& cloudNames,
-    List<wordList>& objectNames
+    wordList& cloudNames,       // All cloud names on any processor
+    boolList& haveClouds,       // Per cloud name, whether my processor has it
+    List<wordList>& objectNames // Per cloud name, the field name
 )
 {
-    fileNameList localCloudDirs
+    const IOobject io
     (
-        readDir
+        cloud::prefix,
+        mesh.time().timeName(),
+        mesh,
+        IOobjectOption::MUST_READ,
+        IOobjectOption::NO_WRITE
+    );
+
+    // Using the fileHandler:
+    // - use fileHandler to synthesise correct processor directory
+    // - cannot use readObjects since assumes all processors have same
+    //   files (i.e. it only checks processor0)
+    const fileNameList localCloudDirs
+    (
+        fileHandler().readDir
         (
-            mesh.time().timePath()
-          / mesh.dbDir()
-          / cloud::prefix,
+            fileHandler().objectPath
+            (
+                io,
+                word::null  // typeName: not used currently
+            ),
             fileName::DIRECTORY
         )
     );
 
+
+    // Copy out the local cloud names (and fileName -> word)
     cloudNames.resize_nocopy(localCloudDirs.size());
     forAll(localCloudDirs, i)
     {
@@ -92,18 +110,34 @@ void Foam::parLagrangianDistributor::findClouds
     Pstream::combineReduce(cloudNames, ListOps::uniqueEqOp<word>());
     Foam::sort(cloudNames);  // Consistent order
 
-    objectNames.clear();
+
+    // See which of the global cloudNames I have
+    haveClouds.resize_nocopy(cloudNames.size());
+    haveClouds = false;
+
+    for (const fileName& localCloudName : localCloudDirs)
+    {
+        const label cloudi = cloudNames.find(localCloudName);
+        if (cloudi >= 0)
+        {
+            haveClouds[cloudi] = true;
+        }
+    }
+
+    // Collect fields per cloud
     objectNames.resize(cloudNames.size());
 
     for (const fileName& localCloudName : localCloudDirs)
     {
         // Do local scan for valid cloud objects
+        const bool oldParRun = UPstream::parRun(false);
         IOobjectList localObjs
         (
             mesh,
             mesh.time().timeName(),
             cloud::prefix/localCloudName
         );
+        UPstream::parRun(oldParRun);
 
         bool isCloud = false;
         if (localObjs.erase("coordinates"))
@@ -141,8 +175,7 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
 ) const
 {
     //Debug(lpi.size());
-
-    const label oldLpi = lpi.size();
+    //const label oldLpi = lpi.size();
 
     labelListList sendMap;
 
@@ -154,7 +187,7 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
         // neighbour processors
         List<IDLList<passivePositionParticle>> particleTransferLists
         (
-            Pstream::nProcs()
+            UPstream::nProcs()
         );
 
         // Per particle the destination processor
@@ -233,13 +266,15 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
             }
         }
 
-        if (lagrangianPositions.size())
+        const bool writeOnProc = lagrangianPositions.size();
+
+        //if (writeOnProc)
         {
             // Write coordinates file
             IOPosition<passivePositionParticleCloud>
             (
                 lagrangianPositions
-            ).write();
+            ).write(writeOnProc);
 
             // Optionally write positions file in v1706 format and earlier
             if (particle::writeLagrangianPositions)
@@ -248,35 +283,33 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
                 (
                      lagrangianPositions,
                      cloud::geometryType::POSITIONS
-                 ).write();
+                 ).write(writeOnProc);
             }
         }
-        else if (oldLpi)
-        {
-            // When running with -overwrite it should also delete the old
-            // files. Below works but is not optimal.
-
-            // Remove any existing coordinates
-            const fileName oldCoords
-            (
-                IOPosition<passivePositionParticleCloud>
-                (
-                    lagrangianPositions
-                ).objectPath()
-            );
-            Foam::rm(oldCoords);
-
-            // Remove any existing positions
-            const fileName oldPos
-            (
-                IOPosition<passivePositionParticleCloud>
-                (
-                    lagrangianPositions,
-                    cloud::geometryType::POSITIONS
-                ).objectPath()
-            );
-            Foam::rm(oldPos);
-        }
+        //else if (!writeOnProc && oldLpi)
+        //{
+        //    // When running with -overwrite it should also delete the old
+        //    // files. Below works but is not optimal.
+        //
+        //    // Remove any existing coordinates
+        //    Foam::rm
+        //    (
+        //        IOPosition<passivePositionParticleCloud>
+        //        (
+        //            lagrangianPositions
+        //        ).objectPath()
+        //    );
+        //
+        //    // Remove any existing positions
+        //    Foam::rm
+        //    (
+        //        IOPosition<passivePositionParticleCloud>
+        //        (
+        //            lagrangianPositions,
+        //            cloud::geometryType::POSITIONS
+        //        ).objectPath()
+        //    );
+        //}
 
         // Restore cloud name
         lpi.rename(cloudName);
