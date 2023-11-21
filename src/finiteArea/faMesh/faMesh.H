@@ -498,11 +498,18 @@ class faMesh
     // Static Functions
 
         //- Test if faSchemes/faSolution files are available
-        static bool hasSystemFiles(const polyMesh& pMesh);
+        static bool hasSystemFiles
+        (
+            const word& meshName,
+            const polyMesh& pMesh
+        );
 
-        //- Test if all files needed for read construction are available
-        static bool hasFiles(const polyMesh& pMesh);
-
+        //- Test if mesh files needed for read construction are available
+        static bool hasMeshFiles
+        (
+            const word& meshName,
+            const polyMesh& pMesh
+        );
 
 public:
 
@@ -524,8 +531,8 @@ public:
     //- Runtime type information
     TypeName("faMesh");
 
-        //- The prefix to local: %finite-area
-        static const word prefix;
+        //- The prefix to the parent registry name: %finite-area
+        static const word& prefix() noexcept;
 
         //- The mesh sub-directory name (usually "faMesh")
         static word meshSubDir;
@@ -655,6 +662,13 @@ public:
             geometryOrder_ = order;
             return old;
         }
+
+        //- Read construction from polyMesh if all files are available
+        static autoPtr<faMesh> TryNew
+        (
+            const word& meshName,
+            const polyMesh& pMesh
+        );
 
         //- Read construction from polyMesh if all files are available
         static autoPtr<faMesh> TryNew(const polyMesh& pMesh);
@@ -809,6 +823,9 @@ public:
         //- Return reference to the mesh database
         virtual const objectRegistry& thisDb() const;
 
+        //- Override the objectRegistry dbDir for a single-region case
+        virtual const fileName& dbDir() const;
+
         //- Name function is needed to disambiguate those inherited
         //- from base classes
         const word& name() const
@@ -818,6 +835,14 @@ public:
 
 
     // Regions
+
+        //- Return the local mesh directory name (eg, "faMesh")
+        //- after applying filter for defaultRegion
+        static fileName meshDir(const word& region);
+
+        //- Return the local mesh directory name (eg, "faMesh")
+        //- after applying filter for defaultRegion
+        static fileName meshDir(const word& volRegion, const word& region);
 
         //- The mesh region name or word::null if polyMesh::defaultRegion
         const word& regionName() const;

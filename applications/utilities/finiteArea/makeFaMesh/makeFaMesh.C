@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
     );
 
     #include "addRegionOption.H"
+    #include "addFaRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createNamedPolyMesh.H"
@@ -133,8 +134,22 @@ int main(int argc, char *argv[])
     // Preliminary checks
     #include "checkPatchTopology.H"
 
+    word areaRegionName
+    (
+        args.getOrDefault<word>("area-region", polyMesh::defaultRegion)
+    );
+
+    Info << "Create areaMesh";
+    if (!Foam::polyMesh::regionName(areaRegionName).empty())
+    {
+        Foam::Info << ' ' << areaRegionName;
+    }
+    Info << " for polyMesh at time = " << runTime.timeName() << nl;
+
     // Create
-    faMesh aMesh(mesh, meshDefDict);
+    faMesh aMesh(areaRegionName, mesh, meshDefDict);
+
+    Pout<< "finite-area " << aMesh.boundary().objectPath() << nl;
 
     // Mesh information (less verbose)
     faMeshTools::printMeshChecks(aMesh, 0);

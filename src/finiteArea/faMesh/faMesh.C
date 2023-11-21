@@ -62,11 +62,43 @@ namespace Foam
 }
 
 
-const Foam::word Foam::faMesh::prefix("finite-area");
-
-Foam::word Foam::faMesh::meshSubDir = "faMesh";
+Foam::word Foam::faMesh::meshSubDir("faMesh");
 
 const int Foam::faMesh::quadricsFit_ = 0;  // Tuning (experimental)
+
+const Foam::word& Foam::faMesh::prefix() noexcept
+{
+    return faMeshRegistry::prefix();
+}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::fileName Foam::faMesh::meshDir(const word& region)
+{
+    if (region.empty() || region == polyMesh::defaultRegion)
+    {
+        return faMesh::meshSubDir;
+    }
+
+    return (region / faMesh::meshSubDir);
+}
+
+
+Foam::fileName Foam::faMesh::meshDir
+(
+    const word& volRegion,
+    const word& region
+)
+{
+    return
+    (
+        polyMesh::regionName(volRegion)
+      / faMesh::prefix()
+      / polyMesh::regionName(region)
+      / faMesh::meshSubDir
+    );
+}
 
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
@@ -490,7 +522,7 @@ Foam::faMesh::faMesh
             "faceLabels",
             time().findInstance(meshDir(), "faceLabels"),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::MUST_READ,
             IOobject::NO_WRITE
         )
@@ -509,7 +541,7 @@ Foam::faMesh::faMesh
                 faceLabels_.instance()
             ),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::MUST_READ,
             IOobject::NO_WRITE
         ),
@@ -560,10 +592,10 @@ Foam::faMesh::faMesh
 
         IOobject rio
         (
-            "name",
+            "any-name",
             time().timeName(),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::LAZY_READ,
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
@@ -611,9 +643,9 @@ Foam::faMesh::faMesh
         IOobject
         (
             "faceLabels",
-            mesh().facesInstance(),
+            pMesh.facesInstance(),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -624,9 +656,9 @@ Foam::faMesh::faMesh
         IOobject
         (
             "faBoundary",
-            mesh().facesInstance(),
+            faceLabels_.instance(),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -704,9 +736,10 @@ Foam::faMesh::faMesh
         IOobject
         (
             "faceLabels",
-            mesh().facesInstance(),
+            // Topological instance from polyMesh
+            baseMesh.mesh().facesInstance(),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -717,9 +750,9 @@ Foam::faMesh::faMesh
         IOobject
         (
             "faBoundary",
-            mesh().facesInstance(),
+            faceLabels_.instance(),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -766,7 +799,11 @@ Foam::faMesh::faMesh
     // {
     //     schemesPtr_.reset
     //     (
-    //         new faSchemes(faMesh::thisDb(), baseMesh.schemes())
+    //         new faSchemes
+    //         (
+    //             static_cast<static_cast<const objectRegistry&>(*this),
+    //             baseMesh.schemes()
+    //         )
     //     );
     // }
     //
@@ -774,7 +811,11 @@ Foam::faMesh::faMesh
     // {
     //     solutionPtr_.reset
     //     (
-    //         new faSolution(faMesh::thisDb(), baseMesh.solution())
+    //         new faSolution
+    //         (
+    //             static_cast<static_cast<const objectRegistry&>(*this),
+    //             baseMesh.solution()
+    //         )
     //     );
     // }
 }
@@ -862,10 +903,10 @@ Foam::faMesh::faMesh
 
         IOobject rio
         (
-            "name",
+            "any-name",
             time().timeName(),
             faMesh::meshSubDir,
-            faMesh::thisDb(),
+            *this,
             IOobject::LAZY_READ,
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
@@ -1031,9 +1072,28 @@ const Foam::polyMesh& Foam::faMesh::mesh() const
 }
 
 
+const Foam::fileName& Foam::faMesh::dbDir() const
+{
+    // In the usual case, the objectRegistry::dbDir() will be something
+    // like finite-area/{region0,film} etc with the "finite-area/"
+    // prefix coming from the enclosing registry of registries.
+    //
+    // So always check the name() portion, not the dbDir() itself
+    // - either,    objectRegistry::dbDir().name()
+    // - or (same), objectRegistry::name()
+
+    if (objectRegistry::name() == polyMesh::defaultRegion)
+    {
+        return objectRegistry::parent().dbDir();
+    }
+
+    return objectRegistry::dbDir();
+}
+
+
 Foam::fileName Foam::faMesh::meshDir() const
 {
-    return mesh().dbDir()/faMesh::meshSubDir;
+    return dbDir()/faMesh::meshSubDir;
 }
 
 
@@ -1063,7 +1123,7 @@ const Foam::objectRegistry& Foam::faMesh::thisDb() const
 
 const Foam::word& Foam::faMesh::regionName() const
 {
-    return polyMesh::regionName(thisDb().name());
+    return polyMesh::regionName(objectRegistry::name());
 }
 
 
@@ -1190,7 +1250,7 @@ Foam::faMesh::S00() const
             (
                 "S00",
                 time().timeName(),
-                faMesh::thisDb(),
+                *this,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),
@@ -1324,7 +1384,7 @@ bool Foam::faMesh::movePoints()
                 (
                     "S0",
                     time().timeName(),
-                    faMesh::thisDb(),
+                    *this,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
                     IOobject::NO_REGISTER

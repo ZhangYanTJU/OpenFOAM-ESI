@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,31 +24,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    makeFaMesh
+    Test-faMesh-try
 
 Description
-    Check a finiteArea mesh
-
-Original Authors
-    Zeljko Tukovic, FAMENA
-    Hrvoje Jasak, Wikki Ltd.
+    Test for loading of faMesh
 
 \*---------------------------------------------------------------------------*/
 
-#include "Time.H"
 #include "argList.H"
 #include "faMesh.H"
+#include "faMeshRegistry.H"
 #include "polyMesh.H"
-#include "areaFaMesh.H"
-#include "edgeFaMesh.H"
-#include "areaFields.H"
-#include "edgeFields.H"
-#include "processorFaPatch.H"
-#include "foamVtkIndPatchWriter.H"
-#include "foamVtkLineWriter.H"
-#include "faMeshTools.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 using namespace Foam;
 
@@ -57,53 +42,20 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    argList::addNote
-    (
-        "Check a finiteArea mesh"
-    );
-
-    argList::addBoolOption
-    (
-        "write-vtk",
-        "Write mesh as a vtp (vtk) file for display or debugging"
-    );
-
-    argList::addOption
-    (
-        "geometryOrder",
-        "N",
-        "Test different geometry order - experimental!!",
-        true  // Advanced option
-    );
-
     #include "addRegionOption.H"
     #include "addFaRegionOption.H"
     #include "setRootCase.H"
+
     #include "createTime.H"
     #include "createNamedPolyMesh.H"
 
-    int geometryOrder(1);
-    if (args.readIfPresent("geometryOrder", geometryOrder))
-    {
-        Info<< "Setting faMesh::geometryOrder = " << geometryOrder << nl
-            << "(experimental)" << nl << endl;
+    #include "getFaRegionOption.H"
 
-        faMesh::geometryOrder(geometryOrder);
-    }
+    autoPtr<faMesh> aMeshPtr = faMesh::TryNew(areaRegionName, mesh);
 
-    #include "createNamedFaMesh.H"
+    Info<< "area-mesh: " << Switch::name(aMeshPtr) << nl;
 
-    Info<< "Time = " << runTime.timeName() << nl << endl;
-
-    // Mesh information (verbose)
-    faMeshTools::printMeshChecks(aMesh);
-
-    if (args.found("write-vtk"))
-    {
-        #include "faMeshWriteVTK.H"
-    }
-
-    Info<< "\nEnd\n" << endl;
+    Info<< "\nEnd\n" << nl;
 
     return 0;
 }

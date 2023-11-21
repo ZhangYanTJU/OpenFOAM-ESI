@@ -37,7 +37,12 @@ namespace Foam
     defineTypeNameAndDebug(faMeshRegistry, 0);
 }
 
-const Foam::word Foam::faMeshRegistry::prefix("finite-area");
+const Foam::word Foam::faMeshRegistry::prefix_("finite-area");
+
+const Foam::word& Foam::faMeshRegistry::prefix() noexcept
+{
+    return prefix_;
+}
 
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
@@ -106,7 +111,7 @@ Foam::faMeshRegistry::faMeshRegistry(const polyMesh& mesh)
     (
         IOobject
         (
-            faMeshRegistry::prefix,
+            faMeshRegistry::prefix(),
             mesh.time().timeName(),
             mesh.thisDb(),
             IOobjectOption::NO_READ,
@@ -115,6 +120,7 @@ Foam::faMeshRegistry::faMeshRegistry(const polyMesh& mesh)
         )
     )
 {
+    Info<< "time: " << mesh.time().sortedNames() << nl;
     Info<< "mesh: " << mesh.sortedNames() << nl;
 
     Info<< "Construct registry..." << endl;
@@ -155,7 +161,7 @@ Foam::faMeshRegistry::faMeshRegistry(const polyMesh& mesh)
 //     (
 //         IOobject
 //         (
-//             faMeshRegistry::prefix,
+//             faMeshRegistry::prefix(),
 //             mesh.time().timeName(),
 //             mesh.db(),
 //             IOobjectOption::NO_READ,

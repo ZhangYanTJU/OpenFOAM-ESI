@@ -72,6 +72,9 @@ class faMeshRegistry
 
     // Private Member Data
 
+        //- The prefix to local: %finite-area
+        static const word prefix_;
+
         //- The finite-area objects (meshes). Name: "finite-area"
         //  Anchored on the polyMesh parent
         objectRegistry objects_;
@@ -82,8 +85,8 @@ public:
     //- Runtime type information.
     TypeName("faMeshRegistry");
 
-    //- The prefix to local: %finite-area
-    static const word prefix;
+    //- Return the prefix to local: %finite-area
+    static const word& prefix() noexcept;
 
 
     // Generated Methods
