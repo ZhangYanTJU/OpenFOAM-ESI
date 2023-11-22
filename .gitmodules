@@ -17,3 +17,6 @@
 [submodule "external-solver"]
 	path = modules/external-solver
 	url = https://develop.openfoam.com/Modules/external-solver.git
+[submodule "turbulence-community"]
+	path = modules/turbulence-community
+	url = https://gitlab.com/openfoam/community/tc-turbulence/turbulence-community.git
