@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
         (
             "pointDualAddressing",
             tetDualMesh.facesInstance(),
-            tetDualMesh.meshSubDir,
+            polyMesh::meshSubDir,
             tetDualMesh,
             IOobject::MUST_READ
         )

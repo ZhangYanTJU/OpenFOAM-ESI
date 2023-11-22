@@ -305,7 +305,7 @@ autoPtr<mapPolyMesh> mergeSharedPoints
 boundBox procBounds
 (
     const PtrList<Time>& databases,
-    const word& regionDir
+    const word& regionName
 )
 {
     boundBox bb;
@@ -316,7 +316,7 @@ boundBox procBounds
         (
             procDb.findInstance
             (
-                regionDir/polyMesh::meshSubDir,
+                polyMesh::meshDir(regionName),
                 "points"
             )
         );
@@ -345,10 +345,10 @@ boundBox procBounds
                 "points",
                 procDb.findInstance
                 (
-                    regionDir/polyMesh::meshSubDir,
+                    polyMesh::meshDir(regionName),
                     "points"
                 ),
-                regionDir/polyMesh::meshSubDir,
+                polyMesh::meshDir(regionName),
                 procDb,
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
@@ -771,7 +771,7 @@ int main(int argc, char *argv[])
             (
                 "faces",
                 databases[0].timeName(),
-                polyMesh::regionName(regionName)/polyMesh::meshSubDir,
+                polyMesh::meshDir(regionName),
                 databases[0],
                 IOobject::NO_READ,
                 IOobject::NO_WRITE

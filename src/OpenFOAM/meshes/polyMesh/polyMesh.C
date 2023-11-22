@@ -47,6 +47,7 @@ namespace Foam
 }
 
 Foam::word Foam::polyMesh::defaultRegion = "region0";
+
 Foam::word Foam::polyMesh::meshSubDir = "polyMesh";
 
 
@@ -817,11 +818,22 @@ const Foam::word& Foam::polyMesh::regionName(const word& region)
 }
 
 
+Foam::fileName Foam::polyMesh::meshDir(const word& region)
+{
+    if (region.empty() || region == polyMesh::defaultRegion)
+    {
+        return polyMesh::meshSubDir;
+    }
+
+    return (region / polyMesh::meshSubDir);
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::fileName& Foam::polyMesh::dbDir() const
 {
-    if (objectRegistry::dbDir() == defaultRegion)
+    if (objectRegistry::name() == polyMesh::defaultRegion)
     {
         return parent().dbDir();
     }

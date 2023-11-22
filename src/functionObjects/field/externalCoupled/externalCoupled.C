@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -354,16 +354,9 @@ Foam::word Foam::functionObjects::externalCoupled::compositeName
     }
     else if (regionNames.size() == 1)
     {
-        if (regionNames[0] == polyMesh::defaultRegion)
-        {
-            // For compatibility with single region cases
-            // - suppress single region name
-            return word::null;
-        }
-        else
-        {
-            return regionNames[0];
-        }
+        // For compatibility with single region cases
+        // - suppress single region name
+        return polyMesh::regionName(regionNames[0]);
     }
 
     // Enforce lexical ordering

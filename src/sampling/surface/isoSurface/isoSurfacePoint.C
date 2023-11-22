@@ -1362,7 +1362,7 @@ Foam::isoSurfacePoint::isoSurfacePoint
         (
             "C",
             fvmesh.pointsInstance(),
-            fvmesh.meshSubDir,
+            polyMesh::meshSubDir,
             fvmesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE,

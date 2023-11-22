@@ -1210,7 +1210,7 @@ void extrudeGeometricProperties
         (
             "patchFaceCentres",
             mesh.pointsInstance(),
-            mesh.meshSubDir,
+            polyMesh::meshSubDir,
             mesh,
             IOobject::MUST_READ
         )
@@ -1222,7 +1222,7 @@ void extrudeGeometricProperties
         (
             "patchEdgeCentres",
             mesh.pointsInstance(),
-            mesh.meshSubDir,
+            polyMesh::meshSubDir,
             mesh,
             IOobject::MUST_READ
         )
@@ -1268,7 +1268,7 @@ void extrudeGeometricProperties
         (
             "faceCentres",
             regionMesh.pointsInstance(),
-            regionMesh.meshSubDir,
+            polyMesh::meshSubDir,
             regionMesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -1352,7 +1352,7 @@ void extrudeGeometricProperties
         (
             "cellCentres",
             regionMesh.pointsInstance(),
-            regionMesh.meshSubDir,
+            polyMesh::meshSubDir,
             regionMesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -2555,7 +2555,7 @@ int main(int argc, char *argv[])
         (
             "cellToPatchFaceAddressing",
             regionMesh.facesInstance(),
-            regionMesh.meshSubDir,
+            polyMesh::meshSubDir,
             regionMesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -2571,7 +2571,7 @@ int main(int argc, char *argv[])
         (
             "faceToPatchFaceAddressing",
             regionMesh.facesInstance(),
-            regionMesh.meshSubDir,
+            polyMesh::meshSubDir,
             regionMesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -2588,7 +2588,7 @@ int main(int argc, char *argv[])
         (
             "faceToPatchEdgeAddressing",
             regionMesh.facesInstance(),
-            regionMesh.meshSubDir,
+            polyMesh::meshSubDir,
             regionMesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -2605,7 +2605,7 @@ int main(int argc, char *argv[])
         (
             "pointToPatchPointAddressing",
             regionMesh.facesInstance(),
-            regionMesh.meshSubDir,
+            polyMesh::meshSubDir,
             regionMesh,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -2647,7 +2647,7 @@ int main(int argc, char *argv[])
         (
             "patchFaceCentres",
             mesh.pointsInstance(),
-            mesh.meshSubDir,
+            polyMesh::meshSubDir,
             mesh,
             IOobject::MUST_READ
         );

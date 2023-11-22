@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -22,6 +22,11 @@ Priority
 Note
     There is no semantical difference between "-regions name"
     and "-region name"
+
+Required Classes
+    - Foam::polyMesh
+    - Foam::regionProperties
+    - Foam::IOobjectOption
 
 Required Variables
     - args [argList]
@@ -42,7 +47,10 @@ wordList regionNames;
     if (args.found("allRegions"))
     {
         regionNames =
-            regionProperties(runTime, IOobject::READ_IF_PRESENT).names();
+        (
+            Foam::regionProperties(runTime, IOobjectOption::READ_IF_PRESENT)
+            .names()
+        );
 
         if (regionNames.empty())
         {
@@ -60,17 +68,20 @@ wordList regionNames;
         if
         (
             selectByName.size() == 1
-         && selectByName.first().isLiteral()
+         && selectByName.front().isLiteral()
         )
         {
             // Identical to -region NAME
             regionNames.resize(1);
-            regionNames.first() = selectByName.first();
+            regionNames.front() = selectByName.front();
         }
         else if (selectByName.size())
         {
             regionNames =
-                regionProperties(runTime, IOobject::READ_IF_PRESENT).names();
+            (
+                Foam::regionProperties(runTime, IOobjectOption::READ_IF_PRESENT)
+                .names()
+            );
 
             if (regionNames.empty())
             {
@@ -99,14 +110,14 @@ wordList regionNames;
     else if (args.found("region"))
     {
         regionNames.resize(1);
-        regionNames.first() = args.get<word>("region");
+        regionNames.front() = args.get<word>("region");
     }
 
     // Fallback to defaultRegion
     if (regionNames.empty())
     {
         regionNames.resize(1);
-        regionNames.first() = polyMesh::defaultRegion;
+        regionNames.front() = Foam::polyMesh::defaultRegion;
     }
 }
 

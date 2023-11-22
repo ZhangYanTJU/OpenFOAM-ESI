@@ -396,7 +396,7 @@ int main(int argc, char *argv[])
         const word& regionName = regionNames[regioni];
         const fileName meshDir
         (
-            polyMesh::regionName(regionName)/polyMesh::meshSubDir
+            polyMesh::meshDir(regionName)
         );
 
         if (regionNames.size() > 1)

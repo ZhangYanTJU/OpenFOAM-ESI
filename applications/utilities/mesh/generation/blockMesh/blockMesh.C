@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -183,12 +183,12 @@ int main(int argc, char *argv[])
       : blockMesh::DEFAULT_MERGE
     );
 
-    word regionName(polyMesh::defaultRegion);
+    // Specified region or default region
+    #include "getRegionOption.H"
 
-    // Check if the region is specified otherwise mesh the default region
-    if (args.readIfPresent("region", regionName))
+    if (!polyMesh::regionName(regionName).empty())
     {
-        Info<< nl << "Generating mesh for region " << regionName << endl;
+        Info<< nl << "Generating mesh for region " << regionName << nl;
     }
 
     // Instance for resulting mesh

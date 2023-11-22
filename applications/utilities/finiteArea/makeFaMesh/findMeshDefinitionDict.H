@@ -13,6 +13,19 @@ License
 Description
     Search for the appropriate faMeshDefinition dictionary...
 
+Required Classes
+    - Foam::polyMesh
+    - Foam::IOdictionary
+
+Required Variables
+    - regionName [word]
+    - args [argList]
+    - runTime [Time]
+
+Provided Variables
+    - meshDefDict [IOdictionary]
+    - meshDictPtr [autoPtr<IOdictionary>]
+
 \*---------------------------------------------------------------------------*/
 
 const word dictName("faMeshDefinition");
@@ -21,7 +34,7 @@ autoPtr<IOdictionary> meshDictPtr;
 
 {
     fileName dictPath;
-    const word& regionDir = polyMesh::regionName(regionName);
+    const word& regionDir = Foam::polyMesh::regionName(regionName);
 
     if (args.readIfPresent("dict", dictPath))
     {

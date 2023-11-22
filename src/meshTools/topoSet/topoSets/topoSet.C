@@ -136,7 +136,7 @@ Foam::fileName Foam::topoSet::localPath
     const word& name
 )
 {
-    return mesh.facesInstance()/mesh.dbDir()/polyMesh::meshSubDir/"sets"/name;
+    return mesh.facesInstance()/mesh.meshDir()/"sets"/name;
 }
 
 
@@ -327,7 +327,7 @@ Foam::IOobject Foam::topoSet::findIOobject
         name,
         mesh.time().findInstance
         (
-            mesh.dbDir()/polyMesh::meshSubDir/"sets",
+            mesh.meshDir()/"sets",
             word::null,
             IOobject::READ_IF_PRESENT,
             mesh.facesInstance()
@@ -628,7 +628,7 @@ void Foam::topoSet::removeFiles(const polyMesh& mesh)
     (
         "dummy",
         mesh.facesInstance(),
-        mesh.meshSubDir/"sets",
+        polyMesh::meshSubDir/"sets",
         mesh
     );
     fileName setsDir(io.path());
