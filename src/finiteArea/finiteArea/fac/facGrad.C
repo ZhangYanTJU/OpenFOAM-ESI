@@ -100,11 +100,22 @@ grad
     const word& name
 )
 {
-    return fa::gradScheme<Type>::New
+    typedef typename outerProduct<vector,Type>::type GradType;
+    typedef GeometricField<GradType, faPatchField, areaMesh> GradFieldType;
+
+    tmp<GradFieldType> tgGrad = fa::gradScheme<Type>::New
     (
         vf.mesh(),
         vf.mesh().gradScheme(name)
-    )().grad(vf, name);
+    ).ref().grad(vf);
+
+    GradFieldType& gGrad = tgGrad.ref();
+
+    const areaVectorField& n = vf.mesh().faceAreaNormals();
+    gGrad -= n*(n & gGrad);
+    gGrad.correctBoundaryConditions();
+
+    return tgGrad;
 }
 
 
