@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,7 +61,37 @@ Foam::expressions::Detail::nComponents
                                                                       \
         case expressions::valueTypeCode::type_##Type :                \
         {                                                             \
-            return pTraits<Type>::nComponents;                        \
+            return exprTypeTraits<Type>::nComponents;                 \
+        }
+
+        FOR_ALL_EXPR_TYPE_CODES(doLocalCode);
+        #undef doLocalCode
+    }
+
+    return 0;
+}
+
+
+Foam::direction
+Foam::expressions::Detail::rank
+(
+    const expressions::valueTypeCode typeCode
+) noexcept
+{
+    switch (typeCode)
+    {
+        case expressions::valueTypeCode::NONE :
+        case expressions::valueTypeCode::INVALID :
+        {
+            break;
+        }
+
+        #undef  doLocalCode
+        #define doLocalCode(Type, UnusedParam)                        \
+                                                                      \
+        case expressions::valueTypeCode::type_##Type :                \
+        {                                                             \
+            return exprTypeTraits<Type>::rank;                        \
         }
 
         FOR_ALL_EXPR_TYPE_CODES(doLocalCode);
@@ -112,7 +142,7 @@ Foam::word Foam::name(const expressions::valueTypeCode typeCode)
 
         case expressions::valueTypeCode::INVALID :
         {
-            // returns ""
+            // returns "", could also return "bad"
             break;
         }
 

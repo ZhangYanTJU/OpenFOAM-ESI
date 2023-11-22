@@ -64,6 +64,15 @@ inline Foam::direction Foam::expressions::exprValue::nComponents
 }
 
 
+inline Foam::direction Foam::expressions::exprValue::rank
+(
+    const expressions::valueTypeCode valTypeCode
+) noexcept
+{
+    return expressions::Detail::rank(valTypeCode);
+}
+
+
 template<class Type>
 inline bool Foam::expressions::exprValue::supportedType()
 {
@@ -110,7 +119,7 @@ inline Foam::expressions::exprValue::exprValue(const Type& val)
     {
         FatalErrorInFunction
             << "Cannot construct for unsupported type: "
-            << typeid(Type).name() << endl
+            << typeid(Type).name() << nl
             << abort(FatalError);
     }
 }
@@ -134,6 +143,13 @@ inline Foam::direction
 Foam::expressions::exprValue::nComponents() const noexcept
 {
     return expressions::Detail::nComponents(typeCode_);
+}
+
+
+inline Foam::direction
+Foam::expressions::exprValue::rank() const noexcept
+{
+    return expressions::Detail::rank(typeCode_);
 }
 
 

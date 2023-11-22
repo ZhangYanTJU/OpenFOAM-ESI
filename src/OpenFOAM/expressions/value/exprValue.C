@@ -129,6 +129,10 @@ Foam::expressions::exprValue::peekType(const ITstream& is)
 
                 switch (endCmpti - firstCmpti)
                 {
+                    case 0:  // Explicitly provided '()' - ie, none
+                        whichCode = expressions::valueTypeCode::NONE;
+                        break;
+
                     case 1:  // pTraits<sphericalTensor>::nComponents
                         whichCode = exprTypeTraits<sphericalTensor>::value;
                         break;
@@ -177,6 +181,13 @@ Foam::expressions::exprValue::peekType(const ITstream& is)
         {
             whichCode = exprTypeTraits<bool>::value;
         }
+
+        // Treat anything else as 'invalid', which also implicitly
+        // includes the token "bad"
+        // else if (tok0.isWord("bad"))
+        // {
+        //     whichCode = expressions::valueTypeCode::INVALID;
+        // }
     }
 
     return whichCode;
@@ -192,7 +203,7 @@ bool Foam::expressions::exprValue::read
     ITstream is(str);
 
     // No trailing non-whitespace!
-    return (val.read(is) && !is.nRemainingTokens());
+    return (val.readTokens(is) && !is.nRemainingTokens());
 }
 
 
@@ -215,9 +226,32 @@ void Foam::expressions::exprValue::deepCopy(const exprValue& rhs)
 }
 
 
-Foam::tokenList Foam::expressions::exprValue::tokens() const
+Foam::tokenList Foam::expressions::exprValue::tokens(bool prune) const
 {
+    // Handling for NONE, INVALID:
+    //   - NONE    => pair of ( ) brackets
+    //   - INVALID => "bad" as a word
+    //
+    // With prune:
+    //   - no output for either
+
     tokenList toks;
+
+    if (!prune)
+    {
+        if (typeCode_ == expressions::valueTypeCode::NONE)
+        {
+            toks.resize(2);
+            toks.front() = token::BEGIN_LIST;
+            toks.back() = token::END_LIST;
+            return toks;
+        }
+        else if (typeCode_ == expressions::valueTypeCode::INVALID)
+        {
+            toks.emplace_back(word("bad"));
+            return toks;
+        }
+    }
 
     switch (typeCode_)
     {
@@ -245,8 +279,29 @@ Foam::tokenList Foam::expressions::exprValue::tokens() const
 }
 
 
-void Foam::expressions::exprValue::print(Ostream& os) const
+void Foam::expressions::exprValue::write(Ostream& os, bool prune) const
 {
+    // Handling for NONE, INVALID:
+    //   - NONE    => pair of ( ) brackets
+    //   - INVALID => "bad" as a word
+    //
+    // With prune:
+    //   - no output for either
+
+    if (!prune)
+    {
+        if (typeCode_ == expressions::valueTypeCode::NONE)
+        {
+            os << token::BEGIN_LIST << token::END_LIST;
+            return;
+        }
+        else if (typeCode_ == expressions::valueTypeCode::INVALID)
+        {
+            os << word("bad");
+            return;
+        }
+    }
+
     switch (typeCode_)
     {
         #undef  doLocalCode
@@ -271,11 +326,86 @@ void Foam::expressions::exprValue::print(Ostream& os) const
 }
 
 
-bool Foam::expressions::exprValue::read(ITstream& is)
+bool Foam::expressions::exprValue::read(Istream& is)
+{
+    ITstream* stream = dynamic_cast<ITstream*>(&is);
+
+    // Reading via tokens - simple for now
+    // Expect either a single token (scalar, label, word etc)
+    // or ( ... ) content
+
+    ITstream toks;
+
+    if (!stream)
+    {
+        token tok(is);
+
+        is.fatalCheck(FUNCTION_NAME);
+
+        if (tok.isPunctuation(token::BEGIN_LIST))
+        {
+            // Expecting "( content )" - eg, (x y z), (xx xy ...)
+            do
+            {
+                toks.add_tokens(tok);
+
+                is >> tok;
+                is.fatalCheck(FUNCTION_NAME);
+            }
+            while (!tok.isPunctuation(token::END_LIST));
+
+            if (tok.isPunctuation(token::END_LIST))
+            {
+                toks.add_tokens(tok);
+            }
+        }
+        else if (tok.good())
+        {
+            toks.add_tokens(tok);
+        }
+
+        // Truncate to number tokens read
+        toks.resize(toks.tokenIndex());
+        toks.seek(0);
+
+        stream = &toks;
+    }
+
+    return readTokens(*stream);
+}
+
+
+bool Foam::expressions::exprValue::readTokens(ITstream& is)
 {
     clear();  // type: none, value: zero
 
     const valueTypeCode whichCode(exprValue::peekType(is));
+
+    if (whichCode == expressions::valueTypeCode::NONE)
+    {
+        typeCode_ = whichCode;
+        is.skip(2);  // Skip tokens: '( )'
+        return true;
+    }
+
+    // This one should be rare or even impossible
+    if (whichCode == expressions::valueTypeCode::INVALID)
+    {
+        typeCode_ = whichCode;
+
+        if (is.bad())
+        {
+            return false;
+        }
+
+        const token& tok0 = is.peek();
+
+        if (tok0.isWord("bad"))
+        {
+            is.skip(1);  // Skip token: "bad"
+            return true;
+        }
+    }
 
     switch (whichCode)
     {
@@ -347,13 +477,24 @@ bool Foam::expressions::exprValue::operator<(const exprValue& rhs) const
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
+Foam::Istream& Foam::operator>>
+(
+    Istream& is,
+    expressions::exprValue& val
+)
+{
+    val.read(is);
+    return is;
+}
+
+
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
     const expressions::exprValue& val
 )
 {
-    val.print(os);
+    val.write(os, false);  // no pruning
     return os;
 }
 
@@ -367,16 +508,18 @@ Foam::Ostream& Foam::operator<<
 {
     const auto& val = *iproxy;
 
-    if (val.good())
+    if (val.typeCode() == expressions::valueTypeCode::NONE)
     {
-        os  << val.valueTypeName() << ": ";
-        val.print(os);
+        os << "none";
+    }
+    else if (val.typeCode() == expressions::valueTypeCode::INVALID)
+    {
+        os << "bad";
     }
     else
     {
-        // typeCode_ is *never* set to INVALID,
-        // so NONE is the only remaining non-good type
-        os  << "none";
+        os << val.valueTypeName() << ": ";
+        val.write(os);  // pruning is immaterial - !good() already handled
     }
 
     return os;

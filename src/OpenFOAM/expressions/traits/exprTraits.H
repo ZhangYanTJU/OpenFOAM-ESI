@@ -117,6 +117,9 @@ namespace Detail
 //- The number of components associated with given valueTypeCode
 ::Foam::direction nComponents(const expressions::valueTypeCode) noexcept;
 
+//- The vector-space rank associated with given valueTypeCode
+::Foam::direction rank(const expressions::valueTypeCode) noexcept;
+
 } // End namespace Detail
 
 

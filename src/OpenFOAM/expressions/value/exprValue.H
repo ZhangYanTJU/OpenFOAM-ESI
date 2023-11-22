@@ -169,7 +169,7 @@ class exprValue
 
     // Private Member Functions
 
-        //- Assign zero, preserving the data type
+        //- Fill the data with zero, preserving the data type
         inline void fill_zero();
 
         //- Copy assignment
@@ -215,6 +215,12 @@ public:
             const expressions::valueTypeCode
         ) noexcept;
 
+        //- The vector-space rank associated with the valueTypeCode
+        inline static direction rank
+        (
+            const expressions::valueTypeCode
+        ) noexcept;
+
         //- True if the specified type is supported
         template<class Type>
         inline static bool supportedType();
@@ -250,6 +256,9 @@ public:
         //- The number of components associated with the value type
         inline direction nComponents() const noexcept;
 
+        //- The vector-space rank associated with the value type
+        inline direction rank() const noexcept;
+
         //- The name for the value type. Similar to pTraits typeName
         inline word valueTypeName() const;
 
@@ -260,9 +269,13 @@ public:
         //- Reset to 'none'
         void clear();
 
+        //- Read read tokens (if possible)
+        //  \return True on success
+        bool read(Istream& is);
+
         //- Guess type and read tokens (if possible)
         //  \return True on success
-        bool read(ITstream& is);
+        bool readTokens(ITstream& is);
 
 
     // Typed Access
@@ -346,11 +359,19 @@ public:
         //- Return info proxy for printing information to a stream
         InfoProxy<exprValue> info() const { return *this; }
 
-        //- The value as tokens. An empty list is returned for NONE.
-        tokenList tokens() const;
+        //- The exprValue as tokens.
+        //  For none : emits pair of brackets.
+        //  For invalid : emits "bad".
+        //
+        //  \param prune suppress the output for none/invalid
+        tokenList tokens(bool prune = false) const;
 
-        //- Print the (type-specific) content
-        void print(Ostream& os) const;
+        //- Write the (type-specific) content.
+        //  For none : emits pair of brackets.
+        //  For invalid : emits "bad".
+        //
+        //  \param prune suppress the output for none/invalid
+        void write(Ostream& os, bool prune = false) const;
 };
 
 
@@ -364,7 +385,11 @@ template<> struct is_contiguous<expressions::exprValue> : std::true_type {};
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-//- Write value to output stream in ASCII format. No output for !good().
+//- Read/parse value from input stream (uses ASCII format).
+Istream& operator>>(Istream& is, expressions::exprValue& val);
+
+//- Write value to output stream (uses ASCII format).
+//- Writes 'none' or 'bad' for unknown/unsupported types.
 Ostream& operator<<(Ostream& os, const expressions::exprValue& val);
 
 template<>

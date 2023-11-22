@@ -11,7 +11,7 @@ License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 
 Application
-    Test-exprValue
+    Test-exprValue1
 
 Description
     Test low-level polymorphic value container (exprValue)
@@ -59,11 +59,11 @@ expressions::exprValue tryParse(const std::string& str)
         Info<< "Direct from string: ";
         if (expressions::exprValue::read(str, val2))
         {
-            Info<< "good" << nl;
+            Info<< "OK" << nl;
         }
         else
         {
-            Info<< "bad" << nl;
+            Info<< "NOK" << nl;
         }
     }
     return val;
@@ -128,21 +128,22 @@ int main(int argc, char *argv[])
 
         expressions::exprValue oldValue(value);
 
-        // Since the IO serialization is not symmetric (in ASCII) there
-        // is no 'operator>>' defined and thus the regular Pstream::broadcast
-        // will not compile.
-        // Even although the data are contiguous and that code branch is never
-        // used.
 
-        // Fails to compile: Pstream::broadcast(value);
-
-        // Broadcast manually
-        UPstream::broadcast
-        (
-            value.data_bytes(),
-            value.size_bytes(),
-            UPstream::worldComm
-        );
+        if (true)
+        {
+            // Broadcast with serialization
+            Pstream::broadcast(value);
+        }
+        else
+        {
+            // Broadcast manually
+            UPstream::broadcast
+            (
+                value.data_bytes(),
+                value.size_bytes(),
+                UPstream::worldComm
+            );
+        }
 
         Pout<< "same values: " << (oldValue == value) << nl;
 
