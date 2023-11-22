@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -296,15 +296,16 @@ int main(int argc, char *argv[])
     IOobject::fileModificationChecking = IOobject::timeStamp;
 
 
-    word regionName(polyMesh::defaultRegion);
-    if (args.readIfPresent("region", regionName))
+    // Specified region or default region
+    #include "getRegionOption.H"
+    if (!polyMesh::regionName(regionName).empty())
     {
         Info<< "Using region " << regionName << nl << endl;
     }
 
     const fileName meshDir
     (
-        polyMesh::regionName(regionName)/polyMesh::meshSubDir
+        polyMesh::meshDir(regionName)
     );
 
 

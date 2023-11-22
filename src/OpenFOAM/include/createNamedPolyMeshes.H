@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -32,13 +32,13 @@ Foam::PtrList<Foam::polyMesh> meshes(regionNames.size());
 {
     forAll(regionNames, regioni)
     {
-        const Foam::word& regionName = regionNames[regioni];
+        const auto& regionName = regionNames[regioni];
 
         Foam::Info<< "Create polyMesh";
         if
         (
             regionNames.size() > 1
-         || regionName != Foam::polyMesh::defaultRegion
+         || !Foam::polyMesh::regionName(regionName).empty()
         )
         {
             Foam::Info<< ' ' << regionName;

@@ -13,6 +13,9 @@ License
 Description
     Add multi-region command-line options: -allRegions, -regions, -region
 
+Required Classes
+    - Foam::argList
+
 See Also
     getAllRegionOptions.H
 

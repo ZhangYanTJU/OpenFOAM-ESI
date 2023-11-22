@@ -1577,14 +1577,20 @@ int main(int argc, char *argv[])
         forAll(regionNames, regioni)
         {
             const word& regionName = regionNames[regioni];
-            const word& regionDir = polyMesh::regionName(regionName);
 
-            const fileName volMeshSubDir(regionDir/polyMesh::meshSubDir);
-            const fileName areaMeshSubDir(regionDir/faMesh::meshSubDir);
+            const fileName volMeshSubDir
+            (
+                polyMesh::meshDir(regionName)
+            );
+            const fileName areaMeshSubDir
+            (
+                polyMesh::regionName(regionName) / faMesh::meshSubDir
+            );
 
             InfoOrPout
                 << nl
-                << "Reconstructing mesh " << regionDir << nl << endl;
+                << "Reconstructing mesh:"
+                << polyMesh::regionName(regionName) << nl << endl;
 
             bool areaMeshDetected = false;
 
@@ -2474,15 +2480,20 @@ int main(int argc, char *argv[])
         forAll(regionNames, regioni)
         {
             const word& regionName = regionNames[regioni];
-            const word& regionDir = polyMesh::regionName(regionName);
 
-            const fileName volMeshSubDir(regionDir/polyMesh::meshSubDir);
-            const fileName areaMeshSubDir(regionDir/faMesh::meshSubDir);
+            const fileName volMeshSubDir
+            (
+                polyMesh::meshDir(regionName)
+            );
+            const fileName areaMeshSubDir
+            (
+                polyMesh::regionName(regionName) / faMesh::meshSubDir
+            );
 
             InfoOrPout
                 << nl << nl
                 << (decompose ? "Decomposing" : "Redistributing")
-                << " mesh " << regionDir << nl << endl;
+                << " mesh:" << polyMesh::regionName(regionName) << nl << endl;
 
 
             // Get time instance directory

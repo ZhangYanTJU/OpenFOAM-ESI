@@ -722,6 +722,9 @@ public:
             return thisDb().name();
         }
 
+
+    // Regions
+
         //- The mesh region name or word::null if polyMesh::defaultRegion
         const word& regionName() const;
 

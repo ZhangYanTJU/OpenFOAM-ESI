@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -13,6 +13,10 @@ License
 Description
     Create a fvMesh (specified region or defaultRegion) with
     additional handling of -dry-run and -dry-run-write options.
+
+Required Classes
+    - Foam::fvMesh
+    - Foam::simplifiedMeshes::columnFvMesh
 
 Required Variables
     - args [argList]
@@ -26,16 +30,18 @@ Provided Variables
 \*---------------------------------------------------------------------------*/
 
 Foam::autoPtr<Foam::fvMesh> meshPtr(nullptr);
-Foam::word regionName(Foam::polyMesh::defaultRegion);
+
+// "getRegionOption.H"
+Foam::word regionName
+(
+    args.getOrDefault<word>("region", Foam::polyMesh::defaultRegion)
+);
 
 if (args.dryRun() || args.found("dry-run-write"))
 {
     Foam::Info
         << "Operating in 'dry-run' mode: case will run for 1 time step.  "
         << "All checks assumed OK on a clean exit" << Foam::endl;
-
-    // Allow region in combination with dry-run
-    args.readIfPresent("region", regionName);
 
     Foam::FieldBase::allowConstructFromLargerSize = true;
 
@@ -68,7 +74,7 @@ if (args.dryRun() || args.found("dry-run-write"))
 else
 {
     Foam::Info << "Create mesh";
-    if (args.readIfPresent("region", regionName))
+    if (!Foam::polyMesh::regionName(regionName).empty())
     {
         Foam::Info << ' ' << regionName;
     }

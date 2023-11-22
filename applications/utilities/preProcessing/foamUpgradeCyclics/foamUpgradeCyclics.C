@@ -409,15 +409,13 @@ int main(int argc, char *argv[])
     }
     const bool enableEntries = args.found("enableFunctionEntries");
 
-    const word regionName =
-        args.getOrDefault<word>("region", polyMesh::defaultRegion);
-
     fileName regionPrefix;
-    if (regionName != polyMesh::defaultRegion)
     {
-        regionPrefix = regionName;
-    }
+        // Specified region or default region
+        #include "getRegionOption.H"
 
+        regionPrefix = polyMesh::regionName(regionName);
+    }
 
     // Per cyclic patch the new name for this side and the other side
     HashTable<word> thisNames;

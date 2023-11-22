@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
     #include "createNamedPolyMesh.H"
 
-    const fileName setsSubPath(mesh.dbDir()/polyMesh::meshSubDir/"sets");
+    const fileName setsSubPath(mesh.meshDir()/"sets");
 
     // Search for list of objects for the time of the mesh
     word setsInstance = runTime.findInstance

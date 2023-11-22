@@ -3755,7 +3755,7 @@ void Foam::meshRefinement::removeFiles(const polyMesh& mesh)
     (
         "dummy",
         mesh.facesInstance(),
-        mesh.meshSubDir,
+        polyMesh::meshSubDir,
         mesh
     );
     fileName setsDir(io.path());

@@ -813,11 +813,7 @@ int main(int argc, char *argv[])
                     IOobject io
                     (
                         "faBoundary",
-                        mesh.time().findInstance
-                        (
-                            mesh.dbDir()/polyMesh::meshSubDir,
-                            "boundary"
-                        ),
+                        mesh.time().findInstance(mesh.meshDir(), "boundary"),
                         faMesh::meshSubDir,
                         mesh,
                         IOobject::READ_IF_PRESENT,

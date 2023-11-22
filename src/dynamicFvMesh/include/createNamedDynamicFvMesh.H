@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -14,40 +14,49 @@ License
 Description
     Create a dynamicFvMesh for a specified region, or the defaultRegion
 
+Required Classes
+    - Foam::dynamicFvMesh
+
 Required Variables
+    - args [argList]
     - runTime [Time]
 
 Provided Variables
     - regionName [word]
-    - mesh [dynamicFvMesh], meshPtr
+    - mesh [dynamicFvMesh]
+    - meshPtr [autoPtr<dynamicFvMesh>]
 
 \*---------------------------------------------------------------------------*/
 
-Foam::word regionName(Foam::polyMesh::defaultRegion);
 Foam::autoPtr<Foam::dynamicFvMesh> meshPtr;
+
+// "getRegionOption.H"
+Foam::word regionName
+(
+    args.getOrDefault<word>("region", Foam::polyMesh::defaultRegion)
+);
 
 {
     Foam::Info << "Create dynamic mesh";
-    if (args.readIfPresent("region", regionName))
+    if (!Foam::polyMesh::regionName(regionName).empty())
     {
         Foam::Info << ' ' << regionName;
     }
     Foam::Info << " for time = " << runTime.timeName() << Foam::nl;
 
-    meshPtr = dynamicFvMesh::New
+    meshPtr = Foam::dynamicFvMesh::New
     (
-        IOobject
+        Foam::IOobject
         (
             regionName,
             runTime.timeName(),
             runTime,
-            IOobject::MUST_READ
+            Foam::IOobject::MUST_READ
         )
     );
 }
 
-
-dynamicFvMesh& mesh = meshPtr();
+Foam::dynamicFvMesh& mesh = meshPtr();
 
 Foam::Info << Foam::endl;
 

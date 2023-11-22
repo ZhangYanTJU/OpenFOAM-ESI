@@ -275,7 +275,7 @@ void Foam::masterMeshInstance
 {
     const fileName meshSubDir
     (
-        polyMesh::regionName(io.name()) / polyMesh::meshSubDir
+        polyMesh::meshDir(io.name())
     );
 
     if (UPstream::master())

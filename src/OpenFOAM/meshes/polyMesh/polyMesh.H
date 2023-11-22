@@ -426,6 +426,10 @@ public:
 
         // Regions
 
+            //- Return the local mesh directory name (eg, "polyMesh")
+            //- after applying filter for defaultRegion
+            static fileName meshDir(const word& region);
+
             //- The mesh region name or word::null if polyMesh::defaultRegion
             static const word& regionName(const word& region);
 

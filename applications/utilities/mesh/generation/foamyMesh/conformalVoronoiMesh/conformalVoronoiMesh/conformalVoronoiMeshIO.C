@@ -296,7 +296,7 @@ void Foam::conformalVoronoiMesh::writeMesh(const fileName& instance)
 //            (
 //                "pointDualAddressing",
 //                instance,
-//                "tetDualMesh"/polyMesh::meshSubDir,
+//                polyMesh::meshDir("tetDualMesh"),
 //                runTime_,
 //                IOobject::NO_READ,
 //                IOobject::NO_WRITE,
@@ -343,7 +343,7 @@ void Foam::conformalVoronoiMesh::writeMesh(const fileName& instance)
 //                (
 //                    "dualPoints",
 //                    instance,
-//                    "tetDualMesh"/polyMesh::meshSubDir,
+//                    polyMesh::meshDir("tetDualMesh"),
 //                    runTime_,
 //                    IOobject::NO_READ,
 //                    IOobject::NO_WRITE,

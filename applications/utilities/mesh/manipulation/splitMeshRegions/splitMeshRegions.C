@@ -894,7 +894,7 @@ void createAndWriteRegion
         (
             "pointRegionAddressing",
             newMesh().facesInstance(),
-            newMesh().meshSubDir,
+            polyMesh::meshSubDir,
             newMesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -913,7 +913,7 @@ void createAndWriteRegion
         (
             "faceRegionAddressing",
             newMesh().facesInstance(),
-            newMesh().meshSubDir,
+            polyMesh::meshSubDir,
             newMesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -951,7 +951,7 @@ void createAndWriteRegion
         (
             "cellRegionAddressing",
             newMesh().facesInstance(),
-            newMesh().meshSubDir,
+            polyMesh::meshSubDir,
             newMesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -970,7 +970,7 @@ void createAndWriteRegion
         (
             "boundaryRegionAddressing",
             newMesh().facesInstance(),
-            newMesh().meshSubDir,
+            polyMesh::meshSubDir,
             newMesh(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,

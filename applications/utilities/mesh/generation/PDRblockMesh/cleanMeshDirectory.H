@@ -18,11 +18,10 @@ Description
 {
     // Shadows enclosing parameter (dictName)
     const word blockMeshDictName("blockMeshDict");
-    const word& regionDir = polyMesh::regionName(regionName);
 
     const fileName polyMeshPath
     (
-        runTime.path()/meshInstance/regionDir/polyMesh::meshSubDir
+        runTime.path()/meshInstance/polyMesh::meshDir(regionName)
     );
 
     if (exists(polyMeshPath))

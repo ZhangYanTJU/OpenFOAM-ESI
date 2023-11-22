@@ -1829,7 +1829,7 @@ const Foam::labelList& Foam::globalMeshData::sharedPointGlobalLabels() const
         IOobject addrHeader
         (
             "pointProcAddressing",
-            mesh_.facesInstance()/mesh_.meshSubDir,
+            mesh_.facesInstance()/polyMesh::meshSubDir,
             mesh_,
             IOobject::MUST_READ
         );

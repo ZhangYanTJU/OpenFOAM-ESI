@@ -255,19 +255,17 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
     #include "createTimeExtruded.H"
 
-    // Get optional regionName
-    word regionName(polyMesh::defaultRegion);
-    if (args.readIfPresent("region", regionName))
-    {
-        Info<< "Create mesh " << regionName << " for time = "
-            << runTimeExtruded.timeName() << nl << endl;
-    }
-    else
-    {
-        Info<< "Create mesh for time = "
-            << runTimeExtruded.timeName() << nl << endl;
-    }
+    // Specified region or default region
+    #include "getRegionOption.H"
 
+    {
+        Info<< "Create mesh";
+        if (!polyMesh::regionName(regionName).empty())
+        {
+            Info<< ' ' << regionName;
+        }
+        Info<< " for time = " << runTimeExtruded.timeName() << nl << nl;
+    }
 
     const IOdictionary dict
     (

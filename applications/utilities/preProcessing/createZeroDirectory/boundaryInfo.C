@@ -54,8 +54,8 @@ Foam::IOPtrList<Foam::entry> Foam::boundaryInfo::readBoundaryDict
         IOobject
         (
             "boundary",
-            runTime.findInstance(regionName/polyMesh::meshSubDir, "boundary"),
-            regionName/polyMesh::meshSubDir,
+            runTime.findInstance(polyMesh::meshDir(regionName), "boundary"),
+            polyMesh::meshDir(regionName),
             runTime,
             IOobject::MUST_READ,
             IOobject::NO_WRITE,

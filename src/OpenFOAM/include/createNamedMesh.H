@@ -6,13 +6,16 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 
 Description
     Create a fvMesh for a specified region, or the defaultRegion
+
+Required Classes
+    - Foam::fvMesh
 
 Required Variables
     - args [argList]
@@ -24,11 +27,15 @@ Provided Variables
 
 \*---------------------------------------------------------------------------*/
 
-Foam::word regionName(Foam::polyMesh::defaultRegion);
+// "getRegionOption.H"
+Foam::word regionName
+(
+    args.getOrDefault<word>("region", Foam::polyMesh::defaultRegion)
+);
 
 {
     Foam::Info << "Create mesh";
-    if (args.readIfPresent("region", regionName))
+    if (!Foam::polyMesh::regionName(regionName).empty())
     {
         Foam::Info << ' ' << regionName;
     }

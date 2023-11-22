@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1317,11 +1317,12 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
     #include "createTime.H"
 
-    word regionName(polyMesh::defaultRegion);
+    // Specified region or default region
+    #include "getRegionOption.H"
 
-    if (args.readIfPresent("region", regionName))
+    if (!polyMesh::regionName(regionName).empty())
     {
-        Info<< "Creating polyMesh for region " << regionName << endl;
+        Info<< "Creating polyMesh for region " << regionName << nl;
     }
 
     const bool keepOrientation = args.found("keepOrientation");

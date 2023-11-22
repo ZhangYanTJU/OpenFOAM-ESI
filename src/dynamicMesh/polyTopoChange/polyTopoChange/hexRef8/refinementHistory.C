@@ -1699,7 +1699,7 @@ void Foam::refinementHistory::removeFiles(const polyMesh& mesh)
     (
         "dummy",
         mesh.facesInstance(),
-        mesh.meshSubDir,
+        polyMesh::meshSubDir,
         mesh
     );
     fileName setsDir(io.path());

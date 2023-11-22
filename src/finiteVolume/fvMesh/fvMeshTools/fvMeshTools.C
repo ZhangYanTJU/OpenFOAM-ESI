@@ -461,7 +461,7 @@ Foam::fvMeshTools::newMesh
 
     const fileName meshSubDir
     (
-        polyMesh::regionName(io.name()) / polyMesh::meshSubDir
+        polyMesh::meshDir(io.name())
     );
 
 
@@ -745,7 +745,7 @@ Foam::fvMeshTools::loadOrCreateMeshImpl
 
     const fileName meshSubDir
     (
-        polyMesh::regionName(io.name()) / polyMesh::meshSubDir
+        polyMesh::meshDir(io.name())
     );
 
 

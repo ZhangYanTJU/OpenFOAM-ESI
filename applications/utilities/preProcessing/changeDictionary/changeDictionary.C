@@ -540,7 +540,7 @@ int main(int argc, char *argv[])
                 "boundary",
                 runTime.findInstance
                 (
-                    polyMesh::regionName(regionName)/polyMesh::meshSubDir,
+                    polyMesh::meshDir(regionName),
                     "boundary",
                     IOobject::READ_IF_PRESENT
                 ),

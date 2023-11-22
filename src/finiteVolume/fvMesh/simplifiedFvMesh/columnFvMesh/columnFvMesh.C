@@ -64,7 +64,7 @@ bool Foam::simplifiedMeshes::columnFvMeshInfo::setPatchEntries
     (
         "boundary",
         localInstance_,
-        polyMesh::regionName(regionName_)/polyMesh::meshSubDir,
+        polyMesh::meshDir(regionName_),
         runTime,
         IOobject::MUST_READ,
         IOobject::NO_WRITE,
@@ -209,7 +209,7 @@ void Foam::simplifiedMeshes::columnFvMeshInfo::initialise(const Time& runTime)
         (
             "points",
             localInstance_,
-            polyMesh::regionName(regionName_)/polyMesh::meshSubDir,
+            polyMesh::meshDir(regionName_),
             runTime,
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
@@ -413,7 +413,7 @@ Foam::simplifiedMeshes::columnFvMeshInfo::columnFvMeshInfo
     (
         runTime.findInstance
         (
-            polyMesh::regionName(regionName_)/polyMesh::meshSubDir,
+            polyMesh::meshDir(regionName_),
             "boundary",
             IOobject::READ_IF_PRESENT
         )

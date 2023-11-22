@@ -38,7 +38,7 @@ autoPtr<IOdictionary> meshDictPtr;
         exists
         (
             runTime.path()/runTime.constant()
-          / regionDir/polyMesh::meshSubDir/dictName
+          / polyMesh::meshDir(regionName)/dictName
         )
     )
     {
@@ -47,7 +47,7 @@ autoPtr<IOdictionary> meshDictPtr;
         dictPath =
         (
             runTime.constant()
-          / regionDir/polyMesh::meshSubDir/dictName
+          / polyMesh::meshDir(regionName)/dictName
         );
 
 

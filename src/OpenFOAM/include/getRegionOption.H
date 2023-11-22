@@ -5,47 +5,29 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
 
 Description
-    Create a fvMesh for a specified named region
+    Get the value from the -region option
+
+Required Classes
+    - Foam::polyMesh
 
 Required Variables
-    - regionName [word]
-    - runTime [Time]
+    - args [argList]
 
 Provided Variables
-    - mesh [fvMesh]
+    - regionName [word]
 
 \*---------------------------------------------------------------------------*/
 
-{
-    Foam::Info << "Create mesh";
-    if (!Foam::polyMesh::regionName(regionName).empty())
-    {
-        Foam::Info << ' ' << regionName;
-    }
-    Foam::Info << " for time = " << runTime.timeName() << Foam::nl;
-}
-
-Foam::fvMesh mesh
+Foam::word regionName
 (
-    Foam::IOobject
-    (
-        regionName,
-        runTime.timeName(),
-        runTime,
-        Foam::IOobject::MUST_READ
-    ),
-    false
+    args.getOrDefault<word>("region", Foam::polyMesh::defaultRegion)
 );
-
-mesh.init(true);   // Initialise all (lower levels and current)
-
-Foam::Info << Foam::endl;
 
 
 // ************************************************************************* //
