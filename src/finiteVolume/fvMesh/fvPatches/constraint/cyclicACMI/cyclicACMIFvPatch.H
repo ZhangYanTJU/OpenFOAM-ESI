@@ -213,6 +213,48 @@ public:
                 return interpolate(tfld());
             }
 
+            // Interpolations (non-blocking). Subject to change
+
+                template<class Type>
+                void initInterpolate
+                (
+                    const Field<Type>& fld,
+                    labelRange& sendRequests,
+                    PtrList<List<Type>>& sendBuffers,
+                    labelRange& recvRequests,
+                    PtrList<List<Type>>& recvBuffers
+                ) const
+                {
+                    // Make sure areas are up-to-date
+                    updateAreas();
+
+                    cyclicACMIPolyPatch_.initInterpolate
+                    (
+                        fld,
+                        sendRequests,
+                        sendBuffers,
+                        recvRequests,
+                        recvBuffers
+                    );
+                }
+
+                template<class Type>
+                tmp<Field<Type>> interpolate
+                (
+                    const Field<Type>& localFld,
+                    const labelRange& requests,  // The receive requests
+                    const PtrList<List<Type>>& recvBuffers
+                ) const
+                {
+                    return cyclicACMIPolyPatch_.interpolate
+                    (
+                        localFld,
+                        requests,
+                        recvBuffers,
+                        UList<Type>()
+                    );
+                }
+
 
         // Interface transfer functions
 

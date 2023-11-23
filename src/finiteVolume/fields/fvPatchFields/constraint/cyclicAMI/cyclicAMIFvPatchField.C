@@ -76,16 +76,19 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
             << exit(FatalIOError);
     }
 
-    // Handle neighbour value first, before any evaluate()
-    const auto* hasNeighbValue =
-        dict.findEntry("neighbourValue", keyType::LITERAL);
-
-    if (hasNeighbValue)
+    if (cacheNeighbourField())
     {
-        patchNeighbourFieldPtr_.reset
-        (
-            new Field<Type>(*hasNeighbValue, p.size())
-        );
+        // Handle neighbour value first, before any evaluate()
+        const auto* hasNeighbValue =
+            dict.findEntry("neighbourValue", keyType::LITERAL);
+
+        if (hasNeighbValue)
+        {
+            patchNeighbourFieldPtr_.reset
+            (
+                new Field<Type>(*hasNeighbValue, p.size())
+            );
+        }
     }
 
     // Use 'value' supplied, or evaluate (if coupled) or set to internal field
@@ -119,7 +122,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {
-    if (ptf.patchNeighbourFieldPtr_)
+    if (ptf.patchNeighbourFieldPtr_ && cacheNeighbourField())
     {
         patchNeighbourFieldPtr_.reset
         (
@@ -299,10 +302,21 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField
 
 
 template<class Type>
+bool Foam::cyclicAMIFvPatchField<Type>::cacheNeighbourField()
+{
+    return
+    (
+        GeometricField<Type, fvPatchField, volMesh>::Boundary::localConsistency
+     != 0
+    );
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
 {
-    if (this->ownerAMI().distributed())
+    if (this->ownerAMI().distributed() && cacheNeighbourField())
     {
         if (!this->ready())
         {
@@ -360,7 +374,7 @@ void Foam::cyclicAMIFvPatchField<Type>::initEvaluate
         this->updateCoeffs();
     }
 
-    if (this->ownerAMI().distributed())
+    if (this->ownerAMI().distributed() && cacheNeighbourField())
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
         {
@@ -404,7 +418,7 @@ void Foam::cyclicAMIFvPatchField<Type>::evaluate
 
     const auto& AMI = this->ownerAMI();
 
-    if (AMI.distributed())
+    if (AMI.distributed() && cacheNeighbourField())
     {
         // Calculate patchNeighbourField
         if (commsType != UPstream::commsTypes::nonBlocking)
@@ -513,16 +527,11 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
-    const auto& AMI =
-    (
-        cyclicAMIPatch_.owner()
-      ? cyclicAMIPatch_.AMI()
-      : cyclicAMIPatch_.neighbPatch().AMI()
-    );
+    const auto& AMI = this->ownerAMI();
 
     solveScalarField pnf;
 
-    if (this->ownerAMI().distributed())
+    if (AMI.distributed())
     {
         if (commsType != UPstream::commsTypes::nonBlocking)
         {

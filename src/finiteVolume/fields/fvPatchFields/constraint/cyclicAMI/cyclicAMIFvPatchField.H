@@ -133,6 +133,9 @@ class cyclicAMIFvPatchField
         //- All receive/send requests have completed
         virtual bool all_ready() const;
 
+        //- Use neighbour field caching
+        static bool cacheNeighbourField();
+
         //- Return neighbour coupled internal cell data
         tmp<Field<Type>> patchNeighbourField(const Field<Type>&) const;
 
