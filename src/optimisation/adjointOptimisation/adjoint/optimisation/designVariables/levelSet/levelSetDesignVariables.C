@@ -26,7 +26,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "HashSet.H"
 #include "levelSetDesignVariables.H"
 #include "wallDist.H"
 #include "zeroGradientFvPatchField.H"
@@ -203,7 +202,7 @@ void levelSetDesignVariables::updateBeta()
     // Compute the beta field by passing the distance field through
     // a Heaviside function
     scalarField& beta = beta_.primitiveFieldRef();
-    interpolation_->interpolate(aTilda_.primitiveField(), beta);
+    interpolation_->interpolate(signedDistances_.primitiveField(), beta);
     beta = 1 - beta;
     // Apply fixed values if necessary
     applyFixedPorosityValues();
@@ -237,32 +236,38 @@ void Foam::levelSetDesignVariables::updateSignedDistances()
     y.primitiveFieldRef() = aTilda_.primitiveFieldRef();
     y.correctBoundaryConditions();
 
-    labelList changedFaces(mesh_.nFaces(), -1);
-    List<wallPoint> changedFacesInfo(mesh_.nFaces());
-    writeFluidSolidInterface(aTilda_, 0, changedFaces, changedFacesInfo);
+    changedFaces_.clear();
+    changedFaces_.setSize(mesh_.nFaces(), -1);
 
-    List<wallPoint> allFaceInfo(mesh_.nFaces());
-    List<wallPoint> allCellInfo(mesh_.nCells());
-    FaceCellWave<wallPoint> wave
+    changedFacesInfo_.clear();
+    changedFacesInfo_.setSize(mesh_.nFaces());
+
+    writeFluidSolidInterface(aTilda_, 0, changedFaces_, changedFacesInfo_);
+
+    List<wallPointData<label>> allFaceInfo(mesh_.nFaces());
+    allCellInfo_.clear();
+    allCellInfo_.setSize(mesh_.nCells());
+
+    FaceCellWave<wallPointData<label>> wave
     (
         mesh_,
-        changedFaces,
-        changedFacesInfo,
+        changedFaces_,
+        changedFacesInfo_,
         allFaceInfo,
-        allCellInfo,
+        allCellInfo_,
         mesh_.globalData().nTotalCells() + 1
     );
 
     // Transfer the distance from cellInfo to the alphaTilda field
-    forAll(allCellInfo, celli)
+    forAll(allCellInfo_, celli)
     {
-        if (allCellInfo[celli].valid(wave.data()))
+        if (allCellInfo_[celli].valid(wave.data()))
         {
-            aTilda_[celli] =
-                sign(aTilda_[celli])*Foam::sqrt(allCellInfo[celli].distSqr());
+            signedDistances_[celli] =
+                sign(aTilda_[celli])*Foam::sqrt(allCellInfo_[celli].distSqr());
         }
     }
-    aTilda_.correctBoundaryConditions();
+    signedDistances_.correctBoundaryConditions();
 }
 
 
@@ -281,6 +286,20 @@ levelSetDesignVariables::levelSetDesignVariables
     regularisation_
         (regularisationPDE::New(mesh, dict.subDict("regularisation"), zones_)),
     aTilda_
+    (
+        IOobject
+        (
+            "aTilda",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh_,
+        dimensionedScalar(dimless, Zero),
+        zeroGradientFvPatchField<scalar>::typeName
+    ),
+    signedDistances_
     (
         IOobject
         (
@@ -313,7 +332,10 @@ levelSetDesignVariables::levelSetDesignVariables
     ),
     fixATildaValues_(dict.getOrDefault<bool>("fixATildaValues", true)),
     writeAllDistanceFields_
-        (dict.getOrDefault<bool>("writeAllDistanceFields", false))
+        (dict.getOrDefault<bool>("writeAllDistanceFields", false)),
+    changedFaces_(),
+    changedFacesInfo_(),
+    allCellInfo_()
 {
     // Read the alpha field if present, or set it based on the distance field
     readField();
@@ -382,20 +404,18 @@ void levelSetDesignVariables::update(scalarField& correction)
     if (writeAllDistanceFields_)
     {
         writeDesignVars();
-        aTilda_.rename("alphaSmoothed");
         aTilda_.write();
-        aTilda_.rename("signedDistances");
     }
 
-    // Make aTilda a signed distance field
+    // Compute signed distances based on aTilda
     updateSignedDistances();
 
-    // Set beta based on aTilda
+    // Set beta based on the signed distances
     updateBeta();
 
     if (writeAllDistanceFields_)
     {
-        aTilda_.write();
+        signedDistances_.write();
         beta_.write();
     }
 
@@ -411,76 +431,12 @@ void levelSetDesignVariables::update(scalarField& correction)
 
 scalar levelSetDesignVariables::computeEta(scalarField& correction)
 {
-    // Back-up the old design variables and signed distances
-    scalarField& dvs = getVars();
-    scalarField oldDVs(getVars());
-    scalarField oldSignedDistances(aTilda_.primitiveField());
-
-    // Compute the smooth alpha field corresponding to the initial variables
-    // Can't use current aTilda_ values since they correspond to signed
-    // distances at this point
-    scalarField oldATilda(aTilda_.primitiveField());
-    regularisation_->regularise
-    (
-        aTilda_, dvs, oldATilda,
-        true, radius_(), upperBounds_()[0], fixATildaValues_
-    );
-
-    // Compute the smooth alpha field corresponding to the updated variables
-    dvs += correction;
-    regularisation_->regularise
-    (
-        aTilda_, dvs, aTilda_.primitiveFieldRef(),
-        true, radius_(), upperBounds_()[0], fixATildaValues_
-    );
-    aTilda_.correctBoundaryConditions();
-
-    // We want to locate the min value of aTilda_ and scale the correction
-    // appropriately such that this min value takes on the prescribed one.
-    // A bit tricky in parallel since we need not only the min value but
-    // its cellId/processor too
-
-    const label proci = Pstream::myProcNo();
-    scalarList minVs(Pstream::nProcs(), pTraits<scalar>::max);
-    labelList minCells(Pstream::nProcs(), Zero);
-
-    scalarField diff(aTilda_.primitiveField() - oldATilda);
-    label minId = findMin(diff);
-
-    if (minId != -1)
-    {
-        minVs[proci] = diff[minId];
-        minCells[proci] = minId;
-    }
-
-    // Collect info from all processors
-    Pstream::allGatherList(minVs);
-    Pstream::allGatherList(minCells);
-
-    minId = findMin(minVs);
-
-    scalar aTildaAtMinChange(Zero);
-    if (proci == minId)
-    {
-        const label cellId = minCells[minId];
-        aTildaAtMinChange = aTilda_.primitiveField()[cellId];
-    }
-    reduce(aTildaAtMinChange, sumOp<scalar>());
-
-    DebugInfo
-       << "AlphaSmoothed at min(alphaSmoothedUpdate) with eta 1/"
-       << "min desirable value "
-       << minVs[minId] << '/' << maxInitChange_()
-       << endl;
-
-    // Compute eta
-    const scalar eta((maxInitChange_() - aTildaAtMinChange)/minVs[minId] + 1);
+    const scalar maxChange(gMax(mag(correction)));
+    Info<< "maxInitChange/maxChange \t"
+        << maxInitChange_() << "/" << maxChange << endl;
+    const scalar eta(maxInitChange_() / maxChange);
     Info<< "Setting eta value to " << eta << endl;
     correction *= eta;
-
-    // Restore the dvs
-    dvs = oldDVs;
-    aTilda_.primitiveFieldRef() = oldSignedDistances;
 
     return eta;
 }
@@ -505,7 +461,8 @@ tmp<scalarField> levelSetDesignVariables::assembleSensitivities
     scalarField& objectiveSens = tobjectiveSens.ref();
 
     // Multiply with dBetadAtilda
-    objectiveSens *= -interpolation_->derivative(aTilda_.primitiveField());
+    objectiveSens *=
+        -interpolation_->derivative(signedDistances_.primitiveField());
 
     // Solve the adjoint to the regularisation equation
     regularisation_->
