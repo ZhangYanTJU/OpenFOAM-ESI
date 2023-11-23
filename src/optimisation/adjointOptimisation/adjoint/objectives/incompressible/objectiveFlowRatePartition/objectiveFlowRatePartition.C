@@ -115,23 +115,21 @@ objectiveFlowRatePartition::objectiveFlowRatePartition
 scalar objectiveFlowRatePartition::J()
 {
     J_ = 0;
-    const volVectorField& U = vars_.UInst();
+    const surfaceScalarField& phi = vars_.phiInst();
 
     // Inlet patches
     inletFlowRate_ = 0;
     for (const label patchI : inletPatches_)
     {
-        const vectorField& Sf = mesh_.boundary()[patchI].Sf();
         // Negative value
-        inletFlowRate_ += gSum(U.boundaryField()[patchI] & Sf);
+        inletFlowRate_ += gSum(phi.boundaryField()[patchI]);
     }
 
     // Outlet patches
     forAll(outletPatches_, pI)
     {
         const label patchI = outletPatches_[pI];
-        const vectorField& Sf = mesh_.boundary()[patchI].Sf();
-        const scalar outletFlowRate = gSum(U.boundaryField()[patchI] & Sf);
+        const scalar outletFlowRate = gSum(phi.boundaryField()[patchI]);
         currentFlowRatePercentage_[pI] = -outletFlowRate/inletFlowRate_;
         flowRateDifference_[pI] =
             targetFlowRatePercentage_[pI] - currentFlowRatePercentage_[pI];
