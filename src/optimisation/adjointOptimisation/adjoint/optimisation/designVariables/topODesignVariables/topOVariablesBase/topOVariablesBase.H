@@ -77,7 +77,7 @@ protected:
         Map<label> meshFaceToChangedFace_;
 
         //- Per cutting face, the changed faces owned by it
-        labelListList changedFacesPerCuttingFace_;
+        //labelListList changedFacesPerCuttingFace_;
 
         //- Iso-surface points
         pointField surfPoints_;
@@ -208,10 +208,10 @@ public:
             return zones_.getBetaMax();
         }
 
-        inline const labelListList& changedFacesPerCuttingFace() const
-        {
-            return changedFacesPerCuttingFace_;
-        }
+       //inline const labelListList& changedFacesPerCuttingFace() const
+       //{
+       //    return changedFacesPerCuttingFace_;
+       //}
 
         inline const pointField& surfacePoints() const
         {
