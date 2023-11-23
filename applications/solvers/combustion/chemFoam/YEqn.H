@@ -6,7 +6,7 @@
         solve
         (
             fvm::ddt(rho, Yi) - chemistry.RR(specieI),
-            mesh.solver("Yi")
+            "Yi"
         );
     }
 }

@@ -33,7 +33,7 @@
     }
     else
     {
-        EEqn.solve(mesh.solver(he.select(finalIter)));
+        EEqn.solve(he.select(finalIter));
         fvOptions.correct(he);
 
         thermo.correct();

@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
                 fvm::laplacian(rAUf, p) == fvc::div(phiHbyA)
             );
 
-            pEqn.solve(mesh.solver(p.select(piso.finalInnerIter())));
+            pEqn.solve(p.select(piso.finalInnerIter()));
 
             phi = phiHbyA - pEqn.flux();
 

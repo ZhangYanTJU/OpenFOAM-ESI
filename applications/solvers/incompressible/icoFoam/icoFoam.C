@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 
                 pEqn.setReference(pRefCell, pRefValue);
 
-                pEqn.solve(mesh.solver(p.select(piso.finalInnerIter())));
+                pEqn.solve(p.select(piso.finalInnerIter()));
 
                 if (piso.finalNonOrthogonalIter())
                 {

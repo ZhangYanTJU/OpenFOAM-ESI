@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -171,14 +171,21 @@ Foam::SolverPerformance<Type> Foam::faMatrix<Type>::solve
 template<class Type>
 Foam::SolverPerformance<Type> Foam::faMatrix<Type>::faSolver::solve()
 {
-    return solve(faMat_.psi().mesh().solverDict(faMat_.psi().name()));
+    return solve(faMat_.solverDict());
+}
+
+
+template<class Type>
+Foam::SolverPerformance<Type> Foam::faMatrix<Type>::solve(const word& name)
+{
+    return this->solve(solverDict(name));
 }
 
 
 template<class Type>
 Foam::SolverPerformance<Type> Foam::faMatrix<Type>::solve()
 {
-    return solve(this->psi().mesh().solverDict(this->psi().name()));
+    return this->solve(solverDict());
 }
 
 

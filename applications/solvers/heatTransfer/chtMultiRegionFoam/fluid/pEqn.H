@@ -52,15 +52,12 @@ constrainPressure(p_rgh, rho, U, phiHbyA, rhorAUf, MRF);
 
         p_rghEqn.solve
         (
-            mesh.solver
+            p_rgh.select
             (
-                p_rgh.select
                 (
-                    (
-                        oCorr == nOuterCorr-1
-                     && corr == nCorr-1
-                     && nonOrth == nNonOrthCorr
-                    )
+                    oCorr == nOuterCorr-1
+                 && corr == nCorr-1
+                 && nonOrth == nNonOrthCorr
                 )
             )
         );

@@ -56,7 +56,7 @@ if (pimple.transonic())
         // Relax the pressure equation to ensure diagonal-dominance
         pEqn.relax();
 
-        pEqn.solve(mesh.solver(p.select(pimple.finalInnerIter())));
+        pEqn.solve(p.select(pimple.finalInnerIter()));
 
         if (pimple.finalNonOrthogonalIter())
         {
@@ -78,7 +78,7 @@ else
     {
         fvScalarMatrix pEqn(pDDtEqn - fvm::laplacian(rhorAUf, p));
 
-        pEqn.solve(mesh.solver(p.select(pimple.finalInnerIter())));
+        pEqn.solve(p.select(pimple.finalInnerIter()));
 
         if (pimple.finalNonOrthogonalIter())
         {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -603,6 +603,10 @@ public:
             //  Use the given solver controls
             SolverPerformance<Type> solveSegregatedOrCoupled(const dictionary&);
 
+            //- Solve segregated or coupled returning the solution statistics.
+            //  Solver controls read from fvSolution
+            SolverPerformance<Type> solveSegregatedOrCoupled();
+
             //- Solve segregated returning the solution statistics.
             //  Use the given solver controls
             SolverPerformance<Type> solveSegregated(const dictionary&);
@@ -614,6 +618,10 @@ public:
             //- Solve returning the solution statistics.
             //  Use the given solver controls
             SolverPerformance<Type> solve(const dictionary&);
+
+            //- Solve returning the solution statistics.
+            //  Uses \p name solver controls from fvSolution
+            SolverPerformance<Type> solve(const word& name);
 
             //- Solve returning the solution statistics.
             //  Solver controls read from fvSolution
@@ -641,7 +649,11 @@ public:
             tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
                 flux() const;
 
-            //- Return the solver dictionary taking into account finalIteration
+            //- Return the solver dictionary (from fvSolution) for \p name
+            const dictionary& solverDict(const word& name) const;
+
+            //- Return the solver dictionary for psi,
+            //- taking into account finalIteration
             const dictionary& solverDict() const;
 
 
@@ -757,8 +769,11 @@ void checkMethod
 //- Solve returning the solution statistics given convergence tolerance
 //  Use the given solver controls
 template<class Type>
-SolverPerformance<Type> solve(fvMatrix<Type>&, const dictionary&);
-
+SolverPerformance<Type> solve
+(
+    fvMatrix<Type>&,
+    const dictionary& solverControls
+);
 
 //- Solve returning the solution statistics given convergence tolerance,
 //- deleting temporary matrix after solution.
@@ -767,19 +782,30 @@ template<class Type>
 SolverPerformance<Type> solve
 (
     const tmp<fvMatrix<Type>>&,
-    const dictionary&
+    const dictionary& solverControls
 );
 
 
 //- Solve returning the solution statistics given convergence tolerance
-//  Solver controls read fvSolution
+//  Uses \p name solver controls from fvSolution
 template<class Type>
-SolverPerformance<Type> solve(fvMatrix<Type>&);
-
+SolverPerformance<Type> solve(fvMatrix<Type>&, const word& name);
 
 //- Solve returning the solution statistics given convergence tolerance,
 //- deleting temporary matrix after solution.
-//  Solver controls read fvSolution
+//  Uses \p name solver controls from fvSolution
+template<class Type>
+SolverPerformance<Type> solve(const tmp<fvMatrix<Type>>&, const word& name);
+
+
+//- Solve returning the solution statistics given convergence tolerance
+//  Uses solver controls from fvSolution
+template<class Type>
+SolverPerformance<Type> solve(fvMatrix<Type>&);
+
+//- Solve returning the solution statistics given convergence tolerance,
+//- deleting temporary matrix after solution.
+//  Uses solver controls from fvSolution
 template<class Type>
 SolverPerformance<Type> solve(const tmp<fvMatrix<Type>>&);
 

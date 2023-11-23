@@ -1529,6 +1529,16 @@ flux() const
 
 
 template<class Type>
+const Foam::dictionary& Foam::fvMatrix<Type>::solverDict
+(
+    const word& name
+) const
+{
+    return psi_.mesh().solverDict(name);
+}
+
+
+template<class Type>
 const Foam::dictionary& Foam::fvMatrix<Type>::solverDict() const
 {
     return psi_.mesh().solverDict
@@ -1921,11 +1931,11 @@ void Foam::checkMethod
 template<class Type>
 Foam::SolverPerformance<Type> Foam::solve
 (
-    fvMatrix<Type>& fvm,
+    fvMatrix<Type>& mat,
     const dictionary& solverControls
 )
 {
-    return fvm.solve(solverControls);
+    return mat.solve(solverControls);
 }
 
 template<class Type>
@@ -1944,9 +1954,34 @@ Foam::SolverPerformance<Type> Foam::solve
 
 
 template<class Type>
-Foam::SolverPerformance<Type> Foam::solve(fvMatrix<Type>& fvm)
+Foam::SolverPerformance<Type> Foam::solve
+(
+    fvMatrix<Type>& mat,
+    const word& name
+)
 {
-    return fvm.solve();
+    return mat.solve(name);
+}
+
+template<class Type>
+Foam::SolverPerformance<Type> Foam::solve
+(
+    const tmp<fvMatrix<Type>>& tmat,
+    const word& name
+)
+{
+    SolverPerformance<Type> solverPerf(tmat.constCast().solve(name));
+
+    tmat.clear();
+
+    return solverPerf;
+}
+
+
+template<class Type>
+Foam::SolverPerformance<Type> Foam::solve(fvMatrix<Type>& mat)
+{
+    return mat.solve();
 }
 
 template<class Type>

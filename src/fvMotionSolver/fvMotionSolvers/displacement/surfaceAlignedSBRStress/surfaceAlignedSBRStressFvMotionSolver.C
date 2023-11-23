@@ -423,7 +423,7 @@ void Foam::surfaceAlignedSBRStressFvMotionSolver::solve()
         fvOptions.constrain(DEqn);
 
         // Note: solve uncoupled
-        DEqn.solveSegregatedOrCoupled(DEqn.solverDict());
+        DEqn.solveSegregatedOrCoupled();
 
         fvOptions.correct(cellDisp);
     }

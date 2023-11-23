@@ -28,7 +28,7 @@
                   - fvc::snGrad(p_rgh)
                 )*mesh.magSf()
             ),
-            mesh.solver(U.select(finalIter))
+            U.select(finalIter)
         );
 
         fvOptions.correct(U);

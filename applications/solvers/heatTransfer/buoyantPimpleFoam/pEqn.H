@@ -52,7 +52,7 @@ while (pimple.correctNonOrthogonal())
         compressible ? getRefCellValue(p_rgh, pRefCell) : pRefValue
     );
 
-    p_rghEqn.solve(mesh.solver(p_rgh.select(pimple.finalInnerIter())));
+    p_rghEqn.solve(p_rgh.select(pimple.finalInnerIter()));
 
     if (pimple.finalNonOrthogonalIter())
     {

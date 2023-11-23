@@ -80,7 +80,7 @@
         (
             p_rghEqnComp
           + p_rghEqnIncomp,
-            mesh.solver(p_rgh.select(pimple.finalInnerIter()))
+            p_rgh.select(pimple.finalInnerIter())
         );
 
         if (pimple.finalNonOrthogonalIter())
