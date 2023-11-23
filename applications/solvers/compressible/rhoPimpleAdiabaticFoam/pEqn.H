@@ -63,7 +63,7 @@
                 fvOptions(psi, p, rho.name())
             );
 
-            pEqn.solve(mesh.solver(p.select(pimple.finalInnerIter())));
+            pEqn.solve(p.select(pimple.finalInnerIter()));
 
             // Rhie & Chow interpolation (part 2)
             if (pimple.finalNonOrthogonalIter())

@@ -146,7 +146,7 @@ void Foam::velocityLaplacianFvMotionSolver::solve()
         );
 
         fvOptions.constrain(UEqn);
-        UEqn.solveSegregatedOrCoupled(UEqn.solverDict());
+        UEqn.solveSegregatedOrCoupled();
         fvOptions.correct(cellMotionU_);
     }
 }

@@ -45,7 +45,7 @@
         //p_rghEqn.setReference(pRefCell, pRefValue);
         p_rghEqn.setReference(pRefCell, getRefCellValue(p_rgh, pRefCell));
 
-        p_rghEqn.solve(mesh.solver(p_rgh.select(pimple.finalInnerIter())));
+        p_rghEqn.solve(p_rgh.select(pimple.finalInnerIter()));
 
         if (pimple.finalNonOrthogonalIter())
         {

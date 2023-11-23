@@ -107,7 +107,7 @@ void Foam::CorrectPhi
 
         pcorrEqn.solve
         (
-            mesh.solver(pcorr.select(pimple.finalNonOrthogonalIter()))
+            pcorr.select(pimple.finalNonOrthogonalIter())
         );
 
         if (pimple.finalNonOrthogonalIter())
@@ -182,7 +182,7 @@ void Foam::CorrectPhi
 
         pcorrEqn.solve
         (
-            mesh.solver(pcorr.select(pimple.finalNonOrthogonalIter()))
+            pcorr.select(pimple.finalNonOrthogonalIter())
         );
 
         if (pimple.finalNonOrthogonalIter())

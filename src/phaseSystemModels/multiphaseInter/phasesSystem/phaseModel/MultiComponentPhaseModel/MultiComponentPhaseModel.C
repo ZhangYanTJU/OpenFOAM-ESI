@@ -420,7 +420,7 @@ void Foam::MultiComponentPhaseModel<BasePhaseModel, phaseThermo>::solveYi
                     )
                 );
 
-                YiDiffEqn.solve(mesh.solver("diffusion" + Yi.name()));
+                YiDiffEqn.solve("diffusion" + Yi.name());
             }
 
             Yt += Yi;

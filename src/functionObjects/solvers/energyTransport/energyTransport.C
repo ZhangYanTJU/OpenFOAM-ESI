@@ -395,7 +395,7 @@ bool Foam::functionObjects::energyTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(mesh_.solverDict(schemesField_));
+            sEqn.solve(schemesField_);
         }
     }
     else if (phi.dimensions() == dimVolume/dimTime)
@@ -433,7 +433,7 @@ bool Foam::functionObjects::energyTransport::execute()
 
             fvOptions_.constrain(sEqn);
 
-            sEqn.solve(mesh_.solverDict(schemesField_));
+            sEqn.solve(schemesField_);
         }
     }
     else

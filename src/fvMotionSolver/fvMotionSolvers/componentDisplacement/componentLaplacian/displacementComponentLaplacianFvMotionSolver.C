@@ -242,7 +242,7 @@ void Foam::displacementComponentLaplacianFvMotionSolver::solve()
     );
 
     fvOptions.constrain(TEqn);
-    TEqn.solveSegregatedOrCoupled(TEqn.solverDict());
+    TEqn.solveSegregatedOrCoupled();
     fvOptions.correct(cellDisplacement_);
 }
 

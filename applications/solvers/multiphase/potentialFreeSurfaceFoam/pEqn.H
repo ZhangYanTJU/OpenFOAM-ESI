@@ -30,7 +30,7 @@ while (pimple.correctNonOrthogonal())
 
     p_ghEqn.setReference(p_ghRefCell, p_ghRefValue);
 
-    p_ghEqn.solve(mesh.solver(p_gh.select(pimple.finalInnerIter())));
+    p_ghEqn.solve(p_gh.select(pimple.finalInnerIter()));
 
     if (pimple.finalNonOrthogonalIter())
     {

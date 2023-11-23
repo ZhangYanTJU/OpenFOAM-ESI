@@ -42,7 +42,7 @@ if (pimple.transonic())
           + fvOptions(psi, p, rho.name())
         );
 
-        pEqn.solve(mesh.solver(p.select(pimple.finalInnerIter())));
+        pEqn.solve(p.select(pimple.finalInnerIter()));
 
         if (pimple.finalNonOrthogonalIter())
         {
@@ -77,7 +77,7 @@ else
           + fvOptions(psi, p, rho.name())
         );
 
-        pEqn.solve(mesh.solver(p.select(pimple.finalInnerIter())));
+        pEqn.solve(p.select(pimple.finalInnerIter()));
 
         if (pimple.finalNonOrthogonalIter())
         {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -315,6 +315,13 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveCoupled
 
 
 template<class Type>
+Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregatedOrCoupled()
+{
+    return this->solveSegregatedOrCoupled(solverDict());
+}
+
+
+template<class Type>
 Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solve
 (
     const dictionary& solverControls
@@ -336,6 +343,13 @@ template<class Type>
 Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::fvSolver::solve()
 {
     return solve(fvMat_.solverDict());
+}
+
+
+template<class Type>
+Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solve(const word& name)
+{
+    return this->solve(solverDict(name));
 }
 
 

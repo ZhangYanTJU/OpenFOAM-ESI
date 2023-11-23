@@ -28,7 +28,7 @@
             mesh.data().setFinalIteration(true);
         }
 
-        hEqn.solve(mesh.solver(h.select(finalIter)));
+        hEqn.solve(h.select(finalIter));
 
         fvOptions.correct(h);
 

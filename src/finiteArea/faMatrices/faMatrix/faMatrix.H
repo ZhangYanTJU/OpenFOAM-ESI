@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -449,6 +449,10 @@ public:
             SolverPerformance<Type> solve(const dictionary&);
 
             //- Solve returning the solution statistics.
+            //  Uses \p name solver controls from faSolution
+            SolverPerformance<Type> solve(const word& name);
+
+            //- Solve returning the solution statistics.
             //  Solver controls read from faSolution
             SolverPerformance<Type> solve();
 
@@ -466,6 +470,12 @@ public:
 
             //- Return the face-flux field from the matrix
             tmp<GeometricField<Type, faePatchField, edgeMesh>> flux() const;
+
+            //- Return the solver dictionary (from faSolution) for \p name
+            const dictionary& solverDict(const word& name) const;
+
+            //- Return the solver dictionary for psi
+            const dictionary& solverDict() const;
 
 
     // Member Operators
@@ -578,27 +588,45 @@ void checkMethod
 
 
 //- Solve returning the solution statistics given convergence tolerance
-// Use the given solver controls
+//  Use the given solver controls
 template<class Type>
-SolverPerformance<Type> solve(faMatrix<Type>&, const dictionary&);
-
+SolverPerformance<Type> solve
+(
+    faMatrix<Type>&,
+    const dictionary& solverControls
+);
 
 //- Solve returning the solution statistics given convergence tolerance,
 //- deleting temporary matrix after solution.
-// Use the given solver controls
+//  Use the given solver controls
 template<class Type>
-SolverPerformance<Type> solve(const tmp<faMatrix<Type>>&, const dictionary&);
+SolverPerformance<Type> solve
+(
+    const tmp<faMatrix<Type>>&,
+    const dictionary& solverControls
+);
 
 
 //- Solve returning the solution statistics given convergence tolerance
-//  Solver controls read faSolution
+//  Uses \p name solver controls from faSolution
 template<class Type>
-SolverPerformance<Type> solve(faMatrix<Type>&);
-
+SolverPerformance<Type> solve(faMatrix<Type>&, const word& name);
 
 //- Solve returning the solution statistics given convergence tolerance,
 //- deleting temporary matrix after solution.
-//  Solver controls read faSolution
+//  Uses \p name solver controls from faSolution
+template<class Type>
+SolverPerformance<Type> solve(const tmp<faMatrix<Type>>&, const word& name);
+
+
+//- Solve returning the solution statistics given convergence tolerance
+//  Uses solver controls from faSolution
+template<class Type>
+SolverPerformance<Type> solve(faMatrix<Type>&);
+
+//- Solve returning the solution statistics given convergence tolerance,
+//- deleting temporary matrix after solution.
+//  Uses solver controls from faSolution
 template<class Type>
 SolverPerformance<Type> solve(const tmp<faMatrix<Type>>&);
 

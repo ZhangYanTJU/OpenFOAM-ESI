@@ -72,7 +72,7 @@ if (mesh.changing())
             divrhoU()
         );
 
-        //pcorrEqn.solve(mesh.solver(pcorr.select(pimple.finalInnerIter())));
+        //pcorrEqn.solve(pcorr.select(pimple.finalInnerIter()));
         //Bypass virtual layer
         const dictionary& d = mesh.solver
             (

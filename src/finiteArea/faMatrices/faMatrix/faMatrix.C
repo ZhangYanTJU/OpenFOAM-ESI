@@ -743,6 +743,26 @@ Foam::faMatrix<Type>::flux() const
 }
 
 
+template<class Type>
+const Foam::dictionary& Foam::faMatrix<Type>::solverDict
+(
+    const word& name
+) const
+{
+    return psi_.mesh().solverDict(name);
+}
+
+
+template<class Type>
+const Foam::dictionary& Foam::faMatrix<Type>::solverDict() const
+{
+    return psi_.mesh().solverDict
+    (
+        psi_.name()
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Type>
@@ -1110,11 +1130,11 @@ void Foam::checkMethod
 template<class Type>
 Foam::SolverPerformance<Type> Foam::solve
 (
-    faMatrix<Type>& fam,
+    faMatrix<Type>& mat,
     const dictionary& solverControls
 )
 {
-    return fam.solve(solverControls);
+    return mat.solve(solverControls);
 }
 
 
@@ -1134,9 +1154,35 @@ Foam::SolverPerformance<Type> Foam::solve
 
 
 template<class Type>
-Foam::SolverPerformance<Type> Foam::solve(faMatrix<Type>& fam)
+Foam::SolverPerformance<Type> Foam::solve
+(
+    faMatrix<Type>& mat,
+    const word& name
+)
 {
-    return fam.solve();
+    return mat.solve(name);
+}
+
+
+template<class Type>
+Foam::SolverPerformance<Type> Foam::solve
+(
+    const tmp<faMatrix<Type>>& tmat,
+    const word& name
+)
+{
+    SolverPerformance<Type> solverPerf(tmat.constCast().solve(name));
+
+    tmat.clear();
+
+    return solverPerf;
+}
+
+
+template<class Type>
+Foam::SolverPerformance<Type> Foam::solve(faMatrix<Type>& mat)
+{
+    return mat.solve();
 }
 
 
