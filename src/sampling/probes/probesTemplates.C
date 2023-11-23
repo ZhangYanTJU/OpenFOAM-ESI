@@ -31,6 +31,7 @@ License
 #include "surfaceFields.H"
 #include "IOmanip.H"
 #include "interpolation.H"
+#include "SpanStream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -137,11 +138,15 @@ void Foam::probes::writeValues
 
         os  << setw(width) << timeValue;
 
+        OCharStream buf;
+
         forAll(values, probei)
         {
             if (includeOutOfBounds_ || processor_[probei] != -1)
             {
-                os  << ' ' << setw(width) << values[probei];
+                buf.rewind();
+                buf << values[probei];
+                os  << ' ' << setw(width) << buf.str().data();
             }
         }
         os  << endl;

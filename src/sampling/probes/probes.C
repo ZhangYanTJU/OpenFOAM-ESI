@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,6 +105,7 @@ void Foam::probes::createProbeFiles(const wordList& fieldNames)
             DebugInfo<< "open probe stream: " << os.name() << endl;
 
             const unsigned int width(IOstream::defaultPrecision() + 7);
+            os  << setf(ios_base::left);
 
             forAll(*this, probei)
             {
@@ -139,8 +140,7 @@ void Foam::probes::createProbeFiles(const wordList& fieldNames)
                 os  << nl;
             }
 
-            os  << '#' << setw(IOstream::defaultPrecision() + 6)
-                << "Probe";
+            os  << setw(width) << "# Time";
 
             forAll(*this, probei)
             {
@@ -149,10 +149,7 @@ void Foam::probes::createProbeFiles(const wordList& fieldNames)
                     os  << ' ' << setw(width) << probei;
                 }
             }
-            os  << nl;
-
-            os  << '#' << setw(IOstream::defaultPrecision() + 6)
-                << "Time" << endl;
+            os  << endl;
         }
     }
 }
