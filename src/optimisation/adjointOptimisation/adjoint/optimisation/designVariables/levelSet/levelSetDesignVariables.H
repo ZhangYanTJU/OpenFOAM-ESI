@@ -92,11 +92,13 @@ protected:
         //- Regularisation mechanism
         autoPtr<regularisationPDE> regularisation_;
 
-        //- The regularised field that is also transformed
-        //- into signed distances
+        //- The regularised field
         volScalarField aTilda_;
 
-        //- Function to transform signed distances to the indicator field beta_
+        //- The signed distances field
+        volScalarField signedDistances_;
+
+        //- Function to transorm signed distances to the indicator field beta_
         autoPtr<topOInterpolationFunction> interpolation_;
 
         //- The indicator field
@@ -107,6 +109,15 @@ protected:
 
         //- Write all fields related to the distance calculation (debugging)
         bool writeAllDistanceFields_;
+
+        //- Mesh faces acting as the source of MeshWave
+        labelList changedFaces_;
+
+        //- Seed distances to MeshWave and cell distances
+        //  The data carried by each wallPoints corresponds to the origin
+        //  mesh face ID
+        List<wallPointData<label>> changedFacesInfo_;
+        List<wallPointData<label>> allCellInfo_;
 
 
     // Protected Member Functions
