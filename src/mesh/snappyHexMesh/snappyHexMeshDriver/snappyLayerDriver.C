@@ -3072,6 +3072,9 @@ void Foam::snappyLayerDriver::printLayerData
         maxPatchNameLen = max(maxPatchNameLen, label(patchName.size()));
     }
 
+    // Print some global mesh statistics
+    meshRefiner_.printMeshInfo(false, "Mesh with layers", false);
+
     Info<< nl
         << setf(ios_base::left) << setw(maxPatchNameLen) << "patch"
         << setw(0) << " faces    layers   overall thickness" << nl
@@ -5501,16 +5504,11 @@ void Foam::snappyLayerDriver::doLayers
             Pstream::reduceOr(faceZoneOnCoupledFace);
         }
 
-
-
-
         // Balance
-        if (Pstream::parRun() && (preBalance || faceZoneOnCoupledFace))
+        if (Pstream::parRun())
         {
-            Info<< nl
-                << "Doing initial balancing" << nl
-                << "-----------------------" << nl
-                << endl;
+            // Calculate wanted number of cells after adding layers
+            // (expressed as weight to be passed into decompositionMethod)
 
             scalarField cellWeights(mesh.nCells(), 1);
             forAll(numLayers, patchi)
@@ -5562,17 +5560,54 @@ void Foam::snappyLayerDriver::doLayers
                 }
             }
 
-            // Balance mesh (and meshRefinement). Restrict faceZones to
-            // be on internal faces only since they will be converted into
-            // baffles.
-            autoPtr<mapDistributePolyMesh> map = meshRefiner_.balance
+
+            // Print starting mesh
+            Info<< nl;
+            meshRefiner_.printMeshInfo
             (
-                true,           // keepZoneFaces
                 false,
-                cellWeights,
-                decomposer,
-                distributor
+                "Before layer addition",
+                false           //printCellLevel
             );
+
+            // Print expected mesh (if all layers added)
+            {
+                const scalar nNewCells = sum(cellWeights);
+                const scalar nNewCellsAll =
+                    returnReduce(nNewCells, sumOp<scalar>());
+                const scalar nIdealNewCells = nNewCellsAll / Pstream::nProcs();
+                const scalar unbalance = returnReduce
+                (
+                    mag(1.0-nNewCells/nIdealNewCells),
+                    maxOp<scalar>()
+                );
+
+                Info<< "Ideal layer addition"
+                    << " : cells:" << nNewCellsAll
+                    << "  unbalance:" << unbalance
+                    << nl << endl;
+            }
+
+
+            if (preBalance || faceZoneOnCoupledFace)
+            {
+                Info<< nl
+                    << "Doing initial balancing" << nl
+                    << "-----------------------" << nl
+                    << endl;
+
+                // Balance mesh (and meshRefinement). Restrict faceZones to
+                // be on internal faces only since they will be converted into
+                // baffles.
+                autoPtr<mapDistributePolyMesh> map = meshRefiner_.balance
+                (
+                    true,           // keepZoneFaces
+                    false,
+                    cellWeights,
+                    decomposer,
+                    distributor
+                );
+            }
         }
 
 

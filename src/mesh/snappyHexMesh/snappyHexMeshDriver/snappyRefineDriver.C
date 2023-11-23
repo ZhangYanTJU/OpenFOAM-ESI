@@ -2199,7 +2199,8 @@ Foam::label Foam::snappyRefineDriver::directionalShellRefine
         meshRefiner_.printMeshInfo
         (
             debug,
-            "After directional refinement iteration " + name(iter)
+            "After directional refinement iteration " + name(iter),
+            true
         );
 
         if (debug&meshRefinement::MESH)

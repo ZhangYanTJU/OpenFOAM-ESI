@@ -1793,7 +1793,12 @@ public:
             );
 
             //- Print some mesh stats.
-            void printMeshInfo(const bool, const string&) const;
+            void printMeshInfo
+            (
+                const bool debug,
+                const string& msg,
+                const bool printCellLevel
+            ) const;
 
             //- Replacement for Time::timeName() that returns oldInstance
             //- (if overwrite_)

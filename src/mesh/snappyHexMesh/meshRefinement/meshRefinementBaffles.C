@@ -3860,7 +3860,7 @@ void Foam::meshRefinement::handleSnapProblems
     Info<< "Created baffles in = "
         << runTime.cpuTimeIncrement() << " s\n" << nl << endl;
 
-    printMeshInfo(debug, "After introducing baffles");
+    printMeshInfo(debug, "After introducing baffles", true);
 
     if (debug&MESH)
     {
@@ -4644,7 +4644,7 @@ void Foam::meshRefinement::baffleAndSplitMesh
     Info<< "Created baffles in = "
         << runTime.cpuTimeIncrement() << " s\n" << nl << endl;
 
-    printMeshInfo(debug, "After introducing baffles");
+    printMeshInfo(debug, "After introducing baffles", true);
 
     if (debug&MESH)
     {
@@ -4752,7 +4752,7 @@ void Foam::meshRefinement::baffleAndSplitMesh
     Info<< "Split mesh in = "
         << runTime.cpuTimeIncrement() << " s\n" << nl << endl;
 
-    printMeshInfo(debug, "After subsetting");
+    printMeshInfo(debug, "After subsetting", true);
 
     if (debug&MESH)
     {

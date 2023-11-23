@@ -2664,6 +2664,10 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::meshRefinement::balance
             }
             else
             {
+                Info<< "Balancing since max unbalance " << unbalance
+                    << " is larger than allowable " << maxLoadUnbalance
+                    << endl;
+
                 scalarField cellWeights(mesh_.nCells(), 1);
                 forAll(cellsToRefine, i)
                 {
@@ -2685,7 +2689,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::meshRefinement::balance
                 Info<< "Balanced mesh in = "
                     << mesh_.time().cpuTimeIncrement() << " s" << endl;
 
-                printMeshInfo(debug, "After balancing " + msg);
+                printMeshInfo(debug, "After balancing " + msg, true);
 
 
                 if (debug&meshRefinement::MESH)
@@ -2749,7 +2753,7 @@ Foam::meshRefinement::refineAndBalance
 
     Info<< "Refined mesh in = "
         << mesh_.time().cpuTimeIncrement() << " s" << endl;
-    printMeshInfo(debug, "After refinement " + msg);
+    printMeshInfo(debug, "After refinement " + msg, true);
 
 
     // Load balancing
@@ -2862,7 +2866,7 @@ Foam::meshRefinement::balanceAndRefine
     //    Info<< endl;
     //}
 
-    printMeshInfo(debug, "After refinement " + msg);
+    printMeshInfo(debug, "After refinement " + msg, true);
 
     return distMap;
 }

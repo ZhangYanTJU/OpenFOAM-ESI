@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -3503,7 +3503,12 @@ Foam::bitSet Foam::meshRefinement::getMasterEdges
 }
 
 
-void Foam::meshRefinement::printMeshInfo(const bool debug, const string& msg)
+void Foam::meshRefinement::printMeshInfo
+(
+    const bool debug,
+    const string& msg,
+    const bool printCellLevel
+)
 const
 {
     const globalMeshData& pData = mesh_.globalData();
@@ -3527,12 +3532,22 @@ const
         Info<< msg.c_str()
             << " : cells:" << pData.nTotalCells()
             << "  faces:" << returnReduce(nMasterFaces, sumOp<label>())
-            << "  points:" << returnReduce(nMasterPoints, sumOp<label>())
-            << endl;
+            << "  points:" << returnReduce(nMasterPoints, sumOp<label>());
+
+        if (UPstream::parRun())
+        {
+            const scalar nIdealCells = pData.nTotalCells()/Pstream::nProcs();
+            const scalar unbalance = returnReduce
+            (
+                mag(1.0-mesh_.nCells()/nIdealCells),
+                maxOp<scalar>()
+            );
+            Info<< "  unbalance:" << unbalance;
+        }
+        Info<< endl;
     }
 
-
-    //if (debug)
+    if (printCellLevel)
     {
         const labelList& cellLevel = meshCutter_.cellLevel();
 

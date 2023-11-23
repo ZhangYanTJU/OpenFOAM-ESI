@@ -721,9 +721,13 @@ void writeMesh
     const meshRefinement::writeType writeLevel
 )
 {
+    // Note: don't want to use time().cpuTimeIncrement since layer addition
+    // somehow resets timer ...
+    cpuTime timer;
+
     const fvMesh& mesh = meshRefiner.mesh();
 
-    meshRefiner.printMeshInfo(debugLevel, msg);
+    meshRefiner.printMeshInfo(debugLevel, msg, true);
     Info<< "Writing mesh to time " << meshRefiner.timeName() << endl;
 
     processorMeshes::removeFiles(mesh);
@@ -740,7 +744,7 @@ void writeMesh
         mesh.time().path()/meshRefiner.timeName()
     );
     Info<< "Wrote mesh in = "
-        << mesh.time().cpuTimeIncrement() << " s." << endl;
+        << timer.cpuTimeIncrement() << " s." << endl;
 }
 
 
@@ -1346,7 +1350,7 @@ int main(int argc, char *argv[])
     }
 
     // Some stats
-    meshRefiner.printMeshInfo(debugLevel, "Initial mesh");
+    meshRefiner.printMeshInfo(debugLevel, "Initial mesh", true);
 
     meshRefiner.write
     (
