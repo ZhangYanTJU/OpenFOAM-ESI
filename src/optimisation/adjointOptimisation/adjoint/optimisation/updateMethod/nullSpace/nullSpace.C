@@ -971,6 +971,7 @@ Foam::nullSpace::nullSpace
         coeffsDict(type).
             getOrDefault<scalar>("violatedConstraintsThreshold", 1.e-3)
     ),
+    epsPerturb_(coeffsDict(type).  getOrDefault<scalar>("perturbation", 1.e-2)),
     aJ_(coeffsDict(type).getOrDefault<scalar>("aJ", 1)),
     aC_(coeffsDict(type).getOrDefault<scalar>("aC", 1)),
     adaptiveStep_(coeffsDict(type).getOrDefault<bool>("adaptiveStep", true)),
@@ -1001,6 +1002,64 @@ Foam::nullSpace::nullSpace
             << "Either maxInitChange or maxDVChange has to be setup when using "
             << "an adaptive step"
             << exit(FatalError);
+    }
+
+    // Sanity checks for the bounds of the design variables.
+    // If all design variables start from either their lower or upper bound
+    // and there is at least one active flow-related constraint, the systems
+    // providing the update of the desgin varaibles become singular.
+    // Issue a warning and change the initial values of the design variables
+    // by a small ammount, to kick start the optimisation
+    if (designVars_->lowerBounds() && designVars_->upperBounds())
+    {
+        const scalarField& lowerBounds = designVars_->lowerBoundsRef();
+        const scalarField& upperBounds = designVars_->upperBoundsRef();
+        scalarField& designVars = designVars_();
+        boolList isOnLowerBound(designVars.size(), false);
+        boolList isOnUpperBound(designVars.size(), false);
+        bool existsNonBoundVar = false;
+        for (const label activeVarI : designVars_->activeDesignVariables())
+        {
+            isOnLowerBound[activeVarI] =
+                mag(designVars[activeVarI] - lowerBounds[activeVarI]) < SMALL;
+            isOnUpperBound[activeVarI] =
+                mag(designVars[activeVarI] - upperBounds[activeVarI]) < SMALL;
+            existsNonBoundVar =
+                existsNonBoundVar
+            || (!isOnLowerBound[activeVarI] && !isOnUpperBound[activeVarI]);
+        }
+        if (globalSum_)
+        {
+            reduce(existsNonBoundVar, orOp<bool>());
+        }
+        if (!existsNonBoundVar)
+        {
+            WarningInFunction
+                << "All design variables lay on their bound values." << nl
+                << tab << "This will lead to singular matrices in nullSpace"
+                << nl
+                << tab << "Perturbing the design variables by "
+                << epsPerturb_ << "*(upperBound - lowerBounds)"
+                << nl
+                << endl;
+            scalarField update(designVars.size(), Zero);
+            for (const label activeVarI : designVars_->activeDesignVariables())
+            {
+                if (isOnLowerBound[activeVarI])
+                {
+                    update[activeVarI] =
+                        epsPerturb_
+                       *(upperBounds[activeVarI] - lowerBounds[activeVarI]);
+                }
+                if (isOnUpperBound[activeVarI])
+                {
+                    update[activeVarI] =
+                      - epsPerturb_
+                       *(upperBounds[activeVarI] - lowerBounds[activeVarI]);
+                }
+            }
+            designVars_->update(update);
+        }
     }
 
     // Read-in aJ in restarts

@@ -159,6 +159,10 @@ protected:
             //  constraints
             scalar epsConstr_;
 
+            //- Value to perturb the design variables by, if all of them
+            //- lay on their bounds at the beginning of the optimisation
+            scalar epsPerturb_;
+
             //- Multiplier of the null space update
             scalar aJ_;
 
