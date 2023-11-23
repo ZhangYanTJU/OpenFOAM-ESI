@@ -555,8 +555,9 @@ private:
                 label& nRefine
             ) const;
 
-            //- Mark cells for surface proximity based refinement.
-            label markProximityRefinementWave
+            //- Mark cells for surface proximity based refinement. Uses
+            //  ray-shooting from markInternalGapRefinement.
+            label markFakeGapRefinement
             (
                 const scalar planarCos,
                 const labelList& blockedSurfaces,

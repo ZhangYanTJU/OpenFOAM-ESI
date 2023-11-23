@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -455,6 +455,7 @@ void Foam::meshRefinement::growSet
 //}
 
 
+/*
 Foam::label Foam::meshRefinement::markProximityRefinementWave
 (
     const scalar planarCos,
@@ -946,6 +947,288 @@ Foam::label Foam::meshRefinement::markProximityRefinementWave
 
     return returnReduce(nRefine-oldNRefine, sumOp<label>());
 }
+*/
+
+
+Foam::label Foam::meshRefinement::markFakeGapRefinement
+(
+    const scalar planarCos,
+    const labelList& blockedSurfaces,
+    const label nAllowRefine,
+    const labelList& neiLevel,
+    const pointField& neiCc,
+
+    labelList& refineCell,
+    label& nRefine
+) const
+{
+    // Re-work the blockLevel of the blockedSurfaces into a length scale
+    // and a number of cells to cross
+    List<scalarList> regionToBlockSize(surfaces_.surfaces().size());
+    scalar maxBlockSize(-1);
+    for (const label surfi : blockedSurfaces)
+    {
+        const label geomi = surfaces_.surfaces()[surfi];
+        const searchableSurface& s = surfaces_.geometry()[geomi];
+        const label nRegions = s.regions().size();
+
+        regionToBlockSize[surfi].setSize(nRegions, -1);
+        for (label regioni = 0; regioni < nRegions; regioni++)
+        {
+            const label globalRegioni = surfaces_.globalRegion(surfi, regioni);
+            const label bLevel = surfaces_.blockLevel()[globalRegioni];
+
+            // If valid blockLevel specified
+            if (bLevel != labelMax)
+            {
+                regionToBlockSize[surfi][regioni] =
+                    meshCutter_.level0EdgeLength()/pow(2.0, bLevel);
+            }
+
+            maxBlockSize = max(maxBlockSize, regionToBlockSize[surfi][regioni]);
+
+            //const label mLevel = surfaces_.maxLevel()[globalRegioni];
+            //// TBD: check for higher cached level of surface due to vol
+            ////      refinement. Problem: might still miss refinement bubble
+            ////      fully inside thin channel
+            //if (isA<triSurfaceMesh>(s) && !isA<distributedTriSurfaceMesh>(s))
+            //{
+            //    const triSurfaceMesh& surf = refCast<const triSurfaceMesh>(s);
+            //}
+        }
+    }
+
+    // Collect candidate faces (i.e. intersecting any surface and
+    // owner/neighbour not yet refined) and their cells
+    labelList cellMap;
+    {
+        const labelList testFaces(getRefineCandidateFaces(refineCell));
+        bitSet isTestCell(mesh_.nCells());
+        for (const label facei : testFaces)
+        {
+            const label own = mesh_.faceOwner()[facei];
+            if (refineCell[own] == -1)
+            {
+                isTestCell.set(own);
+            }
+            if (mesh_.isInternalFace(facei))
+            {
+                const label nei = mesh_.faceNeighbour()[facei];
+                if (refineCell[nei] == -1)
+                {
+                    isTestCell.set(nei);
+                }
+            }
+        }
+        cellMap = isTestCell.sortedToc();
+    }
+
+
+    // Shoot rays in all 6 directions
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //
+    // Almost exact copy of meshRefinement::markInternalGapRefinement.
+    // Difference is only in the length scale (now based on blockLevel)
+
+
+    // Find per cell centre the nearest point and normal on the surfaces
+    List<pointIndexHit> nearInfo;
+    vectorField nearNormal;
+    labelList nearSurface;
+    labelList nearRegion;
+    {
+        surfaces_.findNearestRegion
+        (
+            blockedSurfaces,
+            pointField(mesh_.cellCentres(), cellMap),
+            scalarField(cellMap.size(), maxBlockSize),  // use uniform for now
+            nearSurface,
+            nearInfo,
+            nearRegion,
+            nearNormal
+        );
+    }
+
+
+    DynamicList<label> map(nearInfo.size());
+    DynamicField<point> rayStart(nearInfo.size());
+    DynamicField<point> rayEnd(nearInfo.size());
+    DynamicField<scalar> gapSize(nearInfo.size());
+
+    DynamicField<point> rayStart2(nearInfo.size());
+    DynamicField<point> rayEnd2(nearInfo.size());
+    DynamicField<scalar> gapSize2(nearInfo.size());
+
+    label nTestCells = 0;
+
+    forAll(nearInfo, i)
+    {
+        if (nearInfo[i].hit())
+        {
+            const label globalRegioni = surfaces_.globalRegion
+            (
+                nearSurface[i],
+                nearRegion[i]
+            );
+
+            // Combine info from shell and surface
+            const label bLevel = surfaces_.blockLevel()[globalRegioni];
+            const FixedList<label, 3> gapInfo
+            ({
+                100,
+                bLevel,
+                100
+            });
+            const volumeType gapMode(volumeType::MIXED);
+
+            // Store wanted number of cells in gap
+            const label celli = cellMap[i];
+            const label cLevel = meshCutter_.cellLevel()[celli];
+
+            // Construct one or more rays to test for oppositeness
+            const label nRays = generateRays
+            (
+                false,                      // ignore actual surface normal
+                nearInfo[i].hitPoint(),
+                nearNormal[i],
+                gapInfo,
+                gapMode,
+
+                mesh_.cellCentres()[celli],
+                cLevel,
+
+                rayStart,
+                rayEnd,
+                gapSize,
+
+                rayStart2,
+                rayEnd2,
+                gapSize2
+            );
+            if (nRays > 0)
+            {
+                nTestCells++;
+                for (label j = 0; j < nRays; j++)
+                {
+                    map.append(i);
+                }
+            }
+        }
+    }
+
+    Info<< "Selected " << returnReduce(nTestCells, sumOp<label>())
+        << " cells for testing out of "
+        << mesh_.globalData().nTotalCells() << endl;
+    map.shrink();
+    rayStart.shrink();
+    rayEnd.shrink();
+    gapSize.shrink();
+
+    rayStart2.shrink();
+    rayEnd2.shrink();
+    gapSize2.shrink();
+
+    cellMap = labelUIndList(cellMap, map)();
+    nearNormal = UIndirectList<vector>(nearNormal, map)();
+    nearInfo.clear();
+    nearSurface.clear();
+    nearRegion.clear();
+
+
+    // Do intersections in pairs
+    labelList surf1;
+    labelList region1;
+    List<pointIndexHit> hit1;
+    vectorField normal1;
+    surfaces_.findNearestIntersection
+    (
+        rayStart,
+        rayEnd,
+        surf1,
+        region1,
+        hit1,
+        normal1
+    );
+
+    labelList surf2;
+    labelList region2;
+    List<pointIndexHit> hit2;
+    vectorField normal2;
+    surfaces_.findNearestIntersection
+    (
+        rayStart2,
+        rayEnd2,
+        surf2,
+        region2,
+        hit2,
+        normal2
+    );
+
+    // Extract cell based gap size
+    const label oldNRefine = nRefine;
+    forAll(surf1, i)
+    {
+        if (surf1[i] != -1 && surf2[i] != -1)
+        {
+            // Found intersections with surface. Check for
+            // - small gap
+            // - coplanar normals
+
+            const label celli = cellMap[i];
+            if (celli != -1 && refineCell[celli] == -1)
+            {
+                const scalar d2 = magSqr(hit1[i].hitPoint()-hit2[i].hitPoint());
+
+                const scalar maxGapSize
+                (
+                    max
+                    (
+                        regionToBlockSize[surf1[i]][region1[i]],
+                        regionToBlockSize[surf2[i]][region2[i]]
+                    )
+                );
+
+                if
+                (
+                    (mag(normal1[i]&normal2[i]) > planarCos)
+                 && (d2 < Foam::sqr(maxGapSize))
+                )
+                {
+                    if
+                    (
+                        !markForRefine
+                        (
+                            0,                      // mark level
+                            nAllowRefine,
+                            refineCell[celli],
+                            nRefine
+                        )
+                    )
+                    {
+                        if (debug)
+                        {
+                            Pout<< "Stopped refining since reaching my cell"
+                                << " limit of " << mesh_.nCells()+7*nRefine
+                                << endl;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if
+    (
+        returnReduce(nRefine, sumOp<label>())
+      > returnReduce(nAllowRefine, sumOp<label>())
+    )
+    {
+        Info<< "Reached refinement limit." << endl;
+    }
+
+    return returnReduce(nRefine-oldNRefine, sumOp<label>());
+}
 
 
 Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::removeGapCells
@@ -1006,7 +1289,19 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::removeGapCells
     }
 
 
-    markProximityRefinementWave
+    //markProximityRefinementWave
+    //(
+    //    Foam::cos(degToRad(planarAngle)),
+    //    surfToBlockLevel.sortedToc(),
+    //
+    //    labelMax/Pstream::nProcs(), //nAllowRefine,
+    //    neiLevel,
+    //    neiCc,
+    //
+    //    refineCell,
+    //    nRefine
+    //);
+    markFakeGapRefinement
     (
         Foam::cos(degToRad(planarAngle)),
         surfToBlockLevel.sortedToc(),
@@ -1018,20 +1313,6 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::meshRefinement::removeGapCells
         refineCell,
         nRefine
     );
-
-
-    //// Mark big-gap refinement
-    //markFakeGapRefinement
-    //(
-    //    Foam::cos(degToRad(planarAngle)),
-    //
-    //    labelMax/Pstream::nProcs(), //nAllowRefine,
-    //    neiLevel,
-    //    neiCc,
-    //
-    //    refineCell,
-    //    nRefine
-    //);
 
 
     Info<< "Marked for blocking due to close opposite surfaces         : "
