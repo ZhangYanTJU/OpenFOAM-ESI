@@ -830,7 +830,11 @@ void Foam::MMA::normalise()
     if (normalise_)
     {
         // Compute normalisation factors
-        if (!Jnorm_ || continuousNormalisation_)
+        if
+        (
+            !Jnorm_
+         || (continuousNormalisation_ && counter_ < lastNormalisationStep_)
+        )
         {
             scalarField activeSens(objectiveDerivatives_, activeDesignVars_);
             Jnorm_.reset(new scalar(Foam::sqrt(globalSum(sqr(activeSens)))));
@@ -933,7 +937,11 @@ Foam::MMA::MMA
         (coeffsDict(type).getOrDefault<bool>("continuousNormalisation", false)),
     Jnorm_(nullptr),
     Cnorm_(nullptr),
-    cw_(coeffsDict(type).getOrDefault<scalar>("constraintWeight", 1))
+    cw_(coeffsDict(type).getOrDefault<scalar>("constraintWeight", 1)),
+    lastNormalisationStep_
+    (
+        coeffsDict(type).getOrDefault<label>("lastNormalisationStep", 20)
+    )
 {
     // Check that the design variables bounds have been set
     if (!designVars().lowerBounds() || !designVars().upperBounds())

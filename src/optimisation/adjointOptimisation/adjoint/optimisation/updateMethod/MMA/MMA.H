@@ -248,6 +248,9 @@ protected:
             //- Constaint weight after the normalisation
             scalar cw_;
 
+            //- Constaint weight after the normalisation
+            label lastNormalisationStep_;
+
 
     // Protected Member Functions
 
