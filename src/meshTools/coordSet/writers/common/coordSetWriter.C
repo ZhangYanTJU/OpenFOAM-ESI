@@ -117,7 +117,12 @@ Foam::coordSetWriter::coordSetWriter()
     verbose_(false),
     nFields_(0),
     currTime_(),
-    outputPath_()
+    outputPath_(),
+    geometryScale_(1),
+    geometryCentre_(Zero),
+    geometryTransform_(),
+    fieldLevel_(),
+    fieldScale_()
 {}
 
 
@@ -126,6 +131,27 @@ Foam::coordSetWriter::coordSetWriter(const dictionary& options)
     coordSetWriter()
 {
     options.readIfPresent("verbose", verbose_);
+
+    geometryScale_ = 1;
+    geometryCentre_ = Zero;
+    geometryTransform_.clear();
+
+    options.readIfPresent("scale", geometryScale_);
+
+    // Optional cartesian coordinate system transform
+    const auto* dictptr = options.findDict("transform", keyType::LITERAL);
+
+    if (dictptr)
+    {
+        dictptr->readIfPresent("rotationCentre", geometryCentre_);
+
+        // 'origin' is optional within sub-dictionary
+        geometryTransform_ =
+            coordSystem::cartesian(*dictptr, IOobjectOption::LAZY_READ);
+    }
+
+    fieldLevel_ = options.subOrEmptyDict("fieldLevel");
+    fieldScale_ = options.subOrEmptyDict("fieldScale");
 }
 
 
