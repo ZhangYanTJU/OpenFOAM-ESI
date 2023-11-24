@@ -5,7 +5,7 @@
         (
             "h",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -20,7 +20,7 @@
         (
             "Us",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -34,7 +34,7 @@
         (
             "phis",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
@@ -48,7 +48,7 @@
         (
             "phi2s",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
@@ -67,7 +67,7 @@
         (
             "Sm",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -82,7 +82,7 @@
         (
             "Sd",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -96,7 +96,7 @@
         (
             "Sg",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -112,7 +112,7 @@
         (
             "ps",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
@@ -134,7 +134,7 @@
         (
             "manningField",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -147,7 +147,7 @@
         (
             "frictionFactor",
             runTime.timeName(),
-            mesh,
+            aMesh.thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
