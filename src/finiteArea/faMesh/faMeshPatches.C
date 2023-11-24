@@ -434,7 +434,7 @@ Foam::faPatchList Foam::faMesh::createPatchList
                 (
                     patch(),
                     selectEdges,
-                    mesh().time().globalPath(),
+                    thisDb().time().globalPath(),
                     outputName
                 );
 
@@ -517,7 +517,7 @@ Foam::faPatchList Foam::faMesh::createPatchList
                 (
                     patch(),
                     selectEdges,
-                    mesh().time().globalPath(),
+                    thisDb().time().globalPath(),
                     outputName
                 );
 

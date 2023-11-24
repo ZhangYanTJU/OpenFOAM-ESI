@@ -71,8 +71,8 @@ inline tmp<volScalarField> thermoSingleLayer::hs
             IOobject
             (
                 "hs(" + T.name() + ")",
-                time().timeName(),
-                regionMesh(),
+                regionMesh().time().timeName(),
+                regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),
@@ -94,8 +94,8 @@ inline tmp<volScalarField> thermoSingleLayer::T
             IOobject
             (
                 "T(" + hs.name() + ")",
-                time().timeName(),
-                regionMesh(),
+                regionMesh().time().timeName(),
+                regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),

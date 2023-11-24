@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,6 +38,8 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
 {
     typedef GeometricField<Type, faPatchField, areaMesh> AreaFieldType;
 
+    auto& obr = regionMesh().thisDb();
+
     if (dict.found("sigma"))
     {
         // Sigma to be defined using a Function1 type
@@ -48,8 +50,8 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
             IOobject
             (
                 typeName + ":sigma_" + regionName_,
-                mesh_.time().timeName(),
-                mesh_,
+                obr.time().timeName(),
+                obr,
                 IOobject::NO_READ,
                 IOobject::AUTO_WRITE
             ),
@@ -57,7 +59,7 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
             dimensioned<Type>(sqr(dimCurrent)/dimPower/dimLength, Zero)
         );
 
-        mesh_.objectRegistry::store(tsigma.ptr());
+        regIOobject::store(tsigma.ptr());
 
         Info<< "    Conductivity 'sigma' read from dictionary as f(T)"
             << nl << endl;
@@ -70,15 +72,15 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
             IOobject
             (
                 typeName + ":sigma_" + regionName_,
-                mesh().time().timeName(),
-                mesh(),
+                obr.time().timeName(),
+                obr,
                 IOobject::MUST_READ,
                 IOobject::AUTO_WRITE
             ),
             regionMesh()
         );
 
-        mesh().objectRegistry::store(tsigma.ptr());
+        regIOobject::store(tsigma.ptr());
 
         Info<< "    Conductivity 'sigma' read from file" << nl << endl;
     }
@@ -94,11 +96,10 @@ Foam::fa::jouleHeatingSource::updateSigma
 {
     typedef GeometricField<Type, faPatchField, areaMesh> AreaFieldType;
 
+    const auto& obr = regionMesh().thisDb();
+
     auto& sigma =
-        mesh().lookupObjectRef<AreaFieldType>
-        (
-            typeName + ":sigma_" + regionName_
-        );
+        obr.lookupObjectRef<AreaFieldType>(typeName + ":sigma_" + regionName_);
 
     if (!sigmaVsTPtr)
     {
@@ -106,7 +107,7 @@ Foam::fa::jouleHeatingSource::updateSigma
         return sigma;
     }
 
-    const auto& T = mesh().lookupObject<areaScalarField>(TName_);
+    const auto& T = obr.lookupObject<areaScalarField>(TName_);
 
     // Internal field
     forAll(sigma, i)

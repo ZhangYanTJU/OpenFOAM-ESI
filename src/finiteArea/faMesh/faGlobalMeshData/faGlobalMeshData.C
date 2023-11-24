@@ -73,17 +73,18 @@ const Foam::faMesh& Foam::faGlobalMeshData::mesh() const noexcept
 
 void Foam::faGlobalMeshData::updateMesh()
 {
-    label polyMeshNGlobalPoints = mesh_().globalData().nGlobalPoints();
+    // The polyMesh globalMeshData
+    const globalMeshData& pData = mesh_.mesh().globalData();
 
     const labelList& polyMeshSharedPointLabels =
-        mesh_().globalData().sharedPointLabels();
+        pData.sharedPointLabels();
 
     const labelList& polyMeshSharedPointAddr =
-        mesh_().globalData().sharedPointAddr();
+        pData.sharedPointAddr();
 
     labelHashSet sharedPointLabels;
 
-    labelField globalList(polyMeshNGlobalPoints, Zero);
+    labelField globalList(pData.nGlobalPoints(), Zero);
 
     forAll(mesh_.boundary(), patchI)
     {

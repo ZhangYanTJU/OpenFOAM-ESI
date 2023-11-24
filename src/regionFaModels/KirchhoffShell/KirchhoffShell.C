@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -151,8 +151,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "ps_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
@@ -164,8 +164,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "h_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -176,8 +176,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "laplaceW_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -189,8 +189,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "laplace2W_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -202,8 +202,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "w0_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -215,8 +215,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "w00_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -228,8 +228,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "laplaceW0_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -241,8 +241,8 @@ KirchhoffShell::KirchhoffShell
         IOobject
         (
             "laplace2W0_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -289,8 +289,8 @@ const tmp<areaScalarField> KirchhoffShell::rho() const
             IOobject
             (
                 "rhos",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
+                regionMesh().time().timeName(),
+                regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER

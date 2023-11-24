@@ -120,7 +120,7 @@ waxSolventViscosity::waxSolventViscosity
         (
             typeName + ":muWax",
             film.regionMesh().time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
@@ -143,7 +143,7 @@ waxSolventViscosity::waxSolventViscosity
         (
             typeName + ":muSolvent",
             film.regionMesh().time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),

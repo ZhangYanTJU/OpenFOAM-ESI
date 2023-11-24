@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -151,10 +151,12 @@ void Foam::fa::jouleHeatingSource::addSup
 
         tmp<areaScalarField> tsource;
 
+        const auto& obr = regionMesh().thisDb();
+
         if (anisotropicElectricalConductivity_)
         {
             const auto& sigma =
-                mesh_.lookupObject<areaTensorField>
+                obr.lookupObject<areaTensorField>
                 (
                     typeName + ":sigma_" + regionName_
                 );
@@ -164,7 +166,7 @@ void Foam::fa::jouleHeatingSource::addSup
         else
         {
             const auto& sigma =
-                mesh_.lookupObject<areaScalarField>
+                obr.lookupObject<areaScalarField>
                 (
                     typeName + ":sigma_" + regionName_
                 );

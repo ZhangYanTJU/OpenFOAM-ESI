@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,8 +61,8 @@ Foam::fa::externalFileSource::externalFileSource
         IOobject
         (
             "pExt",
-            mesh_.time().timeName(),
-            mesh_,
+            regionMesh().thisDb().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
             (
@@ -150,7 +150,7 @@ bool Foam::fa::externalFileSource::read(const dictionary& dict)
         const labelList& patches = regionMesh().whichPolyPatches();
 
         mapping_.clear();
-        mapping_.resize(patches.empty() ? 0 : (patches.last()+1));
+        mapping_.resize(patches.empty() ? 0 : (patches.back()+1));
 
         for (const label patchi : patches)
         {

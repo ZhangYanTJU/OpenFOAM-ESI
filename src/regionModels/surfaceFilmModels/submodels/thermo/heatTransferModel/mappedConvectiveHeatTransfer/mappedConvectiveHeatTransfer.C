@@ -65,7 +65,7 @@ mappedConvectiveHeatTransfer::mappedConvectiveHeatTransfer
         (
             "htcConv",
             film.time().timeName(),
-            film.primaryMesh(),
+            film.primaryMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -77,7 +77,7 @@ mappedConvectiveHeatTransfer::mappedConvectiveHeatTransfer
         (
             htcConvPrimary_.name(), // must have same name as above for mapping
             film.time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),

@@ -108,8 +108,8 @@ tmp<areaScalarField> filmTurbulenceModel::Cw() const
             IOobject
             (
                 "tCw",
-                film_.primaryMesh().time().timeName(),
-                film_.primaryMesh()
+                film_.regionMesh().time().timeName(),
+                film_.regionMesh().thisDb()
             ),
             film_.regionMesh(),
             dimensionedScalar(dimVelocity)
@@ -272,8 +272,8 @@ tmp<faVectorMatrix> filmTurbulenceModel::primaryRegionFriction
                 IOobject
                 (
                     "taForce",
-                    film_.primaryMesh().time().timeName(),
-                    film_.primaryMesh()
+                    film_.regionMesh().time().timeName(),
+                    film_.regionMesh().thisDb()
                 ),
                 film_.regionMesh(),
                 dimensionedVector(sqr(dimVelocity), Zero)

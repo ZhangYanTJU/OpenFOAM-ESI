@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,17 +60,15 @@ bool thermalShell::init(const dictionary& dict)
 
 tmp<areaScalarField> thermalShell::qr()
 {
-    IOobject io
-    (
-        "tqr",
-        primaryMesh().time().timeName(),
-        primaryMesh()
-    );
-
     auto taqr =
         tmp<areaScalarField>::New
         (
-            io,
+            IOobject
+            (
+                "tqr",
+                regionMesh().time().timeName(),
+                regionMesh().thisDb()
+            ),
             regionMesh(),
             dimensionedScalar(dimPower/dimArea, Zero)
         );
@@ -136,8 +134,8 @@ thermalShell::thermalShell
         IOobject
         (
             "qs_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
@@ -149,8 +147,8 @@ thermalShell::thermalShell
         IOobject
         (
             "h_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -191,8 +189,8 @@ const tmp<areaScalarField> thermalShell::Cp() const
             IOobject
             (
                 "Cps",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
+                regionMesh().time().timeName(),
+                regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER
@@ -214,8 +212,8 @@ const tmp<areaScalarField> thermalShell::rho() const
             IOobject
             (
                 "rhos",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
+                regionMesh().time().timeName(),
+                regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER
@@ -237,8 +235,8 @@ const tmp<areaScalarField> thermalShell::kappa() const
             IOobject
             (
                 "kappas",
-                primaryMesh().time().timeName(),
-                primaryMesh(),
+                regionMesh().time().timeName(),
+                regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER

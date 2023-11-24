@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,8 +60,8 @@ thermalShellModel::thermalShellModel
         IOobject
         (
             "Ts_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),

@@ -119,7 +119,7 @@ public:
             NVDweight(is),
             edgeFlux_
             (
-                mesh().objectRegistry::lookupObject<edgeScalarField>
+                mesh.thisDb().lookupObject<edgeScalarField>
                 (
                     word(is)
                 )

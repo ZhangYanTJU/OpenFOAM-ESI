@@ -790,7 +790,7 @@ void Foam::faMesh::removeFiles(const fileName& instanceDir) const
 
 void Foam::faMesh::removeFiles() const
 {
-    removeFiles(mesh().instance());
+    removeFiles(thisDb().instance());
 }
 
 

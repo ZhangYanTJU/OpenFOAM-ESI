@@ -97,7 +97,7 @@ public:
             edgeInterpolationScheme<Type>(mesh),
             faceFlux_
             (
-                mesh().objectRegistry::lookupObject<edgeScalarField>
+                mesh.thisDb().lookupObject<edgeScalarField>
                 (
                     word(is)
                 )

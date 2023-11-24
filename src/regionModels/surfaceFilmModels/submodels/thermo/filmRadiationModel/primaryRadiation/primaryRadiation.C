@@ -64,7 +64,7 @@ primaryRadiation::primaryRadiation
         (
             "qin", // same name as qin on primary region to enable mapping
             film.time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -100,7 +100,7 @@ tmp<volScalarField> primaryRadiation::Shs()
             (
                 typeName + ":Shs",
                 film().time().timeName(),
-                film().regionMesh(),
+                film().regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),

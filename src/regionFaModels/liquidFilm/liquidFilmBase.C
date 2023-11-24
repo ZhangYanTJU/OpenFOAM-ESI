@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,8 +90,8 @@ liquidFilmBase::liquidFilmBase
         IOobject
         (
             "hf_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -103,8 +103,8 @@ liquidFilmBase::liquidFilmBase
         IOobject
         (
             "Uf_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -115,8 +115,8 @@ liquidFilmBase::liquidFilmBase
         IOobject
         (
             "pf_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
@@ -128,8 +128,8 @@ liquidFilmBase::liquidFilmBase
         IOobject
         (
             "ppf_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -141,8 +141,8 @@ liquidFilmBase::liquidFilmBase
         IOobject
         (
             "phif_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
@@ -154,22 +154,21 @@ liquidFilmBase::liquidFilmBase
         IOobject
         (
             "phi2s_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         fac::interpolate(h_*Uf_) & regionMesh().Le()
     ),
 
-
     gn_
     (
         IOobject
         (
             "gn",
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -185,7 +184,7 @@ liquidFilmBase::liquidFilmBase
         (
             "massSource",
             primaryMesh().time().timeName(),
-            primaryMesh()
+            primaryMesh().thisDb()
         ),
         primaryMesh(),
         dimensionedScalar(dimMass, Zero)
@@ -197,7 +196,7 @@ liquidFilmBase::liquidFilmBase
         (
             "momentumSource",
             primaryMesh().time().timeName(),
-            primaryMesh()
+            primaryMesh().thisDb()
         ),
         primaryMesh(),
         dimensionedVector(dimPressure, Zero)
@@ -209,7 +208,7 @@ liquidFilmBase::liquidFilmBase
         (
             "pnSource",
             primaryMesh().time().timeName(),
-            primaryMesh()
+            primaryMesh().thisDb()
         ),
         primaryMesh(),
         dimensionedScalar(dimPressure, Zero)
@@ -221,7 +220,7 @@ liquidFilmBase::liquidFilmBase
         (
             "energySource",
             primaryMesh().time().timeName(),
-            primaryMesh()
+            primaryMesh().thisDb()
         ),
         primaryMesh(),
         dimensionedScalar(dimEnergy, Zero)
@@ -284,8 +283,8 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Uw() const
             IOobject
             (
                 "tUw",
-                primaryMesh().time().timeName(),
-                primaryMesh()
+                regionMesh().time().timeName(),
+                regionMesh().thisDb()
             ),
             regionMesh(),
             dimensionedVector(dimVelocity, Zero)
@@ -339,8 +338,8 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Us() const
             IOobject
             (
                 "tUs",
-                primaryMesh().time().timeName(),
-                primaryMesh()
+                regionMesh().time().timeName(),
+                regionMesh().thisDb()
             ),
             regionMesh(),
             dimensionedVector(dimVelocity, Zero)
@@ -366,8 +365,8 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Up() const
             IOobject
             (
                 "tUp",
-                primaryMesh().time().timeName(),
-                primaryMesh()
+                regionMesh().time().timeName(),
+                regionMesh().thisDb()
             ),
             regionMesh(),
             dimensionedVector(dimVelocity, Zero)
@@ -414,8 +413,8 @@ tmp<areaScalarField> liquidFilmBase::pg() const
             IOobject
             (
                 "tpg",
-                primaryMesh().time().timeName(),
-                primaryMesh()
+                regionMesh().time().timeName(),
+                regionMesh().thisDb()
             ),
             regionMesh(),
             dimensionedScalar(dimPressure, Zero)
@@ -447,8 +446,8 @@ tmp<areaScalarField> liquidFilmBase::alpha() const
             IOobject
             (
                 "talpha",
-                primaryMesh().time().timeName(),
-                primaryMesh()
+                regionMesh().time().timeName(),
+                regionMesh().thisDb()
             ),
             regionMesh(),
             dimensionedScalar(dimless, Zero)

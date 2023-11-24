@@ -84,7 +84,7 @@ tmp<volScalarField> constantHeatTransfer::h() const
             (
                 "htc",
                 filmModel_.time().timeName(),
-                filmModel_.regionMesh(),
+                filmModel_.regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER

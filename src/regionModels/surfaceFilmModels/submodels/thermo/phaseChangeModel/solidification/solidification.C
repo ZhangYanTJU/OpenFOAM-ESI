@@ -77,7 +77,7 @@ solidification::solidification
         (
             typeName + ":mass",
             film.regionMesh().time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
@@ -91,7 +91,7 @@ solidification::solidification
         (
             typeName + ":thickness",
             film.regionMesh().time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),

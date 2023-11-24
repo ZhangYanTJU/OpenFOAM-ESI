@@ -628,9 +628,6 @@ public:
         //- Return access to polyMesh
         inline const polyMesh& mesh() const;
 
-        //- Interface to referenced polyMesh (similar to GeoMesh)
-        const polyMesh& operator()() const { return mesh(); }
-
         //- Return the local mesh directory (dbDir()/meshSubDir)
         fileName meshDir() const;
 
@@ -965,6 +962,12 @@ public:
         bool operator!=(const faMesh& m) const;
 
         bool operator==(const faMesh& m) const;
+
+
+    // Housekeeping
+
+        //- No call operator. Prior to 2312 was used to obtain polyMesh
+        void operator()() const = delete;
 };
 
 

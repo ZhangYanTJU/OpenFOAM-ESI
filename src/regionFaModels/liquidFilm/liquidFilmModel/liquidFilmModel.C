@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,8 +99,8 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "rhof",
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
@@ -112,8 +112,8 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "muf",
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -125,8 +125,8 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "Tf_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
@@ -138,8 +138,8 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "Cp_" + regionName_,
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -151,8 +151,8 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "sigmaf",
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -164,8 +164,8 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             h_.name() + "*" + rho_.name(),
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -177,8 +177,8 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "rhoSp",
-            primaryMesh().time().timeName(),
-            primaryMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -190,8 +190,10 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "USp",
-            primaryMesh().time().timeName(),
-            primaryMesh()
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
         ),
         regionMesh(),
         dimensionedVector(sqr(dimVelocity), Zero)
@@ -201,8 +203,10 @@ liquidFilmModel::liquidFilmModel
         IOobject
         (
             "pnSp",
-            primaryMesh().time().timeName(),
-            primaryMesh()
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
         ),
         regionMesh(),
         dimensionedScalar(dimPressure, Zero)
@@ -213,7 +217,7 @@ liquidFilmModel::liquidFilmModel
         (
             "cloudMassTrans",
             primaryMesh().time().timeName(),
-            primaryMesh(),
+            primaryMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -227,7 +231,7 @@ liquidFilmModel::liquidFilmModel
         (
             "cloudDiameterTrans",
             primaryMesh().time().timeName(),
-            primaryMesh(),
+            primaryMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),

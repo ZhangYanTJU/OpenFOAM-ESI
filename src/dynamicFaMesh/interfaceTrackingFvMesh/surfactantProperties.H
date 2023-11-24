@@ -184,7 +184,7 @@ public:
                 (
                     "dSigma",
                     surfactConc.mesh().time().timeName(),
-                    surfactConc.mesh().mesh(),
+                    surfactConc.mesh().thisDb(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE
                 ),

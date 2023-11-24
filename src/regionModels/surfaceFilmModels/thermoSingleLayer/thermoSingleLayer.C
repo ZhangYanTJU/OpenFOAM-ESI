@@ -324,8 +324,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "Cp",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
@@ -338,8 +338,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "kappa",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
@@ -353,8 +353,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "Tf",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -365,8 +365,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "Tsf",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -378,8 +378,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "Twf",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -391,8 +391,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "hf",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -406,8 +406,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "primaryEnergyTrans",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -426,8 +426,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "hsSp",
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -441,8 +441,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             hsSp_.name(), // Must have same name as hSp_ to enable mapping
-            time().timeName(),
-            primaryMesh(),
+            primaryMesh().time().timeName(),
+            primaryMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -455,8 +455,8 @@ thermoSingleLayer::thermoSingleLayer
         IOobject
         (
             "T", // Same name as T on primary region to enable mapping
-            time().timeName(),
-            regionMesh(),
+            regionMesh().time().timeName(),
+            regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -510,8 +510,8 @@ thermoSingleLayer::thermoSingleLayer
                     IOobject
                     (
                         thermo_.carrier().species()[i],
-                        time().timeName(),
-                        regionMesh(),
+                        regionMesh().time().timeName(),
+                        regionMesh().thisDb(),
                         IOobject::NO_READ,
                         IOobject::NO_WRITE
                     ),
@@ -547,8 +547,8 @@ thermoSingleLayer::thermoSingleLayer
             IOobject
             (
                 "phi",
-                time().timeName(),
-                regionMesh(),
+                regionMesh().time().timeName(),
+                regionMesh().thisDb(),
                 IOobject::READ_IF_PRESENT,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER

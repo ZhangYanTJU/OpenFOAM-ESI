@@ -61,10 +61,10 @@ void Foam::faAreaMapper::calcAddressing() const
 
     // Prepare a list of new face labels and (preliminary) addressing
     // Note: dimensioned to number of boundary faces of polyMesh
-    newFaceLabelsPtr_ = new labelList(mesh_().nBoundaryFaces(), -1);
+    newFaceLabelsPtr_ = new labelList(mesh_.mesh().nBoundaryFaces(), -1);
     labelList& newFaceLabels = *newFaceLabelsPtr_;
 
-    newFaceLabelsMapPtr_ = new labelList(mesh_().nBoundaryFaces(), -1);
+    newFaceLabelsMapPtr_ = new labelList(mesh_.mesh().nBoundaryFaces(), -1);
     labelList& newFaceLabelsMap = *newFaceLabelsMapPtr_;
     label nNewFaces = 0;
 

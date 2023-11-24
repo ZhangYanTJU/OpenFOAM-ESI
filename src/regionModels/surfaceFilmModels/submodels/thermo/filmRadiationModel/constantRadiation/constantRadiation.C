@@ -64,7 +64,7 @@ constantRadiation::constantRadiation
         (
             typeName + ":qrConst",
             film.time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
@@ -76,7 +76,7 @@ constantRadiation::constantRadiation
         (
             typeName + ":mask",
             film.time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),

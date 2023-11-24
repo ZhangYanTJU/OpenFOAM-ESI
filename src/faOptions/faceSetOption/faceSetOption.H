@@ -100,7 +100,6 @@ SourceFiles
 
 #include "faOption.H"
 #include "faceSet.H"
-#include "faMesh.H"
 #include "Time.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

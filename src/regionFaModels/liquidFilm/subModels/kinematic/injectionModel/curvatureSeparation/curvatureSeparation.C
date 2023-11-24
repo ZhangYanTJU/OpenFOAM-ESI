@@ -136,11 +136,11 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
             IOobject
             (
                 "cosAngle",
-                film().primaryMesh().time().timeName(),
-                film().primaryMesh(),
+                mesh.time().timeName(),
+                mesh.thisDb(),
                 IOobject::NO_READ
             ),
-            film().regionMesh(),
+            mesh,
             dimensionedScalar(dimless, Zero)
         );
         volCosAngle.primitiveFieldRef() = cosAngle;
@@ -255,8 +255,8 @@ void curvatureSeparation::correct
             IOobject
             (
                 "Fnet",
-                film().primaryMesh().time().timeName(),
-                film().primaryMesh(),
+                mesh.time().timeName(),
+                mesh.thisDb(),
                 IOobject::NO_READ
             ),
             mesh,
@@ -270,8 +270,8 @@ void curvatureSeparation::correct
             IOobject
             (
                 "separated",
-                film().primaryMesh().time().timeName(),
-                film().primaryMesh(),
+                mesh.time().timeName(),
+                mesh.thisDb(),
                 IOobject::NO_READ
             ),
             mesh,
@@ -285,8 +285,8 @@ void curvatureSeparation::correct
             IOobject
             (
                 "massToInject",
-                film().primaryMesh().time().timeName(),
-                film().primaryMesh(),
+                mesh.time().timeName(),
+                mesh.thisDb(),
                 IOobject::NO_READ
             ),
             mesh,
@@ -300,8 +300,8 @@ void curvatureSeparation::correct
             IOobject
             (
                 "InvR1",
-                film().primaryMesh().time().timeName(),
-                film().primaryMesh(),
+                mesh.time().timeName(),
+                mesh.thisDb(),
                 IOobject::NO_READ
             ),
             mesh,

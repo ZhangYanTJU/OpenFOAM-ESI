@@ -106,30 +106,30 @@ void Foam::parFaFieldDistributorCache::read
         runTime.processorCase(false);
     }
 
-    IOobjectList objects;   //(mesh.mesh(), runTime.timeName());
+    IOobjectList objects;
 
     if (readHandler)
     {
         auto oldHandler = fileOperation::fileHandler(readHandler);
         const auto oldComm = UPstream::commWorld(fileHandler().comm());
 
-        objects = IOobjectList(mesh.mesh(), runTime.timeName());
+        objects = IOobjectList(mesh.thisDb(), runTime.timeName());
         readHandler = fileOperation::fileHandler(oldHandler);
         UPstream::commWorld(oldComm);
     }
 
 
-    if (Pstream::master() && decompose)
+    if (UPstream::master() && decompose)
     {
         runTime.caseName() = proc0CaseName;
         runTime.processorCase(oldProcCase);
     }
 
     Info<< "From time " << runTime.timeName()
-        << " mesh:" << mesh.mesh().objectRegistry::objectRelPath()
+        << " mesh:" << mesh.thisDb().objectRelPath()
         << " have objects:" << objects.names() << endl;
 
-    if (Pstream::master() && decompose)
+    if (UPstream::master() && decompose)
     {
         runTime.caseName() = baseRunTime.caseName();
         runTime.processorCase(false);

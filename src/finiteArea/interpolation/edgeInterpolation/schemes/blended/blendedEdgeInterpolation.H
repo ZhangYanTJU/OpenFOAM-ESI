@@ -106,7 +106,7 @@ public:
             upwindEdgeInterpolation<Type>
             (
                 mesh,
-                mesh().objectRegistry::lookupObject<edgeScalarField>
+                mesh.thisDb().lookupObject<edgeScalarField>
                 (
                     word(is)
                 )

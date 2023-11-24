@@ -199,7 +199,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
             (
                 patch(),
                 selectEdges,
-                mesh().time().globalPath(),
+                thisDb().time().globalPath(),
                 outputName
             );
 
@@ -348,7 +348,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
             (
                 patch(),
                 selectEdges,
-                mesh().time().globalPath(),
+                thisDb().time().globalPath(),
                 outputName
             );
 
@@ -711,7 +711,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
         (
             cpp,
             selectEdges,
-            mesh().time().globalPath(),
+            thisDb().time().globalPath(),
             outputName
         );
 
@@ -743,7 +743,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
                 patch().boundaryEdges(),
                 fileName
                 (
-                    mesh().time().globalPath()
+                    thisDb().time().globalPath()
                   / ("faMesh-construct.boundaryEdges")
                 )
             );
@@ -776,7 +776,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
                 patch(),
                 fileName
                 (
-                    mesh().time().globalPath()
+                    thisDb().time().globalPath()
                   / ("faMesh-construct.faPatch")
                 )
             );
@@ -799,7 +799,7 @@ Foam::faMesh::getBoundaryEdgeConnections() const
         (
             patch(),
             selectEdges,
-            mesh().time().globalPath(),
+            thisDb().time().globalPath(),
             outputName
         );
 
@@ -915,7 +915,7 @@ void Foam::faMesh::setBoundaryConnections
         (
             patch(),
             selectEdges,
-            mesh().time().globalPath(),
+            thisDb().time().globalPath(),
             outputName
         );
 

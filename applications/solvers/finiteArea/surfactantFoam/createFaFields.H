@@ -5,7 +5,7 @@ areaScalarField Cs
     (
         "Cs",
         runTime.timeName(),
-        mesh,
+        aMesh.thisDb(),
         IOobject::MUST_READ,
         IOobject::AUTO_WRITE
     ),
@@ -37,7 +37,7 @@ areaVectorField Us
     (
         "Us",
         runTime.timeName(),
-        mesh,
+        aMesh.thisDb(),
         IOobject::MUST_READ,
         IOobject::NO_WRITE
     ),
@@ -51,7 +51,7 @@ edgeScalarField phis
     (
         "phis",
         runTime.timeName(),
-        mesh,
+        aMesh.thisDb(),
         IOobject::NO_READ,
         IOobject::NO_WRITE
     ),

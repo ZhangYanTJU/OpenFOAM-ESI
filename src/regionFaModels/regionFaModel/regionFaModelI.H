@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,16 +31,11 @@ License
 
 inline const Foam::faMesh& Foam::regionModels::regionFaModel::regionMesh() const
 {
-    auto* regionPtr = time_.getObjectPtr<faMesh>(regionName_);
-
-    if (regionPtr)
-    {
-        return *regionPtr;
-    }
-    else if (!regionMeshPtr_)
+    if (!regionMeshPtr_)
     {
         FatalErrorInFunction
-            << "Region mesh not available" << abort(FatalError);
+            << "Region mesh not available"
+            << abort(FatalError);
     }
 
     return *regionMeshPtr_;
@@ -49,16 +44,11 @@ inline const Foam::faMesh& Foam::regionModels::regionFaModel::regionMesh() const
 
 inline Foam::faMesh& Foam::regionModels::regionFaModel::regionMesh()
 {
-    auto* regionPtr = time_.getObjectPtr<faMesh>(regionName_);
-
-    if (regionPtr)
-    {
-        return *regionPtr;
-    }
-    else if (!regionMeshPtr_)
+    if (!regionMeshPtr_)
     {
         FatalErrorInFunction
-            << "Region mesh not available" << abort(FatalError);
+            << "Region mesh not available"
+            << abort(FatalError);
     }
 
     return *regionMeshPtr_;

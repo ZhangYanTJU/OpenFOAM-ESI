@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,8 +64,8 @@ tmp<areaScalarField> laminar::mut() const
         IOobject
         (
             "mut",
-            film().primaryMesh().time().timeName(),
-            film().primaryMesh(),
+            film().regionMesh().time().timeName(),
+            film().regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),

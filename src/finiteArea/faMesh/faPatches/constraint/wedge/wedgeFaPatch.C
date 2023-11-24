@@ -98,7 +98,7 @@ Foam::wedgeFaPatch::wedgeFaPatch
 
     const auto* wedgePtr = isA<wedgePolyPatch>
     (
-        bm.mesh()().boundaryMesh()[ngbPolyPatchIndex()]
+        bm.mesh().mesh().boundaryMesh()[ngbPolyPatchIndex()]
     );
 
     if (wedgePtr)

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,8 +68,8 @@ tmp<faVectorMatrix> contactAngleForce::correct(areaVectorField& U)
         IOobject
         (
             IOobject::scopedName(typeName, "contactForce"),
-            film().primaryMesh().time().timeName(),
-            film().primaryMesh(),
+            film().regionMesh().time().timeName(),
+            film().regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER

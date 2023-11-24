@@ -7,7 +7,7 @@ volVectorField U
     (
         "U",
         runTime.timeName(),
-        mesh,
+        mesh.thisDb(),
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
     ),
@@ -22,7 +22,7 @@ volScalarField H
     (
         "H",
         runTime.timeName(),
-        mesh,
+        mesh.thisDb(),
         IOobject::NO_READ,
         IOobject::AUTO_WRITE
     ),

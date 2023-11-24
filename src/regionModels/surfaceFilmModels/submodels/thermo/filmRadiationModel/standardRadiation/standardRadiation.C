@@ -65,7 +65,7 @@ standardRadiation::standardRadiation
         (
             "qin", // same name as qin on primary region to enable mapping
             film.time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -79,7 +79,7 @@ standardRadiation::standardRadiation
         (
             "qrNet",
             film.time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),

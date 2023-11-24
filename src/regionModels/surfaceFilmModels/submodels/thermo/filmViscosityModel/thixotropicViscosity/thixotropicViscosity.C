@@ -78,7 +78,7 @@ thixotropicViscosity::thixotropicViscosity
         (
             typeName + ":lambda",
             film.regionMesh().time().timeName(),
-            film.regionMesh(),
+            film.regionMesh().thisDb(),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),

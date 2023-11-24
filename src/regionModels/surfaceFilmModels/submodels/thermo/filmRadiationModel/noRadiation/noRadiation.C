@@ -81,7 +81,7 @@ tmp<volScalarField> noRadiation::Shs()
         (
             typeName + ":Shs",
             film().time().timeName(),
-            film().regionMesh(),
+            film().regionMesh().thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),

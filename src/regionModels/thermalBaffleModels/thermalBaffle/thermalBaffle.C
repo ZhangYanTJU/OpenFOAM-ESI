@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -80,7 +80,7 @@ void thermalBaffle::solveEnergy()
             (
                 "tQ",
                 regionMesh().time().timeName(),
-                regionMesh(),
+                regionMesh().thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER
@@ -172,7 +172,7 @@ thermalBaffle::thermalBaffle
         (
             "qs",
             regionMesh().time().timeName(),
-            regionMesh(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
@@ -185,7 +185,7 @@ thermalBaffle::thermalBaffle
         (
             "Q",
             regionMesh().time().timeName(),
-            regionMesh(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
@@ -222,7 +222,7 @@ thermalBaffle::thermalBaffle
         (
             "qs",
             regionMesh().time().timeName(),
-            regionMesh(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
@@ -235,7 +235,7 @@ thermalBaffle::thermalBaffle
         (
             "Q",
             regionMesh().time().timeName(),
-            regionMesh(),
+            regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),

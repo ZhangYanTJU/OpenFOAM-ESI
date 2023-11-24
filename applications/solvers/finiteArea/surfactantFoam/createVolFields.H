@@ -7,7 +7,7 @@
         (
             "Cvf",
             runTime.timeName(),
-            mesh,
+            mesh.thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
@@ -24,7 +24,7 @@
         (
             "U",
             runTime.timeName(),
-            mesh,
+            mesh.thisDb(),
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
