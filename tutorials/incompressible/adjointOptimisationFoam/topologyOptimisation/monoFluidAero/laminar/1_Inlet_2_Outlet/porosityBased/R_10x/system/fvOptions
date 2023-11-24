@@ -12,6 +12,8 @@ FoamFile
     class       dictionary;
     object      fvOptions;
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 momSource
 {
     type     topOSource;
@@ -19,3 +21,6 @@ momSource
     function linear;
     interpolationField beta;
 }
+
+
+// ************************************************************************* //

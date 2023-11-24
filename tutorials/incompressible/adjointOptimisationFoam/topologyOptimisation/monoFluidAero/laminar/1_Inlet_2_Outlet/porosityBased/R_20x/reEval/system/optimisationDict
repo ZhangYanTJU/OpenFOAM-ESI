@@ -88,31 +88,4 @@ adjointManagers
     }
 }
 
-/*
-optimisation
-{
-    designVariables
-    {
-        type dynamicTopO;
-        sensitivityType topO;
-        marchingCoeffs
-        {
-            seedPatches  (designWall);
-            marchingStep 2;
-        }
-        fixedZeroPorousZones   (IEntranceSet OEntranceSet OREntranceSet);
-        regularisation
-        {
-            regularise    false;
-        }
-        betaMax    2500;
-    }
-    updateMethod
-    {
-        method MMA;
-        eta 1;
-    }
-}
-*/
-
 // ************************************************************************* //

@@ -26,22 +26,25 @@ gradSchemes
 
 divSchemes      
 {
-    default                              Gauss linear;
-    div(phi,U)                           bounded Gauss upwind;
-    div(-phi,Uaas1)                      bounded Gauss upwind;
+    default         Gauss linear;
+    div(phi,U)      bounded Gauss upwind;
+    div(-phi,Ua)    bounded Gauss upwind;
 }
 
 interpolationSchemes 
 {
-    default             linear;
+    default         linear;
 }
+
 laplacianSchemes 
 {
     default         Gauss linear corrected;
 }
+
 snGradSchemes   
 {
     default         corrected;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// ************************************************************************* //
