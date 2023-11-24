@@ -99,24 +99,9 @@ adjointManagers
                     {
                         vol
                         {
-                            weight         -1.; 
-                            type            topOSolidVolume;
-                            percentage
-                            {
-                                type scale;
-                                scale
-                                {
-                                    type      stepRamp;
-                                    start     0;
-                                    duration  90;
-                                    interval  1;
-                                }
-                                value
-                                {
-                                    type constant;
-                                    value constant 0.538;
-                                }
-                            }
+                            weight          1.; 
+                            type            topOVolume;
+                            percentage      0.462;
                         }
                     }
                 }
@@ -129,37 +114,23 @@ optimisation
 {
     designVariables
     {
-        type dynamicTopO;
+        type topO;
         sensitivityType topO;
-        marchingCoeffs
-        {
-            seedPatches  (designWall);
-            marchingStep 2;
-        }
         fixedZeroPorousZones   (IEntranceSet OEntranceSet OREntranceSet);
         regularisation
         {
             regularise     true;
             growFromWalls  true;
             meanRadiusMult 10;
-            function tanh;
-            b 20;
+            function       tanh;
+            b              20;
         }
         betaMax    2500;
-        /*
-        // Alternative definition through Darcy
-        betaMaxType Darcy;
-        DarcyCoeffs
-        {
-            inletPatches (inlet);
-            Darcy 1.e-05; // default value
-        }
-        */
+        maxInitChange 0.2;
     }
     updateMethod
     {
-        method MMA;
-        eta 1;
+        method nullSpace;
     }
 }
 

@@ -10,6 +10,7 @@ foamDictionary system/meshDict -entry surfaceFile -set topOIsoSurface$time.fms >
 sed -i 's/empty/wall/g' topOIsoSurface$time.fms
 sed -i 's/inlet wall/inlet patch/g' topOIsoSurface$time.fms
 sed -i 's/outlet wall/outlet patch/g' topOIsoSurface$time.fms
+sed -i 's/outlet-right wall/outlet-right patch/g' topOIsoSurface$time.fms
 runApplication cartesian2DMesh
 runApplication decomposePar
 runParallel $(getApplication)

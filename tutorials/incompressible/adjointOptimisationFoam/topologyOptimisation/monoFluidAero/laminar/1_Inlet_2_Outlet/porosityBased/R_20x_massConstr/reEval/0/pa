@@ -10,7 +10,7 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    object      p;
+    object      pa;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -66,7 +66,7 @@ boundaryField
         type            adjointOutletPressure;
         value           uniform 0.0;
     }
-
 }
+
 
 // ************************************************************************* //

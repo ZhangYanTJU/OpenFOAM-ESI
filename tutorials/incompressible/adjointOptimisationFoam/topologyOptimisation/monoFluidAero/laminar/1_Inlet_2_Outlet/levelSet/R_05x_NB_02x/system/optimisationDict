@@ -137,6 +137,7 @@ optimisation
         {
             regularise     true;
             meanRadiusMult 5;
+            //radius 0.05;
         }
         interpolation
         {

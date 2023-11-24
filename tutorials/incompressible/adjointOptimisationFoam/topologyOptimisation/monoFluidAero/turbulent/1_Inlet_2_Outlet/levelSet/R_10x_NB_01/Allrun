@@ -13,7 +13,7 @@ if [[ ! -z $(which cartesian2DMesh) ]]
 then 
     echo "Re-evaluating topO solution on a body-fitted grid"
     cd reEval
-        ./AllrunReEval > log.AllrunReEval 2>&1 & 
+        ./AllrunReEval > log.AllrunReEval 2>&1 && echo "End" >> log.AllrunReEval 
     cd ..    
 fi
 

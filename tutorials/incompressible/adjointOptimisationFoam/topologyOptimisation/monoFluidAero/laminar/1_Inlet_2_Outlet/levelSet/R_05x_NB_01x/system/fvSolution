@@ -21,7 +21,7 @@ SIMPLE
 
 solvers
 {
-    "p|pa.*|bTilda|aTilda"
+    "p|pa.*|bTilda"
     {
         solver          PCG;
         preconditioner  DIC;
@@ -52,4 +52,5 @@ relaxationFactors
     }
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// ************************************************************************* //

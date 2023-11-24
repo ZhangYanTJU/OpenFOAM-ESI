@@ -22,26 +22,30 @@ ddtSchemes
 gradSchemes     
 {
     default         Gauss linear;
+    gradConv        cellLimited Gauss linear 1;
 }
 
 divSchemes      
 {
-    default                              Gauss linear;
-    div(phi,U)                           bounded Gauss upwind;
-    div(-phi,Ua)                         bounded Gauss upwind;
+    default         Gauss linear;
+    div(phi,U)      bounded Gauss linearUpwind gradConv;
+    div(-phi,Ua)    bounded Gauss linearUpwind gradConv;
 }
 
 interpolationSchemes 
 {
-    default             linear;
+    default         linear;
 }
+
 laplacianSchemes 
 {
     default         Gauss linear corrected;
 }
+
 snGradSchemes   
 {
     default         corrected;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// ************************************************************************* //
