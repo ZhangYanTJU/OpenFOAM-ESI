@@ -41,7 +41,10 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
 :
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF),
-    cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p))
+    cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p)),
+    sendRequests_(0),
+    recvRequests_(0),
+    patchNeighbourFieldPtr_(nullptr)
 {}
 
 
@@ -55,7 +58,10 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
 :
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ),
-    cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p, dict))
+    cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p, dict)),
+    sendRequests_(0),
+    recvRequests_(0),
+    patchNeighbourFieldPtr_(nullptr)
 {
     if (!isA<cyclicACMIFvPatch>(p))
     {
@@ -66,6 +72,21 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
             << " of field " << this->internalField().name()
             << " in file " << this->internalField().objectPath()
             << exit(FatalIOError);
+    }
+
+    if (cacheNeighbourField())
+    {
+        // Handle neighbour value first, before any evaluate()
+        const auto* hasNeighbValue =
+            dict.findEntry("neighbourValue", keyType::LITERAL);
+
+        if (hasNeighbValue)
+        {
+            patchNeighbourFieldPtr_.reset
+            (
+                new Field<Type>(*hasNeighbValue, p.size())
+            );
+        }
     }
 
     // Use 'value' supplied, or set to coupled field
@@ -108,8 +129,19 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
 :
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, p, iF, mapper),
-    cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p))
+    cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p)),
+    sendRequests_(0),
+    recvRequests_(0),
+    patchNeighbourFieldPtr_(nullptr)
 {
+    if (ptf.patchNeighbourFieldPtr_ && cacheNeighbourField())
+    {
+        patchNeighbourFieldPtr_.reset
+        (
+            new Field<Type>(ptf.patchNeighbourFieldPtr_(), mapper)
+        );
+    }
+
     if (!isA<cyclicACMIFvPatch>(this->patch()))
     {
         FatalErrorInFunction
@@ -120,8 +152,13 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
             << " in file " << this->internalField().objectPath()
             << exit(FatalError);
     }
+    if (debug && !ptf.all_ready())
+    {
+        FatalErrorInFunction
+            << "Outstanding request(s) on patch " << cyclicACMIPatch_.name()
+            << abort(FatalError);
+    }
 }
-
 
 
 template<class Type>
@@ -132,8 +169,18 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
 :
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf),
-    cyclicACMIPatch_(ptf.cyclicACMIPatch_)
-{}
+    cyclicACMIPatch_(ptf.cyclicACMIPatch_),
+    sendRequests_(0),
+    recvRequests_(0),
+    patchNeighbourFieldPtr_(ptf.patchNeighbourFieldPtr_)
+{
+    if (debug && !ptf.all_ready())
+    {
+        FatalErrorInFunction
+            << "Outstanding request(s) on patch " << cyclicACMIPatch_.name()
+            << abort(FatalError);
+    }
+}
 
 
 template<class Type>
@@ -145,8 +192,18 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
 :
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, iF),
-    cyclicACMIPatch_(ptf.cyclicACMIPatch_)
-{}
+    cyclicACMIPatch_(ptf.cyclicACMIPatch_),
+    sendRequests_(0),
+    recvRequests_(0),
+    patchNeighbourFieldPtr_(nullptr)
+{
+    if (debug && !ptf.all_ready())
+    {
+        FatalErrorInFunction
+            << "Outstanding request(s) on patch " << cyclicACMIPatch_.name()
+            << abort(FatalError);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -159,13 +216,87 @@ bool Foam::cyclicACMIFvPatchField<Type>::coupled() const
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
+bool Foam::cyclicACMIFvPatchField<Type>::all_ready() const
 {
-    const Field<Type>& iField = this->primitiveField();
-    //const cyclicACMIPolyPatch& cpp = cyclicACMIPatch_.cyclicACMIPatch();
+    int done = 0;
 
-    // By pass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
+    if
+    (
+        UPstream::finishedRequests
+        (
+            recvRequests_.start(),
+            recvRequests_.size()
+        )
+    )
+    {
+        recvRequests_.clear();
+        ++done;
+    }
+
+    if
+    (
+        UPstream::finishedRequests
+        (
+            sendRequests_.start(),
+            sendRequests_.size()
+        )
+    )
+    {
+        sendRequests_.clear();
+        ++done;
+    }
+
+    return (done == 2);
+}
+
+
+template<class Type>
+bool Foam::cyclicACMIFvPatchField<Type>::ready() const
+{
+    if
+    (
+        UPstream::finishedRequests
+        (
+            recvRequests_.start(),
+            recvRequests_.size()
+        )
+    )
+    {
+        recvRequests_.clear();
+
+        if
+        (
+            UPstream::finishedRequests
+            (
+                sendRequests_.start(),
+                sendRequests_.size()
+            )
+        )
+        {
+            sendRequests_.clear();
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField
+(
+    const Field<Type>& iField
+) const
+{
+    DebugPout
+        << "cyclicACMIFvPatchField::patchNeighbourField(const Field<Type>&) :"
+        << " field:" << this->internalField().name()
+        << " patch:" << this->patch().name()
+        << endl;
+
+    // By pass polyPatch to get nbrId. Instead use cyclicACMIFvPatch virtual
     // neighbPatch()
     const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
     const labelUList& nbrFaceCells = neighbPatch.faceCells();
@@ -189,6 +320,77 @@ Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
     }
 
     return tpnf;
+}
+
+
+template<class Type>
+bool Foam::cyclicACMIFvPatchField<Type>::cacheNeighbourField()
+{
+    /*
+    return
+    (
+        GeometricField<Type, fvPatchField, volMesh>::Boundary::localConsistency
+     != 0
+    );
+    */
+    return false;
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::cyclicACMIFvPatchField<Type>::patchNeighbourField() const
+{
+    if (this->ownerAMI().distributed() && cacheNeighbourField())
+    {
+        if (!this->ready())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicACMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        // Initialise if not done in construct-from-dictionary
+        if (!patchNeighbourFieldPtr_)
+        {
+            DebugPout
+                << "cyclicACMIFvPatchField::patchNeighbourField() :"
+                << " field:" << this->internalField().name()
+                << " patch:" << this->patch().name()
+                << " calculating&caching patchNeighbourField"
+                << endl;
+
+            // Do interpolation and store result
+            patchNeighbourFieldPtr_.reset
+            (
+                patchNeighbourField(this->primitiveField()).ptr()
+            );
+        }
+        else
+        {
+            DebugPout
+                << "cyclicACMIFvPatchField::patchNeighbourField() :"
+                << " field:" << this->internalField().name()
+                << " patch:" << this->patch().name()
+                << " returning cached patchNeighbourField"
+                << endl;
+        }
+        return patchNeighbourFieldPtr_();
+    }
+    else
+    {
+        // Do interpolation
+        DebugPout
+            << "cyclicACMIFvPatchField::evaluate() :"
+            << " field:" << this->internalField().name()
+            << " patch:" << this->patch().name()
+            << " calculating up-to-date patchNeighbourField"
+            << endl;
+
+        return patchNeighbourField(this->primitiveField());
+    }
 }
 
 
@@ -225,6 +427,178 @@ Foam::cyclicACMIFvPatchField<Type>::nonOverlapPatchField() const
 
 
 template<class Type>
+void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
+(
+    const Pstream::commsTypes commsType
+)
+{
+    if (!this->updated())
+    {
+        this->updateCoeffs();
+    }
+
+    if (this->ownerAMI().distributed() && cacheNeighbourField())
+    {
+        if (commsType != UPstream::commsTypes::nonBlocking)
+        {
+            // Invalidate old field - or flag as fatal?
+            patchNeighbourFieldPtr_.reset(nullptr);
+            return;
+        }
+
+        // Start sending
+        DebugPout
+            << "cyclicACMIFvPatchField::initEvaluate() :"
+            << " field:" << this->internalField().name()
+            << " patch:" << this->patch().name()
+            << " starting send&receive"
+            << endl;
+
+        if (!this->ready())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicACMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        // By-pass polyPatch to get nbrId. Instead use cyclicACMIFvPatch virtual
+        // neighbPatch()
+        const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
+        const labelUList& nbrFaceCells = neighbPatch.faceCells();
+        const Field<Type> pnf(this->primitiveField(), nbrFaceCells);
+
+        cyclicACMIPatch_.initInterpolate
+        (
+            pnf,
+            sendRequests_,
+            sendBufs_,
+            recvRequests_,
+            recvBufs_
+        );
+    }
+}
+
+
+template<class Type>
+void Foam::cyclicACMIFvPatchField<Type>::evaluate
+(
+    const Pstream::commsTypes commsType
+)
+{
+    if (!this->updated())
+    {
+        this->updateCoeffs();
+    }
+
+    const auto& AMI = this->ownerAMI();
+
+    if (AMI.distributed() && cacheNeighbourField())
+    {
+        // Calculate patchNeighbourField
+        if (commsType != UPstream::commsTypes::nonBlocking)
+        {
+            FatalErrorInFunction
+                << "Can only evaluate distributed AMI with nonBlocking"
+                << exit(FatalError);
+        }
+
+        patchNeighbourFieldPtr_.reset(nullptr);
+
+        if (!this->ready())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicACMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        patchNeighbourFieldPtr_.reset
+        (
+            cyclicACMIPatch_.interpolate
+            (
+                Field<Type>::null(),    // Not used for distributed
+                recvRequests_,
+                recvBufs_
+            ).ptr()
+        );
+
+        auto& patchNeighbourField = patchNeighbourFieldPtr_.ref();
+
+        if (doTransform())
+        {
+            // In-place transform
+            transform(patchNeighbourField, forwardT(), patchNeighbourField);
+        }
+     }
+
+    // Use patchNeighbourField() and patchInternalField() to obtain face value
+    coupledFvPatchField<Type>::evaluate(commsType);
+}
+
+
+template<class Type>
+void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
+(
+    solveScalarField& result,
+    const bool add,
+    const lduAddressing& lduAddr,
+    const label patchId,
+    const solveScalarField& psiInternal,
+    const scalarField& coeffs,
+    const direction cmpt,
+    const Pstream::commsTypes commsType
+) const
+{
+    if (this->ownerAMI().distributed())
+    {
+        // Start sending
+        if (commsType != UPstream::commsTypes::nonBlocking)
+        {
+            FatalErrorInFunction
+                << "Can only evaluate distributed AMI with nonBlocking"
+                << exit(FatalError);
+        }
+
+        DebugPout
+            << "cyclicACMIFvPatchField::initInterfaceMatrixUpdate() :"
+            << " field:" << this->internalField().name()
+            << " patch:" << this->patch().name()
+            << " starting send&receive"
+            << endl;
+
+        if (!this->ready())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicACMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        const labelUList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
+
+        solveScalarField pnf(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf, cmpt);
+
+        cyclicACMIPatch_.initInterpolate
+        (
+            pnf,
+            sendRequests_,
+            scalarSendBufs_,
+            recvRequests_,
+            scalarRecvBufs_
+        );
+    }
+}
+
+
+template<class Type>
 void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 (
     solveScalarField& result,
@@ -234,30 +608,110 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
     const solveScalarField& psiInternal,
     const scalarField& coeffs,
     const direction cmpt,
-    const Pstream::commsTypes
+    const Pstream::commsTypes commsType
 ) const
 {
+    DebugPout<< "cyclicACMIFvPatchField::updateInterfaceMatrix() :"
+        << " field:" << this->internalField().name()
+        << " patch:" << this->patch().name()
+        << endl;
+
     // note: only applying coupled contribution
-
-//     const labelUList& nbrFaceCellsCoupled =
-//         lduAddr.patchAddr
-//         (
-//             cyclicACMIPatch_.cyclicACMIPatch().neighbPatchID()
-//         );
-
-    const labelUList& nbrFaceCellsCoupled =
-        lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
-
-    solveScalarField pnf(psiInternal, nbrFaceCellsCoupled);
-
-    // Transform according to the transformation tensors
-    transformCoupleField(pnf, cmpt);
-
-    pnf = cyclicACMIPatch_.interpolate(pnf);
 
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
+    solveScalarField pnf;
+
+    if (this->ownerAMI().distributed())
+    {
+        if (commsType != UPstream::commsTypes::nonBlocking)
+        {
+            FatalErrorInFunction
+                << "Can only evaluate distributed AMI with nonBlocking"
+                << exit(FatalError);
+        }
+
+        DebugPout
+            << "cyclicACMIFvPatchField::evaluate() :"
+            << " field:" << this->internalField().name()
+            << " patch:" << this->patch().name()
+            << " consuming received coupled neighbourfield"
+            << endl;
+
+        pnf =
+            cyclicACMIPatch_.interpolate
+            (
+                solveScalarField::null(),    // Not used for distributed
+                recvRequests_,
+                scalarRecvBufs_
+            );
+    }
+    else
+    {
+        const labelUList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
+
+        pnf = solveScalarField(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf, cmpt);
+
+        pnf = cyclicACMIPatch_.interpolate(pnf);
+    }
+
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+}
+
+
+template<class Type>
+void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
+(
+    Field<Type>& result,
+    const bool add,
+    const lduAddressing& lduAddr,
+    const label patchId,
+    const Field<Type>& psiInternal,
+    const scalarField& coeffs,
+    const Pstream::commsTypes commsType
+) const
+{
+    const auto& AMI = this->ownerAMI();
+
+    if (AMI.distributed())
+    {
+        if (commsType != UPstream::commsTypes::nonBlocking)
+        {
+            FatalErrorInFunction
+                << "Can only evaluate distributed AMI with nonBlocking"
+                << exit(FatalError);
+        }
+
+        if (!this->ready())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicACMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        const labelUList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
+
+        Field<Type> pnf(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf);
+
+        cyclicACMIPatch_.initInterpolate
+        (
+            pnf,
+            sendRequests_,
+            sendBufs_,
+            recvRequests_,
+            recvBufs_
+        );
+    }
 }
 
 
@@ -270,22 +724,46 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
     const label patchId,
     const Field<Type>& psiInternal,
     const scalarField& coeffs,
-    const Pstream::commsTypes
+    const Pstream::commsTypes commsType
 ) const
 {
     // note: only applying coupled contribution
 
-    const labelUList& nbrFaceCellsCoupled =
-        lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
-
-    Field<Type> pnf(psiInternal, nbrFaceCellsCoupled);
-
-    // Transform according to the transformation tensors
-    transformCoupleField(pnf);
-
-    pnf = cyclicACMIPatch_.interpolate(pnf);
-
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
+
+    const auto& AMI = this->ownerAMI();
+
+    Field<Type> pnf;
+
+    if (AMI.distributed())
+    {
+        if (commsType != UPstream::commsTypes::nonBlocking)
+        {
+            FatalErrorInFunction
+                << "Can only evaluate distributed AMI with nonBlocking"
+                << exit(FatalError);
+        }
+
+        pnf =
+            cyclicACMIPatch_.interpolate
+            (
+                Field<Type>::null(),    // Not used for distributed
+                recvRequests_,
+                recvBufs_
+            );
+    }
+    else
+    {
+        const labelUList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
+
+        pnf = Field<Type>(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf);
+
+        pnf = cyclicACMIPatch_.interpolate(pnf);
+    }
 
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
 }
@@ -364,7 +842,7 @@ void Foam::cyclicACMIFvPatchField<Type>::manipulateMatrix
         }
 
         // Set internalCoeffs and boundaryCoeffs in the assembly matrix
-        // on clyclicAMI patches to be used in the individual matrix by
+        // on cyclicACMI patches to be used in the individual matrix by
         // matrix.flux()
         if (matrix.psi(mat).mesh().fluxRequired(this->internalField().name()))
         {
@@ -462,6 +940,11 @@ void Foam::cyclicACMIFvPatchField<Type>::write(Ostream& os) const
 {
     fvPatchField<Type>::write(os);
     fvPatchField<Type>::writeValueEntry(os);
+
+    if (patchNeighbourFieldPtr_)
+    {
+        patchNeighbourFieldPtr_->writeEntry("neighbourValue", os);
+    }
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +41,8 @@ Usage
     <patchName>
     {
         type            cyclicACMI;
+        value           <initial value>;
+        neighbourValue  <initial value of neighbour patch cells>;
     }
     \endverbatim
 
@@ -80,7 +82,51 @@ class cyclicACMIFvPatchField
         const cyclicACMIFvPatch& cyclicACMIPatch_;
 
 
+        // Sending and receiving (distributed AMI)
+
+            //- Current range of send requests (non-blocking)
+            mutable labelRange sendRequests_;
+
+            //- Current range of recv requests (non-blocking)
+            mutable labelRange recvRequests_;
+
+            //- Send buffers
+            mutable PtrList<List<Type>> sendBufs_;
+
+            //- Receive buffers_
+            mutable PtrList<List<Type>> recvBufs_;
+
+            //- Scalar send buffers
+            mutable PtrList<List<solveScalar>> scalarSendBufs_;
+
+            //- Scalar receive buffers
+            mutable PtrList<List<solveScalar>> scalarRecvBufs_;
+
+            //- Neighbour coupled internal cell data
+            mutable autoPtr<Field<Type>> patchNeighbourFieldPtr_;
+
+
     // Private Member Functions
+
+        //- Return the AMI corresponding to the owner side
+        const AMIPatchToPatchInterpolation& ownerAMI() const
+        {
+            return
+            (
+                cyclicACMIPatch_.owner()
+              ? cyclicACMIPatch_.AMI()
+              : cyclicACMIPatch_.neighbPatch().AMI()
+            );
+        }
+
+        //- All receive/send requests have completed
+        virtual bool all_ready() const;
+
+        //- Use neighbour field caching
+        static bool cacheNeighbourField();
+
+        //- Return neighbour coupled internal cell data
+        tmp<Field<Type>> patchNeighbourField(const Field<Type>&) const;
 
         //- Return neighbour side field given internal fields
         template<class Type2>
@@ -174,11 +220,14 @@ public:
             }
 
 
-        // Evaluation functions
+        // Coupling
 
             //- Return true if coupled. Note that the underlying patch
             //  is not coupled() - the points don't align
             virtual bool coupled() const;
+
+            //- Are all (receive) data available?
+            virtual bool ready() const;
 
             //- Return true if this patch field fixes a value
             //  Needed to check if a level has to be specified while solving
@@ -200,7 +249,6 @@ public:
                 }
             }
 
-
             //- Return neighbour coupled internal cell data
             virtual tmp<Field<Type>> patchNeighbourField() const;
 
@@ -210,7 +258,32 @@ public:
             //- Return reference to non-overlapping patchField
             const fvPatchField<Type>& nonOverlapPatchField() const;
 
-            //- Update result field based on interface functionality
+
+    // Evaluation
+
+        //- Initialise the evaluation of the patch field
+        virtual void initEvaluate(const Pstream::commsTypes commsType);
+
+        //- Evaluate the patch field
+        virtual void evaluate(const Pstream::commsTypes commsType);
+
+
+        // Coupled interface functionality
+
+            //- Initialise neighbour matrix update
+            virtual void initInterfaceMatrixUpdate
+            (
+                solveScalarField& result,
+                const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
+                const solveScalarField& psiInternal,
+                const scalarField& coeffs,
+                const direction cmpt,
+                const Pstream::commsTypes commsType
+            ) const;
+
+             //- Update result field based on interface functionality
             virtual void updateInterfaceMatrix
             (
                 solveScalarField& result,
@@ -220,6 +293,18 @@ public:
                 const solveScalarField& psiInternal,
                 const scalarField& coeffs,
                 const direction cmpt,
+                const Pstream::commsTypes commsType
+            ) const;
+
+            //- Initialise neighbour matrix update
+            virtual void initInterfaceMatrixUpdate
+            (
+                Field<Type>& result,
+                const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
+                const Field<Type>& psiInternal,
+                const scalarField& coeffs,
                 const Pstream::commsTypes commsType
             ) const;
 
