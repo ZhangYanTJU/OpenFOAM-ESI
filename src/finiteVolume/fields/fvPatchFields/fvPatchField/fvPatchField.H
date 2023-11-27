@@ -102,14 +102,16 @@ class fvPatchFieldBase
         word patchType_;
 
 
-//protected:
-public:
+protected:
 
     // Protected Member Functions
 
         //- Read dictionary entries.
         //  Useful when initially constructed without a dictionary
         virtual void readDict(const dictionary& dict);
+
+
+public:
 
         //- Set updated state
         void setUpdated(bool state) noexcept
