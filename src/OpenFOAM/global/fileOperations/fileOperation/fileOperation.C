@@ -1238,7 +1238,7 @@ Foam::IOobject Foam::fileOperation::findInstance
 
 Foam::fileNameList Foam::fileOperation::readObjects
 (
-    const objectRegistry& db,
+    const objectRegistry& obr,
     const fileName& instance,
     const fileName& local,
     word& newInstance
@@ -1247,11 +1247,22 @@ Foam::fileNameList Foam::fileOperation::readObjects
     if (debug)
     {
         Pout<< "fileOperation::readObjects :"
-            << " db:" << db.objectPath()
-            << " instance:" << instance << endl;
+            << " object-path:" << obr.objectPath()
+            << " instance" << instance
+            << " local:" << local << endl;
     }
 
-    fileName path(db.path(instance, db.dbDir()/local));
+    // dbDir() is relative to Time,
+    // so use dbDir() from self or from parent, but not both!
+    fileName path;
+    if (obr.dbDir().empty() || !obr.parent().dbDir().empty())
+    {
+        path = obr.path(instance, local);
+    }
+    else
+    {
+        path = obr.path(instance, obr.dbDir()/local);
+    }
 
     newInstance.clear();
     fileNameList objectNames;
@@ -1259,7 +1270,7 @@ Foam::fileNameList Foam::fileOperation::readObjects
     if (Foam::isDir(path))
     {
         newInstance = instance;
-        objectNames = Foam::readDir(path, fileName::FILE);
+        objectNames = Foam::readDir(path, fileName::Type::FILE);
     }
     else
     {
@@ -1269,7 +1280,7 @@ Foam::fileNameList Foam::fileOperation::readObjects
         if (!procsPath.empty())
         {
             newInstance = instance;
-            objectNames = Foam::readDir(procsPath, fileName::FILE);
+            objectNames = Foam::readDir(procsPath, fileName::Type::FILE);
         }
     }
     return objectNames;
