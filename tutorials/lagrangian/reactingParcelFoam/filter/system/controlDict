@@ -58,6 +58,7 @@ functions
     #include "vtkCloud"
     #include "vtkWrite"
     #include "pressureDifference"
+    #include "caseInfo"
 }
 
 
