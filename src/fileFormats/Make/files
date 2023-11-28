@@ -42,6 +42,8 @@ gltf/foamGltfObject.C
 gltf/foamGltfScene.C
 gltf/foamGltfSceneWriter.C
 
+json/JSONformatter.C
+
 starcd/STARCDCore.C
 stl/STLCore.C
 stl/STLReader.C
