@@ -2858,7 +2858,19 @@ int main(int argc, char *argv[])
                 InfoOrPout
                     << "Setting caseName to " << baseRunTime.caseName()
                     << " to read lagrangian" << endl;
-                runTime.caseName() = baseRunTime.caseName();
+                if (UPstream::master())
+                {
+                    // Change case name but only on the master - this will
+                    // hopefully cause the slaves to not read.
+                    runTime.caseName() = baseRunTime.caseName();
+                }
+                else
+                {
+                    // Explicitly make sure that casename is not recognised as
+                    // a processor case since that has special handling for
+                    // caching processor directories etc.
+                    runTime.caseName() = "#invalid-name#";
+                }
                 runTime.processorCase(false);
             }
 

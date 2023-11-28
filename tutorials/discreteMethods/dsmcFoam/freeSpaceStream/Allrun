@@ -9,10 +9,10 @@ runApplication blockMesh
 
 runApplication dsmcInitialise
 
-runParallel redistributePar -decompose -overwrite -withZero
+runParallel -s decompose redistributePar -decompose -overwrite -withZero
 
 runParallel $(getApplication)
 
-runApplication reconstructPar
+runParallel -s reconstruct redistributePar -reconstruct
 
 #------------------------------------------------------------------------------
