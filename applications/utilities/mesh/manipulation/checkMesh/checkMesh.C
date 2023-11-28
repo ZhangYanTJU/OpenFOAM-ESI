@@ -89,6 +89,9 @@ Usage
 #include "checkMeshQuality.H"
 #include "writeFields.H"
 
+#include "OFstream.H"
+#include "JSONformatter.H"
+
 using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -151,6 +154,14 @@ int main(int argc, char *argv[])
         "Write bad edges (possibly relevant for finite-area) in vtk format"
     );
 
+    argList::addOption
+    (
+        "writeChecks",
+        "word",
+        "Write checks to file in dictionary or JSON format"
+    );
+
+
     #include "setRootCase.H"
     #include "createTime.H"
     #include "getAllRegionOptions.H"
@@ -186,6 +197,14 @@ int main(int argc, char *argv[])
         "cellZone",
         "faceZone"
     });
+
+    #include "writeMeshChecks.H"
+
+    if (args.found("writeChecks"))
+    {
+        writeChecksFormat =
+            writeChecksFormatTypeNames.get(args.get<word>("writeChecks"));
+    }
 
     const bool writeFaceFields = args.found("writeAllSurfaceFields");
     wordHashSet selectedFields;
@@ -371,6 +390,8 @@ int main(int argc, char *argv[])
 
                 // Write selected fields
                 Foam::writeFields(mesh, selectedFields, writeFaceFields);
+
+                writeMeshChecks(mesh, writeChecksFormat);
             }
         }
         else if (state == polyMesh::POINTS_MOVED)
@@ -409,6 +430,8 @@ int main(int argc, char *argv[])
 
                 // Write selected fields
                 Foam::writeFields(mesh, selectedFields, writeFaceFields);
+
+                writeMeshChecks(mesh, writeChecksFormat);
             }
         }
     }
