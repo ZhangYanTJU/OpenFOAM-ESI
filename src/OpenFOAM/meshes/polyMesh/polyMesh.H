@@ -58,6 +58,7 @@ SourceFiles
 #include "pointZoneMesh.H"
 #include "faceZoneMesh.H"
 #include "cellZoneMesh.H"
+#include "meshState.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -116,6 +117,9 @@ private:
     // Private Data
 
         // Primitive mesh data
+
+            //- Mesh data
+            meshState data_;
 
             //- Points
             pointIOField points_;
@@ -304,6 +308,7 @@ private:
                 labelHashSet* setPtr
             ) const;
 
+
 public:
 
     // Public Typedefs
@@ -428,6 +433,12 @@ public:
 
 
         // Access
+
+            //- Return a reference to the mesh data
+            virtual meshState& data() noexcept {return data_;}
+
+            //- Return a const reference to the mesh data
+            virtual const meshState& data() const noexcept {return data_;}
 
             //- Return raw points
             virtual const pointField& points() const;

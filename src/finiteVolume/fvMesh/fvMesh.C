@@ -246,7 +246,6 @@ Foam::fvMesh::fvMesh(const IOobject& io, const bool doInit)
     fvSchemes(static_cast<const objectRegistry&>(*this)),
     surfaceInterpolation(*this),
     fvSolution(static_cast<const objectRegistry&>(*this)),
-    data(static_cast<const objectRegistry&>(*this)),
     boundary_(*this, boundaryMesh()),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -384,7 +383,6 @@ Foam::fvMesh::fvMesh
     fvSchemes(static_cast<const objectRegistry&>(*this)),
     surfaceInterpolation(*this),
     fvSolution(static_cast<const objectRegistry&>(*this)),
-    data(static_cast<const objectRegistry&>(*this)),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -421,7 +419,6 @@ Foam::fvMesh::fvMesh
     fvSchemes(static_cast<const objectRegistry&>(*this)),
     surfaceInterpolation(*this),
     fvSolution(static_cast<const objectRegistry&>(*this)),
-    data(static_cast<const objectRegistry&>(*this)),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -496,11 +493,6 @@ Foam::fvMesh::fvMesh
         static_cast<const objectRegistry&>(*this),
         static_cast<const fvSolution&>(baseMesh)
     ),
-    data
-    (
-        static_cast<const objectRegistry&>(*this),
-        static_cast<const data&>(baseMesh)
-    ),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -514,6 +506,9 @@ Foam::fvMesh::fvMesh
     phiPtr_(nullptr)
 {
     DebugInFunction << "Constructing fvMesh as copy and primitives" << endl;
+
+    // Reset mesh data
+    data().reset(baseMesh.data());
 }
 
 
@@ -546,11 +541,6 @@ Foam::fvMesh::fvMesh
         static_cast<const objectRegistry&>(*this),
         static_cast<const fvSolution&>(baseMesh)
     ),
-    data
-    (
-        static_cast<const objectRegistry&>(*this),
-        static_cast<const data&>(baseMesh)
-    ),
     boundary_(*this),
     lduPtr_(nullptr),
     curTimeIndex_(time().timeIndex()),
@@ -564,6 +554,9 @@ Foam::fvMesh::fvMesh
     phiPtr_(nullptr)
 {
     DebugInFunction << "Constructing fvMesh as copy and primitives" << endl;
+
+    // Reset mesh data
+    data().reset(baseMesh.data());
 }
 
 

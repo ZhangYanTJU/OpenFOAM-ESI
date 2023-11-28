@@ -31,7 +31,7 @@ License
 #include "demandDrivenData.H"
 #include "dictionary.H"
 #include "localIOdictionary.H"
-#include "data.H"
+#include "meshState.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -1155,7 +1155,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::relax()
 
     if
     (
-        this->mesh().data::template getOrDefault<bool>
+        this->mesh().data().template getOrDefault<bool>
         (
             "finalIteration",
             false

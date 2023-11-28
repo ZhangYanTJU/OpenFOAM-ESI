@@ -1,6 +1,6 @@
 if (finalIter)
 {
-    mesh.data::add("finalIteration", true);
+    mesh.data().add("finalIteration", true);
 }
 
 if (frozenFlow)
@@ -36,5 +36,5 @@ else
 
 if (finalIter)
 {
-    mesh.data::remove("finalIteration");
+    mesh.data().remove("finalIteration");
 }

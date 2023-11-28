@@ -173,6 +173,7 @@ Foam::polyMesh::polyMesh(const IOobject& io, const bool doInit)
 :
     objectRegistry(io),
     primitiveMesh(),
+    data_(static_cast<const objectRegistry&>(*this)),
     points_
     (
         IOobject
@@ -380,6 +381,7 @@ Foam::polyMesh::polyMesh
 :
     objectRegistry(io),
     primitiveMesh(),
+    data_(static_cast<const objectRegistry&>(*this)),
     points_
     (
         IOobject
@@ -533,6 +535,7 @@ Foam::polyMesh::polyMesh
 :
     objectRegistry(io),
     primitiveMesh(),
+    data_(static_cast<const objectRegistry&>(*this)),
     points_
     (
         IOobject

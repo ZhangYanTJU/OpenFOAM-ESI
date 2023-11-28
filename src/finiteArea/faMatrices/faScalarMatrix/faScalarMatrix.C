@@ -96,7 +96,7 @@ Foam::solverPerformance Foam::faMatrix<Foam::scalar>::solve
 
     psi.correctBoundaryConditions();
 
-    psi.mesh().setSolverPerformance(psi.name(), solverPerf);
+    psi.mesh().data().setSolverPerformance(psi.name(), solverPerf);
 
     return solverPerf;
 }

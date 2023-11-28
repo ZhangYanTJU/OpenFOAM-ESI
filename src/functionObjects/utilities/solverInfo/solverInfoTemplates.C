@@ -79,7 +79,8 @@ void Foam::functionObjects::solverInfo::initialiseResidualField
 
     if (foundObject<volFieldType>(fieldName))
     {
-        const Foam::dictionary& solverDict = mesh_.solverPerformanceDict();
+        const Foam::dictionary& solverDict =
+            mesh_.data().solverPerformanceDict();
 
         if (solverDict.found(fieldName))
         {
@@ -113,7 +114,8 @@ void Foam::functionObjects::solverInfo::updateSolverInfo(const word& fieldName)
 
     if (foundObject<volFieldType>(fieldName))
     {
-        const Foam::dictionary& solverDict = mesh_.solverPerformanceDict();
+        const Foam::dictionary& solverDict =
+            mesh_.data().solverPerformanceDict();
 
         if (solverDict.found(fieldName))
         {

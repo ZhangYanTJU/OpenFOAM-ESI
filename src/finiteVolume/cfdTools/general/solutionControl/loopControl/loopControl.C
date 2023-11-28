@@ -112,7 +112,8 @@ bool Foam::loopControl::checkConverged() const
         if (!meshPtr) continue;
         const fvMesh& regionMesh = *meshPtr;
 
-        const dictionary& solverDict = regionMesh.solverPerformanceDict();
+        const dictionary& solverDict =
+            regionMesh.data().solverPerformanceDict();
         for (const entry& dataDictEntry : solverDict)
         {
             const word& variableName = dataDictEntry.keyword();

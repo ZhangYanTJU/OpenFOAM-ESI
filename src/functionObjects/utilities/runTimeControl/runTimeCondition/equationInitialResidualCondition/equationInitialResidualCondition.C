@@ -125,7 +125,7 @@ equationInitialResidualCondition::apply()
     }
 
     const fvMesh& mesh = refCast<const fvMesh>(obr_);
-    const dictionary& solverDict = mesh.solverPerformanceDict();
+    const dictionary& solverDict = mesh.data().solverPerformanceDict();
 
     const auto& selection = fieldSelection_.selection();
     List<scalar> result(selection.size(), -VGREAT);
