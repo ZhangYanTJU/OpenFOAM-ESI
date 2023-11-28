@@ -25,22 +25,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::data
+    Foam::meshState
 
 Description
-    Database for solution data, solver performance and other reduced data.
+    Database for mesh data, solution data, solver performance and other
+    reduced data.
 
-    Both faMesh and fvMesh are derived from this class so that every
-    GeometricField has access to this data via their mesh reference.
+    polyMesh has a meshState data member so that every GeometricField has access.
 
 SourceFiles
-    data.C
-    dataTemplates.C
+    meshState.C
+    meshStateTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_data_H
-#define Foam_data_H
+#ifndef Foam_meshState_H
+#define Foam_meshState_H
 
 #include "IOdictionary.H"
 #include "solverPerformance.H"
@@ -51,10 +51,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                            Class data Declaration
+                          Class meshState Declaration
 \*---------------------------------------------------------------------------*/
 
-class data
+class meshState
 :
     public IOdictionary
 {
@@ -67,38 +67,36 @@ class data
     // Private Member Functions
 
         //- True if boolean entry exists and is set
-        bool getBoolEntry(const word& keyword) const
-        {
-            bool value = false;
-            return readIfPresent(keyword, value) && value;
-        }
+        static bool getBoolEntry(const dictionary& dict, const word& keyword);
 
         //- Add/remove boolean entry
-        void setBoolEntry(const word& keyword, bool on)
-        {
-            if (on)
-            {
-                add(keyword, true);
-            }
-            else
-            {
-                remove(keyword);
-            }
-        }
+        static void setBoolEntry
+        (
+            dictionary& dict,
+            const word& keyword,
+            bool on
+        );
 
         //- No copy construct
-        data(const data&) = delete;
+        meshState(const meshState&) = delete;
 
         //- No copy assignment
-        void operator=(const data&) = delete;
+        void operator=(const meshState&) = delete;
+
 
 public:
+
+    // Static Data Members
+
+        static const word solverPerformanceDictName;
+        static const word meshDictName;
+
 
     // Constructors
 
         //- Construct for objectRegistry (registered with specified name)
         //- optionally with initial content
-        data
+        meshState
         (
             const word& name,
             const objectRegistry& obr,
@@ -106,61 +104,57 @@ public:
         );
 
         //- Construct for objectRegistry (registered as "data")
-        explicit data(const objectRegistry& obr)
+        explicit meshState(const objectRegistry& obr)
         :
-            data("data", obr)
+            meshState("data", obr)
         {}
 
         //- Construct for objectRegistry (registered with specified name)
         //- copying initial content
-        data
+        meshState
         (
             const word& name,
             const objectRegistry& obr,
             const dictionary& dict
         )
         :
-            data(name, obr, &dict)
+            meshState(name, obr, &dict)
         {}
 
         //- Construct for objectRegistry (registered as "data")
         //- copying initial content
-        data(const objectRegistry& obr, const dictionary& dict)
+        meshState(const objectRegistry& obr, const dictionary& dict)
         :
-            data("data", obr, &dict)
+            meshState("data", obr, &dict)
         {}
 
 
     // Member Functions
 
+        //- Reset the dictionary
+        void reset(const meshState& ms);
+
+        //- Return the dictionary of mesh data, typically populated by
+        //- the polyMesh::checkXXX functions, checkMesh etc.
+        dictionary& meshDict();
+        const dictionary& meshDict() const;
+
         //- Return the dictionary of solver performance data which
         //- includes initial and final residuals for convergence checking
+        dictionary& solverPerformanceDict();
         const dictionary& solverPerformanceDict() const;
 
         //- True if "firstIteration" entry exists and is set
-        bool isFirstIteration() const
-        {
-            return getBoolEntry("firstIteration");
-        }
+        bool isFirstIteration() const;
 
         //- True if "finalIteration" entry exists and is set
-        bool isFinalIteration() const
-        {
-            return getBoolEntry("finalIteration");
-        }
+        bool isFinalIteration() const;
 
         //- Add/remove "firstIteration" entry
-        void isFirstIteration(bool on)
-        {
-            return setBoolEntry("firstIteration", on);
-        }
+        void setFirstIteration(bool on);
 
         //- Add/remove "finalIteration" entry
-        void isFinalIteration(bool on)
-        {
-            return setBoolEntry("finalIteration", on);
-        }
-
+        void setFinalIteration(bool on);
 
         //- Add/set the solverPerformance entry for the named field
         template<class Type>
@@ -186,7 +180,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "dataTemplates.C"
+    #include "meshStateTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

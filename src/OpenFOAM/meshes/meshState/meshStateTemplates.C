@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2016 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,45 +25,46 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "data.H"
 #include "Time.H"
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::data::data
-(
-    const word& name,
-    const objectRegistry& obr,
-    const dictionary* content
-)
-:
-    IOdictionary
-    (
-        IOobject
-        (
-            name,
-            obr.time().system(),
-            obr,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::REGISTER
-        ),
-        content
-    ),
-    prevTimeIndex_(-1)
-{
-    if (content == nullptr || !findDict("solverPerformance", keyType::LITERAL))
-    {
-        set("solverPerformance", dictionary());
-    }
-}
-
+#include "solverPerformance.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::dictionary& Foam::data::solverPerformanceDict() const
+template<class Type>
+void Foam::meshState::setSolverPerformance
+(
+    const word& name,
+    const SolverPerformance<Type>& sp
+) const
 {
-    return subDict("solverPerformance");
+    dictionary& dict = const_cast<dictionary&>(solverPerformanceDict());
+
+    List<SolverPerformance<Type>> perfs;
+
+    if (prevTimeIndex_ != this->time().timeIndex())
+    {
+        // Reset solver performance between iterations
+        prevTimeIndex_ = this->time().timeIndex();
+        dict.clear();
+    }
+    else
+    {
+        dict.readIfPresent(name, perfs);
+    }
+
+    perfs.push_back(sp);
+
+    dict.set(name, perfs);
+}
+
+
+template<class Type>
+void Foam::meshState::setSolverPerformance
+(
+    const SolverPerformance<Type>& sp
+) const
+{
+    setSolverPerformance(sp.fieldName(), sp);
 }
 
 
