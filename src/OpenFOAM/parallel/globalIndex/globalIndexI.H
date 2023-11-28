@@ -517,12 +517,6 @@ inline Foam::label Foam::globalIndex::whichProcID
 }
 
 
-inline Foam::label Foam::globalIndex::whichProcID(const label i) const
-{
-    return whichProcID(UPstream::myProcNo(), i);
-}
-
-
 inline void Foam::globalIndex::reset
 (
     const globalIndex::gatherNone,
