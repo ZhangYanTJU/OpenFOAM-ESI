@@ -136,12 +136,9 @@ Foam::faMeshTools::newMesh
     // Set up to read-if-present. Note: does not search for mesh so set
     // instance explicitly
 
-    IOobject meshIO(io);
-    meshIO.instance() = facesInstance;
-    meshIO.readOpt(IOobject::READ_IF_PRESENT);
-
     // For mesh components (faceLabels, ...)
-    IOobject cmptIO(meshIO, "faceLabels", meshSubDir);
+    IOobject cmptIO(io, "faceLabels", meshSubDir);
+    cmptIO.instance() = facesInstance;
     cmptIO.readOpt(IOobject::MUST_READ);
     cmptIO.writeOpt(IOobject::NO_WRITE);
     cmptIO.registerObject(false);
@@ -154,7 +151,6 @@ Foam::faMeshTools::newMesh
     if (masterOnlyReading && !UPstream::master())
     {
         haveMesh = false;
-        meshIO.readOpt(IOobject::NO_READ);
     }
 
     if (!haveMesh)
@@ -182,8 +178,7 @@ Foam::faMeshTools::newMesh
     auto meshPtr = autoPtr<faMesh>::New
     (
         pMesh,
-        std::move(faceLabels),
-        meshIO
+        std::move(faceLabels)
     );
     auto& mesh = *meshPtr;
 
@@ -354,15 +349,7 @@ Foam::faMeshTools::loadOrCreateMeshImpl
         const int oldCache = fileOperation::cacheLevel(0);
 
         // Create dummy mesh - on procs that don't already have a mesh
-        meshPtr.reset
-        (
-            new faMesh
-            (
-                pMesh,
-                labelList(),
-                IOobject(io, IOobject::NO_READ, IOobject::AUTO_WRITE)
-            )
-        );
+        meshPtr.reset(new faMesh(pMesh, labelList()));
         faMesh& mesh = *meshPtr;
 
         // Add patches

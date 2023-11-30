@@ -552,17 +552,6 @@ public:
         //  Boundary is added using addFaPatches() member function.
         faMesh(const polyMesh& pMesh, labelList&& faceLabels);
 
-        //- Construct from components (face labels) without boundary,
-        //- using alternative IOobject properties
-        //- (primarily the readOption).
-        //  Boundary is added using addFaPatches() member function.
-        faMesh
-        (
-            const polyMesh& pMesh,
-            labelList&& faceLabels,
-            const IOobject& io
-        );
-
         //- Construct from single polyPatch
         explicit faMesh(const polyPatch& pp, const bool doInit = true);
 

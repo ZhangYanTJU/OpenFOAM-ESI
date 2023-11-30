@@ -93,13 +93,9 @@ Foam::faMeshDistributor::distribute
             ListOps::findIndices(oldToNewConstruct, labelRange::ge0())
         );
 
-        // Set up to read-if-present
-        IOobject io(tgtPolyMesh);
-        io.readOpt(IOobject::READ_IF_PRESENT);
-
         newMeshPtr.reset
         (
-            new faMesh(tgtPolyMesh, std::move(newFaceLabels), io)
+            new faMesh(tgtPolyMesh, std::move(newFaceLabels))
         );
     }
 

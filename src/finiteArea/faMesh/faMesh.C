@@ -325,7 +325,7 @@ bool Foam::faMesh::init(const bool doInit)
 
 Foam::faMesh::faMesh(const polyMesh& pMesh, const Foam::zero)
 :
-    faMesh(pMesh, labelList(), static_cast<const IOobject&>(pMesh))
+    faMesh(pMesh, labelList())
 {}
 
 
@@ -448,17 +448,6 @@ Foam::faMesh::faMesh
 (
     const polyMesh& pMesh,
     labelList&& faceLabels
-)
-:
-    faMesh(pMesh, std::move(faceLabels), static_cast<const IOobject&>(pMesh))
-{}
-
-
-Foam::faMesh::faMesh
-(
-    const polyMesh& pMesh,
-    labelList&& faceLabels,
-    const IOobject& io
 )
 :
     MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>(pMesh),
