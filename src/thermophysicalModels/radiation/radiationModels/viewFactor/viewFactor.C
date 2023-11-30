@@ -935,11 +935,7 @@ void Foam::radiation::viewFactor::calculate()
             const dictionary& solverControls =
                 qr_.mesh().solverDict
                 (
-                    qr_.select
-                    (
-                        qr_.mesh().data::template getOrDefault<bool>
-                        ("finalIteration", false)
-                    )
+                    qr_.select(qr_.mesh().data().isFinalIteration())
                 );
 
             // Solver call

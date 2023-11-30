@@ -42,7 +42,7 @@ Foam::pisoControl::pisoControl(fvMesh& mesh, const word& dictName)
 :
     pimpleControl(mesh, dictName)
 {
-    // mesh_.data::add("finalIteration", true);
+    // mesh_.data().setFinalIteration(true);
 }
 
 

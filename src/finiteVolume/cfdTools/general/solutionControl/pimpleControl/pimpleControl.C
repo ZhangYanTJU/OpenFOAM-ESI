@@ -219,7 +219,7 @@ bool Foam::pimpleControl::loop()
         }
 
         corr_ = 0;
-        mesh_.data().remove("finalIteration");
+        mesh_.data().setFinalIteration(false);
         return false;
     }
 
@@ -231,7 +231,7 @@ bool Foam::pimpleControl::loop()
             Info<< algorithmName_ << ": converged in " << corr_ - 1
                 << " iterations" << endl;
 
-            mesh_.data().remove("finalIteration");
+            mesh_.data().setFinalIteration(false);
             corr_ = 0;
             converged_ = false;
 
@@ -242,7 +242,7 @@ bool Foam::pimpleControl::loop()
             Info<< algorithmName_ << ": iteration " << corr_ << endl;
             storePrevIterFields();
 
-            mesh_.data().add("finalIteration", true);
+            mesh_.data().setFinalIteration(true);
             converged_ = true;
         }
     }
@@ -250,7 +250,7 @@ bool Foam::pimpleControl::loop()
     {
         if (finalIter())
         {
-            mesh_.data().add("finalIteration", true);
+            mesh_.data().setFinalIteration(true);
         }
 
         if (corr_ <= nCorrPIMPLE_)

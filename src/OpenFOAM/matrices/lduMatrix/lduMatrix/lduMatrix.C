@@ -32,6 +32,7 @@ License
 #include "objectRegistry.H"
 #include "scalarIOField.H"
 #include "Time.H"
+#include "meshState.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -351,12 +352,11 @@ void Foam::lduMatrix::setResidualField
 
     if (residualPtr)
     {
-        const IOdictionary* dataPtr =
-            mesh().thisDb().findObject<IOdictionary>("data");
+        const auto* dataPtr = mesh().thisDb().findObject<meshState>("data");
 
         if (dataPtr)
         {
-            if (initial && dataPtr->found("firstIteration"))
+            if (initial && dataPtr->isFirstIteration())
             {
                 *residualPtr = residual;
                 DebugInfo

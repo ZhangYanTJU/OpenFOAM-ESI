@@ -1153,14 +1153,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::relax()
 {
     word name = this->name();
 
-    if
-    (
-        this->mesh().data().template getOrDefault<bool>
-        (
-            "finalIteration",
-            false
-        )
-    )
+    if (this->mesh().data().isFinalIteration())
     {
         name += "Final";
     }
