@@ -61,8 +61,8 @@ class objectiveFlowRatePartition
 
         labelList inletPatches_;
         labelList outletPatches_;
-        scalarList targetFlowRatePercentage_;
-        scalarList currentFlowRatePercentage_;
+        scalarList targetFlowRateFraction_;
+        scalarList currentFlowRateFraction_;
         scalar inletFlowRate_;
         scalarList flowRateDifference_;
 
