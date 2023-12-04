@@ -25,7 +25,109 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "transformField.H"
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::coordSetWriter::adjustFieldTemplate
+(
+    const word& fieldName,
+    const tmp<Field<Type>>& tfield
+) const
+{
+    if (verbose_)
+    {
+        Info<< "Writing field " << fieldName;
+    }
+
+    tmp<Field<Type>> tadjusted;
+
+    // Output scaling for the variable, but not for integer types
+    // which are typically ids etc.
+    if (!std::is_integral<Type>::value)
+    {
+        scalar value;
+
+        // Remove *uniform* reference level
+        if
+        (
+            fieldLevel_.readIfPresent(fieldName, value, keyType::REGEX)
+         && !equal(value, 0)
+        )
+        {
+            // Could also detect brackets (...) and read accordingly
+            // or automatically scale by 1/sqrt(nComponents) instead ...
+
+            Type refLevel;
+            for (direction cmpt = 0; cmpt < pTraits<Type>::nComponents; ++cmpt)
+            {
+                setComponent(refLevel, cmpt) = value;
+            }
+
+            if (verbose_)
+            {
+                Info<< " [level " << refLevel << ']';
+            }
+
+            if (!tadjusted)
+            {
+                // Steal or clone
+                tadjusted.reset(tfield.ptr());
+            }
+
+            // Remove offset level
+            tadjusted.ref() -= refLevel;
+        }
+
+        // Apply scaling
+        if
+        (
+            fieldScale_.readIfPresent(fieldName, value, keyType::REGEX)
+         && !equal(value, 1)
+        )
+        {
+            if (verbose_)
+            {
+                Info<< " [scaling " << value << ']';
+            }
+
+            if (!tadjusted)
+            {
+                // Steal or clone
+                tadjusted.reset(tfield.ptr());
+            }
+
+            // Apply scaling
+            tadjusted.ref() *= value;
+        }
+
+        // Rotate fields (vector and non-spherical tensors)
+        if
+        (
+            (pTraits<Type>::rank != 0 && pTraits<Type>::nComponents > 1)
+         && geometryTransform_.valid()
+         && !geometryTransform_.R().is_identity()
+        )
+        {
+            if (!tadjusted)
+            {
+                // Steal or clone
+                tadjusted.reset(tfield.ptr());
+            }
+
+           Foam::transform
+           (
+               tadjusted.ref(),
+               geometryTransform_.R(),
+               tadjusted()
+           );
+        }
+    }
+
+    return (tadjusted ? tadjusted : tfield);
+}
+
 
 template<class Type>
 Foam::UPtrList<const Foam::Field<Type>>

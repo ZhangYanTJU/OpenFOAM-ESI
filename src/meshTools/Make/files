@@ -116,6 +116,7 @@ coordSet/coordSet.C
 
 setWriters = coordSet/writers
 
+$(setWriters)/abaqus/abaqusCoordSetWriter.C
 $(setWriters)/common/coordSetWriter.C
 $(setWriters)/common/coordSetWriterBuffers.C
 $(setWriters)/common/coordSetWriterNew.C

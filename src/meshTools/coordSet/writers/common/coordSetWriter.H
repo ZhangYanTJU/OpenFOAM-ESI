@@ -66,6 +66,7 @@ SourceFiles
 #include "UPtrList.H"
 #include "instant.H"
 #include "InfoProxy.H"
+#include "cartesianCS.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -124,6 +125,21 @@ protected:
 
         //- The full output directory and file (coords) name
         fileName outputPath_;
+
+        //- Output geometry scaling after rotate/translate
+        scalar geometryScale_;
+
+        //- The centre of rotation (untranslate, translate)
+        point geometryCentre_;
+
+        //- Local coordinate system transformation
+        coordSystem::cartesian geometryTransform_;
+
+        //- Field level to remove (on output)
+        dictionary fieldLevel_;
+
+        //- Field scaling (on output)
+        dictionary fieldScale_;
 
 
     // Buffering
@@ -211,6 +227,13 @@ protected:
 
 
     // Helpers
+
+        template<class Type>
+        tmp<Field<Type>> adjustFieldTemplate
+        (
+            const word& fieldName,
+            const tmp<Field<Type>>& tfield
+        ) const;
 
         //- Repackage field into a UPtrList
         template<class Type>
