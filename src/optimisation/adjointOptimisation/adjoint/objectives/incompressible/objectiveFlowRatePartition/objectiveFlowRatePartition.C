@@ -75,23 +75,30 @@ objectiveFlowRatePartition::objectiveFlowRatePartition
             dict.get<wordRes>("outletPatches")
         ).sortedToc()
     ),
-    targetFlowRatePercentage_(),
-    currentFlowRatePercentage_(outletPatches_.size(), Zero),
+    targetFlowRateFraction_(),
+    currentFlowRateFraction_(outletPatches_.size(), Zero),
     inletFlowRate_(0),
     flowRateDifference_(outletPatches_.size(), Zero)
 {
-    // Read target percentages if present, otherwise treat them as equally
+    // Read target fractions if present, otherwise treat them as equally
     // distributed
-    if (!dict.readIfPresent("targetPercentages", targetFlowRatePercentage_))
+    if
+    (
+        !dict.readIfPresentCompat
+        (
+            "targetFractions", {{"targetPercentages", 2306}},
+            targetFlowRateFraction_
+        )
+    )
     {
         const label nOutPatches = outletPatches_.size();
-        targetFlowRatePercentage_.setSize(nOutPatches, 1.0/scalar(nOutPatches));
+        targetFlowRateFraction_.setSize(nOutPatches, 1.0/scalar(nOutPatches));
     }
     // Sanity checks
-    if (targetFlowRatePercentage_.size() != outletPatches_.size())
+    if (targetFlowRateFraction_.size() != outletPatches_.size())
     {
         FatalErrorInFunction
-            << "Inconsistent sizes for targetPercentages and outletPatches"
+            << "Inconsistent sizes for targetFractions and outletPatches"
             << exit(FatalError);
 
     }
@@ -130,9 +137,9 @@ scalar objectiveFlowRatePartition::J()
     {
         const label patchI = outletPatches_[pI];
         const scalar outletFlowRate = gSum(phi.boundaryField()[patchI]);
-        currentFlowRatePercentage_[pI] = -outletFlowRate/inletFlowRate_;
+        currentFlowRateFraction_[pI] = -outletFlowRate/inletFlowRate_;
         flowRateDifference_[pI] =
-            targetFlowRatePercentage_[pI] - currentFlowRatePercentage_[pI];
+            targetFlowRateFraction_[pI] - currentFlowRateFraction_[pI];
         J_ += 0.5*flowRateDifference_[pI]*flowRateDifference_[pI];
     }
 
@@ -172,7 +179,7 @@ void objectiveFlowRatePartition::addHeaderInfo() const
         const fvPatch& patch = mesh_.boundary()[patchI];
         objFunctionFilePtr_()
             << setw(width_) << word("#" + patch.name() + "Tar") << " "
-            << setw(width_) << targetFlowRatePercentage_[pI] << endl;
+            << setw(width_) << targetFlowRateFraction_[pI] << endl;
     }
 }
 
@@ -190,7 +197,7 @@ void objectiveFlowRatePartition::addHeaderColumns() const
 
 void objectiveFlowRatePartition::addColumnValues() const
 {
-    for (const scalar flowRate : currentFlowRatePercentage_)
+    for (const scalar flowRate : currentFlowRateFraction_)
     {
         objFunctionFilePtr_()
             << setw(width_) << flowRate << " ";

@@ -69,7 +69,7 @@ adjointManagers
                             type              flowRatePartition;
                             inletPatches      (inlet);
                             outletPatches     (outlet outlet-right);
-                            targetPercentages (0.5 0.5);
+                            targetFractions   (0.5 0.5);
                         }
                     }
                 }
