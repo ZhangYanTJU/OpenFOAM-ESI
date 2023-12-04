@@ -243,14 +243,14 @@ void Foam::PDRblock::gridControl::writeDict
 
     const scalarList& knots = *this;
 
-    os  << indent << "points  "
-        << flatOutput(knots) << token::END_STATEMENT << nl;
+    os  << indent << "points  " << flatOutput(knots);
+    os.endEntry();
 
-    os  << indent << "nCells  "
-        << flatOutput(divisions_) << token::END_STATEMENT << nl;
+    os  << indent << "nCells  " << flatOutput(divisions_);
+    os.endEntry();
 
-    os  << indent << "ratios  "
-        << flatOutput(expansion_) << token::END_STATEMENT << nl;
+    os  << indent << "ratios  " << flatOutput(expansion_);
+    os.endEntry();
 
     if (cmpt < vector::nComponents)
     {

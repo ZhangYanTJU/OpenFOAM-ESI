@@ -74,7 +74,7 @@ void Foam::UList<T>::writeEntry(const word& keyword, Ostream& os) const
         os.writeKeyword(keyword);
     }
     writeEntry(os);
-    os << token::END_STATEMENT << endl;
+    os.endEntry();
 }
 
 

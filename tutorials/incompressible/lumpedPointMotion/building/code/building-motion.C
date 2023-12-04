@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -516,7 +516,7 @@ int main(int argc, char *argv[])
             os.writeEntry("degrees", "false");
             os << nl;
             os << "response" << nl;
-            os << '(' << nl;
+            os << token::BEGIN_LIST << nl;
         }
         else
         {
@@ -558,7 +558,8 @@ int main(int argc, char *argv[])
         {
             auto& os = *osPtr;
 
-            os << ')' << token::END_STATEMENT << nl;
+            os << token::END_LIST;
+            os.endEntry();
 
             IOobject::writeEndDivider(os);
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,7 +109,8 @@ static void writeList(Ostream& os, const string& header, const UList<T>& list)
     }
 
     // Write end delimiter
-    os << token::END_LIST << token::END_STATEMENT << nl << nl;
+    os << token::END_LIST;
+    os.endEntry() << nl;
 }
 //! \endcond
 

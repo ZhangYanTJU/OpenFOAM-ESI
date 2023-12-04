@@ -73,7 +73,7 @@ void Foam::FixedList<T, N>::writeEntry
         os.writeKeyword(keyword);
     }
     writeEntry(os);
-    os << token::END_STATEMENT << endl;
+    os.endEntry();
 }
 
 

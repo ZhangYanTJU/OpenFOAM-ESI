@@ -520,8 +520,8 @@ bool Foam::expressions::exprResult::writeEntryChecked
             {
                 os.writeKeyword(keyword);
             }
-            os  << word("uniform") << token::SPACE
-                << val << token::END_STATEMENT << nl;
+            os  << word("uniform") << token::SPACE << val;
+            os.endEntry();
         }
         else
         {
@@ -540,8 +540,8 @@ bool Foam::expressions::exprResult::writeEntryChecked
             {
                 os.writeKeyword(keyword);
             }
-            os  << word("uniform") << token::SPACE
-                << fld.front() << token::END_STATEMENT << nl;
+            os  << word("uniform") << token::SPACE << fld.front();
+            os.endEntry();
         }
         else
         {

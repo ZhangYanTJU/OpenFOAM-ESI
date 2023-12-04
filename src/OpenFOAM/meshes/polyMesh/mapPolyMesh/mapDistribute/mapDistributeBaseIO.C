@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,7 +68,8 @@ static void writeMaps(Ostream& os, const word& key, const labelListList& maps)
     else
     {
         os  << indent << key;
-        printMaps(os, maps) << token::END_STATEMENT << nl;
+        printMaps(os, maps);
+        os.endEntry();
     }
 }
 

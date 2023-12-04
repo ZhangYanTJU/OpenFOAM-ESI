@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -749,11 +749,9 @@ void Foam::slidingInterface::write(Ostream& os) const
 
 
 // To write out all those tolerances
+#undef  WRITE_NON_DEFAULT
 #define WRITE_NON_DEFAULT(name) \
-    if ( name ## _ != name ## Default_ )\
-    { \
-        os << "    " #name " " <<  name ## _ << token::END_STATEMENT << nl; \
-    }
+    if ( name ## _ != name ## Default_ ) os.writeEntry( #name , name ## _ );
 
 
 void Foam::slidingInterface::writeDict(Ostream& os) const
@@ -794,6 +792,8 @@ void Foam::slidingInterface::writeDict(Ostream& os) const
     WRITE_NON_DEFAULT(edgeMasterCatchFraction)
     WRITE_NON_DEFAULT(edgeCoPlanarTol)
     WRITE_NON_DEFAULT(edgeEndCutoffTol)
+
+    #undef WRITE_NON_DEFAULT
 
     os.endBlock();
 }

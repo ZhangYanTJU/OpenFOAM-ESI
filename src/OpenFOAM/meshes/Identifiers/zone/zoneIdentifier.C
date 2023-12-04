@@ -138,8 +138,8 @@ void Foam::zoneIdentifier::write(Ostream& os) const
     if (!inGroups_.empty())
     {
         os.writeKeyword("inGroups");
-        // Flat output of list
-        inGroups_.writeList(os, 0) << token::END_STATEMENT << nl;
+        inGroups_.writeList(os, 0);  // Flat output
+        os.endEntry();
     }
 }
 

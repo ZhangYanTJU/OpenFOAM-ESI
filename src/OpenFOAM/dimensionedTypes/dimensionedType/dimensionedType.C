@@ -544,12 +544,20 @@ void Foam::dimensioned<Type>::writeEntry
     Ostream& os
 ) const
 {
-    os.writeKeyword(keyword);
-
-    if (keyword != name_)
+    if (keyword.size())
     {
-        // The name, only if different from keyword
-        os << name_ << token::SPACE;
+        os.writeKeyword(keyword);
+
+        if (keyword != name_)
+        {
+            // The name, only if different from keyword
+            os << name_ << token::SPACE;
+        }
+    }
+    else
+    {
+        // Use the name (no keyword provided)
+        os.writeKeyword(name_);
     }
 
     // The dimensions
@@ -557,7 +565,8 @@ void Foam::dimensioned<Type>::writeEntry
     dimensions_.write(os, mult);
 
     // The value
-    os << token::SPACE << value_/mult << token::END_STATEMENT << endl;
+    os << token::SPACE << value_/mult;
+    os.endEntry();
 
     os.check(FUNCTION_NAME);
 }

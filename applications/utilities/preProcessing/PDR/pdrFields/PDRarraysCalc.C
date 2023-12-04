@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 Shell Research Ltd.
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -203,9 +203,9 @@ static inline scalar averageSurrounding
 template<class Type>
 static inline Ostream& putUniform(Ostream& os, const word& key, const Type& val)
 {
-    os.writeKeyword(key)
-        << word("uniform") << token::SPACE
-        << val << token::END_STATEMENT << nl;
+    os.writeKeyword(key);
+    os  << word("uniform") << token::SPACE << val;
+    os.endEntry();
     return os;
 }
 
@@ -1153,7 +1153,7 @@ static void tail_field
     // ground
     {
         os.beginBlock(pars.groundPatchName);
-        os.writeKeyword("type") << wall_bc << token::END_STATEMENT << nl;
+        os.writeEntry("type", wall_bc);
         putUniform(os, "value", deflt);
         os.endBlock();
     }
@@ -1170,7 +1170,7 @@ static void tail_field
             // No wall functions for blockedFaces patch unless selected
             if (pars.blockedFacesWallFn)
             {
-                os.writeKeyword("type") << wall_bc << token::END_STATEMENT << nl;
+                os.writeEntry("type", wall_bc);
                 putUniform(os, "value", deflt);
             }
             else
@@ -1184,7 +1184,7 @@ static void tail_field
         {
             os.beginBlock(patchName);
 
-            os.writeKeyword("type") << wall_bc << token::END_STATEMENT << nl;
+            os.writeEntry("type", wall_bc);
             putUniform(os, "value", deflt);
 
             os.endBlock();
@@ -1192,7 +1192,7 @@ static void tail_field
         else
         {
             os.beginBlock(word(patchName + "Wall"));
-            os.writeKeyword("type") << wall_bc << token::END_STATEMENT << nl;
+            os.writeEntry("type", wall_bc);
             putUniform(os, "value", deflt);
             os.endBlock();
 
@@ -1266,7 +1266,7 @@ void write_scalarField
 
     os << nl;
     os.writeKeyword("internalField")
-        << "nonuniform List<scalar>" << nl
+        << word("nonuniform") << token::SPACE << word("List<scalar>") << nl
         << meshIndexing.nCells() << nl << token::BEGIN_LIST << nl;
 
     for (label celli=0; celli < meshIndexing.nCells(); ++celli)
@@ -1282,7 +1282,8 @@ void write_scalarField
         os << limits.clamp(fld(cellIdx)) << nl;
     }
 
-    os << token::END_LIST << token::END_STATEMENT << nl;
+    os << token::END_LIST;
+    os.endEntry();
 
     os << nl;
     os.beginBlock("boundaryField");
@@ -1400,8 +1401,7 @@ void write_pU_fields
         for (label patchi = 0; patchi < 3; ++patchi)
         {
             os.beginBlock(patches[patchi].patchName);
-            os.writeKeyword("type") << pars.UPatchBc.c_str()
-                << token::END_STATEMENT << nl;
+            os.writeEntry("type", pars.UPatchBc.c_str());
             os.endBlock();
         }
 
@@ -1543,7 +1543,7 @@ void write_symmTensorField
 
     os << nl;
     os.writeKeyword("internalField")
-        << "nonuniform List<symmTensor>" << nl
+        << word("nonuniform") << token::SPACE << word("List<symmTensor>") << nl
         << meshIndexing.nCells() << nl << token::BEGIN_LIST << nl;
 
     for (label celli=0; celli < meshIndexing.nCells(); ++celli)
@@ -1558,7 +1558,8 @@ void write_symmTensorField
 
         os << fld(cellIdx) << nl;
     }
-    os << token::END_LIST << token::END_STATEMENT << nl;
+    os << token::END_LIST;
+    os.endEntry();
 
     os << nl;
     os.beginBlock("boundaryField");
@@ -1603,7 +1604,7 @@ void write_symmTensorFieldV
 
     os << nl;
     os.writeKeyword("internalField")
-        << "nonuniform List<symmTensor>" << nl
+        << word("nonuniform") << token::SPACE << word("List<symmTensor>") << nl
         << meshIndexing.nCells() << nl << token::BEGIN_LIST << nl;
 
     symmTensor val(symmTensor::zero);
@@ -1626,7 +1627,8 @@ void write_symmTensorFieldV
 
         os << val << nl;
     }
-    os << token::END_LIST << token::END_STATEMENT << nl;
+    os << token::END_LIST;
+    os.endEntry();
 
     os << nl;
     os.beginBlock("boundaryField");
@@ -1878,7 +1880,9 @@ void write_blocked_face_list
             }
         }
 
-        os  << token::END_LIST << token::END_STATEMENT << nl << nl;
+        os  << token::END_LIST;
+        os.endEntry() << nl;
+
         os.beginBlock("coupledFaces");
 
         for (const PDRpatchDef& p : patches)
@@ -1901,8 +1905,10 @@ void write_blocked_face_list
         IOobject::writeEndDivider(os);
 
         // Write panelList
-        OFstream(casepath / "panelList")()
-            << panelNames << token::END_STATEMENT << nl;
+        OFstream os2(casepath / "panelList");
+
+        os2<< panelNames;
+        os2.endEntry();
     }
 }
 
@@ -2000,7 +2006,7 @@ void write_blockedCellsSet
         os << labelList();
     }
 
-    os << token::END_STATEMENT << nl;
+    os.endEntry();
 
     IOobject::writeEndDivider(os);
 }

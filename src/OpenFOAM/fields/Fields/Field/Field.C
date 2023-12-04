@@ -744,7 +744,7 @@ void Foam::Field<Type>::writeEntry(const word& keyword, Ostream& os) const
         List<Type>::writeEntry(os);
     }
 
-    os << token::END_STATEMENT << nl;
+    os.endEntry();
 }
 
 

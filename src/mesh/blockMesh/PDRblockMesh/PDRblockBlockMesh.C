@@ -573,7 +573,8 @@ Foam::Ostream& Foam::PDRblock::blockMeshDict
             }
         }
 
-        endIndentList(os) << token::END_STATEMENT << nl;
+        endIndentList(os);
+        os.endEntry();
     }
 
 
@@ -658,7 +659,8 @@ Foam::Ostream& Foam::PDRblock::blockMeshDict
             }
         }
 
-        endIndentList(os) << token::END_STATEMENT << nl;
+        endIndentList(os);
+        os.endEntry();
     }
 
 
@@ -686,7 +688,8 @@ Foam::Ostream& Foam::PDRblock::blockMeshDict
             }
         }
 
-        endIndentList(os) << token::END_STATEMENT << nl;
+        endIndentList(os);
+        os.endEntry();
     }
 
 
@@ -707,7 +710,8 @@ Foam::Ostream& Foam::PDRblock::blockMeshDict
             }
         }
 
-        endIndentList(os) << token::END_STATEMENT << nl;
+        endIndentList(os);
+        os.endEntry();
     }
 
 
@@ -733,7 +737,8 @@ Foam::Ostream& Foam::PDRblock::blockMeshDict
                 );
             }
 
-            endIndentList(os) << token::END_STATEMENT << nl;
+            endIndentList(os);
+            os.endEntry();
 
             os.endBlock();
         }
@@ -755,11 +760,14 @@ Foam::Ostream& Foam::PDRblock::blockMeshDict
                 );
             }
 
-            endIndentList(os) << token::END_STATEMENT << nl;
+            endIndentList(os);
+            os.endEntry();
+
             os.endBlock();
         }
 
-        endIndentList(os) << token::END_STATEMENT << nl;
+        endIndentList(os);
+        os.endEntry();
     }
 
 

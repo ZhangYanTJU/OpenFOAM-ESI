@@ -42,7 +42,8 @@ inline Ostream& operator<<
 )
 {
     OStringStream reaction;
-    os << r.solidReactionStr(reaction) << token::END_STATEMENT <<nl;
+    os << r.solidReactionStr(reaction);
+    os.endEntry();
     return os;
 }
 

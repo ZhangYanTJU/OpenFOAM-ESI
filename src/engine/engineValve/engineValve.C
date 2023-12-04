@@ -242,34 +242,35 @@ Foam::labelList Foam::engineValve::movingPatchIDs() const
 
 void Foam::engineValve::writeDict(Ostream& os) const
 {
-    os  << nl << name() << nl << token::BEGIN_BLOCK;
+    os  << nl;
+    os.beginBlock(name());
 
     if (csysPtr_)
     {
         csysPtr_->writeEntry(os);
     }
 
-    os  << "bottomPatch " << bottomPatch_.name() << token::END_STATEMENT << nl
-        << "poppetPatch " << poppetPatch_.name() << token::END_STATEMENT << nl
-        << "stemPatch " << stemPatch_.name() << token::END_STATEMENT << nl
-        << "curtainInPortPatch " << curtainInPortPatch_.name()
-        << token::END_STATEMENT << nl
-        << "curtainInCylinderPatch " << curtainInCylinderPatch_.name()
-        << token::END_STATEMENT << nl
-        << "detachInCylinderPatch " << detachInCylinderPatch_.name()
-        << token::END_STATEMENT << nl
-        << "detachInPortPatch " << detachInPortPatch_.name()
-        << token::END_STATEMENT << nl
-        << "detachFaces " << detachFaces_ << token::END_STATEMENT << nl
-        << "liftProfile " << nl << token::BEGIN_BLOCK
-        << liftProfile_ << token::END_BLOCK << token::END_STATEMENT << nl
-        << "minLift " << minLift_ << token::END_STATEMENT << nl
-        << "minTopLayer " << minTopLayer_ << token::END_STATEMENT << nl
-        << "maxTopLayer " << maxTopLayer_ << token::END_STATEMENT << nl
-        << "minBottomLayer " << minBottomLayer_ << token::END_STATEMENT << nl
-        << "maxBottomLayer " << maxBottomLayer_ << token::END_STATEMENT << nl
-        << "diameter " << diameter_ << token::END_STATEMENT << nl
-        << token::END_BLOCK << endl;
+    os.writeEntry("bottomPatch", bottomPatch_.name());
+    os.writeEntry("poppetPatch", poppetPatch_.name());
+    os.writeEntry("stemPatch", stemPatch_.name());
+    os.writeEntry("curtainInPortPatch", curtainInPortPatch_.name());
+    os.writeEntry("curtainInCylinderPatch", curtainInCylinderPatch_.name());
+    os.writeEntry("detachInCylinderPatch", detachInCylinderPatch_.name());
+    os.writeEntry("detachInPortPatch", detachInPortPatch_.name());
+    os.writeEntry("detachFaces", detachFaces_);
+
+    os  << "liftProfile" << nl << token::BEGIN_LIST
+        << liftProfile_ << token::END_LIST;
+    os.endEntry();
+
+    os.writeEntry("minLift", minLift_);
+    os.writeEntry("minTopLayer", minTopLayer_);
+    os.writeEntry("maxTopLayer", maxTopLayer_);
+    os.writeEntry("minBottomLayer", minBottomLayer_);
+    os.writeEntry("maxBottomLayer", maxBottomLayer_);
+    os.writeEntry("diameter", diameter_);
+
+    os.endBlock();
 }
 
 

@@ -105,7 +105,8 @@ bool Foam::surfaceTensionModels::constant::writeData(Ostream& os) const
 {
     if (surfaceTensionModel::writeData(os))
     {
-        os  << sigma_ << token::END_STATEMENT << nl;
+        os  << sigma_;
+        os.endEntry();
         return os.good();
     }
 

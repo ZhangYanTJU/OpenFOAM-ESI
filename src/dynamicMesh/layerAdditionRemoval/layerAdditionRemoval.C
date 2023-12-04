@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -459,22 +459,19 @@ void Foam::layerAdditionRemoval::write(Ostream& os) const
 
 void Foam::layerAdditionRemoval::writeDict(Ostream& os) const
 {
-    os  << nl << name() << nl << token::BEGIN_BLOCK << nl
-        << "    type " << type()
-        << token::END_STATEMENT << nl
-        << "    faceZoneName " << faceZoneID_.name()
-        << token::END_STATEMENT << nl
-        << "    minLayerThickness " << minLayerThickness_
-        << token::END_STATEMENT << nl
-        << "    maxLayerThickness " << maxLayerThickness_
-        << token::END_STATEMENT << nl
-        << "    thicknessFromVolume " << thicknessFromVolume_
-        << token::END_STATEMENT << nl
-        << "    oldLayerThickness " << oldLayerThickness_
-        << token::END_STATEMENT << nl
-        << "    active " << active()
-        << token::END_STATEMENT << nl
-        << token::END_BLOCK << endl;
+    os << nl;
+
+    os.beginBlock(name());
+
+    os.writeEntry("type", type());
+    os.writeEntry("faceZoneName", faceZoneID_.name());
+    os.writeEntry("minLayerThickness", minLayerThickness_);
+    os.writeEntry("maxLayerThickness", maxLayerThickness_);
+    os.writeEntry("thicknessFromVolume", thicknessFromVolume_);
+    os.writeEntry("oldLayerThickness", oldLayerThickness_);
+    os.writeEntry("active", active());
+
+    os.endBlock();
 }
 
 

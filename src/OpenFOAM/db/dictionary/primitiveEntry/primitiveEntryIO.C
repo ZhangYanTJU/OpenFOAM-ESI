@@ -309,7 +309,7 @@ void Foam::primitiveEntry::write(Ostream& os, const bool contentsOnly) const
 
     if (!contentsOnly)
     {
-        os  << token::END_STATEMENT << endl;
+        os.endEntry();
     }
 }
 

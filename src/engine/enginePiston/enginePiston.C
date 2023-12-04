@@ -72,11 +72,12 @@ Foam::enginePiston::enginePiston
 
 void Foam::enginePiston::writeDict(Ostream& os) const
 {
-    os  << nl << token::BEGIN_BLOCK
-        << "patch " << patchID_.name() << token::END_STATEMENT << nl
-        << "minLayer " << minLayer_ << token::END_STATEMENT << nl
-        << "maxLayer " << maxLayer_ << token::END_STATEMENT << nl
-        << token::END_BLOCK << endl;
+    os  << nl;
+    os.beginBlock();
+    os.writeEntry("patch", patchID_.name());
+    os.writeEntry("minLayer", minLayer_);
+    os.writeEntry("maxLayer", maxLayer_);
+    os.endBlock();
 }
 
 
