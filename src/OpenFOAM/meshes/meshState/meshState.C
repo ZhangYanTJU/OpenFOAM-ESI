@@ -54,7 +54,7 @@ void Foam::meshState::setBoolEntry
 {
     if (on)
     {
-        dict.add(keyword, true);
+        dict.set(keyword, true);
     }
     else
     {
