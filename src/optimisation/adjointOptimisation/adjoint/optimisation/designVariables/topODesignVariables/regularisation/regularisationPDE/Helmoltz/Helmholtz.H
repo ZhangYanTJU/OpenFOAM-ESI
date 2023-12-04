@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 PCOpt/NTUA
-    Copyright (C) 2021 FOSS GP
+    Copyright (C) 2021-2023 PCOpt/NTUA
+    Copyright (C) 2021-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,6 +74,9 @@ protected:
         //- Solve the regularisationPDE only on a subset mesh made of the
         //- active cell zones
         bool solveOnActiveCells_;
+
+        //- Fixed value at wall boundaries. Defaults to 1
+        scalar wallValue_;
 
 
     // Protected Member Functions

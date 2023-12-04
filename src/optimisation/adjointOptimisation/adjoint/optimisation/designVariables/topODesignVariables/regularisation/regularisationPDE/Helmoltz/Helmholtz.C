@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 PCOpt/NTUA
-    Copyright (C) 2021 FOSS GP
+    Copyright (C) 2021-2023 PCOpt/NTUA
+    Copyright (C) 2021-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,7 +92,7 @@ void Foam::Helmholtz::solveEqn
             const fvPatch& patch = mesh.boundary()[patchI];
             if (isA<wallFvPatch>(patch))
             {
-                bTilda.boundaryFieldRef()[patchI] == scalar(1);
+                bTilda.boundaryFieldRef()[patchI] == wallValue_;
             }
         }
     }
@@ -162,7 +162,8 @@ Foam::Helmholtz::Helmholtz
 )
 :
     regularisationPDE(mesh, dict, zones),
-    solveOnActiveCells_(dict.getOrDefault<bool>("solveOnActiveCells", false))
+    solveOnActiveCells_(dict.getOrDefault<bool>("solveOnActiveCells", false)),
+    wallValue_(dict.getOrDefault<scalar>("wallValue", 1))
 {}
 
 
