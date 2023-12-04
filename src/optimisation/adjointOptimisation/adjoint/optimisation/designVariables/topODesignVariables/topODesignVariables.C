@@ -488,6 +488,26 @@ Foam::tmp<Foam::scalarField> Foam::topODesignVariables::assembleSensitivities
     // Add part due to regularisation and projection
     regularisation_.postProcessSens(objectiveSens);
 
+    // Write final sensitivities field
+    if (writeAllFields_ && mesh_.time().writeTime())
+    {
+        volScalarField sens
+        (
+            IOobject
+            (
+                "topOSens" + adjointSens.getAdjointSolver().solverName(),
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_,
+            dimensionedScalar(dimless, Zero)
+        );
+        sens.primitiveFieldRef() = objectiveSens;
+        sens.write();
+    }
+
     return tobjectiveSens;
 }
 
