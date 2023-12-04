@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2019 Zeljko Tukovic, FSB Zagreb.
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,18 +95,21 @@ void Foam::freeSurfaceVelocityFvPatchVectorField::updateCoeffs()
         return;
     }
 
-    const fvMesh& mesh = patch().boundaryMesh().mesh();
-
-    interfaceTrackingFvMesh& itm =
-        refCast<interfaceTrackingFvMesh>
+    // refCast<interfaceTrackingFvMesh>
+    auto* itm =
+        const_cast<interfaceTrackingFvMesh*>
         (
-            const_cast<dynamicFvMesh&>
-            (
-                mesh.lookupObject<dynamicFvMesh>("fvSolution")
-            )
+            isA<interfaceTrackingFvMesh>(patch().boundaryMesh().mesh())
         );
 
-    gradient() = itm.freeSurfaceSnGradU();
+    if (!itm)
+    {
+        // FatalError
+    }
+    else
+    {
+        gradient() = itm->freeSurfaceSnGradU();
+    }
 
     fixedGradientFvPatchVectorField::updateCoeffs();
 }

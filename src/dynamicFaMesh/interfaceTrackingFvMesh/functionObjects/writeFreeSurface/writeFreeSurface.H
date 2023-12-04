@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::writeFreeSurface
+    Foam::functionObjects::writeFreeSurface
 
 Description
     A function object to write the control points on the free surface
@@ -34,17 +34,16 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef writeFreeSurface_H
-#define writeFreeSurface_H
+#ifndef Foam_functionObjects_writeFreeSurface_H
+#define Foam_functionObjects_writeFreeSurface_H
 
-#include "functionObject.H"
-#include "dictionary.H"
-#include "fvMesh.H"
-#include "OFstream.H"
+#include "fvMeshFunctionObject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
+{
+namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
@@ -53,30 +52,13 @@ namespace Foam
 
 class writeFreeSurface
 :
-    public functionObject
+    public functionObjects::fvMeshFunctionObject
 {
-    // Private Data
-
-        //- Name
-        const word name_;
-
-        //- Reference to main object registry
-        const Time& time_;
-
-        //- Region name
-        word regionName_;
-
-
     // Private Member Functions
 
-        //- Write data
-        bool writeData();
+        //- Write data unconditionally
+        void writeData();
 
-        //- No copy construct
-        writeFreeSurface(const writeFreeSurface&) = delete;
-
-        //- No copy assignment
-        void operator=(const writeFreeSurface&) = delete;
 
 public:
 
@@ -86,7 +68,7 @@ public:
 
     // Constructors
 
-        //- Construct from components
+        //- Construct from Time and dictionary
         writeFreeSurface
         (
             const word& name,
@@ -95,27 +77,30 @@ public:
         );
 
 
+        //- No copy construct
+        writeFreeSurface(const writeFreeSurface&) = delete;
+
+        //- No copy assignment
+        void operator=(const writeFreeSurface&) = delete;
+
+
+    //- Destructor
+    virtual ~writeFreeSurface() = default;
+
+
     // Member Functions
 
-        //- start is called at the start of the time-loop
-        virtual bool start();
-
-        //- execute is called at each ++ or += of the time-loop
+        //- Called at each ++ or += of the time-loop
         virtual bool execute();
 
-        //- Read and set the function object if its data has changed
-        virtual bool read(const dictionary& dict);
-
         //- No-op
-        virtual bool write()
-        {
-            return true;
-        }
+        virtual bool write();
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

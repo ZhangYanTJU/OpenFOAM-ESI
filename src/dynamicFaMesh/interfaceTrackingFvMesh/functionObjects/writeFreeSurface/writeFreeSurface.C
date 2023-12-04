@@ -26,13 +26,14 @@ License
 \*----------------------------------------------------------------------------*/
 
 #include "writeFreeSurface.H"
-#include "addToRunTimeSelectionTable.H"
-#include "IOmanip.H"
 #include "interfaceTrackingFvMesh.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
+{
+namespace functionObjects
 {
     defineTypeNameAndDebug(writeFreeSurface, 0);
 
@@ -43,70 +44,60 @@ namespace Foam
         dictionary
     );
 }
+}
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-bool Foam::writeFreeSurface::writeData()
+void Foam::functionObjects::writeFreeSurface::writeData()
 {
-    if (time_.writeTime())
+    // refCast<interfaceTrackingFvMesh>
+    auto* itm =
+        const_cast<interfaceTrackingFvMesh*>
+        (
+            isA<interfaceTrackingFvMesh>(mesh_)
+        );
+
+    if (!itm)
     {
-        const fvMesh& mesh =
-            time_.lookupObject<fvMesh>(polyMesh::defaultRegion);
-
-        interfaceTrackingFvMesh& itm =
-            refCast<interfaceTrackingFvMesh>
-            (
-                const_cast<dynamicFvMesh&>
-                (
-                    mesh.lookupObject<dynamicFvMesh>("fvSolution")
-                )
-            );
-
-        itm.writeVTKControlPoints();
+        // FatalError
     }
-
-    return true;
+    else
+    {
+        itm->writeVTKControlPoints();
+    }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::writeFreeSurface::writeFreeSurface
+Foam::functionObjects::writeFreeSurface::writeFreeSurface
 (
     const word& name,
     const Time& runTime,
     const dictionary& dict
 )
 :
-    functionObject(name),
-    name_(name),
-    time_(runTime),
-    regionName_(polyMesh::defaultRegion)
+    fvMeshFunctionObject(name, runTime, dict)
 {
     Info<< "Creating " << this->name() << " function object." << endl;
-
-    dict.readIfPresent("region", regionName_);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::writeFreeSurface::start()
+bool Foam::functionObjects::writeFreeSurface::execute()
 {
-    return writeData();
+    if (time_.writeTime())
+    {
+        writeData();
+    }
+
+    return true;
 }
 
 
-bool Foam::writeFreeSurface::execute()
+bool Foam::functionObjects::writeFreeSurface::write()
 {
-    return writeData();
-}
-
-
-bool Foam::writeFreeSurface::read(const dictionary& dict)
-{
-    dict.readIfPresent("region", regionName_);
-
     return true;
 }
 

@@ -137,21 +137,24 @@ void Foam::freeSurfacePressureFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    const fvMesh& mesh = patch().boundaryMesh().mesh();
-
-    interfaceTrackingFvMesh& itm =
-        refCast<interfaceTrackingFvMesh>
+    // refCast<interfaceTrackingFvMesh>
+    auto* itm =
+        const_cast<interfaceTrackingFvMesh*>
         (
-            const_cast<dynamicFvMesh&>
-            (
-                mesh.lookupObject<dynamicFvMesh>("fvSolution")
-            )
+            isA<interfaceTrackingFvMesh>(patch().boundaryMesh().mesh())
         );
 
-    operator==
-    (
-        pa_ + itm.freeSurfacePressureJump()
-    );
+    if (!itm)
+    {
+        // FatalError
+    }
+    else
+    {
+        operator==
+        (
+            pa_ + itm->freeSurfacePressureJump()
+        );
+    }
 
     fixedValueFvPatchScalarField::updateCoeffs();
 }
