@@ -59,30 +59,58 @@ bool Foam::IOobject::typeHeaderOk
 
     // Determine local status
     bool ok = false;
-    fileName fName;
 
-    if (!masterOnly || UPstream::master())
-    {
-        fName = typeFilePath<Type>(*this, search);
-        ok = fp.readHeader(*this, fName, Type::typeName);
-    }
-
-    if (ok && checkType && headerClassName_ != Type::typeName)
-    {
-        ok = false;
-        if (verbose)
-        {
-            WarningInFunction
-                << "Unexpected class name \"" << headerClassName_
-                << "\" expected \"" << Type::typeName
-                << "\" when reading " << fName << endl;
-        }
-    }
-
-    // If masterOnly make sure all processors know about it
     if (masterOnly)
     {
-        Pstream::broadcast(ok);
+        if (UPstream::master())
+        {
+            // Force master-only header reading
+            const bool oldParRun = UPstream::parRun(false);
+            const fileName fName(typeFilePath<Type>(*this, search));
+            ok = fp.readHeader(*this, fName, Type::typeName);
+            UPstream::parRun(oldParRun);
+
+            if (ok && checkType && headerClassName_ != Type::typeName)
+            {
+                ok = false;
+                if (verbose)
+                {
+                    WarningInFunction
+                        << "Unexpected class name \"" << headerClassName_
+                        << "\" expected \"" << Type::typeName
+                        << "\" when reading " << fName << endl;
+                }
+            }
+        }
+
+        // If masterOnly make sure all processors know about the read
+        // information. Note: should ideally be inside fileHandler...
+        Pstream::broadcasts
+        (
+            fp.comm(),
+            ok,
+            headerClassName_,
+            note_
+        );
+    }
+    else
+    {
+        const fileName fName(typeFilePath<Type>(*this, search));
+
+        // All read header
+        ok = fp.readHeader(*this, fName, Type::typeName);
+
+        if (ok && checkType && headerClassName_ != Type::typeName)
+        {
+            ok = false;
+            if (verbose)
+            {
+                WarningInFunction
+                    << "Unexpected class name \"" << headerClassName_
+                    << "\" expected \"" << Type::typeName
+                    << "\" when reading " << fName << endl;
+            }
+        }
     }
 
     return ok;

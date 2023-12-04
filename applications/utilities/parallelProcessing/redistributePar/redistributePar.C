@@ -110,7 +110,8 @@ using namespace Foam;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-const int debug(::Foam::debug::debugSwitch("redistributePar", 0));
+// Use -verbose -verbose to switch on debug info. TBD.
+int debug(::Foam::debug::debugSwitch("redistributePar", 0));
 #define InfoOrPout (::debug ? Pout : Info())
 
 
@@ -1307,6 +1308,14 @@ int main(int argc, char *argv[])
 
     if (optVerbose)
     {
+        if (optVerbose == 2)
+        {
+            WarningInFunction
+                << "-verbose -verbose switches on full debugging"
+                << nl << endl;
+            ::debug = 1;
+        }
+
         // Report on output
         faMeshDistributor::verbose_ = 1;
         parPointFieldDistributor::verbose_ = 1;
