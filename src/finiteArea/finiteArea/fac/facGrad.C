@@ -103,13 +103,17 @@ grad
     typedef typename outerProduct<vector,Type>::type GradType;
     typedef GeometricField<GradType, faPatchField, areaMesh> GradFieldType;
 
-    tmp<GradFieldType> tgGrad = fa::gradScheme<Type>::New
+    tmp<GradFieldType> tgGrad
     (
-        vf.mesh(),
-        vf.mesh().gradScheme(name)
-    ).ref().grad(vf);
-
-    GradFieldType& gGrad = tgGrad.ref();
+        fa::gradScheme<Type>::New
+        (
+            vf.mesh(),
+            vf.mesh().gradScheme(name)
+        )
+        .cref()  // const ref to tmp contents
+        .grad(vf).ptr()  // steal ptr or deep copy of cached gradient
+    );
+    auto& gGrad = tgGrad.ref();
 
     const areaVectorField& n = vf.mesh().faceAreaNormals();
     gGrad -= n*(n & gGrad);
