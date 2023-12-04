@@ -241,7 +241,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregated
 
     psi.correctBoundaryConditions();
 
-    psi.mesh().setSolverPerformance(psi.name(), solverPerfVec);
+    psi.mesh().data().setSolverPerformance(psi.name(), solverPerfVec);
 
     return solverPerfVec;
 }
@@ -308,7 +308,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveCoupled
 
     psi.correctBoundaryConditions();
 
-    psi.mesh().setSolverPerformance(psi.name(), solverPerf);
+    psi.mesh().data().setSolverPerformance(psi.name(), solverPerf);
 
     return solverPerf;
 }

@@ -31,7 +31,7 @@ License
 #include "demandDrivenData.H"
 #include "dictionary.H"
 #include "localIOdictionary.H"
-#include "data.H"
+#include "meshState.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -1153,14 +1153,7 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::relax()
 {
     word name = this->name();
 
-    if
-    (
-        this->mesh().data::template getOrDefault<bool>
-        (
-            "finalIteration",
-            false
-        )
-    )
+    if (this->mesh().data().isFinalIteration())
     {
         name += "Final";
     }

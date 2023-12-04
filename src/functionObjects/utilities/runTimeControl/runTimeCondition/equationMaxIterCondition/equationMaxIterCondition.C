@@ -97,7 +97,7 @@ bool Foam::functionObjects::runTimeControls::equationMaxIterCondition::apply()
     }
 
     const fvMesh& mesh = refCast<const fvMesh>(obr_);
-    const dictionary& solverDict = mesh.solverPerformanceDict();
+    const dictionary& solverDict = mesh.data().solverPerformanceDict();
 
     List<label> result(fieldNames_.size(), -1);
 

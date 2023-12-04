@@ -57,7 +57,6 @@ SourceFiles
 #include "surfaceInterpolation.H"
 #include "fvSchemes.H"
 #include "fvSolution.H"
-#include "data.H"
 #include "volFieldsFwd.H"
 #include "surfaceFieldsFwd.H"
 #include "pointFieldsFwd.H"
@@ -87,8 +86,7 @@ class fvMesh
     public lduMesh,
     public fvSchemes,
     public surfaceInterpolation,    // needs input from fvSchemes
-    public fvSolution,
-    public data
+    public fvSolution
 {
 protected:
 

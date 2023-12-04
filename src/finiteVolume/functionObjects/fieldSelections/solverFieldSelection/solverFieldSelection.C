@@ -59,7 +59,7 @@ bool Foam::functionObjects::solverFieldSelection::updateSelection()
 
     const fvMesh& mesh = static_cast<const fvMesh&>(obr_);
 
-    const dictionary& solverDict = mesh.solverPerformanceDict();
+    const dictionary& solverDict = mesh.data().solverPerformanceDict();
 
     const wordList solvedFieldNames(solverDict.sortedToc());
 

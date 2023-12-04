@@ -1,5 +1,7 @@
 abort/abort.C
 
+caseInfo/caseInfo.C
+
 codedFunctionObject/codedFunctionObject.C
 
 areaWrite/areaWrite.C

@@ -848,6 +848,6 @@ algorithms/dynamicIndexedOctree/dynamicTreeDataPoint.C
 parallel/commSchedule/commSchedule.C
 parallel/globalIndex/globalIndex.C
 
-meshes/data/data.C
+meshes/meshState/meshState.C
 
 LIB = $(FOAM_LIBBIN)/libOpenFOAM

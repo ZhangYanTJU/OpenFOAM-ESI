@@ -123,21 +123,30 @@ bool Foam::polyMesh::checkFaceOrthogonality
     reduce(severeNonOrth, sumOp<label>());
     reduce(errorNonOrth, sumOp<label>());
 
-    if (debug || report)
-    {
-        if (nSummed > 0)
-        {
-            if (debug || report)
-            {
-                Info<< "    Mesh non-orthogonality Max: "
-                    << radToDeg(::acos(clamp(minDDotS, -1, 1)))
-                    << " average: "
-                    << radToDeg(::acos(clamp(sumDDotS/nSummed, -1, 1)))
-                    << endl;
-            }
-        }
+    const scalar maxNonOrth = radToDeg(::acos(clamp(minDDotS, -1, 1)));
+    const scalar aveNonOrth = radToDeg(::acos(clamp(sumDDotS/nSummed, -1, 1)));
 
-        if (severeNonOrth > 0)
+    dictionary& meshDict = const_cast<dictionary&>(data().meshDict());
+
+    if (nSummed > 0)
+    {
+        meshDict.set("maxNonOrth", maxNonOrth);
+        meshDict.set("aveNonOrth", aveNonOrth);
+
+        if (debug || report)
+        {
+            Info<< "    Mesh non-orthogonality Max: " << maxNonOrth
+                << " average: " << aveNonOrth
+                << endl;
+        }
+    }
+
+    if (severeNonOrth > 0)
+    {
+        meshDict.set("thresholdNonOrth", primitiveMesh::nonOrthThreshold_);
+        meshDict.set("severeNonOrth", severeNonOrth);
+
+        if (debug || report)
         {
             Info<< "   *Number of severely non-orthogonal (> "
                 << primitiveMesh::nonOrthThreshold_ << " degrees) faces: "
@@ -147,6 +156,8 @@ bool Foam::polyMesh::checkFaceOrthogonality
 
     if (errorNonOrth > 0)
     {
+        meshDict.set("errorNonOrth", errorNonOrth);
+
         if (debug || report)
         {
             Info<< " ***Number of non-orthogonality errors: "
@@ -240,8 +251,13 @@ bool Foam::polyMesh::checkFaceSkewness
     reduce(maxSkew, maxOp<scalar>());
     reduce(nWarnSkew, sumOp<label>());
 
+    dictionary& meshDict = const_cast<dictionary&>(data().meshDict());
+    meshDict.set("maxSkew", maxSkew);
+
     if (nWarnSkew > 0)
     {
+        meshDict.set("nWarnSkew", nWarnSkew);
+
         if (debug || report)
         {
             Info<< " ***Max skewness = " << maxSkew
@@ -365,6 +381,9 @@ bool Foam::polyMesh::checkEdgeAlignment
 
     if (nErrorEdges > 0)
     {
+        dictionary& meshDict = const_cast<dictionary&>(data().meshDict());
+        meshDict.set("nErrorAlignedEdges", nErrorEdges);
+
         if (debug || report)
         {
             Info<< " ***Number of edges not aligned with or perpendicular to "
@@ -438,9 +457,14 @@ bool Foam::polyMesh::checkCellDeterminant
     reduce(sumDet, sumOp<scalar>());
     label nSummed = returnReduce(cellDeterminant.size(), sumOp<label>());
 
-    if (debug || report)
+    dictionary& meshDict = const_cast<dictionary&>(data().meshDict());
+
+    if (nSummed > 0)
     {
-        if (nSummed > 0)
+        meshDict.set("minDeterminant", minDet);
+        meshDict.set("aveDeterminant", sumDet/nSummed);
+
+        if (debug || report)
         {
             Info<< "    Cell determinant (wellposedness) : minimum: " << minDet
                 << " average: " << sumDet/nSummed
@@ -450,6 +474,9 @@ bool Foam::polyMesh::checkCellDeterminant
 
     if (nErrorCells > 0)
     {
+        meshDict.set("thresholdDeterminant", warnDet);
+        meshDict.set("nErrorDeterminant", nErrorCells);
+
         if (debug || report)
         {
             Info<< " ***Cells with small determinant (< "
@@ -526,9 +553,14 @@ bool Foam::polyMesh::checkFaceWeight
     reduce(sumDet, sumOp<scalar>());
     reduce(nSummed, sumOp<label>());
 
-    if (debug || report)
+    dictionary& meshDict = const_cast<dictionary&>(data().meshDict());
+
+    if (nSummed > 0)
     {
-        if (nSummed > 0)
+        meshDict.set("minFaceWeight", minDet);
+        meshDict.set("aveFaceWeight", sumDet/nSummed);
+
+        if (debug || report)
         {
             Info<< "    Face interpolation weight : minimum: " << minDet
                 << " average: " << sumDet/nSummed
@@ -538,6 +570,9 @@ bool Foam::polyMesh::checkFaceWeight
 
     if (nErrorFaces > 0)
     {
+        meshDict.set("thresholdFaceWeight", minWeight);
+        meshDict.set("nErrorFaceWeight", nErrorFaces);
+
         if (debug || report)
         {
             Info<< " ***Faces with small interpolation weight (< " << minWeight
@@ -606,9 +641,14 @@ bool Foam::polyMesh::checkVolRatio
     reduce(sumDet, sumOp<scalar>());
     reduce(nSummed, sumOp<label>());
 
-    if (debug || report)
+    dictionary& meshDict = const_cast<dictionary&>(data().meshDict());
+
+    if (nSummed > 0)
     {
-        if (nSummed > 0)
+        meshDict.set("minFaceVolumeRatio", minDet);
+        meshDict.set("aveFaceVolumeRatio", sumDet/nSummed);
+
+        if (debug || report)
         {
             Info<< "    Face volume ratio : minimum: " << minDet
                 << " average: " << sumDet/nSummed
@@ -618,6 +658,9 @@ bool Foam::polyMesh::checkVolRatio
 
     if (nErrorFaces > 0)
     {
+        meshDict.set("thresholdFaceVolumeRatio", minRatio);
+        meshDict.set("nErrorFaceVolumeRatio", nErrorFaces);
+
         if (debug || report)
         {
             Info<< " ***Faces with small volume ratio (< " << minRatio

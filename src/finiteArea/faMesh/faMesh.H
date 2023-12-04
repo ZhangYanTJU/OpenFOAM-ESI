@@ -73,7 +73,6 @@ Author
 #include "faGlobalMeshData.H"
 #include "faSchemes.H"
 #include "faSolution.H"
-#include "data.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -96,8 +95,7 @@ class faMesh
     public lduMesh,
     public faSchemes,
     public edgeInterpolation,  // may need input from faSchemes
-    public faSolution,
-    public data
+    public faSolution
 {
     // Private (internal) classes/structures
 
@@ -646,6 +644,10 @@ public:
 
         //- Return the current instance directory for faces
         const fileName& facesInstance() const;
+
+        const meshState& data() const noexcept { return mesh().data(); }
+
+        meshState& data() noexcept { return const_cast<polyMesh&>(mesh()).data(); }
 
 
     // Parallel

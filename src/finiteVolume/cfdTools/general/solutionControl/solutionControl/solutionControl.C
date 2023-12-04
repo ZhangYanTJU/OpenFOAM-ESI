@@ -193,12 +193,12 @@ void Foam::solutionControl::setFirstIterFlag
     if (force || (check && corr_ <= 1 && corrNonOrtho_ == 0))
     {
         DebugInfo<< "solutionControl: set firstIteration flag" << endl;
-        mesh_.data::set("firstIteration", true);
+        mesh_.data().setFirstIteration(true);
     }
     else
     {
         DebugInfo<< "solutionControl: remove firstIteration flag" << endl;
-        mesh_.data::remove("firstIteration");
+        mesh_.data().setFirstIteration(false);
     }
 }
 

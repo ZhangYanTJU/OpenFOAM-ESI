@@ -162,7 +162,7 @@ Foam::SolverPerformance<Type> Foam::faMatrix<Type>::solve
 
     psi.correctBoundaryConditions();
 
-    psi.mesh().setSolverPerformance(psi.name(), solverPerfVec);
+    psi.mesh().data().setSolverPerformance(psi.name(), solverPerfVec);
 
     return solverPerfVec;
 }
