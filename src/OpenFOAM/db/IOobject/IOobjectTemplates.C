@@ -87,7 +87,7 @@ bool Foam::IOobject::typeHeaderOk
         // information. Note: should ideally be inside fileHandler...
         Pstream::broadcasts
         (
-            fp.comm(),
+            UPstream::worldComm,
             ok,
             headerClassName_,
             note_
