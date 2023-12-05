@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020,2022 OpenCFD Ltd.
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,42 +25,43 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "WeberNumberReacting.H"
-#include "SLGThermo.H"
+#include "KinematicWeberNumber.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class CloudType>
-Foam::WeberNumberReacting<CloudType>::WeberNumberReacting
+Foam::KinematicWeberNumber<CloudType>::KinematicWeberNumber
 (
     const dictionary& dict,
     CloudType& owner,
     const word& modelName
 )
 :
-    CloudFunctionObject<CloudType>(dict, owner, modelName, typeName)
+    CloudFunctionObject<CloudType>(dict, owner, modelName, typeName),
+    sigma_(dict.getScalar("sigma"))
 {}
 
 
 template<class CloudType>
-Foam::WeberNumberReacting<CloudType>::WeberNumberReacting
+Foam::KinematicWeberNumber<CloudType>::KinematicWeberNumber
 (
-    const WeberNumberReacting<CloudType>& we
+    const KinematicWeberNumber<CloudType>& we
 )
 :
-    CloudFunctionObject<CloudType>(we)
+    CloudFunctionObject<CloudType>(we),
+    sigma_(we.sigma_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class CloudType>
-void Foam::WeberNumberReacting<CloudType>::postEvolve
+void Foam::KinematicWeberNumber<CloudType>::postEvolve
 (
     const typename parcelType::trackingData& td
 )
 {
-    const auto& c = this->owner();
+    auto& c = this->owner();
 
     auto* resultPtr = c.template getObjectPtr<IOField<scalar>>("We");
 
@@ -85,35 +86,12 @@ void Foam::WeberNumberReacting<CloudType>::postEvolve
 
     We.resize(c.size());
 
-    const auto& thermo = c.db().template lookupObject<SLGThermo>("SLGThermo");
-    const auto& liquids = thermo.liquids();
-
-    const auto& UInterp = td.UInterp();
-    const auto& pInterp = td.pInterp();
-    const auto& rhoInterp = td.rhoInterp();
-
     label parceli = 0;
     forAllConstIters(c, parcelIter)
     {
         const parcelType& p = parcelIter();
 
-        const auto& coords = p.coordinates();
-        const auto& tetIs = p.currentTetIndices();
-
-        const vector Uc(UInterp.interpolate(coords, tetIs));
-
-        const scalar pc =
-            max
-            (
-                pInterp.interpolate(coords, tetIs),
-                c.constProps().pMin()
-            );
-
-        const scalar rhoc(rhoInterp.interpolate(coords, tetIs));
-        const scalarField X(liquids.X(p.YLiquid()));
-        const scalar sigma = liquids.sigma(pc, p.T(), X);
-
-        We[parceli++] = rhoc*magSqr(p.U() - Uc)*p.d()/sigma;
+        We[parceli++] = p.We(td, sigma_);
     }
 
     const bool haveParticles = c.size();

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::WeberNumberReacting
+    Foam::ReactingWeberNumber
 
 Group
     grpLagrangianIntermediateFunctionObjects
@@ -33,12 +33,12 @@ Description
     Creates particle Weber number field on the cloud
 
 SourceFiles
-    WeberNumberReacting.C
+    ReactingWeberNumber.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef WeberNumberReacting_H
-#define WeberNumberReacting_H
+#ifndef ReactingWeberNumber_H
+#define ReactingWeberNumber_H
 
 #include "CloudFunctionObject.H"
 
@@ -48,11 +48,11 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class WeberNumberReacting Declaration
+                       Class ReactingWeberNumber Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class CloudType>
-class WeberNumberReacting
+class ReactingWeberNumber
 :
     public CloudFunctionObject<CloudType>
 {
@@ -73,7 +73,7 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        WeberNumberReacting
+        ReactingWeberNumber
         (
             const dictionary& dict,
             CloudType& owner,
@@ -81,20 +81,20 @@ public:
         );
 
         //- Construct copy
-        WeberNumberReacting(const WeberNumberReacting<CloudType>& vf);
+        ReactingWeberNumber(const ReactingWeberNumber<CloudType>& vf);
 
         //- Construct and return a clone
         virtual autoPtr<CloudFunctionObject<CloudType>> clone() const
         {
             return autoPtr<CloudFunctionObject<CloudType>>
             (
-                new WeberNumberReacting<CloudType>(*this)
+                new ReactingWeberNumber<CloudType>(*this)
             );
         }
 
 
     //- Destructor
-    virtual ~WeberNumberReacting() = default;
+    virtual ~ReactingWeberNumber() = default;
 
 
     // Member Functions
@@ -111,7 +111,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "WeberNumberReacting.C"
+    #include "ReactingWeberNumber.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
