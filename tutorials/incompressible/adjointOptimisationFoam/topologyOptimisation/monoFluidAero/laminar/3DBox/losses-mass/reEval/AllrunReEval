@@ -12,6 +12,7 @@ sed -i "s|myLocationInMesh|$locationInMesh|g" system/snappyHexMeshDict
 sed -i "s|stlName|$fileName|g" system/snappyHexMeshDict
 sed -i "s|stlName|$fileName|g" system/surfaceFeatureExtractDict
 
+mkdir -p constant/triSurface
 cp ../optimisation/topOIsoSurfaces/$fileName.stl constant/triSurface/.
 
 runApplication blockMesh 
