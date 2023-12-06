@@ -93,9 +93,9 @@ Foam::faMeshTools::newMesh
     // Read and scatter master patches (without reading master mesh!)
 
     PtrList<entry> patchEntries;
-    if (Pstream::master())
+    if (UPstream::master())
     {
-        const bool oldParRun = Pstream::parRun(false);
+        const bool oldParRun = UPstream::parRun(false);
 
         facesInstance = io.time().findInstance
         (
@@ -118,7 +118,7 @@ Foam::faMeshTools::newMesh
             )
         );
 
-        Pstream::parRun(oldParRun);
+        UPstream::parRun(oldParRun);
     }
 
     // Broadcast information to all
@@ -151,7 +151,7 @@ Foam::faMeshTools::newMesh
 
     const fileName meshDir = io.time().path()/facesInstance/meshSubDir;
     bool haveMesh = isDir(meshDir);
-    if (masterOnlyReading && !Pstream::master())
+    if (masterOnlyReading && !UPstream::master())
     {
         haveMesh = false;
         meshIO.readOpt(IOobject::NO_READ);
@@ -479,7 +479,7 @@ Foam::faMeshTools::loadOrCreateMeshImpl
         }
 
         // Load but do not initialise
-        meshPtr = autoPtr<faMesh>::New(pMesh, labelList(), io);
+        meshPtr = autoPtr<faMesh>::New(pMesh, false);
 
         readHandler = fileOperation::fileHandler(oldHandler);
         UPstream::commWorld(oldWorldComm);
