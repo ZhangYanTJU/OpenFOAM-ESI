@@ -196,6 +196,9 @@ public:
         template<class CoupledPatchType>
         void evaluateCoupled();
 
+        //- Evaluate boundary conditions for selected patches
+        void evaluateSelected(const UList<label>& patchIDs);
+
         //- Return a list of the patch types
         wordList types() const;
 

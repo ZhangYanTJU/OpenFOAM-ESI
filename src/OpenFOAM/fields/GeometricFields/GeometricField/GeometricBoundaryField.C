@@ -646,6 +646,29 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluate()
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateSelected
+(
+    const UList<label>& patchIDs
+)
+{
+    for (const label patchi : patchIDs)
+    {
+        auto& pf = (*this)[patchi];
+
+        DebugInfo<< "Updating " << pf.patch().name() << endl;
+
+        const label startOfRequests = UPstream::nRequests();
+
+        pf.initEvaluate(UPstream::commsTypes::nonBlocking);
+
+        UPstream::waitRequests(startOfRequests);
+
+        pf.evaluate(UPstream::commsTypes::nonBlocking);
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::evaluateLocal()
 {
     ///if (GeometricField<Type, PatchField, GeoMesh::debug)
