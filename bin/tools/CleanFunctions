@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2015-2022 OpenCFD Ltd.
+#     Copyright (C) 2015-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -107,6 +107,10 @@ cleanPostProcessing()
 
 cleanFaMesh()
 {
+    if [ -e constant/finite-area/faMesh ]
+    then
+        rm -rf constant/finite-area/faMesh
+    fi
     if [ -e constant/faMesh ]
     then
         if [ -e constant/faMesh/faMeshDefinition ]
@@ -116,7 +120,7 @@ cleanFaMesh()
             echo
             echo "Warning: not removing constant/faMesh/"
             echo "    It contains a 'faMeshDefinition' file"
-            echo "    Relocate the file(s) to system/ to avoid this warning"
+            echo "    Please relocate file(s) to system/ !!"
             echo
         else
             # Can remove constant/faMesh/ entirely (no faMeshDefinition)
@@ -138,7 +142,7 @@ cleanPolyMesh()
             echo
             echo "Warning: not removing constant/polyMesh/"
             echo "    It contains a 'blockMeshDict' or 'blockMeshDict.m4' file"
-            echo "    Relocate the file(s) to system/ to avoid this warning"
+            echo "    Please relocate file(s) to system/ !!"
             echo
         else
             # Can remove constant/polyMesh/ entirely (no blockMeshDict)

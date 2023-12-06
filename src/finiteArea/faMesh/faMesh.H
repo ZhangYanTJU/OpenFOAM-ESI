@@ -645,9 +645,11 @@ public:
         //- Return the current instance directory for faces
         const fileName& facesInstance() const;
 
-        const meshState& data() const noexcept { return mesh().data(); }
+        //- Const reference to the mesh and solver state data
+        const meshState& data() const { return mesh().data(); }
 
-        meshState& data() noexcept { return const_cast<polyMesh&>(mesh()).data(); }
+        //- Reference to the mesh and solver state data
+        meshState& data() { return const_cast<polyMesh&>(mesh()).data(); }
 
 
     // Parallel

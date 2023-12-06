@@ -116,10 +116,11 @@ private:
 
     // Private Data
 
-        // Primitive mesh data
+        //- Mesh and solver state data
+        meshState data_;
 
-            //- Mesh data
-            meshState data_;
+
+        // Primitive mesh data
 
             //- Points
             pointIOField points_;
@@ -434,11 +435,11 @@ public:
 
         // Access
 
-            //- Return a reference to the mesh data
-            virtual meshState& data() noexcept {return data_;}
+            //- Const reference to the mesh and solver state data
+            virtual const meshState& data() const noexcept { return data_; }
 
-            //- Return a const reference to the mesh data
-            virtual const meshState& data() const noexcept {return data_;}
+            //- Reference to the mesh and solver state data
+            virtual meshState& data() noexcept { return data_; }
 
             //- Return raw points
             virtual const pointField& points() const;
