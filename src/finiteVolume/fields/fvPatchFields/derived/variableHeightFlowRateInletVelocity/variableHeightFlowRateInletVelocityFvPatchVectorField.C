@@ -101,18 +101,29 @@ Foam::variableHeightFlowRateInletVelocityFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::variableHeightFlowRateInletVelocityFvPatchVectorField
-::updateCoeffs()
+void Foam::variableHeightFlowRateInletVelocityFvPatchVectorField::updateCoeffs()
 {
     if (updated())
     {
         return;
     }
 
-    scalarField alphap
-    (
-        patch().lookupPatchField<volScalarField>(alphaName_)
-    );
+    const auto& mesh = patch().boundaryMesh().mesh();
+    auto& alpha = mesh.lookupObjectRef<volScalarField>(alphaName_);
+
+    // Update alpha boundary (if needed) due to mesh changes
+    if (!mesh.upToDatePoints(alpha))
+    {
+        auto& alphabf = alpha.boundaryFieldRef();
+
+        if (!alphabf[patch().index()].updated())
+        {
+            DebugInfo<< "Updating alpha BC due to mesh changes" << endl;
+            alphabf.evaluateSelected(labelList({ patch().index() }));
+        }
+    }
+
+    scalarField alphap(alpha.boundaryField()[patch().index()]);
 
     alphap = max(alphap, scalar(0));
     alphap = min(alphap, scalar(1));
