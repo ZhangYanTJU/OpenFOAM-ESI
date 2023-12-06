@@ -3536,7 +3536,8 @@ const
 
         if (UPstream::parRun())
         {
-            const scalar nIdealCells = pData.nTotalCells()/Pstream::nProcs();
+            const scalar nIdealCells =
+                scalar(pData.nTotalCells())/Pstream::nProcs();
             const scalar unbalance = returnReduce
             (
                 mag(1.0-mesh_.nCells()/nIdealCells),
