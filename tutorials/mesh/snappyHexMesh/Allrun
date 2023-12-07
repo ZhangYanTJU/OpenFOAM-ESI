@@ -14,6 +14,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 ( cd airfoilWithLayers && ./Allrun )
 ( cd sphere_gapClosure && ./Allrun )
 ( cd block_with_curvature && ./Allrun )
+( cd insidePoints && ./Allrun )
 
 exit 0
 
