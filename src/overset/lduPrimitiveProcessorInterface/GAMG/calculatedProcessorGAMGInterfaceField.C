@@ -46,6 +46,12 @@ namespace Foam
         calculatedProcessorGAMGInterfaceField,
         lduInterfaceField
     );
+    addToRunTimeSelectionTable
+    (
+        GAMGInterfaceField,
+        calculatedProcessorGAMGInterfaceField,
+        Istream
+    );
 }
 
 
@@ -86,6 +92,20 @@ calculatedProcessorGAMGInterfaceField
     rank_(rank),
     sendRequest_(-1),
     recvRequest_(-1)
+{}
+
+
+Foam::calculatedProcessorGAMGInterfaceField::
+calculatedProcessorGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    Istream& is
+)
+:
+    GAMGInterfaceField(GAMGCp, is),
+    procInterface_(refCast<const calculatedProcessorGAMGInterface>(GAMGCp)),
+    doTransform_(readBool(is)),
+    rank_(readLabel(is))
 {}
 
 
@@ -191,6 +211,14 @@ void Foam::calculatedProcessorGAMGInterfaceField::updateInterfaceMatrix
     addToInternalField(result, !add, faceCells, coeffs, scalarRecvBuf_);
 
     this->updatedMatrix(true);
+}
+
+
+void Foam::calculatedProcessorGAMGInterfaceField::write(Ostream& os) const
+{
+    //GAMGInterfaceField::write(os);
+    os  << token::SPACE << doTransform()
+        << token::SPACE << rank();
 }
 
 

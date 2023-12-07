@@ -125,12 +125,12 @@ Foam::GAMGSolver::GAMGSolver
                     {
                         if (fineMeshInterfaces.set(intI))
                         {
-                            OStringStream os;
+                            OStringStream os(IOstreamOption::BINARY);
                             refCast<const GAMGInterface>
                             (
                                 fineMeshInterfaces[intI]
                             ).write(os);
-                            IStringStream is(os.str());
+                            IStringStream is(os.str(), IOstreamOption::BINARY);
 
                             dummyPrimMeshInterfaces.set
                             (
@@ -238,6 +238,8 @@ Foam::GAMGSolver::GAMGSolver
                     {
                         Pout<< "        " << i
                             << "\ttype:" << interfaces[i].type()
+                            << "\tsize:"
+                            << interfaces[i].interface().faceCells().size()
                             << endl;
                     }
                 }

@@ -47,6 +47,12 @@ namespace Foam
         cyclicACMIGAMGInterfaceField,
         lduInterfaceField
     );
+    addToRunTimeSelectionTable
+    (
+        GAMGInterfaceField,
+        cyclicACMIGAMGInterfaceField,
+        Istream
+    );
 }
 
 
@@ -83,6 +89,38 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     doTransform_(doTransform),
     rank_(rank)
 {}
+
+
+Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    Istream& is
+)
+:
+    GAMGInterfaceField(GAMGCp, is),
+    cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
+    doTransform_(readBool(is)),
+    rank_(readLabel(is))
+{}
+
+
+Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    const lduInterfaceField& local,
+    const UPtrList<lduInterfaceField>& other
+)
+:
+    GAMGInterfaceField(GAMGCp, local),
+    cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
+    doTransform_(false),
+    rank_(0)
+{
+    const auto& p = refCast<const cyclicACMILduInterfaceField>(local);
+
+    doTransform_ = p.doTransform();
+    rank_ = p.rank();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -129,6 +167,14 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+}
+
+
+void Foam::cyclicACMIGAMGInterfaceField::write(Ostream& os) const
+{
+    //GAMGInterfaceField::write(os);
+    os  << token::SPACE << doTransform()
+        << token::SPACE << rank();
 }
 
 

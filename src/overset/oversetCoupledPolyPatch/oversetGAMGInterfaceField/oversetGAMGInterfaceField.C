@@ -46,6 +46,12 @@ namespace Foam
         oversetGAMGInterfaceField,
         lduInterfaceField
     );
+    addToRunTimeSelectionTable
+    (
+        GAMGInterfaceField,
+        oversetGAMGInterfaceField,
+        Istream
+    );
 }
 
 
@@ -72,6 +78,16 @@ Foam::oversetGAMGInterfaceField::oversetGAMGInterfaceField
 {}
 
 
+Foam::oversetGAMGInterfaceField::oversetGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    Istream& is
+)
+:
+    GAMGInterfaceField(GAMGCp, is)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::oversetGAMGInterfaceField::~oversetGAMGInterfaceField()
@@ -91,6 +107,10 @@ void Foam::oversetGAMGInterfaceField::updateInterfaceMatrix
     const direction cmpt,
     const Pstream::commsTypes
 ) const
+{}
+
+
+void Foam::oversetGAMGInterfaceField::write(Ostream& os) const
 {}
 
 

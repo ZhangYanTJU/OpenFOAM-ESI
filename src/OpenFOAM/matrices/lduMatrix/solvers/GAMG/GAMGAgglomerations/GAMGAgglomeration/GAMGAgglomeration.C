@@ -69,6 +69,7 @@ void Foam::GAMGAgglomeration::compactLevels
     {
         procAgglomMap_.setSize(nCreatedLevels);
         agglomProcIDs_.setSize(nCreatedLevels);
+        procAgglomCommunicator_.setSize(nCreatedLevels);
         procCellOffsets_.setSize(nCreatedLevels);
         procFaceMap_.setSize(nCreatedLevels);
         procBoundaryMap_.setSize(nCreatedLevels);
@@ -289,6 +290,7 @@ Foam::GAMGAgglomeration::GAMGAgglomeration
     {
         procAgglomMap_.setSize(maxLevels_);
         agglomProcIDs_.setSize(maxLevels_);
+        procAgglomCommunicator_.setSize(maxLevels_);
         procCellOffsets_.setSize(maxLevels_);
         procFaceMap_.setSize(maxLevels_);
         procBoundaryMap_.setSize(maxLevels_);
@@ -566,6 +568,12 @@ bool Foam::GAMGAgglomeration::hasProcMesh(const label leveli) const
 Foam::label Foam::GAMGAgglomeration::procCommunicator(const label leveli) const
 {
     return procCommunicator_[leveli];
+}
+
+
+Foam::label Foam::GAMGAgglomeration::agglomCommunicator(const label leveli) const
+{
+    return procAgglomCommunicator_[leveli];
 }
 
 

@@ -484,6 +484,27 @@ public:
             const label comm = UPstream::worldComm
         );
 
+        //- Construct from multiple maps and processor collation
+        //  Assumes all local data first. Sorts contributions of maps
+        //  in processor order i.e.  constructed map has all local data first.
+        //  Returns
+        //  - startOfLocal : per input map the start of the local data. Extends
+        //                   one beyond number of maps so overall local size
+        //                   is startOfLocal.last()
+        //  - compactMaps  : per input map from slot position in the input map
+        //                   to new slot position. (note there is no information
+        //                   returned about which processor it is from)
+        mapDistributeBase
+        (
+            const UPtrList<const mapDistributeBase>& maps,
+            const labelList& localRanks,
+            const label newComm,
+            const labelListList& newToOldRanks, // from rank in newComm to
+                                                // ranks in (old)comm
+            labelList& startOfLocal,            // per map start of local data
+            List<Map<label>>& compactMaps       // per map old slot to new slot
+        );
+
         //- Construct from Istream
         explicit mapDistributeBase(Istream& is);
 
@@ -645,6 +666,7 @@ public:
         static label renumber
         (
             const globalIndex&,
+            const label comm,
             const List<Map<label>>& compactMap,
             const label globalElement
         );
@@ -662,6 +684,36 @@ public:
         (
             labelListList& mapElements,
             const labelUList& oldToNew,
+            const bool hasFlip
+        );
+
+        //- Helper for renumbering the map elements. Assumes local elements
+        //- are first, followed by any remote. Local elements get offset,
+        //- remote elements are mapped.
+        //
+        //  \param[in,out] map  The map to be renumbered
+        //  \param localSize    elements < localSize are offset
+        //  \param offset       offset
+        //  \param cMap         map for non-local elements
+        //  \param hasFlip      True if map has flip addressing
+        //
+        //  \return max-size needed for new addressing (eg, constructSize)
+        static label renumberMap
+        (
+            labelList& map,
+            const label localSize,
+            const label offset,
+            const Map<label>& cMap,
+            const bool hasFlip
+        );
+
+        //- Helper for a list of maps. Calls above renumberMap for all elements
+        static label renumberMap
+        (
+            labelListList& mapElements,
+            const label localSize,
+            const label offset,
+            const Map<label>& cMap,
             const bool hasFlip
         );
 

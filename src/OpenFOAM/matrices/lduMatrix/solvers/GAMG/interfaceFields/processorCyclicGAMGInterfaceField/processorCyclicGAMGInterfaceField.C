@@ -46,6 +46,12 @@ namespace Foam
         processorCyclicGAMGInterfaceField,
         lduInterfaceField
     );
+    addToRunTimeSelectionTable
+    (
+        GAMGInterfaceField,
+        processorCyclicGAMGInterfaceField,
+        Istream
+    );
 }
 
 
@@ -69,6 +75,16 @@ Foam::processorCyclicGAMGInterfaceField::processorCyclicGAMGInterfaceField
 )
 :
     processorGAMGInterfaceField(GAMGCp, doTransform, rank)
+{}
+
+
+Foam::processorCyclicGAMGInterfaceField::processorCyclicGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    Istream& is
+)
+:
+    processorGAMGInterfaceField(GAMGCp, is)
 {}
 
 

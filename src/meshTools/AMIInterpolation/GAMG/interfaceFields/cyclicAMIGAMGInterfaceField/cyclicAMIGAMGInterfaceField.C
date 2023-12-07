@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,6 +47,12 @@ namespace Foam
         cyclicAMIGAMGInterfaceField,
         lduInterfaceField
     );
+    addToRunTimeSelectionTable
+    (
+        GAMGInterfaceField,
+        cyclicAMIGAMGInterfaceField,
+        Istream
+    );
 }
 
 
@@ -85,6 +91,38 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
 {}
 
 
+Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    Istream& is
+)
+:
+    GAMGInterfaceField(GAMGCp, is),
+    cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
+    doTransform_(readBool(is)),
+    rank_(readLabel(is))
+{}
+
+
+Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
+(
+    const GAMGInterface& GAMGCp,
+    const lduInterfaceField& local,
+    const UPtrList<lduInterfaceField>& other
+)
+:
+    GAMGInterfaceField(GAMGCp, local),
+    cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
+    doTransform_(false),
+    rank_(0)
+{
+    const auto& p = refCast<const cyclicAMILduInterfaceField>(local);
+
+    doTransform_ = p.doTransform();
+    rank_ = p.rank();
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::cyclicAMIGAMGInterfaceField::~cyclicAMIGAMGInterfaceField()
@@ -107,6 +145,8 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
 {
     // Get neighbouring field
 
+    const label oldWarnComm = UPstream::warnComm;
+
     const labelList& nbrFaceCells =
         lduAddr.patchAddr
         (
@@ -120,16 +160,38 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
 
     if (cyclicAMIInterface_.owner())
     {
-        pnf = cyclicAMIInterface_.AMI().interpolateToSource(pnf);
+        const auto& AMI = cyclicAMIInterface_.AMI();
+
+        // Switch on warning if using wrong communicator. Can be removed if
+        // sure all is correct
+        UPstream::warnComm = AMI.comm();
+
+        pnf = AMI.interpolateToSource(pnf);
     }
     else
     {
-        pnf = cyclicAMIInterface_.neighbPatch().AMI().interpolateToTarget(pnf);
+        const auto& AMI = cyclicAMIInterface_.neighbPatch().AMI();
+
+        // Switch on warning if using wrong communicator. Can be removed if
+        // sure all is correct
+        UPstream::warnComm = AMI.comm();
+
+        pnf = AMI.interpolateToTarget(pnf);
     }
 
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
     this->addToInternalField(result, !add, faceCells, coeffs, pnf);
+
+    UPstream::warnComm = oldWarnComm;
+}
+
+
+void Foam::cyclicAMIGAMGInterfaceField::write(Ostream& os) const
+{
+    //GAMGInterfaceField::write(os);
+    os  << token::SPACE << doTransform()
+        << token::SPACE << rank();
 }
 
 

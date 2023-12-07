@@ -111,6 +111,9 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
     globalIndex globalTgtCells(tgt.size());
 
 
+    const label myRank = UPstream::myProcNo(comm_);
+
+
     // First pass
     // ==========
     // For each srcPatch face, determine local match on tgtPatch
@@ -134,7 +137,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
             {
                 // With a search radius2 of GREAT all cells should receive a hit
                 localInfo[srcCelli].second() = test.point().distSqr(srcCc);
-                test.setIndex(globalTgtCells.toGlobal(test.index()));
+                test.setIndex(globalTgtCells.toGlobal(myRank, test.index()));
             }
         }
     }
@@ -176,7 +179,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
             test = tgtTree.findNearest(srcCcs[i], remoteInfo[i].second());
             if (test.hit())
             {
-                test.setIndex(globalTgtCells.toGlobal(test.index()));
+                test.setIndex(globalTgtCells.toGlobal(myRank, test.index()));
                 testInfo.second() = test.point().distSqr(srcCcs[i]);
                 nearestEqOp()(remoteInfo[i], testInfo);
             }
@@ -200,7 +203,9 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
         remoteInfo,
         nearestZero,
         nearestEqOp(),
-        identityOp()  // No flipping
+        identityOp(),       // No flipping
+        UPstream::msgType(),
+        comm_
     );
 
 
@@ -223,7 +228,14 @@ Foam::autoPtr<Foam::mapDistribute> Foam::nearestFaceAMI::calcDistributed
     }
 
     List<Map<label>> cMap;
-    return autoPtr<mapDistribute>::New(globalTgtCells, srcToTgtAddr, cMap);
+    return autoPtr<mapDistribute>::New
+    (
+        globalTgtCells,
+        srcToTgtAddr,
+        cMap,
+        UPstream::msgType(),
+        comm_
+    );
 }
 
 

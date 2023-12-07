@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2021,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,6 +76,29 @@ Foam::autoPtr<Foam::GAMGInterfaceField> Foam::GAMGInterfaceField::New
     }
 
     return autoPtr<GAMGInterfaceField>(ctorPtr(GAMGCp, doTransform, rank));
+}
+
+
+Foam::autoPtr<Foam::GAMGInterfaceField> Foam::GAMGInterfaceField::New
+(
+    const word& patchFieldType,
+    const GAMGInterface& GAMGCp,
+    Istream& is
+)
+{
+    auto* ctorPtr = IstreamConstructorTable(patchFieldType);
+
+    if (!ctorPtr)
+    {
+        FatalErrorInLookup
+        (
+            "GAMGInterfaceField",
+            patchFieldType,
+            *IstreamConstructorTablePtr_
+        ) << exit(FatalError);
+    }
+
+    return autoPtr<GAMGInterfaceField>(ctorPtr(GAMGCp, is));
 }
 
 

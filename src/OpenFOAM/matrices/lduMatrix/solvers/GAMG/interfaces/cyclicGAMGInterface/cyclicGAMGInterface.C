@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -159,6 +159,38 @@ Foam::cyclicGAMGInterface::cyclicGAMGInterface
     owner_(readBool(is)),
     forwardT_(is),
     reverseT_(is)
+{}
+
+
+Foam::cyclicGAMGInterface::cyclicGAMGInterface
+(
+    const label index,
+    const lduInterfacePtrsList& coarseInterfaces,
+    const lduInterface& fineInterface,
+    const labelList& interfaceMap,
+    const labelUList& faceCells,
+    const labelUList& faceRestrictAddresssing,
+    const labelUList& faceOffsets,
+    const lduInterfacePtrsList& allInterfaces
+)
+:
+    GAMGInterface
+    (
+        index,
+        coarseInterfaces,
+        faceCells,
+        faceRestrictAddresssing
+    ),
+    neighbPatchID_
+    (
+        interfaceMap.find
+        (
+            refCast<const cyclicLduInterface>(fineInterface).neighbPatchID()
+        )
+    ),
+    owner_(refCast<const cyclicLduInterface>(fineInterface).owner()),
+    forwardT_(refCast<const cyclicLduInterface>(fineInterface).forwardT()),
+    reverseT_(refCast<const cyclicLduInterface>(fineInterface).reverseT())
 {}
 
 
