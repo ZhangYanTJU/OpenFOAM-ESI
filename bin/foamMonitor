@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #-------------------------------------------------------------------------------
 #    Copyright (C) 2015 OpenFOAM Foundation
-#    Copyright (C) 2019-2021 OpenCFD Ltd.
+#    Copyright (C) 2019-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -18,7 +18,7 @@
 # Description
 #     Monitor data with Gnuplot from time-value(s) graphs written by OpenFOAM
 #     e.g. by functionObjects
-#     - requires gnuplot, gnuplot_x11
+#     - requires gnuplot, gnuplot_x11, sed, awk
 #
 #------------------------------------------------------------------------------
 printHelp() {
@@ -58,16 +58,34 @@ die()
 }
 
 
+# Count the number of scalars between ( and ) to deduce the field dimensions
+count_components() {
+    _text="$1"
+
+    # Extract text between the first ( and )
+    _matches="$(echo "$_text" | sed -n 's/^[^(]*(\([^)]*\)).*$/\1/p')"
+
+    # Count the number of scalars between ( and )
+    _count=$(echo "$_matches" | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' | wc -l)
+
+    echo "$_count"
+}
+
+
 # Set Gnuplot header
 plotFileHeader() {
+    TITLE="$1"
+    NCOLOURS="$2"
+    SIZE="1200,627"
     cat<<EOF
-set term x11 1 font "helvetica,17" linewidth 1.5 persist noraise
+set term x11 1 font "helvetica,17" linewidth 1.5 persist noraise size $SIZE
 $LOGSCALE
 $XRANGE
 $YRANGE
 $GRID
-set title "Data Monitoring"
+set title "$TITLE"
 set xlabel "$XLABEL"
+set linetype cycle "$NCOLOURS"
 plot \\
 EOF
 }
@@ -97,6 +115,8 @@ YRANGE=""
 GRID=""
 GNUPLOT=$(which gnuplot)
 [ ! "$GNUPLOT" = "" ] || die "foamMonitor requires Gnuplot installed"
+command -v sed >/dev/null || die "foamMonitor requires sed installed"
+command -v awk >/dev/null || die "foamMonitor requires awk installed"
 
 #-------------------------------------------------------------------------------
 
@@ -154,9 +174,11 @@ do
     esac
 done
 
+
 [ "$#" -eq 1 ] || die "Incorrect arguments specified"
 [ -f "$1" ]    || die "File $1 does not exit"
 FILE="$1"
+
 
 # Get KEYS from header
 KEYS=$(grep -E '^#' "$FILE" | tail -1)
@@ -164,40 +186,73 @@ KEYS=$(grep -E '^#' "$FILE" | tail -1)
 [ "$KEYS" = "" ] && KEYS="# Step"
 NKEYS=$(howMany "$KEYS")
 NCOLS=$(grep -m 1 '^[^#]' "$FILE" | awk '{ print NF }')
+NCOMPS=$(count_components "$(grep -m 1 '^[^#]' "$FILE")")
 
 # With full column labels, NKEYS = NCOLS + 1, since it includes "#"
 
 # If NKEYS > NCOLS + 1, REMOVE EXCESS KEYS
 NCOLSPONE=$((NCOLS+1))
-[ "$NKEYS" -gt "$NCOLSPONE" ] && KEYS=$(echo $KEYS | cut -d" " -f1-$NCOLSPONE)
-NKEYS=$(howMany "$KEYS")
-
-i=0
-while [ "$NKEYS" -le "$NCOLS" ]
-do
-    i=$((i+1))
-    KEYS="$KEYS data$i"
-    NKEYS=$(howMany "$KEYS")
-done
+[ "$NKEYS" -gt "$NCOLSPONE" ] && KEYS=$(echo "$KEYS" | cut -d" " -f1-$NCOLSPONE)
 
 # Remove # and Time keys
-XLABEL=$(echo $KEYS | cut -d " " -f2)
-KEYS=$(echo $KEYS | cut -d " " -f3-)
+XLABEL=$(echo "$KEYS" | cut -d " " -f2)
+KEYS=$(echo "$KEYS" | cut -d " " -f3-)
+NKEYS=$(howMany "$KEYS")
 
+
+# Create the legend items
+TEMPKEYS=""
+
+for i in $KEYS
+do
+    case "$NCOMPS" in
+        0)  # scalar
+            TEMPKEYS="$TEMPKEYS $i"
+            ;;
+        3)  # vector
+            for j in x y z
+            do
+                TEMPKEYS="$TEMPKEYS ${i}_${j}"
+            done
+            ;;
+        6)  # symmetric tensor
+            for j in xx xy xz yy yz zz
+            do
+                TEMPKEYS="$TEMPKEYS ${i}_${j}"
+            done
+            ;;
+        9)  # tensor
+            for j in xx xy xz yx yy yz zx zy zz
+            do
+                TEMPKEYS="$TEMPKEYS ${i}_${j}"
+            done
+            ;;
+        *)  # handle other cases if needed
+            echo "Unsupported number of components: $NCOMPS"
+            exit 1
+            ;;
+    esac
+done
+
+KEYS=$TEMPKEYS
+
+
+# Create plots
 GPFILE=$(mktemp)
-plotFileHeader > "$GPFILE"
+plotFileHeader "$(awk -F'/' '{print $(NF-2) "/" $NF}' <<< "$FILE")" "$((NKEYS*NCOMPS))" > "$GPFILE"
 i=1
 for field in $KEYS
 do
     i=$((i+1))
-    PLOTLINE="\"$FILE\" using 1:${i} with lines title \"$field\""
-    if [ $i -lt $NCOLS ]
+    PLOTLINE="\"< sed 's/[()]//g' $FILE\" u 1:${i} w l t \"$(echo "$field" | sed 's/_/\\\\_/g')\""
+    if [ "$i" -lt "$NCOLS" ]
     then
        PLOTLINE="$PLOTLINE, \\"
     fi
-    echo $PLOTLINE >> "$GPFILE"
+    echo "$PLOTLINE" >> "$GPFILE"
 done
 plotFileFooter >> "$GPFILE"
+
 
 touch "$FILE"
 $GNUPLOT "$GPFILE" &
@@ -205,11 +260,12 @@ PID=$!
 
 while true
 do
-    MODTIME=$(stat --format=%Y $FILE)
+    MODTIME="$(stat --format=%Y "$FILE")"
     IDLEAGO=$(($(date +%s)-IDLE))
     test "$MODTIME" -gt "$IDLEAGO" || break
-    sleep $REFRESH
+    sleep "$REFRESH"
 done
+
 
 kill -9 $PID
 rm -f "$GPFILE"
