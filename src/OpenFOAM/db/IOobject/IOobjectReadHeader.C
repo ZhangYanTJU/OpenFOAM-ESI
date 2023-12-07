@@ -272,37 +272,4 @@ bool Foam::IOobject::readAndCheckHeader
 }
 
 
-// * * * * * * * * * * * * Template Specializations  * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-template<>
-bool IOobject::typeHeaderOk<void>
-(
-    const bool checkType,
-    const bool search,
-    const bool verbose
-)
-{
-    return readAndCheckHeader
-    (
-        false,      // global = false
-        word::null,
-        false,      // checkType = false (not meaningful)
-        search,
-        false       // verbose = false (not meaningful)
-    );
-}
-
-
-template<>
-fileName IOobject::typeFilePath<void>(const bool search) const
-{
-    return this->localFilePath(word::null, search);
-}
-
-} // End namespace Foam
-
-
 // ************************************************************************* //

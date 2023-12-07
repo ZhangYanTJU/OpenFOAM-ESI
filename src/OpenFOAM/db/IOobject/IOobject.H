@@ -656,21 +656,6 @@ public:
         template<class Type>
         void warnNoRereading() const;
 
-        //- Read header (localFilePath only) with optional searching
-        template<>
-        bool typeHeaderOk<void>
-        (
-            //! ignored for \c void
-            const bool checkType,
-            const bool search,
-            //! ignored for \c void
-            const bool verbose
-        );
-
-        //- Call localFilePath for \c void type
-        template<>
-        fileName typeFilePath<void>(const bool search) const;
-
 
     // Writing
 
