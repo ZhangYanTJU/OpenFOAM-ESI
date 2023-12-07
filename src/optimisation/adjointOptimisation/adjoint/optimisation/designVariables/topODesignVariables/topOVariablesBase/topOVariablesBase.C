@@ -437,7 +437,7 @@ Foam::topOVariablesBase::topOVariablesBase
     (
         IOobject
         (
-            "topoVars",
+            "topOVars",
             mesh.time().timeName(),
             fileName("uniform"),
             mesh,
