@@ -100,6 +100,39 @@ public:
             const int rank
         );
 
+        //- Construct from GAMG interface and Istream
+        cyclicGAMGInterfaceField
+        (
+            const GAMGInterface& GAMGCp,
+            Istream& is
+        );
+
+        //- Construct from GAMG interface and local and remote fields
+        cyclicGAMGInterfaceField
+        (
+            const GAMGInterface& GAMGCp,
+            const lduInterfaceField& local, // local
+            const UPtrList<lduInterfaceField>& other // other
+        );
+
+        //- Construct by assembling and return a clone.
+        virtual autoPtr<GAMGInterfaceField> clone
+        (
+            const GAMGInterface& GAMGCp,
+            const UPtrList<lduInterfaceField>& other // other
+        ) const
+        {
+            return autoPtr<GAMGInterfaceField>
+            (
+                new cyclicGAMGInterfaceField
+                (
+                    GAMGCp,
+                    *this,      // local field
+                    other       // other fields
+                )
+            );
+        }
+
 
     //- Destructor
     virtual ~cyclicGAMGInterfaceField() = default;
@@ -157,6 +190,12 @@ public:
                 const direction cmpt,
                 const Pstream::commsTypes commsType
             ) const;
+
+
+        // I/O
+
+            //- Write to stream
+            virtual void write(Ostream&) const;
 };
 
 

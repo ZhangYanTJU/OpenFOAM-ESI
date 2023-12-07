@@ -1,3 +1,5 @@
+/* lduPrimitiveMesh.C */
+
 laplacianFoam.C
 
 EXE = $(FOAM_APPBIN)/laplacianFoam

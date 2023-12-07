@@ -8,6 +8,7 @@
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2016-2021,2023 OpenCFD Ltd.
     Copyright (C) 2023 Huawei (Yu Ankun)
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -301,6 +302,9 @@ void Foam::GAMGSolver::Vcycle
 
     solveScalarField dummyField(0);
 
+    // Work storage for prolongation
+    solveScalarField work;
+
     for (label leveli = coarsestLevel - 1; leveli >= 0; leveli--)
     {
         if (coarseCorrFields.set(leveli))
@@ -321,16 +325,18 @@ void Foam::GAMGSolver::Vcycle
                 preSmoothedCoarseCorrField = coarseCorrFields[leveli];
             }
 
-            agglomeration_.prolongField
+
+            // Prolong correction to leveli
+            const auto& cf = agglomeration_.prolongField
             (
-                coarseCorrFields[leveli],
+                coarseCorrFields[leveli],   // current level
+                work,
                 (
                     coarseCorrFields.set(leveli + 1)
                   ? coarseCorrFields[leveli + 1]
                   : dummyField              // dummy value
                 ),
-                leveli + 1,
-                true
+                leveli + 1
             );
 
 
@@ -346,43 +352,21 @@ void Foam::GAMGSolver::Vcycle
                     ACf.operator const solveScalarField&()
                 );
 
-            if (interpolateCorrection_) //&& leveli < coarsestLevel - 2)
+            if (interpolateCorrection_)
             {
-                if
+                // Normal operation : have both coarse level and fine
+                // level. No processor agglomeration
+                interpolate
                 (
-                    coarseCorrFields.set(leveli+1)
-                 && (
-                        matrixLevels_[leveli].mesh().comm()
-                     == matrixLevels_[leveli+1].mesh().comm()
-                    )
-                )
-                {
-                    // Normal operation : have both coarse level and fine
-                    // level. No processor agglomeration
-                    interpolate
-                    (
-                        coarseCorrFields[leveli],
-                        ACfRef,
-                        matrixLevels_[leveli],
-                        interfaceLevelsBouCoeffs_[leveli],
-                        interfaceLevels_[leveli],
-                        agglomeration_.restrictAddressing(leveli + 1),
-                        coarseCorrFields[leveli + 1],
-                        cmpt
-                    );
-                }
-                else
-                {
-                    interpolate
-                    (
-                        coarseCorrFields[leveli],
-                        ACfRef,
-                        matrixLevels_[leveli],
-                        interfaceLevelsBouCoeffs_[leveli],
-                        interfaceLevels_[leveli],
-                        cmpt
-                    );
-                }
+                    coarseCorrFields[leveli],
+                    ACfRef,
+                    matrixLevels_[leveli],
+                    interfaceLevelsBouCoeffs_[leveli],
+                    interfaceLevels_[leveli],
+                    agglomeration_.restrictAddressing(leveli + 1),
+                    cf,
+                    cmpt
+                );
             }
 
             // Scale coarse-grid correction field

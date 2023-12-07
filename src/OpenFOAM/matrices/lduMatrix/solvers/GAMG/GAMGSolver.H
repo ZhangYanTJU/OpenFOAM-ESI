@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,7 +45,8 @@ Description
       - Coarse matrix scaling: performed by correction scaling, using steepest
         descent optimisation.
       - Type of cycle: V-cycle with optional pre-smoothing.
-      - Coarsest-level matrix solved using PCG or PBiCGStab.
+      - Coarsest-level matrix solved using any lduSolver (PCG, PBiCGStab,
+        smoothSolver) or direct solver on master processor
 
 SourceFiles
     GAMGSolver.C
@@ -190,9 +191,8 @@ class GAMGSolver
         //- Collect matrices from other processors
         void gatherMatrices
         (
-            const labelList& procIDs,
-            const lduMesh& dummyMesh,
-            const label meshComm,
+            const label destLevel,
+            const label comm,
 
             const lduMatrix& mat,
             const FieldField<Field, scalar>& interfaceBouCoeffs,
@@ -202,8 +202,7 @@ class GAMGSolver
             PtrList<lduMatrix>& otherMats,
             PtrList<FieldField<Field, scalar>>& otherBouCoeffs,
             PtrList<FieldField<Field, scalar>>& otherIntCoeffs,
-            List<boolList>& otherTransforms,
-            List<List<label>>& otherRanks
+            PtrList<PtrList<lduInterfaceField>>& otherInterfaces
         ) const;
 
         //- Agglomerate processor matrices

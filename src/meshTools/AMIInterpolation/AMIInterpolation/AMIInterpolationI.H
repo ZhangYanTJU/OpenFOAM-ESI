@@ -102,6 +102,20 @@ inline Foam::label Foam::AMIInterpolation::singlePatchProc() const noexcept
 }
 
 
+inline Foam::label Foam::AMIInterpolation::comm() const
+{
+    return comm_;
+}
+
+
+inline Foam::label Foam::AMIInterpolation::comm(const label newComm)
+{
+    const label oldComm(comm_);
+    comm_ = newComm;
+    return oldComm;
+}
+
+
 inline const Foam::List<Foam::scalar>& Foam::AMIInterpolation::srcMagSf() const
 {
     return srcMagSf_;

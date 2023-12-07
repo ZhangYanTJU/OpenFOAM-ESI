@@ -68,8 +68,36 @@ void Foam::advancingFrontAMI::checkPatches() const
         const scalar maxBoundsError = 0.05;
 
         // Check bounds of source and target
-        boundBox bbSrc(src.points(), src.meshPoints(), true);
-        boundBox bbTgt(tgt.points(), tgt.meshPoints(), true);
+        boundBox bbSrc(src.points(), src.meshPoints(), false);
+        Foam::reduce
+        (
+            bbSrc.min(),
+            minOp<point>(),
+            UPstream::msgType(),
+            comm_
+        );
+        Foam::reduce
+        (
+            bbSrc.max(),
+            maxOp<point>(),
+            UPstream::msgType(),
+            comm_
+        );
+        boundBox bbTgt(tgt.points(), tgt.meshPoints(), false);
+        Foam::reduce
+        (
+            bbTgt.min(),
+            minOp<point>(),
+            UPstream::msgType(),
+            comm_
+        );
+        Foam::reduce
+        (
+            bbTgt.max(),
+            maxOp<point>(),
+            UPstream::msgType(),
+            comm_
+        );
 
         boundBox bbTgtInf(bbTgt);
         bbTgtInf.inflate(maxBoundsError);
@@ -150,7 +178,7 @@ void Foam::advancingFrontAMI::createExtendedTgtPatch()
 
     // Original faces from tgtPatch
     // Note: in globalIndexing since might be remote
-    globalIndex globalTgtFaces(tgtPatch0().size());
+    globalIndex globalTgtFaces(tgtPatch0().size(), comm_);
     distributeAndMergePatches
     (
         map,

@@ -108,6 +108,51 @@ public:
             Istream& is
         );
 
+        //- Construct from fine level interface,
+        //- local and neighbour restrict addressing
+        cyclicGAMGInterface
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            const lduInterface& fineInterface,
+            const labelList& interfaceMap,
+            const labelUList& faceCells,
+            const labelUList& faceRestrictAddresssing,
+            const labelUList& faceOffsets,
+            const lduInterfacePtrsList& allInterfaces
+        );
+
+        //- Construct by assembling and returning a clone.
+        virtual autoPtr<GAMGInterface> clone
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            const labelList& interfaceMap,
+            const labelUList& faceCells,
+            const labelUList& faceRestrictAddresssing,
+            const labelUList& faceOffsets,
+            const lduInterfacePtrsList& allInterfaces,
+            const label coarseComm,
+            const label myProcNo,
+            const labelList& procAgglomMap
+        ) const
+        {
+            return autoPtr<GAMGInterface>
+            (
+                new cyclicGAMGInterface
+                (
+                    index,
+                    coarseInterfaces,
+                    *this,
+                    interfaceMap,
+                    faceCells,
+                    faceRestrictAddresssing,
+                    faceOffsets,
+                    allInterfaces
+                )
+            );
+        }
+
 
     //- Destructor
     virtual ~cyclicGAMGInterface() = default;

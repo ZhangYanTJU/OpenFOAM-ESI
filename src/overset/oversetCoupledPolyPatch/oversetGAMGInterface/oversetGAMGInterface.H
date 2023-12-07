@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenFOAM Foundation
+    Copyright (C) 2021,2023 OpenFOAM Foundation
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -84,9 +84,62 @@ public:
             const label coarseComm
         );
 
+        //- Construct from Istream
+        oversetGAMGInterface
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            Istream& is
+        );
+
+        //- Construct from fine level interface,
+        //- local and neighbour restrict addressing
+        oversetGAMGInterface
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            const lduInterface& fineInterface,
+            const labelList& interfaceMap,
+            const labelUList& faceCells,
+            const labelUList& faceRestrictAddresssing,
+            const labelUList& faceOffsets,
+            const lduInterfacePtrsList& allInterfaces
+        );
+
+        //- Construct by assembling and returning a clone.
+        virtual autoPtr<GAMGInterface> clone
+        (
+            const label index,
+            const lduInterfacePtrsList& coarseInterfaces,
+            const labelList& interfaceMap,
+            const labelUList& faceCells,
+            const labelUList& faceRestrictAddresssing,
+            const labelUList& faceOffsets,
+            const lduInterfacePtrsList& allInterfaces,
+            const label coarseComm,
+            const label myProcNo,
+            const labelList& procAgglomMap
+        ) const
+        {
+            return autoPtr<GAMGInterface>
+            (
+                new oversetGAMGInterface
+                (
+                    index,
+                    coarseInterfaces,
+                    *this,
+                    interfaceMap,
+                    faceCells,
+                    faceRestrictAddresssing,
+                    faceOffsets,
+                    allInterfaces
+                )
+            );
+        }
+
 
     //- Destructor
-    virtual ~oversetGAMGInterface();
+    virtual ~oversetGAMGInterface() = default;
 
 
     // Member Functions
@@ -104,10 +157,7 @@ public:
         // I/O
 
             //- Write to stream
-            virtual void write(Ostream&) const
-            {
-                NotImplemented;
-            }
+            virtual void write(Ostream&) const;
 };
 
 

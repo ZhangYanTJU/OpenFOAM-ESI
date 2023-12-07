@@ -131,6 +131,11 @@ protected:
             //- Communicator for given level
             mutable labelList procCommunicator_;
 
+            //- Communicator for collecting contributions. Note self-contained
+            //  communicator for ease of cleanup - this one gets allocated
+            //  internally, not by the GAMGProcAgglomerations
+            mutable PtrList<UPstream::communicator> procAgglomCommunicator_;
+
             //- Mapping from processor to procMeshLevel cells
             mutable PtrList<labelList> procCellOffsets_;
 
@@ -423,6 +428,17 @@ public:
                 const bool procAgglom
             ) const;
 
+            //- Prolong (interpolate by injection) cell field. Return reference
+            //  to (potentially scattered) coarse field
+            template<class Type>
+            const Field<Type>& prolongField
+            (
+                Field<Type>& ff,        // fine-level field
+                Field<Type>& work,      // work storage
+                const Field<Type>& cf,  // coarse-level field
+                const label coarseLevelIndex
+            ) const;
+
 
         // Processor agglomeration. Note that the mesh and agglomeration is
         // stored per fineLevel (even though it is the coarse level mesh that
@@ -465,6 +481,9 @@ public:
 
             //- Communicator for current level or -1
             label procCommunicator(const label fineLeveli) const;
+
+            //- Communicator for collecting contributions
+            label agglomCommunicator(const label fineLeveli) const;
 
             //- Mapping from processor to procMesh cells
             const labelList& cellOffsets(const label fineLeveli) const;

@@ -74,14 +74,18 @@ void Foam::advancingFrontAMI::distributePatches
     List<labelList>& faceIDs
 ) const
 {
-    faces.resize_nocopy(Pstream::nProcs());
-    points.resize_nocopy(Pstream::nProcs());
-    faceIDs.resize_nocopy(Pstream::nProcs());
+    faces.setSize(Pstream::nProcs(comm_));
+    points.setSize(Pstream::nProcs(comm_));
+    faceIDs.setSize(Pstream::nProcs(comm_));
 
+    PstreamBuffers pBufs
+    (
+        Pstream::commsTypes::nonBlocking,
+        UPstream::msgType(),
+        comm_
+    );
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
-
-    for (const int domain : Pstream::allProcs())
+    for (const int domain : Pstream::allProcs(comm_))
     {
         const labelList& sendElems = map.subMap()[domain];
 
@@ -104,12 +108,13 @@ void Foam::advancingFrontAMI::distributePatches
             }
 
 
-            if (domain == Pstream::myProcNo())
+            if (domain == Pstream::myProcNo(comm_))
             {
                 // Do send/receive for myself
                 faces[domain] = subPatch.localFaces();
                 points[domain] = subPatch.localPoints();
-                faceIDs[domain] = gi.toGlobal(sendElems);
+                faceIDs[domain] =
+                    gi.toGlobal(Pstream::myProcNo(comm_), sendElems);
             }
             else
             {
@@ -118,19 +123,20 @@ void Foam::advancingFrontAMI::distributePatches
                 str
                     << subPatch.localFaces()
                     << subPatch.localPoints()
-                    << gi.toGlobal(sendElems);
+                    << gi.toGlobal(Pstream::myProcNo(comm_), sendElems);
             }
         }
     }
 
     pBufs.finishedSends();
 
+
     // Consume
-    for (const int domain : Pstream::allProcs())
+    for (const int domain : Pstream::allProcs(comm_))
     {
         const labelList& recvElems = map.constructMap()[domain];
 
-        if (domain != Pstream::myProcNo() && recvElems.size())
+        if (domain != Pstream::myProcNo(comm_) && recvElems.size())
         {
             UIPstream is(domain, pBufs);
 
@@ -176,10 +182,10 @@ void Foam::advancingFrontAMI::distributeAndMergePatches
 
     // My own data first
     {
-        const labelList& faceIDs = allTgtFaceIDs[Pstream::myProcNo()];
+        const labelList& faceIDs = allTgtFaceIDs[Pstream::myProcNo(comm_)];
         SubList<label>(tgtFaceIDs, faceIDs.size()) = faceIDs;
 
-        const faceList& fcs = allFaces[Pstream::myProcNo()];
+        const faceList& fcs = allFaces[Pstream::myProcNo(comm_)];
         for (const face& f : fcs)
         {
             face& newF = tgtFaces[nFaces++];
@@ -190,7 +196,7 @@ void Foam::advancingFrontAMI::distributeAndMergePatches
             }
         }
 
-        const pointField& pts = allPoints[Pstream::myProcNo()];
+        const pointField& pts = allPoints[Pstream::myProcNo(comm_)];
         for (const point& pt: pts)
         {
             tgtPoints[nPoints++] = pt;
@@ -201,7 +207,7 @@ void Foam::advancingFrontAMI::distributeAndMergePatches
     // Other proc data follows
     forAll(allFaces, proci)
     {
-        if (proci != Pstream::myProcNo())
+        if (proci != Pstream::myProcNo(comm_))
         {
             const labelList& faceIDs = allTgtFaceIDs[proci];
             SubList<label>(tgtFaceIDs, faceIDs.size(), nFaces) = faceIDs;
@@ -258,11 +264,11 @@ Foam::autoPtr<Foam::mapDistribute> Foam::advancingFrontAMI::calcProcMap
 ) const
 {
     // Get decomposition of patch
-    List<treeBoundBoxList> procBb(Pstream::nProcs());
+    List<treeBoundBoxList> procBb(Pstream::nProcs(comm_));
 
     if (srcPatch.size())
     {
-        procBb[Pstream::myProcNo()] =
+        procBb[Pstream::myProcNo(comm_)] =
             AABBTree<face>
             (
                 srcPatch.localFaces(),
@@ -272,10 +278,10 @@ Foam::autoPtr<Foam::mapDistribute> Foam::advancingFrontAMI::calcProcMap
     }
     else
     {
-        procBb[Pstream::myProcNo()] = treeBoundBoxList();
+        procBb[Pstream::myProcNo(comm_)] = treeBoundBoxList();
     }
 
-    Pstream::allGatherList(procBb);
+    Pstream::allGatherList(procBb, UPstream::msgType(), comm_);
 
     if (debug)
     {
@@ -295,10 +301,10 @@ Foam::autoPtr<Foam::mapDistribute> Foam::advancingFrontAMI::calcProcMap
 
     {
         // Per processor indices into all segments to send
-        List<DynamicList<label>> dynSendMap(Pstream::nProcs());
+        List<DynamicList<label>> dynSendMap(Pstream::nProcs(comm_));
 
         // Work array - whether processor bb overlaps the face bounds
-        boolList procBbOverlaps(Pstream::nProcs());
+        boolList procBbOverlaps(Pstream::nProcs(comm_));
 
         forAll(faces, facei)
         {
@@ -320,7 +326,7 @@ Foam::autoPtr<Foam::mapDistribute> Foam::advancingFrontAMI::calcProcMap
         }
 
         // Convert dynamicList to labelList
-        sendMap.setSize(Pstream::nProcs());
+        sendMap.setSize(Pstream::nProcs(comm_));
         forAll(sendMap, proci)
         {
             sendMap[proci].transfer(dynSendMap[proci]);
@@ -338,7 +344,13 @@ Foam::autoPtr<Foam::mapDistribute> Foam::advancingFrontAMI::calcProcMap
         }
     }
 
-    return autoPtr<mapDistribute>::New(std::move(sendMap));
+    return autoPtr<mapDistribute>::New
+    (
+        std::move(sendMap),
+        false,      //subHasFlip
+        false,      //constructHasFlip
+        comm_
+    );
 }
 
 

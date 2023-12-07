@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -143,6 +143,21 @@ void Foam::mapDistribute::printLayout(Ostream& os) const
                 << "    size  : " << transformElements_[i].size() << endl;
         }
     }
+}
+
+
+Foam::UPtrList<const Foam::mapDistributeBase> Foam::mapDistribute::extractBase
+(
+    const UPtrList<const mapDistribute>& maps
+)
+{
+    UPtrList<const mapDistributeBase> baseMaps(maps.size());
+    forAll(maps, i)
+    {
+        const mapDistributeBase& map = maps[i];
+        baseMaps.set(i, &map);
+    }
+    return baseMaps;
 }
 
 
@@ -434,6 +449,32 @@ Foam::mapDistribute::mapDistribute
     {
         printLayout(Pout);
     }
+}
+
+
+Foam::mapDistribute::mapDistribute
+(
+    const UPtrList<const mapDistribute>& maps,
+    const labelList& localRanks,
+    const label newComm,
+    const labelListList& newToOldRanks, // from rank in newComm to
+                                        // ranks in (old)comm
+    labelList& startOfLocal,
+    List<Map<label>>& compactMaps
+)
+:
+    mapDistributeBase
+    (
+        extractBase(maps),
+        localRanks,
+        newComm,
+        newToOldRanks,
+        startOfLocal,
+        compactMaps
+    )
+{
+    // TBD. -have mapDistributeBase::add or something
+    //      -set transforms from individual maps
 }
 
 

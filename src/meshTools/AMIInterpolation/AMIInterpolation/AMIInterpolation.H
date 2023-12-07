@@ -52,20 +52,14 @@ SourceFiles
 #ifndef Foam_AMIInterpolation_H
 #define Foam_AMIInterpolation_H
 
-#include "className.H"
 #include "searchableSurface.H"
-#include "treeBoundBoxList.H"
 #include "boolList.H"
 #include "primitivePatch.H"
-#include "faceAreaIntersect.H"
-#include "globalIndex.H"
 #include "ops.H"
 #include "refPtr.H"
-#include "Enum.H"
 #include "pointList.H"
 #include "indexedOctree.H"
 #include "treeDataPrimitivePatch.H"
-
 #include "runTimeSelectionTables.H"
 
 
@@ -108,6 +102,9 @@ protected:
         //- Index of processor that holds all of both sides.
         //- The value is -1 for distributed cases
         label singlePatchProc_;
+
+        //- Communicator to use for parallel operations.
+        label comm_;
 
 
         // Source patch
@@ -224,7 +221,8 @@ protected:
                 scalarField& wghtSum,
                 const bool conformal,
                 const bool output,
-                const scalar lowWeightTol
+                const scalar lowWeightTol,
+                const label comm
             );
 
 
@@ -244,7 +242,8 @@ protected:
                 labelListList& srcAddress,
                 scalarListList& srcWeights,
                 scalarField& srcWeightsSum,
-                autoPtr<mapDistribute>& tgtMap
+                autoPtr<mapDistribute>& tgtMap,
+                const label comm
             );
 
 
@@ -342,6 +341,10 @@ public:
             return autoPtr<AMIInterpolation>::New(*this);
         }
 
+        //- Construct from Istream
+        //  Note: does not transfer src(tgt)PatchPts, tsrc(tgt)Patch0_
+        AMIInterpolation(Istream& is);
+
 
     //- Destructor
     virtual ~AMIInterpolation() = default;
@@ -371,7 +374,7 @@ public:
             //- Set the require match flag, return the \em new value
             inline bool setRequireMatch(bool flag) noexcept;
 
-            //- Return true if requireMatch and lowWeightCorrectionin active
+            //- Return true if requireMatch and but not lowWeightCorrection
             inline bool mustMatchFaces() const;
 
             //- Access to the reverseTarget flag
@@ -386,6 +389,13 @@ public:
             //- The processor holding all faces (both sides),
             //- or -1 if distributed
             inline label singlePatchProc() const noexcept;
+
+            //- Communicator to use for parallel operations
+            inline label comm() const;
+
+            //- Set communicator to use for parallel operations. Return
+            //  old value
+            inline label comm(const label newComm);
 
 
             // Source patch
@@ -488,7 +498,8 @@ public:
                 labelListList&& srcAddress,
                 scalarListList&& srcWeights,
                 labelListList&& tgtAddress,
-                scalarListList&& tgtWeights
+                scalarListList&& tgtWeights,
+                const label singlePatchProc
             );
 
             //- Append additional addressing and weights
@@ -664,8 +675,11 @@ public:
 
         // I-O
 
-            //- Write
+            //- Write AMI as a dictionary
             virtual void write(Ostream& os) const;
+
+            //- Write AMI raw
+            virtual bool writeData(Ostream& os) const;
 
 
     // Housekeeping

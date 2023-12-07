@@ -87,7 +87,12 @@ void Foam::globalMeshData::initProcAddr()
 
     if (Pstream::parRun())
     {
-        PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+        PstreamBuffers pBufs
+        (
+            Pstream::commsTypes::nonBlocking,
+            UPstream::msgType(),
+            mesh_.comm()
+        );
 
         // Send indices of my processor patches to my neighbours
         for (const label patchi : processorPatches_)
@@ -1738,7 +1743,7 @@ Foam::globalMeshData::globalMeshData(const polyMesh& mesh)
         processorTopology::New<processorPolyPatch>
         (
             mesh.boundaryMesh(),
-            UPstream::worldComm
+            mesh_.comm()
         )
     ),
     processorPatches_(),

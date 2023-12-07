@@ -118,6 +118,24 @@ public:
             const int rank
         );
 
+        //- Construct from GAMG interface and Istream
+        calculatedProcessorGAMGInterfaceField
+        (
+            const GAMGInterface& GAMGCp,
+            Istream& is
+        );
+
+        //- Construct by assembling and return a clone.
+        virtual autoPtr<GAMGInterfaceField> clone
+        (
+            const GAMGInterface& GAMGCp,
+            const UPtrList<lduInterfaceField>& other
+        ) const
+        {
+            NotImplemented;
+            return autoPtr<GAMGInterfaceField>(nullptr);
+        }
+
 
     //- Destructor
     virtual ~calculatedProcessorGAMGInterfaceField() = default;
@@ -200,6 +218,12 @@ public:
             {
                 return rank_;
             }
+
+
+        // I/O
+
+            //- Write to stream
+            virtual void write(Ostream&) const;
 };
 
 

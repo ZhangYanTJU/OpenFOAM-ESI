@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,6 +39,12 @@ namespace Foam
         GAMGInterface,
         oversetGAMGInterface,
         lduInterface
+    );
+    addToRunTimeSelectionTable
+    (
+        GAMGInterface,
+        oversetGAMGInterface,
+        Istream
     );
 }
 
@@ -110,9 +116,36 @@ Foam::oversetGAMGInterface::oversetGAMGInterface
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+Foam::oversetGAMGInterface::oversetGAMGInterface
+(
+    const label index,
+    const lduInterfacePtrsList& coarseInterfaces,
+    Istream& is
+)
+:
+    GAMGInterface(index, coarseInterfaces, is)
+{}
 
-Foam::oversetGAMGInterface::~oversetGAMGInterface()
+
+Foam::oversetGAMGInterface::oversetGAMGInterface
+(
+    const label index,
+    const lduInterfacePtrsList& coarseInterfaces,
+    const lduInterface& fineInterface,
+    const labelList& interfaceMap,
+    const labelUList& faceCells,
+    const labelUList& faceRestrictAddresssing,
+    const labelUList& faceOffsets,
+    const lduInterfacePtrsList& allInterfaces
+)
+:
+    GAMGInterface
+    (
+        index,
+        coarseInterfaces,
+        faceCells,
+        faceRestrictAddresssing
+    )
 {}
 
 
@@ -125,6 +158,12 @@ Foam::tmp<Foam::labelField> Foam::oversetGAMGInterface::internalFieldTransfer
 ) const
 {
     return tmp<labelField>::New(iF);
+}
+
+
+void Foam::oversetGAMGInterface::write(Ostream& os) const
+{
+    GAMGInterface::write(os);
 }
 
 

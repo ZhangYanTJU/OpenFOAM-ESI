@@ -28,6 +28,7 @@ License
 
 #include "lduPrimitiveMesh.H"
 #include "processorLduInterface.H"
+#include "processorCyclicGAMGInterface.H"
 #include "edgeHashes.H"
 #include "labelPair.H"
 #include "processorGAMGInterface.H"
@@ -308,6 +309,56 @@ Foam::labelList Foam::lduPrimitiveMesh::upperTriOrder
 }
 
 
+Foam::label Foam::lduPrimitiveMesh::findConnectedInterface
+(
+    const lduMesh& myMesh,
+    const PtrList<lduPrimitiveMesh>& otherMeshes,
+    const labelPairList& procAndInterfaces,
+
+    const label nbrProci,
+    const label myRank
+) const
+{
+    // Find mesh, interfacei in procAndInterfaces
+    label nbrInti = -1;
+    for (const auto& procAndInterface : procAndInterfaces)
+    {
+        const label proci = procAndInterface[0];
+
+        if (proci == nbrProci)
+        {
+            const label interfacei = procAndInterface[1];
+            const lduInterfacePtrsList interfaces =
+                mesh
+                (
+                    myMesh,
+                    otherMeshes,
+                    proci
+                ).interfaces();
+            const processorLduInterface& pldui =
+                refCast<const processorLduInterface>
+                (
+                    interfaces[interfacei]
+                );
+
+            if (pldui.neighbProcNo() == myRank)
+            {
+                nbrInti = procAndInterface[1];
+                break;
+            }
+        }
+    }
+
+
+    if (nbrInti == -1)
+    {
+        FatalErrorInFunction
+            << "procAndInterfaces:" << procAndInterfaces << abort(FatalError);
+    }
+    return nbrInti;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::lduPrimitiveMesh::lduPrimitiveMesh
@@ -472,7 +523,6 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
     const label nMeshes = otherMeshes.size()+1;
 
     const label myAgglom = procAgglomMap[UPstream::myProcNo(currentComm)];
-
     if (lduPrimitiveMesh::debug)
     {
         Pout<< "I am " << UPstream::myProcNo(currentComm)
@@ -481,6 +531,7 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
             << endl;
     }
 
+    const lduInterfacePtrsList myInterfaces = myMesh.interfaces();
 
     forAll(procIDs, i)
     {
@@ -522,24 +573,28 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
           + procMesh.lduAddr().lowerAddr().size();
     }
 
-    // Count how faces get added. Interfaces inbetween get merged.
+    // Count how faces get added. Proc interfaces inbetween get merged.
 
-    // Merged interfaces: map from two coarse processors back to
+    // Merged proc interfaces: map from two coarse processors back to
     // - procMeshes
     // - interface in procMesh
     // (estimate size from number of patches of mesh0)
-    EdgeMap<labelPairList> mergedMap(2*myMesh.interfaces().size());
+    EdgeMap<labelPairList> mergedMap(2*myInterfaces.size());
 
-    // Unmerged interfaces: map from two coarse processors back to
+    // Unmerged proc interfaces: map from two coarse processors back to
     // - procMeshes
     // - interface in procMesh
     EdgeMap<labelPairList> unmergedMap(mergedMap.size());
+
+    // (unmerged) global interfaces. These are present on all processors
+    // in the same order (and keep the order in the merged mesh)
+    List<DynamicList<label>> procToGlobal(nMeshes);
+
 
     boundaryMap.setSize(nMeshes);
     boundaryFaceMap.setSize(nMeshes);
 
 
-    label nOtherInterfaces = 0;
     labelList nCoupledFaces(nMeshes, Zero);
 
     for (label procMeshI = 0; procMeshI < nMeshes; ++procMeshI)
@@ -560,6 +615,16 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
 
                 if (isA<processorLduInterface>(ldui))
                 {
+                    if (isA<processorCyclicGAMGInterface>(ldui))
+                    {
+                        FatalErrorInFunction
+                            << "At mesh from processor " << procIDs[procMeshI]
+                            << " have interface " << intI
+                            << " of unhandled type " << ldui.type()
+                            << ". Adapt decomposition to avoid these"
+                            << exit(FatalError);
+                    }
+
                     const processorLduInterface& pldui =
                         refCast<const processorLduInterface>(ldui);
 
@@ -582,7 +647,7 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
                         // Merged interface
                         if (debug)
                         {
-                            Pout<< "merged interface: myProcNo:"
+                            Pout<< "merged proc interface: myProcNo:"
                                 << pldui.myProcNo()
                                 << " nbr:" << pldui.neighbProcNo()
                                 << " size:" << ldui.faceCells().size()
@@ -607,7 +672,7 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
                     {
                         if (debug)
                         {
-                            Pout<< "external interface: myProcNo:"
+                            Pout<< "external proc interface: myProcNo:"
                                 << pldui.myProcNo()
                                 << " nbr:" << pldui.neighbProcNo()
                                 << " size:" << ldui.faceCells().size()
@@ -623,53 +688,90 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
                 else
                 {
                     // Still external (non proc) interface
-                    FatalErrorInFunction
-                        << "At mesh from processor " << procIDs[procMeshI]
-                        << " have interface " << intI
-                        << " of unhandled type " << interfaces[intI].type()
-                        << exit(FatalError);
+                    //FatalErrorInFunction
+                    //WarningInFunction
+                    //    << "At mesh from processor " << procIDs[procMeshI]
+                    //    << " have interface " << intI
+                    //    << " of unhandled type " << ldui.type()
+                    //    << " with size:" << ldui.faceCells().size()
+                    //    //<< exit(FatalError);
+                    //    << endl;
 
-                    ++nOtherInterfaces;
+                    procToGlobal[procMeshI].append(intI);
                 }
             }
         }
     }
 
 
-
+    // Check that all processors have any global patches in the same order
     if (debug)
     {
-        Pout<< "Remaining interfaces:" << endl;
-        forAllConstIters(unmergedMap, iter)
+        const auto& global0 = procToGlobal[0];
+        for (label procMeshI = 1; procMeshI < nMeshes; ++procMeshI)
         {
-            Pout<< "    agglom procEdge:" << iter.key() << endl;
-            const labelPairList& elems = iter.val();
-            forAll(elems, i)
+            const auto& global = procToGlobal[procMeshI];
+            if (global != global0)
             {
-                label procMeshI = elems[i][0];
-                label interfacei = elems[i][1];
-                const lduInterfacePtrsList interfaces =
-                    mesh(myMesh, otherMeshes, procMeshI).interfaces();
-
-                const processorLduInterface& pldui =
-                    refCast<const processorLduInterface>
-                    (
-                        interfaces[interfacei]
-                    );
-
-                Pout<< "        proc:" << procIDs[procMeshI]
-                    << " interfacei:" << interfacei
-                    << " between:" << pldui.myProcNo()
-                    << " and:" << pldui.neighbProcNo()
-                    << endl;
+                FatalErrorInFunction
+                    << "At mesh from processor " << procIDs[procMeshI]
+                    << " have global interfaces " << global
+                    << " which differ from those on processor "
+                    << procIDs[procMeshI]
+                    << " : " << global0
+                    << exit(FatalError);
             }
-            Pout<< endl;
         }
     }
+
+
     if (debug)
     {
+        Pout<< "Global interfaces:" << endl;
+        const auto& global0 = procToGlobal[0];
+        for (const label intI : global0)
+        {
+            Pout<< "        interfacei:" << intI
+                << " type:" << myInterfaces[intI].type()
+                << endl;
+
+        }
+        Pout<< endl;
+
+        Pout<< "Remaining interfaces:" << endl;
+        //forAllConstIters(unmergedMap, iter)
+        for (const auto& iter : unmergedMap.csorted())
+        {
+            Pout<< "    agglom procEdge:" << iter.key() << endl;
+            const labelPairList& elems = iter.val();
+            forAll(elems, i)
+            {
+                label procMeshI = elems[i][0];
+                label interfacei = elems[i][1];
+                const lduInterfacePtrsList interfaces =
+                    mesh(myMesh, otherMeshes, procMeshI).interfaces();
+
+                const processorLduInterface& pldui =
+                    refCast<const processorLduInterface>
+                    (
+                        interfaces[interfacei]
+                    );
+
+                Pout<< "        proc:" << procIDs[procMeshI]
+                    << " interfacei:" << interfacei
+                    << " between:" << pldui.myProcNo()
+                    << " and:" << pldui.neighbProcNo()
+                    << " localsize:"
+                    << interfaces[interfacei].faceCells().size()
+                    << endl;
+            }
+            Pout<< endl;
+        }
+        Pout<< endl;
+
         Pout<< "Merged interfaces:" << endl;
-        forAllConstIters(mergedMap, iter)
+        //forAllConstIters(mergedMap, iter)
+        for (const auto& iter : mergedMap.csorted())
         {
             Pout<< "    agglom procEdge:" << iter.key() << endl;
             const labelPairList& elems = iter.val();
@@ -690,10 +792,13 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
                     << " interfacei:" << interfacei
                     << " between:" << pldui.myProcNo()
                     << " and:" << pldui.neighbProcNo()
+                    << " localsize:"
+                    << interfaces[interfacei].faceCells().size()
                     << endl;
             }
             Pout<< endl;
         }
+        Pout<< endl;
     }
 
 
@@ -780,43 +885,14 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
                         {
                             const labelPairList& elems = fnd();
 
-                            // Find nbrP in elems
-                            label nbrIntI = -1;
-                            forAll(elems, i)
-                            {
-                                label proci = elems[i][0];
-                                label interfacei = elems[i][1];
-                                const lduInterfacePtrsList interfaces =
-                                    mesh
-                                    (
-                                        myMesh,
-                                        otherMeshes,
-                                        proci
-                                    ).interfaces();
-                                const processorLduInterface& pldui =
-                                    refCast<const processorLduInterface>
-                                    (
-                                        interfaces[interfacei]
-                                    );
-
-                                if
-                                (
-                                    elems[i][0] == nbrProcMeshI
-                                 && pldui.neighbProcNo() == procIDs[procMeshI]
-                                )
-                                {
-                                    nbrIntI = elems[i][1];
-                                    break;
-                                }
-                            }
-
-
-                            if (nbrIntI == -1)
-                            {
-                                FatalErrorInFunction
-                                    << "elems:" << elems << abort(FatalError);
-                            }
-
+                            const label nbrIntI = findConnectedInterface
+                            (
+                                myMesh,
+                                otherMeshes,
+                                elems,
+                                nbrProcMeshI,
+                                procIDs[procMeshI]
+                            );
 
                             const lduInterfacePtrsList nbrInterfaces = mesh
                             (
@@ -930,12 +1006,118 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
     // Kept interfaces
     // ~~~~~~~~~~~~~~~
 
-    interfaces_.setSize(unmergedMap.size() + nOtherInterfaces);
+    interfaces_.setSize(unmergedMap.size() + procToGlobal[0].size());
     primitiveInterfaces_.setSize(interfaces_.size());
 
     label allInterfacei = 0;
 
-    forAllConstIters(unmergedMap, iter)
+
+    // Global interfaces
+    // ~~~~~~~~~~~~~~~~~
+    // (e.g. cyclicAMI)
+
+    {
+        const auto& global0 = procToGlobal[0];
+
+        for (const label interfacei : global0)
+        {
+            //Pout<< "        interfacei:" << interfacei
+            //    << " type:" << interfaces[interfacei].type()
+            //    << endl;
+
+            // Just add all individual face-cells in processor order
+
+            // Count
+            label n = 0;
+            for (label procMeshI = 0; procMeshI < nMeshes; ++procMeshI)
+            {
+                const auto& procMesh = mesh(myMesh, otherMeshes, procMeshI);
+                n += procMesh.interfaces()[interfacei].faceCells().size();
+            }
+
+            // Size
+            labelField allFaceCells(n);
+            labelField allFaceRestrictAddressing(n);
+            labelList faceOffsets(nMeshes+1, 0);
+            lduInterfacePtrsList allProcInterfaces(nMeshes);
+            n = 0;
+
+            // Fill
+            for (label procMeshI = 0; procMeshI < nMeshes; ++procMeshI)
+            {
+                faceOffsets[procMeshI] = n;
+
+                const auto& procMesh = mesh(myMesh, otherMeshes, procMeshI);
+                const lduInterfacePtrsList interfaces = procMesh.interfaces();
+
+                allProcInterfaces.set(procMeshI, &interfaces[interfacei]);
+                boundaryMap[procMeshI][interfacei] = allInterfacei;
+                labelList& bfMap = boundaryFaceMap[procMeshI][interfacei];
+
+                const labelUList& l = interfaces[interfacei].faceCells();
+                bfMap.setSize(l.size());
+
+                forAll(l, facei)
+                {
+                    allFaceCells[n] = cellOffsets[procMeshI]+l[facei];
+                    allFaceRestrictAddressing[n] = n;
+                    bfMap[facei] = n;
+                    n++;
+                }
+            }
+
+            // For convenience populate last element with size
+            faceOffsets.last() = n;
+
+
+            const auto& myFineInterface =
+                refCast<const GAMGInterface>(myInterfaces[interfacei]);
+
+            autoPtr<GAMGInterface> ppPtr
+            (
+                myFineInterface.clone
+                (
+                    allInterfacei,
+                    interfaces_,
+                    global0,
+                    allFaceCells,
+                    allFaceRestrictAddressing,
+                    faceOffsets,
+                    allProcInterfaces,
+                    comm_,
+                    myAgglom,
+                    procAgglomMap
+                )
+            );
+
+            primitiveInterfaces_.set
+            (
+                allInterfacei,
+                ppPtr.ptr()
+            );
+
+            interfaces_.set(allInterfacei, &primitiveInterfaces_[allInterfacei]);
+
+            if (debug)
+            {
+                Pout<< "Created " << interfaces_[allInterfacei].type()
+                    << " interface at " << allInterfacei
+                    << " comm:" << comm_
+                    << " myProcNo:" << myAgglom
+                    << " nFaces:" << allFaceCells.size()
+                    << endl;
+            }
+
+            allInterfacei++;
+        }
+    }
+
+
+    // Unmerged processor interfaces
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    //forAllConstIters(unmergedMap, iter)
+    for (const auto& iter : unmergedMap.csorted())
     {
         const labelPairList& elems = iter.val();
 
@@ -1085,6 +1267,58 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
     }
 
 
+    if (allInterfacei != interfaces_.size())
+    {
+        FatalErrorInFunction << "allInterfacei:" << allInterfacei
+            << " interfaces_:" << interfaces_.size() << exit(FatalError);
+    }
+
+
+    if (debug)
+    {
+        Pout<< endl
+            << "Created new lduPrimitiveMesh:" << nl
+            << "    cells:" << this->lduAddr().size() << nl
+            << "    internal face lower:"
+            << this->lduAddr().lowerAddr().size() << nl
+            << "    internal faces upper:"
+            << this->lduAddr().upperAddr().size()
+            << endl;
+        forAll(interfaces_, i)
+        {
+            if (interfaces_.set(i))
+            {
+                Pout<< "    interface:" << i << " type:" << interfaces_[i].type()
+                    << nl
+                    << "    faceCells:" << flatOutput(interfaces_[i].faceCells())
+                    << endl;
+            }
+        }
+
+
+        Pout<< "Original input meshes:" << endl;
+        forAll(boundaryMap, procMeshI)
+        {
+            const auto& procMesh = mesh(myMesh, otherMeshes, procMeshI);
+            const lduInterfacePtrsList interfaces = procMesh.interfaces();
+
+            Pout<< "    proc:" << procMeshI
+                << " interfaces:" << interfaces.size() << endl;
+            forAll(interfaces, inti)
+            {
+                if (interfaces.set(inti))
+                {
+                    Pout<< "        int:" << inti
+                        << " type:" << interfaces[inti].type()
+                        << " size:" << interfaces[inti].faceCells().size()
+                        << " maps to:" << boundaryMap[procMeshI][inti]
+                        << endl;
+                }
+            }
+        }
+    }
+
+
     patchSchedule_ = nonBlockingSchedule<processorGAMGInterface>(interfaces_);
 
     if (debug)
@@ -1111,89 +1345,25 @@ void Foam::lduPrimitiveMesh::gather
 (
     const label comm,
     const lduMesh& mesh,
-    const labelList& procIDs,
     PtrList<lduPrimitiveMesh>& otherMeshes
 )
 {
     // Force calculation of schedule (since does parallel comms)
     (void)mesh.lduAddr().patchSchedule();
 
-    if (Pstream::myProcNo(comm) == procIDs[0])
+    // Use PstreamBuffers
+    PstreamBuffers pBufs
+    (
+        Pstream::commsTypes::nonBlocking,
+        UPstream::msgType(),
+        comm
+    );
+
+    // Send to master
+    if (!Pstream::master(comm))
     {
-        // Master.
-        otherMeshes.setSize(procIDs.size()-1);
-
-        for (label i = 1; i < procIDs.size(); ++i)
-        {
-            //Pout<< "on master :"
-            //    << " receiving from proc " << procIDs[i] << endl;
-
-            IPstream fromProc
-            (
-                Pstream::commsTypes::scheduled,
-                procIDs[i],
-                0,          // bufSize
-                Pstream::msgType(),
-                comm
-            );
-
-            label nCells = readLabel(fromProc);
-            labelList lowerAddr(fromProc);
-            labelList upperAddr(fromProc);
-            boolList validInterface(fromProc);
-
-
-            // Construct mesh without interfaces
-            otherMeshes.set
-            (
-                i-1,
-                new lduPrimitiveMesh
-                (
-                    nCells,
-                    lowerAddr,
-                    upperAddr,
-                    comm,
-                    true    // reuse
-                )
-            );
-
-            // Construct GAMGInterfaces
-            lduInterfacePtrsList newInterfaces(validInterface.size());
-            forAll(validInterface, intI)
-            {
-                if (validInterface[intI])
-                {
-                    word coupleType(fromProc);
-
-                    newInterfaces.set
-                    (
-                        intI,
-                        GAMGInterface::New
-                        (
-                            coupleType,
-                            intI,
-                            otherMeshes[i-1].rawInterfaces(),
-                            fromProc
-                        ).ptr()
-                    );
-                }
-            }
-
-            otherMeshes[i-1].addInterfaces
-            (
-                newInterfaces,
-                nonBlockingSchedule<processorGAMGInterface>
-                (
-                    newInterfaces
-                )
-            );
-       }
-    }
-    else if (procIDs.found(Pstream::myProcNo(comm)))
-    {
-        // Send to master
-
         const lduAddressing& addressing = mesh.lduAddr();
+
         lduInterfacePtrsList interfaces(mesh.interfaces());
         boolList validInterface(interfaces.size());
         forAll(interfaces, intI)
@@ -1201,14 +1371,7 @@ void Foam::lduPrimitiveMesh::gather
             validInterface[intI] = interfaces.set(intI);
         }
 
-        OPstream toMaster
-        (
-            Pstream::commsTypes::scheduled,
-            procIDs[0],
-            0,
-            Pstream::msgType(),
-            comm
-        );
+        UOPstream toMaster(UPstream::masterNo(), pBufs);
 
         toMaster
             << addressing.size()
@@ -1228,6 +1391,74 @@ void Foam::lduPrimitiveMesh::gather
                 toMaster << interface.type();
                 interface.write(toMaster);
             }
+        }
+    }
+
+    // Wait for finish
+    pBufs.finishedGathers();
+
+    // Consume
+    if (Pstream::master(comm))
+    {
+        const label nProcs = UPstream::nProcs(comm);
+
+        // Master.
+        otherMeshes.setSize(nProcs-1);
+
+        for (const int proci : UPstream::subProcs(comm))
+        {
+            UIPstream fromProc(proci, pBufs);
+
+            const label nCells = readLabel(fromProc);
+            labelList lowerAddr(fromProc);
+            labelList upperAddr(fromProc);
+            const boolList validInterface(fromProc);
+
+
+            // Construct mesh without interfaces
+            otherMeshes.set
+            (
+                proci-1,
+                new lduPrimitiveMesh
+                (
+                    nCells,
+                    lowerAddr,
+                    upperAddr,
+                    mesh.comm(),
+                    true    // reuse
+                )
+            );
+
+            // Construct GAMGInterfaces
+            lduInterfacePtrsList newInterfaces(validInterface.size());
+            forAll(validInterface, intI)
+            {
+                if (validInterface[intI])
+                {
+                    word coupleType(fromProc);
+
+                    newInterfaces.set
+                    (
+                        intI,
+                        GAMGInterface::New
+                        (
+                            coupleType,
+                            intI,
+                            otherMeshes[proci-1].rawInterfaces(),
+                            fromProc
+                        ).ptr()
+                    );
+                }
+            }
+
+            otherMeshes[proci-1].addInterfaces
+            (
+                newInterfaces,
+                nonBlockingSchedule<processorGAMGInterface>
+                (
+                    newInterfaces
+                )
+            );
         }
     }
 }
