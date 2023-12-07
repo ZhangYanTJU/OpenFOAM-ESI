@@ -20,15 +20,15 @@ runApplication blockMesh
 application=$(getApplication)
 
 #- Test writing collated format
-runApplication decomposePar -fileHandler collated
-#runParallel redistributePar -decompose -fileHandler collated
+#runApplication decomposePar -fileHandler collated
+runParallel redistributePar -decompose -fileHandler collated
 runParallel $application -fileHandler collated
-runApplication reconstructPar -latestTime -fileHandler collated
-#runParallel -s reconstruct redistributePar -reconstruct -latestTime -fileHandler collated
+#runApplication reconstructPar -latestTime -fileHandler collated
+runParallel -s reconstruct redistributePar -reconstruct -latestTime -fileHandler collated
 
 #- Test writing uncollated format
-runApplication -s uncollated decomposePar -fileHandler uncollated -force
-#runParallel -s uncollated redistributePar -decompose -fileHandler uncollated
+#runApplication -s uncollated decomposePar -fileHandler uncollated -force
+runParallel -s uncollated redistributePar -decompose -fileHandler uncollated
 runParallel -s uncollated $application -fileHandler uncollated
 
 
