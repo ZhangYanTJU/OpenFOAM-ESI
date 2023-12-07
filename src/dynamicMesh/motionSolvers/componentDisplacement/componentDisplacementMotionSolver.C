@@ -110,23 +110,24 @@ Foam::componentDisplacementMotionSolver::componentDisplacementMotionSolver
 {
     if (points0_.size() != mesh.nPoints())
     {
+        const fileName fName
+        (
+            IOobject
+            (
+                "points",
+                mesh.time().constant(),
+                polyMesh::meshSubDir,
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
+            ).typeFilePath<pointIOField>()
+        );
+
         FatalErrorInFunction
             << "Number of points in mesh " << mesh.nPoints()
             << " differs from number of points " << points0_.size()
-            << " read from file "
-            <<  typeFilePath<pointIOField>
-                (
-                    IOobject
-                    (
-                        "points",
-                        mesh.time().constant(),
-                        polyMesh::meshSubDir,
-                        mesh,
-                        IOobject::MUST_READ,
-                        IOobject::NO_WRITE,
-                        IOobject::NO_REGISTER
-                    )
-                )
+            << " read from file " << fName << nl
             << exit(FatalError);
     }
 }

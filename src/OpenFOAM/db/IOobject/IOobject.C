@@ -561,6 +561,17 @@ Foam::fileName Foam::IOobject::globalFilePath
 }
 
 
+// Foam::fileName Foam::IOobject::filePath
+// (
+//     const bool isGlobal,
+//     const word& typeName,
+//     const bool search
+// ) const
+// {
+//     return fileHandler().filePath(isGlobal, *this, typeName, search);
+// }
+
+
 void Foam::IOobject::setBad(const string& s)
 {
     if (objState_ != objectState::GOOD)

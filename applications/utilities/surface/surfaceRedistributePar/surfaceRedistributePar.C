@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
     );
 
     // Look for file (using searchableSurface rules)
-    const fileName actualPath(typeFilePath<searchableSurface>(io));
+    const fileName actualPath(io.typeFilePath<searchableSurface>());
     fileName localPath(actualPath);
     localPath.replace(runTime.rootPath() + '/', "");
 

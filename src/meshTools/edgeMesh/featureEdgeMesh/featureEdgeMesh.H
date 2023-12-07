@@ -102,12 +102,11 @@ public:
 };
 
 
-//- Template function for obtaining global status
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Global file type for featureEdgeMesh
 template<>
-inline bool typeGlobal<featureEdgeMesh>()
-{
-    return true;
-}
+struct is_globalIOobject<featureEdgeMesh> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

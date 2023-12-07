@@ -105,6 +105,7 @@ SourceFiles
 #include "InfoProxy.H"
 #include "IOobjectOption.H"
 #include "IOstreamOption.H"
+#include <type_traits>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -195,6 +196,19 @@ private:
 
         //- Construct from registry, io options. Without name, instance, local
         IOobject(const objectRegistry& registry, IOobjectOption ioOpt);
+
+        //- Read header and check its info.
+        //  Optionally checks headerClassName against the type-name.
+        //  When search is false, simply use the current instance,
+        //  otherwise search previous instances.
+        bool readAndCheckHeader
+        (
+            const bool isGlobal,
+            const word& typeName,
+            const bool checkType = true,
+            const bool search = true,
+            const bool verbose = true
+        );
 
 
 protected:
@@ -621,21 +635,41 @@ public:
         //  Saves the header content in the given dictionary.
         bool readHeader(dictionary& headerDict, Istream& is);
 
-        //- Read header (uses typeFilePath to find file) and check its info.
-        //  Optionally checks headerClassName against the type-name.
-        //  When search is false, simply use the current instance,
-        //  otherwise search previous instances.
+        //- Read header (respects is_globalIOobject trait) and check its info.
         template<class Type>
         bool typeHeaderOk
         (
+            //! Check headerClassName against the type-name
             const bool checkType = true,
+            //! Also search previous instances if not found at current instance
             const bool search = true,
+            //! Report any check-type failures
             const bool verbose = true
         );
+
+        //- Call localFilePath or globalFilePath for given type
+        //- depending on its is_globalIOobject trait.
+        template<class Type>
+        fileName typeFilePath(const bool search = true) const;
 
         //- Helper: warn that type does not support re-reading
         template<class Type>
         void warnNoRereading() const;
+
+        //- Read header (localFilePath only) with optional searching
+        template<>
+        bool typeHeaderOk<void>
+        (
+            //! ignored for \c void
+            const bool checkType,
+            const bool search,
+            //! ignored for \c void
+            const bool verbose
+        );
+
+        //- Call localFilePath for \c void type
+        template<>
+        fileName typeFilePath<void>(const bool search) const;
 
 
     // Writing
@@ -701,25 +735,9 @@ inline bool IOobject::isHeaderClass<void>() const
 }
 
 
-//- Template function for obtaining global vs. local status
+//- Trait for specifying global vs. local file types
 template<class T>
-inline bool typeGlobal()
-{
-    return false;
-}
-
-
-//- Template function for obtaining local or global filePath
-template<class T>
-inline fileName typeFilePath(const IOobject& io, const bool search = true)
-{
-    return
-    (
-        typeGlobal<T>()
-      ? io.globalFilePath(T::typeName, search)
-      : io.localFilePath(T::typeName, search)
-    );
-}
+struct is_globalIOobject : std::false_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

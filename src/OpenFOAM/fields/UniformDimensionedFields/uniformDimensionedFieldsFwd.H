@@ -73,40 +73,6 @@ typedef
     uniformDimensionedTensorField;
 
 
-// Global file status
-
-template<>
-inline bool typeGlobal<uniformDimensionedLabelField>()
-{
-    return true;
-}
-template<>
-inline bool typeGlobal<uniformDimensionedScalarField>()
-{
-    return true;
-}
-template<>
-inline bool typeGlobal<uniformDimensionedVectorField>()
-{
-    return true;
-}
-template<>
-inline bool typeGlobal<uniformDimensionedSphericalTensorField>()
-{
-    return true;
-}
-template<>
-inline bool typeGlobal<uniformDimensionedSymmTensorField>()
-{
-    return true;
-}
-template<>
-inline bool typeGlobal<uniformDimensionedTensorField>()
-{
-    return true;
-}
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam

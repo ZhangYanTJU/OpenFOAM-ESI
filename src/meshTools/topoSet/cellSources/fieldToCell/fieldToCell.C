@@ -203,7 +203,7 @@ void Foam::fieldToCell::applyToSet
         // Note: cannot use volScalarField::typeName since that would
         //    introduce linkage problems (finiteVolume needs meshTools)
 
-        IFstream str(typeFilePath<labelIOList>(fieldObject));
+        IFstream str(fieldObject.typeFilePath<labelIOList>());
 
         // Read as dictionary
         fieldDictionary fieldDict(fieldObject, fieldObject.headerClassName());
@@ -217,7 +217,7 @@ void Foam::fieldToCell::applyToSet
         // Note: cannot use volVectorField::typeName since that would
         //    introduce linkage problems (finiteVolume needs meshTools)
 
-        IFstream str(typeFilePath<labelIOList>(fieldObject));
+        IFstream str(fieldObject.typeFilePath<labelIOList>());
 
         // Read as dictionary
         fieldDictionary fieldDict(fieldObject, fieldObject.headerClassName());

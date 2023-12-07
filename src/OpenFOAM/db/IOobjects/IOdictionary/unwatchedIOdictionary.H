@@ -137,12 +137,9 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- Template function for obtaining global status
+//- Global file type for unwatchedIOdictionary
 template<>
-inline bool typeGlobal<unwatchedIOdictionary>()
-{
-    return true;
-}
+struct is_globalIOobject<unwatchedIOdictionary> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -393,12 +393,11 @@ public:
 };
 
 
-//- Template function for obtaining global status
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Global file type for searchableSurface
 template<>
-inline bool typeGlobal<searchableSurface>()
-{
-    return true;
-}
+struct is_globalIOobject<searchableSurface> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

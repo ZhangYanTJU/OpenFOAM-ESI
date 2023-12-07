@@ -29,27 +29,10 @@ License
 #include "IOMap.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
 namespace Foam
 {
     defineTemplateTypeNameAndDebug(IOMap<dictionary>, 0);
-
-    //- Template specialization for global status
-    template<>
-    bool typeGlobal<IOMap<dictionary>>()
-    {
-        return true;
-    }
-
-    //- Template specialisation for obtaining filePath
-    template<>
-    fileName typeFilePath<IOMap<dictionary>>
-    (
-        const IOobject& io,
-        const bool search
-    )
-    {
-        return io.globalFilePath(IOMap<dictionary>::typeName, search);
-    }
 }
 
 

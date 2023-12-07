@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,8 @@ License
 #include "IOobject.H"
 #include "dictionary.H"
 #include "foamVersion.H"
+#include "fileOperation.H"
+#include "Pstream.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -169,6 +171,138 @@ bool Foam::IOobject::readHeader(Istream& is)
     dictionary headerDict;
     return IOobject::readHeader(headerDict, is);
 }
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+bool Foam::IOobject::readAndCheckHeader
+(
+    const bool isGlobal,
+    const word& typeName,
+    const bool checkType,
+    const bool search,
+    const bool verbose
+)
+{
+    // Mark as not yet read. cf, IOobject::readHeader()
+    headerClassName_.clear();
+
+    // Everyone check or just master
+    const bool masterOnly
+    (
+        isGlobal
+     && (
+            IOobject::fileModificationChecking == IOobject::timeStampMaster
+         || IOobject::fileModificationChecking == IOobject::inotifyMaster
+        )
+    );
+
+    const auto& handler = Foam::fileHandler();
+
+    // Determine local status
+    bool ok = false;
+
+    if (masterOnly)
+    {
+        if (UPstream::master())
+        {
+            // Force master-only header reading
+            const bool oldParRun = UPstream::parRun(false);
+            const fileName fName
+            (
+                handler.filePath(isGlobal, *this, typeName, search)
+            );
+            ok = handler.readHeader(*this, fName, typeName);
+            UPstream::parRun(oldParRun);
+
+            if
+            (
+                ok && checkType
+             && !typeName.empty() && headerClassName_ != typeName
+            )
+            {
+                ok = false;
+                if (verbose)
+                {
+                    WarningInFunction
+                        << "Unexpected class name \"" << headerClassName_
+                        << "\" expected \"" << typeName
+                        << "\" when reading " << fName << endl;
+                }
+            }
+        }
+
+        // If masterOnly make sure all processors know about the read
+        // information. Note: should ideally be inside fileHandler...
+        Pstream::broadcasts
+        (
+            UPstream::worldComm,
+            ok,
+            headerClassName_,
+            note_
+        );
+    }
+    else
+    {
+        // All read header
+        const fileName fName
+        (
+            handler.filePath(isGlobal, *this, typeName, search)
+        );
+        ok = handler.readHeader(*this, fName, typeName);
+
+        if
+        (
+            ok && checkType
+         && !typeName.empty() && headerClassName_ != typeName
+        )
+        {
+            ok = false;
+            if (verbose)
+            {
+                WarningInFunction
+                    << "Unexpected class name \"" << headerClassName_
+                    << "\" expected \"" << typeName
+                    << "\" when reading " << fName << endl;
+            }
+        }
+    }
+
+    return ok;
+}
+
+
+// * * * * * * * * * * * * Template Specializations  * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+template<>
+bool IOobject::typeHeaderOk<void>
+(
+    const bool checkType,
+    const bool search,
+    const bool verbose
+)
+{
+    return readAndCheckHeader
+    (
+        false,      // global = false
+        word::null,
+        false,      // checkType = false (not meaningful)
+        search,
+        false       // verbose = false (not meaningful)
+    );
+}
+
+
+template<>
+fileName IOobject::typeFilePath<void>(const bool search) const
+{
+    return this->localFilePath(word::null, search);
+}
+
+} // End namespace Foam
 
 
 // ************************************************************************* //

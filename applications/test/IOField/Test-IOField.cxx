@@ -206,6 +206,22 @@ int main(int argc, char *argv[])
         Info<< "Serial: using " << sz << nl;
     }
 
+    {
+        IOobject io
+        (
+            "points",
+            mesh.time().constant(),
+            polyMesh::meshSubDir,
+            mesh
+        );
+
+        Info<< "points path: " << io.typeFilePath<labelIOList>() << nl;
+        Info<< "points path: " << io.typeFilePath<void>() << nl;
+
+        io.resetHeader("bad-points");
+        Info<< "bad path: " << io.typeFilePath<void>() << nl;
+    }
+
     IOobject io
     (
         "bla",

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,36 +23,58 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Typedef
-    Foam::globalIOLists
-
 Description
-    Typedefs for globalIOLists of primitive types. These are fully compatible
-    with 'normal' IOLists except have global filePath() scope.
+    Report global/local path for various types
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_globalIOLists_H
-#define Foam_globalIOLists_H
+#include "argList.H"
+#include "Time.H"
+#include "IOobject.H"
+#include "IOdictionary.H"
+#include "IOMap.H"
+#include "coordinateSystems.H"
+#include "faSchemes.H"
+#include "fvSchemes.H"
+#include "schemesLookup.H"
+#include "scalarIOList.H"
 
-#include "primitiveFields.H"
-#include "GlobalIOList.H"
+using namespace Foam;
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-namespace Foam
+template<class Type>
+word report()
 {
-    typedef GlobalIOList<label> labelGlobalIOList;
-    typedef GlobalIOList<scalar> scalarGlobalIOList;
-    typedef GlobalIOList<vector> vectorGlobalIOList;
-    typedef GlobalIOList<sphericalTensor> sphericalTensorGlobalIOList;
-    typedef GlobalIOList<symmTensor> symmTensorGlobalIOList;
-    typedef GlobalIOList<tensor> tensorGlobalIOList;
+    if (is_globalIOobject<Type>::value)
+    {
+        return "global";
+    }
+    else
+    {
+        return "local";
+    }
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Main program:
 
-#endif
+int main(int argc, char *argv[])
+{
+    Info<< "void: " << report<void>() << nl;
+    Info<< "IOobject: " << report<IOobject>() << nl;
+    Info<< "IOdictionary: " << report<IOdictionary>() << nl;
+    Info<< "faSchemes: " << report<faSchemes>() << nl;
+    Info<< "fvSchemes: " << report<fvSchemes>() << nl;
+    Info<< "schemesLookup: " << report<schemesLookup>() << nl;
+    Info<< "coordinateSystems: " << report<coordinateSystems>() << nl;
+    Info<< "IOMap<labelList>: " << report<IOMap<labelList>>() << nl;
+    Info<< "IOMap<dictionary>: " << report<IOMap<dictionary>>() << nl;
+
+    Info<< "\nEnd\n" << endl;
+
+    return 0;
+}
+
 
 // ************************************************************************* //

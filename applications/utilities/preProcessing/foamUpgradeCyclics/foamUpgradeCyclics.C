@@ -79,8 +79,8 @@ void rewriteBoundary
     HashTable<word>& nbrNames
 )
 {
-    Info<< "Reading boundary from " << typeFilePath<IOPtrList<entry>>(io)
-        << endl;
+    Info<< "Reading boundary from "
+        << io.typeFilePath<IOPtrList<entry>>() << nl;
 
     // Read PtrList of dictionary.
     const word oldTypeName = IOPtrList<entry>::typeName;

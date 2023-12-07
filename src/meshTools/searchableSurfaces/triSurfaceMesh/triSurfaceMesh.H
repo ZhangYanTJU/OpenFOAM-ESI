@@ -334,12 +334,11 @@ public:
 };
 
 
-//- Template function for obtaining global status
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Global file type for triSurfaceMesh
 template<>
-inline bool typeGlobal<triSurfaceMesh>()
-{
-    return true;
-}
+struct is_globalIOobject<triSurfaceMesh> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -27,10 +27,10 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "IOobject.H"
-#include "fileOperation.H"
-#include "Istream.H"
 #include "IOstreams.H"
-#include "Pstream.H"
+#include "fileOperation.H"  // legacy include
+#include "Istream.H"  // legacy include
+#include "Pstream.H"  // legacy include
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -42,78 +42,26 @@ bool Foam::IOobject::typeHeaderOk
     const bool verbose
 )
 {
-    // Mark as not yet read. cf, IOobject::readHeader()
-    headerClassName_.clear();
-
-    // Everyone check or just master
-    const bool masterOnly
+    return readAndCheckHeader
     (
-        typeGlobal<Type>()
-     && (
-            IOobject::fileModificationChecking == IOobject::timeStampMaster
-         || IOobject::fileModificationChecking == IOobject::inotifyMaster
-        )
+        is_globalIOobject<Type>::value,
+        Type::typeName,
+        checkType,
+        search,
+        verbose
     );
+}
 
-    const fileOperation& fp = Foam::fileHandler();
 
-    // Determine local status
-    bool ok = false;
-
-    if (masterOnly)
-    {
-        if (UPstream::master())
-        {
-            // Force master-only header reading
-            const bool oldParRun = UPstream::parRun(false);
-            const fileName fName(typeFilePath<Type>(*this, search));
-            ok = fp.readHeader(*this, fName, Type::typeName);
-            UPstream::parRun(oldParRun);
-
-            if (ok && checkType && headerClassName_ != Type::typeName)
-            {
-                ok = false;
-                if (verbose)
-                {
-                    WarningInFunction
-                        << "Unexpected class name \"" << headerClassName_
-                        << "\" expected \"" << Type::typeName
-                        << "\" when reading " << fName << endl;
-                }
-            }
-        }
-
-        // If masterOnly make sure all processors know about the read
-        // information. Note: should ideally be inside fileHandler...
-        Pstream::broadcasts
-        (
-            UPstream::worldComm,
-            ok,
-            headerClassName_,
-            note_
-        );
-    }
-    else
-    {
-        const fileName fName(typeFilePath<Type>(*this, search));
-
-        // All read header
-        ok = fp.readHeader(*this, fName, Type::typeName);
-
-        if (ok && checkType && headerClassName_ != Type::typeName)
-        {
-            ok = false;
-            if (verbose)
-            {
-                WarningInFunction
-                    << "Unexpected class name \"" << headerClassName_
-                    << "\" expected \"" << Type::typeName
-                    << "\" when reading " << fName << endl;
-            }
-        }
-    }
-
-    return ok;
+template<class Type>
+Foam::fileName Foam::IOobject::typeFilePath(const bool search) const
+{
+    return
+    (
+        is_globalIOobject<Type>::value
+      ? this->globalFilePath(Type::typeName, search)
+      : this->localFilePath(Type::typeName, search)
+    );
 }
 
 

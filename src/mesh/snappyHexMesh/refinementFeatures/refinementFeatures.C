@@ -71,7 +71,10 @@ void Foam::refinementFeatures::read
             IOobject::NO_REGISTER
         );
 
-        const fileName fName(typeFilePath<extendedFeatureEdgeMesh>(extFeatObj));
+        const fileName fName
+        (
+            extFeatObj.typeFilePath<extendedFeatureEdgeMesh>()
+        );
 
         if (!fName.empty() && extendedEdgeMesh::canRead(fName))
         {
@@ -105,7 +108,10 @@ void Foam::refinementFeatures::read
                 IOobject::NO_REGISTER
             );
 
-            const fileName fName(typeFilePath<featureEdgeMesh>(featObj));
+            const fileName fName
+            (
+                featObj.typeFilePath<featureEdgeMesh>()
+            );
 
             if (fName.empty())
             {

@@ -116,12 +116,9 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- Template function for obtaining global status
+//- Global file type for IOdictionary
 template<>
-inline bool typeGlobal<IOdictionary>()
-{
-    return true;
-}
+struct is_globalIOobject<IOdictionary> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

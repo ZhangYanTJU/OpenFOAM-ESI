@@ -72,7 +72,7 @@ bool Foam::fileFormats::extendedEdgeMeshFormat::read
             << exit(FatalError);
     }
 
-    const fileName fName(typeFilePath<extendedFeatureEdgeMesh>(io));
+    const fileName fName(io.typeFilePath<extendedFeatureEdgeMesh>());
 
     autoPtr<IFstream> isPtr(new IFstream(fName));
     bool ok = false;

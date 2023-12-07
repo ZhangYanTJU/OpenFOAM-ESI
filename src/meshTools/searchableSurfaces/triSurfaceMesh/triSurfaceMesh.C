@@ -431,6 +431,11 @@ Foam::triSurfaceMesh::triSurfaceMesh(const IOobject& io, const readAction r)
           : io.localFilePath(typeName)
         );
 
+        // const fileName actualFile
+        // (
+        //     io.filePath(searchGlobal, typeName)
+        // );
+
         if (debug)
         {
             Pout<< "triSurfaceMesh(const IOobject& io) :"
@@ -536,6 +541,11 @@ Foam::triSurfaceMesh::triSurfaceMesh
           ? io.globalFilePath(typeName)
           : io.localFilePath(typeName)
         );
+
+        // const fileName actualFile
+        // (
+        //     io.filePath(searchGlobal, typeName)
+        // );
 
         // Reading from supplied file name instead of objectPath/filePath
         if (dict.readIfPresent("file", fName_, keyType::LITERAL))

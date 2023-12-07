@@ -1,3 +1,3 @@
-Test-IOField.C
+Test-IOField.cxx
 
 EXE = $(FOAM_USER_APPBIN)/Test-IOField

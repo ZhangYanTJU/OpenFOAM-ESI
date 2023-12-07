@@ -602,12 +602,11 @@ public:
 };
 
 
-//- Template function for obtaining global status
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Global file type for distributedTriSurfaceMesh
 template<>
-inline bool typeGlobal<distributedTriSurfaceMesh>()
-{
-    return false;
-}
+struct is_globalIOobject<distributedTriSurfaceMesh> : std::true_type {};
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
