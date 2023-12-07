@@ -117,9 +117,10 @@ protected:
         //- Update design variables
         virtual void update();
 
-        //- Compute the inverse Hessian - vector product
+        //- Compute the inverse Hessian - vector product.
         //  Input should have the size of all design variables or the active
-        //  ones, output is the size of the active design variables
+        //  ones, output is the size of the active design variables.
+        //  Can optionally received a seed diagonal matrix
         virtual tmp<scalarField> invHessianVectorProduct
         (
             const scalarField& vector
@@ -129,7 +130,8 @@ protected:
         tmp<scalarField> invHessianVectorProduct
         (
             const scalarField& vector,
-            const label counter
+            const label counter,
+            tmp<scalarField> diag = nullptr
         );
 
         //- Compute the Hessian - vector product
