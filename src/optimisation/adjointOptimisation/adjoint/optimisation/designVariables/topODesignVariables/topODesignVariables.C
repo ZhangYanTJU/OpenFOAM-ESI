@@ -571,7 +571,8 @@ void Foam::topODesignVariables::writeDesignVars()
 
 bool Foam::topODesignVariables::writeData(Ostream& os) const
 {
-    alpha_.writeEntry("alpha", os);
+    const scalarField& alpha = alpha_;
+    alpha.writeEntry("alpha", os);
 
     return true;
 }
