@@ -163,10 +163,10 @@ scalar objectivePowerDissipation::J()
         scalarField integrandZone(integrand.primitiveField(), zoneI);
 
         J_ += 0.5*gSum(integrandZone*VZone);
-        if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+        if (mesh_.foundObject<topOVariablesBase>("topOVars"))
         {
             const topOVariablesBase& vars =
-                mesh_.lookupObject<topOVariablesBase>("topoVars");
+                mesh_.lookupObject<topOVariablesBase>("topOVars");
             const volScalarField& beta = vars.beta();
             scalar porosityContr = Zero;
             for (const label cellI : zoneI)
@@ -225,10 +225,10 @@ void objectivePowerDissipation::update_dJdv()
     }
 
     // Add source from porosity dependencies
-    if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+    if (mesh_.foundObject<topOVariablesBase>("topOVars"))
     {
         const topOVariablesBase& vars =
-            mesh_.lookupObject<topOVariablesBase>("topoVars");
+            mesh_.lookupObject<topOVariablesBase>("topOVars");
         const volScalarField& beta = vars.beta();
         const scalar betaMax = vars.getBetaMax();
         for (const label zI : zones_)
@@ -314,13 +314,13 @@ void objectivePowerDissipation::update_gradDxDbMultiplier()
 
 void objectivePowerDissipation::update_dJdb()
 {
-    if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+    if (mesh_.foundObject<topOVariablesBase>("topOVars"))
     {
         scalarField& dJdb = dJdbPtr_().primitiveFieldRef();
         dJdb = Zero;
         const volVectorField& U = vars_.UInst();
         const topOVariablesBase& vars =
-            mesh_.lookupObject<topOVariablesBase>("topoVars");
+            mesh_.lookupObject<topOVariablesBase>("topOVars");
         const scalar betaMax = vars.getBetaMax();
         for (const label zI : zones_)
         {

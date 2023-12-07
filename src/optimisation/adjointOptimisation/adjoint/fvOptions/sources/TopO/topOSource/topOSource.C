@@ -73,10 +73,10 @@ Foam::fv::topOSource::getSource()
     );
     DimensionedField<scalar, volMesh>& interpolant = tinterpolant.ref();
 
-    if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+    if (mesh_.foundObject<topOVariablesBase>("topOVars"))
     {
         const topOVariablesBase& vars =
-            mesh_.lookupObject<topOVariablesBase>("topoVars");
+            mesh_.lookupObject<topOVariablesBase>("topOVars");
         vars.sourceTerm
             (interpolant, interpolation_(), betaMax_, interpolationFieldName_);
 
@@ -178,14 +178,14 @@ void Foam::fv::topOSource::postProcessSens
     if
     (
         fieldi != -1
-     && mesh_.foundObject<topOVariablesBase>("topoVars")
+     && mesh_.foundObject<topOVariablesBase>("topOVars")
     )
     {
         DebugInfo
             << "Postprocessing Brinkman sensitivities for field "
             << fieldName << endl;
         const topOVariablesBase& vars =
-            mesh_.lookupObject<topOVariablesBase>("topoVars");
+            mesh_.lookupObject<topOVariablesBase>("topOVars");
         vars.sourceTermSensitivities
         (
             sens,
@@ -205,10 +205,10 @@ bool Foam::fv::topOSource::read(const dictionary& dict)
         fieldNames_ = coeffs_.get<wordList>("names");
         interpolationFieldName_ = coeffs_.get<word>("interpolationField");
         applied_.setSize(fieldNames_.size(), false);
-        if (mesh_.foundObject<topOVariablesBase>("topoVars"))
+        if (mesh_.foundObject<topOVariablesBase>("topOVars"))
         {
             const topOVariablesBase& vars =
-                mesh_.lookupObject<topOVariablesBase>("topoVars");
+                mesh_.lookupObject<topOVariablesBase>("topOVars");
             betaMax_ =
                 coeffs_.getOrDefault<scalar>("betaMax", vars.getBetaMax());
         }
