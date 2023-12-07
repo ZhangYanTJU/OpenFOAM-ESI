@@ -174,16 +174,11 @@ Foam::updateMethod::inv(SquareMatrix<scalar> A)
 
 Foam::scalar Foam::updateMethod::globalSum(const scalarField& field)
 {
-    scalar value(0);
     if (globalSum_)
     {
-        value = gSum(field);
+        return gSum(field);
     }
-    else
-    {
-        value = sum(field);
-    }
-    return value;
+    return sum(field);
 }
 
 

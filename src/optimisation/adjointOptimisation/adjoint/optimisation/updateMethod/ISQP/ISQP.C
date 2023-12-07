@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 PCOpt/NTUA
-    Copyright (C) 2020-2021 FOSS GP
+    Copyright (C) 2020-2023 PCOpt/NTUA
+    Copyright (C) 2020-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(ISQP, 0);
+    defineTypeNameAndDebug(ISQP, 2);
     addToRunTimeSelectionTable
     (
         updateMethod,
@@ -48,6 +48,15 @@ namespace Foam
         dictionary
     );
 }
+
+
+const Foam::Enum<Foam::ISQP::preconditioners>
+Foam::ISQP::preconditionerNames
+({
+    { preconditioners::diag, "diag" },
+    { preconditioners::invHessian, "invHessian" },
+    { preconditioners::ShermanMorrison, "ShermanMorrison" }
+});
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -208,6 +217,7 @@ void Foam::ISQP::zeroUpdates()
 
 void Foam::ISQP::solveDeltaPEqn()
 {
+    addProfiling(ISQP, "ISQP::solveDeltaPEqn");
     // Explicit part of the right hand side of the deltaX equation
     scalarField FDx(-resFL());
     if (includeBoundConstraints_)
@@ -233,29 +243,6 @@ void Foam::ISQP::solveDeltaPEqn()
         }
     }
     CGforDeltaP(FDx);
-    /*
-  //Info<< "FDx::" << FDx << endl;
-  //Info<< "invHFL::" << invHFL() << endl;
-
-    // Loop to obtain deltaX. Part of the LHS is treated explicitly, to
-    // avoid solving a (potentially) dense system with the size of the design
-    // variables
-    scalarField rhs(computeRHSForDeltaX(FDx));
-    scalar res(sqrt(globalSum(magSqr(deltaP_ - rhs))));
-    scalar resInit(res);
-    label iter(0);
-    do
-    {
-        deltaP_ = rhs;
-        rhs = computeRHSForDeltaX(FDx);
-        res = sqrt(globalSum(magSqr(deltaP_ - rhs)));
-        DebugInfo
-            << "Solving for deltaX, Initial Residual " << resInit
-            << ", Final Residual " << res << endl;
-        resInit = res;
-    } while (iter++ < maxDxIters_ && res > 1.e-07);
-//  Info<< "deltaX solution " << deltaP_ << endl;
-//  */
 }
 
 
@@ -302,9 +289,10 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::computeRHSForDeltaX
 
 void Foam::ISQP::CGforDeltaP(const scalarField& FDx)
 {
-    scalarField precond(deltaPDiagPreconditioner());
-    scalarField r(FDx - DeltaPMatrixVectorProduct(deltaP_));
-    scalarField z(precond*r);
+    addProfiling(ISQP, "ISQP::CGforDeltaP");
+    autoPtr<scalarField> precon(nullptr);
+    scalarField r(FDx - matrixVectorProduct(deltaP_));
+    scalarField z(preconVectorProduct(r, precon));
     scalarField p(z);
     scalar res(sqrt(globalSum(r*r)));
     scalar resInit(res);
@@ -313,17 +301,17 @@ void Foam::ISQP::CGforDeltaP(const scalarField& FDx)
     label iter(0);
     do
     {
-        scalarField Ap(DeltaPMatrixVectorProduct(p));
+        scalarField Ap(matrixVectorProduct(p));
         scalar a = rz/globalSum(p*Ap);
         deltaP_ += a*p;
         r -= a*Ap;
         res = sqrt(globalSum(r*r));
-        z = precond*r;
+        z = preconVectorProduct(r, precon);
         rz = globalSum(r*z);
         scalar beta = rz/rzOld;
         p = z + beta*p;
         rzOld = rz;
-    } while (iter++ < maxDxIters_ && res > 1.e-09);
+    } while (iter++ < maxDxIters_ && res > relTol_*resInit);
     DebugInfo
         << "CG, Solving for deltaP, Initial Residual " << resInit
         << ", Final Residual " << res
@@ -331,42 +319,13 @@ void Foam::ISQP::CGforDeltaP(const scalarField& FDx)
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::ISQP::deltaPDiagPreconditioner()
-{
-    tmp<scalarField> tpreconditioner(HessianDiag());
-  //tmp<scalarField> tpreconditioner(SR1HessianDiag());
-    scalarField& preconditioner = tpreconditioner.ref();
-
-    // Part related to the constraints
-    forAll(constraintDerivatives_, cI)
-    {
-        scalarField cDerivs(constraintDerivatives_[cI], activeDesignVars_);
-        scalar mult(gs_[cI]/lamdas_[cI]);
-        if (includeExtraVars_)
-        {
-            mult += extraVars_()[cI]/z_()[cI];
-        }
-        preconditioner += sqr(cDerivs)/mult;
-    }
-
-    if (includeBoundConstraints_)
-    {
-        preconditioner += lTilda_()/ls_() + uTilda_()/us_();
-    }
-
-    preconditioner = 1./preconditioner;
-
-    return tpreconditioner;
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::ISQP::DeltaPMatrixVectorProduct
+Foam::tmp<Foam::scalarField> Foam::ISQP::matrixVectorProduct
 (
     const scalarField& vector
 )
 {
+    addProfiling(ISQP, "ISQP::MatrixVectorProduct");
     tmp<scalarField> tAp(HessianVectorProduct(vector));
-  //tmp<scalarField> tAp(SR1HessianVectorProduct(vector));
     scalarField& Ap = tAp.ref();
     scalarField GsLAv(cValues_.size(), Zero);
     forAll(constraintDerivatives_, cI)
@@ -403,6 +362,134 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::DeltaPMatrixVectorProduct
 }
 
 
+Foam::tmp<Foam::scalarField> Foam::ISQP::preconVectorProduct
+(
+    const scalarField& vector,
+    autoPtr<scalarField>& precon
+)
+{
+    addProfiling(ISQP, "ISQP::preconVectorProduct");
+    if (preconType_ == preconditioners::diag)
+    {
+        if (!precon)
+        {
+            precon.reset(diagPreconditioner().ptr());
+        }
+        return precon()*vector;
+    }
+    else if (preconType_ == preconditioners::invHessian)
+    {
+        return invHessianVectorProduct(vector);
+    }
+    else if (preconType_ == preconditioners::ShermanMorrison)
+    {
+        return ShermanMorrisonPrecon(vector);
+    }
+    return nullptr;
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::ISQP::diagPreconditioner()
+{
+    addProfiling(ISQP, "ISQP::deltaPDiagPreconditioner");
+    tmp<scalarField> tpreconditioner(HessianDiag());
+    scalarField& preconditioner = tpreconditioner.ref();
+
+    // Part related to the constraints
+    forAll(constraintDerivatives_, cI)
+    {
+        scalarField cDerivs(constraintDerivatives_[cI], activeDesignVars_);
+        scalar mult(gs_[cI]/lamdas_[cI]);
+        if (includeExtraVars_)
+        {
+            mult += extraVars_()[cI]/z_()[cI];
+        }
+        preconditioner += sqr(cDerivs)/mult;
+    }
+
+    if (includeBoundConstraints_)
+    {
+        preconditioner += lTilda_()/ls_() + uTilda_()/us_();
+    }
+
+    preconditioner = 1./preconditioner;
+
+    return tpreconditioner;
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::ISQP::ShermanMorrisonPrecon
+(
+    const scalarField& vector
+)
+{
+    // Recursively update the inv(LHS)*vector since the LHS consists of the
+    // L-BFGS-based Hessian, computed with rank-2 updates, and the part related
+    // to flow constraints, computed as rank-1 updates. In the inversion
+    // process, the diagonal matrix related to bound constraints is treated as
+    // the initial matrix of the L-BFGS update.
+
+    // Constribution from bound constraints, treated as the seed of the
+    // L-BFGS inverse
+    tmp<scalarField> tdiag(nullptr);
+    if (includeBoundConstraints_)
+    {
+        tdiag.reset(lTilda_()/ls_() + uTilda_()/us_());
+    }
+
+    // List of vectors to be used in the rank-1 updates related to the flow
+    // constraitns
+    PtrList<scalarField> r1Updates(cValues_.size());
+
+    forAll(constraintDerivatives_, cI)
+    {
+        const scalarField& cDerivsI = constraintDerivatives_[cI];
+        r1Updates.set(cI, new scalarField(cDerivsI, activeDesignVars_));
+    }
+    // Multipliers of the rank-1 updates
+    scalarField mult(gs_/lamdas_);
+    if (includeExtraVars_)
+    {
+        mult += extraVars_()/z_();
+    }
+
+    return
+        ShermanMorrisonRank1Update(r1Updates, vector, tdiag, mult, mult.size());
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::ISQP::ShermanMorrisonRank1Update
+(
+    const PtrList<scalarField>& r1Updates,
+    const scalarField& p,
+    const tmp<scalarField>& diag,
+    const scalarField& mult,
+    label n
+)
+{
+    auto tAp(tmp<scalarField>::New(activeDesignVars_.size(), Zero));
+    scalarField& Ap = tAp.ref();
+
+    if (n == 0)
+    {
+        Ap = invHessianVectorProduct(p, counter_, diag);
+        return tAp;
+    }
+
+    do
+    {
+        --n;
+        Ap = ShermanMorrisonRank1Update(r1Updates, p, diag, mult, n);
+        tmp<scalarField> tAv =
+            ShermanMorrisonRank1Update(r1Updates, r1Updates[n], diag, mult, n);
+        scalarField& Av = tAv.ref();
+        scalar yHs = globalSum(r1Updates[n]*Av)/mult[n];
+        Ap -= Av*globalSum(r1Updates[n]*Ap)/(1 + yHs)/mult[n];
+    } while (n > 0);
+    return tAp;
+}
+
+
 void Foam::ISQP::computeNewtonDirection()
 {
     // Zero the updates computed in the previous optimisation cycle
@@ -410,6 +497,7 @@ void Foam::ISQP::computeNewtonDirection()
 
     // Solve equation for deltaP_. The expensive part of the step. Everything
     // else can be computed based on this
+    addProfiling(ISQP, "ISQP::computeNewtonDirection");
     solveDeltaPEqn();
 
     // deltaLamda
@@ -698,7 +786,10 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::invHFL()
 
 Foam::tmp<Foam::scalarField> Foam::ISQP::resFGs()
 {
-    tmp<scalarField> tFGs(tmp<scalarField>::New(gs_ + cValues_));
+    tmp<scalarField> tFGs
+    (
+        tmp<scalarField>::New(gs_ + cValues_ - max((1 - cRed_)*cValues_, Zero))
+    );
     scalarField& FGs = tFGs.ref();
 
     forAll(constraintDerivatives_, cI)
@@ -795,6 +886,7 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::resFz()
 
 void Foam::ISQP::solveSubproblem()
 {
+    addProfiling(ISQP, "ISQP::solveSubproblem");
     zeroUpdates();
     if (includeBoundConstraints_ || !cValues_.empty())
     {
@@ -825,13 +917,14 @@ void Foam::ISQP::solveSubproblem()
         (
             iter++ < maxNewtonIters_ && (eps_ > epsMin_ || resMax > 0.9*eps_)
         );
+        Info<< "Finished solving the QP subproblem" << nl << endl;
         if (iter == maxNewtonIters_)
         {
             WarningInFunction
                 << "Iterative solution of the QP problem did not converge"
                 << endl;
         }
-        if (debug)
+        if (debug > 2)
         {
             scalarField vars(designVars_().getVars(), activeDesignVars_);
             scalarField newVars(vars + p_);
@@ -961,8 +1054,21 @@ Foam::ISQP::ISQP
         coeffsDict(type).getOrDefault<label>("maxLineSearchIters", 10)
     ),
     maxDxIters_(coeffsDict(type).getOrDefault<label>("maxDpIters", 1000)),
+    relTol_(coeffsDict(type).getOrDefault<scalar>("relTol", 0.01)),
+    preconType_
+    (
+        preconditionerNames.getOrDefault
+        (
+            "preconditioner", coeffsDict(type), preconditioners::diag
+        )
+    ),
+    cRed_
+        (coeffsDict(type).getOrDefault<scalar>("targetConstraintReduction", 1)),
     meritFunctionFile_(nullptr)
 {
+    Info<< "Preconditioner type of the SQP subproblem is ::"
+        << preconditionerNames.names()[preconType_]
+        << endl;
     // Always apply damping of s in ISQP
     useYDamping_ = true;
     useSDamping_ = false;

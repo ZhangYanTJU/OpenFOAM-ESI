@@ -174,29 +174,36 @@ Foam::tmp<Foam::scalarField>
 Foam::LBFGS::invHessianVectorProduct
 (
     const scalarField& vector,
-    const label counter
+    const label counter,
+    tmp<scalarField> diag
 )
 {
     // Sanity checks
     tmp<scalarField> tq(tmp<scalarField>::New(activeDesignVars_.size(), Zero));
     scalarField& q = tq.ref();
-    if (vector.size() == designVars_().getVars().size())
+    label nv = designVars_().getVars().size();
+    label nav = activeDesignVars_.size();
+    if (vector.size() == nv)
     {
         q.map(vector, activeDesignVars_);
     }
-    else if (vector.size() == activeDesignVars_.size())
+    else if (vector.size() == nav)
     {
         q = vector;
     }
     else
     {
         FatalErrorInFunction
-            << "Size of input vector is equal to neither the number of "
-            << " design variabes nor that of the active design variables"
+            << "Size of input vector "
+            << "(" << vector.size() << ") "
+            << "is equal to neither the number of design variabes "
+            << "(" << nv << ")"
+            << " nor that of the active design variables "
+            << "(" << nav << ")"
             << exit(FatalError);
     }
 
-    if (counter != 0)
+    if (counter)
     {
         // L-BFGS two loop recursion
         //~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,16 +213,21 @@ Foam::LBFGS::invHessianVectorProduct
         scalarField r(nSteps, 0.);
         for (label i = nLast; i > -1; --i)
         {
-          //Info << "Y " << y_[i] << endl;
-          //Info << "S " << s_[i] << endl;
             r[i] = 1./globalSum(y_[i]*s_[i]);
             a[i] = r[i]*globalSum(s_[i]*q);
             q -= a[i]*y_[i];
         }
 
         scalar gamma =
-            globalSum(y_[nLast]*s_[nLast])/globalSum(y_[nLast]*y_[nLast]);
-        q *= gamma;
+            globalSum(y_[nLast]*y_[nLast])/globalSum(y_[nLast]*s_[nLast]);
+        if (diag)
+        {
+            q /= (gamma + diag());
+        }
+        else
+        {
+            q /= gamma;
+        }
 
         scalarField b(activeDesignVars_.size(), Zero);
         for (label i = 0; i < nSteps; ++i)
@@ -223,6 +235,10 @@ Foam::LBFGS::invHessianVectorProduct
             b = r[i]*globalSum(y_[i]*q);
             q += s_[i]*(a[i] - b);
         }
+    }
+    else if (diag)
+    {
+        q /= (1 + diag());
     }
 
     return tq;
@@ -243,6 +259,7 @@ Foam::LBFGS::HessianVectorProduct
     const label counter
 )
 {
+    addProfiling(LBFGS, "LBFGS::HessianVectorProduct");
     // Sanity checks
     tmp<scalarField> tq(tmp<scalarField>::New(activeDesignVars_.size(), Zero));
     scalarField& q = tq.ref();
@@ -273,7 +290,7 @@ Foam::LBFGS::HessianVectorProduct
 
         // Product of the last matrix on the right with the input vector
         scalarField SKsource(2*nSteps, Zero);
-        for(label i = 0; i < nSteps; ++i)
+        for (label i = 0; i < nSteps; ++i)
         {
             SKsource[i] = delta*globalSum(s_[i]*source);
             SKsource[i + nSteps] = globalSum(y_[i]*source);
@@ -374,11 +391,11 @@ Foam::tmp<Foam::scalarField> Foam::LBFGS::HessianDiag()
 
         // Product of the inverse of the middle matrix with the right vector
         List<scalarField> MR(2*nSteps, scalarField(n, Zero));
-        for(label k = 0; k < n; ++k)
+        for (label k = 0; k < n; ++k)
         {
-            for(label i = 0; i < 2*nSteps; ++i)
+            for (label i = 0; i < 2*nSteps; ++i)
             {
-                for(label j = 0; j < nSteps; ++j)
+                for (label j = 0; j < nSteps; ++j)
                 {
                     MR[i][k] +=
                         invM[i][j]*delta*s_[j][k]
@@ -390,9 +407,9 @@ Foam::tmp<Foam::scalarField> Foam::LBFGS::HessianDiag()
         // Part of the Hessian diagonal computed by the multiplication
         // of the above matrix with the left matrix of the recursive Hessian
         // reconstruction
-        for(label k = 0; k < n; ++k)
+        for (label k = 0; k < n; ++k)
         {
-            for(label j = 0; j < nSteps; ++j)
+            for (label j = 0; j < nSteps; ++j)
             {
                 diag[k] -=
                     delta*s_[j][k]*MR[j][k] + y_[j][k]*MR[j + nSteps][k];
@@ -448,7 +465,7 @@ Foam::LBFGS::SR1HessianVectorProduct
 
         // Product of the last matrix on the right with the input vector
         scalarField YBSsource(nSteps, Zero);
-        for(label i = 0; i < nSteps; ++i)
+        for (label i = 0; i < nSteps; ++i)
         {
             YBSsource[i] = globalSum((y_[i] - delta*s_[i])*source);
         }
@@ -544,11 +561,11 @@ Foam::tmp<Foam::scalarField> Foam::LBFGS::SR1HessianDiag()
 
         // Product of the inverse of the middle matrix with the right vector
         List<scalarField> MR(nSteps, scalarField(n, Zero));
-        for(label k = 0; k < n; ++k)
+        for (label k = 0; k < n; ++k)
         {
-            for(label i = 0; i < nSteps; ++i)
+            for (label i = 0; i < nSteps; ++i)
             {
-                for(label j = 0; j < nSteps; ++j)
+                for (label j = 0; j < nSteps; ++j)
                 {
                     MR[i][k] += invM[i][j]*(y_[j][k] - delta*s_[j][k]);
                 }
@@ -558,9 +575,9 @@ Foam::tmp<Foam::scalarField> Foam::LBFGS::SR1HessianDiag()
         // Part of the Hessian diagonal computed by the multiplication
         // of the above matrix with the left matrix of the recursive Hessian
         // reconstruction
-        for(label k = 0; k < n; ++k)
+        for (label k = 0; k < n; ++k)
         {
-            for(label j = 0; j < nSteps; ++j)
+            for (label j = 0; j < nSteps; ++j)
             {
                 diag[k] += (y_[j][k] - delta*s_[j][k])*MR[j][k];
             }

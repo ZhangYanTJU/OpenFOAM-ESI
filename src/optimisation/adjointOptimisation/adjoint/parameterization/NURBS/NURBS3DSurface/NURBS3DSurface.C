@@ -1479,7 +1479,7 @@ scalar NURBS3DSurface::lengthU
     }
 
     // Integrate.
-    for(label uI = 0; uI<(uLenSize - 1); uI++)
+    for (label uI = 0; uI<(uLenSize - 1); uI++)
     {
         const label ptI((uIStart+uI)*nVPts_ + vIConst);
 
@@ -1512,7 +1512,7 @@ scalar NURBS3DSurface::lengthU
     }
 
     // Integrate.
-    for(label uI = 0; uI<(nPts - 1); uI++)
+    for (label uI = 0; uI<(nPts - 1); uI++)
     {
         uLength +=
             0.5*(mag(dxdu[uI + 1]) + mag(dxdu[uI]))*(localU[uI + 1]-localU[uI]);
@@ -1556,7 +1556,7 @@ scalar NURBS3DSurface::lengthV
     }
 
     // Integrate.
-    for(label vI = 0; vI<(vLenSize - 1); vI++)
+    for (label vI = 0; vI<(vLenSize - 1); vI++)
     {
         const label ptI((uIConst)*nVPts_ + (vIStart + vI));
 
@@ -1589,7 +1589,7 @@ scalar NURBS3DSurface::lengthV
     }
 
     // Integrate.
-    for(label vI = 0; vI<(nPts - 1); vI++)
+    for (label vI = 0; vI<(nPts - 1); vI++)
     {
         vLength +=
             0.5*(mag(dxdv[vI + 1]) + mag(dxdv[vI]))*(localV[vI + 1]-localV[vI]);
@@ -1979,7 +1979,7 @@ scalar NURBS3DSurface::lengthDerivativeU
     }
 
     // Integrate.
-    for(label uI=0; uI<(nPts-1); uI++)
+    for (label uI=0; uI<(nPts-1); uI++)
     {
         ulDerivative +=
             0.5
@@ -2017,7 +2017,7 @@ scalar NURBS3DSurface::lengthDerivativeV
     }
 
     // Integrate.
-    for(label vI=0; vI<(nPts-1); vI++)
+    for (label vI=0; vI<(nPts-1); vI++)
     {
         vlDerivative +=
             0.5
@@ -2046,9 +2046,9 @@ const labelList& NURBS3DSurface::getBoundaryCPIDs()
 
         // v-constant cps
         label bID(0);
-        for(label vI=0; vI<vNCPs; vI+=vNCPs-1)
+        for (label vI=0; vI<vNCPs; vI+=vNCPs-1)
         {
-            for(label uI=0; uI<uNCPs; uI++)
+            for (label uI=0; uI<uNCPs; uI++)
             {
                 const label CPI(vI*uNCPs + uI);
                 whichBoundaryCPID_()[CPI] = bID;
@@ -2056,10 +2056,10 @@ const labelList& NURBS3DSurface::getBoundaryCPIDs()
             }
         }
         // u-constant cps
-        for(label uI=0; uI<uNCPs; uI+=uNCPs-1)
+        for (label uI=0; uI<uNCPs; uI+=uNCPs-1)
         {
             // corner CPS already accounted for
-            for(label vI=1; vI<vNCPs-1; vI++)
+            for (label vI=1; vI<vNCPs-1; vI++)
             {
                 const label CPI(vI*uNCPs + uI);
                 whichBoundaryCPID_()[CPI] = bID;

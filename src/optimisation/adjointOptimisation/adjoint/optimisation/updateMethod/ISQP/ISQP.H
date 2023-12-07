@@ -34,14 +34,17 @@ Description
     solved using the interior point method (hence the I in the classe name,
     which is not standard in the terminology used in the literature). The
     (potentially dense) linear system formulated by the interior point method
-    is solved using Conjugate Gradient with a diagonal preconditioner, using
-    matrix-vector products to avoid storing the LHS matrix.
+    is solved using Conjugate Gradient and a choice from three preconditioners
+    (diagonal, inverse Hessian, Sherman-Morrison), using matrix-vector products
+    to avoid storing the LHS matrix.
 
     Bound constraints on the design variables will also be included, if set by
     the designVariables known by the updateMethod. If the QP problem is
     infeasible, the algorithm can still be used by setting includeExtraVars_
     to true, to allow a computation of an update, despite not being able to
-    satisfy all the constraints of the QP problem.
+    satisfy all the constraints of the QP problem.  Alternatively,
+    targetConstraintReduction can be set to a number lower than 1 to help with
+    the feasibility of the dual problem.
 
 
 SourceFiles
@@ -69,6 +72,18 @@ class ISQP
     public LBFGS,
     public SQPBase
 {
+public:
+
+        //- Enumeration of preconditioners for the subproblem
+        enum preconditioners
+        {
+            diag, invHessian, ShermanMorrison
+        };
+
+        //- Names of preconditioners for the subproblem
+        static const Enum<preconditioners> preconditionerNames;
+
+
 protected:
 
     // Protected data
@@ -91,10 +106,6 @@ protected:
         scalarField p_;
 
         // Lagrange multipliers and slack variables
-
-            //- Lagrange multipliers for the inequality constraints
-            //  Inheritated from SQPBase
-            //scalarField lamdas_;
 
             //- Slack variables for the inequality constraints
             scalarField gs_;
@@ -154,6 +165,16 @@ protected:
         //- Maxmimum number of iterations for the deltaX equation
         label maxDxIters_;
 
+        //- Relative tolerance of the CG solver, solving for deltaP_
+        scalar relTol_;
+
+        //- Which preconditioner to use for the solution of the subproblem
+        label preconType_;
+
+        //- Percentage reduction for the constraints.
+        //  Can be used to relax QP problems with no feasible points
+        scalar cRed_;
+
         //- File including the l1 merit function
         autoPtr<OFstream> meritFunctionFile_;
 
@@ -193,18 +214,43 @@ protected:
             void solveDeltaPEqn();
 
             //- Compute the RHS for the deltaX equation
+            //  Currently not in use
             tmp<scalarField> computeRHSForDeltaX(const scalarField& FDx);
 
             //- CG algorithm for the solution of the deltaP eqn
             void CGforDeltaP(const scalarField& FDx);
 
-            //- Diagonal preconditioner of the deltaP eqn
-            tmp<scalarField> deltaPDiagPreconditioner();
-
             //- Procudt of the LHS of the deltaP eqn with a vector
-            tmp<scalarField> DeltaPMatrixVectorProduct
+            tmp<scalarField> matrixVectorProduct
             (
                 const scalarField& vector
+            );
+
+            //- Preconditioner-vector product for CG
+            //  In case a diagonal preconditioner is used, it is stored in
+            //  precon for all CG iterations
+            tmp<scalarField> preconVectorProduct
+            (
+                const scalarField& vector,
+                autoPtr<scalarField>& precon
+            );
+
+            //- Diagonal preconditioner of the deltaP eqn
+            tmp<scalarField> diagPreconditioner();
+
+            //- Use the Sherman-Morrison formula to compute the matrix-free
+            //- product of the approximate inverse of the LHS with a vector
+            tmp<scalarField> ShermanMorrisonPrecon(const scalarField& vector);
+
+            //- Recursive (naive) implementation of the rank-1 update
+            //  WIP, efficient for up to 2 flow-related constraints
+            tmp<scalarField> ShermanMorrisonRank1Update
+            (
+                const PtrList<scalarField>& r1Updates,
+                const scalarField& p,
+                const tmp<scalarField>& diag,
+                const scalarField& mult,
+                label n
             );
 
             //- Perform line search and return max residual corresponding to
