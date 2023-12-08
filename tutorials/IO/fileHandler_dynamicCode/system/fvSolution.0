@@ -18,8 +18,8 @@ solvers
 {
     p
     {
-        solver          GAMG;
-        smoother        symGaussSeidel;
+        solver          PCG;
+        preconditioner  DIC;
         tolerance       1e-06;
         relTol          0.05;
     }

@@ -75,7 +75,7 @@ runTimeModifiable true;
 
 functions
 {
-    fileUpdate
+    solverControls
     {
         type                timeActivatedFileUpdate;
         libs                (utilityFunctionObjects);
@@ -89,6 +89,22 @@ functions
             ( 0.02  "<system>/solverControls.5" )
         );
     }
+
+    fvSolution
+    {
+        type                timeActivatedFileUpdate;
+        libs                (utilityFunctionObjects);
+        writeControl        timeStep;
+        writeInterval       1;
+        fileToUpdate        "<system>/fvSolution";
+
+        timeVsFile
+        (
+            (-1     "<system>/fvSolution.0" )
+            ( 0.02  "<system>/fvSolution.5" )
+        );
+    }
+
 
     // Wait a bit to make runTimeModifiable work.
     //  - see also fileModificationSkew

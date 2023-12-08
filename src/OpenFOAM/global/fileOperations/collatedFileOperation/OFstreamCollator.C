@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -361,10 +361,13 @@ bool Foam::OFstreamCollator::write
     off_t totalSize = 0;
     label maxLocalSize = 0;
     {
-        for (const label recvSize : recvSizes)
+        if (UPstream::master(localComm_))
         {
-            totalSize += recvSize;
-            maxLocalSize = max(maxLocalSize, recvSize);
+            for (const label recvSize : recvSizes)
+            {
+                totalSize += recvSize;
+                maxLocalSize = max(maxLocalSize, recvSize);
+            }
         }
         Pstream::broadcasts(localComm_, totalSize, maxLocalSize);
     }
