@@ -30,6 +30,7 @@ License
 #include "GAMGInterface.H"
 #include "processorGAMGInterface.H"
 #include "cyclicLduInterface.H"
+#include "PrecisionAdaptor.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -510,6 +511,8 @@ void Foam::GAMGAgglomeration::procAgglomerateLduAddressing
                 procBoundaryMap_[levelIndex]
             )
         );
+        const labelList localSizes = data.localSizes();
+        const labelList& localStarts = data.offsets();
 
         // Make space
         procBoundaryMap_[levelIndex].setSize(procIDs.size());
@@ -520,9 +523,10 @@ void Foam::GAMGAgglomeration::procAgglomerateLduAddressing
         UPstream::scatter
         (
             data.values().cdata(),
-            data.localSizes(),
-            data.offsets(),
 
+            // Pass as List<int> for MPI
+            ConstPrecisionAdaptor<int, label, List>(localSizes).cref(),
+            ConstPrecisionAdaptor<int, label, List>(localStarts).cref(),
 
             bMap.data(),
             bMap.size(),
