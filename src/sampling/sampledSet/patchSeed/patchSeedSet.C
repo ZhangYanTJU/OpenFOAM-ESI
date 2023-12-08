@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,13 +28,12 @@ License
 
 #include "patchSeedSet.H"
 #include "polyMesh.H"
-#include "addToRunTimeSelectionTable.H"
 #include "treeBoundBox.H"
 #include "treeDataFace.H"
-#include "Time.H"
-#include "meshTools.H"
 #include "mappedPatchBase.H"
 #include "indirectPrimitivePatch.H"
+#include "triangulatedPatch.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -47,8 +46,10 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::patchSeedSet::calcSamples
+void Foam::patchSeedSet::calcPatchSamples
 (
+    const label nAvailable,
+    const label nPatchPoints,
     DynamicList<point>& samplingPts,
     DynamicList<label>& samplingCells,
     DynamicList<label>& samplingFaces,
@@ -56,39 +57,71 @@ void Foam::patchSeedSet::calcSamples
     DynamicList<scalar>& samplingCurveDist
 )
 {
-    DebugInfo << "patchSeedSet : sampling on patches :" << endl;
+    if (nAvailable < 1)
+    {
+        return;
+    }
 
-    // Construct search tree for all patch faces.
+    Random& rndGen = *rndGenPtr_;
+
+    globalIndex globalSampleNumbers(nAvailable);
+    label nGlobalPatchPoints = returnReduce(nPatchPoints, sumOp<label>());
+
+    point pt;
+    label facei;
+    label celli;
+
+    const bool perturb = true;
+
+    for (const label patchi : patchSet_)
+    {
+        const polyPatch& pp = mesh().boundaryMesh()[patchi];
+        triangulatedPatch tp(pp, perturb);
+
+        const label np = nAvailable*pp.size()/scalar(nGlobalPatchPoints);
+        for (label i = 0; i < np; ++i)
+        {
+            tp.randomLocalPoint(rndGen, pt, facei, celli);
+
+            samplingPts.append(pt);
+            samplingCells.append(celli);
+            samplingFaces.append(pp.start() + facei);
+            samplingSegments.append(0);
+            samplingCurveDist.append(globalSampleNumbers.toGlobal(i));
+        }
+    }
+}
+
+
+void Foam::patchSeedSet::calcSelectedLocations
+(
+    const label nAvailable,
+    const label nPatchPoints,
+    DynamicList<point>& samplingPts,
+    DynamicList<label>& samplingCells,
+    DynamicList<label>& samplingFaces,
+    DynamicList<label>& samplingSegments,
+    DynamicList<scalar>& samplingCurveDist
+)
+{
+    if (nAvailable < 1)
+    {
+        return;
+    }
+
+    Random& rndGen = *rndGenPtr_;
+
+    labelList patchFaces(nPatchPoints);
     label sz = 0;
     for (const label patchi : patchSet_)
     {
         const polyPatch& pp = mesh().boundaryMesh()[patchi];
-
-        sz += pp.size();
-
-        DebugInfo << "    " << pp.name() << " size " << pp.size() << endl;
-    }
-
-    labelList patchFaces(sz);
-    sz = 0;
-    for (const label patchi : patchSet_)
-    {
-        const polyPatch& pp = mesh().boundaryMesh()[patchi];
-        forAll(pp, i)
+        forAll(pp, localFacei)
         {
-            patchFaces[sz++] = pp.start()+i;
+            patchFaces[sz++] = pp.start() + localFacei;
         }
     }
 
-
-    if (!rndGenPtr_)
-    {
-        rndGenPtr_.reset(new Random(0));
-    }
-    Random& rndGen = *rndGenPtr_;
-
-
-    if (selectedLocations_.size())
     {
         DynamicList<label> newPatchFaces(patchFaces.size());
 
@@ -98,7 +131,7 @@ void Foam::patchSeedSet::calcSamples
             //    selectedLocations
 
             // All the info for nearest. Construct to miss
-            List<mappedPatchBase::nearInfo> nearest(selectedLocations_.size());
+            List<mappedPatchBase::nearInfo> nearest(nAvailable);
 
             const indirectPrimitivePatch pp
             (
@@ -130,7 +163,7 @@ void Foam::patchSeedSet::calcSamples
                 GREAT
             );
 
-            forAll(selectedLocations_, sampleI)
+            for (label sampleI = 0; sampleI < nAvailable; ++sampleI)
             {
                 const auto& treeData = boundaryTree.shapes();
                 const point& sample = selectedLocations_[sampleI];
@@ -184,7 +217,7 @@ void Foam::patchSeedSet::calcSamples
         if (debug)
         {
             Pout<< "Found " << newPatchFaces.size()
-                << " out of " << selectedLocations_.size()
+                << " out of " << nAvailable
                 << " on local processor" << endl;
         }
 
@@ -193,13 +226,12 @@ void Foam::patchSeedSet::calcSamples
 
 
     // Shuffle and truncate if in random mode
-    label totalSize = returnReduce(patchFaces.size(), sumOp<label>());
+    const label totalSize = returnReduce(patchFaces.size(), sumOp<label>());
 
-    if (maxPoints_ < totalSize)
+    if (totalSize > nAvailable)
     {
         // Check what fraction of maxPoints_ I need to generate locally.
-        label myMaxPoints =
-            label(scalar(patchFaces.size())/totalSize*maxPoints_);
+        label myMaxPoints = scalar(patchFaces.size())/totalSize*nAvailable;
 
         labelList subset = identity(patchFaces.size());
         for (label iter = 0; iter < 4; ++iter)
@@ -210,6 +242,7 @@ void Foam::patchSeedSet::calcSamples
                 std::swap(subset[i], subset[j]);
             }
         }
+
         // Truncate
         subset.setSize(myMaxPoints);
 
@@ -239,7 +272,7 @@ void Foam::patchSeedSet::calcSamples
 
     forAll(patchFaces, i)
     {
-        label facei = patchFaces[i];
+        const label facei = patchFaces[i];
 
         // Slightly shift point in since on warped face face-diagonal
         // decomposition might be outside cell for face-centre decomposition!
@@ -249,7 +282,7 @@ void Foam::patchSeedSet::calcSamples
             facei,
             polyMesh::FACE_DIAG_TRIS
         );
-        label celli = mesh().faceOwner()[facei];
+        const label celli = mesh().faceOwner()[facei];
 
         if (info.hit())
         {
@@ -310,6 +343,59 @@ void Foam::patchSeedSet::genSamples()
     {
         write(Info);
     }
+}
+
+
+void Foam::patchSeedSet::calcSamples
+(
+    DynamicList<point>& samplingPts,
+    DynamicList<label>& samplingCells,
+    DynamicList<label>& samplingFaces,
+    DynamicList<label>& samplingSegments,
+    DynamicList<scalar>& samplingCurveDist
+)
+{
+    DebugInfo << "patchSeedSet : sampling on patches :" << endl;
+
+    if (!rndGenPtr_)
+    {
+        rndGenPtr_.reset(new Random(0));
+    }
+
+    label nPatchPoints = 0;
+    for (const label patchi : patchSet_)
+    {
+        const polyPatch& pp = mesh().boundaryMesh()[patchi];
+        nPatchPoints += pp.size();
+
+        DebugInfo << "    " << pp.name() << " size " << pp.size() << endl;
+    }
+
+    label nAvailable = min(maxPoints_, selectedLocations_.size());
+
+    calcSelectedLocations
+    (
+        nAvailable,
+        nPatchPoints,
+        samplingPts,
+        samplingCells,
+        samplingFaces,
+        samplingSegments,
+        samplingCurveDist
+    );
+
+    nAvailable = maxPoints_ - nAvailable;
+
+    calcPatchSamples
+    (
+        nAvailable,
+        nPatchPoints,
+        samplingPts,
+        samplingCells,
+        samplingFaces,
+        samplingSegments,
+        samplingCurveDist
+    );
 }
 
 

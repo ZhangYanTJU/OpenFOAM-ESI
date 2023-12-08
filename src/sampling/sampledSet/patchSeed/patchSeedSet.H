@@ -58,7 +58,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class patchSeedSet Declaration
+                        Class patchSeedSet Declaration
 \*---------------------------------------------------------------------------*/
 
 class patchSeedSet
@@ -81,6 +81,30 @@ class patchSeedSet
 
 
     // Private Member Functions
+
+        //- Determine (random) samples on patch
+        void calcPatchSamples
+        (
+            const label nAvailable,
+            const label nPatchPoints,
+            DynamicList<point>& samplingPts,
+            DynamicList<label>& samplingCells,
+            DynamicList<label>& samplingFaces,
+            DynamicList<label>& samplingSegments,
+            DynamicList<scalar>& samplingCurveDist
+        );
+
+        //- Determine samples provided by supplied points
+        void calcSelectedLocations
+        (
+            const label nAvailable,
+            const label nPatchPoints,
+            DynamicList<point>& samplingPts,
+            DynamicList<label>& samplingCells,
+            DynamicList<label>& samplingFaces,
+            DynamicList<label>& samplingSegments,
+            DynamicList<scalar>& samplingCurveDist
+        );
 
         //- Samples all points in sampleCoords.
         void calcSamples
