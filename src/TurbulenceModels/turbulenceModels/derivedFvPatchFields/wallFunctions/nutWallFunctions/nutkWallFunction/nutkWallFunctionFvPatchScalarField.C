@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016, 2019 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,6 +40,11 @@ calcNut() const
 {
     const label patchi = patch().index();
 
+    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
+    const scalar kappa = wallCoeffs_.kappa();
+    const scalar E = wallCoeffs_.E();
+    const scalar yPlusLam = wallCoeffs_.yPlusLam();
+
     const auto& turbModel = db().lookupObject<turbulenceModel>
     (
         IOobject::groupName
@@ -49,92 +54,117 @@ calcNut() const
         )
     );
 
+    const labelUList& faceCells = patch().faceCells();
+
     const scalarField& y = turbModel.y()[patchi];
 
     const tmp<volScalarField> tk = turbModel.k();
     const volScalarField& k = tk();
 
-    const tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    // Viscous sublayer contribution
+    const tmp<scalarField> tnutVis = turbModel.nu(patchi);
+    const scalarField& nutVis = tnutVis();
 
-    const scalar Cmu25 = pow025(wallCoeffs_.Cmu());
-    const scalar kappa = wallCoeffs_.kappa();
-    const scalar E = wallCoeffs_.E();
-    const scalar yPlusLam = wallCoeffs_.yPlusLam();
+    // Calculate y-plus
+    const auto yPlus = [&](const label facei) -> scalar
+    {
+        return (Cmu25*y[facei]*sqrt(k[faceCells[facei]])/nutVis[facei]);
+    };
+
+    // Inertial sublayer contribution
+    const auto nutLog = [&](const label facei) -> scalar
+    {
+        const scalar yPlusFace = yPlus(facei);
+        return
+        (
+            nutVis[facei]*yPlusFace*kappa
+          / log(max(E*yPlusFace, 1 + 1e-4))
+        );
+    };
 
     auto tnutw = tmp<scalarField>::New(patch().size(), Zero);
     auto& nutw = tnutw.ref();
 
-    forAll(nutw, facei)
+    switch (blender_)
     {
-        const label celli = patch().faceCells()[facei];
-
-        const scalar yPlus = Cmu25*y[facei]*sqrt(k[celli])/nuw[facei];
-
-        // Viscous sublayer contribution
-        const scalar nutVis = 0;
-
-        // Inertial sublayer contribution
-        const scalar nutLog =
-            nuw[facei]*(yPlus*kappa/log(max(E*yPlus, 1 + 1e-4)) - 1.0);
-
-        switch (blender_)
+        case blenderType::STEPWISE:
         {
-            case blenderType::STEPWISE:
+            forAll(nutw, facei)
             {
-                if (yPlus > yPlusLam)
+                if (yPlus(facei) > yPlusLam)
                 {
-                    nutw[facei] = nutLog;
+                    nutw[facei] = nutLog(facei);
                 }
                 else
                 {
-                    nutw[facei] = nutVis;
+                    nutw[facei] = nutVis[facei];
                 }
-                break;
             }
+            break;
+        }
 
-            case blenderType::MAX:
+        case blenderType::MAX:
+        {
+            forAll(nutw, facei)
             {
                 // (PH:Eq. 27)
-                nutw[facei] = max(nutVis, nutLog);
-                break;
+                nutw[facei] = max(nutVis[facei], nutLog(facei));
             }
+            break;
+        }
 
-            case blenderType::BINOMIAL:
+        case blenderType::BINOMIAL:
+        {
+            forAll(nutw, facei)
             {
                 // (ME:Eqs. 15-16)
                 nutw[facei] =
                     pow
                     (
-                        pow(nutVis, n_) + pow(nutLog, n_),
+                        pow(nutVis[facei], n_) + pow(nutLog(facei), n_),
                         scalar(1)/n_
                     );
-                break;
             }
+            break;
+        }
 
-            case blenderType::EXPONENTIAL:
+        case blenderType::EXPONENTIAL:
+        {
+            forAll(nutw, facei)
             {
                 // (PH:Eq. 31)
-                const scalar Gamma = 0.01*pow4(yPlus)/(1 + 5*yPlus);
+                const scalar yPlusFace = yPlus(facei);
+                const scalar Gamma = 0.01*pow4(yPlusFace)/(1 + 5*yPlusFace);
                 const scalar invGamma = scalar(1)/(Gamma + ROOTVSMALL);
 
-                nutw[facei] = nutVis*exp(-Gamma) + nutLog*exp(-invGamma);
-                break;
+                nutw[facei] =
+                    nutVis[facei]*exp(-Gamma) + nutLog(facei)*exp(-invGamma);
             }
+            break;
+        }
 
-            case blenderType::TANH:
+        case blenderType::TANH:
+        {
+            forAll(nutw, facei)
             {
                 // (KAS:Eqs. 33-34)
-                const scalar phiTanh = tanh(pow4(0.1*yPlus));
-                const scalar b1 = nutVis + nutLog;
+                const scalar nutLogFace = nutLog(facei);
+                const scalar b1 = nutVis[facei] + nutLogFace;
                 const scalar b2 =
-                    pow(pow(nutVis, 1.2) + pow(nutLog, 1.2), 1.0/1.2);
+                    pow
+                    (
+                        pow(nutVis[facei], 1.2) + pow(nutLogFace, 1.2),
+                        1.0/1.2
+                    );
+                const scalar phiTanh = tanh(pow4(0.1*yPlus(facei)));
 
                 nutw[facei] = phiTanh*b1 + (1 - phiTanh)*b2;
-                break;
             }
+            break;
         }
     }
+
+    nutw -= nutVis;
 
     return tnutw;
 }
@@ -231,8 +261,8 @@ yPlus() const
     tmp<scalarField> tkwc = k.boundaryField()[patchi].patchInternalField();
     const scalarField& kwc = tkwc();
 
-    tmp<scalarField> tnuw = turbModel.nu(patchi);
-    const scalarField& nuw = tnuw();
+    tmp<scalarField> tnutVis = turbModel.nu(patchi);
+    const scalarField& nutVis = tnutVis();
 
     tmp<scalarField> tnuEff = turbModel.nuEff(patchi);
     const scalarField& nuEff = tnuEff();
@@ -249,13 +279,13 @@ yPlus() const
     forAll(yPlus, facei)
     {
         // inertial sublayer
-        yPlus[facei] = Cmu25*y[facei]*sqrt(kwc[facei])/nuw[facei];
+        yPlus[facei] = Cmu25*y[facei]*sqrt(kwc[facei])/nutVis[facei];
 
         if (yPlusLam > yPlus[facei])
         {
             // viscous sublayer
             yPlus[facei] =
-                y[facei]*sqrt(nuEff[facei]*magGradUw[facei])/nuw[facei];
+                y[facei]*sqrt(nuEff[facei]*magGradUw[facei])/nutVis[facei];
         }
     }
 
