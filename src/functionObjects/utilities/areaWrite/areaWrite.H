@@ -75,8 +75,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef areaWrite_H
-#define areaWrite_H
+#ifndef Foam_areaWrite_H
+#define Foam_areaWrite_H
 
 #include "fvMeshFunctionObject.H"
 #include "polyMesh.H"
@@ -191,8 +191,8 @@ public:
             const dictionary& dict
         );
 
-        //- Construct for given objectRegistry and dictionary
-        //  allow the possibility to load fields from files
+        //- Construct for given objectRegistry and dictionary.
+        //- Allow the possibility to load fields from files
         areaWrite
         (
             const word& name,

@@ -148,18 +148,24 @@ bool Foam::areaWrite::read(const dictionary& dict)
 
     verbose_ = dict.getOrDefault("verbose", false);
 
+    // Registry containing all finite-area meshes on the polyMesh
+    const auto* faRegistry = faMesh::registry(mesh_);
+
     dict.readIfPresent("areas", selectAreas_);
 
     if (selectAreas_.empty())
     {
         word areaName;
+
         if (!dict.readIfPresent("area", areaName))
         {
-            wordList available = obr().sortedNames<faMesh>();
-
-            if (available.size())
+            if (faRegistry)
             {
-                areaName = available.front();
+                wordList available = faRegistry->sortedNames<faMesh>();
+                if (!available.empty())
+                {
+                    areaName = available.front();
+                }
             }
         }
 
@@ -171,7 +177,12 @@ bool Foam::areaWrite::read(const dictionary& dict)
     }
 
     // Restrict to specified meshes
-    meshes_ = obr().csorted<faMesh>(selectAreas_);
+    meshes_.clear();
+
+    if (faRegistry)
+    {
+        meshes_ = faRegistry->csorted<faMesh>(selectAreas_);
+    }
 
     dict.readEntry("fields", fieldSelection_);
     fieldSelection_.uniq();
@@ -252,7 +263,7 @@ bool Foam::areaWrite::write()
 
         selected.clear();
 
-        IOobjectList objects(0);
+        IOobjectList objects;
 
         if (loadFromFiles_)
         {
@@ -279,7 +290,7 @@ bool Foam::areaWrite::write()
         {
             if (!ListOps::found(allFields, fieldSelection_[i]))
             {
-                missed.append(i);
+                missed.push_back(i);
             }
         }
 
@@ -304,8 +315,8 @@ bool Foam::areaWrite::write()
 
             if
             (
-                fieldTypes::area.found(clsName)
-             || fieldTypes::area_internal.found(clsName)
+                fieldTypes::area.contains(clsName)
+             || fieldTypes::area_internal.contains(clsName)
             )
             {
                 nAreaFields += n;

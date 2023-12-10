@@ -68,6 +68,25 @@ Foam::word Foam::faMesh::meshSubDir = "faMesh";
 const int Foam::faMesh::quadricsFit_ = 0;  // Tuning (experimental)
 
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+const Foam::objectRegistry* Foam::faMesh::registry(const polyMesh& pMesh)
+{
+    // This will change in the near future
+    return &static_cast<const objectRegistry&>(pMesh);
+}
+
+
+const Foam::faMesh& Foam::faMesh::mesh
+(
+    const polyMesh& pMesh
+)
+{
+    // This will change in the near future
+    return pMesh.lookupObject<faMesh>("faMesh");
+}
+
+
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
 
 namespace Foam

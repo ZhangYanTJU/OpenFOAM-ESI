@@ -2108,18 +2108,12 @@ Foam::operator&
     const DimensionedField<Type, areaMesh>& psi
 )
 {
-    auto tMphi = tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    auto tMphi = GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "M&" + psi.name(),
-            psi.instance(),
-            psi.mesh().mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "M&" + psi.name(),
         psi.mesh(),
-        M.dimensions()/dimArea
+        M.dimensions()/dimArea,
+        faPatchFieldBase::extrapolatedCalculatedType()
     );
     auto& Mphi = tMphi.ref();
 
