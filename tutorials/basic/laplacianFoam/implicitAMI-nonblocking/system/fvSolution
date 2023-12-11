@@ -19,8 +19,15 @@ solvers
 {
     T
     {
-        solver          PCG;
-        preconditioner  DIC;
+        //solver          PCG;
+        //preconditioner  DIC;
+
+        //- Processor agglomeration with cyclicAMI
+        solver                  GAMG;
+        nCellsInCoarsestLevel   1;
+        smoother                GaussSeidel;
+        processorAgglomerator   masterCoarsest;
+
         tolerance       1e-06;
         relTol          0;
     }

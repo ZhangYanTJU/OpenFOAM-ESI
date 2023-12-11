@@ -9,6 +9,6 @@ runApplication blockMesh
 
 runApplication decomposePar
 
-runParallel $(getApplication)
+runParallel $(getApplication) -debug-switch GAMGAgglomeration
 
 #------------------------------------------------------------------------------

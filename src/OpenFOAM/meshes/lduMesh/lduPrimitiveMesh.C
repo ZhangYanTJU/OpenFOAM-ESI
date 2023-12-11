@@ -688,15 +688,6 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
                 else
                 {
                     // Still external (non proc) interface
-                    //FatalErrorInFunction
-                    //WarningInFunction
-                    //    << "At mesh from processor " << procIDs[procMeshI]
-                    //    << " have interface " << intI
-                    //    << " of unhandled type " << ldui.type()
-                    //    << " with size:" << ldui.faceCells().size()
-                    //    //<< exit(FatalError);
-                    //    << endl;
-
                     procToGlobal[procMeshI].append(intI);
                 }
             }
@@ -739,7 +730,6 @@ Foam::lduPrimitiveMesh::lduPrimitiveMesh
         Pout<< endl;
 
         Pout<< "Remaining interfaces:" << endl;
-        //forAllConstIters(unmergedMap, iter)
         for (const auto& iter : unmergedMap.csorted())
         {
             Pout<< "    agglom procEdge:" << iter.key() << endl;
