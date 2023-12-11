@@ -344,13 +344,18 @@ bool Foam::faMesh::init(const bool doInit)
 
 Foam::faMesh::faMesh(const polyMesh& pMesh, const Foam::zero)
 :
-    faMesh(pMesh, labelList(), static_cast<const IOobject&>(pMesh))
+    faMesh(pMesh, labelList(), static_cast<IOobjectOption>(pMesh))
 {}
 
 
 Foam::faMesh::faMesh(const faMesh& baseMesh, const Foam::zero)
 :
-    faMesh(baseMesh, labelList())
+    faMesh
+    (
+        baseMesh,
+        labelList(),
+        IOobjectOption(IOobjectOption::NO_READ, IOobjectOption::NO_WRITE)
+    )
 {}
 
 
@@ -471,7 +476,12 @@ Foam::faMesh::faMesh
     labelList&& faceLabels
 )
 :
-    faMesh(pMesh, std::move(faceLabels), static_cast<const IOobject&>(pMesh))
+    faMesh
+    (
+        pMesh,
+        std::move(faceLabels),
+        static_cast<IOobjectOption>(pMesh)
+    )
 {}
 
 
@@ -479,13 +489,13 @@ Foam::faMesh::faMesh
 (
     const polyMesh& pMesh,
     labelList&& faceLabels,
-    const IOobject& io
+    IOobjectOption ioOpt
 )
 :
     MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>(pMesh),
-    faSchemes(mesh(), io.readOpt()),
+    faSchemes(mesh(), ioOpt.readOpt()),
     edgeInterpolation(*this),
-    faSolution(mesh(), io.readOpt()),
+    faSolution(mesh(), ioOpt.readOpt()),
     faceLabels_
     (
         IOobject
@@ -553,20 +563,23 @@ Foam::faMesh::faMesh
 Foam::faMesh::faMesh
 (
     const faMesh& baseMesh,
-    labelList&& faceLabels
+    labelList&& faceLabels,
+    IOobjectOption ioOpt
 )
 :
     MeshObject<polyMesh, Foam::UpdateableMeshObject, faMesh>(baseMesh.mesh()),
     faSchemes
     (
-        mesh(),
-        static_cast<const faSchemes&>(baseMesh)
+        faMesh::thisDb(),
+        ioOpt.readOpt(),
+        static_cast<const dictionary*>(baseMesh.hasSchemes())
     ),
     edgeInterpolation(*this),
     faSolution
     (
-        mesh(),
-        static_cast<const faSolution&>(baseMesh)
+        faMesh::thisDb(),
+        ioOpt.readOpt(),
+        static_cast<const dictionary*>(baseMesh.hasSolution())
     ),
     faceLabels_
     (
@@ -739,6 +752,42 @@ Foam::faMesh::~faMesh()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+const Foam::faSchemes* Foam::faMesh::hasSchemes() const
+{
+    return static_cast<const faSchemes*>(this);
+}
+
+
+const Foam::faSolution* Foam::faMesh::hasSolution() const
+{
+    return static_cast<const faSolution*>(this);
+}
+
+
+const Foam::faSchemes& Foam::faMesh::schemes() const
+{
+    return static_cast<const faSchemes&>(*this);
+}
+
+
+Foam::faSchemes& Foam::faMesh::schemes()
+{
+    return static_cast<faSchemes&>(*this);
+}
+
+
+const Foam::faSolution& Foam::faMesh::solution() const
+{
+    return static_cast<const faSolution&>(*this);
+}
+
+
+Foam::faSolution& Foam::faMesh::solution()
+{
+    return static_cast<faSolution&>(*this);
+}
+
 
 Foam::fileName Foam::faMesh::meshDir() const
 {

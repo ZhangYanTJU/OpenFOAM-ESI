@@ -332,6 +332,27 @@ public:
             }
 
 
+        // Solution Control
+
+            //- Non-null if fvSchemes exists (can test as bool).
+            const fvSchemes* hasSchemes() const;
+
+            //- Non-null if fvSolution exists (can test as bool).
+            const fvSolution* hasSolution() const;
+
+            //- Read-access to the fvSchemes controls
+            const fvSchemes& schemes() const;
+
+            //- Read/write-access to the fvSchemes controls
+            fvSchemes& schemes();
+
+            //- Read-access to the fvSolution controls
+            const fvSolution& solution() const;
+
+            //- Read/write-access to the fvSolution controls
+            fvSolution& solution();
+
+
             // Overlap
 
                 //- Interpolate interpolationCells only

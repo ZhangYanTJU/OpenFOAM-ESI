@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -105,6 +105,19 @@ public:
         )
         :
             solution(obr, rOpt, "fvSolution", fallback)
+        {}
+
+        //- Construct for objectRegistry, readOption with the
+        //- default dictionary name ("fvSolution") and
+        //- fallback dictionary content.
+        fvSolution
+        (
+            const objectRegistry& obr,
+            IOobjectOption::readOption rOpt,
+            const dictionary& dict
+        )
+        :
+            solution(obr, rOpt, "fvSolution", &dict)
         {}
 
         //- Construct for objectRegistry with the

@@ -534,14 +534,24 @@ public:
         faMesh(const polyMesh& pMesh, const Foam::zero);
 
         //- Construct as copy (for dictionaries) and zero-sized
-        //- without boundary, using IOobject properties from polyMesh.
+        //- without boundary.
         //  Boundary is added using addFaPatches() member function
         faMesh(const faMesh& baseMesh, const Foam::zero);
 
         //- Construct as copy (for dictionaries) and faceLabels
-        //- without boundary, using IOobject properties from polyMesh.
+        //- without boundary, using read properties from baseMesh.
         //  Boundary is added using addFaPatches() member function
         faMesh(const faMesh& baseMesh, labelList&& faceLabels);
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using specified read properties.
+        //  Boundary is added using addFaPatches() member function.
+        faMesh
+        (
+            const faMesh& baseMesh,
+            labelList&& faceLabels,
+            IOobjectOption ioOpt
+        );
 
         //- Construct from components (face labels) without boundary,
         //- using IOobject properties from polyMesh.
@@ -549,14 +559,13 @@ public:
         faMesh(const polyMesh& pMesh, labelList&& faceLabels);
 
         //- Construct from components (face labels) without boundary,
-        //- using alternative IOobject properties
-        //- (primarily the readOption).
+        //- using specified read properties.
         //  Boundary is added using addFaPatches() member function.
         faMesh
         (
             const polyMesh& pMesh,
             labelList&& faceLabels,
-            const IOobject& io
+            IOobjectOption ioOpt
         );
 
         //- Construct from single polyPatch
@@ -670,6 +679,27 @@ public:
 
         //- Return parallel info (demand-driven)
         const faGlobalMeshData& globalData() const;
+
+
+    // Solution Control
+
+        //- Non-null if faSchemes exists (can test as bool).
+        const faSchemes* hasSchemes() const;
+
+        //- Non-null if faSolution exists (can test as bool).
+        const faSolution* hasSolution() const;
+
+        //- Read-access to the faSchemes controls
+        const faSchemes& schemes() const;
+
+        //- Read/write-access to the faSchemes controls
+        faSchemes& schemes();
+
+        //- Read-access to the faSolution controls
+        const faSolution& solution() const;
+
+        //- Read/write-access to the faSolution controls
+        faSolution& solution();
 
 
     // Access: Mesh size parameters

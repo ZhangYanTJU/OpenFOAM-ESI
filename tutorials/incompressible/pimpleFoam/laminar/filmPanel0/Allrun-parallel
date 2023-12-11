@@ -3,6 +3,9 @@ cd "${0%/*}" || exit                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
 #------------------------------------------------------------------------------
 
+unset fileHandler
+fileHandler="-fileHandler collated"
+
 restore0Dir
 
 runApplication blockMesh
@@ -15,19 +18,20 @@ then
 
     runApplication makeFaMesh
 
-    runApplication decomposePar
+    runApplication decomposePar $fileHandler
 
 else
 
     # Additional steps (to exercise some functionality)
 
-    runParallel $decompDict -s decompose redistributePar -decompose
+    runParallel $decompDict -s decompose redistributePar -decompose \
+        -no-finite-area $fileHandler
 
-    runParallel $decompDict makeFaMesh
+    runParallel $decompDict makeFaMesh $fileHandler
 
-    runParallel -s redistribute redistributePar -overwrite
+    runParallel -s redistribute redistributePar -overwrite $fileHandler
 fi
 
-runParallel $(getApplication)
+runParallel $(getApplication) $fileHandler
 
 #------------------------------------------------------------------------------

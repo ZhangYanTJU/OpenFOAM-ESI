@@ -485,13 +485,15 @@ Foam::fvMesh::fvMesh
     fvSchemes
     (
         static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSchemes&>(baseMesh)
+        io.readOpt(),
+        static_cast<const dictionary*>(baseMesh.hasSchemes())
     ),
     surfaceInterpolation(*this),
     fvSolution
     (
         static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSolution&>(baseMesh)
+        io.readOpt(),
+        static_cast<const dictionary*>(baseMesh.hasSolution())
     ),
     boundary_(*this),
     lduPtr_(nullptr),
@@ -533,13 +535,15 @@ Foam::fvMesh::fvMesh
     fvSchemes
     (
         static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSchemes&>(baseMesh)
+        io.readOpt(),
+        static_cast<const dictionary*>(baseMesh.hasSchemes())
     ),
     surfaceInterpolation(*this),
     fvSolution
     (
         static_cast<const objectRegistry&>(*this),
-        static_cast<const fvSolution&>(baseMesh)
+        io.readOpt(),
+        static_cast<const dictionary*>(baseMesh.hasSolution())
     ),
     boundary_(*this),
     lduPtr_(nullptr),
@@ -569,6 +573,42 @@ Foam::fvMesh::~fvMesh()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+const Foam::fvSchemes* Foam::fvMesh::hasSchemes() const
+{
+    return static_cast<const fvSchemes*>(this);
+}
+
+
+const Foam::fvSolution* Foam::fvMesh::hasSolution() const
+{
+    return static_cast<const fvSolution*>(this);
+}
+
+
+const Foam::fvSchemes& Foam::fvMesh::schemes() const
+{
+    return static_cast<const fvSchemes&>(*this);
+}
+
+
+Foam::fvSchemes& Foam::fvMesh::schemes()
+{
+    return static_cast<fvSchemes&>(*this);
+}
+
+
+const Foam::fvSolution& Foam::fvMesh::solution() const
+{
+    return static_cast<const fvSolution&>(*this);
+}
+
+
+Foam::fvSolution& Foam::fvMesh::solution()
+{
+    return static_cast<fvSolution&>(*this);
+}
+
 
 Foam::SolverPerformance<Foam::scalar> Foam::fvMesh::solve
 (
