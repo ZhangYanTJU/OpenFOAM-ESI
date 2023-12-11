@@ -412,7 +412,8 @@ void Foam::snappyLayerDriver::addLayersSinglePass
             patchIDs,
             cellNLayers,
             faceWantedThickness,
-            faceRealThickness
+            faceRealThickness,
+            layerParams
         );
 
 

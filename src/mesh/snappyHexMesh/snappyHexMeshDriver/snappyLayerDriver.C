@@ -3056,7 +3056,8 @@ void Foam::snappyLayerDriver::printLayerData
     const labelList& patchIDs,
     const labelList& cellNLayers,
     const scalarField& faceWantedThickness,
-    const scalarField& faceRealThickness
+    const scalarField& faceRealThickness,
+    const layerParameters& layerParams
 ) const
 {
     const polyBoundaryMesh& pbm = mesh.boundaryMesh();
@@ -3077,11 +3078,11 @@ void Foam::snappyLayerDriver::printLayerData
 
     Info<< nl
         << setf(ios_base::left) << setw(maxPatchNameLen) << "patch"
-        << setw(0) << " faces    layers   overall thickness" << nl
+        << setw(0) << " faces        layers        overall thickness" << nl
         << setf(ios_base::left) << setw(maxPatchNameLen) << " "
-        << setw(0) << "                   [m]       [%]" << nl
+        << setw(0) << "          target   mesh     [m]       [%]" << nl
         << setf(ios_base::left) << setw(maxPatchNameLen) << "-----"
-        << setw(0) << " -----    ------   ---       ---" << endl;
+        << setw(0) << " -----    -----    ----     ---       ---" << endl;
 
 
     forAll(patchIDs, i)
@@ -3139,6 +3140,7 @@ void Foam::snappyLayerDriver::printLayerData
         Info<< setf(ios_base::left) << setw(maxPatchNameLen)
             << pbm[patchi].name() << setprecision(3)
             << " " << setw(8) << sumSize
+            << " " << setw(8) << layerParams.numLayers()[patchi]
             << " " << setw(8) << avgLayers
             << " " << setw(8) << avgReal
             << "  " << setw(8) << 100*avgFraction
@@ -4953,10 +4955,12 @@ void Foam::snappyLayerDriver::addLayers
 
         // Exit if nothing to be added
         const label nToAdd = gSum(deltaNLayers);
+        Info<< nl
+            << "Outer iteration : " << layeri << nl
+            << "-------------------" << endl;
         if (debug)
         {
-            Info<< "Outer iteration : " << layeri
-                << " to add in current iteration : " << nToAdd << endl;
+            Info<< " Layers to add in current iteration : " << nToAdd << endl;
         }
         if (nToAdd == 0)
         {
@@ -5080,8 +5084,7 @@ void Foam::snappyLayerDriver::addLayers
         const label nTotalAdded = gSum(patchNLayers);
         if (debug)
         {
-            Info<< "Outer iteration : " << layeri
-                << " added in current iteration : " << nTotalAdded
+            Info<< nl << " Added in current iteration : " << nTotalAdded
                 << " out of : " << gSum(deltaNLayers) << endl;
         }
         if (nTotalAdded == 0)
@@ -5197,7 +5200,8 @@ void Foam::snappyLayerDriver::addLayers
                 patchIDs,
                 cellNLayers,
                 faceWantedThickness,
-                faceRealThickness
+                faceRealThickness,
+                layerParams
             );
 
 

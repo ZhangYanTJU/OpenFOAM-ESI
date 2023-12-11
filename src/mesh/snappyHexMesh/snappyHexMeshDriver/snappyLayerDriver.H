@@ -509,7 +509,8 @@ private:
                     const labelList& patchIDs,
                     const labelList& cellNLayers,
                     const scalarField& faceWantedThickness,
-                    const scalarField& faceRealThickness
+                    const scalarField& faceRealThickness,
+                    const layerParameters& layerParams
                 ) const;
 
                 //- Write cellSet,faceSet for layers
