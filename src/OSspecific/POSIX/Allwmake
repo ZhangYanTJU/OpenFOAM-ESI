@@ -14,6 +14,7 @@ then
 fi
 
 # Make object (non-shared by default)
-wmake $targetType
+# Never want/need openmp, especially for static objects
+wmake -no-openmp $targetType
 
 #------------------------------------------------------------------------------

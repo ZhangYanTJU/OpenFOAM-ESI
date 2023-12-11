@@ -27,6 +27,7 @@
 #
 # Parsed options (wmake)
 #     -debug | -debug-O[g0123]
+#     -openmp | -no-openmp
 #     -strict
 #     -q | -queue
 #     -build-root=...
@@ -88,7 +89,7 @@ USAGE
 #------------------------------------------------------------------------------
 
 unset wmakeOpt_frontend wmakeOpt_nonRecursive
-unset wmakeOpt_debug wmakeOpt_log wmakeOpt_strict wmakeOpt_queue
+unset wmakeOpt_debug wmakeOpt_log wmakeOpt_openmp wmakeOpt_strict wmakeOpt_queue
 
 for arg in "$@"
 do
@@ -184,6 +185,11 @@ do
         continue    # Argument handled, remove it
         ;;
 
+    -openmp | -no-openmp)
+        wmakeOpt_openmp="$arg"
+        continue    # Argument handled, remove it
+        ;;
+
     -q | -queue)
         wmakeOpt_queue="-queue"
         continue    # Argument handled, remove it
@@ -240,7 +246,7 @@ fi
 #------------------------------------------------------------------------------
 
 unset wmakeOpt_frontend wmakeOpt_nonRecursive
-unset wmakeOpt_debug wmakeOpt_log wmakeOpt_strict wmakeOpt_queue
+unset wmakeOpt_debug wmakeOpt_log wmakeOpt_openmp wmakeOpt_strict wmakeOpt_queue
 unset -f usage
 
 

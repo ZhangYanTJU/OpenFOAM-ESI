@@ -15,7 +15,8 @@ if have_scotch
 then
     if have_ptscotch
     then
-        wmakeLibMpi ptscotchDecomp "scotch=$SCOTCH_VERSION"
+        # Never need/want openmp for MPI interfaces
+        wmakeLibMpi -no-openmp ptscotchDecomp "scotch=$SCOTCH_VERSION"
     fi
 fi
 

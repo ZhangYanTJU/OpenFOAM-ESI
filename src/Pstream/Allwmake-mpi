@@ -7,6 +7,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 # Environment
 #   - FOAM_MPI_LIBBIN (optional: defaults to FOAM_LIBBIN/FOAM_MPI)
 
-wmakeLibMpi mpi
+# Never need/want openmp for MPI interfaces
+wmakeLibMpi -no-openmp mpi
 
 #------------------------------------------------------------------------------

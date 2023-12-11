@@ -6,7 +6,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2015-2016 OpenFOAM Foundation
-#     Copyright (C) 2018-2021 OpenCFD Ltd.
+#     Copyright (C) 2018-2023 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -348,19 +348,43 @@ sameDependency()
 
 
 # Build a mpi-versioned library (targetType)
-# - use sentinel file(s) to handle paraview version changes
-# compile into qualified directory
+# compile into MPI-qualified directory
 # use sentinel file(s) to handle version changes
 # 1 - libName
 # 2... build/configure information
 #
 # Global variables used:
 # - WM_OPTIONS, WM_MPLIB, FOAM_MPI
+# - targetType
 #
 # Requires that WM_MPLIB contain an "MPI" string
+#
+# Has very simple option handling (bool options only!) that allow
+# things like "wmakeLibMpi -debug -no-openmp" etc.
+#
 wmakeLibMpi()
 {
-    local libName="$1"
+    local libName
+    local wmakeCmd="wmake"
+
+    # Very simple option handling (bool options only!)
+    while [ "$#" -gt 0 ]
+    do
+        case "$1" in
+        (- | --)    # Stop option parsing
+            shift
+            break
+            ;;
+        (-*)        # Any bool option
+            wmakeCmd="$wmakeCmd $1"
+            ;;
+        (*)
+            break   # Done
+            ;;
+        esac
+        shift
+    done
+    libName="$1"
     shift
 
     case "$WM_MPLIB" in (*MPI* | *mpi*)
@@ -374,8 +398,8 @@ wmakeLibMpi()
         sentinel=$(sameDependency "$libName" "MPLIB=$WM_MPLIB" "MPI=$FOAM_MPI" $@) || \
             wclean "$libName"
 
-        echo "wmake $targetType $libName (mpi=$WM_MPLIB:$FOAM_MPI)"
-        wmake $targetType "$libName" && \
+        echo "$wmakeCmd $targetType${targetType:+ }(mpi=$WM_MPLIB:$FOAM_MPI)"
+        $wmakeCmd $targetType "$libName" && \
         storeDependency "$sentinel" "MPLIB=$WM_MPLIB" "MPI=$FOAM_MPI" $@
     )
     ;;

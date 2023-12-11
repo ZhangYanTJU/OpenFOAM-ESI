@@ -52,9 +52,13 @@ sinclude $(RULES)/general
 sinclude $(RULES)/c++
 endif
 
-# Add compile flags for openmp
+# Compile flags for openmp
+# - if enabled (+openmp) and not disabled (~openmp).
+# - disable has higher precedence
+ifeq  (,$(findstring ~openmp,$(WM_COMPILE_CONTROL)))
 ifneq (,$(findstring +openmp,$(WM_COMPILE_CONTROL)))
-c++FLAGS  += $(COMP_OPENMP)
+    c++FLAGS  += $(COMP_OPENMP)
+endif
 endif
 
 include $(GENERAL_RULES)/transform

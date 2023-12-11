@@ -3,9 +3,10 @@ cd "${0%/*}" || exit                                # Run from this directory
 . ${WM_PROJECT_DIR:?}/wmake/scripts/AllwmakeParseArguments
 
 #------------------------------------------------------------------------------
+# Never need/want openmp for MPI interfaces, or for static linkage
 
-echo "wmake $targetType dummy (mpi=$WM_MPLIB)"
-wmake $targetType dummy
+echo "wmake -no-openmp $targetType${targetType:+ }dummy (mpi=$WM_MPLIB)"
+wmake -no-openmp $targetType dummy
 
 ./Allwmake-mpi $targetType $*
 

@@ -19,6 +19,7 @@ fi
 unset COMP_FLAGS LINK_FLAGS
 
 # Make object (non-shared by default)
-wmake $targetType
+# Never want/need openmp, especially for static objects
+wmake -no-openmp $targetType
 
 #------------------------------------------------------------------------------
