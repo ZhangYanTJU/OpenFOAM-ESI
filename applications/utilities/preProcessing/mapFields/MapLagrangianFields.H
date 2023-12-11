@@ -111,8 +111,6 @@ void MapLagrangianFields
     const labelList& addParticles
 )
 {
-    const fvMesh& meshTarget = meshToMesh0Interp.toMesh();
-
     MapLagrangianFields
     <
         IOField<Type>,
