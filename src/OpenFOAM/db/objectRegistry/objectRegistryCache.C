@@ -65,6 +65,12 @@ void Foam::objectRegistry::readCacheTemporaryObjects() const
         {
             cacheTemporaryObjects_.emplace(objName, false, false);
         }
+
+        if (objectRegistry::debug)
+        {
+            Info<< "objectRegistry::cacheTemporaryObjects : "
+                << flatOutput(objectNames) << endl;
+        }
     }
 }
 
@@ -75,6 +81,8 @@ void Foam::objectRegistry::deleteCachedObject(regIOobject* io) const
     {
         io->release();     // Relinquish any ownership by registry
         io->checkOut();
+        // Additional safety - not certain this is actually needed...
+        io->rename(io->name() + "-Cache");
         delete io;
     }
 }
@@ -90,12 +98,24 @@ void Foam::objectRegistry::deleteCachedObject(regIOobject* io) const
 // }
 
 
-bool Foam::objectRegistry::cacheTemporaryObject
+bool Foam::objectRegistry::is_cacheTemporaryObject
 (
     const word& name
 ) const
 {
-    return cacheTemporaryObjects_.found(name);
+    return cacheTemporaryObjects_.contains(name);
+}
+
+
+bool Foam::objectRegistry::is_cacheTemporaryObject(const regIOobject* io) const
+{
+    return io && cacheTemporaryObjects_.contains(io->name());
+}
+
+
+bool Foam::objectRegistry::is_cacheTemporaryObject(const regIOobject& io) const
+{
+    return cacheTemporaryObjects_.contains(io.name());
 }
 
 

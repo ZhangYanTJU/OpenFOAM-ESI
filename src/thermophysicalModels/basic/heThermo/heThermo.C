@@ -89,7 +89,7 @@ void Foam::heThermo<BasicThermo, MixtureType>::init
     this->heBoundaryCorrection(he);
 
     // Note: T does not have oldTime
-    if (p.nOldTimes() > 0)
+    if (p.nOldTimes())
     {
         init(p.oldTime(), T.oldTime(), he.oldTime());
     }

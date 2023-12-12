@@ -899,6 +899,11 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::~GeometricField()
 
     deleteDemandDrivenData(field0Ptr_);
     deleteDemandDrivenData(fieldPrevIterPtr_);
+
+    // FUTURE: register cache field info
+    // // this->db().cacheTemporaryObject(*this);
+
+    clearOldTimes();
 }
 
 
@@ -956,6 +961,14 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::boundaryFieldRef
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::label
+Foam::GeometricField<Type, PatchField, GeoMesh>::nOldTimes() const noexcept
+{
+    return (field0Ptr_ ? (field0Ptr_->nOldTimes() + 1) : 0);
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricField<Type, PatchField, GeoMesh>::storeOldTimes() const
 {
     if
@@ -992,18 +1005,6 @@ void Foam::GeometricField<Type, PatchField, GeoMesh>::storeOldTime() const
             field0Ptr_->writeOpt(this->writeOpt());
         }
     }
-}
-
-
-template<class Type, template<class> class PatchField, class GeoMesh>
-Foam::label Foam::GeometricField<Type, PatchField, GeoMesh>::nOldTimes() const
-{
-    if (field0Ptr_)
-    {
-        return field0Ptr_->nOldTimes() + 1;
-    }
-
-    return 0;
 }
 
 
@@ -1094,6 +1095,14 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::prevIter() const
     }
 
     return *fieldPrevIterPtr_;
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::GeometricField<Type, PatchField, GeoMesh>::clearOldTimes()
+{
+    deleteDemandDrivenData(field0Ptr_);
+    deleteDemandDrivenData(fieldPrevIterPtr_);
 }
 
 

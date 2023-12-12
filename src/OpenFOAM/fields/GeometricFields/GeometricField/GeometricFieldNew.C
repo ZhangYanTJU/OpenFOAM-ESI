@@ -26,7 +26,75 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+template<class... Args>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New_impl
+(
+    IOobjectOption::registerOption regOpt,
+    const word& name,
+    const Mesh& mesh,
+    Args&&... args
+)
+{
+    auto ptr = tmp<GeometricField<Type, PatchField, GeoMesh>>::New
+    (
+        IOobject
+        (
+            name,
+            mesh.thisDb().time().timeName(),
+            mesh.thisDb(),
+            IOobjectOption::NO_READ,
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::NO_REGISTER
+        ),
+        mesh,
+        std::forward<Args>(args)...
+    );
+
+    if (IOobjectOption::REGISTER == regOpt)
+    {
+        ptr->checkIn();
+    }
+    else if
+    (
+        // LEGACY_REGISTER: detect if caching is desired
+        (IOobjectOption::LEGACY_REGISTER == regOpt)
+     && ptr->db().is_cacheTemporaryObject(ptr.get())
+    )
+    {
+        ptr.protect(true);
+        ptr->checkIn();
+    }
+    return ptr;
+}
+
+
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const word& patchFieldType
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
+    (
+        regOpt,
+        name,
+        mesh,
+        dims,
+        patchFieldType
+    );
+}
+
 
 template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
@@ -38,22 +106,36 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const word& patchFieldType
 )
 {
-    const bool caching = mesh.thisDb().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
     (
-        caching,        // (true: immovable, false: movable)
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
-        ),
+        IOobjectOption::LEGACY_REGISTER,
+        name,
         mesh,
         dims,
+        patchFieldType
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    const Field<Type>& iField,
+    const word& patchFieldType
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
+    (
+        regOpt,
+        name,
+        mesh,
+        dims,
+        iField,
         patchFieldType
     );
 }
@@ -70,23 +152,37 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const word& patchFieldType
 )
 {
-    const bool caching = mesh.thisDb().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
     (
-        caching,        // (true: immovable, false: movable)
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
-        ),
+        IOobjectOption::LEGACY_REGISTER,
+        name,
         mesh,
         dims,
         iField,
+        patchFieldType
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensionSet& dims,
+    Field<Type>&& iField,
+    const word& patchFieldType
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
+    (
+        regOpt,
+        name,
+        mesh,
+        dims,
+        std::move(iField),
         patchFieldType
     );
 }
@@ -103,20 +199,10 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const word& patchFieldType
 )
 {
-    const bool caching = mesh.thisDb().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
     (
-        caching,        // (true: immovable, false: movable)
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
-        ),
+        IOobjectOption::LEGACY_REGISTER,
+        name,
         mesh,
         dims,
         std::move(iField),
@@ -130,26 +216,17 @@ Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
 Foam::GeometricField<Type, PatchField, GeoMesh>::New
 (
     const word& name,
+    IOobjectOption::registerOption regOpt,
     const Mesh& mesh,
     const Type& value,
     const dimensionSet& dims,
     const word& patchFieldType
 )
 {
-    const bool caching = mesh.thisDb().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
     (
-        caching,        // (true: immovable, false: movable)
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
-        ),
+        regOpt,
+        name,
         mesh,
         value,
         dims,
@@ -166,29 +243,91 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const Mesh& mesh,
     const Type& value,
     const dimensionSet& dims,
+    const word& patchFieldType
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
+    (
+        IOobjectOption::LEGACY_REGISTER,
+        name,
+        mesh,
+        value,
+        dims,
+        patchFieldType
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const Type& value,
+    const dimensionSet& dims,
     const wordList& patchFieldTypes,
     const wordList& actualPatchTypes
 )
 {
-    const bool caching = mesh.thisDb().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
     (
-        caching,        // (true: immovable, false: movable)
-        IOobject
-        (
-            name,
-            mesh.thisDb().time().timeName(),
-            mesh.thisDb(),
-            IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
-        ),
+        regOpt,
+        name,
         mesh,
         value,
         dims,
         patchFieldTypes,
         actualPatchTypes
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    const Mesh& mesh,
+    const Type& value,
+    const dimensionSet& dims,
+    const wordList& patchFieldTypes,
+    const wordList& actualPatchTypes
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New_impl
+    (
+        IOobjectOption::LEGACY_REGISTER,
+        name,
+        mesh,
+        value,
+        dims,
+        patchFieldTypes,
+        actualPatchTypes
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensioned<Type>& dt,
+    const word& patchFieldType
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New
+    (
+        name,
+        regOpt,
+        mesh,
+        dt.value(),
+        dt.dimensions(),
+        patchFieldType
     );
 }
 
@@ -210,6 +349,31 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
         dt.value(),
         dt.dimensions(),
         patchFieldType
+    );
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+Foam::tmp<Foam::GeometricField<Type, PatchField, GeoMesh>>
+Foam::GeometricField<Type, PatchField, GeoMesh>::New
+(
+    const word& name,
+    IOobjectOption::registerOption regOpt,
+    const Mesh& mesh,
+    const dimensioned<Type>& dt,
+    const wordList& patchFieldTypes,
+    const wordList& actualPatchTypes
+)
+{
+    return GeometricField<Type, PatchField, GeoMesh>::New
+    (
+        name,
+        regOpt,
+        mesh,
+        dt.value(),
+        dt.dimensions(),
+        patchFieldTypes,
+        actualPatchTypes
     );
 }
 
@@ -246,11 +410,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const word& patchFieldType
 )
 {
-    const bool caching = tgf().db().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    auto ptr = tmp<GeometricField<Type, PatchField, GeoMesh>>::New
     (
-        caching,        // (true: immovable, false: movable)
         IOobject
         (
             name,
@@ -259,11 +420,21 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
             tgf().db(),
             IOobjectOption::NO_READ,
             IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
+            IOobjectOption::NO_REGISTER
         ),
         tgf,
         patchFieldType
     );
+
+    if
+    (
+        ptr->db().is_cacheTemporaryObject(ptr.get())
+    )
+    {
+        ptr.protect(true);
+        ptr->checkIn();
+    }
+    return ptr;
 }
 
 
@@ -275,11 +446,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const tmp<GeometricField<Type, PatchField, GeoMesh>>& tgf
 )
 {
-    const bool caching = tgf().db().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    auto ptr = tmp<GeometricField<Type, PatchField, GeoMesh>>::New
     (
-        caching,        // (true: immovable, false: movable)
         IOobject
         (
             name,
@@ -288,10 +456,20 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
             tgf().db(),
             IOobjectOption::NO_READ,
             IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
+            IOobjectOption::NO_REGISTER
         ),
         tgf
     );
+
+    if
+    (
+        ptr->db().is_cacheTemporaryObject(ptr.get())
+    )
+    {
+        ptr.protect(true);
+        ptr->checkIn();
+    }
+    return ptr;
 }
 
 
@@ -305,11 +483,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const wordList& actualPatchTypes
 )
 {
-    const bool caching = tgf().db().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    auto ptr = tmp<GeometricField<Type, PatchField, GeoMesh>>::New
     (
-        caching,        // (true: immovable, false: movable)
         IOobject
         (
             name,
@@ -318,12 +493,22 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
             tgf().db(),
             IOobjectOption::NO_READ,
             IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
+            IOobjectOption::NO_REGISTER
         ),
         tgf,
         patchFieldTypes,
         actualPatchTypes
     );
+
+    if
+    (
+        ptr->db().is_cacheTemporaryObject(ptr.get())
+    )
+    {
+        ptr.protect(true);
+        ptr->checkIn();
+    }
+    return ptr;
 }
 
 
@@ -338,11 +523,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const word& patchFieldType
 )
 {
-    const bool caching = fld.db().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    auto ptr = tmp<GeometricField<Type, PatchField, GeoMesh>>::New
     (
-        caching,        // (true: immovable, false: movable)
         IOobject
         (
             name,
@@ -350,12 +532,22 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
             fld.db(),
             IOobjectOption::NO_READ,
             IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
+            IOobjectOption::NO_REGISTER
         ),
         fld.mesh(),
         dims,
         patchFieldType
     );
+
+    if
+    (
+        ptr->db().is_cacheTemporaryObject(ptr.get())
+    )
+    {
+        ptr.protect(true);
+        ptr->checkIn();
+    }
+    return ptr;
 }
 
 
@@ -370,11 +562,8 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
     const word& patchFieldType
 )
 {
-    const bool caching = fld.db().cacheTemporaryObject(name);
-
-    return tmp<GeometricField<Type, PatchField, GeoMesh>>::NewImmovable
+    auto ptr = tmp<GeometricField<Type, PatchField, GeoMesh>>::New
     (
-        caching,        // (true: immovable, false: movable)
         IOobject
         (
             name,
@@ -382,13 +571,23 @@ Foam::GeometricField<Type, PatchField, GeoMesh>::New
             fld.db(),
             IOobjectOption::NO_READ,
             IOobjectOption::NO_WRITE,
-            caching     // (true: REGISTER, false: NO_REGISTER)
+            IOobjectOption::NO_REGISTER
         ),
         fld.mesh(),
         dt.value(),
         dt.dimensions(),
         patchFieldType
     );
+
+    if
+    (
+        ptr->db().is_cacheTemporaryObject(ptr.get())
+    )
+    {
+        ptr.protect(true);
+        ptr->checkIn();
+    }
+    return ptr;
 }
 
 

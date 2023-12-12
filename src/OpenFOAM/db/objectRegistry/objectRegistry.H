@@ -633,7 +633,13 @@ public:
         //FUTURE void addTemporaryObject(const word& name) const;
 
         //- True if given name is in the cacheTemporaryObjects set
-        bool cacheTemporaryObject(const word& name) const;
+        bool is_cacheTemporaryObject(const word& name) const;
+
+        //- True if name of object is in the cacheTemporaryObjects set
+        bool is_cacheTemporaryObject(const regIOobject* io) const;
+
+        //- True if name of object is in the cacheTemporaryObjects set
+        bool is_cacheTemporaryObject(const regIOobject& io) const;
 
         //- Cache the given object. Moves content and stores
         template<class Type>
@@ -643,7 +649,7 @@ public:
         void resetCacheTemporaryObject(const regIOobject* io) const;
 
         //- Reset the cache state of the given object
-        //  in the cacheTemporaryObjects set
+        //- in the cacheTemporaryObjects set
         void resetCacheTemporaryObject(const regIOobject& io) const;
 
         //- Check that all objects specified in the cacheTemporaryObjects
