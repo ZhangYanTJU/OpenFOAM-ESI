@@ -112,7 +112,7 @@ using namespace Foam;
 
 // Use -verbose -verbose to switch on debug info. TBD.
 int debug(::Foam::debug::debugSwitch("redistributePar", 0));
-#define InfoOrPout (::debug ? Pout : Info())
+#define InfoOrPout (::debug ? Pout : Info.stream())
 
 
 // Allocate a new file handler on valid processors only
@@ -1216,7 +1216,10 @@ int main(int argc, char *argv[])
     #include "addOverwriteOption.H"
     argList::addBoolOption("decompose", "Decompose case");
     argList::addBoolOption("reconstruct", "Reconstruct case");
-    argList::addVerboseOption("Additional verbosity");
+    argList::addVerboseOption
+    (
+        "Additional verbosity. (Can be used multiple times for debugging)"
+    );
     argList::addDryRunOption
     (
         "Test without writing the decomposition. "
@@ -1267,9 +1270,9 @@ int main(int argc, char *argv[])
     // - reconstruct - reads parallel, write on master only and to parent
     //                 directory
 
-    // Detect if running data-distributed (processors cannot see all other
-    // processors' files)
-    const bool nfs = !fileHandler().distributed();
+    // Running data-distributed?
+    // (processors cannot see all other processors' files)
+    const bool hasDistributedFiles(fileHandler().distributed());
 
 
     // Set up loose processorsXXX directory matching (for collated) so e.g.
@@ -1277,21 +1280,6 @@ int main(int argc, char *argv[])
     // the time, actual number of processors etc we switch back to strict
     // matching.
     fileOperation::nProcsFilter(0);
-
-
-    // Read handler on processors with a volMesh
-    refPtr<fileOperation> volMeshReadHandler;
-
-    // Read handler on processors with an areaMesh
-    refPtr<fileOperation> areaMeshReadHandler;
-
-    // Handler for master-only operation (read/writing from/to undecomposed)
-    refPtr<fileOperation> masterOnlyHandler;
-    if (UPstream::master(UPstream::worldComm))
-    {
-        masterOnlyHandler = fileOperation::NewUncollated();
-    }
-
 
     // Need this line since we don't include "setRootCase.H"
     #include "foamDlOpenLibs.H"
@@ -1306,19 +1294,36 @@ int main(int argc, char *argv[])
     bool decompose = args.found("decompose");
     bool overwrite = args.found("overwrite");
 
+    // Field restrictions...
+    const wordRes selectedFields;
+    const wordRes selectedLagrangianFields;
+
+
+    if (!UPstream::parRun())
+    {
+        FatalErrorInFunction
+            << ": This utility can only be run parallel"
+            << exit(FatalError);
+    }
+
+    if (decompose && reconstruct)
+    {
+        FatalErrorInFunction
+            << "Cannot specify both -decompose and -reconstruct"
+            << exit(FatalError);
+    }
+
     if (optVerbose)
     {
-        if (optVerbose == 2)
-        {
-            WarningInFunction
-                << "-verbose -verbose switches on full debugging"
-                << nl << endl;
-            ::debug = 1;
-        }
-
         // Report on output
         faMeshDistributor::verbose_ = 1;
         parPointFieldDistributor::verbose_ = 1;
+
+        if (optVerbose > 1)
+        {
+            Info<< "Additional debugging enabled" << nl << endl;
+            ::debug = 1;
+        }
     }
 
     // Disable NaN setting and floating point error trapping. This is to avoid
@@ -1332,19 +1337,33 @@ int main(int argc, char *argv[])
     // fvMeshDistribute.
     Foam::sigFpe::unset(true);
 
-    const wordRes selectedFields;
-    const wordRes selectedLagrangianFields;
 
+    // File handlers (read/write)
+    // ==========================
+
+    // Read handler on processors with a volMesh
+    refPtr<fileOperation> volMeshReadHandler;
+
+    // Read handler on processors with an areaMesh
+    refPtr<fileOperation> areaMeshReadHandler;
+
+    // Handler for master-only operation (read/writing from/to undecomposed)
+    // - only the 'real' master, not io-rank masters
+    refPtr<fileOperation> masterOnlyHandler;
+
+    if (UPstream::master(UPstream::worldComm))
+    {
+        const bool oldParRun = UPstream::parRun(false);
+
+        masterOnlyHandler = fileOperation::NewUncollated();
+
+        UPstream::parRun(oldParRun);
+    }
 
     if (decompose)
     {
-        InfoOrPout<< "Decomposing case (like decomposePar)" << nl << endl;
-        if (reconstruct)
-        {
-            FatalErrorInFunction
-                << "Cannot specify both -decompose and -reconstruct"
-                << exit(FatalError);
-        }
+        InfoOrPout<< "Decomposing case (like decomposePar)"
+            << nl << endl;
     }
     else if (reconstruct)
     {
@@ -1374,18 +1393,12 @@ int main(int argc, char *argv[])
     if ((decompose || reconstruct) && !overwrite)
     {
         overwrite = true;
-        WarningInFunction
-            << "Working in -decompose or -reconstruct mode:"
-               " automatically implies -overwrite" << nl << endl;
-    }
 
-    if (!Pstream::parRun())
-    {
-        FatalErrorInFunction
-            << ": This utility can only be run parallel"
-            << exit(FatalError);
+        Warning
+            << nl << "    "
+            << "Added implicit -overwrite for decompose/reconstruct modes"
+            << nl << endl;
     }
-
 
     if
     (
@@ -1401,7 +1414,7 @@ int main(int argc, char *argv[])
     }
 
 
-    if (!nfs)
+    if (hasDistributedFiles)
     {
         InfoOrPout<< "Detected multiple roots i.e. non-nfs running"
             << nl << endl;
@@ -1498,7 +1511,7 @@ int main(int argc, char *argv[])
     // This will read the same controlDict but might have a different
     // set of times so enforce same times
 
-    if (!nfs)
+    if (hasDistributedFiles)
     {
         InfoOrPout<< "Creating time directories for undecomposed Time"
             << " on all processors" << nl << endl;
