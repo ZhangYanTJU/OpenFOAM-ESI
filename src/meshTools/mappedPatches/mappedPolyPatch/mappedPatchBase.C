@@ -1158,6 +1158,8 @@ void Foam::mappedPatchBase::calcAMI() const
         );
 
         // Change to use inter-world communicator
+        AMIPtr_->comm(myComm);
+
         const label oldWarnComm = UPstream::commWarn(myComm);
         const label oldWorldComm = UPstream::commWorld(myComm);
 
