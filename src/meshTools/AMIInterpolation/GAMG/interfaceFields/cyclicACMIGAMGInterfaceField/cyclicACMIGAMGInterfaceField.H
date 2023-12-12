@@ -69,6 +69,21 @@ class cyclicACMIGAMGInterfaceField
         int rank_;
 
 
+        // Sending and receiving (distributed AMI)
+
+            //- Current range of send requests (non-blocking)
+            mutable labelRange sendRequests_;
+
+            //- Current range of recv requests (non-blocking)
+            mutable labelRange recvRequests_;
+
+            //- Scalar send buffers
+            mutable PtrList<List<solveScalar>> scalarSendBufs_;
+
+            //- Scalar receive buffers
+            mutable PtrList<List<solveScalar>> scalarRecvBufs_;
+
+
     // Private Member Functions
 
         //- No copy construct
@@ -139,7 +154,7 @@ public:
 
 
     //- Destructor
-    virtual ~cyclicACMIGAMGInterfaceField();
+    virtual ~cyclicACMIGAMGInterfaceField() = default;
 
 
     // Member Functions
@@ -154,6 +169,22 @@ public:
 
 
         // Interface matrix update
+
+            //- Are all (receive) data available?
+            virtual bool ready() const;
+
+            //- Initialise neighbour matrix update
+            virtual void initInterfaceMatrixUpdate
+            (
+                solveScalarField& result,
+                const bool add,
+                const lduAddressing& lduAddr,
+                const label patchId,
+                const solveScalarField& psiInternal,
+                const scalarField& coeffs,
+                const direction cmpt,
+                const Pstream::commsTypes commsType
+            ) const;
 
             //- Update result field based on interface functionality
             virtual void updateInterfaceMatrix
