@@ -100,7 +100,7 @@ void Foam::regIOobject::readStream(const bool readOnProc)
         if (watchIndices_.size())
         {
             // File is being watched. Read exact file that is being watched.
-            objPath = fileHandler().getFile(watchIndices_.last());
+            objPath = fileHandler().getFile(watchIndices_.back());
         }
         else
         {
@@ -190,26 +190,7 @@ bool Foam::regIOobject::read()
     // Note: cannot do anything in readStream itself since this is used by
     // e.g. GeometricField.
 
-
-    // Save old watchIndices and clear (so the list of included files can
-    // change)
-    fileNameList oldWatchFiles;
-    if (watchIndices_.size())
-    {
-        oldWatchFiles.setSize(watchIndices_.size());
-        forAll(watchIndices_, i)
-        {
-            oldWatchFiles[i] = fileHandler().getFile(watchIndices_[i]);
-        }
-        forAllReverse(watchIndices_, i)
-        {
-            fileHandler().removeWatch(watchIndices_[i]);
-        }
-        watchIndices_.clear();
-    }
-
-
-    // Read
+    // Everyone or just master
     const bool masterOnly
     (
         global()
@@ -219,12 +200,26 @@ bool Foam::regIOobject::read()
         )
     );
 
+    // Remove old watches (indices) and clear:
+    // so the list of included files can change
+
+    const bool needWatch(!watchIndices_.empty());
+
+    if (!watchIndices_.empty())
+    {
+        forAllReverse(watchIndices_, i)
+        {
+            fileHandler().removeWatch(watchIndices_[i]);
+        }
+        watchIndices_.clear();
+    }
+
     // Note: IOstream::binary flag is for all the processor comms. (Only for
     //       dictionaries should it be ascii)
     bool ok =
         fileHandler().read(*this, masterOnly, IOstreamOption::BINARY, type());
 
-    if (oldWatchFiles.size())
+    if (needWatch)
     {
         // Re-watch master file
         addWatch();
@@ -264,9 +259,9 @@ bool Foam::regIOobject::readIfModified()
 
     if (modified != -1)
     {
-        const fileName fName = fileHandler().getFile(watchIndices_.last());
+        const fileName fName = fileHandler().getFile(watchIndices_.back());
 
-        if (modified == watchIndices_.last())
+        if (modified == watchIndices_.back())
         {
             InfoInFunction
                 << "    Re-reading object " << name()

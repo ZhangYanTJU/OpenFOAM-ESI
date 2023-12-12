@@ -277,6 +277,23 @@ Foam::label Foam::regIOobject::addWatch(const fileName& f)
 
 void Foam::regIOobject::addWatch()
 {
+    // Everyone or just master
+    const bool masterOnly
+    (
+        global()
+     && (
+            IOobject::fileModificationChecking == IOobject::timeStampMaster
+         || IOobject::fileModificationChecking == IOobject::inotifyMaster
+        )
+    );
+
+    // if (debug)
+    // {
+    //     Pout<< "regIOobject::addWatch " << watchIndices_.size()
+    //         << " indices master-only:" << masterOnly
+    //         << " watchFiles: " << watchFiles_ << endl;
+    // }
+
     if
     (
         registered_
@@ -285,7 +302,7 @@ void Foam::regIOobject::addWatch()
     )
     {
         fileName f = filePath();
-        if (!f.size())
+        if (f.empty())
         {
             // We don't have this file but would like to re-read it.
             // Possibly if master-only reading mode.
@@ -303,14 +320,6 @@ void Foam::regIOobject::addWatch()
 
         // If master-only reading only the master will have all dependencies
         // so broadcast these to other ranks
-        const bool masterOnly
-        (
-            global()
-         && (
-                IOobject::fileModificationChecking == IOobject::timeStampMaster
-             || IOobject::fileModificationChecking == IOobject::inotifyMaster
-            )
-        );
 
         if (masterOnly && UPstream::parRun())
         {
@@ -328,8 +337,13 @@ void Foam::regIOobject::addWatch()
 
                 UPstream::parRun(oldParRun);
             }
-            Pstream::broadcast(filesToWatch);
 
+            Pstream::broadcasts
+            (
+                UPstream::worldComm,
+                filesToWatch,
+                watchFiles_
+            );
 
             // Add master files in same order
             if (!UPstream::master())

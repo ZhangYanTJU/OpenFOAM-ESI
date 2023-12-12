@@ -94,7 +94,7 @@ bool Foam::regIOobject::writeObject
     }
 
 
-    // Everyone check or just master
+    // Everyone or just master
     const bool masterOnly
     (
         isGlobal
@@ -122,9 +122,9 @@ bool Foam::regIOobject::writeObject
 
     // Only update the lastModified_ time if this object is re-readable,
     // i.e. lastModified_ is already set
-    if (watchIndices_.size())
+    if (!watchIndices_.empty())
     {
-        fileHandler().setUnmodified(watchIndices_.last());
+        fileHandler().setUnmodified(watchIndices_.back());
     }
 
     return osGood;
