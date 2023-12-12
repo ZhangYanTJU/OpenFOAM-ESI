@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,15 +116,18 @@ private:
         //- Construct object stream, read header if not already constructed
         void readStream(const bool readOnProc);
 
-        //- No copy assignment
-        void operator=(const regIOobject&) = delete;
-
 
 public:
 
         //- Friendship with classes needing access to masterOnlyReading
         friend class functionEntries::codeStream;
         friend class fileOperations::uncollatedFileOperation;
+
+
+    // Generated Methods
+
+        //- No copy assignment
+        void operator=(const regIOobject&) = delete;
 
 
     // Static Data
@@ -366,6 +369,7 @@ public:
     // Member Operators
 
         //- Copy assignment
+        FOAM_DEPRECATED_STRICT(2023-12, "possibly remove in the future")
         void operator=(const IOobject& io);
 
 

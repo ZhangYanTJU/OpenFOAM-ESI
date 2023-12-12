@@ -2007,6 +2007,8 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
             << " fName : " << fName << " readOnProc:" << readOnProc << endl;
     }
 
+    // Close old stream
+    io.close();
 
     autoPtr<ISstream> isPtr;
     bool isCollated = false;
@@ -2044,7 +2046,9 @@ Foam::fileOperations::masterUncollatedFileOperation::readStream
                             << " doing straight IFstream input from "
                             << fName << endl;
                     }
-                    io = headerIO;
+
+                    // Copy IOobject header information
+                    io.IOobject::operator=(headerIO);
                     return isPtr;
                 }
             }
