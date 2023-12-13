@@ -329,7 +329,7 @@ Foam::radiation::laserDTRM::laserDTRM(const volScalarField& T)
 :
     radiationModel(typeName, T),
     mode_(powerDistNames_.get("mode", *this)),
-    DTRMCloud_(mesh_, "DTRMCloud", IDLList<DTRMParticle>()),
+    DTRMCloud_(mesh_, Foam::zero{}, "DTRMCloud"),  // Empty cloud
     nParticles_(0),
     ndTheta_(get<label>("nTheta")),
     ndr_(get<label>("nr")),
@@ -427,7 +427,7 @@ Foam::radiation::laserDTRM::laserDTRM
 :
     radiationModel(typeName, dict, T),
     mode_(powerDistNames_.get("mode", *this)),
-    DTRMCloud_(mesh_, "DTRMCloud", IDLList<DTRMParticle>()),
+    DTRMCloud_(mesh_, Foam::zero{}, "DTRMCloud"),  // Empty cloud
     nParticles_(0),
     ndTheta_(get<label>("nTheta")),
     ndr_(get<label>("nr")),

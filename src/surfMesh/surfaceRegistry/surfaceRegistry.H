@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef surfaceRegistry_H
-#define surfaceRegistry_H
+#ifndef Foam_surfaceRegistry_H
+#define Foam_surfaceRegistry_H
 
 #include "objectRegistry.H"
 
@@ -53,20 +53,9 @@ class surfaceRegistry
 :
     public objectRegistry
 {
-
-    // Private Member Functions
-
-        //- No copy construct
-        surfaceRegistry(const surfaceRegistry&) = delete;
-
-        //- No copy assignment
-        surfaceRegistry& operator=(const surfaceRegistry&) = delete;
-
-
 public:
 
-    //- Runtime type information
-    TypeName("surfaceRegistry");
+    // Static Data Members
 
         //- The prefix to local: %surfaces
         static const word prefix;
@@ -75,19 +64,30 @@ public:
         static word defaultName;
 
 
+    //- Runtime type information
+    TypeName("surfaceRegistry");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        surfaceRegistry(const surfaceRegistry&) = delete;
+
+        //- No copy assignment
+        surfaceRegistry& operator=(const surfaceRegistry&) = delete;
+
+
     // Constructors
 
-        //- Construct for the given objectRegistry and named surface
-        surfaceRegistry
-        (
-            const objectRegistry& obr,
-            const word& surfName = word::null
-        );
+        //- Construct for given objectRegistry. Uses default surface name
+        explicit surfaceRegistry(const objectRegistry& obr);
+
+        //- Construct for given objectRegistry and named surface
+        surfaceRegistry(const objectRegistry& obr, const word& surfName);
 
 
     //- Destructor
     virtual ~surfaceRegistry() = default;
-
 };
 
 

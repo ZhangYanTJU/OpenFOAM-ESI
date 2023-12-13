@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,6 +37,7 @@ namespace Foam
 }
 
 const Foam::word Foam::cloud::prefix("lagrangian");
+
 Foam::word Foam::cloud::defaultName("defaultCloud");
 
 const Foam::Enum<Foam::cloud::geometryType>
@@ -51,7 +52,7 @@ Foam::cloud::geometryTypeNames
 
 Foam::cloud::cloud(const objectRegistry& obr)
 :
-    cloud(obr, defaultName)
+    cloud(obr, cloud::defaultName)
 {}
 
 
@@ -61,12 +62,13 @@ Foam::cloud::cloud(const objectRegistry& obr, const word& cloudName)
     (
         IOobject
         (
-            cloudName,
+            (cloudName.empty() ? cloud::defaultName : cloudName),
             obr.time().timeName(),
-            prefix,
+            cloud::prefix,
             obr,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         )
     )
 {}

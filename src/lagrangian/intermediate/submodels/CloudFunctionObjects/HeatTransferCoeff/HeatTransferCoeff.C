@@ -92,10 +92,8 @@ void Foam::HeatTransferCoeff<CloudType>::postEvolve
         const_cast<typename parcelType::trackingData&>(td);
 
     label parceli = 0;
-    forAllConstIters(c, parcelIter)
+    for (const parcelType& p : c)
     {
-        const parcelType& p = parcelIter();
-
         scalar Ts, rhos, mus, Pr, kappas;
         p.template calcSurfaceValues<CloudType>
         (

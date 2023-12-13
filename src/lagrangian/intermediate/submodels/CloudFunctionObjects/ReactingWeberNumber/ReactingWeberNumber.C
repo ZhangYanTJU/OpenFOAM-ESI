@@ -93,10 +93,8 @@ void Foam::ReactingWeberNumber<CloudType>::postEvolve
     const auto& rhoInterp = td.rhoInterp();
 
     label parceli = 0;
-    forAllConstIters(c, parcelIter)
+    for (const parcelType& p : c)
     {
-        const parcelType& p = parcelIter();
-
         const auto& coords = p.coordinates();
         const auto& tetIs = p.currentTetIndices();
 

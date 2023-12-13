@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef cloud_H
-#define cloud_H
+#ifndef Foam_cloud_H
+#define Foam_cloud_H
 
 #include "objectRegistry.H"
 #include "Enum.H"
@@ -59,16 +59,6 @@ class cloud
 :
     public objectRegistry
 {
-
-    // Private Member Functions
-
-        //- No copy construct
-        cloud(const cloud&) = delete;
-
-        //- No copy assignment
-        void operator=(const cloud&) = delete;
-
-
 public:
 
     //- Cloud geometry type (internal or IO representations)
@@ -78,11 +68,11 @@ public:
         POSITIONS       //!< positions
     };
 
+    //- Named enumerations "coordinates", "positions"
     static const Enum<geometryType> geometryTypeNames;
 
 
-    //- Runtime type information
-    TypeName("cloud");
+    // Static Data Members
 
         //- The prefix to local: %lagrangian
         static const word prefix;
@@ -91,12 +81,25 @@ public:
         static word defaultName;
 
 
+    //- Runtime type information
+    TypeName("cloud");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        cloud(const cloud&) = delete;
+
+        //- No copy assignment
+        void operator=(const cloud&) = delete;
+
+
     // Constructors
 
-        //- Construct for given objectRegistry and default cloud name
+        //- Construct for given objectRegistry. Uses default cloud name
         explicit cloud(const objectRegistry& obr);
 
-        //- Construct for given objectRegistry and named cloud instance
+        //- Construct for given objectRegistry and named cloud
         cloud(const objectRegistry& obr, const word& cloudName);
 
 
@@ -139,7 +142,7 @@ public:
             //- Locate an IOField within object registry
             //  \return nullptr if not found or wrong type
             template<class Type>
-            inline static const IOField<Type>* findIOField
+            static const IOField<Type>* findIOField
             (
                 const word& fieldName,
                 const objectRegistry& obr
@@ -150,7 +153,7 @@ public:
 
             //- Locate the "position" IOField within object registry
             //  \return nullptr if not found or wrong type
-            inline static const IOField<point>* findIOPosition
+            static const IOField<point>* findIOPosition
             (
                 const objectRegistry& obr
             )
@@ -161,7 +164,7 @@ public:
             //- Lookup an IOField within object registry
             //  Fatal if not found or wrong type
             template<class Type>
-            inline static const IOField<Type>& lookupIOField
+            static const IOField<Type>& lookupIOField
             (
                 const word& fieldName,
                 const objectRegistry& obr

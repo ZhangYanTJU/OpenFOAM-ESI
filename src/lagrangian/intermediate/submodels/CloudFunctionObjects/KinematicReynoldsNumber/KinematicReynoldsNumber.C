@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,10 +85,8 @@ void Foam::KinematicReynoldsNumber<CloudType>::postEvolve
     Re.resize(c.size());
 
     label parceli = 0;
-    forAllConstIters(c, parcelIter)
+    for (const parcelType& p : c)
     {
-        const parcelType& p = parcelIter();
-
         Re[parceli++] = p.Re(td);
     }
 

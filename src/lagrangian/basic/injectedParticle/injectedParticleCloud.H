@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef injectedParticleCloud_H
-#define injectedParticleCloud_H
+#ifndef Foam_injectedParticleCloud_H
+#define Foam_injectedParticleCloud_H
 
 #include "Cloud.H"
 #include "injectedParticle.H"
@@ -46,7 +46,6 @@ SourceFiles
 namespace Foam
 {
 
-
 /*---------------------------------------------------------------------------*\
                    Class injectedParticleCloud Declaration
 \*---------------------------------------------------------------------------*/
@@ -55,29 +54,38 @@ class injectedParticleCloud
 :
     public Cloud<injectedParticle>
 {
-
-private:
-
-    // Private Member Functions
-
-        //- No copy construct
-        injectedParticleCloud(const injectedParticleCloud&) = delete;
-
-        //- No copy assignment
-        void operator=(const injectedParticleCloud&) = delete;
-
-
 public:
+
+    //- Type of parcel within the cloud
+    typedef injectedParticle parcelType;
+
+    //- No copy construct
+    injectedParticleCloud(const injectedParticleCloud&) = delete;
+
+    //- No copy assignment
+    void operator=(const injectedParticleCloud&) = delete;
+
 
     // Constructors
 
-        //- Construct from mesh and cloud name
+        //- Read construct
         injectedParticleCloud
         (
             const polyMesh& mesh,
-            const word& name,
+            const word& cloudName,
             const bool readFields = true
         );
+
+        //- Construct without particles
+        injectedParticleCloud
+        (
+            const polyMesh& mesh,
+            const Foam::zero,
+            const word& cloudName = cloud::defaultName
+        )
+        :
+            Cloud<injectedParticle>(mesh, Foam::zero{}, cloudName)
+        {}
 
         //- Copy constructor with new name
         injectedParticleCloud(const injectedParticleCloud& c, const word& name);
@@ -93,18 +101,16 @@ public:
 
 
     //- Destructor
-    virtual ~injectedParticleCloud();
+    virtual ~injectedParticleCloud() = default;
 
 
     // Member Functions
 
-        // I-O
+        //- Read particle fields as objects from the obr registry
+        virtual void readObjects(const objectRegistry& obr);
 
-            //- Read particle fields as objects from the obr registry
-            virtual void readObjects(const objectRegistry& obr);
-
-            //- Write particle fields as objects into the obr registry
-            virtual void writeObjects(objectRegistry& obr) const;
+        //- Write particle fields as objects into the obr registry
+        virtual void writeObjects(objectRegistry& obr) const;
 };
 
 

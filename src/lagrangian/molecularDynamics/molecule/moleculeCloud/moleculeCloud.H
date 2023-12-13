@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef moleculeCloud_H
-#define moleculeCloud_H
+#ifndef Foam_moleculeCloud_H
+#define Foam_moleculeCloud_H
 
 #include "Cloud.H"
 #include "molecule.H"
@@ -133,18 +133,22 @@ class moleculeCloud
             const molecule::constantProperties& cP
         );
 
-        //- No copy construct
-        moleculeCloud(const moleculeCloud&) = delete;
-
-        //- No copy assignment
-        void operator=(const moleculeCloud&) = delete;
-
 
 public:
 
+    //- Type of parcel within the cloud
+    typedef molecule parcelType;
+
+    //- No copy construct
+    moleculeCloud(const moleculeCloud&) = delete;
+
+    //- No copy assignment
+    void operator=(const moleculeCloud&) = delete;
+
+
     // Constructors
 
-        //- Construct given mesh and potential references
+        //- Read construct given mesh and potential references
         moleculeCloud
         (
             const polyMesh& mesh,
@@ -152,7 +156,7 @@ public:
             bool readFields = true
         );
 
-        //- Construct given mesh, potential and mdInitialiseDict
+        //- Read construct given mesh, potential and mdInitialiseDict
         moleculeCloud
         (
             const polyMesh& mesh,
@@ -178,19 +182,32 @@ public:
 
     // Access
 
-        inline const polyMesh& mesh() const;
+        // Same as pMesh()
+        const polyMesh& mesh() const noexcept { return mesh_; }
 
-        inline const potential& pot() const;
+        const potential& pot() const { return pot_; }
 
-        inline const List<DynamicList<molecule*>>& cellOccupancy() const;
+        const List<DynamicList<molecule*>>& cellOccupancy() const
+        {
+            return cellOccupancy_;
+        }
 
-        inline const InteractionLists<molecule>& il() const;
+        const InteractionLists<molecule>& il() const
+        {
+            return il_;
+        }
 
-        inline const List<molecule::constantProperties> constProps() const;
+        const List<molecule::constantProperties>& constProps() const
+        {
+            return constPropList_;
+        }
 
-        inline const molecule::constantProperties& constProps(label id) const;
+        const molecule::constantProperties& constProps(label id) const
+        {
+            return constPropList_[id];
+        }
 
-        inline Random& rndGen();
+        Random& rndGen() { return rndGen_; }
 
 
     // Member Operators

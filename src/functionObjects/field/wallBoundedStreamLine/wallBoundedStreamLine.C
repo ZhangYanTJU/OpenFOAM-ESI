@@ -142,12 +142,11 @@ void Foam::functionObjects::wallBoundedStreamLine::track()
     // Find nearest wall particle for the seedPoints
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    IDLList<wallBoundedStreamLineParticle> initialParticles;
     wallBoundedStreamLineParticleCloud particles
     (
         mesh_,
-        cloudName_,
-        initialParticles
+        Foam::zero{},
+        cloudName_
     );
 
     {

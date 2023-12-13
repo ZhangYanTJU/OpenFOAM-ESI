@@ -227,19 +227,21 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
     pBufs.finishedSends();
 
 
+    // The cloud name
+    const word cloudName = lpi.name();
+
     {
         // Temporarily rename original cloud so we can construct a new one
         // (to distribute the positions) without getting a duplicate
         // registration warning
-        const word cloudName = lpi.name();
         lpi.rename(cloudName + "_old");
 
-        // New cloud on tgtMesh
+        // New empty cloud on tgtMesh
         passivePositionParticleCloud lagrangianPositions
         (
             tgtMesh_,
-            cloudName,
-            IDLList<passivePositionParticle>()
+            Foam::zero{},
+            cloudName
         );
 
         // Retrieve from receive buffers
@@ -310,10 +312,10 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
         //        ).objectPath()
         //    );
         //}
-
-        // Restore cloud name
-        lpi.rename(cloudName);
     }
+
+    // Restore cloud name
+    lpi.rename(cloudName);
 
 
     // The constructMap is in linear (processor) order

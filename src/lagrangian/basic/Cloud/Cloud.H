@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,7 +67,7 @@ class Cloud
     public cloud,
     public IDLList<ParticleType>
 {
-    // Private data
+    // Private Data
 
         //- Reference to the mesh database
         const polyMesh& polyMesh_;
@@ -130,6 +130,14 @@ public:
 
     // Constructors
 
+        //- Construct without particles
+        Cloud
+        (
+            const polyMesh& mesh,
+            const Foam::zero,
+            const word& cloudName
+        );
+
         //- Construct from mesh and a list of particles
         Cloud
         (
@@ -138,12 +146,12 @@ public:
             const IDLList<ParticleType>& particles
         );
 
-        //- Construct from mesh by reading from file with given cloud instance
-        //  Optionally disable checking of class name for post-processing
+        //- Read construct from file(s) with given cloud instance.
         Cloud
         (
             const polyMesh& pMesh,
             const word& cloudName,
+            //! Disable checking of class name (eg, for post-processing)
             const bool checkClass = true
         );
 
@@ -153,7 +161,7 @@ public:
         // Access
 
             //- Return the polyMesh reference
-            const polyMesh& pMesh() const
+            const polyMesh& pMesh() const noexcept
             {
                 return polyMesh_;
             }

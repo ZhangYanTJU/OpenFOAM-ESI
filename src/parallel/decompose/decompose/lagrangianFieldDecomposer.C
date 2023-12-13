@@ -44,7 +44,7 @@ Foam::lagrangianFieldDecomposer::lagrangianFieldDecomposer
 )
 :
     procMesh_(procMesh),
-    positions_(procMesh, cloudName, IDLList<passiveParticle>()),
+    positions_(procMesh, Foam::zero{}, cloudName),  // Empty cloud
     particleIndices_(lagrangianPositions.size())
 {
     label pi = 0;

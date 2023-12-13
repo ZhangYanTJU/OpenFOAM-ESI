@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef passivePositionParticleCloud_H
-#define passivePositionParticleCloud_H
+#ifndef Foam_passivePositionParticleCloud_H
+#define Foam_passivePositionParticleCloud_H
 
 #include "Cloud.H"
 #include "passivePositionParticle.H"
@@ -53,21 +53,21 @@ class passivePositionParticleCloud
 :
     public Cloud<passivePositionParticle>
 {
-    // Private Member Functions
-
-        //- No copy construct
-        passivePositionParticleCloud(const passivePositionParticleCloud&) =
-            delete;
-
-        //- No copy assignment
-        void operator=(const passivePositionParticleCloud&) = delete;
-
-
 public:
+
+    //- Type of parcel within the cloud
+    typedef passivePositionParticle parcelType;
+
+    //- No copy construct
+    passivePositionParticleCloud(const passivePositionParticleCloud&) = delete;
+
+    //- No copy assignment
+    void operator=(const passivePositionParticleCloud&) = delete;
+
 
     // Constructors
 
-        //- Construct given mesh
+        //- Read construct
         explicit passivePositionParticleCloud
         (
             const polyMesh& mesh,
@@ -75,13 +75,16 @@ public:
             bool readFields = true
         );
 
-        //- Construct from mesh, cloud name, and a list of particles
+        //- Construct without particles
         passivePositionParticleCloud
         (
             const polyMesh& mesh,
-            const word& cloudName,
-            const IDLList<passivePositionParticle>& particles
-        );
+            const Foam::zero,
+            const word& cloudName = cloud::defaultName
+        )
+        :
+            Cloud<passivePositionParticle>(mesh, Foam::zero{}, cloudName)
+        {}
 };
 
 

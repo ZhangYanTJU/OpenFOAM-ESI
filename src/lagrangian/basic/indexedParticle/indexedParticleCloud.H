@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef indexedParticleCloud_H
-#define indexedParticleCloud_H
+#ifndef Foam_indexedParticleCloud_H
+#define Foam_indexedParticleCloud_H
 
 #include "Cloud.H"
 #include "indexedParticle.H"
@@ -53,26 +53,38 @@ class indexedParticleCloud
 :
     public Cloud<indexedParticle>
 {
-    // Private Member Functions
-
-        //- No copy construct
-        indexedParticleCloud(const indexedParticleCloud&) = delete;
-
-        //- No copy assignment
-        void operator=(const indexedParticleCloud&) = delete;
-
-
 public:
+
+    //- Type of parcel within the cloud
+    typedef indexedParticle parcelType;
+
+    //- No copy construct
+    indexedParticleCloud(const indexedParticleCloud&) = delete;
+
+    //- No copy assignment
+    void operator=(const indexedParticleCloud&) = delete;
+
 
     // Constructors
 
-        //- Construct given mesh
+        //- Read construct
         explicit indexedParticleCloud
         (
             const polyMesh& mesh,
             const word& cloudName = cloud::defaultName,
             bool readFields = true
         );
+
+        //- Construct without particles
+        explicit indexedParticleCloud
+        (
+            const polyMesh& mesh,
+            const Foam::zero,
+            const word& cloudName = cloud::defaultName
+        )
+        :
+            Cloud<indexedParticle>(mesh, Foam::zero{}, cloudName)
+        {}
 };
 
 

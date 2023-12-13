@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    testPassiveParticle
+    Test-passiveParticle
 
 Description
     Test cloud of passive particles.
@@ -50,12 +50,8 @@ int main(int argc, char *argv[])
 
     {
         // Start with empty cloud
-        passiveParticleCloud particles
-        (
-            mesh,
-            cloudName,
-            IDLList<passiveParticle>()
-        );
+        passiveParticleCloud particles(mesh, Foam::zero{}, cloudName);
+
         Pout<< "Starting particles:" << particles.size() << endl;
 
         Pout<< "Adding a particle." << endl;

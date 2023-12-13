@@ -133,6 +133,7 @@ void mapLagrangian(const meshToMesh0& meshToMesh0Interp)
                 cloudDir,
                 false
             );
+
             Info<< "    read " << sourceParcels.size()
                 << " parcels from source mesh." << endl;
 
@@ -140,8 +141,8 @@ void mapLagrangian(const meshToMesh0& meshToMesh0Interp)
             passiveParticleCloud targetParcels
             (
                 meshTarget,
-                cloudDir,
-                IDLList<passiveParticle>()
+                Foam::zero{},
+                cloudDir
             );
 
             passiveParticle::trackingData td(targetParcels);

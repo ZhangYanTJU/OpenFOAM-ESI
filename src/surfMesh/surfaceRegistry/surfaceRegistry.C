@@ -44,6 +44,15 @@ Foam::word Foam::surfaceRegistry::defaultName("default");
 
 Foam::surfaceRegistry::surfaceRegistry
 (
+    const objectRegistry& obr
+)
+:
+    surfaceRegistry(obr, surfaceRegistry::defaultName)
+{}
+
+
+Foam::surfaceRegistry::surfaceRegistry
+(
     const objectRegistry& obr,
     const word& surfName
 )
@@ -52,12 +61,13 @@ Foam::surfaceRegistry::surfaceRegistry
     (
         IOobject
         (
-            (surfName.size() ? surfName : defaultName),
+            (surfName.empty() ? surfaceRegistry::defaultName : surfName),
             obr.time().timeName(),
-            prefix,
+            surfaceRegistry::prefix,
             obr,
             IOobjectOption::NO_READ,
-            IOobjectOption::NO_WRITE
+            IOobjectOption::NO_WRITE,
+            IOobjectOption::REGISTER
         )
     )
 {}

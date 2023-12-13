@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef unmappedPassivePositionParticleCloud_H
-#define unmappedPassivePositionParticleCloud_H
+#ifndef Foam_unmappedPassivePositionParticleCloud_H
+#define Foam_unmappedPassivePositionParticleCloud_H
 
 #include "passivePositionParticleCloud.H"
 
@@ -54,12 +54,11 @@ class unmappedPassivePositionParticleCloud
 :
     public passivePositionParticleCloud
 {
-
 public:
 
     // Constructors
 
-        //- Construct given mesh
+        //- Read construct
         explicit unmappedPassivePositionParticleCloud
         (
             const polyMesh& mesh,
@@ -70,15 +69,15 @@ public:
             passivePositionParticleCloud(mesh, cloudName, readFields)
         {}
 
-        //- Construct from mesh, cloud name, and a list of particles
+        //- Construct without particles
         unmappedPassivePositionParticleCloud
         (
             const polyMesh& mesh,
-            const word& cloudName,
-            const IDLList<passivePositionParticle>& particles
+            const Foam::zero,
+            const word& cloudName = cloud::defaultName
         )
         :
-            passivePositionParticleCloud(mesh, cloudName, particles)
+            passivePositionParticleCloud(mesh, Foam::zero{}, cloudName)
         {}
 
 
@@ -89,7 +88,7 @@ public:
     // Member Functions
 
         //- Switch off remapping of cells of particles when
-        //  mesh topology changes
+        //- mesh topology changes
         virtual void autoMap(const mapPolyMesh&)
         {}
 

@@ -87,10 +87,8 @@ void Foam::KinematicWeberNumber<CloudType>::postEvolve
     We.resize(c.size());
 
     label parceli = 0;
-    forAllConstIters(c, parcelIter)
+    for (const parcelType& p : c)
     {
-        const parcelType& p = parcelIter();
-
         We[parceli++] = p.We(td, sigma_);
     }
 

@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef IOPosition_H
-#define IOPosition_H
+#ifndef Foam_IOPosition_H
+#define Foam_IOPosition_H
 
 #include "cloud.H"
 #include "regIOobject.H"
@@ -55,7 +55,7 @@ class IOPosition
 :
     public regIOobject
 {
-    // Private data
+    // Private Data
 
         cloud::geometryType geometryType_;
 
@@ -65,7 +65,7 @@ class IOPosition
 
 public:
 
-    // Static data
+    // Static Data
 
         //- Runtime type name information. Use cloud type.
         virtual const word& type() const
@@ -77,7 +77,7 @@ public:
     // Constructors
 
         //- Construct from cloud
-        IOPosition
+        explicit IOPosition
         (
             const CloudType& c,
             cloud::geometryType geomType = cloud::geometryType::COORDINATES

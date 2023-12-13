@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -92,10 +92,8 @@ void Foam::ParticleDose<CloudType>::postEvolve
     const auto& G = mesh.lookupObject<volScalarField>(GName_);
 
     label parceli = 0;
-    forAllConstIters(c, parcelIter)
+    for (const parcelType& p : c)
     {
-        const parcelType& p = parcelIter();
-
         D[parceli] += G[p.cell()]*mesh.time().deltaTValue();
         parceli++;
     }

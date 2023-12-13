@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,17 +50,6 @@ Foam::passivePositionParticleCloud::passivePositionParticleCloud
         passivePositionParticle::readFields(*this);
     }
 }
-
-
-Foam::passivePositionParticleCloud::passivePositionParticleCloud
-(
-    const polyMesh& mesh,
-    const word& cloudName,
-    const IDLList<passivePositionParticle>& particles
-)
-:
-    Cloud<passivePositionParticle>(mesh, cloudName, particles)
-{}
 
 
 // ************************************************************************* //

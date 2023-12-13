@@ -61,13 +61,8 @@ void Foam::functionObjects::nearWallFields::calcAddressing()
 
     DebugInFunction << "nPatchFaces: " << globalWalls.totalSize() << endl;
 
-    // Construct cloud
-    Cloud<findCellParticle> cloud
-    (
-        mesh_,
-        cloud::defaultName,
-        IDLList<findCellParticle>()
-    );
+    // Start with empty cloud
+    Cloud<findCellParticle> cloud(mesh_, Foam::zero{}, cloud::defaultName);
 
     // Add particles to track to sample locations
     nPatchFaces = 0;
