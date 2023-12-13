@@ -68,8 +68,8 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
     rank_(0),
-    sendRequests_(0),
-    recvRequests_(0)
+    sendRequests_(),
+    recvRequests_()
 {
     const cyclicAMILduInterfaceField& p =
         refCast<const cyclicAMILduInterfaceField>(fineInterface);
@@ -90,8 +90,8 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(doTransform),
     rank_(rank),
-    sendRequests_(0),
-    recvRequests_(0)
+    sendRequests_(),
+    recvRequests_()
 {}
 
 
@@ -105,8 +105,8 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(readBool(is)),
     rank_(readLabel(is)),
-    sendRequests_(0),
-    recvRequests_(0)
+    sendRequests_(),
+    recvRequests_()
 {}
 
 
@@ -121,8 +121,8 @@ Foam::cyclicAMIGAMGInterfaceField::cyclicAMIGAMGInterfaceField
     cyclicAMIInterface_(refCast<const cyclicAMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
     rank_(0),
-    sendRequests_(0),   // assume no requests in flight for input field
-    recvRequests_(0)
+    sendRequests_(),    // assume no requests in flight for input field
+    recvRequests_()
 {
     const auto& p = refCast<const cyclicAMILduInterfaceField>(local);
 
@@ -220,8 +220,7 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
 
         // Insert send/receive requests (non-blocking). See e.g.
         // cyclicAMIPolyPatchTemplates.C
-        const label oldWarnComm = UPstream::warnComm;
-        UPstream::warnComm = AMI.comm();
+        const label oldWarnComm = UPstream::commWarn(AMI.comm());
         map.send
         (
             pnf,
@@ -230,7 +229,7 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
             recvRequests_,
             scalarRecvBufs_
         );
-        UPstream::warnComm = oldWarnComm;
+        UPstream::commWarn(oldWarnComm);
     }
 }
 
@@ -313,10 +312,6 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
 
         // Transform according to the transformation tensors
         transformCoupleField(work, cmpt);
-
-        // Switch on warning if using wrong communicator. Can be removed if
-        // sure all is correct
-        UPstream::warnComm = AMI.comm();
 
         solveScalarField pnf(faceCells.size(), Zero);
         AMI.weightedSum

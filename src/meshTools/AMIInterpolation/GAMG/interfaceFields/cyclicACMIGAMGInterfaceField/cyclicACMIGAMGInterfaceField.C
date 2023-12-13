@@ -68,8 +68,8 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
     rank_(0),
-    sendRequests_(0),
-    recvRequests_(0)
+    sendRequests_(),
+    recvRequests_()
 {
     const cyclicAMILduInterfaceField& p =
         refCast<const cyclicAMILduInterfaceField>(fineInterface);
@@ -90,8 +90,8 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(doTransform),
     rank_(rank),
-    sendRequests_(0),
-    recvRequests_(0)
+    sendRequests_(),
+    recvRequests_()
 {}
 
 
@@ -105,8 +105,8 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(readBool(is)),
     rank_(readLabel(is)),
-    sendRequests_(0),
-    recvRequests_(0)
+    sendRequests_(),
+    recvRequests_()
 {}
 
 
@@ -121,8 +121,8 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
     rank_(0),
-    sendRequests_(0),
-    recvRequests_(0)
+    sendRequests_(),
+    recvRequests_()
 {
     const auto& p = refCast<const cyclicACMILduInterfaceField>(local);
 
@@ -219,8 +219,7 @@ void Foam::cyclicACMIGAMGInterfaceField::initInterfaceMatrixUpdate
 
         // Insert send/receive requests (non-blocking). See e.g.
         // cyclicAMIPolyPatchTemplates.C
-        const label oldWarnComm = UPstream::warnComm;
-        UPstream::warnComm = AMI.comm();
+        const label oldWarnComm = UPstream::commWarn(AMI.comm());
         map.send
         (
             pnf,
@@ -229,7 +228,7 @@ void Foam::cyclicACMIGAMGInterfaceField::initInterfaceMatrixUpdate
             recvRequests_,
             scalarRecvBufs_
         );
-        UPstream::warnComm = oldWarnComm;
+        UPstream::commWarn(oldWarnComm);
     }
 }
 
