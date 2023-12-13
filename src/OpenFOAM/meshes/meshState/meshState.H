@@ -31,7 +31,8 @@ Description
     Database for mesh data, solution data, solver performance and other
     reduced data.
 
-    polyMesh has a meshState data member so that every GeometricField has access.
+    polyMesh has a meshState data member so that
+    every GeometricField has access.
 
 SourceFiles
     meshState.C
@@ -88,8 +89,14 @@ public:
 
     // Static Data Members
 
-        static const word solverPerformanceDictName;
+        //- Name for "controls" sub-dictionary
+        static const word controlsDictName;
+
+        //- Name for "mesh" sub-dictionary
         static const word meshDictName;
+
+        //- Name for "solver" (solver performance) sub-dictionary
+        static const word solverPerformanceDictName;
 
 
     // Constructors
@@ -134,6 +141,10 @@ public:
         //- Reset the dictionary
         void reset(const meshState& ms);
 
+        //- Return the dictionary of controls
+        dictionary& controlsDict();
+        const dictionary& controlsDict() const;
+
         //- Return the dictionary of mesh data, typically populated by
         //- the polyMesh::checkXXX functions, checkMesh etc.
         dictionary& meshDict();
@@ -144,16 +155,16 @@ public:
         dictionary& solverPerformanceDict();
         const dictionary& solverPerformanceDict() const;
 
-        //- True if "firstIteration" entry exists and is set
+        //- True if "firstIteration" entry exists (in controls) and is set
         bool isFirstIteration() const;
 
-        //- True if "finalIteration" entry exists and is set
+        //- True if "finalIteration" entry exists (in controls) and is set
         bool isFinalIteration() const;
 
-        //- Add/remove "firstIteration" entry
+        //- Add/remove "firstIteration" entry (from controls)
         void setFirstIteration(bool on);
 
-        //- Add/remove "finalIteration" entry
+        //- Add/remove "finalIteration" entry (from controls)
         void setFinalIteration(bool on);
 
         //- Add/set the solverPerformance entry for the named field

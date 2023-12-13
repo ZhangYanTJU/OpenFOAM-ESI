@@ -31,8 +31,12 @@ License
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-const Foam::word Foam::meshState::solverPerformanceDictName = "solver";
+const Foam::word Foam::meshState::controlsDictName = "controls";
 const Foam::word Foam::meshState::meshDictName = "mesh";
+const Foam::word Foam::meshState::solverPerformanceDictName = "solver";
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
 bool Foam::meshState::getBoolEntry
 (
@@ -87,6 +91,7 @@ Foam::meshState::meshState
     ),
     prevTimeIndex_(-1)
 {
+    (void)subDictOrAdd(controlsDictName);
     (void)subDictOrAdd(meshDictName);
     (void)subDictOrAdd(solverPerformanceDictName);
 }
@@ -97,6 +102,18 @@ Foam::meshState::meshState
 void Foam::meshState::reset(const meshState& ms)
 {
     dictionary::operator=(ms);
+}
+
+
+Foam::dictionary& Foam::meshState::controlsDict()
+{
+    return subDict(controlsDictName);
+}
+
+
+const Foam::dictionary& Foam::meshState::controlsDict() const
+{
+    return subDict(controlsDictName);
 }
 
 
@@ -126,25 +143,25 @@ const Foam::dictionary& Foam::meshState::solverPerformanceDict() const
 
 bool Foam::meshState::isFirstIteration() const
 {
-    return getBoolEntry(solverPerformanceDict(), "firstIteration");
+    return getBoolEntry(controlsDict(), "firstIteration");
 }
 
 
 bool Foam::meshState::isFinalIteration() const
 {
-    return getBoolEntry(solverPerformanceDict(), "finalIteration");
+    return getBoolEntry(controlsDict(), "finalIteration");
 }
 
 
 void Foam::meshState::setFirstIteration(bool on)
 {
-    return setBoolEntry(solverPerformanceDict(), "firstIteration", on);
+    return setBoolEntry(controlsDict(), "firstIteration", on);
 }
 
 
 void Foam::meshState::setFinalIteration(bool on)
 {
-    return setBoolEntry(solverPerformanceDict(), "finalIteration", on);
+    return setBoolEntry(controlsDict(), "finalIteration", on);
 }
 
 
