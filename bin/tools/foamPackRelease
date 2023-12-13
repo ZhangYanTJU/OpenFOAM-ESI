@@ -404,6 +404,68 @@ fi
 
 #------------------------------------------------------------------------------
 # Add in modules
+
+#
+# Recursive addition of submodule content.
+# NB: must be called from within the respective parent directory.
+# Example,
+#
+#    packModule abc  (implied cd)
+#       packModule abc/def
+#          packModule abc/def/hij
+#
+packModule()
+{
+    local parent="$1"
+
+    if [ -n "$parent" ]
+    then
+    (
+        cd "${parent##*/}" 2>/dev/null || exit
+
+        git ls-tree HEAD | \
+        while read mode gittype sha1 module
+        do
+            [ "$gittype" == commit ] || continue
+
+            case "$module" in
+            (. | ./)
+                echo "# module not initialized? : $parent"
+                continue
+                ;;
+            esac
+
+            echo
+            echo "# module"
+            echo "module=\""$parent${parent:+/}$module"\""
+            echo "commit=\""$sha1"\""
+            echo "tmpTarFile=\""$tarName-${module##*/}".tar\""
+            echo
+            echo '('
+            echo 'cd "$module" || exit'
+            echo 'newPrefix="$prefixDir${prefixDir:+/}$module"'
+            echo 'git -c tar.umask=user archive --format=tar --prefix="$newPrefix/" -o "$outputDir/$tmpTarFile" "$commit" || exit'
+            echo '# Without test, validation dirs (potentially large)'
+            echo 'tar --delete -f "$outputDir/$tmpTarFile" "$newPrefix/test" "$newPrefix/validation" 2>/dev/null'
+            echo 'tar -Af "$outputDir/$tarName.tar" "$outputDir/$tmpTarFile"'
+            echo 'rm -f "$outputDir/$tmpTarFile"'
+            echo '{'
+            echo '  echo'
+            echo '  echo "$module"'
+            echo '  echo commit="$commit"'
+            echo '  echo'
+            echo '  # Without test, validation dirs'
+            echo '  git ls-tree -r "$commit" | sed -e '"'"'/\ttest\//d;/\tvalidation\//d'"'"
+            echo '} >> "$outputDir/$manifest1"'
+            echo ')'
+
+            packModule "$parent/$module"
+        done
+    )
+    fi
+}
+
+
 if [ "$withModules" != false ]
 then
     echo
@@ -415,33 +477,7 @@ then
     echo '  echo head="$head"'
     echo '} > "$outputDir/$manifest1"'
 
-    git --git-dir="$gitbase/.git" ls-tree "$head" modules/ | \
-        while read mode gittype sha1 module
-    do
-        [ "$gittype" == commit ] || continue
-
-        echo
-        echo "module=\""$module"\""
-        echo "commit=\""$sha1"\""
-        echo "tarModule=\""$tarName-${module##*/}"\""
-        echo
-        echo 'if pushd "$module"; then'
-        echo 'moduleDir="$prefixDir${prefixDir:+/}$module"'
-        echo 'git -c tar.umask=user archive --format=tar --prefix="$moduleDir/" -o "$outputDir/$tarModule.tar" "$commit"'
-        echo '# Without test, validation dirs (potentially large)'
-        echo 'tar --delete -f "$outputDir/$tarModule.tar" "$moduleDir/test" "$moduleDir/validation" 2>/dev/null'
-        echo 'tar -Af "$outputDir/$tarName.tar" "$outputDir/$tarModule.tar"'
-        echo 'rm -f "$outputDir/$tarModule.tar"'
-        echo '{'
-        echo '  echo'
-        echo '  echo "$module"'
-        echo '  echo commit="$commit"'
-        echo '  echo'
-        echo '  # Without test, validation dirs'
-        echo '  git ls-tree -r "$commit" | sed -e '"'"'/\ttest\//d;/\tvalidation\//d'"'"
-        echo '} >> "$outputDir/$manifest1"'
-        echo 'popd; fi'
-    done
+    packModule modules
 
     echo
     echo '{ echo; echo "# End"; } >> "$outputDir/$manifest1"'
@@ -459,8 +495,9 @@ echo 'rm -f "$buildInfo" "$manifest0" "$manifest1"'
 echo 'popd; fi'
 
 echo
+echo "# -----------------------"
 echo "# End of creating archive"
-echo
+echo "# -----------------------"
 
 #------------------------------------------------------------------------------
 # Compression
