@@ -71,10 +71,9 @@ inline bool writeMeshObject
 
         // Switch off type checking (for reading e.g. faceZones as
         // generic list of dictionaries).
-        word oldTypeName;
+        const word oldTypeName = Type::typeName;
         if (disableHeaderChecking)
         {
-            oldTypeName = Type::typeName;
             const_cast<word&>(Type::typeName) = word::null;
         }
 

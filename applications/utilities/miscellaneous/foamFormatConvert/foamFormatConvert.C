@@ -73,8 +73,7 @@ Usage
 #include "tensorIOField.H"
 #include "labelFieldIOField.H"
 #include "vectorFieldIOField.H"
-#include "Cloud.H"
-#include "passiveParticle.H"
+#include "passiveParticleCloud.H"
 #include "fieldDictionary.H"
 
 #include "writeMeshObject.H"
@@ -95,7 +94,7 @@ bool writeZones
     const word& name,
     const fileName& meshDir,
     Time& runTime,
-    const IOstreamOption::compressionType compression
+    IOstreamOption::compressionType compression
 )
 {
     IOobject io
@@ -123,11 +122,11 @@ bool writeZones
 
         IOPtrList<entry> meshObject(io);
 
-        forAll(meshObject, i)
+        for (entry& e : meshObject)
         {
-            if (meshObject[i].isDict())
+            if (e.isDict())
             {
-                dictionary& d = meshObject[i].dict();
+                dictionary& d = e.dict();
 
                 if (d.found("faceLabels"))
                 {
@@ -197,13 +196,13 @@ struct uniqueEqOp
 };
 
 
-template<class T>
+template<class Type>
 bool writeOptionalMeshObject
 (
     const word& name,
     const fileName& meshDir,
     Time& runTime,
-    const bool writeOnProc
+    bool writeOnProc
 )
 {
     IOobject io
@@ -217,22 +216,26 @@ bool writeOptionalMeshObject
         IOobject::NO_REGISTER
     );
 
+    // Check if available and the correct type.
+    // Done as typeHeaderOk<regIOobject> + isHeaderClass to ensure
+    // local-only reading and circumvent is_globalIOobject<Type> check
+    // in typeHeaderOk<Type>
+
+    bool readOnProc =
+    (
+        io.typeHeaderOk<regIOobject>(false)
+     && io.isHeaderClass<Type>()
+    );
+
     bool writeOk = false;
-    const bool haveFile = io.typeHeaderOk<regIOobject>(false);
 
-    // Make sure all know if there is a valid class name
-    wordList classNames(1, io.headerClassName());
-    Pstream::combineReduce(classNames, uniqueEqOp<word>());
-
-    // Check for correct type
-    if (classNames[0] == T::typeName)
+    if (returnReduceOr(readOnProc))
     {
-        Info<< "        Reading " << classNames[0]
-            << " : " << name << endl;
-        T meshObject(io, writeOnProc && haveFile);
+        Info<< "        Reading " << Type::typeName << " : " << name << endl;
+        Type meshObject(io, readOnProc && writeOnProc);
 
         Info<< "        Writing " << name << endl;
-        writeOk = meshObject.regIOobject::write(writeOnProc && haveFile);
+        writeOk = meshObject.regIOobject::write(readOnProc && writeOnProc);
     }
 
     return writeOk;
@@ -416,7 +419,6 @@ int main(int argc, char *argv[])
         }
 
 
-
         // Check for lagrangian
         fileNameList lagrangianDirs
         (
@@ -451,11 +453,13 @@ int main(int argc, char *argv[])
                             polyMesh::defaultRegion,
                             runTime.timeName(),
                             runTime,
-                            Foam::IOobject::MUST_READ
+                            IOobject::MUST_READ
                         )
                     )
                 );
             }
+
+            const auto& mesh = meshPtr();
 
             fileNameList cloudDirs
             (
@@ -468,11 +472,14 @@ int main(int argc, char *argv[])
 
             Pstream::combineReduce(cloudDirs, uniqueEqOp<fileName>());
 
-            forAll(cloudDirs, i)
+            for (const auto& cloudDir : cloudDirs)
             {
-                fileName dir(cloud::prefix/cloudDirs[i]);
+                fileName dir(cloud::prefix/cloudDir);
 
-                Cloud<passiveParticle> parcels(meshPtr(), cloudDirs[i], false);
+                // Read with origProcId,origId fields
+                passiveParticleCloud parcels(mesh, cloudDir, true);
+
+                const bool writeOnProc = parcels.size();
 
                 parcels.writeObject
                 (
@@ -481,7 +488,7 @@ int main(int argc, char *argv[])
                         runTime.writeFormat(),
                         runTime.writeCompression()
                     ),
-                    parcels.size()
+                    writeOnProc
                 );
 
 
@@ -496,10 +503,7 @@ int main(int argc, char *argv[])
 
                 for (const word& name : cloudFields)
                 {
-                    // Note: try the various field types. Make sure to
-                    //       exit once successful conversion to avoid re-read
-                    //       converted file.
-
+                    // These ones already done by cloud itself
                     if
                     (
                         name == "positions"
@@ -511,81 +515,32 @@ int main(int argc, char *argv[])
                         continue;
                     }
 
-                    bool writeOk = writeOptionalMeshObject<labelIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-                    if (writeOk) continue;
-
-                    writeOk = writeOptionalMeshObject<scalarIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-                    if (writeOk) continue;
-
-                    writeOk = writeOptionalMeshObject<vectorIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-                    if (writeOk) continue;
-
-                    writeOk = writeOptionalMeshObject<sphericalTensorIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-                    if (writeOk) continue;
-
-                    writeOk = writeOptionalMeshObject<symmTensorIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-                    if (writeOk) continue;
-
-                    writeOk = writeOptionalMeshObject<tensorIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-                    if (writeOk) continue;
-
-                    writeOk = writeOptionalMeshObject<labelFieldIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-                    if (writeOk) continue;
-
-                    writeOk = writeOptionalMeshObject<vectorFieldIOField>
-                    (
-                        name,
-                        dir,
-                        runTime,
-                        parcels.size() > 0
-                    );
-
-                    if (!writeOk)
-                    {
-                        Info<< "        Failed converting " << name << endl;
+                    #undef  doLocalCode
+                    #define doLocalCode(Type)                                 \
+                    if                                                        \
+                    (                                                         \
+                        writeOptionalMeshObject<Type>                         \
+                        (                                                     \
+                            name, dir, runTime, writeOnProc                   \
+                        )                                                     \
+                    )                                                         \
+                    {                                                         \
+                        continue;                                             \
                     }
+
+                    doLocalCode(labelIOField);
+                    doLocalCode(scalarIOField);
+                    doLocalCode(vectorIOField);
+                    doLocalCode(sphericalTensorIOField);
+                    doLocalCode(symmTensorIOField);
+                    doLocalCode(tensorIOField);
+
+                    doLocalCode(labelFieldIOField);
+                    doLocalCode(vectorFieldIOField);
+
+                    #undef doLocalCode
+
+                    Info<< "        Failed converting " << name << endl;
                 }
             }
         }
