@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,18 +72,18 @@ bool Foam::IOPosition<CloudType>::writeData(Ostream& os) const
     {
         case cloud::geometryType::COORDINATES:
         {
-            forAllConstIters(cloud_, iter)
+            for (const auto& p : cloud_)
             {
-                iter().writeCoordinates(os);
+                p.writeCoordinates(os);
                 os  << nl;
             }
             break;
         }
         case cloud::geometryType::POSITIONS:
         {
-            forAllConstIters(cloud_, iter)
+            for (const auto& p : cloud_)
             {
-                iter().writePosition(os);
+                p.writePosition(os);
                 os  << nl;
             }
             break;

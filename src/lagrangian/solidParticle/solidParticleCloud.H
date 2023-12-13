@@ -31,14 +31,13 @@ Description
     A Cloud of solid particles
 
 SourceFiles
-    solidParticleCloudI.H
     solidParticleCloud.C
     solidParticleCloudIO.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef solidParticleCloud_H
-#define solidParticleCloud_H
+#ifndef Foam_solidParticleCloud_H
+#define Foam_solidParticleCloud_H
 
 #include "Cloud.H"
 #include "solidParticle.H"
@@ -60,7 +59,7 @@ class solidParticleCloud
 :
     public Cloud<solidParticle>
 {
-    // Private data
+    // Private Data
 
         const fvMesh& mesh_;
 
@@ -71,20 +70,21 @@ class solidParticleCloud
         scalar mu_;
 
 
-    // Private Member Functions
-
-        //- No copy construct
-        solidParticleCloud(const solidParticleCloud&) = delete;
-
-        //- No copy assignment
-        void operator=(const solidParticleCloud&) = delete;
-
-
 public:
+
+    //- Type of parcel within the cloud
+    typedef solidParticle parcelType;
+
+    //- No copy construct
+    solidParticleCloud(const solidParticleCloud&) = delete;
+
+    //- No copy assignment
+    void operator=(const solidParticleCloud&) = delete;
+
 
     // Constructors
 
-        //- Construct given mesh
+        //- Read construct
         explicit solidParticleCloud
         (
             const fvMesh& mesh,
@@ -95,30 +95,26 @@ public:
 
     // Member Functions
 
-        // Access
+    // Access
 
-            inline const fvMesh& mesh() const;
+        const fvMesh& mesh() const { return mesh_; }
 
-            inline scalar rhop() const;
-            inline scalar e() const;
-            inline scalar mu() const;
+        scalar rhop() const noexcept { return rhop_; }
+        scalar e() const noexcept { return e_; }
+        scalar mu() const noexcept { return mu_; }
 
 
-        // Edit
+    // Edit
 
-            //- Move the particles under the influence of the given
-            //  gravitational acceleration
-            void move(const dimensionedVector& g);
+        //- Move the particles under the influence of the given
+        //-  gravitational acceleration
+        void move(const dimensionedVector& g);
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "solidParticleCloudI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

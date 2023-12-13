@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef passiveParticleCloud_H
-#define passiveParticleCloud_H
+#ifndef Foam_passiveParticleCloud_H
+#define Foam_passiveParticleCloud_H
 
 #include "Cloud.H"
 #include "passiveParticle.H"
@@ -54,20 +54,21 @@ class passiveParticleCloud
 :
     public Cloud<passiveParticle>
 {
-    // Private Member Functions
-
-        //- No copy construct
-        passiveParticleCloud(const passiveParticleCloud&) = delete;
-
-        //- No copy assignment
-        void operator=(const passiveParticleCloud&) = delete;
-
-
 public:
+
+    //- Type of parcel within the cloud
+    typedef passiveParticle parcelType;
+
+    //- No copy construct
+    passiveParticleCloud(const passiveParticleCloud&) = delete;
+
+    //- No copy assignment
+    void operator=(const passiveParticleCloud&) = delete;
+
 
     // Constructors
 
-        //- Construct given mesh
+        //- Read construct
         explicit passiveParticleCloud
         (
             const polyMesh& mesh,
@@ -75,13 +76,16 @@ public:
             bool readFields = true
         );
 
-        //- Construct from mesh, cloud name, and a list of particles
+        //- Construct without particles
         passiveParticleCloud
         (
             const polyMesh& mesh,
-            const word& cloudName,
-            const IDLList<passiveParticle>& particles
-        );
+            const Foam::zero,
+            const word& cloudName = cloud::defaultName
+        )
+        :
+            Cloud<passiveParticle>(mesh, Foam::zero{}, cloudName)
+        {}
 };
 
 

@@ -63,25 +63,31 @@ template<class ParticleType>
 Foam::Cloud<ParticleType>::Cloud
 (
     const polyMesh& pMesh,
+    const Foam::zero,
+    const word& cloudName
+)
+:
+    cloud(pMesh, cloudName),
+    polyMesh_(pMesh),
+    geometryType_(cloud::geometryType::COORDINATES)
+{
+    checkPatches();
+
+    (void)polyMesh_.tetBasePtIs();
+    (void)polyMesh_.oldCellCentres();
+}
+
+
+template<class ParticleType>
+Foam::Cloud<ParticleType>::Cloud
+(
+    const polyMesh& pMesh,
     const word& cloudName,
     const IDLList<ParticleType>& particles
 )
 :
-    cloud(pMesh, cloudName),
-    IDLList<ParticleType>(),
-    polyMesh_(pMesh),
-    labels_(),
-    globalPositionsPtr_(),
-    geometryType_(cloud::geometryType::COORDINATES)
+    Cloud<ParticleType>(pMesh, Foam::zero{}, cloudName)
 {
-    checkPatches();
-    (void)polyMesh_.oldCellCentres();
-
-    // Ask for the tetBasePtIs to trigger all processors to build
-    // them, otherwise, if some processors have no particles then
-    // there is a comms mismatch.
-    (void)polyMesh_.tetBasePtIs();
-
     if (particles.size())
     {
         IDLList<ParticleType>::operator=(particles);

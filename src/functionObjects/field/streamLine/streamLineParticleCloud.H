@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,22 +56,19 @@ class streamLineParticleCloud
 {
 public:
 
-    //- Type of parcel the cloud was instantiated for
+    //- Type of parcel within the cloud
     typedef streamLineParticle parcelType;
 
+    //- No copy construct
+    streamLineParticleCloud(const streamLineParticleCloud&) = delete;
 
-    // Generated Methods
-
-        //- No copy construct
-        streamLineParticleCloud(const streamLineParticleCloud&) = delete;
-
-        //- No copy assignment
-        void operator=(const streamLineParticleCloud&) = delete;
+    //- No copy assignment
+    void operator=(const streamLineParticleCloud&) = delete;
 
 
     // Constructors
 
-        //- Construct given mesh
+        //- Read construct
         explicit streamLineParticleCloud
         (
             const polyMesh& mesh,
@@ -79,13 +76,16 @@ public:
             bool readFields = true
         );
 
-        //- Construct from mesh, cloud name, and a list of particles
+        //- Construct without particles
         streamLineParticleCloud
         (
             const polyMesh& mesh,
-            const word& cloudName,
-            const IDLList<streamLineParticle>& particles
-        );
+            const Foam::zero,
+            const word& cloudName = cloud::defaultName
+        )
+        :
+            Cloud<streamLineParticle>(mesh, Foam::zero{}, cloudName)
+        {}
 };
 
 

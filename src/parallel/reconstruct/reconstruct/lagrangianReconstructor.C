@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,11 +58,12 @@ Foam::label Foam::lagrangianReconstructor::reconstructPositions
     const word& cloudName
 ) const
 {
+    // Start with empty cloud
     passivePositionParticleCloud lagrangianPositions
     (
         mesh_,
-        cloudName,
-        IDLList<passivePositionParticle>()
+        Foam::zero{},
+        cloudName
     );
 
     forAll(procMeshes_, meshi)
@@ -78,10 +79,8 @@ Foam::label Foam::lagrangianReconstructor::reconstructPositions
         // - written in the old format
         passivePositionParticleCloud lpi(procMeshes_[meshi], cloudName, false);
 
-        forAllConstIters(lpi, iter)
+        for (const passivePositionParticle& ppi : lpi)
         {
-            const passivePositionParticle& ppi = *iter;
-
             const label mappedCell =
             (
                 (ppi.cell() >= 0)

@@ -27,10 +27,13 @@ License
 
 #include "injectedParticleCloud.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
 namespace Foam
 {
     defineNamedTemplateTypeNameAndDebug(Cloud<injectedParticle>, 0);
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -59,12 +62,6 @@ Foam::injectedParticleCloud::injectedParticleCloud
 )
 :
     Cloud<injectedParticle>(c.pMesh(), cloudName, c)
-{}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::injectedParticleCloud::~injectedParticleCloud()
 {}
 
 

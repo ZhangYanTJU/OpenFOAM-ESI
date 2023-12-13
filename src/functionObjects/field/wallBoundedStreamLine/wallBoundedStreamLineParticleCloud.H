@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,7 @@ Class
     Foam::wallBoundedStreamLineParticleCloud
 
 Description
-    A Cloud of streamLine particles
+    A Cloud of wall-bounded streamLine particles
 
 SourceFiles
     streamLineCloud.C
@@ -56,9 +56,8 @@ class wallBoundedStreamLineParticleCloud
 {
 public:
 
-    //- Type of parcel the cloud was instantiated for
+    //- Type of parcel within the cloud
     typedef wallBoundedStreamLineParticle parcelType;
-
 
     // Generated Methods
 
@@ -74,7 +73,7 @@ public:
 
     // Constructors
 
-        //- Construct given mesh
+        //- Read construct
         explicit wallBoundedStreamLineParticleCloud
         (
             const polyMesh& mesh,
@@ -82,13 +81,16 @@ public:
             bool readFields = true
         );
 
-        //- Construct from mesh, cloud name, and a list of particles
+        //- Construct without particles
         wallBoundedStreamLineParticleCloud
         (
             const polyMesh& mesh,
-            const word& cloudName,
-            const IDLList<wallBoundedStreamLineParticle>& particles
-        );
+            const Foam::zero,
+            const word& cloudName = cloud::defaultName
+        )
+        :
+            Cloud<wallBoundedStreamLineParticle>(mesh, Foam::zero{}, cloudName)
+        {}
 };
 
 

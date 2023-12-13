@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,6 +34,7 @@ namespace Foam
     defineTemplateTypeNameAndDebug(Cloud<passivePositionParticle>, 0);
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::passivePositionParticleCloud::passivePositionParticleCloud
@@ -50,17 +51,6 @@ Foam::passivePositionParticleCloud::passivePositionParticleCloud
         passivePositionParticle::readFields(*this);
     }
 }
-
-
-Foam::passivePositionParticleCloud::passivePositionParticleCloud
-(
-    const polyMesh& mesh,
-    const word& cloudName,
-    const IDLList<passivePositionParticle>& particles
-)
-:
-    Cloud<passivePositionParticle>(mesh, cloudName, particles)
-{}
 
 
 // ************************************************************************* //

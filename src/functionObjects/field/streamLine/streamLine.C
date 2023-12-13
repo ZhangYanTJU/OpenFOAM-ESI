@@ -47,13 +47,8 @@ namespace functionObjects
 
 void Foam::functionObjects::streamLine::track()
 {
-    IDLList<streamLineParticle> initialParticles;
-    streamLineParticleCloud particles
-    (
-        mesh_,
-        cloudName_,
-        initialParticles
-    );
+    // Start with empty cloud
+    streamLineParticleCloud particles(mesh_, Foam::zero{}, cloudName_);
 
     const sampledSet& seedPoints = sampledSetPoints();
 

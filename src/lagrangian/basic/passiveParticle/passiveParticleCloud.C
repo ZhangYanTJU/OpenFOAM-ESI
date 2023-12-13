@@ -52,15 +52,4 @@ Foam::passiveParticleCloud::passiveParticleCloud
 }
 
 
-Foam::passiveParticleCloud::passiveParticleCloud
-(
-    const polyMesh& mesh,
-    const word& cloudName,
-    const IDLList<passiveParticle>& particles
-)
-:
-    Cloud<passiveParticle>(mesh, cloudName, particles)
-{}
-
-
 // ************************************************************************* //

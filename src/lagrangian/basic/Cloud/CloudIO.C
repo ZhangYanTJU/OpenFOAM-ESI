@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017, 2020 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -49,7 +49,7 @@ void Foam::Cloud<ParticleType>::readCloudUniformProperties()
         time().timeName(),
         "uniform"/cloud::prefix/name(),
         db(),
-        IOobject::MUST_READ_IF_MODIFIED,
+        IOobject::MUST_READ,
         IOobject::NO_WRITE,
         IOobject::NO_REGISTER
     );
@@ -114,9 +114,8 @@ void Foam::Cloud<ParticleType>::writeCloudUniformProperties() const
 
     forAll(np, i)
     {
-        word procName("processor" + Foam::name(i));
-        uniformPropsDict.add(procName, dictionary());
-        uniformPropsDict.subDict(procName).add("particleCount", np[i]);
+        const word procName("processor" + Foam::name(i));
+        uniformPropsDict.subDictOrAdd(procName).add("particleCount", np[i]);
     }
 
     uniformPropsDict.writeObject
@@ -169,17 +168,8 @@ Foam::Cloud<ParticleType>::Cloud
     const bool checkClass
 )
 :
-    cloud(pMesh, cloudName),
-    polyMesh_(pMesh),
-    labels_(),
-    cellWallFacesPtr_(),
-    geometryType_(cloud::geometryType::COORDINATES)
+    Cloud<ParticleType>(pMesh, Foam::zero{}, cloudName)
 {
-    checkPatches();
-
-    (void)polyMesh_.tetBasePtIs();
-    (void)polyMesh_.oldCellCentres();
-
     initCloud(checkClass);
 }
 

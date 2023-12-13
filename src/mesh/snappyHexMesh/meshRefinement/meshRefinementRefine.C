@@ -337,8 +337,8 @@ void Foam::meshRefinement::markFeatureCellLevel
     Cloud<trackedParticle> startPointCloud
     (
         mesh_,
-        "startPointCloud",
-        IDLList<trackedParticle>()
+        Foam::zero{},
+        "startPointCloud"
     );
 
 
@@ -492,12 +492,8 @@ void Foam::meshRefinement::markFeatureCellLevel
     }
 
 
-    Cloud<trackedParticle> cloud
-    (
-        mesh_,
-        "featureCloud",
-        IDLList<trackedParticle>()
-    );
+    // Start with empty cloud
+    Cloud<trackedParticle> cloud(mesh_, Foam::zero{}, "featureCloud");
 
     if (debug&meshRefinement::FEATURESEEDS)
     {

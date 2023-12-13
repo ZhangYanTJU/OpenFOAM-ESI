@@ -37,6 +37,7 @@ namespace Foam
 }
 
 const Foam::word Foam::cloud::prefix("lagrangian");
+
 Foam::word Foam::cloud::defaultName("defaultCloud");
 
 const Foam::Enum<Foam::cloud::geometryType>
@@ -51,7 +52,7 @@ Foam::cloud::geometryTypeNames
 
 Foam::cloud::cloud(const objectRegistry& obr)
 :
-    cloud(obr, defaultName)
+    cloud(obr, cloud::defaultName)
 {}
 
 
@@ -63,10 +64,11 @@ Foam::cloud::cloud(const objectRegistry& obr, const word& cloudName)
         (
             cloudName,
             obr.time().timeName(),
-            prefix,
+            cloud::prefix,
             obr,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         )
     )
 {}
