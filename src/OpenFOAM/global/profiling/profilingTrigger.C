@@ -7,6 +7,7 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2009-2016 Bernhard Gschaider
     Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2023 Josep Pocurull Serra, Barcelona Supercomputing Center
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +31,115 @@ License
 #include "profilingTrigger.H"
 #include "profilingInformation.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+// Extrae profiling hooks
+// ----------------------
+// https://tools.bsc.es/extrae
+// ----------------------
+
+#ifdef HAVE_EXTRAE
+#include <map>
+#include <utility>
+
+// Weak functions for Extrae C api
+extern "C"
+{
+    typedef unsigned extrae_type_t;
+    typedef unsigned long long extrae_value_t;
+
+    // Adds to the Paraver Configuration File human readable information
+    // regarding type and its values.
+    void Extrae_define_event_type
+    (
+        extrae_type_t *type,
+        char *type_description,
+        unsigned *nvalues,
+        extrae_value_t *values,
+        char **values_description
+    ) __attribute__((weak));
+
+    // Adds a single timestamped event into the tracefile
+    void Extrae_event
+    (
+        extrae_type_t type,
+        extrae_value_t value
+    ) __attribute__((weak));
+
+}  // End extern "C"
+
+
+// Descriptor for the events
+static char myExtrae_description[] = "OpenFOAM Extrae Profiling";
+
+static void open_extrae_region(const std::string& name)
+{
+    // Event history (by name) of profiling triggers
+    static std::map<std::string, extrae_value_t> event_history;
+
+    // Scratch space for transcribing map -> flat lists
+    static Foam::DynamicList<char*> eventNames;
+    static Foam::DynamicList<extrae_value_t> eventValues;
+
+
+    if (event_history.empty())
+    {
+        event_history.insert(std::make_pair("End", 0));
+    }
+
+    extrae_type_t event_type = 7000;
+    extrae_value_t event_name;
+
+    // Check if there is already an event with that name
+    auto iter = event_history.find(name);
+    if (iter != event_history.end())
+    {
+        event_name = iter->second;
+    }
+    else
+    {
+        // Update extrae defined events
+
+        event_name = static_cast<extrae_value_t>(event_history.size());
+        event_history.insert(std::make_pair(name, event_name));
+
+        unsigned numEvents = event_history.size();
+
+        const Foam::label len(numEvents);
+
+        eventNames.resize_nocopy(len);
+        eventValues.resize_nocopy(len);
+
+        Foam::label i = 0;
+        for (const auto& iter : event_history)
+        {
+            eventNames[i]  = const_cast<char*>(iter.first.data());
+            eventValues[i] = iter.second;
+            ++i;
+        }
+
+        Extrae_define_event_type
+        (
+            &event_type,
+            myExtrae_description,
+            &numEvents,
+            eventValues.data(),
+            eventNames.data()
+        );
+    }
+
+    Extrae_event(event_type, event_name);
+}
+
+
+static void close_extrae_region()
+{
+    Extrae_event(7000, 0);
+}
+
+#endif  /* HAVE_EXTRAE */
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::profilingTrigger::profilingTrigger() noexcept
@@ -48,6 +158,9 @@ Foam::profilingTrigger::profilingTrigger(const std::string& name)
 :
     ptr_(profiling::New(name))
 {
+    #ifdef HAVE_EXTRAE
+    if (Extrae_event) open_extrae_region(std::string(name));
+    #endif
 }
 
 
@@ -69,6 +182,10 @@ bool Foam::profilingTrigger::running() const noexcept
 
 void Foam::profilingTrigger::stop()
 {
+    #ifdef HAVE_EXTRAE
+    if (Extrae_event) close_extrae_region();
+    #endif
+
     if (ptr_)
     {
         // profiling info pointer managed by pool storage, so no delete here
