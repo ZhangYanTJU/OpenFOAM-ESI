@@ -43,8 +43,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef globalIndexAndTransform_H
-#define globalIndexAndTransform_H
+#ifndef Foam_globalIndexAndTransform_H
+#define Foam_globalIndexAndTransform_H
 
 #include "labelPair.H"
 #include "vectorTensorTransform.H"
@@ -55,8 +55,8 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class polyMesh;
-
 
 /*---------------------------------------------------------------------------*\
                    Class globalIndexAndTransform Declaration
@@ -66,7 +66,7 @@ class globalIndexAndTransform
 {
 public:
 
-    // Public classes
+    // Public Classes
 
         //- Less function class used in sorting encoded transforms and indices
         //  Minimum of:
@@ -168,7 +168,7 @@ public:
     // Constructors
 
         //- Construct from components
-        globalIndexAndTransform(const polyMesh& mesh);
+        explicit globalIndexAndTransform(const polyMesh& mesh);
 
 
     // Member Functions
@@ -282,7 +282,6 @@ public:
             const labelHashSet& patchIs,
             const point& pt
         ) const;
-
 };
 
 

@@ -154,8 +154,8 @@ Foam::UPtrList<const Foam::mapDistributeBase> Foam::mapDistribute::extractBase
     UPtrList<const mapDistributeBase> baseMaps(maps.size());
     forAll(maps, i)
     {
-        const mapDistributeBase& map = maps[i];
-        baseMaps.set(i, &map);
+        // Implicit cast to <const mapDistributeBase*>
+        baseMaps.set(i, maps.get(i));
     }
     return baseMaps;
 }
@@ -250,15 +250,13 @@ Foam::mapDistribute::mapDistribute
     );
 
     // Add all (non-local) transformed elements needed.
-    forAll(transformedElements, i)
+    for (const labelPair& elem : transformedElements)
     {
-        labelPair elem = transformedElements[i];
         label proci = globalTransforms.processor(elem);
         if (proci != myRank)
         {
             label index = globalTransforms.index(elem);
-            label nCompact = compactMap[proci].size();
-            compactMap[proci].insert(index, nCompact);
+            compactMap[proci].insert(index, compactMap[proci].size());
         }
     }
 
@@ -279,31 +277,32 @@ Foam::mapDistribute::mapDistribute
     // Renumber the transformed elements
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Count per transformIndex
-    label nTrafo = globalTransforms.transformPermutations().size();
+    const label nTrafo = globalTransforms.transformPermutations().size();
     labelList nPerTransform(nTrafo, Zero);
-    forAll(transformedElements, i)
+    for (const labelPair& elem : transformedElements)
     {
-        labelPair elem = transformedElements[i];
         label trafoI = globalTransforms.transformIndex(elem);
         nPerTransform[trafoI]++;
     }
     // Offset per transformIndex
-    transformStart_.setSize(nTrafo);
-    transformElements_.setSize(nTrafo);
+    transformStart_.resize_nocopy(nTrafo);
+    transformElements_.resize_nocopy(nTrafo);
     forAll(transformStart_, trafoI)
     {
+        const label count = nPerTransform[trafoI];
+
         transformStart_[trafoI] = constructSize();
-        constructSize() += nPerTransform[trafoI];
-        transformElements_[trafoI].setSize(nPerTransform[trafoI]);
+        transformElements_[trafoI].resize_nocopy(count);
+        constructSize() += count;
     }
 
     // Sort transformed elements into their new slot.
     nPerTransform = 0;
 
-    transformedIndices.setSize(transformedElements.size());
+    transformedIndices.resize_nocopy(transformedElements.size());
     forAll(transformedElements, i)
     {
-        labelPair elem = transformedElements[i];
+        const labelPair& elem = transformedElements[i];
         label proci = globalTransforms.processor(elem);
         label index = globalTransforms.index(elem);
         label trafoI = globalTransforms.transformIndex(elem);
@@ -358,18 +357,15 @@ Foam::mapDistribute::mapDistribute
     );
 
     // Add all (non-local) transformed elements needed.
-    forAll(transformedElements, celli)
+    for (const labelPairList& elems : transformedElements)
     {
-        const labelPairList& elems = transformedElements[celli];
-
-        forAll(elems, i)
+        for (const labelPair& elem : elems)
         {
-            label proci = globalTransforms.processor(elems[i]);
+            label proci = globalTransforms.processor(elem);
             if (proci != myRank)
             {
-                label index = globalTransforms.index(elems[i]);
-                label nCompact = compactMap[proci].size();
-                compactMap[proci].insert(index, nCompact);
+                label index = globalTransforms.index(elem);
+                compactMap[proci].insert(index, compactMap[proci].size());
             }
         }
     }
@@ -391,36 +387,36 @@ Foam::mapDistribute::mapDistribute
     // Renumber the transformed elements
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Count per transformIndex
-    label nTrafo = globalTransforms.transformPermutations().size();
+    const label nTrafo = globalTransforms.transformPermutations().size();
     labelList nPerTransform(nTrafo, Zero);
-    forAll(transformedElements, celli)
+    for (const labelPairList& elems : transformedElements)
     {
-        const labelPairList& elems = transformedElements[celli];
-
-        forAll(elems, i)
+        for (const labelPair& elem : elems)
         {
-            label trafoI = globalTransforms.transformIndex(elems[i]);
+            label trafoI = globalTransforms.transformIndex(elem);
             nPerTransform[trafoI]++;
         }
     }
     // Offset per transformIndex
-    transformStart_.setSize(nTrafo);
-    transformElements_.setSize(nTrafo);
+    transformStart_.resize_nocopy(nTrafo);
+    transformElements_.resize_nocopy(nTrafo);
     forAll(transformStart_, trafoI)
     {
+        const label count = nPerTransform[trafoI];
+
         transformStart_[trafoI] = constructSize();
-        constructSize() += nPerTransform[trafoI];
-        transformElements_[trafoI].setSize(nPerTransform[trafoI]);
+        transformElements_[trafoI].resize_nocopy(count);
+        constructSize() += count;
     }
 
     // Sort transformed elements into their new slot.
     nPerTransform = 0;
 
-    transformedIndices.setSize(transformedElements.size());
+    transformedIndices.resize_nocopy(transformedElements.size());
     forAll(transformedElements, celli)
     {
         const labelPairList& elems = transformedElements[celli];
-        transformedIndices[celli].setSize(elems.size());
+        transformedIndices[celli].resize_nocopy(elems.size());
 
         forAll(elems, i)
         {

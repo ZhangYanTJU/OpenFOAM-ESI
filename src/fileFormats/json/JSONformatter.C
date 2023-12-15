@@ -130,7 +130,7 @@ Foam::Ostream& Foam::JSONformatter::writeDict(const dictionary& dict)
         const word& keyword = e.keyword();
 
         os_  << indent;
-        writeKeyword(keyword) << " : ";
+        os_.writeQuoted(keyword) << " : ";
 
         if (e.isDict())
         {

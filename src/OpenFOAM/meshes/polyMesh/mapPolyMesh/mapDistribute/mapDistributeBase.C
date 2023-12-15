@@ -425,8 +425,7 @@ void Foam::mapDistributeBase::calcCompactAddressing
         {
             label proci = globalNumbering.whichProcID(myRank, globalIdx);
             label index = globalNumbering.toLocal(proci, globalIdx);
-            label nCompact = compactMap[proci].size();
-            compactMap[proci].insert(index, nCompact);
+            compactMap[proci].insert(index, compactMap[proci].size());
         }
     }
 }
@@ -478,8 +477,7 @@ void Foam::mapDistributeBase::calcCompactAddressing
             {
                 label proci = globalNumbering.whichProcID(myRank, globalIdx);
                 label index = globalNumbering.toLocal(proci, globalIdx);
-                label nCompact = compactMap[proci].size();
-                compactMap[proci].insert(index, nCompact);
+                compactMap[proci].insert(index, compactMap[proci].size());
             }
         }
     }

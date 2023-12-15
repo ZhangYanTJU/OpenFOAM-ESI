@@ -8,6 +8,7 @@ const Enum<writeChecksFormatType> writeChecksFormatTypeNames
 {
     { writeChecksFormatType::none, "none" },
     { writeChecksFormatType::dictionary, "dictionary" },
+    { writeChecksFormatType::JSON, "json" },
     { writeChecksFormatType::JSON, "JSON" },
 };
 
@@ -15,7 +16,7 @@ writeChecksFormatType writeChecksFormat(writeChecksFormatType::none);
 
 auto writeMeshChecks = [](const fvMesh& mesh, const writeChecksFormatType fmt)
 {
-    if (Pstream::master())
+    if (UPstream::master())
     {
         switch (fmt)
         {
@@ -33,14 +34,13 @@ auto writeMeshChecks = [](const fvMesh& mesh, const writeChecksFormatType fmt)
                     )
                 );
 
+                Info<< "Writing mesh data to " << os.name() << nl << endl;
+
                 data.writeHeader(os);
 
                 mesh.data().meshDict().write(os, false);
 
                 IOobject::writeEndDivider(os);
-
-                Info<< "Writing mesh data to " << data.objectPath()
-                    << nl << endl;
 
                 break;
             }

@@ -82,7 +82,7 @@ public:
         virtual Ostream& write(const bool val);
         virtual Ostream& write(const int32_t val);
         virtual Ostream& write(const int64_t val);
-        virtual Ostream& write(const float val );
+        virtual Ostream& write(const float val);
         virtual Ostream& write(const double val);
         virtual Ostream& write(const word& str);
         virtual Ostream& write(const std::string& str);
@@ -94,11 +94,13 @@ public:
         //- Write OpenFOAM dictionary to JSON dictionary
         virtual Ostream& writeDict(const dictionary& dict);
 
-        //- Write JSON keyword-value pair
+        //- Write JSON keyword-value pair (for primitive types)
         template<class Type>
-        Ostream& writeEntry(const word& keyword, Type val)
+        Ostream& writeEntry(const word& keyword, const Type& val)
         {
-            writeKeyword(keyword) << " : " << write(val);
+            os_.writeQuoted(keyword) << " : ";
+            write(val);
+            return os_;
         }
 };
 
