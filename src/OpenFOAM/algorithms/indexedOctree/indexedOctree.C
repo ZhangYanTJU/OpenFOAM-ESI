@@ -2154,14 +2154,14 @@ Foam::indexedOctree<Type>::indexedOctree
     contents_(),
     nodeTypes_()
 {
-    int oldMemSize = 0;
+    int64_t oldMemSize = 0;
     if (debug)
     {
         Pout<< "indexedOctree::indexedOctree:" << nl
             << "    shapes:" << shapes.size() << nl
             << "    bb:" << bb << nl
             << endl;
-        oldMemSize = memInfo().size();
+        oldMemSize = Foam::memInfo{}.size();
     }
 
     if (shapes.size() == 0)
@@ -2296,7 +2296,7 @@ Foam::indexedOctree<Type>::indexedOctree
             maxEntries = max(maxEntries, num);
         }
 
-        label memSize = memInfo().size();
+        int64_t memSize = Foam::memInfo{}.size();
 
         Pout<< "indexedOctree::indexedOctree"
             << " : finished construction of tree of:" << shapes.typeName

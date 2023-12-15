@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2009-2016 Bernhard Gschaider
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,8 +59,9 @@ class profilingTrigger
         //- The profiling information
         profilingInformation *ptr_;
 
+public:
 
-    // Private Member Functions
+    // Generated Methods
 
         //- No copy construct
         profilingTrigger(const profilingTrigger&) = delete;
@@ -69,22 +70,20 @@ class profilingTrigger
         void operator=(const profilingTrigger&) = delete;
 
 
-public:
-
     // Constructors
 
         //- Default construct, no profiling trigger
-        profilingTrigger();
+        profilingTrigger() noexcept;
 
         //- Construct profiling with given description.
         //  Descriptions beginning with 'application::' are reserved for
         //  internal use.
-        profilingTrigger(const char* name);
+        explicit profilingTrigger(const char* name);
 
         //- Construct profiling with given description.
         //  Descriptions beginning with 'application::' are reserved for
         //  internal use.
-        profilingTrigger(const string& name);
+        explicit profilingTrigger(const std::string& name);
 
 
     //- Destructor
@@ -94,7 +93,7 @@ public:
     // Member Functions
 
         //- True if the triggered profiling is active
-        bool running() const;
+        bool running() const noexcept;
 
         //- Stop triggered profiling
         void stop();
@@ -111,24 +110,21 @@ public:
 
 //- Define profiling trigger with specified name and description string
 //  \sa endProfiling
-#define addProfiling(name,descr)                                               \
-    ::Foam::profilingTrigger  profilingTriggerFor##name(descr)
+#define addProfiling(Name,Descr) \
+    ::Foam::profilingTrigger  profilingTriggerFor##Name(Descr)
+
+//- Remove profiling with specified name
+//  \sa addProfiling
+#define endProfiling(Name)    profilingTriggerFor##Name.stop()
 
 //- Define profiling trigger with specified name and description
 //- corresponding to the compiler-defined function name string
 //  \sa addProfiling
-//  \sa endProfiling
 #ifdef __GNUC__
-    #define addProfilingInFunction(name)                                       \
-    ::Foam::profilingTrigger  profilingTriggerFor##name(__PRETTY_FUNCTION__)
+#define addProfilingInFunction(Name)  addProfiling(Name, __PRETTY_FUNCTION__)
 #else
-    #define addProfilingInFunction(name)                                       \
-    ::Foam::profilingTrigger  profilingTriggerFor##name(__func__)
+#define addProfilingInFunction(Name)  addProfiling(Name, __func__)
 #endif
-
-//- Remove profiling with specified name
-//  \sa addProfiling
-#define endProfiling(name)    profilingTriggerFor##name.stop()
 
 
 #endif

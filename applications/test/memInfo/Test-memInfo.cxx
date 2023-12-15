@@ -47,14 +47,18 @@ int main(int argc, char *argv[])
     memInfo mem;
 
     Info<< memTags << mem << endl;
-    List<vector> lst(n, vector::one);
 
-    Info<< "allocate " << n << " vectors" << nl
-        << memTags << mem.update() << endl;
+    List<vector> list(n, vector::one);
 
-    lst.clear();
-    Info<< "clear" << nl
-        << memTags << mem.update() << endl;
+    Info<< "allocate " << n << " vectors" << nl;
+    Info<< memTags << mem.update() << endl;
+
+    list.clear();
+    Info<< "clear" << nl;
+    Info<< memTags << mem.update() << endl;
+
+    mem.writeEntry("memory", Info);
+    Info<< endl;
 
     return 0;
 }

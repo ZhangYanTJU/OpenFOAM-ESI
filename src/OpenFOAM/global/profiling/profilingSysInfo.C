@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,10 +56,7 @@ inline void printEnv
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::Ostream& Foam::profilingSysInfo::write
-(
-    Ostream& os
-) const
+void Foam::profilingSysInfo::writeEntries(Ostream& os) const
 {
     os.writeEntry("host",       Foam::hostName()); // short name
     os.writeEntry("date",       Foam::clock::dateTime());
@@ -73,8 +70,14 @@ Foam::Ostream& Foam::profilingSysInfo::write
     printEnv(os, "compiler",     "WM_COMPILER");
     printEnv(os, "mplib",        "WM_MPLIB");
     printEnv(os, "options",      "WM_OPTIONS");
+}
 
-    return os;
+
+void Foam::profilingSysInfo::writeEntry(const word& keyword, Ostream& os) const
+{
+    os.beginBlock(keyword);
+    writeEntries(os);
+    os.endBlock();
 }
 
 

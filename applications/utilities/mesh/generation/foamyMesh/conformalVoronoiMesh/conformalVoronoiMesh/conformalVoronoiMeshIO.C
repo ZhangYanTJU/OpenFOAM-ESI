@@ -38,6 +38,7 @@ License
 #include "indexedVertexOps.H"
 #include "DelaunayMeshTools.H"
 #include "syncTools.H"
+#include "memInfo.H"
 #include "faceSet.H"
 #include "OBJstream.H"
 

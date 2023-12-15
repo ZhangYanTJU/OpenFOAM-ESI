@@ -159,7 +159,6 @@ int main(int argc, char *argv[])
 
 
     cpuTime timer;
-    memInfo mem;
 
     Info<< "insert " << nElem << " (int) elements";
     if (optFnd)
@@ -306,7 +305,8 @@ int main(int argc, char *argv[])
     }
 
     Info<< timer.cpuTimeIncrement() << " s\n";
-    Info<< "mem info: " << mem.update() << endl;
+    Foam::memInfo{}.writeEntry("mem-info", Info);
+    Info<< endl;
 
     return 0;
 }

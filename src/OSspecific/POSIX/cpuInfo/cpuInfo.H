@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,6 +51,7 @@ namespace Foam
 {
 
 // Forward Declarations
+class word;
 class Ostream;
 
 /*---------------------------------------------------------------------------*\
@@ -59,9 +60,7 @@ class Ostream;
 
 class cpuInfo
 {
-    // Private data
-
-        // Various bits from /proc/cpuinfo
+    // Private Data
 
         std::string vendor_id;
         std::string model_name;
@@ -71,17 +70,10 @@ class cpuInfo
         int siblings;
         int cpu_cores;
 
-
     // Private Member Functions
 
-        //- Parse /proc/cpuinfo
-        void parse();
-
-        //- No copy construct
-        cpuInfo(const cpuInfo&) = delete;
-
-        //- No copy assignment
-        void operator=(const cpuInfo&) = delete;
+        //- Populate entries
+        void populate();
 
 public:
 
@@ -91,15 +83,13 @@ public:
         cpuInfo();
 
 
-    //- Destructor
-    ~cpuInfo() = default;
-
-
     // Member Functions
 
-        //- Write content as dictionary entries
-        void write(Ostream& os) const;
+        //- Write cpu-info as dictionary entries
+        void writeEntries(Ostream& os) const;
 
+        //- Write cpu-info as dictionary
+        void writeEntry(const word& keyword, Ostream& os) const;
 };
 
 

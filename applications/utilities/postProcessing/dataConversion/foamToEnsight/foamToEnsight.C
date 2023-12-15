@@ -463,8 +463,7 @@ int main(int argc, char *argv[])
 
     // ------------------------------------------------------------------------
     cpuTime timer;
-    memInfo mem;
-    Info<< "Initial memory " << mem.update().size() << " kB" << endl;
+    Info<< "Initial memory " << Foam::memInfo{}.size() << " kB" << endl;
 
     #include "createNamedMeshes.H"
     #include "createMeshAccounting.H"
@@ -496,7 +495,7 @@ int main(int argc, char *argv[])
 
     Info<< "Startup in "
         << timer.cpuTimeIncrement() << " s, "
-        << mem.update().size() << " kB" << nl << endl;
+        << Foam::memInfo{}.size() << " kB" << nl << endl;
 
 
     forAll(timeDirs, timei)
@@ -587,7 +586,7 @@ int main(int argc, char *argv[])
 
         Info<< "Wrote in "
             << timer.cpuTimeIncrement() << " s, "
-            << mem.update().size() << " kB" << nl << nl;
+            << Foam::memInfo{}.size() << " kB" << nl << nl;
     }
 
     // Write cases
@@ -606,7 +605,7 @@ int main(int argc, char *argv[])
 
     Info<< "\nEnd: "
         << timer.elapsedCpuTime() << " s, "
-        << mem.update().peak() << " kB (peak)" << nl << endl;
+        << Foam::memInfo{}.peak() << " kB (peak)" << nl << endl;
 
     return 0;
 }

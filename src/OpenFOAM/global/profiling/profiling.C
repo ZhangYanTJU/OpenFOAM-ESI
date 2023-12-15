@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2009-2016 Bernhard Gschaider
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,6 +36,7 @@ License
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 int Foam::profiling::allowed(Foam::debug::infoSwitch("allowProfiling", 1));
+
 std::unique_ptr<Foam::profiling> Foam::profiling::singleton_(nullptr);
 
 
@@ -62,7 +63,7 @@ Foam::profilingInformation* Foam::profiling::create()
 Foam::profilingInformation* Foam::profiling::create
 (
     profilingInformation *parent,
-    const string& descr
+    const std::string& descr
 )
 {
     const label parentId = parent->id();
@@ -110,13 +111,13 @@ Foam::profilingInformation* Foam::profiling::endTimer()
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-bool Foam::profiling::active()
+bool Foam::profiling::active() noexcept
 {
     return allowed && singleton_;
 }
 
 
-void Foam::profiling::disable()
+void Foam::profiling::disable() noexcept
 {
     allowed = 0;
 }
@@ -124,7 +125,7 @@ void Foam::profiling::disable()
 
 bool Foam::profiling::print(Ostream& os)
 {
-    if (active())
+    if (allowed && singleton_)
     {
         return singleton_->writeData(os);
     }
@@ -135,7 +136,7 @@ bool Foam::profiling::print(Ostream& os)
 
 bool Foam::profiling::writeNow()
 {
-    if (active())
+    if (allowed && singleton_)
     {
         return singleton_->regIOobject::write();
     }
@@ -180,7 +181,7 @@ void Foam::profiling::stop(const Time& owner)
 }
 
 
-Foam::profilingInformation* Foam::profiling::New(const string& descr)
+Foam::profilingInformation* Foam::profiling::New(const std::string& descr)
 {
     Information *info = nullptr;
 
@@ -193,10 +194,12 @@ Foam::profilingInformation* Foam::profiling::New(const string& descr)
 
         if (singleton_->memInfo_)
         {
+            singleton_->memInfo_->update();
+
             info->maxMem_ = Foam::max
             (
                 info->maxMem_,
-                singleton_->memInfo_->update().size()
+                singleton_->memInfo_->size()
             );
         }
     }
@@ -236,14 +239,7 @@ Foam::profiling::profiling
 )
 :
     IOdictionary(io),
-    owner_(owner),
-    pool_(),
-    children_(),
-    stack_(),
-    times_(),
-    sysInfo_(nullptr),
-    cpuInfo_(nullptr),
-    memInfo_(nullptr)
+    owner_(owner)
 {
     if (allEnabled)
     {
@@ -268,17 +264,21 @@ Foam::profiling::profiling
 :
     profiling(io, owner, false)
 {
-    if (dict.getOrDefault("sysInfo", false))
     {
-        sysInfo_.reset(new profilingSysInfo);
-    }
-    if (dict.getOrDefault("cpuInfo", false))
-    {
-        cpuInfo_.reset(new cpuInfo);
-    }
-    if (dict.getOrDefault("memInfo", false))
-    {
-        memInfo_.reset(new memInfo);
+        bool on = false;
+
+        if (dict.readIfPresent("sysInfo", on) && on)
+        {
+            sysInfo_.reset(new profilingSysInfo);
+        }
+        if (dict.readIfPresent("cpuInfo", on) && on)
+        {
+            cpuInfo_.reset(new cpuInfo);
+        }
+        if (dict.readIfPresent("memInfo", on) && on)
+        {
+            memInfo_.reset(new memInfo);
+        }
     }
 }
 
@@ -296,7 +296,7 @@ Foam::profiling::~profiling()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::Time& Foam::profiling::owner() const
+const Foam::Time& Foam::profiling::owner() const noexcept
 {
     return owner_;
 }
@@ -355,28 +355,20 @@ bool Foam::profiling::writeData(Ostream& os) const
     if (sysInfo_)
     {
         os << nl;
-        os.beginBlock("sysInfo");
-        sysInfo_->write(os);
-        os.endBlock();
+        sysInfo_->writeEntry("sysInfo", os);
     }
 
     if (cpuInfo_)
     {
         os << nl;
-        os.beginBlock("cpuInfo");
-        cpuInfo_->write(os);
-        os.endBlock();
+        cpuInfo_->writeEntry("cpuInfo", os);
     }
 
     if (memInfo_)
     {
         memInfo_->update();
-
         os << nl;
-        os.beginBlock("memInfo");
-        memInfo_->write(os);
-        os.writeEntry("units", "kB");
-        os.endBlock();
+        memInfo_->writeEntry("memInfo", os);
     }
 
     return os.good();
@@ -393,7 +385,7 @@ bool Foam::profiling::writeObject
         regIOobject::writeObject
         (
             IOstreamOption(IOstreamOption::ASCII),
-            true
+            true  // always writeOnProc
         );
 }
 

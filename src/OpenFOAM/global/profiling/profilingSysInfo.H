@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef profilingSysInfo_H
-#define profilingSysInfo_H
+#ifndef Foam_profilingSysInfo_H
+#define Foam_profilingSysInfo_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -43,6 +43,7 @@ namespace Foam
 {
 
 // Forward Declarations
+class word;
 class Ostream;
 
 /*---------------------------------------------------------------------------*\
@@ -55,8 +56,11 @@ public:
 
     // Member Functions
 
-        //- Write the profiling system-info, use dictionary format.
-        Ostream& write(Ostream& os) const;
+        //- Write system-info as dictionary entries
+        void writeEntries(Ostream& os) const;
+
+        //- Write system-info as dictionary
+        void writeEntry(const word& keyword, Ostream& os) const;
 };
 
 

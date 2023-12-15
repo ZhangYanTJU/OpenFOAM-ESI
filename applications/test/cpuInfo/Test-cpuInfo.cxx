@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,7 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    cpuInfo().write(Info);
+    Foam::cpuInfo{}.writeEntry("cpu-info", Info);
     Info<< endl;
 
     return 0;

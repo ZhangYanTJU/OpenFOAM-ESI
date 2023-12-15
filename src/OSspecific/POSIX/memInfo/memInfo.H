@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011 OpenFOAM Foundation
     Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -42,6 +42,8 @@ SourceFiles
 #ifndef Foam_memInfo_H
 #define Foam_memInfo_H
 
+#include <cstdint>
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -49,12 +51,10 @@ namespace Foam
 
 // Forward Declarations
 class memInfo;
-class Istream;
+class word;
 class Ostream;
 
-Istream& operator>>(Istream& is, memInfo& m);
 Ostream& operator<<(Ostream& os, const memInfo& m);
-
 
 /*---------------------------------------------------------------------------*\
                            Class memInfo Declaration
@@ -65,16 +65,23 @@ class memInfo
     // Private Data
 
         //- Peak memory used by the process (VmPeak in /proc/PID/status)
-        int peak_;
+        int64_t peak_;
 
         //- Memory used by the process (VmSize in /proc/PID/status)
-        int size_;
+        int64_t size_;
 
         //- Resident set size of the process (VmRSS in /proc/PID/status)
-        int rss_;
+        int64_t rss_;
 
         //- System memory free (MemFree in /proc/meminfo)
-        int free_;
+        int64_t free_;
+
+
+    // Private Member Functions
+
+        //- Populate entries
+        void populate();
+
 
 public:
 
@@ -84,14 +91,27 @@ public:
         memInfo();
 
 
-    //- Destructor
-    ~memInfo() = default;
-
-
     // Member Functions
+
+    // Access
 
         //- True if the memory information appears valid
         bool good() const noexcept;
+
+        //- Peak memory at last update - (VmPeak in /proc/PID/status)
+        int64_t peak() const noexcept { return peak_; }
+
+        //- Memory size at last update - (VmSize in /proc/PID/status)
+        int64_t size() const noexcept { return size_; }
+
+        //- Resident set size at last update - (VmRSS in /proc/PID/status)
+        int64_t rss() const noexcept { return rss_; }
+
+        //- System memory free (MemFree in /proc/meminfo)
+        int64_t free() const noexcept { return free_; }
+
+
+    // Edit
 
         //- Reset to zero
         void clear() noexcept;
@@ -100,38 +120,19 @@ public:
         const memInfo& update();
 
 
-        //- Peak memory (VmPeak in /proc/PID/status) at last update()
-        int peak() const noexcept { return peak_; }
-
-        //- Memory size (VmSize in /proc/PID/status) at last update()
-        int size() const noexcept { return size_; }
-
-        //- Resident set size (VmRSS in /proc/PID/status) at last update()
-        int rss() const noexcept { return rss_; }
-
-        //- System memory free (MemFree in /proc/meminfo)
-        int free() const noexcept { return free_; }
-
-
-      // Write
-
-        //- Write content as dictionary entries
-        void write(Ostream& os) const;
-
-
     // IOstream Operators
-
-        //- Read peak/size/rss from stream
-        friend Istream& operator>>(Istream& is, memInfo& m);
 
         //- Write peak/size/rss to stream
         friend Ostream& operator<<(Ostream& os, const memInfo& m);
 
 
-    // Housekeeping
+    // Write
 
-        //- True if the memory information appears valid
-        bool valid() const noexcept { return good(); }
+        //- Write mem-info as dictionary entries
+        void writeEntries(Ostream& os) const;
+
+        //- Write mem-info as dictionary
+        void writeEntry(const word& keyword, Ostream& os) const;
 };
 
 

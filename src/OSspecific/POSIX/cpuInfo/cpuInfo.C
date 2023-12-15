@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2017 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,7 @@ License
 // file-scope function
 // split things like "a key word\t: value information"
 // into ("a_key_word", "value information")
-//
+
 static bool split(const std::string& line, std::string& key, std::string& val)
 {
     key.clear();
@@ -109,7 +109,7 @@ static bool split(const std::string& line, std::string& key, std::string& val)
 // address sizes   : 46 bits physical, 48 bits virtual
 // power management:
 
-void Foam::cpuInfo::parse()
+void Foam::cpuInfo::populate()
 {
     int ncpu = 0;
     std::string line, key, val;
@@ -152,13 +152,13 @@ Foam::cpuInfo::cpuInfo()
     siblings(0),
     cpu_cores(0)
 {
-    parse();
+    populate();
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::cpuInfo::write(Ostream& os) const
+void Foam::cpuInfo::writeEntries(Ostream& os) const
 {
     if (!vendor_id.empty())
     {
@@ -174,6 +174,14 @@ void Foam::cpuInfo::write(Ostream& os) const
     os.writeEntryIfDifferent<float>("cpu_MHz", 0, cpu_MHz);
     os.writeEntryIfDifferent<int>("cpu_cores", 0, cpu_cores);
     os.writeEntryIfDifferent<int>("siblings", 0, siblings);
+}
+
+
+void Foam::cpuInfo::writeEntry(const word& keyword, Ostream& os) const
+{
+    os.beginBlock(keyword);
+    writeEntries(os);
+    os.endBlock();
 }
 
 

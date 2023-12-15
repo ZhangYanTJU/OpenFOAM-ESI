@@ -371,7 +371,8 @@ void Foam::Time::setMonitoring(const bool forceProfiling)
                 "uniform",
                 *this,
                 IOobjectOption::NO_READ,
-                IOobjectOption::AUTO_WRITE
+                IOobjectOption::AUTO_WRITE,
+                IOobjectOption::REGISTER
             ),
             *this
         );
@@ -392,7 +393,8 @@ void Foam::Time::setMonitoring(const bool forceProfiling)
                 "uniform",
                 *this,
                 IOobjectOption::NO_READ,
-                IOobjectOption::AUTO_WRITE
+                IOobjectOption::AUTO_WRITE,
+                IOobjectOption::REGISTER
             ),
             *this
         );

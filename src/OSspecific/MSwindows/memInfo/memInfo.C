@@ -27,9 +27,10 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "memInfo.H"
-#include "OSspecific.H"
 #include "IOstreams.H"
+#include "OSspecific.H"  // For pid()
 
+#include <cstdlib>
 #include <fstream>
 #include <string>
 
@@ -42,7 +43,7 @@ Foam::memInfo::memInfo()
     rss_(0),
     free_(0)
 {
-    update();
+    populate();
 }
 
 
@@ -56,50 +57,63 @@ bool Foam::memInfo::good() const noexcept
 
 void Foam::memInfo::clear() noexcept
 {
-    peak_ = size_ = rss_ = 0;
-    free_ = 0;
+    peak_ = size_ = rss_ = free_ = 0;
+}
+
+
+void Foam::memInfo::populate()
+{
+    // Not yet supported under Windows
 }
 
 
 const Foam::memInfo& Foam::memInfo::update()
 {
-    clear();
-
-    // Not supported under Windows
-
+    // Not yet supported under Windows
+    // clear();
+    // populate();
     return *this;
 }
 
 
-void Foam::memInfo::write(Ostream& os) const
+void Foam::memInfo::writeEntries(Ostream& os) const
 {
     os.writeEntry("size", size_);
     os.writeEntry("peak", peak_);
     os.writeEntry("rss", rss_);
     os.writeEntry("free", free_);
+    os.writeEntry("units", "kB");  // kibi-btyes (1024)
+}
+
+
+void Foam::memInfo::writeEntry(const word& keyword, Ostream& os) const
+{
+    os.beginBlock(keyword);
+    writeEntries(os);
+    os.endBlock();
 }
 
 
 // * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
 
-Foam::Istream& Foam::operator>>(Istream& is, memInfo& m)
-{
-    is.readBegin("memInfo");
-    is  >> m.peak_ >> m.size_ >> m.rss_ >> m.free_;
-    is.readEnd("memInfo");
-
-    is.check(FUNCTION_NAME);
-    return is;
-}
+// Foam::Istream& Foam::operator>>(Istream& is, memInfo& m)
+// {
+//     is.readBegin("memInfo");
+//     is  >> m.peak_ >> m.size_ >> m.rss_ >> m.free_;
+//     is.readEnd("memInfo");
+//
+//     is.check(FUNCTION_NAME);
+//     return is;
+// }
 
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const memInfo& m)
 {
     os  << token::BEGIN_LIST
-        << m.peak_ << token::SPACE
-        << m.size_ << token::SPACE
-        << m.rss_  << token::SPACE
-        << m.free_
+        << m.peak() << token::SPACE
+        << m.size() << token::SPACE
+        << m.rss()  << token::SPACE
+        << m.free()
         << token::END_LIST;
 
     os.check(FUNCTION_NAME);

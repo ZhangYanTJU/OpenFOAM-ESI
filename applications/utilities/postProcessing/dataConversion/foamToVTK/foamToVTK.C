@@ -712,15 +712,14 @@ int main(int argc, char *argv[])
     // ------------------------------------------------------------------------
 
     cpuTime timer;
-    memInfo mem;
-    Info<< "Initial memory " << mem.update().size() << " kB" << endl;
+    Info<< "Initial memory " << Foam::memInfo{}.size() << " kB" << endl;
 
     #include "createNamedMeshes.H"
     #include "createMeshAccounting.H"
 
     Info<< "VTK mesh topology: "
         << timer.cpuTimeIncrement() << " s, "
-        << mem.update().size() << " kB" << endl;
+        << Foam::memInfo{}.size() << " kB" << endl;
 
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -860,13 +859,13 @@ int main(int argc, char *argv[])
 
         Info<< "Wrote in "
             << timer.cpuTimeIncrement() << " s, "
-            << mem.update().size() << " kB" << endl;
+            << Foam::memInfo{}.size() << " kB" << endl;
     }
 
 
     Info<< "\nEnd: "
         << timer.elapsedCpuTime() << " s, "
-        << mem.update().peak() << " kB (peak)\n" << endl;
+        << Foam::memInfo{}.peak() << " kB (peak)\n" << endl;
 
     return 0;
 }

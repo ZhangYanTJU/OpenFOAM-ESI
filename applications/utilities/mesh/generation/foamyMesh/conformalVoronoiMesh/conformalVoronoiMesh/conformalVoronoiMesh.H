@@ -64,7 +64,6 @@ SourceFiles
 #include "fvMesh.H"
 #include "labelPair.H"
 #include "HashSet.H"
-#include "memInfo.H"
 #include "point.H"
 #include "cellSet.H"
 #include "wallPolyPatch.H"

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2009-2016 Bernhard Gschaider
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -118,7 +118,7 @@ private:
         PtrDynList<Information> pool_;
 
         //- Parent/child relationships for lookup purposes
-        DynamicList<DynamicList<Information*,16>> children_;
+        DynamicList<DynamicList<Information*>> children_;
 
         //- LIFO stack of profiling information
         DynamicList<Information*> stack_;
@@ -136,21 +136,21 @@ private:
         std::unique_ptr<memInfo> memInfo_;
 
 
-    // Private Member Functions
-
-        //- No copy construct
-        profiling(const profiling&) = delete;
-
-        //- No copy assignment
-        void operator=(const profiling&) = delete;
-
-
 protected:
 
     // Friendship
 
         friend class profilingTrigger;
         friend class Time;
+
+
+    // Generated Methods
+
+        //- No copy construct
+        profiling(const profiling&) = delete;
+
+        //- No copy assignment
+        void operator=(const profiling&) = delete;
 
 
     // Constructors
@@ -184,7 +184,7 @@ protected:
         Information* create
         (
             Information* parent,
-            const string& descr
+            const std::string& descr
         );
 
         //- Add to stack of active information and begin timer datum
@@ -217,7 +217,7 @@ protected:
 
         //- Existing or new element on pool, add to stack.
         //  Returns nullptr if profiling has not been initialized
-        static profilingInformation* New(const string& descr);
+        static profilingInformation* New(const std::string& descr);
 
         //- Remove the information from the top of the stack
         static void unstack(const profilingInformation* info);
@@ -232,10 +232,10 @@ public:
     // Static Member Functions
 
         //- True if profiling is allowed and is active
-        static bool active();
+        static bool active() noexcept;
 
-        //- Disallow profiling by forcing the InfoSwitch off.
-        static void disable();
+        //- Disallow profiling - turns the InfoSwitch off
+        static void disable() noexcept;
 
         //- Print profiling information to specified output
         //  Forwards to writeData member of top-level object
@@ -248,7 +248,7 @@ public:
     // Member Functions
 
         //- The owner of the profiling
-        const Time& owner() const;
+        const Time& owner() const noexcept;
 
         //- The size of the current stack
         label size() const noexcept;

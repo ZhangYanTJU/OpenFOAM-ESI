@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2009-2016 Bernhard Gschaider
-    Copyright (C) 2016-2018 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,7 +32,7 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::profilingTrigger::profilingTrigger()
+Foam::profilingTrigger::profilingTrigger() noexcept
 :
     ptr_(nullptr)
 {}
@@ -40,14 +40,15 @@ Foam::profilingTrigger::profilingTrigger()
 
 Foam::profilingTrigger::profilingTrigger(const char* name)
 :
-    ptr_(profiling::New(name))
+    profilingTrigger(std::string(name))
 {}
 
 
-Foam::profilingTrigger::profilingTrigger(const string& name)
+Foam::profilingTrigger::profilingTrigger(const std::string& name)
 :
     ptr_(profiling::New(name))
-{}
+{
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -60,7 +61,7 @@ Foam::profilingTrigger::~profilingTrigger()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::profilingTrigger::running() const
+bool Foam::profilingTrigger::running() const noexcept
 {
     return ptr_;
 }

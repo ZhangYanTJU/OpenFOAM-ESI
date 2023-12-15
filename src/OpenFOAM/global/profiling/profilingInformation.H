@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2009-2016 Bernhard Gschaider
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,7 +62,7 @@ class profilingInformation
         const label id_;
 
         //- What this timer does
-        const string description_;
+        const std::string description_;
 
         //- Pointer to the parent object (or self for top-level)
         profilingInformation* parent_;
@@ -97,17 +97,17 @@ protected:
         //- Default construct - only the master-element
         profilingInformation();
 
-
-    // Protected Member Functions
-
-        //- Mark as being active or passive)
-        void setActive(bool state) const;
-
         //- No copy construct
         profilingInformation(const profilingInformation&) = delete;
 
         //- No copy assignment
         void operator=(const profilingInformation&) = delete;
+
+
+    // Protected Member Functions
+
+        //- Mark as being active or passive
+        void setActive(bool state) const;
 
 public:
 
@@ -117,7 +117,7 @@ public:
         profilingInformation
         (
             profilingInformation* parent,
-            const string& descr,
+            const std::string& descr,
             const label id
         );
 
@@ -132,7 +132,7 @@ public:
 
         label id() const noexcept { return id_; }
 
-        const string& description() const noexcept { return description_; }
+        const std::string& description() const noexcept { return description_; }
 
         profilingInformation& parent() const noexcept { return *parent_; }
 
@@ -166,6 +166,8 @@ public:
         ) const;
 };
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Global Operators
 

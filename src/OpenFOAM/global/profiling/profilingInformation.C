@@ -48,7 +48,7 @@ Foam::profilingInformation::profilingInformation()
 Foam::profilingInformation::profilingInformation
 (
     profilingInformation *parent,
-    const string& descr,
+    const std::string& descr,
     const label id
 )
 :

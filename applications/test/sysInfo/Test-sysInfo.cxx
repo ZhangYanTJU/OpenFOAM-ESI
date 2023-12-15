@@ -43,9 +43,8 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    profilingSysInfo().write(Info);
-
-    cpuInfo().write(Info);
+    profilingSysInfo{}.writeEntry("sys-info", Info);
+    Foam::cpuInfo{}.writeEntry("cpu-info", Info);
 
 #ifdef WM_BIG_ENDIAN
     Info
