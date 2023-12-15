@@ -862,7 +862,9 @@ public:
             virtual label nProcs
             (
                 const fileName& dir,
-                const fileName& local = ""
+                const fileName& local = "",
+                //! >0 if we know in advance what we're looking for
+                const label wantedNProcs = 0
             ) const;
 
             //- Get sorted list of times

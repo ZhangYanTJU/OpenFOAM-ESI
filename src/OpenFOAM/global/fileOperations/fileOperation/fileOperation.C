@@ -1290,13 +1290,33 @@ Foam::fileNameList Foam::fileOperation::readObjects
 Foam::label Foam::fileOperation::nProcs
 (
     const fileName& dir,
-    const fileName& local
+    const fileName& local,
+    const label wanted      // expected nProcs. 0 if not supplied
 ) const
 {
     label nProcs = 0;
     if (UPstream::master(comm_))
     {
         fileNameList dirNames(Foam::readDir(dir, fileName::Type::DIRECTORY));
+
+        // E.g. (maybe left over)
+        // processor0
+        // processor1
+        // processors5
+        // processor90     // gap!
+        // processors10
+        //
+        //- if wanted is 2 then processor0,1 is enough
+        //- if wanted is not set then return highest valid range
+        //  (processors10 in above case)
+        //- if wanted cannot be matched (e.g. 37) return 0
+
+        // For marking off contiquous ranges
+        bitSet foundDirs;
+        if (wanted > 0)
+        {
+            foundDirs.resize(wanted);
+        }
 
         // Detect any processorsDDD or processorDDD
         label maxProc = -1;
@@ -1310,14 +1330,37 @@ Foam::label Foam::fileOperation::nProcs
                 splitProcessorPath(dirN, rp, rd, rl, group, rNum);
 
             maxProc = max(maxProc, readProci);
-            if (rNum != -1)
+
+            if (rNum > 0)       // processorsDDD where DDD>0
             {
-                // Direct detection of processorsDDD
-                maxProc = rNum-1;
-                break;
+                // Use processors number
+                maxProc = max(maxProc, rNum-1);
+                // Mark in cache. TBD separate handling for groups?
+                foundDirs.set(labelRange(0, rNum));
+
+                if (wanted == rNum)
+                {
+                    // Exact match of processorsDDD. Direct exit.
+                    maxProc = rNum-1;
+                    foundDirs.resize(rNum);
+                    break;
+                }
+            }
+            else if (readProci >= 0)
+            {
+                // Mark in cache
+                foundDirs.set(readProci);
             }
         }
         nProcs = maxProc+1;
+
+        // Override with any gaps in processorDDD numbering (can never happen
+        // with collated)
+        const label gapIndex = foundDirs.find_first_not();
+        if (gapIndex > 0)
+        {
+            nProcs = gapIndex-1;
+        }
 
         if (nProcs == 0 && Foam::isDir(dir/processorsBaseDir))
         {
