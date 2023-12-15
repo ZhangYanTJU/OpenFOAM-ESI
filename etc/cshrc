@@ -83,9 +83,10 @@ setenv WM_LABEL_SIZE 32
 setenv WM_COMPILE_OPTION Opt
 
 # [WM_COMPILE_CONTROL] - additional control for compilation/linking
-#   +gold   : with gold linker
-#   +lld    : with  lld linker (with clang)
-#   +mold   : with mold linker (with clang)
+#   +gold   : use gold linker
+#   +link-ld: use   ld linker [clang]
+#   +lld    : use  lld linker [clang]
+#   +mold   : use mold linker [clang]
 #   ~libz   : without libz compression
 #   ~rpath  : without rpath handling [MacOS]
 #   +openmp : with openmp
@@ -94,8 +95,8 @@ setenv WM_COMPILE_OPTION Opt
 #   +xcrun  : use xcrun and native compilers [MacOS]
 #   +strict : more deprecation warnings (may generate *many* warnings)
 #   ccache=... : ccache command (unquoted, single/double or <> quoted)
-#   version=... : compiler suffix (eg, "11" for gcc-11)
-#setenv WM_COMPILE_CONTROL "+gold"
+#   version=... : compiler suffix (eg, version=11 -> gcc-11)
+#setenv WM_COMPILE_CONTROL "+strict"
 
 # [WM_MPLIB] - MPI implementation:
 # = SYSTEMOPENMPI | OPENMPI | SYSTEMMPI | MPI | MPICH | MPICH-GM |
