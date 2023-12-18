@@ -7,6 +7,64 @@ tools to placed and have them built as part of the normal OpenFOAM
 build process. It is assumed that each subdirectory contain an
 appropriate `Allwmake` (or `Allwmake.override`) file.
 
+### How to use
+
+On the first use, you need to register the submodules, and then update them.
+You can execute both steps for all the available submodules (including the
+nested ones) as follows while you are at `$WM_PROJECT_DIR`:
+
+```bash
+cd $WM_PROJECT_DIR
+
+git submodule update --init --recursive
+```
+
+Executing this single-line command clones all the submodules from their
+respective repositories and prepares them for compilation. Note that you can
+also make only a certain group of submodules ready by explicitly specifying the
+requested submodules' names at the end of the command above. For example, if
+you would like to use only the `turbulence-community` submodule, you specify:
+
+```bash
+git submodule update --init --recursive modules/turbulence-community
+```
+
+You can display information about the status of submodules as follows:
+
+```bash
+git submodule status --recursive
+```
+
+An easy way to see which submodules are actually in use:
+
+```bash
+cat .gitmodules
+```
+
+Which will reveal content resembling the following:
+```
+[submodule "avalanche"]
+    path = modules/avalanche
+    url = https://develop.openfoam.com/Community/avalanche.git
+[submodule "cfmesh"]
+    path = modules/cfmesh
+    url = https://develop.openfoam.com/Community/integration-cfmesh.git
+...
+```
+
+If you need to remove a specific submodule or wish to restart the process,
+you can simply carry out the task as follows:
+
+```bash
+git submodule deinit modules/turbulence-community
+```
+
+This command deregisters the specified submodule and clears the
+`modules/turbulence-community` directory.
+
+A quick overview of `git submodules` can be found in this
+[*blog*][blog git-submodule] with full details in the
+[*manpage*][man git-submodule].
 
 ### Build locations
 
@@ -27,61 +85,11 @@ command.
 | ./Allwmake -prefix=openfoam | `$FOAM_APPBIN`, `$FOAM_LIBBIN` |
 | ./Allwmake -prefix=/some/pathname | `/some/pathname/bin`, `/some/pathname/lib` |
 
-
-### Adding additional components
-
-These additional components may be added as [git submodules][man git-submodule],
-by script or by hand.
-
-
-#### git
-
-On the first use, it will be necessary to register the submodules:
-```
-git submodule init
-```
-
-This will clone the relevant submodules from their respective
-repositories.
-
-The following will indicate the current state:
-```
-git submodule status
-```
-
-On the first use, or after merging upstream changes in the OpenFOAM
-repository, it will be necessary to update the submodules:
-```
-git submodule update
-```
-
-A quick overview of `git submodule` can be in this
-[*blog*][blog git-submodule] with full details in the
-[*manpage*][man git-submodule].
-
-
-An easy way to see which submodules are actually in use:
-```
-cat .gitmodules
-```
-
-Which will reveal content resembling the following:
-```
-[submodule "avalanche"]
-    path = modules/avalanche
-    url = https://develop.openfoam.com/Community/avalanche.git
-[submodule "cfmesh"]
-    path = modules/cfmesh
-    url = https://develop.openfoam.com/Community/integration-cfmesh.git
-...
-```
-
 ### Documentation (doxygen)
 
 To build the doxygen information for the components, it is also
 necessary to link the directories to the doc/ subdirectory.
 This is a purely manual operation.
-
 
 ### Developer Information
 
