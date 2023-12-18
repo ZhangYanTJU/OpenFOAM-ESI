@@ -52,26 +52,26 @@ faceCells::faceCells
 :
     zeroATCcells(mesh, dict)
 {
+    DynamicList<label> cellIDs;
     for (const fvPatch& patch : mesh_.boundary())
     {
         for (const word& patchType : zeroATCPatches_)
         {
             if (patch.type() == patchType)
             {
-                const labelList& faceCells_ = patch.faceCells();
-                zeroATCcells_.append(faceCells_);
+                cellIDs.push_back(patch.faceCells());
             }
         }
     }
 
-    for (const label zoneID: zeroATCZones_)
+    for (const label zoneID : zeroATCZones_)
     {
-        if (zoneID !=-1)
+        if (zoneID != -1)
         {
-            const labelList& zoneCells = mesh_.cellZones()[zoneID];
-            zeroATCcells_.append(zoneCells);
+            cellIDs.push_back(mesh_.cellZones()[zoneID]);
         }
     }
+    zeroATCZones_.transfer(cellIDs);
 
     Info<< "Setting limiter on "
         << returnReduce(zeroATCcells_.size(), sumOp<label>())

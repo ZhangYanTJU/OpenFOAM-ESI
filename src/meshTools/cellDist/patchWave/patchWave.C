@@ -66,6 +66,20 @@ void Foam::patchWave::setChangedFaces
             }
         }
     }
+
+    for (const label facei : sourceIDs_)
+    {
+        changedFaces[nChangedFaces] = facei;
+
+        faceDist[nChangedFaces] =
+            wallPoint
+            (
+                mesh.faceCentres()[facei],
+                0.0
+            );
+
+        nChangedFaces++;
+    }
 }
 
 
@@ -137,7 +151,8 @@ Foam::patchWave::patchWave
 (
     const polyMesh& mesh,
     const labelHashSet& patchIDs,
-    const bool correctWalls
+    const bool correctWalls,
+    const labelList& sourceIDs
 )
 :
     cellDistFuncs(mesh),
@@ -145,7 +160,8 @@ Foam::patchWave::patchWave
     correctWalls_(correctWalls),
     nUnset_(0),
     distance_(mesh.nCells()),
-    patchDistance_(mesh.boundaryMesh().size())
+    patchDistance_(mesh.boundaryMesh().size()),
+    sourceIDs_(sourceIDs)
 {
     patchWave::correct();
 }
@@ -163,7 +179,7 @@ void Foam::patchWave::correct()
 {
     // Set initial changed faces: set wallPoint for wall faces to wall centre
 
-    label nPatch = sumPatchSize(patchIDs_);
+    label nPatch = sumPatchSize(patchIDs_) + sourceIDs_.size();
 
     List<wallPoint> faceDist(nPatch);
     labelList changedFaces(nPatch);

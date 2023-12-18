@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -175,7 +175,7 @@ protected:
             //- References to the primal turbulence model variables
             const volScalarField& nuTilda() const;
 
-            const volScalarField& nut() const;
+            const volScalarField& nutRef() const;
 
 
         // Adjoint Spalart - Allmaras
@@ -282,6 +282,12 @@ protected:
                 return adjointTMVariable1Ptr_();
             };
 
+            //- Constant access to the adjoint Spalart - Allmaras field
+            inline const volScalarField& nuaTilda() const
+            {
+                return adjointTMVariable1Ptr_();
+            };
+
             //- Update the constant primal-related fields
             void updatePrimalRelatedFields();
 
@@ -336,6 +342,11 @@ public:
         virtual tmp<volScalarField> distanceSensitivities();
 
         virtual tmp<volTensorField> FISensitivityTerm();
+
+        virtual tmp<scalarField> topologySensitivities
+        (
+            const word& designVarsName
+        ) const;
 
         //- Nullify all adjoint turbulence model fields and their old times
         virtual void nullify();

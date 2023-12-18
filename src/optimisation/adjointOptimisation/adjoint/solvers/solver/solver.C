@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -42,14 +42,15 @@ Foam::solver::solver
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 :
     localIOdictionary
     (
         IOobject
         (
-            dict.dictName(),
+            solverName,
             mesh.time().timeName(),
             fileName("uniform")/fileName("solvers"),
             mesh,
@@ -62,19 +63,13 @@ Foam::solver::solver
     mesh_(mesh),
     managerType_(managerType),
     dict_(dict),
-    solverName_(dict.dictName()),
-    active_(dict.getOrDefault("active", true)),
-    optTypeSource_(nullptr),
+    solverName_(solverName),
+    active_(dict.getOrDefault<bool>("active", true)),
+    isMaster_(dict.getOrDefault<bool>("isMaster", true)),
+    useSolverNameForFields_
+        (dict_.getOrDefault<bool>("useSolverNameForFields", false)),
     vars_(nullptr)
 {}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::solver::~solver()
-{
-    optTypeSource_ = 0;
-}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -85,46 +80,11 @@ bool Foam::solver::readDict(const dictionary& dict)
 
     // Note: Slightly dangerous to change active_ while the solver is
     // running. At the very least, this should trigger writing before stopping.
-    // Additional problems if we have an adjontSolver corresponding to a
+    // Additional problems if we have an adjointSolver corresponding to a
     // constraint. To be revisited
     //active_ = dict.getOrDefault<bool>("active", true);
 
     return true;
-}
-
-
-const Foam::fvMesh& Foam::solver::mesh() const
-{
-    return mesh_;
-}
-
-const Foam::word& Foam::solver::solverName() const
-{
-    return solverName_;
-}
-
-
-bool Foam::solver::active()
-{
-    return active_;
-}
-
-
-const Foam::dictionary& Foam::solver::dict() const
-{
-    return dict_;
-}
-
-
-const Foam::variablesSet& Foam::solver::getVariablesSet() const
-{
-    return vars_();
-}
-
-
-Foam::variablesSet& Foam::solver::getVariablesSet()
-{
-    return vars_();
 }
 
 
@@ -146,16 +106,9 @@ void Foam::solver::postLoop()
 }
 
 
-void Foam::solver::updateOptTypeSource
-(
-    const autoPtr<volScalarField>& optSourcePtr
-)
+void Foam::solver::addTopOFvOptions() const
 {
-    if (optSourcePtr)
-    {
-        const volScalarField& optSource = optSourcePtr();
-        optTypeSource_ = &optSource;
-    }
+    // Does nothing in the base class
 }
 
 

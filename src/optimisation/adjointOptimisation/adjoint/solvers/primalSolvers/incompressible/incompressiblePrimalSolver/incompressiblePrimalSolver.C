@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -55,10 +55,11 @@ Foam::incompressiblePrimalSolver::incompressiblePrimalSolver
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 :
-    primalSolver(mesh, managerType, dict),
+    primalSolver(mesh, managerType, dict, solverName),
     phiReconstructionTol_
     (
         dict.subOrEmptyDict("fieldReconstruction").
@@ -79,7 +80,8 @@ Foam::incompressiblePrimalSolver::New
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 {
     const word solverType(dict.get<word>("solver"));
@@ -99,7 +101,7 @@ Foam::incompressiblePrimalSolver::New
     return
         autoPtr<incompressiblePrimalSolver>
         (
-            ctorPtr(mesh, managerType, dict)
+            ctorPtr(mesh, managerType, dict, solverName)
         );
 }
 
@@ -117,17 +119,13 @@ bool Foam::incompressiblePrimalSolver::readDict(const dictionary& dict)
 }
 
 
-Foam::List<Foam::objective*>
+Foam::UPtrList<Foam::objective>
 Foam::incompressiblePrimalSolver::getObjectiveFunctions() const
 {
-    DynamicList<objective*> objectives(10);
+    DynamicList<objective*> objectives;
 
-    auto adjointSolvers = mesh_.lookupClass<adjointSolver>();
-
-    for (adjointSolver* adjointPtr : adjointSolvers)
+    for (auto& adjoint : mesh_.sorted<adjointSolver>())
     {
-        adjointSolver& adjoint = *adjointPtr;
-
         if (adjoint.primalSolverName() == solverName_)
         {
             PtrList<objective>& managerObjectives =
@@ -135,18 +133,12 @@ Foam::incompressiblePrimalSolver::getObjectiveFunctions() const
 
             for (objective& obj : managerObjectives)
             {
-                objectives.append(&obj);
+                objectives.push_back(&obj);
             }
         }
     }
 
-    return objectives;
-}
-
-
-bool Foam::incompressiblePrimalSolver::useSolverNameForFields() const
-{
-    return vars_().useSolverNameForFields();
+    return UPtrList<objective>(objectives);
 }
 
 
@@ -175,7 +167,7 @@ void Foam::incompressiblePrimalSolver::correctBoundaryConditions()
     // including averaged ones, if present
     vars.correctBoundaryConditions();
 
-    // phi cannot be updated through correctBoundayrConditions.
+    // phi cannot be updated through correctBoundaryConditions.
     // Re-compute based on the Rhie-Chow interpolation scheme.
     // This is a non-linear process
     // (phi depends on UEqn().A() which depends on phi)

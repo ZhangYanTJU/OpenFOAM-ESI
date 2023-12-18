@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -57,24 +57,6 @@ displacementMethodlaplacianMotionSolver::displacementMethodlaplacianMotionSolver
     displacementMethod(mesh, patchIDs),
     pointMotionU_(refCast<laplacianMotionSolver>(motionPtr_()).pointMotionU()),
     cellMotionU_(refCast<laplacianMotionSolver>(motionPtr_()).cellMotionU()),
-    /*
-    // getting a reference from the database is dangerous since multiple
-    // fields with the same name might be registered
-    pointMotionU_
-    (
-        const_cast<pointVectorField&>
-        (
-            mesh_.lookupObject<pointVectorField>("pointMotionU")
-        )
-    ),
-    cellMotionU_
-    (
-        const_cast<volVectorField&>
-        (
-            mesh_.lookupObject<volVectorField>("cellMotionU")
-        )
-    ),
-    */
     resetFields_
     (
         IOdictionary::readContents
@@ -97,6 +79,12 @@ displacementMethodlaplacianMotionSolver::displacementMethodlaplacianMotionSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool displacementMethodlaplacianMotionSolver::preferPointField() const
+{
+    return false;
+}
+
+
 void displacementMethodlaplacianMotionSolver::setMotionField
 (
     const pointVectorField& pointMovement
@@ -104,14 +92,16 @@ void displacementMethodlaplacianMotionSolver::setMotionField
 {
     if (resetFields_)
     {
-        pointMotionU_.primitiveFieldRef() = vector::zero;
-        cellMotionU_.primitiveFieldRef() = vector::zero;
+        pointMotionU_.primitiveFieldRef() = Zero;
+        cellMotionU_.primitiveFieldRef() = Zero;
         cellMotionU_.correctBoundaryConditions();
     }
 
+    maxDisplacement_ = SMALL;
+
     // Set boundary mesh movement and calculate
     // max current boundary displacement
-    for (label patchI : patchIDs_)
+    for (const label patchI : patchIDs_)
     {
         // Set boundary field. Needed for the motionSolver class
         pointMotionU_.boundaryFieldRef()[patchI] ==
@@ -140,6 +130,8 @@ void displacementMethodlaplacianMotionSolver::setMotionField
                 )
             );
     }
+    // Transfer movement to cellMotionU
+    refCast<laplacianMotionSolver>(motionPtr_()).setBoundaryConditions();
 }
 
 
@@ -148,28 +140,28 @@ void displacementMethodlaplacianMotionSolver::setMotionField
     const volVectorField& cellMovement
 )
 {
-    NotImplemented;
-    /*
+    if (resetFields_)
+    {
+        pointMotionU_.primitiveFieldRef() = Zero;
+        cellMotionU_.primitiveFieldRef() = Zero;
+        cellMotionU_.correctBoundaryConditions();
+    }
+
+    auto& cellMotionUbf = cellMotionU_.boundaryFieldRef();
     // Set boundary mesh movement and calculate max current boundary
     // displacement
-    forAll(patchIDs_, pI)
+    for (const label patchI : patchIDs_)
     {
-        label patchI = patchIDs_[pI];
-        cellMotionU_.boundaryField()[patchI] ==
-            cellMovement.boundaryField()[patchI];
+        cellMotionUbf[patchI] == cellMovement.boundaryField()[patchI];
 
         // Find max value
         maxDisplacement_ =
             max
             (
                 maxDisplacement_,
-                gMax
-                (
-                    mag(cellMovement.boundaryField()[patchI])
-                )
+                gMax(mag(cellMotionUbf[patchI]))
             );
     }
-    */
 }
 
 

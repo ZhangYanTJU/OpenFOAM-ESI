@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2021 PCOpt/NTUA
+    Copyright (C) 2013-2021 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -44,6 +44,7 @@ SourceFiles
 #define constraintProjection_H
 
 #include "constrainedOptimisationMethod.H"
+#include "updateMethod.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,7 +57,8 @@ namespace Foam
 
 class constraintProjection
 :
-    public constrainedOptimisationMethod
+    public constrainedOptimisationMethod,
+    public updateMethod
 {
 protected:
 
@@ -64,6 +66,9 @@ protected:
 
         //- Correct for non-linearities
         bool useCorrection_;
+
+        //- Weight of the aggregated constraint values in the merit function
+        scalar delta_;
 
 
 private:
@@ -86,7 +91,14 @@ public:
     // Constructors
 
         //- Construct from components
-        constraintProjection(const fvMesh& mesh, const dictionary& dict);
+        constraintProjection
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            autoPtr<designVariables>& designVars,
+            const label nConstraints,
+            const word& type
+        );
 
 
     //- Destructor
@@ -95,8 +107,12 @@ public:
 
     // Member Functions
 
-       //- Compute design variables correction
-       void computeCorrection();
+        //- Compute design variables correction
+        void computeCorrection();
+
+        //- Compute merit function. Could be different than the objective
+        //- in the presence of constraints
+        virtual scalar computeMeritFunction();
 };
 
 

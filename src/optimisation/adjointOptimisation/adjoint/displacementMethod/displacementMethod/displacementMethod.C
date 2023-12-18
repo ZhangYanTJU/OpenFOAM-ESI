@@ -97,6 +97,12 @@ Foam::autoPtr<Foam::displacementMethod> Foam::displacementMethod::New
 
 // * * * * * * * * * * * * * * *  Member Functions   * * * * * * * * * * * * //
 
+bool Foam::displacementMethod::preferPointField() const
+{
+    return true;
+}
+
+
 void Foam::displacementMethod::boundControlField(vectorField& controlField)
 {
     // Does nothing in base

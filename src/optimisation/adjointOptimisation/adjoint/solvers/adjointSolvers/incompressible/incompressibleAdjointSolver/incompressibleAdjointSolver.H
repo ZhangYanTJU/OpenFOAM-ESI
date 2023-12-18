@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -79,6 +79,18 @@ protected:
         //- Adjoint Transpose Convection options
         autoPtr<ATCModel> ATCModel_;
 
+        //- Auxiliary bool to avoid a potentially expensive
+        //- part of the sensitivity computation
+        //  As a Switch with delayed evaluation since adjointBoundaryConditions
+        //  have not been allocated at the time of construction
+        Switch hasBCdxdbMult_;
+
+
+    // Protected Member Functions
+
+        //- Compute, if necessary, and return the hasBCdxdbMult_ bool
+        bool hasBCdxdbMult(const labelHashSet& sensitivityPatchIDs);
+
 
 public:
 
@@ -100,9 +112,10 @@ public:
                 fvMesh& mesh,
                 const word& managerType,
                 const dictionary& dict,
-                const word& primalSolverName
+                const word& primalSolverName,
+                const word& solverName
             ),
-            (mesh, managerType, dict, primalSolverName)
+            (mesh, managerType, dict, primalSolverName, solverName)
         );
 
 
@@ -114,7 +127,8 @@ public:
             fvMesh& mesh,
             const word& managerType,
             const dictionary& dict,
-            const word& primalSolverName
+            const word& primalSolverName,
+            const word& solverName
         );
 
 
@@ -126,7 +140,8 @@ public:
             fvMesh& mesh,
             const word& managerType,
             const dictionary& dict,
-            const word& primalSolverName
+            const word& primalSolverName,
+            const word& solverName
         );
 
 
@@ -135,13 +150,6 @@ public:
 
 
     // Member Functions
-
-        //- Read dict if updated
-        virtual bool readDict(const dictionary& dict);
-
-        //- Should solver name be appended to fields
-        virtual bool useSolverNameForFields() const;
-
 
         // Access
 
@@ -160,6 +168,22 @@ public:
             //- Access to the ATC model
             autoPtr<ATCModel>& getATCModel();
 
+            //- Should the adjoint to the eikonal equation be solved
+            virtual bool includeDistance() const;
+
+            //- Return the dimensions of the adjoint distance field
+            virtual dimensionSet daDimensions() const;
+
+            //- Return the dimensions of the adjoint grid displacement variable
+            virtual dimensionSet maDimensions() const;
+
+            //- Return the source the adjoint eikonal equation
+            virtual tmp<volScalarField> adjointEikonalSource();
+
+            //- Return the distance field, to be used in the solution of the
+            //- adjoint eikonal PDE
+            virtual tmp<volScalarField> yWall() const;
+
 
         // Evolution
 
@@ -170,22 +194,73 @@ public:
 
         // Sensitivity related functions
 
-            //- Compute the multiplier for grad(dxdb)
-            //  Used in shape sensitivity derivatives, computed with the FI
-            //  and E-SI approaches
-            virtual tmp<volTensorField> computeGradDxDbMultiplier();
+            // Functions related to the computation of sensitivity derivatives
+            // All functions get the field to accumulate their contibution on
+            // as an argument. Should be implemented by the derived classes
+            // if the physics there adds terms to the sensitivity derivatives
 
-            //- Terms to be added to the sensitivity map, depending
-            //- on the adjoint solver
-            //  The typical terms associated with the typical incompressible
-            //  flow equations are included in the sensitivity classes.
-            //  This is to be used whenever additional physics is added
-            virtual void additionalSensitivityMapTerms
-            (
-                boundaryVectorField& sensitivityMap,
-                const labelHashSet& patchIDs,
-                const scalar dt
-            );
+                // Shape optimisation
+
+                    //- Compute the multiplier for grad(dxdb)
+                    //  Used in shape sensitivity derivatives, computed with
+                    //  the FI and E-SI approaches
+                    virtual void accumulateGradDxDbMultiplier
+                    (
+                        volTensorField& gradDxDbMult,
+                        const scalar dt
+                    );
+
+                    //- Compute the multiplier for div(dxdb)
+                    //  Used in shape sensitivity derivatives, computed with
+                    //  the FI and E-SI approaches
+                    virtual void accumulateDivDxDbMultiplier
+                    (
+                        autoPtr<scalarField>& divDxDbMult,
+                        const scalar dt
+                    );
+
+                    //- Accumulate the multipliers of geometric quantities
+                    //- defined at the boundary, usually through an objective
+                    //- or constraint function
+                    virtual void accumulateGeometryVariationsMultipliers
+                    (
+                        autoPtr<boundaryVectorField>& dSfdbMult,
+                        autoPtr<boundaryVectorField>& dnfdbMult,
+                        autoPtr<boundaryVectorField>& dxdbDirectMult,
+                        autoPtr<pointBoundaryVectorField>& pointDxDirectDbMult,
+                        const labelHashSet& sensitivityPatchIDs,
+                        const scalar dt
+                    );
+
+                    //- Contributions from boundary functions that inlcude
+                    //- geometric aspects in them and change when the geometry
+                    //- is displaced, e.g. rotationWallVelocity
+                    virtual void accumulateBCSensitivityIntegrand
+                    (
+                        autoPtr<boundaryVectorField>& bcDxDbMult,
+                        const labelHashSet& sensitivityPatchIDs,
+                        const scalar dt
+                    );
+
+                    //- Contributions from fvOptions that inlcude
+                    //- geometric aspects in them and change when the geometry
+                    //- is displaced, e.g. MRF
+                    virtual void accumulateOptionsDxDbMultiplier
+                    (
+                        vectorField& optionsDxDbMult,
+                        const scalar dt
+                    );
+
+
+                // Topology optimisation
+
+                    //- Compute the multiplier of beta
+                    virtual void topOSensMultiplier
+                    (
+                        scalarField& betaMult,
+                        const word& designVariablesName,
+                        const scalar dt
+                    );
 
 
         // IO

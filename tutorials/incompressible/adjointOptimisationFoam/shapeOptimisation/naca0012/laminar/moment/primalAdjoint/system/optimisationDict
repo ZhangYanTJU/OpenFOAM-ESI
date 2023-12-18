@@ -97,36 +97,28 @@ adjointManagers
 
 optimisation
 {
-    sensitivities
+    designVariables
     {
-        type                multiple; // used to compute many kinds of sensitivities at the same time
-        patches             (pressure suction);
-        sensTypes
+        type            shape;
+        shapeType       Bezier;
+        sensitivityType multiple;
+        sensitivityTypes (FI ESI SI);
+        patches         (pressure suction);
+        ESI
         {
-            ESI
-            {
-                type                Bezier;
-                patches             (pressure suction);
-            }
-            SI
-            {
-                type                Bezier;
-                patches             (pressure suction);
-                surfaceSensitivities
-                {
-                    includeMeshMovement false;
-                }
-            }
-            FI
-            {
-                type                BezierFI;
-                patches             (pressure suction);
-            }
-            surface
-            {
-                type                surface;
-                patches             (pressure suction);
-            }
+            sensitivityType shapeESI;
+            patches         (pressure suction);
+        }
+        SI
+        {
+            sensitivityType shapeESI;
+            patches         (pressure suction);
+            includeMeshMovement false;
+        }
+        FI
+        {
+            sensitivityType shapeFI;
+            patches         (pressure suction);
         }
     }
 }

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2022 PCOpt/NTUA
-    Copyright (C) 2014-2022 FOSS GP
+    Copyright (C) 2014-2023 PCOpt/NTUA
+    Copyright (C) 2014-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,6 +34,8 @@ License
 #include "reverseLinear.H"
 #include "nutkWallFunctionFvPatchScalarField.H"
 #include "omegaWallFunctionFvPatchScalarField.H"
+#include "fvOptions.H"
+#include "sensitivityTopO.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -2149,6 +2151,8 @@ void adjointkOmegaSST::correct()
     volScalarField dR_dnut(this->dR_dnut());
     volScalarField::Internal divU(fvc::div(fvc::absolute(phi, U)));
 
+    fv::options& fvOptions(fv::options::New(mesh_));
+
     tmp<fvScalarMatrix> waEqn
     (
         fvm::div(-phi, wa())
@@ -2164,6 +2168,8 @@ void adjointkOmegaSST::correct()
             wa()
         )
       - (case_2_Pk_*c1_ - scalar(1))*betaStar_*k()*ka()
+     ==
+        fvOptions(wa())
     );
 
     // Boundary manipulate changes the diagonal component, so relax has to
@@ -2173,7 +2179,8 @@ void adjointkOmegaSST::correct()
 
     // Sources from the objective should be added after the boundary
     // manipulation
-    objectiveManager_.addTMEqn2Source(waEqn.ref());
+    objectiveManager_.addSource(waEqn.ref());
+    fvOptions.constrain(waEqn.ref());
     waEqn.ref().solve();
 
     // Adjoint Turbulent kinetic energy equation
@@ -2189,13 +2196,16 @@ void adjointkOmegaSST::correct()
       + kaEqnSourceFromF1()
       + dR_dnut()*dnut_dk_()
       - zeroFirstCell_()*gamma_*dGPrime_dk().ref()()*wa()
+     ==
+        fvOptions(ka())
     );
 
     kaEqn.ref().relax();
     kaEqn.ref().boundaryManipulate(ka().boundaryFieldRef());
     addWallFunctionTerms(kaEqn.ref(), dR_dnut);
+    fvOptions.constrain(kaEqn.ref());
     // Add sources from the objective functions
-    objectiveManager_.addTMEqn1Source(kaEqn.ref());
+    objectiveManager_.addSource(kaEqn.ref());
 
     kaEqn.ref().solve();
 
@@ -2203,8 +2213,8 @@ void adjointkOmegaSST::correct()
     {
         dimensionedScalar maxwa = max(mag(wa()));
         dimensionedScalar maxka = max(mag(ka()));
-        Info<< "Max mag of adjoint dissipation = " << maxwa.value() << endl;
-        Info<< "Max mag of adjoint kinetic energy = " << maxka.value() << endl;
+        Info<< "Max mag (" << wa().name() << ") = " << maxwa.value() << endl;
+        Info<< "Max mag (" << ka().name() << ") = " << maxka.value() << endl;
     }
 }
 
@@ -2345,8 +2355,25 @@ tmp<scalarField> adjointkOmegaSST::topologySensitivities
     const word& designVarsName
 ) const
 {
-    // Missing proper terms - return zero for now
-    return tmp<scalarField>::New(mesh_.nCells(), Zero);
+    fv::options& fvOptions(fv::options::New(this->mesh_));
+    auto tres(tmp<scalarField>::New(mesh_.nCells(), Zero));
+
+    // Sensitivity from the source term in the k equation
+    scalarField auxSens
+        (k().primitiveField()*ka().primitiveField());
+    sensitivityTopO::postProcessSens
+    (
+        tres.ref(), auxSens, fvOptions, k().name(), designVarsName
+    );
+
+    // Sensitivity from the source term in the omega equation
+    auxSens = omega().primitiveField()*wa().primitiveField();
+    sensitivityTopO::postProcessSens
+    (
+        tres.ref(), auxSens, fvOptions, omega().name(), designVarsName
+    );
+
+    return tres;
 }
 
 

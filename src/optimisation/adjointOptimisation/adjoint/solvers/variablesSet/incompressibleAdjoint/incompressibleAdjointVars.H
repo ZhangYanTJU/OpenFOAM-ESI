@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -68,10 +68,10 @@ protected:
     // Protected Member Functions
 
         //- No copy construct
-        incompressibleAdjointVars(const incompressibleAdjointVars&);
+        incompressibleAdjointVars(const incompressibleAdjointVars&) = delete;
 
         //- No copy assignment
-        void operator=(const incompressibleAdjointVars&);
+        void operator=(const incompressibleAdjointVars&) = delete;
 
 
 public:
@@ -96,7 +96,7 @@ public:
 
 
     //- Destructor
-    virtual ~incompressibleAdjointVars(){};
+    virtual ~incompressibleAdjointVars() = default;
 
 
     // Member Functions
@@ -110,6 +110,9 @@ public:
             //- Return non-const reference to the adjointRASModel
             inline autoPtr<incompressibleAdjoint::adjointRASModel>&
                 adjointTurbulence();
+
+            //- Restore field values to the initial ones
+            void restoreInitValues();
 
             //- Reset mean fields to zero
             void resetMeanFields();

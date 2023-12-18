@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -73,6 +73,7 @@ protected:
         bool computeMeanFields_;
         bool nullified_;
         bool normalize_;
+        bool shouldWrite_;
 
         //- Objective function value and weight
         scalar J_;
@@ -83,22 +84,46 @@ protected:
         //- Objective weight
         scalar weight_;
 
+        //- Whether the objective is computed or not
+        //  Some objective (e.g. geometric ones) might not change from one
+        //  iteration of the primal solver to the next and might be expensive
+        //  to evaluate. This can be used to compute them only once per
+        //  optimisation cycle
+        bool computed_;
+
         //- Normalization factor
         autoPtr<scalar> normFactor_;
 
         //- Target value, in case the objective is used as a constraint
-        //  Should be used in caution and with updateMethods than get affected
-        //  by the target value, without requiring a sqr (e.g. SQP, MMA)
+        //  Should be used with caution and with updateMethods
+        //  than get affected by the target value, without
+        //  requiring a sqr (e.g. SQP, MMA)
         autoPtr<scalar> target_;
+
+        //- Target on the left hand-side of a double inequality,
+        //- for double sided constraints
+        autoPtr<scalar> targetLeft_;
 
         //- Objective integration start and end times (for unsteady flows)
         autoPtr<scalar> integrationStartTimePtr_;
         autoPtr<scalar> integrationEndTimePtr_;
 
+        //- List of adjoint fields for which this objective will contribute
+        //- sources to their equations.
+        //  Only for volume-based objectives for the moment
+        wordList fieldNames_;
+
         //- Contribution to field sensitivity derivatives
         //  Topology optimisation or other variants with
         //  as many design variables as the mesh cells
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         autoPtr<volScalarField> dJdbPtr_;
+
+        //- Contribution to sensitivity derivatives with a
+        //- random number of design variables
+        //- (neither surface, nor volume based)
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        autoPtr<scalarField> dJdbFieldPtr_;
 
         // Contribution to surface sensitivity derivatives
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -154,9 +179,6 @@ protected:
 
 
     // Protected Member Functions
-
-        //- Return objective dictionary
-        const dictionary& dict() const;
 
         //- Set the output file ptr
         void setObjectiveFilePtr() const;
@@ -241,81 +263,89 @@ public:
         //- Return the instantaneous objective function value
         virtual scalar J() = 0;
 
-        //- Return the mean objective function value, if it exists,
-        //- otherwise the mean one
-        scalar JCycle() const;
+        //- Return the objective function of the optimisation cycle.
+        //  This corresponds to the mean value, if it exists, or the
+        //  instantaneous value otherwise
+        virtual scalar JCycle(bool negate = false) const;
 
         //- Accumulate contribution for the mean objective value
         //  For steady-state runs
-        void accumulateJMean(solverControl& solverControl);
+        virtual void accumulateJMean(solverControl& solverControl);
+        
 
         //- Accumulate contribution for the mean objective value
         //  For unsteady runs
-        void accumulateJMean();
+        virtual void accumulateJMean();
 
         //- Return the objective function weight
-        scalar weight() const;
+        virtual scalar weight() const;
 
         //- Is the objective normalized
-        bool normalize() const;
+        virtual bool normalize() const;
 
         //- Normalize all fields allocated by the objective
         virtual void doNormalization();
 
         //- Check whether this is an objective integration time
-        bool isWithinIntegrationTime() const;
+        virtual bool isWithinIntegrationTime() const;
 
         //- Increment integration times
-        void incrementIntegrationTimes(const scalar timeSpan);
+        virtual void incrementIntegrationTimes(const scalar timeSpan);
 
         //- Contribution to field sensitivities
-        const volScalarField& dJdb();
+        inline const volScalarField& dJdb() const;
+
+        //- Contribution to sensitivities with a random number of designVars
+        inline const scalarField& dJdbField() const;
 
         //- Contribution to surface sensitivities for a specific patch
-        const fvPatchVectorField& boundarydJdb(const label);
+        inline const fvPatchVectorField& boundarydJdb(const label) const;
 
         //- Multiplier of delta(n dS)/delta b
-        const fvPatchVectorField& dSdbMultiplier(const label);
+        inline const fvPatchVectorField& dSdbMultiplier(const label) const;
 
         //- Multiplier of delta(n dS)/delta b
-        const fvPatchVectorField& dndbMultiplier(const label);
+        inline const fvPatchVectorField& dndbMultiplier(const label) const;
 
         //- Multiplier of delta(x)/delta b
-        const fvPatchVectorField& dxdbMultiplier(const label);
+        inline const fvPatchVectorField& dxdbMultiplier(const label) const;
 
         //- Multiplier of delta(x)/delta b
-        const fvPatchVectorField& dxdbDirectMultiplier(const label);
+        inline const fvPatchVectorField& dxdbDirectMultiplier
+        (
+            const label
+        ) const;
 
         //- Multiplier located at patch boundary edges
-        const vectorField& boundaryEdgeMultiplier
+        inline const vectorField& boundaryEdgeMultiplier
         (
             const label patchI,
             const label edgeI
-        );
+        ) const;
 
         //- Contribution to surface sensitivities for all patches
-        const boundaryVectorField& boundarydJdb();
+        inline const boundaryVectorField& boundarydJdb() const;
 
         //- Multiplier of delta(n dS)/delta b for all patches
-        const boundaryVectorField& dSdbMultiplier();
+        inline const boundaryVectorField& dSdbMultiplier() const;
 
         //- Multiplier of delta(n dS)/delta b for all patches
-        const boundaryVectorField& dndbMultiplier();
+        inline const boundaryVectorField& dndbMultiplier() const;
 
         //- Multiplier of delta(x)/delta b for all patches
-        const boundaryVectorField& dxdbMultiplier();
+        inline const boundaryVectorField& dxdbMultiplier() const;
 
         //- Multiplier of delta(x)/delta b for all patches
-        const boundaryVectorField& dxdbDirectMultiplier();
+        inline const boundaryVectorField& dxdbDirectMultiplier() const;
 
         //- Multiplier located at patch boundary edges
-        const vectorField3& boundaryEdgeMultiplier();
+        inline const vectorField3& boundaryEdgeMultiplier() const;
 
         //- Multiplier of grad( delta(x)/delta b) for volume-based sensitivities
-        const volScalarField& divDxDbMultiplier();
+        inline const volScalarField& divDxDbMultiplier() const;
 
         //- Multiplier of grad( delta(x)/delta b) for volume-based sensitivities
-        const volTensorField& gradDxDbMultiplier();
+        inline const volTensorField& gradDxDbMultiplier() const;
 
         //- Update objective function derivatives
         virtual void update() = 0;
@@ -326,6 +356,13 @@ public:
         //- Update normalization factors, for objectives in
         //- which the factor is not known a priori
         virtual void updateNormalizationFactor();
+
+
+        virtual void update_dJdb()
+        {}
+
+        virtual void update_dJdbField()
+        {}
 
         //- Update objective function derivative term
         virtual void update_boundarydJdb()
@@ -360,6 +397,15 @@ public:
         virtual void update_gradDxDbMultiplier()
         {}
 
+
+        //- Manipulate fvVectorMatrix through the objective
+        virtual void addSource(fvVectorMatrix& matrix)
+        {}
+
+        //- Manipulate fvVectorMatrix through the objective
+        virtual void addSource(fvScalarMatrix& matrix)
+        {}
+
         //- Write objective function history
         virtual bool write(const bool valid = true) const;
 
@@ -392,20 +438,33 @@ public:
         //- Return the objective name
         inline const word& objectiveName() const;
 
+        //- Should the objective be written to file upon calling write()?
+        inline bool shouldWrite() const;
+
+        //- Should the objective be written to file upon calling write()?
+        inline void setWrite(const bool shouldWrite);
+
         // Inline functions for checking whether pointers are set or not
-        inline bool hasdJdb() const;
-        inline bool hasBoundarydJdb() const;
-        inline bool hasdSdbMult() const;
-        inline bool hasdndbMult() const;
-        inline bool hasdxdbMult() const;
-        inline bool hasdxdbDirectMult() const;
-        inline bool hasBoundaryEdgeContribution() const;
-        inline bool hasDivDxDbMult() const;
-        inline bool hasGradDxDbMult() const;
+        inline bool hasdJdb() const noexcept;
+        inline bool hasdJdbField() const noexcept;
+        inline bool hasBoundarydJdb() const noexcept;
+        inline bool hasdSdbMult() const noexcept;
+        inline bool hasdndbMult() const noexcept;
+        inline bool hasdxdbMult() const noexcept;
+        inline bool hasdxdbDirectMult() const noexcept;
+        inline bool hasBoundaryEdgeContribution() const noexcept;
+        inline bool hasDivDxDbMult() const noexcept;
+        inline bool hasGradDxDbMult() const noexcept;
 
         // Inline functions for checking whether integration times are set
-        inline bool hasIntegrationStartTime() const;
-        inline bool hasIntegrationEndTime() const;
+        inline bool hasIntegrationStartTime() const noexcept;
+        inline bool hasIntegrationEndTime() const noexcept;
+
+        //- Set the computed status of the objective
+        inline void setComputed(const bool isComputed) noexcept;
+
+        //- Return objective dictionary
+        const dictionary& dict() const;
 };
 
 

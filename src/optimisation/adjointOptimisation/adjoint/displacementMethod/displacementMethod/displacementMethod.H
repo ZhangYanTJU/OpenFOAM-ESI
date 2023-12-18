@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -66,11 +66,14 @@ protected:
         fvMesh& mesh_;
 
         //- IDs of the patches to be moved
-        const labelList& patchIDs_;
+        labelList patchIDs_;
 
         autoPtr<motionSolver> motionPtr_;
 
         scalar maxDisplacement_;
+
+        //- Whether the motion solver prefers a point of a vol field as input
+        bool preferPointField_;
 
 
 private:
@@ -130,33 +133,42 @@ public:
 
     // Member Functions
 
-       //- Set motion filed related to model based on given motion
-       virtual void setMotionField(const pointVectorField& pointMovement) = 0;
+        //- Whether the motion solver prefers a point of a vol field as input
+        virtual bool preferPointField() const;
 
-       //- Set motion filed related to model based on given motion
-       virtual void setMotionField(const volVectorField& cellMovement) = 0;
+        //- Set motion filed related to model based on given motion
+        virtual void setMotionField(const pointVectorField& pointMovement) = 0;
 
-       //- Set control field as a vectorField. For methods working with
-       //- parameters (RBF etc)
-       virtual void setControlField(const vectorField& controlField) = 0;
+        //- Set motion filed related to model based on given motion
+        virtual void setMotionField(const volVectorField& cellMovement) = 0;
 
-       //- Set control field as a vectorField. For methods working with
-       //- parameters (RBF etc)
-       virtual void setControlField(const scalarField& controlField) = 0;
+        //- Set control field as a vectorField. For methods working with
+        //- parameters (RBF etc)
+        virtual void setControlField(const vectorField& controlField) = 0;
 
-       //- Bound control field in certain directions etc. For methods working
-       //- with parameters (RBF etc)
-       //- does nothing by default
-       virtual void boundControlField(vectorField& controlField);
+        //- Set control field as a vectorField. For methods working with
+        //- parameters (RBF etc)
+        virtual void setControlField(const scalarField& controlField) = 0;
 
-       //- Get access to motionSolver
-       autoPtr<motionSolver>& getMotionSolver();
+        //- Bound control field in certain directions etc. For methods working
+        //- with parameters (RBF etc)
+        //- does nothing by default
+        virtual void boundControlField(vectorField& controlField);
 
-       //- Get max displacement
-       scalar getMaxDisplacement() const;
+        //- Get access to motionSolver
+        autoPtr<motionSolver>& getMotionSolver();
 
-       //- Update mesh
-       void update();
+        //- Get max displacement
+        scalar getMaxDisplacement() const;
+
+        //- Set parametertised patch IDs
+        inline void setPatchIDs(const labelList& patchIDs)
+        {
+            patchIDs_ = patchIDs;
+        }
+
+        //- Update mesh
+        void update();
 };
 
 

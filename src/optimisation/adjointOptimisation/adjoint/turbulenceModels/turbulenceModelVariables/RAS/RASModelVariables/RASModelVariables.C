@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -373,17 +373,17 @@ void RASModelVariables::resetMeanFields()
         Info<< "Resetting mean turbulent fields to zero" << endl;
 
         // Reset fields to zero
-        if (hasTMVar1())
+        if (TMVar1MeanPtr_)
         {
             TMVar1MeanPtr_.ref() ==
                 dimensionedScalar(TMVar1Inst().dimensions(), Zero);
         }
-        if (hasTMVar2())
+        if (TMVar2MeanPtr_)
         {
             TMVar2MeanPtr_.ref() ==
                 dimensionedScalar(TMVar2Inst().dimensions(), Zero);
         }
-        if (hasNut())
+        if (nutMeanPtr_)
         {
             nutMeanPtr_.ref() ==
                 dimensionedScalar(nutRefInst().dimensions(), Zero);
@@ -436,7 +436,7 @@ tmp<volSymmTensorField> RASModelVariables::devReff
             IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
-      - (laminarTransport.nu() + nutRef())*devTwoSymm(fvc::grad(U))
+      - (laminarTransport.nu() + nut())*devTwoSymm(fvc::grad(U))
     );
 }
 

@@ -92,50 +92,28 @@ adjointManagers
 
 optimisation
 {
-    sensitivities
+    designVariables
     {
-        type            multiple; // used to compute many kinds of sensitivities at the same time
-        patches         (lower upper);
-        sensTypes
+        type             shape;
+        shapeType        Bezier;
+        sensitivityType  multiple;
+        sensitivityTypes (FI ESI SI);
+        patches          (lower upper);
+        FI
         {
-            FIVolSplines
-            {
-                type                volumetricBSplinesFI;
-                patches             (lower upper);
-            }
-            ESIVolSplines
-            {
-                type                volumetricBSplines;
-                patches             (lower upper);
-            }
-            SIVolSplines
-            {
-                type                volumetricBSplines;
-                patches             (lower upper);
-                surfaceSensitivities
-                {
-                    includeMeshMovement false;
-                }
-            }
-            FIBezier
-            {
-                type                BezierFI;
-                patches             (lower upper);
-            }
-            ESIBezier
-            {
-                type                Bezier;
-                patches             (lower upper);
-            }
-            SIBezier
-            {
-                type                Bezier;
-                patches             (lower upper);
-                surfaceSensitivities
-                {
-                    includeMeshMovement false;
-                }
-            }
+            sensitivityType     shapeFI;
+            patches             (lower upper);
+        }
+        ESI
+        {
+            sensitivityType     shapeESI;
+            patches             (lower upper);
+        }
+        SI
+        {
+            sensitivityType     shapeESI;
+            patches             (lower upper);
+            includeMeshMovement false;
         }
     }
 }

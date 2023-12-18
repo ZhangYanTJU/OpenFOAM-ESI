@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -92,15 +92,22 @@ Foam::simple::simple
 (
     fvMesh& mesh,
     const word& managerType,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& solverName
 )
 :
-    incompressiblePrimalSolver(mesh, managerType, dict),
+    incompressiblePrimalSolver
+    (
+        mesh,
+        managerType,
+        dict,
+        solverName
+    ),
     solverControl_(SIMPLEControl::New(mesh, managerType, *this)),
     incoVars_(allocateVars()),
-    MRF_(mesh, word(useSolverNameForFields() ? solverName() : word::null)),
+    MRF_(mesh, word(useSolverNameForFields() ? solverName_ : word::null)),
     cumulativeContErr_(Zero),
-    objectives_(0)
+    objectives_()
 {
     addExtraSchemes();
     setRefCell
@@ -237,15 +244,22 @@ void Foam::simple::mainIter()
 
 void Foam::simple::postIter()
 {
+    // Execute function objects in optimisation cases
+    // Disabled in Time since we are subsycling
+    if (managerType_ == "steadyOptimisation")
+    {
+        const_cast<Time&>(mesh_.time()).functionObjects().execute(false);
+    }
+
     solverControl_().write();
 
     // Print objective values to screen and compute mean value
     Info<< endl;
-    for (objective* obj : objectives_)
+    for (auto& obj : objectives_)
     {
-        Info<< obj->objectiveName() << " : " << obj->J() << endl;
-        obj->accumulateJMean(solverControl_());
-        obj->writeInstantaneousValue();
+        Info<< obj.objectiveName() << " : " << obj.J() << endl;
+        obj.accumulateJMean(solverControl_());
+        obj.writeInstantaneousValue();
     }
 
     // Average fields if necessary
@@ -302,9 +316,9 @@ void Foam::simple::preLoop()
 
 void Foam::simple::postLoop()
 {
-    for (objective* obj : objectives_)
+    for (auto& obj : objectives_)
     {
-        obj->writeInstantaneousSeparator();
+        obj.writeInstantaneousSeparator();
     }
 
     // Safety

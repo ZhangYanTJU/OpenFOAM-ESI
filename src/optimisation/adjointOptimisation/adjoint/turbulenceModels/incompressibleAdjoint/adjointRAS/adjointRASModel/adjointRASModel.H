@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -263,7 +263,7 @@ public:
 
         //- Return reference to the adjoint turbulence model variables base
         //- names
-        const wordList& getAdjointTMVariablesBaseNames();
+        const wordList& getAdjointTMVariablesBaseNames() const;
 
         //- Return the effective stress tensor including the laminar stress
         virtual tmp<volSymmTensorField> devReff() const = 0;
@@ -314,12 +314,12 @@ public:
         virtual const boundaryVectorField& adjointMomentumBCSource() const = 0;
 
         //- Sensitivity terms for shape optimisation, emerging from
-        //  the turbulence model differentiation.
+        //- the turbulence model differentiation.
         //  Misses dxdb, to be added by the classes assembling the sensitivities
         virtual const boundaryVectorField& wallShapeSensitivities() = 0;
 
         //- Sensitivity terms for flow control, emerging from the
-        //  turbulence model differentiation
+        //- turbulence model differentiation
         virtual const boundaryVectorField& wallFloCoSensitivities() = 0;
 
         //- Sensitivity terms resulting from the differentiation of the
@@ -331,6 +331,15 @@ public:
         //  Misses grad(dxdb), to be added by the assembling the sensitivities
         virtual tmp<volTensorField> FISensitivityTerm() = 0;
 
+        //- Term contributing to the computation of topology optimisation
+        //- sensitivities
+        //  Misses betaMax, dBeta/dAlpha and the mesh volume, to be added
+        //  during the assembly of the sensitivities
+        virtual tmp<scalarField> topologySensitivities
+        (
+            const word& designVarsName
+        ) const = 0;
+
         //- Solve the adjoint turbulence equations
         virtual void correct();
 
@@ -339,6 +348,9 @@ public:
 
         //- Set flag of changed primal solution to true
         void setChangedPrimalSolution();
+
+        //- Restore field values to the initial ones
+        void restoreInitValues();
 
         //- Reset mean fields to zero
         void resetMeanFields();

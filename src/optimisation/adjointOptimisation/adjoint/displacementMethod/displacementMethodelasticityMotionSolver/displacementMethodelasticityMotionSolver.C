@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -98,6 +98,12 @@ displacementMethodelasticityMotionSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool displacementMethodelasticityMotionSolver::preferPointField() const
+{
+    return false;
+}
+
+
 void displacementMethodelasticityMotionSolver::setMotionField
 (
     const pointVectorField& pointMovement
@@ -105,17 +111,17 @@ void displacementMethodelasticityMotionSolver::setMotionField
 {
     if (resetFields_)
     {
-        pointMotionU_.primitiveFieldRef() = vector::zero;
-        cellMotionU_.primitiveFieldRef() = vector::zero;
+        pointMotionU_.primitiveFieldRef() = Zero;
+        cellMotionU_.primitiveFieldRef() = Zero;
         cellMotionU_.correctBoundaryConditions();
     }
 
     maxDisplacement_ = SMALL;
 
-    // Update the boundary conditions of the pointField in order to make
-    // sure that the boundary will move according to the initial BCs
-    // without the interference of the volPointInterpolation in the elasticityMotionSolver
-    for (label patchI : patchIDs_)
+    // Update the boundary conditions of the pointField in order to make sure
+    // that the boundary will move according to the initial BCs without the
+    // interference of the volPointInterpolation in the elasticityMotionSolver
+    for (const label patchI : patchIDs_)
     {
         // Set boundary field. Needed for the motionSolver class
         pointMotionU_.boundaryFieldRef()[patchI] ==
@@ -145,7 +151,8 @@ void displacementMethodelasticityMotionSolver::setMotionField
             );
     }
 
-    // update the volField boundary conditions, used for the elasticity PDEs solution
+    // Update the volField boundary conditions,
+    // used for the elasticity PDEs solution
     const pointField& points = mesh_.points();
     for (label patchI : patchIDs_)
     {
@@ -164,15 +171,12 @@ void displacementMethodelasticityMotionSolver::setMotionField
     const volVectorField& cellMovement
 )
 {
-    auto cellMotionUbf = cellMotionU_.boundaryFieldRef();
+    auto& cellMotionUbf = cellMotionU_.boundaryFieldRef();
 
     // Set boundary mesh movement and calculate
     // max current boundary displacement
-    forAll(patchIDs_, pI)
+    for (const label patchI : patchIDs_)
     {
-        label patchI = patchIDs_[pI];
-
-        // Set boundary field. Needed for the motionSolver class
         cellMotionUbf[patchI] == cellMovement.boundaryField()[patchI];
 
         // Find max value
@@ -180,10 +184,7 @@ void displacementMethodelasticityMotionSolver::setMotionField
             max
             (
                 maxDisplacement_,
-                gMax
-                (
-                    mag(cellMotionUbf[patchI])
-                )
+                gMax(mag(cellMotionUbf[patchI]))
             );
     }
 }

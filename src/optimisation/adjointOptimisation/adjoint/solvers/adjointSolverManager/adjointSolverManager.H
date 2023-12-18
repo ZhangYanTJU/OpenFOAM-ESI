@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -77,15 +77,23 @@ protected:
 
         const word managerName_;
 
+        const word managerType_;
+
         const word primalSolverName_;
 
         PtrList<adjointSolver> adjointSolvers_;
 
         labelList objectiveSolverIDs_;
 
-        labelList constraintSolverIDs_;
+        labelList oneSidedConstraintSolverIDs_;
+
+        labelList doubleSidedConstraintSolverIDs_;
 
         scalar operatingPointWeight_;
+
+        label nActiveAdjointSolvers_;
+
+        autoPtr<designVariables>& designVars_;
 
 
 public:
@@ -99,6 +107,7 @@ public:
         adjointSolverManager
         (
             fvMesh& mesh,
+            autoPtr<designVariables>& designVars,
             const word& managerType,
             const dictionary& dict,
             bool overrideUseSolverName
@@ -111,7 +120,7 @@ public:
 
     // Member Functions
 
-        virtual bool readDict(const dictionary& dict);
+        bool readDict(const dictionary& dict);
 
 
         // Access
@@ -131,11 +140,32 @@ public:
             //- Non-const access to adjoint solvers
             PtrList<adjointSolver>& adjointSolvers();
 
+            //- Return the names of all adjointSolvers
+            wordList adjointSolversNames() const;
+
             //- Const access to adjoint solvers
             scalar operatingPointWeight() const;
 
-            //- Number of adjoint solvers corresponding to constraints
+            //- Return number of active adjoint solvers, either corresponding
+            //  to objectives or constraints
+            label nActiveAdjointSolvers() const;
+
+            //- Static function returning the number of active adjoint
+            //  solvers reading dict
+            static label nActiveAdjointSolvers(const dictionary& dict);
+
+            //- Number of constraints
+            //  Is the sum of one-sided and double-sided constraints, the
+            //  latter multiplied by two
             label nConstraints() const;
+
+            //- Number of adjoint solvers corresponding to one-sided
+            //- constraints
+            label nOneSidedConstraints() const;
+
+            //- Number of adjoint solvers corresponding to double-sided
+            //- constraints
+            label nDoubleSidedConstraints() const;
 
             //- Number of adjoint solvers corresponding to objectives
             label nObjectives() const;
@@ -148,13 +178,13 @@ public:
 
             //- Update objective function-related values and solve adjoint
             //- equations
-            virtual void solveAdjointEquations();
+            void solveAdjointEquations();
 
             //- Aggregate sensitivities from various adjoint solvers
-            virtual tmp<scalarField> aggregateSensitivities();
+            tmp<scalarField> aggregateSensitivities();
 
             //- Get constraint sensitivities. One scalarField per constraint
-            virtual PtrList<scalarField> constraintSensitivities();
+            PtrList<scalarField> constraintSensitivities();
 
             //- Compute sensitivities for all adjoint solvers
             //- (both objective- and constraint-related ones)
@@ -167,11 +197,16 @@ public:
             scalar objectiveValue();
 
             //- Get constraint values
-            virtual tmp<scalarField> constraintValues();
+            tmp<scalarField> constraintValues();
 
             //- Update fields related to primal solution.
             //  For instance, primal fields of adjoint turbulence models
             void updatePrimalBasedQuantities(const word& name);
+
+            //- Whether the primal solver corresponding to the
+            //- adjointSolverManager is the master one, in case of coupled
+            //- solvers
+            bool isMaster() const;
 
 
         // IO

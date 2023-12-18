@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -39,9 +39,9 @@ SourceFiles
 #ifndef updateMethod_H
 #define updateMethod_H
 
+#include "localIOdictionary.H"
+#include "designVariables.H"
 #include "runTimeSelectionTables.H"
-#include "IOdictionary.H"
-#include "fvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,6 +53,8 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class updateMethod
+:
+    public localIOdictionary
 {
 protected:
 
@@ -62,8 +64,14 @@ protected:
 
         const dictionary dict_;
 
-        //- Used to output values useful for continuation runs
-        IOdictionary optMethodIODict_;
+        //- Design variables
+        autoPtr<designVariables>& designVars_;
+
+        //- Number of constraints
+        label nConstraints_;
+
+        //- Map to active design variables
+        const labelList& activeDesignVars_;
 
         //- Derivatives of the objective functions
         scalarField objectiveDerivatives_;
@@ -73,6 +81,10 @@ protected:
 
         //- Objective value
         scalar objectiveValue_;
+
+        //- Old objective value
+        //  Used for convergence checking
+        scalar objectiveValueOld_;
 
         //- Constraint values
         scalarField cValues_;
@@ -86,6 +98,9 @@ protected:
 
         //- Step multiplying the correction
         scalar eta_;
+
+        //- Optimisation cycle count
+        label counter_;
 
         //- Is initially set?
         bool initialEtaSet_;
@@ -128,8 +143,12 @@ protected:
         //- Compute either global or local sum, based on globalSum flag
         scalar globalSum(tmp<scalarField>& tfield);
 
-        //- Return optional dictionary with parameters specific to each method
-        dictionary coeffsDict();
+        //- Compute either global or local sum, based on globalSum flag
+        label globalSum(const label);
+
+        //- Helper function to either read a scalarField of certain size
+        //- from a dictionary, or construct a zero field
+        tmp<scalarField> readOrZeroField(const word& name, const label size);
 
 
 private:
@@ -158,9 +177,12 @@ public:
             dictionary,
             (
                 const fvMesh& mesh,
-                const dictionary& dict
+                const dictionary& dict,
+                autoPtr<designVariables>& designVars,
+                const label nConstraints,
+                const word& type
             ),
-            (mesh, dict)
+            (mesh, dict, designVars, nConstraints, type)
         );
 
 
@@ -170,7 +192,10 @@ public:
         updateMethod
         (
             const fvMesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            autoPtr<designVariables>& designVars,
+            const label nConstraints,
+            const word& type
         );
 
 
@@ -180,7 +205,9 @@ public:
         static autoPtr<updateMethod> New
         (
             const fvMesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            autoPtr<designVariables>& designVars,
+            const label nConstraints
         );
 
 
@@ -190,54 +217,84 @@ public:
 
     // Member Functions
 
-       //- Set objective derivative
-       void setObjectiveDeriv(const scalarField& derivs);
+        //- Return optional dictionary with parameters specific to each method
+        dictionary coeffsDict(const word& type) const;
 
-       //- Set constraints derivative
-       void setConstraintDeriv(const PtrList<scalarField>& derivs);
+        //- Set objective derivative
+        void setObjectiveDeriv(const scalarField& derivs);
 
-       //- Set constraints derivative
-       void setObjectiveValue(const scalar value);
+        //- Set constraints derivative
+        void setConstraintDeriv(const PtrList<scalarField>& derivs);
 
-       //- Set constraints derivative
-       void setConstraintValues(const scalarField& values);
+        //- Set objective value
+        void setObjectiveValue(const scalar value);
 
-       //- Set step for optimisation methods
-       void setStep(const scalar eta);
+        //- Set old objective value
+        void setObjectiveValueOld(const scalar value);
 
-       //- Set globalSum variable.
-       //  Should be set by the optimisationType owining the updateMethod
-       void setGlobalSum(const bool useGlobalSum);
+        //- Set values of constraints
+        void setConstraintValues(const scalarField& values);
 
-       //- Return the correction of the design variables
-       virtual void computeCorrection()=0;
+        //- Get objective value
+        scalar getObjectiveValue() const;
 
-       //- Return the correction of the design variables
-       //const scalarField& returnCorrection() const;
+        //- Get old objective value
+        scalar getObjectiveValueOld() const;
 
-       //- Return the correction of the design variables
-       scalarField& returnCorrection();
+        //- Get values of constraints
+        const scalarField& getConstraintValues() const;
 
-       void writeCorrection();
+        //- Get optimisation cycle
+        label getCycle() const;
 
-       //- Compute merit function. Could be different than the objective
-       //- in the presence of constraints
-       virtual scalar computeMeritFunction();
+        //- Set step for optimisation methods
+        void setStep(const scalar eta);
 
-       //- Directional derivative of the merit function, in the direction of
-       //- the correction. Could be different than the objective directional
-       //- derivative in the presence of constraints
-       virtual scalar meritFunctionDirectionalDerivative();
+        //- Multiply step
+        void modifyStep(const scalar multiplier);
 
-       //- Return whether initial eta was set
-       bool& initialEtaSet();
+        //- Set globalSum variable.
+        //  Should be set by the optimisationManager owning the updateMethod
+        void setGlobalSum(const bool useGlobalSum);
 
-       //- Update old correction. useful for quasi-newton methods coupled with
-       //- line search
-       virtual void updateOldCorrection(const scalarField& oldCorrection);
+        //- Set the number of constraints
+        void setConstaintsNumber(const label nConstraints);
 
-       //- Write useful quantities to files
-       virtual void write();
+        //- Get the number of constraints
+        label nConstraints() const;
+
+        //- Return the correction of the design variables
+        virtual void computeCorrection() = 0;
+
+        //- Return the correction of the design variables
+        //const scalarField& returnCorrection() const;
+
+        //- Return the correction of the design variables
+        scalarField& returnCorrection();
+
+        void writeCorrection();
+
+        //- Compute merit function. Could be different than the objective
+        //- in the presence of constraints
+        virtual scalar computeMeritFunction();
+
+        //- Directional derivative of the merit function, in the direction of
+        //- the correction. Could be different than the objective directional
+        //- derivative in the presence of constraints
+        virtual scalar meritFunctionDirectionalDerivative();
+
+        //- Return whether initial eta was set
+        bool& initialEtaSet();
+
+        //- Update old correction. Useful for quasi-newton methods coupled with
+        //- line search
+        virtual void updateOldCorrection(const scalarField& oldCorrection);
+
+        //- Write continuation data under uniform
+        virtual bool writeData(Ostream& os) const;
+
+        //- Write non-continuation data, usually under the optimisation folder
+        virtual bool writeAuxiliaryData();
 };
 
 

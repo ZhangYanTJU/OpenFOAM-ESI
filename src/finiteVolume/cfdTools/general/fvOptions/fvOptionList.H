@@ -7,8 +7,8 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2019 OpenCFD Ltd.
-    Copyright (C) 2020 PCOpt/NTUA
-    Copyright (C) 2020 FOSS GP
+    Copyright (C) 2020,2023 PCOpt/NTUA
+    Copyright (C) 2020,2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -243,8 +243,11 @@ public:
         // Correction
 
             //- Apply correction to field
-            template<class Type>
-            void correct(GeometricField<Type, fvPatchField, volMesh>& field);
+            template
+            <
+                class Type, template<class> class PatchField, class GeoMesh
+            >
+            void correct(GeometricField<Type, PatchField, GeoMesh>& field);
 
 
         //- Post process sensitivity field related to the fvOption
@@ -254,6 +257,16 @@ public:
             Field<Type>& sensField,
             const word& fieldName = word::null,
             const word& designVariablesName = word::null
+        );
+
+        //- Post process auxiliary sensitivity field related to the fvOption
+        template<class Type, template<class> class PatchField, class GeoMesh>
+        void postProcessAuxSens
+        (
+            const GeometricField<Type, PatchField, GeoMesh>& primal,
+            const GeometricField<Type, PatchField, GeoMesh>& adjoint,
+            scalarField& sensField,
+            const word& fieldName = word::null
         );
 
 

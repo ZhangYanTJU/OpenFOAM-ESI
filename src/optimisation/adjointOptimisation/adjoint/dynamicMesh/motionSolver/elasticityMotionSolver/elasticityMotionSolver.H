@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -60,6 +60,7 @@ namespace Foam
 
 // Forward class declarations
 class motionInterpolation;
+class motionDiffusivity;
 class mapPolyMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -84,11 +85,8 @@ protected:
         //- Interpolation used to transfer cell displacement to the points
         autoPtr<motionInterpolation> interpolationPtr_;
 
-        //- Inverse cell volume diffusivity
-        volScalarField E_;
-
-        //- Exponent to stiffen highly morphed cells
-        scalar exponent_;
+        //- Diffusivity used to control the motion
+        autoPtr<motionDiffusivity> diffusivityPtr_;
 
         //- Intermediate steps to solve the PDEs
         label nSteps_;

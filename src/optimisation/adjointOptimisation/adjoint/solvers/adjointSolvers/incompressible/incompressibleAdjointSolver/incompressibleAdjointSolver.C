@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -30,6 +30,9 @@ License
 #include "incompressibleAdjointSolver.H"
 #include "incompressiblePrimalSolver.H"
 #include "wallFvPatch.H"
+#include "sensitivityTopO.H"
+#include "adjointBoundaryConditions.H"
+#include "adjointBoundaryConditionsFwd.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -47,6 +50,38 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+bool Foam::incompressibleAdjointSolver::hasBCdxdbMult
+(
+    const labelHashSet& sensitivityPatchIDs
+)
+{
+    if (hasBCdxdbMult_.bad())
+    {
+        const volVectorField& Ua = getAdjointVars().Ua();
+        hasBCdxdbMult_ = false;
+        for (const label patchI : sensitivityPatchIDs)
+        {
+            const fvPatchVectorField& Uab = Ua.boundaryField()[patchI];
+            if (isA<adjointVectorBoundaryCondition>(Uab))
+            {
+                adjointVectorBoundaryCondition& abc =
+                    refCast<adjointVectorBoundaryCondition>
+                        (const_cast<fvPatchVectorField&>(Uab));
+                tmp<tensorField> dxdbMult = abc.dxdbMult();
+                if (dxdbMult)
+                {
+                    hasBCdxdbMult_ = true;
+                    break;
+                }
+            }
+        }
+    }
+    return hasBCdxdbMult_;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::incompressibleAdjointSolver::incompressibleAdjointSolver
@@ -54,16 +89,18 @@ Foam::incompressibleAdjointSolver::incompressibleAdjointSolver
     fvMesh& mesh,
     const word& managerType,
     const dictionary& dict,
-    const word& primalSolverName
+    const word& primalSolverName,
+    const word& solverName
 )
 :
-    adjointSolver(mesh, managerType, dict, primalSolverName),
+    adjointSolver(mesh, managerType, dict, primalSolverName, solverName),
     primalVars_
     (
         mesh.lookupObjectRef<incompressiblePrimalSolver>(primalSolverName).
             getIncoVars()
     ),
-    ATCModel_(nullptr)
+    ATCModel_(nullptr),
+    hasBCdxdbMult_(Switch::INVALID)
 {}
 
 
@@ -75,7 +112,8 @@ Foam::incompressibleAdjointSolver::New
     fvMesh& mesh,
     const word& managerType,
     const dictionary& dict,
-    const word& primalSolverName
+    const word& primalSolverName,
+    const word& solverName
 )
 {
     const word solverType(dict.get<word>("solver"));
@@ -95,28 +133,12 @@ Foam::incompressibleAdjointSolver::New
     return
         autoPtr<incompressibleAdjointSolver>
         (
-            ctorPtr(mesh, managerType, dict, primalSolverName)
+            ctorPtr(mesh, managerType, dict, primalSolverName, solverName)
         );
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::incompressibleAdjointSolver::readDict(const dictionary& dict)
-{
-    if (adjointSolver::readDict(dict))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool Foam::incompressibleAdjointSolver::useSolverNameForFields() const
-{
-    return getAdjointVars().useSolverNameForFields();
-}
-
 
 const Foam::incompressibleVars&
 Foam::incompressibleAdjointSolver::getPrimalVars() const
@@ -152,6 +174,38 @@ Foam::incompressibleAdjointSolver::getATCModel() const
 }
 
 
+bool Foam::incompressibleAdjointSolver::includeDistance() const
+{
+    return getAdjointVars().adjointTurbulence()->includeDistance();
+}
+
+
+Foam::dimensionSet Foam::incompressibleAdjointSolver::daDimensions() const
+{
+    return sqr(dimLength)/pow3(dimTime);
+}
+
+
+Foam::dimensionSet Foam::incompressibleAdjointSolver::maDimensions() const
+{
+    return pow3(dimLength/dimTime);
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::incompressibleAdjointSolver::adjointEikonalSource()
+{
+    return getAdjointVars().adjointTurbulence()->distanceSensitivities();
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::incompressibleAdjointSolver::yWall() const
+{
+    return getPrimalVars().RASModelVariables()->d();
+}
+
+
 Foam::autoPtr<Foam::ATCModel>& Foam::incompressibleAdjointSolver::getATCModel()
 {
     return ATCModel_;
@@ -169,14 +223,17 @@ void Foam::incompressibleAdjointSolver::updatePrimalBasedQuantities()
 }
 
 
-Foam::tmp<Foam::volTensorField>
-Foam::incompressibleAdjointSolver::computeGradDxDbMultiplier()
+void Foam::incompressibleAdjointSolver::accumulateGradDxDbMultiplier
+(
+    volTensorField& gradDxDbMult,
+    const scalar dt
+)
 {
     /*
     addProfiling
     (
         incompressibleAdjointSolver,
-        "incompressibleAdjointSolver::computeGradDxDbMultiplier"
+        "incompressibleAdjointSolver::accumulateGradDxDbMultiplier"
     );
     */
     autoPtr<incompressibleAdjoint::adjointRASModel>& adjointRAS
@@ -215,53 +272,32 @@ Foam::incompressibleAdjointSolver::computeGradDxDbMultiplier()
 
     tmp<volScalarField> tnuEff = adjointRAS->nuEff();
     tmp<volSymmTensorField> stress = tnuEff()*twoSymm(gradU);
-    // Note:
-    // term4 (Ua & grad(stress)) is numerically tricky.  Its div leads to third
-    // order spatial derivs in E-SI based computations. Applying the product
-    // derivative rule (putting Ua inside the grad) gives better results in
-    // NACA0012, SA, WF.  However, the original formulation should be kept at
-    // the boundary in order to respect the Ua boundary conditions (necessary
-    // for E-SI to give the same sens as FI).  A mixed approach is hence
-    // followed
-
-    // Term 3, used also to allocated the return field
     tmp<volTensorField> tgradUa = fvc::grad(Ua);
-    auto tflowTerm =
+
+    // Return field
+    auto tflowTerm
+    (
         tmp<volTensorField>::New
         (
-            "flowTerm",
-          - tnuEff*(gradU & twoSymm(tgradUa()))
-        );
+            IOobject
+            (
+                "flowTerm",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_,
+            dimensionedTensor(sqr(dimLength)/pow3(dimTime), Zero),
+            fvPatchFieldBase::zeroGradientType()
+        )
+    );
     volTensorField& flowTerm = tflowTerm.ref();
-    // Term 4, only for the internal field
-    flowTerm.ref() +=
-        (
-          - (tgradUa & stress())
-          + fvc::grad(Ua & stress())
-        )().internalField();
+    // Term 3
+    flowTerm = - tnuEff*(gradU & twoSymm(tgradUa()));
+    // Term 4
+    flowTerm += fvc::grad(Ua & stress()) - (tgradUa & stress());
 
-    // Boundary conditions from term 4
-    for (label idir = 0; idir < pTraits<vector>::nComponents; ++idir)
-    {
-        autoPtr<volVectorField> stressDirPtr
-        (
-            createZeroFieldPtr<vector>
-                (mesh_, "stressDir", stress().dimensions())
-        );
-        // Components need to be in the [0-5] range since stress is a
-        // volSymmTensorField
-        unzipRow(stress(), idir, stressDirPtr());
-        volTensorField gradStressDir(fvc::grad(stressDirPtr()));
-        forAll(mesh_.boundary(), pI)
-        {
-            if (!isA<coupledFvPatch>(mesh_.boundary()[pI]))
-            {
-                flowTerm.boundaryFieldRef()[pI] +=
-                    Ua.component(idir)().boundaryField()[pI]
-                   *gradStressDir.boundaryField()[pI];
-            }
-        }
-    }
     // Release memory
     stress.clear();
 
@@ -279,8 +315,7 @@ Foam::incompressibleAdjointSolver::computeGradDxDbMultiplier()
     flowTerm += T(adjointRAS->FISensitivityTerm());
 
     // Term 7, term from objective functions
-    PtrList<objective>& functions
-        (objectiveManagerPtr_->getObjectiveFunctions());
+    PtrList<objective>& functions = objectiveManager_.getObjectiveFunctions();
 
     for (objective& objI : functions)
     {
@@ -292,20 +327,198 @@ Foam::incompressibleAdjointSolver::computeGradDxDbMultiplier()
 
     flowTerm.correctBoundaryConditions();
 
+    gradDxDbMult += flowTerm.T()*dt;
   //profiling::writeNow();
-
-    return (tflowTerm);
 }
 
 
-void Foam::incompressibleAdjointSolver::additionalSensitivityMapTerms
+void Foam::incompressibleAdjointSolver::accumulateDivDxDbMultiplier
 (
-    boundaryVectorField& sensitivityMap,
-    const labelHashSet& patchIDs,
+    autoPtr<scalarField>& divDxDbMult,
     const scalar dt
 )
 {
-    // Does nothing in base
+    PtrList<objective>& functions = objectiveManager_.getObjectiveFunctions();
+    for (objective& func : functions)
+    {
+        if (func.hasDivDxDbMult())
+        {
+            divDxDbMult() +=
+                func.weight()*func.divDxDbMultiplier().primitiveField()*dt;
+        }
+    }
+}
+
+
+void Foam::incompressibleAdjointSolver::accumulateGeometryVariationsMultipliers
+(
+    autoPtr<boundaryVectorField>& dSfdbMult,
+    autoPtr<boundaryVectorField>& dnfdbMult,
+    autoPtr<boundaryVectorField>& dxdbDirectMult,
+    autoPtr<pointBoundaryVectorField>& pointDxDbDirectMult,
+    const labelHashSet& sensitivityPatchIDs,
+    const scalar dt
+)
+{
+    PtrList<objective>& functions = objectiveManager_.getObjectiveFunctions();
+    for (const label patchI : sensitivityPatchIDs)
+    {
+        const scalarField magSfDt(mesh_.boundary()[patchI].magSf()*dt);
+        for (objective& func : functions)
+        {
+            const scalar wei = func.weight();
+            if (func.hasdSdbMult())
+            {
+                dSfdbMult()[patchI] += wei*func.dSdbMultiplier(patchI)*dt;
+            }
+            if (func.hasdndbMult())
+            {
+                dnfdbMult()[patchI] += wei*func.dndbMultiplier(patchI)*magSfDt;
+            }
+            if (func.hasdxdbDirectMult())
+            {
+                dxdbDirectMult()[patchI] +=
+                    wei*func.dxdbDirectMultiplier(patchI)*magSfDt;
+            }
+        }
+    }
+}
+
+
+void Foam::incompressibleAdjointSolver::accumulateBCSensitivityIntegrand
+(
+    autoPtr<boundaryVectorField>& bcDxDbMult,
+    const labelHashSet& sensitivityPatchIDs,
+    const scalar dt
+)
+{
+    if (!hasBCdxdbMult(sensitivityPatchIDs))
+    {
+        return;
+    }
+
+    // Grab references
+    const volVectorField& Ua = getAdjointVars().Ua();
+    const autoPtr<incompressibleAdjoint::adjointRASModel>& adjointTurbulence =
+        getAdjointVars().adjointTurbulence();
+
+    // Fields needed to calculate adjoint sensitivities
+    const autoPtr<incompressible::RASModelVariables>&
+       turbVars = primalVars_.RASModelVariables();
+    const singlePhaseTransportModel& lamTransp = primalVars_.laminarTransport();
+    volScalarField nuEff(lamTransp.nu() + turbVars->nut());
+    tmp<volTensorField> tgradUa = fvc::grad(Ua);
+    const volTensorField::Boundary& gradUabf = tgradUa.cref().boundaryField();
+
+    // Avoid updating the event number to keep consistency with cases caching
+    // gradUa
+    auto& UaBoundary = getAdjointVars().Ua().boundaryFieldRef(false);
+    auto& nuEffBoundary = nuEff.boundaryField();
+
+    for (const label patchI : sensitivityPatchIDs)
+    {
+        fvPatchVectorField& Uab = UaBoundary[patchI];
+        if (isA<adjointVectorBoundaryCondition>(Uab))
+        {
+            const fvPatch& patch = mesh_.boundary()[patchI];
+            tmp<vectorField> tnf = patch.nf();
+            const scalarField& magSf = patch.magSf();
+
+            tmp<vectorField> DvDbMult =
+                nuEffBoundary[patchI]*(Uab.snGrad() + (gradUabf[patchI] & tnf))
+    //        - (nf*pa.boundaryField()[patchI])
+              + adjointTurbulence().adjointMomentumBCSource()[patchI];
+            bcDxDbMult()[patchI] +=
+                (
+                    DvDbMult
+                  & refCast<adjointVectorBoundaryCondition>(Uab).dxdbMult()
+                )*magSf*dt;
+        }
+    }
+}
+
+
+void Foam::incompressibleAdjointSolver::accumulateOptionsDxDbMultiplier
+(
+    vectorField& optionsDxDbMult,
+    const scalar dt
+)
+{
+    // Terms from fvOptions - missing contributions from turbulence models
+    const incompressibleAdjointVars& av = getAdjointVars();
+    vectorField temp(mesh_.nCells(), Zero);
+    fv::options::New(this->mesh_).postProcessSens
+    (
+        temp, av.UaInst().name(), av.solverName()
+    );
+    optionsDxDbMult += temp*dt;
+    temp = Zero;
+    fv::options::New(this->mesh_).postProcessSens
+    (
+        temp, av.paInst().name(), av.solverName()
+    );
+    optionsDxDbMult += temp*dt;
+}
+
+
+void Foam::incompressibleAdjointSolver::topOSensMultiplier
+(
+    scalarField& betaMult,
+    const word& designVariablesName,
+    const scalar dt
+)
+{
+    const incompressibleAdjointVars& adjointVars = getAdjointVars();
+    const volVectorField& U = primalVars_.U();
+    const volVectorField& Ua = adjointVars.Ua();
+    const autoPtr<incompressibleAdjoint::adjointRASModel>& adjointTurbulence =
+        adjointVars.adjointTurbulence();
+    fv::options& fvOptions(fv::options::New(mesh_));
+
+    // Term from the momentum equations
+    scalarField momSens((U.primitiveField() & Ua.primitiveField())*dt);
+    Foam::sensitivityTopO::postProcessSens
+        (betaMult, momSens, fvOptions, U.name(), designVariablesName);
+    if (debug > 2)
+    {
+        volScalarField IvSens
+        (
+            IOobject
+            (
+                "IvSens" + solverName(),
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_,
+            dimensionedScalar(dimless, Zero)
+        );
+        IvSens.primitiveFieldRef() = momSens;
+        IvSens.write();
+    }
+
+    // Term from the turbulence model.
+    // Includes already the derivative of the interpolation function
+    betaMult +=
+        (adjointTurbulence->topologySensitivities(designVariablesName))*dt;
+
+    // Terms resulting directly from the objective function
+    PtrList<objective>& functions = objectiveManager_.getObjectiveFunctions();
+    for (objective& objI : functions)
+    {
+        const scalar weight(objI.weight());
+        if (objI.hasdJdb())
+        {
+            betaMult += weight*objI.dJdb()*dt;
+        }
+
+        if (objI.hasdJdbField())
+        {
+            SubField<scalar> betaSens(objI.dJdbField(), mesh_.nCells(), 0);
+            betaMult += weight*betaSens*dt;
+        }
+    }
 }
 
 

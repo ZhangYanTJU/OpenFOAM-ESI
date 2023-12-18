@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -29,7 +29,7 @@ Class
     Foam::solver
 
 Description
-    Base class for solution control classes
+    Base solver class
 
 \*---------------------------------------------------------------------------*/
 
@@ -72,11 +72,12 @@ protected:
         //- Solve equations?
         bool active_;
 
-        //- Pointer to a source term coming from the optimisationType
-        //- (e.g. porosity from topologyOptimisation)
-        //  Will never allocate new memory, so no need to be deleted
-        //  in the destructor
-        const volScalarField* optTypeSource_;
+        //- Is the solver the master one
+        //  Used in cases where a solver needs to work in tandem with another
+        bool isMaster_;
+
+        //- Append the variables related to the solver with it name
+        bool useSolverNameForFields_;
 
         //- Base variableSet pointer.
         //  To be allocated in derived classes
@@ -108,12 +109,13 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            const word& solverName
         );
 
 
     //- Destructor
-    virtual ~solver();
+    virtual ~solver() = default;
 
 
     // Member Functions
@@ -124,25 +126,36 @@ public:
         // Access
 
             //- Return the solver mesh
-            const fvMesh& mesh() const;
+            inline const fvMesh& mesh() const;
 
             //- Return the solver name
-            const word& solverName() const;
+            inline const word& solverName() const;
 
             //- Use solver name as a suffix to the involved fields
-            virtual bool useSolverNameForFields() const = 0;
+            inline bool useSolverNameForFields() const;
+
+            //- Given a variable name, return a name that is possibly appended
+            //- by the solverName, depending on useSolverNameForFields
+            inline word extendedVariableName(const word& varName) const;
 
             //- Return state of solver
-            virtual bool active();
+            inline bool active();
 
             //- Return the solver dictionary
-            virtual const dictionary& dict() const;
+            inline const dictionary& dict() const;
 
             //- Return constant reference to variableSet used by the solver
-            const variablesSet& getVariablesSet() const;
+            inline const variablesSet& getVariablesSet() const;
 
             //- Return non-constant reference to variableSet used by the solver
-            variablesSet& getVariablesSet();
+            inline variablesSet& getVariablesSet();
+
+            //- Return the manager type
+            inline const word& managerType() const;
+
+            //- Whether the solver is the master one, in case of coupled
+            //- solvers
+            inline bool isMaster() const;
 
 
         // Evolution
@@ -165,12 +178,6 @@ public:
             //- Functions to be called after loop
             virtual void postLoop();
 
-            //- Update source term related to optimisationType
-            void updateOptTypeSource
-            (
-                const autoPtr<volScalarField>& optSourcePtr
-            );
-
             //- Main control loop.
             //  Gets a list of function pointers to be called at the end of
             //  each solver iteration
@@ -181,9 +188,9 @@ public:
                 List<void (Type::*)()>& funcs
             );
 
-            //- Add source from optimisationType to underlaying equation
-            template<class Type>
-            void addOptimisationTypeSource(fvMatrix<Type>& matrix) const;
+            //- Add topO fvOptions
+            //  Does nothing in base
+            virtual void addTopOFvOptions() const;
 
 
         // IO
@@ -217,6 +224,7 @@ public:
 #ifdef NoRepository
 #   include "solverTemplates.C"
 #endif
+#include "solverI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

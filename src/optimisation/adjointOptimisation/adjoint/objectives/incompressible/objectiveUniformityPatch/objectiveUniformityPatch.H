@@ -70,6 +70,12 @@ class objectiveUniformityPatch
         scalarField UVar_;
 
 
+    // Private Member Functions
+
+        //- Return the objectiveReportPatches
+        void initialize();
+
+
 public:
 
     //- Runtime type information
@@ -94,20 +100,17 @@ public:
 
     // Member Functions
 
-        //- Return the objectiveReportPatches
-        void initialize();
-
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Update values to be added to the adjoint outlet velocity
-        void update_boundarydJdv();
+        virtual void update_boundarydJdv();
 
         //- Update values to be added to the adjoint outlet pressure
-        void update_boundarydJdvn();
+        virtual void update_boundarydJdvn();
 
         //- Update values to be added to the adjoint outlet tangential velocity
-        void update_boundarydJdvt();
+        virtual void update_boundarydJdvt();
 
         // Helper write functions
 

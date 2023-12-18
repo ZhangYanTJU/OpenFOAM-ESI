@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -84,7 +84,7 @@ protected:
         scalar cumulativeContErr_;
 
         //- List of objectives related to this primal solver
-        List<objective*> objectives_;
+        UPtrList<objective> objectives_;
 
 
     //- Protected Member Functions
@@ -117,7 +117,8 @@ public:
         (
             fvMesh& mesh,
             const word& managerType,
-            const dictionary& dict
+            const dictionary& dict,
+            const word& solverName
         );
 
 

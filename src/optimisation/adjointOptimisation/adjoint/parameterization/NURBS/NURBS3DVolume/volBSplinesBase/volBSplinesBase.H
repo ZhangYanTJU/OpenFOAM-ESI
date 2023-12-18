@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2020 PCOpt/NTUA
-    Copyright (C) 2013-2020 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -129,8 +129,14 @@ public:
         //- Get start CP ID for each box
         labelList getStartCpID() const;
 
+        //- Get start CP ID for each box
+        labelList getStartVarID() const;
+
         //- Find box of certain control point
         label findBoxID(const label cpI) const;
+
+        //- From design variable ID, return boxID, cpID and direction
+        Vector<label> decomposeDV(const label dvI) const;
 
         //- Get active design variables
         const labelList& getActiveDesignVariables() const;
@@ -138,6 +144,13 @@ public:
         //- Get max boundary displacement for a given control-points
         //- movement
         scalar computeMaxBoundaryDisplacement
+        (
+            const vectorField& controlPointsMovement,
+            const labelList& patchesToBeMoved
+        );
+
+        //- Get the updated boundary points only
+        tmp<vectorField> computeBoundaryDisplacement
         (
             const vectorField& controlPointsMovement,
             const labelList& patchesToBeMoved

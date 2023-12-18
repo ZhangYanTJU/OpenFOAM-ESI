@@ -77,13 +77,12 @@ objectiveFlowRate::objectiveFlowRate
 scalar objectiveFlowRate::J()
 {
     J_ = 0;
-    const volVectorField& U = vars_.UInst();
+    const surfaceScalarField& phi = vars_.phiInst();
 
     forAll(patches_, pI)
     {
         const label patchI = patches_[pI];
-        flowRates_[pI] =
-            gSum(U.boundaryField()[patchI] & mesh_.boundary()[patchI].Sf());
+        flowRates_[pI] = gSum(phi.boundaryField()[patchI]);
         J_ += flowRates_[pI];
     }
 

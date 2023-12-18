@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -57,6 +57,9 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration
+class designVariables;
+
 /*---------------------------------------------------------------------------*\
                          Class sensitivity Declaration
 \*---------------------------------------------------------------------------*/
@@ -69,13 +72,12 @@ protected:
 
         const fvMesh& mesh_;
         dictionary dict_;
+        bool writeFieldSens_;
 
         // Field sensitivities. Topology optimisation
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         autoPtr<volScalarField> fieldSensPtr_;
 
-
-    // Protected Member Functions
 
 private:
 
@@ -108,27 +110,40 @@ public:
 
     // Member Functions
 
+        //- Return reference to mesh
+        inline const fvMesh& mesh() const
+        {
+            return mesh_;
+        }
+
         //- Return the construction dictionary
-        const dictionary& dict() const;
+        inline const dictionary& dict() const
+        {
+            return
+                dict_.optionalSubDict(mesh_.name()).
+                    optionalSubDict("sensitivities");
+        }
 
         //- Read dictionary if changed
         virtual bool readDict(const dictionary& dict);
 
-        //- Compute design variables number. Does nothing in the base
-        //  Used to get the correct design variables number when
-        //  setSensitivityPatchIDs are not set in the constructor
-        virtual void computeDerivativesSize();
+        //- Calculates and returns sensitivity field
+        virtual const scalarField& calculateSensitivities
+        (
+            autoPtr<designVariables>& designVars
+        ) = 0;
 
-        //- Calculates and returns sensitivity fields.
-        //  Used with optimisation libraries
-        virtual const scalarField& calculateSensitivities() = 0;
+        //- Get the fieldSensPtr
+        inline const autoPtr<volScalarField>& fieldSensPtr() const
+        {
+            return fieldSensPtr_;
+        }
 
         //- Write sensitivity fields.
         //  If valid, copies boundaryFields to volFields and writes them.
         //  Virtual to be reimplemented by control points-based methods
         //  (Bezier, RBF) which do not need to write fields
         virtual void write(const word& baseName = word::null);
-
 };
 
 

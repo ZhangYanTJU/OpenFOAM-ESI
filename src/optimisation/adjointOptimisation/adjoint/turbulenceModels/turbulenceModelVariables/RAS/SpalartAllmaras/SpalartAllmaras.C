@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -58,24 +58,6 @@ SpalartAllmaras::SpalartAllmaras
     TMVar1BaseName_ = "nuTilda";
 
     TMVar1Ptr_.ref(mesh_.lookupObjectRef<volScalarField>(TMVar1BaseName_));
-
-    TMVar2Ptr_.reset
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "dummySpalartAllmarasVar2",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensionedScalar(dimless, Zero)
-        )
-    );
-
     nutPtr_.ref(mesh_.lookupObjectRef<volScalarField>(nutBaseName_));
 
     // The wall dist name can vary depending on how wallDist was

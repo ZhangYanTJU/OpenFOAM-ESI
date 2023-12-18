@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -60,10 +60,10 @@ Foam::quadratic::quadratic(const dictionary& dict)
 
 void Foam::quadratic::updateStep(scalar& step)
 {
-    Info<< "f(0)" << firstMeritValue_ << endl;
-    Info<< "f(a0)" << secondMeritValue_ << endl;
-    Info<< "df(0)" << meritDerivative_ << endl;
-    Info<< "a0 " <<  step << endl;
+    Info<< "First merit value,  f(0)  = " << firstMeritValue_ << endl;
+    Info<< "Second merit value, f(a0) = " << secondMeritValue_ << endl;
+    Info<< "Merit derivative,   df(0) = " << meritDerivative_ << endl;
+    Info<< "Previous step,      a0    = " <<  step << endl;
     scalar denom = 1./(step*step);
     scalar coeff1 =
         (secondMeritValue_ - meritDerivative_*step - firstMeritValue_)

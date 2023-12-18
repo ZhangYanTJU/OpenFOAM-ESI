@@ -97,14 +97,11 @@ public:
 
     // Member Functions
 
-        //- Return the objectiveReportPatches
-        void initialize();
-
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Update values to be added to the adjoint outlet velocity
-        void update_dJdv();
+        virtual void update_dJdv();
 
         //- Update div( dx/db multiplier). Volume-based sensitivity term
         virtual void update_divDxDbMultiplier();

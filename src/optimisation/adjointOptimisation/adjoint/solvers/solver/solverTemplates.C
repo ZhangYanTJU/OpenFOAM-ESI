@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -51,22 +51,6 @@ void Foam::solver::solveWithArgs
             }
         }
         postLoop();
-    }
-}
-
-
-template<class Type>
-void Foam::solver::addOptimisationTypeSource
-(
-    fvMatrix<Type>& matrix
-) const
-{
-    // If source has been allocated, add source * variable
-    if (optTypeSource_)
-    {
-        const GeometricField<Type, fvPatchField, volMesh>& psi = matrix.psi();
-
-        matrix += fvm::Sp(*optTypeSource_, psi);
     }
 }
 

@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2022 PCOpt/NTUA
-    Copyright (C) 2013-2022 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,6 +66,12 @@ class objectivePowerDissipation
         labelList zones_;
 
 
+    // Private Member Functions
+
+        //- Populate fieldNames
+        void populateFieldNames();
+
+
 public:
 
     //- Runtime type information
@@ -91,22 +97,28 @@ public:
     // Member Functions
 
         //- Return the objective function value
-        scalar J();
+        virtual scalar J();
 
         //- Update values to be added to the adjoint outlet velocity
-        void update_dJdv();
+        virtual void update_dJdv();
 
         //- Update field to be added to the first adjoint turbulence model PDE
-        void update_dJdTMvar1();
+        virtual void update_dJdTMvar1();
 
         //- Update field to be added to the second adjoint turbulence model PDE
-        void update_dJdTMvar2();
+        virtual void update_dJdTMvar2();
 
         //- Update div(dx/db multiplier). Volume-based sensitivity term
         virtual void update_divDxDbMultiplier();
 
         //- Update grad(dx/db multiplier). Volume-based sensitivity term
         virtual void update_gradDxDbMultiplier();
+
+        //- Contribution to field sensitivities
+        virtual void update_dJdb();
+
+        //- Add source terms to the adjoint turbulence model equations
+        virtual void addSource(fvScalarMatrix& matrix);
 };
 
 

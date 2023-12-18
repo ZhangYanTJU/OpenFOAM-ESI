@@ -7,8 +7,8 @@
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
     Copyright (C) 2016-2021 OpenCFD Ltd.
-    Copyright (C) 2020 PCOpt/NTUA
-    Copyright (C) 2020 FOSS GP
+    Copyright (C) 2020,2023 PCOpt/NTUA
+    Copyright (C) 2020,2023 FOSS GP
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -350,10 +350,10 @@ void Foam::fv::optionList::constrain(fvMatrix<Type>& eqn)
 }
 
 
-template<class Type>
+template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::fv::optionList::correct
 (
-    GeometricField<Type, fvPatchField, volMesh>& field
+    GeometricField<Type, PatchField, GeoMesh>& field
 )
 {
     const word& fieldName = field.name();
@@ -424,6 +424,47 @@ void Foam::fv::optionList::postProcessSens
                     sensField,
                     fieldName,
                     designVariablesName
+                );
+            }
+        }
+    }
+}
+
+
+template<class Type, template<class> class PatchField, class GeoMesh>
+void Foam::fv::optionList::postProcessAuxSens
+(
+    const GeometricField<Type, PatchField, GeoMesh>& primal,
+    const GeometricField<Type, PatchField, GeoMesh>& adjoint,
+    scalarField& sensField,
+    const word& fieldName
+)
+{
+    for (fv::option& source : *this)
+    {
+        const label fieldi = source.applyToField(fieldName);
+
+        if (fieldi != -1)
+        {
+            addProfiling
+                (fvopt, "fvOption::postProcessAuxSens." + source.name());
+
+            const bool ok = source.isActive();
+
+            if (debug && ok)
+            {
+                Info<< "Post processing sensitivity source "
+                    << source.name() << " for field " << fieldName << endl;
+            }
+
+            if (ok)
+            {
+                source.postProcessAuxSens
+                (
+                    primal,
+                    adjoint,
+                    sensField,
+                    fieldName
                 );
             }
         }

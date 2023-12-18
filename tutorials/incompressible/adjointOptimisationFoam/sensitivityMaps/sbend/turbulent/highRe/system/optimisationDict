@@ -91,9 +91,9 @@ adjointManagers
 
 optimisation
 {
-    sensitivities
+    designVariables
     {
-        type            surfacePoints;
+        sensitivityType surfacePoints;
         patches         (lower upper);
     }
 }

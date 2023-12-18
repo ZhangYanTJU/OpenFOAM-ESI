@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -127,6 +127,12 @@ public:
 
         //- Returns zero field
         virtual tmp<volTensorField> FISensitivityTerm();
+
+        //- Returns zero field
+        virtual tmp<scalarField> topologySensitivities
+        (
+            const word& designVarsName
+        ) const;
 
         //- Nullify all adjoint turbulence model fields and their old times
         virtual void nullify();

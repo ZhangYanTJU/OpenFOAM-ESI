@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -125,74 +125,96 @@ bool Foam::SIMPLEControlOpt::loop()
 
     Time& runTime = const_cast<Time&>(mesh_.time());
 
-    // Sub-cycle time if this is the first iter
-    if (!subCycledTimePtr_)
-    {
-        subCycledTimePtr_.reset(new subCycleTime(runTime, nIters()));
-        Info<< "Solving equations for solver "
-            << solver_.solverName() << "\n" << endl;
-        deltaTSubSycle_ = runTime.deltaTValue();
-
-        // Reset iteration count to zero
-        iter_ = 0;
-    }
-
-    // Increase index
-    subCycledTimePtr_()++;
-    iter_ = subCycledTimePtr_().index();
-
     bool doNextIter(true);
 
-    if (criteriaSatisfied())
+    if (nIters() > 0)
     {
-        Info<< nl
-            << solver_.solverName()
-            << " solution converged in "
-            << subCycledTimePtr_->index() << " iterations" << nl << endl;
+        // Sub-cycle time if this is the first iter
+        if (!subCycledTimePtr_)
+        {
+            subCycledTimePtr_.reset(new subCycleTime(runTime, nIters()));
+            Info<< "Solving equations for solver "
+                << solver_.solverName() << "\n" << endl;
+            deltaTSubSycle_ = runTime.deltaTValue();
 
-        subCycledTimePtr_->endSubCycle();
-        subCycledTimePtr_.clear();
+            // Reset iteration count to zero
+            iter_ = 0;
 
-        // Write solution before continuing to next solver
-        runTime.write();
-        solver_.write();
+            // Reset previous time index of fvMesh::data, to avoid the rare
+            // occurance of a solver satisfying the convergence criteria at the
+            // first iteration, which then causes all subsequent optimisation
+            // cycles to be seen as converged, irrespective of the residual
+            // level, since the data::prevTimeIndex_ is not updated
+            //mesh_.data::setPreviousTimeIndex(0);
+        }
 
-        // Check whether mean fields have not been computed due to an
-        // unexpectedly early convergence
-        checkMeanSolution();
+        // Increase index
+        subCycledTimePtr_()++;
+        iter_ = subCycledTimePtr_().index();
 
-        doNextIter = false;
-    }
-    else if (subCycledTimePtr_->end())
-    {
-        Info<< nl
-            << solver_.solverName()
-            << " solution reached max. number of iterations "
-            << subCycledTimePtr_().nSubCycles() << nl << endl;
 
-        subCycledTimePtr_->endSubCycle();
-        subCycledTimePtr_.clear();
+        if (criteriaSatisfied())
+        {
+            Info<< nl
+                << solver_.solverName()
+                << " solution converged in "
+                << subCycledTimePtr_->index() << " iterations" << nl << endl;
 
-        // Write solution before continuing to next solver
-        runTime.write();
-        solver_.write();
+            subCycledTimePtr_->endSubCycle();
+            subCycledTimePtr_.clear();
 
-        doNextIter = false;
+            // Write solution before continuing to next solver
+            runTime.write();
+            solver_.write();
+
+            // Check whether mean fields have not been computed due to an
+            // unexpectedly early convergence
+            checkMeanSolution();
+
+            doNextIter = false;
+        }
+        else if (subCycledTimePtr_->end())
+        {
+            Info<< nl
+                << solver_.solverName()
+                << " solution reached max. number of iterations "
+                << subCycledTimePtr_().nSubCycles() << nl << endl;
+
+            subCycledTimePtr_->endSubCycle();
+            subCycledTimePtr_.clear();
+
+            // Write solution before continuing to next solver
+            runTime.write();
+            solver_.write();
+
+            doNextIter = false;
+        }
+        else
+        {
+            // Since dicts are not updated when Time is sub-cycled,
+            // do it manually here
+            runTime.readModifiedObjects();
+            resetDeltaT();
+
+            DebugInfo
+                << "Iteration " << subCycledTimePtr_().index()
+                << "|" << subCycledTimePtr_().nSubCycles() << endl;
+
+            simpleControl::storePrevIterFields();
+
+            doNextIter = true;
+        }
     }
     else
     {
-        // Since dicts are not updated when Time is sub-cycled,
-        // do it manually here
-        runTime.readModifiedObjects();
-        resetDeltaT();
+        WarningInFunction
+            << "Number of iterations is non-positive (" << nIters() << ")."
+            << nl
+            << "Skipping the solution of the equations corresponding to solver "
+            << solver_.solverName()
+            << nl << endl;
 
-        DebugInfo
-            << "Iteration " << subCycledTimePtr_().index()
-            << "|" << subCycledTimePtr_().nSubCycles() << endl;
-
-        storePrevIterFields();
-
-        doNextIter = true;
+        doNextIter = false;
     }
 
     return doNextIter;

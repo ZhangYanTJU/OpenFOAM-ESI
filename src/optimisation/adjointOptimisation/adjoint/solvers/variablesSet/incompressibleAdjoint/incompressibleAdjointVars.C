@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -66,6 +66,19 @@ incompressibleAdjointVars::incompressibleAdjointVars
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void incompressibleAdjointVars::restoreInitValues()
+{
+    if (solverControl_.storeInitValues())
+    {
+        Info<< "Restoring adjoint field to initial ones" << endl;
+        paInst() == dimensionedScalar(paInst().dimensions(), Zero);
+        UaInst() == dimensionedVector(UaInst().dimensions(), Zero);
+        phiaInst() == dimensionedScalar(phiaInst().dimensions(), Zero);
+        adjointTurbulence_().restoreInitValues();
+    }
+}
+
 
 void incompressibleAdjointVars::resetMeanFields()
 {

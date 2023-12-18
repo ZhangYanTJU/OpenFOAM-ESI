@@ -612,7 +612,7 @@ bool Foam::functionObjectList::start()
 }
 
 
-bool Foam::functionObjectList::execute()
+bool Foam::functionObjectList::execute(bool writeProperties)
 {
     bool ok = true;
 
@@ -774,7 +774,7 @@ bool Foam::functionObjectList::execute()
     }
 
     // Force writing of properties dictionary after function object execution
-    if (time_.writeTime())
+    if (time_.writeTime() && writeProperties)
     {
         const auto oldPrecision = IOstream::precision_;
         IOstream::precision_ = 16;

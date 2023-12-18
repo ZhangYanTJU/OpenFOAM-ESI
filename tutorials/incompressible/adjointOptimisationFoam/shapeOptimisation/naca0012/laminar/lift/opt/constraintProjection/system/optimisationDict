@@ -94,15 +94,14 @@ adjointManagers
                 // choose adjoint solver
                 //----------------------
                 active                 true;
-                type                   incompressible;
-                solver                 adjointSimple;
+                type                   null;
                 isConstraint           true;
 
                 // manage objectives
                 //------------------
                 objectives
                 {
-                    type                incompressible;
+                    type                geometric;
                     objectiveNames
                     {
                         vol
@@ -113,25 +112,6 @@ adjointManagers
                         }
                     }
                 }
-
-                // ATC treatment
-                //--------------
-                ATCModel
-                {
-                    ATCModel        standard;
-                }
-
-                // solution control
-                //------------------
-                solutionControls
-                {
-                    nIters 3000;
-                    residualControl
-                    {
-                        "pa.*"       1.e-7;
-                        "Ua.*"       1.e-7;
-                    }
-                }
             }
         }
     }
@@ -139,24 +119,17 @@ adjointManagers
 
 optimisation
 {
-    optimisationType
+    designVariables
     {
-        type            shapeOptimisation;
-        writeEachMesh   true;
-    }
-    sensitivities
-    {
-        type            volumetricBSplinesFI;
+        type            shape;
+        shapeType       volumetricBSplines;
+        sensitivityType shapeFI;
         patches         (pressure suction);
+        maxInitChange   5.e-3;
     }
     updateMethod
     {
         method          constraintProjection;
-    }
-    meshMovement
-    {
-        type            volumetricBSplines;
-        maxAllowedDisplacement 5.e-3;
     }
 }
 

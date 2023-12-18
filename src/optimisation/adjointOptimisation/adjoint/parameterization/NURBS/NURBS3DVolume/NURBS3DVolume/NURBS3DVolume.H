@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -170,7 +170,7 @@ protected:
             vector& vec,
             scalar minValue = 1e-7,
             scalar maxValue = 0.999999
-        );
+        ) const;
 
         //- Create lists with active design variables and control points
         void determineActiveDesignVariablesAndPoints();
@@ -183,6 +183,9 @@ protected:
 
         //- Confine movement in all control points for user-defined directions
         void confineControlPointsDirections();
+
+        //- Deactivate control points if they affect no mesh point
+        void confineInertControlPoints();
 
         //- Confine all three movements for a prescribed control point
         void confineControlPoint(const label cpI);
@@ -261,6 +264,13 @@ public:
 
 
     // Member Functions
+
+        //- Compute parametric coordinates for a given set of points
+        //  (not necessarily the mesh ones)
+        tmp<vectorField> computeParametricCoordinates
+        (
+            const vectorField& points
+        ) const;
 
         // Derivatives wrt parametric coordinates
 
@@ -383,6 +393,9 @@ public:
 
             //- Get control point ID from its I-J-K coordinates
             label getCPID(const label i, const label j, const label k) const;
+
+            //- Get I-J-K coordinates from control point ID
+            void getIJK(label& i, label& j, label& k, const label cpID) const;
 
             //- Set new control points
             //  New values should be on the coordinates system original CPs

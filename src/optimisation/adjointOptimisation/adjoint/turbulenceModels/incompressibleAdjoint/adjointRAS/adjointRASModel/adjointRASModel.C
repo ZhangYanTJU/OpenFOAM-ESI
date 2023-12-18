@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2019 PCOpt/NTUA
-    Copyright (C) 2013-2019 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -57,6 +57,26 @@ void adjointRASModel::printCoeffs()
     if (printCoeffs_)
     {
         Info<< type() << "Coeffs" << coeffDict_ << endl;
+    }
+}
+
+
+void adjointRASModel::restoreInitValues()
+{
+    const solverControl& solControl = adjointVars_.getSolverControl();
+    if (solControl.storeInitValues())
+    {
+        if (adjointTMVariable1Ptr_)
+        {
+            volScalarField& var1 = adjointTMVariable1Ptr_.ref();
+            var1 == dimensionedScalar(var1.dimensions(), Zero);
+        }
+
+        if (adjointTMVariable2Ptr_)
+        {
+            volScalarField& var2 = adjointTMVariable2Ptr_.ref();
+            var2 == dimensionedScalar(var2.dimensions(), Zero);
+        }
     }
 }
 
@@ -352,7 +372,7 @@ autoPtr<volScalarField>& adjointRASModel::getAdjointTMVariable2InstPtr()
 }
 
 
-const wordList& adjointRASModel::getAdjointTMVariablesBaseNames()
+const wordList& adjointRASModel::getAdjointTMVariablesBaseNames() const
 {
     return adjointTMVariablesBaseNames_;
 }
@@ -360,6 +380,13 @@ const wordList& adjointRASModel::getAdjointTMVariablesBaseNames()
 
 tmp<volScalarField> adjointRASModel::nutJacobianTMVar1() const
 {
+    dimensionSet dims
+    (
+        bool(adjointTMVariable1Ptr_)
+      ? dimViscosity/adjointTMVariable1Ptr_().dimensions()
+      : dimless
+    );
+
     return
         tmp<volScalarField>::New
         (
@@ -372,17 +399,20 @@ tmp<volScalarField> adjointRASModel::nutJacobianTMVar1() const
                 IOobject::NO_WRITE
             ),
             mesh_,
-            dimensionedScalar
-            (
-               nut().dimensions()/adjointTMVariable1Ptr_().dimensions(),
-               Zero
-            )
+            dimensionedScalar(dims, Zero)
         );
 }
 
 
 tmp<volScalarField> adjointRASModel::nutJacobianTMVar2() const
 {
+    dimensionSet dims
+    (
+        bool(adjointTMVariable2Ptr_)
+      ? dimViscosity/adjointTMVariable2Ptr_().dimensions()
+      : dimless
+    );
+
     return
         tmp<volScalarField>::New
         (
@@ -395,11 +425,7 @@ tmp<volScalarField> adjointRASModel::nutJacobianTMVar2() const
                 IOobject::NO_WRITE
             ),
             mesh_,
-            dimensionedScalar
-            (
-                nut().dimensions()/adjointTMVariable2Ptr_().dimensions(),
-                Zero
-            )
+            dimensionedScalar(dims, Zero)
         );
 }
 

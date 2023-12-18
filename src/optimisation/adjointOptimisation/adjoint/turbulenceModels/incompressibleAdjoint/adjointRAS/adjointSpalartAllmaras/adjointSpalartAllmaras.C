@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2007-2021 PCOpt/NTUA
-    Copyright (C) 2013-2021 FOSS GP
+    Copyright (C) 2007-2023 PCOpt/NTUA
+    Copyright (C) 2013-2023 FOSS GP
     Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -35,6 +35,8 @@ License
 #include "boundaryAdjointContribution.H"
 #include "coupledFvPatch.H"
 #include "ATCModel.H"
+#include "fvOptions.H"
+#include "sensitivityTopO.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -148,7 +150,7 @@ const volScalarField& adjointSpalartAllmaras::nuTilda() const
 }
 
 
-const volScalarField& adjointSpalartAllmaras::nut() const
+const volScalarField& adjointSpalartAllmaras::nutRef() const
 {
     return primalVars_.RASModelVariables()().nutRef();
 }
@@ -861,7 +863,7 @@ tmp<volScalarField> adjointSpalartAllmaras::distanceSensitivities()
     typedef nutUSpaldingWallFunctionFvPatchScalarField
         SAwallFunctionPatchField;
 
-    const volScalarField::Boundary& nutBoundary = nut().boundaryField();
+    const volScalarField::Boundary& nutBoundary = nutRef().boundaryField();
     const scalarField& V = mesh_.V().field();
 
     tmp<volScalarField> tnuEff = nuEff();
@@ -945,7 +947,7 @@ tmp<volScalarField> adjointSpalartAllmaras::distanceSensitivities()
 
 tmp<volTensorField> adjointSpalartAllmaras::FISensitivityTerm()
 {
-    const volVectorField& U  = primalVars_.U();
+    const volVectorField& U = primalVars_.U();
 
     tmp<volTensorField> tgradU = fvc::grad(U);
     const volTensorField& gradU = tgradU.cref();
@@ -997,10 +999,26 @@ tmp<volTensorField> adjointSpalartAllmaras::FISensitivityTerm()
     volScalarField dfw_dOmega
         (this->dfw_dOmega(Stilda_, dfw_dr, dStilda_dOmega));
 
-    return
+    // Assemply of the return field
+    auto tFISens
+    (
         tmp<volTensorField>::New
         (
-            "volSensTerm",
+            IOobject
+            (
+                type() + "flowTerm",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh_,
+            dimensionedTensor(sqr(dimLength)/pow3(dimTime), Zero),
+            fvPatchFieldBase::zeroGradientType()
+        )
+    );
+    volTensorField& FISens = tFISens.ref();
+    FISens =
             // jk, cm formulation for the TM model convection
           - (nuaTilda()*(U*gradNuTilda))
             // jk, symmetric in theory
@@ -1013,8 +1031,29 @@ tmp<volTensorField> adjointSpalartAllmaras::FISensitivityTerm()
               - Cb1_*nuTilda()*dStilda_dOmega
               + Cw1_*sqr(nuTilda()/y_)*dfw_dOmega
             )
-           *nuaTilda()*deltaOmega // jk
-        );
+           *nuaTilda()*deltaOmega; // jk
+    FISens.correctBoundaryConditions();
+
+    return tFISens;
+}
+
+
+tmp<scalarField> adjointSpalartAllmaras::topologySensitivities
+(
+    const word& designVarsName
+) const
+{
+    auto tres(tmp<scalarField>::New(nuTilda().primitiveField().size(), Zero));
+    scalarField nuTildaSens
+        (nuTilda().primitiveField()*nuaTilda().primitiveField());
+
+    fv::options& fvOptions(fv::options::New(mesh_));
+    sensitivityTopO::postProcessSens
+    (
+        tres.ref(), nuTildaSens, fvOptions, nuTilda().name(), designVarsName
+    );
+
+    return tres;
 }
 
 
@@ -1050,6 +1089,8 @@ void adjointSpalartAllmaras::correct()
 
     nuaTilda().storePrevIter();
 
+    fv::options& fvOptions(fv::options::New(mesh_));
+
     tmp<fvScalarMatrix> nuaTildaEqn
     (
         fvm::ddt(nuaTilda())
@@ -1060,28 +1101,33 @@ void adjointSpalartAllmaras::correct()
       + fvc::laplacian(2.0*Cb2_*oneOverSigmaNut*nuaTilda(), nuTilda())
       + gradNua*oneOverSigmaNut
      ==
-        // always a negative contribution to the lhs. No Sp used!
+        // Always a negative contribution to the lhs. No Sp used!
         Cb1_*Stilda_*nuaTilda()
-        //always a positive contribution to the lhs. no need for SuSp
+        // Always a positive contribution to the lhs. no need for SuSp
       - fvm::Sp(Cw1_*fw_*nuTilda()/sqr(y_), nuaTilda())
       - Cdnut_*gradUaR
+      + fvOptions(nuaTilda())
     );
 
     // Add sources from the objective functions
-    objectiveManager_.addTMEqn1Source(nuaTildaEqn.ref());
+    objectiveManager_.addSource(nuaTildaEqn.ref());
 
     nuaTildaEqn.ref().relax();
+    fvOptions.constrain(nuaTildaEqn.ref());
     solve(nuaTildaEqn);
     nuaTilda().correctBoundaryConditions();
     nuaTilda().relax();
 
     if (adjointVars_.getSolverControl().printMaxMags())
     {
-        scalar maxDeltaNuaTilda =
-            gMax(mag(nuaTilda() - nuaTilda().prevIter())());
+        dimensionedScalar maxDeltaNuaTilda =
+            max(mag(nuaTilda() - nuaTilda().prevIter())());
         dimensionedScalar maxNuaTilda = max(mag(nuaTilda()));
-        Info<< "Max mag of nuaTilda = " << maxNuaTilda.value() << endl;
-        Info<< "Max mag of delta nuaTilda = " << maxDeltaNuaTilda << endl;
+        Info<< "Max mag (" << nuaTilda().name() << ") = "
+            << maxNuaTilda.value() << endl;
+        Info<< "Max mag (Delta " << nuaTilda().name() << ") = "
+            << maxDeltaNuaTilda.value()
+            << endl;
     }
 }
 
