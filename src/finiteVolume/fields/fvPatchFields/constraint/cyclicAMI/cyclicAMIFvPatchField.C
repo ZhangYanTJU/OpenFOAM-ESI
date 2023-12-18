@@ -261,6 +261,7 @@ void Foam::cyclicAMIFvPatchField<Type>::autoMap
     const fvPatchFieldMapper& mapper
 )
 {
+    coupledFvPatchField<Type>::autoMap(mapper);
     patchNeighbourFieldPtr_.reset(nullptr);
 }
 
@@ -272,6 +273,7 @@ void Foam::cyclicAMIFvPatchField<Type>::rmap
     const labelList& addr
 )
 {
+    coupledFvPatchField<Type>::rmap(ptf, addr);
     patchNeighbourFieldPtr_.reset(nullptr);
 }
 
