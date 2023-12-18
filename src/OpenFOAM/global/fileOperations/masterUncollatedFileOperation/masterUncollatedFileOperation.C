@@ -1983,7 +1983,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::readHeader
     {
         Pout<< "masterUncollatedFileOperation::readHeader :" << " ok:" << ok
             << " class:" << io.headerClassName()
-            << " for file:" << fName << endl;;
+            << " for file:" << fName << endl;
     }
     return ok;
 }
