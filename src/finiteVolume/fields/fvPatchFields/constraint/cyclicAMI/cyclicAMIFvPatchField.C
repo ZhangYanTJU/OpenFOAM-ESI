@@ -44,8 +44,6 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF),
     cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p)),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {}
 
@@ -61,8 +59,6 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ),
     cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p, dict)),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {
     if (!isA<cyclicAMIFvPatch>(p))
@@ -118,17 +114,15 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, p, iF, mapper),
     cyclicAMIPatch_(refCast<const cyclicAMIFvPatch>(p)),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {
-    if (ptf.patchNeighbourFieldPtr_ && cacheNeighbourField())
-    {
-        patchNeighbourFieldPtr_.reset
-        (
-            new Field<Type>(ptf.patchNeighbourFieldPtr_(), mapper)
-        );
-    }
+    //if (ptf.patchNeighbourFieldPtr_ && cacheNeighbourField())
+    //{
+    //    patchNeighbourFieldPtr_.reset
+    //    (
+    //        new Field<Type>(ptf.patchNeighbourFieldPtr_(), mapper)
+    //    );
+    //}
 
     if (!isA<cyclicAMIFvPatch>(this->patch()))
     {
@@ -158,9 +152,7 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf),
     cyclicAMIPatch_(ptf.cyclicAMIPatch_),
-    sendRequests_(0),
-    recvRequests_(0),
-    patchNeighbourFieldPtr_(ptf.patchNeighbourFieldPtr_)
+    patchNeighbourFieldPtr_(nullptr)
 {
     if (debug && !ptf.all_ready())
     {
@@ -181,8 +173,6 @@ Foam::cyclicAMIFvPatchField<Type>::cyclicAMIFvPatchField
     cyclicAMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, iF),
     cyclicAMIPatch_(ptf.cyclicAMIPatch_),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {
     if (debug && !ptf.all_ready())
@@ -264,6 +254,28 @@ bool Foam::cyclicAMIFvPatchField<Type>::ready() const
 }
 
 
+
+template<class Type>
+void Foam::cyclicAMIFvPatchField<Type>::autoMap
+(
+    const fvPatchFieldMapper& mapper
+)
+{
+    patchNeighbourFieldPtr_.reset(nullptr);
+}
+
+
+template<class Type>
+void Foam::cyclicAMIFvPatchField<Type>::rmap
+(
+    const fvPatchField<Type>& ptf,
+    const labelList& addr
+)
+{
+    patchNeighbourFieldPtr_.reset(nullptr);
+}
+
+
 template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField
@@ -271,12 +283,6 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField
     const Field<Type>& iField
 ) const
 {
-    DebugPout
-        << "cyclicAMIFvPatchField::patchNeighbourField(const Field<Type>&) :"
-        << " field:" << this->internalField().name()
-        << " patch:" << this->patch().name()
-        << endl;
-
     // By pass polyPatch to get nbrId. Instead use cyclicAMIFvPatch virtual
     // neighbPatch()
     const cyclicAMIFvPatch& neighbPatch = cyclicAMIPatch_.neighbPatch();
@@ -327,15 +333,61 @@ Foam::cyclicAMIFvPatchField<Type>::patchNeighbourField() const
                 << abort(FatalError);
         }
 
+        const auto& fvp = this->patch();
+
+        if
+        (
+            patchNeighbourFieldPtr_
+        && !fvp.boundaryMesh().mesh().upToDatePoints(this->internalField())
+        )
+        {
+            //DebugPout
+            //    << "cyclicAMIFvPatchField::patchNeighbourField() :"
+            //    << " field:" << this->internalField().name()
+            //    << " patch:" << fvp.name()
+            //    << " CLEARING patchNeighbourField"
+            //    << endl;
+            patchNeighbourFieldPtr_.reset(nullptr);
+        }
+
         // Initialise if not done in construct-from-dictionary
         if (!patchNeighbourFieldPtr_)
         {
+            //DebugPout
+            //    << "cyclicAMIFvPatchField::patchNeighbourField() :"
+            //    << " field:" << this->internalField().name()
+            //    << " patch:" << fvp.name()
+            //    << " caching patchNeighbourField"
+            //    << endl;
+
             // Do interpolation and store result
             patchNeighbourFieldPtr_.reset
             (
                 patchNeighbourField(this->primitiveField()).ptr()
             );
         }
+        else
+        {
+            // Have cached value. Check
+            //if (debug)
+            //{
+            //    tmp<Field<Type>> tpnf
+            //    (
+            //        patchNeighbourField(this->primitiveField())
+            //    );
+            //    if (tpnf() != patchNeighbourFieldPtr_())
+            //    {
+            //        FatalErrorInFunction
+            //            << "On field " << this->internalField().name()
+            //            << " patch " << fvp.name() << endl
+            //            << "Cached patchNeighbourField    :"
+            //            << flatOutput(patchNeighbourFieldPtr_()) << endl
+            //            << "Calculated patchNeighbourField:"
+            //            << flatOutput(tpnf()) << exit(FatalError);
+            //    }
+            //}
+        }
+
         return patchNeighbourFieldPtr_();
     }
     else
@@ -376,6 +428,13 @@ void Foam::cyclicAMIFvPatchField<Type>::initEvaluate
 
     if (this->ownerAMI().distributed() && cacheNeighbourField())
     {
+        //DebugPout
+        //    << "*** cyclicAMIFvPatchField::initEvaluate() :"
+        //    << " field:" << this->internalField().name()
+        //    << " patch:" << this->patch().name()
+        //    << " sending patchNeighbourField"
+        //    << endl;
+
         if (commsType != UPstream::commsTypes::nonBlocking)
         {
             // Invalidate old field - or flag as fatal?
@@ -438,11 +497,18 @@ void Foam::cyclicAMIFvPatchField<Type>::evaluate
             defaultValues = this->patchInternalField();
         }
 
+        //DebugPout
+        //    << "*** cyclicAMIFvPatchField::evaluate() :"
+        //    << " field:" << this->internalField().name()
+        //    << " patch:" << this->patch().name()
+        //    << " receiving&caching patchNeighbourField"
+        //    << endl;
+
         patchNeighbourFieldPtr_.reset
         (
             cpp.interpolate
             (
-                Field<Type>::null(),  // Not used for distributed
+                Field<Type>::null(),    // Not used for distributed
                 recvRequests_,
                 recvBufs_,
                 defaultValues
@@ -520,10 +586,10 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
-    DebugPout<< "cyclicAMIFvPatchField::updateInterfaceMatrix() :"
-        << " field:" << this->internalField().name()
-        << " patch:" << this->patch().name()
-        << endl;
+    //DebugPout<< "cyclicAMIFvPatchField::updateInterfaceMatrix() :"
+    //    << " field:" << this->internalField().name()
+    //    << " patch:" << this->patch().name()
+    //    << endl;
 
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
@@ -551,7 +617,7 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
         pnf =
             cpp.interpolate
             (
-                solveScalarField::null(),  // Not used for distributed
+                solveScalarField::null(),   // Not used for distributed
                 recvRequests_,
                 scalarRecvBufs_,
                 defaultValues
@@ -638,10 +704,10 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
-    DebugPout<< "cyclicAMIFvPatchField::updateInterfaceMatrix() :"
-        << " field:" << this->internalField().name()
-        << " patch:" << this->patch().name()
-        << endl;
+    //DebugPout<< "cyclicAMIFvPatchField::updateInterfaceMatrix() :"
+    //    << " field:" << this->internalField().name()
+    //    << " patch:" << this->patch().name()
+    //    << endl;
 
     const labelUList& faceCells = lduAddr.patchAddr(patchId);
 
@@ -876,6 +942,104 @@ void Foam::cyclicAMIFvPatchField<Type>::write(Ostream& os) const
     if (patchNeighbourFieldPtr_)
     {
         patchNeighbourFieldPtr_->writeEntry("neighbourValue", os);
+    }
+}
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::cyclicAMIFvPatchField<Type>::operator=
+(
+    const fvPatchField<Type>& ptf
+)
+{
+    fvPatchField<Type>::operator=(ptf);
+
+    //Pout<< "cyclicAMIFvPatchField::operator= :"
+    //    << " field:" << this->internalField().name()
+    //    << " patch:" << this->patch().name()
+    //    << " copying from field:" << ptf.internalField().name()
+    //    << endl;
+
+    const auto* cycPtr = isA<cyclicAMIFvPatchField<Type>>(ptf);
+    if (cycPtr)
+    {
+        const auto& cyc = *cycPtr;
+        if
+        (
+            cyc.patchNeighbourFieldPtr_
+         && cyc.patchNeighbourFieldPtr_->size() == this->size()
+        )
+        {
+            const auto& cycPnf = cyc.patchNeighbourFieldPtr_();
+            if (patchNeighbourFieldPtr_)
+            {
+                // Copy values
+                patchNeighbourFieldPtr_() = cycPnf;
+            }
+            else
+            {
+                // Copy values
+                patchNeighbourFieldPtr_.reset(new Field<Type>(cycPnf));
+            }
+        }
+        else
+        {
+            patchNeighbourFieldPtr_.reset(nullptr);
+        }
+    }
+    else
+    {
+        patchNeighbourFieldPtr_.reset(nullptr);
+    }
+}
+
+
+template<class Type>
+void Foam::cyclicAMIFvPatchField<Type>::operator==
+(
+    const fvPatchField<Type>& ptf
+)
+{
+    fvPatchField<Type>::operator==(ptf);
+
+    //Pout<< "cyclicAMIFvPatchField::operator== :"
+    //    << " field:" << this->internalField().name()
+    //    << " patch:" << this->patch().name()
+    //    << " copying from field:" << ptf.internalField().name()
+    //    << endl;
+
+    const auto* cycPtr = isA<cyclicAMIFvPatchField<Type>>(ptf);
+    if (cycPtr)
+    {
+        const auto& cyc = *cycPtr;
+        if
+        (
+            cyc.patchNeighbourFieldPtr_
+         && cyc.patchNeighbourFieldPtr_->size() == this->size()
+        )
+        {
+            const auto& cycPnf = cyc.patchNeighbourFieldPtr_();
+            if (patchNeighbourFieldPtr_)
+            {
+                // Copy values
+                patchNeighbourFieldPtr_() = cycPnf;
+            }
+            else
+            {
+                // Copy values
+                patchNeighbourFieldPtr_.reset(new Field<Type>(cycPnf));
+            }
+        }
+        else
+        {
+            patchNeighbourFieldPtr_.reset(nullptr);
+        }
+    }
+    else
+    {
+        patchNeighbourFieldPtr_.reset(nullptr);
     }
 }
 

@@ -109,6 +109,18 @@ Foam::processorGAMGInterfaceField::processorGAMGInterfaceField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::processorGAMGInterfaceField::ready() const
+{
+    const bool ok = UPstream::finishedRequest(recvRequest_);
+    if (ok)
+    {
+        recvRequest_ = -1;
+        if (UPstream::finishedRequest(sendRequest_)) sendRequest_ = -1;
+    }
+    return ok;
+}
+
+
 void Foam::processorGAMGInterfaceField::initInterfaceMatrixUpdate
 (
     solveScalarField&,

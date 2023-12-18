@@ -254,6 +254,22 @@ public:
         const cyclicAMIFvPatchField<Type>& neighbourPatchField() const;
 
 
+    // Mapping Functions
+
+        //- Map (and resize as needed) from self given a mapping object
+        virtual void autoMap
+        (
+            const fvPatchFieldMapper&
+        );
+
+        //- Reverse map the given fvPatchField onto this fvPatchField
+        virtual void rmap
+        (
+            const fvPatchField<Type>&,
+            const labelList&
+        );
+
+
     // Evaluation
 
         //- Initialise the evaluation of the patch field
@@ -356,6 +372,12 @@ public:
 
             //- Write
             virtual void write(Ostream& os) const;
+
+
+        // Member Operators
+
+            virtual void operator=(const fvPatchField<Type>&);
+            virtual void operator==(const fvPatchField<Type>&);
 };
 
 

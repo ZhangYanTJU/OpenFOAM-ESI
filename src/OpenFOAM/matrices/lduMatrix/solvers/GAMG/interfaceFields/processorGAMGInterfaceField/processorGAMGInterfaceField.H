@@ -162,6 +162,9 @@ public:
 
         // Interface matrix update
 
+            //- Are all (receive) data available?
+            virtual bool ready() const;
+
             //- Initialise neighbour matrix update
             virtual void initInterfaceMatrixUpdate
             (
