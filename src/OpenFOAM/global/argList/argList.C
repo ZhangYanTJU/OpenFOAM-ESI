@@ -1690,15 +1690,26 @@ void Foam::argList::parse
                 )
                 {
                     label nProcDirs = 0;
-                    while
-                    (
-                        isDir
+                    {
+                        const bool oldParRun(UPstream::parRun(false));
+                        // Don't cache processor directories (probably not
+                        // needed since master-only
+                        const int oldCacheLevel(fileOperation::cacheLevel(0));
+                        // Accept any processorsXXX
+                        const int oldFilter(fileOperation::nProcsFilter(0));
+
+                        nProcDirs = fileHandler().nProcs
                         (
-                            rootPath_/globalCase_
-                          / ("processor" + Foam::name(++nProcDirs))
-                        )
-                    )
-                    {}
+                            rootPath_/globalCase_,
+                            "",
+                            dictNProcs  // expected nProcs
+                        );
+
+                        fileOperation::nProcsFilter(oldFilter);
+                        fileOperation::cacheLevel(oldCacheLevel);
+                        UPstream::parRun(oldParRun);
+                    }
+
 
                     if (nProcDirs != Pstream::nProcs())
                     {
