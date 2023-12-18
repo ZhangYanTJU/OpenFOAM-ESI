@@ -42,8 +42,6 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF),
     cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p)),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {}
 
@@ -59,8 +57,6 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(p, iF, dict, IOobjectOption::NO_READ),
     cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p, dict)),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {
     if (!isA<cyclicACMIFvPatch>(p))
@@ -130,17 +126,15 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, p, iF, mapper),
     cyclicACMIPatch_(refCast<const cyclicACMIFvPatch>(p)),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {
-    if (ptf.patchNeighbourFieldPtr_ && cacheNeighbourField())
-    {
-        patchNeighbourFieldPtr_.reset
-        (
-            new Field<Type>(ptf.patchNeighbourFieldPtr_(), mapper)
-        );
-    }
+    //if (ptf.patchNeighbourFieldPtr_ && cacheNeighbourField())
+    //{
+    //    patchNeighbourFieldPtr_.reset
+    //    (
+    //        new Field<Type>(ptf.patchNeighbourFieldPtr_(), mapper)
+    //    );
+    //}
 
     if (!isA<cyclicACMIFvPatch>(this->patch()))
     {
@@ -170,9 +164,7 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf),
     cyclicACMIPatch_(ptf.cyclicACMIPatch_),
-    sendRequests_(0),
-    recvRequests_(0),
-    patchNeighbourFieldPtr_(ptf.patchNeighbourFieldPtr_)
+    patchNeighbourFieldPtr_(nullptr)
 {
     if (debug && !ptf.all_ready())
     {
@@ -193,8 +185,6 @@ Foam::cyclicACMIFvPatchField<Type>::cyclicACMIFvPatchField
     cyclicACMILduInterfaceField(),
     coupledFvPatchField<Type>(ptf, iF),
     cyclicACMIPatch_(ptf.cyclicACMIPatch_),
-    sendRequests_(0),
-    recvRequests_(0),
     patchNeighbourFieldPtr_(nullptr)
 {
     if (debug && !ptf.all_ready())

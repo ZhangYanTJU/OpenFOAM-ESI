@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019,2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,7 +67,9 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, fineInterface),
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
-    rank_(0)
+    rank_(0),
+    sendRequests_(),
+    recvRequests_()
 {
     const cyclicAMILduInterfaceField& p =
         refCast<const cyclicAMILduInterfaceField>(fineInterface);
@@ -87,7 +89,9 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, doTransform, rank),
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(doTransform),
-    rank_(rank)
+    rank_(rank),
+    sendRequests_(),
+    recvRequests_()
 {}
 
 
@@ -100,7 +104,9 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, is),
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(readBool(is)),
-    rank_(readLabel(is))
+    rank_(readLabel(is)),
+    sendRequests_(),
+    recvRequests_()
 {}
 
 
@@ -114,7 +120,9 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
     GAMGInterfaceField(GAMGCp, local),
     cyclicACMIInterface_(refCast<const cyclicACMIGAMGInterface>(GAMGCp)),
     doTransform_(false),
-    rank_(0)
+    rank_(0),
+    sendRequests_(),
+    recvRequests_()
 {
     const auto& p = refCast<const cyclicACMILduInterfaceField>(local);
 
@@ -123,13 +131,107 @@ Foam::cyclicACMIGAMGInterfaceField::cyclicACMIGAMGInterfaceField
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::cyclicACMIGAMGInterfaceField::~cyclicACMIGAMGInterfaceField()
-{}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::cyclicACMIGAMGInterfaceField::ready() const
+{
+    if
+    (
+        UPstream::finishedRequests
+        (
+            recvRequests_.start(),
+            recvRequests_.size()
+        )
+    )
+    {
+        recvRequests_.clear();
+
+        if
+        (
+            UPstream::finishedRequests
+            (
+                sendRequests_.start(),
+                sendRequests_.size()
+            )
+        )
+        {
+            sendRequests_.clear();
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+
+void Foam::cyclicACMIGAMGInterfaceField::initInterfaceMatrixUpdate
+(
+    solveScalarField& result,
+    const bool add,
+    const lduAddressing& lduAddr,
+    const label patchId,
+    const solveScalarField& psiInternal,
+    const scalarField& coeffs,
+    const direction cmpt,
+    const Pstream::commsTypes commsType
+) const
+{
+    const auto& AMI =
+    (
+        cyclicACMIInterface_.owner()
+      ? cyclicACMIInterface_.AMI()
+      : cyclicACMIInterface_.neighbPatch().AMI()
+    );
+
+    if (AMI.distributed())
+    {
+        DebugPout<< "cyclicACMIFvPatchField::initInterfaceMatrixUpdate() :"
+            << " interface:" << cyclicACMIInterface_.index()
+            << " size:" << cyclicACMIInterface_.size()
+            << " owner:" << cyclicACMIInterface_.owner()
+            << " AMI distributed:" << AMI.distributed()
+            << endl;
+
+        // Start sending
+        if (commsType != UPstream::commsTypes::nonBlocking)
+        {
+            FatalErrorInFunction
+                << "Can only evaluate distributed AMI with nonBlocking"
+                << exit(FatalError);
+        }
+
+        // Get neighbouring field
+        const labelList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIInterface_.neighbPatchID());
+
+        solveScalarField pnf(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf, cmpt);
+
+        const auto& map =
+        (
+            cyclicACMIInterface_.owner()
+          ? AMI.tgtMap()
+          : AMI.srcMap()
+        );
+
+        // Insert send/receive requests (non-blocking). See e.g.
+        // cyclicAMIPolyPatchTemplates.C
+        const label oldWarnComm = UPstream::commWarn(AMI.comm());
+        map.send
+        (
+            pnf,
+            sendRequests_,
+            scalarSendBufs_,
+            recvRequests_,
+            scalarRecvBufs_
+        );
+        UPstream::commWarn(oldWarnComm);
+    }
+}
+
 
 void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
 (
@@ -143,30 +245,73 @@ void Foam::cyclicACMIGAMGInterfaceField::updateInterfaceMatrix
     const Pstream::commsTypes
 ) const
 {
-    // Get neighbouring field
-    const labelList& nbrFaceCells =
-        lduAddr.patchAddr
+    const labelUList& faceCells = lduAddr.patchAddr(patchId);
+
+    const auto& AMI =
+    (
+        cyclicACMIInterface_.owner()
+      ? cyclicACMIInterface_.AMI()
+      : cyclicACMIInterface_.neighbPatch().AMI()
+    );
+
+    DebugPout<< "cyclicACMIGAMGInterfaceField::updateInterfaceMatrix() :"
+        << " interface:" << cyclicACMIInterface_.index()
+        << " size:" << cyclicACMIInterface_.size()
+        << " owner:" << cyclicACMIInterface_.owner()
+        << " AMI distributed:" << AMI.distributed()
+        << endl;
+
+
+    if (AMI.distributed())
+    {
+        const auto& map =
         (
-            cyclicACMIInterface_.neighbPatchID()
+            cyclicACMIInterface_.owner()
+          ? AMI.tgtMap()
+          : AMI.srcMap()
         );
 
-    solveScalarField pnf(psiInternal, nbrFaceCells);
+        // Receive (= copy) data from buffers into work. TBD: receive directly
+        // into slices of work.
+        solveScalarField work;
+        map.receive(recvRequests_, scalarRecvBufs_, work);
 
-    // Transform according to the transformation tensors
-    transformCoupleField(pnf, cmpt);
+        solveScalarField pnf(faceCells.size(), Zero);
+        AMI.weightedSum
+        (
+            cyclicACMIInterface_.owner(),
+            work,
+            pnf,               // result
+            solveScalarField::null()
+        );
 
-    if (cyclicACMIInterface_.owner())
-    {
-        pnf = cyclicACMIInterface_.AMI().interpolateToSource(pnf);
+        // Add result using coefficients
+        this->addToInternalField(result, !add, faceCells, coeffs, pnf);
     }
     else
     {
-        pnf = cyclicACMIInterface_.neighbPatch().AMI().interpolateToTarget(pnf);
+        // Get neighbouring field
+        const labelList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIInterface_.neighbPatchID());
+
+        solveScalarField pnf(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf, cmpt);
+
+        if (cyclicACMIInterface_.owner())
+        {
+            pnf = AMI.interpolateToSource(pnf);
+        }
+        else
+        {
+            pnf = AMI.interpolateToTarget(pnf);
+        }
+
+        const labelUList& faceCells = lduAddr.patchAddr(patchId);
+
+        this->addToInternalField(result, !add, faceCells, coeffs, pnf);
     }
-
-    const labelUList& faceCells = lduAddr.patchAddr(patchId);
-
-    this->addToInternalField(result, !add, faceCells, coeffs, pnf);
 }
 
 
