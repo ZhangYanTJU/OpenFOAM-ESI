@@ -46,6 +46,7 @@ It is likely incomplete...
 - Victor Olesen
 - Evangelos Papoutsis-Kiachagias
 - Juho Peltola
+- Josep Pocurull
 - Johan Roenby
 - Henrik Rusche
 - Bruno Santos

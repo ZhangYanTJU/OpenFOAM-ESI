@@ -10,6 +10,12 @@ ifeq (,$(findstring ~libz,$(WM_COMPILE_CONTROL)))
     LIB_LIBS += -lz
 endif
 
+/* extrae profiling hooks [https://tools.bsc.es/extrae] */
+ifeq (,$(findstring windows,$(WM_OSTYPE)))
+ifeq (,$(findstring ~extrae,$(WM_COMPILE_CONTROL)))
+    EXE_INC  += -DHAVE_EXTRAE
+endif
+endif
 
 /* Never self-link (WM_PROJECT == OpenFOAM), but do link to Pstream */
 
