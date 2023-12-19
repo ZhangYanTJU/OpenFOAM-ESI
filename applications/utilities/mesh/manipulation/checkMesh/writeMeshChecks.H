@@ -9,7 +9,6 @@ const Enum<writeChecksFormatType> writeChecksFormatTypeNames
     { writeChecksFormatType::none, "none" },
     { writeChecksFormatType::dictionary, "dictionary" },
     { writeChecksFormatType::JSON, "json" },
-    { writeChecksFormatType::JSON, "JSON" },
 };
 
 writeChecksFormatType writeChecksFormat(writeChecksFormatType::none);

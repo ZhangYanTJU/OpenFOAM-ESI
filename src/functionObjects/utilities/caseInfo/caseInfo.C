@@ -416,7 +416,7 @@ bool Foam::functionObjects::caseInfo::read(const dictionary& dict)
 {
     if (stateFunctionObject::read(dict) && writeFile::read(dict))
     {
-        writeFormat_ = writeFormatNames_.get("writeFormat", dict);
+        writeFormatNames_.readIfPresent("writeFormat", dict, writeFormat_);
         lookupModeNames_.readIfPresent("lookupMode", dict, lookupMode_);
 
         dictionaries_ = dict.subOrEmptyDict("dictionaries");
