@@ -139,6 +139,11 @@ bool Foam::CloudFunctionObjectList<CloudType>::postMove
     const typename parcelType::trackingData& td
 )
 {
+    if (!td.keepParticle)
+    {
+        return td.keepParticle;
+    }
+
     for (auto& cfo : *this)
     {
         if (!cfo.postMove(p, dt, position0, td))
@@ -159,6 +164,11 @@ bool Foam::CloudFunctionObjectList<CloudType>::postPatch
     const typename parcelType::trackingData& td
 )
 {
+    if (!td.keepParticle)
+    {
+        return td.keepParticle;
+    }
+
     for (auto& cfo : *this)
     {
         if (!cfo.postPatch(p, pp, td))
@@ -178,13 +188,17 @@ bool Foam::CloudFunctionObjectList<CloudType>::postFace
     const typename parcelType::trackingData& td
 )
 {
+    if (!td.keepParticle)
+    {
+        return td.keepParticle;
+    }
+
     for (auto& cfo : *this)
     {
         if (!cfo.postFace(p, td))
         {
             return false;
         }
-
     }
 
     return true;
