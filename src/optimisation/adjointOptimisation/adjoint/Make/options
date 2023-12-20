@@ -18,13 +18,14 @@ EXE_INC = \
 LIB_LIBS = \
     -lfiniteVolume \
     -lfiniteArea \
-    -lmeshTools \
+    -lfileFormats \
     -lsurfMesh \
+    -lmeshTools \
     -lsampling \
     -lturbulenceModels \
     -lincompressibleTurbulenceModels \
     -lincompressibleTransportModels \
-    -lfvMotionSolvers \
     -ldynamicMesh \
+    -lfvMotionSolvers \
     -lgeometricVoF \
     -lfvOptions
