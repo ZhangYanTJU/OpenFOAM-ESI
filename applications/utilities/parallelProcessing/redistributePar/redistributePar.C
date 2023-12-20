@@ -1440,24 +1440,25 @@ int main(int argc, char *argv[])
     else
     {
         // Directory does not exist. If this happens on master -> decompose mode
-        if (UPstream::master() && !reconstruct)
+        if (UPstream::master() && !reconstruct && !decompose)
         {
            decompose = true;
            InfoOrPout
                 << "No processor directories; switching on decompose mode"
-               << nl << endl;
+                << nl << endl;
         }
     }
     // If master changed to decompose mode make sure all nodes know about it
     Pstream::broadcast(decompose);
     if (decompose)
     {
-         // The UPstream::nProcs is either the source or destination procs
-         fileOperation::nProcsFilter(UPstream::nProcs());
-         InfoOrPout<< "Switching to exact matching for "
-             << fileOperation::processorsBaseDir + Foam::name(UPstream::nProcs())
-             << " processor directories"
-             << nl << endl;
+        // The UPstream::nProcs is either the source or destination procs
+        fileOperation::nProcsFilter(UPstream::nProcs());
+        InfoOrPout
+            << "Switching to exact matching for "
+            << fileOperation::processorsBaseDir + Foam::name(UPstream::nProcs())
+            << " processor directories"
+            << nl << endl;
      }
 
 

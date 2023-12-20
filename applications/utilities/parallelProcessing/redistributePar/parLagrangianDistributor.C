@@ -29,6 +29,7 @@ License
 #include "ListOps.H"
 #include "parLagrangianDistributor.H"
 #include "passivePositionParticleCloud.H"
+#include "fileOperation.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -76,9 +77,10 @@ void Foam::parLagrangianDistributor::findClouds
     (
         cloud::prefix,
         mesh.time().timeName(),
-        mesh,
+        mesh.thisDb(),
         IOobjectOption::MUST_READ,
-        IOobjectOption::NO_WRITE
+        IOobjectOption::NO_WRITE,
+        IOobjectOption::NO_REGISTER
     );
 
     // Using the fileHandler:
@@ -110,9 +112,10 @@ void Foam::parLagrangianDistributor::findClouds
     Pstream::combineReduce(cloudNames, ListOps::uniqueEqOp<word>());
     Foam::sort(cloudNames);  // Consistent order
 
+    const label nClouds = cloudNames.size();
 
     // See which of the global cloudNames I have
-    haveClouds.resize_nocopy(cloudNames.size());
+    haveClouds.resize_nocopy(nClouds);
     haveClouds = false;
 
     for (const fileName& localCloudName : localCloudDirs)
@@ -125,17 +128,21 @@ void Foam::parLagrangianDistributor::findClouds
     }
 
     // Collect fields per cloud
-    objectNames.resize(cloudNames.size());
+    objectNames.resize_nocopy(nClouds);
 
-    for (const fileName& localCloudName : localCloudDirs)
+    for (label cloudi = 0; cloudi < nClouds; ++cloudi)
     {
+        objectNames[cloudi].clear();
+
+        if (!haveClouds[cloudi]) continue;
+
         // Do local scan for valid cloud objects
         const bool oldParRun = UPstream::parRun(false);
         IOobjectList localObjs
         (
             mesh,
             mesh.time().timeName(),
-            cloud::prefix/localCloudName
+            cloud::prefix/cloudNames[cloudi]
         );
         UPstream::parRun(oldParRun);
 
@@ -152,9 +159,6 @@ void Foam::parLagrangianDistributor::findClouds
         if (isCloud)
         {
             // Has coordinates/positions - so must be a valid cloud
-
-            const label cloudi = cloudNames.find(localCloudName);
-
             objectNames[cloudi] = localObjs.sortedNames();
         }
     }
@@ -333,9 +337,24 @@ Foam::parLagrangianDistributor::distributeLagrangianPositions
     const word& cloudName
 ) const
 {
-    // Load cloud and send particle
+    // Mixed exists/missing on various ranks?
+    // Avoid masterRead+broadcast (can cause blocking)
+
+    auto& handler = Foam::fileHandler();
+    const bool oldDistributed =
+        handler.distributed
+        (
+            !fileOperation::cacheLevel() || handler.distributed()
+        );
+
+
+    // Load cloud
     passivePositionParticleCloud lpi(srcMesh_, cloudName, false);
 
+    // Restore distributed flag
+    handler.distributed(oldDistributed);
+
+    // Distribute particles to other ranks
     return distributeLagrangianPositions(lpi);
 }
 

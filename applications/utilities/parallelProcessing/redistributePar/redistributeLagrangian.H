@@ -34,6 +34,7 @@ Description
 
 #include "parLagrangianDistributor.H"
 #include "unmappedPassivePositionParticleCloud.H"
+#include "fileOperation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -58,6 +59,17 @@ readLagrangian
     {
         (void)mesh.tetBasePtIs();
     }
+
+    // Mixed exists/missing on various ranks?
+    // Avoid masterRead+broadcast (can cause blocking)
+
+    auto& handler = Foam::fileHandler();
+    const bool oldDistributed =
+        handler.distributed
+        (
+            !fileOperation::cacheLevel() || handler.distributed()
+        );
+
 
     // Setup clouds
     forAll(cloudNames, i)
@@ -87,6 +99,9 @@ readLagrangian
             selectedFields
         );
     }
+
+    // Restore distributed flag
+    handler.distributed(oldDistributed);
 
     return clouds;
 }
@@ -164,6 +179,16 @@ void reconstructLagrangian
     }
     const auto& distributor = *distributorPtr;
 
+    // Mixed exists/missing on various ranks?
+    // Avoid masterRead+broadcast (can cause blocking)
+
+    auto& handler = Foam::fileHandler();
+    const bool oldDistributed =
+        handler.distributed
+        (
+            !fileOperation::cacheLevel() || handler.distributed()
+        );
+
     forAll(cloudNames, cloudi)
     {
         const word& cloudName = cloudNames[cloudi];
@@ -171,18 +196,18 @@ void reconstructLagrangian
         Info<< "Reconstructing lagrangian fields for cloud "
             << cloudName << nl << endl;
 
+        autoPtr<mapDistributeBase> lagrangianMapPtr =
+            distributor.distributeLagrangianPositions
+            (
+                cloudName
+            );
+
         IOobjectList cloudObjs
         (
             mesh,
             mesh.time().timeName(),
             cloud::prefix/cloudName
         );
-
-        autoPtr<mapDistributeBase> lagrangianMapPtr =
-            distributor.distributeLagrangianPositions
-            (
-                cloudName
-            );
 
         distributor.distributeAllFields
         (
@@ -193,6 +218,9 @@ void reconstructLagrangian
             selectedFields
         );
     }
+
+    // Restore distributed flag
+    handler.distributed(oldDistributed);
 }
 
 

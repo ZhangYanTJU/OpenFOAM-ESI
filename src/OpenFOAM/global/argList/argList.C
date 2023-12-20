@@ -1711,21 +1711,21 @@ void Foam::argList::parse
                     }
 
 
-                    if (nProcDirs != Pstream::nProcs())
+                    if (nProcDirs < UPstream::nProcs())
                     {
                         FatalError
                             << "number of processor directories = "
                             << nProcDirs
                             << " is not equal to the number of processors = "
-                            << Pstream::nProcs()
+                            << UPstream::nProcs()
                             << exit(FatalError);
                     }
                 }
 
                 // Distribute the master's argument list (unaltered)
-                for (const int subproci : Pstream::subProcs())
+                for (const int proci : UPstream::subProcs())
                 {
-                    OPstream toProc(Pstream::commsTypes::scheduled, subproci);
+                    OPstream toProc(UPstream::commsTypes::scheduled, proci);
 
                     toProc
                         << args_ << options_
