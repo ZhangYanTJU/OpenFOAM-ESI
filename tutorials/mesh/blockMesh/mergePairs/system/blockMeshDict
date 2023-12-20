@@ -102,10 +102,10 @@ boundary
         );
     }
 
-    other
+    defaultFaces
     {
-        type  patch;
-        faces ();
+        type    patch;
+        faces   ();
     }
 );
 
