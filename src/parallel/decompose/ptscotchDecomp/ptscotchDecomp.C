@@ -295,6 +295,25 @@ Foam::label Foam::ptscotchDecomp::decompose
             velotab.resize(1, 1);
         }
     }
+    else
+    {
+        // HACK: specify uniform weights
+        // - seems that scotch takes different code paths internally
+        //   if weights are not specified (issue #3063)
+
+        if (numCells > 0)
+        {
+            velotab.resize(numCells);
+        }
+        else
+        {
+            // Locally zero cells but not globally.
+            // Provide some size to avoid null pointer.
+            velotab.resize(1);
+        }
+
+        velotab = static_cast<SCOTCH_Num>(1);
+    }
 
 
     //

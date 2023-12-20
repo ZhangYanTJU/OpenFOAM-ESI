@@ -267,6 +267,15 @@ Foam::label Foam::scotchDecomp::decomposeSerial
             }
         }
     }
+    else
+    {
+        // HACK: specify uniform weights
+        // - seems that scotch takes different code paths internally
+        //   if weights are not specified (issue #3063)
+
+        velotab.resize(numCells);
+        velotab = static_cast<SCOTCH_Num>(1);
+    }
 
 
     //
