@@ -621,8 +621,8 @@ addLayersControls
     // bulk ('finalLayerThickness'), the expansionRatio ('expansionRatio') and
     // the overall thickness of all layers ('thickness').
 
-    //- specification of firstLayerThickness and overallThicknes, calculates
-    //  needed expansionRatio.
+    //- specification of firstLayerThickness and overallThicknes. From these
+    //  it calculates the needed expansionRatio.
     // thicknessModel firstAndOverall;
 
     //- specification of firstLayerThickness and expansionRatio.
