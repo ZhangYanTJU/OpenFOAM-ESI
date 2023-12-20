@@ -6,11 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-<<<<<<< HEAD
     Copyright (C) 2019-2023 OpenCFD Ltd.
-=======
-    Copyright (C) 2019-202i3 OpenCFD Ltd.
->>>>>>> origin/master
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
