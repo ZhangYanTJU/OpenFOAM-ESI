@@ -86,6 +86,12 @@ protected:
         //- List of objectives related to this primal solver
         UPtrList<objective> objectives_;
 
+        //- Allow the execution of function objects in optimisation mode.
+        //  Depending on the functions used and the setup, this might lead
+        //  to a high amount of data written to the hard drive.
+        //  WIP
+        bool allowFunctionObjects_;
+
 
     //- Protected Member Functions
 
