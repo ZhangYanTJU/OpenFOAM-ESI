@@ -29,8 +29,9 @@ solvers
         relTol          0.01;
     }
 
-    "U|Ua.*"   smoothSolver
+    "U|Ua.*"
     {
+        solver      smoothSolver;
         smoother    GaussSeidel;
         tolerance   1e-12;
         relTol      0.1;
