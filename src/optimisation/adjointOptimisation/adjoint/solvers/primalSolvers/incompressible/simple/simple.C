@@ -107,7 +107,8 @@ Foam::simple::simple
     incoVars_(allocateVars()),
     MRF_(mesh, word(useSolverNameForFields() ? solverName_ : word::null)),
     cumulativeContErr_(Zero),
-    objectives_()
+    objectives_(),
+    allowFunctionObjects_(dict.getOrDefault("allowFunctionObjects", false))
 {
     addExtraSchemes();
     setRefCell
@@ -246,7 +247,7 @@ void Foam::simple::postIter()
 {
     // Execute function objects in optimisation cases
     // Disabled in Time since we are subsycling
-    if (managerType_ == "steadyOptimisation")
+    if (managerType_ == "steadyOptimisation" && allowFunctionObjects_)
     {
         const_cast<Time&>(mesh_.time()).functionObjects().execute(false);
     }
