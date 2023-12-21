@@ -1082,6 +1082,9 @@ Foam::argList::argList
                         << " -help-full' for extended usage" << nl
                         << nl;
 
+                    args_.clear();
+                    options_.clearStorage();
+
                     UPstream::exit(1);  // works for serial and parallel
                 }
 
@@ -1242,6 +1245,9 @@ void Foam::argList::parse
 
         if (quickExit)
         {
+            args_.clear();
+            options_.clearStorage();
+
             std::exit(0);
         }
     }
@@ -1251,6 +1257,9 @@ void Foam::argList::parse
     {
         foamVersion::printBuildInfo(Info.stdStream(), false);
         FatalError.write(Info, false);
+
+        args_.clear();
+        options_.clearStorage();
 
         UPstream::exit(1);  // works for serial and parallel
     }
