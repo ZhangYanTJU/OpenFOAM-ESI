@@ -519,7 +519,8 @@ public:
                 if (newCapacity < len)
                 {
                     // Increase capacity (doubling)
-                    newCapacity = max(len, label(2*storage_.size()));
+                    newCapacity =
+                        Foam::max(label(len), label(2*storage_.size()));
                 }
 
                 // Info<<"request:" << len
