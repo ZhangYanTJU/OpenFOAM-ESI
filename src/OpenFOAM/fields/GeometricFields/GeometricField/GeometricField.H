@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -505,6 +505,68 @@ public:
         );
 
         //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, copy of internal field contents
+        //- and patch list to clone.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const Field<Type>& iField,
+            const PtrList<PatchField<Type>>& pflds
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, copy of internal field contents
+        //- and patch list to clone.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& name,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            const Field<Type>& iField,
+            const PtrList<PatchField<Type>>& pflds
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, moved internal field contents
+        //- and patch list to clone.
+        //- [Takes current timeName from the mesh registry].
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& name,
+            IOobjectOption::registerOption regOpt,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            Field<Type>&& iField,
+            const PtrList<PatchField<Type>>& pflds
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
+        //- from name, mesh, dimensions, moved internal field contents
+        //- and patch list to clone.
+        //- [Takes current timeName from the mesh registry].
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& name,
+            const Mesh& mesh,
+            const dimensionSet& dims,
+            Field<Type>&& iField,
+            const PtrList<PatchField<Type>>& pflds
+        );
+
+        //- Return tmp field (NO_READ, NO_WRITE)
         //- from name, mesh, field value, dimensions and patch type.
         //- [Takes current timeName from the mesh registry].
         //  For LEGACY_REGISTER, registration is determined by
@@ -621,36 +683,70 @@ public:
         );
 
         //- Return renamed tmp field (NO_READ, NO_WRITE)
-        //- [Takes current timeName from the mesh registry].
-        //  Registration/persistence determined by
+        //- retaining its instance/local.
+        //  For LEGACY_REGISTER, registration is determined by
         //  objectRegistry::is_cacheTemporaryObject().
         static tmp<GeometricField<Type, PatchField, GeoMesh>> New
         (
             const word& newName,
-            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tgf
+            IOobjectOption::registerOption regOpt,
+            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tfld
         );
 
         //- Return renamed tmp field (NO_READ, NO_WRITE)
-        //- with reset patch field type.
-        //- [Takes current timeName from the mesh registry].
+        //- retaining its instance/local.
         //  Registration/persistence determined by
         //  objectRegistry::is_cacheTemporaryObject().
         static tmp<GeometricField<Type, PatchField, GeoMesh>> New
         (
             const word& newName,
-            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tgf,
+            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tfld
+        );
+
+        //- Return renamed tmp field (NO_READ, NO_WRITE)
+        //- with reset patch field type, retaining its instance/local.
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& newName,
+            IOobjectOption::registerOption regOpt,
+            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tfld,
             const word& patchFieldType
         );
 
         //- Return renamed tmp field (NO_READ, NO_WRITE)
-        //- with reset patch field types.
-        //- [Takes instance from the field].
+        //- with reset patch field type, retaining its instance/local.
         //  Registration/persistence determined by
         //  objectRegistry::is_cacheTemporaryObject().
         static tmp<GeometricField<Type, PatchField, GeoMesh>> New
         (
             const word& newName,
-            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tgf,
+            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tfld,
+            const word& patchFieldType
+        );
+
+        //- Return renamed tmp field (NO_READ, NO_WRITE)
+        //- with reset patch field types, retaining its instance/local.
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& newName,
+            IOobjectOption::registerOption regOpt,
+            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tfld,
+            const wordList& patchFieldTypes,
+            const wordList& actualPatchTypes = wordList()
+        );
+
+        //- Return renamed tmp field (NO_READ, NO_WRITE)
+        //- with reset patch field types, retaining its instance/local.
+        //  Registration/persistence determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<GeometricField<Type, PatchField, GeoMesh>> New
+        (
+            const word& newName,
+            const tmp<GeometricField<Type, PatchField, GeoMesh>>& tfld,
             const wordList& patchFieldTypes,
             const wordList& actualPatchTypes = wordList()
         );
@@ -866,7 +962,6 @@ public:
 
     // Member Operators
 
-        //- Return a const-reference to the dimensioned internal field.
         //- Same as internalField().
         //  Useful in the formulation of source-terms for FV equations
         const Internal& operator()() const { return *this; }

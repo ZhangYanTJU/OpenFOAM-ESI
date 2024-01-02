@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -440,8 +440,19 @@ public:
             const dimensioned<Type>& dt
         );
 
-        //- Return renamed tmp field (NO_READ, NO_WRITE).
-        //- [Takes current timeName from the mesh registry].
+        //- Return renamed tmp field (NO_READ, NO_WRITE)
+        //- retaining its instance/local.
+        //  For LEGACY_REGISTER, registration is determined by
+        //  objectRegistry::is_cacheTemporaryObject().
+        static tmp<DimensionedField<Type, GeoMesh>> New
+        (
+            const word& newName,
+            IOobjectOption::registerOption regOpt,
+            const tmp<DimensionedField<Type, GeoMesh>>& tfld
+        );
+
+        //- Return renamed tmp field (NO_READ, NO_WRITE)
+        //- retaining its instance/local.
         //  Registration/persistence determined by
         //  objectRegistry::is_cacheTemporaryObject().
         static tmp<DimensionedField<Type, GeoMesh>> New
