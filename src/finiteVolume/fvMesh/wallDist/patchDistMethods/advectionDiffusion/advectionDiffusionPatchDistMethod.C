@@ -79,8 +79,7 @@ Foam::patchDistMethods::advectionDiffusion::advectionDiffusion
     tolerance_(coeffs_.getOrDefault<scalar>("tolerance", 1e-3)),
     maxIter_(coeffs_.getOrDefault<int>("maxIter", 10)),
     predicted_(false),
-    checkAndWriteMesh_
-        (coeffs_.lookupOrDefault<bool>("checkAndWriteMesh", true))
+    checkAndWriteMesh_(coeffs_.getOrDefault("checkAndWriteMesh", true))
 {}
 
 
@@ -119,11 +118,11 @@ bool Foam::patchDistMethods::advectionDiffusion::correct
                 (
                    "points",
                     mesh_.pointsInstance(),
-                    mesh_.meshSubDir,
+                    polyMesh::meshSubDir,
                     mesh_,
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
-                    false
+                    IOobject::NO_REGISTER
                 ),
                 mesh_.points()
             );

@@ -687,7 +687,7 @@ Foam::tmp<Foam::Field<Type>> Foam::surfaceWriter::adjustFieldTemplate
         // Rotate fields (vector and non-spherical tensors)
         if
         (
-            (pTraits<Type>::rank != 0 && pTraits<Type>::nComponents > 1)
+            (is_vectorspace<Type>::value && pTraits<Type>::nComponents > 1)
          && geometryTransform_.good()
          && !geometryTransform_.R().is_identity()
         )

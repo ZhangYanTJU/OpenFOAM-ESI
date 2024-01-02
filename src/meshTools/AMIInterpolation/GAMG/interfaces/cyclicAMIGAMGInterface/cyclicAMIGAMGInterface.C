@@ -964,7 +964,7 @@ void Foam::cyclicAMIGAMGInterface::write(Ostream& os) const
 {
     GAMGInterface::write(os);
 
-    const bool hasAMI = amiPtr_.valid();
+    const bool hasAMI = bool(amiPtr_);
 
     os  << token::SPACE << neighbPatchID_
         << token::SPACE << owner_

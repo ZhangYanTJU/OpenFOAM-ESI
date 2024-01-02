@@ -138,11 +138,11 @@ Foam::autoPtr<Foam::regularisationPDE> Foam::regularisationPDE::New
     const word modelType =
         dict.getOrDefault<word>("regularisationPDE", "Helmholtz");
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
     Info<< "regularisationPDE type " << modelType << endl;
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
@@ -155,7 +155,7 @@ Foam::autoPtr<Foam::regularisationPDE> Foam::regularisationPDE::New
 
     return autoPtr<regularisationPDE>
     (
-        cstrIter()(mesh, dict, zones)
+        ctorPtr(mesh, dict, zones)
     );
 }
 

@@ -28,7 +28,6 @@ License
 
 #include "fieldRegularisation.H"
 #include "fixedValueFvPatchFields.H"
-#include "zeroGradientFvPatchFields.H"
 #include "wallFvPatch.H"
 #include "fvm.H"
 
@@ -96,7 +95,7 @@ Foam::fieldRegularisation::fieldRegularisation
         ),
         mesh_,
         dimensionedScalar(dimless, Zero),
-        zeroGradientFvPatchScalarField::typeName
+        fvPatchFieldBase::zeroGradientType()
     )
 {
     DebugInfo

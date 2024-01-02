@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,11 +37,11 @@ Foam::autoPtr<Foam::binModel> Foam::binModel::New
     const word& outputPrefix
 )
 {
-    word modelType(dict.get<word>("binModel"));
+    const word modelType(dict.get<word>("binModel"));
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.good())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
@@ -52,7 +52,7 @@ Foam::autoPtr<Foam::binModel> Foam::binModel::New
         ) << exit(FatalIOError);
     }
 
-    return autoPtr<binModel>(cstrIter()(dict, mesh, outputPrefix));
+    return autoPtr<binModel>(ctorPtr(dict, mesh, outputPrefix));
 }
 
 

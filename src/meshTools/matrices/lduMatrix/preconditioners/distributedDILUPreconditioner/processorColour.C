@@ -149,12 +149,12 @@ Foam::label Foam::processorColour::colour
     //            mesh.time().timeName(),
     //            mesh,
     //            IOobject::NO_READ,
-    //            IOobject::AUTO_WRITE,
-    //            false
+    //            IOobject::NO_WRITE,
+    //            IOobject::NO_REGISTER
     //        ),
     //        mesh,
     //        dimensionedScalar(dimless, procColour[Pstream::myProcNo()]),
-    //        zeroGradientFvPatchScalarField::typeName
+    //        fvPatchFieldBase::zeroGradientType()
     //    );
     //    volColour.write();
     //}

@@ -66,9 +66,9 @@ void Foam::designVariables::readBounds
         scalar lowerBound(dict_.get<scalar>("lowerBound"));
         lowerBounds_.reset(new scalarField(getVars().size(), lowerBound));
     }
-    else if (lowerBoundPtr.valid())
+    else if (lowerBoundPtr)
     {
-        lowerBounds_.reset(new scalarField(getVars().size(), lowerBoundPtr()));
+        lowerBounds_.reset(new scalarField(getVars().size(), *lowerBoundPtr));
     }
 
     // Read upper bounds for the design variables, if present
@@ -91,9 +91,9 @@ void Foam::designVariables::readBounds
         scalar upperBound(dict_.get<scalar>("upperBound"));
         upperBounds_.reset(new scalarField(getVars().size(), upperBound));
     }
-    else if (upperBoundPtr.valid())
+    else if (upperBoundPtr)
     {
-        upperBounds_.reset(new scalarField(getVars().size(), upperBoundPtr()));
+        upperBounds_.reset(new scalarField(getVars().size(), *upperBoundPtr));
     }
 }
 
@@ -164,9 +164,9 @@ Foam::autoPtr<Foam::designVariables> Foam::designVariables::New
 
     Info<< "designVariables type : " << modelType << endl;
 
-    auto cstrIter = designVariablesConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = designVariablesConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
@@ -176,7 +176,7 @@ Foam::autoPtr<Foam::designVariables> Foam::designVariables::New
         ) << exit(FatalError);
     }
 
-    return autoPtr<designVariables>(cstrIter()(mesh, dict));
+    return autoPtr<designVariables>(ctorPtr(mesh, dict));
 }
 
 

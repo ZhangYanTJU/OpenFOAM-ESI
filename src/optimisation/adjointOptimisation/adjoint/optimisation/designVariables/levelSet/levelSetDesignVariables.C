@@ -227,11 +227,7 @@ void Foam::levelSetDesignVariables::updateSignedDistances()
         ),
         mesh_,
         dimensionedScalar(dimLength, Zero),
-        wordList
-        (
-            mesh_.boundary().size(),
-            zeroGradientFvPatchField<scalar>::typeName
-        )
+        fvPatchFieldBase::zeroGradientType()
     );
     y.primitiveFieldRef() = aTilda_.primitiveFieldRef();
     y.correctBoundaryConditions();
@@ -297,7 +293,7 @@ levelSetDesignVariables::levelSetDesignVariables
         ),
         mesh_,
         dimensionedScalar(dimless, Zero),
-        zeroGradientFvPatchField<scalar>::typeName
+        fvPatchFieldBase::zeroGradientType()
     ),
     signedDistances_
     (
@@ -311,7 +307,7 @@ levelSetDesignVariables::levelSetDesignVariables
         ),
         mesh_,
         dimensionedScalar(dimless, Zero),
-        zeroGradientFvPatchField<scalar>::typeName
+        fvPatchFieldBase::zeroGradientType()
     ),
     interpolation_
     (

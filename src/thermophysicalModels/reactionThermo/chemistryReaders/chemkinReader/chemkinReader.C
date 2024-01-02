@@ -219,22 +219,22 @@ void Foam::chemkinReader::addReactionType
         break;
 
         default:
-
+        {
             if (rType < 3)
             {
                 FatalErrorInFunction
-                    << "Reaction type " << reactionTypeNames[rType]
-                    << " on line " << lineNo_-1
-                    << " not handled by this function"
+                    << "Unhandled reaction type " << reactionTypeNames[rType]
+                    << " on line " << lineNo_-1 << nl
                     << exit(FatalError);
             }
             else
             {
                 FatalErrorInFunction
-                    << "Unknown reaction type " << rType
-                    << " on line " << lineNo_-1
+                    << "Unknown reaction type (" << int(rType)
+                    << "), on line " << lineNo_-1 << nl
                     << exit(FatalError);
             }
+        }
     }
 }
 
@@ -401,10 +401,8 @@ void Foam::chemkinReader::addPressureDependentReaction
         default:
         {
             FatalErrorInFunction
-                << "Fall-off function type "
-                << fallOffFunctionNames[fofType]
-                << " on line " << lineNo_-1
-                << " not implemented"
+                << "Fall-off function type (" << int(fofType)
+                << ") not implemented, line " << lineNo_-1
                 << exit(FatalError);
         }
     }
@@ -748,9 +746,8 @@ void Foam::chemkinReader::addReaction
         default:
         {
             FatalErrorInFunction
-                << "Reaction rate type " << reactionRateTypeNames[rrType]
-                << " on line " << lineNo_-1
-                << " not implemented"
+                << "Reaction rate type (" << int(rrType)
+                << ") not implemented, on line " << lineNo_-1
                 << exit(FatalError);
         }
     }

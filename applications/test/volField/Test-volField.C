@@ -118,7 +118,8 @@ PtrList<GeoField> create
             (
                 word("cmpt." + name(i)),
                 mesh,
-                dimensioned<typename GeoField::value_type>(Zero)
+                Foam::zero{},  // value
+                dimless
             ).ptr()
         );
     }

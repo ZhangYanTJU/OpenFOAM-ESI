@@ -62,11 +62,11 @@ Foam::autoPtr<Foam::regularisationRadius> Foam::regularisationRadius::New
 {
     const word modelType = dict.getOrDefault<word>("type", "isotropic");
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
     Info<< "regularisationRadius type " << modelType << endl;
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalIOErrorInLookup
         (
@@ -79,7 +79,7 @@ Foam::autoPtr<Foam::regularisationRadius> Foam::regularisationRadius::New
 
     return autoPtr<regularisationRadius>
     (
-        cstrIter()(mesh, dict, adjustWallThickness)
+        ctorPtr(mesh, dict, adjustWallThickness)
     );
 }
 

@@ -275,7 +275,7 @@ scalar objective::JCycle(bool negate) const
     }
 
     // Subtract target, in case the objective is used as a constraint
-    if (target_.valid())
+    if (target_)
     {
         if (negate)
         {
@@ -541,12 +541,12 @@ bool objective::write(const bool valid) const
             ios_base::fmtflags flags = file.flags();
             flags |= std::cout.left;
             file.flags(flags);
-            if (target_.valid())
+            if (target_)
             {
                 file<< setw(width_) << "#target" << " "
                     << setw(width_) << target_() << endl;
             }
-            if (targetLeft_.valid())
+            if (targetLeft_)
             {
                 file<< setw(width_) << "#targetLeft" << " "
                     << setw(width_) << targetLeft_() << endl;

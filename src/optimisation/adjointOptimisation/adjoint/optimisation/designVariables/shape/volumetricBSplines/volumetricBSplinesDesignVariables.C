@@ -307,7 +307,7 @@ void Foam::volumetricBSplinesDesignVariables::setDisplacement
                 mesh_,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             pointMesh::New(mesh_),
             dimensionedVector(dimless, Zero)

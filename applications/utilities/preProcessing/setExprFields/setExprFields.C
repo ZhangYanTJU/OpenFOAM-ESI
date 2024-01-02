@@ -148,7 +148,8 @@ bool setField
         (
             fieldName,
             mesh,
-            dimensioned<typename GeoField::value_type>(dims)
+            Foam::zero{},  // value
+            dims
         );
     }
     else

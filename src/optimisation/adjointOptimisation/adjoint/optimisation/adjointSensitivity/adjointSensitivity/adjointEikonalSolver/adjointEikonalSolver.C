@@ -48,6 +48,7 @@ namespace Foam
 
 defineTypeNameAndDebug(adjointEikonalSolver, 0);
 
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 wordList adjointEikonalSolver::patchTypes() const
@@ -60,7 +61,7 @@ wordList adjointEikonalSolver::patchTypes() const
 
     for (const label patchi : wallPatchIDs_)
     {
-        daTypes[patchi] = zeroGradientFvPatchScalarField::typeName;
+        daTypes[patchi] = fvPatchFieldBase::zeroGradientType();
     }
 
     return daTypes;
@@ -212,7 +213,7 @@ void adjointEikonalSolver::solve()
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE,
-            false
+            IOobject::NO_REGISTER
         ),
         mesh_,
         dimensionedScalar("scaleDims", dimTime/dimLength, scalar(1))
@@ -329,7 +330,7 @@ tmp<volTensorField> adjointEikonalSolver::getFISensitivityTerm() const
             ),
             mesh_,
             dimensionedTensor(da_.dimensions(), Zero),
-            zeroGradientFvPatchField<tensor>::typeName
+            fvPatchFieldBase::zeroGradientType()
         )
     );
     volTensorField& distanceSens = tdistanceSens.ref();

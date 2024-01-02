@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         (
             "procAddressing",
             instance,
-            fvMesh::meshSubDir,
+            polyMesh::meshSubDir,
             mesh,
             IOobject::MUST_READ,
             IOobject::NO_WRITE,

@@ -372,7 +372,7 @@ void Foam::designVariablesUpdate::update(const scalarField& direction)
 {
     // Multiply with line search step, if necessary
     scalarField correction(direction);
-    if (lineSearch_.valid())
+    if (lineSearch_)
     {
         lineSearch_->updateCorrection(correction);
     }
@@ -551,9 +551,10 @@ void Foam::designVariablesUpdate::postUpdate(const scalarField& oldCorrection)
     updateOldCorrection(oldCorrection);
     write();
     designVars_->evolveNumber();
-    if (lineSearch_.valid())
+    if (lineSearch_)
     {
-        lineSearch_().postUpdate();
+        lineSearch_->postUpdate();
+
         // Append additional empty line at the end of the instantaneous
         // objective file to indicate the end of the block corresponding to
         // this optimisation cycle

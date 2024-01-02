@@ -114,7 +114,6 @@ public:
             const DimensionedField<scalar, volMesh>& iF
         ) const
         {
-            Info<< "manager name " << managerName_ << endl;
             return tmp<fvPatchScalarField>
             (
                 new adjointInletNuaTildaFvPatchScalarField(*this, iF)

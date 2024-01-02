@@ -1714,7 +1714,7 @@ Foam::meshRefinement::meshRefinement
         (
             "surfaceIndex",
             mesh_.facesInstance(),
-            fvMesh::meshSubDir,
+            polyMesh::meshSubDir,
             mesh_,
             IOobject::NO_READ,
             IOobject::NO_WRITE,

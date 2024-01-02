@@ -264,10 +264,11 @@ void Foam::elasticityMotionSolver::solve()
                 (
                     "points",
                     mesh().pointsInstance(),
-                    mesh().meshSubDir,
+                    polyMesh::meshSubDir,
                     mesh(),
                     IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
                 ),
                 mesh().points()
             );

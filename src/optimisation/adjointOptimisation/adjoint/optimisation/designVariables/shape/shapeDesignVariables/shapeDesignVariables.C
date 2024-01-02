@@ -211,9 +211,9 @@ Foam::autoPtr<Foam::shapeDesignVariables> Foam::shapeDesignVariables::New
 
     Info<< "shapeDesignVariables type : " << modelType << endl;
 
-    auto cstrIter = dictionaryConstructorTablePtr_->cfind(modelType);
+    auto* ctorPtr = dictionaryConstructorTable(modelType);
 
-    if (!cstrIter.found())
+    if (!ctorPtr)
     {
         FatalErrorInLookup
         (
@@ -223,7 +223,7 @@ Foam::autoPtr<Foam::shapeDesignVariables> Foam::shapeDesignVariables::New
         ) << exit(FatalError);
     }
 
-    return autoPtr<shapeDesignVariables>(cstrIter()(mesh, dict));
+    return autoPtr<shapeDesignVariables>(ctorPtr(mesh, dict));
 }
 
 
@@ -281,11 +281,11 @@ void Foam::shapeDesignVariables::moveMesh()
             (
                "points",
                 mesh_.pointsInstance(),
-                mesh_.meshSubDir,
+                polyMesh::meshSubDir,
                 mesh_,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
-                false
+                IOobject::NO_REGISTER
             ),
             mesh_.points()
         );
