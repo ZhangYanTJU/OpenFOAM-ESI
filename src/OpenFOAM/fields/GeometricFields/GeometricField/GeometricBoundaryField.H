@@ -117,7 +117,7 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const word& patchFieldType = PatchField<Type>::calculatedType()
         );
 
@@ -127,7 +127,7 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const wordList& wantedPatchTypes,
             const wordList& actualPatchTypes = wordList()
         );
@@ -137,14 +137,14 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const PtrList<PatchField<Type>>& ptfl
         );
 
         //- Construct as copy, setting the reference to the internal field
         GeometricBoundaryField
         (
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf
         );
 
@@ -152,7 +152,7 @@ public:
         //- and resetting type of field for given patch IDs
         GeometricBoundaryField
         (
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf,
             const labelList& patchIDs,
             const word& patchFieldName
@@ -169,7 +169,7 @@ public:
         GeometricBoundaryField
         (
             const BoundaryMesh& bmesh,
-            const DimensionedField<Type, GeoMesh>& field,
+            const Internal& iField,
             const dictionary& dict
         );
 
@@ -177,11 +177,7 @@ public:
     // Member Functions
 
         //- Read the boundary field
-        void readField
-        (
-            const DimensionedField<Type, GeoMesh>& field,
-            const dictionary& dict
-        );
+        void readField(const Internal& iField, const dictionary& dict);
 
         //- Update the boundary condition coefficients
         void updateCoeffs();
@@ -203,7 +199,7 @@ public:
         wordList types() const;
 
         //- Return boundary field of values neighbouring the boundary
-        GeometricBoundaryField boundaryInternalField() const;
+        tmp<GeometricBoundaryField> boundaryInternalField() const;
 
         //- Return a list of pointers for each patch field with only those
         //- pointing to interfaces being set

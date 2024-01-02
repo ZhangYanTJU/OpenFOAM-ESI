@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -189,7 +189,7 @@ bool Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::checkConsistency
 template<class Type, template<class> class PatchField, class GeoMesh>
 void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
 (
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const dictionary& dict
 )
 {
@@ -210,7 +210,9 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
 
     for (const entry& dEntry : dict)
     {
-        if (dEntry.isDict() && dEntry.keyword().isLiteral())
+        const auto* subdict = dEntry.dictPtr();
+
+        if (subdict && dEntry.keyword().isLiteral())
         {
             const label patchi = bmesh_.findPatchID(dEntry.keyword());
 
@@ -222,11 +224,11 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                     PatchField<Type>::New
                     (
                         bmesh_[patchi],
-                        field,
-                        dEntry.dict()
+                        iField,
+                        *subdict
                     )
                 );
-                nUnset--;
+                --nUnset;
             }
         }
     }
@@ -245,8 +247,9 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
     for (auto iter = dict.crbegin(); iter != dict.crend(); ++iter)
     {
         const entry& dEntry = *iter;
+        const auto* subdict = dEntry.dictPtr();
 
-        if (dEntry.isDict() && dEntry.keyword().isLiteral())
+        if (subdict && dEntry.keyword().isLiteral())
         {
             const labelList patchIds =
                 bmesh_.indices(dEntry.keyword(), true); // use patchGroups
@@ -261,8 +264,8 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                         PatchField<Type>::New
                         (
                             bmesh_[patchi],
-                            field,
-                            dEntry.dict()
+                            iField,
+                            *subdict
                         )
                     );
                 }
@@ -285,15 +288,15 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                     (
                         emptyPolyPatch::typeName,
                         bmesh_[patchi],
-                        field
+                        iField
                     )
                 );
             }
             else
             {
-                bool found = dict.found(bmesh_[patchi].name());
+                const auto* subdict = dict.findDict(bmesh_[patchi].name());
 
-                if (found)
+                if (subdict)
                 {
                     this->set
                     (
@@ -301,8 +304,8 @@ void Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::readField
                         PatchField<Type>::New
                         (
                             bmesh_[patchi],
-                            field,
-                            dict.subDict(bmesh_[patchi].name())
+                            iField,
+                            *subdict
                         )
                     );
                 }
@@ -353,7 +356,7 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const word& patchFieldType
 )
 :
@@ -374,7 +377,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
             (
                 patchFieldType,
                 bmesh_[patchi],
-                field
+                iField
             )
         );
     }
@@ -385,7 +388,7 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const wordList& patchFieldTypes,
     const wordList& constraintTypes
 )
@@ -424,7 +427,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
                     patchFieldTypes[patchi],
                     constraintTypes[patchi],
                     bmesh_[patchi],
-                    field
+                    iField
                 )
             );
         }
@@ -440,7 +443,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
                 (
                     patchFieldTypes[patchi],
                     bmesh_[patchi],
-                    field
+                    iField
                 )
             );
         }
@@ -452,7 +455,7 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const PtrList<PatchField<Type>>& ptfl
 )
 :
@@ -466,7 +469,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 
     forAll(bmesh_, patchi)
     {
-        this->set(patchi, ptfl[patchi].clone(field));
+        this->set(patchi, ptfl[patchi].clone(iField));
     }
 }
 
@@ -474,7 +477,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf
 )
 :
@@ -488,7 +491,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 
     forAll(bmesh_, patchi)
     {
-        this->set(patchi, btf[patchi].clone(field));
+        this->set(patchi, btf[patchi].clone(iField));
     }
 }
 
@@ -496,7 +499,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const GeometricBoundaryField<Type, PatchField, GeoMesh>& btf,
     const labelList& patchIDs,
     const word& patchFieldType
@@ -519,7 +522,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
             (
                 patchFieldType,
                 bmesh_[patchi],
-                field
+                iField
             )
         );
     }
@@ -528,7 +531,7 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
     {
         if (!this->set(patchi))
         {
-            this->set(patchi, btf[patchi].clone(field));
+            this->set(patchi, btf[patchi].clone(iField));
         }
     }
 }
@@ -554,14 +557,14 @@ template<class Type, template<class> class PatchField, class GeoMesh>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::GeometricBoundaryField
 (
     const BoundaryMesh& bmesh,
-    const DimensionedField<Type, GeoMesh>& field,
+    const Internal& iField,
     const dictionary& dict
 )
 :
     FieldField<PatchField, Type>(bmesh.size()),
     bmesh_(bmesh)
 {
-    readField(field, dict);
+    readField(iField, dict);
 }
 
 
@@ -835,18 +838,24 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::types() const
 
 
 template<class Type, template<class> class PatchField, class GeoMesh>
-Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>
+Foam::tmp<Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>>
 Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::
 boundaryInternalField() const
 {
-    GeometricBoundaryField<Type, PatchField, GeoMesh> result(*this);
+    auto tresult = tmp<GeometricBoundaryField<Type, PatchField, GeoMesh>>::New
+    (
+        DimensionedField<Type, GeoMesh>::null(),
+        *this
+    );
+
+    auto& result = tresult;
 
     forAll(result, patchi)
     {
         result[patchi] == this->operator[](patchi).patchInternalField();
     }
 
-    return result;
+    return tresult;
 }
 
 
@@ -858,13 +867,11 @@ Foam::GeometricBoundaryField<Type, PatchField, GeoMesh>::interfaces() const
 
     forAll(list, patchi)
     {
-        const auto* lduPtr =
-            isA<LduInterfaceField<Type>>(this->operator[](patchi));
-
-        if (lduPtr)
-        {
-            list.set(patchi, lduPtr);
-        }
+        list.set
+        (
+            patchi,
+            isA<LduInterfaceField<Type>>(this->operator[](patchi))
+        );
     }
 
     return list;
@@ -880,13 +887,11 @@ scalarInterfaces() const
 
     forAll(list, patchi)
     {
-        const auto* lduPtr =
-            isA<lduInterfaceField>(this->operator[](patchi));
-
-        if (lduPtr)
-        {
-            list.set(patchi, lduPtr);
-        }
+        list.set
+        (
+            patchi,
+            isA<lduInterfaceField>(this->operator[](patchi))
+        );
     }
 
     return list;
