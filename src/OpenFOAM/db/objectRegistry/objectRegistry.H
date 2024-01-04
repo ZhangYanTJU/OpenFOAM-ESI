@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -237,6 +237,23 @@ public:
         {
             return dbDir_;
         }
+
+
+    // Helper Functions
+
+        //- Create an IOobject at the current time instance (timeName).
+        //  By default the object is NO_READ/NO_WRITE/NO_REGISTER
+        IOobject newIOobject
+        (
+            //! The object name
+            const word& name,
+            //! The read option (default: NO_READ)
+            IOobjectOption::readOption rOpt = IOobjectOption::NO_READ,
+            //! The write option (default: NO_WRITE)
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            //! The register option (default: NO_REGISTER)
+            IOobjectOption::registerOption regOpt = IOobjectOption::NO_REGISTER
+        ) const;
 
 
     // Summary of classes

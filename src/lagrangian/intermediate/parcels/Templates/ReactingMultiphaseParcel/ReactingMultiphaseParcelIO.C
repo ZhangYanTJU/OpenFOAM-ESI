@@ -119,7 +119,7 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::readFields
     {
         IOField<scalar> YGas
         (
-            c.fieldIOobject
+            c.newIOobject
             (
                 "Y" + gasNames[j] + stateLabels[idGas],
                 IOobject::MUST_READ
@@ -139,7 +139,7 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::readFields
     {
         IOField<scalar> YLiquid
         (
-            c.fieldIOobject
+            c.newIOobject
             (
                 "Y" + liquidNames[j] + stateLabels[idLiquid],
                  IOobject::MUST_READ
@@ -159,7 +159,7 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::readFields
     {
         IOField<scalar> YSolid
         (
-            c.fieldIOobject
+            c.newIOobject
             (
                 "Y" + solidNames[j] + stateLabels[idSolid],
                 IOobject::MUST_READ
@@ -208,7 +208,7 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::writeFields
         {
             IOField<scalar> YGas
             (
-                c.fieldIOobject
+                c.newIOobject
                 (
                     "Y" + gasNames[j] + stateLabels[idGas],
                     IOobject::NO_READ
@@ -232,7 +232,7 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::writeFields
         {
             IOField<scalar> YLiquid
             (
-                c.fieldIOobject
+                c.newIOobject
                 (
                     "Y" + liquidNames[j] + stateLabels[idLiquid],
                     IOobject::NO_READ
@@ -256,7 +256,7 @@ void Foam::ReactingMultiphaseParcel<ParcelType>::writeFields
         {
             IOField<scalar> YSolid
             (
-                c.fieldIOobject
+                c.newIOobject
                 (
                     "Y" + solidNames[j] + stateLabels[idSolid],
                     IOobject::NO_READ

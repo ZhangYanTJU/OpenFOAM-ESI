@@ -101,33 +101,33 @@ void Foam::CollidingParcel<ParcelType>::readFields(CloudType& c)
 
     ParcelType::readFields(c);
 
-    IOField<vector> f(c.fieldIOobject("f", IOobject::MUST_READ), readOnProc);
+    IOField<vector> f(c.newIOobject("f", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, f);
 
     IOField<vector> angularMomentum
     (
-        c.fieldIOobject("angularMomentum", IOobject::MUST_READ),
+        c.newIOobject("angularMomentum", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, angularMomentum);
 
     IOField<vector> torque
     (
-        c.fieldIOobject("torque", IOobject::MUST_READ),
+        c.newIOobject("torque", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, torque);
 
     labelFieldCompactIOField collisionRecordsPairAccessed
     (
-        c.fieldIOobject("collisionRecordsPairAccessed", IOobject::MUST_READ),
+        c.newIOobject("collisionRecordsPairAccessed", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldFieldIOobject(c, collisionRecordsPairAccessed);
 
     labelFieldCompactIOField collisionRecordsPairOrigProcOfOther
     (
-        c.fieldIOobject
+        c.newIOobject
         (
             "collisionRecordsPairOrigProcOfOther",
             IOobject::MUST_READ
@@ -138,7 +138,7 @@ void Foam::CollidingParcel<ParcelType>::readFields(CloudType& c)
 
     labelFieldCompactIOField collisionRecordsPairOrigIdOfOther
     (
-        c.fieldIOobject
+        c.newIOobject
         (
             "collisionRecordsPairOrigIdOfOther",
             IOobject::MUST_READ
@@ -149,28 +149,28 @@ void Foam::CollidingParcel<ParcelType>::readFields(CloudType& c)
 
     pairDataFieldCompactIOField collisionRecordsPairData
     (
-        c.fieldIOobject("collisionRecordsPairData", IOobject::MUST_READ),
+        c.newIOobject("collisionRecordsPairData", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldFieldIOobject(c, collisionRecordsPairData);
 
     labelFieldCompactIOField collisionRecordsWallAccessed
     (
-        c.fieldIOobject("collisionRecordsWallAccessed", IOobject::MUST_READ),
+        c.newIOobject("collisionRecordsWallAccessed", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldFieldIOobject(c, collisionRecordsWallAccessed);
 
     vectorFieldCompactIOField collisionRecordsWallPRel
     (
-        c.fieldIOobject("collisionRecordsWallPRel", IOobject::MUST_READ),
+        c.newIOobject("collisionRecordsWallPRel", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldFieldIOobject(c, collisionRecordsWallPRel);
 
     wallDataFieldCompactIOField collisionRecordsWallData
     (
-        c.fieldIOobject("collisionRecordsWallData", IOobject::MUST_READ),
+        c.newIOobject("collisionRecordsWallData", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldFieldIOobject(c, collisionRecordsWallData);
@@ -209,22 +209,22 @@ void Foam::CollidingParcel<ParcelType>::writeFields(const CloudType& c)
     const bool writeOnProc = c.size();
 
 
-    IOField<vector> f(c.fieldIOobject("f", IOobject::NO_READ), np);
+    IOField<vector> f(c.newIOobject("f", IOobject::NO_READ), np);
     IOField<vector> angMom
     (
-        c.fieldIOobject("angularMomentum", IOobject::NO_READ),
+        c.newIOobject("angularMomentum", IOobject::NO_READ),
         np
     );
-    IOField<vector> torque(c.fieldIOobject("torque", IOobject::NO_READ), np);
+    IOField<vector> torque(c.newIOobject("torque", IOobject::NO_READ), np);
 
     labelFieldCompactIOField collisionRecordsPairAccessed
     (
-        c.fieldIOobject("collisionRecordsPairAccessed", IOobject::NO_READ),
+        c.newIOobject("collisionRecordsPairAccessed", IOobject::NO_READ),
         np
     );
     labelFieldCompactIOField collisionRecordsPairOrigProcOfOther
     (
-        c.fieldIOobject
+        c.newIOobject
         (
             "collisionRecordsPairOrigProcOfOther",
             IOobject::NO_READ
@@ -233,27 +233,27 @@ void Foam::CollidingParcel<ParcelType>::writeFields(const CloudType& c)
     );
     labelFieldCompactIOField collisionRecordsPairOrigIdOfOther
     (
-        c.fieldIOobject("collisionRecordsPairOrigIdOfOther", IOobject::NO_READ),
+        c.newIOobject("collisionRecordsPairOrigIdOfOther", IOobject::NO_READ),
         np
     );
     pairDataFieldCompactIOField collisionRecordsPairData
     (
-        c.fieldIOobject("collisionRecordsPairData", IOobject::NO_READ),
+        c.newIOobject("collisionRecordsPairData", IOobject::NO_READ),
         np
     );
     labelFieldCompactIOField collisionRecordsWallAccessed
     (
-        c.fieldIOobject("collisionRecordsWallAccessed", IOobject::NO_READ),
+        c.newIOobject("collisionRecordsWallAccessed", IOobject::NO_READ),
         np
     );
     vectorFieldCompactIOField collisionRecordsWallPRel
     (
-        c.fieldIOobject("collisionRecordsWallPRel", IOobject::NO_READ),
+        c.newIOobject("collisionRecordsWallPRel", IOobject::NO_READ),
         np
     );
     wallDataFieldCompactIOField collisionRecordsWallData
     (
-        c.fieldIOobject("collisionRecordsWallData", IOobject::NO_READ),
+        c.newIOobject("collisionRecordsWallData", IOobject::NO_READ),
         np
     );
 

@@ -213,13 +213,13 @@ void Foam::wallBoundedStreamLineParticle::readFields
 
     IOField<label> lifeTime
     (
-        c.fieldIOobject("lifeTime", IOobject::MUST_READ)
+        c.newIOobject("lifeTime", IOobject::MUST_READ)
     );
     c.checkFieldIOobject(c, lifeTime);
 
     vectorFieldIOField sampledPositions
     (
-        c.fieldIOobject("sampledPositions", IOobject::MUST_READ)
+        c.newIOobject("sampledPositions", IOobject::MUST_READ)
     );
     c.checkFieldIOobject(c, sampledPositions);
 
@@ -244,12 +244,12 @@ void Foam::wallBoundedStreamLineParticle::writeFields
 
     IOField<label> lifeTime
     (
-        c.fieldIOobject("lifeTime", IOobject::NO_READ),
+        c.newIOobject("lifeTime", IOobject::NO_READ),
         np
     );
     vectorFieldIOField sampledPositions
     (
-        c.fieldIOobject("sampledPositions", IOobject::NO_READ),
+        c.newIOobject("sampledPositions", IOobject::NO_READ),
         np
     );
 

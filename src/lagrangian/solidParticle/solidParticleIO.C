@@ -82,10 +82,10 @@ void Foam::solidParticle::readFields(Cloud<solidParticle>& c)
 
     particle::readFields(c);
 
-    IOField<scalar> d(c.fieldIOobject("d", IOobject::MUST_READ), readOnProc);
+    IOField<scalar> d(c.newIOobject("d", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, d);
 
-    IOField<vector> U(c.fieldIOobject("U", IOobject::MUST_READ), readOnProc);
+    IOField<vector> U(c.newIOobject("U", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, U);
 
     label i = 0;
@@ -105,8 +105,8 @@ void Foam::solidParticle::writeFields(const Cloud<solidParticle>& c)
     const label np = c.size();
     const bool writeOnProc = c.size();
 
-    IOField<scalar> d(c.fieldIOobject("d", IOobject::NO_READ), np);
-    IOField<vector> U(c.fieldIOobject("U", IOobject::NO_READ), np);
+    IOField<scalar> d(c.newIOobject("d", IOobject::NO_READ), np);
+    IOField<vector> U(c.newIOobject("U", IOobject::NO_READ), np);
 
     label i = 0;
     for (const solidParticle& p : c)

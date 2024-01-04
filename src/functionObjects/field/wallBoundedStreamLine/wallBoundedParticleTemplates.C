@@ -427,19 +427,19 @@ void Foam::wallBoundedParticle::readFields(TrackCloudType& c)
 
     IOField<point> localPosition
     (
-        c.fieldIOobject("position", IOobject::MUST_READ)
+        c.newIOobject("position", IOobject::MUST_READ)
     );
     c.checkFieldIOobject(c, localPosition);
 
     IOField<label> meshEdgeStart
     (
-        c.fieldIOobject("meshEdgeStart", IOobject::MUST_READ)
+        c.newIOobject("meshEdgeStart", IOobject::MUST_READ)
     );
     c.checkFieldIOobject(c, meshEdgeStart);
 
     IOField<label> diagEdge
     (
-        c.fieldIOobject("diagEdge", IOobject::MUST_READ)
+        c.newIOobject("diagEdge", IOobject::MUST_READ)
     );
     c.checkFieldIOobject(c, diagEdge);
 
@@ -464,17 +464,17 @@ void Foam::wallBoundedParticle::writeFields(const TrackCloudType& c)
 
     IOField<point> localPosition
     (
-        c.fieldIOobject("position", IOobject::NO_READ),
+        c.newIOobject("position", IOobject::NO_READ),
         np
     );
     IOField<label> meshEdgeStart
     (
-        c.fieldIOobject("meshEdgeStart", IOobject::NO_READ),
+        c.newIOobject("meshEdgeStart", IOobject::NO_READ),
         np
     );
     IOField<label> diagEdge
     (
-        c.fieldIOobject("diagEdge", IOobject::NO_READ),
+        c.newIOobject("diagEdge", IOobject::NO_READ),
         np
     );
 

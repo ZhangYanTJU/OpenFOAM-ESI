@@ -139,85 +139,85 @@ void Foam::SprayParcel<ParcelType>::readFields
 
     ParcelType::readFields(c, compModel);
 
-    IOField<scalar> d0(c.fieldIOobject("d0", IOobject::MUST_READ), readOnProc);
+    IOField<scalar> d0(c.newIOobject("d0", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, d0);
 
     IOField<vector> position0
     (
-        c.fieldIOobject("position0", IOobject::MUST_READ),
+        c.newIOobject("position0", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, position0);
 
     IOField<scalar> sigma
     (
-        c.fieldIOobject("sigma", IOobject::MUST_READ),
+        c.newIOobject("sigma", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, sigma);
 
-    IOField<scalar> mu(c.fieldIOobject("mu", IOobject::MUST_READ), readOnProc);
+    IOField<scalar> mu(c.newIOobject("mu", IOobject::MUST_READ), readOnProc);
     c.checkFieldIOobject(c, mu);
 
     IOField<scalar> liquidCore
     (
-        c.fieldIOobject("liquidCore", IOobject::MUST_READ),
+        c.newIOobject("liquidCore", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, liquidCore);
 
     IOField<scalar> KHindex
     (
-        c.fieldIOobject("KHindex", IOobject::MUST_READ),
+        c.newIOobject("KHindex", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, KHindex);
 
     IOField<scalar> y
     (
-        c.fieldIOobject("y", IOobject::MUST_READ),
+        c.newIOobject("y", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, y);
 
     IOField<scalar> yDot
     (
-        c.fieldIOobject("yDot", IOobject::MUST_READ),
+        c.newIOobject("yDot", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, yDot);
 
     IOField<scalar> tc
     (
-        c.fieldIOobject("tc", IOobject::MUST_READ),
+        c.newIOobject("tc", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, tc);
 
     IOField<scalar> ms
     (
-        c.fieldIOobject("ms", IOobject::MUST_READ),
+        c.newIOobject("ms", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, ms);
 
     IOField<scalar> injector
     (
-        c.fieldIOobject("injector", IOobject::MUST_READ),
+        c.newIOobject("injector", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, injector);
 
     IOField<scalar> tMom
     (
-        c.fieldIOobject("tMom", IOobject::MUST_READ),
+        c.newIOobject("tMom", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, tMom);
 
     IOField<scalar> user
     (
-        c.fieldIOobject("user", IOobject::MUST_READ),
+        c.newIOobject("user", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, user);
@@ -265,31 +265,31 @@ void Foam::SprayParcel<ParcelType>::writeFields
     const label np = c.size();
     const bool writeOnProc = c.size();
 
-    IOField<scalar> d0(c.fieldIOobject("d0", IOobject::NO_READ), np);
+    IOField<scalar> d0(c.newIOobject("d0", IOobject::NO_READ), np);
     IOField<vector> position0
     (
-        c.fieldIOobject("position0", IOobject::NO_READ),
+        c.newIOobject("position0", IOobject::NO_READ),
         np
     );
-    IOField<scalar> sigma(c.fieldIOobject("sigma", IOobject::NO_READ), np);
-    IOField<scalar> mu(c.fieldIOobject("mu", IOobject::NO_READ), np);
+    IOField<scalar> sigma(c.newIOobject("sigma", IOobject::NO_READ), np);
+    IOField<scalar> mu(c.newIOobject("mu", IOobject::NO_READ), np);
     IOField<scalar> liquidCore
     (
-        c.fieldIOobject("liquidCore", IOobject::NO_READ),
+        c.newIOobject("liquidCore", IOobject::NO_READ),
         np
     );
-    IOField<scalar> KHindex(c.fieldIOobject("KHindex", IOobject::NO_READ), np);
-    IOField<scalar> y(c.fieldIOobject("y", IOobject::NO_READ), np);
-    IOField<scalar> yDot(c.fieldIOobject("yDot", IOobject::NO_READ), np);
-    IOField<scalar> tc(c.fieldIOobject("tc", IOobject::NO_READ), np);
-    IOField<scalar> ms(c.fieldIOobject("ms", IOobject::NO_READ), np);
+    IOField<scalar> KHindex(c.newIOobject("KHindex", IOobject::NO_READ), np);
+    IOField<scalar> y(c.newIOobject("y", IOobject::NO_READ), np);
+    IOField<scalar> yDot(c.newIOobject("yDot", IOobject::NO_READ), np);
+    IOField<scalar> tc(c.newIOobject("tc", IOobject::NO_READ), np);
+    IOField<scalar> ms(c.newIOobject("ms", IOobject::NO_READ), np);
     IOField<scalar> injector
     (
-        c.fieldIOobject("injector", IOobject::NO_READ),
+        c.newIOobject("injector", IOobject::NO_READ),
         np
     );
-    IOField<scalar> tMom(c.fieldIOobject("tMom", IOobject::NO_READ), np);
-    IOField<scalar> user(c.fieldIOobject("user", IOobject::NO_READ), np);
+    IOField<scalar> tMom(c.newIOobject("tMom", IOobject::NO_READ), np);
+    IOField<scalar> user(c.newIOobject("user", IOobject::NO_READ), np);
 
     label i = 0;
     for (const SprayParcel<ParcelType>& p : c)

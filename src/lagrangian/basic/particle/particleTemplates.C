@@ -141,7 +141,7 @@ void Foam::particle::readFields(TrackCloudType& c)
 {
     const bool readOnProc = c.size();
 
-    IOobject procIO(c.fieldIOobject("origProcId", IOobject::MUST_READ));
+    IOobject procIO(c.newIOobject("origProcId", IOobject::MUST_READ));
 
     const bool haveFile = procIO.typeHeaderOk<IOField<label>>(true);
 
@@ -150,7 +150,7 @@ void Foam::particle::readFields(TrackCloudType& c)
 
     IOField<label> origId
     (
-        c.fieldIOobject("origId", IOobject::MUST_READ),
+        c.newIOobject("origId", IOobject::MUST_READ),
         readOnProc && haveFile
     );
     c.checkFieldIOobject(c, origId);
@@ -197,12 +197,12 @@ void Foam::particle::writeFields(const TrackCloudType& c)
 
     IOField<label> origProc
     (
-        c.fieldIOobject("origProcId", IOobject::NO_READ),
+        c.newIOobject("origProcId", IOobject::NO_READ),
         np
     );
     IOField<label> origId
     (
-        c.fieldIOobject("origId", IOobject::NO_READ),
+        c.newIOobject("origId", IOobject::NO_READ),
         np
     );
 

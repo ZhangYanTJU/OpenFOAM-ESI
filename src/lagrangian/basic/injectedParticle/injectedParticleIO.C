@@ -104,16 +104,16 @@ void Foam::injectedParticle::readFields(Cloud<injectedParticle>& c)
 
     particle::readFields(c);
 
-    IOField<label> tag(c.fieldIOobject("tag", IOobject::MUST_READ));
+    IOField<label> tag(c.newIOobject("tag", IOobject::MUST_READ));
     c.checkFieldIOobject(c, tag);
 
-    IOField<scalar> soi(c.fieldIOobject("soi", IOobject::MUST_READ));
+    IOField<scalar> soi(c.newIOobject("soi", IOobject::MUST_READ));
     c.checkFieldIOobject(c, soi);
 
-    IOField<scalar> d(c.fieldIOobject("d", IOobject::MUST_READ));
+    IOField<scalar> d(c.newIOobject("d", IOobject::MUST_READ));
     c.checkFieldIOobject(c, d);
 
-    IOField<vector> U(c.fieldIOobject("U", IOobject::MUST_READ));
+    IOField<vector> U(c.newIOobject("U", IOobject::MUST_READ));
     c.checkFieldIOobject(c, U);
 
     label i = 0;
@@ -144,10 +144,10 @@ void Foam::injectedParticle::writeFields(const Cloud<injectedParticle>& c)
 
     const label np = c.size();
 
-    IOField<label> tag(c.fieldIOobject("tag", IOobject::NO_READ), np);
-    IOField<scalar> soi(c.fieldIOobject("soi", IOobject::NO_READ), np);
-    IOField<scalar> d(c.fieldIOobject("d", IOobject::NO_READ), np);
-    IOField<vector> U(c.fieldIOobject("U", IOobject::NO_READ), np);
+    IOField<label> tag(c.newIOobject("tag", IOobject::NO_READ), np);
+    IOField<scalar> soi(c.newIOobject("soi", IOobject::NO_READ), np);
+    IOField<scalar> d(c.newIOobject("d", IOobject::NO_READ), np);
+    IOField<vector> U(c.newIOobject("U", IOobject::NO_READ), np);
 
     label i = 0;
 

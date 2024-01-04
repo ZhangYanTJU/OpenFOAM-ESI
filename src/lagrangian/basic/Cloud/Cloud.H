@@ -226,13 +226,6 @@ public:
 
         // Read
 
-            //- Helper to construct IOobject for field and current time.
-            IOobject fieldIOobject
-            (
-                const word& fieldName,
-                IOobjectOption::readOption rOpt = IOobjectOption::NO_READ
-            ) const;
-
             //- Check lagrangian data field
             template<class DataType>
             void checkFieldIOobject
@@ -287,6 +280,20 @@ public:
             //  Stores the particles global positions in the database
             //  for use during mapping.
             void storeGlobalPositions() const;
+
+
+    // Housekeeping
+
+        //- Helper to construct IOobject for field and current time.
+        FOAM_DEPRECATED_FOR(2024-01, "newIOobject()")
+        IOobject fieldIOobject
+        (
+            const word& fieldName,
+            IOobjectOption::readOption rOpt = IOobjectOption::NO_READ
+        ) const
+        {
+            return this->newIOobject(fieldName, rOpt);
+        }
 };
 
 

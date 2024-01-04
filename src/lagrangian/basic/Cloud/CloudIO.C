@@ -178,25 +178,6 @@ Foam::Cloud<ParticleType>::Cloud
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class ParticleType>
-Foam::IOobject Foam::Cloud<ParticleType>::fieldIOobject
-(
-    const word& fieldName,
-    IOobjectOption::readOption rOpt
-) const
-{
-    return IOobject
-    (
-        fieldName,
-        time().timeName(),
-        *this,
-        rOpt,
-        IOobjectOption::NO_WRITE,
-        IOobjectOption::NO_REGISTER
-    );
-}
-
-
-template<class ParticleType>
 template<class DataType>
 void Foam::Cloud<ParticleType>::checkFieldIOobject
 (

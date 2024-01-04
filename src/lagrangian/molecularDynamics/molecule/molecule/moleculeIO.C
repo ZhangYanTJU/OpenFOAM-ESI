@@ -114,40 +114,40 @@ void Foam::molecule::readFields(Cloud<molecule>& mC)
 
     particle::readFields(mC);
 
-    IOField<tensor> Q(mC.fieldIOobject("Q", IOobject::MUST_READ), readOnProc);
+    IOField<tensor> Q(mC.newIOobject("Q", IOobject::MUST_READ), readOnProc);
     mC.checkFieldIOobject(mC, Q);
 
-    IOField<vector> v(mC.fieldIOobject("v", IOobject::MUST_READ), readOnProc);
+    IOField<vector> v(mC.newIOobject("v", IOobject::MUST_READ), readOnProc);
     mC.checkFieldIOobject(mC, v);
 
-    IOField<vector> a(mC.fieldIOobject("a", IOobject::MUST_READ), readOnProc);
+    IOField<vector> a(mC.newIOobject("a", IOobject::MUST_READ), readOnProc);
     mC.checkFieldIOobject(mC, a);
 
-    IOField<vector> pi(mC.fieldIOobject("pi", IOobject::MUST_READ), readOnProc);
+    IOField<vector> pi(mC.newIOobject("pi", IOobject::MUST_READ), readOnProc);
     mC.checkFieldIOobject(mC, pi);
 
     IOField<vector> tau
     (
-        mC.fieldIOobject("tau", IOobject::MUST_READ),
+        mC.newIOobject("tau", IOobject::MUST_READ),
         readOnProc
     );
     mC.checkFieldIOobject(mC, tau);
 
     IOField<vector> specialPosition
     (
-        mC.fieldIOobject("specialPosition", IOobject::MUST_READ),
+        mC.newIOobject("specialPosition", IOobject::MUST_READ),
         readOnProc
     );
     mC.checkFieldIOobject(mC, specialPosition);
 
     IOField<label> special
     (
-        mC.fieldIOobject("special", IOobject::MUST_READ),
+        mC.newIOobject("special", IOobject::MUST_READ),
         readOnProc
     );
     mC.checkFieldIOobject(mC, special);
 
-    IOField<label> id(mC.fieldIOobject("id", IOobject::MUST_READ), readOnProc);
+    IOField<label> id(mC.newIOobject("id", IOobject::MUST_READ), readOnProc);
     mC.checkFieldIOobject(mC, id);
 
     label i = 0;
@@ -174,48 +174,48 @@ void Foam::molecule::writeFields(const Cloud<molecule>& mC)
     const label np = mC.size();
     const bool writeOnProc = mC.size();
 
-    IOField<tensor> Q(mC.fieldIOobject("Q", IOobject::NO_READ), np);
-    IOField<vector> v(mC.fieldIOobject("v", IOobject::NO_READ), np);
-    IOField<vector> a(mC.fieldIOobject("a", IOobject::NO_READ), np);
-    IOField<vector> pi(mC.fieldIOobject("pi", IOobject::NO_READ), np);
-    IOField<vector> tau(mC.fieldIOobject("tau", IOobject::NO_READ), np);
+    IOField<tensor> Q(mC.newIOobject("Q", IOobject::NO_READ), np);
+    IOField<vector> v(mC.newIOobject("v", IOobject::NO_READ), np);
+    IOField<vector> a(mC.newIOobject("a", IOobject::NO_READ), np);
+    IOField<vector> pi(mC.newIOobject("pi", IOobject::NO_READ), np);
+    IOField<vector> tau(mC.newIOobject("tau", IOobject::NO_READ), np);
     IOField<vector> specialPosition
     (
-        mC.fieldIOobject("specialPosition", IOobject::NO_READ),
+        mC.newIOobject("specialPosition", IOobject::NO_READ),
         np
     );
-    IOField<label> special(mC.fieldIOobject("special", IOobject::NO_READ), np);
-    IOField<label> id(mC.fieldIOobject("id", IOobject::NO_READ), np);
+    IOField<label> special(mC.newIOobject("special", IOobject::NO_READ), np);
+    IOField<label> id(mC.newIOobject("id", IOobject::NO_READ), np);
 
     // Post processing fields
 
     IOField<vector> piGlobal
     (
-        mC.fieldIOobject("piGlobal", IOobject::NO_READ),
+        mC.newIOobject("piGlobal", IOobject::NO_READ),
         np
     );
 
     IOField<vector> tauGlobal
     (
-        mC.fieldIOobject("tauGlobal", IOobject::NO_READ),
+        mC.newIOobject("tauGlobal", IOobject::NO_READ),
         np
     );
 
     IOField<vector> orientation1
     (
-        mC.fieldIOobject("orientation1", IOobject::NO_READ),
+        mC.newIOobject("orientation1", IOobject::NO_READ),
         np
     );
 
     IOField<vector> orientation2
     (
-        mC.fieldIOobject("orientation2", IOobject::NO_READ),
+        mC.newIOobject("orientation2", IOobject::NO_READ),
         np
     );
 
     IOField<vector> orientation3
     (
-        mC.fieldIOobject("orientation3", IOobject::NO_READ),
+        mC.newIOobject("orientation3", IOobject::NO_READ),
         np
     );
 

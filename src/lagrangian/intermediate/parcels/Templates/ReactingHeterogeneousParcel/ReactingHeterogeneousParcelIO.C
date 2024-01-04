@@ -93,7 +93,7 @@ void Foam::ReactingHeterogeneousParcel<ParcelType>::readFields
 
     IOField<scalar> mass0
     (
-        c.fieldIOobject("mass0", IOobject::MUST_READ),
+        c.newIOobject("mass0", IOobject::MUST_READ),
         readOnProc
     );
     c.checkFieldIOobject(c, mass0);
@@ -123,7 +123,7 @@ void Foam::ReactingHeterogeneousParcel<ParcelType>::readFields
         // Read F
         IOField<scalar> F
         (
-            c.fieldIOobject
+            c.newIOobject
             (
                 "F" + name(i),
                 IOobject::MUST_READ
@@ -144,7 +144,7 @@ void Foam::ReactingHeterogeneousParcel<ParcelType>::readFields
     {
         IOField<scalar> Y
         (
-            c.fieldIOobject
+            c.newIOobject
             (
                 "Y" + solidNames[j],
                 IOobject::MUST_READ
@@ -188,7 +188,7 @@ void Foam::ReactingHeterogeneousParcel<ParcelType>::writeFields
     const label np = c.size();
     const bool writeOnProc = c.size();
 
-    IOField<scalar> mass0(c.fieldIOobject("mass0", IOobject::NO_READ), np);
+    IOField<scalar> mass0(c.newIOobject("mass0", IOobject::NO_READ), np);
 
     label nF = 0;
     label i = 0;
@@ -208,7 +208,7 @@ void Foam::ReactingHeterogeneousParcel<ParcelType>::writeFields
     {
         IOField<scalar> F
         (
-            c.fieldIOobject
+            c.newIOobject
             (
                 "F" + name(i),
                 IOobject::NO_READ
@@ -231,7 +231,7 @@ void Foam::ReactingHeterogeneousParcel<ParcelType>::writeFields
     {
         IOField<scalar> Y
         (
-            c.fieldIOobject
+            c.newIOobject
             (
                 "Y" + solidNames[j],
                 IOobject::NO_READ
