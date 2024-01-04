@@ -145,7 +145,7 @@ void Foam::patchTransformedInterpolation::interpolate
             const labelList cPoints(c.labels(mesh().faces()));
 
             // Consider movement around the face centre
-            const point& xOrigin(patch.faceCentres()[pFaceI]);
+            const point xOrigin(patch.faceCentres()[pFaceI]);
 
             // Mean translation
             const vector uMean(f.average(points, pointDisplacement));

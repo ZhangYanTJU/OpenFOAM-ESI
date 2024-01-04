@@ -292,7 +292,7 @@ void Foam::processorPolyPatch::calcGeometry(PstreamBuffers& pBufs)
                 forAll(faceCentres(), facej)
                 {
                     const point& c0 = neighbFaceCentres_[facej];
-                    const point& c1 = faceCentres()[facej];
+                    const point c1 = faceCentres()[facej];
 
                     writeOBJ(ccStr, c0, c1, vertI);
                 }

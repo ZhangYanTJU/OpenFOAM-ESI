@@ -84,7 +84,8 @@ Foam::diameterModels::IATEsources::turbulentBreakUp::R() const
     scalar WeCr = WeCr_.value();
     volScalarField Ut(this->Ut());
     volScalarField We(this->We());
-    const volScalarField& d(iate_.d()());
+    const tmp<volScalarField> td(iate_.d()());
+    const volScalarField& d = td();
 
     forAll(R, celli)
     {

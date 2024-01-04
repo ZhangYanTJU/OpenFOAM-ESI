@@ -95,7 +95,8 @@ tmp<volScalarField> SpalartAllmaras::nutJacobianVar1
     );
     auto& nutJacobian = tnutJacobian.ref();
 
-    const volScalarField& nu = laminarTransport.nu();
+    const tmp<volScalarField> tnu(laminarTransport.nu());
+    const volScalarField& nu = tnu();
     const volScalarField& nuTilda = TMVar1();
 
     volScalarField chi(nuTilda/nu);
