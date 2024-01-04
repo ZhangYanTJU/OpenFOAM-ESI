@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -348,7 +348,7 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
         {
             agglomPtr().printLevels();
         }
-        return store(agglomPtr.ptr());
+        return regIOobject::store(agglomPtr);
     }
 }
 
@@ -398,7 +398,7 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
             {
                 agglomPtr().printLevels();
             }
-            return store(agglomPtr.ptr());
+            return regIOobject::store(agglomPtr);
         }
     }
 }
@@ -463,7 +463,7 @@ const Foam::GAMGAgglomeration& Foam::GAMGAgglomeration::New
         {
             agglomPtr().printLevels();
         }
-        return store(agglomPtr.ptr());
+        return regIOobject::store(agglomPtr);
     }
 }
 

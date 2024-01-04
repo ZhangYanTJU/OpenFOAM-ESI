@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,7 +61,7 @@ Foam::functionObjects::surfaceDistance::surfaceDistance
             (
                 "surfaceDistance",
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -71,7 +71,7 @@ Foam::functionObjects::surfaceDistance::surfaceDistance
         )
     );
 
-    mesh_.objectRegistry::store(distPtr);
+    regIOobject::store(distPtr);
 }
 
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,13 +46,14 @@ Foam::volVectorField& Foam::CoulombForce<CloudType>::getOrReadField
             (
                 fieldName,
                 this->mesh().time().timeName(),
-                this->mesh(),
+                this->mesh().thisDb(),
                 IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::REGISTER
             ),
             this->mesh()
         );
-        this->mesh().objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;

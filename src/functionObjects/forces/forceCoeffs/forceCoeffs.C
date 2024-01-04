@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,18 +63,17 @@ void Foam::functionObjects::forceCoeffs::initialise()
 
 Foam::volVectorField& Foam::functionObjects::forceCoeffs::forceCoeff()
 {
-    auto* coeffPtr =
-        mesh_.getObjectPtr<volVectorField>(scopedName("forceCoeff"));
+    auto* ptr = mesh_.getObjectPtr<volVectorField>(scopedName("forceCoeff"));
 
-    if (!coeffPtr)
+    if (!ptr)
     {
-        coeffPtr = new volVectorField
+        ptr = new volVectorField
         (
             IOobject
             (
                 scopedName("forceCoeff"),
                 time_.timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -83,27 +82,26 @@ Foam::volVectorField& Foam::functionObjects::forceCoeffs::forceCoeff()
             dimensionedVector(dimless, Zero)
         );
 
-        mesh_.objectRegistry::store(coeffPtr);
+        regIOobject::store(ptr);
     }
 
-    return *coeffPtr;
+    return *ptr;
 }
 
 
 Foam::volVectorField& Foam::functionObjects::forceCoeffs::momentCoeff()
 {
-    auto* coeffPtr =
-        mesh_.getObjectPtr<volVectorField>(scopedName("momentCoeff"));
+    auto* ptr = mesh_.getObjectPtr<volVectorField>(scopedName("momentCoeff"));
 
-    if (!coeffPtr)
+    if (!ptr)
     {
-        coeffPtr = new volVectorField
+        ptr = new volVectorField
         (
             IOobject
             (
                 scopedName("momentCoeff"),
                 time_.timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -112,10 +110,10 @@ Foam::volVectorField& Foam::functionObjects::forceCoeffs::momentCoeff()
             dimensionedVector(dimless, Zero)
         );
 
-        mesh_.objectRegistry::store(coeffPtr);
+        regIOobject::store(ptr);
     }
 
-    return *coeffPtr;
+    return *ptr;
 }
 
 

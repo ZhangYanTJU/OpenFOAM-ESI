@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,26 +40,33 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
 
     auto& obr = regionMesh().thisDb();
 
+    IOobject io
+    (
+        typeName + ":sigma_" + regionName_,
+        obr.time().timeName(),
+        obr,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE,
+        IOobject::REGISTER
+    );
+
+    tmp<AreaFieldType> tsigma;
+
     if (dict.found("sigma"))
     {
         // Sigma to be defined using a Function1 type
         sigmaVsTPtr = Function1<Type>::New("sigma", dict, &mesh_);
 
-        auto tsigma = tmp<AreaFieldType>::New
+        tsigma.reset
         (
-            IOobject
+            new AreaFieldType
             (
-                typeName + ":sigma_" + regionName_,
-                obr.time().timeName(),
-                obr,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
-            regionMesh(),
-            dimensioned<Type>(sqr(dimCurrent)/dimPower/dimLength, Zero)
+                io,
+                regionMesh(),
+                Foam::zero{},  // value
+                sqr(dimCurrent)/dimPower/dimLength
+            )
         );
-
-        regIOobject::store(tsigma.ptr());
 
         Info<< "    Conductivity 'sigma' read from dictionary as f(T)"
             << nl << endl;
@@ -67,23 +74,14 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
     else
     {
         // Sigma to be defined by user input
-        auto tsigma = tmp<AreaFieldType>::New
-        (
-            IOobject
-            (
-                typeName + ":sigma_" + regionName_,
-                obr.time().timeName(),
-                obr,
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            ),
-            regionMesh()
-        );
+        io.readOpt(IOobject::MUST_READ);
 
-        regIOobject::store(tsigma.ptr());
+        tsigma.reset(new AreaFieldType(io, regionMesh()));
 
         Info<< "    Conductivity 'sigma' read from file" << nl << endl;
     }
+
+    regIOobject::store(tsigma);
 }
 
 
@@ -117,11 +115,11 @@ Foam::fa::jouleHeatingSource::updateSigma
 
 
     // Boundary field
-    typename AreaFieldType::Boundary& bf = sigma.boundaryFieldRef();
+    auto& bf = sigma.boundaryFieldRef();
     forAll(bf, patchi)
     {
         faPatchField<Type>& pf = bf[patchi];
-        if (!isA<emptyFaPatch>(bf[patchi]))
+        if (!isA<emptyFaPatch>(pf))
         {
             const scalarField& Tbf = T.boundaryField()[patchi];
             forAll(pf, facei)

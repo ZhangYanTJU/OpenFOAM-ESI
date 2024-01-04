@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,14 +59,14 @@ Foam::volScalarField& Foam::functionObjects::electricPotential::getOrReadField
             (
                 fieldName,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
             ),
             mesh_
         );
-        mesh_.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;
@@ -241,13 +241,14 @@ Foam::functionObjects::electricPotential::electricPotential
                 (
                     Ename_,
                     mesh_.time().timeName(),
-                    mesh_,
+                    mesh_.thisDb(),
                     IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    IOobject::NO_WRITE,
+                    IOobject::REGISTER
                 ),
                 -fvc::grad(eV)
             );
-            mesh_.objectRegistry::store(ptr);
+            regIOobject::store(ptr);
         }
     }
 }

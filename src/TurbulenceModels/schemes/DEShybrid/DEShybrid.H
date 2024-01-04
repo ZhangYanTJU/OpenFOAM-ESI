@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
     Copyright (C) 2022 Upstream CFD GmbH
 -------------------------------------------------------------------------------
 License
@@ -301,7 +301,7 @@ class DEShybrid
             (
                 factorName,
                 mesh.time().timeName(),
-                mesh,
+                mesh.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -321,7 +321,7 @@ class DEShybrid
                             dimensionedScalar(dimless, Zero)
                         );
 
-                    const_cast<fvMesh&>(mesh).objectRegistry::store(factorPtr);
+                    regIOobject::store(factorPtr);
                 }
 
                 auto& factor = *factorPtr;

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,26 +36,33 @@ void Foam::fv::jouleHeatingSource::initialiseSigma
 {
     typedef GeometricField<Type, fvPatchField, volMesh> VolFieldType;
 
+    IOobject io
+    (
+        typeName + ":sigma",
+        mesh_.time().timeName(),
+        mesh_.thisDb(),
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE,
+        IOobject::REGISTER
+    );
+
+    tmp<VolFieldType> tsigma;
+
     if (dict.found("sigma"))
     {
         // Sigma to be defined using a Function1 type
         sigmaVsTPtr = Function1<Type>::New("sigma", dict, &mesh_);
 
-        auto tsigma = tmp<VolFieldType>::New
+        tsigma.reset
         (
-            IOobject
+            new VolFieldType
             (
-                typeName + ":sigma",
-                mesh_.time().timeName(),
+                io,
                 mesh_,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
-            mesh_,
-            dimensioned<Type>(sqr(dimCurrent)/dimPower/dimLength, Zero)
+                Foam::zero{},  // value
+                sqr(dimCurrent)/dimPower/dimLength
+            )
         );
-
-        mesh_.objectRegistry::store(tsigma.ptr());
 
         Info<< "    Conductivity 'sigma' read from dictionary as f(T)"
             << nl << endl;
@@ -63,23 +70,14 @@ void Foam::fv::jouleHeatingSource::initialiseSigma
     else
     {
         // Sigma to be defined by user input
-        auto tsigma = tmp<VolFieldType>::New
-        (
-            IOobject
-            (
-                typeName + ":sigma",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            ),
-            mesh_
-        );
+        io.readOpt(IOobject::MUST_READ);
 
-        mesh_.objectRegistry::store(tsigma.ptr());
+        tsigma.reset(new VolFieldType(io, mesh_));
 
         Info<< "    Conductivity 'sigma' read from file" << nl << endl;
     }
+
+    regIOobject::store(tsigma);
 }
 
 
@@ -110,7 +108,7 @@ Foam::fv::jouleHeatingSource::updateSigma
 
 
     // Boundary field
-    typename VolFieldType::Boundary& bf = sigma.boundaryFieldRef();
+    auto& bf = sigma.boundaryFieldRef();
     forAll(bf, patchi)
     {
         fvPatchField<Type>& pf = bf[patchi];

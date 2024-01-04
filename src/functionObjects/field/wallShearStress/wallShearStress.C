@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -104,7 +104,7 @@ Foam::functionObjects::wallShearStress::wallShearStress
             (
                 scopedName(typeName),
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobjectOption::NO_READ,
                 IOobjectOption::NO_WRITE,
                 IOobjectOption::REGISTER
@@ -114,7 +114,7 @@ Foam::functionObjects::wallShearStress::wallShearStress
         )
     );
 
-    mesh_.objectRegistry::store(wallShearStressPtr);
+    regIOobject::store(wallShearStressPtr);
 }
 
 

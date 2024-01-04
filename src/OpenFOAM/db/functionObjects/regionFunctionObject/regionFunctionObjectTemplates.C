@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -139,7 +139,7 @@ bool Foam::functionObjects::regionFunctionObject::store
         }
         else
         {
-            obr().objectRegistry::store(tfield.ptr());
+            regIOobject::store(tfield.ptr());
         }
     }
     else
@@ -153,7 +153,7 @@ bool Foam::functionObjects::regionFunctionObject::store
             fieldName = tfield().name();
         }
 
-        obr().objectRegistry::store(tfield.ptr());
+        regIOobject::store(tfield.ptr());
     }
 
     return true;
@@ -179,8 +179,11 @@ bool Foam::functionObjects::regionFunctionObject::storeInDb
     }
     else
     {
-        tfield.ref().rename(fieldName);
-        obr.objectRegistry::store(tfield.ptr());
+        if (fieldName.size() && fieldName != tfield().name())
+        {
+            tfield.ref().rename(fieldName);
+        }
+        regIOobject::store(tfield.ptr());
     }
 
     return true;

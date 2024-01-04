@@ -10,7 +10,8 @@ if (pimple.dict().getOrDefault("hydrostaticInitialization", false))
                 "0",
                 mesh,
                 IOobject::MUST_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::REGISTER
             ),
             mesh
         )

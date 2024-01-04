@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -157,14 +157,14 @@ VolFieldType& Foam::fv::MapFieldConstraint<Type>::getOrReadField
             (
                 fieldName,
                 thisMesh.time().timeName(),
-                thisMesh,
+                thisMesh.thisDb(),
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
             ),
             thisMesh
         );
-        thisMesh.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;
