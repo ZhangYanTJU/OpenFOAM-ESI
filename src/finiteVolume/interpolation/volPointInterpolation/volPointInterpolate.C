@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -570,8 +570,8 @@ Foam::volPointInterpolation::interpolate
     if (!pfPtr)
     {
         solution::cachePrintMessage("Calculating and caching", name, vf);
-        pfPtr = interpolate(vf, name, false).ptr();
 
+        pfPtr = interpolate(vf, name, false).ptr();
         regIOobject::store(pfPtr);
     }
     else

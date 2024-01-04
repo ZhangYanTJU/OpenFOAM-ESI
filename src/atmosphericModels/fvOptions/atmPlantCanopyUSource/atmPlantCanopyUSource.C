@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2020 ENERCON GmbH
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,14 +59,14 @@ Foam::volScalarField& Foam::fv::atmPlantCanopyUSource::getOrReadField
             (
                 fieldName,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::MUST_READ,
                 IOobject::AUTO_WRITE,
                 IOobject::REGISTER
             ),
             mesh_
         );
-        mesh_.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;

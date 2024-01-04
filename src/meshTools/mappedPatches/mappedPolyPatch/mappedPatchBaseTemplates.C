@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -300,7 +300,7 @@ bool Foam::mappedPatchBase::constructIOField
                 ),
                 Foam::zero{}
             );
-            objectRegistry::store(fldPtr);
+            regIOobject::store(fldPtr);
         }
 
         fldPtr->transfer
@@ -340,7 +340,7 @@ void Foam::mappedPatchBase::storeField
             ),
             Foam::zero{}
         );
-        objectRegistry::store(fldPtr);
+        regIOobject::store(fldPtr);
     }
 
     *fldPtr = values;

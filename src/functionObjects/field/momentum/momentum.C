@@ -446,14 +446,14 @@ bool Foam::functionObjects::momentum::read(const dictionary& dict)
     {
         Info<< "    Momentum fields will be written" << endl;
 
-        mesh_.objectRegistry::store
+        regIOobject::store
         (
             newField<volVectorField>("momentum", dimVelocity*dimMass)
         );
 
         if (hasCsys_)
         {
-            mesh_.objectRegistry::store
+            regIOobject::store
             (
                 newField<volVectorField>("angularMomentum", dimVelocity*dimMass)
             );
@@ -466,7 +466,7 @@ bool Foam::functionObjects::momentum::read(const dictionary& dict)
         {
             Info<< "    Angular velocity will be written" << endl;
 
-            mesh_.objectRegistry::store
+            regIOobject::store
             (
                 newField<volVectorField>("angularVelocity", dimVelocity)
             );

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -161,7 +161,7 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
                 (
                     limiterFieldName,
                     mesh.time().timeName(),
-                    mesh,
+                    mesh.thisDb(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
                     IOobject::REGISTER
@@ -170,7 +170,7 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
                 dimless
             );
 
-            mesh.objectRegistry::store(fldptr);
+            regIOobject::store(fldptr);
         }
         auto& limiterField = *fldptr;
 

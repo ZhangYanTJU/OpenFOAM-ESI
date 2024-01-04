@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,7 +65,7 @@ Foam::functionObjects::stabilityBlendingFactor::indicator()
             (
                 "blendedIndicator" + fieldName_,
                 time_.timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -75,7 +75,7 @@ Foam::functionObjects::stabilityBlendingFactor::indicator()
             fvPatchFieldBase::zeroGradientType()
         );
 
-        mesh_.objectRegistry::store(fldPtr);
+        regIOobject::store(fldPtr);
     }
 
     return *fldPtr;
@@ -558,7 +558,7 @@ Foam::functionObjects::stabilityBlendingFactor::stabilityBlendingFactor
         (
             nonOrthogonalityName_,
             mesh_.time().constant(),
-            mesh_,
+            mesh_.thisDb(),
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             IOobject::REGISTER
@@ -567,7 +567,7 @@ Foam::functionObjects::stabilityBlendingFactor::stabilityBlendingFactor
         if (fieldHeader.typeHeaderOk<volScalarField>(true, true, false))
         {
             auto* vfPtr = new volScalarField(fieldHeader, mesh_);
-            mesh_.objectRegistry::store(vfPtr);
+            regIOobject::store(vfPtr);
         }
         else
         {
@@ -588,7 +588,7 @@ Foam::functionObjects::stabilityBlendingFactor::stabilityBlendingFactor
         (
             faceWeightName_,
             mesh_.time().constant(),
-            mesh_,
+            mesh_.thisDb(),
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             IOobject::REGISTER
@@ -597,7 +597,7 @@ Foam::functionObjects::stabilityBlendingFactor::stabilityBlendingFactor
         if (fieldHeader.typeHeaderOk<volScalarField>(true, true, false))
         {
             auto* vfPtr = new volScalarField(fieldHeader, mesh_);
-            mesh_.objectRegistry::store(vfPtr);
+            regIOobject::store(vfPtr);
         }
         else
         {
@@ -616,7 +616,7 @@ Foam::functionObjects::stabilityBlendingFactor::stabilityBlendingFactor
         (
             skewnessName_,
             mesh_.time().constant(),
-            mesh_,
+            mesh_.thisDb(),
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
             IOobject::REGISTER
@@ -625,7 +625,7 @@ Foam::functionObjects::stabilityBlendingFactor::stabilityBlendingFactor
         if (fieldHeader.typeHeaderOk<volScalarField>(true, true, false))
         {
             auto* vfPtr = new volScalarField(fieldHeader, mesh_);
-            mesh_.objectRegistry::store(vfPtr);
+            regIOobject::store(vfPtr);
         }
         else
         {

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,7 +116,7 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
             (
                 scopedName(typeName),
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobjectOption::NO_READ,
                 IOobjectOption::NO_WRITE,
                 IOobjectOption::REGISTER
@@ -126,7 +126,7 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
         )
     );
 
-    mesh_.objectRegistry::store(wallHeatFluxPtr);
+    regIOobject::store(wallHeatFluxPtr);
 
     read(dict);
 

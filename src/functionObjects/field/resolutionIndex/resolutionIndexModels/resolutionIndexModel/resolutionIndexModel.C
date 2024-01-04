@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -98,7 +98,7 @@ bool Foam::resolutionIndexModel::read(const dictionary& dict)
             (
                 resultName_,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::LAZY_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -108,7 +108,7 @@ bool Foam::resolutionIndexModel::read(const dictionary& dict)
             fvPatchFieldBase::zeroGradientType()
         );
 
-        mesh_.objectRegistry::store(indexPtr);
+        regIOobject::store(indexPtr);
     }
 
     return true;
