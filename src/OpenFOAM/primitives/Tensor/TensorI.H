@@ -513,6 +513,10 @@ inline Foam::Tensor<Cmpt> Foam::Tensor<Cmpt>::T() const
 
 
 template<class Cmpt>
+#if defined(__GNUC__) && !defined(__clang__)
+// Workaround for gcc (11+) that fails to handle tensor dot vector
+__attribute__((optimize("no-tree-vectorize")))
+#endif
 inline Foam::Tensor<Cmpt>
 Foam::Tensor<Cmpt>::inner(const Tensor<Cmpt>& t2) const
 {
@@ -536,6 +540,10 @@ Foam::Tensor<Cmpt>::inner(const Tensor<Cmpt>& t2) const
 
 
 template<class Cmpt>
+#if defined(__GNUC__) && !defined(__clang__)
+// Workaround for gcc (11+) that fails to handle tensor dot vector
+__attribute__((optimize("no-tree-vectorize")))
+#endif
 inline Foam::Tensor<Cmpt>
 Foam::Tensor<Cmpt>::schur(const Tensor<Cmpt>& t2) const
 {
@@ -970,6 +978,10 @@ operator&(const Tensor<Cmpt>& t1, const Tensor<Cmpt>& t2)
 
 //- Inner-product of a SphericalTensor and a Tensor
 template<class Cmpt>
+#if defined(__GNUC__) && !defined(__clang__)
+// Workaround for gcc (11+) that fails to handle tensor dot vector
+__attribute__((optimize("no-tree-vectorize")))
+#endif
 inline Tensor<Cmpt>
 operator&(const SphericalTensor<Cmpt>& st1, const Tensor<Cmpt>& t2)
 {
@@ -984,6 +996,10 @@ operator&(const SphericalTensor<Cmpt>& st1, const Tensor<Cmpt>& t2)
 
 //- Inner-product of a Tensor and a SphericalTensor
 template<class Cmpt>
+#if defined(__GNUC__) && !defined(__clang__)
+// Workaround for gcc (11+) that fails to handle tensor dot vector
+__attribute__((optimize("no-tree-vectorize")))
+#endif
 inline Tensor<Cmpt>
 operator&(const Tensor<Cmpt>& t1, const SphericalTensor<Cmpt>& st2)
 {
@@ -998,6 +1014,10 @@ operator&(const Tensor<Cmpt>& t1, const SphericalTensor<Cmpt>& st2)
 
 //- Inner-product of a SymmTensor and a Tensor
 template<class Cmpt>
+#if defined(__GNUC__) && !defined(__clang__)
+// Workaround for gcc (11+) that fails to handle tensor dot vector
+__attribute__((optimize("no-tree-vectorize")))
+#endif
 inline Tensor<Cmpt>
 operator&(const SymmTensor<Cmpt>& st1, const Tensor<Cmpt>& t2)
 {
@@ -1020,6 +1040,10 @@ operator&(const SymmTensor<Cmpt>& st1, const Tensor<Cmpt>& t2)
 
 //- Inner-product of a Tensor and a SymmTensor
 template<class Cmpt>
+#if defined(__GNUC__) && !defined(__clang__)
+// Workaround for gcc (11+) that fails to handle tensor dot vector
+__attribute__((optimize("no-tree-vectorize")))
+#endif
 inline Tensor<Cmpt>
 operator&(const Tensor<Cmpt>& t1, const SymmTensor<Cmpt>& st2)
 {
@@ -1046,7 +1070,7 @@ template<class Cmpt>
 // Workaround for gcc (11+) that fails to handle tensor dot vector
 __attribute__((optimize("no-tree-vectorize")))
 #endif
-inline typename innerProduct<Tensor<Cmpt>, Vector<Cmpt>>::type
+inline Vector<Cmpt>
 operator&(const Tensor<Cmpt>& t, const Vector<Cmpt>& v)
 {
     return Vector<Cmpt>
@@ -1060,7 +1084,11 @@ operator&(const Tensor<Cmpt>& t, const Vector<Cmpt>& v)
 
 //- Inner-product of a Vector and a Tensor
 template<class Cmpt>
-inline typename innerProduct<Vector<Cmpt>, Tensor<Cmpt>>::type
+#if defined(__GNUC__) && !defined(__clang__)
+// Workaround for gcc (11+) that fails to handle tensor dot vector
+__attribute__((optimize("no-tree-vectorize")))
+#endif
+inline Vector<Cmpt>
 operator&(const Vector<Cmpt>& v, const Tensor<Cmpt>& t)
 {
     return Vector<Cmpt>
