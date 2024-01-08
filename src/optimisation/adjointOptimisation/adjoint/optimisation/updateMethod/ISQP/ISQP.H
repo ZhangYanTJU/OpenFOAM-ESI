@@ -248,7 +248,7 @@ protected:
             (
                 const PtrList<scalarField>& r1Updates,
                 const scalarField& p,
-                const tmp<scalarField>& diag,
+                const refPtr<scalarField>& diag,
                 const scalarField& mult,
                 label n
             );

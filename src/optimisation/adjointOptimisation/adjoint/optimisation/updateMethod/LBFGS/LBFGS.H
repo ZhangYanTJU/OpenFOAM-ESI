@@ -131,7 +131,7 @@ protected:
         (
             const scalarField& vector,
             const label counter,
-            tmp<scalarField> diag = nullptr
+            const refPtr<scalarField> diag = nullptr
         );
 
         //- Compute the Hessian - vector product
