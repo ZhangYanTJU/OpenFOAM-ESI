@@ -136,10 +136,10 @@ public:
         //- Construct from dictionary
         IDEA(const dictionary& dict);
 
-        //- Construct and return clone
+        //- Return a clone
         virtual autoPtr<liquidProperties> clone() const
         {
-            return autoPtr<liquidProperties>::NewFrom<IDEA>(*this);
+            return liquidProperties::Clone(*this);
         }
 
 

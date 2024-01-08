@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,7 +40,6 @@ SourceFiles
 #define Foam_wallBoundedStreamLineParticle_H
 
 #include "wallBoundedParticle.H"
-#include "autoPtr.H"
 #include "interpolation.H"
 #include "vectorList.H"
 #include "InfoProxy.H"
@@ -181,14 +180,13 @@ public:
         //- Construct copy
         wallBoundedStreamLineParticle(const wallBoundedStreamLineParticle& p);
 
-        //- Construct and return a clone
+        //- Return a clone
         autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new wallBoundedStreamLineParticle(*this));
+            return particle::Clone(*this);
         }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;

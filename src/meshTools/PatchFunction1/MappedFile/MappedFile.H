@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -219,9 +219,6 @@ public:
             const bool faceValues = true
         );
 
-        //- Copy construct
-        explicit MappedFile(const MappedFile<Type>& rhs);
-
         //- Copy construct setting patch
         explicit MappedFile
         (
@@ -229,22 +226,19 @@ public:
             const polyPatch& pp
         );
 
-        //- Construct and return a clone
+        //- Copy construct
+        explicit MappedFile(const MappedFile<Type>& rhs);
+
+        //- Return a clone
         virtual tmp<PatchFunction1<Type>> clone() const
         {
-            return tmp<PatchFunction1<Type>>
-            (
-                new MappedFile<Type>(*this)
-            );
+            return PatchFunction1<Type>::Clone(*this, this->patch());
         }
 
-        //- Construct and return a clone setting patch
+        //- Return a clone, setting the patch
         virtual tmp<PatchFunction1<Type>> clone(const polyPatch& pp) const
         {
-            return tmp<PatchFunction1<Type>>
-            (
-                new MappedFile<Type>(*this, pp)
-            );
+            return PatchFunction1<Type>::Clone(*this, pp);
         }
 
 

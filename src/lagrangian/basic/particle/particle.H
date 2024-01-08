@@ -417,16 +417,33 @@ public:
             const bool doLocate = true
         );
 
-        //- Construct as a copy
-        particle(const particle& p);
-
-        //- Construct as a copy with reference to a new mesh
+        //- Construct as a copy with reference to a mesh
         particle(const particle& p, const polyMesh& mesh);
+
+        //- Copy construct
+        particle(const particle& p);
 
         //- Construct a clone
         virtual autoPtr<particle> clone() const
         {
             return autoPtr<particle>::New(*this);
+        }
+
+
+    // Factory Methods
+
+        //- Clone a particle
+        template<class Derived>
+        static autoPtr<particle> Clone(const Derived& p)
+        {
+            return autoPtr<particle>(new Derived(p));
+        }
+
+        //- Clone a particle with a mesh reference
+        template<class Derived>
+        static autoPtr<particle> Clone(const Derived& p, const polyMesh& mesh)
+        {
+            return autoPtr<particle>(new Derived(p, mesh));
         }
 
         //- Factory class to read-construct particles (for parallel transfer)

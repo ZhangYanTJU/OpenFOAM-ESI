@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,7 +40,6 @@ SourceFiles
 
 #include "particle.H"
 #include "IOstream.H"
-#include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -109,13 +108,14 @@ public:
         //- Construct as a copy
         indexedParticle(const indexedParticle& p)
         :
-            particle(p)
+            particle(p),
+            index_(p.index_)
         {}
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new indexedParticle(*this));
+            return particle::Clone(*this);
         }
 
 

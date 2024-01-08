@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -140,10 +140,10 @@ public:
         //- Copy construct
         explicit CSV(const CSV<Type>& csv);
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<Type>> clone() const
         {
-            return tmp<Function1<Type>>(new CSV<Type>(*this));
+            return Function1<Type>::Clone(*this);
         }
 
 

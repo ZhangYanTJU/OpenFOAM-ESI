@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -147,15 +147,15 @@ public:
             const bool faceValues = true
         );
 
-        //- Copy construct
-        explicit PatchFunction1(const PatchFunction1<Type>& rhs);
-
         //- Copy construct setting patch
         explicit PatchFunction1
         (
             const PatchFunction1<Type>& rhs,
             const polyPatch& pp
         );
+
+        //- Copy construct
+        explicit PatchFunction1(const PatchFunction1<Type>& rhs);
 
         //- Return a clone
         virtual tmp<PatchFunction1<Type>> clone() const = 0;
@@ -164,7 +164,24 @@ public:
         virtual tmp<PatchFunction1<Type>> clone(const polyPatch& pp) const = 0;
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a PatchFunction1
+        template<class Derived>
+        static tmp<PatchFunction1<Type>>
+        Clone(const Derived& fun)
+        {
+            return tmp<PatchFunction1<Type>>(new Derived(fun));
+        }
+
+        //- Clone a PatchFunction1 with a patch
+        template<class Derived>
+        static tmp<PatchFunction1<Type>>
+        Clone(const Derived& fun, const polyPatch& pp)
+        {
+            return tmp<PatchFunction1<Type>>(new Derived(fun, pp));
+        }
+
 
         //- Selector
         static autoPtr<PatchFunction1<Type>> New

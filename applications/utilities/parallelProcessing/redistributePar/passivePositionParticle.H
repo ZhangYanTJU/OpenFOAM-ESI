@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -100,10 +100,10 @@ public:
             cachedPosition_(p.cachedPosition_)
         {}
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new passivePositionParticle(*this));
+            return particle::Clone(*this);
         }
 
 

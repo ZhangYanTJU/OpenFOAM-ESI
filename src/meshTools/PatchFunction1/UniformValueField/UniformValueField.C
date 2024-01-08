@@ -57,16 +57,6 @@ Foam::PatchFunction1Types::UniformValueField<Type>::UniformValueField
 template<class Type>
 Foam::PatchFunction1Types::UniformValueField<Type>::UniformValueField
 (
-    const UniformValueField<Type>& rhs
-)
-:
-    UniformValueField<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
-Foam::PatchFunction1Types::UniformValueField<Type>::UniformValueField
-(
     const UniformValueField<Type>& rhs,
     const polyPatch& pp
 )
@@ -79,6 +69,16 @@ Foam::PatchFunction1Types::UniformValueField<Type>::UniformValueField
         uniformValuePtr_->resetDb(patchFunction1Base::whichDb());
     }
 }
+
+
+template<class Type>
+Foam::PatchFunction1Types::UniformValueField<Type>::UniformValueField
+(
+    const UniformValueField<Type>& rhs
+)
+:
+    UniformValueField<Type>(rhs, rhs.patch())
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,7 +43,6 @@ SourceFiles
 
 #include "particle.H"
 #include "IOstream.H"
-#include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -131,16 +130,16 @@ public:
         //- Construct as copy
         passivePositionParticle(const passivePositionParticle& p)
         :
-            particle(p)
+            particle(p),
+            location_(p.location_)
         {}
 
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new passivePositionParticle(*this));
+            return particle::Clone(*this);
         }
-
 
         //- Factory class to read-construct particles (for parallel transfer)
         class iNew

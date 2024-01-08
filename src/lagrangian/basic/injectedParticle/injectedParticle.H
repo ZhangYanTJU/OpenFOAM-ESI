@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,7 +46,6 @@ SeeAlso
 
 #include "particle.H"
 #include "IOstream.H"
-#include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -147,20 +146,19 @@ public:
         //- Construct as a copy
         injectedParticle(const injectedParticle& p, const polyMesh& mesh);
 
-        //- Construct and return a (basic particle) clone
+        //- Return a (basic particle) clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new injectedParticle(*this));
+            return particle::Clone(*this);
         }
 
         //- Construct and return a (basic particle) clone
         virtual autoPtr<particle> clone(const polyMesh& mesh) const
         {
-            return autoPtr<particle>(new injectedParticle(*this, mesh));
+            return particle::Clone(*this, mesh);
         }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;
@@ -174,10 +172,7 @@ public:
 
             autoPtr<injectedParticle> operator()(Istream& is) const
             {
-                return autoPtr<injectedParticle>
-                (
-                    new injectedParticle(mesh_, is, true)
-                );
+                return autoPtr<injectedParticle>::New(mesh_, is, true);
             }
         };
 

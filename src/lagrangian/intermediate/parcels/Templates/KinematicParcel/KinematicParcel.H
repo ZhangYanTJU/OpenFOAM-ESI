@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,7 +52,6 @@ SourceFiles
 
 #include "particle.H"
 #include "IOstream.H"
-#include "autoPtr.H"
 #include "interpolation.H"
 #include "demandDrivenEntry.H"
 #include "labelFieldIOField.H"
@@ -433,20 +432,19 @@ public:
         //- Construct as a copy
         KinematicParcel(const KinematicParcel& p, const polyMesh& mesh);
 
-        //- Construct and return a (basic particle) clone
+        //- Return a (basic particle) clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new KinematicParcel(*this));
+            return particle::Clone(*this);
         }
 
-        //- Construct and return a (basic particle) clone
+        //- Return a (basic particle) clone
         virtual autoPtr<particle> clone(const polyMesh& mesh) const
         {
-            return autoPtr<particle>(new KinematicParcel(*this, mesh));
+            return particle::Clone(*this, mesh);
         }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;

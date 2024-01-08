@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2019 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,7 +41,6 @@ SourceFiles
 
 #include "bitSet.H"
 #include "particle.H"
-#include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -164,14 +163,13 @@ public:
             bool newFormat = true
         );
 
-        //- Construct and return a clone
-        autoPtr<particle> clone() const
+        //- Return a clone
+        virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>::NewFrom<trackedParticle>(*this);
+            return particle::Clone(*this);
         }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;

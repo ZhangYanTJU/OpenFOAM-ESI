@@ -67,10 +67,10 @@ public:
         //- Construct from dictionary
         ash(const dictionary& dict);
 
-        //- Construct and return clone
+        //- Return a clone
         virtual autoPtr<solidProperties> clone() const
         {
-            return autoPtr<solidProperties>::NewFrom<ash>(*this);
+            return solidProperties::Clone(*this);
         }
 
 

@@ -599,22 +599,6 @@ Foam::particle::particle
 }
 
 
-Foam::particle::particle(const particle& p)
-:
-    mesh_(p.mesh_),
-    coordinates_(p.coordinates_),
-    celli_(p.celli_),
-    tetFacei_(p.tetFacei_),
-    tetPti_(p.tetPti_),
-    facei_(p.facei_),
-    stepFraction_(p.stepFraction_),
-    behind_(p.behind_),
-    nBehind_(p.nBehind_),
-    origProc_(p.origProc_),
-    origId_(p.origId_)
-{}
-
-
 Foam::particle::particle(const particle& p, const polyMesh& mesh)
 :
     mesh_(mesh),
@@ -628,6 +612,12 @@ Foam::particle::particle(const particle& p, const polyMesh& mesh)
     nBehind_(p.nBehind_),
     origProc_(p.origProc_),
     origId_(p.origId_)
+{}
+
+
+Foam::particle::particle(const particle& p)
+:
+    particle(p, p.mesh())
 {}
 
 

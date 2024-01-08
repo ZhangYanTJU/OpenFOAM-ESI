@@ -113,10 +113,10 @@ public:
         //- Construct from dictionary
         H2O(const dictionary& dict);
 
-        //- Construct and return clone
+        //- Return a clone
         virtual autoPtr<liquidProperties> clone() const
         {
-            return autoPtr<liquidProperties>::NewFrom<H2O>(*this);
+            return liquidProperties::Clone(*this);
         }
 
 

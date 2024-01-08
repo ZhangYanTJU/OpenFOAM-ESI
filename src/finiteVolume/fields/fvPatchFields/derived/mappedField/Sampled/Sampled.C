@@ -76,16 +76,6 @@ Foam::PatchFunction1Types::Sampled<Type>::Sampled
 template<class Type>
 Foam::PatchFunction1Types::Sampled<Type>::Sampled
 (
-    const Sampled<Type>& rhs
-)
-:
-    Sampled<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
-Foam::PatchFunction1Types::Sampled<Type>::Sampled
-(
     const Sampled<Type>& rhs,
     const polyPatch& pp
 )
@@ -96,6 +86,16 @@ Foam::PatchFunction1Types::Sampled<Type>::Sampled
     setAverage_(rhs.setAverage_),
     average_(rhs.average_),
     interpolationScheme_(rhs.interpolationScheme_)
+{}
+
+
+template<class Type>
+Foam::PatchFunction1Types::Sampled<Type>::Sampled
+(
+    const Sampled<Type>& rhs
+)
+:
+    Sampled<Type>(rhs, rhs.patch())
 {}
 
 

@@ -135,17 +135,6 @@ Foam::FieldFunction1<Function1Type>::FieldFunction1
 
 
 template<class Function1Type>
-Foam::tmp<Foam::Function1<typename Function1Type::returnType>>
-Foam::FieldFunction1<Function1Type>::clone() const
-{
-    return tmp<Function1<Type>>
-    (
-        new FieldFunction1<Function1Type>(*this)
-    );
-}
-
-
-template<class Function1Type>
 Foam::tmp<Foam::Field<typename Function1Type::returnType>>
 Foam::FieldFunction1<Function1Type>::integrate
 (

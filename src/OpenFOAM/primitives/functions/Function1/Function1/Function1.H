@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -164,11 +164,18 @@ public:
         //- Copy construct
         explicit Function1(const Function1<Type>& rhs);
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<Type>> clone() const = 0;
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a Function1
+        template<class Derived>
+        static tmp<Function1<Type>> Clone(const Derived& fun)
+        {
+            return tmp<Function1<Type>>(new Derived(fun));
+        }
 
         //- Selector, with fallback redirection
         static autoPtr<Function1<Type>> New
@@ -321,8 +328,11 @@ public:
             const objectRegistry* obrPtr = nullptr
         );
 
-        //- Construct and return a clone
-        virtual tmp<Function1<Type>> clone() const;
+        //- Return a clone
+        virtual tmp<Function1<Type>> clone() const
+        {
+            return Function1<Type>::Clone(*this);
+        }
 
 
     //- Destructor

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,12 +85,6 @@ public:
             const bool faceValues = true
         );
 
-        //- Copy construct
-        ${typeName}PatchFunction1${FieldType}
-        (
-            const ${typeName}PatchFunction1${FieldType}& rhs
-        ) = default;
-
         //- Copy construct, resetting patch
         ${typeName}PatchFunction1${FieldType}
         (
@@ -98,25 +92,25 @@ public:
             const polyPatch& pp
         );
 
-        //- Construct and return a clone
+        //- Copy construct
+        ${typeName}PatchFunction1${FieldType}
+        (
+            const ${typeName}PatchFunction1${FieldType}& rhs
+        ) = default;
+
+        //- Return a clone
         virtual tmp<PatchFunction1<${TemplateType}>> clone() const
         {
-            return tmp<PatchFunction1<${TemplateType}>>
-            (
-                new ${typeName}PatchFunction1${FieldType}(*this)
-            );
+            return PatchFunction1<${TemplateType}>::Clone(*this);
         }
 
-        //- Construct and return a clone setting patch
+        //- Return a clone, setting the patch
         virtual tmp<PatchFunction1<${TemplateType}>> clone
         (
             const polyPatch& pp
         ) const
         {
-            return tmp<PatchFunction1<${TemplateType}>>
-            (
-                new ${typeName}PatchFunction1${FieldType}(*this, pp)
-            );
+            return PatchFunction1<${TemplateType}>::Clone(*this, pp);
         }
 
 

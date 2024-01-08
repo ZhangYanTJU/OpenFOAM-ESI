@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -453,7 +453,26 @@ public:
     );
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a coordinate system
+        template<class Derived>
+        static autoPtr<coordinateSystem> Clone(const Derived& csys)
+        {
+            return autoPtr<coordinateSystem>(new Derived(csys));
+        }
+
+        //- Select construct the specified coordinate system type
+        //- with reference to objectRegistry for indirect entries.
+        //
+        //  An empty modelType will be treated as "cartesian"
+        static autoPtr<coordinateSystem> Clone
+        (
+            const word& modelType,
+            const objectRegistry& obr,
+            const dictionary& dict,
+            IOobjectOption::readOption readOrigin = IOobjectOption::MUST_READ
+        );
 
         //- Select construct the specified coordinate system type
         //- with reference to objectRegistry for indirect entries.
