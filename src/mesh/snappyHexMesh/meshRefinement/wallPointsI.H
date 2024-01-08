@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -207,13 +207,25 @@ inline bool Foam::wallPoints::updateCell
     {
         const FixedList<label, 3>& nbrSurface = neighbourInfo.surface_[i];
 
-        // Check distance from nbr origin to cc against max walking distance
-        const scalar blockSize =
-            td.regionToBlockSize_[nbrSurface[0]][nbrSurface[1]];
-
         const scalar d2 = magSqr(cc-neighbourInfo.origin_[i]);
 
-        if (d2 < Foam::sqr(3*blockSize))
+        // Optionally check against surface-based block size
+        bool propagate = false;
+        if (nbrSurface[0] == labelMax)
+        {
+            // nbrSurface has special value to ignore regionToBlockSize
+            propagate = true;
+        }
+        else
+        {
+            // Check distance from nbr origin to cc against max walking distance
+            const scalar blockSize =
+                td.regionToBlockSize_[nbrSurface[0]][nbrSurface[1]];
+
+            propagate = (d2 < Foam::sqr(3*blockSize));
+        }
+
+        if (propagate)
         {
             // Real distance less than max gap distance. Note that it should
             // be at least 2 * blockSize (since gap is two cells across).
@@ -280,13 +292,26 @@ inline bool Foam::wallPoints::updateFace
         {
             const FixedList<label, 3>& nbrSurface = neighbourInfo.surface_[i];
 
-            // Check distance from nbr origin to cc against max walking distance
-            const scalar blockSize =
-                td.regionToBlockSize_[nbrSurface[0]][nbrSurface[1]];
-
             const scalar d2 = magSqr(fc-neighbourInfo.origin_[i]);
 
-            if (d2 < Foam::sqr(3*blockSize))
+            // Optionally check against surface-based block size
+            bool propagate = false;
+            if (nbrSurface[0] == labelMax)
+            {
+                // nbrSurface has special value to ignore regionToBlockSize
+                propagate = true;
+            }
+            else
+            {
+                // Check distance from nbr origin to cc against max walking
+                // distance
+                const scalar blockSize =
+                    td.regionToBlockSize_[nbrSurface[0]][nbrSurface[1]];
+
+                propagate = (d2 < Foam::sqr(3*blockSize));
+            }
+
+            if (propagate)
             {
                 // Real distance less than max gap distance
 
@@ -348,13 +373,26 @@ inline bool Foam::wallPoints::updateFace
         {
             const FixedList<label, 3>& nbrSurface = neighbourInfo.surface_[i];
 
-            // Check distance from nbr origin to cc against max walking distance
-            const scalar blockSize =
-                td.regionToBlockSize_[nbrSurface[0]][nbrSurface[1]];
-
             const scalar d2 = magSqr(fc-neighbourInfo.origin_[i]);
 
-            if (d2 < Foam::sqr(3*blockSize))
+            // Optionally check against surface-based block size
+            bool propagate = false;
+            if (nbrSurface[0] == labelMax)
+            {
+                // nbrSurface has special value to ignore regionToBlockSize
+                propagate = true;
+            }
+            else
+            {
+                // Check distance from nbr origin to cc against max walking
+                // distance
+                const scalar blockSize =
+                    td.regionToBlockSize_[nbrSurface[0]][nbrSurface[1]];
+
+                propagate = (d2 < Foam::sqr(3*blockSize));
+            }
+
+            if (propagate)
             {
                 // Real distance less than max gap distance
 
