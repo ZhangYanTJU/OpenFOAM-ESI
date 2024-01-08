@@ -55,7 +55,7 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> singleCellFvMesh::interpolate
             (
                 fvPatchFieldBase::calculatedType(),
                 boundary()[patchi],
-                DimensionedField<Type, volMesh>::null()
+                fvPatchField<Type>::Internal::null()
             )
         );
     }

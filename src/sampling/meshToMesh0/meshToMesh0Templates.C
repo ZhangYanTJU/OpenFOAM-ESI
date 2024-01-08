@@ -395,7 +395,7 @@ Foam::meshToMesh0::interpolate
             (
                 fromVf.boundaryField()[patchi],
                 toMesh_.boundary()[patchi],
-                DimensionedField<Type, volMesh>::null(),
+                fvPatchField<Type>::Internal::null(),
                 patchFieldInterpolator
                 (
                     boundaryAddressing_[patchi]

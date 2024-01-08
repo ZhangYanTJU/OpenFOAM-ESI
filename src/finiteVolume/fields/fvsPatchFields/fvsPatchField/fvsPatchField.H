@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,10 +205,30 @@ class fvsPatchField
     public fvsPatchFieldBase,
     public Field<Type>
 {
+public:
+
+    // Public Data Types
+
+        //- The patch type for the patch field
+        typedef fvPatch Patch;
+
+        //- The value_type for the patch field
+        typedef Type value_type;
+
+        //- The internal field type associated with the patch field
+        typedef DimensionedField<Type, surfaceMesh> Internal;
+
+        //- Type for a \em calculated patch
+        typedef calculatedFvsPatchField<Type> Calculated;
+
+
+private:
+
     // Private Data
 
         //- Reference to internal field
         const DimensionedField<Type, surfaceMesh>& internalField_;
+
 
 protected:
 
@@ -231,16 +251,6 @@ protected:
 
 
 public:
-
-    //- The internal field type associated with the patch field
-    typedef DimensionedField<Type, surfaceMesh> Internal;
-
-    //- The patch type for the patch field
-    typedef fvPatch Patch;
-
-    //- Type for a \em calculated patch
-    typedef calculatedFvsPatchField<Type> Calculated;
-
 
     // Declare run-time constructor selection tables
 

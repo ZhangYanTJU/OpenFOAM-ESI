@@ -56,7 +56,7 @@ Foam::pointFieldDecomposer::decomposeField
                 (
                     field.boundaryField()[boundaryAddressing_[patchi]],
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null(),
+                    pointPatchField<Type>::Internal::null(),
                     patchFieldDecomposerPtrs_[patchi]
                 )
             );
@@ -69,7 +69,7 @@ Foam::pointFieldDecomposer::decomposeField
                 new processorPointPatchField<Type>
                 (
                     procMesh_.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null()
+                    pointPatchField<Type>::Internal::null()
                 )
             );
         }

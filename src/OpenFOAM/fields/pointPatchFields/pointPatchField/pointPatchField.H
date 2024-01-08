@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -240,6 +240,25 @@ class pointPatchField
 :
     public pointPatchFieldBase
 {
+public:
+
+    // Public Data Types
+
+        //- The patch type for the patch field
+        typedef pointPatch Patch;
+
+        //- The value_type for the patch field
+        typedef Type value_type;
+
+        //- The internal field type associated with the patch field
+        typedef DimensionedField<Type, pointMesh> Internal;
+
+        //- Type for a \em calculated patch
+        typedef calculatedPointPatchField<Type> Calculated;
+
+
+private:
+
     // Private Data
 
         //- Reference to internal field
@@ -247,19 +266,6 @@ class pointPatchField
 
 
 public:
-
-    //- The Field value_type
-    typedef Type value_type;
-
-    //- The internal field type associated with the patch field
-    typedef DimensionedField<Type, pointMesh> Internal;
-
-    //- The patch type for the patch field
-    typedef pointPatch Patch;
-
-    //- Type for a \em calculated patch
-    typedef calculatedPointPatchField<Type> Calculated;
-
 
     // Declare run-time constructor selection tables
 

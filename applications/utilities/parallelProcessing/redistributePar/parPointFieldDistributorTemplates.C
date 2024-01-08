@@ -26,11 +26,11 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Time.H"
-#include "emptyPointPatchField.H"
 #include "IOobjectList.H"
 #include "mapDistributePolyMesh.H"
 #include "distributedFieldMapper.H"
 #include "distributedPointPatchFieldMapper.H"
+#include "emptyPointPatch.H"
 #include "pointFields.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -108,7 +108,7 @@ Foam::parPointFieldDistributor::distributeField
                 (
                     bfld[patchi],
                     tgtMesh.boundary()[patchi],    // pointPatch
-                    DimensionedField<Type, pointMesh>::null(),
+                    pointPatchField<Type>::Internal::null(),
                     mapper
                 )
             );
@@ -122,7 +122,7 @@ Foam::parPointFieldDistributor::distributeField
             //    bfld[patchi].clone
             //    (
             //        tgtMesh.boundary()[patchi],
-            //        DimensionedField<Type, pointMesh>::null(),
+            //        pointPatchField<Type>::Internal::null(),
             //        mapper
             //    )
             //);
@@ -140,9 +140,9 @@ Foam::parPointFieldDistributor::distributeField
                 patchi,
                 pointPatchField<Type>::New
                 (
-                    emptyPointPatchField<Type>::typeName,
+                    pointPatchFieldBase::emptyType(),
                     tgtMesh.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null()
+                    pointPatchField<Type>::Internal::null()
                 )
             );
         }

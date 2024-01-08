@@ -612,7 +612,7 @@ Foam::meshToMesh::mapSrcToTgt
                 (
                     srcBfld[srcPatchi],
                     tgtMesh.boundary()[tgtPatchi],
-                    DimensionedField<Type, volMesh>::null(),
+                    fvPatchField<Type>::Internal::null(),
                     directFvPatchFieldMapper
                     (
                         labelList(tgtMesh.boundary()[tgtPatchi].size(), -1)
@@ -636,7 +636,7 @@ Foam::meshToMesh::mapSrcToTgt
                 (
                     fvPatchFieldBase::calculatedType(),
                     tgtMesh.boundary()[tgtPatchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -843,7 +843,7 @@ Foam::meshToMesh::mapTgtToSrc
                 (
                     tgtBfld[tgtPatchi],
                     srcMesh.boundary()[srcPatchi],
-                    DimensionedField<Type, volMesh>::null(),
+                    fvPatchField<Type>::Internal::null(),
                     directFvPatchFieldMapper
                     (
                         labelList(srcMesh.boundary()[srcPatchi].size(), -1)
@@ -867,7 +867,7 @@ Foam::meshToMesh::mapTgtToSrc
                 (
                     fvPatchFieldBase::calculatedType(),
                     srcMesh.boundary()[srcPatchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }

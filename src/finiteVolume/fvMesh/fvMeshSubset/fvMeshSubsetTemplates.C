@@ -67,7 +67,7 @@ Foam::fvMeshSubset::interpolate
                 new emptyFvPatchField<Type>
                 (
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -80,7 +80,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     fvPatchFieldBase::calculatedType(),
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -248,7 +248,7 @@ Foam::fvMeshSubset::interpolate
                 new emptyFvsPatchField<Type>
                 (
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, surfaceMesh>::null()
+                    fvsPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -261,7 +261,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     fvsPatchFieldBase::calculatedType(),
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, surfaceMesh>::null()
+                    fvsPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -435,7 +435,7 @@ Foam::fvMeshSubset::interpolate
                 new emptyPointPatchField<Type>
                 (
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null()
+                    pointPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -448,7 +448,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     pointPatchFieldBase::calculatedType(),
                     sMesh.boundary()[patchi],
-                    DimensionedField<Type, pointMesh>::null()
+                    pointPatchField<Type>::Internal::null()
                 )
             );
         }
