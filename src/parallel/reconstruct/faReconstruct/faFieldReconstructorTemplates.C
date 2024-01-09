@@ -29,10 +29,9 @@ License
 #include "faFieldReconstructor.H"
 #include "Time.H"
 #include "PtrList.H"
-#include "faPatchFields.H"
 #include "emptyFaPatch.H"
-#include "emptyFaPatchField.H"
-#include "emptyFaePatchField.H"
+#include "faPatchFields.H"
+#include "faePatchFields.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -130,7 +129,7 @@ Foam::faFieldReconstructor::reconstructField
                         (
                             procField.boundaryField()[patchI],
                             mesh_.boundary()[curBPatch],
-                            DimensionedField<Type, areaMesh>::null(),
+                            faPatchField<Type>::Internal::null(),
                             faPatchFieldReconstructor
                             (
                                 mesh_.boundary()[curBPatch].size(),
@@ -204,7 +203,7 @@ Foam::faFieldReconstructor::reconstructField
                                 (
                                     mesh_.boundary()[curBPatch].type(),
                                     mesh_.boundary()[curBPatch],
-                                    DimensionedField<Type, areaMesh>::null()
+                                    faPatchField<Type>::Internal::null()
                                 )
                             );
                         }
@@ -238,9 +237,9 @@ Foam::faFieldReconstructor::reconstructField
                 patchI,
                 faPatchField<Type>::New
                 (
-                    emptyFaPatchField<Type>::typeName,
+                    faPatchFieldBase::emptyType(),
                     mesh_.boundary()[patchI],
-                    DimensionedField<Type, areaMesh>::null()
+                    faPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -371,7 +370,7 @@ Foam::faFieldReconstructor::reconstructField
                         (
                             procField.boundaryField()[patchI],
                             mesh_.boundary()[curBPatch],
-                            DimensionedField<Type, edgeMesh>::null(),
+                            faePatchField<Type>::Internal::null(),
                             faPatchFieldReconstructor
                             (
                                 mesh_.boundary()[curBPatch].size(),
@@ -448,8 +447,7 @@ Foam::faFieldReconstructor::reconstructField
                                     (
                                         mesh_.boundary()[curBPatch].type(),
                                         mesh_.boundary()[curBPatch],
-                                        DimensionedField<Type, edgeMesh>
-                                           ::null()
+                                        faePatchField<Type>::Internal::null()
                                     )
                                 );
                             }
@@ -489,9 +487,9 @@ Foam::faFieldReconstructor::reconstructField
                 patchI,
                 faePatchField<Type>::New
                 (
-                    emptyFaePatchField<Type>::typeName,
+                    faePatchFieldBase::emptyType(),
                     mesh_.boundary()[patchI],
-                    DimensionedField<Type, edgeMesh>::null()
+                    faePatchField<Type>::Internal::null()
                 )
             );
         }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -211,6 +211,25 @@ class faePatchField
     public faePatchFieldBase,
     public Field<Type>
 {
+public:
+
+    // Public Data Types
+
+        //- The patch type for the patch field
+        typedef faPatch Patch;
+
+        //- The value_type for the patch field
+        typedef Type value_type;
+
+        //- The internal field type associated with the patch field
+        typedef DimensionedField<Type, edgeMesh> Internal;
+
+        //- Type for a \em calculated patch
+        typedef calculatedFaePatchField<Type> Calculated;
+
+
+private:
+
     // Private Data
 
         //- Reference to internal field
@@ -237,16 +256,6 @@ protected:
 
 
 public:
-
-    //- The internal field type associated with the patch field
-    typedef DimensionedField<Type, edgeMesh> Internal;
-
-    //- The patch type for the patch field
-    typedef faPatch Patch;
-
-    //- Type for a \em calculated patch
-    typedef calculatedFaePatchField<Type> Calculated;
-
 
     // Declare run-time constructor selection tables
 

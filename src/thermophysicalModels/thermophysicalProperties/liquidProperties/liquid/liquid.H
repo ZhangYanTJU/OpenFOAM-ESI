@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef liquid_H
-#define liquid_H
+#ifndef Foam_liquid_H
+#define Foam_liquid_H
 
 #include "liquidProperties.H"
 #include "Function1.H"
@@ -90,10 +90,10 @@ public:
         liquid(const liquid& rhs);
 
 
-        //- Construct and return clone
+        //- Return a clone
         virtual autoPtr<liquidProperties> clone() const
         {
-            return autoPtr<liquidProperties>(new liquid(*this));
+            return liquidProperties::Clone(*this);
         }
 
 

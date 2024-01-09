@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,7 +42,6 @@ SourceFiles
 
 #include "particle.H"
 #include "IOstream.H"
-#include "autoPtr.H"
 #include "contiguous.H"
 #include "DSMCCloud.H"
 
@@ -193,14 +192,13 @@ public:
             bool newFormat = true
         );
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new DSMCParcel<ParcelType>(*this));
+            return particle::Clone(*this);
         }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;

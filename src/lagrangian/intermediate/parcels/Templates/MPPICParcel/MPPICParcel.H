@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -238,20 +238,19 @@ public:
         //- Construct as a copy
         MPPICParcel(const MPPICParcel& p, const polyMesh& mesh);
 
-        //- Construct and return a (basic particle) clone
+        //- Return a (basic particle) clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new MPPICParcel(*this));
+            return particle::Clone(*this);
         }
 
-        //- Construct and return a (basic particle) clone
+        //- Return a (basic particle) clone
         virtual autoPtr<particle> clone(const polyMesh& mesh) const
         {
-            return autoPtr<particle>(new MPPICParcel(*this, mesh));
+            return particle::Clone(*this, mesh);
         }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;

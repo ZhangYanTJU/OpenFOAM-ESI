@@ -168,16 +168,6 @@ Foam::PatchFunction1Types::CodedField<Type>::CodedField
 template<class Type>
 Foam::PatchFunction1Types::CodedField<Type>::CodedField
 (
-    const CodedField<Type>& rhs
-)
-:
-    CodedField<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
-Foam::PatchFunction1Types::CodedField<Type>::CodedField
-(
     const CodedField<Type>& rhs,
     const polyPatch& pp
 )
@@ -186,6 +176,16 @@ Foam::PatchFunction1Types::CodedField<Type>::CodedField
     codedBase(),
     dict_(rhs.dict_),
     redirectName_(rhs.redirectName_)
+{}
+
+
+template<class Type>
+Foam::PatchFunction1Types::CodedField<Type>::CodedField
+(
+    const CodedField<Type>& rhs
+)
+:
+    CodedField<Type>(rhs, rhs.patch())
 {}
 
 

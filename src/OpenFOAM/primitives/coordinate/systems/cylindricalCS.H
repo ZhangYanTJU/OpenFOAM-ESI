@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -191,7 +191,7 @@ public:
         //- Return clone
         virtual autoPtr<coordinateSystem> clone() const
         {
-            return autoPtr<coordinateSystem>::NewFrom<cylindrical>(*this);
+            return coordinateSystem::Clone(*this);
         }
 
 

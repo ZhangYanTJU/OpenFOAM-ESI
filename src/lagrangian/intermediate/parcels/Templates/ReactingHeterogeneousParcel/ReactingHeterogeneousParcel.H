@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2019 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -280,23 +280,19 @@ public:
             const polyMesh& mesh
         );
 
-        //- Construct and return a (basic particle) clone
+        //- Return a (basic particle) clone
         virtual autoPtr<particle> clone() const
         {
-            return autoPtr<particle>(new ReactingHeterogeneousParcel(*this));
+            return particle::Clone(*this);
         }
 
-        //- Construct and return a (basic particle) clone
+        //- Return a (basic particle) clone
         virtual autoPtr<particle> clone(const polyMesh& mesh) const
         {
-            return autoPtr<particle>
-            (
-                new ReactingHeterogeneousParcel(*this, mesh)
-            );
+            return particle::Clone(*this, mesh);
         }
 
-        //- Factory class to read-construct particles used for
-        //  parallel transfer
+        //- Factory class to read-construct particles (for parallel transfer)
         class iNew
         {
             const polyMesh& mesh_;

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,8 +79,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Function1Types_Table_H
-#define Function1Types_Table_H
+#ifndef Foam_Function1Types_Table_H
+#define Foam_Function1Types_Table_H
 
 #include "TableBase.H"
 
@@ -130,10 +130,10 @@ public:
         //- Copy construct
         explicit Table(const Table<Type>& tbl);
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<Type>> clone() const
         {
-            return tmp<Function1<Type>>(new Table<Type>(*this));
+            return Function1<Type>::Clone(*this);
         }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,9 +30,8 @@ License
 #include "Time.H"
 #include "PtrList.H"
 #include "fvPatchFields.H"
+#include "fvsPatchFields.H"
 #include "emptyFvPatch.H"
-#include "emptyFvPatchField.H"
-#include "emptyFvsPatchField.H"
 #include "IOobjectList.H"
 #include "mapDistributePolyMesh.H"
 #include "processorFvPatch.H"
@@ -123,13 +122,17 @@ Foam::parFvFieldDistributor::distributeField
     {
         if (patchFaceMaps_.set(patchi))
         {
-            // Clone local patch field
-            oldPatchFields.set(patchi, bfld[patchi].clone());
-
             distributedFvPatchFieldMapper mapper
             (
                 labelUList::null(),
                 patchFaceMaps_[patchi]
+            );
+
+            // Clone local patch field
+            oldPatchFields.set
+            (
+                patchi,
+                bfld[patchi].clone(fld.internalField())
             );
 
             // Map into local copy
@@ -159,7 +162,7 @@ Foam::parFvFieldDistributor::distributeField
                 (
                     pfld,
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, volMesh>::null(),
+                    fvPatchField<Type>::Internal::null(),
                     dummyMapper
                 )
             );
@@ -178,9 +181,9 @@ Foam::parFvFieldDistributor::distributeField
                 patchi,
                 fvPatchField<Type>::New
                 (
-                    emptyFvPatchField<Type>::typeName,
+                    fvPatchFieldBase::emptyType(),
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -268,13 +271,17 @@ Foam::parFvFieldDistributor::distributeField
     {
         if (patchFaceMaps_.set(patchi))
         {
-            // Clone local patch field
-            oldPatchFields.set(patchi, bfld[patchi].clone());
-
             distributedFvPatchFieldMapper mapper
             (
                 labelUList::null(),
                 patchFaceMaps_[patchi]
+            );
+
+            // Clone local patch field
+            oldPatchFields.set
+            (
+                patchi,
+                bfld[patchi].clone(fld.internalField())
             );
 
             // Map into local copy
@@ -303,7 +310,7 @@ Foam::parFvFieldDistributor::distributeField
                 (
                     pfld,
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, surfaceMesh>::null(),
+                    fvsPatchField<Type>::Internal::null(),
                     dummyMapper
                 )
             );
@@ -321,9 +328,9 @@ Foam::parFvFieldDistributor::distributeField
                 patchi,
                 fvsPatchField<Type>::New
                 (
-                    emptyFvsPatchField<Type>::typeName,
+                    fvsPatchFieldBase::emptyType(),
                     tgtMesh_.boundary()[patchi],
-                    DimensionedField<Type, surfaceMesh>::null()
+                    fvsPatchField<Type>::Internal::null()
                 )
             );
         }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,11 +109,18 @@ public:
 
         // Uses all default constructors
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual autoPtr<coordinateRotation> clone() const = 0;
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a coordinate rotation
+        template<class Derived>
+        static autoPtr<coordinateRotation> Clone(const Derived& crot)
+        {
+            return autoPtr<coordinateRotation>(new Derived(crot));
+        }
 
         //- Select construct the specified coordinate rotation type
         //

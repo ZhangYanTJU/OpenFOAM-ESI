@@ -170,16 +170,6 @@ Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
 template<class Type>
 Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
 (
-    const MappedFile<Type>& rhs
-)
-:
-    MappedFile<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
-Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
-(
     const MappedFile<Type>& rhs,
     const polyPatch& pp
 )
@@ -212,6 +202,16 @@ Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
         readerPtr_ = surfaceReader::New(readerFormat_, fName);
     }
 }
+
+
+template<class Type>
+Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
+(
+    const MappedFile<Type>& rhs
+)
+:
+    MappedFile<Type>(rhs, rhs.patch())
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

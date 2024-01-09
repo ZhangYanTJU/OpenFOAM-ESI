@@ -89,7 +89,7 @@ Foam::fvFieldDecomposer::decomposeField
             (
                 fvPatchFieldBase::calculatedType(),
                 procMesh_.boundary()[patchi],
-                DimensionedField<Type, volMesh>::null()
+                fvPatchField<Type>::Internal::null()
             )
         );
     }
@@ -262,7 +262,7 @@ Foam::fvFieldDecomposer::decomposeField
             (
                 fvsPatchFieldBase::calculatedType(),
                 procMesh_.boundary()[patchi],
-                DimensionedField<Type, surfaceMesh>::null()
+                fvsPatchField<Type>::Internal::null()
             )
         );
     }

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -86,13 +86,10 @@ public:
             const ${typeName}Function1_${TemplateType}& rhs
         ) = default;
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<${TemplateType}>> clone() const
         {
-            return tmp<Function1<${TemplateType}>>
-            (
-                new ${typeName}Function1_${TemplateType}(*this)
-            );
+            return Function1<${TemplateType}>::Clone(*this);
         }
 
 

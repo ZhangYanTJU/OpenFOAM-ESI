@@ -251,16 +251,6 @@ Foam::PatchFunction1Types::ConstantField<Type>::ConstantField
 template<class Type>
 Foam::PatchFunction1Types::ConstantField<Type>::ConstantField
 (
-    const ConstantField<Type>& rhs
-)
-:
-    ConstantField<Type>(rhs, rhs.patch())
-{}
-
-
-template<class Type>
-Foam::PatchFunction1Types::ConstantField<Type>::ConstantField
-(
     const ConstantField<Type>& rhs,
     const polyPatch& pp
 )
@@ -278,6 +268,16 @@ Foam::PatchFunction1Types::ConstantField<Type>::ConstantField
         value_ = uniformValue_;
     }
 }
+
+
+template<class Type>
+Foam::PatchFunction1Types::ConstantField<Type>::ConstantField
+(
+    const ConstantField<Type>& rhs
+)
+:
+    ConstantField<Type>(rhs, rhs.patch())
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

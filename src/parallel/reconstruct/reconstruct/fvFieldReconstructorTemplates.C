@@ -29,10 +29,9 @@ License
 #include "fvFieldReconstructor.H"
 #include "Time.H"
 #include "PtrList.H"
-#include "fvPatchFields.H"
 #include "emptyFvPatch.H"
-#include "emptyFvPatchField.H"
-#include "emptyFvsPatchField.H"
+#include "fvPatchFields.H"
+#include "fvsPatchFields.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -125,7 +124,7 @@ Foam::fvFieldReconstructor::reconstructField
                         (
                             procField.boundaryField()[patchi],
                             mesh_.boundary()[curBPatch],
-                            DimensionedField<Type, volMesh>::null(),
+                            fvPatchField<Type>::Internal::null(),
                             fvPatchFieldReconstructor
                             (
                                 mesh_.boundary()[curBPatch].size()
@@ -193,7 +192,7 @@ Foam::fvFieldReconstructor::reconstructField
                                 (
                                     mesh_.boundary()[curBPatch].type(),
                                     mesh_.boundary()[curBPatch],
-                                    DimensionedField<Type, volMesh>::null()
+                                    fvPatchField<Type>::Internal::null()
                                 )
                             );
                         }
@@ -225,9 +224,9 @@ Foam::fvFieldReconstructor::reconstructField
                 patchi,
                 fvPatchField<Type>::New
                 (
-                    emptyFvPatchField<Type>::typeName,
+                    fvPatchFieldBase::emptyType(),
                     mesh_.boundary()[patchi],
-                    DimensionedField<Type, volMesh>::null()
+                    fvPatchField<Type>::Internal::null()
                 )
             );
         }
@@ -323,7 +322,7 @@ Foam::fvFieldReconstructor::reconstructField
                         (
                             procField.boundaryField()[patchi],
                             mesh_.boundary()[curBPatch],
-                            DimensionedField<Type, surfaceMesh>::null(),
+                            fvsPatchField<Type>::Internal::null(),
                             fvPatchFieldReconstructor
                             (
                                 mesh_.boundary()[curBPatch].size()
@@ -379,8 +378,7 @@ Foam::fvFieldReconstructor::reconstructField
                                     (
                                         mesh_.boundary()[curBPatch].type(),
                                         mesh_.boundary()[curBPatch],
-                                        DimensionedField<Type, surfaceMesh>
-                                           ::null()
+                                        fvsPatchField<Type>::Internal::null()
                                     )
                                 );
                             }
@@ -418,9 +416,9 @@ Foam::fvFieldReconstructor::reconstructField
                 patchi,
                 fvsPatchField<Type>::New
                 (
-                    emptyFvsPatchField<Type>::typeName,
+                    fvsPatchFieldBase::emptyType(),
                     mesh_.boundary()[patchi],
-                    DimensionedField<Type, surfaceMesh>::null()
+                    fvsPatchField<Type>::Internal::null()
                 )
             );
         }

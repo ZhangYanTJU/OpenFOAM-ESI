@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,8 +59,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Function1Types_Polynomial_H
-#define Function1Types_Polynomial_H
+#ifndef Foam_Function1Types_Polynomial_H
+#define Foam_Function1Types_Polynomial_H
 
 #include "Function1.H"
 #include "Tuple2.H"
@@ -127,10 +127,10 @@ public:
         //- Copy constructor
         explicit Polynomial(const Polynomial& poly);
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<Type>> clone() const
         {
-            return tmp<Function1<Type>>(new Polynomial<Type>(*this));
+            return Function1<Type>::Clone(*this);
         }
 
 

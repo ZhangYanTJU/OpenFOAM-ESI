@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +40,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Function1Types_Uniform_H
-#define Function1Types_Uniform_H
+#ifndef Foam_Function1Types_Uniform_H
+#define Foam_Function1Types_Uniform_H
 
 #include "Constant.H"
 
@@ -89,10 +89,10 @@ public:
             Constant<Type>(entryName, dict, obrPtr)
         {}
 
-        //- Construct and return a clone
+        //- Return a clone
         virtual tmp<Function1<Type>> clone() const
         {
-            return tmp<Function1<Type>>(new Uniform<Type>(*this));
+            return Function1<Type>::Clone(*this);
         }
 };
 
