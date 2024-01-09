@@ -175,7 +175,7 @@ Foam::LBFGS::invHessianVectorProduct
 (
     const scalarField& vector,
     const label counter,
-    tmp<scalarField> diag
+    const refPtr<scalarField> diag
 )
 {
     // Sanity checks

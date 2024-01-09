@@ -429,12 +429,12 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::ShermanMorrisonPrecon
     // process, the diagonal matrix related to bound constraints is treated as
     // the initial matrix of the L-BFGS update.
 
-    // Constribution from bound constraints, treated as the seed of the
+    // Contribution from bound constraints, treated as the seed of the
     // L-BFGS inverse
-    tmp<scalarField> tdiag(nullptr);
+    refPtr<scalarField> tdiag(nullptr);
     if (includeBoundConstraints_)
     {
-        tdiag.reset(lTilda_()/ls_() + uTilda_()/us_());
+        tdiag.reset((lTilda_()/ls_() + uTilda_()/us_()).ptr());
     }
 
     // List of vectors to be used in the rank-1 updates related to the flow
@@ -462,7 +462,7 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::ShermanMorrisonRank1Update
 (
     const PtrList<scalarField>& r1Updates,
     const scalarField& p,
-    const tmp<scalarField>& diag,
+    const refPtr<scalarField>& diag,
     const scalarField& mult,
     label n
 )
@@ -472,7 +472,7 @@ Foam::tmp<Foam::scalarField> Foam::ISQP::ShermanMorrisonRank1Update
 
     if (n == 0)
     {
-        Ap = invHessianVectorProduct(p, counter_, diag);
+        Ap = invHessianVectorProduct(p, counter_, diag.shallowClone());
         return tAp;
     }
 
