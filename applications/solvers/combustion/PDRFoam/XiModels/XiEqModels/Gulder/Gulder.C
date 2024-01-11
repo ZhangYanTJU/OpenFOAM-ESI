@@ -69,7 +69,8 @@ Foam::XiEqModels::Gulder::~Gulder()
 Foam::tmp<Foam::volScalarField> Foam::XiEqModels::Gulder::XiEq() const
 {
     volScalarField up(sqrt((2.0/3.0)*turbulence_.k()));
-    const volScalarField& epsilon = turbulence_.epsilon();
+    const tmp<volScalarField> tepsilon(turbulence_.epsilon());
+    const volScalarField& epsilon = tepsilon();
 
     if (subGridSchelkin_)
     {

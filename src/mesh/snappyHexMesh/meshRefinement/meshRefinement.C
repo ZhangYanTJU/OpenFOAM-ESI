@@ -3805,26 +3805,27 @@ const Foam::dictionary& Foam::meshRefinement::subDict
     enum keyType::option matchOpt
 )
 {
-    const auto finder(dict.csearch(keyword, matchOpt));
+    const dictionary* dictptr = dict.findDict(keyword, matchOpt);
 
-    if (!finder.good())
+    if (!dictptr)
     {
-        auto& err = FatalIOErrorInFunction(dict);
-
-        err << "Entry '" << keyword << "' not found in dictionary "
+        FatalIOErrorInFunction(dict)
+            << "Entry '" << keyword
+            << "' not found (or not a dictionary) in dictionary "
             << dict.relativeName() << nl;
 
         if (noExit)
         {
+            // Dummy return
             return dictionary::null;
         }
         else
         {
-            err << exit(FatalIOError);
+            FatalIOError << exit(FatalIOError);
         }
     }
 
-    return finder.dict();
+    return *dictptr;
 }
 
 
@@ -3840,19 +3841,18 @@ Foam::ITstream& Foam::meshRefinement::lookup
 
     if (!eptr)
     {
-        auto& err = FatalIOErrorInFunction(dict);
-
-        err << "Entry '" << keyword << "' not found in dictionary "
+        FatalIOErrorInFunction(dict)
+            << "Entry '" << keyword << "' not found in dictionary "
             << dict.relativeName() << nl;
 
         if (noExit)
         {
-            // Fake entry
-            return dict.first()->stream();
+            // Dummy return
+            return ITstream::empty_stream();
         }
         else
         {
-            err << exit(FatalIOError);
+            FatalIOError << exit(FatalIOError);
         }
     }
 

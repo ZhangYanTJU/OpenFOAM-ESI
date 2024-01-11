@@ -132,9 +132,9 @@ void Foam::patchTransformedInterpolation::interpolate
     labelList pointDisplacementNSum(nPoints, Zero);
     vectorField pointDisplacementSum(nPoints, Zero);
 
-    forAll(patches_, patchI)
+    for (const label patchi : patches_)
     {
-        const polyPatch& patch(mesh().boundaryMesh()[patches_[patchI]]);
+        const polyPatch& patch = mesh().boundaryMesh()[patchi];
 
         forAll(patch, pFaceI)
         {
@@ -145,7 +145,7 @@ void Foam::patchTransformedInterpolation::interpolate
             const labelList cPoints(c.labels(mesh().faces()));
 
             // Consider movement around the face centre
-            const point& xOrigin(patch.faceCentres()[pFaceI]);
+            const point xOrigin(patch.faceCentres()[pFaceI]);
 
             // Mean translation
             const vector uMean(f.average(points, pointDisplacement));

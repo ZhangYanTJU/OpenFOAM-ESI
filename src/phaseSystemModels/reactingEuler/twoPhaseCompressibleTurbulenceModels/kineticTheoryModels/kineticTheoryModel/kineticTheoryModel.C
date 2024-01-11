@@ -266,7 +266,8 @@ Foam::RASModels::kineticTheoryModel::R() const
 Foam::tmp<Foam::volScalarField>
 Foam::RASModels::kineticTheoryModel::pPrime() const
 {
-    const volScalarField& rho = phase_.rho();
+    const tmp<volScalarField> trho(phase_.rho());
+    const volScalarField& rho = trho();
 
     tmp<volScalarField> tpPrime
     (
@@ -365,11 +366,13 @@ void Foam::RASModels::kineticTheoryModel::correct()
 {
     // Local references
     volScalarField alpha(max(alpha_, scalar(0)));
-    const volScalarField& rho = phase_.rho();
+    const tmp<volScalarField> trho(phase_.rho());
+    const volScalarField& rho = trho();
     const surfaceScalarField& alphaRhoPhi = alphaRhoPhi_;
     const volVectorField& U = U_;
-    const volVectorField& Uc_ =
+    const tmp<volVectorField> tUc =
         refCast<const twoPhaseSystem>(phase_.fluid()).otherPhase(phase_).U();
+    const volVectorField& Uc = tUc();
 
     const scalar sqrtPi = sqrt(constant::mathematical::pi);
     dimensionedScalar ThetaSmall("ThetaSmall", Theta_.dimensions(), 1e-6);
@@ -421,7 +424,7 @@ void Foam::RASModels::kineticTheoryModel::correct()
         volScalarField J2
         (
             "J2",
-            0.25*sqr(beta)*da*magSqr(U - Uc_)
+            0.25*sqr(beta)*da*magSqr(U - Uc)
            /(
                max(alpha, residualAlpha_)*rho
               *sqrtPi*(ThetaSqrt + ThetaSmallSqrt)

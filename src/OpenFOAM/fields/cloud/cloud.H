@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2019 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -171,6 +171,21 @@ public:
             )
             {
                 return obr.lookupObject<IOField<Type>>(fieldName);
+            }
+
+            //- Lookup an IOField within object registry
+            //  Fatal if not found or wrong type
+            //
+            //  Note: const char signature to avoid spurious
+            //  -Wdangling-reference with gcc-13
+            template<class Type>
+            static const IOField<Type>& lookupIOField
+            (
+                const char* fieldName,
+                const objectRegistry& obr
+            )
+            {
+                return obr.lookupObject<IOField<Type>>(word(fieldName));
             }
 };
 

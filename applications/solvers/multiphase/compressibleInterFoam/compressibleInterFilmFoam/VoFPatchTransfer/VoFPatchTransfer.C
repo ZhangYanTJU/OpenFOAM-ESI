@@ -160,7 +160,8 @@ void VoFPatchTransfer::correct
     const volScalarField& heVoF = thermo.thermo1().he();
     const volScalarField& TVoF = thermo.thermo1().T();
     const volScalarField CpVoF(thermo.thermo1().Cp());
-    const volScalarField& rhoVoF = thermo.thermo1().rho()();
+    const tmp<volScalarField> trhoVoF(thermo.thermo1().rho());
+    const volScalarField& rhoVoF = trhoVoF();
     const volScalarField& alphaVoF = thermo.alpha1();
 
     forAll(patchIDs_, pidi)

@@ -45,7 +45,8 @@ void Foam::fv::atmAmbientTurbSource::atmAmbientTurbSourceEpsilon
         (
             turbulenceModel::propertiesName
         );
-    const volScalarField& epsilon = turbPtr->epsilon();
+    const tmp<volScalarField> tepsilon(turbPtr->epsilon());
+    const volScalarField& epsilon = tepsilon();
 
     // (Heuristically derived from RS:Eq. 4, rhs-term:5)
     eqn +=
@@ -67,7 +68,9 @@ void Foam::fv::atmAmbientTurbSource::atmAmbientTurbSourceOmega
         (
             turbulenceModel::propertiesName
         );
-    const volScalarField& omega = turbPtr->omega();
+    const tmp<volScalarField> tomega(turbPtr->omega());
+    const volScalarField& omega = tomega();
+
     const volScalarField::Internal& beta =
         mesh_.lookupObjectRef<volScalarField::Internal>
         (
@@ -93,7 +96,8 @@ void Foam::fv::atmAmbientTurbSource::atmAmbientTurbSourceK
         (
             turbulenceModel::propertiesName
         );
-    const volScalarField& k = turbPtr->k();
+    const tmp<volScalarField> tk(turbPtr->k());
+    const volScalarField& k = tk();
 
     if (isEpsilon_)
     {
