@@ -97,7 +97,7 @@ Foam::eddyViscosity<BasicTurbulenceModel>::R() const
         if
         (
            !fvPatchField<symmTensor>::patchConstructorTablePtr_
-                ->found(patchFieldTypes[i])
+                ->contains(patchFieldTypes[i])
         )
         {
             patchFieldTypes[i] = fvPatchFieldBase::calculatedType();

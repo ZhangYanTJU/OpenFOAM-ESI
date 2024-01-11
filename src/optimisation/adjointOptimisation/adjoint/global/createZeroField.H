@@ -94,13 +94,17 @@ createZeroBoundaryPtr
     // on symmetry patches (not a good practice either way)
     const fvBoundaryMesh& bm = mesh.boundary();
     wordList actualPatchTypes(bm.size(), word::null);
-    forAll(actualPatchTypes, pI)
+    forAll(actualPatchTypes, patchi)
     {
-        auto patchTypeCstrIter =
-            fvPatchField<Type>::patchConstructorTablePtr_->cfind(bm[pI].type());
-        if (patchTypeCstrIter.good())
+        if
+        (
+            fvPatchField<Type>::patchConstructorTablePtr_->contains
+            (
+                bm[patchi].type()
+            )
+        )
         {
-            actualPatchTypes[pI] = bm[pI].type();
+            actualPatchTypes[patchi] = bm[patchi].type();
         }
     }
 

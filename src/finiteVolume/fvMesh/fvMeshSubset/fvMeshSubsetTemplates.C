@@ -159,7 +159,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     vf.boundaryField()[basePatchId],
                     subPatch,
-                    result(),
+                    result.internalField(),
                     mapper
                 )
             );
@@ -526,7 +526,7 @@ Foam::fvMeshSubset::interpolate
                 (
                     vf.boundaryField()[patchMap[patchi]],
                     subPatch,
-                    result(),
+                    result.internalField(),
                     directPointPatchFieldMapper(directAddressing)
                 )
             );
