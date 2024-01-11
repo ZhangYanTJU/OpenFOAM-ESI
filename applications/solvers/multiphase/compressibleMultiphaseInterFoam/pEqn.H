@@ -28,7 +28,8 @@
     forAllConstIters(mixture.phases(), phase)
     {
         const rhoThermo& thermo = phase().thermo();
-        const volScalarField& rho = thermo.rho()();
+        const tmp<volScalarField> trho(thermo.rho());
+        const volScalarField& rho = trho();
 
         p_rghEqnComps.set
         (

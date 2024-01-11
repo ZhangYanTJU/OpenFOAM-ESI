@@ -1371,7 +1371,7 @@ Foam::labelHashSet Foam::conformalVoronoiMesh::findRemainingProtrusionSet
         protrudingCells.write();
     }
 
-    return std::move(protrudingCells);
+    return protrudingCells;
 }
 
 

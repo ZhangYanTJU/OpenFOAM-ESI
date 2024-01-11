@@ -66,7 +66,8 @@ Foam::XiGModels::KTS::~KTS()
 Foam::tmp<Foam::volScalarField> Foam::XiGModels::KTS::G() const
 {
     volScalarField up(sqrt((2.0/3.0)*turbulence_.k()));
-    const volScalarField& epsilon = turbulence_.epsilon();
+    const tmp<volScalarField> tepsilon(turbulence_.epsilon());
+    const volScalarField& epsilon = tepsilon();
 
     volScalarField tauEta(sqrt(mag(thermo_.muu()/(thermo_.rhou()*epsilon))));
 

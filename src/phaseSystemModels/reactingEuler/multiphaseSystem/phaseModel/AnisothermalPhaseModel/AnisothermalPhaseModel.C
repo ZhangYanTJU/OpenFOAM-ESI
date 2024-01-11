@@ -93,7 +93,8 @@ Foam::tmp<Foam::fvScalarMatrix>
 Foam::AnisothermalPhaseModel<BasePhaseModel>::heEqn()
 {
     const volScalarField& alpha = *this;
-    const volScalarField& rho = this->rho();
+    const tmp<volScalarField> trho(this->rho());
+    const volScalarField& rho(trho());
 
     const tmp<volVectorField> tU(this->U());
     const volVectorField& U(tU());

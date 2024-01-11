@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd
+    Copyright (C) 2020,2023 OpenCFD Ltd
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,7 +46,8 @@ void Foam::fv::buoyancyTurbSource::buoyancyTurbSourceK
         (
             turbulenceModel::propertiesName
         );
-    const volScalarField& nut = turbPtr->nut();
+    const tmp<volScalarField> tnut(turbPtr->nut());
+    const volScalarField& nut = tnut();
 
     const dictionary& turbDict = turbPtr->coeffDict();
     const scalar Prt

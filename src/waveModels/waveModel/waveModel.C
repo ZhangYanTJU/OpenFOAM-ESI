@@ -90,8 +90,7 @@ void Foam::waveModel::initialiseGeometry()
     }
 
     // Local face centres
-    const vectorField& Cf = patch_.faceCentres();
-    const vectorField CfLocal(Rgl_ & Cf);
+    const vectorField CfLocal(Rgl_ & patch_.faceCentres());
     z_ = CfLocal.component(2);
 
     // Local face extents in z-direction

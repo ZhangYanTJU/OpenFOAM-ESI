@@ -45,7 +45,8 @@ void Foam::fv::atmPlantCanopyTurbSource::atmPlantCanopyTurbSourceEpsilon
         (
             turbulenceModel::propertiesName
         );
-    const volScalarField& epsilon = turbPtr->epsilon();
+    const tmp<volScalarField> tepsilon(turbPtr->epsilon());
+    const volScalarField& epsilon = tepsilon();
     const volVectorField::Internal& U = turbPtr->U()();
 
     eqn -= fvm::Sp(alpha()*rho()*(C1_ - C2_)*calcPlantCanopyTerm(U), epsilon);
@@ -66,7 +67,8 @@ void Foam::fv::atmPlantCanopyTurbSource::atmPlantCanopyTurbSourceOmega
         (
             turbulenceModel::propertiesName
         );
-    const volScalarField& omega = turbPtr->omega();
+    const tmp<volScalarField> tomega(turbPtr->omega());
+    const volScalarField& omega = tomega();
     const volVectorField::Internal& U = turbPtr->U()();
     const volScalarField::Internal& gamma =
         mesh_.lookupObjectRef<volScalarField::Internal>
