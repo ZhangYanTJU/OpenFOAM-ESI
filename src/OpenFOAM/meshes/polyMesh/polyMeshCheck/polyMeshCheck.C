@@ -123,13 +123,13 @@ bool Foam::polyMesh::checkFaceOrthogonality
     reduce(severeNonOrth, sumOp<label>());
     reduce(errorNonOrth, sumOp<label>());
 
-    const scalar maxNonOrth = radToDeg(::acos(clamp(minDDotS, -1, 1)));
-    const scalar aveNonOrth = radToDeg(::acos(clamp(sumDDotS/nSummed, -1, 1)));
-
     dictionary& meshDict = const_cast<dictionary&>(data().meshDict());
 
     if (nSummed > 0)
     {
+        scalar maxNonOrth = radToDeg(::acos(clamp(minDDotS, -1, 1)));
+        scalar aveNonOrth = radToDeg(::acos(clamp(sumDDotS/nSummed, -1, 1)));
+
         meshDict.set("maxNonOrth", maxNonOrth);
         meshDict.set("aveNonOrth", aveNonOrth);
 
