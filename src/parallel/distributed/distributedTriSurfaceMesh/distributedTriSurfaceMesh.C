@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1814,6 +1814,11 @@ Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
         // Now combine for all processors and convert to correct format.
         forAll(bbs, proci)
         {
+            // Inflate a bit for if triangle coincide with processor boundaries
+            for (auto& bb : bbs[proci])
+            {
+                bb.grow(mergeDist_);
+            }
             Pstream::listCombineGather(bbs[proci], plusEqOp<boundBox>());
         }
         Pstream::broadcast(bbs);
@@ -1864,6 +1869,11 @@ Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
         // Now combine for all processors and convert to correct format.
         forAll(bbs, proci)
         {
+            // Inflate a bit for if triangle coincide with processor boundaries
+            for (auto& bb : bbs[proci])
+            {
+                bb.grow(mergeDist_);
+            }
             Pstream::listCombineGather(bbs[proci], plusEqOp<boundBox>());
         }
         Pstream::broadcast(bbs);
@@ -2165,6 +2175,11 @@ Foam::distributedTriSurfaceMesh::independentlyDistributedBbs
         // Now combine for all processors and convert to correct format.
         forAll(bbs, proci)
         {
+            // Inflate a bit for if triangle coincide with processor boundaries
+            for (auto& bb : bbs[proci])
+            {
+                bb.grow(mergeDist_);
+            }
             Pstream::listCombineGather(bbs[proci], plusEqOp<boundBox>());
         }
         Pstream::broadcast(bbs);
@@ -2724,16 +2739,16 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
         distributionTypeNames_.readIfPresent
         (
             "distributionType",
-            dict_,
+            dict,
             distType_
         );
 
         // Merge distance
-        dict_.readIfPresent("mergeDistance", mergeDist_);
+        dict.readIfPresent("mergeDistance", mergeDist_);
 
         // Distribution type
         bool closed;
-        if (dict_.readIfPresent<bool>("closed", closed))
+        if (dict.readIfPresent<bool>("closed", closed))
         {
             surfaceClosed_ = closed;
         }
@@ -2741,7 +2756,7 @@ Foam::distributedTriSurfaceMesh::distributedTriSurfaceMesh
         outsideVolType_ = volumeType::names.getOrDefault
         (
             "outsideVolumeType",
-            dict_,
+            dict,
             outsideVolType_
         );
     }
