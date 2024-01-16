@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,7 +70,7 @@ static tmp<vectorField> getBoundedColours
     const scalar boundMax
 )
 {
-    const label boundDelta = (boundMax - boundMin + ROOTVSMALL);
+    const scalar boundDelta = (boundMax - boundMin + ROOTVSMALL);
 
     auto tresult = tmp<vectorField>::New(field.size());
     auto& result = tresult.ref();
@@ -167,7 +167,7 @@ Foam::scalarMinMax Foam::coordSetWriters::gltfWriter::getFieldLimits
 {
     const dictionary fieldDict = fieldInfoDict_.subOrEmptyDict(fieldName);
 
-    scalarMinMax limits;
+    scalarMinMax limits(-GREAT, GREAT);
 
     fieldDict.readIfPresent("min", limits.min());
     fieldDict.readIfPresent("max", limits.max());
@@ -191,7 +191,7 @@ Foam::coordSetWriters::gltfWriter::getAlphaField
     {
         // Not specified
     }
-    else if (!eptr->stream().peek().isString())
+    else if (!eptr->stream().peek().isWord())
     {
         // Value specified
 
