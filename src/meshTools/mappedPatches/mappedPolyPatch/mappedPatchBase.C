@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,6 +85,24 @@ Foam::mappedPatchBase::offsetModeNames_
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::mappedPatchBase::calcGeometry(PstreamBuffers& pBufs)
+{}
+
+
+void Foam::mappedPatchBase::movePoints
+(
+    PstreamBuffers& pBufs,
+    const pointField& p
+)
+{}
+
+
+void Foam::mappedPatchBase::updateMesh(PstreamBuffers& pBufs)
+{
+    clearOut();
+}
+
 
 Foam::autoPtr<Foam::fileName> Foam::mappedPatchBase::readDatabase
 (
@@ -1569,8 +1587,9 @@ Foam::mappedPatchBase::~mappedPatchBase()
 void Foam::mappedPatchBase::clearOut()
 {
     mapPtr_.reset(nullptr);
-    surfPtr_.reset(nullptr);
     AMIPtr_->upToDate(false);
+
+    //Note: no need to clear out surface since not mesh related
 }
 
 
@@ -1671,6 +1690,67 @@ const Foam::polyPatch& Foam::mappedPatchBase::samplePolyPatch() const
     }
 
     return nbrMesh.boundaryMesh()[patchi];
+}
+
+
+bool Foam::mappedPatchBase::upToDate() const
+{
+    const polyMesh& thisMesh = patch_.boundaryMesh().mesh();
+
+    bool thisUpToDate = thisMesh.upToDatePoints(updateMeshTime());
+    bool sampleUpToDate =
+    (
+        sameWorld()
+      ? sampleMesh().upToDatePoints(updateSampleMeshTime())
+      : true
+    );
+
+    if (!thisUpToDate && thisMesh.moving())
+    {
+        // Moving (but not topoChanging mesh) : do more accurate check:
+        // compare actual patch point position
+
+        thisUpToDate = true;
+        for (const label pointi : patch_.meshPoints())
+        {
+            const point& oldPt = thisMesh.oldPoints()[pointi];
+            const point& thisPt = thisMesh.points()[pointi];
+            if (mag(oldPt-thisPt) > SMALL)
+            {
+                thisUpToDate = false;
+                break;
+            }
+        }
+        Pstream::reduceAnd(thisUpToDate);
+
+        if (thisUpToDate)
+        {
+            updateMeshTime().setUpToDate();
+        }
+    }
+
+    if (!sampleUpToDate && sampleMesh().moving())
+    {
+        sampleUpToDate = true;
+        for (const label pointi : samplePolyPatch().meshPoints())
+        {
+            const point& oldPt = sampleMesh().oldPoints()[pointi];
+            const point& samplePt = sampleMesh().points()[pointi];
+            if (mag(oldPt-samplePt) > SMALL)
+            {
+                sampleUpToDate = false;
+                break;
+            }
+        }
+        Pstream::reduceAnd(sampleUpToDate);
+
+        if (sampleUpToDate)
+        {
+            updateSampleMeshTime().setUpToDate();
+        }
+    }
+
+    return (thisUpToDate && sampleUpToDate);
 }
 
 
