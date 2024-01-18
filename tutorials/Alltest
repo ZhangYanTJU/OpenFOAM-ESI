@@ -7,7 +7,7 @@
 #    \\/     M anipulation  |
 #------------------------------------------------------------------------------
 #     Copyright (C) 2011-2016 OpenFOAM Foundation
-#     Copyright (C) 2017-2023 OpenCFD Ltd.
+#     Copyright (C) 2017-2024 OpenCFD Ltd.
 #------------------------------------------------------------------------------
 # License
 #     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -150,6 +150,7 @@ modifyCaseControlDict()
 {
     for dict in $(find . -name "controlDict*" -type f)
     do
+        case "${dict}" in (*.orig) continue;; esac
         cp -f "${dict}" "${dict}.orig"
         sed \
             -e 's/\(startFrom[ \t]*\)[^ \t;]*;/\1 latestTime;/' \
