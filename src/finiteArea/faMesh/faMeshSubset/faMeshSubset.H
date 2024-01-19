@@ -102,12 +102,6 @@ protected:
         //- FatalError if subset has not been performed
         bool checkHasSubMesh() const;
 
-        //- No copy construct
-        faMeshSubset(const faMeshSubset&) = delete;
-
-        //- No copy assignment
-        void operator=(const faMeshSubset&) = delete;
-
 
 public:
 
@@ -115,6 +109,14 @@ public:
 
         //- Name for exposed internal edges (default: oldInternalEdges)
         static word exposedPatchName;
+
+    // Generated Methods
+
+        //- No copy construct
+        faMeshSubset(const faMeshSubset&) = delete;
+
+        //- No copy assignment
+        void operator=(const faMeshSubset&) = delete;
 
 
     // Constructors

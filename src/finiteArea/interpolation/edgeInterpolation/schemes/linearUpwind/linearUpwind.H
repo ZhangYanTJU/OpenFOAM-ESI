@@ -58,8 +58,16 @@ namespace Foam
 
 class linearUpwindWeight
 {
-
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        linearUpwindWeight(const linearUpwindWeight&) = delete;
+
+        //- No copy assignment
+        void operator=(const linearUpwindWeight&) = delete;
+
 
     linearUpwindWeight(Istream&)
     {}

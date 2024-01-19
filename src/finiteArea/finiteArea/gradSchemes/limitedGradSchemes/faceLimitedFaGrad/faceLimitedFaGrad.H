@@ -69,25 +69,26 @@ class faceLimitedGrad
 {
     // Private Data
 
+        //- Basic gradient scheme
         tmp<fa::gradScheme<Type>> basicGradScheme_;
 
         //- Limiter coefficient
         scalar k_;
 
 
-    // Private Member Functions
+public:
+
+    //- RunTime type information
+    TypeName("faceLimited");
+
+
+    // Generated Methods
 
         //- No copy construct
         faceLimitedGrad(const faceLimitedGrad&) = delete;
 
         //- No copy assignment
         void operator=(const faceLimitedGrad&) = delete;
-
-
-public:
-
-    //- RunTime type information
-    TypeName("faceLimited");
 
 
     // Constructors

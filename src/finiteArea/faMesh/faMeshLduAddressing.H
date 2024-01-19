@@ -73,7 +73,9 @@ class faMeshLduAddressing
         const lduSchedule& patchSchedule_;
 
 
-    // Private Member Functions
+public:
+
+    // Generated Methods
 
         //- No copy construct
         faMeshLduAddressing(const faMeshLduAddressing&) = delete;
@@ -81,8 +83,6 @@ class faMeshLduAddressing
         //- No copy assignment
         void operator=(const faMeshLduAddressing&) = delete;
 
-
-public:
 
     // Constructors
 

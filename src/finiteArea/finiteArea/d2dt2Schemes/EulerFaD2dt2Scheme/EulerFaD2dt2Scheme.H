@@ -67,17 +67,20 @@ class EulerFaD2dt2Scheme
         //- Return the previous time-step
         scalar deltaT0_() const;
 
-        //- No copy construct
-        EulerFaD2dt2Scheme(const EulerFaD2dt2Scheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const EulerFaD2dt2Scheme&) = delete;
-
 
 public:
 
     //- Runtime type information
     TypeName("Euler");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        EulerFaD2dt2Scheme(const EulerFaD2dt2Scheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const EulerFaD2dt2Scheme&) = delete;
 
 
     // Constructors

@@ -83,17 +83,19 @@ class boundedBackwardFaDdtScheme
         }
 
 
+public:
+
+    //- Runtime type information
+    TypeName("boundedBackward");
+
+
+    // Generated Methods
+
         //- No copy construct
         boundedBackwardFaDdtScheme(const boundedBackwardFaDdtScheme&) = delete;
 
         //- No copy assignment
         void operator=(const boundedBackwardFaDdtScheme&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    TypeName("boundedBackward");
 
 
     // Constructors

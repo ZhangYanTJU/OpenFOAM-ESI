@@ -99,6 +99,7 @@ class faMeshDistributor
         //- Debug: check addressing
         void checkAddressing() const;
 
+        //- Construct reconstruct mapping
         static mapDistributePolyMesh createReconstructMap
         (
             const faMesh& mesh,

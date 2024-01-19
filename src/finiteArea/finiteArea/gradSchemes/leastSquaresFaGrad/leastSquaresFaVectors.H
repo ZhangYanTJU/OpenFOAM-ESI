@@ -58,14 +58,14 @@ class leastSquaresFaVectors
 :
     public MeshObject<faMesh, Foam::MoveableMeshObject, leastSquaresFaVectors>
 {
-    // Private data
+    // Private Data
 
         //- Least-squares gradient vectors
         mutable edgeVectorField* pVectorsPtr_;
         mutable edgeVectorField* nVectorsPtr_;
 
 
-    // Private member functions
+    // Private Member Functions
 
         //- Construct Least-squares gradient vectors
         void makeLeastSquaresVectors() const;

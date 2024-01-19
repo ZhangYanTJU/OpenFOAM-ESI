@@ -77,19 +77,19 @@ class faGlobalMeshData
         labelList sharedPointAddr_;
 
 
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    ClassName("faGlobalMeshData");
+
+
+    // Generated Methods
 
         //- No copy construct
         faGlobalMeshData(const faGlobalMeshData&) = delete;
 
         //- No copy assignment
         void operator=(const faGlobalMeshData&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    ClassName("faGlobalMeshData");
 
 
     // Constructors

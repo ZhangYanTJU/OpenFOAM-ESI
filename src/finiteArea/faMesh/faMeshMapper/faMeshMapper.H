@@ -68,7 +68,7 @@ class mapPolyMesh;
 
 class faMeshMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const faMesh& mesh_;
@@ -110,7 +110,9 @@ class faMeshMapper
             faBoundaryMeshMapper boundaryMap_;
 
 
-    // Private Member Functions
+public:
+
+    // Generated Methods
 
         //- No copy construct
         faMeshMapper(const faMeshMapper&) = delete;
@@ -118,8 +120,6 @@ class faMeshMapper
         //- No copy assignment
         void operator=(const faMeshMapper&) = delete;
 
-
-public:
 
     // Constructors
 

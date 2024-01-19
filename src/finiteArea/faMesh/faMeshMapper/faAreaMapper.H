@@ -60,7 +60,7 @@ class faAreaMapper
 :
     public morphFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh mapper
         const faMesh& mesh_;
@@ -101,12 +101,6 @@ class faAreaMapper
 
     // Private Member Functions
 
-        //- No copy construct
-        faAreaMapper(const faAreaMapper&) = delete;
-
-        //- No copy assignment
-        void operator=(const faAreaMapper&) = delete;
-
         //- Calculate addressing
         void calcAddressing() const;
 
@@ -115,6 +109,15 @@ class faAreaMapper
 
 
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        faAreaMapper(const faAreaMapper&) = delete;
+
+        //- No copy assignment
+        void operator=(const faAreaMapper&) = delete;
+
 
     //- Construct from components
     faAreaMapper

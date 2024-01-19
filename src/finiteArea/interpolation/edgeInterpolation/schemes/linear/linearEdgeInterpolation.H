@@ -54,15 +54,19 @@ class linearEdgeInterpolation
 :
     virtual public edgeInterpolationScheme<Type>
 {
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const linearEdgeInterpolation&) = delete;
-
 public:
 
     //- Runtime type information
     TypeName("linear");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        linearEdgeInterpolation(const linearEdgeInterpolation&) = delete;
+
+        //- No copy assignment
+        void operator=(const linearEdgeInterpolation&) = delete;
 
 
     // Constructors

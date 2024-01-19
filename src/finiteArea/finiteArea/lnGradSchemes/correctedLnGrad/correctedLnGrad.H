@@ -58,16 +58,19 @@ class correctedLnGrad
 :
     public lnGradScheme<Type>
 {
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const correctedLnGrad&) = delete;
-
-
 public:
 
     //- Runtime type information
     TypeName("corrected");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        correctedLnGrad(const correctedLnGrad&) = delete;
+
+        //- No copy assignment
+        void operator=(const correctedLnGrad&) = delete;
 
 
     // Constructors

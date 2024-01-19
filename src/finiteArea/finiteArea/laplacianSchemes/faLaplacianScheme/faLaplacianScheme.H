@@ -79,15 +79,6 @@ protected:
         tmp<lnGradScheme<Type>> tlnGradScheme_;
 
 
-    // Private Member Functions
-
-        //- No copy construct
-        laplacianScheme(const laplacianScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const laplacianScheme&) = delete;
-
-
 public:
 
     // Declare run-time constructor selection tables
@@ -100,6 +91,15 @@ public:
             (const faMesh& mesh, Istream& schemeData),
             (mesh, schemeData)
         );
+
+
+    // Generated Methods
+
+        //- No copy construct
+        laplacianScheme(const laplacianScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const laplacianScheme&) = delete;
 
 
     // Constructors

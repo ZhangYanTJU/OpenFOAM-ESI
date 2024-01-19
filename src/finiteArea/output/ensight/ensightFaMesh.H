@@ -85,14 +85,17 @@ class ensightFaMesh
         //- Enforce consistent index/part numbering
         void renumber();
 
+
+public:
+
+    // Generated Methods
+
         //- No copy construct
         ensightFaMesh(const ensightFaMesh&) = delete;
 
         //- No copy assignment
         void operator=(const ensightFaMesh&) = delete;
 
-
-public:
 
     // Constructors
 
