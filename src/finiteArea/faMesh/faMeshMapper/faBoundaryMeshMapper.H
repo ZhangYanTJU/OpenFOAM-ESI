@@ -34,7 +34,6 @@ Description
 #ifndef faBoundaryMeshMapper_H
 #define faBoundaryMeshMapper_H
 
-#include "PtrList.H"
 #include "faPatchMapper.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

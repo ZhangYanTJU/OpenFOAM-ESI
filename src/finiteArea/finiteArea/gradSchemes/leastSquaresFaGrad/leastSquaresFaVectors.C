@@ -29,7 +29,6 @@ License
 #include "leastSquaresFaVectors.H"
 #include "edgeFields.H"
 #include "areaFields.H"
-#include "mapPolyMesh.H"
 #include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

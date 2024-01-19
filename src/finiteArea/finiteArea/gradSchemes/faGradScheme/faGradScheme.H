@@ -39,11 +39,8 @@ SourceFiles
 #ifndef faGradScheme_H
 #define faGradScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
-#include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

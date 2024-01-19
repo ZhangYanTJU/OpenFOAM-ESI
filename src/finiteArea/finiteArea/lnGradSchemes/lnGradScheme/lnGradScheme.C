@@ -30,7 +30,6 @@ License
 #include "lnGradScheme.H"
 #include "areaFields.H"
 #include "edgeFields.H"
-#include "HashTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

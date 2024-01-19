@@ -43,7 +43,6 @@ SourceFiles
 #include "MeshObject.H"
 #include "faMesh.H"
 #include "edgeFieldsFwd.H"
-#include "labelPair.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

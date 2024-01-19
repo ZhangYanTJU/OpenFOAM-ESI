@@ -28,11 +28,6 @@ License
 
 #include "edgeLimitedFaGrad.H"
 #include "gaussFaGrad.H"
-#include "faMesh.H"
-#include "areaFaMesh.H"
-#include "edgeFaMesh.H"
-#include "areaFields.H"
-#include "fixedValueFaPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

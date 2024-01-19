@@ -37,10 +37,8 @@ SourceFiles
 #ifndef faConvectionScheme_H
 #define faConvectionScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

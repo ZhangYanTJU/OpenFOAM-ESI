@@ -26,11 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "faPatchMapper.H"
-#include "faPatch.H"
-#include "faBoundaryMesh.H"
-#include "faMesh.H"
 #include "mapPolyMesh.H"
-#include "faceMapper.H"
 #include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

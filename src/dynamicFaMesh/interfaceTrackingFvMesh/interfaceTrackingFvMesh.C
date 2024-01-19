@@ -50,6 +50,7 @@ License
 #include "demandDrivenData.H"
 #include "unitConversion.H"
 #include "foamVtkIndPatchWriter.H"
+#include "calculatedFaPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

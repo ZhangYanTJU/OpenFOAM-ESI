@@ -28,8 +28,6 @@ License
 
 #include "gaussFaGrad.H"
 #include "facGrad.H"
-#include "areaFields.H"
-#include "edgeFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
