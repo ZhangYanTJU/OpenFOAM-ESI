@@ -69,19 +69,19 @@ class gaussGrad
         tmp<edgeInterpolationScheme<Type>> tinterpScheme_;
 
 
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    TypeName("Gauss");
+
+
+    // Generated Methods
 
         //- No copy construct
         gaussGrad(const gaussGrad&) = delete;
 
         //- No copy assignment
         void operator=(const gaussGrad&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    TypeName("Gauss");
 
 
     // Constructors

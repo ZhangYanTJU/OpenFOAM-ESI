@@ -332,12 +332,6 @@ class faMesh
 
     // Private Member Functions
 
-        //- No copy construct
-        faMesh(const faMesh&) = delete;
-
-        //- No copy assignment
-        void operator=(const faMesh&) = delete;
-
         //- Set indirect patch, removing any old one.
         //  No communication
         void initPatch() const;
@@ -522,6 +516,15 @@ public:
 
         //- The mesh sub-directory name (usually "faMesh")
         static word meshSubDir;
+
+
+    // Generated Methods
+
+        //- No copy construct
+        faMesh(const faMesh&) = delete;
+
+        //- No copy assignment
+        void operator=(const faMesh&) = delete;
 
 
     // Constructors

@@ -72,7 +72,7 @@ limitedLnGrad<Type>::correction
                 (1 - limitCoeff_)*mag(corr)
               + dimensionedScalar("small", corr.dimensions(), SMALL)
             ),
-            dimensionedScalar("one", dimless, 1.0)
+            dimensionedScalar(dimless, Foam::one{})
         )
     );
 

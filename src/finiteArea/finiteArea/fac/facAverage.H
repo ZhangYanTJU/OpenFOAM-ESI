@@ -34,7 +34,6 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-
 #ifndef facAverage_H
 #define facAverage_H
 

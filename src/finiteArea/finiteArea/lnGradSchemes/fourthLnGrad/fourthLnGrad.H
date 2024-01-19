@@ -58,16 +58,19 @@ class fourthLnGrad
 :
     public lnGradScheme<Type>
 {
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const fourthLnGrad&) = delete;
-
-
 public:
 
     //- Runtime type information
     TypeName("fourth");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        fourthLnGrad(const fourthLnGrad&) = delete;
+
+        //- No copy assignment
+        void operator=(const fourthLnGrad&) = delete;
 
 
     // Constructors
@@ -102,10 +105,7 @@ public:
         }
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
-        {
-            return true;
-        }
+        virtual bool corrected() const { return true; }
 
         //- Return the explicit correction to the fourthLnGrad
         //  for the given field

@@ -54,7 +54,11 @@ namespace Foam
 
 class GammaWeight
 {
-    scalar k_;
+    // Private Data
+
+        //- Model coefficient [0,1]
+        scalar k_;
+
 
 public:
 

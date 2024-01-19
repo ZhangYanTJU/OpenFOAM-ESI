@@ -129,6 +129,15 @@ public:
     ClassName("edgeInterpolation");
 
 
+    // Generated Methods
+
+        //- No copy construct
+        edgeInterpolation(const edgeInterpolation&) = delete;
+
+        //- No copy assignment
+        void operator=(const edgeInterpolation&) = delete;
+
+
     // Constructors
 
         //- Construct given an faMesh
@@ -142,10 +151,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const noexcept
-        {
-            return faMesh_;
-        }
+        const faMesh& mesh() const noexcept { return faMesh_; }
 
         //- Return reference to PN geodesic distance
         const edgeScalarField& lPN() const;

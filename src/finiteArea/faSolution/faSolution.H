@@ -61,11 +61,13 @@ class faSolution
 {
 public:
 
-    //- No copy construct
-    faSolution(const faSolution&) = delete;
+    // Generated Methods
 
-    //- No copy assignment
-    void operator=(const faSolution&) = delete;
+        //- No copy construct
+        faSolution(const faSolution&) = delete;
+
+        //- No copy assignment
+        void operator=(const faSolution&) = delete;
 
 
     // Constructors

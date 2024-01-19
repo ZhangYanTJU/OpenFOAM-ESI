@@ -34,7 +34,6 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-
 #ifndef facLnGrad_H
 #define facLnGrad_H
 

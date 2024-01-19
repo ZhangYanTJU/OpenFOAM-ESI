@@ -56,24 +56,25 @@ class blendedEdgeInterpolation
     public linearEdgeInterpolation<Type>,
     public upwindEdgeInterpolation<Type>
 {
-    // Private data
+    // Private Data
 
+        //- Blending factor
         const scalar blendingFactor_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        blendedEdgeInterpolation(const blendedEdgeInterpolation&) = delete;
-
-        //- No copy assignment
-        void operator=(const blendedEdgeInterpolation&) = delete;
 
 
 public:
 
     //- Runtime type information
     TypeName("blended");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        blendedEdgeInterpolation(const blendedEdgeInterpolation&) = delete;
+
+        //- No copy assignment
+        void operator=(const blendedEdgeInterpolation&) = delete;
 
 
     // Constructors

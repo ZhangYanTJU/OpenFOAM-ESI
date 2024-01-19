@@ -72,17 +72,20 @@ class backwardFaDdtScheme
         template<class GeoField>
         scalar deltaT0_(const GeoField&) const;
 
-        //- No copy construct
-        backwardFaDdtScheme(const backwardFaDdtScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const backwardFaDdtScheme&) = delete;
-
 
 public:
 
     //- Runtime type information
     TypeName("backward");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        backwardFaDdtScheme(const backwardFaDdtScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const backwardFaDdtScheme&) = delete;
 
 
     // Constructors

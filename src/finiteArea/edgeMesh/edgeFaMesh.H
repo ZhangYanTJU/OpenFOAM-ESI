@@ -65,25 +65,17 @@ public:
             GeoMesh<faMesh>(mesh)
         {}
 
+
     // Member Functions
 
         //- Return size. Number of internal edges
-        static label size(const Mesh& mesh)
-        {
-            return mesh.nInternalEdges();
-        }
+        static label size(const Mesh& mesh) { return mesh.nInternalEdges(); }
 
         //- Return size. Number of internal edges
-        label size() const
-        {
-            return size(mesh_);
-        }
+        label size() const { return size(mesh_); }
 
         //- Field of edge centres
-        const edgeVectorField& C() const
-        {
-            return mesh_.edgeCentres();
-        }
+        const edgeVectorField& C() const { return mesh_.edgeCentres(); }
 };
 
 

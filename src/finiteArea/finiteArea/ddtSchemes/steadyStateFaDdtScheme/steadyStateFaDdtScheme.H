@@ -58,19 +58,19 @@ class steadyStateFaDdtScheme
 :
     public fa::faDdtScheme<Type>
 {
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    TypeName("steadyState");
+
+
+    // Generated Methods
 
         //- No copy construct
         steadyStateFaDdtScheme(const steadyStateFaDdtScheme&) = delete;
 
         //- No copy assignment
         void operator=(const steadyStateFaDdtScheme&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    TypeName("steadyState");
 
 
     // Constructors

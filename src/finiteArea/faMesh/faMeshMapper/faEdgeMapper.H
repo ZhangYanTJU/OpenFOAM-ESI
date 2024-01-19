@@ -61,13 +61,10 @@ class faEdgeMapper
 :
     public morphFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const faMesh& mesh_;
-
-        //- Reference to mapPolyMesh
-        //const mapPolyMesh& mpm_;
 
         //- Old mesh size
         label sizeBeforeMapping_;
@@ -83,12 +80,6 @@ class faEdgeMapper
 
     // Private Member Functions
 
-        //- No copy construct
-        faEdgeMapper(const faEdgeMapper&) = delete;
-
-        //- No copy assignment
-        void operator=(const faEdgeMapper&) = delete;
-
         //- Calculate addressing
         void calcAddressing() const;
 
@@ -97,6 +88,15 @@ class faEdgeMapper
 
 
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        faEdgeMapper(const faEdgeMapper&) = delete;
+
+        //- No copy assignment
+        void operator=(const faEdgeMapper&) = delete;
+
 
     //- Construct from components
     faEdgeMapper

@@ -49,6 +49,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 template<class Type>
 class faMatrix;
 
@@ -68,21 +69,12 @@ class faDdtScheme
 :
     public refCount
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
+        //- Reference to mesh
         const faMesh& mesh_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        faDdtScheme(const faDdtScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const faDdtScheme&) = delete;
 
 
 public:
@@ -101,6 +93,15 @@ public:
             (const faMesh& mesh, Istream& schemeData),
             (mesh, schemeData)
         );
+
+
+    // Generated Methods
+
+        //- No copy construct
+        faDdtScheme(const faDdtScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const faDdtScheme&) = delete;
 
 
     // Constructors
@@ -135,10 +136,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         virtual tmp<GeometricField<Type, faPatchField, areaMesh>> facDdt
         (
