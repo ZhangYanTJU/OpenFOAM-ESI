@@ -30,7 +30,6 @@ License
 #include "processorPolyPatch.H"  // For newName()
 #include "addToRunTimeSelectionTable.H"
 #include "transformField.H"
-#include "faBoundaryMesh.H"
 #include "faMesh.H"
 #include "globalMeshData.H"
 

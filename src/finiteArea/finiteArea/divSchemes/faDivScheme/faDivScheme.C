@@ -27,8 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fa.H"
-#include "HashTable.H"
-#include "linearEdgeInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

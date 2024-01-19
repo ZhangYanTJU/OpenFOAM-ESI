@@ -37,10 +37,8 @@ SourceFiles
 #ifndef lnGradScheme_H
 #define lnGradScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

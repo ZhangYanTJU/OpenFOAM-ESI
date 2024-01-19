@@ -42,11 +42,8 @@ SourceFiles
 #ifndef Foam_edgeInterpolation_H
 #define Foam_edgeInterpolation_H
 
-#include "tmp.H"
-#include "scalar.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "className.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

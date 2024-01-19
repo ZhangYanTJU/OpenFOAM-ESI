@@ -36,7 +36,6 @@ SourceFiles
 #ifndef edgeInterpolate_H
 #define edgeInterpolate_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
 #include "edgeInterpolationScheme.H"

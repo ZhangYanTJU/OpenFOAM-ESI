@@ -45,7 +45,6 @@ SourceFiles
 #include "faPatchFieldMapper.H"
 #include "faceMapper.H"
 #include "faPatch.H"
-#include "primitiveFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

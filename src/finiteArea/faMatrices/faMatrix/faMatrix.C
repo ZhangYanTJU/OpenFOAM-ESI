@@ -28,12 +28,9 @@ License
 
 #include "areaFields.H"
 #include "edgeFields.H"
-#include "calculatedFaPatchFields.H"
 #include "extrapolatedCalculatedFaPatchFields.H"
-#include "zeroGradientFaPatchFields.H"
 #include "IndirectList.H"
 #include "UniformList.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 

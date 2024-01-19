@@ -37,11 +37,9 @@ SourceFiles
 #ifndef faD2dt2Scheme_H
 #define faD2dt2Scheme_H
 
-#include "tmp.H"
 #include "dimensionedType.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

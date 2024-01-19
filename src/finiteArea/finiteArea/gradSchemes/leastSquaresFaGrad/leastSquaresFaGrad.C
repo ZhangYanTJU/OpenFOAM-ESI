@@ -29,11 +29,6 @@ License
 #include "leastSquaresFaGrad.H"
 #include "leastSquaresFaVectors.H"
 #include "gaussFaGrad.H"
-#include "faMesh.H"
-#include "areaFaMesh.H"
-#include "edgeFaMesh.H"
-#include "GeometricField.H"
-#include "zeroGradientFaPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

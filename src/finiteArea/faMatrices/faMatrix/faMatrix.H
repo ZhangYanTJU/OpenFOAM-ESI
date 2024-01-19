@@ -46,10 +46,6 @@ Author
 #include "areaFields.H"
 #include "edgeFields.H"
 #include "lduMatrix.H"
-#include "tmp.H"
-#include "autoPtr.H"
-#include "dimensionedTypes.H"
-#include "className.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

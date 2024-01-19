@@ -29,7 +29,6 @@ License
 #include "faBoundaryMesh.H"
 #include "faMesh.H"
 #include "globalIndex.H"
-#include "primitiveMesh.H"
 #include "processorFaPatch.H"
 #include "wordRes.H"
 #include "PtrListOps.H"

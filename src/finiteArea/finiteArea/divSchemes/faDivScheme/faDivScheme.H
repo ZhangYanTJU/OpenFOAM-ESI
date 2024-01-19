@@ -38,11 +38,9 @@ SourceFiles
 #ifndef Foam_faDivScheme_H
 #define Foam_faDivScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
 #include "linearEdgeInterpolation.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

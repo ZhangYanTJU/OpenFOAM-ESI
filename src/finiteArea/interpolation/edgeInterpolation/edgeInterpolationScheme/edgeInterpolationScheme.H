@@ -37,10 +37,8 @@ SourceFiles
 #ifndef edgeInterpolationScheme_H
 #define edgeInterpolationScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "boundedBackwardFaDdtScheme.H"
-#include "facDiv.H"
 #include "faMatrices.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

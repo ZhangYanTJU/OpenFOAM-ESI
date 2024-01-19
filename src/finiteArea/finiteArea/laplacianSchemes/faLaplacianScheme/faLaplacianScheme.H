@@ -38,12 +38,9 @@ SourceFiles
 #ifndef Foam_faLaplacianScheme_H
 #define Foam_faLaplacianScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "linearEdgeInterpolation.H"
 #include "correctedLnGrad.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

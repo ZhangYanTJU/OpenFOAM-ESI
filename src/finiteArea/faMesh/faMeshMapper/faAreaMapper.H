@@ -43,9 +43,6 @@ SourceFiles
 
 #include "morphFieldMapper.H"
 #include "faMesh.H"
-#include "faceMapper.H"
-#include "HashSet.H"
-#include "mapPolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

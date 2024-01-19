@@ -39,10 +39,8 @@ SourceFiles
 #define skewCorrectedEdgeInterpolation_H
 
 #include "edgeInterpolationScheme.H"
-#include "linearEdgeInterpolation.H"
 #include "gaussFaGrad.H"
 #include "areaFields.H"
-#include "zeroGradientFaPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
