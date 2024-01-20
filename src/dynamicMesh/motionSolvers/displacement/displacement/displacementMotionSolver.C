@@ -57,7 +57,7 @@ Foam::displacementMotionSolver::displacementMotionSolver
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
-        pointMesh::New(mesh)
+        pointMesh::New(mesh, Foam::IOobject::READ_IF_PRESENT)
     )
 {}
 

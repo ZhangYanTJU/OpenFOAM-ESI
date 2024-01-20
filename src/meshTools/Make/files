@@ -216,6 +216,7 @@ $(pointSources)/searchableSurfaceToPoint/searchableSurfaceToPoint.C
 $(pointSources)/sphereToPoint/sphereToPoint.C
 $(pointSources)/surfaceToPoint/surfaceToPoint.C
 $(pointSources)/zoneToPoint/zoneToPoint.C
+$(pointSources)/patchToPoint/patchToPoint.C
 
 faceZoneSources = topoSet/faceZoneSources
 $(faceZoneSources)/topoSetFaceZoneSource/topoSetFaceZoneSource.C

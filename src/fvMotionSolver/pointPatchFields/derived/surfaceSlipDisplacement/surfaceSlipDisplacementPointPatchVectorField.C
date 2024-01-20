@@ -312,7 +312,12 @@ surfaceSlipDisplacementPointPatchVectorField
     pointPatchVectorField(p, iF, dict),
     surfacesDict_(dict.subDict("geometry")),
     projectMode_(projectModeNames_.get("projectMode", dict)),
-    projectDir_(dict.get<vector>("projectDirection")),
+    projectDir_
+    (
+        (projectMode_ == FIXEDNORMAL)
+      ? dict.get<vector>("projectDirection")
+      : Zero
+    ),
     wedgePlane_(dict.getOrDefault("wedgePlane", -1)),
     frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null))
 {}
@@ -425,9 +430,13 @@ void Foam::surfaceSlipDisplacementPointPatchVectorField::write
     pointPatchField<vector>::write(os);
     os.writeEntry("geometry", surfacesDict_);
     os.writeEntry("projectMode", projectModeNames_[projectMode_]);
-    os.writeEntry("projectDirection", projectDir_);
-    os.writeEntry("wedgePlane", wedgePlane_);
-
+    os.writeEntryIfDifferent<vector>
+    (
+        "projectDirection",
+        Zero,
+        projectDir_
+    );
+    os.writeEntryIfDifferent<label>("wedgePlane", -1, wedgePlane_);
     os.writeEntryIfDifferent<word>
     (
         "frozenPointsZone",

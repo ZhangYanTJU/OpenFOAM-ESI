@@ -84,7 +84,7 @@ Foam::facePointPatch::facePointPatch
     const pointBoundaryMesh& bm
 )
 :
-    pointPatch(bm),
+    pointPatch(p.name(), p.index(), bm, p.physicalType(), p.inGroups()),
     polyPatch_(p)
 {}
 

@@ -37,8 +37,11 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(pointMesh, 0);
+    defineTypeNameAndDebug(pointMesh, 0);
 }
+
+Foam::word Foam::pointMesh::meshSubDir = "pointMesh";
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -86,6 +89,45 @@ Foam::pointMesh::pointMesh(const polyMesh& pMesh)
     // Calculate the geometry for the patches (transformation tensors etc.)
     boundary_.calcGeometry();
 }
+
+
+Foam::pointMesh::pointMesh(const polyMesh& pMesh, const IOobject& io)
+:
+    MeshObject<polyMesh, Foam::UpdateableMeshObject, pointMesh>(pMesh),
+    GeoMesh<polyMesh>(pMesh),
+    boundary_(io, *this, pMesh.boundaryMesh())
+{
+    if (debug)
+    {
+        Pout<< "pointMesh::pointMesh(const polyMesh&): "
+            << "Constructing from IO " << io.objectRelPath()
+            << endl;
+    }
+
+    // Calculate the geometry for the patches (transformation tensors etc.)
+    boundary_.calcGeometry();
+}
+
+
+Foam::pointMesh::pointMesh
+(
+    const polyMesh& pMesh,
+    const IOobjectOption::readOption rOpt
+)
+:
+    pointMesh
+    (
+        pMesh,
+        IOobject
+        (
+            pMesh.name(),                // polyMesh region
+            pMesh.facesInstance(),       // polyMesh topology instance
+            pMesh.time(),
+            rOpt,
+            Foam::IOobject::NO_WRITE
+        )
+    )
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

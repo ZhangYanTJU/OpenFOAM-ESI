@@ -2,11 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | www.openfoam.com
+    \\  /    A nd           | Copyright (C) 2016 OpenFOAM Foundation
      \\/     M anipulation  |
--------------------------------------------------------------------------------
-    Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,37 +25,31 @@ License
 
 #include "pointPatch.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-namespace Foam
+Foam::autoPtr<Foam::pointPatch> Foam::pointPatch::New
+(
+    const word& name,
+    const dictionary& dict,
+    const label index,
+    const pointBoundaryMesh& bm
+)
 {
-    defineTypeNameAndDebug(pointPatch, 0);
+    // Similar to polyPatchNew but no support for generic since we want it
+    // to fall through to the construct-from-polyPatch
+    DebugInFunction << "Constructing pointPatch" << endl;
 
-//    int pointPatch::disallowGenericPointPatch
-//    (
-//        debug::debugSwitch("disallowGenericPointPatch", 0)
-//    );
+    const word patchType(dict.lookup("type"));
+    //dict.readIfPresent("geometricType", patchType);
 
-    defineRunTimeSelectionTable(pointPatch, dictionary);
-}
+    auto* ctorPtr = dictionaryConstructorTable(patchType);
 
+    if (!ctorPtr)
+    {
+        return nullptr;
+    }
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::pointPatch::write(Ostream& os) const
-{
-    os.writeKeyword("type") << type() << token::END_STATEMENT << nl;
-    patchIdentifier::write(os);
-}
-
-
-// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
-
-Foam::Ostream& Foam::operator<<(Ostream& os, const pointPatch& p)
-{
-    p.write(os);
-    os.check("Ostream& operator<<(Ostream& os, const pointPatch& p");
-    return os;
+    return autoPtr<pointPatch>(ctorPtr(name, dict, index, bm, patchType));
 }
 
 

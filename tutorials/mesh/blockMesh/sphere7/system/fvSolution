@@ -14,5 +14,20 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+solvers
+{
+    "cellDisplacement.*"
+    {
+        solver          GAMG;
+        tolerance       1e-08;
+        relTol          0;
+        smoother        GaussSeidel;
+    }
+}
+
+
+PIMPLE
+{}
+
 
 // ************************************************************************* //
