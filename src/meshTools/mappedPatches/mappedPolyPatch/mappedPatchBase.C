@@ -86,18 +86,6 @@ Foam::mappedPatchBase::offsetModeNames_
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::mappedPatchBase::calcGeometry(PstreamBuffers& pBufs)
-{}
-
-
-void Foam::mappedPatchBase::movePoints
-(
-    PstreamBuffers& pBufs,
-    const pointField& p
-)
-{}
-
-
 void Foam::mappedPatchBase::updateMesh(PstreamBuffers& pBufs)
 {
     clearOut();
@@ -1705,49 +1693,58 @@ bool Foam::mappedPatchBase::upToDate() const
       : true
     );
 
+
+    // Lambda to check for points on the patch being the same
+    auto checkPointMovement = []
+    (
+        const polyMesh& mesh,
+        const polyPatch& patch,
+        regIOobject& state
+    ) -> bool
+    {
+        bool upToDate = true;
+        const auto& oldPoints = mesh.oldPoints();
+        const auto& points = mesh.points();
+
+        for (const label pointi : patch.meshPoints())
+        {
+            const point& oldPt = oldPoints[pointi];
+            const point& currentPt = points[pointi];
+
+            if (mag(oldPt - currentPt) > SMALL)
+            {
+                upToDate = false;
+                break;
+            }
+        }
+
+        Pstream::reduceAnd(upToDate);
+
+        if (upToDate)
+        {
+            state.setUpToDate();
+        }
+
+        return upToDate;
+    };
+
+
     if (!thisUpToDate && thisMesh.moving())
     {
         // Moving (but not topoChanging mesh) : do more accurate check:
         // compare actual patch point position
 
-        thisUpToDate = true;
-        for (const label pointi : patch_.meshPoints())
-        {
-            const point& oldPt = thisMesh.oldPoints()[pointi];
-            const point& thisPt = thisMesh.points()[pointi];
-            if (mag(oldPt-thisPt) > SMALL)
-            {
-                thisUpToDate = false;
-                break;
-            }
-        }
-        Pstream::reduceAnd(thisUpToDate);
-
-        if (thisUpToDate)
-        {
-            updateMeshTime().setUpToDate();
-        }
+        thisUpToDate = checkPointMovement(thisMesh, patch_, updateMeshTime());
     }
 
     if (!sampleUpToDate && sampleMesh().moving())
     {
-        sampleUpToDate = true;
-        for (const label pointi : samplePolyPatch().meshPoints())
-        {
-            const point& oldPt = sampleMesh().oldPoints()[pointi];
-            const point& samplePt = sampleMesh().points()[pointi];
-            if (mag(oldPt-samplePt) > SMALL)
-            {
-                sampleUpToDate = false;
-                break;
-            }
-        }
-        Pstream::reduceAnd(sampleUpToDate);
-
-        if (sampleUpToDate)
-        {
-            updateSampleMeshTime().setUpToDate();
-        }
+        sampleUpToDate = checkPointMovement
+        (
+            sampleMesh(),
+            samplePolyPatch(),
+            updateSampleMeshTime()
+        );
     }
 
     return (thisUpToDate && sampleUpToDate);

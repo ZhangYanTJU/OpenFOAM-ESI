@@ -308,14 +308,16 @@ protected:
             {}
 
             //- Calculate the patch geometry
-            virtual void calcGeometry(PstreamBuffers&);
+            virtual void calcGeometry(PstreamBuffers&)
+            {}
 
             //- Initialise the patches for moving points
             virtual void initMovePoints(PstreamBuffers&, const pointField&)
             {}
 
             //- Correct patches after moving points
-            virtual void movePoints(PstreamBuffers&, const pointField&);
+            virtual void movePoints(PstreamBuffers&, const pointField&)
+            {}
 
             //- Initialise the update of the patch topology
             virtual void initUpdateMesh(PstreamBuffers&)
