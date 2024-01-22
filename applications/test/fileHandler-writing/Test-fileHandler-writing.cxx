@@ -56,8 +56,18 @@ int main(int argc, char *argv[])
 
     argList::noFunctionObjects();  // Disallow function objects
     argList::addVerboseOption("additional verbosity");
-    argList::addOption("output", "Begin output iteration (default: 10000)");
-    argList::addOption("count", "Number of writes (default: 1)");
+    argList::addOption
+    (
+        "output",
+        "N",
+        "Begin output iteration (default: 10000)"
+    );
+    argList::addOption
+    (
+        "count",
+        "N",
+        "Number of writes (default: 1)"
+    );
 
     #include "setRootCase.H"
     #include "createTime.H"
