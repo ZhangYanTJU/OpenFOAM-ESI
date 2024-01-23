@@ -43,7 +43,7 @@ static inline void writeMeasured_binary
     const UList<floatVector>& points
 )
 {
-    for (const floatVector& p : points)
+    for (const auto& p : points)
     {
         os.write(p.x());
         os.write(p.y());
@@ -59,7 +59,7 @@ static inline label writeMeasured_ascii
     const UList<floatVector>& points
 )
 {
-    for (const floatVector& p : points)
+    for (const auto& p : points)
     {
         os.writeInt(++pointId, 8);  // 1-index and an unusual width
         os.write(p.x());
@@ -79,75 +79,24 @@ static inline label writeMeasured_ascii
 bool Foam::ensightOutput::writeCloudPositions
 (
     ensightFile& os,
-    const fvMesh& mesh,
-    const word& cloudName,
-    bool exists
+    DynamicList<floatVector>& positions,
+    const globalIndex& procAddr
 )
 {
-    label nLocalParcels(0);
-    autoPtr<Cloud<passiveParticle>> parcelsPtr;
+    // Total number of parcels across all ranks
+    const label nTotParcels = procAddr.totalSize();
 
-    if (exists)
-    {
-        parcelsPtr.reset(new Cloud<passiveParticle>(mesh, cloudName, false));
-        nLocalParcels = parcelsPtr().size();
-    }
-
-    // Total number of parcels on all processes
-    const label nTotParcels = returnReduce(nLocalParcels, sumOp<label>());
+    bool noCloud(!procAddr.totalSize());
+    Pstream::broadcast(noCloud);
 
     if (UPstream::master())
     {
         os.beginParticleCoordinates(nTotParcels);
     }
 
-    if (!nTotParcels)
+    if (noCloud)
     {
-        return false;  // DONE
-    }
-
-
-    // Gather sizes (offsets irrelevant)
-    const globalIndex procAddr(globalIndex::gatherOnly{}, nLocalParcels);
-
-
-    DynamicList<floatVector> positions;
-    positions.reserve(UPstream::master() ? procAddr.maxSize() : nLocalParcels);
-
-    // Extract positions from parcel.
-    // Store as floatVector, since that is what Ensight will write anyhow
-
-    if (parcelsPtr)
-    {
-        const auto& parcels = *parcelsPtr;
-
-        positions.resize_nocopy(parcels.size());  // same as nLocalParcels
-
-        auto outIter = positions.begin();
-
-        if (std::is_same<float, vector::cmptType>::value)
-        {
-            for (const passiveParticle& p : parcels)
-            {
-                *outIter = p.position();
-                ++outIter;
-            }
-        }
-        else
-        {
-            for (const passiveParticle& p : parcels)
-            {
-                vector pos(p.position());
-
-                (*outIter).x() = narrowFloat(pos.x());
-                (*outIter).y() = narrowFloat(pos.y());
-                (*outIter).z() = narrowFloat(pos.z());
-
-                ++outIter;
-            }
-        }
-
-        parcelsPtr.reset(nullptr);
+        return false;  // All empty
     }
 
     if (UPstream::master())
@@ -178,6 +127,9 @@ bool Foam::ensightOutput::writeCloudPositions
         }
 
 
+        positions.clear();
+        positions.reserve_nocopy(procAddr.maxNonLocalSize());
+
         // Receive and write
         for (const label proci : procAddr.subProcs())
         {
@@ -186,6 +138,7 @@ bool Foam::ensightOutput::writeCloudPositions
             if (procSize)
             {
                 positions.resize_nocopy(procSize);
+
                 UIPstream::read
                 (
                     UPstream::commsTypes::scheduled,
@@ -205,7 +158,7 @@ bool Foam::ensightOutput::writeCloudPositions
             }
         }
     }
-    else
+    else if (UPstream::is_subrank())
     {
         if (positions.size())
         {
@@ -220,6 +173,88 @@ bool Foam::ensightOutput::writeCloudPositions
     }
 
     return true;
+}
+
+
+bool Foam::ensightOutput::writeCloudPositions
+(
+    ensightFile& os,
+    DynamicList<floatVector>& positions
+)
+{
+    return ensightOutput::writeCloudPositions
+    (
+        os,
+        positions,
+        // Gather sizes (offsets irrelevant)
+        globalIndex(globalIndex::gatherOnly{}, positions.size())
+    );
+}
+
+
+bool Foam::ensightOutput::writeCloudPositions
+(
+    ensightFile& os,
+    const fvMesh& mesh,
+    const word& cloudName,
+    bool exists
+)
+{
+    autoPtr<Cloud<passiveParticle>> parcelsPtr;
+
+    if (exists)
+    {
+        parcelsPtr.reset(new Cloud<passiveParticle>(mesh, cloudName, false));
+    }
+
+    const label nLocalParcels
+    (
+        parcelsPtr ? parcelsPtr->size() : 0
+    );
+
+    // Gather sizes (offsets irrelevant)
+    // and total number of parcels (all processes)
+    const globalIndex procAddr(globalIndex::gatherOnly{}, nLocalParcels);
+
+    // Extract positions from parcel.
+    // Store as floatVector, since that is what Ensight will write anyhow
+
+    DynamicList<floatVector> positions;
+    positions.reserve(UPstream::master() ? procAddr.maxSize() : nLocalParcels);
+
+    if (parcelsPtr)
+    {
+        const auto& parcels = *parcelsPtr;
+
+        positions.resize_nocopy(parcels.size());  // same as nLocalParcels
+
+        auto iter = positions.begin();
+
+        if (std::is_same<float, vector::cmptType>::value)
+        {
+            for (const auto& p : parcels)
+            {
+                *iter = p.position();
+                ++iter;
+            }
+        }
+        else
+        {
+            for (const auto& p : parcels)
+            {
+                const vector pos(p.position());
+
+                (*iter).x() = narrowFloat(pos.x());
+                (*iter).y() = narrowFloat(pos.y());
+                (*iter).z() = narrowFloat(pos.z());
+                ++iter;
+            }
+        }
+
+        parcelsPtr.reset(nullptr);
+    }
+
+    return ensightOutput::writeCloudPositions(os, positions, procAddr);
 }
 
 
