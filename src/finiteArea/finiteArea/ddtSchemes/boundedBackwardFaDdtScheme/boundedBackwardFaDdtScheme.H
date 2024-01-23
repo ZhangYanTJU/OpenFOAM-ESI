@@ -76,10 +76,8 @@ class boundedBackwardFaDdtScheme
             {
                 return GREAT;
             }
-            else
-            {
-                return deltaT0_();
-            }
+
+            return deltaT0_();
         }
 
 

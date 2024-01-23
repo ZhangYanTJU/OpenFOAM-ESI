@@ -91,22 +91,22 @@ tmp<areaVectorField> edgeLimitedGrad<scalar>::calcGrad
     const areaVectorField& C = mesh.areaCentres();
     const edgeVectorField& Cf = mesh.edgeCentres();
 
-    // create limiter
+    // Create limiter field
     scalarField limiter(vsf.internalField().size(), 1.0);
 
-    scalar rk = (1.0/k_ - 1.0);
+    const scalar rk = (1.0/k_ - 1.0);
 
     forAll(owner, edgei)
     {
-        label own = owner[edgei];
-        label nei = neighbour[edgei];
+        const label own = owner[edgei];
+        const label nei = neighbour[edgei];
 
-        scalar vsfOwn = vsf[own];
-        scalar vsfNei = vsf[nei];
+        const scalar vsfOwn = vsf[own];
+        const scalar vsfNei = vsf[nei];
 
         scalar maxEdge = max(vsfOwn, vsfNei);
         scalar minEdge = min(vsfOwn, vsfNei);
-        scalar maxMinEdge = rk*(maxEdge - minEdge);
+        const scalar maxMinEdge = rk*(maxEdge - minEdge);
         maxEdge += maxMinEdge;
         minEdge -= maxMinEdge;
 
@@ -114,7 +114,8 @@ tmp<areaVectorField> edgeLimitedGrad<scalar>::calcGrad
         limitEdge
         (
             limiter[own],
-            maxEdge - vsfOwn, minEdge - vsfOwn,
+            maxEdge - vsfOwn,
+            minEdge - vsfOwn,
             (Cf[edgei] - C[own]) & g[own]
         );
 
@@ -122,67 +123,53 @@ tmp<areaVectorField> edgeLimitedGrad<scalar>::calcGrad
         limitEdge
         (
             limiter[nei],
-            maxEdge - vsfNei, minEdge - vsfNei,
+            maxEdge - vsfNei,
+            minEdge - vsfNei,
             (Cf[edgei] - C[nei]) & g[nei]
         );
     }
 
-    const areaScalarField::Boundary& bsf = vsf.boundaryField();
+    // Lambda expression to update limiter for boundary edges
+    auto updateLimiter = [&](const label patchi, const scalarField& fld) -> void
+    {
+        const labelUList& pOwner = mesh.boundary()[patchi].edgeFaces();
+        const vectorField& pCf = Cf.boundaryField()[patchi];
 
+        forAll(pOwner, edgei)
+        {
+            const label own = pOwner[edgei];
+
+            const scalar vsfOwn = vsf[own];
+            const scalar vsfNei = fld[edgei];
+
+            scalar maxEdge = max(vsfOwn, vsfNei);
+            scalar minEdge = min(vsfOwn, vsfNei);
+            const scalar maxMinEdge = rk*(maxEdge - minEdge);
+            maxEdge += maxMinEdge;
+            minEdge -= maxMinEdge;
+
+            limitEdge
+            (
+                limiter[own],
+                maxEdge - vsfOwn,
+                minEdge - vsfOwn,
+                (pCf[edgei] - C[own]) & g[own]
+            );
+        }
+    };
+
+    const areaScalarField::Boundary& bsf = vsf.boundaryField();
     forAll(bsf, patchi)
     {
         const faPatchScalarField& psf = bsf[patchi];
 
-        const labelUList& pOwner = mesh.boundary()[patchi].edgeFaces();
-        const vectorField& pCf = Cf.boundaryField()[patchi];
-
         if (psf.coupled())
         {
-            const scalarField psfNei(psf.patchNeighbourField());
-
-            forAll(pOwner, pEdgei)
-            {
-                label own = pOwner[pEdgei];
-
-                scalar vsfOwn = vsf[own];
-                scalar vsfNei = psfNei[pEdgei];
-
-                scalar maxEdge = max(vsfOwn, vsfNei);
-                scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
-                maxEdge += maxMinEdge;
-                minEdge -= maxMinEdge;
-
-                limitEdge
-                (
-                    limiter[own],
-                    maxEdge - vsfOwn, minEdge - vsfOwn,
-                    (pCf[pEdgei] - C[own]) & g[own]
-                );
-            }
+            updateLimiter(patchi, psf.patchNeighbourField());
         }
         else if (psf.fixesValue())
         {
-            forAll(pOwner, pEdgei)
-            {
-                label own = pOwner[pEdgei];
-
-                scalar vsfOwn = vsf[own];
-                scalar vsfNei = psf[pEdgei];
-
-                scalar maxEdge = max(vsfOwn, vsfNei);
-                scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
-                maxEdge += maxMinEdge;
-                minEdge -= maxMinEdge;
-
-                limitEdge
-                (
-                    limiter[own],
-                    maxEdge - vsfOwn, minEdge - vsfOwn,
-                    (pCf[pEdgei] - C[own]) & g[own]
-                );
-            }
+            updateLimiter(patchi, psf);
         }
     }
 
@@ -226,35 +213,33 @@ tmp<areaTensorField> edgeLimitedGrad<vector>::calcGrad
     const areaVectorField& C = mesh.areaCentres();
     const edgeVectorField& Cf = mesh.edgeCentres();
 
-    // create limiter
+    // Create limiter
     scalarField limiter(vvf.internalField().size(), 1.0);
 
-    scalar rk = (1.0/k_ - 1.0);
+    const scalar rk = (1.0/k_ - 1.0);
 
     forAll(owner, edgei)
     {
-        label own = owner[edgei];
-        label nei = neighbour[edgei];
-
-        vector vvfOwn = vvf[own];
-        vector vvfNei = vvf[nei];
+        const label own = owner[edgei];
+        const label nei = neighbour[edgei];
 
         // owner side
-        vector gradf = (Cf[edgei] - C[own]) & g[own];
+        vector gradf((Cf[edgei] - C[own]) & g[own]);
 
-        scalar vsfOwn = gradf & vvfOwn;
-        scalar vsfNei = gradf & vvfNei;
+        scalar vsfOwn = gradf & vvf[own];
+        scalar vsfNei = gradf & vvf[nei];
 
         scalar maxEdge = max(vsfOwn, vsfNei);
         scalar minEdge = min(vsfOwn, vsfNei);
-        scalar maxMinEdge = rk*(maxEdge - minEdge);
+        const scalar maxMinEdge = rk*(maxEdge - minEdge);
         maxEdge += maxMinEdge;
         minEdge -= maxMinEdge;
 
         limitEdge
         (
             limiter[own],
-            maxEdge - vsfOwn, minEdge - vsfOwn,
+            maxEdge - vsfOwn,
+            minEdge - vsfOwn,
             magSqr(gradf)
         );
 
@@ -262,8 +247,8 @@ tmp<areaTensorField> edgeLimitedGrad<vector>::calcGrad
         // neighbour side
         gradf = (Cf[edgei] - C[nei]) & g[nei];
 
-        vsfOwn = gradf & vvfOwn;
-        vsfNei = gradf & vvfNei;
+        vsfOwn = gradf & vvf[own];
+        vsfNei = gradf & vvf[nei];
 
         maxEdge = max(vsfOwn, vsfNei);
         minEdge = min(vsfOwn, vsfNei);
@@ -271,78 +256,57 @@ tmp<areaTensorField> edgeLimitedGrad<vector>::calcGrad
         limitEdge
         (
             limiter[nei],
-            maxEdge - vsfNei, minEdge - vsfNei,
+            maxEdge - vsfNei,
+            minEdge - vsfNei,
             magSqr(gradf)
         );
     }
 
 
-    const areaVectorField::Boundary& bvf = vvf.boundaryField();
+    // Lambda expression to update limiter for boundary edges
+    auto updateLimiter = [&](const label patchi, const vectorField& fld) -> void
+    {
+        const labelUList& pOwner = mesh.boundary()[patchi].edgeFaces();
+        const vectorField& pCf = Cf.boundaryField()[patchi];
 
+        forAll(pOwner, edgei)
+        {
+            const label own = pOwner[edgei];
+
+            const vector gradf((pCf[edgei] - C[own]) & g[own]);
+
+            const scalar vsfOwn = gradf & vvf[own];
+            const scalar vsfNei = gradf & fld[edgei];
+
+            scalar maxEdge = max(vsfOwn, vsfNei);
+            scalar minEdge = min(vsfOwn, vsfNei);
+            const scalar maxMinEdge = rk*(maxEdge - minEdge);
+            maxEdge += maxMinEdge;
+            minEdge -= maxMinEdge;
+
+            limitEdge
+            (
+                limiter[own],
+                maxEdge - vsfOwn,
+                minEdge - vsfOwn,
+                magSqr(gradf)
+            );
+        }
+    };
+
+
+    const areaVectorField::Boundary& bvf = vvf.boundaryField();
     forAll(bvf, patchi)
     {
         const faPatchVectorField& psf = bvf[patchi];
 
-        const labelUList& pOwner = mesh.boundary()[patchi].edgeFaces();
-        const vectorField& pCf = Cf.boundaryField()[patchi];
-
         if (psf.coupled())
         {
-            const vectorField psfNei(psf.patchNeighbourField());
-
-            forAll(pOwner, pEdgei)
-            {
-                label own = pOwner[pEdgei];
-
-                vector vvfOwn = vvf[own];
-                vector vvfNei = psfNei[pEdgei];
-
-                vector gradf = (pCf[pEdgei] - C[own]) & g[own];
-
-                scalar vsfOwn = gradf & vvfOwn;
-                scalar vsfNei = gradf & vvfNei;
-
-                scalar maxEdge = max(vsfOwn, vsfNei);
-                scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
-                maxEdge += maxMinEdge;
-                minEdge -= maxMinEdge;
-
-                limitEdge
-                (
-                    limiter[own],
-                    maxEdge - vsfOwn, minEdge - vsfOwn,
-                    magSqr(gradf)
-                );
-            }
+            updateLimiter(patchi, psf.patchNeighbourField());
         }
         else if (psf.fixesValue())
         {
-            forAll(pOwner, pEdgei)
-            {
-                label own = pOwner[pEdgei];
-
-                vector vvfOwn = vvf[own];
-                vector vvfNei = psf[pEdgei];
-
-                vector gradf = (pCf[pEdgei] - C[own]) & g[own];
-
-                scalar vsfOwn = gradf & vvfOwn;
-                scalar vsfNei = gradf & vvfNei;
-
-                scalar maxEdge = max(vsfOwn, vsfNei);
-                scalar minEdge = min(vsfOwn, vsfNei);
-                scalar maxMinEdge = rk*(maxEdge - minEdge);
-                maxEdge += maxMinEdge;
-                minEdge -= maxMinEdge;
-
-                limitEdge
-                (
-                    limiter[own],
-                    maxEdge - vsfOwn, minEdge - vsfOwn,
-                    magSqr(gradf)
-                );
-            }
+            updateLimiter(patchi, psf);
         }
     }
 

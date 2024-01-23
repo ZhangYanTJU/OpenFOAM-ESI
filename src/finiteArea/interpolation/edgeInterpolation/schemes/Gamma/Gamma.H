@@ -76,7 +76,7 @@ public:
 
         // Rescale k_ to be >= 0 and <= 0.5 (TVD conformant)
         // and avoid the /0 when k_ = 0
-        k_ = max(k_/2.0, SMALL);
+        k_ = max(0.5*k_, SMALL);
     }
 
 
@@ -91,30 +91,19 @@ public:
         const vector& d
     ) const
     {
-        scalar magd = mag(d);
-        vector dHat = d/mag(d);
+        const vector dHat(normalised(d));
 
-        scalar gradf = (phiN - phiP)/magd;
-
-        scalar gradcf;
-        scalar udWeight;
-
-        if (faceFlux > 0)
-        {
-            gradcf = dHat & gradcP;
-            udWeight = 1;
-        }
-        else
-        {
-            gradcf = dHat & gradcN;
-            udWeight = 0;
-        }
+        // Choose gradc based on faceFlux
+        const vector& gradcPN = (faceFlux > 0) ? gradcP : gradcN;
+        const scalar udWeight = (faceFlux > 0) ? 1 : 0;
 
         // Stabilise for division
-        gradcf = stabilise(gradcf, SMALL);
+        const scalar gradcf = stabilise(dHat & gradcPN, SMALL);
 
-        scalar phict = 1 - 0.5*gradf/gradcf;
-        scalar limiter = clamp(phict/k_, zero_one{});
+        const scalar gradf = (phiN - phiP)/mag(d);
+
+        const scalar phict = 1 - 0.5*gradf/gradcf;
+        const scalar limiter = clamp(phict/k_, zero_one{});
 
         return lerp(udWeight, cdWeight, limiter);
     }
