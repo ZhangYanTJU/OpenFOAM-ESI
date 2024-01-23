@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2019 OpenCFD Ltd.
+    Copyright (C) 2015-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -338,14 +338,9 @@ void Foam::displacementLayeredMotionMotionSolver::cellZoneSolve
             patchi,
             new pointVectorField
             (
-                IOobject
+                mesh().newIOobject
                 (
-                    mesh().cellZones()[cellZoneI].name() + "_" + fz.name(),
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
+                    mesh().cellZones()[cellZoneI].name() + "_" + fz.name()
                 ),
                 pointDisplacement_  // to inherit the boundary conditions
             )
@@ -429,20 +424,18 @@ void Foam::displacementLayeredMotionMotionSolver::cellZoneSolve
     if (debug)
     {
         // Normalised distance
-        pointScalarField distance
+        auto tdistance = pointScalarField::New
         (
-            IOobject
+            IOobject::scopedName
             (
-                mesh().cellZones()[cellZoneI].name() + ":distance",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
+                mesh().cellZones()[cellZoneI].name(),
+                "distance"
             ),
+            IOobject::NO_REGISTER,
             pointMesh::New(mesh()),
             dimensionedScalar(dimLength, Zero)
         );
+        auto& distance = tdistance.ref();
 
         for (const label pointi : isZonePoint)
         {

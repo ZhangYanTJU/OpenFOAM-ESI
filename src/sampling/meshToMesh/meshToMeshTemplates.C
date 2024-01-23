@@ -218,14 +218,7 @@ Foam::tmp<Foam::Field<Type>> Foam::meshToMesh::mapSrcToTgt
     const CombineOp& cop
 ) const
 {
-    tmp<Field<Type>> tresult
-    (
-        new Field<Type>
-        (
-            tgtToSrcCellAddr_.size(),
-            Zero
-        )
-    );
+    auto tresult = tmp<Field<Type>>::New(tgtToSrcCellAddr_.size(), Zero);
 
     mapSrcToTgt(srcField, cop, tresult.ref());
 
@@ -423,14 +416,7 @@ Foam::tmp<Foam::Field<Type>> Foam::meshToMesh::mapTgtToSrc
     const CombineOp& cop
 ) const
 {
-    tmp<Field<Type>> tresult
-    (
-        new Field<Type>
-        (
-            srcToTgtCellAddr_.size(),
-            Zero
-        )
-    );
+    auto tresult = tmp<Field<Type>>::New(srcToTgtCellAddr_.size(), Zero);
 
     mapTgtToSrc(tgtField, cop, tresult.ref());
 
@@ -645,13 +631,13 @@ Foam::meshToMesh::mapSrcToTgt
     auto tresult =
         tmp<VolumeField<Type>>::New
         (
-            IOobject
+            tgtMesh.newIOobject
             (
-                type() + ":interpolate(" + field.name() + ")",
-                tgtMesh.time().timeName(),
-                tgtMesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::scopedName
+                (
+                    type(),
+                    "interpolate(" + field.name() + ")"
+                )
             ),
             tgtMesh,
             field.dimensions(),
@@ -876,13 +862,13 @@ Foam::meshToMesh::mapTgtToSrc
     auto tresult =
         tmp<VolumeField<Type>>::New
         (
-            IOobject
+            srcMesh.newIOobject
             (
-                type() + ":interpolate(" + field.name() + ")",
-                srcMesh.time().timeName(),
-                srcMesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::scopedName
+                (
+                    type(),
+                    "interpolate(" + field.name() + ")"
+                )
             ),
             srcMesh,
             field.dimensions(),

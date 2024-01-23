@@ -143,8 +143,8 @@ Foam::tmp<Foam::scalarField> Foam::edgeMeshTools::featureProximity
     const scalar searchDistance
 )
 {
-    tmp<scalarField> tfld(new scalarField(surf.size(), searchDistance));
-    scalarField& featureProximity = tfld.ref();
+    auto tfld = tmp<scalarField>::New(surf.size(), searchDistance);
+    auto& featureProximity = tfld.ref();
 
     Info<< "Extracting proximity of close feature points and "
         << "edges to the surface" << endl;

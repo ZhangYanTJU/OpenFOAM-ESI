@@ -46,7 +46,8 @@ Foam::tmp<GeoField> Foam::uniformInterpolate
             field0.time().timeName(),
             field0.db(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         weights[0]*(*fields[indices[0]])
     );

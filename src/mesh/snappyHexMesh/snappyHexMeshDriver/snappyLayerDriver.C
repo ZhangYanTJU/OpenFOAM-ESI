@@ -113,8 +113,8 @@ Foam::tmp<Foam::scalarField> Foam::snappyLayerDriver::avgPointData
     const scalarField& pointFld
 )
 {
-    tmp<scalarField> tfaceFld(new scalarField(pp.size(), Zero));
-    scalarField& faceFld = tfaceFld.ref();
+    auto tfaceFld = tmp<scalarField>::New(pp.size(), Zero);
+    auto& faceFld = tfaceFld.ref();
 
     forAll(pp.localFaces(), facei)
     {

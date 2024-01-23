@@ -224,8 +224,8 @@ Foam::rigidBodyMeshMotion::curPoints() const
     }
     else
     {
-        tmp<pointField> ttransformedPts(new pointField(mesh().points()));
-        pointField& transformedPts = ttransformedPts.ref();
+        auto ttransformedPts = tmp<pointField>::New(mesh().points());
+        auto& transformedPts = ttransformedPts.ref();
 
         UIndirectList<point>(transformedPts, pointIDs()) =
             pointField(newPoints.ref(), pointIDs());

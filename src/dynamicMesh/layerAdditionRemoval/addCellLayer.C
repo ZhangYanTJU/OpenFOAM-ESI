@@ -47,8 +47,8 @@ Foam::tmp<Foam::vectorField> Foam::layerAdditionRemoval::extrusionDir() const
     const pointField& points = mesh.points();
     const labelList& mp = masterFaceLayer.meshPoints();
 
-    tmp<vectorField> textrusionDir(new vectorField(mp.size()));
-    vectorField& extrusionDir = textrusionDir.ref();
+    auto textrusionDir = tmp<vectorField>::New(mp.size());
+    auto& extrusionDir = textrusionDir.ref();
 
     if (setLayerPairing())
     {

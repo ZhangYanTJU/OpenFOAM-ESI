@@ -195,10 +195,7 @@ public:
                 const tmp<scalarField>&
             ) const
             {
-                return tmp<Field<Type>>
-                (
-                    new Field<Type>(this->size(), Zero)
-                );
+                return tmp<Field<Type>>::New(this->size(), Foam::zero{});
             }
 
             //- Return the matrix source coefficients corresponding to the
@@ -208,30 +205,21 @@ public:
                 const tmp<scalarField>&
             ) const
             {
-                return tmp<Field<Type>>
-                (
-                    new Field<Type>(this->size(), Zero)
-                );
+                return tmp<Field<Type>>::New(this->size(), Foam::zero{});
             }
 
             //- Return the matrix diagonal coefficients corresponding to the
             //- evaluation of the gradient of this patchField
             tmp<Field<Type>> gradientInternalCoeffs() const
             {
-                return tmp<Field<Type>>
-                (
-                    new Field<Type>(this->size(), Zero)
-                );
+                return tmp<Field<Type>>::New(this->size(), Foam::zero{});
             }
 
             //- Return the matrix source coefficients corresponding to the
             //- evaluation of the gradient of this patchField
             tmp<Field<Type>> gradientBoundaryCoeffs() const
             {
-                return tmp<Field<Type>>
-                (
-                    new Field<Type>(this->size(), Zero)
-                );
+                return tmp<Field<Type>>::New(this->size(), Foam::zero{});
             }
 
             //- Manipulate matrix

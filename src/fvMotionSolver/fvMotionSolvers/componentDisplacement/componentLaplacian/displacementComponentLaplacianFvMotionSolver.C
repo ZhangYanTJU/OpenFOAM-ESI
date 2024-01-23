@@ -186,8 +186,8 @@ Foam::displacementComponentLaplacianFvMotionSolver::curPoints() const
     }
     else
     {
-        tmp<pointField> tcurPoints(new pointField(fvMesh_.points()));
-        pointField& curPoints = tcurPoints.ref();
+        auto tcurPoints = tmp<pointField>::New(fvMesh_.points());
+        auto& curPoints = tcurPoints.ref();
 
         curPoints.replace
         (
