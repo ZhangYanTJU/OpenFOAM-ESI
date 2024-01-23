@@ -138,14 +138,10 @@ void dynamicKEqn<BasicTurbulenceModel>::correctNut()
 template<class BasicTurbulenceModel>
 tmp<fvScalarMatrix> dynamicKEqn<BasicTurbulenceModel>::kSource() const
 {
-    return tmp<fvScalarMatrix>
+    return tmp<fvScalarMatrix>::New
     (
-        new fvScalarMatrix
-        (
-            k_,
-            dimVolume*this->rho_.dimensions()*k_.dimensions()
-            /dimTime
-        )
+        k_,
+        dimVolume*this->rho_.dimensions()*k_.dimensions()/dimTime
     );
 }
 

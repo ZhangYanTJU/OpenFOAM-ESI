@@ -53,21 +53,12 @@ void Foam::LESModels::IDDESDelta::calcDelta()
     // Wall-normal vectors
     const volVectorField& n = wallDist::New(mesh).n();
 
-    tmp<volScalarField> tfaceToFacenMax
+    auto tfaceToFacenMax = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "faceToFaceMax",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimensionedScalar(dimLength, Zero)
-        )
+        "faceToFaceMax",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimensionedScalar(dimLength, Zero)
     );
 
     scalarField& faceToFacenMax = tfaceToFacenMax.ref().primitiveFieldRef();
