@@ -32,24 +32,14 @@ License
 Foam::tmp<Foam::DimensionedField<Foam::vector, Foam::volMesh>>
 Foam::coalCloudList::UTrans() const
 {
-    tmp<volVectorField::Internal> tfld
+    auto tfld = volVectorField::Internal::New
     (
-        new volVectorField::Internal
-        (
-            IOobject
-            (
-                "UTransEff",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedVector(dimMass*dimVelocity, Zero)
-        )
+        "UTransEff",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedVector(dimMass*dimVelocity, Zero)
     );
-
-    volVectorField::Internal& fld = tfld.ref();
+    auto& fld = tfld.ref();
 
     forAll(*this, i)
     {
@@ -65,8 +55,8 @@ Foam::tmp<Foam::fvVectorMatrix> Foam::coalCloudList::SU
     volVectorField& U
 ) const
 {
-    tmp<fvVectorMatrix> tfvm(new fvVectorMatrix(U, dimForce));
-    fvVectorMatrix& fvm = tfvm.ref();
+    auto tfvm = tmp<fvVectorMatrix>::New(U, dimForce);
+    auto& fvm = tfvm.ref();
 
     forAll(*this, i)
     {
@@ -80,24 +70,14 @@ Foam::tmp<Foam::fvVectorMatrix> Foam::coalCloudList::SU
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::coalCloudList::hsTrans() const
 {
-    tmp<volScalarField::Internal> tfld
+    auto tfld = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                "hsTransEff",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimEnergy, Zero)
-        )
+        "hsTransEff",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimEnergy, Zero)
     );
-
-    volScalarField::Internal& fld = tfld.ref();
+    auto& fld = tfld.ref();
 
     forAll(*this, i)
     {
@@ -113,8 +93,8 @@ Foam::tmp<Foam::fvScalarMatrix> Foam::coalCloudList::Sh
     volScalarField& hs
 ) const
 {
-    tmp<fvScalarMatrix> tfvm(new fvScalarMatrix(hs, dimEnergy/dimTime));
-    fvScalarMatrix& fvm = tfvm.ref();
+    auto tfvm = tmp<fvScalarMatrix>::New(hs, dimEnergy/dimTime);
+    auto& fvm = tfvm.ref();
 
     forAll(*this, i)
     {
@@ -131,8 +111,8 @@ Foam::tmp<Foam::fvScalarMatrix> Foam::coalCloudList::SYi
     volScalarField& Yi
 ) const
 {
-    tmp<fvScalarMatrix> tfvm(new fvScalarMatrix(Yi, dimMass/dimTime));
-    fvScalarMatrix& fvm = tfvm.ref();
+    auto tfvm = tmp<fvScalarMatrix>::New(Yi, dimMass/dimTime);
+    auto& fvm = tfvm.ref();
 
     forAll(*this, i)
     {
@@ -146,24 +126,14 @@ Foam::tmp<Foam::fvScalarMatrix> Foam::coalCloudList::SYi
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::coalCloudList::rhoTrans() const
 {
-    tmp<volScalarField::Internal> tfld
+    auto tfld = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                "rhoTransEff",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimMass, Zero)
-        )
+        "rhoTransEff",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimMass, Zero)
     );
-
-    volScalarField::Internal& fld = tfld.ref();
+    auto& fld = tfld.ref();
 
     forAll(*this, i)
     {
@@ -177,29 +147,17 @@ Foam::coalCloudList::rhoTrans() const
 }
 
 
-
-
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::coalCloudList::Srho() const
 {
-    tmp<volScalarField::Internal> tfld
+    auto tfld = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                "rhoTransEff",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimDensity/dimTime, Zero)
-        )
+        "rhoTransEff",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimDensity/dimTime, Zero)
     );
-
-    volScalarField::Internal& fld = tfld.ref();
+    auto& fld = tfld.ref();
 
     forAll(*this, i)
     {
@@ -216,24 +174,14 @@ Foam::coalCloudList::Srho
     const label i
 ) const
 {
-    tmp<volScalarField::Internal> tfld
+    auto tfld = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                "rhoTransEff",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimDensity/dimTime, Zero)
-        )
+        "rhoTransEff",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimDensity/dimTime, Zero)
     );
-
-    volScalarField::Internal& fld = tfld.ref();
+    auto& fld = tfld.ref();
 
     forAll(*this, j)
     {
@@ -249,8 +197,8 @@ Foam::tmp<Foam::fvScalarMatrix> Foam::coalCloudList::Srho
     volScalarField& rho
 ) const
 {
-    tmp<fvScalarMatrix> tfvm(new fvScalarMatrix(rho, dimMass/dimTime));
-    fvScalarMatrix& fvm = tfvm.ref();
+    auto tfvm = tmp<fvScalarMatrix>::New(rho, dimMass/dimTime);
+    auto& fvm = tfvm.ref();
 
     forAll(*this, i)
     {

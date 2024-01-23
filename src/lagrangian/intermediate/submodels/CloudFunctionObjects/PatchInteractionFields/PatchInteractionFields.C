@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,7 +50,7 @@ void Foam::PatchInteractionFields<CloudType>::clearOrReset
 {
     if (fieldPtr)
     {
-        fieldPtr->primitiveFieldRef() = 0.0;
+        fieldPtr->primitiveFieldRef() = scalar(0);
     }
     else
     {
@@ -62,11 +62,17 @@ void Foam::PatchInteractionFields<CloudType>::clearOrReset
             (
                 IOobject
                 (
-                    this->owner().name() + ":" + this->modelName() + ":" + fieldName,
+                    IOobject::scopedName
+                    (
+                        this->owner().name(),
+                        this->modelName(),
+                        fieldName
+                    ),
                     mesh.time().timeName(),
                     mesh,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::NO_WRITE
+                    IOobject::NO_WRITE,
+                    IOobject::NO_REGISTER
                 ),
                 mesh,
                 dimensionedScalar(dims, Zero)

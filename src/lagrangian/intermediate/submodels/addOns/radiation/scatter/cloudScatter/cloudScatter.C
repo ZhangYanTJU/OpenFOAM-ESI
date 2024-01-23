@@ -72,30 +72,18 @@ Foam::radiation::cloudScatter::~cloudScatter()
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::cloudScatter::sigmaEff() const
 {
-    tmp<volScalarField> tsigma
+    auto tsigma = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "sigma",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "sigma",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 
-    forAll(cloudNames_, i)
+    for (const word& cloudName : cloudNames_)
     {
-        const thermoCloud& tc
-        (
-            mesh_.objectRegistry::lookupObject<thermoCloud>(cloudNames_[i])
-        );
+        const auto& tc =
+            mesh_.objectRegistry::lookupObject<thermoCloud>(cloudName);
 
         tsigma.ref() += tc.sigmap();
     }

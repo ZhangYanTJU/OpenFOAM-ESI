@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,7 +45,7 @@ inline Foam::MPPICParcel<ParcelType>::trackingData::trackingData
         (
             IOobject
             (
-                cloud.name() + ":volumeAverage",
+                IOobject::scopedName(cloud.name(), "volumeAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),
@@ -59,7 +59,7 @@ inline Foam::MPPICParcel<ParcelType>::trackingData::trackingData
         (
             IOobject
             (
-                cloud.name() + ":radiusAverage",
+                IOobject::scopedName(cloud.name(), "radiusAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),
@@ -73,7 +73,7 @@ inline Foam::MPPICParcel<ParcelType>::trackingData::trackingData
         (
             IOobject
             (
-                cloud.name() + ":rhoAverage",
+                IOobject::scopedName(cloud.name(), "rhoAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),
@@ -87,7 +87,7 @@ inline Foam::MPPICParcel<ParcelType>::trackingData::trackingData
         (
             IOobject
             (
-                cloud.name() + ":uAverage",
+                IOobject::scopedName(cloud.name(), "uAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),
@@ -101,7 +101,7 @@ inline Foam::MPPICParcel<ParcelType>::trackingData::trackingData
         (
             IOobject
             (
-                cloud.name() + ":uSqrAverage",
+                IOobject::scopedName(cloud.name(), "uSqrAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),
@@ -115,7 +115,7 @@ inline Foam::MPPICParcel<ParcelType>::trackingData::trackingData
         (
             IOobject
             (
-                cloud.name() + ":frequencyAverage",
+                IOobject::scopedName(cloud.name(), "frequencyAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),
@@ -129,7 +129,7 @@ inline Foam::MPPICParcel<ParcelType>::trackingData::trackingData
         (
             IOobject
             (
-                cloud.name() + ":massAverage",
+                IOobject::scopedName(cloud.name(), "massAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),
@@ -164,7 +164,7 @@ inline void Foam::MPPICParcel<ParcelType>::trackingData::updateAverages
         (
             IOobject
             (
-                cloud.name() + ":weightAverage",
+                IOobject::scopedName(cloud.name(), "weightAverage"),
                 cloud.db().time().timeName(),
                 cloud.mesh()
             ),

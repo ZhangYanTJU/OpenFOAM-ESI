@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -473,8 +473,9 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             cloudName + "Properties",
             mesh_.time().constant(),
             mesh_,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
     typeIdList_(particleProperties_.lookup("typeIdList")),
@@ -488,7 +489,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -496,7 +498,7 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
     (
         IOobject
         (
-            this->name() + ":collisionSelectionRemainder",
+            IOobject::scopedName(this->name(), "collisionSelectionRemainder"),
             mesh_.time().timeName(),
             mesh_
         ),
@@ -511,7 +513,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -523,7 +526,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -535,7 +539,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -547,7 +552,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -559,7 +565,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -571,7 +578,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -583,7 +591,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -595,7 +604,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -607,7 +617,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -621,7 +632,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -633,7 +645,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_
     ),
@@ -698,8 +711,9 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             cloudName + "Properties",
             mesh_.time().constant(),
             mesh_,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
     typeIdList_(particleProperties_.lookup("typeIdList")),
@@ -713,7 +727,8 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero),
@@ -723,7 +738,7 @@ Foam::DSMCCloud<ParcelType>::DSMCCloud
     (
         IOobject
         (
-            this->name() + ":collisionSelectionRemainder",
+            IOobject::scopedName(this->name(), "collisionSelectionRemainder"),
             mesh_.time().timeName(),
             mesh_
         ),
