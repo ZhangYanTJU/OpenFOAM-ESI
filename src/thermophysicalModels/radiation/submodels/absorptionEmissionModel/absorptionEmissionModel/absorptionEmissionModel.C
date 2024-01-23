@@ -69,22 +69,12 @@ Foam::radiation::absorptionEmissionModel::a(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::absorptionEmissionModel::aCont(const label bandI) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "aCont",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "aCont",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 }
 
@@ -92,22 +82,12 @@ Foam::radiation::absorptionEmissionModel::aCont(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::absorptionEmissionModel::aDisp(const label bandI) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "aDisp",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "aDisp",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 }
 
@@ -122,22 +102,12 @@ Foam::radiation::absorptionEmissionModel::e(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::absorptionEmissionModel::eCont(const label bandI) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "eCont",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "eCont",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 }
 
@@ -145,22 +115,12 @@ Foam::radiation::absorptionEmissionModel::eCont(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::absorptionEmissionModel::eDisp(const label bandI) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "eDisp",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "eDisp",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 }
 
@@ -175,22 +135,12 @@ Foam::radiation::absorptionEmissionModel::E(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::absorptionEmissionModel::ECont(const label bandI) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "ECont",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "ECont",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 }
 
@@ -198,22 +148,12 @@ Foam::radiation::absorptionEmissionModel::ECont(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::absorptionEmissionModel::EDisp(const label bandI) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "EDisp",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "EDisp",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 }
 

@@ -215,18 +215,13 @@ void Foam::radiation::P1::calculate()
     const dimensionedScalar a0("a0", a_.dimensions(), ROOTVSMALL);
 
     // Construct diffusion
-    const volScalarField gamma
+    const auto tgamma = volScalarField::New
     (
-        IOobject
-        (
-            "gammaRad",
-            G_.mesh().time().timeName(),
-            G_.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "gammaRad",
+        IOobject::REGISTER,  // used by boundary conditions
         1.0/(3.0*a_ + sigmaEff + a0)
     );
+    const auto& gamma = tgamma();
 
     // Solve G transport equation
     solve
@@ -254,21 +249,11 @@ void Foam::radiation::P1::calculate()
 
 Foam::tmp<Foam::volScalarField> Foam::radiation::P1::Rp() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Rp",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            4.0*absorptionEmission_->eCont()*physicoChemical::sigma
-        )
+        "Rp",
+        IOobject::NO_REGISTER,
+        4.0*absorptionEmission_->eCont()*physicoChemical::sigma
     );
 }
 

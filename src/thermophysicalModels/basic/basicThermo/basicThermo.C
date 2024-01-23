@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -285,8 +285,9 @@ Foam::basicThermo::basicThermo
             phasePropertyName(dictName, phaseName),
             mesh.time().constant(),
             mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
 
@@ -303,11 +304,12 @@ Foam::basicThermo::basicThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:alpha"),
+            phaseScopedName("thermo", "alpha"),
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero)
@@ -332,7 +334,8 @@ Foam::basicThermo::basicThermo
             mesh.time().constant(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         dict
     ),
@@ -350,11 +353,12 @@ Foam::basicThermo::basicThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:alpha"),
+            phaseScopedName("thermo", "alpha"),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero)
@@ -378,8 +382,9 @@ Foam::basicThermo::basicThermo
             dictionaryName,
             mesh.time().constant(),
             mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
 
@@ -396,11 +401,12 @@ Foam::basicThermo::basicThermo
     (
         IOobject
         (
-            phasePropertyName("thermo:alpha"),
+            phaseScopedName("thermo", "alpha"),
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         mesh,
         dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero)

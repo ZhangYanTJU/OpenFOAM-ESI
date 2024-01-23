@@ -218,25 +218,15 @@ Foam::tmp<Foam::volScalarField> Foam::heThermo<BasicThermo, MixtureType>::he
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> the
+    auto the = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "he",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            he_.dimensions()
-        )
+        "he",
+        IOobject::NO_REGISTER,
+        mesh,
+        he_.dimensions()
     );
+    auto& he = the.ref();
 
-    volScalarField& he = the.ref();
     scalarField& heCells = he.primitiveFieldRef();
     const scalarField& pCells = p;
     const scalarField& TCells = T;
@@ -274,8 +264,8 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::he
     const labelList& cells
 ) const
 {
-    tmp<scalarField> the(new scalarField(T.size()));
-    scalarField& he = the.ref();
+    auto the = tmp<scalarField>::New(T.size());
+    auto& he = the.ref();
 
     forAll(T, celli)
     {
@@ -294,8 +284,8 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::he
     const label patchi
 ) const
 {
-    tmp<scalarField> the(new scalarField(T.size()));
-    scalarField& he = the.ref();
+    auto the = tmp<scalarField>::New(T.size());
+    auto& he = the.ref();
 
     forAll(T, facei)
     {
@@ -313,25 +303,15 @@ Foam::heThermo<BasicThermo, MixtureType>::hc() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> thc
+    auto thc = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "hc",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            he_.dimensions()
-        )
+        "hc",
+        IOobject::NO_REGISTER,
+        mesh,
+        he_.dimensions()
     );
+    auto& hcf = thc.ref();
 
-    volScalarField& hcf = thc.ref();
     scalarField& hcCells = hcf.primitiveFieldRef();
 
     forAll(hcCells, celli)
@@ -363,8 +343,8 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::Cp
     const label patchi
 ) const
 {
-    tmp<scalarField> tCp(new scalarField(T.size()));
-    scalarField& cp = tCp.ref();
+    auto tCp = tmp<scalarField>::New(T.size());
+    auto& cp = tCp.ref();
 
     forAll(T, facei)
     {
@@ -404,25 +384,14 @@ Foam::heThermo<BasicThermo, MixtureType>::Cp() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> tCp
+    auto tCp = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Cp",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            dimEnergy/dimMass/dimTemperature
-        )
+        "Cp",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimEnergy/dimMass/dimTemperature
     );
-
-    volScalarField& cp = tCp.ref();
+    auto& cp = tCp.ref();
 
     forAll(this->T_, celli)
     {
@@ -458,8 +427,8 @@ Foam::heThermo<BasicThermo, MixtureType>::Cv
     const label patchi
 ) const
 {
-    tmp<scalarField> tCv(new scalarField(T.size()));
-    scalarField& cv = tCv.ref();
+    auto tCv = tmp<scalarField>::New(T.size());
+    auto& cv = tCv.ref();
 
     forAll(T, facei)
     {
@@ -499,25 +468,14 @@ Foam::heThermo<BasicThermo, MixtureType>::Cv() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> tCv
+    auto tCv = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Cv",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            dimEnergy/dimMass/dimTemperature
-        )
+        "Cv",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimEnergy/dimMass/dimTemperature
     );
-
-    volScalarField& cv = tCv.ref();
+    auto& cv = tCv.ref();
 
     forAll(this->T_, celli)
     {
@@ -549,8 +507,8 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::gamma
     const label patchi
 ) const
 {
-    tmp<scalarField> tgamma(new scalarField(T.size()));
-    scalarField& gamma = tgamma.ref();
+    auto tgamma = tmp<scalarField>::New(T.size());
+    auto& gamma = tgamma.ref();
 
     forAll(T, facei)
     {
@@ -568,25 +526,14 @@ Foam::heThermo<BasicThermo, MixtureType>::gamma() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> tgamma
+    auto tgamma = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "gamma",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            dimless
-        )
+        "gamma",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimless
     );
-
-    volScalarField& gamma = tgamma.ref();
+    auto& gamma = tgamma.ref();
 
     forAll(this->T_, celli)
     {
@@ -624,8 +571,8 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::Cpv
     const label patchi
 ) const
 {
-    tmp<scalarField> tCpv(new scalarField(T.size()));
-    scalarField& Cpv = tCpv.ref();
+    auto tCpv = tmp<scalarField>::New(T.size());
+    auto& Cpv = tCpv.ref();
 
     forAll(T, facei)
     {
@@ -643,25 +590,14 @@ Foam::heThermo<BasicThermo, MixtureType>::Cpv() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> tCpv
+    auto tCpv = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Cpv",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            dimEnergy/dimMass/dimTemperature
-        )
+        "Cpv",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimEnergy/dimMass/dimTemperature
     );
-
-    volScalarField& Cpv = tCpv.ref();
+    auto& Cpv = tCpv.ref();
 
     forAll(this->T_, celli)
     {
@@ -696,8 +632,8 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::CpByCpv
     const label patchi
 ) const
 {
-    tmp<scalarField> tCpByCpv(new scalarField(T.size()));
-    scalarField& CpByCpv = tCpByCpv.ref();
+    auto tCpByCpv = tmp<scalarField>::New(T.size());
+    auto& CpByCpv = tCpByCpv.ref();
 
     forAll(T, facei)
     {
@@ -715,25 +651,14 @@ Foam::heThermo<BasicThermo, MixtureType>::CpByCpv() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> tCpByCpv
+    auto tCpByCpv = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "CpByCpv",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            dimless
-        )
+        "CpByCpv",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimless
     );
-
-    volScalarField& CpByCpv = tCpByCpv.ref();
+    auto& CpByCpv = tCpByCpv.ref();
 
     forAll(this->T_, celli)
     {
@@ -776,8 +701,8 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::THE
     const labelList& cells
 ) const
 {
-    tmp<scalarField> tT(new scalarField(h.size()));
-    scalarField& T = tT.ref();
+    auto tT = tmp<scalarField>::New(h.size());
+    auto& T = tT.ref();
 
     forAll(h, celli)
     {
@@ -799,8 +724,9 @@ Foam::tmp<Foam::scalarField> Foam::heThermo<BasicThermo, MixtureType>::THE
 ) const
 {
 
-    tmp<scalarField> tT(new scalarField(h.size()));
-    scalarField& T = tT.ref();
+    auto tT = tmp<scalarField>::New(h.size());
+    auto& T = tT.ref();
+
     forAll(h, facei)
     {
         T[facei] = this->patchFaceMixture
@@ -821,25 +747,15 @@ Foam::tmp<Foam::volScalarField> Foam::heThermo<BasicThermo, MixtureType>::W
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volScalarField> tW
+    auto tW = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "W",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh,
-            dimMass/dimMoles
-        )
+        "W",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimMass/dimMoles
     );
+    auto& W = tW.ref();
 
-    volScalarField& W = tW.ref();
     scalarField& WCells = W.primitiveFieldRef();
 
     forAll(WCells, celli)
@@ -847,7 +763,7 @@ Foam::tmp<Foam::volScalarField> Foam::heThermo<BasicThermo, MixtureType>::W
         WCells[celli] = this->cellMixture(celli).W();
     }
 
-    volScalarField::Boundary& WBf = W.boundaryFieldRef();
+    auto& WBf = W.boundaryFieldRef();
 
     forAll(WBf, patchi)
     {

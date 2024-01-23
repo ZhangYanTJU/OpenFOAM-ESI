@@ -158,7 +158,7 @@ updateCoeffs()
 Foam::tmp<Foam::scalarField> Foam::radiation::
 greyDiffusiveViewFactorFixedValueFvPatchScalarField::qro(label bandI) const
 {
-    tmp<scalarField> tqrt(new scalarField(qro_));
+    auto tqrt = tmp<scalarField>::New(qro_);
 
     const viewFactor& radiation =
         db().lookupObject<viewFactor>("radiationProperties");

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2016 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,26 +70,17 @@ template<class CompType, class SolidThermo>
 inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::solidChemistryModel<CompType, SolidThermo>::RRs() const
 {
-    tmp<volScalarField::Internal> tRRs
+    auto tRRs = DimensionedField<scalar, volMesh>::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                "RRs",
-                this->time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            this->mesh(),
-            dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
-        )
+        "RRs",
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
+    auto& RRs = tRRs.ref();
 
     if (this->chemistry_)
     {
-        volScalarField::Internal& RRs = tRRs.ref();
         for (label i=0; i < nSolids_; i++)
         {
             RRs += RRs_[i];
@@ -103,27 +94,17 @@ template<class CompType, class SolidThermo>
 inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::solidChemistryModel<CompType, SolidThermo>::RRsHs() const
 {
-    tmp<DimensionedField<scalar, volMesh>> tRRsHs
+    auto tRRsHs = DimensionedField<scalar, volMesh>::New
     (
-        new DimensionedField<scalar, volMesh>
-        (
-            IOobject
-            (
-                "RRsHs",
-                this->time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            this->mesh(),
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
+        "RRsHs",
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );
+    auto& RRs = tRRsHs.ref();
 
     if (this->chemistry_)
     {
-        DimensionedField<scalar, volMesh>& RRs = tRRsHs.ref();
-
         const volScalarField& T =  this->solidThermo().T();
         const volScalarField& p =  this->solidThermo().p();
 

@@ -65,17 +65,10 @@ Foam::surfaceTensionModels::constant::~constant()
 Foam::tmp<Foam::volScalarField>
 Foam::surfaceTensionModels::constant::sigma() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "sigma",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "sigma",
+        IOobject::NO_REGISTER,
         mesh_,
         sigma_
     );

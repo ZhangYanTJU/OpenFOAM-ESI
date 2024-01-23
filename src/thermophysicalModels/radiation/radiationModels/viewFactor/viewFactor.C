@@ -1133,17 +1133,10 @@ void Foam::radiation::viewFactor::calculate()
 
 Foam::tmp<Foam::volScalarField> Foam::radiation::viewFactor::Rp() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "Rp",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "Rp",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar
         (
@@ -1156,17 +1149,10 @@ Foam::tmp<Foam::volScalarField> Foam::radiation::viewFactor::Rp() const
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiation::viewFactor::Ru() const
 {
-    return tmp<DimensionedField<scalar, volMesh>>::New
+    return DimensionedField<scalar, volMesh>::New
     (
-        IOobject
-        (
-            "Ru",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "Ru",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );

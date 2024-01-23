@@ -433,20 +433,8 @@ turbulentTemperatureCoupledBaffleMixedFvPatchScalarField::coeffs
         << "which has more functionalities and it can handle "
         << "the assemble coupled option for energy. "
         << abort(FatalError);
-    /*
-    const label index(this->patch().index());
 
-    const label nSubFaces(matrix.lduMesh().cellBoundMap()[mat][index].size());
-
-    Field<scalar> mapCoeffs(nSubFaces, Zero);
-
-    label subFaceI = 0;
-    forAll(*this, faceI)
-    {
-
-    }
-    */
-    return tmp<Field<scalar>>(new Field<scalar>());
+    return nullptr;
 }
 
 

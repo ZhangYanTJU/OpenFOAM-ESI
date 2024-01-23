@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -219,24 +219,15 @@ Foam::heSolidThermo<BasicSolidThermo, MixtureType>::Kappa() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
-    tmp<volVectorField> tKappa
+    auto tKappa = volVectorField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                "Kappa",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            dimEnergy/dimTime/dimLength/dimTemperature
-        )
+        "Kappa",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimEnergy/dimTime/dimLength/dimTemperature
     );
+    auto& Kappa = tKappa.ref();
 
-    volVectorField& Kappa = tKappa.ref();
     vectorField& KappaCells = Kappa.primitiveFieldRef();
     const scalarField& TCells = this->T_;
     const scalarField& pCells = this->p_;
@@ -286,9 +277,9 @@ Foam::heSolidThermo<BasicSolidThermo, MixtureType>::Kappa
 {
     const scalarField& pp = this->p_.boundaryField()[patchi];
     const scalarField& Tp = this->T_.boundaryField()[patchi];
-    tmp<vectorField> tKappa(new vectorField(pp.size()));
 
-    vectorField& Kappap = tKappa.ref();
+    auto tKappa = tmp<vectorField>::New(pp.size());
+    auto& Kappap = tKappa.ref();
 
     forAll(Tp, facei)
     {

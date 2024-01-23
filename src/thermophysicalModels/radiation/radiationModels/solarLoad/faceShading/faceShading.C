@@ -214,22 +214,15 @@ void Foam::faceShading::calculate()
 
     if (debug)
     {
-        auto thitFaces = tmp<surfaceScalarField>::New
+        auto thitFaces = surfaceScalarField::New
         (
-            IOobject
-            (
-                "hitFaces",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            "hitFaces",
+            IOobject::NO_REGISTER,
             mesh_,
             dimensionedScalar(dimless, Zero)
         );
+        auto& hitFaces = thitFaces.ref();
 
-        surfaceScalarField& hitFaces = thitFaces.ref();
         surfaceScalarField::Boundary& hitFacesBf = hitFaces.boundaryFieldRef();
 
         hitFacesBf = 0.0;

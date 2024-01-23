@@ -804,7 +804,7 @@ tmp<Field<scalar>> turbulentTemperatureRadCoupledMixedFvPatchScalarField::coeffs
         << "the assemble coupled option for energy. "
         << abort(FatalError);
 
-    return tmp<Field<scalar>>(new Field<scalar>());
+    return nullptr;
 }
 
 

@@ -83,16 +83,10 @@ void Foam::radiation::opaqueSolid::calculate()
 
 Foam::tmp<Foam::volScalarField> Foam::radiation::opaqueSolid::Rp() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "Rp",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "Rp",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar
         (
@@ -105,16 +99,10 @@ Foam::tmp<Foam::volScalarField> Foam::radiation::opaqueSolid::Rp() const
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiation::opaqueSolid::Ru() const
 {
-    return tmp<volScalarField::Internal>::New
+    return volScalarField::Internal::New
     (
-        IOobject
-        (
-            "Ru",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "Ru",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
@@ -125,5 +113,6 @@ Foam::label Foam::radiation::opaqueSolid::nBands() const
 {
     return absorptionEmission_->nBands();
 }
+
 
 // ************************************************************************* //
