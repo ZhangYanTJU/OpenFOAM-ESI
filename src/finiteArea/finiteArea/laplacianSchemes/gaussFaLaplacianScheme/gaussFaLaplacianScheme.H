@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef gaussFaLaplacianScheme_H
-#define gaussFaLaplacianScheme_H
+#ifndef Foam_gaussFaLaplacianScheme_H
+#define Foam_gaussFaLaplacianScheme_H
 
 #include "faLaplacianScheme.H"
 
@@ -76,7 +76,7 @@ public:
 
     // Constructors
 
-        //- Construct null
+        //- Construct from mesh
         gaussLaplacianScheme(const faMesh& mesh)
         :
             laplacianScheme<Type>(mesh)

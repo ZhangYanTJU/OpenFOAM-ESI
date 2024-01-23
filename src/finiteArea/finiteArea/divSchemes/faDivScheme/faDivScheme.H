@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faDivScheme_H
-#define faDivScheme_H
+#ifndef Foam_faDivScheme_H
+#define Foam_faDivScheme_H
 
 #include "tmp.H"
 #include "areaFieldsFwd.H"
@@ -50,9 +50,8 @@ SourceFiles
 namespace Foam
 {
 
-template<class Type>
-class faMatrix;
-
+// Forward Declarations
+template<class Type> class faMatrix;
 class faMesh;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -69,12 +68,12 @@ class divScheme
 :
     public refCount
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         const faMesh& mesh_;
+
         tmp<edgeInterpolationScheme<Type>> tinterpScheme_;
 
 
@@ -113,9 +112,23 @@ public:
         //- Construct from mesh and Istream
         divScheme(const faMesh& mesh, Istream& is)
         :
-            mesh_(mesh),
-            tinterpScheme_(edgeInterpolationScheme<Type>::New(mesh, is))
-        {}
+            mesh_(mesh)
+        {
+            if (is.eof())
+            {
+                tinterpScheme_.reset
+                (
+                    new linearEdgeInterpolation<Type>(mesh)
+                );
+            }
+            else
+            {
+                tinterpScheme_.reset
+                (
+                    edgeInterpolationScheme<Type>::New(mesh, is)
+                );
+            }
+        }
 
 
     // Selectors
@@ -129,7 +142,7 @@ public:
 
 
     //- Destructor
-    virtual ~divScheme();
+    virtual ~divScheme() = default;
 
 
     // Member Functions

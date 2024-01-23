@@ -42,8 +42,8 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::source
 {
     checkApplied();
 
-    tmp<fvMatrix<Type>> tmtx(new fvMatrix<Type>(field, ds));
-    fvMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<fvMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fv::option& source : *this)
     {
@@ -129,8 +129,8 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::operator()
         rho.dimensions()*field.dimensions()/dimTime*dimVolume
     );
 
-    tmp<fvMatrix<Type>> tmtx(new fvMatrix<Type>(field, ds));
-    fvMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<fvMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fv::option& source : *this)
     {
@@ -198,8 +198,8 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::fv::optionList::operator()
        /dimTime*dimVolume
     );
 
-    tmp<fvMatrix<Type>> tmtx(new fvMatrix<Type>(field, ds));
-    fvMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<fvMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fv::option& source : *this)
     {

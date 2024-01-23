@@ -184,19 +184,11 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
     }
     else
     {
-        tmp<surfaceScalarField> tlimiterField
+        auto tlimiterField = surfaceScalarField::New
         (
-            new surfaceScalarField
-            (
-                IOobject
-                (
-                    limiterFieldName,
-                    mesh.time().timeName(),
-                    mesh
-                ),
-                mesh,
-                dimless
-            )
+            limiterFieldName,
+            mesh,
+            dimless
         );
 
         calcLimiter(phi, tlimiterField.ref());

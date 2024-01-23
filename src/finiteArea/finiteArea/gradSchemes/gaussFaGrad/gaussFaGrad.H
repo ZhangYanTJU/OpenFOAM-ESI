@@ -37,8 +37,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef gaussFaGrad_H
-#define gaussFaGrad_H
+#ifndef Foam_gaussFaGrad_H
+#define Foam_gaussFaGrad_H
 
 #include "faGradScheme.H"
 #include "edgeInterpolationScheme.H"
@@ -96,24 +96,21 @@ public:
         //- Construct from Istream
         gaussGrad(const faMesh& mesh, Istream& is)
         :
-            gradScheme<Type>(mesh),
-            tinterpScheme_(nullptr)
+            gradScheme<Type>(mesh)
         {
             if (is.eof())
             {
-                tinterpScheme_ =
-                    tmp<edgeInterpolationScheme<Type>>
-                    (
-                        new linearEdgeInterpolation<Type>(mesh)
-                    );
+                tinterpScheme_.reset
+                (
+                    new linearEdgeInterpolation<Type>(mesh)
+                );
             }
             else
             {
-                tinterpScheme_ =
-                    tmp<edgeInterpolationScheme<Type>>
-                    (
-                        edgeInterpolationScheme<Type>::New(mesh, is)
-                    );
+                tinterpScheme_.reset
+                (
+                    edgeInterpolationScheme<Type>::New(mesh, is)
+                );
             }
         }
 

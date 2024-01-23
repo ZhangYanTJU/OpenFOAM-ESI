@@ -278,22 +278,20 @@ Foam::fvc::interpolate
     const FieldField<fvPatchField, Type>& fvpff
 )
 {
-    FieldField<fvsPatchField, Type>* fvspffPtr
-    (
-        new FieldField<fvsPatchField, Type>(fvpff.size())
-    );
+    auto tresult = tmp<FieldField<fvsPatchField, Type>>::New(fvpff.size());
+    auto& result = tresult.ref();
 
-    forAll(*fvspffPtr, patchi)
+    forAll(result, patchi)
     {
-        fvspffPtr->set
+        result.set
         (
             patchi,
             fvsPatchField<Type>::NewCalculatedType(fvpff[patchi].patch()).ptr()
         );
-        (*fvspffPtr)[patchi] = fvpff[patchi];
+        result[patchi] = fvpff[patchi];
     }
 
-    return tmp<FieldField<fvsPatchField, Type>>(fvspffPtr);
+    return tresult;
 }
 
 

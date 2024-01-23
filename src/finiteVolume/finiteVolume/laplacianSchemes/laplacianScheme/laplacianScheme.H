@@ -53,9 +53,8 @@ SourceFiles
 namespace Foam
 {
 
-template<class Type>
-class fvMatrix;
-
+// Forward Declarations
+template<class Type> class fvMatrix;
 class fvMesh;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -72,19 +71,16 @@ class laplacianScheme
 :
     public refCount
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         const fvMesh& mesh_;
         tmp<surfaceInterpolationScheme<GType>> tinterpGammaScheme_;
         tmp<snGradScheme<Type>> tsnGradScheme_;
 
 
-private:
-
-    // Private Member Functions
+    // Protected Member Functions
 
         //- No copy construct
         laplacianScheme(const laplacianScheme&) = delete;
@@ -124,19 +120,25 @@ public:
         //- Construct from mesh and Istream
         laplacianScheme(const fvMesh& mesh, Istream& is)
         :
-            mesh_(mesh),
-            tinterpGammaScheme_(nullptr),
-            tsnGradScheme_(nullptr)
+            mesh_(mesh)
         {
-            tinterpGammaScheme_ = tmp<surfaceInterpolationScheme<GType>>
-            (
-                surfaceInterpolationScheme<GType>::New(mesh, is)
-            );
+            if (is.eof())
+            {
+                tinterpGammaScheme_.reset(new linear<GType>(mesh));
+                tsnGradScheme_.reset(new correctedSnGrad<Type>(mesh));
+            }
+            else
+            {
+                tinterpGammaScheme_.reset
+                (
+                    surfaceInterpolationScheme<GType>::New(mesh, is)
+                );
 
-            tsnGradScheme_ = tmp<snGradScheme<Type>>
-            (
-                snGradScheme<Type>::New(mesh, is)
-            );
+                tsnGradScheme_.reset
+                (
+                    snGradScheme<Type>::New(mesh, is)
+                );
+            }
         }
 
         //- Construct from mesh, interpolation and snGradScheme schemes

@@ -1207,7 +1207,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, B, "+");
-    tmp<faMatrix<Type>> tC(new faMatrix<Type>(A));
+    auto tC = tmp<faMatrix<Type>>::New(A);
     tC.ref() += B;
     return tC;
 }
@@ -1262,7 +1262,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::operator-
     const faMatrix<Type>& A
 )
 {
-    tmp<faMatrix<Type>> tC(new faMatrix<Type>(A));
+    auto tC = tmp<faMatrix<Type>>::New(A);
     tC.ref().negate();
     return tC;
 }
@@ -1288,7 +1288,7 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, B, "-");
-    tmp<faMatrix<Type>> tC(new faMatrix<Type>(A));
+    auto tC = tmp<faMatrix<Type>>::New(A);
     tC.ref() -= B;
     return tC;
 }

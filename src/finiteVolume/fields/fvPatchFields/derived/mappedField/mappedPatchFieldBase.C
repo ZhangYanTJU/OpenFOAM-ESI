@@ -821,8 +821,8 @@ Foam::tmp<Foam::Field<Type>>
 Foam::mappedPatchFieldBase<Type>::mappedInternalField() const
 {
     // Swap to obtain full local values of neighbour internal field
-    tmp<Field<Type>> tnbrIntFld(new Field<Type>());
-    Field<Type>& nbrIntFld = tnbrIntFld.ref();
+    auto tnbrIntFld = tmp<Field<Type>>::New();
+    auto& nbrIntFld = tnbrIntFld.ref();
 
     if (mapper_.sameWorld())
     {
@@ -855,8 +855,8 @@ Foam::tmp<Foam::scalarField>
 Foam::mappedPatchFieldBase<Type>::mappedWeightField() const
 {
     // Swap to obtain full local values of neighbour internal field
-    tmp<scalarField> tnbrKDelta(new scalarField());
-    scalarField& nbrKDelta = tnbrKDelta.ref();
+    auto tnbrKDelta = tmp<scalarField>::New();
+    auto& nbrKDelta = tnbrKDelta.ref();
 
     if (mapper_.sameWorld())
     {

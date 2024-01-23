@@ -61,7 +61,7 @@ Foam::fv::relaxedSnGrad<Type>::correction
     }
 
     // Return under/over-relaxed explicit correction field
-    tmp<SurfFieldType> trelaxedCorrection(new SurfFieldType(tcorrection()));
+    auto trelaxedCorrection = tmp<SurfFieldType>::New(tcorrection());
 
     SurfFieldType& oldCorrection =
         obr.lookupObjectRef<SurfFieldType>(oldFieldName);

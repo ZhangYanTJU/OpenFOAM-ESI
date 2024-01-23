@@ -35,8 +35,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faLaplacianScheme_H
-#define faLaplacianScheme_H
+#ifndef Foam_faLaplacianScheme_H
+#define Foam_faLaplacianScheme_H
 
 #include "tmp.H"
 #include "areaFieldsFwd.H"
@@ -51,9 +51,8 @@ SourceFiles
 namespace Foam
 {
 
-template<class Type>
-class faMatrix;
-
+// Forward Declarations
+template<class Type> class faMatrix;
 class faMesh;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -70,12 +69,12 @@ class laplacianScheme
 :
     public refCount
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         const faMesh& mesh_;
+
         tmp<edgeInterpolationScheme<scalar>> tinterpGammaScheme_;
         tmp<lnGradScheme<Type>> tlnGradScheme_;
 
@@ -116,30 +115,28 @@ public:
         //- Construct from mesh and Istream
         laplacianScheme(const faMesh& mesh, Istream& is)
         :
-            mesh_(mesh),
-            tinterpGammaScheme_(nullptr),
-            tlnGradScheme_(nullptr)
+            mesh_(mesh)
         {
             if (is.eof())
             {
-                tinterpGammaScheme_ = tmp<edgeInterpolationScheme<scalar>>
+                tinterpGammaScheme_.reset
                 (
                     new linearEdgeInterpolation<scalar>(mesh)
                 );
 
-                tlnGradScheme_ = tmp<lnGradScheme<Type>>
+                tlnGradScheme_.reset
                 (
                     new correctedLnGrad<Type>(mesh)
                 );
             }
             else
             {
-                tinterpGammaScheme_ = tmp<edgeInterpolationScheme<scalar>>
+                tinterpGammaScheme_.reset
                 (
                     edgeInterpolationScheme<scalar>::New(mesh, is)
                 );
 
-                tlnGradScheme_ = tmp<lnGradScheme<Type>>
+                tlnGradScheme_.reset
                 (
                     lnGradScheme<Type>::New(mesh, is)
                 );
@@ -218,11 +215,11 @@ public:
                                                                                \
     namespace Foam                                                             \
     {                                                                          \
-        namespace fa                                                           \
-        {                                                                      \
-            laplacianScheme<Type>::addIstreamConstructorToTable<SS<Type>>     \
-                add##SS##Type##IstreamConstructorToTable_;                     \
-        }                                                                      \
+    namespace fa                                                               \
+    {                                                                          \
+        laplacianScheme<Type>::addIstreamConstructorToTable<SS<Type>>          \
+            add##SS##Type##IstreamConstructorToTable_;                         \
+    }                                                                          \
     }
 
 

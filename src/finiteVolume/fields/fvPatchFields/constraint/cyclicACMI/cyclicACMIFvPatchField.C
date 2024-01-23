@@ -881,7 +881,8 @@ Foam::cyclicACMIFvPatchField<Type>::coeffs
         matrix.lduMeshAssembly().cellBoundMap()[mat][index].size()
     );
 
-    Field<scalar> mapCoeffs(nSubFaces, Zero);
+    auto tmapCoeffs = tmp<Field<scalar>>::New(nSubFaces, Zero);
+    auto& mapCoeffs = tmapCoeffs.ref();
 
     const scalarListList& srcWeight =
         cyclicACMIPatch_.cyclicACMIPatch().AMI().srcWeights();
@@ -906,7 +907,7 @@ Foam::cyclicACMIFvPatchField<Type>::coeffs
         }
     }
 
-    return tmp<Field<scalar>>(new Field<scalar>(mapCoeffs));
+    return tmapCoeffs;
 }
 
 
