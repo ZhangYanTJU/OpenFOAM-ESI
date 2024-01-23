@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,14 +108,9 @@ void kinematicSingleLayer::transferPrimaryRegionSourceFields()
 {
     DebugInFunction << endl;
 
-    volScalarField::Boundary& rhoSpPrimaryBf =
-        rhoSpPrimary_.boundaryFieldRef();
-
-    volVectorField::Boundary& USpPrimaryBf =
-        USpPrimary_.boundaryFieldRef();
-
-    volScalarField::Boundary& pSpPrimaryBf =
-        pSpPrimary_.boundaryFieldRef();
+    auto& rhoSpPrimaryBf = rhoSpPrimary_.boundaryFieldRef();
+    auto& USpPrimaryBf = USpPrimary_.boundaryFieldRef();
+    auto& pSpPrimaryBf = pSpPrimary_.boundaryFieldRef();
 
     // Convert accumulated source terms into per unit area per unit time
     const scalar deltaT = time_.deltaTValue();
@@ -161,18 +156,11 @@ void kinematicSingleLayer::transferPrimaryRegionSourceFields()
 
 tmp<volScalarField> kinematicSingleLayer::pu()
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
+        IOobject::scopedName(typeName, "pu"),
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                typeName + ":pu",
-                time_.timeName(),
-                regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
             pPrimary_                  // pressure (mapped from primary region)
           - pSp_                           // accumulated particle impingement
           - fvc::laplacian(sigma_, delta_) // surface tension
@@ -183,18 +171,11 @@ tmp<volScalarField> kinematicSingleLayer::pu()
 
 tmp<volScalarField> kinematicSingleLayer::pp()
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
+        IOobject::scopedName(typeName, "pp"),
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                typeName + ":pp",
-                time_.timeName(),
-                regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
            -rho_*gNormClipped() // hydrostatic effect only
         )
     );
@@ -1084,17 +1065,10 @@ void kinematicSingleLayer::info()
 
 tmp<volScalarField::Internal> kinematicSingleLayer::Srho() const
 {
-    return tmp<volScalarField::Internal>::New
+    return volScalarField::Internal::New
     (
-        IOobject
-        (
-            typeName + ":Srho",
-            time().timeName(),
-            primaryMesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(typeName, "Srho"),
+        IOobject::NO_REGISTER,
         primaryMesh(),
         dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
@@ -1106,17 +1080,10 @@ tmp<volScalarField::Internal> kinematicSingleLayer::Srho
     const label i
 ) const
 {
-    return tmp<volScalarField::Internal>::New
+    return volScalarField::Internal::New
     (
-        IOobject
-        (
-            typeName + ":Srho(" + Foam::name(i) + ")",
-            time().timeName(),
-            primaryMesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(typeName, "Srho(" + Foam::name(i) + ")"),
+        IOobject::NO_REGISTER,
         primaryMesh(),
         dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
@@ -1125,17 +1092,10 @@ tmp<volScalarField::Internal> kinematicSingleLayer::Srho
 
 tmp<volScalarField::Internal> kinematicSingleLayer::Sh() const
 {
-    return tmp<volScalarField::Internal>::New
+    return volScalarField::Internal::New
     (
-        IOobject
-        (
-            typeName + ":Sh",
-            time().timeName(),
-            primaryMesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(typeName, "Sh"),
+        IOobject::NO_REGISTER,
         primaryMesh(),
         dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );

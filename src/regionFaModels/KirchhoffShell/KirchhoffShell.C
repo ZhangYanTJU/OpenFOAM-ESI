@@ -282,23 +282,13 @@ const tmp<areaScalarField> KirchhoffShell::D() const
 
 const tmp<areaScalarField> KirchhoffShell::rho() const
 {
-    return tmp<areaScalarField>
+    return areaScalarField::New
     (
-        new areaScalarField
-        (
-            IOobject
-            (
-                "rhos",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            regionMesh(),
-            dimensionedScalar("rho", dimDensity, solid().rho()),
-            faPatchFieldBase::zeroGradientType()
-        )
+        "rhos",
+        IOobjectOption::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar("rho", dimDensity, solid().rho()),
+        faPatchFieldBase::zeroGradientType()
     );
 }
 

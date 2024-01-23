@@ -72,25 +72,14 @@ void thermalBaffle::solveEnergy()
 
     const polyBoundaryMesh& rbm = regionMesh().boundaryMesh();
 
-    tmp<volScalarField> tQ
+    auto tQ = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "tQ",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            regionMesh(),
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
+        "tQ",
+        IOobject::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );
-
-    volScalarField& Q = tQ.ref();
+    auto& Q = tQ.ref();
 
     volScalarField rho("rho", thermo_->rho());
     volScalarField alpha("alpha", thermo_->alpha());

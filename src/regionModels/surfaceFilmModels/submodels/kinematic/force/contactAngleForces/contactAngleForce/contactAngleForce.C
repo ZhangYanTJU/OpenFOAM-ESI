@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -107,14 +107,15 @@ contactAngleForce::contactAngleForce
     (
         IOobject
         (
-            typeName + ":contactForceMask",
+            IOobject::scopedName(typeName, "contactForceMask"),
             filmModel_.time().timeName(),
             filmModel_.regionMesh(),
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
         ),
         filmModel_.regionMesh(),
-        dimensionedScalar("mask", dimless, 1.0)
+        dimensionedScalar(word::null, dimless, 1.0)
     )
 {
     initialise();
@@ -131,24 +132,14 @@ contactAngleForce::~contactAngleForce()
 
 tmp<fvVectorMatrix> contactAngleForce::correct(volVectorField& U)
 {
-    tmp<volVectorField> tForce
+    auto tForce = volVectorField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                typeName + ":contactForce",
-                filmModel_.time().timeName(),
-                filmModel_.regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            filmModel_.regionMesh(),
-            dimensionedVector(dimForce/dimArea, Zero)
-        )
+        IOobject::scopedName(typeName, "contactForce"),
+        IOobject::NO_REGISTER,
+        filmModel_.regionMesh(),
+        dimensionedVector(dimForce/dimArea, Zero)
     );
-
-    vectorField& force = tForce.ref().primitiveFieldRef();
+    auto& force = tForce.ref().primitiveFieldRef();
 
     const labelUList& own = filmModel_.regionMesh().owner();
     const labelUList& nbr = filmModel_.regionMesh().neighbour();
@@ -226,10 +217,7 @@ tmp<fvVectorMatrix> contactAngleForce::correct(volVectorField& U)
         tForce().write();
     }
 
-    tmp<fvVectorMatrix> tfvm
-    (
-        new fvVectorMatrix(U, dimForce/dimArea*dimVolume)
-    );
+    auto tfvm = tmp<fvVectorMatrix>::New(U, dimForce/dimArea*dimVolume);
 
     tfvm.ref() += tForce;
 

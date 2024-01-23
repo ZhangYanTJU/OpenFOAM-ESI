@@ -64,20 +64,11 @@ inline tmp<volScalarField> thermoSingleLayer::hs
     const volScalarField& T
 ) const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "hs(" + T.name() + ")",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            Cp_*(T - Tref)
-        )
+        "hs(" + T.name() + ")",
+        IOobject::NO_REGISTER,
+        Cp_*(T - Tref)
     );
 }
 
@@ -87,20 +78,11 @@ inline tmp<volScalarField> thermoSingleLayer::T
     const volScalarField& hs
 ) const
 {
-    tmp<volScalarField> tT
+    auto tT = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "T(" + hs.name() + ")",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            hs/Cp_ + Tref
-        )
+        "T(" + hs.name() + ")",
+        IOobject::NO_REGISTER,
+        hs/Cp_ + Tref
     );
 
     if (limitType::CLAMP_MIN == withTbounds_)

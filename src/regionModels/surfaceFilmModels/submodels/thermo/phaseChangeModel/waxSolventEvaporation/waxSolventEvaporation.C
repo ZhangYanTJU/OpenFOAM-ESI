@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -88,9 +88,12 @@ waxSolventEvaporation::waxSolventEvaporation
     (
         IOobject
         (
-            typeName + ":Wwax",
+            IOobject::scopedName(typeName, "Wwax"),
             film.regionMesh().time().constant(),
-            film.regionMesh().thisDb()
+            film.regionMesh().thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         coeffDict_.get<scalar>("Wwax")
     ),
@@ -98,9 +101,12 @@ waxSolventEvaporation::waxSolventEvaporation
     (
         IOobject
         (
-            typeName + ":Wsolvent",
+            IOobject::scopedName(typeName, "Wsolvent"),
             film.regionMesh().time().constant(),
-            film.regionMesh().thisDb()
+            film.regionMesh().thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         coeffDict_.get<scalar>("Wsolvent")
     ),
@@ -108,22 +114,24 @@ waxSolventEvaporation::waxSolventEvaporation
     (
         IOobject
         (
-            typeName + ":Ysolvent0",
+            IOobject::scopedName(typeName, "Ysolvent0"),
             film.regionMesh().time().constant(),
             film.regionMesh().thisDb(),
             IOobject::MUST_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
     Ysolvent_
     (
         IOobject
         (
-            typeName + ":Ysolvent",
+            IOobject::scopedName(typeName, "Ysolvent"),
             film.regionMesh().time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh()
     ),
@@ -187,35 +195,21 @@ void waxSolventEvaporation::correctModel
     const scalar Wwax = Wwax_.value();
     const scalar Wsolvent = Wsolvent_.value();
 
-    volScalarField::Internal evapRateCoeff
+    auto tevapRateCoeff = volScalarField::Internal::New
     (
-        IOobject
-        (
-            typeName + ":evapRateCoeff",
-            film.regionMesh().time().timeName(),
-            film.regionMesh().thisDb(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(typeName, "evapRateCoeff"),
         film.regionMesh(),
         dimensionedScalar(dimDensity*dimVelocity, Zero)
     );
+    auto& evapRateCoeff = tevapRateCoeff.ref();
 
-    volScalarField::Internal evapRateInf
+    auto tevapRateInf = volScalarField::Internal::New
     (
-        IOobject
-        (
-            typeName + ":evapRateInf",
-            film.regionMesh().time().timeName(),
-            film.regionMesh().thisDb(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(typeName, "evapRateInf"),
         film.regionMesh(),
         dimensionedScalar(dimDensity*dimVelocity, Zero)
     );
+    auto& evapRateInf = tevapRateInf.ref();
 
     bool filmPresent = false;
 
