@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -238,23 +238,19 @@ void Foam::fv::rotorDiskSource::setFaceArea(vector& axis, const bool correct)
 
     if (debug)
     {
-        volScalarField area
+        auto tarea = volScalarField::New
         (
-            IOobject
-            (
-                name_ + ":area",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            IOobject::scopedName(name_, "area"),
+            IOobject::NO_REGISTER,
             mesh_,
             dimensionedScalar(dimArea, Zero)
         );
-        UIndirectList<scalar>(area.primitiveField(), cells_) = area_;
+        auto& area = tarea.ref();
 
-        Info<< type() << ": " << name_ << " writing field " << area.name()
-            << endl;
+        UIndirectList<scalar>(area.primitiveFieldRef(), cells_) = area_;
+
+        Info<< type() << ": " << name_
+            << " writing field " << area.name() << endl;
 
         area.write();
     }
@@ -480,17 +476,14 @@ void Foam::fv::rotorDiskSource::addSup
     const label fieldi
 )
 {
-    volVectorField force
+    auto tforce = volVectorField::New
     (
-        IOobject
-        (
-            name_ + ":rotorForce",
-            mesh_.time().timeName(),
-            mesh_
-        ),
+        IOobject::scopedName(name_, "rotorForce"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedVector(eqn.dimensions()/dimVolume, Zero)
     );
+    auto& force = tforce.ref();
 
     // Read the reference density for incompressible flow
     coeffs_.readEntry("rhoRef", rhoRef_);
@@ -516,17 +509,14 @@ void Foam::fv::rotorDiskSource::addSup
     const label fieldi
 )
 {
-    volVectorField force
+    auto tforce = volVectorField::New
     (
-        IOobject
-        (
-            name_ + ":rotorForce",
-            mesh_.time().timeName(),
-            mesh_
-        ),
+        IOobject::scopedName(name_, "rotorForce"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedVector(eqn.dimensions()/dimVolume, Zero)
     );
+    auto& force = tforce.ref();
 
     const vectorField Uin(inflowVelocity(eqn.psi()));
     trim_->correct(rho, Uin, force);

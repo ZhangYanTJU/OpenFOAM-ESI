@@ -36,13 +36,13 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
     autoPtr<Function1<Type>>& sigmaVsTPtr
 )
 {
-    typedef GeometricField<Type, faPatchField, areaMesh> AreaFieldType;
+    typedef GeometricField<Type, faPatchField, areaMesh> FieldType;
 
     auto& obr = regionMesh().thisDb();
 
     IOobject io
     (
-        typeName + ":sigma_" + regionName_,
+        IOobject::scopedName(typeName, "sigma_" + regionName_),
         obr.time().timeName(),
         obr,
         IOobject::NO_READ,
@@ -50,7 +50,7 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
         IOobject::REGISTER
     );
 
-    tmp<AreaFieldType> tsigma;
+    autoPtr<FieldType> tsigma;
 
     if (dict.found("sigma"))
     {
@@ -59,7 +59,7 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
 
         tsigma.reset
         (
-            new AreaFieldType
+            new FieldType
             (
                 io,
                 regionMesh(),
@@ -76,7 +76,7 @@ void Foam::fa::jouleHeatingSource::initialiseSigma
         // Sigma to be defined by user input
         io.readOpt(IOobject::MUST_READ);
 
-        tsigma.reset(new AreaFieldType(io, regionMesh()));
+        tsigma.reset(new FieldType(io, regionMesh()));
 
         Info<< "    Conductivity 'sigma' read from file" << nl << endl;
     }
@@ -92,12 +92,15 @@ Foam::fa::jouleHeatingSource::updateSigma
     const autoPtr<Function1<Type>>& sigmaVsTPtr
 ) const
 {
-    typedef GeometricField<Type, faPatchField, areaMesh> AreaFieldType;
+    typedef GeometricField<Type, faPatchField, areaMesh> FieldType;
 
     const auto& obr = regionMesh().thisDb();
 
     auto& sigma =
-        obr.lookupObjectRef<AreaFieldType>(typeName + ":sigma_" + regionName_);
+        obr.lookupObjectRef<FieldType>
+        (
+            IOobject::scopedName(typeName, "sigma_" + regionName_)
+        );
 
     if (!sigmaVsTPtr)
     {
