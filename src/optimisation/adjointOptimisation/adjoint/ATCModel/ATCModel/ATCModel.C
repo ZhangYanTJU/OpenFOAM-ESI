@@ -229,25 +229,16 @@ tmp<volScalarField> ATCModel::createLimiter
     const labelList& zeroCells = zeroType->getZeroATCcells();
     const label nSmooth = dict.getOrDefault<label>("nSmooth", 0);
 
-    tmp<volScalarField> tlimiter
+    auto tlimiter = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "limiter",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh,
-            scalar(1),
-            dimless,
-            fvPatchFieldBase::zeroGradientType()
-        )
+        "limiter",
+        IOobject::NO_REGISTER,
+        mesh,
+        scalar(1),
+        dimless,
+        fvPatchFieldBase::zeroGradientType()
     );
-    volScalarField& limiter = tlimiter.ref();
+    auto& limiter = tlimiter.ref();
 
     computeLimiter(limiter, zeroCells, nSmooth);
 

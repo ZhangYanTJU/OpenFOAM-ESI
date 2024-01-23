@@ -267,12 +267,7 @@ Foam::tmp<Foam::scalarField> Foam::updateMethod::readOrZeroField
     const label size
 )
 {
-    return tmp<scalarField>
-    (
-        found(name) ?
-        new scalarField(name, *this, size) :
-        new scalarField(size, Zero)
-    );
+    return tmp<scalarField>::New(name, *this, size, IOobjectOption::LAZY_READ);
 }
 
 

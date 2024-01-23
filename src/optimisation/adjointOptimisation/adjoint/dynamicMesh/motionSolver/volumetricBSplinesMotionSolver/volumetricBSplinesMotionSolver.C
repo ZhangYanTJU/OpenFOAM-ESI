@@ -74,8 +74,8 @@ Foam::volumetricBSplinesMotionSolver::volumetricBSplinesMotionSolver
 Foam::tmp<Foam::pointField>
 Foam::volumetricBSplinesMotionSolver::curPoints() const
 {
-    tmp<vectorField> tPointMovement(new vectorField(mesh().points()));
-    vectorField& pointMovement = tPointMovement.ref();
+    auto tPointMovement = tmp<vectorField>::New(mesh().points());
+    auto& pointMovement = tPointMovement.ref();
 
     label pastControlPoints(0);
     PtrList<NURBS3DVolume>& boxes = volBSplinesBase_.boxesRef();

@@ -80,18 +80,11 @@ tmp<volSymmTensorField> adjointLaminar::devReff
     const volVectorField& U
 ) const
 {
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
+        "devRhoReff",
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                "devRhoReff",
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
            -nu()*devTwoSymm(fvc::grad(U))
         )
     );
@@ -110,23 +103,13 @@ tmp<fvVectorMatrix> adjointLaminar::divDevReff(volVectorField& U) const
 
 tmp<volVectorField> adjointLaminar::adjointMeanFlowSource()
 {
-    return tmp<volVectorField>::New
-        (
-            IOobject
-            (
-                "adjointMeanFlowSource",
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedVector
-            (
-                dimensionSet(0, 1, -2, 0, 0),
-                Zero
-            )
-        );
+    return volVectorField::New
+    (
+        "adjointMeanFlowSource",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedVector(dimensionSet(0, 1, -2, 0, 0), Zero)
+    );
 }
 
 
@@ -151,37 +134,25 @@ const boundaryVectorField& adjointLaminar::wallFloCoSensitivities()
 
 tmp<volScalarField> adjointLaminar::distanceSensitivities()
 {
-    return tmp<volScalarField>::New
-        (
-            IOobject
-            (
-                "adjointEikonalSource" + type(),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimLength/pow3(dimTime), Zero)
-       );
+    return volScalarField::New
+    (
+        "adjointEikonalSource" + type(),
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimLength/pow3(dimTime), Zero)
+    );
 }
 
 
 tmp<volTensorField> adjointLaminar::FISensitivityTerm()
 {
-    return tmp<volTensorField>::New
-        (
-            IOobject
-            (
-                "volumeSensTerm" + type(),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedTensor(dimensionSet(0, 2, -3, 0, 0), Zero)
-       );
+    return volTensorField::New
+    (
+        "volumeSensTerm" + type(),
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedTensor(dimensionSet(0, 2, -3, 0, 0), Zero)
+    );
 }
 
 

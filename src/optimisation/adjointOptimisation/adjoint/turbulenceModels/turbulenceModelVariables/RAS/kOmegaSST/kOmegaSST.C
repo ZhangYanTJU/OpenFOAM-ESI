@@ -63,7 +63,8 @@ void kOmegaSST::allocateMeanFields()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 mesh_,
                 dimensionedScalar(dimArea/pow3(dimTime), Zero)
@@ -120,12 +121,13 @@ tmp<volScalarField::Internal> kOmegaSST::computeG()
     );
 
     // NB: leave tmp registered (for correctBoundaryConditions)
-    auto tG =
-        tmp<volScalarField::Internal>::New
-        (
-            turbModel.GName(),
-            nutRefInst()*GbyNu0
-        );
+    auto tG = volScalarField::Internal::New
+    (
+        turbModel.GName(),
+        IOobject::REGISTER,
+        nutRefInst()*GbyNu0
+    );
+
     // Use correctBoundaryConditions instead of updateCoeffs to avoid
     // messing with updateCoeffs in the next iteration of omegaEqn
     TMVar2Inst().correctBoundaryConditions();

@@ -1342,8 +1342,9 @@ Foam::tmp<Foam::tensorField> Foam::NURBS3DVolume::dndbBasedSensitivities
     const fvPatch& patch = mesh_.boundary()[patchI];
     const polyPatch& ppatch = patch.patch();
     // Return field
-    tmp<tensorField> tdndbSens(new tensorField(patch.size(), Zero));
-    tensorField& dndbSens = tdndbSens.ref();
+    auto tdndbSens = tmp<tensorField>::New(patch.size(), Zero);
+    auto& dndbSens = tdndbSens.ref();
+
     // Auxiliary quantities
     deltaBoundary deltaBoundary(mesh_);
     const label patchStart = ppatch.start();
@@ -1574,8 +1575,8 @@ Foam::tmp<Foam::vectorField> Foam::NURBS3DVolume::computeNewPoints
     const vectorField& parameterizedPoints = tparameterizedPoints();
 
     // Return field. Initialized with current mesh points
-    tmp<vectorField> tnewPoints(new vectorField(mesh_.points()));
-    vectorField& newPoints = tnewPoints.ref();
+    auto tnewPoints = tmp<vectorField>::New(mesh_.points());
+    auto& newPoints = tnewPoints.ref();
 
     // Update position of parameterized points
     forAll(parameterizedPoints, pI)
@@ -1612,8 +1613,8 @@ Foam::tmp<Foam::vectorField> Foam::NURBS3DVolume::computeNewBoundaryPoints
     }
 
     // Return field. Initialized with current mesh points
-    tmp<vectorField> tnewPoints(new vectorField(mesh_.points()));
-    vectorField& newPoints = tnewPoints.ref();
+    auto tnewPoints = tmp<vectorField>::New(mesh_.points());
+    auto& newPoints = tnewPoints.ref();
 
     // Update position of parameterized boundary points
     for (const label patchI : patchesToBeMoved)
@@ -1883,21 +1884,12 @@ Foam::tmp<Foam::volTensorField> Foam::NURBS3DVolume::getDxCellsDb
     const vectorField& parametricCoordinates = getParametricCoordinates();
 
     // Set return field to zero
-    tmp<volTensorField> tDxDb
+    auto tDxDb = volTensorField::New
     (
-        new volTensorField
-        (
-            IOobject
-            (
-                "DxDb",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedTensor(dimless, Zero)
-        )
+        "DxDb",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedTensor(dimless, Zero)
     );
 
     volTensorField& DxDb = tDxDb.ref();
