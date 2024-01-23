@@ -68,19 +68,12 @@ Foam::multiphaseEuler::diameterModels::constant::constant
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseEuler::diameterModels::constant::d() const
 {
-    return tmp<Foam::volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "d",
-                phase_.U().time().timeName(),
-                phase_.U().mesh()
-            ),
-            phase_.U().mesh(),
-            d_
-        )
+        "d",
+        IOobject::NO_REGISTER,
+        phase_.U().mesh(),
+        d_
     );
 }
 

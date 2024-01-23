@@ -69,19 +69,12 @@ Foam::wallLubricationModels::noWallLubrication::~noWallLubrication()
 Foam::tmp<Foam::volVectorField>
 Foam::wallLubricationModels::noWallLubrication::Fi() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
-    return tmp<volVectorField>::New
+    return volVectorField::New
     (
-        IOobject
-        (
-            "noWallLubrication:Fi",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName("noWallLubrication", "Fi"),
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedVector(dimF, Zero)
     );
@@ -91,19 +84,12 @@ Foam::wallLubricationModels::noWallLubrication::Fi() const
 Foam::tmp<Foam::volVectorField>
 Foam::wallLubricationModels::noWallLubrication::F() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
-    return tmp<volVectorField>::New
+    return volVectorField::New
     (
-        IOobject
-        (
-            "noWallLubrication:F",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName("noWallLubrication", "F"),
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedVector(dimF, Zero)
     );

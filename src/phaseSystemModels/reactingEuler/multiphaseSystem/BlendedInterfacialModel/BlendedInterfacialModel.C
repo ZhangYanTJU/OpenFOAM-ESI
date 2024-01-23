@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014-2018 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -125,22 +125,12 @@ Foam::BlendedInterfacialModel<ModelType>::evaluate
             );
     }
 
-    tmp<typeGeoField> x
+    auto x = typeGeoField::New
     (
-        new typeGeoField
-        (
-            IOobject
-            (
-                ModelType::typeName + ":" + name,
-                phase1_.mesh().time().timeName(),
-                phase1_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            phase1_.mesh(),
-            dimensioned<Type>(dims, Zero)
-        )
+        IOobject::scopedName(ModelType::typeName, name),
+        IOobject::NO_REGISTER,
+        phase1_.mesh(),
+        dimensioned<Type>(dims, Zero)
     );
 
     if (model_)

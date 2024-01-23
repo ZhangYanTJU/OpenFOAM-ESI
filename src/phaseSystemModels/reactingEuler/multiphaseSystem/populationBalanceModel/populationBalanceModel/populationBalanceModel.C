@@ -148,31 +148,23 @@ void Foam::diameterModels::populationBalanceModel::registerSizeGroups
 
     Su_.append
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                "Su",
-                fluid_.time().timeName(),
-                mesh_
-            ),
+            "Su",
+            IOobject::NO_REGISTER,
             mesh_,
-            dimensionedScalar("zero", inv(dimTime), 0)
+            dimensionedScalar(inv(dimTime), Zero)
         )
     );
 
     SuSp_.append
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                "SuSp",
-                fluid_.time().timeName(),
-                mesh_
-            ),
+            "SuSp",
+            IOobject::NO_REGISTER,
             mesh_,
-            dimensionedScalar("zero", inv(dimTime), 0)
+            dimensionedScalar(inv(dimTime), Zero)
         )
     );
 }
@@ -957,14 +949,9 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
         (
             new volScalarField
             (
-                IOobject
-                (
-                     "coalescenceRate",
-                     mesh_.time().timeName(),
-                     mesh_
-                ),
+                mesh_.newIOobject("coalescenceRate"),
                 mesh_,
-                dimensionedScalar("zero", dimVolume/dimTime, Zero)
+                dimensionedScalar(dimVolume/dimTime, Zero)
             )
         );
     }
@@ -975,14 +962,9 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
         (
             new volScalarField
             (
-                IOobject
-                (
-                    "breakupRate",
-                    fluid_.time().timeName(),
-                    mesh_
-                ),
+                mesh_.newIOobject("breakupRate"),
                 mesh_,
-                dimensionedScalar("zero", inv(dimTime), Zero)
+                dimensionedScalar(inv(dimTime), Zero)
             )
         );
     }
@@ -993,19 +975,9 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
         (
             new volScalarField
             (
-                IOobject
-                (
-                    "binaryBreakupRate",
-                    fluid_.time().timeName(),
-                    mesh_
-                ),
+                mesh_.newIOobject("binaryBreakupRate"),
                 mesh_,
-                dimensionedScalar
-                (
-                    "binaryBreakupRate",
-                    inv(dimVolume*dimTime),
-                    Zero
-                )
+                dimensionedScalar(inv(dimVolume*dimTime), Zero)
             )
         );
     }
@@ -1016,14 +988,9 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
         (
             new volScalarField
             (
-                IOobject
-                (
-                    "driftRate",
-                    fluid_.time().timeName(),
-                    mesh_
-                ),
+                mesh_.newIOobject("driftRate"),
                 mesh_,
-                dimensionedScalar("zero", dimVolume/dimTime, Zero)
+                dimensionedScalar(dimVolume/dimTime, Zero)
             )
         );
 
@@ -1031,14 +998,9 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
         (
             new volScalarField
             (
-                IOobject
-                (
-                    "r",
-                    fluid_.time().timeName(),
-                    mesh_
-                ),
+                mesh_.newIOobject("rx"),
                 mesh_,
-                dimensionedScalar("zero", dimless, Zero)
+                dimensionedScalar(dimless, Zero)
             )
         );
 
@@ -1046,14 +1008,9 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
         (
             new volScalarField
             (
-                IOobject
-                (
-                    "r",
-                    fluid_.time().timeName(),
-                    mesh_
-                ),
+                mesh_.newIOobject("rdx"),
                 mesh_,
-                dimensionedScalar("zero", dimless, Zero)
+                dimensionedScalar(dimless, Zero)
             )
         );
     }
@@ -1064,19 +1021,9 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
         (
             new volScalarField
             (
-                IOobject
-                (
-                    "nucleationRate",
-                    fluid_.time().timeName(),
-                    mesh_
-                ),
+                mesh_.newIOobject("nucleationRate"),
                 mesh_,
-                dimensionedScalar
-                (
-                    "nucleationRate",
-                    inv(dimTime*dimVolume),
-                    Zero
-                )
+                dimensionedScalar(inv(dimTime*dimVolume), Zero)
             )
         );
     }
@@ -1093,10 +1040,11 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
                     fluid_.time().timeName(),
                     mesh_,
                     IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 mesh_,
-                dimensionedScalar("zero", dimless, Zero)
+                dimensionedScalar(dimless, Zero)
             )
         );
 
@@ -1110,10 +1058,11 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
                     fluid_.time().timeName(),
                     mesh_,
                     IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 mesh_,
-                dimensionedScalar("zero", dimLength, Zero)
+                dimensionedScalar(dimLength, Zero)
             )
         );
 
@@ -1127,7 +1076,8 @@ Foam::diameterModels::populationBalanceModel::populationBalanceModel
                     fluid_.time().timeName(),
                     mesh_,
                     IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 mesh_,
                 dimensionedVector(dimVelocity, Zero)

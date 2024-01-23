@@ -123,21 +123,12 @@ Foam::RASModels::phasePressureModel::omega() const
 Foam::tmp<Foam::volSymmTensorField>
 Foam::RASModels::phasePressureModel::R() const
 {
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
-        (
-            IOobject
-            (
-                IOobject::groupName("R", U_.group()),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensioned<symmTensor>(dimensionSet(0, 2, -2, 0, 0), Zero)
-        )
+        IOobject::groupName("R", U_.group()),
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensioned<symmTensor>(dimensionSet(0, 2, -2, 0, 0), Zero)
     );
 }
 
@@ -155,8 +146,7 @@ Foam::RASModels::phasePressureModel::pPrime() const
         )
     );
 
-    volScalarField::Boundary& bpPrime =
-        tpPrime.ref().boundaryFieldRef();
+    auto& bpPrime = tpPrime.ref().boundaryFieldRef();
 
     forAll(bpPrime, patchi)
     {
@@ -183,8 +173,7 @@ Foam::RASModels::phasePressureModel::pPrimef() const
         )
     );
 
-   surfaceScalarField::Boundary& bpPrime =
-       tpPrime.ref().boundaryFieldRef();
+    auto& bpPrime = tpPrime.ref().boundaryFieldRef();
 
     forAll(bpPrime, patchi)
     {
@@ -211,25 +200,15 @@ Foam::RASModels::phasePressureModel::devRhoReff
     const volVectorField& U
 ) const
 {
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
+        IOobject::groupName("devRhoReff", U.group()),
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensioned<symmTensor>
         (
-            IOobject
-            (
-                IOobject::groupName("devRhoReff", U.group()),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensioned<symmTensor>
-            (
-                "R",
-                rho_.dimensions()*dimensionSet(0, 2, -2, 0, 0),
-                Zero
-            )
+            rho_.dimensions()*dimensionSet(0, 2, -2, 0, 0),
+            Zero
         )
     );
 }
@@ -241,13 +220,10 @@ Foam::RASModels::phasePressureModel::divDevRhoReff
     volVectorField& U
 ) const
 {
-    return tmp<fvVectorMatrix>
+    return tmp<fvVectorMatrix>::New
     (
-        new fvVectorMatrix
-        (
-            U,
-            rho_.dimensions()*dimensionSet(0, 4, -2, 0, 0)
-        )
+        U,
+        rho_.dimensions()*dimensionSet(0, 4, -2, 0, 0)
     );
 }
 

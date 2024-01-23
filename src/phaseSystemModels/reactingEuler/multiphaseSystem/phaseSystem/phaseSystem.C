@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,13 +53,11 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseSystem::calcPhi
     const phaseModelList& phaseModels
 ) const
 {
-    tmp<surfaceScalarField> tphi
+    auto tphi = surfaceScalarField::New
     (
-        surfaceScalarField::New
-        (
-            "phi",
-            fvc::interpolate(phaseModels[0])*phaseModels[0].phi()
-        )
+        "phi",
+        IOobject::NO_REGISTER,
+        fvc::interpolate(phaseModels[0])*phaseModels[0].phi()
     );
 
     for (label phasei=1; phasei<phaseModels.size(); ++phasei)
@@ -136,8 +134,9 @@ Foam::phaseSystem::phaseSystem
             "phaseProperties",
             mesh.time().constant(),
             mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
 
@@ -156,7 +155,7 @@ Foam::phaseSystem::phaseSystem
             mesh
         ),
         mesh,
-        dimensionedScalar("zero", dimPressure/dimTime, 0)
+        dimensionedScalar(dimPressure/dimTime, Zero)
     ),
 
     MRF_(mesh_)
@@ -303,15 +302,14 @@ Foam::phaseSystem::E(const phasePairKey& key) const
     {
         return aspectRatioModels_[key]->E();
     }
-    else
-    {
-        return volScalarField::New
-        (
-            aspectRatioModel::typeName + ":E",
-            this->mesh_,
-            dimensionedScalar("one", dimless, 1)
-        );
-    }
+
+    return volScalarField::New
+    (
+        IOobject::scopedName(aspectRatioModel::typeName, "E"),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar("one", dimless, 1)
+    );
 }
 
 
@@ -322,19 +320,21 @@ Foam::phaseSystem::sigma(const phasePairKey& key) const
     {
         return surfaceTensionModels_[key]->sigma();
     }
-    else
-    {
-        return volScalarField::New
+
+    return volScalarField::New
+    (
+        IOobject::scopedName
         (
-            reactingMultiphaseEuler::surfaceTensionModel::typeName + ":sigma",
-            this->mesh_,
-            dimensionedScalar
-            (
-                reactingMultiphaseEuler::surfaceTensionModel::dimSigma,
-                0
-            )
-        );
-    }
+            reactingMultiphaseEuler::surfaceTensionModel::typeName, "sigma"
+        ),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar
+        (
+            reactingMultiphaseEuler::surfaceTensionModel::dimSigma,
+            Zero
+        )
+    );
 }
 
 
@@ -346,8 +346,9 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::dmdt
     return volScalarField::New
     (
         IOobject::groupName("dmdt", phasePairs_[key]->name()),
+        IOobject::NO_REGISTER,
         this->mesh_,
-        dimensionedScalar("zero", dimDensity/dimTime, 0)
+        dimensionedScalar(dimDensity/dimTime, Zero)
     );
 }
 

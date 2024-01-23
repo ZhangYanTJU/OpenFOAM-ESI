@@ -152,18 +152,14 @@ Foam::meltingEvaporationModels::interfaceOxideRate<Thermo, OtherThermo>::Kexp
             const labelUList& fc = mesh.boundary()[patchi].faceCells();
             tmp<scalarField> tsb = pp.source();
 
-            auto tRhoto = tmp<volScalarField>::New
+            auto tRhoto = volScalarField::New
             (
-                IOobject
-                (
-                    "tRhoto",
-                    mesh.time().timeName(),
-                    mesh
-                ),
+                "tRhoto",
+                IOobject::NO_REGISTER,
                 mesh,
                 dimensionedScalar(dimDensity, Zero)
             );
-            volScalarField& rhoto = tRhoto.ref();
+            auto& rhoto = tRhoto.ref();
 
             rhoto = this->pair().to().rho();
 

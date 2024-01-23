@@ -557,14 +557,12 @@ Foam::tmp<Foam::surfaceScalarField> Foam::multiphaseSystem::surfaceTension
     const phaseModel& phase1
 ) const
 {
-    tmp<surfaceScalarField> tSurfaceTension
+    auto tSurfaceTension = surfaceScalarField::New
     (
-        surfaceScalarField::New
-        (
-            "surfaceTension",
-            mesh_,
-            dimensionedScalar(dimensionSet(1, -2, -2, 0, 0), Zero)
-        )
+        "surfaceTension",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimensionSet(1, -2, -2, 0, 0), Zero)
     );
 
     tSurfaceTension.ref().setOriented();
@@ -600,14 +598,12 @@ Foam::tmp<Foam::surfaceScalarField> Foam::multiphaseSystem::surfaceTension
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseSystem::nearInterface() const
 {
-    tmp<volScalarField> tnearInt
+    auto tnearInt = volScalarField::New
     (
-        volScalarField::New
-        (
-            "nearInterface",
-            mesh_,
-            dimensionedScalar(dimless, Zero)
-        )
+        "nearInterface",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless, Zero)
     );
 
     forAll(phases(), phasei)
