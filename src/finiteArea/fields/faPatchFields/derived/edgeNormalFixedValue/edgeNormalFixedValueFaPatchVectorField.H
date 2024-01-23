@@ -113,15 +113,6 @@ public:
             const edgeNormalFixedValueFaPatchVectorField&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faPatchVectorField> clone() const
-        {
-            return tmp<faPatchVectorField>
-            (
-                new edgeNormalFixedValueFaPatchVectorField(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         edgeNormalFixedValueFaPatchVectorField
         (
@@ -129,22 +120,20 @@ public:
             const DimensionedField<vector, areaMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
-        virtual tmp<faPatchVectorField> clone
+        //- Return clone
+        virtual tmp<faPatchField<vector>> clone() const
+        {
+            return faPatchField<vector>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
+        virtual tmp<faPatchField<vector>> clone
         (
             const DimensionedField<vector, areaMesh>& iF
         ) const
         {
-            return tmp<faPatchVectorField>
-            (
-                new edgeNormalFixedValueFaPatchVectorField
-                (
-                    *this,
-                    iF
-                )
-            );
+            return faPatchField<vector>::Clone(*this, iF);
         }
-
 
 
     // Member functions

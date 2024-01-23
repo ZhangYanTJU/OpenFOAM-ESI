@@ -92,15 +92,15 @@ public:
             const faPatchFieldMapper&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const = 0;
-
         //- Construct as copy setting internal field reference
         transformFaPatchField
         (
             const transformFaPatchField<Type>&,
             const DimensionedField<Type, areaMesh>&
         );
+
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const = 0;
 
         //- Construct and return a clone setting internal field reference
         virtual tmp<faPatchField<Type>> clone

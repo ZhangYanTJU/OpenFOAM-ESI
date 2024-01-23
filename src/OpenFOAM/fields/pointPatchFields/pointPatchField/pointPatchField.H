@@ -345,17 +345,31 @@ public:
             const DimensionedField<Type, pointMesh>&
         );
 
-        //- Construct and return a clone
+        //- Clone patch field with its own internal field reference
         virtual autoPtr<pointPatchField<Type>> clone() const = 0;
 
-        //- Construct and return a clone setting internal field reference
+        //- Clone patch field with an internal field reference
         virtual autoPtr<pointPatchField<Type>> clone
         (
             const DimensionedField<Type, pointMesh>& iF
         ) const = 0;
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a patch field, optionally with internal field reference etc.
+        template<class DerivedPatchField, class... Args>
+        static autoPtr<pointPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf,
+            Args&&... args
+        )
+        {
+            return autoPtr<pointPatchField<Type>>
+            (
+                new DerivedPatchField(pf, std::forward<Args>(args)...)
+            );
+        }
 
         //- Return a pointer to a new patchField created on freestore given
         //  patch and internal field
@@ -400,11 +414,19 @@ public:
 
         //- Return a pointer to a new calculatedPointPatchField created on
         //  freestore without setting patchField values
-        template<class Type2>
         static autoPtr<pointPatchField<Type>>
         NewCalculatedType
         (
-            const pointPatchField<Type2>&
+            const pointPatch& p
+        );
+
+        //- Return a pointer to a new calculatedPointPatchField created on
+        //  freestore without setting patchField values
+        template<class AnyType>
+        static autoPtr<pointPatchField<Type>>
+        NewCalculatedType
+        (
+            const pointPatchField<AnyType>& pf
         );
 
 

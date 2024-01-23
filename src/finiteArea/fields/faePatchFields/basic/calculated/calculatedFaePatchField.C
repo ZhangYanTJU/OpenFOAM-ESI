@@ -90,20 +90,19 @@ Foam::calculatedFaePatchField<Type>::calculatedFaePatchField
 
 
 template<class Type>
-template<class Type2>
 Foam::tmp<Foam::faePatchField<Type>>
 Foam::faePatchField<Type>::NewCalculatedType
 (
-    const faePatchField<Type2>& pf
+    const faPatch& p
 )
 {
-    auto* patchTypeCtor = patchConstructorTable(pf.patch().type());
+    auto* patchTypeCtor = patchConstructorTable(p.type());
 
     if (patchTypeCtor)
     {
         return patchTypeCtor
         (
-            pf.patch(),
+            p,
             DimensionedField<Type, edgeMesh>::null()
         );
     }
@@ -113,11 +112,23 @@ Foam::faePatchField<Type>::NewCalculatedType
         (
             new calculatedFaePatchField<Type>
             (
-                pf.patch(),
+                p,
                 DimensionedField<Type, edgeMesh>::null()
             )
         );
     }
+}
+
+
+template<class Type>
+template<class AnyType>
+Foam::tmp<Foam::faePatchField<Type>>
+Foam::faePatchField<Type>::NewCalculatedType
+(
+    const faePatchField<AnyType>& pf
+)
+{
+    return NewCalculatedType(pf.patch());
 }
 
 

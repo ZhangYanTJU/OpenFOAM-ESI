@@ -108,15 +108,15 @@ public:
             const coupledFaPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const = 0;
-
         //- Construct as copy setting internal field reference
         coupledFaPatchField
         (
             const coupledFaPatchField<Type>&,
             const DimensionedField<Type, areaMesh>&
         );
+
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const = 0;
 
         //- Construct and return a clone
         virtual tmp<faPatchField<Type>> clone

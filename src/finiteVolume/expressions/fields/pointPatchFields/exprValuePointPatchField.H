@@ -126,17 +126,10 @@ public:
             const exprValuePointPatchField<Type>&
         );
 
-
-        //- Construct and return a clone
+        //- Return a clone
         virtual autoPtr<pointPatchField<Type>> clone() const
         {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new exprValuePointPatchField<Type>
-                (
-                    *this
-                )
-            );
+            return pointPatchField<Type>::Clone(*this);
         }
 
         //- Construct and return a clone setting internal field reference
@@ -145,14 +138,7 @@ public:
             const DimensionedField<Type, pointMesh>& iF
         ) const
         {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new exprValuePointPatchField<Type>
-                (
-                    *this,
-                    iF
-                )
-            );
+            return pointPatchField<Type>::Clone(*this, iF);
         }
 
 

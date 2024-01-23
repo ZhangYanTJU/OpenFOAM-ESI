@@ -106,15 +106,15 @@ public:
             const coupledFaePatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faePatchField<Type>> clone() const = 0;
-
         //- Construct as copy setting internal field reference
         coupledFaePatchField
         (
             const coupledFaePatchField<Type>&,
             const DimensionedField<Type, edgeMesh>&
         );
+
+        //- Return clone
+        virtual tmp<faePatchField<Type>> clone() const = 0;
 
         //- Construct and return a clone
         virtual tmp<faePatchField<Type>> clone

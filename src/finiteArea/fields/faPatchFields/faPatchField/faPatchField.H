@@ -393,23 +393,56 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone
+        //- Clone patch field with its own internal field reference
         virtual tmp<faPatchField<Type>> clone() const
         {
-            return tmp<faPatchField<Type>>(new faPatchField<Type>(*this));
+            return tmp<faPatchField<Type>>
+            (
+                new faPatchField<Type>(*this, this->internalField_)
+            );
         }
 
-        //- Construct and return a clone setting internal field reference
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
         ) const
         {
-            return tmp<faPatchField<Type>>(new faPatchField<Type>(*this, iF));
+            return tmp<faPatchField<Type>>
+            (
+                new faPatchField<Type>(*this, iF)
+            );
         }
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a patch field with its own internal field reference
+        template<class DerivedPatchField>
+        static tmp<faPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf
+        )
+        {
+            return tmp<faPatchField<Type>>
+            (
+                new DerivedPatchField(pf)
+            );
+        }
+
+        //- Clone a patch field with an internal field reference
+        template<class DerivedPatchField>
+        static tmp<faPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf,
+            const DimensionedField<Type, areaMesh>& iF
+        )
+        {
+            return tmp<faPatchField<Type>>
+            (
+                new DerivedPatchField(pf, iF)
+            );
+        }
 
         //- Return a pointer to a new patchField created on freestore given
         //- patch and internal field
@@ -449,6 +482,13 @@ public:
             const faPatch&,
             const DimensionedField<Type, areaMesh>&,
             const dictionary&
+        );
+
+        //- Return a pointer to a new calculatedFaPatchField created on
+        //- freestore without setting patchField values
+        static tmp<faPatchField<Type>> NewCalculatedType
+        (
+            const faPatch& p
         );
 
         //- Return a pointer to a new calculatedFaPatchField created on

@@ -459,23 +459,43 @@ public:
             const DimensionedField<Type, volMesh>&
         );
 
-        //- Construct and return a clone
+        //- Clone patch field with its own internal field reference
         virtual tmp<fvPatchField<Type>> clone() const
         {
-            return tmp<fvPatchField<Type>>::New(*this);
+            return tmp<fvPatchField<Type>>
+            (
+                new fvPatchField<Type>(*this, this->internalField_)
+            );
         }
 
-        //- Construct and return a clone setting internal field reference
+        //- Clone patch field with given internal field reference
         virtual tmp<fvPatchField<Type>> clone
         (
             const DimensionedField<Type, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<Type>>::New(*this, iF);
+            return tmp<fvPatchField<Type>>
+            (
+                new fvPatchField<Type>(*this, iF)
+            );
         }
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a patch field, optionally with internal field reference etc.
+        template<class DerivedPatchField, class... Args>
+        static tmp<fvPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf,
+            Args&&... args
+        )
+        {
+            return tmp<fvPatchField<Type>>
+            (
+                new DerivedPatchField(pf, std::forward<Args>(args)...)
+            );
+        }
 
         //- Return a pointer to a new patchField created on freestore given
         //  patch and internal field
@@ -522,15 +542,15 @@ public:
         //  freestore without setting patchField values
         static tmp<fvPatchField<Type>> NewCalculatedType
         (
-            const fvPatch&
+            const fvPatch& p
         );
 
         //- Return a pointer to a new calculatedFvPatchField created on
         //  freestore without setting patchField values
-        template<class Type2>
+        template<class AnyType>
         static tmp<fvPatchField<Type>> NewCalculatedType
         (
-            const fvPatchField<Type2>&
+            const fvPatchField<AnyType>& pf
         );
 
 

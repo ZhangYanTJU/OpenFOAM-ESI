@@ -136,15 +136,6 @@ public:
             const inletOutletFaPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const
-        {
-            return tmp<faPatchField<Type>>
-            (
-                new inletOutletFaPatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         inletOutletFaPatchField
         (
@@ -152,16 +143,19 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const
+        {
+            return faPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
         ) const
         {
-            return tmp<faPatchField<Type>>
-            (
-                new inletOutletFaPatchField<Type>(*this, iF)
-            );
+            return faPatchField<Type>::Clone(*this, iF);
         }
 
 

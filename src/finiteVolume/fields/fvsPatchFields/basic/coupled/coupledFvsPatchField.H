@@ -101,15 +101,15 @@ public:
             const coupledFvsPatchField<Type>&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const = 0;
-
         //- Construct as copy setting internal field reference
         coupledFvsPatchField
         (
             const coupledFvsPatchField<Type>&,
             const DimensionedField<Type, surfaceMesh>&
         );
+
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const = 0;
 
         //- Construct and return a clone
         virtual tmp<fvsPatchField<Type>> clone

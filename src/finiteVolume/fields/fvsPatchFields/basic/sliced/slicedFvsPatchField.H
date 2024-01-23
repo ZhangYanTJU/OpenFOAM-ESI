@@ -109,9 +109,6 @@ public:
         //- Construct as copy
         slicedFvsPatchField(const slicedFvsPatchField<Type>&);
 
-        //- Construct and return a clone
-        virtual tmp<fvsPatchField<Type>> clone() const;
-
         //- Construct as copy setting internal field reference
         slicedFvsPatchField
         (
@@ -119,11 +116,20 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<fvsPatchField<Type>> clone() const
+        {
+            return fvsPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
-        ) const;
+        ) const
+        {
+            return fvsPatchField<Type>::Clone(*this, iF);
+        }
 
 
     //- Destructor
