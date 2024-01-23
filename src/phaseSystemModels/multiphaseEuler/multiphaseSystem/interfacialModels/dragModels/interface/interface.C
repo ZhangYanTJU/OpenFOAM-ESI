@@ -70,17 +70,10 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseEuler::dragModels::interface::K
     const volScalarField& Ur
 ) const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "K",
-            Ur.mesh().time().timeName(),
-            Ur.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "K",
+        IOobject::NO_REGISTER,
         Ur.mesh(),
         dimensionedScalar(dimDensity/dimTime, Zero)
     );

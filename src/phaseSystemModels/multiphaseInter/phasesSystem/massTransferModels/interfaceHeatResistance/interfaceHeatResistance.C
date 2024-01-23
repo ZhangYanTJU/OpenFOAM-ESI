@@ -195,14 +195,10 @@ Foam::meltingEvaporationModels::interfaceHeatResistance<Thermo, OtherThermo>
 
     updateInterface(T);
 
-    auto tdeltaT = tmp<volScalarField>::New
+    auto tdeltaT = volScalarField::New
     (
-        IOobject
-        (
-            "tdeltaT",
-            mesh.time().timeName(),
-            mesh
-        ),
+        "tdeltaT",
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedScalar(dimTemperature, Zero)
     );

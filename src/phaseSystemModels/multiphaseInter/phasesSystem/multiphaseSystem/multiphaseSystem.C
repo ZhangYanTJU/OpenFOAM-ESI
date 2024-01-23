@@ -84,36 +84,22 @@ Foam::multiphaseInter::multiphaseSystem::multiphaseSystem
     {
         const multiphaseInter::phaseModel& pm = iter()();
 
-        Su_.insert
+        Su_.emplace
         (
             pm.name(),
-            volScalarField::Internal
-            (
-                IOobject
-                (
-                    "Su" + pm.name(),
-                    mesh_.time().timeName(),
-                    mesh_
-                ),
-                mesh_,
-                dimensionedScalar(dimless/dimTime, Zero)
-            )
+            // volScalarField::Internal
+            mesh_.newIOobject("Su" + pm.name()),
+            mesh_,
+            dimensionedScalar(dimless/dimTime, Zero)
         );
 
-        Sp_.insert
+        Sp_.emplace
         (
             pm.name(),
-            volScalarField::Internal
-            (
-                IOobject
-                (
-                    "Sp" + pm.name(),
-                    mesh_.time().timeName(),
-                    mesh_
-                ),
-                mesh_,
-                dimensionedScalar(dimless/dimTime, Zero)
-            )
+            // volScalarField::Internal
+            mesh_.newIOobject("Sp" + pm.name()),
+            mesh_,
+            dimensionedScalar(dimless/dimTime, Zero)
         );
     }
 }
@@ -138,12 +124,7 @@ void Foam::multiphaseInter::multiphaseSystem::solve()
     {
         surfaceScalarField rhoPhiSum
         (
-            IOobject
-            (
-                "rhoPhiSum",
-                mesh_.time().timeName(),
-                mesh_
-            ),
+            mesh_.newIOobject("rhoPhiSum"),
             mesh_,
             dimensionedScalar(rhoPhi_.dimensions(), Zero)
         );
@@ -323,12 +304,7 @@ void Foam::multiphaseInter::multiphaseSystem::solveAlphas()
 
         volScalarField sumAlpha
         (
-            IOobject
-            (
-                "sumAlpha",
-                mesh_.time().timeName(),
-                mesh_
-            ),
+            mesh_.newIOobject("sumAlpha"),
             mesh_,
             dimensionedScalar(dimless, Zero)
         );
@@ -386,12 +362,7 @@ void Foam::multiphaseInter::multiphaseSystem::solveAlphas()
         {
             volScalarField sumAlpha
             (
-                IOobject
-                (
-                    "sumAlpha",
-                    mesh_.time().timeName(),
-                    mesh_
-                ),
+                mesh_.newIOobject("sumAlpha"),
                 mesh_,
                 dimensionedScalar(dimless, Zero)
             );

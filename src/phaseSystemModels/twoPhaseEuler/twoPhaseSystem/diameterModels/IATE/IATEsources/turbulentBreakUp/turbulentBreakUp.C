@@ -63,22 +63,14 @@ turbulentBreakUp
 Foam::tmp<Foam::volScalarField>
 Foam::diameterModels::IATEsources::turbulentBreakUp::R() const
 {
-    tmp<volScalarField> tR
+    auto tR = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "R",
-                iate_.phase().U().time().timeName(),
-                iate_.phase().mesh()
-            ),
-            iate_.phase().U().mesh(),
-            dimensionedScalar(dimless/dimTime, Zero)
-        )
+        "R",
+        IOobject::NO_REGISTER,
+        iate_.phase().U().mesh(),
+        dimensionedScalar(dimless/dimTime, Zero)
     );
-
-    volScalarField R = tR();
+    auto R = tR();
 
     const scalar Cti = Cti_.value();
     const scalar WeCr = WeCr_.value();

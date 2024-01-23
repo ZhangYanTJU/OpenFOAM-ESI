@@ -70,20 +70,15 @@ Foam::tmp<Foam::volScalarField>
 Foam::multiphaseInter::surfaceTensionModels::constantSurfaceTensionCoefficient::
 sigma() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
-    return
-        tmp<volScalarField>::New
-        (
-            IOobject
-            (
-                "zero",
-                mesh.time().timeName(),
-                mesh
-            ),
-            mesh,
-            sigma_
-        );
+    return volScalarField::New
+    (
+        "zero",
+        IOobject::NO_REGISTER,
+        mesh,
+        sigma_
+    );
 }
 
 

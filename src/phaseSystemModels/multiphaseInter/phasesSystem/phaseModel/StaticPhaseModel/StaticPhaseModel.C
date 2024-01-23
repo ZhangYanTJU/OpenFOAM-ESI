@@ -87,14 +87,10 @@ template<class BasePhaseModel>
 Foam::tmp<Foam::surfaceScalarField>
 Foam::StaticPhaseModel<BasePhaseModel>::phi() const
 {
-    return tmp<surfaceScalarField>::New
+    return surfaceScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("phi", multiphaseInter::phaseModel::name()),
-            U_.mesh().time().timeName(),
-            U_.mesh()
-        ),
+        IOobject::groupName("phi", multiphaseInter::phaseModel::name()),
+        IOobject::NO_REGISTER,
         U_.mesh(),
         dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero)
     );
@@ -114,18 +110,14 @@ template<class BasePhaseModel>
 Foam::tmp<Foam::surfaceScalarField>
 Foam::StaticPhaseModel<BasePhaseModel>::alphaPhi() const
 {
-    return tmp<surfaceScalarField>::New
+    return surfaceScalarField::New
     (
-        IOobject
+        IOobject::groupName
         (
-            IOobject::groupName
-            (
-                "alphaPhi",
-                multiphaseInter::phaseModel::name()
-            ),
-            U_.mesh().time().timeName(),
-            U_.mesh()
+            "alphaPhi",
+            multiphaseInter::phaseModel::name()
         ),
+        IOobject::NO_REGISTER,
         U_.mesh(),
         dimensionedScalar(dimensionSet(0, 3, -1, 0, 0), Zero)
     );
@@ -145,14 +137,10 @@ template<class BasePhaseModel>
 Foam::tmp<Foam::volVectorField>
 Foam::StaticPhaseModel<BasePhaseModel>::U() const
 {
-    return tmp<volVectorField>::New
+    return volVectorField::New
     (
-        IOobject
-        (
-            IOobject::groupName("U", multiphaseInter::phaseModel::name()),
-            U_.mesh().time().timeName(),
-            U_.mesh()
-        ),
+        IOobject::groupName("U", multiphaseInter::phaseModel::name()),
+        IOobject::NO_REGISTER,
         U_.mesh(),
         dimensionedVector(dimVelocity, Zero)
     );
