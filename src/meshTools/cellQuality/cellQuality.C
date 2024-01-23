@@ -41,15 +41,8 @@ Foam::cellQuality::cellQuality(const polyMesh& mesh)
 
 Foam::tmp<Foam::scalarField> Foam::cellQuality::nonOrthogonality() const
 {
-    tmp<scalarField> tresult
-    (
-        new scalarField
-        (
-            mesh_.nCells(), 0.0
-        )
-    );
-
-    scalarField& result = tresult.ref();
+    auto tresult = tmp<scalarField>::New(mesh_.nCells(), Zero);
+    auto& result = tresult.ref();
 
     scalarField sumArea(mesh_.nCells(), Zero);
 
@@ -103,14 +96,8 @@ Foam::tmp<Foam::scalarField> Foam::cellQuality::nonOrthogonality() const
 
 Foam::tmp<Foam::scalarField> Foam::cellQuality::skewness() const
 {
-    tmp<scalarField> tresult
-    (
-        new scalarField
-        (
-            mesh_.nCells(), 0.0
-        )
-    );
-    scalarField& result = tresult.ref();
+    auto tresult = tmp<scalarField>::New(mesh_.nCells(), Zero);
+    auto& result = tresult.ref();
 
     scalarField sumArea(mesh_.nCells(), Zero);
 
@@ -182,15 +169,8 @@ Foam::tmp<Foam::scalarField> Foam::cellQuality::skewness() const
 
 Foam::tmp<Foam::scalarField> Foam::cellQuality::faceNonOrthogonality() const
 {
-    tmp<scalarField> tresult
-    (
-        new scalarField
-        (
-            mesh_.nFaces(), 0.0
-        )
-    );
-    scalarField& result = tresult.ref();
-
+    auto tresult = tmp<scalarField>::New(mesh_.nFaces(), Zero);
+    auto& result = tresult.ref();
 
     const vectorField& centres = mesh_.cellCentres();
     const vectorField& areas = mesh_.faceAreas();
@@ -242,15 +222,8 @@ Foam::tmp<Foam::scalarField> Foam::cellQuality::faceNonOrthogonality() const
 
 Foam::tmp<Foam::scalarField> Foam::cellQuality::faceSkewness() const
 {
-    tmp<scalarField> tresult
-    (
-        new scalarField
-        (
-            mesh_.nFaces(), 0.0
-        )
-    );
-    scalarField& result = tresult.ref();
-
+    auto tresult = tmp<scalarField>::New(mesh_.nFaces(), Zero);
+    auto& result = tresult.ref();
 
     const vectorField& cellCtrs = mesh_.cellCentres();
     const vectorField& faceCtrs = mesh_.faceCentres();

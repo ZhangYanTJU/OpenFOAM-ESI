@@ -104,7 +104,7 @@ Foam::velocityComponentLaplacianFvMotionSolver::curPoints() const
         pointMotionU_
     );
 
-    tmp<pointField> tcurPoints(new pointField(fvMesh_.points()));
+    auto tcurPoints = tmp<pointField>::New(fvMesh_.points());
 
     tcurPoints.ref().replace
     (

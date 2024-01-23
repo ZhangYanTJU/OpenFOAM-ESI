@@ -90,10 +90,7 @@ template<class Type, class DType, class LUType>
 Foam::tmp<Foam::Field<Type>>
 Foam::LduMatrix<Type, DType, LUType>::H(const Field<Type>& psi) const
 {
-    tmp<Field<Type>> tHpsi
-    (
-        new Field<Type>(lduAddr().size(), Zero)
-    );
+    auto tHpsi = tmp<Field<Type>>::New(lduAddr().size(), Zero);
 
     if (lowerPtr_ || upperPtr_)
     {

@@ -333,8 +333,8 @@ const Foam::vectorField::subField Foam::polyPatch::faceAreas() const
 
 Foam::tmp<Foam::vectorField> Foam::polyPatch::faceCellCentres() const
 {
-    tmp<vectorField> tcc(new vectorField(size()));
-    vectorField& cc = tcc.ref();
+    auto tcc = tmp<vectorField>::New(size());
+    auto& cc = tcc.ref();
 
     // get reference to global cell centres
     const vectorField& gcc = boundaryMesh_.mesh().cellCentres();
@@ -352,8 +352,8 @@ Foam::tmp<Foam::vectorField> Foam::polyPatch::faceCellCentres() const
 
 Foam::tmp<Foam::scalarField> Foam::polyPatch::areaFraction() const
 {
-    tmp<scalarField> tfraction(new scalarField(size()));
-    scalarField& fraction = tfraction.ref();
+    auto tfraction = tmp<scalarField>::New(size());
+    auto& fraction = tfraction.ref();
 
     const vectorField::subField faceAreas = this->faceAreas();
     const pointField& points = this->points();

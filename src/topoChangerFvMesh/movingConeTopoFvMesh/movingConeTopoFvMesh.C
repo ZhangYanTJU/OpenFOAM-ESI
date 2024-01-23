@@ -70,8 +70,8 @@ Foam::tmp<Foam::scalarField> Foam::movingConeTopoFvMesh::vertexMarkup
     Info<< "Updating vertex markup.  curLeft: "
         << curLeft << " curRight: " << curRight << endl;
 
-    tmp<scalarField> tvertexMarkup(new scalarField(p.size()));
-    scalarField& vertexMarkup = tvertexMarkup.ref();
+    auto tvertexMarkup = tmp<scalarField>::New(p.size());
+    auto& vertexMarkup = tvertexMarkup.ref();
 
     forAll(p, pI)
     {

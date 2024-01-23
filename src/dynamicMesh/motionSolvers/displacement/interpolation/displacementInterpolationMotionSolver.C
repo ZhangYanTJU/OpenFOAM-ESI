@@ -339,8 +339,8 @@ Foam::displacementInterpolationMotionSolver::curPoints() const
             << " points." << exit(FatalError);
     }
 
-    tmp<pointField> tcurPoints(new pointField(points0()));
-    pointField& curPoints = tcurPoints.ref();
+    auto tcurPoints = tmp<pointField>::New(points0());
+    auto& curPoints = tcurPoints.ref();
 
     // Interpolate the displacement of the face zones.
     vectorField zoneDisp(displacements_.size(), Zero);

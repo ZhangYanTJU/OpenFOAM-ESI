@@ -275,12 +275,8 @@ bool Foam::linearValveLayersFvMesh::attached() const
 
 Foam::tmp<Foam::pointField> Foam::linearValveLayersFvMesh::newPoints() const
 {
-    tmp<pointField> tnewPoints
-    (
-        new pointField(points())
-    );
-
-    pointField& np = tnewPoints();
+    auto tnewPoints = tmp<pointField>::New(points());
+    auto& np = tnewPoints();
 
     const word layerPatchName
     (
