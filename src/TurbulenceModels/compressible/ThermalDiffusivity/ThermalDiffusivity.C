@@ -143,10 +143,7 @@ Foam::ThermalDiffusivity<BasicTurbulenceModel>::alphat
     const label patchi
 ) const
 {
-    return tmp<scalarField>
-    (
-        new scalarField(this->mesh_.boundary()[patchi].size(), Zero)
-    );
+    return tmp<scalarField>::New(this->mesh_.boundary()[patchi].size(), Zero);
 }
 
 

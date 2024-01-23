@@ -80,17 +80,10 @@ tmp<volScalarField> kL<BasicTurbulenceModel>::epsilonCanopy() const
         return Cd*LAD*mag(U)*k_;
     }
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("epsilonCanopy", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("epsilonCanopy", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(sqr(dimLength)/pow3(dimTime), Zero)
     );
@@ -118,26 +111,22 @@ tmp<volScalarField> kL<BasicTurbulenceModel>::epsilon() const
 template<class BasicTurbulenceModel>
 tmp<volScalarField> kL<BasicTurbulenceModel>::canopyHeight() const
 {
-    const auto* canopyHeightPtr =
-        this->mesh_.template findObject<volScalarField>("canopyHeight");
+    tmp<volScalarField> tcanopy;
 
-    if (canopyHeightPtr)
+    tcanopy.cref
+    (
+        this->mesh_.template cfindObject<volScalarField>("canopyHeight")
+    );
+
+    if (tcanopy)
     {
-        const auto& canopyHeight = *canopyHeightPtr;
-        return canopyHeight;
+        return tcanopy;
     }
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("canopyHeight", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("canopyHeight", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(dimLength, Zero)
     );

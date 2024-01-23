@@ -193,14 +193,10 @@ Foam::RASModel<BasicTurbulenceModel>::epsilon() const
 {
     const scalar Cmu = 0.09;
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("epsilon", this->alphaRhoPhi_.group()),
-            this->mesh_.time().timeName(),
-            this->mesh_
-        ),
+        IOobject::groupName("epsilon", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         Cmu*this->k()*this->omega()
     );
 }
@@ -213,14 +209,10 @@ Foam::RASModel<BasicTurbulenceModel>::omega() const
     const scalar betaStar = 0.09;
     const dimensionedScalar k0(sqr(dimLength/dimTime), SMALL);
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("omega", this->alphaRhoPhi_.group()),
-            this->mesh_.time().timeName(),
-            this->mesh_
-        ),
+        IOobject::groupName("omega", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->epsilon()/(betaStar*(this->k() + k0))
     );
 }

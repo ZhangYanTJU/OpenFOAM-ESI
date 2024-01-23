@@ -168,16 +168,10 @@ tmp<volScalarField> DESModel<BasicTurbulenceModel>::Ssigma
 template<class BasicTurbulenceModel>
 tmp<volScalarField> DESModel<BasicTurbulenceModel>::fd() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "fd",
-            this->mesh_.time().timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "fd",
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(dimless, Zero)
     );
