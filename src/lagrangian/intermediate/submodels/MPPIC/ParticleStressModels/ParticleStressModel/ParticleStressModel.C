@@ -107,17 +107,15 @@ Foam::ParticleStressModel::tau
     const FieldField<Field, scalar>& uRms
 ) const
 {
-    tmp<FieldField<Field, scalar>> value
-    (
-        new FieldField<Field, scalar>(alpha.size())
-    );
+    auto tvalue = tmp<FieldField<Field, scalar>>::New(alpha.size());
+    auto& value = tvalue.ref();
 
     forAll(alpha, i)
     {
-        value->set(i, tau(alpha[i], rho[i], uRms[i]));
+        value.set(i, tau(alpha[i], rho[i], uRms[i]));
     }
 
-    return value;
+    return tvalue;
 }
 
 

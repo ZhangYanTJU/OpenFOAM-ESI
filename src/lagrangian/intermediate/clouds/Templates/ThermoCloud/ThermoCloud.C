@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,11 +64,12 @@ void Foam::ThermoCloud<CloudType>::setModels()
             (
                 IOobject
                 (
-                    this->name() + ":radAreaP",
+                    IOobject::scopedName(this->name(), "radAreaP"),
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 this->mesh(),
                 dimensionedScalar(dimArea, Zero)
@@ -81,11 +82,12 @@ void Foam::ThermoCloud<CloudType>::setModels()
             (
                 IOobject
                 (
-                    this->name() + ":radT4",
+                    IOobject::scopedName(this->name(), "radT4"),
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 this->mesh(),
                 dimensionedScalar(pow4(dimTemperature), Zero)
@@ -98,11 +100,12 @@ void Foam::ThermoCloud<CloudType>::setModels()
             (
                 IOobject
                 (
-                    this->name() + ":radAreaPT4",
+                    IOobject::scopedName(this->name(), "radAreaPT4"),
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 this->mesh(),
                 dimensionedScalar(sqr(dimLength)*pow4(dimTemperature), Zero)
@@ -164,11 +167,12 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
         (
             IOobject
             (
-                this->name() + ":hsTrans",
+                IOobject::scopedName(this->name(), "hsTrans"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::REGISTER
             ),
             this->mesh(),
             dimensionedScalar(dimEnergy, Zero)
@@ -180,11 +184,12 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
         (
             IOobject
             (
-                this->name() + ":hsCoeff",
+                IOobject::scopedName(this->name(), "hsCoeff"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::REGISTER
             ),
             this->mesh(),
             dimensionedScalar(dimEnergy/dimTemperature, Zero)
@@ -235,7 +240,7 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
         (
             IOobject
             (
-                this->name() + ":hsTrans",
+                IOobject::scopedName(this->name(), "hsTrans"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,
@@ -251,7 +256,7 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
         (
             IOobject
             (
-                this->name() + ":hsCoeff",
+                IOobject::scopedName(this->name(), "hsCoeff"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,
@@ -270,7 +275,7 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
             (
                 IOobject
                 (
-                    this->name() + ":radAreaP",
+                    IOobject::scopedName(this->name(), "radAreaP"),
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::NO_READ,
@@ -287,7 +292,7 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
             (
                 IOobject
                 (
-                    this->name() + ":radT4",
+                    IOobject::scopedName(this->name(), "radT4"),
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::NO_READ,
@@ -304,7 +309,7 @@ Foam::ThermoCloud<CloudType>::ThermoCloud
             (
                 IOobject
                 (
-                    this->name() + ":radAreaPT4",
+                    IOobject::scopedName(this->name(), "radAreaPT4"),
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::NO_READ,

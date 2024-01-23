@@ -360,8 +360,9 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
             cloudName + "Properties",
             mesh_.time().constant(),
             mesh_,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
     outputProperties_
@@ -373,7 +374,8 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
             "uniform"/cloud::prefix/cloudName,
             mesh_,
             IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
     solution_(mesh_, particleProperties_.subDict("solution")),
@@ -438,7 +440,8 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::REGISTER
             ),
             mesh_,
             dimensionedScalar(dimMass, Zero)
@@ -454,7 +457,8 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::REGISTER
             ),
             mesh_,
             dimensionedVector(dimMass*dimVelocity, Zero)
@@ -470,7 +474,8 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::READ_IF_PRESENT,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::REGISTER
             ),
             mesh_,
             dimensionedScalar(dimMass, Zero)
@@ -571,7 +576,7 @@ Foam::KinematicCloud<CloudType>::KinematicCloud
         (
             IOobject
             (
-                name + ":UCoeff",
+                IOobject::scopedName(this->name(), "UCoeff"),
                 this->db().time().timeName(),
                 this->db(),
                 IOobject::NO_READ,

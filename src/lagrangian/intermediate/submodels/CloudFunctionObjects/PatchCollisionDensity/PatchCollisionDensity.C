@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2018 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,36 +39,42 @@ void Foam::PatchCollisionDensity<CloudType>::write()
 {
     const scalarField z(this->owner().mesh().nCells(), Zero);
 
-    volScalarField
-    (
-        IOobject
+    {
+        volScalarField
         (
-            this->owner().name() + ":collisionDensity",
-            this->owner().mesh().time().timeName(),
-            this->owner().mesh()
-        ),
-        this->owner().mesh(),
-        dimless/dimArea,
-        z,
-        collisionDensity_
-    )
-   .write();
+            this->owner().mesh().newIOobject
+            (
+                IOobject::scopedName
+                (
+                    this->owner().name(),
+                    "collisionDensity"
+                )
+            ),
+            this->owner().mesh(),
+            dimless/dimArea,
+            z,
+            collisionDensity_
+        ).write();
+    }
 
-    volScalarField
-    (
-        IOobject
+    {
+        volScalarField
         (
-            this->owner().name() + ":collisionDensityRate",
-            this->owner().mesh().time().timeName(),
-            this->owner().mesh()
-        ),
-        this->owner().mesh(),
-        dimless/dimArea/dimTime,
-        z,
-        (collisionDensity_ - collisionDensity0_)
-       /(this->owner().mesh().time().value() - time0_)
-    )
-   .write();
+            this->owner().mesh().newIOobject
+            (
+                IOobject::scopedName
+                (
+                    this->owner().name(),
+                    "collisionDensityRate"
+                )
+            ),
+            this->owner().mesh(),
+            dimless/dimArea/dimTime,
+            z,
+            (collisionDensity_ - collisionDensity0_)
+            /(this->owner().mesh().time().value() - time0_)
+        ).write();
+    }
 
     collisionDensity0_ == collisionDensity_;
     time0_ = this->owner().mesh().time().value();
@@ -106,11 +112,11 @@ Foam::PatchCollisionDensity<CloudType>::PatchCollisionDensity
 
     IOobject io
     (
-        this->owner().name() + ":collisionDensity",
-        this->owner().mesh().time().timeName(),
-        this->owner().mesh(),
-        IOobject::MUST_READ,
-        IOobject::NO_WRITE
+        this->owner().mesh().newIOobject
+        (
+            IOobject::scopedName(this->owner().name(), "collisionDensity"),
+            IOobject::MUST_READ
+        )
     );
 
     if (io.typeHeaderOk<volScalarField>())

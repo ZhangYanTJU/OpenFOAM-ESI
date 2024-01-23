@@ -120,7 +120,15 @@ Foam::ReactingCloud<CloudType>::ReactingCloud
     // Set storage for mass source fields and initialise to zero
     forAll(rhoTrans_, i)
     {
-        const word& specieName = thermo.carrier().species()[i];
+        const word fieldName
+        (
+            IOobject::scopedName
+            (
+                this->name(),
+                "rhoTrans_" + thermo.carrier().species()[i]
+            )
+        );
+
         rhoTrans_.set
         (
             i,
@@ -128,11 +136,12 @@ Foam::ReactingCloud<CloudType>::ReactingCloud
             (
                 IOobject
                 (
-                    this->name() + ":rhoTrans_" + specieName,
+                    fieldName,
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
+                    IOobject::AUTO_WRITE,
+                    IOobject::REGISTER
                 ),
                 this->mesh(),
                 dimensionedScalar(dimMass, Zero)
@@ -164,7 +173,15 @@ Foam::ReactingCloud<CloudType>::ReactingCloud
 {
     forAll(c.rhoTrans_, i)
     {
-        const word& specieName = this->thermo().carrier().species()[i];
+        const word fieldName
+        (
+            IOobject::scopedName
+            (
+                this->name(),
+                "rhoTrans_" + this->thermo().carrier().species()[i]
+            )
+        );
+
         rhoTrans_.set
         (
             i,
@@ -172,7 +189,7 @@ Foam::ReactingCloud<CloudType>::ReactingCloud
             (
                 IOobject
                 (
-                    this->name() + ":rhoTrans_" + specieName,
+                    fieldName,
                     this->db().time().timeName(),
                     this->db(),
                     IOobject::NO_READ,

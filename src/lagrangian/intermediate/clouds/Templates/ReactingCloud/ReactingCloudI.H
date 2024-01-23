@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -144,25 +145,14 @@ inline Foam::tmp<Foam::fvScalarMatrix> Foam::ReactingCloud<CloudType>::SYi
     {
         if (this->solution().semiImplicit("Yi"))
         {
-            tmp<volScalarField> trhoTrans
+            auto trhoTrans = volScalarField::New
             (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        this->name() + ":rhoTrans",
-                        this->db().time().timeName(),
-                        this->db(),
-                        IOobject::NO_READ,
-                        IOobject::NO_WRITE,
-                        IOobject::NO_REGISTER
-                    ),
-                    this->mesh(),
-                    dimensionedScalar(dimMass/dimTime/dimVolume, Zero)
-                )
+                IOobject::scopedName(this->name(), "rhoTrans"),
+                IOobject::NO_REGISTER,
+                this->mesh(),
+                dimensionedScalar(dimMass/dimTime/dimVolume, Zero)
             );
-
-            volScalarField& sourceField = trhoTrans.ref();
+            auto& sourceField = trhoTrans.ref();
 
             sourceField.primitiveFieldRef() =
                 rhoTrans_[i]/(this->db().time().deltaTValue()*this->mesh().V());
@@ -175,8 +165,8 @@ inline Foam::tmp<Foam::fvScalarMatrix> Foam::ReactingCloud<CloudType>::SYi
         }
         else
         {
-            tmp<fvScalarMatrix> tfvm(new fvScalarMatrix(Yi, dimMass/dimTime));
-            fvScalarMatrix& fvm = tfvm.ref();
+            auto tfvm = tmp<fvScalarMatrix>::New(Yi, dimMass/dimTime);
+            auto& fvm = tfvm.ref();
 
             fvm.source() = -rhoTrans_[i]/this->db().time().deltaTValue();
 
@@ -192,30 +182,20 @@ template<class CloudType>
 inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::ReactingCloud<CloudType>::Srho(const label i) const
 {
-    tmp<volScalarField::Internal> tRhoi
+    auto tRhoi = volScalarField::Internal::New
     (
-        new volScalarField::Internal
+        IOobject::scopedName(this->name(), "rhoTrans"),
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar
         (
-            IOobject
-            (
-                this->name() + ":rhoTrans",
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar
-            (
-                rhoTrans_[0].dimensions()/dimTime/dimVolume, Zero
-            )
+            rhoTrans_[0].dimensions()/dimTime/dimVolume, Zero
         )
     );
+    scalarField& rhoi = tRhoi.ref();
 
     if (this->solution().coupled())
     {
-        scalarField& rhoi = tRhoi.ref();
         rhoi = rhoTrans_[i]/(this->db().time().deltaTValue()*this->mesh().V());
     }
 
@@ -227,30 +207,20 @@ template<class CloudType>
 inline Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::ReactingCloud<CloudType>::Srho() const
 {
-    tmp<volScalarField::Internal> trhoTrans
+    auto trhoTrans = volScalarField::Internal::New
     (
-        new volScalarField::Internal
+        IOobject::scopedName(this->name(), "rhoTrans"),
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar
         (
-            IOobject
-            (
-                this->name() + ":rhoTrans",
-                this->db().time().timeName(),
-                this->db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar
-            (
-                rhoTrans_[0].dimensions()/dimTime/dimVolume, Zero
-            )
+            rhoTrans_[0].dimensions()/dimTime/dimVolume, Zero
         )
     );
+    scalarField& sourceField = trhoTrans.ref();
 
     if (this->solution().coupled())
     {
-        scalarField& sourceField = trhoTrans.ref();
         forAll(rhoTrans_, i)
         {
             sourceField += rhoTrans_[i];
@@ -269,29 +239,17 @@ Foam::ReactingCloud<CloudType>::Srho(volScalarField& rho) const
 {
     if (this->solution().coupled())
     {
-        tmp<volScalarField> trhoTrans
+        auto trhoTrans = volScalarField::New
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    this->name() + ":rhoTrans",
-                    this->db().time().timeName(),
-                    this->db(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ),
-                this->mesh(),
-                dimensionedScalar(dimMass/dimTime/dimVolume, Zero)
-            )
+            IOobject::scopedName(this->name(), "rhoTrans"),
+            IOobject::NO_REGISTER,
+            this->mesh(),
+            dimensionedScalar(dimMass/dimTime/dimVolume, Zero)
         );
-
         scalarField& sourceField = trhoTrans.ref();
 
         if (this->solution().semiImplicit("rho"))
         {
-
             forAll(rhoTrans_, i)
             {
                 sourceField += rhoTrans_[i];
@@ -302,8 +260,8 @@ Foam::ReactingCloud<CloudType>::Srho(volScalarField& rho) const
         }
         else
         {
-            tmp<fvScalarMatrix> tfvm(new fvScalarMatrix(rho, dimMass/dimTime));
-            fvScalarMatrix& fvm = tfvm.ref();
+            auto tfvm = tmp<fvScalarMatrix>::New(rho, dimMass/dimTime);
+            auto& fvm = tfvm.ref();
 
             forAll(rhoTrans_, i)
             {
