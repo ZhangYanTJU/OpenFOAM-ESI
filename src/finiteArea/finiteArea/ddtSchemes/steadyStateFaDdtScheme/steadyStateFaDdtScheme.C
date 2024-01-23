@@ -48,16 +48,13 @@ steadyStateFaDdtScheme<Type>::facDdt
     const dimensioned<Type> dt
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt("+dt.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt("+dt.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(dt.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        dt.dimensions()/dimTime
     );
 }
 
@@ -69,16 +66,13 @@ steadyStateFaDdtScheme<Type>::facDdt0
     const dimensioned<Type> dt
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt("+dt.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt("+dt.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(dt.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        dt.dimensions()/dimTime
     );
 }
 
@@ -90,16 +84,13 @@ steadyStateFaDdtScheme<Type>::facDdt
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt("+vf.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt("+vf.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(vf.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        vf.dimensions()/dimTime
     );
 }
 
@@ -111,16 +102,13 @@ steadyStateFaDdtScheme<Type>::facDdt0
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt0("+vf.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt0("+vf.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(vf.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        vf.dimensions()/dimTime
     );
 }
 
@@ -133,16 +121,13 @@ steadyStateFaDdtScheme<Type>::facDdt
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt("+rho.name()+','+vf.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt("+rho.name()+','+vf.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        rho.dimensions()*vf.dimensions()/dimTime
     );
 }
 
@@ -154,16 +139,13 @@ steadyStateFaDdtScheme<Type>::facDdt0
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt0("+rho.name()+','+vf.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt0("+rho.name()+','+vf.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        rho.dimensions()*vf.dimensions()/dimTime
     );
 }
 
@@ -176,16 +158,13 @@ steadyStateFaDdtScheme<Type>::facDdt
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt("+rho.name()+','+vf.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt("+rho.name()+','+vf.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        rho.dimensions()*vf.dimensions()/dimTime
     );
 }
 
@@ -198,16 +177,13 @@ steadyStateFaDdtScheme<Type>::facDdt0
     const GeometricField<Type, faPatchField, areaMesh>& vf
 )
 {
-    return tmp<GeometricField<Type, faPatchField, areaMesh>>::New
+    return GeometricField<Type, faPatchField, areaMesh>::New
     (
-        IOobject
-        (
-            "ddt0("+rho.name()+','+vf.name()+')',
-            mesh().time().timeName(),
-            mesh().thisDb()
-        ),
+        "ddt0("+rho.name()+','+vf.name()+')',
+        IOobject::REGISTER,
         mesh(),
-        dimensioned<Type>(rho.dimensions()*vf.dimensions()/dimTime, Zero)
+        Foam::zero{},
+        rho.dimensions()*vf.dimensions()/dimTime
     );
 }
 

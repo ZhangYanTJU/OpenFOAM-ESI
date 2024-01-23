@@ -71,13 +71,13 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     scalar coefft   = (deltaT + deltaT0)/(2*deltaT);
     scalar coefft00 = (deltaT + deltaT0)/(2*deltaT0);
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+dt.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+dt.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
@@ -130,13 +130,13 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     scalar deltaT = deltaT_();
@@ -208,13 +208,13 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     scalar deltaT = deltaT_();
@@ -293,13 +293,13 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     scalar deltaT = deltaT_();

@@ -49,13 +49,13 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+dt.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt("+dt.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
@@ -96,13 +96,13 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+dt.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt("+dt.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     tmp<GeometricField<Type, faPatchField, areaMesh>> tdtdt0
@@ -134,13 +134,13 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt("+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
@@ -187,13 +187,13 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt0("+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt0("+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
@@ -234,13 +234,13 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
@@ -287,13 +287,13 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt0("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt0("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
@@ -336,13 +336,13 @@ EulerFaDdtScheme<Type>::facDdt
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
@@ -393,13 +393,13 @@ EulerFaDdtScheme<Type>::facDdt0
 {
     dimensionedScalar rDeltaT = 1.0/mesh().time().deltaT();
 
-    IOobject ddtIOobject
+    const IOobject ddtIOobject
     (
-        "ddt0("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "ddt0("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())

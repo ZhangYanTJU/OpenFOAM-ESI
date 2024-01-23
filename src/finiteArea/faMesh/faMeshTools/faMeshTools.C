@@ -144,7 +144,7 @@ Foam::faMeshTools::newMesh
     IOobject cmptIO(meshIO, "faceLabels", meshSubDir);
     cmptIO.readOpt(IOobject::MUST_READ);
     cmptIO.writeOpt(IOobject::NO_WRITE);
-    cmptIO.registerObject(false);
+    cmptIO.registerObject(IOobject::NO_REGISTER);
 
 
     // Check who has a mesh
