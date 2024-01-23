@@ -276,19 +276,12 @@ scalar liquidFilmBase::CourantNumber() const
 
 Foam::tmp<Foam::areaVectorField> liquidFilmBase::Uw() const
 {
-    tmp<areaVectorField> tUw
+    auto tUw = areaVectorField::New
     (
-        new areaVectorField
-        (
-            IOobject
-            (
-                "tUw",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb()
-            ),
-            regionMesh(),
-            dimensionedVector(dimVelocity, Zero)
-        )
+        "tUw",
+        IOobjectOption::NO_REGISTER,
+        regionMesh(),
+        dimensionedVector(dimVelocity, Zero)
     );
     auto& Uw = tUw.ref();
 
@@ -331,19 +324,12 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Uw() const
 
 Foam::tmp<Foam::areaVectorField> liquidFilmBase::Us() const
 {
-    tmp<areaVectorField> tUs
+    auto tUs = areaVectorField::New
     (
-        new areaVectorField
-        (
-            IOobject
-            (
-                "tUs",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb()
-            ),
-            regionMesh(),
-            dimensionedVector(dimVelocity, Zero)
-        )
+        "tUs",
+        IOobjectOption::NO_REGISTER,
+        regionMesh(),
+        dimensionedVector(dimVelocity, Zero)
     );
 
     // Uf quadratic profile
@@ -358,21 +344,14 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Up() const
     const volVectorField& Uprimary =
         primaryMesh().lookupObject<volVectorField>(UName_);
 
-    tmp<areaVectorField> tUp
+    auto tUp = areaVectorField::New
     (
-        new areaVectorField
-        (
-            IOobject
-            (
-                "tUp",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb()
-            ),
-            regionMesh(),
-            dimensionedVector(dimVelocity, Zero)
-        )
+        "tUp",
+        IOobjectOption::NO_REGISTER,
+        regionMesh(),
+        dimensionedVector(dimVelocity, Zero)
     );
-    areaVectorField& Up = tUp.ref();
+    auto& Up = tUp.ref();
 
 
     // Set up mapping values per patch
@@ -406,19 +385,12 @@ Foam::tmp<Foam::areaVectorField> liquidFilmBase::Up() const
 
 tmp<areaScalarField> liquidFilmBase::pg() const
 {
-    tmp<areaScalarField> tpg
+    auto tpg = areaScalarField::New
     (
-        new areaScalarField
-        (
-            IOobject
-            (
-                "tpg",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb()
-            ),
-            regionMesh(),
-            dimensionedScalar(dimPressure, Zero)
-        )
+        "tpg",
+        IOobjectOption::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar(dimPressure, Zero)
     );
     auto& pfg = tpg.ref();
 
@@ -439,19 +411,12 @@ tmp<areaScalarField> liquidFilmBase::pg() const
 
 tmp<areaScalarField> liquidFilmBase::alpha() const
 {
-    tmp<areaScalarField> talpha
+    auto talpha = areaScalarField::New
     (
-        new areaScalarField
-        (
-            IOobject
-            (
-                "talpha",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb()
-            ),
-            regionMesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        "talpha",
+        IOobjectOption::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar(dimless, Zero)
     );
     auto& alpha = talpha.ref();
 

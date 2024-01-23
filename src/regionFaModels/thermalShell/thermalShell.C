@@ -182,73 +182,43 @@ void thermalShell::evolveRegion()
 
 const tmp<areaScalarField> thermalShell::Cp() const
 {
-    return tmp<areaScalarField>
+    return areaScalarField::New
     (
-        new areaScalarField
-        (
-            IOobject
-            (
-                "Cps",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            regionMesh(),
-            dimensionedScalar(dimEnergy/dimTemperature/dimMass, thermo_.Cp()),
-            faPatchFieldBase::zeroGradientType()
-        )
+        "Cps",
+        IOobject::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar(dimEnergy/dimTemperature/dimMass, thermo_.Cp()),
+        faPatchFieldBase::zeroGradientType()
     );
 }
 
 
 const tmp<areaScalarField> thermalShell::rho() const
 {
-    return tmp<areaScalarField>
+    return areaScalarField::New
     (
-        new areaScalarField
-        (
-            IOobject
-            (
-                "rhos",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            regionMesh(),
-            dimensionedScalar(dimDensity, thermo_.rho()),
-            faPatchFieldBase::zeroGradientType()
-        )
+        "rhos",
+        IOobject::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar(dimDensity, thermo_.rho()),
+        faPatchFieldBase::zeroGradientType()
     );
 }
 
 
 const tmp<areaScalarField> thermalShell::kappa() const
 {
-    return tmp<areaScalarField>
+    return areaScalarField::New
     (
-        new areaScalarField
+        "kappas",
+        IOobject::NO_REGISTER,
+        regionMesh(),
+        dimensionedScalar
         (
-            IOobject
-            (
-                "kappas",
-                regionMesh().time().timeName(),
-                regionMesh().thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            regionMesh(),
-            dimensionedScalar
-            (
-                dimPower/dimLength/dimTemperature,
-                thermo_.kappa()
-            ),
-            faPatchFieldBase::zeroGradientType()
-        )
+            dimPower/dimLength/dimTemperature,
+            thermo_.kappa()
+        ),
+        faPatchFieldBase::zeroGradientType()
     );
 }
 

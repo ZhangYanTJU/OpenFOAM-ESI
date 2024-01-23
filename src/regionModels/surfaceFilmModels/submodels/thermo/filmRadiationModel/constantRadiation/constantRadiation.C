@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,7 +63,7 @@ constantRadiation::constantRadiation
     (
         IOobject
         (
-            typeName + ":qrConst",
+            IOobject::scopedName(typeName, "qrConst"),
             film.time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::MUST_READ,
@@ -74,7 +75,7 @@ constantRadiation::constantRadiation
     (
         IOobject
         (
-            typeName + ":mask",
+            IOobject::scopedName(typeName, "mask"),
             film.time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
@@ -105,28 +106,19 @@ void constantRadiation::correct()
 
 tmp<volScalarField> constantRadiation::Shs()
 {
-    tmp<volScalarField> tShs
+    auto tShs = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                typeName + ":Shs",
-                film().time().timeName(),
-                film().regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            film().regionMesh(),
-            dimensionedScalar(dimMass/pow3(dimTime), Zero)
-        )
+        IOobject::scopedName(typeName, "Shs"),
+        IOobject::NO_REGISTER,
+        film().regionMesh(),
+        dimensionedScalar(dimMass/pow3(dimTime), Zero)
     );
+    auto& Shs = tShs.ref().primitiveFieldRef();
 
     const scalar time = film().time().value();
 
     if ((time >= timeStart_) && (time <= timeStart_ + duration_))
     {
-        scalarField& Shs = tShs.ref();
         const scalarField& qr = qrConst_;
         const scalarField& alpha = filmModel_.alpha();
 

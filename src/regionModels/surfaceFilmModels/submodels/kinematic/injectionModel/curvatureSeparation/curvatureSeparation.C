@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -66,20 +66,19 @@ tmp<volScalarField> curvatureSeparation::calcInvR1
 {
     // method 1
 /*
-    tmp<volScalarField> tinvR1
-    (
-        new volScalarField("invR1", fvc::div(film().nHat()))
-    );
+    auto tinvR1 = volScalarField::New("invR1", fvc::div(film().nHat()));
 */
 
     // method 2
     dimensionedScalar smallU("smallU", dimVelocity, ROOTVSMALL);
     volVectorField UHat(U/(mag(U) + smallU));
-    tmp<volScalarField> tinvR1
-    (
-        new volScalarField("invR1", UHat & (UHat & gradNHat_))
-    );
 
+    auto tinvR1 = volScalarField::New
+    (
+        "invR1",
+        IOobject::NO_REGISTER,
+        UHat & (UHat & gradNHat_)
+    );
 
     scalarField& invR1 = tinvR1.ref().primitiveFieldRef();
 
@@ -197,21 +196,16 @@ tmp<scalarField> curvatureSeparation::calcCosAngle
     // checks
     if (debug && mesh.time().writeTime())
     {
-        volScalarField volCosAngle
+        auto tvolCosAngle = volScalarField::New
         (
-            IOobject
-            (
-                "cosAngle",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            "cosAngle",
+            IOobject::NO_REGISTER,
             mesh,
             dimensionedScalar(dimless, Zero),
             fvPatchFieldBase::zeroGradientType()
         );
+        auto& volCosAngle = tvolCosAngle.ref();
+
         volCosAngle.primitiveFieldRef() = cosAngle;
         volCosAngle.correctBoundaryConditions();
         volCosAngle.write();
@@ -341,21 +335,16 @@ void curvatureSeparation::correct
 
     if (debug && mesh.time().writeTime())
     {
-        volScalarField volFnet
+        auto tvolFnet = volScalarField::New
         (
-            IOobject
-            (
-                "Fnet",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            "Fnet",
+            IOobject::NO_REGISTER,
             mesh,
             dimensionedScalar(dimForce, Zero),
             fvPatchFieldBase::zeroGradientType()
         );
+        auto& volFnet = tvolFnet.ref();
+
         volFnet.primitiveFieldRef() = Fnet;
         volFnet.correctBoundaryConditions();
         volFnet.write();

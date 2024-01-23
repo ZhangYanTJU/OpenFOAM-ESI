@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,7 +68,8 @@ standardRadiation::standardRadiation
             film.time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh(),
         dimensionedScalar(dimMass/pow3(dimTime), Zero),
@@ -81,7 +83,8 @@ standardRadiation::standardRadiation
             film.time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh(),
         dimensionedScalar(dimMass/pow3(dimTime), Zero),
@@ -103,24 +106,15 @@ void standardRadiation::correct()
 
 tmp<volScalarField> standardRadiation::Shs()
 {
-    tmp<volScalarField> tShs
+    auto tShs = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                typeName + ":Shs",
-                film().time().timeName(),
-                film().regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            film().regionMesh(),
-            dimensionedScalar(dimMass/pow3(dimTime), Zero)
-        )
+        IOobject::scopedName(typeName, "Shs"),
+        IOobject::NO_REGISTER,
+        film().regionMesh(),
+        dimensionedScalar(dimMass/pow3(dimTime), Zero)
     );
-
     scalarField& Shs = tShs.ref();
+
     const scalarField& qinP = qinPrimary_;
     const scalarField& delta = filmModel_.delta();
     const scalarField& alpha = filmModel_.alpha();

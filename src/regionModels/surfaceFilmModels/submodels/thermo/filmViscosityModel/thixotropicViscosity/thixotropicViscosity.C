@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,11 +77,12 @@ thixotropicViscosity::thixotropicViscosity
     (
         IOobject
         (
-            typeName + ":lambda",
+            IOobject::scopedName(typeName, "lambda"),
             film.regionMesh().time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh()
     )

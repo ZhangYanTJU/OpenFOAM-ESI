@@ -68,8 +68,7 @@ tmp<fvVectorMatrix> thermocapillaryForce::correct(volVectorField& U)
     const volScalarField& alpha = filmModel_.alpha();
     const volScalarField& sigma = filmModel_.sigma();
 
-    tmp<fvVectorMatrix>
-        tfvm(new fvVectorMatrix(U, dimForce/dimArea*dimVolume));
+    auto tfvm = tmp<fvVectorMatrix>::New(U, dimForce/dimArea*dimVolume);
 
     tfvm.ref() += alpha*fvc::grad(sigma);
 

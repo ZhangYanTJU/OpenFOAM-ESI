@@ -56,7 +56,8 @@ void Foam::regionModels::singleLayerRegion::constructMeshObjects()
                 time_.timeName(),
                 regionMesh(),
                 IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             regionMesh(),
             dimensionedVector(dimless, Zero),
@@ -75,7 +76,8 @@ void Foam::regionModels::singleLayerRegion::constructMeshObjects()
                 time_.timeName(),
                 regionMesh(),
                 IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             regionMesh(),
             dimensionedScalar(dimArea, Zero),

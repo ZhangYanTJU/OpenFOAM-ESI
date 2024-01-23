@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -75,16 +76,10 @@ void noRadiation::correct()
 
 tmp<volScalarField> noRadiation::Shs()
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            typeName + ":Shs",
-            film().time().timeName(),
-            film().regionMesh().thisDb(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(typeName, "Shs"),
+        IOobject::NO_REGISTER,
         film().regionMesh(),
         dimensionedScalar(dimMass/pow3(dimTime), Zero)
     );

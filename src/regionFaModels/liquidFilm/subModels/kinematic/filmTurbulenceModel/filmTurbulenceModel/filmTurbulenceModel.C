@@ -102,18 +102,13 @@ const liquidFilmBase& filmTurbulenceModel::film() const
 
 tmp<areaScalarField> filmTurbulenceModel::Cw() const
 {
-    auto tCw =
-        tmp<areaScalarField>::New
-        (
-            IOobject
-            (
-                "tCw",
-                film_.regionMesh().time().timeName(),
-                film_.regionMesh().thisDb()
-            ),
-            film_.regionMesh(),
-            dimensionedScalar(dimVelocity)
-        );
+    auto tCw = areaScalarField::New
+    (
+        "tCw",
+        IOobject::NO_REGISTER,
+        film_.regionMesh(),
+        dimensionedScalar(dimVelocity, Zero)
+    );
     auto& Cw = tCw.ref();
 
 
@@ -195,10 +190,8 @@ tmp<faVectorMatrix> filmTurbulenceModel::primaryRegionFriction
     areaVectorField& U
 ) const
 {
-    tmp<faVectorMatrix> tshearStress
-    (
-        new faVectorMatrix(U, sqr(U.dimensions())*sqr(dimLength))
-    );
+    auto tshearStress =
+        tmp<faVectorMatrix>::New(U, sqr(U.dimensions())*sqr(dimLength));
 
     switch (shearMethod_)
     {
@@ -267,14 +260,10 @@ tmp<faVectorMatrix> filmTurbulenceModel::primaryRegionFriction
                 }
             }
 
-            auto taForce = tmp<areaVectorField>::New
+            auto taForce = areaVectorField::New
             (
-                IOobject
-                (
-                    "taForce",
-                    film_.regionMesh().time().timeName(),
-                    film_.regionMesh().thisDb()
-                ),
+                "taForce",
+                IOobject::NO_REGISTER,
                 film_.regionMesh(),
                 dimensionedVector(sqr(dimVelocity), Zero)
             );
@@ -352,31 +341,29 @@ tmp<Foam::volSymmTensorField> filmTurbulenceModel::devRhoReff() const
             << "No valid model for viscous stress calculation"
             << exit(FatalError);
 
-        return volSymmTensorField::null();
+        return nullptr;
     }
 }
 
 
 tmp<Foam::volScalarField> filmTurbulenceModel::rho() const
 {
-    const fvMesh& m = film_.primaryMesh();
+    const fvMesh& mesh = film_.primaryMesh();
+
     if (rhoName_ == "rhoInf")
     {
-        return tmp<volScalarField>::New
+        return volScalarField::New
         (
-            IOobject
-            (
-                "rho",
-                m.time().timeName(),
-                m
-            ),
-            m,
+            "rho",
+            IOobject::NO_REGISTER,
+            mesh,
             dimensionedScalar(dimDensity, rhoRef_)
         );
     }
 
-    return m.lookupObject<volScalarField>(rhoName_);
+    return mesh.lookupObject<volScalarField>(rhoName_);
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -327,7 +327,8 @@ thermoSingleLayer::thermoSingleLayer
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         regionMesh(),
         dimensionedScalar(dimEnergy/dimMass/dimTemperature, Zero),
@@ -341,7 +342,8 @@ thermoSingleLayer::thermoSingleLayer
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         regionMesh(),
         dimensionedScalar(dimEnergy/dimTime/dimLength/dimTemperature, Zero),
@@ -356,7 +358,8 @@ thermoSingleLayer::thermoSingleLayer
             regionMesh().time().timeName(),
             regionMesh().thisDb(),
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         regionMesh()
     ),
@@ -705,38 +708,28 @@ void thermoSingleLayer::info()
 
 tmp<volScalarField::Internal> thermoSingleLayer::Srho() const
 {
-    tmp<volScalarField::Internal> tSrho
+    auto tSrho = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                typeName + ":Srho",
-                time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            primaryMesh(),
-            dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
-        )
+        IOobject::scopedName(typeName, "Srho"),
+        IOobject::NO_REGISTER,
+        primaryMesh(),
+        dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
-
     scalarField& Srho = tSrho.ref();
+
     const scalarField& V = primaryMesh().V();
     const scalar dt = time_.deltaTValue();
 
     forAll(intCoupledPatchIDs(), i)
     {
         const label filmPatchi = intCoupledPatchIDs()[i];
+        const label primaryPatchi = primaryPatchIDs()[i];
 
         scalarField patchMass =
             primaryMassTrans_.boundaryField()[filmPatchi];
 
         toPrimary(filmPatchi, patchMass);
 
-        const label primaryPatchi = primaryPatchIDs()[i];
         const labelUList& cells =
             primaryMesh().boundaryMesh()[primaryPatchi].faceCells();
 
@@ -757,40 +750,30 @@ tmp<volScalarField::Internal> thermoSingleLayer::Srho
 {
     const label vapId = thermo_.carrierId(filmThermo_->name());
 
-    tmp<volScalarField::Internal> tSrho
+    auto tSrho = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                typeName + ":Srho(" + Foam::name(i) + ")",
-                time_.timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            primaryMesh(),
-            dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
-        )
+        IOobject::scopedName(typeName, "Srho(" + Foam::name(i) + ")"),
+        IOobject::NO_REGISTER,
+        primaryMesh(),
+        dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
+    scalarField& Srho = tSrho.ref();
 
     if (vapId == i)
     {
-        scalarField& Srho = tSrho.ref();
         const scalarField& V = primaryMesh().V();
         const scalar dt = time().deltaTValue();
 
         forAll(intCoupledPatchIDs_, i)
         {
             const label filmPatchi = intCoupledPatchIDs_[i];
+            const label primaryPatchi = primaryPatchIDs()[i];
 
             scalarField patchMass =
                 primaryMassTrans_.boundaryField()[filmPatchi];
 
             toPrimary(filmPatchi, patchMass);
 
-            const label primaryPatchi = primaryPatchIDs()[i];
             const labelUList& cells =
                 primaryMesh().boundaryMesh()[primaryPatchi].faceCells();
 
@@ -807,38 +790,28 @@ tmp<volScalarField::Internal> thermoSingleLayer::Srho
 
 tmp<volScalarField::Internal> thermoSingleLayer::Sh() const
 {
-    tmp<volScalarField::Internal> tSh
+    auto tSh = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                typeName + ":Sh",
-                time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            primaryMesh(),
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
+        IOobject::scopedName(typeName, "Sh"),
+        IOobject::NO_REGISTER,
+        primaryMesh(),
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );
-
     scalarField& Sh = tSh.ref();
+
     const scalarField& V = primaryMesh().V();
     const scalar dt = time_.deltaTValue();
 
     forAll(intCoupledPatchIDs_, i)
     {
         const label filmPatchi = intCoupledPatchIDs_[i];
+        const label primaryPatchi = primaryPatchIDs()[i];
 
         scalarField patchEnergy =
             primaryEnergyTrans_.boundaryField()[filmPatchi];
 
         toPrimary(filmPatchi, patchEnergy);
 
-        const label primaryPatchi = primaryPatchIDs()[i];
         const labelUList& cells =
             primaryMesh().boundaryMesh()[primaryPatchi].faceCells();
 
