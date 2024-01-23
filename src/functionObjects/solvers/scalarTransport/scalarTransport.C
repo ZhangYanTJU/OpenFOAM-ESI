@@ -96,16 +96,10 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::scalarTransport::D
 
     if (constantD_)
     {
-        return tmp<volScalarField>::New
+        return volScalarField::New
         (
-            IOobject
-            (
-                Dname,
-                mesh_.time().timeName(),
-                mesh_.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            Dname,
+            IOobject::NO_REGISTER,
             mesh_,
             dimensionedScalar(Dname, phi.dimensions()/dimLength, D_)
         );
@@ -129,9 +123,10 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::scalarTransport::D
 
         if (turb)
         {
-            return tmp<volScalarField>::New
+            return volScalarField::New
             (
                 Dname,
+                IOobject::NO_REGISTER,
                 alphaD_ * turb->nu() + alphaDt_ * turb->nut()
             );
         }
@@ -147,25 +142,20 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::scalarTransport::D
 
         if (turb)
         {
-            return tmp<volScalarField>::New
+            return volScalarField::New
             (
                 Dname,
+                IOobject::NO_REGISTER,
                 alphaD_ * turb->mu() + alphaDt_ * turb->mut()
             );
         }
     }
 
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            Dname,
-            mesh_.time().timeName(),
-            mesh_.time(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        Dname,
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(phi.dimensions()/dimLength, Zero)
     );

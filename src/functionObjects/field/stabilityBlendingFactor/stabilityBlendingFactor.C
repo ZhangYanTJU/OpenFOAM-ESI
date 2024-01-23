@@ -321,16 +321,10 @@ bool Foam::functionObjects::stabilityBlendingFactor::init(bool first)
                 << exit(FatalError);
         }
 
-        auto tmagGradCC = tmp<volScalarField>::New
+        auto tmagGradCC = volScalarField::New
         (
-            IOobject
-            (
-                "magGradCC",
-                time_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            "magGradCC",
+            IOobject::NO_REGISTER,
             mesh_,
             dimensionedScalar(dimless, Zero),
             fvPatchFieldBase::zeroGradientType()
@@ -340,20 +334,16 @@ bool Foam::functionObjects::stabilityBlendingFactor::init(bool first)
         for (direction i=0; i<vector::nComponents; i++)
         {
             // Create field with zero grad
-            volScalarField cci
+            auto tcci = volScalarField::New
             (
-                IOobject
-                (
-                    "cc" + word(vector::componentNames[i]),
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
+                "cc" + word(vector::componentNames[i]),
+                IOobject::NO_REGISTER,
                 mesh_,
                 dimensionedScalar(dimLength, Zero),
                 fvPatchFieldBase::zeroGradientType()
             );
+            auto& cci = tcci.ref();
+
             cci = mesh_.C().component(i);
             cci.correctBoundaryConditions();
             magGradCC += mag(fvc::grad(cci)).ref();
@@ -394,21 +384,14 @@ bool Foam::functionObjects::stabilityBlendingFactor::init(bool first)
                 << exit(FatalError);
         }
 
-        auto CoPtr = tmp<volScalarField>::New
+        auto CoPtr = volScalarField::New
         (
-            IOobject
-            (
-                "Co",
-                time_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            "Co",
+            IOobject::NO_REGISTER,
             mesh_,
             dimensionedScalar(dimless, Zero),
             fvPatchFieldBase::zeroGradientType()
         );
-
         auto& Co = CoPtr.ref();
 
         Co.primitiveFieldRef() =
@@ -533,17 +516,10 @@ Foam::functionObjects::stabilityBlendingFactor::stabilityBlendingFactor
     read(dict);
     setResultName(typeName, "");
 
-    auto faceBlendedPtr = tmp<surfaceScalarField>::New
+    auto faceBlendedPtr = surfaceScalarField::New
     (
-        IOobject
-        (
-            resultName_,
-            time_.timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::REGISTER
-        ),
+        resultName_,
+        IOobject::REGISTER,
         mesh_,
         dimensionedScalar(dimless, Zero)
     );

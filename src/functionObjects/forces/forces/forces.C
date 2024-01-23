@@ -311,14 +311,10 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::forces::rho() const
 {
     if (rhoName_ == "rhoInf")
     {
-        return tmp<volScalarField>::New
+        return volScalarField::New
         (
-            IOobject
-            (
-                "rho",
-                mesh_.time().timeName(),
-                mesh_
-            ),
+            "rho",
+            IOobject::NO_REGISTER,
             mesh_,
             dimensionedScalar(dimDensity, rhoRef_)
         );

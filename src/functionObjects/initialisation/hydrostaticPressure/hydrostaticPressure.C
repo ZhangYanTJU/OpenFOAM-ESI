@@ -182,7 +182,7 @@ Foam::functionObjects::hydrostaticPressure::hydrostaticPressure
     if (read(dict))
     {
         // Read and store the initial ph_rgh field
-        volScalarField* ph_rghPtr =
+        volScalarField* ptr =
             new volScalarField
             (
                 IOobject
@@ -197,7 +197,7 @@ Foam::functionObjects::hydrostaticPressure::hydrostaticPressure
                 mesh_
             );
 
-        regIOobject::store(ph_rghPtr);
+        regIOobject::store(ptr);
 
         bool reInitialise = dict.getOrDefault("reInitialise", false);
 

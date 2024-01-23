@@ -45,17 +45,10 @@ namespace Foam
 
 Foam::tmp<Foam::volScalarField> Foam::resolutionIndexModel::V() const
 {
-    auto tV = tmp<volScalarField>::New
+    auto tV = volScalarField::New
     (
-        IOobject
-        (
-            "V",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "V",
+        IOobject::NO_REGISTER,
         mesh_,
         dimVolume,
         fvPatchFieldBase::zeroGradientType()

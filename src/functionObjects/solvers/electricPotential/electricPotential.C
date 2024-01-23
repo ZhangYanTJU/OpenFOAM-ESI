@@ -78,12 +78,7 @@ Foam::functionObjects::electricPotential::sigma() const
 {
     const IOobject sigmaIO
     (
-        IOobject::scopedName(typeName, "sigma"),
-        mesh_.time().timeName(),
-        mesh_.time(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE,
-        IOobject::NO_REGISTER
+        mesh_.thisDb().newIOobject(IOobject::scopedName(typeName, "sigma"))
     );
 
     if (phases_.size())
@@ -125,12 +120,7 @@ Foam::functionObjects::electricPotential::epsilonm() const
 
     const IOobject epsilonrIO
     (
-        IOobject::scopedName(typeName, "epsilonr"),
-        mesh_.time().timeName(),
-        mesh_.time(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE,
-        IOobject::NO_REGISTER
+        mesh_.thisDb().newIOobject(IOobject::scopedName(typeName, "epsilonr"))
     );
 
     if (phases_.size())
@@ -409,17 +399,10 @@ bool Foam::functionObjects::electricPotential::write()
         // Write the current density field
         tmp<volScalarField> tsigma = this->sigma();
 
-        auto eJ = tmp<volVectorField>::New
+        auto eJ = volVectorField::New
         (
-            IOobject
-            (
-                IOobject::scopedName(typeName, "J"),
-                mesh_.time().timeName(),
-                mesh_.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            IOobject::scopedName(typeName, "J"),
+            IOobject::NO_REGISTER,
             -tsigma*fvc::grad(eV),
             fvPatchFieldBase::calculatedType()
         );
@@ -432,17 +415,10 @@ bool Foam::functionObjects::electricPotential::write()
         // Write the free-charge density field
         tmp<volScalarField> tepsilonm = this->epsilonm();
 
-        auto erho = tmp<volScalarField>::New
+        auto erho = volScalarField::New
         (
-            IOobject
-            (
-                IOobject::scopedName(typeName, "rho"),
-                mesh_.time().timeName(),
-                mesh_.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            IOobject::scopedName(typeName, "rho"),
+            IOobject::NO_REGISTER,
             fvc::div(tepsilonm*(-fvc::grad(eV))),
             fvPatchFieldBase::calculatedType()
         );
