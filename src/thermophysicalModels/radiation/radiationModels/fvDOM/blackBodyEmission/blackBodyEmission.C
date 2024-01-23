@@ -201,21 +201,12 @@ Foam::radiation::blackBodyEmission::deltaLambdaT
     const Vector2D<scalar>& band
 ) const
 {
-    tmp<volScalarField> deltaLambdaT
+    auto deltaLambdaT = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "deltaLambdaT",
-                T.mesh().time().timeName(),
-                T.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            T.mesh(),
-            dimensionedScalar("deltaLambdaT", dimless, 1.0)
-        )
+        "deltaLambdaT",
+        IOobject::NO_REGISTER,
+        T.mesh(),
+        dimensionedScalar("deltaLambdaT", dimless, 1.0)
     );
 
     if (band != Vector2D<scalar>::one)
@@ -239,20 +230,11 @@ Foam::radiation::blackBodyEmission::EbDeltaLambdaT
     const Vector2D<scalar>& band
 ) const
 {
-    tmp<volScalarField> Eb
+    auto Eb = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Eb",
-                T.mesh().time().timeName(),
-                T.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            physicoChemical::sigma*pow4(T)
-        )
+        "Eb",
+        IOobject::NO_REGISTER,
+        physicoChemical::sigma*pow4(T)
     );
 
     if (band != Vector2D<scalar>::one)

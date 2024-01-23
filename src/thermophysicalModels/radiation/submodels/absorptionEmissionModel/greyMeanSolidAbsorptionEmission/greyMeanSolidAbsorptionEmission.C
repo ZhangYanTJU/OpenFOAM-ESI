@@ -56,11 +56,11 @@ greyMeanSolidAbsorptionEmission::X(const word specie) const
     const volScalarField& T = thermo_.T();
     const volScalarField& p = thermo_.p();
 
-    tmp<scalarField> tXj(new scalarField(T.primitiveField().size(), Zero));
-    scalarField& Xj = tXj.ref();
+    auto tXj = tmp<scalarField>::New(T.primitiveField().size(), Zero);
+    auto& Xj = tXj.ref();
 
-    tmp<scalarField> tRhoInv(new scalarField(T.primitiveField().size(), Zero));
-    scalarField& rhoInv = tRhoInv.ref();
+    auto tRhoInv = tmp<scalarField>::New(T.primitiveField().size(), Zero);
+    auto& rhoInv = tRhoInv.ref();
 
     forAll(mixture_.Y(), specieI)
     {
@@ -142,25 +142,15 @@ Foam::tmp<Foam::volScalarField>
 Foam::radiation::greyMeanSolidAbsorptionEmission::
 calc(const label propertyId) const
 {
-    tmp<volScalarField> ta
+    auto ta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "a",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar(dimless/dimLength, Zero),
-            fvPatchFieldBase::extrapolatedCalculatedType()
-        )
+        "a",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar(dimless/dimLength, Zero),
+        fvPatchFieldBase::extrapolatedCalculatedType()
     );
-
-    scalarField& a = ta.ref().primitiveFieldRef();
+    auto& a = ta.ref().primitiveFieldRef();
 
     forAllConstIters(speciesNames_, iter)
     {
@@ -193,5 +183,6 @@ Foam::radiation::greyMeanSolidAbsorptionEmission::aCont
 {
    return calc(absorptivity);
 }
+
 
 // ************************************************************************* //

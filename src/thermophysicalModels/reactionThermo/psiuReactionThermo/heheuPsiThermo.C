@@ -253,7 +253,8 @@ Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::heheuPsiThermo
             mesh.time().timeName(),
             mesh,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh
     ),
@@ -328,7 +329,8 @@ Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::heheuPsiThermo
             mesh.time().timeName(),
             mesh,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh
     ),
@@ -429,8 +431,8 @@ Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::heu
     const labelList& cells
 ) const
 {
-    tmp<scalarField> theu(new scalarField(Tu.size()));
-    scalarField& heu = theu.ref();
+    auto theu = tmp<scalarField>::New(Tu.size());
+    auto& heu = theu.ref();
 
     forAll(Tu, celli)
     {
@@ -450,8 +452,8 @@ Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::heu
     const label patchi
 ) const
 {
-    tmp<scalarField> theu(new scalarField(Tu.size()));
-    scalarField& heu = theu.ref();
+    auto theu = tmp<scalarField>::New(Tu.size());
+    auto& heu = theu.ref();
 
     forAll(Tu, facei)
     {
@@ -467,24 +469,14 @@ template<class BasicPsiThermo, class MixtureType>
 Foam::tmp<Foam::volScalarField>
 Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::Tb() const
 {
-    tmp<volScalarField> tTb
+    auto tTb = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Tb",
-                this->T_.time().timeName(),
-                this->T_.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->T_
-        )
+        "Tb",
+        IOobject::NO_REGISTER,
+        this->T_
     );
+    auto& Tb_ = tTb.ref();
 
-    volScalarField& Tb_ = tTb.ref();
     scalarField& TbCells = Tb_.primitiveFieldRef();
     const scalarField& pCells = this->p_;
     const scalarField& TCells = this->T_;
@@ -526,25 +518,15 @@ template<class BasicPsiThermo, class MixtureType>
 Foam::tmp<Foam::volScalarField>
 Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::psiu() const
 {
-    tmp<volScalarField> tpsiu
+    auto tpsiu = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "psiu",
-                this->psi_.time().timeName(),
-                this->psi_.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->psi_.mesh(),
-            this->psi_.dimensions()
-        )
+        "psiu",
+        IOobject::NO_REGISTER,
+        this->psi_.mesh(),
+        this->psi_.dimensions()
     );
+    auto& psiu = tpsiu.ref();
 
-    volScalarField& psiu = tpsiu.ref();
     scalarField& psiuCells = psiu.primitiveFieldRef();
     const scalarField& TuCells = this->Tu_;
     const scalarField& pCells = this->p_;
@@ -580,25 +562,15 @@ template<class BasicPsiThermo, class MixtureType>
 Foam::tmp<Foam::volScalarField>
 Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::psib() const
 {
-    tmp<volScalarField> tpsib
+    auto tpsib = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "psib",
-                this->psi_.time().timeName(),
-                this->psi_.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->psi_.mesh(),
-            this->psi_.dimensions()
-        )
+        "psib",
+        IOobject::NO_REGISTER,
+        this->psi_.mesh(),
+        this->psi_.dimensions()
     );
+    auto& psib = tpsib.ref();
 
-    volScalarField& psib = tpsib.ref();
     scalarField& psibCells = psib.primitiveFieldRef();
     const volScalarField Tb_(Tb());
     const scalarField& TbCells = Tb_;
@@ -635,25 +607,15 @@ template<class BasicPsiThermo, class MixtureType>
 Foam::tmp<Foam::volScalarField>
 Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::muu() const
 {
-    tmp<volScalarField> tmuu
+    auto tmuu = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "muu",
-                this->T_.time().timeName(),
-                this->T_.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->T_.mesh(),
-            dimensionSet(1, -1, -1, 0, 0)
-        )
+        "muu",
+        IOobject::NO_REGISTER,
+        this->T_.mesh(),
+        dimensionSet(1, -1, -1, 0, 0)
     );
+    auto& muu_ = tmuu.ref();
 
-    volScalarField& muu_ = tmuu.ref();
     scalarField& muuCells = muu_.primitiveFieldRef();
     const scalarField& pCells = this->p_;
     const scalarField& TuCells = this->Tu_;
@@ -693,25 +655,15 @@ template<class BasicPsiThermo, class MixtureType>
 Foam::tmp<Foam::volScalarField>
 Foam::heheuPsiThermo<BasicPsiThermo, MixtureType>::mub() const
 {
-    tmp<volScalarField> tmub
+    auto tmub = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "mub",
-                this->T_.time().timeName(),
-                this->T_.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->T_.mesh(),
-            dimensionSet(1, -1, -1, 0, 0)
-        )
+        "mub",
+        IOobject::NO_REGISTER,
+        this->T_.mesh(),
+        dimensionSet(1, -1, -1, 0, 0)
     );
+    auto& mub_ = tmub.ref();
 
-    volScalarField& mub_ = tmub.ref();
     scalarField& mubCells = mub_.primitiveFieldRef();
     const volScalarField Tb_(Tb());
     const scalarField& pCells = this->p_;

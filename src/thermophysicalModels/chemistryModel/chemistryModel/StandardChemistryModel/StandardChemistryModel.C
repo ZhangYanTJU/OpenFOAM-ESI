@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2021,2023 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -470,25 +470,14 @@ template<class ReactionThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::StandardChemistryModel<ReactionThermo, ThermoType>::tc() const
 {
-    tmp<volScalarField> ttc
+    auto ttc = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "tc",
-                this->time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh(),
-            dimensionedScalar(word::null, dimTime, SMALL),
-            fvPatchFieldBase::extrapolatedCalculatedType()
-        )
+        "tc",
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(word::null, dimTime, SMALL),
+        fvPatchFieldBase::extrapolatedCalculatedType()
     );
-
     scalarField& tc = ttc.ref();
 
     tmp<volScalarField> trho(this->thermo().rho());
@@ -544,22 +533,12 @@ template<class ReactionThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::StandardChemistryModel<ReactionThermo, ThermoType>::Qdot() const
 {
-    tmp<volScalarField> tQdot
+    auto tQdot = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Qdot",
-                this->mesh_.time().timeName(),
-                this->mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh_,
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
+        "Qdot",
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );
 
     if (this->chemistry_)
@@ -592,24 +571,14 @@ Foam::StandardChemistryModel<ReactionThermo, ThermoType>::calculateRR
     scalar pf, cf, pr, cr;
     label lRef, rRef;
 
-    tmp<volScalarField::Internal> tRR
+    auto tRR = volScalarField::Internal::New
     (
-        new volScalarField::Internal
-        (
-            IOobject
-            (
-                "RR",
-                this->mesh().time().timeName(),
-                this->mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            this->mesh(),
-            dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
-        )
+        "RR",
+        IOobject::NO_REGISTER,
+        this->mesh(),
+        dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
-
-    volScalarField::Internal& RR = tRR.ref();
+    auto& RR = tRR.ref();
 
     tmp<volScalarField> trho(this->thermo().rho());
     const scalarField& rho = trho();

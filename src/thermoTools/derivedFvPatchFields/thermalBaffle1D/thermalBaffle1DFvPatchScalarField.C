@@ -253,11 +253,9 @@ baffleThickness() const
             nbrPatch.template lookupPatchField<volScalarField>(TName_)
         );
 
-        tmp<scalarField> tthickness
-        (
-            new scalarField(nbrField.baffleThickness())
-        );
-        scalarField& thickness = tthickness.ref();
+        auto tthickness = tmp<scalarField>::New(nbrField.baffleThickness());
+        auto& thickness = tthickness.ref();
+
         mapDist.distribute(thickness);
         return tthickness;
     }
@@ -284,8 +282,9 @@ tmp<scalarField> thermalBaffle1DFvPatchScalarField<solidType>::qs() const
             nbrPatch.template lookupPatchField<volScalarField>(TName_)
         );
 
-        tmp<scalarField> tqs(new scalarField(nbrField.qs()));
-        scalarField& qs = tqs.ref();
+        auto tqs = tmp<scalarField>::New(nbrField.qs());
+        auto& qs = tqs.ref();
+
         mapDist.distribute(qs);
         return tqs;
     }

@@ -81,24 +81,13 @@ Foam::radiation::multiBandAbsorptionEmission::aCont
     const label bandI
 ) const
 {
-    tmp<volScalarField> ta
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "a",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("a", dimless/dimLength, absCoeffs_[bandI])
-        )
+        "a",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar("a", dimless/dimLength, absCoeffs_[bandI])
     );
-
-    return ta;
 }
 
 
@@ -108,24 +97,13 @@ Foam::radiation::multiBandAbsorptionEmission::eCont
     const label bandI
 ) const
 {
-    tmp<volScalarField> te
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "e",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("e", dimless/dimLength, emiCoeffs_[bandI])
-        )
+        "e",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar("e", dimless/dimLength, emiCoeffs_[bandI])
     );
-
-    return te;
 }
 
 
@@ -135,24 +113,13 @@ Foam::radiation::multiBandAbsorptionEmission::ECont
     const label bandI
 ) const
 {
-    tmp<volScalarField> E
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "E",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "E",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
-
-    return E;
 }
 
 
