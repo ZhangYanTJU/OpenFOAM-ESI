@@ -232,11 +232,8 @@ Foam::tmp<Foam::Field<Type>> Foam::volPointInterpolation::flatBoundaryField
     const fvMesh& mesh = vf.mesh();
     const fvBoundaryMesh& bm = mesh.boundary();
 
-    tmp<Field<Type>> tboundaryVals
-    (
-        new Field<Type>(mesh.nBoundaryFaces())
-    );
-    Field<Type>& boundaryVals = tboundaryVals.ref();
+    auto tboundaryVals = tmp<Field<Type>>::New(mesh.nBoundaryFaces());
+    auto& boundaryVals = tboundaryVals.ref();
 
     forAll(vf.boundaryField(), patchi)
     {

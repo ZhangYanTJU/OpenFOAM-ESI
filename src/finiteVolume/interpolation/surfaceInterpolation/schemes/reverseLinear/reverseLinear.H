@@ -113,28 +113,19 @@ public:
             );
             const surfaceScalarField& cdWeights = tcdWeights();
 
-            tmp<surfaceScalarField> treverseLinearWeights
+            auto treverseLinearWeights = surfaceScalarField::New
             (
-                new surfaceScalarField
-                (
-                    IOobject
-                    (
-                        "reverseLinearWeights",
-                        mesh.time().timeName(),
-                        mesh
-                    ),
-                    mesh,
-                    dimless
-                )
+                "reverseLinearWeights",
+                IOobject::NO_REGISTER,
+                mesh,
+                dimless
             );
-            surfaceScalarField& reverseLinearWeights =
-                treverseLinearWeights.ref();
+            auto& reverseLinearWeights = treverseLinearWeights.ref();
 
             reverseLinearWeights.primitiveFieldRef() =
                 1.0 - cdWeights.primitiveField();
 
-            surfaceScalarField::Boundary& rlwbf =
-                reverseLinearWeights.boundaryFieldRef();
+            auto& rlwbf = reverseLinearWeights.boundaryFieldRef();
 
 
             forAll(mesh.boundary(), patchi)

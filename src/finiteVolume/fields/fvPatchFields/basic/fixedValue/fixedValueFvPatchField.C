@@ -119,10 +119,7 @@ Foam::fixedValueFvPatchField<Type>::valueInternalCoeffs
     const tmp<scalarField>&
 ) const
 {
-    return tmp<Field<Type>>
-    (
-        new Field<Type>(this->size(), Zero)
-    );
+    return tmp<Field<Type>>::New(this->size(), Foam::zero{});
 }
 
 

@@ -130,8 +130,8 @@ Foam::cyclicFaPatchField<Type>::patchNeighbourField() const
     const Field<Type>& iField = this->primitiveField();
     const labelUList& faceCells = cyclicPatch_.faceCells();
 
-    tmp<Field<Type>> tpnf(new Field<Type>(this->size()));
-    Field<Type>& pnf = tpnf.ref();
+    auto tpnf = tmp<Field<Type>>::New(this->size());
+    auto& pnf = tpnf.ref();
 
     const label sizeby2 = this->size()/2;
 
