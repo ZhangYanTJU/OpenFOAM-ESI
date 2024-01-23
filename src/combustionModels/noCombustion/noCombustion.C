@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,12 +65,7 @@ Foam::combustionModels::noCombustion<ReactionThermo>::R
     volScalarField& Y
 ) const
 {
-    tmp<fvScalarMatrix> tSu
-    (
-        new fvScalarMatrix(Y, dimMass/dimTime)
-    );
-
-    return tSu;
+    return tmp<fvScalarMatrix>::New(Y, dimMass/dimTime);
 }
 
 
@@ -78,17 +73,10 @@ template<class ReactionThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::combustionModels::noCombustion<ReactionThermo>::Qdot() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            this->thermo().phasePropertyName(typeName + ":Qdot"),
-            this->mesh().time().timeName(),
-            this->mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        this->thermo().phaseScopedName(typeName, "Qdot"),
+        IOobject::NO_REGISTER,
         this->mesh(),
         dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );

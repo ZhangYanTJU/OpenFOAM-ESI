@@ -72,7 +72,8 @@ FSD<ReactionThermo, ThermoType>::FSD
             this->mesh().time().timeName(),
             this->mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         this->mesh(),
         dimensionedScalar(dimless, Zero)
@@ -149,43 +150,23 @@ void FSD<ReactionThermo, ThermoType>::calculateSourceNorm()
             s.value()*YFuelFuelStream_.value() + YO2OxiStream_.value()
         );
 
-    tmp<volScalarField> tPc
+    auto tPc = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                this->thermo().phasePropertyName("Pc"),
-                U.time().timeName(),
-                U.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            U.mesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        this->thermo().phasePropertyName("Pc"),
+        IOobject::NO_REGISTER,
+        U.mesh(),
+        dimensionedScalar(dimless, Zero)
     );
+    auto& pc = tPc.ref();
 
-    volScalarField& pc = tPc.ref();
-
-    tmp<volScalarField> tomegaFuel
+    auto tomegaFuel = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                this->thermo().phasePropertyName("omegaFuelBar"),
-                U.time().timeName(),
-                U.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            U.mesh(),
-            dimensionedScalar(omegaFuel.dimensions(), Zero)
-        )
+        this->thermo().phasePropertyName("omegaFuelBar"),
+        IOobject::NO_REGISTER,
+        U.mesh(),
+        dimensionedScalar(omegaFuel.dimensions(), Zero)
     );
-
-    volScalarField& omegaFuelBar = tomegaFuel.ref();
+    auto& omegaFuelBar = tomegaFuel.ref();
 
     // Calculation of the mixture fraction variance (ftVar)
     const compressible::LESModel& lesModel =
@@ -294,24 +275,14 @@ void FSD<ReactionThermo, ThermoType>::calculateSourceNorm()
         }
     }
 
-    tmp<volScalarField> tproducts
+    auto tproducts = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                this->thermo().phasePropertyName("products"),
-                U.time().timeName(),
-                U.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            U.mesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        this->thermo().phasePropertyName("products"),
+        IOobject::NO_REGISTER,
+        U.mesh(),
+        dimensionedScalar(dimless, Zero)
     );
-
-    volScalarField& products = tproducts.ref();
+    auto& products = tproducts.ref();
 
     forAll(productsIndex, j)
     {
