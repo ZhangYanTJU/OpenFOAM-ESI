@@ -34,11 +34,11 @@ void Foam::fv::jouleHeatingSource::initialiseSigma
     autoPtr<Function1<Type>>& sigmaVsTPtr
 )
 {
-    typedef GeometricField<Type, fvPatchField, volMesh> VolFieldType;
+    typedef GeometricField<Type, fvPatchField, volMesh> FieldType;
 
     IOobject io
     (
-        typeName + ":sigma",
+        IOobject::scopedName(typeName, "sigma"),
         mesh_.time().timeName(),
         mesh_.thisDb(),
         IOobject::NO_READ,
@@ -46,7 +46,7 @@ void Foam::fv::jouleHeatingSource::initialiseSigma
         IOobject::REGISTER
     );
 
-    tmp<VolFieldType> tsigma;
+    autoPtr<FieldType> tsigma;
 
     if (dict.found("sigma"))
     {
@@ -55,7 +55,7 @@ void Foam::fv::jouleHeatingSource::initialiseSigma
 
         tsigma.reset
         (
-            new VolFieldType
+            new FieldType
             (
                 io,
                 mesh_,
@@ -72,7 +72,7 @@ void Foam::fv::jouleHeatingSource::initialiseSigma
         // Sigma to be defined by user input
         io.readOpt(IOobject::MUST_READ);
 
-        tsigma.reset(new VolFieldType(io, mesh_));
+        tsigma.reset(new FieldType(io, mesh_));
 
         Info<< "    Conductivity 'sigma' read from file" << nl << endl;
     }
@@ -88,9 +88,12 @@ Foam::fv::jouleHeatingSource::updateSigma
     const autoPtr<Function1<Type>>& sigmaVsTPtr
 ) const
 {
-    typedef GeometricField<Type, fvPatchField, volMesh> VolFieldType;
+    typedef GeometricField<Type, fvPatchField, volMesh> FieldType;
 
-    auto& sigma = mesh_.lookupObjectRef<VolFieldType>(typeName + ":sigma");
+    auto& sigma = mesh_.lookupObjectRef<FieldType>
+    (
+        IOobject::scopedName(typeName, "sigma")
+    );
 
     if (!sigmaVsTPtr)
     {

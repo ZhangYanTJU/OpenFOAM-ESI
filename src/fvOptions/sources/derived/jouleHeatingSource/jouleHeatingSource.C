@@ -44,8 +44,6 @@ namespace fv
 }
 }
 
-const Foam::word Foam::fv::jouleHeatingSource::sigmaName(typeName + ":sigma");
-
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -55,17 +53,10 @@ Foam::fv::jouleHeatingSource::transformSigma
     const volVectorField& sigmaLocal
 ) const
 {
-    auto tsigma = tmp<volSymmTensorField>::New
+    auto tsigma = volSymmTensorField::New
     (
-        IOobject
-        (
-            sigmaName,
-            mesh_.time().timeName(),
-            mesh_.thisDb(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName(typeName, "sigma"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedSymmTensor(sigmaLocal.dimensions(), Zero),
         fvPatchFieldBase::zeroGradientType()
@@ -115,11 +106,12 @@ Foam::fv::jouleHeatingSource::jouleHeatingSource
     (
         IOobject
         (
-            typeName + ":V",
+            IOobject::scopedName(typeName, "V"),
             mesh.time().timeName(),
             mesh,
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh
     ),
@@ -182,6 +174,10 @@ void Foam::fv::jouleHeatingSource::addSup
     }
 
     // Add the Joule heating contribution
+    const word sigmaName
+    (
+        IOobject::scopedName(typeName, "sigma")
+    );
 
     const volVectorField gradV(fvc::grad(V_));
     if (anisotropicElectricalConductivity_)

@@ -47,16 +47,10 @@ namespace fv
 
 Foam::tmp<Foam::volScalarField> Foam::fv::viscousDissipation::rho() const
 {
-    auto trho = tmp<volScalarField>::New
+    auto trho = volScalarField::New
     (
-        IOobject
-        (
-            "trho",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "trho",
+        IOobject::NO_REGISTER,
         mesh_,
         rho_
     );
@@ -177,16 +171,10 @@ void Foam::fv::viscousDissipation::addSup
 
     const word gradUName("grad(" + UName_ + ')');
 
-    auto tgradU = tmp<GradFieldType>::New
+    auto tgradU = GradFieldType::New
     (
-        IOobject
-        (
-            "gradU",
-            mesh_.time().timeName(),
-            mesh_.time(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "gradU",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedTensor(inv(dimTime), Zero)
     );

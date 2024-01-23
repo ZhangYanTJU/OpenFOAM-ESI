@@ -41,8 +41,8 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::source
 {
     checkApplied();
 
-    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, ds));
-    faMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<faMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fa::option& source : *this)
     {
@@ -132,8 +132,8 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
         rho.dimensions()*field.dimensions()/dimTime*dimArea
     );
 
-    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, ds));
-    faMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<faMatrix<Type>>::New(field, ds);
+    auto& mtx = tmtx.ref();
 
     for (fa::option& source : *this)
     {
@@ -184,8 +184,8 @@ Foam::tmp<Foam::faMatrix<Type>> Foam::fa::optionList::operator()
 
     const dimensionSet dsMat(ds*dimArea);
 
-    tmp<faMatrix<Type>> tmtx(new faMatrix<Type>(field, dsMat));
-    faMatrix<Type>& mtx = tmtx.ref();
+    auto tmtx = tmp<faMatrix<Type>>::New(field, dsMat);
+    auto& mtx = tmtx.ref();
 
     for (fa::option& source : *this)
     {
