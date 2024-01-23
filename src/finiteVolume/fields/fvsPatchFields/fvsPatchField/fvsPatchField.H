@@ -372,23 +372,43 @@ public:
             const DimensionedField<Type, surfaceMesh>&
         );
 
-        //- Construct and return a clone
+        //- Clone patch field with its own internal field reference
         virtual tmp<fvsPatchField<Type>> clone() const
         {
-            return tmp<fvsPatchField<Type>>::New(*this);
+            return tmp<fvsPatchField<Type>>
+            (
+                new fvsPatchField<Type>(*this, this->internalField_)
+            );
         }
 
-        //- Construct and return a clone setting internal field reference
+        //- Clone with an internal field reference
         virtual tmp<fvsPatchField<Type>> clone
         (
             const DimensionedField<Type, surfaceMesh>& iF
         ) const
         {
-            return tmp<fvsPatchField<Type>>::New(*this, iF);
+            return tmp<fvsPatchField<Type>>
+            (
+                new fvsPatchField<Type>(*this, iF)
+            );
         }
 
 
-    // Selectors
+    // Factory Methods
+
+        //- Clone a patch field, optionally with internal field reference etc.
+        template<class DerivedPatchField, class... Args>
+        static tmp<fvsPatchField<Type>> Clone
+        (
+            const DerivedPatchField& pf,
+            Args&&... args
+        )
+        {
+            return tmp<fvsPatchField<Type>>
+            (
+                new DerivedPatchField(pf, std::forward<Args>(args)...)
+            );
+        }
 
         //- Return a pointer to a new patchField created on freestore given
         //  patch and internal field
@@ -435,15 +455,15 @@ public:
         //  freestore without setting patchField values
         static tmp<fvsPatchField<Type>> NewCalculatedType
         (
-            const fvPatch&
+            const fvPatch& p
         );
 
         //- Return a pointer to a new calculatedFvsPatchField created on
         //  freestore without setting patchField values
-        template<class Type2>
+        template<class AnyType>
         static tmp<fvsPatchField<Type>> NewCalculatedType
         (
-            const fvsPatchField<Type2>&
+            const fvsPatchField<AnyType>& pf
         );
 
 

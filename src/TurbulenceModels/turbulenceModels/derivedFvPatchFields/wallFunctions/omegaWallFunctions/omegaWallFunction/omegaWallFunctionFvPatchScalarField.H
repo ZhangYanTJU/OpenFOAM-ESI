@@ -203,15 +203,6 @@ public:
             const omegaWallFunctionFvPatchScalarField&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new omegaWallFunctionFvPatchScalarField(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         omegaWallFunctionFvPatchScalarField
         (
@@ -219,17 +210,21 @@ public:
             const DimensionedField<scalar, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatchScalarField> clone
+        //- Return a clone
+        virtual tmp<fvPatchField<scalar>> clone() const
+        {
+            return fvPatchField<scalar>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
+        virtual tmp<fvPatchField<scalar>> clone
         (
             const DimensionedField<scalar, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchScalarField>
-            (
-                new omegaWallFunctionFvPatchScalarField(*this, iF)
-            );
+            return fvPatchField<scalar>::Clone(*this, iF);
         }
+
 
     //- Destructor
     virtual ~omegaWallFunctionFvPatchScalarField() = default;

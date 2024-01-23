@@ -120,11 +120,11 @@ Foam::fvsPatchField<Type>::NewCalculatedType
 
 
 template<class Type>
-template<class Type2>
+template<class AnyType>
 Foam::tmp<Foam::fvsPatchField<Type>>
 Foam::fvsPatchField<Type>::NewCalculatedType
 (
-    const fvsPatchField<Type2>& pf
+    const fvsPatchField<AnyType>& pf
 )
 {
     return NewCalculatedType(pf.patch());

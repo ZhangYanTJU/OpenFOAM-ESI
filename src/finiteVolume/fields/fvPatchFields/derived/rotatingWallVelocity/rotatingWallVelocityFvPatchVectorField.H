@@ -132,15 +132,6 @@ public:
             const rotatingWallVelocityFvPatchVectorField&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchVectorField> clone() const
-        {
-            return tmp<fvPatchVectorField>
-            (
-                new rotatingWallVelocityFvPatchVectorField(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         rotatingWallVelocityFvPatchVectorField
         (
@@ -148,18 +139,20 @@ public:
             const DimensionedField<vector, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatchVectorField> clone
-        (
-             const DimensionedField<vector, volMesh>& iF
-        ) const
+        //- Return a clone
+        virtual tmp<fvPatchField<vector>> clone() const
         {
-            return tmp<fvPatchVectorField>
-            (
-                new rotatingWallVelocityFvPatchVectorField(*this, iF)
-            );
+            return fvPatchField<vector>::Clone(*this);
         }
 
+        //- Clone with an internal field reference
+        virtual tmp<fvPatchField<vector>> clone
+        (
+            const DimensionedField<vector, volMesh>& iF
+        ) const
+        {
+            return fvPatchField<vector>::Clone(*this, iF);
+        }
 
 
     // Member functions

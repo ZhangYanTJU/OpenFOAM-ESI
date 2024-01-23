@@ -94,15 +94,6 @@ public:
         //- Construct as copy
         calculatedFaePatchField(const calculatedFaePatchField<Type>&);
 
-        //- Construct and return a clone
-        virtual tmp<faePatchField<Type>> clone() const
-        {
-            return tmp<faePatchField<Type>>
-            (
-                new calculatedFaePatchField<Type>(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         calculatedFaePatchField
         (
@@ -110,17 +101,21 @@ public:
             const DimensionedField<Type, edgeMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faePatchField<Type>> clone() const
+        {
+            return faePatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faePatchField<Type>> clone
         (
             const DimensionedField<Type, edgeMesh>& iF
         ) const
         {
-            return tmp<faePatchField<Type>>
-            (
-                new calculatedFaePatchField<Type>(*this, iF)
-            );
+            return faePatchField<Type>::Clone(*this, iF);
         }
+
 
     //- Destructor
     virtual ~calculatedFaePatchField() = default;

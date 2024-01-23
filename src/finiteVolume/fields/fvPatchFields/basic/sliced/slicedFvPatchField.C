@@ -112,46 +112,13 @@ Foam::slicedFvPatchField<Type>::slicedFvPatchField
 
 
 template<class Type>
-Foam::tmp<Foam::fvPatchField<Type>>
-Foam::slicedFvPatchField<Type>::clone() const
-{
-    return tmp<fvPatchField<Type>>
-    (
-        new slicedFvPatchField<Type>(*this)
-    );
-}
-
-
-template<class Type>
 Foam::slicedFvPatchField<Type>::slicedFvPatchField
 (
     const slicedFvPatchField<Type>& ptf
 )
 :
-    fvPatchField<Type>
-    (
-        ptf.patch(),
-        ptf.internalField(),
-        Field<Type>()
-    )
-{
-    // Transfer the slice from the argument
-    UList<Type>::shallowCopy(ptf);
-}
-
-
-template<class Type>
-Foam::tmp<Foam::fvPatchField<Type>>
-Foam::slicedFvPatchField<Type>::clone
-(
-    const DimensionedField<Type, volMesh>& iF
-) const
-{
-    return tmp<fvPatchField<Type>>
-    (
-        new slicedFvPatchField<Type>(*this, iF)
-    );
-}
+    slicedFvPatchField<Type>(ptf, ptf.internalField())
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -170,8 +137,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::slicedFvPatchField<Type>::snGrad() const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 
@@ -180,8 +146,7 @@ Foam::tmp<Foam::Field<Type>>
 Foam::slicedFvPatchField<Type>::patchInternalField() const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 
@@ -200,8 +165,7 @@ Foam::slicedFvPatchField<Type>::patchNeighbourField
 ) const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 
@@ -210,8 +174,7 @@ Foam::tmp<Foam::Field<Type>>
 Foam::slicedFvPatchField<Type>::patchNeighbourField() const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 
@@ -223,8 +186,7 @@ Foam::slicedFvPatchField<Type>::valueInternalCoeffs
 ) const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 
@@ -236,8 +198,7 @@ Foam::slicedFvPatchField<Type>::valueBoundaryCoeffs
 ) const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 
@@ -246,8 +207,7 @@ Foam::tmp<Foam::Field<Type>>
 Foam::slicedFvPatchField<Type>::gradientInternalCoeffs() const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 
@@ -256,8 +216,7 @@ Foam::tmp<Foam::Field<Type>>
 Foam::slicedFvPatchField<Type>::gradientBoundaryCoeffs() const
 {
     NotImplemented;
-
-    return Field<Type>::null();
+    return nullptr;
 }
 
 

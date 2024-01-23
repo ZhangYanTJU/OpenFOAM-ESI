@@ -116,9 +116,6 @@ public:
         //- Construct as copy
         slicedFaPatchField(const slicedFaPatchField<Type>&);
 
-        //- Construct and return a clone
-        virtual tmp<faPatchField<Type>> clone() const;
-
         //- Construct as copy setting internal field reference
         slicedFaPatchField
         (
@@ -126,11 +123,20 @@ public:
             const DimensionedField<Type, areaMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return clone
+        virtual tmp<faPatchField<Type>> clone() const
+        {
+            return faPatchField<Type>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<faPatchField<Type>> clone
         (
             const DimensionedField<Type, areaMesh>& iF
-        ) const;
+        ) const
+        {
+            return faPatchField<Type>::Clone(*this, iF);
+        }
 
 
     //- Destructor

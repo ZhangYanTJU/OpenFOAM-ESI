@@ -182,15 +182,6 @@ public:
             const porousBafflePressureFvPatchField&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<scalar>> clone() const
-        {
-            return tmp<fvPatchField<scalar>>
-            (
-                new porousBafflePressureFvPatchField(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         porousBafflePressureFvPatchField
         (
@@ -198,16 +189,19 @@ public:
             const DimensionedField<scalar, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
+        //- Return a clone
+        virtual tmp<fvPatchField<scalar>> clone() const
+        {
+            return fvPatchField<scalar>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
         virtual tmp<fvPatchField<scalar>> clone
         (
             const DimensionedField<scalar, volMesh>& iF
         ) const
         {
-            return tmp<fvPatchField<scalar>>
-            (
-                new porousBafflePressureFvPatchField(*this, iF)
-            );
+            return fvPatchField<scalar>::Clone(*this, iF);
         }
 
 

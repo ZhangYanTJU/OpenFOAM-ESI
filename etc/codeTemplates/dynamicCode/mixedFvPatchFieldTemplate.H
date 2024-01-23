@@ -107,15 +107,6 @@ public:
             const ${typeName}MixedValueFvPatch${FieldType}&
         );
 
-        //- Construct and return a clone
-        virtual tmp<fvPatch${FieldType}> clone() const
-        {
-            return tmp<fvPatch${FieldType}>
-            (
-                new ${typeName}MixedValueFvPatch${FieldType}(*this)
-            );
-        }
-
         //- Construct as copy setting internal field reference
         ${typeName}MixedValueFvPatch${FieldType}
         (
@@ -123,16 +114,19 @@ public:
             const DimensionedField<${TemplateType}, volMesh>&
         );
 
-        //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatch${FieldType}> clone
+        //- Return a clone
+        virtual tmp<fvPatchField<${TemplateType}>> clone() const
+        {
+            return fvPatchField<${TemplateType}>::Clone(*this);
+        }
+
+        //- Clone with an internal field reference
+        virtual tmp<fvPatchField<${TemplateType}>> clone
         (
             const DimensionedField<${TemplateType}, volMesh>& iF
         ) const
         {
-            return tmp<fvPatch${FieldType}>
-            (
-                new ${typeName}MixedValueFvPatch${FieldType}(*this, iF)
-            );
+            return fvPatchField<${TemplateType}>::Clone(*this, iF);
         }
 
 
