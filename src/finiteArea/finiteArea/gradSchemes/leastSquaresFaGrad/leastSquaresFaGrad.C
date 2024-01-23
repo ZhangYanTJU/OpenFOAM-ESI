@@ -91,10 +91,10 @@ leastSquaresFaGrad<Type>::calcGrad
 
     forAll(own, edgei)
     {
-        label ownEdgeI = own[edgei];
-        label neiEdgeI = nei[edgei];
+        const label ownEdgeI = own[edgei];
+        const label neiEdgeI = nei[edgei];
 
-        Type deltaVsf = vsf[neiEdgeI] - vsf[ownEdgeI];
+        const Type deltaVsf(vsf[neiEdgeI] - vsf[ownEdgeI]);
 
         lsGrad[ownEdgeI] += ownLs[edgei]*deltaVsf;
         lsGrad[neiEdgeI] -= neiLs[edgei]*deltaVsf;
@@ -103,35 +103,23 @@ leastSquaresFaGrad<Type>::calcGrad
     // Boundary edges
     forAll(vsf.boundaryField(), patchi)
     {
-        const faePatchVectorField& patchOwnLs = ownLs.boundaryField()[patchi];
+        const faPatchField<Type>& bf = vsf.boundaryField()[patchi];
 
+        const Field<Type>& vsfp =
+        (
+            bf.coupled()
+          ? bf.patchNeighbourField().cref()
+          : const_cast<faPatchField<Type>&>(bf)
+        );
+
+        const faePatchVectorField& ownLsp = ownLs.boundaryField()[patchi];
         const labelUList& edgeFaces =
             lsGrad.boundaryField()[patchi].patch().edgeFaces();
 
-        if (vsf.boundaryField()[patchi].coupled())
+        forAll(vsfp, pEdgei)
         {
-            Field<Type> neiVsf
-            (
-                vsf.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            forAll(neiVsf, patchEdgeI)
-            {
-                lsGrad[edgeFaces[patchEdgeI]] +=
-                    patchOwnLs[patchEdgeI]
-                   *(neiVsf[patchEdgeI] - vsf[edgeFaces[patchEdgeI]]);
-            }
-        }
-        else
-        {
-            const faPatchField<Type>& patchVsf = vsf.boundaryField()[patchi];
-
-            forAll(patchVsf, patchEdgeI)
-            {
-                lsGrad[edgeFaces[patchEdgeI]] +=
-                     patchOwnLs[patchEdgeI]
-                    *(patchVsf[patchEdgeI] - vsf[edgeFaces[patchEdgeI]]);
-            }
+            lsGrad[edgeFaces[pEdgei]] +=
+                ownLsp[pEdgei]*(vsfp[pEdgei] - vsf[edgeFaces[pEdgei]]);
         }
     }
 
