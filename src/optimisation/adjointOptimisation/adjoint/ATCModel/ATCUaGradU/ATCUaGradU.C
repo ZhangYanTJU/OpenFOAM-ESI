@@ -102,23 +102,14 @@ void ATCUaGradU::addATC(fvVectorMatrix& UaEqn)
 
 tmp<volTensorField> ATCUaGradU::getFISensitivityTerm() const
 {
-    tmp<volTensorField> tvolSDTerm
+    auto tvolSDTerm = volTensorField::New
     (
-        new volTensorField
-        (
-            IOobject
-            (
-                "ATCFISensitivityTerm" + type(),
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedTensor(sqr(dimLength)/pow(dimTime, 3), Zero)
-        )
+        "ATCFISensitivityTerm" + type(),
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedTensor(sqr(dimLength)/pow(dimTime, 3), Zero)
     );
-    volTensorField& volSDTerm = tvolSDTerm.ref();
+    auto& volSDTerm = tvolSDTerm.ref();
 
     const volVectorField& U = primalVars_.U();
     const volVectorField& Ua = adjointVars_.Ua();

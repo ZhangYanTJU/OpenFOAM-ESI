@@ -251,8 +251,8 @@ tmp<scalarField> boundaryAdjointContributionIncompressible::momentumDiffusion()
 
 tmp<scalarField> boundaryAdjointContributionIncompressible::laminarDiffusivity()
 {
-    tmp<scalarField> tnu(new scalarField(patch_.size(), Zero));
-    scalarField& nu = tnu.ref();
+    auto tnu = tmp<scalarField>::New(patch_.size(), Zero);
+    auto& nu = tnu.ref();
 
     const autoPtr<incompressible::turbulenceModel>& turbulenceModel =
         primalVars_.turbulence();
@@ -272,13 +272,10 @@ tmp<scalarField> boundaryAdjointContributionIncompressible::thermalDiffusion()
     tmp<scalarField> talphaEff = turbulenceModel.alphaEff(patch_.index());
     */
 
-    tmp<scalarField> talphaEff(new scalarField(patch_.size(), Zero));
-
     WarningInFunction
         << "no abstract thermalDiffusion is implemented. Returning zero field";
 
-
-    return talphaEff;
+    return tmp<scalarField>::New(patch_.size(), Zero);
 }
 
 

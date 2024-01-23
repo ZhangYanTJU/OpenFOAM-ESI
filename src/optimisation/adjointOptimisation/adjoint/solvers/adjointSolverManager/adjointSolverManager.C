@@ -301,8 +301,8 @@ void Foam::adjointSolverManager::solveAdjointEquations()
 Foam::tmp<Foam::scalarField>
 Foam::adjointSolverManager::aggregateSensitivities()
 {
-    tmp<scalarField> tsens(new scalarField(0));
-    scalarField& sens = tsens.ref();
+    auto tsens = tmp<scalarField>::New();
+    auto& sens = tsens.ref();
 
     // Sum sensitivities from all objectives expect the constraints
     for (const label solveri : objectiveSolverIDs_)

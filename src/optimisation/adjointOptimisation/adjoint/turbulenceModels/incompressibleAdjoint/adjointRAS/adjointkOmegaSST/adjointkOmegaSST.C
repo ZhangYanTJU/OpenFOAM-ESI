@@ -125,21 +125,14 @@ tmp<volScalarField::Internal> adjointkOmegaSST::GbyNu
 
 tmp<volScalarField> adjointkOmegaSST::zeroFirstCell()
 {
-    auto tzeroFirstCell =
-        tmp<volScalarField>::New
-        (
-            IOobject
-            (
-                "zeroFirstCell",
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimless, Foam::one{})
-        );
-    volScalarField& zeroFirstCell = tzeroFirstCell.ref();
+    auto tzeroFirstCell = volScalarField::New
+    (
+        "zeroFirstCell",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless, Foam::one{})
+    );
+    auto& zeroFirstCell = tzeroFirstCell.ref();
 
     firstCellIDs_.resize(mesh_.nCells(), -1);
     label counter(0);
@@ -1799,8 +1792,7 @@ tmp<volSymmTensorField> adjointkOmegaSST::devReff
     const volVectorField& U
 ) const
 {
-    return
-        tmp<volSymmTensorField>::New
+    return tmp<volSymmTensorField>::New
         (
             IOobject
             (

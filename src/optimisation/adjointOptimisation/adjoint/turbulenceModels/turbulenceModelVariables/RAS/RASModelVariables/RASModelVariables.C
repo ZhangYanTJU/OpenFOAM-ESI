@@ -305,16 +305,10 @@ tmp<volScalarField> RASModelVariables::nutJacobianVar1
         << "jutJacobianVar1 not implemented for the current turbulence model."
         << "Returning zero field" << endl;
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "nutJacobianVar1",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "nutJacobianVar1",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimless, Zero)
     );
@@ -330,16 +324,10 @@ tmp<volScalarField> RASModelVariables::nutJacobianVar2
         << "nutJacobianVar2 not implemented for the current turbulence model."
         << "Returning zero field" << endl;
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "nutJacobianVar2",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "nutJacobianVar2",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimless, Zero)
     );
@@ -426,16 +414,10 @@ tmp<volSymmTensorField> RASModelVariables::devReff
     const volVectorField& U
 ) const
 {
-    return tmp<volSymmTensorField>::New
+    return volSymmTensorField::New
     (
-        IOobject
-        (
-            "devRhoReff",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "devRhoReff",
+        IOobject::NO_REGISTER,
       - (laminarTransport.nu() + nut())*devTwoSymm(fvc::grad(U))
     );
 }
