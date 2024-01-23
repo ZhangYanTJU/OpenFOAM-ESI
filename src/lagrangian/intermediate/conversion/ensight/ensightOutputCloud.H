@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,6 +40,8 @@ SourceFiles
 
 #include "ensightFile.H"
 #include "IOField.H"
+#include "DynamicList.H"
+#include "vector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,11 +50,40 @@ namespace Foam
 
 // Forward Declarations
 class fvMesh;
+class globalIndex;
 
 namespace ensightOutput
 {
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+//- Write cloud positions
+bool writeCloudPositions
+(
+    //! Output file (must be valid on master)
+    ensightFile& os,
+
+    //! The positions (measured data) to write.
+    //! Also used as intermediate buffer (on master)
+    DynamicList<floatVector>& positions,
+
+    //! The global sizes of \p positions (must be valid on master)
+    //! and consistent with \p positions dimensions
+    const globalIndex& procAddr
+);
+
+
+//- Write cloud positions
+bool writeCloudPositions
+(
+    //! Output file (must be valid on master)
+    ensightFile& os,
+
+    //! The positions (measured data) to write.
+    //! Also used as intermediate buffer (on master)
+    DynamicList<floatVector>& positions
+);
 
 
 //- Write cloud positions
@@ -80,7 +111,23 @@ bool writeCloudField
     ensightFile& os,
 
     //! The cloud field
-    const IOField<Type>& field
+    const UList<Type>& field,
+
+    //! The global sizes of \p field (must be valid on master)
+    //! and consistent with \p field dimensions
+    const globalIndex& procAddr
+);
+
+
+//- Write cloud field, returning true if the field is non-empty.
+template<class Type>
+bool writeCloudField
+(
+    //! Output file (must be valid on master)
+    ensightFile& os,
+
+    //! The cloud field
+    const UList<Type>& field
 );
 
 

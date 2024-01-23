@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,6 @@ Foam::label Foam::ensightOutput::Detail::writeCloudFieldContent
     label count
 )
 {
-    // Write master data
     for (Type val : field)          // <-- working on a copy!
     {
         if (mag(val) < 1e-90)       // approximately root(ROOTVSMALL)
@@ -70,18 +69,20 @@ template<class Type>
 bool Foam::ensightOutput::writeCloudField
 (
     ensightFile& os,
-    const IOField<Type>& field
+    const UList<Type>& field,
+    const globalIndex& procAddr
 )
 {
-    if (returnReduceAnd(field.empty()))
+    bool allEmpty(!procAddr.totalSize());
+    Pstream::broadcast(allEmpty);
+
+    if (allEmpty)
     {
-        return false;
+        return false;  // All empty
     }
 
-    // Gather sizes (offsets irrelevant)
-    const globalIndex procAddr(globalIndex::gatherOnly{}, field.size());
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // 6 values per line
         label count = 0;
@@ -128,7 +129,7 @@ bool Foam::ensightOutput::writeCloudField
             os.newline();
         }
     }
-    else
+    else if (UPstream::is_subrank())
     {
         if (field.size())
         {
@@ -143,6 +144,23 @@ bool Foam::ensightOutput::writeCloudField
     }
 
     return true;
+}
+
+
+template<class Type>
+bool Foam::ensightOutput::writeCloudField
+(
+    ensightFile& os,
+    const UList<Type>& field
+)
+{
+    return ensightOutput::writeCloudField
+    (
+        os,
+        field,
+        // Gather sizes (offsets irrelevant)
+        globalIndex(globalIndex::gatherOnly{}, field.size())
+    );
 }
 
 
@@ -162,10 +180,11 @@ bool Foam::ensightOutput::readWriteCloudField
 
         IOobject io(fieldObject);
         io.readOpt(IOobject::READ_IF_PRESENT);
+        io.registerObject(IOobject::NO_REGISTER);
 
         IOField<Type> field(io);
 
-        writeCloudField(os, field);
+        ensightOutput::writeCloudField(os, field);
     }
 
     return true;
