@@ -508,11 +508,9 @@ void Foam::faPatch::makeDeltaCoeffs(scalarField& dc) const
 
 void Foam::faPatch::makeCorrectionVectors(vectorField& k) const
 {
-    vectorField unitDelta(delta()/mag(delta()));
-    vectorField edgeNormMag(edgeNormals()/mag(edgeNormals()));
-    scalarField dn(edgeNormals() & delta());
+    const vectorField unitDelta(delta()/mag(delta()));
 
-    k = edgeNormMag - (scalar(1)/(unitDelta & edgeNormMag))*unitDelta;
+    k = edgeNormals() - (scalar(1)/(unitDelta & edgeNormals()))*unitDelta;
 }
 
 
