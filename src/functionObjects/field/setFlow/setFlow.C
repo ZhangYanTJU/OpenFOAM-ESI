@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -240,7 +240,7 @@ bool Foam::functionObjects::setFlow::execute()
             const volVectorField& C = mesh_.C();
             const volVectorField d
             (
-                typeName + ":d",
+                IOobject::scopedName(typeName, "d"),
                 C - dimensionedVector("origin", dimLength, origin_)
             );
             const scalarField x(d.component(vector::X));
@@ -286,7 +286,7 @@ bool Foam::functionObjects::setFlow::execute()
 
             const volVectorField d
             (
-                typeName + ":d",
+                IOobject::scopedName(typeName, "d"),
                 C - dimensionedVector("origin", dimLength, origin_)
             );
             const scalarField x(d.component(vector::X));
@@ -350,7 +350,7 @@ bool Foam::functionObjects::setFlow::execute()
 
             const volVectorField d
             (
-                typeName + ":d",
+                IOobject::scopedName(typeName, "d"),
                 C - dimensionedVector("origin", dimLength, origin_)
             );
             const scalarField x(d.component(vector::X));
