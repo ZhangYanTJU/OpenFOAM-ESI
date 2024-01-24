@@ -249,48 +249,6 @@ liquidFilmModel::liquidFilmModel
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-const areaScalarField& liquidFilmModel::mu() const
-{
-     return mu_;
-}
-
-
-const areaScalarField& liquidFilmModel::rho() const
-{
-     return rho_;
-}
-
-
-const areaScalarField& liquidFilmModel::sigma() const
-{
-     return sigma_;
-}
-
-
-const areaScalarField& liquidFilmModel::Tf() const
-{
-     return Tf_;
-}
-
-
-const areaScalarField& liquidFilmModel::Cp() const
-{
-     return Cp_;
-}
-
-
-const liquidMixtureProperties& liquidFilmModel::thermo() const
-{
-    return thermo_;
-}
-
-
-scalar liquidFilmModel::Tref() const
-{
-    return Tref_;
-}
-
-
 const volScalarField& liquidFilmModel::cloudMassTrans() const
 {
     return cloudMassTrans_;

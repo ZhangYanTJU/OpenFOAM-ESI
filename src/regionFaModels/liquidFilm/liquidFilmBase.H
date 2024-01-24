@@ -264,41 +264,40 @@ public:
             tmp<areaScalarField> alpha() const;
 
 
-        // Access functions
+        // Access
 
             //- Return faOptions
-            Foam::fa::options& faOptions();
+            Foam::fa::options& faOptions() noexcept { return faOptions_; }
 
             //- Access const reference Uf
-            const areaVectorField& Uf() const;
+            const areaVectorField& Uf() const noexcept { return Uf_; }
 
             //- Access const reference gn
-            const areaScalarField& gn() const;
+            const areaScalarField& gn() const noexcept { return gn_; }
 
             //- Gravity
-            const uniformDimensionedVectorField& g() const;
+            const uniformDimensionedVectorField& g() const noexcept { return g_; }
 
             //- Access const reference h
-            const areaScalarField& h() const;
+            const areaScalarField& h() const noexcept { return h_; }
 
             //- Access to momentum flux
-            const edgeScalarField& phif() const;
+            const edgeScalarField& phif() const noexcept { return phif_; }
 
             //- Access continuity flux
-            const edgeScalarField& phi2s() const;
-
+            const edgeScalarField& phi2s() const noexcept { return phi2s_; }
 
             //- Return h0
-            const dimensionedScalar& h0() const;
+            const dimensionedScalar& h0() const noexcept { return h0_; }
 
             //- Access to this region
-            const regionFaModel& region() const;
+            const regionFaModel& region() const noexcept { return *this; }
 
             //- Access to pRef
-            scalar pRef();
+            scalar pRef() const noexcept { return pRef_; }
 
             //- Name of the U field
-            word UName() const;
+            word UName() const noexcept { return UName_; }
 
 
             // Transfer fields - to the primary region (lagragian injection)
