@@ -27,20 +27,23 @@ Class
     Foam::regionFaModels::KirchhoffShell
 
 Description
+    Vibration-shell finite-area model.
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional entries
-        ...
-
         // Mandatory entries
         vibrationShellModel   KirchhoffShell;
-        f0                    0.04;
-        f1                    0.0;
-        f2                    0.0;
+        f0                    <scalar>;
+        f1                    <scalar>;
+        f2                    <scalar>;
+
+        // Inherited entries
+        ...
+        nNonOrthCorr          <int>;    // read from another dict
+        nSubCycles            <int>;
     }
     \endverbatim
 

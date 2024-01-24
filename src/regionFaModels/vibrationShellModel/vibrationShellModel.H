@@ -34,19 +34,16 @@ Usage
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional entries
-        ...
-
         // Mandatory entries
-        vibrationShellModel     <thermalShellModelName>;
-        p                       <pName>;
+        vibrationShellModel     <word>;
+        p                       <word>;
 
         solid
         {
             // subdictionary entries
         }
 
-        // Mandatory/Optional (derived) entries
+        // Inherited entries
         ...
     }
     \endverbatim
