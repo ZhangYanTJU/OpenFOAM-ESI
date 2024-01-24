@@ -42,7 +42,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    mixedFvPatchField<vector>(p, iF),
+    mixedFvPatchVectorField(p, iF),
     baffle_(nullptr),
     dict_(),
     curTimeIndex_(-1),
@@ -62,7 +62,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const fvPatchFieldMapper& mapper
 )
 :
-    mixedFvPatchField<vector>
+    mixedFvPatchVectorField
     (
         ptf,
         p,
@@ -83,7 +83,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const dictionary& dict
 )
 :
-    mixedFvPatchField<vector>(p, iF),
+    mixedFvPatchVectorField(p, iF),
     baffle_(nullptr),
     dict_
     (
@@ -129,7 +129,7 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
     const DimensionedField<vector, volMesh>& iF
 )
 :
-    mixedFvPatchField<vector>(ptf, iF),
+    mixedFvPatchVectorField(ptf, iF),
     baffle_(nullptr),
     dict_(ptf.dict_),
     curTimeIndex_(-1),
@@ -146,7 +146,7 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
         return;
     }
 
-    // Execute the change to the openFraction only once per time-step
+    // Execute the change only once per time-step
     if (curTimeIndex_ != this->db().time().timeIndex())
     {
         baffle_->evolve();
@@ -170,13 +170,13 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
         curTimeIndex_ = this->db().time().timeIndex();
     }
 
-    mixedFvPatchField<vector>::updateCoeffs();
+    mixedFvPatchVectorField::updateCoeffs();
 }
 
 
 void velocityFilmShellFvPatchVectorField::write(Ostream& os) const
 {
-    mixedFvPatchField<vector>::write(os);
+    mixedFvPatchVectorField::write(os);
     dict_.write(os, false);
 }
 

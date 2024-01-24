@@ -40,7 +40,6 @@ namespace regionModels
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTypeNameAndDebug(vibrationShellModel, 0);
-
 defineRunTimeSelectionTable(vibrationShellModel, dictionary);
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

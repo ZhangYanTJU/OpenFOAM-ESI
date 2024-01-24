@@ -60,7 +60,6 @@ liquidFilmBase::liquidFilmBase
 )
 :
     regionFaModel(mesh, liquidFilmName, modelType, dict, true),
-
     momentumPredictor_
     (
         this->solution().subDict("PIMPLE").get<bool>("momentumPredictor")
@@ -74,17 +73,11 @@ liquidFilmBase::liquidFilmBase
     (
         this->solution().subDict("PIMPLE").get<label>("nFilmCorr")
     ),
-
     h0_("h0", dimLength, 1e-7, dict),
-
     deltaWet_("deltaWet", dimLength, 1e-4, dict),
-
     UName_(dict.get<word>("U")),
-
     pName_(dict.getOrDefault<word>("p",  word::null)),
-
     pRef_(dict.get<scalar>("pRef")),
-
     h_
     (
         IOobject
@@ -97,7 +90,6 @@ liquidFilmBase::liquidFilmBase
         ),
         regionMesh()
     ),
-
     Uf_
     (
         IOobject
@@ -148,7 +140,6 @@ liquidFilmBase::liquidFilmBase
         ),
         fac::interpolate(Uf_) & regionMesh().Le()
     ),
-
     phi2s_
     (
         IOobject
@@ -161,7 +152,6 @@ liquidFilmBase::liquidFilmBase
         ),
         fac::interpolate(h_*Uf_) & regionMesh().Le()
     ),
-
     gn_
     (
         IOobject
@@ -175,9 +165,7 @@ liquidFilmBase::liquidFilmBase
         regionMesh(),
         dimensionedScalar(dimAcceleration, Zero)
     ),
-
     g_(meshObjects::gravity::New(primaryMesh().time())),
-
     massSource_
     (
         IOobject
@@ -189,7 +177,6 @@ liquidFilmBase::liquidFilmBase
         primaryMesh(),
         dimensionedScalar(dimMass, Zero)
     ),
-
     momentumSource_
     (
         IOobject
@@ -201,7 +188,6 @@ liquidFilmBase::liquidFilmBase
         primaryMesh(),
         dimensionedVector(dimPressure, Zero)
     ),
-
     pnSource_
     (
         IOobject
@@ -213,7 +199,6 @@ liquidFilmBase::liquidFilmBase
         primaryMesh(),
         dimensionedScalar(dimPressure, Zero)
     ),
-
     energySource_
     (
         IOobject
@@ -225,9 +210,7 @@ liquidFilmBase::liquidFilmBase
         primaryMesh(),
         dimensionedScalar(dimEnergy, Zero)
     ),
-
     addedMassTotal_(0),
-
     faOptions_(Foam::fa::options::New(primaryMesh()))
 {
     const areaVectorField& ns = regionMesh().faceAreaNormals();
@@ -429,8 +412,6 @@ tmp<areaScalarField> liquidFilmBase::pg() const
             primaryMesh().lookupObject<volScalarField>(pName_),
             pfg.primitiveFieldRef()
         );
-
-        //pfg -= pRef_;
     }
 
     return tpg;

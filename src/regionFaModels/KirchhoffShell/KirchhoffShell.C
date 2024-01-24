@@ -41,7 +41,6 @@ namespace regionModels
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTypeNameAndDebug(KirchhoffShell, 0);
-
 addToRunTimeSelectionTable(vibrationShellModel, KirchhoffShell, dictionary);
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -56,10 +55,7 @@ bool KirchhoffShell::init(const dictionary& dict)
 
 void KirchhoffShell::solveDisplacement()
 {
-    if (debug)
-    {
-        InfoInFunction << endl;
-    }
+    DebugInFunction << endl;
 
     const Time& time = primaryMesh().time();
 
@@ -77,7 +73,7 @@ void KirchhoffShell::solveDisplacement()
         w_.oldTime().oldTime() = w00_;
         laplaceW_.oldTime() = laplaceW0_;
         laplace2W_.oldTime() = laplace2W0_;
-     }
+    }
 
     for
     (
@@ -89,7 +85,6 @@ void KirchhoffShell::solveDisplacement()
        !(++wSubCycle).end();
     )
     {
-
         laplaceW_ = fac::laplacian(w_);
         laplace2W_ = fac::laplacian(laplaceW_);
 
@@ -264,7 +259,7 @@ void KirchhoffShell::evolveRegion()
     nNonOrthCorr_ = solution().get<label>("nNonOrthCorr");
     nSubCycles_ = solution().get<label>("nSubCycles");
 
-    for (int nonOrth=0; nonOrth<=nNonOrthCorr_; nonOrth++)
+    for (int nonOrth=0; nonOrth<=nNonOrthCorr_; ++nonOrth)
     {
         solveDisplacement();
     }

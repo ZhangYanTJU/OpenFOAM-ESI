@@ -88,7 +88,7 @@ namespace compressible
 
 class thermalShellFvPatchScalarField
 :
-    public fixedValueFvPatchField<scalar>
+    public fixedValueFvPatchScalarField
 {
     // Typedefs
 

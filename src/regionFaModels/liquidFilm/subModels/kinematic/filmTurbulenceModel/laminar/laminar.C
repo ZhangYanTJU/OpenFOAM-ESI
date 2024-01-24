@@ -28,7 +28,6 @@ License
 #include "laminar.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam

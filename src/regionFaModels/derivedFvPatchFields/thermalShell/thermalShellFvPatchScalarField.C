@@ -44,7 +44,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF),
+    fixedValueFvPatchScalarField(p, iF),
     baffle_(nullptr),
     dict_()
 {}
@@ -58,7 +58,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    fixedValueFvPatchField<scalar>
+    fixedValueFvPatchScalarField
     (
         ptf,
         p,
@@ -77,7 +77,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const dictionary& dict
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF, dict),
+    fixedValueFvPatchScalarField(p, iF, dict),
     baffle_(nullptr),
     dict_
     (
@@ -107,7 +107,7 @@ thermalShellFvPatchScalarField::thermalShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<scalar>(ptf, iF),
+    fixedValueFvPatchScalarField(ptf, iF),
     baffle_(nullptr),
     dict_(ptf.dict_)
 {}
@@ -128,13 +128,13 @@ void thermalShellFvPatchScalarField::updateCoeffs()
 
     baffle_->vsm().mapToVolumePatch(baffle_->T(), pfld, patch().index());
 
-    fixedValueFvPatchField<scalar>::updateCoeffs();
+    fixedValueFvPatchScalarField::updateCoeffs();
 }
 
 
 void thermalShellFvPatchScalarField::write(Ostream& os) const
 {
-    fixedValueFvPatchField<scalar>::write(os);
+    fixedValueFvPatchScalarField::write(os);
     dict_.write(os, false);
 }
 

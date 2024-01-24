@@ -105,13 +105,13 @@ protected:
 
         // Solution parameters
 
-            //- Momentum predictor
+            //- Flag to enable momentum predictor
             Switch momentumPredictor_;
 
             //- Number of outer correctors
             label nOuterCorr_;
 
-            //- Number of PISO-like correctors
+            //- Number of PISO-like inner correctors
             label nCorr_;
 
             //- Number of film thickness correctors
@@ -120,10 +120,10 @@ protected:
             //- Cumulative continuity error
             scalar cumulativeContErr_;
 
-            //- Smallest numerical thickness
+            //- Smallest film thickness
             dimensionedScalar h0_;
 
-            //- Delta wet for sub-models
+            //- Film thickness beyond which face is assumed to be wet
             dimensionedScalar deltaWet_;
 
 
@@ -139,7 +139,7 @@ protected:
 
         // Fields
 
-            //- Film hight
+            //- Film height
             areaScalarField h_;
 
             //- Film velocity
@@ -209,7 +209,6 @@ public:
 
 
     // Constructors
-
 
         //- Construct from type name and mesh and dict
         liquidFilmBase

@@ -90,10 +90,7 @@ tmp<areaScalarField> thermalShell::qr()
 
 void thermalShell::solveEnergy()
 {
-    if (debug)
-    {
-        InfoInFunction << endl;
-    }
+    DebugInFunction << endl;
 
     const areaScalarField rhoCph(Cp()*rho()*h_);
 

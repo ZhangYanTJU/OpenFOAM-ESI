@@ -169,13 +169,13 @@ protected:
         //- Model dictionary
         const dictionary dict_;
 
-        //- Method used
+        //- Friction model
         const frictionMethodType method_;
 
-        //- Shear method used
+        //- Shear-stress model
         const shearMethodType shearMethod_;
 
-        //- Name of density field (optional)
+        //- Name of density field
         word rhoName_;
 
         //- Reference density needed for incompressible calculations

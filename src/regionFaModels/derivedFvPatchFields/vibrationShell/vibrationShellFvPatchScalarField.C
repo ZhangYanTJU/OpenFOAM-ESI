@@ -42,7 +42,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
+    mixedFvPatchScalarField(p, iF),
     baffle_(nullptr),
     dict_()
 {
@@ -60,7 +60,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    mixedFvPatchField<scalar>
+    mixedFvPatchScalarField
     (
         ptf,
         p,
@@ -79,7 +79,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const dictionary& dict
 )
 :
-    mixedFvPatchField<scalar>(p, iF),
+    mixedFvPatchScalarField(p, iF),
     baffle_(nullptr),
     dict_
     (
@@ -123,7 +123,7 @@ vibrationShellFvPatchScalarField::vibrationShellFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    mixedFvPatchField<scalar>(ptf, iF),
+    mixedFvPatchScalarField(ptf, iF),
     baffle_(nullptr),
     dict_(ptf.dict_)
 {}
@@ -156,13 +156,13 @@ void vibrationShellFvPatchScalarField::updateCoeffs()
     refValue() = Zero;
     valueFraction() = Zero;
 
-    mixedFvPatchField<scalar>::updateCoeffs();
+    mixedFvPatchScalarField::updateCoeffs();
 }
 
 
 void vibrationShellFvPatchScalarField::write(Ostream& os) const
 {
-    mixedFvPatchField<scalar>::write(os);
+    mixedFvPatchScalarField::write(os);
     dict_.write(os, false);
 }
 

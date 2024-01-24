@@ -99,7 +99,7 @@ protected:
         //- Liquid thermo
         liquidMixtureProperties thermo_;
 
-        //- Reference tempararure
+        //- Reference temperature
         scalar Tref_;
 
 
@@ -111,16 +111,16 @@ protected:
         //- Dynamic viscosity [Pa.s]
         areaScalarField mu_;
 
-        //- Film temperature
+        //- Film temperature [K]
         areaScalarField Tf_;
 
-        //- Film Heat capacity
+        //- Film heat capacity [J/K]
         areaScalarField Cp_;
 
-        //- Surface tension [m/s2]
+        //- Surface tension [m/s^2]
         areaScalarField sigma_;
 
-        //- Film rho*height
+        //- Film rho*height [m.kg/m^3]
         areaScalarField hRho_;
 
 
@@ -138,7 +138,7 @@ protected:
 
     // Transfer fields
 
-        //- Film mass  for transfer to cloud
+        //- Film mass for transfer to cloud
         volScalarField cloudMassTrans_;
 
         //- Parcel diameters originating from film to cloud
@@ -158,9 +158,6 @@ protected:
 
             //- Cloud injection
             injectionModelList injection_;
-
-            //- Transfer with the continuous phase
-            //transferModelList transfer_;
 
             //- List of film forces
             forceList forces_;
