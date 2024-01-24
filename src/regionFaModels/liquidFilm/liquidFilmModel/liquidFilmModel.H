@@ -201,25 +201,28 @@ public:
         // Access
 
             //- Access const reference mu
-            const areaScalarField& mu() const;
+            const areaScalarField& mu() const noexcept { return mu_; }
 
             //- Access const reference rho
-            const areaScalarField& rho() const;
+            const areaScalarField& rho() const noexcept { return rho_; }
 
             //- Access const reference sigma
-            const areaScalarField& sigma() const;
+            const areaScalarField& sigma() const noexcept { return sigma_; }
 
             //- Access const reference Tf
-            const areaScalarField& Tf() const;
+            const areaScalarField& Tf() const noexcept { return Tf_; }
 
             //- Access const reference Cp
-            const areaScalarField& Cp() const;
+            const areaScalarField& Cp() const noexcept { return Cp_; }
 
             //- Access to thermo
-            const liquidMixtureProperties& thermo() const;
+            const liquidMixtureProperties& thermo() const noexcept
+            {
+                return thermo_;
+            }
 
             //- Access to reference temperature
-            scalar Tref() const;
+            scalar Tref() const noexcept { return Tref_; }
 
 
         // Transfer fields - to the primary region (lagragian injection)
