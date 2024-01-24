@@ -69,11 +69,6 @@ SourceFiles
 #define Foam_regionFaModel_H
 
 #include "volMesh.H"
-#include "IOdictionary.H"
-#include "Switch.H"
-#include "labelList.H"
-#include "areaFields.H"
-#include "faMesh.H"
 #include "volSurfaceMapping.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

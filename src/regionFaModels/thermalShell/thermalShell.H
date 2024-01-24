@@ -78,7 +78,6 @@ SourceFiles
 #include "volFieldsFwd.H"
 #include "thermalShellModel.H"
 #include "solidProperties.H"
-#include "faMesh.H"
 #include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

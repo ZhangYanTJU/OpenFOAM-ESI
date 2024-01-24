@@ -69,7 +69,6 @@ SourceFiles
 
 #include "volFieldsFwd.H"
 #include "vibrationShellModel.H"
-#include "faMesh.H"
 #include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

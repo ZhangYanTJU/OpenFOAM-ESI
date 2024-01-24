@@ -64,7 +64,6 @@ SourceFiles
 #ifndef vibrationShellFvPatchScalarField_H
 #define vibrationShellFvPatchScalarField_H
 
-#include "autoPtr.H"
 #include "vibrationShellModel.H"
 #include "mixedFvPatchFields.H"
 

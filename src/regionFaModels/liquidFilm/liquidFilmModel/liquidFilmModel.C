@@ -27,8 +27,6 @@ License
 
 #include "liquidFilmModel.H"
 #include "addToRunTimeSelectionTable.H"
-#include "uniformDimensionedFields.H"
-#include "gravityMeshObject.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

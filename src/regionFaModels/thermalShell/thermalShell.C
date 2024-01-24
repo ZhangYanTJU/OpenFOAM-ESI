@@ -28,7 +28,6 @@ License
 #include "thermalShell.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFields.H"
-#include "zeroGradientFaPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

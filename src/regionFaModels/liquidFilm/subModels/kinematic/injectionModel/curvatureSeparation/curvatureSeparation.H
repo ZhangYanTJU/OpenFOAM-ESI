@@ -87,7 +87,6 @@ SourceFiles
 #define curvatureSeparation_H
 
 #include "injectionModel.H"
-#include "faCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

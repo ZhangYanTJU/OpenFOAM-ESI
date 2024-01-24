@@ -74,8 +74,6 @@ SourceFiles
 #ifndef Foam_liquidFilmBase_H
 #define Foam_liquidFilmBase_H
 
-#include "runTimeSelectionTables.H"
-#include "autoPtr.H"
 #include "faCFD.H"
 #include "volFieldsFwd.H"
 #include "uniformDimensionedFields.H"
