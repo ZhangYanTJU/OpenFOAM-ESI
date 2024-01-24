@@ -197,17 +197,6 @@ liquidFilmBase::liquidFilmBase
         primaryMesh(),
         dimensionedScalar(dimPressure, Zero)
     ),
-    energySource_
-    (
-        IOobject
-        (
-            "energySource",
-            primaryMesh().time().timeName(),
-            primaryMesh().thisDb()
-        ),
-        primaryMesh(),
-        dimensionedScalar(dimEnergy, Zero)
-    ),
     addedMassTotal_(0),
     faOptions_(Foam::fa::options::New(primaryMesh()))
 {

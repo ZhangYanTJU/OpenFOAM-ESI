@@ -173,9 +173,6 @@ protected:
             //- Normal pressure by particles
             volScalarField pnSource_;
 
-            //- Energy
-            volScalarField energySource_;
-
             //- Total mass added
             scalar addedMassTotal_;
 
