@@ -89,7 +89,7 @@ createZeroBoundaryPtr
         Boundary;
 
     // Make sure that the patchFields to be generated will be of type
-    // calculated, even if they are of constraint type
+    // calculated, even if they are of constraint type.
     // Necessary to avoid unexpected behaviour when computing sensitivities
     // on symmetry patches (not a good practice either way)
     const fvBoundaryMesh& bm = mesh.boundary();
@@ -113,7 +113,7 @@ createZeroBoundaryPtr
         new Boundary
         (
             mesh.boundary(),
-            mesh.V()*pTraits<Type>::zero,  // Dummy internal field,
+            DimensionedField<Type, volMesh>::null(),
             wordList(bm.size(), fvPatchFieldBase::calculatedType()),
             actualPatchTypes
         )
