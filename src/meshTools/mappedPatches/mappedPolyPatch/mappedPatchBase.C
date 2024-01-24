@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -85,6 +85,12 @@ Foam::mappedPatchBase::offsetModeNames_
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::mappedPatchBase::updateMesh(PstreamBuffers& pBufs)
+{
+    clearOut();
+}
+
 
 Foam::autoPtr<Foam::fileName> Foam::mappedPatchBase::readDatabase
 (
@@ -1569,8 +1575,9 @@ Foam::mappedPatchBase::~mappedPatchBase()
 void Foam::mappedPatchBase::clearOut()
 {
     mapPtr_.reset(nullptr);
-    surfPtr_.reset(nullptr);
     AMIPtr_->upToDate(false);
+
+    //Note: no need to clear out surface since not mesh related
 }
 
 
@@ -1671,6 +1678,76 @@ const Foam::polyPatch& Foam::mappedPatchBase::samplePolyPatch() const
     }
 
     return nbrMesh.boundaryMesh()[patchi];
+}
+
+
+bool Foam::mappedPatchBase::upToDate() const
+{
+    const polyMesh& thisMesh = patch_.boundaryMesh().mesh();
+
+    bool thisUpToDate = thisMesh.upToDatePoints(updateMeshTime());
+    bool sampleUpToDate =
+    (
+        sameWorld()
+      ? sampleMesh().upToDatePoints(updateSampleMeshTime())
+      : true
+    );
+
+
+    // Lambda to check for points on the patch being the same
+    auto checkPointMovement = []
+    (
+        const polyMesh& mesh,
+        const polyPatch& patch,
+        regIOobject& state
+    ) -> bool
+    {
+        bool upToDate = true;
+        const auto& oldPoints = mesh.oldPoints();
+        const auto& points = mesh.points();
+
+        for (const label pointi : patch.meshPoints())
+        {
+            const point& oldPt = oldPoints[pointi];
+            const point& currentPt = points[pointi];
+
+            if (mag(oldPt - currentPt) > SMALL)
+            {
+                upToDate = false;
+                break;
+            }
+        }
+
+        Pstream::reduceAnd(upToDate);
+
+        if (upToDate)
+        {
+            state.setUpToDate();
+        }
+
+        return upToDate;
+    };
+
+
+    if (!thisUpToDate && thisMesh.moving())
+    {
+        // Moving (but not topoChanging mesh) : do more accurate check:
+        // compare actual patch point position
+
+        thisUpToDate = checkPointMovement(thisMesh, patch_, updateMeshTime());
+    }
+
+    if (!sampleUpToDate && sampleMesh().moving())
+    {
+        sampleUpToDate = checkPointMovement
+        (
+            sampleMesh(),
+            samplePolyPatch(),
+            updateSampleMeshTime()
+        );
+    }
+
+    return (thisUpToDate && sampleUpToDate);
 }
 
 

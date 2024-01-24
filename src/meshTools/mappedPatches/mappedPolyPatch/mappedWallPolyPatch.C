@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -175,9 +175,7 @@ Foam::mappedWallPolyPatch::mappedWallPolyPatch
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::mappedWallPolyPatch::~mappedWallPolyPatch()
-{
-    mappedPatchBase::clearOut();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -191,7 +189,7 @@ void Foam::mappedWallPolyPatch::initGeometry(PstreamBuffers& pBufs)
 void Foam::mappedWallPolyPatch::calcGeometry(PstreamBuffers& pBufs)
 {
     wallPolyPatch::calcGeometry(pBufs);
-    mappedPatchBase::clearOut();
+    mappedPatchBase::calcGeometry(pBufs);
 }
 
 
@@ -202,6 +200,7 @@ void Foam::mappedWallPolyPatch::initMovePoints
 )
 {
     wallPolyPatch::initMovePoints(pBufs, p);
+    mappedPatchBase::initMovePoints(pBufs, p);
 }
 
 
@@ -212,20 +211,21 @@ void Foam::mappedWallPolyPatch::movePoints
 )
 {
     wallPolyPatch::movePoints(pBufs, p);
-    mappedPatchBase::clearOut();
+    mappedPatchBase::movePoints(pBufs, p);
 }
 
 
 void Foam::mappedWallPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
 {
     wallPolyPatch::initUpdateMesh(pBufs);
+    mappedPatchBase::initUpdateMesh(pBufs);
 }
 
 
 void Foam::mappedWallPolyPatch::updateMesh(PstreamBuffers& pBufs)
 {
     wallPolyPatch::updateMesh(pBufs);
-    mappedPatchBase::clearOut();
+    mappedPatchBase::updateMesh(pBufs);
 }
 
 

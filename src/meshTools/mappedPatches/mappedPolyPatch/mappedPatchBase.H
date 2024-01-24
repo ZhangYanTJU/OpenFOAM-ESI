@@ -301,6 +301,32 @@ protected:
 
     // Protected Member Functions
 
+        // polyPatch callbacks
+
+            //- Initialise the calculation of the patch geometry
+            virtual void initGeometry(PstreamBuffers&)
+            {}
+
+            //- Calculate the patch geometry
+            virtual void calcGeometry(PstreamBuffers&)
+            {}
+
+            //- Initialise the patches for moving points
+            virtual void initMovePoints(PstreamBuffers&, const pointField&)
+            {}
+
+            //- Correct patches after moving points
+            virtual void movePoints(PstreamBuffers&, const pointField&)
+            {}
+
+            //- Initialise the update of the patch topology
+            virtual void initUpdateMesh(PstreamBuffers&)
+            {}
+
+            //- Update of the patch topology
+            virtual void updateMesh(PstreamBuffers&);
+
+
         //- Add a world-world connection
         bool addWorldConnection();
 
@@ -532,7 +558,7 @@ public:
             //- Sample mesh upate time
             inline uniformDimensionedScalarField& updateMeshTime() const;
 
-            inline bool upToDate() const;
+            bool upToDate() const;
 
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
