@@ -139,7 +139,6 @@ velocityFilmShellFvPatchVectorField::velocityFilmShellFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 void velocityFilmShellFvPatchVectorField::updateCoeffs()
 {
     if (this->updated())

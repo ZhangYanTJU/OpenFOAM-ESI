@@ -34,16 +34,13 @@ Usage
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional entries
-        ...
-
         // Mandatory entries
-        T                     <Tname>;
+        T                     <word>;
 
         // Optional entries
-        thermalShellModel     <thermalShellModelName>;
+        thermalShellModel     <word>;
 
-        // Derived entries
+        // Inherited entries
         ...
     }
     \endverbatim
@@ -53,7 +50,7 @@ Usage
       Property   | Description                       | Type  | Reqd | Deflt
       T          | Name of operand temperature field | word  | yes  | -
       thermalShellModel | Name of thermal-shell model <!--
-                        -->                      | word | no | thermalShell
+                        -->                      | word | choice | -
     \endtable
 
     The inherited entries are elaborated in:

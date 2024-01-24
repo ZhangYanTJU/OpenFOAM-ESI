@@ -27,7 +27,44 @@ Class
     Foam::regionModels::liquidFilmBase
 
 Description
-    Base class for thermal 2D shells
+    Base class for liquid-film models.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        // Mandatory entries
+        U                       <word>;
+        pRef                    <scalar>;
+
+        // Optional entries
+        h0                      <scalar>;
+        deltaWet                <scalar>;
+        p                       <word>;
+
+        // Inherited entries
+        ...
+        momentumPredictor       <int>;
+        nOuterCorr              <label>;
+        nCorr                   <label>;
+        nFilmCorr               <label>;
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                      | Type  | Reqd | Deflt
+      U          | Name of velocity field           | word  | yes  | -
+      pRef       | Reference absolute pressure     | scalar | yes  | -
+      h0         | Smallest film thickness         | scalar | no   | 1e-7
+      deltaWet   | Film thickness beyond which face is assumed to be wet <!--
+                 -->                               | scalar | no   | 1e-4
+      p          | Name of pressure field           | word  | no   | null
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link regionFaModel.H \endlink
 
 SourceFiles
     liquidFilmBase.C

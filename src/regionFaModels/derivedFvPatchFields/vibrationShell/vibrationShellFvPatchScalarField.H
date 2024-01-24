@@ -30,23 +30,25 @@ Group
     grpVibrationBoundaryConditions
 
 Description
+    This boundary condition provides a coupled acoustic pressure condition
+    between a primary region (3D mesh) and a vibration shell model (2D mesh).
 
 Usage
     Example of the boundary condition specification:
     \verbatim
     <masterPatchName>
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type                vibrationShell;
 
-        // Mandatory/Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property | Description                      | Type  | Reqd | Dflt
+      Property | Description                      | Type  | Reqd | Deflt
       type     | Type name: vibrationShell        | word  | yes  | -
     \endtable
 

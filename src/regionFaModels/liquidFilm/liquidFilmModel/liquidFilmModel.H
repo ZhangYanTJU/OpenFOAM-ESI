@@ -27,12 +27,39 @@ Class
     Foam::regionFaModels::liquidFilmModel
 
 Description
-    Thin Model Film model.
+    Thin film model.
 
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        // Mandatory entries
+        thermo                  <dict>;
+
+        // Optional entries
+        T0                      <scalar>;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                      | Type  | Reqd   | Deflt
+      thermo     | Liquid thermodynamics properties | dict  | yes    | -
+      T0         | Reference temperature [K]       | scalar | choice | -
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link liquidFilmBase.H \endlink
+      - \link filmTurbulenceModel.H \endlink
+      - \link injectionModelList.H \endlink
+      - \link forceList.H \endlink
 
 SourceFiles
     liquidFilmModel.C
-    kinematicThinFilmI.H
 
 \*---------------------------------------------------------------------------*/
 
