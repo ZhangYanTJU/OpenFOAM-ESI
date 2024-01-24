@@ -27,19 +27,14 @@ License
 
 #include "cyclicFaePatchFields.H"
 #include "faePatchFields.H"
+#include "edgeFaMesh.H"
 #include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-makeFaePatchFields(cyclic);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
+namespace Foam
+{
+    makeFaePatchFields(cyclic);
+}
 
 // ************************************************************************* //

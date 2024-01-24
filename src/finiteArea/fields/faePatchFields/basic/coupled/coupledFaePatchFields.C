@@ -25,17 +25,16 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "faePatchFields.H"
 #include "coupledFaePatchFields.H"
+#include "faePatchFields.H"
+#include "edgeFaMesh.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-makeFaePatchFieldsTypeName(coupled);
-
-} // End namespace Foam
+    makeFaePatchFieldsTypeName(coupled);
+}
 
 // ************************************************************************* //

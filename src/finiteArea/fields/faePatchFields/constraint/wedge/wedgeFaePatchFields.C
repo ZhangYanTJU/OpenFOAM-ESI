@@ -27,19 +27,14 @@ License
 
 #include "wedgeFaePatchFields.H"
 #include "faePatchFields.H"
+#include "edgeFaMesh.H"
 #include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
 
 // * * * * * * * * * * * * * * Static Data Member  * * * * * * * * * * * * * //
 
-makeFaePatchFields(wedge);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
+namespace Foam
+{
+    makeFaePatchFields(wedge);
+}
 
 // ************************************************************************* //
