@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -895,21 +895,32 @@ public:
         );
 
         //- Communication schedule for tree all-to-master (proc 0)
-        static const List<commsStruct>& treeCommunication
+        static const List<commsStruct>&
+        treeCommunication
         (
             const label communicator = worldComm
         );
 
-        //- Communication schedule for linear/tree all-to-master (proc 0).
-        //- Chooses based on the value of UPstream::nProcsSimpleSum
+        //- Communication schedule for all-to-master (proc 0) as
+        //- linear/tree/none with switching based on UPstream::nProcsSimpleSum
+        //- and the is_parallel() state
         static const List<commsStruct>& whichCommunication
         (
             const label communicator = worldComm
         )
         {
+            const label np
+            (
+                parRun_ && is_rank(communicator)  // cf. is_parallel()
+              ? nProcs(communicator)
+              : 0
+            );
+
             return
             (
-                nProcs(communicator) < nProcsSimpleSum
+                np <= 1
+              ? List<commsStruct>::null()
+              : np < nProcsSimpleSum
               ? linearCommunication(communicator)
               : treeCommunication(communicator)
             );
@@ -1138,7 +1149,7 @@ public:
         //  On master input list length == nProcs, ignored on other procs.
         //  \n
         //  For \b non-parallel :
-        //  returns the first list element (or zero).
+        //  returns the first list element (or default initialized).
         template<class T>
         static T listScatterValues
         (

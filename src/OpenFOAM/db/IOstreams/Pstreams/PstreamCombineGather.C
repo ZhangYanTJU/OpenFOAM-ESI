@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Variant of gather, scatter.
+    Variant of gather.
     Normal gather uses:
     - default construct and read (>>) from Istream
     - binary operator and assignment operator to combine values
@@ -46,7 +46,6 @@ Description
 template<class T, class CombineOp>
 void Foam::Pstream::combineGather
 (
-    const List<UPstream::commsStruct>& comms,
     T& value,
     const CombineOp& cop,
     const int tag,
@@ -55,8 +54,10 @@ void Foam::Pstream::combineGather
 {
     if (UPstream::is_parallel(comm))
     {
-        // My communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        // Communication order
+        const auto& comms = UPstream::whichCommunication(comm);
+        // if (comms.empty()) return;  // extra safety?
+        const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
@@ -89,7 +90,7 @@ void Foam::Pstream::combineGather
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -132,7 +133,7 @@ void Foam::Pstream::combineGather
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -143,144 +144,6 @@ void Foam::Pstream::combineGather
 }
 
 
-template<class T>
-void Foam::Pstream::combineScatter
-(
-    const List<UPstream::commsStruct>& comms,
-    T& value,
-    const int tag,
-    const label comm
-)
-{
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(value, comm);
-    #else
-    if (UPstream::is_parallel(comm))
-    {
-        // My communication order
-        const UPstream::commsStruct& myComm = comms[UPstream::myProcNo(comm)];
-
-        // Receive from up
-        if (myComm.above() != -1)
-        {
-            if (is_contiguous<T>::value)
-            {
-                UIPstream::read
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    reinterpret_cast<char*>(&value),
-                    sizeof(T),
-                    tag,
-                    comm
-                );
-            }
-            else
-            {
-                IPstream fromAbove
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    0,
-                    tag,
-                    comm
-                );
-                value = T(fromAbove);
-            }
-        }
-
-        // Send to my downstairs neighbours
-        forAllReverse(myComm.below(), belowI)
-        {
-            const label belowID = myComm.below()[belowI];
-
-            if (is_contiguous<T>::value)
-            {
-                UOPstream::write
-                (
-                    UPstream::commsTypes::scheduled,
-                    belowID,
-                    reinterpret_cast<const char*>(&value),
-                    sizeof(T),
-                    tag,
-                    comm
-                );
-            }
-            else
-            {
-                OPstream toBelow
-                (
-                    UPstream::commsTypes::scheduled,
-                    belowID,
-                    0,
-                    tag,
-                    comm
-                );
-                toBelow << value;
-            }
-        }
-    }
-    #endif
-}
-
-
-template<class T, class CombineOp>
-void Foam::Pstream::combineGather
-(
-    T& value,
-    const CombineOp& cop,
-    const int tag,
-    const label comm
-)
-{
-    Pstream::combineGather
-    (
-        UPstream::whichCommunication(comm),
-        value,
-        cop,
-        tag,
-        comm
-    );
-}
-
-
-template<class T>
-void Foam::Pstream::combineScatter
-(
-    T& value,
-    const int tag,
-    const label comm
-)
-{
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(value, comm);
-    #else
-    Pstream::combineScatter
-    (
-        UPstream::whichCommunication(comm),
-        value,
-        tag,
-        comm
-    );
-    #endif
-}
-
-
-template<class T, class CombineOp>
-void Foam::Pstream::combineReduce
-(
-    const List<UPstream::commsStruct>& comms,
-    T& value,
-    const CombineOp& cop,
-    const int tag,
-    const label comm
-)
-{
-    Pstream::combineGather(comms, value, cop, tag, comm);
-    Pstream::broadcast(value, comm);
-}
-
-
 template<class T, class CombineOp>
 void Foam::Pstream::combineReduce
 (
@@ -292,9 +155,7 @@ void Foam::Pstream::combineReduce
 {
     if (UPstream::is_parallel(comm))
     {
-        const auto& comms = UPstream::whichCommunication(comm);
-
-        Pstream::combineGather(comms, value, cop, tag, comm);
+        Pstream::combineGather(value, cop, tag, comm);
         Pstream::broadcast(value, comm);
     }
 }
@@ -305,7 +166,6 @@ void Foam::Pstream::combineReduce
 template<class T, class CombineOp>
 void Foam::Pstream::listCombineGather
 (
-    const List<UPstream::commsStruct>& comms,
     List<T>& values,
     const CombineOp& cop,
     const int tag,
@@ -314,8 +174,10 @@ void Foam::Pstream::listCombineGather
 {
     if (UPstream::is_parallel(comm))
     {
-        // My communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        // Communication order
+        const auto& comms = UPstream::whichCommunication(comm);
+        // if (comms.empty()) return;  // extra safety?
+        const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
@@ -351,7 +213,7 @@ void Foam::Pstream::listCombineGather
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -397,7 +259,7 @@ void Foam::Pstream::listCombineGather
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -405,129 +267,6 @@ void Foam::Pstream::listCombineGather
             }
         }
     }
-}
-
-
-template<class T>
-void Foam::Pstream::listCombineScatter
-(
-    const List<UPstream::commsStruct>& comms,
-    List<T>& values,
-    const int tag,
-    const label comm
-)
-{
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(values, comm);
-    #else
-    if (UPstream::is_parallel(comm))
-    {
-        // My communication order
-        const UPstream::commsStruct& myComm = comms[UPstream::myProcNo(comm)];
-
-        // Receive from up
-        if (myComm.above() != -1)
-        {
-            if (is_contiguous<T>::value)
-            {
-                UIPstream::read
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    values.data_bytes(),
-                    values.size_bytes(),
-                    tag,
-                    comm
-                );
-            }
-            else
-            {
-                IPstream fromAbove
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    0,
-                    tag,
-                    comm
-                );
-                fromAbove >> values;
-            }
-        }
-
-        // Send to my downstairs neighbours
-        forAllReverse(myComm.below(), belowI)
-        {
-            const label belowID = myComm.below()[belowI];
-
-            if (is_contiguous<T>::value)
-            {
-                UOPstream::write
-                (
-                    UPstream::commsTypes::scheduled,
-                    belowID,
-                    values.cdata_bytes(),
-                    values.size_bytes(),
-                    tag,
-                    comm
-                );
-            }
-            else
-            {
-                OPstream toBelow
-                (
-                    UPstream::commsTypes::scheduled,
-                    belowID,
-                    0,
-                    tag,
-                    comm
-                );
-                toBelow << values;
-            }
-        }
-    }
-    #endif
-}
-
-
-template<class T, class CombineOp>
-void Foam::Pstream::listCombineGather
-(
-    List<T>& values,
-    const CombineOp& cop,
-    const int tag,
-    const label comm
-)
-{
-    Pstream::listCombineGather
-    (
-        UPstream::whichCommunication(comm),
-        values,
-        cop,
-        tag,
-        comm
-    );
-}
-
-
-template<class T>
-void Foam::Pstream::listCombineScatter
-(
-    List<T>& values,
-    const int tag,
-    const label comm
-)
-{
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(values, comm);
-    #else
-    Pstream::listCombineScatter
-    (
-        UPstream::whichCommunication(comm),
-        values,
-        tag,
-        comm
-    );
-    #endif
 }
 
 
@@ -542,9 +281,7 @@ void Foam::Pstream::listCombineReduce
 {
     if (UPstream::is_parallel(comm))
     {
-        const auto& comms = UPstream::whichCommunication(comm);
-
-        Pstream::listCombineGather(comms, values, cop, tag, comm);
+        Pstream::listCombineGather(values, cop, tag, comm);
         Pstream::broadcast(values, comm);
     }
 }
@@ -555,7 +292,6 @@ void Foam::Pstream::listCombineReduce
 template<class Container, class CombineOp>
 void Foam::Pstream::mapCombineGather
 (
-    const List<UPstream::commsStruct>& comms,
     Container& values,
     const CombineOp& cop,
     const int tag,
@@ -564,8 +300,10 @@ void Foam::Pstream::mapCombineGather
 {
     if (UPstream::is_parallel(comm))
     {
-        // My communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        // Communication order
+        const auto& comms = UPstream::whichCommunication(comm);
+        // if (comms.empty()) return;  // extra safety?
+        const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
@@ -576,7 +314,7 @@ void Foam::Pstream::mapCombineGather
             (
                 UPstream::commsTypes::scheduled,
                 belowID,
-                0,
+                0,  // bufsize
                 tag,
                 comm
             );
@@ -623,117 +361,13 @@ void Foam::Pstream::mapCombineGather
             (
                 UPstream::commsTypes::scheduled,
                 myComm.above(),
-                0,
+                0,  // bufsize
                 tag,
                 comm
             );
             toAbove << values;
         }
     }
-}
-
-
-template<class Container>
-void Foam::Pstream::mapCombineScatter
-(
-    const List<UPstream::commsStruct>& comms,
-    Container& values,
-    const int tag,
-    const label comm
-)
-{
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(values, comm);
-    #else
-    if (UPstream::is_parallel(comm))
-    {
-        // My communication order
-        const UPstream::commsStruct& myComm = comms[UPstream::myProcNo(comm)];
-
-        // Receive from up
-        if (myComm.above() != -1)
-        {
-            IPstream fromAbove
-            (
-                UPstream::commsTypes::scheduled,
-                myComm.above(),
-                0,
-                tag,
-                comm
-            );
-            fromAbove >> values;
-
-            if (debug & 2)
-            {
-                Pout<< " received from "
-                    << myComm.above() << " data:" << values << endl;
-            }
-        }
-
-        // Send to my downstairs neighbours
-        forAllReverse(myComm.below(), belowI)
-        {
-            const label belowID = myComm.below()[belowI];
-
-            if (debug & 2)
-            {
-                Pout<< " sending to " << belowID << " data:" << values << endl;
-            }
-
-            OPstream toBelow
-            (
-                UPstream::commsTypes::scheduled,
-                belowID,
-                0,
-                tag,
-                comm
-            );
-            toBelow << values;
-        }
-    }
-    #endif
-}
-
-
-template<class Container, class CombineOp>
-void Foam::Pstream::mapCombineGather
-(
-    Container& values,
-    const CombineOp& cop,
-    const int tag,
-    const label comm
-)
-{
-    Pstream::mapCombineGather
-    (
-        UPstream::whichCommunication(comm),
-        values,
-        cop,
-        tag,
-        comm
-    );
-}
-
-
-template<class Container>
-void Foam::Pstream::mapCombineScatter
-(
-    Container& values,
-    const int tag,
-    const label comm
-)
-{
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(values, comm);
-    #else
-    Pstream::mapCombineScatter
-    (
-        UPstream::whichCommunication(comm),
-        values,
-        tag,
-        comm
-    );
-    #endif
 }
 
 
@@ -748,9 +382,7 @@ void Foam::Pstream::mapCombineReduce
 {
     if (UPstream::is_parallel(comm))
     {
-        const auto& comms = UPstream::whichCommunication(comm);
-
-        Pstream::mapCombineGather(comms, values, cop, tag, comm);
+        Pstream::mapCombineGather(values, cop, tag, comm);
         Pstream::broadcast(values, comm);
     }
 }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,7 +51,7 @@ void Foam::Pstream::gatherList
     const label comm
 )
 {
-    if (UPstream::is_parallel(comm))
+    if (!comms.empty() && UPstream::is_parallel(comm))
     {
         if (values.size() < UPstream::nProcs(comm))
         {
@@ -62,7 +62,7 @@ void Foam::Pstream::gatherList
         }
 
         // My communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
@@ -199,7 +199,7 @@ void Foam::Pstream::scatterList
     // between scatterList() and using broadcast(List<T>&) or a regular
     // scatter(List<T>&) is that processor-local data is skipped.
 
-    if (UPstream::is_parallel(comm))
+    if (!comms.empty() && UPstream::is_parallel(comm))
     {
         if (values.size() < UPstream::nProcs(comm))
         {
@@ -210,7 +210,7 @@ void Foam::Pstream::scatterList
         }
 
         // My communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from up
         if (myComm.above() != -1)
@@ -323,7 +323,13 @@ void Foam::Pstream::gatherList
     const label comm
 )
 {
-    Pstream::gatherList(UPstream::whichCommunication(comm), values, tag, comm);
+    Pstream::gatherList
+    (
+        UPstream::whichCommunication(comm),
+        values,
+        tag,
+        comm
+    );
 }
 
 
@@ -336,7 +342,13 @@ void Foam::Pstream::scatterList
     const label comm
 )
 {
-    Pstream::scatterList(UPstream::whichCommunication(comm), values, tag, comm);
+    Pstream::scatterList
+    (
+        UPstream::whichCommunication(comm),
+        values,
+        tag,
+        comm
+    );
 }
 
 

@@ -34,14 +34,6 @@ Foam::List<T> Foam::UPstream::allGatherValues
     const label comm
 )
 {
-    if (!is_contiguous<T>::value)
-    {
-        FatalErrorInFunction
-            << "Cannot all-gather values for non-contiguous types" << endl
-            << Foam::abort(FatalError);
-    }
-
-
     List<T> allValues;
 
     if (UPstream::is_parallel(comm))
@@ -49,7 +41,17 @@ Foam::List<T> Foam::UPstream::allGatherValues
         allValues.resize(UPstream::nProcs(comm));
         allValues[UPstream::myProcNo(comm)] = localValue;
 
-        UPstream::mpiAllGather(allValues.data_bytes(), sizeof(T), comm);
+        if (is_contiguous<T>::value)
+        {
+            UPstream::mpiAllGather(allValues.data_bytes(), sizeof(T), comm);
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Cannot all-gather values for non-contiguous types"
+                   " - consider Pstream variant instead" << endl
+                << Foam::abort(FatalError);
+        }
     }
     else
     {
@@ -70,14 +72,6 @@ Foam::List<T> Foam::UPstream::listGatherValues
     const label comm
 )
 {
-    if (!is_contiguous<T>::value)
-    {
-        FatalErrorInFunction
-            << "Cannot gather values for non-contiguous types" << endl
-            << Foam::abort(FatalError);
-    }
-
-
     List<T> allValues;
 
     if (UPstream::is_parallel(comm))
@@ -87,13 +81,23 @@ Foam::List<T> Foam::UPstream::listGatherValues
             allValues.resize(UPstream::nProcs(comm));
         }
 
-        UPstream::mpiGather
-        (
-            reinterpret_cast<const char*>(&localValue),
-            allValues.data_bytes(),
-            sizeof(T),  // The send/recv size per rank
-            comm
-        );
+        if (is_contiguous<T>::value)
+        {
+            UPstream::mpiGather
+            (
+                reinterpret_cast<const char*>(&localValue),
+                allValues.data_bytes(),
+                sizeof(T),  // The send/recv size per rank
+                comm
+            );
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Cannot gather values for non-contiguous types"
+                   " - consider Pstream variant instead" << endl
+                << Foam::abort(FatalError);
+        }
     }
     else
     {
@@ -114,47 +118,46 @@ T Foam::UPstream::listScatterValues
     const label comm
 )
 {
-    if (!is_contiguous<T>::value)
-    {
-        FatalErrorInFunction
-            << "Cannot scatter values for non-contiguous types" << endl
-            << Foam::abort(FatalError);
-    }
-
-
-    T localValue;
+    T localValue{};
 
     if (UPstream::is_parallel(comm))
     {
-        const label nproc = UPstream::nProcs(comm);
+        const label numProc = UPstream::nProcs(comm);
 
-        if (UPstream::master(comm) && allValues.size() < nproc)
+        if (UPstream::master(comm) && allValues.size() < numProc)
         {
             FatalErrorInFunction
                 << "Attempting to send " << allValues.size()
-                << " values to " << nproc << " processors" << endl
+                << " values to " << numProc << " processors" << endl
                 << Foam::abort(FatalError);
         }
 
-        UPstream::mpiScatter
-        (
-            allValues.cdata_bytes(),
-            reinterpret_cast<char*>(&localValue),
-            sizeof(T),  // The send/recv size per rank
-            comm
-        );
-    }
-    else
-    {
-        // non-parallel: return local value
-
-        if (UPstream::is_rank(comm) && !allValues.empty())
+        if (is_contiguous<T>::value)
         {
-            localValue = allValues[0];
+            UPstream::mpiScatter
+            (
+                allValues.cdata_bytes(),
+                reinterpret_cast<char*>(&localValue),
+                sizeof(T),  // The send/recv size per rank
+                comm
+            );
         }
         else
         {
-            localValue = Zero;
+            FatalErrorInFunction
+                << "Cannot scatter values for non-contiguous types"
+                   " - consider Pstream variant instead" << endl
+                << Foam::abort(FatalError);
+        }
+    }
+    else
+    {
+        // non-parallel: return first value
+        // TBD: only when UPstream::is_rank(comm) as well?
+
+        if (!allValues.empty())
+        {
+            return allValues[0];
         }
      }
 

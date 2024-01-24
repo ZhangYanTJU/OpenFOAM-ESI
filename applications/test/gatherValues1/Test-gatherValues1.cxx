@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 
     const labelList localValues
     (
-        identity(2 *(Pstream::myProcNo()+1), -5*Pstream::myProcNo())
+        identity(2 *(UPstream::myProcNo()+1), -5*UPstream::myProcNo())
     );
 
     // Test resize
@@ -76,8 +76,8 @@ int main(int argc, char *argv[])
         // One-sided sizing!  master only
         const globalIndex allProcAddr
         (
-            sendData.size(),
-            globalIndex::gatherOnly{}
+            globalIndex::gatherOnly{},
+            sendData.size()
         );
 
         Pout<< "listGather sizes: " << flatOutput(allProcAddr.sizes()) << nl;
@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
         // One-sided sizing!  master only
         const globalIndex allProcAddr
         (
-            sendData.size(),
-            globalIndex::gatherOnly{}
+            globalIndex::gatherOnly{},
+            sendData.size()
         );
 
         Pout<< "listGather sizes: " << flatOutput(allProcAddr.sizes()) << nl;
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     {
         const labelList::subList& sendData =
         (
-            Pstream::master()
+            UPstream::master()
           ? SubList<label>(localValues, 0)  // exclude
           : SubList<label>(localValues)
         );
@@ -147,11 +147,11 @@ int main(int argc, char *argv[])
             << UPstream::listScatterValues(subProcAddr.offsets()) << nl;
 
 
-        Pout<< endl << "local list [" << Pstream::myProcNo() << "] "
+        Pout<< endl << "local list [" << UPstream::myProcNo() << "] "
             << flatOutput(localValues) << nl;
 
 
-        Pout<< endl << "local send [" << Pstream::myProcNo() << "] "
+        Pout<< endl << "local send [" << UPstream::myProcNo() << "] "
             << sendSize << nl;
 
 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 
         Pout<< "off-proc: " << allValues << endl;
 
-        if (Pstream::master())
+        if (UPstream::master())
         {
             Info<< "master: " << flatOutput(localValues) << nl;
 
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
             {
                 globalIndex glob
                 (
-                    globalIndex:gatherNone{},
+                    globalIndex::gatherNone{},
                     labelList(Foam::one{}, 0)
                 );
                 Info<< "single:" << nl;
@@ -208,35 +208,37 @@ int main(int argc, char *argv[])
         }
     }
 
-    // This will likely fail - not declared as is_contiguous
-    // Cannot even catch since it triggers an abort()
-
-    #if 0
+    // Non-contiguous gather - use Pstream, not UPstream!
     {
-        std::pair<label,vector> sendData(Pstream::myProcNo(), vector::one);
+        typedef std::pair<label,vector> valueType;
 
-        const bool oldThrowingError = FatalError.throwing(true);
+        valueType sendData(UPstream::myProcNo(), vector::one);
 
-        try
-        {
-            List<std::pair<label,vector>> countValues
-            (
-                UPstream::listGatherValues<std::pair<label, vector>>
-                (
-                    sendData
-                )
-            );
+        List<valueType> countValues
+        (
+            Pstream::listGatherValues(sendData)
+        );
 
-            Pout<< "listGather: " << flatOutput(countValues) << nl;
-        }
-        catch (const Foam::error& err)
-        {
-            Info<< err.message().c_str() << nl;
-        }
-
-        FatalError.throwing(oldThrowingError);
+        Pout<< "listGather: " << flatOutput(countValues) << nl;
     }
-    #endif
+
+    // Non-contiguous scatter - use Pstream, not UPstream!
+    {
+        List<fileName> allValues;
+
+        if (UPstream::master())
+        {
+            allValues.resize(UPstream::nProcs());
+            forAll(allValues, proci)
+            {
+                allValues[proci] = "processor" + Foam::name(proci);
+            }
+        }
+
+        fileName procName = Pstream::listScatterValues(allValues);
+
+        Pout<< "listScatter: " << procName << nl;
+    }
 
     Info<< "\nEnd\n" << endl;
 

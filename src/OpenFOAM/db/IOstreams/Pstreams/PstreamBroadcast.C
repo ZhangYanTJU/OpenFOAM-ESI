@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -135,6 +135,30 @@ void Foam::Pstream::broadcastList(ListType& list, const label comm)
         }
     }
 }
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Convenience wrappers - defined after all specialisations are known
+
+namespace Foam
+{
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Return a broadcasted value (uses a copy internally)
+template<class Type>
+Type returnBroadcast(const Type& value, const label comm)
+{
+    Type work(value);
+    Pstream::broadcast(work, comm);
+    return work;
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
 
 
 // ************************************************************************* //
