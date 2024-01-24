@@ -215,21 +215,25 @@ Foam::pointBoundaryMesh::pointBoundaryMesh
         forAll(Patches, patchi)
         {
             // Try construct-from-dictionary first
+            const word& name = patchEntries[patchi].keyword();
+
             autoPtr<pointPatch> pPtr
             (
                 pointPatch::New
                 (
-                    patchEntries[patchi].keyword(),
+                    name,
                     patchEntries[patchi].dict(),
                     patchi,
                     *this
                 )
             );
 
-            if (!pPtr && patchi < pbm.size())
+            if (!pPtr)
             {
+                const label polyPatchi = pbm.findPatchID(name, false);
                 // Try as facePointPatch from polyPatch
-                pPtr = facePointPatch::New(pbm[patchi], *this);
+                pPtr = facePointPatch::New(pbm[polyPatchi], *this);
+                pPtr->index() = patchi;
             }
 
             Patches.set(patchi, pPtr);

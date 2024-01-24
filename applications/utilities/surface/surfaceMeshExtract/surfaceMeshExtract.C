@@ -63,6 +63,7 @@ Description
 #include "unitConversion.H"
 #include "dummyTransform.H"
 #include "syncTools.H"
+#include "processorPointPatch.H"
 
 using namespace Foam;
 
@@ -544,10 +545,11 @@ label addMeshPointPatches
     {
         const label nPoints =
             returnReduce(zoneToMeshPoints[zonei].size(), sumOp<label>());
-        if (nPoints)
-        {
-            const word patchName(surfZones[zonei].name() + "Edges");
 
+        const word patchName(surfZones[zonei].name() + "Edges");
+
+        if (nPoints && (pointBm.findPatchID(patchName) == -1))
+        {
             const_cast<pointBoundaryMesh&>(pointBm).push_back
             (
                 new meshPointPatch
@@ -563,11 +565,9 @@ label addMeshPointPatches
 
             if (verbose)
             {
-                Info<< "Added feature-edges pointPatch "
-                    << pointBm.last().name()
-                    << " index " << pointBm.last().index()
-                    << " with " << nPoints << " points"
-                    << endl;
+                const auto& ppp = pointBm.last();
+                Info<< "Added feature-edges pointPatch " << ppp.name()
+                    << " with " << nPoints << " points" << endl;
             }
         }
     }
@@ -575,44 +575,10 @@ label addMeshPointPatches
 
     // Add inter-patch points
 
-    const word allPointPatchName("boundaryPoints");
-
-    const label nMultiPoints =
-        returnReduce(multiZoneMeshPoints.size(), sumOp<label>());
-    if (nMultiPoints)
-    {
-        const_cast<pointBoundaryMesh&>(pointBm).push_back
-        (
-            new meshPointPatch
-            (
-                allPointPatchName,
-                multiZoneMeshPoints,
-                vectorField
-                (
-                    meshPointNormals,   // is pointNormal expanded to all mesh
-                    multiZoneMeshPoints
-                ),
-                pointBm.size(),
-                pointBm,
-                meshPointPatch::typeName
-            )
-        );
-
-        if (verbose)
-        {
-            const auto& ppp = pointBm.last();
-            Info<< "Added multi-patch pointPatch " << ppp.name()
-                << " index " << ppp.index()
-                << " with " << nMultiPoints << " points"
-                << endl;
-        }
-    }
-
     const word allEdgePatchName("boundaryEdges");
-
     const label nPatchEdgePoints =
         returnReduce(twoZoneMeshPoints.size(), sumOp<label>());
-    if (nPatchEdgePoints)
+    if (nPatchEdgePoints && (pointBm.findPatchID(allEdgePatchName) == -1))
     {
         const_cast<pointBoundaryMesh&>(pointBm).push_back
         (
@@ -635,11 +601,60 @@ label addMeshPointPatches
         {
             const auto& ppp = pointBm.last();
             Info<< "Added inter-patch pointPatch " << ppp.name()
-                << " index " << ppp.index()
-                << " with " << nPatchEdgePoints << " points"
-                << endl;
+                << " with " << nPatchEdgePoints << " points" << endl;
         }
     }
+
+
+    const word allPointPatchName("boundaryPoints");
+    const label nMultiPoints =
+        returnReduce(multiZoneMeshPoints.size(), sumOp<label>());
+    if (nMultiPoints && (pointBm.findPatchID(allPointPatchName) == -1))
+    {
+        const_cast<pointBoundaryMesh&>(pointBm).push_back
+        (
+            new meshPointPatch
+            (
+                allPointPatchName,
+                multiZoneMeshPoints,
+                vectorField
+                (
+                    meshPointNormals,   // is pointNormal expanded to all mesh
+                    multiZoneMeshPoints
+                ),
+                pointBm.size(),
+                pointBm,
+                meshPointPatch::typeName
+            )
+        );
+
+        if (verbose)
+        {
+            const auto& ppp = pointBm.last();
+            Info<< "Added multi-patch pointPatch " << ppp.name()
+                << " with " << nMultiPoints << " points" << endl;
+        }
+    }
+
+
+    // Shuffle into order
+    labelList oldToNew(pointBm.size());
+    label newPatchi = 0;
+    forAll(pointBm, patchi)
+    {
+        if (!isA<processorPointPatch>(pointBm[patchi]))
+        {
+            oldToNew[patchi] = newPatchi++;
+        }
+    }
+    forAll(pointBm, patchi)
+    {
+        if (isA<processorPointPatch>(pointBm[patchi]))
+        {
+            oldToNew[patchi] = newPatchi++;
+        }
+    }
+    const_cast<pointBoundaryMesh&>(pointBm).reorder(oldToNew, true);
 
     return pointBm.size() - nPointPatches;
 }

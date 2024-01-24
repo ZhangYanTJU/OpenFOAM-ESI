@@ -61,6 +61,7 @@ boundaryField
     {
         type            edgeSlipDisplacement;
         file            "box222.eMesh";
+        //file            "box222.extendedFeatureEdgeMesh";
         //- Underrelax motion by limiting displacement velocity
         velocity        (0.1 0.1 0.1);
     }

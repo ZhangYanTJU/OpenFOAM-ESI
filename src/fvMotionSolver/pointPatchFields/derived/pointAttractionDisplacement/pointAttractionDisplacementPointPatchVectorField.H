@@ -31,9 +31,9 @@ Description
     displacementMotionSolver as a bc on the pointDisplacement field.
 
     Needs:
-    - file : name of edgeMesh. Either a .eMesh in
-      constant/extendedFeatureEdgeMesh or a known format in
-      constant/triSurface
+    - file : name of edgeMesh. Either:
+        - .extendedFeatureEdgeMesh (read from  constant/extendedFeatureEdgeMesh)
+        - or .eMesh in or a known format (read from constant/triSurface)
     - frozenPointsZone : empty or name of pointZone containing points
                          that do not move
     - velocity : maximum displacement velocity
@@ -76,20 +76,11 @@ private:
         //- pointZone with frozen points
         const word frozenPointsZone_;
 
-        //- If read from basic edge-mesh
-        autoPtr<edgeMesh> meshPtr_;
-
-        //- If read from extendedEdgeMesh (edge-mesh + classification)
-        autoPtr<extendedEdgeMesh> extendedMeshPtr_;
-
         //- Point searching
         mutable autoPtr<indexedOctree<treeDataPoint>> pointTreePtr_;
 
 
     // Private Member Functions
-
-        //- Read geometry
-        void read(const dictionary& dict);
 
         //- Calculate displacement (w.r.t. points0()) to project onto surface
         void calcProjection(vectorField& displacement) const;
@@ -181,11 +172,8 @@ public:
 
     // Member Functions
 
-        //- Update the patch field
-        virtual void evaluate
-        (
-            const Pstream::commsTypes commsType=Pstream::commsTypes::blocking
-        );
+        //- Update the coefficients associated with the patch field
+        virtual void updateCoeffs();
 
         //- Write
         virtual void write(Ostream&) const;

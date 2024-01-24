@@ -31,64 +31,9 @@ License
 #include "transformField.H"
 #include "displacementMotionSolver.H"
 #include "featureEdgeMesh.H"
+#include "edgeSlipDisplacementPointPatchVectorField.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-void Foam::pointAttractionDisplacementPointPatchVectorField::read
-(
-    const dictionary& dict
-)
-{
-    const Time& tm = this->patch().boundaryMesh().mesh().time();
-
-    IOobject extFeatObj
-    (
-        featFileName_,                       // name
-        tm.constant(),                      // instance
-        "extendedFeatureEdgeMesh",          // local
-        tm,                                 // registry
-        IOobject::MUST_READ,
-        IOobject::NO_WRITE,
-        IOobject::NO_REGISTER
-    );
-
-    //const fileName fName(typeFilePath<extendedFeatureEdgeMesh>(extFeatObj));
-    const fileName fName(extFeatObj.typeFilePath<extendedFeatureEdgeMesh>());
-
-    if (!fName.empty() && extendedEdgeMesh::canRead(fName))
-    {
-        extendedMeshPtr_ = extendedEdgeMesh::New(fName);
-    }
-    else
-    {
-        // Try reading as edgeMesh
-
-        IOobject featObj
-        (
-            featFileName_,                       // name
-            tm.constant(),                      // instance
-            "triSurface",                       // local
-            tm.time(),                          // registry
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        );
-
-        //const fileName fName(typeFilePath<featureEdgeMesh>(featObj));
-        const fileName fName(featObj.typeFilePath<featureEdgeMesh>());
-
-        if (fName.empty())
-        {
-            FatalIOErrorInFunction(dict)
-                << "Could not open " << featObj.objectPath()
-                << exit(FatalIOError);
-        }
-
-        // Read as edgeMesh
-        meshPtr_ = edgeMesh::New(fName);
-    }
-}
-
 
 void Foam::pointAttractionDisplacementPointPatchVectorField::calcProjection
 (
@@ -208,7 +153,12 @@ pointAttractionDisplacementPointPatchVectorField
     featFileName_(dict.get<fileName>("file", keyType::LITERAL)),
     frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null))
 {
-    read(dict);
+    // Read&store edge mesh on registry
+    edgeSlipDisplacementPointPatchVectorField::read
+    (
+        this->patch().boundaryMesh().mesh().time(),
+        dict
+    );
 }
 
 
@@ -224,9 +174,7 @@ pointAttractionDisplacementPointPatchVectorField
     pointPatchVectorField(p, iF),
     velocity_(ppf.velocity_),
     featFileName_(ppf.featFileName_),
-    frozenPointsZone_(ppf.frozenPointsZone_),
-    meshPtr_(ppf.meshPtr_),
-    extendedMeshPtr_(ppf.extendedMeshPtr_)
+    frozenPointsZone_(ppf.frozenPointsZone_)
 {}
 
 
@@ -239,9 +187,7 @@ pointAttractionDisplacementPointPatchVectorField
     pointPatchVectorField(ppf),
     velocity_(ppf.velocity_),
     featFileName_(ppf.featFileName_),
-    frozenPointsZone_(ppf.frozenPointsZone_),
-    meshPtr_(ppf.meshPtr_),
-    extendedMeshPtr_(ppf.extendedMeshPtr_)
+    frozenPointsZone_(ppf.frozenPointsZone_)
 {}
 
 
@@ -255,9 +201,7 @@ pointAttractionDisplacementPointPatchVectorField
     pointPatchVectorField(ppf, iF),
     velocity_(ppf.velocity_),
     featFileName_(ppf.featFileName_),
-    frozenPointsZone_(ppf.frozenPointsZone_),
-    meshPtr_(ppf.meshPtr_),
-    extendedMeshPtr_(ppf.extendedMeshPtr_)
+    frozenPointsZone_(ppf.frozenPointsZone_)
 {}
 
 
@@ -268,16 +212,10 @@ Foam::pointAttractionDisplacementPointPatchVectorField::pointTree() const
 {
     if (!pointTreePtr_)
     {
-        const auto& eMesh =
-        (
-            meshPtr_
-          ? meshPtr_()
-          : extendedMeshPtr_()
-        );
+        const Time& tm = this->patch().boundaryMesh().mesh().time();
+        const auto& eMesh = tm.lookupObject<edgeMesh>(featFileName_);
+
         const pointField& points = eMesh.points();
-
-DebugVar(points);
-
 
         // Calculate bb of all points
         treeBoundBox bb(points);
@@ -307,25 +245,18 @@ DebugVar(points);
 }
 
 
-void Foam::pointAttractionDisplacementPointPatchVectorField::evaluate
-(
-    const Pstream::commsTypes commsType
-)
+void Foam::pointAttractionDisplacementPointPatchVectorField::updateCoeffs()
 {
-DebugVar("pointAttractionDisplacementPointPatchVectorField::evaluate");
-
-//    if (this->updated())
-//    {
-//        return;
-//    }
+    if (this->updated())
+    {
+        return;
+    }
 
     const vectorField currentDisplacement(this->patchInternalField());
 
     // Calculate displacement to project points onto surface
     vectorField displacement(currentDisplacement);
     calcProjection(displacement);
-
-DebugVar(displacement);
 
     // offset wrt current displacement
     displacement -= currentDisplacement;
@@ -359,11 +290,9 @@ DebugVar(displacement);
 
     displacement += currentDisplacement;
 
-DebugVar(displacement);
-
     setInInternalField(iF, displacement);
 
-    pointPatchVectorField::evaluate(commsType);
+    pointPatchVectorField::updateCoeffs();
 }
 
 

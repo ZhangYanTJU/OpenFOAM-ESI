@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,6 +29,7 @@ License
 #include "fvMotionSolver.H"
 #include "fixedValuePointPatchFields.H"
 #include "cellMotionFvPatchFields.H"
+#include "facePointPatch.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -38,23 +40,33 @@ Foam::wordList Foam::fvMotionSolver::cellMotionBoundaryTypes
     Boundary& pmUbf
 ) const
 {
-    wordList cmUbf = pmUbf.types();
+    wordList cmUbf(fvMesh_.boundary().size());
 
-    // Remove global patches from the end of the list
-    cmUbf.setSize(fvMesh_.boundary().size());
-
-    forAll(cmUbf, patchi)
+    forAll(pmUbf, patchi)
     {
-        if (isA<fixedValuePointPatchField<Type>>(pmUbf[patchi]))
+        const auto& pfld = pmUbf[patchi];
+        const auto* fppPtr = isA<facePointPatch>(pfld.patch());
+        if (fppPtr)
         {
-            cmUbf[patchi] = cellMotionFvPatchField<Type>::typeName;
-        }
+            const auto& fpp = *fppPtr;
+            const label polyPatchi = fpp.patch().index();
 
-        if (debug)
-        {
-            Pout<< "Patch:" << fvMesh_.boundary()[patchi].patch().name()
-                << " pointType:" << pmUbf.types()[patchi]
-                << " cellType:" << cmUbf[patchi] << endl;
+            if (isA<fixedValuePointPatchField<Type>>(pfld))
+            {
+                cmUbf[polyPatchi] = cellMotionFvPatchField<Type>::typeName;
+            }
+            else
+            {
+                // Take over pointPatch type
+                cmUbf[polyPatchi] = pfld.type();
+            }
+
+            if (debug)
+            {
+                Pout<< "Patch:" << fvMesh_.boundary()[patchi].patch().name()
+                    << " pointType:" << pfld.type()
+                    << " cellType:" << cmUbf[patchi] << endl;
+            }
         }
     }
 

@@ -36,20 +36,28 @@ License
 
 void Foam::edgeSlipDisplacementPointPatchVectorField::read
 (
+    const objectRegistry& obr,
     const dictionary& dict
 )
 {
-    const Time& tm = this->patch().boundaryMesh().mesh().time();
+    const Time& tm = obr.time();
+
+    const fileName featFileName(dict.get<fileName>("file", keyType::LITERAL));
+
+    if (tm.foundObject<edgeMesh>(featFileName))
+    {
+        return;
+    }
 
     IOobject extFeatObj
     (
-        featFileName_,                       // name
+        featFileName,                       // name
         tm.constant(),                      // instance
         "extendedFeatureEdgeMesh",          // local
-        tm,                                 // registry
+        obr,                                // registry
         IOobject::MUST_READ,
         IOobject::NO_WRITE,
-        IOobject::NO_REGISTER
+        IOobject::REGISTER
     );
 
     //const fileName fName(typeFilePath<extendedFeatureEdgeMesh>(extFeatObj));
@@ -57,7 +65,9 @@ void Foam::edgeSlipDisplacementPointPatchVectorField::read
 
     if (!fName.empty() && extendedEdgeMesh::canRead(fName))
     {
-        extendedMeshPtr_ = extendedEdgeMesh::New(fName);
+        Info<< "Reading edgeMesh from " << extFeatObj.objectRelPath() << endl;
+        auto* eMeshPtr = new extendedFeatureEdgeMesh(extFeatObj);
+        eMeshPtr->store();
     }
     else
     {
@@ -65,16 +75,16 @@ void Foam::edgeSlipDisplacementPointPatchVectorField::read
 
         IOobject featObj
         (
-            featFileName_,                       // name
+            featFileName,                       // name
             tm.constant(),                      // instance
             "triSurface",                       // local
-            tm.time(),                          // registry
+            obr,                                // registry
             IOobject::MUST_READ,
             IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
+            IOobject::REGISTER
         );
 
-        //const fileName fName(typeFilePath<featureEdgeMesh>(featObj));
+        Info<< "Reading edgeMesh from " << featObj.objectRelPath() << endl;
         const fileName fName(featObj.typeFilePath<featureEdgeMesh>());
 
         if (fName.empty())
@@ -85,7 +95,8 @@ void Foam::edgeSlipDisplacementPointPatchVectorField::read
         }
 
         // Read as edgeMesh
-        meshPtr_ = edgeMesh::New(fName);
+        auto* eMeshPtr = new featureEdgeMesh(featObj);
+        eMeshPtr->store();
     }
 }
 
@@ -208,7 +219,7 @@ edgeSlipDisplacementPointPatchVectorField
     featFileName_(dict.get<fileName>("file", keyType::LITERAL)),
     frozenPointsZone_(dict.getOrDefault("frozenPointsZone", word::null))
 {
-    read(dict);
+    read(this->patch().boundaryMesh().mesh().time(), dict);
 }
 
 
@@ -224,9 +235,7 @@ edgeSlipDisplacementPointPatchVectorField
     pointPatchVectorField(p, iF),
     velocity_(ppf.velocity_),
     featFileName_(ppf.featFileName_),
-    frozenPointsZone_(ppf.frozenPointsZone_),
-    meshPtr_(ppf.meshPtr_),
-    extendedMeshPtr_(ppf.extendedMeshPtr_)
+    frozenPointsZone_(ppf.frozenPointsZone_)
 {}
 
 
@@ -239,9 +248,7 @@ edgeSlipDisplacementPointPatchVectorField
     pointPatchVectorField(ppf),
     velocity_(ppf.velocity_),
     featFileName_(ppf.featFileName_),
-    frozenPointsZone_(ppf.frozenPointsZone_),
-    meshPtr_(ppf.meshPtr_),
-    extendedMeshPtr_(ppf.extendedMeshPtr_)
+    frozenPointsZone_(ppf.frozenPointsZone_)
 {}
 
 
@@ -255,9 +262,7 @@ edgeSlipDisplacementPointPatchVectorField
     pointPatchVectorField(ppf, iF),
     velocity_(ppf.velocity_),
     featFileName_(ppf.featFileName_),
-    frozenPointsZone_(ppf.frozenPointsZone_),
-    meshPtr_(ppf.meshPtr_),
-    extendedMeshPtr_(ppf.extendedMeshPtr_)
+    frozenPointsZone_(ppf.frozenPointsZone_)
 {}
 
 
@@ -268,12 +273,9 @@ Foam::edgeSlipDisplacementPointPatchVectorField::edgeTree() const
 {
     if (!edgeTreePtr_)
     {
-        const auto& eMesh =
-        (
-            meshPtr_
-          ? meshPtr_()
-          : extendedMeshPtr_()
-        );
+        const Time& tm = this->patch().boundaryMesh().mesh().time();
+        const auto& eMesh = tm.lookupObject<edgeMesh>(featFileName_);
+
         const pointField& points = eMesh.points();
         const edgeList& edges = eMesh.edges();
 
@@ -305,15 +307,12 @@ Foam::edgeSlipDisplacementPointPatchVectorField::edgeTree() const
 }
 
 
-void Foam::edgeSlipDisplacementPointPatchVectorField::evaluate
-(
-    const Pstream::commsTypes commsType
-)
+void Foam::edgeSlipDisplacementPointPatchVectorField::updateCoeffs()
 {
-//    if (this->updated())
-//    {
-//        return;
-//    }
+    if (this->updated())
+    {
+        return;
+    }
 
     const vectorField currentDisplacement(this->patchInternalField());
 
@@ -355,7 +354,7 @@ void Foam::edgeSlipDisplacementPointPatchVectorField::evaluate
 
     setInInternalField(iF, displacement);
 
-    pointPatchVectorField::evaluate(commsType);
+    pointPatchVectorField::updateCoeffs();
 }
 
 
