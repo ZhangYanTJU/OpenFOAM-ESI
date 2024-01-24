@@ -27,8 +27,6 @@ License
 
 #include "KirchhoffShell.H"
 #include "addToRunTimeSelectionTable.H"
-#include "fvPatchFields.H"
-#include "zeroGradientFaPatchFields.H"
 #include "subCycle.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

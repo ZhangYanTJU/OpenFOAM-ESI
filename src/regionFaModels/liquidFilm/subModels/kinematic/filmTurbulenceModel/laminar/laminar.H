@@ -37,8 +37,7 @@ SourceFiles
 #ifndef regionFaModels_surfaceFilmModels_laminar_H
 #define regionFaModels_surfaceFilmModels_laminar_H
 
-#include "liquidFilm/subModels/kinematic/filmTurbulenceModel/filmTurbulenceModel/filmTurbulenceModel.H"
-#include "faCFD.H"
+#include "filmTurbulenceModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -102,11 +102,7 @@ SourceFiles
 #define regionFaModels_filmTurbulenceModel_H
 
 #include "areaFieldsFwd.H"
-#include "runTimeSelectionTables.H"
-#include "faMatrices.H"
 #include "liquidFilmBase.H"
-#include "fvMesh.H"
-#include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -40,8 +40,6 @@ SourceFiles
 #define injectionModel_H
 
 #include "filmSubModelBase.H"
-#include "runTimeSelectionTables.H"
-#include "scalarField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

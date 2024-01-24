@@ -27,7 +27,6 @@ License
 
 #include "kinematicThinFilm.H"
 #include "addToRunTimeSelectionTable.H"
-#include "uniformDimensionedFields.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

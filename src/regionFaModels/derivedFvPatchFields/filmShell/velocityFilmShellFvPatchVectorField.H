@@ -116,7 +116,6 @@ SourceFiles
 #ifndef velocityFilmShellFvPatchVectorField_H
 #define velocityFilmShellFvPatchVectorField_H
 
-#include "autoPtr.H"
 #include "liquidFilmBase.H"
 #include "mixedFvPatchFields.H"
 
