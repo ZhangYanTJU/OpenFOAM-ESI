@@ -52,6 +52,7 @@ Foam::UPstream::commsTypeNames
 ({
     { commsTypes::blocking, "blocking" },
     { commsTypes::scheduled, "scheduled" },
+    // { commsTypes::nonBlocking, "non-blocking" },
     { commsTypes::nonBlocking, "nonBlocking" },
 });
 

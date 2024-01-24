@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,7 +41,6 @@ Description
 template<class T, class BinaryOp>
 void Foam::Pstream::gather
 (
-    const List<UPstream::commsStruct>& comms,
     T& value,
     const BinaryOp& bop,
     const int tag,
@@ -50,8 +49,10 @@ void Foam::Pstream::gather
 {
     if (UPstream::is_parallel(comm))
     {
-        // My communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        // Communication order
+        const auto& comms = UPstream::whichCommunication(comm);
+        // if (comms.empty()) return;  // extra safety?
+        const auto& myComm = comms[UPstream::myProcNo(comm)];
 
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
@@ -76,7 +77,7 @@ void Foam::Pstream::gather
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -107,7 +108,7 @@ void Foam::Pstream::gather
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -119,110 +120,181 @@ void Foam::Pstream::gather
 
 
 template<class T>
-void Foam::Pstream::scatter
+Foam::List<T> Foam::Pstream::listGatherValues
 (
-    const List<UPstream::commsStruct>& comms,
-    T& value,
-    const int tag,
-    const label comm
+    const T& localValue,
+    const label comm,
+    const int tag
 )
 {
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(value, comm);
-    #else
+    // OR
+    // if (is_contiguous<T>::value)
+    // {
+    //     return UPstream::listGatherValues(localValue, comm);
+    // }
+
+    List<T> allValues;
+
     if (UPstream::is_parallel(comm))
     {
-        // My communication order
-        const commsStruct& myComm = comms[UPstream::myProcNo(comm)];
+        const label numProc = UPstream::nProcs(comm);
 
-        // Receive from up
-        if (myComm.above() != -1)
+        if (UPstream::master(comm))
         {
-            if (is_contiguous<T>::value)
-            {
-                UIPstream::read
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    reinterpret_cast<char*>(&value),
-                    sizeof(T),
-                    tag,
-                    comm
-                );
-            }
-            else
-            {
-                IPstream fromAbove
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    0,
-                    tag,
-                    comm
-                );
-                fromAbove >> value;
-            }
+            allValues.resize(numProc);
         }
 
-        // Send to my downstairs neighbours. Note reverse order (compared to
-        // receiving). This is to make sure to send to the critical path
-        // (only when using a tree schedule!) first.
-        forAllReverse(myComm.below(), belowI)
+        if (is_contiguous<T>::value)
         {
-            const label belowID = myComm.below()[belowI];
+            UPstream::mpiGather
+            (
+                reinterpret_cast<const char*>(&localValue),
+                allValues.data_bytes(),
+                sizeof(T),  // The send/recv size per rank
+                comm
+            );
+        }
+        else
+        {
+            if (UPstream::master(comm))
+            {
+                // Non-trivial to manage non-blocking gather without a
+                // PEX/NBX approach (eg, PstreamBuffers) but leave with
+                // with simple exchange for now
 
-            if (is_contiguous<T>::value)
-            {
-                UOPstream::write
-                (
-                    UPstream::commsTypes::scheduled,
-                    belowID,
-                    reinterpret_cast<const char*>(&value),
-                    sizeof(T),
-                    tag,
-                    comm
-                );
+                allValues[0] = localValue;
+
+                for (int proci = 1; proci < numProc; ++proci)
+                {
+                    IPstream fromProc
+                    (
+                        UPstream::commsTypes::scheduled,
+                        proci,
+                        0,  // bufsize
+                        tag,
+                        comm
+                    );
+                    fromProc >> allValues[proci];
+                }
             }
-            else
+            else if (UPstream::is_rank(comm))
             {
-                OPstream toBelow
+                OPstream toProc
                 (
                     UPstream::commsTypes::scheduled,
-                    belowID,
-                    0,
+                    UPstream::masterNo(),
+                    0,  // bufsize
                     tag,
                     comm
                 );
-                toBelow << value;
+                toProc << localValue;
             }
         }
     }
-    #endif
-}
+    else
+    {
+        // non-parallel: return own value
+        // TBD: only when UPstream::is_rank(comm) as well?
+        allValues.resize(1);
+        allValues[0] = localValue;
+    }
 
-
-template<class T, class BinaryOp>
-void Foam::Pstream::gather
-(
-    T& value,
-    const BinaryOp& bop,
-    const int tag,
-    const label comm
-)
-{
-    Pstream::gather(UPstream::whichCommunication(comm), value, bop, tag, comm);
+    return allValues;
 }
 
 
 template<class T>
-void Foam::Pstream::scatter(T& value, const int tag, const label comm)
+T Foam::Pstream::listScatterValues
+(
+    const UList<T>& allValues,
+    const label comm,
+    const int tag
+)
 {
-    #ifndef Foam_Pstream_scatter_nobroadcast
-    Pstream::broadcast(value, comm);
-    #else
-    Pstream::scatter(UPstream::whichCommunication(comm), value, tag, comm);
-    #endif
+    // OR
+    // if (is_contiguous<T>::value)
+    // {
+    //     return UPstream::listScatterValues(allValues, comm);
+    // }
+
+    T localValue{};
+
+    if (UPstream::is_parallel(comm))
+    {
+        const label numProc = UPstream::nProcs(comm);
+
+        if (UPstream::master(comm) && allValues.size() < numProc)
+        {
+            FatalErrorInFunction
+                << "Attempting to send " << allValues.size()
+                << " values to " << numProc << " processors" << endl
+                << Foam::abort(FatalError);
+        }
+
+        if (is_contiguous<T>::value)
+        {
+            UPstream::mpiScatter
+            (
+                allValues.cdata_bytes(),
+                reinterpret_cast<char*>(&localValue),
+                sizeof(T),  // The send/recv size per rank
+                comm
+            );
+        }
+        else
+        {
+            if (UPstream::master(comm))
+            {
+                const label startOfRequests = UPstream::nRequests();
+
+                List<DynamicList<char>> sendBuffers(numProc);
+
+                for (int proci = 1; proci < numProc; ++proci)
+                {
+                    UOPstream toProc
+                    (
+                        UPstream::commsTypes::nonBlocking,
+                        proci,
+                        sendBuffers[proci],
+                        tag,
+                        comm
+                    );
+                    toProc << allValues[proci];
+                }
+
+                // Wait for outstanding requests
+                UPstream::waitRequests(startOfRequests);
+
+                return allValues[0];
+            }
+            else if (UPstream::is_rank(comm))
+            {
+                IPstream fromProc
+                (
+                    UPstream::commsTypes::scheduled,
+                    UPstream::masterNo(),
+                    0,  // bufsize
+                    tag,
+                    comm
+                );
+                fromProc >> localValue;
+            }
+        }
+    }
+    else
+    {
+        // non-parallel: return first value
+        // TBD: only when UPstream::is_rank(comm) as well?
+
+        if (!allValues.empty())
+        {
+            return allValues[0];
+        }
+     }
+
+     return localValue;
 }
+
 
 
 // ************************************************************************* //
