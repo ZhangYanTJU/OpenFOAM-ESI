@@ -125,8 +125,7 @@ protected:
         //- Minimum gravity driven film thickness (non-dimensionalised delta/R1)
         scalar deltaByR1Min_;
 
-        //- List of radii for patches - if patch not defined, radius
-        //- calculated based on mesh geometry
+        //- Patch radius
         scalar definedPatchRadii_;
 
         //- Magnitude of gravity vector

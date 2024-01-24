@@ -89,7 +89,7 @@ class vibrationShellFvPatchScalarField
 
     // Private Data
 
-        //- The vibration shell
+        //- The vibration shell model
         autoPtr<baffleType> baffle_;
 
         //- Dictionary

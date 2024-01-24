@@ -123,16 +123,16 @@ protected:
 
         // Source term fields
 
-            //- External surface energy source  / [J/m2/s]
+            //- External surface energy source [J/m2/s]
             areaScalarField qs_;
 
-            //- Thickness
+            //- Film thickness [m]
             areaScalarField h_;
 
             //- Name of the primary region radiative flux
             const word qrName_;
 
-            //- Uniform thickness
+            //- Uniform film thickness [m]
             scalar thickness_;
 
 
@@ -178,7 +178,7 @@ public:
             //- Return the film specific heat capacity [J/kg/K]
             const tmp<areaScalarField> Cp() const;
 
-            //- Return density [Kg/m3]
+            //- Return density [kg/m3]
             const tmp<areaScalarField> rho() const;
 
             //- Return thermal conductivity [W/m/K]

@@ -28,7 +28,6 @@ License
 #include "setTimeStepFaRegionsFunctionObject.H"
 #include "addToRunTimeSelectionTable.H"
 
-
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam

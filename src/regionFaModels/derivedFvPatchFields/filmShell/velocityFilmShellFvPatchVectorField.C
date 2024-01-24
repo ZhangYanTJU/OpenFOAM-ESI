@@ -146,7 +146,7 @@ void velocityFilmShellFvPatchVectorField::updateCoeffs()
         return;
     }
 
-    // Execute the change to the openFraction only once per time-step
+    // Execute the change only once per time-step
     if (curTimeIndex_ != this->db().time().timeIndex())
     {
         baffle_->evolve();

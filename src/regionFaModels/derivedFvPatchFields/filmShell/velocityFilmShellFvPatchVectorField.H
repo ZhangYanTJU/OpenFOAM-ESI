@@ -141,7 +141,7 @@ class velocityFilmShellFvPatchVectorField
 
     // Private Data
 
-        //- The liquid film
+        //- The liquid film model
         autoPtr<baffleType> baffle_;
 
         //- Dictionary
@@ -150,7 +150,7 @@ class velocityFilmShellFvPatchVectorField
         //- Time index to evolve the film
         label curTimeIndex_;
 
-        //- Zero wall velocity. Fix U to zero or to film U
+        //- Flag to set velocity to zero or film velocity
         bool zeroWallVelocity_;
 
 
