@@ -1140,7 +1140,8 @@ int main(int argc, char *argv[])
                                     (
                                         "boundaryProcAddressing",
                                         procMesh.facesInstance(),
-                                        pointMesh::meshSubDir,
+                                        polyMesh::meshSubDir
+                                       /pointMesh::meshSubDir,
                                         procPMesh.thisDb(),
                                         IOobject::READ_IF_PRESENT,
                                         IOobject::NO_WRITE,

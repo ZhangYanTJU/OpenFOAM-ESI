@@ -833,7 +833,7 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
             (
                 "boundaryProcAddressing",
                 procMesh.facesInstance(),
-                pointMesh::meshSubDir,
+                polyMesh::meshSubDir/pointMesh::meshSubDir,
                 procPointMesh.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,

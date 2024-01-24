@@ -120,7 +120,7 @@ void Foam::processorMeshes::read()
                 (
                     "boundaryProcAddressing",
                     meshes_[proci].facesInstance(),
-                    pointMesh::meshSubDir,
+                    polyMesh::meshSubDir/pointMesh::meshSubDir,
                     pMeshes_[proci].thisDb(),
                     IOobject::READ_IF_PRESENT,
                     IOobject::NO_WRITE,
@@ -299,7 +299,7 @@ void Foam::processorMeshes::removeFiles(const polyMesh& mesh)
     (
         "boundary",
         mesh.facesInstance(),
-        pointMesh::meshSubDir,
+        polyMesh::meshSubDir/pointMesh::meshSubDir,
         mesh.thisDb()
     );
 

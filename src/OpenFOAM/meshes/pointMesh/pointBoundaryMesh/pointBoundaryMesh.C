@@ -132,7 +132,7 @@ Foam::pointBoundaryMesh::pointBoundaryMesh
             "boundary",
             //m.thisDb().time().findInstance(m.meshDir(), "boundary"),
             pbm.mesh().facesInstance(),
-            pointMesh::meshSubDir,
+            polyMesh::meshSubDir/pointMesh::meshSubDir,
             m.thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
@@ -176,7 +176,7 @@ Foam::pointBoundaryMesh::pointBoundaryMesh
         (
             "boundary",
             io.instance(),
-            pointMesh::meshSubDir,
+            polyMesh::meshSubDir/pointMesh::meshSubDir,
             io.db(),
             io.readOpt(),
             io.writeOpt(),

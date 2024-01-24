@@ -21,7 +21,13 @@ runApplication surfaceMeshExtract -featureAngle 45 \
 #- Extract features from surface. Writes .eMesh
 runApplication surfaceFeatureExtract
 
-#- Morph mesh to the surface (.obj file) and feature-edges (.eMesh file)
-runApplication moveDynamicMesh
+##- Morph mesh to the surface (.obj file) and feature-edges (.eMesh file)
+#runApplication moveDynamicMesh
+
+runApplication decomposePar
+
+runParallel moveDynamicMesh
+
+runApplication reconstructPar
 
 #------------------------------------------------------------------------------
