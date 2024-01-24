@@ -93,23 +93,23 @@ protected:
 
     // Protected Data
 
-        //- Name of the coupled field in the primary region
-        word pName_;
-
-        //- Primary region acoustic pressure
-        const volScalarField& pa_;
-
         //- Shell displacement
         areaScalarField w_;
 
         //- Shell acceleration
         areaScalarField a_;
 
-        //- Pointer to faOptions
-        Foam::fa::options& faOptions_;
-
         //- Solid properties
         solidProperties solid_;
+
+        //- Name of the coupled field in the primary region
+        word pName_;
+
+        //- Primary region acoustic pressure
+        const volScalarField& pa_;
+
+        //- Reference to faOptions
+        Foam::fa::options& faOptions_;
 
 
 public:
