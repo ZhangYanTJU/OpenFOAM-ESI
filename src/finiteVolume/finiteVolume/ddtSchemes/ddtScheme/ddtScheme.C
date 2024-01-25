@@ -96,11 +96,7 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> ddtScheme<Type>::fvcDdt
 )
 {
     NotImplemented;
-
-    return tmp<GeometricField<Type, fvPatchField, volMesh>>
-    (
-        GeometricField<Type, fvPatchField, volMesh>::null()
-    );
+    return nullptr;
 }
 
 
@@ -113,13 +109,7 @@ tmp<fvMatrix<Type>> ddtScheme<Type>::fvmDdt
 )
 {
     NotImplemented;
-
-    return tmp<fvMatrix<Type>>::New
-    (
-        vf,
-        alpha.dimensions()*rho.dimensions()
-        *vf.dimensions()*dimVol/dimTime
-    );
+    return nullptr;
 }
 
 
@@ -130,13 +120,8 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> ddtScheme<Type>::fvcDdt
 )
 {
     NotImplemented;
-
-    return tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
-    (
-        GeometricField<Type, fvsPatchField, surfaceMesh>::null()
-    );
+    return nullptr;
 }
-
 
 
 template<class Type>

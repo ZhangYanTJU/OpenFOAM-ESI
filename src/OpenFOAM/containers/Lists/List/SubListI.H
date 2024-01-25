@@ -28,15 +28,6 @@ License
 
 #include "FixedList.H"
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
-
-template<class T>
-inline const Foam::SubList<T>& Foam::SubList<T>::null()
-{
-    return NullObjectRef<SubList<T>>();
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T>
@@ -124,7 +115,7 @@ inline Foam::SubList<T>::SubList
 template<class T>
 inline Foam::UList<T>& Foam::SubList<T>::reset(std::nullptr_t) noexcept
 {
-    UList<T>::shallowCopy(nullptr, 0);
+    UList<T>::shallowCopy(nullptr);
     return *this;
 }
 

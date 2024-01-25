@@ -129,8 +129,12 @@ public:
 
     // Static Member Functions
 
-        //- Return a null List
-        inline static const List<T>& null();
+        //- Return a null List (reference to a nullObject).
+        //- Behaves like an empty List.
+        static const List<T>& null() noexcept
+        {
+            return NullObjectRef<List<T>>();
+        }
 
 
     // Constructors

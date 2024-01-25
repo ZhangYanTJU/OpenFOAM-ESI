@@ -25,15 +25,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
-
-template<class Type>
-inline const Foam::Field<Type>& Foam::Field<Type>::null()
-{
-    return NullObjectRef<Field<Type>>();
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>

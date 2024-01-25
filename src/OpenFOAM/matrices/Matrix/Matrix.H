@@ -114,8 +114,12 @@ public:
 
     // Static Member Functions
 
-        //- Return a null Matrix
-        inline static const Matrix<Form, Type>& null();
+        //- Return a null Matrix (reference to a nullObject).
+        //- Behaves like a empty Matrix.
+        static const Matrix<Form, Type>& null() noexcept
+        {
+            return NullObjectRef<Matrix<Form, Type>>();
+        }
 
 
     // Iterators

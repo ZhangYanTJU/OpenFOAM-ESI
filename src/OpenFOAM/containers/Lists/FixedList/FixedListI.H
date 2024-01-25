@@ -28,15 +28,6 @@ License
 
 #include "UList.H"
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
-
-template<class T, unsigned N>
-inline const Foam::FixedList<T, N>& Foam::FixedList<T, N>::null()
-{
-    return NullObjectRef<FixedList<T, N>>();
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class T, unsigned N>

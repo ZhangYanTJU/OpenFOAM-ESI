@@ -27,12 +27,6 @@ License
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-inline const Foam::wordRes& Foam::wordRes::null()
-{
-    return NullObjectRef<wordRes>();
-}
-
-
 inline Foam::label Foam::wordRes::first_match
 (
     const UList<wordRe>& selectors,

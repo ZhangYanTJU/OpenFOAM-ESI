@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +48,7 @@ class SimpleClass
 public:
 
     //- Default construct
-    SimpleClass() {}
+    SimpleClass() = default;
 };
 
 
@@ -73,9 +73,8 @@ void printInfo(const UList<T>& list)
 int main()
 {
     // Test pointer and reference to a class
-
-    SimpleClass* ptrToClass = new SimpleClass;
-    SimpleClass& refToClass(*ptrToClass);
+    auto ptrToClass = autoPtr<SimpleClass>::New();
+    auto& refToClass = ptrToClass.ref();
 
     std::cout
         << "nullObject addr=" << name(&(nullObjectPtr)) << nl
@@ -89,13 +88,13 @@ int main()
         << "  pointer:" << name(nullObjectPtr->pointer()) << nl
         << "  value:"   << nullObjectPtr->value() << nl << nl;
 
-    if (notNull(ptrToClass))
+    if (notNull(ptrToClass.get()))
     {
         Info<< "Pass: ptrToClass is not null" << nl;
     }
     else
     {
-        Info<< "FAIL: refToClass is null" << nl;
+        Info<< "FAIL: ptrToClass is null" << nl;
     }
 
     if (notNull(refToClass))
@@ -110,8 +109,8 @@ int main()
 
     // Test pointer and reference to the nullObject
 
-    const SimpleClass* ptrToNull(NullObjectPtr<SimpleClass>());
-    const SimpleClass& refToNull(*ptrToNull);
+    const SimpleClass* ptrToNull = NullObjectPtr<SimpleClass>();
+    const SimpleClass& refToNull = (*ptrToNull);
 
     if (isNull(ptrToNull))
     {
@@ -131,9 +130,6 @@ int main()
         Info<< "FAIL: refToNull is not null" << nl;
     }
 
-    // Clean-up
-    delete ptrToClass;
-
 
     // Test List casting
     {
@@ -152,7 +148,7 @@ int main()
     // Looks pretty ugly though!
 
     NullObject::nullObject = "hello world";
-    NullObject::nullObject = labelList({1, 2, 3});
+    NullObject::nullObject = Foam::identity(5);
 
     Info<< nl;
 

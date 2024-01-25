@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -894,13 +894,13 @@ void Foam::fvMatrix<Type>::transferFvMatrixCoeffs()
 template<class Type>
 Foam::lduPrimitiveMeshAssembly* Foam::fvMatrix<Type>::lduMeshPtr()
 {
-    const lduPrimitiveMeshAssembly* lduAssemMeshPtr =
-        psi_.mesh().thisDb().objectRegistry::template findObject
+    return
+    (
+        psi_.mesh().thisDb().objectRegistry::template getObjectPtr
         <
             lduPrimitiveMeshAssembly
-        > (lduAssemblyName_);
-
-    return const_cast<lduPrimitiveMeshAssembly*>(lduAssemMeshPtr);
+        > (lduAssemblyName_)
+    );
 }
 
 

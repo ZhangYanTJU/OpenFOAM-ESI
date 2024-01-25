@@ -94,13 +94,6 @@ inline void Foam::UList<T>::fill_uniform(const Foam::zero)
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-inline const Foam::UList<T>& Foam::UList<T>::null()
-{
-    return NullObjectRef<UList<T>>();
-}
-
-
-template<class T>
 inline Foam::label Foam::UList<T>::fcIndex(const label i) const noexcept
 {
     return (i == size()-1 ? 0 : i+1);
@@ -327,6 +320,14 @@ inline void Foam::UList<T>::shallowCopy
 {
     size_ = len;
     v_ = ptr;
+}
+
+
+template<class T>
+inline void Foam::UList<T>::shallowCopy(std::nullptr_t) noexcept
+{
+    size_ = 0;
+    v_ = nullptr;
 }
 
 

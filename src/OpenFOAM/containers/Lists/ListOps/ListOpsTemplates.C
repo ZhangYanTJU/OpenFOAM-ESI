@@ -707,7 +707,7 @@ void Foam::invertManyToMany
 )
 {
     // The output list sizes
-    labelList sizes(len, Zero);
+    labelList sizes(len, Foam::zero{});
 
     for (const InputIntListType& sublist : input)
     {

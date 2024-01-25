@@ -116,7 +116,7 @@ Foam::labelListList Foam::invertOneToMany
     const labelUList& map
 )
 {
-    labelList sizes(len, Zero);
+    labelList sizes(len, Foam::zero{});
 
     for (const label newIdx : map)
     {

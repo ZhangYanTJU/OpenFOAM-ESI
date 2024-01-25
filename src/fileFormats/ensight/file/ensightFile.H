@@ -92,7 +92,7 @@ public:
     // Static Functions
 
         //- Return a null ensightFile
-        static const ensightFile& null()
+        static const ensightFile& null() noexcept
         {
             return NullObjectRef<ensightFile>();
         }

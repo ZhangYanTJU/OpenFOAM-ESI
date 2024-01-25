@@ -441,7 +441,7 @@ const Foam::List<typename Foam::Reaction<ReactionThermo>::specieCoeffs>&
 Foam::Reaction<ReactionThermo>::glhs() const
 {
     NotImplemented;
-    return NullObjectRef<List<specieCoeffs>>();
+    return List<specieCoeffs>::null();
 }
 
 
@@ -450,7 +450,7 @@ const Foam::List<typename Foam::Reaction<ReactionThermo>::specieCoeffs>&
 Foam::Reaction<ReactionThermo>::grhs() const
 {
     NotImplemented;
-    return NullObjectRef<List<specieCoeffs>>();
+    return List<specieCoeffs>::null();
 }
 
 

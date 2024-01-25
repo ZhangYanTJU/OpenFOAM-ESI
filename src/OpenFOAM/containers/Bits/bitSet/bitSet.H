@@ -120,8 +120,11 @@ public:
 
     // Static Member Functions
 
-        //- Return a null bitSet reference
-        inline static const bitSet& null();
+        //- Return a null bitSet (reference to a nullObject).
+        static const bitSet& null() noexcept
+        {
+            return NullObjectRef<bitSet>();
+        }
 
 
     //- Declare type-name (with debug switch)

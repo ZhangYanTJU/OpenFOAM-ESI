@@ -138,8 +138,11 @@ public:
 
     // Static Member Functions
 
-        //- Return a CompactListList reference to a nullObject
-        inline static const CompactListList<T>& null();
+        //- Return a null CompactListList (reference to a nullObject).
+        static const CompactListList<T>& null() noexcept
+        {
+            return NullObjectRef<CompactListList<T>>();
+        }
 
         //- Construct by packing together the list of lists
         template<class SubListType = List<T>>

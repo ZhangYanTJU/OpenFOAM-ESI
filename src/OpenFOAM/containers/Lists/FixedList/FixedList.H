@@ -46,9 +46,10 @@ SourceFiles
 #include "zero.H"
 #include "contiguous.H"
 #include "stdFoam.H"
-#include "autoPtr.H"
+#include "nullObject.H"
 #include "Hash.H"
 #include "ListPolicy.H"
+#include "autoPtr.H"
 
 // <algorithm> already included by stdFoam.H
 #include <iterator>
@@ -139,8 +140,12 @@ public:
 
     // Static Functions
 
-        //- Return a null FixedList
-        inline static const FixedList<T, N>& null();
+        //- Return a null FixedList (reference to a nullObject).
+        //- Read/write access is questionable
+        static const FixedList<T, N>& null() noexcept
+        {
+            return NullObjectRef<FixedList<T, N>>();
+        }
 
 
     // Constructors

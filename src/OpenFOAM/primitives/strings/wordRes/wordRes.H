@@ -86,8 +86,12 @@ public:
 
     // Static Data / Methods
 
-        //- Return a null wordRes - a reference to the NullObject
-        inline static const wordRes& null();
+        //- Return a null wordRes (reference to a nullObject).
+        //- Behaves like a empty wordRes.
+        static const wordRes& null() noexcept
+        {
+            return NullObjectRef<wordRes>();
+        }
 
         //- Return a wordRes with duplicate entries filtered out.
         //  No distinction made between literals and regular expressions.

@@ -29,15 +29,6 @@ License
 #include "ListOps.H"
 #include "SubList.H"
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
-
-template<class T>
-inline const Foam::CompactListList<T>& Foam::CompactListList<T>::null()
-{
-    return NullObjectRef<CompactListList<T>>();
-}
-
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class T>

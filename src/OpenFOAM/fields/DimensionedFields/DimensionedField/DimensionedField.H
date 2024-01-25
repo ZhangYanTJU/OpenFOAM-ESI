@@ -137,8 +137,11 @@ public:
 
     // Static Member Functions
 
-        //- Return a NullObjectRef DimensionedField
-        inline static const DimensionedField<Type, GeoMesh>& null();
+        //- Return a null DimensionedField (reference to a nullObject).
+        static const DimensionedField<Type, GeoMesh>& null() noexcept
+        {
+            return NullObjectRef<DimensionedField<Type, GeoMesh>>();
+        }
 
 
     // Constructors

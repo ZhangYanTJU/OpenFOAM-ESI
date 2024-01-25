@@ -122,8 +122,12 @@ public:
 
     // Static Member Functions
 
-        //- Return nullObject reference Field
-        inline static const Field<Type>& null();
+        //- Return a null Field (reference to a nullObject).
+        //- Behaves like an empty Field.
+        static const Field<Type>& null() noexcept
+        {
+            return NullObjectRef<Field<Type>>();
+        }
 
 
     // Constructors

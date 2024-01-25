@@ -127,7 +127,7 @@ template<class Type>
 Foam::slicedFvPatchField<Type>::~slicedFvPatchField()
 {
     // Set to nullptr to avoid deletion of underlying field
-    UList<Type>::shallowCopy(UList<Type>());
+    UList<Type>::shallowCopy(nullptr);
 }
 
 

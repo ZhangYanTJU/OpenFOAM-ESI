@@ -106,12 +106,6 @@ bool Foam::PDRblock::checkMonotonic
 }
 
 
-const Foam::PDRblock& Foam::PDRblock::null()
-{
-    return NullObjectRef<PDRblock>();
-}
-
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::PDRblock::addDefaultPatches()

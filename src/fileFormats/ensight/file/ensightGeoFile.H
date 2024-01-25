@@ -72,7 +72,7 @@ public:
     // Static Functions
 
         //- Return a null ensightGeoFile
-        static const ensightGeoFile& null()
+        static const ensightGeoFile& null() noexcept
         {
             return NullObjectRef<ensightGeoFile>();
         }
