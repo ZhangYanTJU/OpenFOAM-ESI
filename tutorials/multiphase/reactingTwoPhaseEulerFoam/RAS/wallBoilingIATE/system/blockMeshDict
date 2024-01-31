@@ -39,9 +39,7 @@ boundary
     {
         type mappedPatch;
         offset          (0 0.1 0);
-        sampleRegion    region0;
         sampleMode      nearestCell;
-        samplePatch     none;
 
         faces
         (
