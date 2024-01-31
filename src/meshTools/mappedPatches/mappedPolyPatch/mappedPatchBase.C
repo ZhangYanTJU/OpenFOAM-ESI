@@ -1737,7 +1737,16 @@ bool Foam::mappedPatchBase::upToDate() const
         thisUpToDate = checkPointMovement(thisMesh, patch_, updateMeshTime());
     }
 
-    if (!sampleUpToDate && sampleMesh().moving())
+    if
+    (
+       !sampleUpToDate
+     && sampleMesh().moving()
+     && (
+            mode_ == NEARESTPATCHFACE
+         || mode_ == NEARESTPATCHFACEAMI
+         || mode_ == NEARESTPATCHPOINT
+        )
+    )
     {
         sampleUpToDate = checkPointMovement
         (
