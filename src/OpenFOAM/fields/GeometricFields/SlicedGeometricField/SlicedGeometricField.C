@@ -176,10 +176,11 @@ makeBoundary
                 new SlicedPatchField<Type>
                 (
                     p,
-                    DimensionedField<Type, GeoMesh>::null(),
-                    bField[patchi]
+                    DimensionedField<Type, GeoMesh>::null()
                 )
             );
+
+            bf[patchi].UList<Type>::shallowCopy(bField[patchi]);
         }
     }
 

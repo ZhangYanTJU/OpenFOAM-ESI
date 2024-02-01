@@ -36,7 +36,7 @@ divSchemes
 
     div(phi,k)      Gauss limitedLinear 1;
     div(phi,B)      Gauss limitedLinear 1;
-    div(phi,muTilda) Gauss limitedLinear 1;
+    div(phi,nuTilda) Gauss limitedLinear 1;
     div(B)          Gauss linear;
 
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
@@ -57,5 +57,9 @@ snGradSchemes
     default         corrected;
 }
 
+wallDist
+{
+    method          meshWave;
+}
 
 // ************************************************************************* //
