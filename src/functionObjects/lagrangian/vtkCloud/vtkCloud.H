@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -81,7 +81,7 @@ Description
         Property     | Description                      | Required | Default
         type         | Type name: vtkCloud              | yes |
         clouds       | List of clouds (name or regex)   | no  |
-        cloud        | Cloud name                       | no  | defaultCloud
+        cloud        | Cloud name                       | no  |
         fields       | List of fields (name or regex)   | no  |
         selection    | Parcel selection control         | no  | empty-dict
     \endtable
@@ -160,7 +160,7 @@ class vtkCloud
     public fvMeshFunctionObject,
     public Foam::Detail::parcelSelection
 {
-    // Private data
+    // Private Data
 
         //- Writer options
         vtk::outputOptions writeOpts_;
@@ -209,7 +209,7 @@ class vtkCloud
         wordList writeFields
         (
             autoPtr<vtk::formatter>& format,
-            const objectRegistry& obrTmp,
+            const objectRegistry& obr,
             const label nTotParcels
         ) const;
 
