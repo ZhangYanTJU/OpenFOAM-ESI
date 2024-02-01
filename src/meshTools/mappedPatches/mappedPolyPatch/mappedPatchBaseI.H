@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2020-2021 OpenCFD Ltd.
+    Copyright (C) 2020-2021,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -201,7 +201,10 @@ Foam::mappedPatchBase::updateSampleMeshTime() const
 {
     if (!updateSampleMeshTimePtr_)
     {
-        const auto& mesh = sampleMesh();
+        // Note: explicitly register on our mesh instead of sampleMesh
+        // since otherwise the destructor might give problems since sampleMesh
+        // might have already been taken down before.
+        const auto& mesh = patch_.boundaryMesh().mesh();
 
         updateSampleMeshTimePtr_.reset
         (
