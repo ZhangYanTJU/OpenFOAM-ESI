@@ -148,14 +148,14 @@ public:
         void write
         (
             ensightGeoFile& os,
-            bool parallel = Pstream::parRun()
+            bool parallel = UPstream::parRun()
         ) const;
 
         //- Write geometry to file. Normally in parallel
         inline void write
         (
             autoPtr<ensightGeoFile>& os,
-            bool parallel = Pstream::parRun()
+            bool parallel = UPstream::parRun()
         ) const;
 };
 

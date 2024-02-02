@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,11 +101,15 @@ bool Foam::functionObjects::vtkCloud::writeCloud
     const word& cloudName
 )
 {
-    const auto* objPtr = mesh_.findObject<cloud>(cloudName);
-    if (!objPtr)
+    applyFilter_ = false;
+
+    const auto* cloudPtr = mesh_.cfindObject<cloud>(cloudName);
+    if (!cloudPtr)
     {
         return false;
     }
+
+    const auto& currCloud = *cloudPtr;
 
     objectRegistry obrTmp
     (
@@ -120,7 +124,7 @@ bool Foam::functionObjects::vtkCloud::writeCloud
         )
     );
 
-    objPtr->writeObjects(obrTmp);
+    currCloud.writeObjects(obrTmp);
 
     const auto* pointsPtr = cloud::findIOPosition(obrTmp);
 
@@ -135,7 +139,10 @@ bool Foam::functionObjects::vtkCloud::writeCloud
 
 
     // Number of parcels (locally)
-    label nParcels = (applyFilter_ ? parcelAddr_.count() : pointsPtr->size());
+    const label nParcels
+    (
+        applyFilter_ ? parcelAddr_.count() : pointsPtr->size()
+    );
 
     // Total number of parcels on all processes
     const label nTotParcels = returnReduce(nParcels, sumOp<label>());
@@ -163,9 +170,9 @@ bool Foam::functionObjects::vtkCloud::writeCloud
             << exit(FatalError);
     }
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
-        mkDir(file.path());
+        Foam::mkDir(file.path());
         os.open(file);
 
         format = writeOpts_.newFormatter(os);
@@ -238,7 +245,7 @@ bool Foam::functionObjects::vtkCloud::writeCloud
     }
 
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         format().flush();
         format().endDataArray();
@@ -270,7 +277,7 @@ bool Foam::functionObjects::vtkCloud::writeCloud
 
     // Write fields
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         if (useVerts_)
         {
@@ -282,13 +289,28 @@ bool Foam::functionObjects::vtkCloud::writeCloud
         }
     }
 
-    DynamicList<word> written(obrTmp.size());
+    DynamicList<word> written(obrTmp.size() + currCloud.objectRegistry::size());
 
-    written.append(writeFields<label>(format, obrTmp, nTotParcels));
-    written.append(writeFields<scalar>(format, obrTmp, nTotParcels));
-    written.append(writeFields<vector>(format, obrTmp, nTotParcels));
+    written.push_back
+    (
+        writeFields<label>(format, obrTmp, nTotParcels)
+    );
+    written.push_back
+    (
+        writeFields<scalar>(format, obrTmp, nTotParcels)
+    );
+    written.push_back
+    (
+        writeFields<vector>(format, obrTmp, nTotParcels)
+    );
 
-    if (Pstream::master())
+    // Any cloudFunctions results
+    written.push_back
+    (
+        writeFields<scalar>(format, currCloud, nTotParcels)
+    );
+
+    if (UPstream::master())
     {
         if (useVerts_)
         {
@@ -415,12 +437,15 @@ bool Foam::functionObjects::vtkCloud::read(const dictionary& dict)
 
     selectClouds_.clear();
     dict.readIfPresent("clouds", selectClouds_);
+    selectClouds_.uniq();
 
     if (selectClouds_.empty())
     {
-        selectClouds_.resize(1);
-        selectClouds_.first() =
-            dict.getOrDefault<word>("cloud", cloud::defaultName);
+        word cloudName;
+        if (dict.readIfPresent("cloud", cloudName))
+        {
+            selectClouds_.push_back(std::move(cloudName));
+        }
     }
 
     selectFields_.clear();
@@ -463,7 +488,12 @@ bool Foam::functionObjects::vtkCloud::execute()
 
 bool Foam::functionObjects::vtkCloud::write()
 {
-    const wordList cloudNames(mesh_.sortedNames<cloud>(selectClouds_));
+    const wordList cloudNames
+    (
+        selectClouds_.empty()
+      ? mesh_.sortedNames<cloud>()
+      : mesh_.sortedNames<cloud>(selectClouds_)
+    );
 
     if (cloudNames.empty())
     {
@@ -498,7 +528,7 @@ bool Foam::functionObjects::vtkCloud::write()
             Log << "    cloud  : "
                 << time_.relativePath(outputName) << endl;
 
-            if (Pstream::master())
+            if (UPstream::master())
             {
                 // Add to file-series and emit as JSON
                 fileName seriesName(vtk::seriesWriter::base(outputName));

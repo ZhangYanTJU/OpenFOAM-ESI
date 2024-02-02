@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,68 +24,129 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::dataCloud
+    Foam::functionObjects::ensightCloudWriteObject
 
 Group
     grpLagrangianFunctionObjects
 
 Description
-    This functionObject writes a cloud position and in ASCII.
+    This functionObject writes cloud(s) in ensight format
 
     Example of function object specification:
     \verbatim
     cloudWrite1
     {
-        type            dataCloud;
+        type            ensightCloud;
         libs            (lagrangianFunctionObjects);
         writeControl    writeTime;
         writeInterval   1;
+        format          ascii;
+
+        timeFormat      scientific;
+        timePrecision   5;
+
         cloud           myCloud;
-        field           d;
+        fields          (T U rho);
+        width           4;  // file-padding
+
+        selection
+        {
+            stride
+            {
+                // every 10th parcelId
+                action  add;
+                source  stride;
+                stride  10;
+            }
+            Umin
+            {
+                // Remove slow parcels
+                action  subtract;
+                source  field;
+                field   U;
+                accept  (less 1e-3);
+            }
+            diam
+            {
+                // Only particular diameter ranges
+                action  subset;
+                source  field;
+                field   d;
+                accept  (greater 1e-3) and (less 1e-3);
+            }
+        }
     }
     \endverbatim
 
     \heading Basic Usage
     \table
         Property     | Description                      | Required | Default
-        type         | Type name: dataCloud             | yes |
+        type         | Type name: ensightCloud          | yes |
         clouds       | List of clouds (name or regex)   | no  |
         cloud        | Cloud name                       | no  |
-        field        | Name of the field                | yes |
+        fields       | List of fields (name or regex)   | no  |
         selection    | Parcel selection control         | no  | empty-dict
     \endtable
 
     \heading Output Options
     \table
         Property     | Description                      | Required | Default
-        precision    | The write precision              | no  | same as IOstream
+        format       | Format as ascii or binary        | no  | binary
+        width        | Mask width for \c data/XXXX      | no  | 8
         directory    | The output directory name    | no | postProcessing/NAME
+        overwrite    | Remove existing directory        | no  | false
+        consecutive  | Consecutive output numbering     | no  | false
         width        | Padding width for file name      | no  | 8
+        prune        | Suppress writing of empty clouds | no  | false
+        timeFormat   | Time format (ensight case)       | no  | scientific
+        timePrecision | Time precision (ensight case)   | no  | 5
         writeControl | Output control                   | recommended | timeStep
     \endtable
 
+    The output filename and fields are added to the functionObjectProperties
+    information. For the previous example specification:
+
+    \verbatim
+    cloudWrite1
+    {
+        myCloud
+        {
+            file    "<case>/simulation.case";
+            fields  (T U rho);
+        }
+    }
+    \endverbatim
+
 Note
-    See Foam::functionObjects::vtkCloud and Foam::Detail::parcelSelection
-    for more details about the parcel selection mechanism.
+    The selection dictionary can be used for finer control of the parcel
+    output. It contains a set of (add,subtract,subset,clear,invert)
+    selection actions and sources.
+    Omitting the selection dictionary is the same as specifying the
+    conversion of all parcels (in the selected clouds).
+    More syntax details are to be found in the corresponding
+    Foam::Detail::parcelSelection class.
 
 See also
     Foam::Detail::parcelSelection
     Foam::functionObjects::vtkCloud
+    Foam::functionObjects::ensightWrite
     Foam::functionObjects::fvMeshFunctionObject
     Foam::functionObjects::timeControl
 
 SourceFiles
-    dataCloud.C
-    dataCloudTemplates.C
+    ensightCloudWriteObject.cxx
+    ensightCloudWriteObjectImpl.cxx
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_dataCloud_H
-#define functionObjects_dataCloud_H
+#ifndef functionObjects_ensightCloudWriteObject_H
+#define functionObjects_ensightCloudWriteObject_H
 
 #include "fvMeshFunctionObject.H"
+#include "ensightCase.H"
+#include "globalIndex.H"
 #include "parcelSelectionDetail.H"
-#include "vectorField.H"
+#include "wordRes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -95,109 +156,80 @@ namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class dataCloud Declaration
+                   Class ensightCloudWriteObject Declaration
 \*---------------------------------------------------------------------------*/
 
-class dataCloud
+class ensightCloudWriteObject
 :
     public fvMeshFunctionObject,
     public Foam::Detail::parcelSelection
 {
     // Private Data
 
-        //- The printf format for zero-padding names
-        string printf_;
+        //- Ensight output options
+        ensightCase::options caseOpts_;
 
-        //- The output precision
-        unsigned precision_;
+        //- Output directory
+        fileName outputDir_;
+
+        //- Consecutive output numbering
+        bool consecutive_;
+
+        //- Suppress writing of empty clouds
+        bool pruneEmpty_;
 
         //- Apply output filter (for the current cloud)
         bool applyFilter_;
+
+        //- Sizing of selected parcels (including any filtering)
+        globalIndex procAddr_;
 
         //- Requested names of clouds to process
         wordRes selectClouds_;
 
         //- Subset of cloud fields to process
-        word fieldName_;
+        wordRes selectFields_;
 
-        //- Output directory
-        fileName directory_;
+        //- Ensight case handler
+        autoPtr<ensightCase> ensCase_;
 
 
     // Private Member Functions
 
-        //- Output (point,value) combination on a single line
+        //- Ensight case handler
+        ensightCase& ensCase() { return *ensCase_; }
+
+        //- Write a cloud to disk (creates parent directory),
+        //- and record on the cloud OutputProperties.
+        //  \param file is the output file name, with extension.
+        bool writeCloud(const word& cloudName);
+
+        //- Write fields of IOField<Type>
         template<class Type>
-        static void writePointValue
+        wordList writeFields
         (
-            Ostream& os,
-            const vector& pt,
-            const Type& val
+            const word& cloudName,
+            const objectRegistry& obrTmp
         );
-
-        template<class Type>
-        static void writeList
-        (
-            Ostream& os,
-            const vectorField& points,
-            const List<Type>& field
-        );
-
-        template<class Type>
-        static void writeListParallel
-        (
-            Ostream& os,
-            const vectorField& points,
-            const List<Type>& field
-        );
-
-        template<class Type>
-        static void writeList
-        (
-            Ostream& os,
-            const vectorField& points,
-            const List<Type>& field,
-            const bitSet& selected
-        );
-
-        template<class Type>
-        static void writeListParallel
-        (
-            Ostream& os,
-            const vectorField& points,
-            const List<Type>& field,
-            const bitSet& selected
-        );
-
-        //- Write to disk
-        bool writeCloud(const fileName& outputName, const word& cloudName);
-
-        //- Write from objectRegistry entry
-        template<class Type>
-        bool writeField
-        (
-            const fileName& outputName,
-            const objectRegistry& obr
-        ) const;
 
 
         //- No copy construct
-        dataCloud(const dataCloud&) = delete;
+        ensightCloudWriteObject(const ensightCloudWriteObject&) = delete;
 
         //- No copy assignment
-        void operator=(const dataCloud&) = delete;
+        void operator=(const ensightCloudWriteObject&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("dataCloud");
+    TypeName("ensightCloud");
 
 
     // Constructors
 
         //- Construct from Time and dictionary
-        dataCloud
+        ensightCloudWriteObject
         (
             const word& name,
             const Time& runTime,
@@ -206,12 +238,12 @@ public:
 
 
     //- Destructor
-    virtual ~dataCloud() = default;
+    virtual ~ensightCloudWriteObject() = default;
 
 
     // Member Functions
 
-        //- Read the dataCloud specification
+        //- Read the ensightCloud specification
         virtual bool read(const dictionary& dict);
 
         //- Execute, currently does nothing
@@ -226,12 +258,6 @@ public:
 
 } // End namespace functionObjects
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "dataCloudTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -163,6 +163,18 @@ public:
         //- Write string as "%79s" or as binary (max 80 chars)
         void writeString(const std::string& str);
 
+        //- Write integer value with specified width or as binary
+        void writeInt(const int32_t val, const int fieldWidth);
+
+        //- Write (narrowed) integer value with specified width or as binary
+        void writeInt(const int64_t val, const int fieldWidth);
+
+        //- Write floating-point with specified width or as binary
+        void writeFloat(const float val, const int fieldWidth);
+
+        //- Write (narrowed) floating-point with specified width or as binary
+        void writeFloat(const double val, const int fieldWidth);
+
         //- Write undef value
         void writeUndef();
 
@@ -197,14 +209,11 @@ public:
         //- Write string, uses writeString()
         virtual Ostream& write(const std::string& str) override;
 
-        //- Write integer as "%10d" or as binary
+        //- Write integer value as "%10d" or as binary
         virtual Ostream& write(const int32_t val) override;
 
-        //- Write integer as "%10d" or as binary
+        //- Write integer value as "%10d" or as binary (narrowed to int32_t)
         virtual Ostream& write(const int64_t val) override;
-
-        //- Write integer with specified width or as binary
-        Ostream& write(const label value, const label fieldWidth);
 
         //- Write floating-point as "%12.5e" or as binary
         virtual Ostream& write(const float val) override;

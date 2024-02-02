@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2024 OpenCFD Ltd.
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,19 +26,17 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "IOField.H"
+#include "ensightOutputCloud.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-Foam::wordList Foam::functionObjects::vtkCloud::writeFields
+Foam::wordList Foam::functionObjects::ensightCloudWriteObject::writeFields
 (
-    autoPtr<vtk::formatter>& format,
-    const objectRegistry& obr,
-    const label nTotParcels
-) const
+    const word& cloudName,
+    const objectRegistry& obrTmp
+)
 {
-    const direction nCmpt(pTraits<Type>::nComponents);
-
     static_assert
     (
         (
@@ -58,52 +56,46 @@ Foam::wordList Foam::functionObjects::vtkCloud::writeFields
     wordList fieldNames =
     (
         selectFields_.size()
-      ? obr.names<IOField<Type>>(selectFields_)
-      : obr.names<IOField<Type>>()
+      ? obrTmp.names<IOField<Type>>(selectFields_)
+      : obrTmp.names<IOField<Type>>()
     );
 
     Pstream::combineReduce(fieldNames, ListOps::uniqueEqOp<word>());
     Foam::sort(fieldNames);  // Consistent order
 
+    DynamicList<Type> scratch;
+
     for (const word& fieldName : fieldNames)
     {
-        const List<Type>* fldPtr = obr.findObject<IOField<Type>>(fieldName);
+        const List<Type>* fldPtr = obrTmp.findObject<IOField<Type>>(fieldName);
         const List<Type>& values = (fldPtr ? *fldPtr : List<Type>::null());
 
-        if (UPstream::master())
-        {
-            if (std::is_same<label, typename pTraits<Type>::cmptType>::value)
-            {
-                const uint64_t payLoad =
-                    vtk::sizeofData<label, nCmpt>(nTotParcels);
-
-                format().beginDataArray<label, nCmpt>(fieldName);
-                format().writeSize(payLoad);
-            }
-            else
-            {
-                const uint64_t payLoad =
-                    vtk::sizeofData<float, nCmpt>(nTotParcels);
-
-                format().beginDataArray<float, nCmpt>(fieldName);
-                format().writeSize(payLoad);
-            }
-        }
+        autoPtr<ensightFile> os =
+            ensCase().newCloudData<Type>(cloudName, fieldName);
 
         if (applyFilter_)
         {
-            vtk::writeListParallel(format.ref(), values, parcelAddr_);
+            scratch.resize_nocopy(parcelAddr_.count());
+
+            auto iter = scratch.begin();
+
+            for (const label idx : parcelAddr_)
+            {
+                *iter = values[idx];
+                ++iter;
+            }
+
+            // TBD:
+            // recalculate globalIndex instead of relying on procAddr_ ?
+
+            ensightOutput::writeCloudField(os.ref(), scratch, procAddr_);
         }
         else
         {
-            vtk::writeListParallel(format.ref(), values);
-        }
+            // TBD:
+            // recalculate globalIndex instead of relying on procAddr_ ?
 
-        if (UPstream::master())
-        {
-            // Non-legacy
-            format().flush();
-            format().endDataArray();
+            ensightOutput::writeCloudField(os.ref(), values, procAddr_);
         }
     }
 

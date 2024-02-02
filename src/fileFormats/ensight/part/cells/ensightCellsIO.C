@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,9 @@ License
 #include "ensightCells.H"
 #include "ensightOutput.H"
 #include "InfoProxy.H"
+#include "boundBox.H"
 #include "polyMesh.H"
+#include "cellModel.H"
 #include "globalIndex.H"
 #include "globalMeshData.H"
 #include "manifoldCellsMeshObject.H"
@@ -326,6 +328,44 @@ void Foam::ensightCells::write
                 parallel
             );
         }
+    }
+}
+
+
+void Foam::ensightCells::writeBox
+(
+    ensightGeoFile& os,
+    const boundBox& bb,
+    const label partIndex,
+    const word& partName
+)
+{
+    pointField points;
+    cellShapeList shapes;
+
+    if (UPstream::master())
+    {
+        points = bb.hexCorners();
+        shapes.emplace_back(cellModel::HEX, identity(8));
+    }
+
+    ensightOutput::Detail::writeCoordinates
+    (
+        os,
+        partIndex,
+        partName,
+        8,          // nPoints (global)
+        points,
+        false       // serial only! (parallel=false)
+    );
+
+    if (UPstream::master())
+    {
+        os.writeKeyword(ensightCells::key(ensightCells::elemType::HEXA8));
+        os.write(shapes.size());  // one cell (global)
+        os.newline();
+
+        ensightOutput::writeCellShapes(os, shapes);
     }
 }
 

@@ -171,10 +171,10 @@ template<class Type>
 bool Foam::functionObjects::dataCloud::writeField
 (
     const fileName& outputName,
-    const objectRegistry& obrTmp
+    const objectRegistry& obr
 ) const
 {
-    const auto* pointsPtr = cloud::findIOPosition(obrTmp);
+    const auto* pointsPtr = cloud::findIOPosition(obr);
 
     if (!pointsPtr)
     {
@@ -185,8 +185,8 @@ bool Foam::functionObjects::dataCloud::writeField
     // Fields are not always on all processors (eg, multi-component parcels).
     // Thus need to resolve between all processors.
 
-    const List<Type>* fldPtr = obrTmp.findObject<IOField<Type>>(fieldName_);
-    const List<Type>& values = (fldPtr ? *fldPtr : List<Type>());
+    const List<Type>* fldPtr = obr.findObject<IOField<Type>>(fieldName_);
+    const List<Type>& values = (fldPtr ? *fldPtr : List<Type>::null());
 
     if (!returnReduceOr(fldPtr != nullptr))
     {
