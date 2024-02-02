@@ -579,8 +579,8 @@ inline bool CGAL::indexedCell<Gt, Cb>::potentialCoplanarCell() const
 
     if (nMasters == 2 && nSlaves == 2)
     {
-        Foam::vector vp0(Foam::Zero);
-        Foam::vector vp1(Foam::Zero);
+        Foam::vector vp0(Foam::zero{});
+        Foam::vector vp1(Foam::zero{});
 
         if
         (

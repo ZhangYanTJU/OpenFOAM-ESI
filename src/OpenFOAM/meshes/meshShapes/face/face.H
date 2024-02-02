@@ -395,7 +395,7 @@ public:
         // Face splitting utilities
 
             //- Number of triangles after splitting
-            inline label nTriangles() const;
+            inline label nTriangles() const noexcept;
 
             //- Number of triangles after splitting
             label nTriangles(const UList<point>& unused) const;

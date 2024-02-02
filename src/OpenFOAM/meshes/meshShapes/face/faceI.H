@@ -199,9 +199,9 @@ inline Foam::label Foam::face::prevLabel(const label i) const
 }
 
 
-inline Foam::label Foam::face::nTriangles() const
+inline Foam::label Foam::face::nTriangles() const noexcept
 {
-    return size() - 2;
+    return labelList::size() - 2;
 }
 
 

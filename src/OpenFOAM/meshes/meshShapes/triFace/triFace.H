@@ -93,7 +93,7 @@ public:
         //- Construct from an initializer list of three vertex labels
         inline explicit triFace(std::initializer_list<label> list);
 
-        //- Copy construct from a list of three  vertex labels.
+        //- Copy construct from a list of three vertex labels.
         inline explicit triFace(const labelUList& list);
 
         //- Copy construct from a subset of vertex labels

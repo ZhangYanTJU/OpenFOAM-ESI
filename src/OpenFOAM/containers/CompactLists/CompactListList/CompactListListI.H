@@ -89,7 +89,7 @@ inline Foam::CompactListList<T>::CompactListList
     const label nVals
 )
 :
-    offsets_(mRows+1, Zero),
+    offsets_(mRows+1, Foam::zero{}),
     values_(nVals)
 {
     // Optionally: enforceSizeSanity();
@@ -104,8 +104,8 @@ inline Foam::CompactListList<T>::CompactListList
     const Foam::zero
 )
 :
-    offsets_(mRows+1, Zero),
-    values_(nVals, Zero)
+    offsets_(mRows+1, Foam::zero{}),
+    values_(nVals, Foam::zero{})
 {
     // Optionally: enforceSizeSanity();
 }
@@ -119,7 +119,7 @@ inline Foam::CompactListList<T>::CompactListList
     const T& val
 )
 :
-    offsets_(mRows+1, Zero),
+    offsets_(mRows+1, Foam::zero{}),
     values_(nVals, val)
 {
     // Optionally: enforceSizeSanity();
@@ -378,7 +378,7 @@ inline void Foam::CompactListList<T>::resize
     }
     else
     {
-        offsets_.resize(mRows+1, Zero);
+        offsets_.resize(mRows+1, Foam::zero{});
         values_.resize(nVals);
     }
 }
@@ -399,7 +399,7 @@ inline void Foam::CompactListList<T>::resize_nocopy
     }
     else
     {
-        offsets_.resize(mRows+1, Zero);
+        offsets_.resize(mRows+1, Foam::zero{});
         values_.resize_nocopy(nVals);
     }
 }
@@ -421,7 +421,7 @@ inline void Foam::CompactListList<T>::resize
     }
     else
     {
-        offsets_.resize(mRows+1, Zero);
+        offsets_.resize(mRows+1, Foam::zero{});
         values_.resize(nVals, val);
     }
 }

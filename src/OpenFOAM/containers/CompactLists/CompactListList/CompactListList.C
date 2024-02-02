@@ -81,7 +81,7 @@ Foam::CompactListList<T> Foam::CompactListList<T>::pack_impl
 
     if (len)
     {
-        newOffsets.resize(len+1, Zero);
+        newOffsets.resize(len+1, Foam::zero{});
 
         for (label i = 0; i < len; ++i)
         {

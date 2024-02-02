@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,6 +108,15 @@ public:
         (
             const UList<point>& points,
             const FixedList<label, 3>& indices
+        );
+
+        //- Copy construct from subset of points
+        inline triPoints
+        (
+            const UList<point>& points,
+            const label p0,
+            const label p1,
+            const label p2
         );
 
 
@@ -275,12 +284,21 @@ public:
         //- Construct from three points
         inline triangle(const FixedList<Point, 3>& pts);
 
-        //- Construct from three points in the list of points
+        //- Construct from three points out of the list of points
         //  The indices could be from triFace etc.
         inline triangle
         (
             const UList<Point>& points,
             const FixedList<label, 3>& indices
+        );
+
+        //- Construct from three points out of the list of points
+        inline triangle
+        (
+            const UList<Point>& points,
+            const label p0,
+            const label p1,
+            const label p2
         );
 
         //- Construct from Istream

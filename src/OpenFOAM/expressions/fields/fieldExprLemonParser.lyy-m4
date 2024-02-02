@@ -7,7 +7,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -163,7 +163,7 @@ operator_precedence()
 
 svalue (lhs) ::= NUMBER (tok) .     { lhs = (tok).scalarValue; } // scanToken
 
-svalue (lhs) ::= ZERO .             { lhs = Foam::Zero; }
+svalue (lhs) ::= ZERO .             { lhs = Foam::zero{}; }
 svalue (lhs) ::= PI LPAREN RPAREN . { lhs = Foam::constant::mathematical::pi; }
 svalue (lhs) ::= DEG_TO_RAD LPAREN RPAREN . { lhs = Foam::degToRad(); }
 svalue (lhs) ::= RAD_TO_DEG LPAREN RPAREN . { lhs = Foam::radToDeg(); }

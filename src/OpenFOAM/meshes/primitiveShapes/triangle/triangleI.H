@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -69,6 +69,20 @@ inline Foam::triPoints::triPoints
 {}
 
 
+inline Foam::triPoints::triPoints
+(
+    const UList<point>& points,
+    const label p0,
+    const label p1,
+    const label p2
+)
+{
+    a() = points[p0];
+    b() = points[p1];
+    c() = points[p2];
+}
+
+
 template<class Point, class PointRef>
 inline Foam::triangle<Point, PointRef>::triangle
 (
@@ -105,6 +119,21 @@ inline Foam::triangle<Point, PointRef>::triangle
     a_(points[indices.template get<0>()]),
     b_(points[indices.template get<1>()]),
     c_(points[indices.template get<2>()])
+{}
+
+
+template<class Point, class PointRef>
+inline Foam::triangle<Point, PointRef>::triangle
+(
+    const UList<Point>& points,
+    const label p0,
+    const label p1,
+    const label p2
+)
+:
+    a_(points[p0]),
+    b_(points[p1]),
+    c_(points[p2])
 {}
 
 
