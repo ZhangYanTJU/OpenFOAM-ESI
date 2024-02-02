@@ -1202,6 +1202,7 @@ public:
 
         //- Process index of first sub-process
         //  \deprecated(2020-09) use subProcs() method instead
+        FOAM_DEPRECATED_FOR(2020-09, "subProcs() method")
         static constexpr int firstSlave() noexcept
         {
             return 1;
@@ -1209,6 +1210,7 @@ public:
 
         //- Process index of last sub-process
         //  \deprecated(2020-09) use subProcs() method instead
+        FOAM_DEPRECATED_FOR(2020-09, "subProcs() or allProcs() method")
         static int lastSlave(const label communicator = worldComm)
         {
             return nProcs(communicator) - 1;

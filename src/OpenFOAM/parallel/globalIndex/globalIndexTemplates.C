@@ -30,6 +30,25 @@ License
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
+// Cannot use non-blocking for non-contiguous data.
+// template<class Type>
+// inline Foam::UPstream::commsTypes getCommsType
+// (
+//     const UPstream::commsTypes preferred
+// )
+// {
+//     return
+//     (
+//         (
+//             !is_contiguous<Type>::value
+//          && UPstream::commsTypes::nonBlocking == preferred
+//         )
+//       ? UPstream::commsTypes::scheduled
+//       : preferred
+//     );
+// }
+
+
 template<class Addr>
 Foam::labelList
 Foam::globalIndex::calcOffsets
@@ -115,8 +134,7 @@ void Foam::globalIndex::gatherValues
 {
     // low-level: no parRun guard
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (
@@ -202,8 +220,7 @@ void Foam::globalIndex::gather
 {
     // low-level: no parRun guard
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (
@@ -322,8 +339,7 @@ void Foam::globalIndex::gather
         return;
     }
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (
@@ -907,8 +923,7 @@ void Foam::globalIndex::scatter
 {
     // low-level: no parRun guard
 
-    // Automatically change from nonBlocking to scheduled for
-    // non-contiguous data.
+    // Cannot use non-blocking for non-contiguous data.
     const UPstream::commsTypes commsType =
     (
         (

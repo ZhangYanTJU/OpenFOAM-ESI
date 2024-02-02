@@ -290,7 +290,7 @@ Foam::globalIndex::bin
     if (!globalIds.empty())
     {
         labelList& binOffsets = bins.offsets();
-        binOffsets.resize(offsets.size(), Zero);
+        binOffsets.resize(offsets.size(), Foam::zero{});
 
         labelList& binValues = bins.values();
         binValues = UIndirectList<label>(globalIds, order);
@@ -372,7 +372,7 @@ void Foam::globalIndex::reset
             // TBD: check for (proci >= 0) ?
             const auto proci = UPstream::myProcNo(comm);
 
-            counts.resize(len, Zero);
+            counts.resize(len, Foam::zero{});
             counts[proci] = localSize;
         }
 

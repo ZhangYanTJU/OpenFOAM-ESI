@@ -26,7 +26,7 @@ License
 
 Description
     Gather data from all processors onto single processor according to some
-    communication schedule (usually linear-to-master or tree-to-master).
+    communication schedule (usually tree-to-master).
     The gathered data will be a list with element procID the data from processor
     procID. Before calling every processor should insert its value into
     values[UPstream::myProcNo(comm)].
@@ -45,24 +45,27 @@ Description
 template<class T>
 void Foam::Pstream::gatherList
 (
-    const List<UPstream::commsStruct>& comms,
-    List<T>& values,
+    const UList<UPstream::commsStruct>& comms,
+    UList<T>& values,
     const int tag,
     const label comm
 )
 {
     if (!comms.empty() && UPstream::is_parallel(comm))
     {
-        if (values.size() < UPstream::nProcs(comm))
+        const label myProci = UPstream::myProcNo(comm);
+        const label numProc = UPstream::nProcs(comm);
+
+        if (values.size() < numProc)
         {
             FatalErrorInFunction
-                << "List of values is too small:" << values.size()
-                << " vs numProcs:" << UPstream::nProcs(comm) << nl
+                << "List of values:" << values.size()
+                << " < numProcs:" << numProc << nl
                 << Foam::abort(FatalError);
         }
 
         // My communication order
-        const auto& myComm = comms[UPstream::myProcNo(comm)];
+        const auto& myComm = comms[myProci];
 
         // Receive from my downstairs neighbours
         for (const label belowID : myComm.below())
@@ -127,21 +130,21 @@ void Foam::Pstream::gatherList
         // Send up from values:
         // - my own value first
         // - all belowLeaves next
-        if (myComm.above() != -1)
+        if (myComm.above() >= 0)
         {
             const labelList& belowLeaves = myComm.allBelow();
 
             if (debug & 2)
             {
                 Pout<< " sending to " << myComm.above()
-                    << " data from me:" << UPstream::myProcNo(comm)
-                    << " data:" << values[UPstream::myProcNo(comm)] << endl;
+                    << " data from me:" << myProci
+                    << " data:" << values[myProci] << endl;
             }
 
             if (is_contiguous<T>::value)
             {
                 List<T> sending(belowLeaves.size() + 1);
-                sending[0] = values[UPstream::myProcNo(comm)];
+                sending[0] = values[myProci];
 
                 forAll(belowLeaves, leafI)
                 {
@@ -168,7 +171,7 @@ void Foam::Pstream::gatherList
                     tag,
                     comm
                 );
-                toAbove << values[UPstream::myProcNo(comm)];
+                toAbove << values[myProci];
 
                 for (const label leafID : belowLeaves)
                 {
@@ -189,8 +192,8 @@ void Foam::Pstream::gatherList
 template<class T>
 void Foam::Pstream::scatterList
 (
-    const List<UPstream::commsStruct>& comms,
-    List<T>& values,
+    const UList<UPstream::commsStruct>& comms,
+    UList<T>& values,
     const int tag,
     const label comm
 )
@@ -201,19 +204,22 @@ void Foam::Pstream::scatterList
 
     if (!comms.empty() && UPstream::is_parallel(comm))
     {
-        if (values.size() < UPstream::nProcs(comm))
+        const label myProci = UPstream::myProcNo(comm);
+        const label numProc = UPstream::nProcs(comm);
+
+        if (values.size() < numProc)
         {
             FatalErrorInFunction
-                << "List of values is too small:" << values.size()
-                << " vs numProcs:" << UPstream::nProcs(comm) << nl
+                << "List of values:" << values.size()
+                << " < numProcs:" << numProc << nl
                 << Foam::abort(FatalError);
         }
 
         // My communication order
-        const auto& myComm = comms[UPstream::myProcNo(comm)];
+        const auto& myComm = comms[myProci];
 
         // Receive from up
-        if (myComm.above() != -1)
+        if (myComm.above() >= 0)
         {
             const labelList& notBelowLeaves = myComm.allNotBelow();
 
@@ -318,7 +324,7 @@ void Foam::Pstream::scatterList
 template<class T>
 void Foam::Pstream::gatherList
 (
-    List<T>& values,
+    UList<T>& values,
     const int tag,
     const label comm
 )
@@ -337,7 +343,7 @@ void Foam::Pstream::gatherList
 template<class T>
 void Foam::Pstream::scatterList
 (
-    List<T>& values,
+    UList<T>& values,
     const int tag,
     const label comm
 )
@@ -355,7 +361,7 @@ void Foam::Pstream::scatterList
 template<class T>
 void Foam::Pstream::allGatherList
 (
-    List<T>& values,
+    UList<T>& values,
     const int tag,
     const label comm
 )

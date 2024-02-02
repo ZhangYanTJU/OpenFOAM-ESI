@@ -26,7 +26,7 @@ License
 
 Description
     Gather data from all processors onto single processor according to some
-    communication schedule (usually linear-to-master or tree-to-master).
+    communication schedule (usually tree-to-master).
     The gathered data will be a single value constructed from the values
     on individual processors using a user-specified operator.
 
@@ -88,7 +88,7 @@ void Foam::Pstream::gather
         }
 
         // Send up value
-        if (myComm.above() != -1)
+        if (myComm.above() >= 0)
         {
             if (is_contiguous<T>::value)
             {

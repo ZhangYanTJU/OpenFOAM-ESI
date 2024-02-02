@@ -148,7 +148,11 @@ namespace Foam
 
 //- Return a broadcasted value (uses a copy internally)
 template<class Type>
-Type returnBroadcast(const Type& value, const label comm)
+Type returnBroadcast
+(
+    const Type& value,
+    const label comm = UPstream::worldComm
+)
 {
     Type work(value);
     Pstream::broadcast(work, comm);

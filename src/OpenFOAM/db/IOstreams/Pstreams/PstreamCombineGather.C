@@ -107,7 +107,7 @@ void Foam::Pstream::combineGather
         }
 
         // Send up value
-        if (myComm.above() != -1)
+        if (myComm.above() >= 0)
         {
             if (debug & 2)
             {
@@ -166,7 +166,7 @@ void Foam::Pstream::combineReduce
 template<class T, class CombineOp>
 void Foam::Pstream::listCombineGather
 (
-    List<T>& values,
+    UList<T>& values,
     const CombineOp& cop,
     const int tag,
     const label comm
@@ -233,7 +233,7 @@ void Foam::Pstream::listCombineGather
         }
 
         // Send up values
-        if (myComm.above() != -1)
+        if (myComm.above() >= 0)
         {
             if (debug & 2)
             {
@@ -349,7 +349,7 @@ void Foam::Pstream::mapCombineGather
         }
 
         // Send up values
-        if (myComm.above() != -1)
+        if (myComm.above() >= 0)
         {
             if (debug & 2)
             {

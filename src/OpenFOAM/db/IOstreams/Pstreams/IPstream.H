@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,6 +71,33 @@ public:
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
+
+
+    // Static Functions
+
+        //- Receive and deserialize a value.
+        //- Uses \c operator>> for de-serialization
+        template<class Type>
+        static void recv
+        (
+            Type& value,
+            const int fromProcNo,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        )
+        {
+            IPstream is
+            (
+                UPstream::commsTypes::scheduled,
+                fromProcNo,
+                0,  // bufSize
+                tag,
+                comm,
+                fmt
+            );
+            is >> value;
+        }
 };
 
 

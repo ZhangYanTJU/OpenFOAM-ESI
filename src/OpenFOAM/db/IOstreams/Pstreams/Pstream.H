@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -170,7 +170,7 @@ public:
 
     // Gather/combine data
     // Inplace combine values from processors.
-    // (Uses construct from Istream instead of <<)
+    // (Uses construct from Istream instead of \c << operator)
 
         //- Gather data, applying \c cop to inplace combine \c value
         //- from different processors.
@@ -178,6 +178,7 @@ public:
         template<class T, class CombineOp>
         static void combineGather
         (
+            //! [in,out]
             T& value,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -193,6 +194,7 @@ public:
         template<class T, class CombineOp>
         static void combineReduce
         (
+            //! [in,out]
             T& value,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -220,7 +222,8 @@ public:
         template<class T, class CombineOp>
         static void listCombineGather
         (
-            List<T>& values,
+            //! [in,out]
+            UList<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
@@ -232,6 +235,7 @@ public:
         template<class T, class CombineOp>
         static void listCombineReduce
         (
+            //! [in,out] - List (not UList) due to broadcast()
             List<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -242,6 +246,7 @@ public:
         template<class T, class CombineOp>
         static void listCombineAllGather
         (
+            //! [in,out] - List (not UList) due to broadcast()
             List<T>& values,
             const CombineOp& cop,
             const int tag = UPstream::msgType(),
@@ -305,8 +310,9 @@ public:
         template<class T>
         static void gatherList
         (
-            const List<commsStruct>& comms,
-            List<T>& values,
+            const UList<commsStruct>& comms,
+            //! [in,out]
+            UList<T>& values,
             const int tag,
             const label comm
         );
@@ -316,7 +322,8 @@ public:
         template<class T>
         static void gatherList
         (
-            List<T>& values,
+            //! [in,out]
+            UList<T>& values,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
         );
@@ -328,73 +335,35 @@ public:
         template<class T>
         static void allGatherList
         (
-            List<T>& values,
+            //! [in,out]
+            UList<T>& values,
             const int tag = UPstream::msgType(),
             const label comm = UPstream::worldComm
         );
 
 
-        // Scatter
+    // Scatter
 
-            //- Broadcast data
-            template<class T>
-            FOAM_DEPRECATED_FOR(2024-01, "broadcast()")
-            static void scatter
-            (
-                T& value,
-                const int tag = UPstream::msgType(),  //!< ignored
-                const label comm = UPstream::worldComm
-            );
+        //- Inverse of gatherList.
+        //- Uses the specified communication schedule.
+        template<class T>
+        static void scatterList
+        (
+            const UList<commsStruct>& comms,
+            UList<T>& values,
+            const int tag,
+            const label comm
+        );
 
-            //- Broadcast data
-            template<class T>
-            FOAM_DEPRECATED_FOR(2024-01, "broadcast()")
-            static void combineScatter
-            (
-                T& value,
-                const int tag = UPstream::msgType(),  //!< ignored
-                const label comm = UPstream::worldComm
-            );
-
-            //- Broadcast data
-            template<class T>
-            FOAM_DEPRECATED_FOR(2024-01, "broadcast()")
-            static void listCombineScatter
-            (
-                List<T>& value,
-                const int tag = UPstream::msgType(),  //!< ignored
-                const label comm = UPstream::worldComm
-            );
-
-            //- Broadcast data
-            template<class Container>
-            FOAM_DEPRECATED_FOR(2024-01, "broadcast()")
-            static void mapCombineScatter
-            (
-                Container& values,
-                const int tag = UPstream::msgType(),  //!< ignored
-                const label comm = UPstream::worldComm
-            );
-
-
-            //- Scatter data. Reverse of gatherList
-            template<class T>
-            static void scatterList
-            (
-                const List<commsStruct>& comms,
-                List<T>& values,
-                const int tag,
-                const label comm
-            );
-
-            //- Like above but switches between linear/tree communication
-            template<class T>
-            static void scatterList
-            (
-                List<T>& values,
-                const int tag = UPstream::msgType(),
-                const label comm = UPstream::worldComm
-            );
+        //- Inverse of gatherList.
+        //- Uses linear/tree communication.
+        template<class T>
+        static void scatterList
+        (
+            UList<T>& values,
+            const int tag = UPstream::msgType(),
+            const label comm = UPstream::worldComm
+        );
 
 
     // Exchange
@@ -573,6 +542,61 @@ public:
             const label comm,
             const bool wait = true  //!< (ignored)
         );
+
+
+    // Housekeeping
+
+        //- \deprecated(2024-01) Broadcast data
+        template<class T>
+        FOAM_DEPRECATED_FOR(2024-01, "Pstream::broadcast()")
+        static void scatter
+        (
+            T& value,
+            const int tag = UPstream::msgType(),  //!< ignored
+            const label comm = UPstream::worldComm
+        )
+        {
+            Pstream::broadcast(value, comm);
+        }
+
+        //- \deprecated(2024-01) Broadcast data
+        template<class T>
+        FOAM_DEPRECATED_FOR(2024-01, "Pstream::broadcast()")
+        static void combineScatter
+        (
+            T& value,
+            const int tag = UPstream::msgType(),  //!< ignored
+            const label comm = UPstream::worldComm
+        )
+        {
+            Pstream::broadcast(value, comm);
+        }
+
+        //- \deprecated(2024-01) Broadcast data
+        template<class T>
+        FOAM_DEPRECATED_FOR(2024-01, "Pstream::broadcast()")
+        static void listCombineScatter
+        (
+            List<T>& value,
+            const int tag = UPstream::msgType(),  //!< ignored
+            const label comm = UPstream::worldComm
+        )
+        {
+            Pstream::broadcast(value, comm);
+        }
+
+        //- \deprecated(2024-01) Broadcast data
+        template<class Container>
+        FOAM_DEPRECATED_FOR(2024-01, "Pstream::broadcast()")
+        static void mapCombineScatter
+        (
+            Container& values,
+            const int tag = UPstream::msgType(),  //!< ignored
+            const label comm = UPstream::worldComm
+        )
+        {
+            Pstream::broadcast(values, comm);
+        }
 };
 
 
