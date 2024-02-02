@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -875,11 +875,11 @@ bool Foam::fileOperations::masterUncollatedFileOperation::mkDir
     mode_t mode
 ) const
 {
-    return masterOp<mode_t>
+    return masterOp<bool>
     (
         dir,
         mkDirOp(mode),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -891,11 +891,11 @@ bool Foam::fileOperations::masterUncollatedFileOperation::chMod
     mode_t mode
 ) const
 {
-    return masterOp<mode_t>
+    return masterOp<bool>
     (
         fName,
         chModOp(mode),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -911,7 +911,7 @@ mode_t Foam::fileOperations::masterUncollatedFileOperation::mode
     (
         fName,
         modeOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -925,11 +925,11 @@ Foam::fileName::Type Foam::fileOperations::masterUncollatedFileOperation::type
 {
     return fileName::Type
     (
-        masterOp<label>
+        masterOp<int>
         (
             fName,
             typeOp(followLink),
-            Pstream::msgType(),
+            UPstream::msgType(),
             comm_
         )
     );
@@ -947,7 +947,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::exists
     (
         fName,
         existsOp(checkGzip, followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -963,7 +963,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::isDir
     (
         fName,
         isDirOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -980,7 +980,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::isFile
     (
         fName,
         isFileOp(checkGzip, followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -996,7 +996,7 @@ off_t Foam::fileOperations::masterUncollatedFileOperation::fileSize
     (
         fName,
         fileSizeOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1012,7 +1012,7 @@ time_t Foam::fileOperations::masterUncollatedFileOperation::lastModified
     (
         fName,
         lastModifiedOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         UPstream::worldComm
     );
 }
@@ -1028,7 +1028,7 @@ double Foam::fileOperations::masterUncollatedFileOperation::highResLastModified
     (
         fName,
         highResLastModifiedOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         UPstream::worldComm
     );
 }
@@ -1044,7 +1044,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::mvBak
     (
         fName,
         mvBakOp(ext),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1059,7 +1059,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::rm
     (
         fName,
         rmOp(),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1076,7 +1076,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::rmDir
     (
         dir,
         rmDirOp(silent, emptyOnly),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1094,7 +1094,7 @@ Foam::fileNameList Foam::fileOperations::masterUncollatedFileOperation::readDir
     (
         dir,
         readDirOp(type, filtergz, followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1112,7 +1112,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::cp
         src,
         dst,
         cpOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1129,7 +1129,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::ln
         src,
         dst,
         lnOp(),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1147,7 +1147,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::mv
         src,
         dst,
         mvOp(followLink),
-        Pstream::msgType(),
+        UPstream::msgType(),
         comm_
     );
 }
@@ -1293,7 +1293,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::filePath
                 (
                     io.objectPath(),
                     fileOrNullOp(true), // isFile=true
-                    Pstream::msgType(),
+                    UPstream::msgType(),
                     comm_
                 );
             }
@@ -1451,7 +1451,7 @@ Foam::fileName Foam::fileOperations::masterUncollatedFileOperation::dirPath
                 (
                     io.objectPath(),
                     fileOrNullOp(false), // isFile=false
-                    Pstream::msgType(),
+                    UPstream::msgType(),
                     comm_
                 );
             }

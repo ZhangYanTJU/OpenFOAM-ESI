@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -162,8 +162,8 @@ protected:
                 followLink_(followLink)
             {}
 
-            // Returns label not fileName::Type for reductions
-            label operator()(const fileName& f) const
+            // Returns int (for reductions) instead of fileName::Type
+            int operator()(const fileName& f) const
             {
                 return Foam::type(f, followLink_);
             }
@@ -389,9 +389,6 @@ protected:
 
 
     // Private Member Functions
-
-        template<class Type>
-        Type scatterList(const UList<Type>&, const int, const label comm) const;
 
         template<class Type, class FileOp>
         Type masterOp
