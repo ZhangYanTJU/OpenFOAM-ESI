@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -221,7 +221,7 @@ Foam::Ostream& Foam::ensightFile::write
 }
 
 
-Foam::Ostream& Foam::ensightFile::write(const int32_t val)
+void Foam::ensightFile::writeInt(const int32_t val, const int fieldWidth)
 {
     if (format() == IOstreamOption::BINARY)
     {
@@ -233,24 +233,22 @@ Foam::Ostream& Foam::ensightFile::write(const int32_t val)
     }
     else
     {
-        stdStream().width(10);
+        stdStream().width(fieldWidth);
         stdStream() << val;
         syncState();
     }
-
-    return *this;
 }
 
 
-Foam::Ostream& Foam::ensightFile::write(const int64_t val)
+void Foam::ensightFile::writeInt(const int64_t val, const int fieldWidth)
 {
-    int32_t ivalue(narrowInt32(val));
+    int32_t work(narrowInt32(val));
 
-    return write(ivalue);
+    writeInt(work, fieldWidth);
 }
 
 
-Foam::Ostream& Foam::ensightFile::write(const float val)
+void Foam::ensightFile::writeFloat(const float val, const int fieldWidth)
 {
     if (format() == IOstreamOption::BINARY)
     {
@@ -262,40 +260,45 @@ Foam::Ostream& Foam::ensightFile::write(const float val)
     }
     else
     {
-        stdStream().width(12);
+        stdStream().width(fieldWidth);
         stdStream() << val;
         syncState();
     }
+}
 
+
+void Foam::ensightFile::writeFloat(const double val, const int fieldWidth)
+{
+    float work(narrowFloat(val));
+
+    writeFloat(work, fieldWidth);
+}
+
+
+Foam::Ostream& Foam::ensightFile::write(const int32_t val)
+{
+    writeInt(val, 10);
+    return *this;
+}
+
+
+Foam::Ostream& Foam::ensightFile::write(const int64_t val)
+{
+    writeInt(val, 10);
+    return *this;
+}
+
+
+Foam::Ostream& Foam::ensightFile::write(const float val)
+{
+    writeFloat(val, 12);
     return *this;
 }
 
 
 Foam::Ostream& Foam::ensightFile::write(const double val)
 {
-    float fvalue(narrowFloat(val));
-
-    return write(fvalue);
-}
-
-
-Foam::Ostream& Foam::ensightFile::write
-(
-    const label value,
-    const label fieldWidth
-)
-{
-    if (format() == IOstreamOption::BINARY)
-    {
-        write(value);
-    }
-    else
-    {
-        stdStream().width(fieldWidth);
-        stdStream() << value;
-        syncState();
-    }
-
+    writeFloat(val, 12);
     return *this;
 }
 
@@ -376,7 +379,7 @@ void Foam::ensightFile::beginParticleCoordinates(const label nparticles)
 {
     writeString("particle coordinates");
     newline();
-    write(nparticles, 8); // unusual width
+    writeInt(nparticles, 8);  // Warning: unusual width
     newline();
 }
 

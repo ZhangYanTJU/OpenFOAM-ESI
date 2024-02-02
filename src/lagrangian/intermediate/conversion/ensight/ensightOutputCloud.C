@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,7 +61,7 @@ static inline label writeMeasured_ascii
 {
     for (const floatVector& p : points)
     {
-        os.write(++pointId, 8); // 1-index and an unusual width
+        os.writeInt(++pointId, 8);  // 1-index and an unusual width
         os.write(p.x());
         os.write(p.y());
         os.write(p.z());
