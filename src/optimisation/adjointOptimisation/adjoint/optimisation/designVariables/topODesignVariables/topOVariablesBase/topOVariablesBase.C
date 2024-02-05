@@ -669,19 +669,13 @@ void Foam::topOVariablesBase::writeFluidSolidInterface
     //    invertOneToMany(surfFaces_.size(), changedFaceToCutFace);
 
     // Transform origin cut faces to a global numbering
-    labelList cuttingFacesPerProc(Pstream::nProcs(), Zero);
-    cuttingFacesPerProc[Pstream::myProcNo()] = changedFaces.size();
-    Pstream::listCombineReduce(cuttingFacesPerProc, plusEqOp<label>());
 
-    labelList passedFaces(Pstream::nProcs(), Zero);
-    for (label i = 1; i < Pstream::nProcs(); ++i)
-    {
-        passedFaces[i] = passedFaces[i - 1] + cuttingFacesPerProc[i - 1];
-    }
+    const label changedFacesOffset =
+        globalIndex::calcOffset(changedFaces.size());
 
-    forAll(changedFacesInfo, facei)
+    for (auto& info : changedFacesInfo)
     {
-        changedFacesInfo[facei].data() += passedFaces[Pstream::myProcNo()];
+        info.data() += changedFacesOffset;
     }
 }
 

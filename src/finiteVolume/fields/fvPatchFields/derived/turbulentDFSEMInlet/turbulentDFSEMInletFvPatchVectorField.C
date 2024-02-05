@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -132,58 +132,76 @@ void Foam::turbulentDFSEMInletFvPatchVectorField::initialisePatch()
     patchNormal_ /= mag(patchNormal_) + ROOTVSMALL;
 
 
-    // Decompose the patch faces into triangles to enable point search
-
     const polyPatch& patch = this->patch().patch();
     const pointField& points = patch.points();
 
     // Triangulate the patch faces and create addressing
-    DynamicList<label> triToFace(2*patch.size());
-    DynamicList<scalar> triMagSf(2*patch.size());
-    DynamicList<face> triFace(2*patch.size());
-    DynamicList<face> tris(5);
-
-    // Set zero value at the start of the tri area list
-    triMagSf.append(0.0);
-
-    forAll(patch, faceI)
     {
-        const face& f = patch[faceI];
-
-        tris.clear();
-        f.triangles(points, tris);
-
-        forAll(tris, i)
+        label nTris = 0;
+        for (const face& f : patch)
         {
-            triToFace.append(faceI);
-            triFace.append(tris[i]);
-            triMagSf.append(tris[i].mag(points));
+            nTris += f.nTriangles();
+        }
+
+        DynamicList<labelledTri> dynTriFace(nTris);
+        DynamicList<face> tris(8);  // work array
+
+        forAll(patch, facei)
+        {
+            const face& f = patch[facei];
+
+            tris.clear();
+            f.triangles(points, tris);
+
+            for (const auto& t : tris)
+            {
+                dynTriFace.emplace_back(t[0], t[1], t[2], facei);
+            }
+        }
+
+        // Transfer to persistent storage
+        triFace_.transfer(dynTriFace);
+    }
+
+
+    const label myProci = UPstream::myProcNo();
+    const label numProc = UPstream::nProcs();
+
+    // Calculate the cumulative triangle weights
+    {
+        triCumulativeMagSf_.resize_nocopy(triFace_.size()+1);
+
+        auto iter = triCumulativeMagSf_.begin();
+
+        // Set zero value at the start of the tri area/weight list
+        scalar patchArea = 0;
+        *iter++ = patchArea;
+
+        // Calculate cumulative and total area
+        for (const auto& t : triFace_)
+        {
+            patchArea += t.mag(points);
+            *iter++ = patchArea;
+        }
+
+        sumTriMagSf_.resize_nocopy(numProc+1);
+        sumTriMagSf_[0] = 0;
+
+        {
+            scalarList::subList slice(sumTriMagSf_, numProc, 1);
+            slice[myProci] = patchArea;
+            Pstream::allGatherList(slice);
+        }
+
+        // Convert to cumulative sum of areas per proc
+        for (label i = 1; i < sumTriMagSf_.size(); ++i)
+        {
+            sumTriMagSf_[i] += sumTriMagSf_[i-1];
         }
     }
 
-    sumTriMagSf_ = Zero;
-    sumTriMagSf_[Pstream::myProcNo() + 1] = sum(triMagSf);
-
-    Pstream::listCombineReduce(sumTriMagSf_, maxEqOp<scalar>());
-
-    for (label i = 1; i < triMagSf.size(); ++i)
-    {
-        triMagSf[i] += triMagSf[i-1];
-    }
-
-    // Transfer to persistent storage
-    triFace_.transfer(triFace);
-    triToFace_.transfer(triToFace);
-    triCumulativeMagSf_.transfer(triMagSf);
-
-    // Convert sumTriMagSf_ into cumulative sum of areas per proc
-    for (label i = 1; i < sumTriMagSf_.size(); ++i)
-    {
-        sumTriMagSf_[i] += sumTriMagSf_[i-1];
-    }
-
     // Global patch area (over all processors)
-    patchArea_ = sumTriMagSf_.last();
+    patchArea_ = sumTriMagSf_.back();
 
     // Local patch bounds (this processor)
     patchBounds_ = boundBox(patch.localPoints(), false);
@@ -239,11 +257,10 @@ Foam::pointIndexHit Foam::turbulentDFSEMInletFvPatchVectorField::setNewPosition
     const bool global
 )
 {
-    // Initialise to miss
-    pointIndexHit pos(false, vector::max, -1);
-
     const polyPatch& patch = this->patch().patch();
     const pointField& points = patch.points();
+
+    label triI = -1;
 
     if (global)
     {
@@ -251,21 +268,21 @@ Foam::pointIndexHit Foam::turbulentDFSEMInletFvPatchVectorField::setNewPosition
             rndGen_.globalPosition<scalar>(0, patchArea_);
 
         // Determine which processor to use
-        label procI = 0;
+        label proci = 0;
         forAllReverse(sumTriMagSf_, i)
         {
             if (areaFraction >= sumTriMagSf_[i])
             {
-                procI = i;
+                proci = i;
                 break;
             }
         }
 
-        if (Pstream::myProcNo() == procI)
+        if (UPstream::myProcNo() == proci)
         {
             // Find corresponding decomposed face triangle
-            label triI = 0;
-            const scalar offset = sumTriMagSf_[procI];
+            triI = 0;
+            const scalar offset = sumTriMagSf_[proci];
             forAllReverse(triCumulativeMagSf_, i)
             {
                 if (areaFraction > triCumulativeMagSf_[i] + offset)
@@ -274,20 +291,13 @@ Foam::pointIndexHit Foam::turbulentDFSEMInletFvPatchVectorField::setNewPosition
                     break;
                 }
             }
-
-            // Find random point in triangle
-            const face& tf = triFace_[triI];
-            const triPointRef tri(points[tf[0]], points[tf[1]], points[tf[2]]);
-
-            pos.hitPoint(tri.randomPoint(rndGen_));
-            pos.setIndex(triToFace_[triI]);
         }
     }
     else
     {
         // Find corresponding decomposed face triangle on local processor
-        label triI = 0;
-        const scalar maxAreaLimit = triCumulativeMagSf_.last();
+        triI = 0;
+        const scalar maxAreaLimit = triCumulativeMagSf_.back();
         const scalar areaFraction = rndGen_.position<scalar>(0, maxAreaLimit);
 
         forAllReverse(triCumulativeMagSf_, i)
@@ -298,16 +308,22 @@ Foam::pointIndexHit Foam::turbulentDFSEMInletFvPatchVectorField::setNewPosition
                 break;
             }
         }
-
-        // Find random point in triangle
-        const face& tf = triFace_[triI];
-        const triPointRef tri(points[tf[0]], points[tf[1]], points[tf[2]]);
-
-        pos.hitPoint(tri.randomPoint(rndGen_));
-        pos.setIndex(triToFace_[triI]);
     }
 
-    return pos;
+
+    if (triI >= 0)
+    {
+        return pointIndexHit
+        (
+            true,
+            // Find random point in triangle
+            triFace_[triI].tri(points).randomPoint(rndGen_),
+            triFace_[triI].index()
+        );
+    }
+
+    // No hit
+    return pointIndexHit(false, vector::max, -1);
 }
 
 
@@ -573,7 +589,6 @@ turbulentDFSEMInletFvPatchVectorField
 
     patchArea_(-1),
     triFace_(),
-    triToFace_(),
     triCumulativeMagSf_(),
     sumTriMagSf_(Pstream::nProcs() + 1, Zero),
     patchNormal_(Zero),
@@ -615,7 +630,6 @@ turbulentDFSEMInletFvPatchVectorField
 
     patchArea_(ptf.patchArea_),
     triFace_(ptf.triFace_),
-    triToFace_(ptf.triToFace_),
     triCumulativeMagSf_(ptf.triCumulativeMagSf_),
     sumTriMagSf_(ptf.sumTriMagSf_),
     patchNormal_(ptf.patchNormal_),
@@ -656,7 +670,6 @@ turbulentDFSEMInletFvPatchVectorField
 
     patchArea_(-1),
     triFace_(),
-    triToFace_(),
     triCumulativeMagSf_(),
     sumTriMagSf_(Pstream::nProcs() + 1, Zero),
     patchNormal_(Zero),
@@ -684,10 +697,11 @@ turbulentDFSEMInletFvPatchVectorField
 Foam::turbulentDFSEMInletFvPatchVectorField::
 turbulentDFSEMInletFvPatchVectorField
 (
-    const turbulentDFSEMInletFvPatchVectorField& ptf
+    const turbulentDFSEMInletFvPatchVectorField& ptf,
+    const DimensionedField<vector, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<vector>(ptf),
+    fixedValueFvPatchField<vector>(ptf, iF),
     U_(ptf.U_.clone(patch().patch())),
     R_(ptf.R_.clone(patch().patch())),
     L_(ptf.L_.clone(patch().patch())),
@@ -702,7 +716,6 @@ turbulentDFSEMInletFvPatchVectorField
 
     patchArea_(ptf.patchArea_),
     triFace_(ptf.triFace_),
-    triToFace_(ptf.triToFace_),
     triCumulativeMagSf_(ptf.triCumulativeMagSf_),
     sumTriMagSf_(ptf.sumTriMagSf_),
     patchNormal_(ptf.patchNormal_),
@@ -723,40 +736,10 @@ turbulentDFSEMInletFvPatchVectorField
 Foam::turbulentDFSEMInletFvPatchVectorField::
 turbulentDFSEMInletFvPatchVectorField
 (
-    const turbulentDFSEMInletFvPatchVectorField& ptf,
-    const DimensionedField<vector, volMesh>& iF
+    const turbulentDFSEMInletFvPatchVectorField& ptf
 )
 :
-    fixedValueFvPatchField<vector>(ptf, iF),
-    U_(ptf.U_.clone(patch().patch())),
-    R_(ptf.R_.clone(patch().patch())),
-    L_(ptf.L_.clone(patch().patch())),
-    delta_(ptf.delta_),
-    d_(ptf.d_),
-    kappa_(ptf.kappa_),
-    Uref_(ptf.Uref_),
-    Lref_(ptf.Lref_),
-    scale_(ptf.scale_),
-    m_(ptf.m_),
-    nCellPerEddy_(ptf.nCellPerEddy_),
-
-    patchArea_(ptf.patchArea_),
-    triFace_(ptf.triFace_),
-    triToFace_(ptf.triToFace_),
-    triCumulativeMagSf_(ptf.triCumulativeMagSf_),
-    sumTriMagSf_(ptf.sumTriMagSf_),
-    patchNormal_(ptf.patchNormal_),
-    patchBounds_(ptf.patchBounds_),
-
-    eddies_(ptf.eddies_),
-    v0_(ptf.v0_),
-    rndGen_(ptf.rndGen_),
-    sigmax_(ptf.sigmax_),
-    maxSigmaX_(ptf.maxSigmaX_),
-    nEddy_(ptf.nEddy_),
-    curTimeIndex_(-1),
-    singleProc_(ptf.singleProc_),
-    writeEddies_(ptf.writeEddies_)
+    turbulentDFSEMInletFvPatchVectorField(ptf, ptf.internalField())
 {}
 
 

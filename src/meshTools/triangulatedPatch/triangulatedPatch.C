@@ -171,31 +171,32 @@ void Foam::triangulatedPatch::update()
 
     // Set zero value at the start of the tri area/weight list
     scalar patchArea = 0;
-    *iter = patchArea;
-    ++iter;
+    *iter++ = patchArea;
 
     // Calculate cumulative and total area (processor-local at this point)
     for (const auto& t : triFace_)
     {
         patchArea += t.mag(points);
-
-        *iter = patchArea;
-        ++iter;
+        *iter++ = patchArea;
     }
 
-    // FIXME: use allGatherList of subslice
-    scalarList procSumWght(numProc+1, Foam::zero{});
-    procSumWght[myProci+1] = patchArea;
-    Pstream::listCombineReduce(procSumWght, maxEqOp<scalar>());
+    scalarList procSumArea(numProc+1);
+    procSumArea[0] = 0;
+
+    {
+        scalarList::subList slice(procSumArea, numProc, 1);
+        slice[myProci] = patchArea;
+        Pstream::allGatherList(slice);
+    }
 
     // Convert to cumulative
-    for (label i = 1; i < procSumWght.size(); ++i)
+    for (label i = 1; i < procSumArea.size(); ++i)
     {
-        procSumWght[i] += procSumWght[i-1];
+        procSumArea[i] += procSumArea[i-1];
     }
 
-    const scalar offset = procSumWght[myProci];
-    const scalar totalArea = procSumWght.back();
+    const scalar offset = procSumArea[myProci];
+    const scalar totalArea = procSumArea.back();
 
     // Apply processor offset and normalise - for a global 0-1 interval
     for (scalar& w : triWght_)

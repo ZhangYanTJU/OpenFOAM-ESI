@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -146,6 +146,7 @@ SourceFiles
 #include "eddy.H"
 #include "pointIndexHit.H"
 #include "PatchFunction1.H"
+#include "labelledTri.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -204,13 +205,11 @@ class turbulentDFSEMInletFvPatchVectorField
             //- Patch area - total across all processors
             scalar patchArea_;
 
-            //- Decomposed patch faces as a list of triangles
-            faceList triFace_;
+            //- The polyPatch faces as triangles, the index of each corresponds
+            //- to the undecomposed patch face index.
+            List<labelledTri> triFace_;
 
-            //- Addressing from per triangle to patch face
-            labelList triToFace_;
-
-            //- Cumulative triangle area per triangle face
+            //- Cumulative triangle area per triangle face (processor-local)
             scalarList triCumulativeMagSf_;
 
             //- Cumulative area fractions per processor
