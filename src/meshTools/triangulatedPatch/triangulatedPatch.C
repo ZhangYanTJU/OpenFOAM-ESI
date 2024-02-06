@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "triangulatedPatch.H"
-#include "triPointRef.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -50,6 +49,8 @@ bool Foam::triangulatedPatch::randomPoint
 
     // Find corresponding decomposed face triangle
     // Note: triWght_ is sized nTri+1 (zero added at start)
+    //
+    // TBD: binary search with findLower(triWght_, c) ??
     label trii = 0;
     for (label i = 0; i < triWght_.size() - 1; ++i)
     {
@@ -62,11 +63,9 @@ bool Foam::triangulatedPatch::randomPoint
 
     // Find random point in triangle
     const pointField& points = patch_.points();
-    const face& tf = triFace_[trii];
-    const triPointRef tri(points[tf[0]], points[tf[1]], points[tf[2]]);
 
-    result = tri.randomPoint(rnd);
-    facei = triToFace_[trii];
+    result = triFace_[trii].tri(points).randomPoint(rnd);
+    facei = triFace_[trii].index();
     celli = patch_.faceCells()[facei];
 
     if (perturbTol_ > 0)
@@ -97,7 +96,6 @@ Foam::triangulatedPatch::triangulatedPatch
     patch_(patch),
     perturbTol_(perturbTol),
     triFace_(),
-    triToFace_(),
     triWght_()
 {
     update();
@@ -115,70 +113,95 @@ Foam::triangulatedPatch::triangulatedPatch
 {}
 
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+void Foam::triangulatedPatch::triangulate
+(
+    const polyPatch& pp,
+    List<labelledTri>& tris
+)
+{
+    const pointField& points = pp.points();
+
+    // Triangulate the patch faces and create addressing
+    label nTris = 0;
+    for (const face& f : pp)
+    {
+        nTris += f.nTriangles();
+    }
+
+    DynamicList<labelledTri> dynTris(nTris);
+    DynamicList<face> tfaces(8);  // work array
+
+    label facei = 0;
+    for (const face& f : pp)
+    {
+        tfaces.clear();
+        f.triangles(points, tfaces);
+
+        for (const auto& t : tfaces)
+        {
+            dynTris.emplace_back(t[0], t[1], t[2], facei);
+        }
+        ++facei;
+    }
+
+    tris.transfer(dynTris);
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::triangulatedPatch::update()
 {
+    triFace_.clear();
+    triWght_.clear();
+
+    triangulate(patch_, triFace_);
+
     const pointField& points = patch_.points();
 
-    // Triangulate the patch faces and create addressing
-    DynamicList<label> triToFace(2*patch_.size());
-    DynamicList<face> triFace(2*patch_.size());
-    DynamicList<scalar> triWght(2*patch_.size());
-    DynamicList<face> tris(8);
+    const label myProci = UPstream::myProcNo();
+    const label numProc = UPstream::nProcs();
+
+    // Calculate the cumulative triangle weights
+    triWght_.resize_nocopy(triFace_.size()+1);
+
+    auto iter = triWght_.begin();
 
     // Set zero value at the start of the tri area/weight list
-    triWght.push_back(0);
+    scalar patchArea = 0;
+    *iter = patchArea;
+    ++iter;
 
-    forAll(patch_, facei)
+    // Calculate cumulative and total area (processor-local at this point)
+    for (const auto& t : triFace_)
     {
-        const face& f = patch_[facei];
+        patchArea += t.mag(points);
 
-        tris.clear();
-        f.triangles(points, tris);
-
-        for (const auto& t : tris)
-        {
-            triToFace.push_back(facei);
-            triFace.push_back(t);
-            triWght.push_back(t.mag(points));
-        }
+        *iter = patchArea;
+        ++iter;
     }
 
-    scalarList procSumWght(Pstream::nProcs()+1, Zero);
-    procSumWght[Pstream::myProcNo()+1] = sum(triWght);
+    // FIXME: use allGatherList of subslice
+    scalarList procSumWght(numProc+1, Foam::zero{});
+    procSumWght[myProci+1] = patchArea;
     Pstream::listCombineReduce(procSumWght, maxEqOp<scalar>());
 
+    // Convert to cumulative
     for (label i = 1; i < procSumWght.size(); ++i)
     {
-        // Convert to cumulative
         procSumWght[i] += procSumWght[i-1];
     }
 
-    const scalar offset = procSumWght[Pstream::myProcNo()];
-    forAll(triWght, i)
+    const scalar offset = procSumWght[myProci];
+    const scalar totalArea = procSumWght.back();
+
+    // Apply processor offset and normalise - for a global 0-1 interval
+    for (scalar& w : triWght_)
     {
-        if (i)
-        {
-            // Convert to cumulative
-            triWght[i] += triWght[i-1];
-        }
-
-        // Apply processor offset
-        triWght[i] += offset;
+        w = (w + offset) / totalArea;
     }
-
-    // Normalise
-    const scalar sumWght = procSumWght.back();
-    for (scalar& w : triWght)
-    {
-        w /= sumWght;
-    }
-
-    // Transfer to persistent storage
-    triFace_.transfer(triFace);
-    triToFace_.transfer(triToFace);
-    triWght_.transfer(triWght);
 }
 
 
@@ -190,6 +213,14 @@ bool Foam::triangulatedPatch::randomLocalPoint
     label& celli
 ) const
 {
+    if (triWght_.empty())
+    {
+        result = point::min;
+        facei = -1;
+        celli = -1;
+        return false;
+    }
+
     const scalar c = rnd.position<scalar>(triWght_.front(), triWght_.back());
 
     return randomPoint(rnd, c, result, facei, celli);
@@ -204,20 +235,23 @@ bool Foam::triangulatedPatch::randomGlobalPoint
     label& celli
 ) const
 {
-    boolList valid(UPstream::nProcs(), false);
-    valid[UPstream::myProcNo()] = randomLocalPoint(rnd, result, facei, celli);
-    UPstream::listGatherValues(valid);
-
-    forAll(valid, proci)
+    if (UPstream::parRun())
     {
-        // Choose first valid processor
-        if (valid[proci])
-        {
-            return (proci == UPstream::myProcNo());
-        }
-    }
+        const scalar c = rnd.sample01<scalar>();
+        const bool ok = randomPoint(rnd, c, result, facei, celli);
 
-    return false;
+        boolList valid(UPstream::listGatherValues(ok));
+
+        // Select the first valid processor
+        label proci = valid.find(true);
+        Pstream::broadcast(proci);
+
+        return (proci == UPstream::myProcNo());
+    }
+    else
+    {
+        return randomLocalPoint(rnd, result, facei, celli);
+    }
 }
 
 

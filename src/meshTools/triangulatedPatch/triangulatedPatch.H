@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,7 @@ Description
 #define Foam_triangulatedPatch_H
 
 #include "polyMesh.H"
+#include "labelledTri.H"
 #include "Random.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -55,13 +56,12 @@ class triangulatedPatch
         //- Perturbation tolerance to move the point towards the cell centre
         bool perturbTol_;
 
-        //- Face triangles
-        faceList triFace_;
+        //- The polyPatch faces as triangles, the index of each corresponds
+        //- to the undecomposed patch face index.
+        List<labelledTri> triFace_;
 
-        //- Triangle to patch face addressing
-        labelList triToFace_;
-
-        //- Triangle weights
+        //- The cumulative triangle area per triangle face,
+        //- globally normalised as a 0-1 interval.
         scalarList triWght_;
 
 
@@ -80,6 +80,11 @@ class triangulatedPatch
             label& celli
         ) const;
 
+
+    // Static Member Functions
+
+        //- Triangulate the patch faces and create addressing
+        static void triangulate(const polyPatch& pp, List<labelledTri>& tris);
 
 public:
 
