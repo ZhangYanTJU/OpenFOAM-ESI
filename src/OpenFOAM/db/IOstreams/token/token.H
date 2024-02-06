@@ -541,7 +541,7 @@ public:
         //  No character stripping
         inline explicit token(tokenType typ, const std::string&, label line=0);
 
-        //- Copy construct word/string token with the specified variant.
+        //- Move construct word/string token with the specified variant.
         //  A invalid word/string variant type is silently treated as STRING.
         //  No character stripping
         inline explicit token(tokenType typ, std::string&&, label line=0);
