@@ -197,8 +197,8 @@ if ( "$FOAM_MPI" != dummy ) then
     _foamAddLib "${FOAM_LIBBIN}/${FOAM_MPI}"
 endif
 
-# OpenFOAM user, group libraries
-_foamAddLib  "${FOAM_USER_LIBBIN}:${FOAM_SITE_LIBBIN}"
+_foamAddLib  "$FOAM_SITE_LIBBIN"  # OpenFOAM group libraries
+_foamAddLib  "$FOAM_USER_LIBBIN"  # OpenFOAM user  libraries
 
 if ( -d "$WM_PROJECT_DIR/doc/man1" ) then
     _foamAddMan "$WM_PROJECT_DIR/doc"
