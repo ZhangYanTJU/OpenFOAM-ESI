@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -905,6 +905,11 @@ void Foam::polyTopoChange::reorderCompactFaces
     renumberKey(oldToNew, faceZone_);
     inplaceReorder(oldToNew, faceZoneFlip_);
     faceZoneFlip_.setCapacity(newSize);
+    if (faceAdditionalZones_.size())
+    {
+        inplaceReorder(oldToNew, faceAdditionalZones_);
+        faceAdditionalZones_.setCapacity(newSize);
+    }
 }
 
 
@@ -913,6 +918,7 @@ void Foam::polyTopoChange::shrink()
     points_.shrink();
     pointMap_.shrink();
     reversePointMap_.shrink();
+    pointAdditionalZones_.shrink();
 
     faces_.shrink();
     region_.shrink();
@@ -920,10 +926,12 @@ void Foam::polyTopoChange::shrink()
     faceNeighbour_.shrink();
     faceMap_.shrink();
     reverseFaceMap_.shrink();
+    faceAdditionalZones_.shrink();
 
     cellMap_.shrink();
     reverseCellMap_.shrink();
     cellZone_.shrink();
+    cellAdditionalZones_.shrink();
 }
 
 
@@ -1091,6 +1099,10 @@ void Foam::polyTopoChange::compact
 
         renumberKey(localPointMap, pointZone_);
         renumber(localPointMap, retiredPoints_);
+        if (pointAdditionalZones_.size())
+        {
+            reorder(localPointMap, pointAdditionalZones_);
+        }
 
         // Use map to relabel face vertices
         forAll(faces_, facei)
@@ -1191,6 +1203,11 @@ void Foam::polyTopoChange::compact
 
             reorder(localCellMap, cellZone_);
             cellZone_.setCapacity(newCelli);
+            if (cellAdditionalZones_.size())
+            {
+                reorder(localCellMap, cellAdditionalZones_);
+                cellAdditionalZones_.setCapacity(newCelli);
+            }
 
             renumberKey(localCellMap, cellFromPoint_);
             renumberKey(localCellMap, cellFromEdge_);
@@ -1224,6 +1241,14 @@ void Foam::polyTopoChange::compact
                             std::swap(faceOwner_[facei], faceNeighbour_[facei]);
                             flipFaceFlux_.flip(facei);
                             faceZoneFlip_.flip(facei);
+                            if (facei < faceAdditionalZones_.size())
+                            {
+                                for (auto& zas : faceAdditionalZones_[facei])
+                                {
+                                    // Flip sign
+                                    zas = -zas;
+                                }
+                            }
                         }
                     }
                 }
@@ -1582,6 +1607,19 @@ void Foam::polyTopoChange::resetZones
             }
             nPoints[zonei]++;
         }
+        forAll(pointAdditionalZones_, pointi)
+        {
+            for (const label zonei : pointAdditionalZones_[pointi])
+            {
+                if (zonei < 0 || zonei >= pointZones.size())
+                {
+                    FatalErrorInFunction
+                        << "Illegal zoneID " << zonei << " for point "
+                        << pointi << abort(FatalError);
+                }
+                nPoints[zonei]++;
+            }
+        }
 
         // Distribute points per zone
 
@@ -1598,6 +1636,13 @@ void Foam::polyTopoChange::resetZones
             const label zonei = iter.val();
 
             addressing[zonei][nPoints[zonei]++] = pointi;
+        }
+        forAll(pointAdditionalZones_, pointi)
+        {
+            for (const label zonei : pointAdditionalZones_[pointi])
+            {
+                addressing[zonei][nPoints[zonei]++] = pointi;
+            }
         }
         // Sort the addressing
         forAll(addressing, zonei)
@@ -1668,6 +1713,20 @@ void Foam::polyTopoChange::resetZones
             }
             nFaces[zonei]++;
         }
+        forAll(faceAdditionalZones_, facei)
+        {
+            for (const label zoneAndSign : faceAdditionalZones_[facei])
+            {
+                const label zonei = mag(zoneAndSign)-1;
+                if (zonei < 0 || zonei >= faceZones.size())
+                {
+                    FatalErrorInFunction
+                        << "Illegal zoneID " << zonei << " for face "
+                        << facei << abort(FatalError);
+                }
+                nFaces[zonei]++;
+            }
+        }
 
         labelListList addressing(faceZones.size());
         boolListList flipMode(faceZones.size());
@@ -1685,9 +1744,21 @@ void Foam::polyTopoChange::resetZones
             const label zonei = iter.val();
 
             const label index = nFaces[zonei]++;
-
             addressing[zonei][index] = facei;
             flipMode[zonei][index] = faceZoneFlip_.test(facei);
+
+            if (facei < faceAdditionalZones_.size())
+            {
+                for (const label zoneAndSign : faceAdditionalZones_[facei])
+                {
+                    const label zonei = mag(zoneAndSign)-1;
+                    const bool flip = (zoneAndSign > 0);
+
+                    const label index = nFaces[zonei]++;
+                    addressing[zonei][index] = facei;
+                    flipMode[zonei][index] = flip;
+                }
+            }
         }
 
         // Sort the addressing
@@ -1784,6 +1855,20 @@ void Foam::polyTopoChange::resetZones
                 nCells[zonei]++;
             }
         }
+        forAll(cellAdditionalZones_, celli)
+        {
+            for (const label zonei : cellAdditionalZones_[celli])
+            {
+                if (zonei < 0 || zonei >= cellZones.size())
+                {
+                    FatalErrorInFunction
+                        << "Illegal zoneID " << zonei << " for cell "
+                        << celli << abort(FatalError);
+                }
+                nCells[zonei]++;
+            }
+        }
+
 
         labelListList addressing(cellZones.size());
         forAll(addressing, zonei)
@@ -1797,6 +1882,13 @@ void Foam::polyTopoChange::resetZones
             const label zonei = cellZone_[celli];
 
             if (zonei >= 0)
+            {
+                addressing[zonei][nCells[zonei]++] = celli;
+            }
+        }
+        forAll(cellAdditionalZones_, celli)
+        {
+            for (const label zonei : cellAdditionalZones_[celli])
             {
                 addressing[zonei][nCells[zonei]++] = celli;
             }
@@ -2236,6 +2328,7 @@ void Foam::polyTopoChange::clear()
     pointMap_.clearStorage();
     reversePointMap_.clearStorage();
     pointZone_.clearStorage();
+    pointAdditionalZones_.clearStorage();
     retiredPoints_.clearStorage();
 
     faces_.clearStorage();
@@ -2249,11 +2342,13 @@ void Foam::polyTopoChange::clear()
     flipFaceFlux_.clearStorage();
     faceZone_.clearStorage();
     faceZoneFlip_.clearStorage();
+    faceAdditionalZones_.clearStorage();
     nActiveFaces_ = 0;
 
     cellMap_.clearStorage();
     reverseCellMap_.clearStorage();
     cellZone_.clearStorage();
+    cellAdditionalZones_.clearStorage();
     cellFromPoint_.clearStorage();
     cellFromEdge_.clearStorage();
     cellFromFace_.clearStorage();
@@ -2288,29 +2383,42 @@ void Foam::polyTopoChange::addMesh
         reversePointMap_.setCapacity(reversePointMap_.size() + points.size());
         pointZone_.resize(pointZone_.size() + points.size()/128);
 
-        // Precalc offset zones
-        labelList newZoneID(points.size(), -1);
-
-        forAll(pointZones, zonei)
+        // Add points without pointZone
+        labelList newPointID(points.size());
+        forAll(newPointID, pointi)
         {
-            const labelList& pointLabels = pointZones[zonei];
-
-            for (const label pointi : pointLabels)
-            {
-                newZoneID[pointi] = pointZoneMap[zonei];
-            }
-        }
-
-        // Add points in mesh order
-        for (label pointi = 0; pointi < mesh.nPoints(); pointi++)
-        {
-            addPoint
+            // Add point from point
+            newPointID[pointi] = addPoint
             (
                 points[pointi],
                 pointi,
-                newZoneID[pointi],
+                 -1,
                 true
             );
+        }
+
+        // Modify for pointZones
+        DynamicList<label> zones;
+        forAll(pointZones, zonei)
+        {
+            for (const label pointi : pointZones[zonei])
+            {
+                // Get previous zones
+                this->pointZones(newPointID[pointi], zones);
+                for (auto& zonei : zones)
+                {
+                    zonei = pointZoneMap[zonei];
+                }
+                // Add new zone
+                zones.append(pointZoneMap[zonei]);
+                modifyPoint
+                (
+                    newPointID[pointi],
+                    points_[newPointID[pointi]],
+                    zones,
+                    true
+                );
+            }
         }
     }
 
@@ -2332,38 +2440,30 @@ void Foam::polyTopoChange::addMesh
         cellZone_.setCapacity(cellZone_.size() + nAllCells);
 
 
-        // Precalc offset zones
-        labelList newZoneID(nAllCells, -1);
-
-        forAll(cellZones, zonei)
-        {
-            const labelList& cellLabels = cellZones[zonei];
-
-            for (const label celli : cellLabels)
-            {
-                if (newZoneID[celli] != -1)
-                {
-                    WarningInFunction
-                        << "Cell:" << celli
-                        << " centre:" << mesh.cellCentres()[celli]
-                        << " is in two zones:"
-                        << cellZones[newZoneID[celli]].name()
-                        << " and " << cellZones[zonei].name() << endl
-                        << "    This is not supported."
-                        << " Continuing with first zone only." << endl;
-                }
-                else
-                {
-                    newZoneID[celli] = cellZoneMap[zonei];
-                }
-            }
-        }
-
-        // Add cells in mesh order
+        // Add cells without cellZone
+        labelList newCellID(nAllCells);
         for (label celli = 0; celli < nAllCells; celli++)
         {
             // Add cell from cell
-            addCell(-1, -1, -1, celli, newZoneID[celli]);
+            newCellID[celli] = addCell(-1, -1, -1, celli, -1);
+        }
+
+        // Modify for cellZones
+        DynamicList<label> zones;
+        forAll(cellZones, zonei)
+        {
+            for (const label celli : cellZones[zonei])
+            {
+                // Get previous zones
+                this->cellZones(newCellID[celli], zones);
+                for (auto& zonei : zones)
+                {
+                    zonei = cellZoneMap[zonei];
+                }
+                // Add new zone
+                zones.append(cellZoneMap[zonei]);
+                modifyCell(newCellID[celli], zones);
+            }
         }
     }
 
@@ -2388,31 +2488,16 @@ void Foam::polyTopoChange::addMesh
         faceFromEdge_.resize(faceFromEdge_.size() + nAllFaces/128);
         flipFaceFlux_.setCapacity(faces_.size() + nAllFaces);
         faceZone_.resize(faceZone_.size() + nAllFaces/128);
-        faceZoneFlip_.setCapacity(faces_.size() + nAllFaces);
+        faceZoneFlip_.setCapacity(faceMap_.capacity());
 
 
-        // Precalc offset zones
-        labelList newZoneID(nAllFaces, -1);
-        boolList zoneFlip(nAllFaces, false);
-
-        forAll(faceZones, zonei)
-        {
-            const labelList& faceLabels = faceZones[zonei];
-            const boolList& flipMap = faceZones[zonei].flipMap();
-
-            forAll(faceLabels, facei)
-            {
-                newZoneID[faceLabels[facei]] = faceZoneMap[zonei];
-                zoneFlip[faceLabels[facei]] = flipMap[facei];
-            }
-        }
-
-        // Add faces in mesh order
+        // Add faces (in mesh order) without faceZone
+        labelList newFaceID(nAllFaces);
 
         // 1. Internal faces
         for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
         {
-            addFace
+            newFaceID[facei] = addFace
             (
                 faces[facei],
                 faceOwner[facei],
@@ -2422,8 +2507,8 @@ void Foam::polyTopoChange::addMesh
                 facei,                      // masterFaceID
                 false,                      // flipFaceFlux
                 -1,                         // patchID
-                newZoneID[facei],           // zoneID
-                zoneFlip[facei]             // zoneFlip
+                -1,                         // zoneID
+                false                       // zoneFlip
             );
         }
 
@@ -2446,7 +2531,7 @@ void Foam::polyTopoChange::addMesh
             {
                 const label facei = pp.start() + patchFacei;
 
-                addFace
+                newFaceID[facei] = addFace
                 (
                     faces[facei],
                     faceOwner[facei],
@@ -2456,8 +2541,49 @@ void Foam::polyTopoChange::addMesh
                     facei,                      // masterFaceID
                     false,                      // flipFaceFlux
                     patchMap[patchi],           // patchID
-                    newZoneID[facei],           // zoneID
-                    zoneFlip[facei]             // zoneFlip
+                    -1,                         // zoneID
+                    false                       // zoneFlip
+                );
+            }
+        }
+
+
+        // Modify for faceZones
+
+        DynamicList<label> zones;
+        DynamicList<bool> flips;
+        forAll(faceZones, zonei)
+        {
+            const auto& fz = faceZones[zonei];
+
+            forAll(fz, i)
+            {
+                const label facei = fz[i];
+                const bool flip = fz.flipMap()[i];
+
+                // Modify face index for combined zones
+                const label newFacei = newFaceID[facei];
+
+                // Get previous zones
+                this->faceZones(newFacei, zones, flips);
+                for (auto& zonei : zones)
+                {
+                    zonei = faceZoneMap[zonei];
+                }
+                // Add new zone
+                zones.append(faceZoneMap[zonei]);
+                flips.append(flip);
+
+                modifyFace
+                (
+                    faces_[newFacei],
+                    newFacei,
+                    faceOwner_[newFacei],
+                    faceNeighbour_[newFacei],
+                    flipFaceFlux_(newFacei),
+                    region_[newFacei],
+                    zones,
+                    flips
                 );
             }
         }
@@ -2644,6 +2770,57 @@ Foam::label Foam::polyTopoChange::addPoint
     {
         pointZone_.insert(pointi, zoneID);
     }
+    // Delay extending the pointAdditionalZones
+
+    if (!inCell)
+    {
+        retiredPoints_.insert(pointi);
+    }
+
+    return pointi;
+}
+
+
+Foam::label Foam::polyTopoChange::addPoint
+(
+    const point& pt,
+    const label masterPointID,
+    const labelUList& zoneIDs,
+    const bool inCell
+)
+{
+    const label pointi = points_.size();
+
+    points_.append(pt);
+    pointMap_.append(masterPointID);
+    reversePointMap_.append(pointi);
+
+    if (zoneIDs.size())
+    {
+        const label minIndex = findMin(zoneIDs);
+
+        pointZone_.set(pointi, zoneIDs[minIndex]);
+
+        // Clear any additional storage
+        if (pointi < pointAdditionalZones_.size())
+        {
+            pointAdditionalZones_[pointi].clear();
+        }
+        // (auto-vivify and) store additional zones
+        forAll(zoneIDs, i)
+        {
+            if (i != minIndex)
+            {
+                if (zoneIDs[i] == zoneIDs[minIndex])
+                {
+                    FatalErrorInFunction << "Duplicates in zones "
+                        << flatOutput(zoneIDs) << " for point " << pointi
+                        << exit(FatalError);
+                }
+                pointAdditionalZones_(pointi).push_uniq(zoneIDs[i]);
+            }
+        }
+    }
 
     if (!inCell)
     {
@@ -2659,6 +2836,88 @@ void Foam::polyTopoChange::modifyPoint
     const label pointi,
     const point& pt,
     const label zoneID,
+    const bool inCell,
+    const bool singleZone
+)
+{
+    if (pointi < 0 || pointi >= points_.size())
+    {
+        FatalErrorInFunction
+            << "illegal point label " << pointi << endl
+            << "Valid point labels are 0 .. " << points_.size()-1
+            << abort(FatalError);
+    }
+    if (pointRemoved(pointi) || pointMap_[pointi] == -1)
+    {
+        FatalErrorInFunction
+            << "point " << pointi << " already marked for removal"
+            << abort(FatalError);
+    }
+    points_[pointi] = pt;
+
+    if (singleZone)
+    {
+        if (zoneID >= 0)
+        {
+            pointZone_.set(pointi, zoneID);
+        }
+        else
+        {
+            pointZone_.erase(pointi);
+        }
+        if (pointi < pointAdditionalZones_.size())
+        {
+            pointAdditionalZones_[pointi].clear();
+        }
+    }
+    else
+    {
+        auto fnd = pointZone_.find(pointi);
+        if (!fnd)
+        {
+            pointZone_.set(pointi, zoneID);
+
+            // Check that no leftover additional zones
+            if (pointAdditionalZones_(pointi).size())
+            {
+                FatalErrorInFunction
+                    << "Additional zones for point:"
+                    << pointAdditionalZones_(pointi)
+                    << abort(FatalError);
+            }
+        }
+        else if (zoneID == -1)
+        {
+            // Clear
+            pointZone_.erase(pointi);
+            if (pointi < pointAdditionalZones_.size())
+            {
+                pointAdditionalZones_[pointi].clear();
+            }
+        }
+        else if (zoneID != fnd())
+        {
+            // New zone. Store in additional storage.
+            pointAdditionalZones_(pointi).push_uniq(zoneID);
+        }
+    }
+
+    if (inCell)
+    {
+        retiredPoints_.erase(pointi);
+    }
+    else
+    {
+        retiredPoints_.insert(pointi);
+    }
+}
+
+
+void Foam::polyTopoChange::modifyPoint
+(
+    const label pointi,
+    const point& pt,
+    const labelUList& zoneIDs,
     const bool inCell
 )
 {
@@ -2677,13 +2936,33 @@ void Foam::polyTopoChange::modifyPoint
     }
     points_[pointi] = pt;
 
-    if (zoneID >= 0)
+    if (zoneIDs.size())
     {
-        pointZone_.set(pointi, zoneID);
+        if (zoneIDs.found(-1))
+        {
+            FatalErrorInFunction
+                << "zones cannot contain -1 : " << flatOutput(zoneIDs)
+                << " for point:" << pointi
+                << abort(FatalError);
+        }
+
+        pointZone_.set(pointi, zoneIDs[0]);
+        if (pointi < pointAdditionalZones_.size())
+        {
+            pointAdditionalZones_[pointi].clear();
+        }
+        for (label i = 1; i < zoneIDs.size(); ++i)
+        {
+            pointAdditionalZones_(pointi).push_uniq(zoneIDs[i]);
+        }
     }
     else
     {
         pointZone_.erase(pointi);
+        if (pointi < pointAdditionalZones_.size())
+        {
+            pointAdditionalZones_[pointi].clear();
+        }
     }
 
     if (inCell)
@@ -2695,7 +2974,6 @@ void Foam::polyTopoChange::modifyPoint
         retiredPoints_.insert(pointi);
     }
 }
-
 
 void Foam::polyTopoChange::movePoints(const pointField& newPoints)
 {
@@ -2759,6 +3037,10 @@ void Foam::polyTopoChange::removePoint
         reversePointMap_[pointi] = -1;
     }
     pointZone_.erase(pointi);
+    if (pointi < pointAdditionalZones_.size())
+    {
+        pointAdditionalZones_[pointi].clear();
+    }
     retiredPoints_.erase(pointi);
 }
 
@@ -2822,6 +3104,100 @@ Foam::label Foam::polyTopoChange::addFace
         faceZone_.insert(facei, zoneID);
     }
     faceZoneFlip_.set(facei, zoneFlip);
+    // Delay extending the faceAdditionalZones
+
+    return facei;
+}
+
+
+Foam::label Foam::polyTopoChange::addFace
+(
+    const face& f,
+    const label own,
+    const label nei,
+    const label masterPointID,
+    const label masterEdgeID,
+    const label masterFaceID,
+    const bool flipFaceFlux,
+    const label patchID,
+    const labelUList& zoneIDs,
+    const UList<bool>& zoneFlips
+)
+{
+    // Check validity
+    if (debug)
+    {
+        // Note: no check on zones
+        checkFace(f, -1, own, nei, patchID, -1);
+    }
+
+    label facei = faces_.size();
+
+    faces_.append(f);
+    region_.append(patchID);
+    faceOwner_.append(own);
+    faceNeighbour_.append(nei);
+
+    if (masterPointID >= 0)
+    {
+        faceMap_.append(-1);
+        faceFromPoint_.insert(facei, masterPointID);
+    }
+    else if (masterEdgeID >= 0)
+    {
+        faceMap_.append(-1);
+        faceFromEdge_.insert(facei, masterEdgeID);
+    }
+    else if (masterFaceID >= 0)
+    {
+        faceMap_.append(masterFaceID);
+    }
+    else
+    {
+        // Allow inflate-from-nothing?
+        //FatalErrorInFunction
+        //    << "Need to specify a master point, edge or face"
+        //    << "face:" << f << " own:" << own << " nei:" << nei
+        //    << abort(FatalError);
+        faceMap_.append(-1);
+    }
+    reverseFaceMap_.append(facei);
+
+    flipFaceFlux_.set(facei, flipFaceFlux);
+
+    if (zoneIDs.size())
+    {
+        const label minIndex = findMin(zoneIDs);
+
+        faceZone_.set(facei, zoneIDs[minIndex]);
+        faceZoneFlip_.set(facei, zoneFlips[minIndex]);
+
+        // Clear any additional storage
+        if (facei < faceAdditionalZones_.size())
+        {
+            faceAdditionalZones_[facei].clear();
+        }
+        // (auto-vivify and) store additional zones
+        forAll(zoneIDs, i)
+        {
+            if (i != minIndex)
+            {
+                if (zoneIDs[i] == zoneIDs[minIndex])
+                {
+                    FatalErrorInFunction << "Duplicates in zones "
+                        << flatOutput(zoneIDs) << " for face " << facei
+                        << exit(FatalError);
+                }
+                const label zoneAndSign
+                (
+                    zoneFlips[i]
+                  ? zoneIDs[i]+1
+                  : -(zoneIDs[i]+1)
+                );
+                faceAdditionalZones_(facei).push_uniq(zoneAndSign);
+            }
+        }
+    }
 
     return facei;
 }
@@ -2836,7 +3212,8 @@ void Foam::polyTopoChange::modifyFace
     const bool flipFaceFlux,
     const label patchID,
     const label zoneID,
-    const bool zoneFlip
+    const bool zoneFlip,
+    const bool singleZone
 )
 {
     // Check validity
@@ -2851,15 +3228,133 @@ void Foam::polyTopoChange::modifyFace
     region_[facei] = patchID;
 
     flipFaceFlux_.set(facei, flipFaceFlux);
-    faceZoneFlip_.set(facei, zoneFlip);
 
-    if (zoneID >= 0)
+    // Note: same logic as modifyCell except storage is now sparse instead
+    //       of marked with -1
+
+    if (singleZone)
     {
-        faceZone_.set(facei, zoneID);
+        if (zoneID == -1)
+        {
+            faceZone_.erase(facei);
+            faceZoneFlip_.set(facei, zoneFlip);
+        }
+        else
+        {
+            faceZone_.set(facei, zoneID);
+            faceZoneFlip_.set(facei, zoneFlip);
+        }
+        if (facei < faceAdditionalZones_.size())
+        {
+            faceAdditionalZones_[facei].clear();
+        }
+    }
+    else
+    {
+        auto fnd = faceZone_.find(facei);
+        if (!fnd)
+        {
+            faceZone_.set(facei, zoneID);
+            faceZoneFlip_.set(facei, zoneFlip);
+
+            // Check that no leftover additional zones
+            if (faceAdditionalZones_(facei).size())
+            {
+                FatalErrorInFunction
+                    << "Additional zones for face:"
+                    << faceAdditionalZones_(facei)
+                    << abort(FatalError);
+            }
+        }
+        else if (zoneID == -1)
+        {
+            // Clear
+            faceZone_.erase(facei);
+            faceZoneFlip_.set(facei, false);
+            if (facei < faceAdditionalZones_.size())
+            {
+                faceAdditionalZones_[facei].clear();
+            }
+        }
+        else if (zoneID != fnd())
+        {
+            // New zone. Store in additional storage.
+            const label zoneAndSign
+            (
+                zoneFlip
+              ? zoneID+1
+              : -(zoneID+1)
+            );
+            faceAdditionalZones_(facei).push_uniq(zoneAndSign);
+        }
+    }
+}
+
+
+void Foam::polyTopoChange::modifyFace
+(
+    const face& f,
+    const label facei,
+    const label own,
+    const label nei,
+    const bool flipFaceFlux,
+    const label patchID,
+    const labelUList& zoneIDs,
+    const UList<bool>& zoneFlips
+)
+{
+    // Check validity
+    if (debug)
+    {
+        // Note: no check on zones
+        checkFace(f, facei, own, nei, patchID, -1);
+    }
+
+    faces_[facei] = f;
+    faceOwner_[facei] = own;
+    faceNeighbour_[facei] = nei;
+    region_[facei] = patchID;
+
+    flipFaceFlux_.set(facei, flipFaceFlux);
+
+    // Note: same logic as modifyCell except storage is now sparse instead
+    //       of marked with -1
+
+    if (zoneIDs.size())
+    {
+        if (zoneIDs.found(-1))
+        {
+            FatalErrorInFunction
+                << "zones cannot contain -1 : " << flatOutput(zoneIDs)
+                << " for face:" << facei
+                << abort(FatalError);
+        }
+
+        faceZone_.set(facei, zoneIDs[0]);
+        faceZoneFlip_.set(facei, zoneFlips[0]);
+        if (facei < faceAdditionalZones_.size())
+        {
+            faceAdditionalZones_[facei].clear();
+        }
+        for (label i = 1; i < zoneIDs.size(); ++i)
+        {
+            const label zoneAndSign
+            (
+                zoneFlips[i]
+              ? zoneIDs[i]+1
+              : -(zoneIDs[i]+1)
+            );
+            faceAdditionalZones_(facei).push_uniq(zoneAndSign);
+        }
     }
     else
     {
         faceZone_.erase(facei);
+        faceZoneFlip_.set(facei, false);
+        if (facei < faceAdditionalZones_.size())
+        {
+            faceAdditionalZones_[facei].clear();
+        }
     }
 }
 
@@ -2908,6 +3403,10 @@ void Foam::polyTopoChange::removeFace
     flipFaceFlux_.unset(facei);
     faceZoneFlip_.unset(facei);
     faceZone_.erase(facei);
+    if (facei < faceAdditionalZones_.size())
+    {
+        faceAdditionalZones_[facei].clear();
+    }
 }
 
 
@@ -2942,7 +3441,65 @@ Foam::label Foam::polyTopoChange::addCell
         cellMap_.append(masterCellID);
     }
     reverseCellMap_.append(celli);
+
     cellZone_.append(zoneID);
+    // Delay extending the cellAdditionalZones
+
+    return celli;
+}
+
+
+Foam::label Foam::polyTopoChange::addCell
+(
+    const label masterPointID,
+    const label masterEdgeID,
+    const label masterFaceID,
+    const label masterCellID,
+    const labelUList& zoneIDs
+)
+{
+    label celli = cellMap_.size();
+
+    if (masterPointID >= 0)
+    {
+        cellMap_.append(-1);
+        cellFromPoint_.insert(celli, masterPointID);
+    }
+    else if (masterEdgeID >= 0)
+    {
+        cellMap_.append(-1);
+        cellFromEdge_.insert(celli, masterEdgeID);
+    }
+    else if (masterFaceID >= 0)
+    {
+        cellMap_.append(-1);
+        cellFromFace_.insert(celli, masterFaceID);
+    }
+    else
+    {
+        cellMap_.append(masterCellID);
+    }
+    reverseCellMap_.append(celli);
+
+    if (zoneIDs.size())
+    {
+        cellZone_.append(zoneIDs[0]);
+
+        // Clear any additional storage
+        if (celli < cellAdditionalZones_.size())
+        {
+            cellAdditionalZones_[celli].clear();
+        }
+        // (auto-vivify and) store additional zones
+        for (label i = 1; i < zoneIDs.size(); ++i)
+        {
+            cellAdditionalZones_(celli).push_uniq(zoneIDs[i]);
+        }
+    }
+    else
+    {
+        cellZone_.append(-1);
+    }
 
     return celli;
 }
@@ -2951,10 +3508,96 @@ Foam::label Foam::polyTopoChange::addCell
 void Foam::polyTopoChange::modifyCell
 (
     const label celli,
-    const label zoneID
+    const label zoneID,
+    const bool singleZone
 )
 {
-    cellZone_[celli] = zoneID;
+    if (singleZone)
+    {
+        cellZone_[celli] = zoneID;
+        if (celli < cellAdditionalZones_.size())
+        {
+            cellAdditionalZones_[celli].clear();
+        }
+    }
+    else
+    {
+        if (cellZone_[celli] == -1)
+        {
+            cellZone_[celli] = zoneID;
+
+            // Check that no leftover additional zones
+            if (cellAdditionalZones_(celli).size())
+            {
+                FatalErrorInFunction
+                    << "Additional zones for cell:"
+                    << cellAdditionalZones_(celli)
+                    << abort(FatalError);
+            }
+        }
+        else
+        {
+            if (zoneID == -1)
+            {
+                // Clear
+                cellZone_[celli] = zoneID;
+                if (celli < cellAdditionalZones_.size())
+                {
+                    cellAdditionalZones_[celli].clear();
+                }
+            }
+            else if (zoneID != cellZone_[celli])
+            {
+                // New zone. Store in additional storage.
+                cellAdditionalZones_(celli).push_uniq(zoneID);
+            }
+        }
+    }
+}
+
+
+void Foam::polyTopoChange::modifyCell
+(
+    const label celli,
+    const labelUList& zoneIDs
+)
+{
+    if (celli < 0 || celli >= cellMap_.size())
+    {
+        FatalErrorInFunction
+            << "illegal cell label " << celli << endl
+            << "Valid cell labels are 0 .. " << cellMap_.size()-1
+            << abort(FatalError);
+    }
+
+    if (zoneIDs.size())
+    {
+        if (zoneIDs.found(-1))
+        {
+            FatalErrorInFunction
+                << "zones cannot contain -1 : " << flatOutput(zoneIDs)
+                << " for cell:" << celli
+                << abort(FatalError);
+        }
+
+        cellZone_[celli] = zoneIDs[0];
+        if (celli < cellAdditionalZones_.size())
+        {
+            cellAdditionalZones_[celli].clear();
+        }
+        for (label i = 1; i < zoneIDs.size(); ++i)
+        {
+            cellAdditionalZones_(celli).push_uniq(zoneIDs[i]);
+        }
+    }
+    else
+    {
+        cellZone_[celli] = -1;
+        if (celli < cellAdditionalZones_.size())
+        {
+            cellAdditionalZones_[celli].clear();
+        }
+    }
 }
 
 
@@ -2993,6 +3636,109 @@ void Foam::polyTopoChange::removeCell
     cellFromEdge_.erase(celli);
     cellFromFace_.erase(celli);
     cellZone_[celli] = -1;
+    if (celli < cellAdditionalZones_.size())
+    {
+        cellAdditionalZones_[celli].clear();
+    }
+}
+
+
+Foam::label Foam::polyTopoChange::pointZones
+(
+    const label pointi,
+    DynamicList<label>& zones
+) const
+{
+    if (pointi < 0 || pointi >= pointMap_.size())
+    {
+        FatalErrorInFunction
+            << "illegal point label " << pointi << endl
+            << "Valid point labels are 0 .. " << pointMap_.size()-1
+            << abort(FatalError);
+    }
+    zones.clear();
+
+    const auto fnd = pointZone_.find(pointi);
+    if (fnd)
+    {
+        zones.push_back(fnd());
+        if (pointi < pointAdditionalZones_.size())
+        {
+            for (const label zonei : pointAdditionalZones_[pointi])
+            {
+                zones.push_uniq(zonei);
+            }
+        }
+    }
+    return zones.size();
+}
+
+
+Foam::label Foam::polyTopoChange::faceZones
+(
+    const label facei,
+    DynamicList<label>& zones,
+    DynamicList<bool>& flips
+) const
+{
+    if (facei < 0 || facei >= faceMap_.size())
+    {
+        FatalErrorInFunction
+            << "illegal face label " << facei << endl
+            << "Valid face labels are 0 .. " << faceMap_.size()-1
+            << abort(FatalError);
+    }
+    zones.clear();
+    flips.clear();
+
+    const auto fnd = faceZone_.find(facei);
+    if (fnd)
+    {
+        zones.push_back(fnd());
+        flips.push_back(flipFaceFlux_[facei]);
+        if (facei < faceAdditionalZones_.size())
+        {
+            for (const label zoneAndSign : faceAdditionalZones_[facei])
+            {
+                const label zonei = mag(zoneAndSign)-1;
+                if (!zones.found(zonei))
+                {
+                    zones.push_back(zonei);
+                    flips.push_back((zoneAndSign > 0));
+                }
+            }
+        }
+    }
+    return zones.size();
+}
+
+
+Foam::label Foam::polyTopoChange::cellZones
+(
+    const label celli,
+    DynamicList<label>& zones
+) const
+{
+    if (celli < 0 || celli >= cellMap_.size())
+    {
+        FatalErrorInFunction
+            << "illegal cell label " << celli << endl
+            << "Valid cell labels are 0 .. " << cellMap_.size()-1
+            << abort(FatalError);
+    }
+    zones.clear();
+    if (cellZone_[celli] != -1)
+    {
+        zones.push_back(cellZone_[celli]);
+    }
+    if (celli < cellAdditionalZones_.size())
+    {
+        for (const label zonei : cellAdditionalZones_[celli])
+        {
+            zones.push_uniq(zonei);
+        }
+    }
+    return zones.size();
 }
 
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,6 +55,14 @@ Description
     - coupled patches: the reorderCoupledFaces routine (borrowed from
     the couplePatches utility) reorders coupled patch faces and
     uses the cyclicPolyPatch,processorPolyPatch functionality.
+    - zones are assumed to be non-overlapping by default. If desired to be
+    overlapping= either set the singleZone to false when calling
+    modifyCell|Face|Point or use the variants of addCell|Face|Point
+    and modifyCell|Face|Point that take a list of zones.
+    - if overlapping zones:
+        - 'main' zone is the lowest numbered zone. -1 means no zones.
+        - 'additional' zones are stored in incremental ordering (and cannot
+          contain -1)
 
 SourceFiles
     polyTopoChange.C
@@ -127,6 +135,9 @@ class polyTopoChange
             //- Zone of point
             Map<label> pointZone_;
 
+            //- Additional zones of points
+            DynamicList<labelList> pointAdditionalZones_;
+
             //- Retired points
             labelHashSet retiredPoints_;
 
@@ -170,6 +181,9 @@ class polyTopoChange
             //- Orientation of face in zone
             bitSet faceZoneFlip_;
 
+            //- Additional zones of face (stored as signed face)
+            DynamicList<labelList> faceAdditionalZones_;
+
             //- Active faces
             label nActiveFaces_;
 
@@ -193,8 +207,11 @@ class polyTopoChange
             //- Cells added from face
             Map<label> cellFromFace_;
 
-            //- Zone of cell
+            //- First zone of cell (or -1)
             DynamicList<label> cellZone_;
+
+            //- Additional zones of cell
+            DynamicList<labelList> cellAdditionalZones_;
 
 
     // Private Member Functions
@@ -533,6 +550,18 @@ public:
                 const bool inCell
             );
 
+            //- Add point. Return new point label.
+            //  Notes:
+            //  - masterPointID can be < 0 (appended points)
+            //  - inCell = false: add retired point (to end of point list)
+            label addPoint
+            (
+                const point& pt,
+                const label masterPointID,
+                const labelUList& zoneIDs,
+                const bool inCell
+            );
+
             //- Modify coordinate.
             //  Notes:
             //  - zoneID = +ve (add to zoneID), -ve (remove from zones)
@@ -542,11 +571,31 @@ public:
                 const label pointi,
                 const point& pt,
                 const label zoneID,
+                const bool inCell,
+                const bool singleZone = true
+            );
+
+            //- Modify coordinate.
+            //  Notes:
+            //  - zoneIDs = set pointZones
+            //  - inCell = false: add retired point (to end of point list)
+            void modifyPoint
+            (
+                const label pointi,
+                const point& pt,
+                const labelUList& zoneIDs,
                 const bool inCell
             );
 
             //- Remove/merge point.
             void removePoint(const label pointi, const label mergePointi);
+
+            //- Get current cellZone(s). Return number of zones.
+            label pointZones
+            (
+                const label pointi,
+                DynamicList<label>& zones
+            ) const;
 
             //- Add face to cells. Return new face label.
             //  own,nei<0, zoneID>=0 : add inactive face (to end of face list)
@@ -564,6 +613,22 @@ public:
                 const bool zoneFlip
             );
 
+            //- Add face to cells. Return new face label.
+            //  own,nei<0, zoneID>=0 : add inactive face (to end of face list)
+            label addFace
+            (
+                const face& f,
+                const label own,
+                const label nei,
+                const label masterPointID,
+                const label masterEdgeID,
+                const label masterFaceID,
+                const bool flipFaceFlux,
+                const label patchID,
+                const labelUList& zoneIDs,
+                const UList<bool>& zoneFlips
+            );
+
             //- Modify vertices or cell of face.
             void modifyFace
             (
@@ -574,11 +639,33 @@ public:
                 const bool flipFaceFlux,
                 const label patchID,
                 const label zoneID,
-                const bool zoneFlip
+                const bool zoneFlip,
+                const bool singleZone = true
+            );
+
+            //- Modify vertices or cell of face.
+            void modifyFace
+            (
+                const face& f,
+                const label facei,
+                const label own,
+                const label nei,
+                const bool flipFaceFlux,
+                const label patchID,
+                const labelUList& zoneIDs,
+                const UList<bool>& zoneFlips
             );
 
             //- Remove/merge face.
             void removeFace(const label facei, const label mergeFacei);
+
+            //- Get current faceZone(s). Return number of zones.
+            label faceZones
+            (
+                const label facei,
+                DynamicList<label>& zones,
+                DynamicList<bool>& flips
+            ) const;
 
             //- Add cell. Return new cell label.
             label addCell
@@ -590,11 +677,33 @@ public:
                 const label zoneID
             );
 
-            //- Modify zone of cell
-            void modifyCell(const label celli, const label zoneID);
+            //- Add zoned cell (zones cannot be -1). Return new cell label.
+            label addCell
+            (
+                const label masterPointID,
+                const label masterEdgeID,
+                const label masterFaceID,
+                const label masterCellID,
+                const labelUList& zoneIDs
+            );
+
+            //- Modify zone of cell. Optionally add to zone.
+            void modifyCell
+            (
+                const label celli,
+                const label zoneID,
+                const bool singleZone = true
+            );
+
+            //- Set zones of cell
+            void modifyCell(const label celli, const labelUList& zoneIDs);
 
             //- Remove/merge cell.
             void removeCell(const label celli, const label mergeCelli);
+
+            //- Get current cellZone(s). Return number of zones.
+            label cellZones(const label celli, DynamicList<label>& zones) const;
+
 
             //- Explicitly set the number of patches if construct-without-mesh
             //- used.
