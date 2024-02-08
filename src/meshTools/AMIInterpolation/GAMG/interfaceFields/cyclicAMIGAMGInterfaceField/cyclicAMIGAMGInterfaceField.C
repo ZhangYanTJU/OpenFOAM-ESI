@@ -218,6 +218,19 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
           : AMI.srcMap()
         );
 
+        // Make sure all is finished
+        if (!recvRequests_.empty())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicAMIInterface_.index()
+                << abort(FatalError);
+        }
+        //UPstream::waitRequests(recvRequests_.start(), recvRequests_.size());
+        //UPstream::waitRequests(sendRequests_.start(), sendRequests_.size());
+        //recvRequests_.clear();
+        sendRequests_.clear();
+
         // Insert send/receive requests (non-blocking). See e.g.
         // cyclicAMIPolyPatchTemplates.C
         const label oldWarnComm = UPstream::commWarn(AMI.comm());
@@ -289,6 +302,9 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         // into slices of work.
         solveScalarField work;
         map.receive(recvRequests_, scalarRecvBufs_, work);
+
+        // Receive requests already handled.
+        recvRequests_.clear();
 
         solveScalarField pnf(faceCells.size(), Zero);
         AMI.weightedSum

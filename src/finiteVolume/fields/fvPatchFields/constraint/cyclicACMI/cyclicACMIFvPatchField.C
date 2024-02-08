@@ -444,7 +444,23 @@ void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
             << " starting send&receive"
             << endl;
 
-        if (!this->ready())
+//        if (!this->ready())
+//        {
+//            FatalErrorInFunction
+//                << "Outstanding recv request(s) on patch "
+//                << cyclicACMIPatch_.name()
+//                << " field " << this->internalField().name()
+//                << abort(FatalError);
+//        }
+
+        // By-pass polyPatch to get nbrId. Instead use cyclicACMIFvPatch virtual
+        // neighbPatch()
+        const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
+        const labelUList& nbrFaceCells = neighbPatch.faceCells();
+        const Field<Type> pnf(this->primitiveField(), nbrFaceCells);
+
+        // Make sure all is finished
+        if (!recvRequests_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -453,11 +469,10 @@ void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
                 << abort(FatalError);
         }
 
-        // By-pass polyPatch to get nbrId. Instead use cyclicACMIFvPatch virtual
-        // neighbPatch()
-        const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
-        const labelUList& nbrFaceCells = neighbPatch.faceCells();
-        const Field<Type> pnf(this->primitiveField(), nbrFaceCells);
+        //UPstream::waitRequests(recvRequests_.start(), recvRequests_.size());
+        //UPstream::waitRequests(sendRequests_.start(), sendRequests_.size());
+        //recvRequests_.clear();
+        sendRequests_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
@@ -515,6 +530,11 @@ void Foam::cyclicACMIFvPatchField<Type>::evaluate
             ).ptr()
         );
 
+        // Delete as early as possible. Already waited for in interpolate
+        // above so can be cleared.
+        recvRequests_.clear();
+
+
         auto& patchNeighbourField = patchNeighbourFieldPtr_.ref();
 
         if (doTransform())
@@ -559,14 +579,14 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
             << " starting send&receive"
             << endl;
 
-        if (!this->ready())
-        {
-            FatalErrorInFunction
-                << "Outstanding recv request(s) on patch "
-                << cyclicACMIPatch_.name()
-                << " field " << this->internalField().name()
-                << abort(FatalError);
-        }
+//        if (!this->ready())
+//        {
+//            FatalErrorInFunction
+//                << "Outstanding recv request(s) on patch "
+//                << cyclicACMIPatch_.name()
+//                << " field " << this->internalField().name()
+//                << abort(FatalError);
+//        }
 
         const labelUList& nbrFaceCells =
             lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
@@ -575,6 +595,21 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
 
         // Transform according to the transformation tensors
         transformCoupleField(pnf, cmpt);
+
+        // Make sure all is finished
+        if (!recvRequests_.empty())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicACMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        //UPstream::waitRequests(recvRequests_.start(), recvRequests_.size());
+        //UPstream::waitRequests(sendRequests_.start(), sendRequests_.size());
+        //recvRequests_.clear();
+        sendRequests_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
@@ -635,6 +670,10 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
                 recvRequests_,
                 scalarRecvBufs_
             );
+
+        // Delete as early as possible. Already waited for in interpolate
+        // above so can be cleared.
+        recvRequests_.clear();
     }
     else
     {
@@ -676,14 +715,14 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
                 << exit(FatalError);
         }
 
-        if (!this->ready())
-        {
-            FatalErrorInFunction
-                << "Outstanding recv request(s) on patch "
-                << cyclicACMIPatch_.name()
-                << " field " << this->internalField().name()
-                << abort(FatalError);
-        }
+//        if (!this->ready())
+//        {
+//            FatalErrorInFunction
+//                << "Outstanding recv request(s) on patch "
+//                << cyclicACMIPatch_.name()
+//                << " field " << this->internalField().name()
+//                << abort(FatalError);
+//        }
 
         const labelUList& nbrFaceCells =
             lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
@@ -692,6 +731,21 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
 
         // Transform according to the transformation tensors
         transformCoupleField(pnf);
+
+        // Make sure all is finished
+        if (!recvRequests_.empty())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicACMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        //UPstream::waitRequests(recvRequests_.start(), recvRequests_.size());
+        //UPstream::waitRequests(sendRequests_.start(), sendRequests_.size());
+        //recvRequests_.clear();
+        sendRequests_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
@@ -741,6 +795,10 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
                 recvRequests_,
                 recvBufs_
             );
+
+        // Delete as early as possible. Already waited for in interpolate
+        // above so can be cleared.
+        recvRequests_.clear();
     }
     else
     {

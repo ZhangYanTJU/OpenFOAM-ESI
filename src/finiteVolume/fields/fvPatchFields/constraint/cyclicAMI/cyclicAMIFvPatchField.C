@@ -454,6 +454,20 @@ void Foam::cyclicAMIFvPatchField<Type>::initEvaluate
 
         const cyclicAMIPolyPatch& cpp = cyclicAMIPatch_.cyclicAMIPatch();
 
+        // Make sure all is finished
+        if (!recvRequests_.empty())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicAMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+        //UPstream::waitRequests(recvRequests_.start(), recvRequests_.size());
+        //UPstream::waitRequests(sendRequests_.start(), sendRequests_.size());
+        //recvRequests_.clear();
+        sendRequests_.clear();
+
         cpp.initInterpolate
         (
             pnf,
@@ -516,6 +530,11 @@ void Foam::cyclicAMIFvPatchField<Type>::evaluate
                 defaultValues
             ).ptr()
         );
+
+        // Delete as early as possible. Already waited for in interpolate
+        // above so can be cleared.
+        recvRequests_.clear();
+
         auto& patchNeighbourField = patchNeighbourFieldPtr_.ref();
 
         if (doTransform())
@@ -562,6 +581,20 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
         transformCoupleField(pnf, cmpt);
 
         const cyclicAMIPolyPatch& cpp = cyclicAMIPatch_.cyclicAMIPatch();
+
+        // Make sure all is finished
+        if (!recvRequests_.empty())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicAMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+        //UPstream::waitRequests(recvRequests_.start(), recvRequests_.size());
+        //UPstream::waitRequests(sendRequests_.start(), sendRequests_.size());
+        //recvRequests_.clear();
+        sendRequests_.clear();
 
         cpp.initInterpolate
         (
@@ -624,6 +657,10 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
                 scalarRecvBufs_,
                 defaultValues
             );
+
+        // Delete as early as possible. Already waited for in interpolate
+        // above so can be cleared.
+        recvRequests_.clear();
     }
     else
     {
@@ -681,6 +718,22 @@ void Foam::cyclicAMIFvPatchField<Type>::initInterfaceMatrixUpdate
         transformCoupleField(pnf);
 
         const cyclicAMIPolyPatch& cpp = cyclicAMIPatch_.cyclicAMIPatch();
+
+
+        // Make sure all is finished
+        if (!recvRequests_.empty())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicAMIPatch_.name()
+                << " field " << this->internalField().name()
+                << abort(FatalError);
+        }
+
+        //UPstream::waitRequests(recvRequests_.start(), recvRequests_.size());
+        //UPstream::waitRequests(sendRequests_.start(), sendRequests_.size());
+        //recvRequests_.clear();
+        sendRequests_.clear();
 
         cpp.initInterpolate
         (
@@ -742,6 +795,10 @@ void Foam::cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
                 recvBufs_,
                 defaultValues
             );
+
+        // Delete as early as possible. Already waited for in interpolate
+        // above so can be cleared.
+        recvRequests_.clear();
     }
     else
     {
