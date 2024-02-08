@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,21 +43,10 @@ Foam::procLduMatrix::procLduMatrix
     lowerAddr_(ldum.lduAddr().lowerAddr()),
     diag_(ldum.diag()),
     upper_(ldum.upper()),
-    lower_(ldum.lower())
+    lower_(ldum.lower()),
+    interfaces_(interfaces.count_nonnull())
 {
     label nInterfaces = 0;
-
-    forAll(interfaces, i)
-    {
-        if (interfaces.set(i))
-        {
-            nInterfaces++;
-        }
-    }
-
-    interfaces_.setSize(nInterfaces);
-
-    nInterfaces = 0;
 
     forAll(interfaces, i)
     {
@@ -73,7 +63,6 @@ Foam::procLduMatrix::procLduMatrix
             );
         }
     }
-
 }
 
 

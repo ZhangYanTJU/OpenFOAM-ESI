@@ -38,8 +38,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ODESolver_H
-#define ODESolver_H
+#ifndef Foam_ODESolver_H
+#define Foam_ODESolver_H
 
 #include "ODESystem.H"
 #include "typeInfo.H"
@@ -56,10 +56,9 @@ namespace Foam
 
 class ODESolver
 {
-
 protected:
 
-    // Protected data
+    // Protected Data
 
         //- Reference to ODESystem
         const ODESystem& odes_;
@@ -106,7 +105,7 @@ public:
 
     class stepState
     {
-        public:
+    public:
 
         const bool forward;
         scalar dxTry;
@@ -171,14 +170,14 @@ public:
 
     // Member Functions
 
-        //- Return the number of equations to solve
-        inline label nEqns() const;
+        //- The number of equations to solve
+        label nEqns() const noexcept { return n_; }
 
-        //- Return access to the absolute tolerance field
-        inline scalarField& absTol();
+        //- Access to the absolute tolerance field
+        scalarField& absTol() noexcept { return absTol_; }
 
-        //- Return access to the relative tolerance field
-        inline scalarField& relTol();
+        //- Access to the relative tolerance field
+        scalarField& relTol() noexcept { return relTol_; }
 
         //- Resize the ODE solver
         virtual bool resize() = 0;

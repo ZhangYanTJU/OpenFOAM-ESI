@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,7 +30,7 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-Foam::label Foam::Detail::PtrListDetail<T>::count() const noexcept
+Foam::label Foam::Detail::PtrListDetail<T>::count_nonnull() const noexcept
 {
     label n = 0;
 

@@ -412,7 +412,7 @@ int main(int argc, char *argv[])
     }
 
     {
-        Info<< "range-for of list (" << list1.count() << '/'
+        Info<< "range-for of list (" << list1.count_nonnull() << '/'
             << list1.size() << ") non-null entries" << nl
             << "(" << nl;
         for (const auto& item : list1)

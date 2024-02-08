@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -124,9 +124,9 @@ inline Foam::label Foam::UPtrList<T>::capacity() const noexcept
 
 
 template<class T>
-inline Foam::label Foam::UPtrList<T>::count() const noexcept
+inline Foam::label Foam::UPtrList<T>::count_nonnull() const noexcept
 {
-    return ptrs_.count();
+    return ptrs_.count_nonnull();
 }
 
 

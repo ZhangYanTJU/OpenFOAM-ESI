@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,8 +95,8 @@ public:
         //- Return pointer to element or nullptr for out-of-range access.
         inline T* get(const label i);
 
-        //- Return the number of non-null entries
-        label count() const noexcept;
+        //- The number of non-nullptr entries in the list
+        label count_nonnull() const noexcept;
 
         //- FatalError if any null exists in the list
         inline void checkNonNull() const;

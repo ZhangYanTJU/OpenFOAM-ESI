@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,8 +40,8 @@ Foam::Ostream& Foam::Detail::PtrListDetail<T>::write
 {
     const label len = this->size();
 
-    // The net length (after trimming any nullptr)
-    const label netLen = (trimNull ? this->count() : len);
+    // The net length, optionally after trimming any nullptr
+    const label netLen = (trimNull ? this->count_nonnull() : len);
 
     if (!netLen)
     {

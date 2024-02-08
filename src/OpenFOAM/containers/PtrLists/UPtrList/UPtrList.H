@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -257,8 +257,8 @@ public:
         //- Size of the underlying storage.
         inline label capacity() const noexcept;
 
-        //- The number of non-null entries in the list
-        inline label count() const noexcept;
+        //- The number of non-nullptr entries in the list
+        inline label count_nonnull() const noexcept;
 
         //- Reference to the first element of the list
         inline T& front();
@@ -648,6 +648,10 @@ public:
         //- Move append another list to the end of this list.
         //FOAM_DEPRECATED_FOR(2022-10, "push_back()")
         void append(UPtrList<T>&& other) { this->push_back(std::move(other)); }
+
+        //- The number of non-nullptr entries in the list
+        FOAM_DEPRECATED_FOR(2024-01, "count_nonnull()")
+        label count() const noexcept { return count_nonnull(); }
 };
 
 
