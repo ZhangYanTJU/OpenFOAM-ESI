@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2019,2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -218,6 +218,18 @@ void Foam::cyclicAMIGAMGInterfaceField::initInterfaceMatrixUpdate
           : AMI.srcMap()
         );
 
+        // Assert that all receives are known to have finished
+        if (!recvRequests_.empty())
+        {
+            FatalErrorInFunction
+                << "Outstanding recv request(s) on patch "
+                << cyclicAMIInterface_.index()
+                << abort(FatalError);
+        }
+
+        // Assume that sends are also OK
+        sendRequests_.clear();
+
         // Insert send/receive requests (non-blocking). See e.g.
         // cyclicAMIPolyPatchTemplates.C
         const label oldWarnComm = UPstream::commWarn(AMI.comm());
@@ -289,6 +301,9 @@ void Foam::cyclicAMIGAMGInterfaceField::updateInterfaceMatrix
         // into slices of work.
         solveScalarField work;
         map.receive(recvRequests_, scalarRecvBufs_, work);
+
+        // Receive requests all handled by last function call
+        recvRequests_.clear();
 
         solveScalarField pnf(faceCells.size(), Zero);
         AMI.weightedSum

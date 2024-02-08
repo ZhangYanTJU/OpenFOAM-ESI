@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -444,7 +444,14 @@ void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
             << " starting send&receive"
             << endl;
 
-        if (!this->ready())
+        // Bypass polyPatch to get nbrId.
+        // - use cyclicACMIFvPatch::neighbPatch() virtual instead
+        const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
+        const labelUList& nbrFaceCells = neighbPatch.faceCells();
+        const Field<Type> pnf(this->primitiveField(), nbrFaceCells);
+
+        // Assert that all receives are known to have finished
+        if (!recvRequests_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -453,11 +460,8 @@ void Foam::cyclicACMIFvPatchField<Type>::initEvaluate
                 << abort(FatalError);
         }
 
-        // By-pass polyPatch to get nbrId. Instead use cyclicACMIFvPatch virtual
-        // neighbPatch()
-        const cyclicACMIFvPatch& neighbPatch = cyclicACMIPatch_.neighbPatch();
-        const labelUList& nbrFaceCells = neighbPatch.faceCells();
-        const Field<Type> pnf(this->primitiveField(), nbrFaceCells);
+        // Assume that sends are also OK
+        sendRequests_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
@@ -515,6 +519,10 @@ void Foam::cyclicACMIFvPatchField<Type>::evaluate
             ).ptr()
         );
 
+        // Receive requests all handled by last function call
+        recvRequests_.clear();
+
+
         auto& patchNeighbourField = patchNeighbourFieldPtr_.ref();
 
         if (doTransform())
@@ -559,7 +567,16 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
             << " starting send&receive"
             << endl;
 
-        if (!this->ready())
+        const labelUList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
+
+        solveScalarField pnf(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf, cmpt);
+
+        // Assert that all receives are known to have finished
+        if (!recvRequests_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -568,13 +585,8 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
                 << abort(FatalError);
         }
 
-        const labelUList& nbrFaceCells =
-            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
-
-        solveScalarField pnf(psiInternal, nbrFaceCells);
-
-        // Transform according to the transformation tensors
-        transformCoupleField(pnf, cmpt);
+        // Assume that sends are also OK
+        sendRequests_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
@@ -635,6 +647,9 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
                 recvRequests_,
                 scalarRecvBufs_
             );
+
+        // Receive requests all handled by last function call
+        recvRequests_.clear();
     }
     else
     {
@@ -676,7 +691,16 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
                 << exit(FatalError);
         }
 
-        if (!this->ready())
+        const labelUList& nbrFaceCells =
+            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
+
+        Field<Type> pnf(psiInternal, nbrFaceCells);
+
+        // Transform according to the transformation tensors
+        transformCoupleField(pnf);
+
+        // Assert that all receives are known to have finished
+        if (!recvRequests_.empty())
         {
             FatalErrorInFunction
                 << "Outstanding recv request(s) on patch "
@@ -685,13 +709,8 @@ void Foam::cyclicACMIFvPatchField<Type>::initInterfaceMatrixUpdate
                 << abort(FatalError);
         }
 
-        const labelUList& nbrFaceCells =
-            lduAddr.patchAddr(cyclicACMIPatch_.neighbPatchID());
-
-        Field<Type> pnf(psiInternal, nbrFaceCells);
-
-        // Transform according to the transformation tensors
-        transformCoupleField(pnf);
+        // Assume that sends are also OK
+        sendRequests_.clear();
 
         cyclicACMIPatch_.initInterpolate
         (
@@ -741,6 +760,9 @@ void Foam::cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
                 recvRequests_,
                 recvBufs_
             );
+
+        // Receive requests all handled by last function call
+        recvRequests_.clear();
     }
     else
     {
