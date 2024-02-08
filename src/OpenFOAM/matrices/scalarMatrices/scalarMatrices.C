@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,17 +49,20 @@ void Foam::LUDecompose
     label& sign
 )
 {
-    label m = matrix.m();
-    scalar vv[m];
+    const label size = matrix.m();
+
+    pivotIndices.resize_nocopy(size);
+
+    List<scalar> vv(size);
     sign = 1;
 
-    for (label i = 0; i < m; ++i)
+    for (label i = 0; i < size; ++i)
     {
         scalar largestCoeff = 0.0;
         scalar temp;
         const scalar* __restrict__ matrixi = matrix[i];
 
-        for (label j = 0; j < m; ++j)
+        for (label j = 0; j < size; ++j)
         {
             if ((temp = mag(matrixi[j])) > largestCoeff)
             {
@@ -75,7 +79,7 @@ void Foam::LUDecompose
         vv[i] = 1.0/largestCoeff;
     }
 
-    for (label j = 0; j < m; ++j)
+    for (label j = 0; j < size; ++j)
     {
         scalar* __restrict__ matrixj = matrix[j];
 
@@ -94,7 +98,7 @@ void Foam::LUDecompose
         label iMax = 0;
 
         scalar largestCoeff = 0.0;
-        for (label i = j; i < m; ++i)
+        for (label i = j; i < size; ++i)
         {
             scalar* __restrict__ matrixi = matrix[i];
             scalar sum = matrixi[j];
@@ -120,7 +124,7 @@ void Foam::LUDecompose
         {
             scalar* __restrict__ matrixiMax = matrix[iMax];
 
-            for (label k = 0; k < m; ++k)
+            for (label k = 0; k < size; ++k)
             {
                 std::swap(matrixj[k], matrixiMax[k]);
             }
@@ -134,11 +138,11 @@ void Foam::LUDecompose
             matrixj[j] = SMALL;
         }
 
-        if (j != m-1)
+        if (j != size-1)
         {
             scalar rDiag = 1.0/matrixj[j];
 
-            for (label i = j + 1; i < m; ++i)
+            for (label i = j + 1; i < size; ++i)
             {
                 matrix(i, j) *= rDiag;
             }
@@ -150,7 +154,7 @@ void Foam::LUDecompose
 void Foam::LUDecompose(scalarSymmetricSquareMatrix& matrix)
 {
     // Store result in upper triangular part of matrix
-    label size = matrix.m();
+    const label size = matrix.m();
 
     // Set upper triangular parts to zero.
     for (label j = 0; j < size; ++j)
@@ -223,7 +227,7 @@ void Foam::multiply
             << abort(FatalError);
     }
 
-    ans = scalarRectangularMatrix(A.m(), C.n(), Zero);
+    ans = scalarRectangularMatrix(A.m(), C.n(), Foam::zero{});
 
     for (label i = 0; i < A.m(); ++i)
     {

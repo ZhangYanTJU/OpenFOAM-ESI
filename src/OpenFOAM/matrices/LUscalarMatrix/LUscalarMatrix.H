@@ -34,8 +34,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef LUscalarMatrix_H
-#define LUscalarMatrix_H
+#ifndef Foam_LUscalarMatrix_H
+#define Foam_LUscalarMatrix_H
 
 #include "scalarMatrices.H"
 #include "labelList.H"
@@ -47,6 +47,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class lduMatrix;
 class procLduMatrix;
 
@@ -58,7 +59,7 @@ class LUscalarMatrix
 :
     public scalarSquareMatrix
 {
-    // Private data
+    // Private Data
 
         //- Communicator to use
         const label comm_;
@@ -70,7 +71,7 @@ class LUscalarMatrix
         labelList pivotIndices_;
 
 
-    // Private member functions
+    // Private Member Functions
 
         //- Convert the given lduMatrix into this LUscalarMatrix
         void convert
@@ -81,12 +82,12 @@ class LUscalarMatrix
         );
 
         //- Convert the given list of procLduMatrix into this LUscalarMatrix
-        //  on the master processor
+        //- on the master processor
         void convert(const PtrList<procLduMatrix>& lduMatrices);
 
 
         //- Print the ratio of the mag-sum of the off-diagonal coefficients
-        //  to the mag-diagonal
+        //- to the mag-diagonal
         void printDiagonalDominance() const;
 
 
@@ -98,13 +99,14 @@ public:
 
     // Constructors
 
-        //- Construct null
-        LUscalarMatrix();
+        //- Default construct
+        LUscalarMatrix() noexcept;
 
-        //- Construct from and perform LU decomposition of the matrix M
-        LUscalarMatrix(const scalarSquareMatrix& M);
+        //- Construct from and perform LU decomposition of the given matrix
+        explicit LUscalarMatrix(const scalarSquareMatrix& mat);
 
-        //- Construct from lduMatrix and perform LU decomposition
+        //- Construct from lduMatrix and perform LU decomposition.
+        //- In parallel it assembles the matrix on the master.
         LUscalarMatrix
         (
             const lduMatrix& ldum,
@@ -115,8 +117,8 @@ public:
 
     // Member Functions
 
-        //- Perform the LU decomposition of the matrix M
-        void decompose(const scalarSquareMatrix& M);
+        //- Perform the LU decomposition of the matrix
+        void decompose(const scalarSquareMatrix& mat);
 
         //- Solve the linear system with the given source
         //  and returning the solution in the Field argument x.

@@ -74,19 +74,21 @@ void solve
     const List<Type>& source
 );
 
-//- LU decompose the matrix with pivoting
+//- LU decompose the matrix with pivoting.
 void LUDecompose
 (
     scalarSquareMatrix& matrix,
+    //! [out] size is adjusted as required
     labelList& pivotIndices
 );
 
 //- LU decompose the matrix with pivoting.
-//- sign is -1 for odd number of row interchanges and 1 for even number.
 void LUDecompose
 (
     scalarSquareMatrix& matrix,
+    //! [out] size is adjusted as required
     labelList& pivotIndices,
+    //! [out] is -1 for odd number of row interchanges and 1 for even number
     label& sign
 );
 
