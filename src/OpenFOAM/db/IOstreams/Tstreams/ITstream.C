@@ -91,13 +91,14 @@ Foam::ITstream& Foam::ITstream::empty_stream()
 }
 
 
-Foam::tokenList Foam::ITstream::parse
+Foam::tokenList Foam::ITstream::parse_chars
 (
-    const UList<char>& input,
+    const char* s,
+    size_t nbytes,
     IOstreamOption streamOpt
 )
 {
-    ISpanStream is(input, streamOpt);
+    ISpanStream is(s, nbytes, streamOpt);
 
     tokenList tokens;
     parseStream(is, tokens);
@@ -105,31 +106,14 @@ Foam::tokenList Foam::ITstream::parse
 }
 
 
-Foam::tokenList Foam::ITstream::parse
-(
-    const std::string& input,
-    IOstreamOption streamOpt
-)
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::ITstream::reset(const char* input, size_t nbytes)
 {
-    ISpanStream is(input, streamOpt);
+    ISpanStream is(input, nbytes, static_cast<IOstreamOption>(*this));
 
-    tokenList tokens;
-    parseStream(is, tokens);
-    return tokens;
-}
-
-
-Foam::tokenList Foam::ITstream::parse
-(
-    const char* input,
-    IOstreamOption streamOpt
-)
-{
-    ISpanStream is(input, strlen(input), streamOpt);
-
-    tokenList tokens;
-    parseStream(is, tokens);
-    return tokens;
+    parseStream(is, static_cast<tokenList&>(*this));
+    ITstream::seek(0);  // rewind(), but bypasss virtual
 }
 
 
@@ -254,10 +238,7 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    ISpanStream is(input, streamOpt);
-
-    parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::seek(0);  // rewind(), but bypasss virtual
+    reset(input.cdata(), input.size_bytes());
 }
 
 
@@ -270,10 +251,7 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    ISpanStream is(input, streamOpt);
-
-    parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::seek(0);  // rewind(), but bypasss virtual
+    reset(input.data(), input.size());
 }
 
 
@@ -286,10 +264,7 @@ Foam::ITstream::ITstream
 :
     ITstream(streamOpt, name)
 {
-    ISpanStream is(input, strlen(input), streamOpt);
-
-    parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::seek(0);  // rewind(), but bypasss virtual
+    reset(input, strlen(input));
 }
 
 

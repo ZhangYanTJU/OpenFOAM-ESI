@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -132,7 +132,7 @@ public:
     // Member Functions
 
         //- True if compiled with libz support
-        static bool supports_gz();
+        static bool supports_gz() noexcept;
 
 
     // Access
@@ -276,7 +276,7 @@ public:
     // Member Functions
 
         //- True if compiled with libz support
-        static bool supports_gz();
+        static bool supports_gz() noexcept;
 
 
     // Access

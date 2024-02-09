@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -109,7 +109,13 @@ public:
         //- The current output position within the buffer (tellp)
         std::streampos output_pos() const
         {
-            return (buffer_type::span_tellp());
+            return buffer_type::span_tellp();
+        }
+
+        //- The number of bytes outputted
+        std::streamsize count() const
+        {
+            return buffer_type::size_bytes();
         }
 
         //- The put buffer capacity
@@ -189,33 +195,6 @@ public:
 };
 
 
-namespace Detail
-{
-
-/*---------------------------------------------------------------------------*\
-                Class Detail::OCharStreamAllocator Declaration
-\*---------------------------------------------------------------------------*/
-
-//- An allocator for holding Foam::ocharstream
-class OCharStreamAllocator
-{
-protected:
-
-    // Protected Data
-
-        //- The stream
-        Foam::ocharstream stream_;
-
-
-    // Constructors
-
-        //- Default construct - empty
-        OCharStreamAllocator() = default;
-};
-
-} // End namespace Detail
-
-
 /*---------------------------------------------------------------------------*\
                          Class OCharStream Declaration
 \*---------------------------------------------------------------------------*/
@@ -223,10 +202,12 @@ protected:
 //- An OSstream with internal List storage
 class OCharStream
 :
-    public Detail::OCharStreamAllocator,
+    public Foam::Detail::StreamAllocator<Foam::ocharstream>,
     public Foam::OSstream
 {
-    typedef Detail::OCharStreamAllocator allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<Foam::ocharstream>
+        allocator_type;
 
 public:
 
@@ -277,8 +258,11 @@ public:
         //- The current output position within the buffer (tellp)
         std::streampos output_pos() const { return stream_.output_pos(); }
 
-        //- The current output size. Same as tellp(), output_pos()
-        label size() const { return label(stream_.output_pos()); }
+        //- The number of bytes outputted
+        std::streamsize count() const { return stream_.count(); }
+
+        //- The current output size. Same as count(), output_pos(), tellp().
+        label size() const { return label(stream_.count()); }
 
         //- The put buffer capacity
         std::streamsize capacity() const { return stream_.capacity(); }

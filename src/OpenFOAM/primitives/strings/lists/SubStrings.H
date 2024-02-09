@@ -109,19 +109,14 @@ public:
             this->push_back(range);
         }
 
-        //- Const reference to the first element,
-        //- for consistency with other OpenFOAM containers
-        auto first() const -> decltype(this->front())
-        {
-            return this->front();
-        }
-
-        //- Const reference to the last element,
-        //- for consistency with other OpenFOAM containers
-        auto last() const -> decltype(this->back())
-        {
-            return this->back();
-        }
+    // FUTURE?
+    //  #if __cplusplus >= 201703L
+    //  std::string_view view(size_t pos) const
+    //  {}
+    //  #else
+    //  stdFoam::span<const char> view(size_t pos) const
+    //  {}
+    //  #endif
 };
 
 

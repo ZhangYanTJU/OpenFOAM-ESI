@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,7 +35,6 @@ Description
 #define Foam_OScountStream_H
 
 #include "OSstream.H"
-#include <iostream>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -126,7 +125,7 @@ class ocountstream
 
         // Member Functions
 
-            //- The number of bytes counted.
+            //- The number of bytes counted
             std::streamsize count() const noexcept { return size_; }
 
             //- Reset the count
@@ -155,7 +154,7 @@ public:
         //- This hides both signatures of std::basic_ios::rdbuf()
         countbuf* rdbuf() { return &buf_; }
 
-        //- \return The number of bytes counted
+        //- The number of bytes counted
         std::streamsize count() const noexcept { return buf_.count(); }
 
         //- Reset the count
@@ -173,33 +172,6 @@ public:
 };
 
 
-namespace Detail
-{
-
-/*---------------------------------------------------------------------------*\
-                Class Detail::OCountStreamAllocator Declaration
-\*---------------------------------------------------------------------------*/
-
-//- An allocator for holding Foam::ocountstream
-class OCountStreamAllocator
-{
-protected:
-
-    // Protected Data
-
-        //- The output stream
-        Foam::ocountstream stream_;
-
-
-    // Constructors
-
-        //- Default construct
-        OCountStreamAllocator() = default;
-};
-
-} // End namespace Detail
-
-
 /*---------------------------------------------------------------------------*\
                         Class OCountStream Declaration
 \*---------------------------------------------------------------------------*/
@@ -207,10 +179,12 @@ protected:
 //- An output stream for calculating byte counts
 class OCountStream
 :
-    public Detail::OCountStreamAllocator,
-    public OSstream
+    public Foam::Detail::StreamAllocator<Foam::ocountstream>,
+    public Foam::OSstream
 {
-    typedef Detail::OCountStreamAllocator allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<Foam::ocountstream>
+        allocator_type;
 
 public:
 
@@ -238,10 +212,10 @@ public:
 
     // Member Functions
 
-        //- \return The number of bytes counted
+        //- The number of bytes counted
         std::streamsize count() const noexcept { return stream_.count(); }
 
-        //- \return The number of bytes counted
+        //- The number of bytes counted
         std::streamsize size() const noexcept { return stream_.count(); }
 
         //- Reset the count

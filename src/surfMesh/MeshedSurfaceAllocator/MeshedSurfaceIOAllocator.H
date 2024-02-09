@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -39,7 +39,7 @@ SourceFiles
 #define Foam_MeshedSurfaceIOAllocator_H
 
 #include "pointIOField.H"
-#include "faceIOList.H"
+#include "faceIOList.H"  // faceIOList and faceCompactIOList
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -62,8 +62,9 @@ class MeshedSurfaceIOAllocator
         //- Faces
         faceCompactIOList faces_;
 
+public:
 
-    // Private Member Functions
+    // Generated Methods
 
         //- No copy construct
         MeshedSurfaceIOAllocator(const MeshedSurfaceIOAllocator&) = delete;
@@ -71,8 +72,6 @@ class MeshedSurfaceIOAllocator
         //- No copy assignment
         void operator=(const MeshedSurfaceIOAllocator&) = delete;
 
-
-public:
 
     // Constructors
 
@@ -99,7 +98,7 @@ public:
 
 
     //- Destructor
-    virtual ~MeshedSurfaceIOAllocator();
+    virtual ~MeshedSurfaceIOAllocator() = default;
 
 
     // Member Functions
@@ -116,25 +115,25 @@ public:
     // Access
 
         //- Non-const access to the points
-        pointIOField& storedIOPoints()
+        pointIOField& storedIOPoints() noexcept
         {
             return points_;
         }
 
         //- Non-const access to the faces
-        faceCompactIOList& storedIOFaces()
+        faceCompactIOList& storedIOFaces() noexcept
         {
             return faces_;
         }
 
         //- Const access to the points
-        const pointIOField& storedIOPoints() const
+        const pointIOField& storedIOPoints() const noexcept
         {
             return points_;
         }
 
         //- Const access to the faces
-        const faceCompactIOList& storedIOFaces() const
+        const faceCompactIOList& storedIOFaces() const noexcept
         {
             return faces_;
         }

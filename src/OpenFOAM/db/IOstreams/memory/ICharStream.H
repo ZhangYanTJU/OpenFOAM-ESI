@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,8 +42,6 @@ See Also
 #define Foam_ICharStream_H
 
 #include "ISpanStream.H"
-#include "List.H"
-#include "DynamicList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -205,33 +203,6 @@ public:
 };
 
 
-namespace Detail
-{
-
-/*---------------------------------------------------------------------------*\
-                Class Detail::ICharStreamAllocator Declaration
-\*---------------------------------------------------------------------------*/
-
-//- An allocator for holding Foam::icharstream
-class ICharStreamAllocator
-{
-protected:
-
-    // Protected Data
-
-        //- The stream
-        Foam::icharstream stream_;
-
-
-    // Constructors
-
-        //- Default construct
-        ICharStreamAllocator() = default;
-};
-
-} // End namespace Detail
-
-
 /*---------------------------------------------------------------------------*\
                          Class ICharStream Declaration
 \*---------------------------------------------------------------------------*/
@@ -239,10 +210,12 @@ protected:
 //- An ISstream with internal List storage. Always UNCOMPRESSED.
 class ICharStream
 :
-    public Detail::ICharStreamAllocator,
+    public Foam::Detail::StreamAllocator<Foam::icharstream>,
     public Foam::ISstream
 {
-    typedef Detail::ICharStreamAllocator allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<Foam::icharstream>
+        allocator_type;
 
 public:
 

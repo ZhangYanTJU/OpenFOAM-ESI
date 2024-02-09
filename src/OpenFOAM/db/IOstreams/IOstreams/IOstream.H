@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -464,6 +464,41 @@ inline IOstream& scientific(IOstream& io)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Detail
+{
+
+/*---------------------------------------------------------------------------*\
+                   Class Detail::StreamAllocator Declaration
+\*---------------------------------------------------------------------------*/
+
+//- A wrapper to hold a std::stream type for OpenFOAM wrapped streams.
+//- This is necessary since the OpenFOAM streams hold a reference to
+//- the normal std::stream
+template<class StreamType>
+class StreamAllocator
+{
+protected:
+
+    // Protected Data
+
+        //- The std::stream
+        StreamType stream_;
+
+
+    // Constructors
+
+        //- Default construct (empty)
+        StreamAllocator() = default;
+};
+
+
+} // End namespace Detail
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Functions/Algorithms
 
 namespace Detail
 {

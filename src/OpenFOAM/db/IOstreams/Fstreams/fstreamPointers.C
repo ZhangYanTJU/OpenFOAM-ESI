@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -40,7 +40,7 @@ License
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-bool Foam::ifstreamPointer::supports_gz()
+bool Foam::ifstreamPointer::supports_gz() noexcept
 {
     #ifdef HAVE_LIBZ
     return true;
@@ -50,7 +50,7 @@ bool Foam::ifstreamPointer::supports_gz()
 }
 
 
-bool Foam::ofstreamPointer::supports_gz()
+bool Foam::ofstreamPointer::supports_gz() noexcept
 {
     #ifdef HAVE_LIBZ
     return true;
@@ -71,7 +71,7 @@ Foam::ifstreamPointer::ifstreamPointer
     IOstreamOption streamOpt  // Currently unused
 )
 :
-    ptr_(nullptr)
+    ptr_()
 {
     open(pathname, streamOpt);
 }
@@ -82,7 +82,7 @@ Foam::ifstreamPointer::ifstreamPointer
     const fileName& pathname
 )
 :
-    ptr_(nullptr)
+    ptr_()
 {
     open(pathname);
 }
@@ -110,7 +110,7 @@ Foam::ofstreamPointer::ofstreamPointer
     const bool atomic
 )
 :
-    ptr_(nullptr),
+    ptr_(),
     atomic_(atomic)
 {
     std::ios_base::openmode mode

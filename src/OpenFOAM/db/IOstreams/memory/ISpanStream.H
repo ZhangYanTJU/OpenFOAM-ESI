@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,7 +65,6 @@ See Also
 #define Foam_ISpanStream_H
 
 #include "memoryStreamBuffer.H"
-#include "UList.H"
 #include "ISstream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -213,37 +212,9 @@ public:
         //- Some information about the input buffer position/capacity
         void debug_info(Ostream& os) const
         {
-            os  << "get="
-                << input_pos() << '/' << capacity();
+            os  << "get=" << input_pos() << '/' << capacity();
         }
 };
-
-
-namespace Detail
-{
-
-/*---------------------------------------------------------------------------*\
-                Class Detail::ISpanStreamAllocator Declaration
-\*---------------------------------------------------------------------------*/
-
-//- An allocator for holding Foam::ispanstream
-class ISpanStreamAllocator
-{
-protected:
-
-    // Protected Data
-
-        //- The stream
-        Foam::ispanstream stream_;
-
-
-    // Constructors
-
-        //- Default construct (empty)
-        ISpanStreamAllocator() = default;
-};
-
-} // End namespace Detail
 
 
 /*---------------------------------------------------------------------------*\
@@ -252,10 +223,12 @@ protected:
 
 class ISpanStream
 :
-    public Detail::ISpanStreamAllocator,
+    public Foam::Detail::StreamAllocator<Foam::ispanstream>,
     public Foam::ISstream
 {
-    typedef Detail::ISpanStreamAllocator allocator_type;
+    typedef
+        Foam::Detail::StreamAllocator<Foam::ispanstream>
+        allocator_type;
 
 public:
 

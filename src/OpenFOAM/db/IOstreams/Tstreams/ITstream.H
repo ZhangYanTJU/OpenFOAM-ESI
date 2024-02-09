@@ -77,6 +77,18 @@ class ITstream
         //  but leave any excess capacity (ie, like reserve).
         void reserveCapacity(const label newCapacity);
 
+        //- Convert input sequence into a list of tokens,
+        static tokenList parse_chars
+        (
+            const char* s,
+            size_t nbytes,
+            IOstreamOption streamOpt
+        );
+
+        //- Convert input sequence into a list of tokens,
+        //- using the existing stream format. Rewinds the stream
+        void reset(const char* input, size_t nbytes);
+
         //- Failsafe read-access to token at specified location
         //- or undefinedToken
         inline const token& peekNoFail(const label i) const
@@ -158,6 +170,47 @@ public:
             const string& name = "input"
         );
 
+        #if __cplusplus >= 201703L
+        //- Construct token list by parsing the input character sequence
+        //  Uses static parse function internally.
+        explicit ITstream
+        (
+            std::string_view s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ITstream(streamOpt)
+        {
+            reset(s.data(), s.size());
+        }
+        #endif
+
+        //- Construct token list by parsing the input character sequence
+        //  Uses static parse function internally.
+        explicit ITstream
+        (
+            stdFoam::span<char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ITstream(streamOpt)
+        {
+            reset(s.data(), s.size());
+        }
+
+        //- Construct token list by parsing the input character sequence
+        //  Uses static parse function internally.
+        explicit ITstream
+        (
+            stdFoam::span<const char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        :
+            ITstream(streamOpt)
+        {
+            reset(s.data(), s.size());
+        }
+
 
     // Additional constructors
 
@@ -207,7 +260,10 @@ public:
         (
             const UList<char>& input,
             IOstreamOption streamOpt = IOstreamOption()
-        );
+        )
+        {
+            return parse_chars(input.cdata(), input.size(), streamOpt);
+        }
 
         //- Create token list by parsing the input string
         //- until no good tokens remain.
@@ -215,7 +271,10 @@ public:
         (
             const std::string& input,
             IOstreamOption streamOpt = IOstreamOption()
-        );
+        )
+        {
+            return parse_chars(input.data(), input.size(), streamOpt);
+        }
 
         //- Create token list by parsing the input character sequence
         //- until no good tokens remain.
@@ -223,7 +282,45 @@ public:
         (
             const char* input,
             IOstreamOption streamOpt = IOstreamOption()
-        );
+        )
+        {
+            return parse_chars(input, strlen(input), streamOpt);
+        }
+
+        #if __cplusplus >= 201703L
+        //- Create token list by parsing the input character sequence
+        //- until no good tokens remain.
+        static tokenList parse
+        (
+            std::string_view s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        {
+            return parse_chars(s.data(), s.size(), streamOpt);
+        }
+        #endif
+
+        //- Create token list by parsing the input character sequence
+        //- until no good tokens remain.
+        static tokenList parse
+        (
+            stdFoam::span<char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        {
+            return parse_chars(s.data(), s.size(), streamOpt);
+        }
+
+        //- Create token list by parsing the input character sequence
+        //- until no good tokens remain.
+        static tokenList parse
+        (
+            stdFoam::span<const char> s,
+            IOstreamOption streamOpt = IOstreamOption()
+        )
+        {
+            return parse_chars(s.data(), s.size(), streamOpt);
+        }
 
 
     // Member Functions
