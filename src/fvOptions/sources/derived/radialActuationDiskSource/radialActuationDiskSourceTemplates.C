@@ -48,9 +48,8 @@ addRadialActuationDiskAxialInertialResistance
     scalarField Tr(cells.size());
 
     tensor E(Zero);
-    E.xx() = diskDir_.x();
-    E.yy() = diskDir_.y();
-    E.zz() = diskDir_.z();
+    const vector diskDir = this->diskDir();
+    E.diag(diskDir);
 
     const Field<vector> zoneCellCentres(mesh().cellCentres(), cells);
     const Field<scalar> zoneCellVolumes(mesh().cellVolumes(), cells);

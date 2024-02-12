@@ -90,6 +90,8 @@ void Foam::fv::actuationDiskSource::writeFileHeader(Ostream& os)
         writeFile::writeCommented(os, "P");
     }
 
+    writeFile::writeCommented(os, "diskDir");
+
     os  << endl;
 }
 
@@ -208,14 +210,7 @@ Foam::fv::actuationDiskSource::actuationDiskSource
             scalarMinMax::ge(VSMALL)
         )
     ),
-    diskDir_
-    (
-        coeffs_.getCheck<vector>
-        (
-            "diskDir",
-            [&](const vector& vec){ return mag(vec) > VSMALL; }
-        ).normalise()
-    ),
+    diskDir_(Function1<vector>::New("diskDir", coeffs_, &mesh)),
     UvsCpPtr_(Function1<scalar>::New("Cp", coeffs_, &mesh)),
     UvsCtPtr_(Function1<scalar>::New("Ct", coeffs_, &mesh)),
     monitorCells_()
@@ -236,6 +231,25 @@ Foam::fv::actuationDiskSource::actuationDiskSource
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::vector Foam::fv::actuationDiskSource::diskDir() const
+{
+    const scalar t = mesh_.time().timeOutputValue();
+    const vector dir(diskDir_->value(t));
+    const scalar magDir = Foam::mag(dir);
+
+    if (magDir < SMALL)
+    {
+        FatalErrorInFunction
+            << "Actuator disk surface-normal vector is zero: " << dir
+            << " at time=" << t
+            << exit(FatalError);
+    }
+
+    // normalised:
+    return dir/magDir;
+}
+
 
 void Foam::fv::actuationDiskSource::addSup
 (
@@ -295,19 +309,10 @@ bool Foam::fv::actuationDiskSource::read(const dictionary& dict)
                 << exit(FatalIOError);
         }
 
-        dict.readIfPresent("diskDir", diskDir_);
-        diskDir_.normalise();
-        if (mag(diskDir_) < VSMALL)
-        {
-            FatalIOErrorInFunction(dict)
-                << "Actuator disk surface-normal vector is zero: "
-                << "diskDir = " << diskDir_
-                << exit(FatalIOError);
-        }
+        // TBD: runTime re-reading of "diskDir" ?
 
         return true;
     }
-
     return false;
 }
 

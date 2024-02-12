@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -21,7 +21,7 @@ disk1
     selectionMode   cellSet;
     cellSet         actuationDisk1;
     diskArea        40;
-    diskDir         (1 0 0);
+    diskDir         constant (1 0 0);  // Or other Function1
     writeToFile     true;
     sink            true;
     Cp              0.386;
@@ -45,7 +45,7 @@ disk2
     Cp              0.53;
     Ct              0.58;
     diskArea        40;
-    diskDir         (1 0 0);
+    diskDir         (1 0 0);  // Or other Function1
     upstreamPoint   (581753 4785663 1070);
 }
 
