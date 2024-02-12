@@ -70,7 +70,7 @@ Foam::labelList
 Foam::minCellSizeRefinement::refinementCellCandidates() const
 {
     // Get cell sizes: cube root of cell volume (assuming cube cells)
-    const scalarField cellSize = pow(mesh().V().field(), 1.0/3.0);
+    const scalarField cellSize(pow(mesh().V().field(), 1.0/3.0));
 
     // Create storage for collection of cells. Assume that almost all of the
     // cells will be marked to prevent excessive resizing.

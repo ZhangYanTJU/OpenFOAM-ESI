@@ -89,7 +89,7 @@ Foam::labelList
 Foam::minFaceArea2DRefinement::refinementCellCandidates() const
 {
     // Get face areas (from polyMesh)
-    const scalarField faceArea = mag(mesh().faceAreas());
+    const scalarField faceArea(mag(mesh().faceAreas()));
 
     // Mark empty or wedge faces
     boolList faceOnEmptyPatch(mesh().nFaces(), false);
