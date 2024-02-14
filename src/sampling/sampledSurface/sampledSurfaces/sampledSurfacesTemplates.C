@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,7 +56,7 @@ void Foam::sampledSurfaces::writeSurface
 
 
 template<class Type, class GeoMeshType>
-bool Foam::sampledSurfaces::storeRegistryField
+void Foam::sampledSurfaces::storeRegistryField
 (
     const sampledSurface& s,
     const word& fieldName,
@@ -64,13 +64,13 @@ bool Foam::sampledSurfaces::storeRegistryField
     Field<Type>&& values
 )
 {
-    return s.storeRegistryField<Type, GeoMeshType>
+    s.storeRegistryField<Type, GeoMeshType>
     (
         storedObjects(),
         fieldName,
         dims,
         std::move(values),
-        IOobject::groupName(name(), s.name())
+        IOobject::groupName(name(), s.name())  // surfaceName
     );
 }
 
@@ -94,13 +94,10 @@ void Foam::sampledSurfaces::performAction
 
     forAll(*this, surfi)
     {
-        const sampledSurface& s = operator[](surfi);
+        // Skip empty surfaces (eg, failed cut-plane)
+        if (!hasFaces_[surfi]) continue;
 
-        // Skip surface without faces (eg, failed cut-plane)
-        if (!nFaces_[surfi])
-        {
-            continue;
-        }
+        const sampledSurface& s = operator[](surfi);
 
         Field<Type> values;
 
@@ -170,13 +167,10 @@ void Foam::sampledSurfaces::performAction
 
     forAll(*this, surfi)
     {
-        const sampledSurface& s = (*this)[surfi];
+        // Skip empty surfaces (eg, failed cut-plane)
+        if (!hasFaces_[surfi]) continue;
 
-        // Skip surface without faces (eg, failed cut-plane)
-        if (!nFaces_[surfi])
-        {
-            continue;
-        }
+        const sampledSurface& s = (*this)[surfi];
 
         Field<Type> values(s.sample(fld));
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -95,6 +95,36 @@ Foam::surfaceWriters::proxyWriter::proxyWriter
     proxyWriter(outputPath.ext(), options)
 {
     surfaceWriter::open(points, faces, outputPath, parallel);
+}
+
+
+// * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::surfaceWriter>
+Foam::surfaceWriters::proxyWriter::TryNew(const word& writeType)
+{
+    if (MeshedSurfaceProxy<face>::canWriteType(writeType))
+    {
+        return autoPtr<surfaceWriter>(new proxyWriter(writeType));
+    }
+
+    return nullptr;
+}
+
+
+Foam::autoPtr<Foam::surfaceWriter>
+Foam::surfaceWriters::proxyWriter::TryNew
+(
+    const word& writeType,
+    const dictionary& writeOpts
+)
+{
+    if (MeshedSurfaceProxy<face>::canWriteType(writeType))
+    {
+        return autoPtr<surfaceWriter>(new proxyWriter(writeType, writeOpts));
+    }
+
+    return nullptr;
 }
 
 

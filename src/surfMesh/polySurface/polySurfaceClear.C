@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "polySurface.H"
-#include "globalMeshData.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

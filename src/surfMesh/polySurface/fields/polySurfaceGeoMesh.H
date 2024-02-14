@@ -27,7 +27,7 @@ Class
     Foam::polySurfaceGeoMesh
 
 Description
-    The polySurface GeoMesh (for holding fields).
+    The polySurface GeoMesh for face fields.
 
 \*---------------------------------------------------------------------------*/
 
@@ -74,6 +74,13 @@ public:
         {
             return size(mesh_);
         }
+
+        // FUTURE?
+        // //- Return the object registry for face fields
+        // const objectRegistry& thisDb() const
+        // {
+        //     return mesh_.faceData();
+        // }
 };
 
 

@@ -27,7 +27,7 @@ Class
     Foam::polySurfacePointGeoMesh
 
 Description
-    The polySurface GeoMesh (for holding point fields).
+    The polySurface GeoMesh for point fields.
 
 \*---------------------------------------------------------------------------*/
 
@@ -74,6 +74,13 @@ public:
         {
             return size(mesh_);
         }
+
+        // FUTURE?
+        // //- Return the object registry for point fields
+        // const objectRegistry& thisDb() const
+        // {
+        //     return mesh_.pointData();
+        // }
 };
 
 

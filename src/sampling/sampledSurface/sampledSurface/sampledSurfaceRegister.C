@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -36,12 +36,12 @@ Foam::polySurface* Foam::sampledSurface::getRegistrySurface
     word lookupName
 ) const
 {
-    if (lookupName.empty())
-    {
-        lookupName = this->name();
-    }
-
-    return obr.getObjectPtr<polySurface>(lookupName);
+    return
+    (
+        lookupName.empty()
+      ? obr.getObjectPtr<polySurface>(this->name())
+      : obr.getObjectPtr<polySurface>(lookupName)
+    );
 }
 
 
@@ -56,15 +56,16 @@ Foam::polySurface* Foam::sampledSurface::storeRegistrySurface
         lookupName = this->name();
     }
 
-    polySurface* surfptr = getRegistrySurface(obr, lookupName);
+    auto* surfptr = obr.getObjectPtr<polySurface>(lookupName);
 
     if (!surfptr)
     {
-        // Default construct and add to registry (owned by registry)
-        surfptr = new polySurface(lookupName, obr, true);
+        surfptr = new polySurface(lookupName, obr);
+        regIOobject::store(surfptr);
     }
 
-    surfptr->copySurface(*this);   // Copy in geometry (removes old fields)
+    // Copy in geometry (removes existing fields if sizes have changed)
+    surfptr->copySurface(*this);
 
     return surfptr;
 }
@@ -76,8 +77,12 @@ bool Foam::sampledSurface::removeRegistrySurface
     word lookupName
 ) const
 {
-    polySurface* surfptr = getRegistrySurface(obr, lookupName);
-    return obr.checkOut(surfptr);
+    return
+    (
+        lookupName.empty()
+      ? polySurface::Delete(this->name(), obr)
+      : polySurface::Delete(lookupName, obr)
+    );
 }
 
 
