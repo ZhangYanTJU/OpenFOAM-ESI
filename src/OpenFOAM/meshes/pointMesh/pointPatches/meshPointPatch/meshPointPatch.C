@@ -88,24 +88,16 @@ Foam::meshPointPatch::meshPointPatch
 )
 :
     pointPatch(name, dict, index, bm),
-    meshPoints_(dict.lookup("meshPoints")),
-    pointNormals_(dict.lookup("normals"))
-{
-    if (meshPoints_.size() != pointNormals_.size())
-    {
-        FatalErrorInFunction << "patch " << name
-            << " size of meshPoints " << meshPoints_.size()
-            << " differs from size of pointNormals " << pointNormals_.size()
-            << exit(FatalError);
-    }
-}
+    meshPoints_(dict.get<labelList>("meshPoints")),
+    pointNormals_("normals", dict, meshPoints_.size())
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::meshPointPatch::movePoints(PstreamBuffers&, const pointField& p)
 {
-    localPointsPtr_.clear();
+    localPointsPtr_.reset(nullptr);
 
     // Recalculate the point normals? Something like
     //if (owner())
@@ -136,18 +128,23 @@ void Foam::meshPointPatch::movePoints(PstreamBuffers&, const pointField& p)
 
 void Foam::meshPointPatch::updateMesh(PstreamBuffers&)
 {
-    localPointsPtr_.clear();
+    localPointsPtr_.reset(nullptr);
     // Do what to pointNormals? Don't know what the new mesh points are
 }
 
 
 const Foam::pointField& Foam::meshPointPatch::localPoints() const
 {
-    if (!localPointsPtr_.valid())
+    if (!localPointsPtr_)
     {
-        const pointField& points = boundaryMesh().mesh()().points();
-
-        localPointsPtr_.reset(new pointField(points, meshPoints()));
+        localPointsPtr_.reset
+        (
+            new pointField
+            (
+                boundaryMesh().mesh().mesh().points(),
+                meshPoints()
+            )
+        );
     }
     return localPointsPtr_();
 }
@@ -155,7 +152,7 @@ const Foam::pointField& Foam::meshPointPatch::localPoints() const
 
 //const Foam::vectorField& Foam::meshPointPatch::pointNormals() const
 //{
-//    if (!pointNormalsPtr_.valid())
+//    if (!pointNormalsPtr_)
 //    {
 //        pointNormalsPtr_.reset(new vectorField(size()));
 //        vectorField& pointNormals = pointNormalsPtr_();
@@ -184,18 +181,16 @@ const Foam::pointField& Foam::meshPointPatch::localPoints() const
 //)
 //{
 //    constraints_ = pc;
-//    localPointsPtr_.clear();
-//    pointNormalsPtr_.clear();
+//    localPointsPtr_.reset(nullptr);
+//    pointNormalsPtr_.reset(nullptr);
 //}
 
 
 void Foam::meshPointPatch::write(Ostream& os) const
 {
     pointPatch::write(os);
-    os.writeKeyword("meshPoints")
-        << meshPoints() << token::END_STATEMENT << nl;
-    os.writeKeyword("normals")
-        << pointNormals() << token::END_STATEMENT << nl;
+    meshPoints().writeEntry("meshPoints", os);
+    pointNormals().writeEntry("normals", os);
 }
 
 

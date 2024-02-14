@@ -429,11 +429,12 @@ void Foam::surfaceDisplacementPointPatchVectorField::updateCoeffs()
 
     const polyMesh& mesh = patch().boundaryMesh().mesh()();
 
-    vectorField currentDisplacement(this->patchInternalField());
+    const vectorField currentDisplacement(this->patchInternalField());
 
     // Calculate intersections with surface w.r.t points0.
     vectorField displacement(currentDisplacement);
     calcProjection(displacement);
+
 
     // offset wrt current displacement
     vectorField offset(displacement-currentDisplacement);
@@ -447,21 +448,15 @@ void Foam::surfaceDisplacementPointPatchVectorField::updateCoeffs()
     {
         vector& d = offset[i];
 
-        for (direction cmpt = 0; cmpt < vector::nComponents; cmpt++)
+        const scalar magD(mag(d));
+        if (magD > ROOTVSMALL)
         {
-            if (d[cmpt] < 0)
-            {
-                d[cmpt] = max(d[cmpt], -clipVelocity[cmpt]);
-            }
-            else
-            {
-                d[cmpt] = min(d[cmpt], clipVelocity[cmpt]);
-            }
+            d /= magD;
+            d *= min(magD, mag(clipVelocity));
         }
     }
 
     this->operator==(currentDisplacement+offset);
-
     fixedValuePointPatchVectorField::updateCoeffs();
 }
 
