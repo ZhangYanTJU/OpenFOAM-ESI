@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,6 +129,21 @@ public:
 
     //- Destructor
     virtual ~proxyWriter() = default;
+
+
+    // Factory Methods
+
+        //- Optional select construct proxy writer.
+        //  Return nullptr if the specified type is not supported.
+        static autoPtr<surfaceWriter> TryNew(const word& writeType);
+
+        //- Optional select construct proxy writer with extra write options.
+        //  Return nullptr if the specified type is not supported.
+        static autoPtr<surfaceWriter> TryNew
+        (
+            const word& writeType,
+            const dictionary& writeOptions
+        );
 
 
     // Member Functions

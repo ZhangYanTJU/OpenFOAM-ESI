@@ -28,7 +28,7 @@ Class
     Foam::surfGeoMesh
 
 Description
-    The surfMesh GeoMesh (for holding fields).
+    The surfMesh GeoMesh for face fields.
 
 \*---------------------------------------------------------------------------*/
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +30,9 @@ Class
 Description
     A surface mesh consisting of general polygon faces that has
     IO capabilities and a registry for storing fields.
+
+Note
+    In many places the Foam::polySurface class may be more flexible.
 
 SourceFiles
     surfMesh.C
@@ -88,10 +91,13 @@ private:
     // Private Typedefs
 
         //- Memory and IO management
-        typedef Detail::MeshedSurfaceIOAllocator Allocator;
+        typedef
+            Detail::MeshedSurfaceIOAllocator
+            Allocator;
 
         //- Internal mesh storage type
-        typedef PrimitivePatch<::Foam::UList<face>, const pointField&>
+        typedef
+            PrimitivePatch<::Foam::UList<face>, const pointField&>
             MeshReference;
 
 
@@ -99,15 +105,6 @@ private:
 
         //- The surface zones
         surfZoneIOList surfZones_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        surfMesh(const surfMesh&) = delete;
-
-        //- No copy assignment
-        void operator=(const surfMesh&) = delete;
 
 
 protected:
@@ -154,6 +151,15 @@ public:
     static word meshSubDir;
 
 
+    // Generated Methods
+
+        //- No copy construct
+        surfMesh(const surfMesh&) = delete;
+
+        //- No copy assignment
+        void operator=(const surfMesh&) = delete;
+
+
     // Constructors
 
         //- Read construct from IOobject.
@@ -164,7 +170,7 @@ public:
         //  Writing = NO_WRITE
         surfMesh(const IOobject& io, const word& surfName);
 
-        //- Construct null with specified name on the given registry.
+        //- Construct empty with specified name on the given registry.
         surfMesh(const word& surfName, const objectRegistry& obr);
 
         //- Copy construct from MeshedSurface<face>
@@ -301,7 +307,11 @@ public:
 
         //- Transfer the contents of the argument and annul the argument
         //  Optionally validate the zone coverage.
-        void transfer(MeshedSurface<face>& surf, bool validate=false);
+        void transfer
+        (
+            MeshedSurface<face>& surf,
+            bool validate=false
+        );
 
         //- Update mesh based on the files saved in time directories
         virtual readUpdateState readUpdate();
@@ -311,7 +321,8 @@ public:
 
         //- Copy/store named field as face or point data (template parameter).
         //
-        //  Default is face-data (surfGeoMesh as template).
+        //  - Default is face-data (surfGeoMesh as template).
+        //  - For point-data use surfPointGeoMesh as template.
         template<class Type, class GeoMeshType = surfGeoMesh>
         void storeField
         (
@@ -322,7 +333,8 @@ public:
 
         //- Move/store named field as face or point data (template parameter).
         //
-        //  Default is face-data (surfGeoMesh as template).
+        //  - Default is face-data (surfGeoMesh as template).
+        //  - For point-data use surfPointGeoMesh as template.
         template<class Type, class GeoMeshType = surfGeoMesh>
         void storeField
         (

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,15 +52,12 @@ void Foam::polySurface::calculateZoneIds(const UList<surfZone>& zones)
     // Extra safety, ensure we have at some zones
     // and they cover all the faces - fix start silently
 
-    zoneIds_.resize(size(), Zero);
+    zoneIds_.resize_nocopy(size());
 
     label off = 0;
     for (const surfZone& zn : zones)
     {
-        const label sz = zn.size();
-
-        SubList<label>(zoneIds_, sz, off) = zn.index();
-
+        SubList<label>(zoneIds_, zn.size(), off) = zn.index();
         off += zn.size();
     }
 
@@ -69,7 +66,7 @@ void Foam::polySurface::calculateZoneIds(const UList<surfZone>& zones)
         WarningInFunction
             << "More faces " << size() << " than zones " << off << endl;
 
-        SubList<label>(zoneIds_, size()-off, off) = zones.back().index();
+        zoneIds_.slice(off) = zones.back().index();
     }
     else if (size() < off)
     {
@@ -96,8 +93,7 @@ Foam::polySurface::polySurface(const IOobject& io, bool doCheckIn)
             IOobjectOption::REGISTER
         )
     ),
-    MeshReference(faceList(), pointField()),
-    zoneIds_()
+    MeshReference(faceList(), pointField())
 {
     // Created without a point field sub-registry
 
@@ -183,7 +179,7 @@ Foam::label Foam::polySurface::nFaceData() const
 
 Foam::label Foam::polySurface::nPointData() const
 {
-    const objectRegistry* subreg =
+    const auto* subreg =
         objectRegistry::cfindObject<objectRegistry>(pointDataName);
 
     if (subreg)
@@ -213,11 +209,13 @@ Foam::polySurface::queryFieldAssociation(const word& fieldName) const
 {
     unsigned where(FieldAssociation::NO_DATA);
 
+    const objectRegistry* subreg = nullptr;
+
     // Face Data
     {
-        const objectRegistry* regptr = this;
+        subreg = this;
 
-        if (regptr && regptr->found(fieldName))
+        if (subreg && subreg->contains(fieldName))
         {
             where |= FieldAssociation::FACE_DATA;
         }
@@ -225,10 +223,9 @@ Foam::polySurface::queryFieldAssociation(const word& fieldName) const
 
     // Point Data
     {
-        const objectRegistry* regptr =
-            cfindObject<objectRegistry>(pointDataName);
+        subreg = cfindObject<objectRegistry>(pointDataName);
 
-        if (regptr && regptr->found(fieldName))
+        if (subreg && subreg->contains(fieldName))
         {
             where |= FieldAssociation::POINT_DATA;
         }
@@ -248,13 +245,14 @@ const Foam::regIOobject* Foam::polySurface::findFieldObject
 
 
     const regIOobject* ioptr = nullptr;
+    const objectRegistry* subreg = nullptr;
 
     // Face Data
     if (where & FieldAssociation::FACE_DATA)
     {
-        const objectRegistry* regptr = this;
+        subreg = this;
 
-        if (regptr && (ioptr = regptr->cfindObject<regIOobject>(fieldName)))
+        if (subreg && (ioptr = subreg->cfindObject<regIOobject>(fieldName)))
         {
             return ioptr;
         }
@@ -263,10 +261,9 @@ const Foam::regIOobject* Foam::polySurface::findFieldObject
     // Point Data
     if (where & FieldAssociation::POINT_DATA)
     {
-        const objectRegistry* regptr =
-            cfindObject<objectRegistry>(pointDataName);
+        subreg = cfindObject<objectRegistry>(pointDataName);
 
-        if (regptr && (ioptr = regptr->cfindObject<regIOobject>(fieldName)))
+        if (subreg && (ioptr = subreg->cfindObject<regIOobject>(fieldName)))
         {
             return ioptr;
         }
@@ -466,7 +463,7 @@ const regIOobject* polySurface::findFieldObject<polySurfacePointGeoMesh>
 {
     // Point Data (sub-registry)
 
-    const objectRegistry* subreg =
+    const auto* subreg =
         objectRegistry::cfindObject<objectRegistry>(pointDataName);
 
     if (subreg)
@@ -488,7 +485,7 @@ const objectRegistry* polySurface::whichRegistry<polySurfaceGeoMesh>
     // Face Data (main registry)
     const objectRegistry* subreg = this;
 
-    if (subreg->found(fieldName))
+    if (subreg->contains(fieldName))
     {
         return subreg;
     }
@@ -505,10 +502,10 @@ const objectRegistry* polySurface::whichRegistry<polySurfacePointGeoMesh>
 {
     // Point Data (sub registry)
 
-    const objectRegistry* subreg =
+    const auto* subreg =
         objectRegistry::cfindObject<objectRegistry>(pointDataName);
 
-    if (subreg && subreg->found(fieldName))
+    if (subreg && subreg->contains(fieldName))
     {
         return subreg;
     }

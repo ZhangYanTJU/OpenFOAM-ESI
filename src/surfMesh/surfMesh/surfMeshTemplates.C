@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,24 +38,24 @@ void Foam::surfMesh::storeField
     const Field<Type>& values
 )
 {
+    typedef DimensionedField<Type, GeoMeshType> fieldType;
+
     const objectRegistry& fieldDb = *this;
 
-    auto* dimfield =
-        fieldDb.getObjectPtr<DimensionedField<Type, GeoMeshType>>(fieldName);
+    auto* fldptr = fieldDb.getObjectPtr<fieldType>(fieldName);
 
-    if (dimfield)
+    if (fldptr)
     {
-        dimfield->dimensions().reset(dims);  // Dimensions may have changed
-        dimfield->field() = values;
+        fldptr->dimensions().reset(dims);  // Dimensions may have changed
+        fldptr->field() = values;
     }
     else
     {
-        dimfield = new DimensionedField<Type, GeoMeshType>
+        fldptr = new fieldType
         (
-            IOobject
+            fieldDb.newIOobject
             (
                 fieldName,
-                fieldDb,
                 IOobjectOption::NO_READ,
                 IOobjectOption::NO_WRITE,
                 IOobjectOption::REGISTER
@@ -65,7 +65,7 @@ void Foam::surfMesh::storeField
             values
         );
 
-        dimfield->store();
+        fldptr->store();
     }
 }
 
@@ -78,24 +78,24 @@ void Foam::surfMesh::storeField
     Field<Type>&& values
 )
 {
+    typedef DimensionedField<Type, GeoMeshType> fieldType;
+
     const objectRegistry& fieldDb = *this;
 
-    auto* dimfield =
-        fieldDb.getObjectPtr<DimensionedField<Type, GeoMeshType>>(fieldName);
+    auto* fldptr = fieldDb.getObjectPtr<fieldType>(fieldName);
 
-    if (dimfield)
+    if (fldptr)
     {
-        dimfield->dimensions().reset(dims);  // Dimensions may have changed
-        dimfield->field() = std::move(values);
+        fldptr->dimensions().reset(dims);  // Dimensions may have changed
+        fldptr->field() = std::move(values);
     }
     else
     {
-        dimfield = new DimensionedField<Type, GeoMeshType>
+        fldptr = new fieldType
         (
-            IOobject
+            fieldDb.newIOobject
             (
                 fieldName,
-                fieldDb,
                 IOobjectOption::NO_READ,
                 IOobjectOption::NO_WRITE,
                 IOobjectOption::REGISTER
@@ -105,7 +105,7 @@ void Foam::surfMesh::storeField
             std::move(values)
         );
 
-        dimfield->store();
+        fldptr->store();
     }
 }
 

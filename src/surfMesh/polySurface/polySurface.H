@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,7 +87,8 @@ private:
     // Private Typedefs
 
         //- Internal mesh storage type
-        typedef PrimitivePatch<::Foam::List<face>, pointField>
+        typedef
+            PrimitivePatch<::Foam::List<face>, pointField>
             MeshReference;
 
 
@@ -101,12 +102,6 @@ private:
 
         //- Calculate per-face zone/region information
         void calculateZoneIds(const UList<surfZone>& zones);
-
-        //- No copy construct
-        polySurface(const polySurface&) = delete;
-
-        //- No copy assignment
-        void operator=(const polySurface&) = delete;
 
 
 protected:
@@ -122,7 +117,11 @@ protected:
         //- Non-const access to the faces
         faceList& storedFaces()
         {
-            return static_cast<faceList&>(static_cast<MeshReference&>(*this));
+            return
+                static_cast<faceList&>
+                (
+                    static_cast<MeshReference&>(*this)
+                );
         }
 
         //- Const access to the faces
@@ -152,6 +151,15 @@ public:
 
     //- Runtime type information
     TypeName("polySurface");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        polySurface(const polySurface&) = delete;
+
+        //- No copy assignment
+        void operator=(const polySurface&) = delete;
 
 
     // Constructors
@@ -353,19 +361,37 @@ public:
         const objectRegistry& faceData() const;
 
         //- Point data are stored in a sub-registry
-        //  Note that this method with automatically create the corresponding
+        //  Note that this method will automatically create the corresponding
         //  sub-registry if it did not previously exist.
         //  Use the nPointData() methods instead if you wish to test for
         //  content without this side-effect.
         const objectRegistry& pointData() const;
 
 
+        //- Create/store named zero field as face or point data
+        //- (template parameter).
+        //
+        //  - Default is face-data (polySurfaceGeoMesh as template).
+        //  - For point-data use polySurfacePointGeoMesh as template.
+        //
+        //  \return reference to the field
+        template<class Type, class GeoMeshType = polySurfaceGeoMesh>
+        DimensionedField<Type, GeoMeshType>&
+        zeroField
+        (
+            const word& fieldName,
+            const dimensionSet& dims
+        );
+
         //- Copy/store named field as face or point data (template parameter).
         //
-        //  Default is face-data (polySurfaceGeoMesh as template).
-        //  For point data use (polySurfacePointGeoMesh as template).
+        //  - Default is face-data (polySurfaceGeoMesh as template).
+        //  - For point-data use polySurfacePointGeoMesh as template.
+        //
+        //  \return reference to the field
         template<class Type, class GeoMeshType = polySurfaceGeoMesh>
-        void storeField
+        DimensionedField<Type, GeoMeshType>&
+        storeField
         (
             const word& fieldName,
             const dimensionSet& dims,
@@ -374,10 +400,13 @@ public:
 
         //- Move/store named field as face or point data (template parameter).
         //
-        //  Default is face-data (polySurfaceGeoMesh as template).
-        //  For point data use (polySurfacePointGeoMesh as template).
+        //  - Default is face-data (polySurfaceGeoMesh as template).
+        //  - For point-data use polySurfacePointGeoMesh as template.
+        //
+        //  \return reference to the field
         template<class Type, class GeoMeshType = polySurfaceGeoMesh>
-        void storeField
+        DimensionedField<Type, GeoMeshType>&
+        storeField
         (
             const word& fieldName,
             const dimensionSet& dims,

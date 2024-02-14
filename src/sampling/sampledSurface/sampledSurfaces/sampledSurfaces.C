@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,7 +129,7 @@ Foam::IOobjectList Foam::sampledSurfaces::preCheckFields()
     {
         if (!ListOps::found(allFields, fieldSelection_[i]))
         {
-            missed.append(i);
+            missed.push_back(i);
         }
     }
 
@@ -153,11 +153,11 @@ Foam::IOobjectList Foam::sampledSurfaces::preCheckFields()
         const word& clsName = iter.key();
         const label n = iter.val().size();
 
-        if (fieldTypes::volume.found(clsName))
+        if (fieldTypes::volume.contains(clsName))
         {
             nVolumeFields += n;
         }
-        else if (fieldTypes::surface.found(clsName))
+        else if (fieldTypes::surface.contains(clsName))
         {
             nSurfaceFields += n;
         }
@@ -224,13 +224,7 @@ Foam::sampledSurfaces::sampledSurfaces
     outputPath_
     (
         time_.globalPath()/functionObject::outputPrefix/name
-    ),
-    fieldSelection_(),
-    sampleFaceScheme_(),
-    sampleNodeScheme_(),
-    writers_(),
-    actions_(),
-    nFaces_()
+    )
 {
     outputPath_.clean();  // Remove unneeded ".."
 
@@ -254,13 +248,7 @@ Foam::sampledSurfaces::sampledSurfaces
     outputPath_
     (
         time_.globalPath()/functionObject::outputPrefix/name
-    ),
-    fieldSelection_(),
-    sampleFaceScheme_(),
-    sampleNodeScheme_(),
-    writers_(),
-    actions_(),
-    nFaces_()
+    )
 {
     outputPath_.clean();  // Remove unneeded ".."
 
@@ -285,7 +273,7 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
     PtrList<sampledSurface>::clear();
     writers_.clear();
     actions_.clear();
-    nFaces_.clear();
+    nonEmpty_.clear();
     fieldSelection_.clear();
 
     verbose_ = dict.getOrDefault("verbose", false);
@@ -312,7 +300,6 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
 
         actions_.resize(surfs.size(), ACTION_WRITE); // Default action
         writers_.resize(surfs.size());
-        nFaces_.resize(surfs.size(), Zero);
 
         label surfi = 0;
 
@@ -385,7 +372,6 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
 
         actions_.resize(surfs.size(), ACTION_WRITE); // Default action
         writers_.resize(surfs.size());
-        nFaces_.resize(surfs.size(), Zero);
 
         label surfi = 0;
 
@@ -436,10 +422,11 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
 
     // Have some surfaces, so sort out which fields are needed and report
 
+    nonEmpty_.resize_nocopy(surfs.size());
+    nonEmpty_ = false;
+
     if (surfs.size())
     {
-        nFaces_.resize(surfs.size(), Zero);
-
         dict.readEntry("fields", fieldSelection_);
         fieldSelection_.uniq();
 
@@ -466,7 +453,7 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
         Info<< nl;
     }
 
-    if (debug && Pstream::master())
+    if (debug && UPstream::master())
     {
         Pout<< "sample fields:" << fieldSelection_ << nl
             << "sample surfaces:" << nl << '(' << nl;
@@ -499,12 +486,17 @@ bool Foam::sampledSurfaces::performAction(unsigned request)
             if (s.update())
             {
                 writers_[surfi].expire();
+                nonEmpty_[surfi] = false;
             }
 
-            nFaces_[surfi] = returnReduce(s.faces().size(), sumOp<label>());
+            // Extra safety: check outside out of the update() above
+            // (to avoid any stickiness on empty surfaces?)
+            if (!nonEmpty_[surfi])
+            {
+                nonEmpty_[surfi] = returnReduceOr(s.faces().size());
+            }
 
-            ok = ok || nFaces_[surfi];
-
+            ok = ok || nonEmpty_[surfi];
 
             // Store surfaces (even empty ones) otherwise we miss geometry
             // updates.
@@ -536,7 +528,7 @@ bool Foam::sampledSurfaces::performAction(unsigned request)
     {
         const sampledSurface& s = (*this)[surfi];
 
-        if (((request & actions_[surfi]) & ACTION_WRITE) && nFaces_[surfi])
+        if (((request & actions_[surfi]) & ACTION_WRITE) && nonEmpty_[surfi])
         {
             surfaceWriter& outWriter = writers_[surfi];
 
@@ -604,7 +596,7 @@ bool Foam::sampledSurfaces::performAction(unsigned request)
     // Finish this time step
     forAll(writers_, surfi)
     {
-        if (((request & actions_[surfi]) & ACTION_WRITE) && nFaces_[surfi])
+        if (((request & actions_[surfi]) & ACTION_WRITE) && nonEmpty_[surfi])
         {
             // Write geometry if no fields were written so that we still
             // can have something to look at
@@ -706,7 +698,7 @@ bool Foam::sampledSurfaces::expire(const bool force)
 
         writers_[surfi].expire();
         writers_[surfi].mergeDim(mergeDim);
-        nFaces_[surfi] = 0;
+        nonEmpty_[surfi] = false;
     }
 
     // True if any surfaces just expired
@@ -731,9 +723,9 @@ bool Foam::sampledSurfaces::update()
         {
             ++nUpdated;
             writers_[surfi].expire();
+            // nonEmpty_[surfi] = false;
+            nonEmpty_[surfi] = returnReduceOr(s.faces().size());
         }
-
-        nFaces_[surfi] = returnReduce(s.faces().size(), sumOp<label>());
     }
 
     return nUpdated;

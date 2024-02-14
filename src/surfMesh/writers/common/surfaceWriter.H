@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -326,16 +326,27 @@ public:
         );
 
 
-    // Selectors
+    // Factory Methods / Selectors
 
         //- True if New is likely to succeed for this writeType
         static bool supportedType(const word& writeType);
 
-        //- Return a reference to the selected surfaceWriter
+        //- Optional select construct surfaceWriter.
+        //  Return nullptr if the specified type is not supported.
+        static autoPtr<surfaceWriter> TryNew(const word& writeType);
+
+        //- Optional select construct surfaceWriter with extra write options.
+        //  Return nullptr if the specified type is not supported.
+        static autoPtr<surfaceWriter> TryNew
+        (
+            const word& writeType,
+            const dictionary& writeOptions
+        );
+
+        //- Select construct a surfaceWriter
         static autoPtr<surfaceWriter> New(const word& writeType);
 
-        //- Return a reference to the selected surfaceWriter
-        //  Select with extra write option
+        //- Select construct a surfaceWriter with extra write options.
         static autoPtr<surfaceWriter> New
         (
             const word& writeType,

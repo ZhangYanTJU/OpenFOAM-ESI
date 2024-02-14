@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -205,8 +205,8 @@ class sampledSurfaces
         //- Per-surface selection of store/write actions
         List<unsigned> actions_;
 
-        //- Cached values of the global number of faces per-surface
-        labelList nFaces_;
+        //- Per-surface validity of the surfaces (eg, has faces)
+        List<bool> nonEmpty_;
 
 
     // Private Member Functions
