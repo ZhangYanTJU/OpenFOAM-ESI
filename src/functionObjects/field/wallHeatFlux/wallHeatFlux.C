@@ -108,6 +108,10 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
     writeFile(obr_, name, typeName, dict),
     qrName_("qr")
 {
+    read(dict);
+
+    writeFileHeader(file());
+
     volScalarField* wallHeatFluxPtr
     (
         new volScalarField
@@ -127,10 +131,6 @@ Foam::functionObjects::wallHeatFlux::wallHeatFlux
     );
 
     mesh_.objectRegistry::store(wallHeatFluxPtr);
-
-    read(dict);
-
-    writeFileHeader(file());
 }
 
 
