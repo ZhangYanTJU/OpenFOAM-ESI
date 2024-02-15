@@ -39,7 +39,7 @@ Description
     Optionally only extracts named patches.
 
     Optionally filters out points on feature-edges and generates pointPatches
-    for these - written to constant/pointMesh/boundary.
+    for these - written to pointMesh/boundary.
 
     If run in parallel, processor patches get filtered out by default and
     the mesh is merged (based on topology).
