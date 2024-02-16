@@ -56,7 +56,7 @@ Description
     the couplePatches utility) reorders coupled patch faces and
     uses the cyclicPolyPatch,processorPolyPatch functionality.
     - zones are assumed to be non-overlapping by default. If desired to be
-    overlapping= either set the singleZone to false when calling
+    overlapping either set the multiZone to true when calling
     modifyCell|Face|Point or use the variants of addCell|Face|Point
     and modifyCell|Face|Point that take a list of zones.
     - if overlapping zones:
@@ -572,7 +572,7 @@ public:
                 const point& pt,
                 const label zoneID,
                 const bool inCell,
-                const bool singleZone = true
+                const bool multiZone = false
             );
 
             //- Modify coordinate.
@@ -640,7 +640,7 @@ public:
                 const label patchID,
                 const label zoneID,
                 const bool zoneFlip,
-                const bool singleZone = true
+                const bool multiZone = false
             );
 
             //- Modify vertices or cell of face.
@@ -692,7 +692,7 @@ public:
             (
                 const label celli,
                 const label zoneID,
-                const bool singleZone = true
+                const bool multiZone = false
             );
 
             //- Set zones of cell

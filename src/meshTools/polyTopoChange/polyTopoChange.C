@@ -2837,7 +2837,7 @@ void Foam::polyTopoChange::modifyPoint
     const point& pt,
     const label zoneID,
     const bool inCell,
-    const bool singleZone
+    const bool multiZone
 )
 {
     if (pointi < 0 || pointi >= points_.size())
@@ -2855,7 +2855,7 @@ void Foam::polyTopoChange::modifyPoint
     }
     points_[pointi] = pt;
 
-    if (singleZone)
+    if (!multiZone)
     {
         if (zoneID >= 0)
         {
@@ -2889,7 +2889,7 @@ void Foam::polyTopoChange::modifyPoint
         else if (zoneID == -1)
         {
             // Clear
-            pointZone_.erase(pointi);
+            pointZone_.erase(fnd);
             if (pointi < pointAdditionalZones_.size())
             {
                 pointAdditionalZones_[pointi].clear();
@@ -3213,7 +3213,7 @@ void Foam::polyTopoChange::modifyFace
     const label patchID,
     const label zoneID,
     const bool zoneFlip,
-    const bool singleZone
+    const bool multiZone
 )
 {
     // Check validity
@@ -3232,7 +3232,7 @@ void Foam::polyTopoChange::modifyFace
     // Note: same logic as modifyCell except storage is now sparse instead
     //       of marked with -1
 
-    if (singleZone)
+    if (!multiZone)
     {
         if (zoneID == -1)
         {
@@ -3269,7 +3269,7 @@ void Foam::polyTopoChange::modifyFace
         else if (zoneID == -1)
         {
             // Clear
-            faceZone_.erase(facei);
+            faceZone_.erase(fnd);
             faceZoneFlip_.set(facei, false);
             if (facei < faceAdditionalZones_.size())
             {
@@ -3509,10 +3509,10 @@ void Foam::polyTopoChange::modifyCell
 (
     const label celli,
     const label zoneID,
-    const bool singleZone
+    const bool multiZone
 )
 {
-    if (singleZone)
+    if (!multiZone)
     {
         cellZone_[celli] = zoneID;
         if (celli < cellAdditionalZones_.size())
