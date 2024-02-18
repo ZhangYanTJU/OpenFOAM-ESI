@@ -132,6 +132,25 @@ Foam::pointMesh::pointMesh
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::pointMesh::setInstance
+(
+    const fileName& inst,
+    const IOobjectOption::writeOption wOpt
+)
+{
+    if (debug)
+    {
+        Pout<< "pointMesh::setInstance(): "
+            << "Setting instance to " << inst << endl;
+    }
+    this->writeOpt(wOpt);
+    this->instance() = inst;
+
+    boundary_.writeOpt(wOpt);
+    boundary_.instance() = inst;
+}
+
+
 bool Foam::pointMesh::movePoints()
 {
     if (debug)
@@ -157,6 +176,21 @@ void Foam::pointMesh::updateMesh(const mapPolyMesh& mpm)
 
     // Map all registered point fields
     mapFields(mpm);
+}
+
+
+bool Foam::pointMesh::writeObject
+(
+    IOstreamOption streamOpt,
+    const bool writeOnProc
+) const
+{
+    if (debug)
+    {
+        Pout<< "pointMesh::writeObject(IOstreamOption, const bool): "
+            << "Writing to " << boundary_.objectRelPath() << endl;
+    }
+    return boundary_.writeObject(streamOpt, writeOnProc);
 }
 
 

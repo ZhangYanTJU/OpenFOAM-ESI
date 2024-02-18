@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,10 +32,16 @@ License
 #include "cyclicPolyPatch.H"
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
+#include "meshPointPatch.H"
+#include "processorPointPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::word Foam::fvMeshSubset::exposedPatchName("oldInternalFaces");
+namespace Foam
+{
+    word fvMeshSubset::exposedPatchName("oldInternalFaces");
+    defineTypeNameAndDebug(fvMeshSubset, 0);
+}
 
 
 // * * * * * * * * * * * * * * * Local Functions * * * * * * * * * * * * * * //
@@ -522,6 +528,16 @@ void Foam::fvMeshSubset::reset
 
 void Foam::fvMeshSubset::reset(const Foam::zero)
 {
+    // Was old pointMesh present?
+    const auto* basePointMeshPtr =
+            baseMesh_.thisDb().cfindObject<pointMesh>(pointMesh::typeName);
+    if (basePointMeshPtr)
+    {
+        DebugPout<< "fvMeshSubset::reset(const Foam::zero) :"
+                << " Detected pointMesh" << endl;
+    }
+
+
     clear();
 
     // Create zero-sized subMesh
@@ -573,6 +589,46 @@ void Foam::fvMeshSubset::reset(const Foam::zero)
     }
 
 
+    // Clone old additional point patches
+    if (basePointMeshPtr)
+    {
+        DebugPout<< "Subsetting pointMesh" << endl;
+        const auto& basePointMesh = *basePointMeshPtr;
+        const auto& oldPointBoundary = basePointMesh.boundary();
+
+        // 1. Generate pointBoundaryMesh from polyBoundaryMesh (so ignoring
+        //    any additional patches
+        const auto& newSubPointMesh = pointMesh::New(newSubMesh);
+
+        auto& newBoundary =
+            const_cast<pointBoundaryMesh&>(newSubPointMesh.boundary());
+
+        // Start off from (poly)patch map
+        pointPatchMap_ = patchMap_;
+
+        // 2. Explicitly add subsetted meshPointPatches
+        for (const auto& oldPointPatch : oldPointBoundary)
+        {
+            const auto* mppPtr = isA<meshPointPatch>(oldPointPatch);
+            if (mppPtr && (newBoundary.findPatchID(mppPtr->name()) == -1))
+            {
+                newBoundary.push_back
+                (
+                    mppPtr->clone
+                    (
+                        newBoundary,
+                        newBoundary.size(),
+                        labelList::null(), // map
+                        labelList::null()  // map
+                    )
+                );
+            }
+        }
+
+        // Extend patchMap with -1
+        pointPatchMap_.setSize(newBoundary.size(), -1);
+    }
+
     // Add the zones
     subsetZones();
 }
@@ -585,6 +641,16 @@ void Foam::fvMeshSubset::reset
     const bool syncPar
 )
 {
+    // Was old pointMesh present?
+    const auto* basePointMeshPtr =
+            baseMesh_.thisDb().cfindObject<pointMesh>(pointMesh::typeName);
+    if (basePointMeshPtr)
+    {
+        DebugPout<< "fvMeshSubset::reset(const bitSet&) :"
+                << " Detected pointMesh" << endl;
+    }
+
+
     // Clear all old maps and pointers
     clear();
 
@@ -1125,6 +1191,8 @@ void Foam::fvMeshSubset::reset
 
     // Inserted patch
 
+    label newInternalPatchID = -1;
+
     if (wantedPatchID == -1)
     {
         label oldInternalSize = boundaryPatchSizes[oldInternalPatchID];
@@ -1158,6 +1226,7 @@ void Foam::fvMeshSubset::reset
             // the internal faces
             patchStart += boundaryPatchSizes[oldInternalPatchID];
             patchMap_[nNewPatches] = -1;
+            newInternalPatchID = nNewPatches;
             ++nNewPatches;
         }
     }
@@ -1232,6 +1301,98 @@ void Foam::fvMeshSubset::reset
 
     // Subset and add any zones
     subsetZones();
+
+
+    if (basePointMeshPtr)
+    {
+        DebugPout<< "Subsetting pointMesh" << endl;
+        const auto& basePointMesh = *basePointMeshPtr;
+        const auto& oldPointBoundary = basePointMesh.boundary();
+
+        // 1. Generate pointBoundaryMesh from polyBoundaryMesh (so ignoring
+        //    any additional patches
+        const auto& newSubPointMesh = pointMesh::New(subMeshPtr_());
+
+        pointPatchMap_ = patchMap_;
+
+        auto& newBoundary =
+            const_cast<pointBoundaryMesh&>(newSubPointMesh.boundary());
+
+
+        // 2. Explicitly add subsetted meshPointPatches
+        labelList oldToNewPoints(baseMesh_.nPoints(), -1);
+        forAll(pointMap_, i)
+        {
+            oldToNewPoints[pointMap_[i]] = i;
+        }
+
+
+        // Add meshPointPatches
+        pointPatchMap_.setSize(newBoundary.size(), -1);
+
+        for (const auto& oldPointPatch : oldPointBoundary)
+        {
+            const auto* mppPtr = isA<meshPointPatch>(oldPointPatch);
+            if (mppPtr && (newBoundary.findPatchID(mppPtr->name()) == -1))
+            {
+                const auto& mp = mppPtr->meshPoints();
+                DynamicList<label> subPointMap(mp.size());
+                forAll(mp, i)
+                {
+                    const label newPointi = oldToNewPoints[mp[i]];
+                    if (newPointi != -1)
+                    {
+                        subPointMap.append(i);
+                    }
+                }
+
+                pointPatchMap_.push_back(mppPtr->index());
+
+                newBoundary.push_back
+                (
+                    mppPtr->clone
+                    (
+                        newBoundary,
+                        newBoundary.size(),
+                        subPointMap,        // map
+                        oldToNewPoints
+                    )
+                );
+            }
+        }
+
+
+        // 3. rotate into place:
+        //      - global patches (including meshPointPatches)
+        //      - optional 'internalFaces' patch
+        //      - processor patches
+        labelList oldToNew(newBoundary.size());
+        label newPatchi = 0;
+        forAll(newBoundary, patchi)
+        {
+            if
+            (
+                patchi != newInternalPatchID
+            && !isA<processorPointPatch>(newBoundary[patchi])
+            )
+            {
+                oldToNew[patchi] = newPatchi++;
+            }
+        }
+        if (newInternalPatchID != -1)
+        {
+            oldToNew[newInternalPatchID] = newPatchi++;
+        }
+        forAll(newBoundary, patchi)
+        {
+            if (isA<processorPointPatch>(newBoundary[patchi]))
+            {
+                oldToNew[patchi] = newPatchi++;
+            }
+        }
+        newBoundary.reorder(oldToNew, true);
+        inplaceReorder(oldToNew, pointPatchMap_);
+    }
 }
 
 

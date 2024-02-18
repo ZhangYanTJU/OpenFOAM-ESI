@@ -102,6 +102,9 @@ class fvMeshSubset
         //- Patch mapping array
         labelList patchMap_;
 
+        //- PointPatch mapping array
+        labelList pointPatchMap_;
+
 
     // Private Member Functions
 
@@ -134,6 +137,10 @@ protected:
 
 
 public:
+
+    // Declare name of the class and its debug switch
+    ClassName("fvMeshSubset");
+
 
     // Static Data Members
 
@@ -224,6 +231,10 @@ public:
 
         //- Return patch map
         inline const labelList& patchMap() const;
+
+        //- Return point-patch map. Usually identical to patchMap except if
+        //- additional patches are added to the pointMesh.
+        inline const labelList& pointPatchMap() const;
 
 
     // Edit

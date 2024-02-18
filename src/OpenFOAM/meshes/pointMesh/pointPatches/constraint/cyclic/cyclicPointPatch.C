@@ -91,6 +91,20 @@ Foam::cyclicPointPatch::cyclicPointPatch
 {}
 
 
+Foam::cyclicPointPatch::cyclicPointPatch
+(
+    const cyclicPointPatch& patch,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    coupledFacePointPatch(patch, bm, index, mapAddressing, reversePointMap),
+    cyclicPolyPatch_(refCast<const cyclicPolyPatch>(patch.patch()))
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::cyclicPointPatch::~cyclicPointPatch()

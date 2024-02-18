@@ -555,7 +555,7 @@ Foam::label Foam::pointBoundaryMesh::findPatchID
     if (debug)
     {
         Pout<< "label pointBoundaryMesh::findPatchID(const word&) const"
-            << "Patch named " << patchName << " not found.  "
+            << " Patch named " << patchName << " not found.  "
             << "Available patch names: " << names() << endl;
     }
 
@@ -725,6 +725,23 @@ void Foam::pointBoundaryMesh::reorder
     if (validBoundary)
     {
         updateMesh();
+    }
+
+    if (debug)
+    {
+        pointPatchList& Patches = *this;
+
+        Pout<< "pointBoundaryMesh::reorder"
+            << "(const labelUList&, const bool): "
+            << "reordered pointBoundaryMesh:" << endl;
+        Pout<< incrIndent;
+        for (const auto& pp : Patches)
+        {
+            Pout<< indent
+                << "index:" << pp.index() << " patch:" << pp.name()
+                << " type:" << pp.type() << endl;
+        }
+        Pout<< decrIndent;
     }
 }
 

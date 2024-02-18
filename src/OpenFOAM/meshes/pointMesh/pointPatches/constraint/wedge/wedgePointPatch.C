@@ -58,6 +58,20 @@ Foam::wedgePointPatch::wedgePointPatch
 {}
 
 
+Foam::wedgePointPatch::wedgePointPatch
+(
+    const wedgePointPatch& patch,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    facePointPatch(patch, bm, index, mapAddressing, reversePointMap),
+    wedgePolyPatch_(refCast<const wedgePolyPatch>(patch.patch()))
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::wedgePointPatch::applyConstraint

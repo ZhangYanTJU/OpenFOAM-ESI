@@ -166,6 +166,30 @@ public:
             boundaryMesh_(bm)
         {}
 
+        //- Construct given the original patch and a map
+        explicit pointPatch
+        (
+            const pointPatch& pp,
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        )
+        :
+            patchIdentifier(pp.name(), index, pp.physicalType(), pp.inGroups()),
+            boundaryMesh_(bm)
+        {}
+
+        //- Construct and return a subset clone,
+        //- resetting the point list and boundary mesh
+        virtual autoPtr<pointPatch> clone
+        (
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        ) const = 0;
+
 
     // Selectors
 

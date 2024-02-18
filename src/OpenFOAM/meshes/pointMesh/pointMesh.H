@@ -155,6 +155,13 @@ public:
             return GeoMesh<polyMesh>::mesh_.time();
         }
 
+        //- Set the instance for mesh files
+        void setInstance
+        (
+            const fileName& instance,
+            const IOobjectOption::writeOption wOpt = IOobject::AUTO_WRITE
+        );
+
 
     // Volume Mesh
 
@@ -185,6 +192,16 @@ public:
         {
             return &pm == this;
         }
+
+
+    // Write
+
+        //- Write
+        virtual bool writeObject
+        (
+            IOstreamOption streamOpt,
+            const bool writeOnProc = true
+        ) const;
 };
 
 

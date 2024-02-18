@@ -554,7 +554,7 @@ Foam::fvMeshSubset::interpolate
     (
         sf,
         pointMesh::New(subMesh()),     // subsetted point mesh
-        patchMap(),
+        pointPatchMap(),
         pointMap()
     );
 }

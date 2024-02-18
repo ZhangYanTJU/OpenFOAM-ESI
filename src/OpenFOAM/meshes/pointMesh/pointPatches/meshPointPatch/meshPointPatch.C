@@ -93,6 +93,27 @@ Foam::meshPointPatch::meshPointPatch
 {}
 
 
+Foam::meshPointPatch::meshPointPatch
+(
+    const meshPointPatch& pp,
+    const pointBoundaryMesh& bm,
+    const label index,
+    const labelUList& mapAddressing,
+    const labelUList& reversePointMap
+)
+:
+    meshPointPatch
+    (
+        pp.name(),
+        labelList(reversePointMap, labelList(pp.meshPoints(), mapAddressing)),
+        vectorField(pp.pointNormals(), mapAddressing),
+        index,
+        bm,
+        pp.type()
+    )
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::meshPointPatch::movePoints(PstreamBuffers&, const pointField& p)

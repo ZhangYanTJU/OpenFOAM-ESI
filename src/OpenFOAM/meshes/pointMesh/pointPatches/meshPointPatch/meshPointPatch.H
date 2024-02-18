@@ -56,8 +56,6 @@ namespace Foam
 class meshPointPatch
 :
     public pointPatch
-//,
-//    public patchIdentifier
 {
 private:
 
@@ -120,6 +118,36 @@ public:
             const pointBoundaryMesh& bm,
             const word& patchType
         );
+
+        //- Construct given the original patch and a map
+        meshPointPatch
+        (
+            const meshPointPatch& pp,
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        );
+
+        //- Construct and return a subset clone,
+        //- resetting the point list and boundary mesh
+        virtual autoPtr<pointPatch> clone
+        (
+            const pointBoundaryMesh& bm,
+            const label index,
+            const labelUList& mapAddressing,
+            const labelUList& reversePointMap
+        ) const
+        {
+            return autoPtr<pointPatch>::NewFrom<meshPointPatch>
+            (
+                *this,
+                bm,
+                index,
+                mapAddressing,
+                reversePointMap
+            );
+        }
 
 
     //- Destructor
