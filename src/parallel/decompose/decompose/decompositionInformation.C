@@ -40,17 +40,16 @@ void Foam::decompositionInformation::populate
 {
     nDomains_ = nDomain;
 
-    distrib_.clear();
-    distrib_.resize(nDomain);
+    distrib_.resize_nocopy(nDomain);
 
     for (labelList& subdist : distrib_)
     {
-        subdist.clear();
-        subdist.resize(nDomain, Zero);
+        subdist.resize_nocopy(nDomain);
+        subdist = Foam::zero{};
     }
 
     // Protect against zero-sized offset list
-    const label numCells = max(0, (xadj.size()-1));
+    const label numCells = Foam::max(0, (xadj.size()-1));
 
     for (label celli = 0; celli < numCells; ++celli)
     {
@@ -75,9 +74,9 @@ void Foam::decompositionInformation::populate
 
     // Build summary
 
-    labelList cellsCount(nDomains_, Zero);
-    labelList neighCount(nDomains_, Zero);
-    labelList facesCount(nDomains_, Zero);
+    labelList cellsCount(nDomains_, Foam::zero{});
+    labelList neighCount(nDomains_, Foam::zero{});
+    labelList facesCount(nDomains_, Foam::zero{});
 
     forAll(distrib_, ownProc)
     {

@@ -123,15 +123,9 @@ int main(int argc, char *argv[])
 
         const label nDomains = max(cellToProc) + 1;
 
+        // Local mesh connectivity
         CompactListList<label> cellCells;
-        globalMeshData::calcCellCells
-        (
-            mesh,
-            identity(mesh.nCells()),
-            mesh.nCells(),
-            false,
-            cellCells
-        );
+        globalMeshData::calcCellCells(mesh, cellCells);
 
         decompositionInformation info
         (

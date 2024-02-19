@@ -101,7 +101,7 @@ Foam::label Foam::kahipDecomp::decomposeSerial
     }
     #endif
 
-    int numCells = max(0, (xadj.size()-1));
+    int numCells = Foam::max(0, (xadj.size()-1));
 
     // Addressing
     ConstPrecisionAdaptor<int, label, List> adjncy_param(adjncy);

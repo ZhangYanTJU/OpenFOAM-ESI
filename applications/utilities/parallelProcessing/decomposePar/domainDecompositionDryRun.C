@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -112,15 +112,9 @@ void Foam::domainDecompositionDryRun::execute
 
     decompositionMethod& method = model.decomposer();
 
+    // Local mesh connectivity
     CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh_,
-        identity(mesh_.nCells()),
-        mesh_.nCells(),
-        false,  // false = local only
-        cellCells
-    );
+    globalMeshData::calcCellCells(mesh_, cellCells);
 
     labelList cellToProc = method.decompose(mesh_, cellWeights);
 

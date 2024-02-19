@@ -73,15 +73,9 @@ Foam::labelList Foam::renumberMethod::renumber
     const pointField& points
 ) const
 {
+    // Local mesh connectivity
     CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh,
-        identity(mesh.nCells()),
-        mesh.nCells(),
-        false,                      // local only
-        cellCells
-    );
+    globalMeshData::calcCellCells(mesh, cellCells);
 
     return renumber(cellCells, points);
 }
@@ -122,7 +116,7 @@ Foam::labelList Foam::renumberMethod::renumber
         mesh,
         fineToCoarse,
         coarsePoints.size(),
-        false,                      // local only
+        false,  // local only (parallel = false)
         coarseCellCells
     );
 

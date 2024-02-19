@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,7 +79,7 @@ Foam::labelList Foam::springRenumber::renumberImpl
     // Sum force per cell. Also reused for the displacement
     scalarField sumForce(nOldCells);
 
-    labelList oldToNew(identity(nOldCells));
+    labelList oldToNew(Foam::identity(nOldCells));
 
     scalar maxCo = (maxCo_ * nOldCells);
 
@@ -163,15 +163,9 @@ Foam::labelList Foam::springRenumber::renumber
     const pointField&
 ) const
 {
+    // Local mesh connectivity
     CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh,
-        identity(mesh.nCells()),
-        mesh.nCells(),
-        false,                      // local only
-        cellCells
-    );
+    globalMeshData::calcCellCells(mesh, cellCells);
 
     return renumberImpl(cellCells);
 }

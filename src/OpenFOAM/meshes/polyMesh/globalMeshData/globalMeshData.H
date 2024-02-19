@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -614,6 +614,7 @@ public:
 
         //- Determine (local or global) cellCells from mesh agglomeration.
         //  Agglomeration is local to the processor.
+        //
         //  - parallel = false
         //    Resulting connections are in local cell indices.
         //    Coupled across cyclics but not processor patches.
@@ -623,9 +624,14 @@ public:
         static void calcCellCells
         (
             const polyMesh& mesh,
-            const labelList& agglom,
+            //! The cell agglomeration, negative agglomeration are excluded
+            //! from the sub-mesh
+            const labelUList& agglom,
+            //! The number of unique, agglomerated cells
             const label nLocalCoarse,
-            const bool parallel,  //!< Use global cell ids in parallel
+            //! Use global cell ids in parallel
+            const bool parallel,
+            //! [out] the mesh connectivity as CSR
             CompactListList<label>& cellCells
         );
 
@@ -635,11 +641,76 @@ public:
         static void calcCellCells
         (
             const polyMesh& mesh,
-            const labelList& agglom,
+            //! The cell agglomeration, negative agglomeration are excluded
+            //! from the sub-mesh
+            const labelUList& agglom,
+            //! The number of unique, agglomerated cells
             const label nLocalCoarse,
-            const bool parallel,  //!< Use global cell ids in parallel
+            //! Use global cell ids in parallel
+            const bool parallel,
+            //! [out] the mesh connectivity as CSR
             CompactListList<label>& cellCells,
+            //! [out] the connectivity weights (face area)
             CompactListList<scalar>& cellCellWeights
+        );
+
+        //- Determine (local or global) mesh connectivity
+        //
+        //  - parallel = false
+        //    Resulting connections are in local cell indices.
+        //    Coupled across cyclics but not processor patches.
+        //  - parallel = true
+        //    Resulting connections are in global cell indices.
+        //    Coupled across cyclics and processor patches.
+        static void calcCellCells
+        (
+            const polyMesh& mesh,
+            //! [out] the mesh connectivity as CSR
+            CompactListList<label>& cellCells,
+            //! Use global cell ids in parallel
+            const bool parallel = false
+        );
+
+        //- Determine (local or global) sub-mesh connectivity
+        //
+        //  - parallel = false
+        //    Resulting connections are in local cell indices.
+        //    Coupled across cyclics but not processor patches.
+        //  - parallel = true
+        //    Resulting connections are in global cell indices.
+        //    Coupled across cyclics and processor patches.
+        //
+        //  \return the cellMap
+        static labelList calcCellCells
+        (
+            const polyMesh& mesh,
+            //! The cell-subset
+            const bitSet& selectedCells,
+            //! [out] the mesh connectivity as CSR
+            CompactListList<label>& cellCells,
+            //! Use global cell ids in parallel
+            const bool parallel = false
+        );
+
+        //- Determine (local or global) sub-mesh connectivity
+        //
+        //  - parallel = false
+        //    Resulting connections are in local cell indices.
+        //    Coupled across cyclics but not processor patches.
+        //  - parallel = true
+        //    Resulting connections are in global cell indices.
+        //    Coupled across cyclics and processor patches.
+        //
+        //  \return the cellMap
+        static labelList calcCellCells
+        (
+            const polyMesh& mesh,
+            //! The cell-subset
+            const labelUList& selectedCells,
+            //! [out] the mesh connectivity as CSR
+            CompactListList<label>& cellCells,
+            //! Use global cell ids in parallel
+            const bool parallel = false
         );
 };
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,7 +29,6 @@ License
 #include "CuthillMcKeeRenumber.H"
 #include "addToRunTimeSelectionTable.H"
 #include "bandCompression.H"
-#include "globalMeshData.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -67,17 +66,7 @@ Foam::labelList Foam::CuthillMcKeeRenumber::renumber
     const pointField& points
 ) const
 {
-    CompactListList<label> cellCells;
-    globalMeshData::calcCellCells
-    (
-        mesh,
-        identity(mesh.nCells()),
-        mesh.nCells(),
-        false,                      // local only
-        cellCells
-    );
-
-    labelList orderedToOld = meshTools::bandCompression(cellCells);
+    labelList orderedToOld = meshTools::bandCompression(mesh);
 
     if (reverse_)
     {

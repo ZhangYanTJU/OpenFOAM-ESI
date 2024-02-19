@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2013 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,6 +50,7 @@ namespace Foam
 {
 
 // Forward Declarations
+class polyMesh;
 template<class T> class CompactListList;
 
 } // End namespace Foam
@@ -63,6 +64,12 @@ namespace meshTools
 {
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Renumber (mesh) addressing to reduce the band of the mesh connectivity,
+//- using the Cuthill-McKee algorithm.
+//
+//  \returns order in which the cells are to be visited (ordered to original)
+labelList bandCompression(const polyMesh& mesh);
 
 //- Renumber (mesh) addressing to reduce the band of the matrix,
 //- using the Cuthill-McKee algorithm.
@@ -97,12 +104,14 @@ namespace Foam
 {
 
 //- Forward to meshTools::bandCompression
+//  \deprecated(2022-03) prefer meshTools::bandCompression()
 inline labelList bandCompression(const labelListList& cellCellAddressing)
 {
     return meshTools::bandCompression(cellCellAddressing);
 }
 
 //- Forward to meshTools::bandCompression
+//  \deprecated(2022-03) prefer meshTools::bandCompression()
 inline labelList bandCompression
 (
     const labelUList& cellCells,
