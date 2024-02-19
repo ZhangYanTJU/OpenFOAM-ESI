@@ -747,12 +747,11 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
         procMesh.write();
 
         // Add pointMesh if it was available
-        if (thisDb().foundObject<pointMesh>(pointMesh::typeName))
+        const auto* pMeshPtr =
+            thisDb().cfindObject<pointMesh>(pointMesh::typeName);
+        if (pMeshPtr)
         {
-            const auto& pMesh = thisDb().lookupObject<pointMesh>
-            (
-                pointMesh::typeName
-            );
+            const auto& pMesh = *pMeshPtr;
             const auto& pMeshBoundary = pMesh.boundary();
 
 

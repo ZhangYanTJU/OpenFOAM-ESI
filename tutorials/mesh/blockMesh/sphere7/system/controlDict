@@ -17,6 +17,7 @@ FoamFile
 DebugSwitches
 {
     pointBoundaryMesh   1;
+    fvMeshSubset        1;
 }
 
 application     blockMesh;
