@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -170,8 +170,7 @@ void Foam::globalIndex::gatherValues
             }
             else
             {
-                IPstream fromProc(commsType, procIDs[i], 0, tag, comm);
-                fromProc >> allValues[i];
+                IPstream::recv(allValues[i], procIDs[i], tag, comm);
             }
         }
     }
@@ -193,8 +192,7 @@ void Foam::globalIndex::gatherValues
         }
         else
         {
-            OPstream toMaster(commsType, masterProci, 0, tag, comm);
-            toMaster << localValue;
+            OPstream::send(localValue, commsType, masterProci, tag, comm);
         }
     }
 
@@ -269,8 +267,7 @@ void Foam::globalIndex::gather
             }
             else
             {
-                IPstream fromProc(commsType, procIDs[i], 0, tag, comm);
-                fromProc >> procSlot;
+                IPstream::recv(procSlot, procIDs[i], tag, comm);
             }
         }
     }
@@ -294,8 +291,7 @@ void Foam::globalIndex::gather
         }
         else
         {
-            OPstream toMaster(commsType, masterProci, 0, tag, comm);
-            toMaster << fld;
+            OPstream::send(fld, commsType, masterProci, tag, comm);
         }
     }
 
@@ -378,8 +374,7 @@ void Foam::globalIndex::gather
             }
             else
             {
-                IPstream fromProc(commsType, procIDs[i], 0, tag, comm);
-                fromProc >> procSlot;
+                IPstream::recv(procSlot, procIDs[i], tag, comm);
             }
         }
     }
@@ -391,8 +386,7 @@ void Foam::globalIndex::gather
         }
         else
         {
-            OPstream toMaster(commsType, masterProci, 0, tag, comm);
-            toMaster << fld;
+            OPstream::send(fld, commsType, masterProci, tag, comm);
         }
     }
 
@@ -962,8 +956,7 @@ void Foam::globalIndex::scatter
             }
             else
             {
-                OPstream toProc(commsType, procIDs[i], 0, tag, comm);
-                toProc << procSlot;
+                OPstream::send(procSlot, commsType, procIDs[i], tag, comm);
             }
         }
 
@@ -999,8 +992,7 @@ void Foam::globalIndex::scatter
         }
         else
         {
-            IPstream fromMaster(commsType, masterProci, 0, tag, comm);
-            fromMaster >> fld;
+            IPstream::recv(fld, masterProci, tag, comm);
         }
     }
 

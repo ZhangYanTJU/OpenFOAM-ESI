@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -379,11 +379,10 @@ void getInterfaceSizes
         if (Pstream::master())
         {
             // Receive and add to my sizes
-            for (const int slave : Pstream::subProcs())
+            for (const int proci : UPstream::subProcs())
             {
-                IPstream fromSlave(Pstream::commsTypes::blocking, slave);
-
-                EdgeMap<Map<label>> slaveSizes(fromSlave);
+                EdgeMap<Map<label>> slaveSizes;
+                IPstream::recv(slaveSizes, proci);
 
                 forAllConstIters(slaveSizes, slaveIter)
                 {
@@ -421,15 +420,8 @@ void getInterfaceSizes
         }
         else
         {
-            // Send to master
-            {
-                OPstream toMaster
-                (
-                    Pstream::commsTypes::blocking,
-                    Pstream::masterNo()
-                );
-                toMaster << regionsToSize;
-            }
+            // buffered send to master
+            OPstream::bsend(regionsToSize, UPstream::masterNo());
         }
     }
 

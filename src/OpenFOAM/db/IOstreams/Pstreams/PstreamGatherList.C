@@ -99,7 +99,7 @@ void Foam::Pstream::gatherList
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -167,7 +167,7 @@ void Foam::Pstream::gatherList
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -248,7 +248,7 @@ void Foam::Pstream::scatterList
                 (
                     UPstream::commsTypes::scheduled,
                     myComm.above(),
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );
@@ -298,7 +298,7 @@ void Foam::Pstream::scatterList
                 (
                     UPstream::commsTypes::scheduled,
                     belowID,
-                    0,
+                    0,  // bufsize
                     tag,
                     comm
                 );

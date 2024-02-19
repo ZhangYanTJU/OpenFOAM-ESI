@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -503,20 +503,13 @@ void Foam::mapDistributeBase::distribute
 
             if (proci != myRank && map.size())
             {
-                OPstream os
-                (
-                    UPstream::commsTypes::blocking,
-                    proci,
-                    0,
-                    tag,
-                    comm
-                );
                 List<T> subField
                 (
                     accessAndFlip(field, map, subHasFlip, negOp)
                 );
 
-                os  << subField;
+                // buffered send
+                OPstream::bsend(subField, proci, tag, comm);
             }
         }
 
@@ -552,15 +545,8 @@ void Foam::mapDistributeBase::distribute
 
             if (proci != myRank && map.size())
             {
-                IPstream is
-                (
-                    UPstream::commsTypes::blocking,
-                    proci,
-                    0,
-                    tag,
-                    comm
-                );
-                List<T> subField(is);
+                List<T> subField;
+                IPstream::recv(subField, proci, tag, comm);
 
                 checkReceivedSize(proci, map.size(), subField.size());
 
@@ -620,15 +606,6 @@ void Foam::mapDistributeBase::distribute
                 const label nbrProc = twoProcs.second();
 
                 {
-                    OPstream os
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-
                     const labelList& map = subMap[nbrProc];
 
                     List<T> subField
@@ -636,18 +613,12 @@ void Foam::mapDistributeBase::distribute
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
-                    os  << subField;
+                    OPstream::send(subField, nbrProc, tag, comm);
                 }
                 {
-                    IPstream is
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-                    List<T> subField(is);
+                    List<T> subField;
+                    IPstream::recv(subField, nbrProc, tag, comm);
+
                     const labelList& map = constructMap[nbrProc];
 
                     checkReceivedSize(nbrProc, map.size(), subField.size());
@@ -669,15 +640,9 @@ void Foam::mapDistributeBase::distribute
                 const label nbrProc = twoProcs.first();
 
                 {
-                    IPstream is
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-                    List<T> subField(is);
+                    List<T> subField;
+                    IPstream::recv(subField, nbrProc, tag, comm);
+
                     const labelList& map = constructMap[nbrProc];
 
                     checkReceivedSize(nbrProc, map.size(), subField.size());
@@ -693,15 +658,6 @@ void Foam::mapDistributeBase::distribute
                     );
                 }
                 {
-                    OPstream os
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-
                     const labelList& map = subMap[nbrProc];
 
                     List<T> subField
@@ -709,7 +665,7 @@ void Foam::mapDistributeBase::distribute
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
-                    os  << subField;
+                    OPstream::send(subField, nbrProc, tag, comm);
                 }
             }
         }
@@ -730,13 +686,12 @@ void Foam::mapDistributeBase::distribute
 
                 if (proci != myRank && map.size())
                 {
-                    UOPstream os(proci, pBufs);
-
                     List<T> subField
                     (
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
+                    UOPstream os(proci, pBufs);
                     os  << subField;
                 }
             }
@@ -992,21 +947,13 @@ void Foam::mapDistributeBase::distribute
 
             if (proci != myRank && map.size())
             {
-                OPstream os
-                (
-                    UPstream::commsTypes::blocking,
-                    proci,
-                    0,
-                    tag,
-                    comm
-                );
-
                 List<T> subField
                 (
                     accessAndFlip(field, map, subHasFlip, negOp)
                 );
 
-                os  << subField;
+                // buffered send
+                OPstream::bsend(subField, proci, tag, comm);
             }
         }
 
@@ -1041,15 +988,8 @@ void Foam::mapDistributeBase::distribute
 
             if (proci != myRank && map.size())
             {
-                IPstream is
-                (
-                    UPstream::commsTypes::blocking,
-                    proci,
-                    0,
-                    tag,
-                    comm
-                );
-                List<T> subField(is);
+                List<T> subField;
+                IPstream::recv(subField, proci, tag, comm);
 
                 checkReceivedSize(proci, map.size(), subField.size());
 
@@ -1107,33 +1047,17 @@ void Foam::mapDistributeBase::distribute
                 const label nbrProc = twoProcs.second();
 
                 {
-                    OPstream os
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-
                     const labelList& map = subMap[nbrProc];
                     List<T> subField
                     (
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
-                    os  << subField;
+                    OPstream::send(subField, nbrProc, tag, comm);
                 }
                 {
-                    IPstream is
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-                    List<T> subField(is);
+                    List<T> subField;
+                    IPstream::recv(subField, nbrProc, tag, comm);
 
                     const labelList& map = constructMap[nbrProc];
 
@@ -1156,15 +1080,8 @@ void Foam::mapDistributeBase::distribute
                 const label nbrProc = twoProcs.first();
 
                 {
-                    IPstream is
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-                    List<T> subField(is);
+                    List<T> subField;
+                    IPstream::recv(subField, nbrProc, tag, comm);
 
                     const labelList& map = constructMap[nbrProc];
 
@@ -1181,22 +1098,13 @@ void Foam::mapDistributeBase::distribute
                     );
                 }
                 {
-                    OPstream os
-                    (
-                        UPstream::commsTypes::scheduled,
-                        nbrProc,
-                        0,
-                        tag,
-                        comm
-                    );
-
                     const labelList& map = subMap[nbrProc];
                     List<T> subField
                     (
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
-                    os  << subField;
+                    OPstream::send(subField, nbrProc, tag, comm);
                 }
             }
         }
@@ -1217,13 +1125,12 @@ void Foam::mapDistributeBase::distribute
 
                 if (proci != myRank && map.size())
                 {
-                    UOPstream os(proci, pBufs);
-
                     List<T> subField
                     (
                         accessAndFlip(field, map, subHasFlip, negOp)
                     );
 
+                    UOPstream os(proci, pBufs);
                     os  << subField;
                 }
             }
@@ -1433,13 +1340,12 @@ void Foam::mapDistributeBase::send
 
         if (map.size())
         {
-            UOPstream os(proci, pBufs);
-
             List<T> subField
             (
                 accessAndFlip(field, map, subHasFlip_, flipOp())
             );
 
+            UOPstream os(proci, pBufs);
             os  << subField;
         }
     }

@@ -70,9 +70,9 @@ public:
     //- Communications types
     enum class commsTypes : char
     {
-        blocking,       //!< "blocking"    : (MPI_Bsend, MPI_Recv)
-        scheduled,      //!< "scheduled"   : (MPI_Send, MPI_Recv)
-        nonBlocking     //!< "nonBlocking" : (MPI_Isend, MPI_Irecv)
+        blocking,       //!< "blocking" (buffered)      : (MPI_Bsend, MPI_Recv)
+        scheduled,      //!< "scheduled" (MPI standard) : (MPI_Send, MPI_Recv)
+        nonBlocking     //!< "nonBlocking" (immediate)  : (MPI_Isend, MPI_Irecv)
     };
 
     //- Enumerated names for the communication types

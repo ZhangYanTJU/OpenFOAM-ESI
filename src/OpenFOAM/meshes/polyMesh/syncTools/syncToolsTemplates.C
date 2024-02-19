@@ -324,8 +324,8 @@ void Foam::syncTools::syncPointMap
                 // Receive the edges using shared points from other procs
                 for (const int proci : UPstream::subProcs())
                 {
-                    IPstream fromProc(UPstream::commsTypes::scheduled, proci);
-                    Map<T> nbrValues(fromProc);
+                    Map<T> nbrValues;
+                    IPstream::recv(nbrValues, proci);
 
                     // Merge neighbouring values with my values
                     forAllConstIters(nbrValues, iter)
@@ -343,12 +343,7 @@ void Foam::syncTools::syncPointMap
             else
             {
                 // Send to master
-                OPstream toMaster
-                (
-                    UPstream::commsTypes::scheduled,
-                    UPstream::masterNo()
-                );
-                toMaster << sharedPointValues;
+                OPstream::send(sharedPointValues, UPstream::masterNo());
             }
 
             // Broadcast: send merged values to all
@@ -687,8 +682,8 @@ void Foam::syncTools::syncEdgeMap
             // Receive the edges using shared points from other procs
             for (const int proci : UPstream::subProcs())
             {
-                IPstream fromProc(UPstream::commsTypes::scheduled, proci);
-                EdgeMap<T> nbrValues(fromProc);
+                EdgeMap<T> nbrValues;
+                IPstream::recv(nbrValues, proci);
 
                 // Merge neighbouring values with my values
                 forAllConstIters(nbrValues, iter)
@@ -706,14 +701,7 @@ void Foam::syncTools::syncEdgeMap
         else
         {
             // Send to master
-            {
-                OPstream toMaster
-                (
-                    UPstream::commsTypes::scheduled,
-                    UPstream::masterNo()
-                );
-                toMaster << sharedEdgeValues;
-            }
+            OPstream::send(sharedEdgeValues, UPstream::masterNo());
         }
 
         // Broadcast: send merged values to all

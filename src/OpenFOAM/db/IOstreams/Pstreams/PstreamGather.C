@@ -32,8 +32,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "OPstream.H"
 #include "IPstream.H"
+#include "OPstream.H"
 #include "contiguous.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -73,15 +73,7 @@ void Foam::Pstream::gather
             }
             else
             {
-                IPstream fromBelow
-                (
-                    UPstream::commsTypes::scheduled,
-                    belowID,
-                    0,  // bufsize
-                    tag,
-                    comm
-                );
-                fromBelow >> received;
+                IPstream::recv(received, belowID, tag, comm);
             }
 
             value = bop(value, received);
@@ -104,15 +96,7 @@ void Foam::Pstream::gather
             }
             else
             {
-                OPstream toAbove
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    0,  // bufsize
-                    tag,
-                    comm
-                );
-                toAbove << value;
+                OPstream::send(value, myComm.above(), tag, comm);
             }
         }
     }
@@ -166,28 +150,12 @@ Foam::List<T> Foam::Pstream::listGatherValues
 
                 for (int proci = 1; proci < numProc; ++proci)
                 {
-                    IPstream fromProc
-                    (
-                        UPstream::commsTypes::scheduled,
-                        proci,
-                        0,  // bufsize
-                        tag,
-                        comm
-                    );
-                    fromProc >> allValues[proci];
+                    IPstream::recv(allValues[proci], proci, tag, comm);
                 }
             }
             else if (UPstream::is_rank(comm))
             {
-                OPstream toProc
-                (
-                    UPstream::commsTypes::scheduled,
-                    UPstream::masterNo(),
-                    0,  // bufsize
-                    tag,
-                    comm
-                );
-                toProc << localValue;
+                OPstream::send(localValue, UPstream::masterNo(), tag, comm);
             }
         }
     }
@@ -269,15 +237,7 @@ T Foam::Pstream::listScatterValues
             }
             else if (UPstream::is_rank(comm))
             {
-                IPstream fromProc
-                (
-                    UPstream::commsTypes::scheduled,
-                    UPstream::masterNo(),
-                    0,  // bufsize
-                    tag,
-                    comm
-                );
-                fromProc >> localValue;
+                IPstream::recv(localValue, UPstream::masterNo(), tag, comm);
             }
         }
     }

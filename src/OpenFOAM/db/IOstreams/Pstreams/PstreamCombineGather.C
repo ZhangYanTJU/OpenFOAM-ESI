@@ -36,8 +36,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "OPstream.H"
 #include "IPstream.H"
+#include "OPstream.H"
 #include "IOstreams.H"
 #include "contiguous.H"
 
@@ -129,15 +129,7 @@ void Foam::Pstream::combineGather
             }
             else
             {
-                OPstream toAbove
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    0,  // bufsize
-                    tag,
-                    comm
-                );
-                toAbove << value;
+                OPstream::send(value, myComm.above(), tag, comm);
             }
         }
     }
@@ -255,15 +247,7 @@ void Foam::Pstream::listCombineGather
             }
             else
             {
-                OPstream toAbove
-                (
-                    UPstream::commsTypes::scheduled,
-                    myComm.above(),
-                    0,  // bufsize
-                    tag,
-                    comm
-                );
-                toAbove << values;
+                OPstream::send(values, myComm.above(), tag, comm);
             }
         }
     }
@@ -357,15 +341,7 @@ void Foam::Pstream::mapCombineGather
                     << " data:" << values << endl;
             }
 
-            OPstream toAbove
-            (
-                UPstream::commsTypes::scheduled,
-                myComm.above(),
-                0,  // bufsize
-                tag,
-                comm
-            );
-            toAbove << values;
+            OPstream::send(values, myComm.above(), tag, comm);
         }
     }
 }

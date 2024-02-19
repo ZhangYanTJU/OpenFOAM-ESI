@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -164,12 +164,8 @@ void Foam::isoSurfacePoint::syncUnseparatedPoints
                     patchInfo[nbrPointi] = pointValues[meshPts[pointi]];
                 }
 
-                OPstream toNbr
-                (
-                    Pstream::commsTypes::blocking,
-                    procPatch.neighbProcNo()
-                );
-                toNbr << patchInfo;
+                // buffered send
+                OPstream::bsend(patchInfo, procPatch.neighbProcNo());
             }
         }
 
@@ -181,17 +177,11 @@ void Foam::isoSurfacePoint::syncUnseparatedPoints
 
             if (pp.nPoints() && collocatedPatch(pp))
             {
-                pointField nbrPatchInfo(procPatch.nPoints());
-                {
-                    // We do not know the number of points on the other side
-                    // so cannot use UIPstream::read
-                    IPstream fromNbr
-                    (
-                        Pstream::commsTypes::blocking,
-                        procPatch.neighbProcNo()
-                    );
-                    fromNbr >> nbrPatchInfo;
-                }
+                pointField nbrPatchInfo;
+
+                // We do not know the number of points on the other side
+                // so cannot use UIPstream::read
+                IPstream::recv(nbrPatchInfo, procPatch.neighbProcNo());
 
                 const labelList& meshPts = procPatch.meshPoints();
 
