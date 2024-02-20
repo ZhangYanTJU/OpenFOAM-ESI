@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -174,7 +174,7 @@ Foam::solution::solution
             obr.time().system(),
             obr,
             rOpt,
-            IOobject::NO_WRITE
+            IOobjectOption::NO_WRITE
         ),
         fallback
     ),
@@ -184,18 +184,23 @@ Foam::solution::solution
     eqnRelaxDict_(),
     solvers_()
 {
-    // Treat as MUST_READ_IF_MODIFIED whenever possible
+    // Treat as READ_MODIFIED whenever possible
     if
     (
-        readOpt() == IOobject::MUST_READ
+        readOpt() == IOobjectOption::MUST_READ
      || (isReadOptional() && headerOk())
     )
     {
-        readOpt(IOobject::MUST_READ_IF_MODIFIED);
+        readOpt(IOobjectOption::READ_MODIFIED);
         addWatch();
     }
 
-    if (readOpt() == IOobject::MUST_READ_IF_MODIFIED)
+    // Update: from values read or copied in
+    if
+    (
+        readOpt() == IOobjectOption::READ_MODIFIED
+     || !dictionary::empty()
+    )
     {
         read(selectedDict());
     }
