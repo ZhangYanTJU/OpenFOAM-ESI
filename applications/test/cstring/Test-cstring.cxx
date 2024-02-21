@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2017 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -81,8 +81,7 @@ int print(char *argv[])
 
 int main(int argc, char *argv[])
 {
-    DynamicList<string> dynlst;
-    dynlst.reserve(16);
+    DynamicList<string> dynlst(16);
 
     dynlst.push_back("string1 with content");
     dynlst.push_back("string2 other content");
@@ -96,6 +95,18 @@ int main(int argc, char *argv[])
         print(inC);
 
         Info<< "null-terminated string list" << nl;
+        print(inC.strings());
+
+        Info<< "sublist: starting at " << inC.size()/2 << nl;
+        print(inC.strings(inC.size()/2));
+
+        Info<< nl;
+    }
+
+    {
+        CStringList inC({ "string1", "string2", "string3", "end" });
+
+        Info<< "null-terminated string list from " << nl;
         print(inC.strings());
 
         Info<< "sublist: starting at " << inC.size()/2 << nl;
@@ -124,7 +135,7 @@ int main(int argc, char *argv[])
         Info<< nl;
     }
 
-    Info<<"command-line with " << CStringList::count(argv) << " items"<< endl;
+    Info<< "command-line with " << CStringList::count(argv) << " items" << nl;
 
     print(argc, argv);
 

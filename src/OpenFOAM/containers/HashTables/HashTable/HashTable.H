@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -252,9 +252,22 @@ public:
         //- Move construct
         HashTable(this_type&& rhs) noexcept;
 
-        //- Construct from an initializer list
-        //  Duplicate entries are handled by overwriting
-        HashTable(std::initializer_list<std::pair<Key, T>> list);
+        //- Construct from key/value pairs in initializer list
+        //  By default, uses insert not overwrite semantics for duplicates.
+        HashTable
+        (
+            std::initializer_list<std::pair<Key, T>> list,
+            const bool overwrite = false
+        );
+
+        //- Construct from key/value pairs
+        //  By default, uses insert not overwrite semantics for duplicates.
+        HashTable
+        (
+            const UList<Key>& keys,
+            const UList<T>& values,
+            const bool overwrite = false
+        );
 
 
     //- Destructor

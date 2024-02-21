@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1364,11 +1364,7 @@ Foam::label Foam::meshRefinement::splitFacesUndo
         }
 
         {
-            Map<label> splitFaceToIndex(2*splitFaces.size());
-            forAll(splitFaces, i)
-            {
-                splitFaceToIndex.insert(splitFaces[i], i);
-            }
+            Map<label> splitFaceToIndex(invertToMap(splitFaces));
 
             forAll(map.faceMap(), facei)
             {

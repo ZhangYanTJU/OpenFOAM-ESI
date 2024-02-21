@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -165,15 +165,8 @@ bool Foam::fileFormats::NASedgeFormat::read
     // transfer to normal lists
     storedPoints().transfer(dynPoints);
 
-    pointId.shrink();
-    dynEdges.shrink();
-
     // Build inverse mapping (NASTRAN pointId -> index)
-    Map<label> mapPointId(2*pointId.size());
-    forAll(pointId, i)
-    {
-        mapPointId.insert(pointId[i], i);
-    }
+    Map<label> mapPointId(invertToMap(pointId));
 
     // note which points were really used and which can be culled
     bitSet usedPoints(points().size());

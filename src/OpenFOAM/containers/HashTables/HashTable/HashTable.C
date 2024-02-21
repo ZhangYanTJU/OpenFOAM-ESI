@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -98,14 +98,38 @@ Foam::HashTable<T, Key, Hash>::HashTable(HashTable<T, Key, Hash>&& rhs) noexcept
 template<class T, class Key, class Hash>
 Foam::HashTable<T, Key, Hash>::HashTable
 (
-    std::initializer_list<std::pair<Key, T>> list
+    std::initializer_list<std::pair<Key, T>> list,
+    const bool overwrite
 )
 :
-    HashTable<T, Key, Hash>(2*list.size())
+    HashTable<T, Key, Hash>()
 {
+    reserve(list.size());
+
     for (const auto& keyval : list)
     {
-        set(keyval.first, keyval.second);
+        this->setEntry(overwrite, keyval.first, keyval.second);
+    }
+}
+
+
+template<class T, class Key, class Hash>
+Foam::HashTable<T, Key, Hash>::HashTable
+(
+    const UList<Key>& keys,
+    const UList<T>& values,
+    const bool overwrite
+)
+:
+    HashTable<T, Key, Hash>()
+{
+    const label len = std::min(keys.size(), values.size());
+
+    reserve(len);
+
+    for (label i = 0; i < len; ++i)
+    {
+        this->setEntry(overwrite, keys[i], values[i]);
     }
 }
 

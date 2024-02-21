@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,15 +59,20 @@ SourceFiles
 namespace Foam
 {
 
-//- Renumber the values (not the indices) of a list.
-//  Negative IntListType elements are left untouched.
+//- Renumber the values within a list.
+//  Negative input values are left untouched.
 template<class IntListType>
 IntListType renumber(const labelUList& oldToNew, const IntListType& input);
 
-//- Inplace renumber the values (not the indices) of a list.
-//  Negative IntListType elements are left untouched.
+//- Inplace renumber the values within a list.
+//  Negative input values are left untouched.
 template<class IntListType>
 void inplaceRenumber(const labelUList& oldToNew, IntListType& input);
+
+//- Inplace renumber the values of a list.
+//  Values that are not mapped by oldToNew are left untouched.
+template<class IntListType>
+void inplaceRenumber(const Map<label>& oldToNew, IntListType& input);
 
 
 //- Reorder the elements of a list.
@@ -361,6 +366,14 @@ labelList invert(const label len, const bitSet& map);
 //
 //  \return the inverse mapping with -1 for unmapped elements.
 labelList invert(const bitSet& map);
+
+//- Create inverse mapping, which is a lookup table into the given list
+//  \param values the values (likely unique).
+//
+//  Negative values are allowed, duplicates are "first wins"
+//
+//  \return the inverse lookup
+Map<label> invertToMap(const labelUList& values);
 
 //- Invert one-to-many map. Unmapped elements will be size 0.
 labelListList invertOneToMany(const label len, const labelUList& map);

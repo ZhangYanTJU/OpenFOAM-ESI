@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -359,11 +359,7 @@ void Foam::syncTools::syncPointMap
         // pointValues (keyed on mesh points).
 
         // Map from global shared index to meshpoint
-        Map<label> sharedToMeshPoint(2*sharedPtAddr.size());
-        forAll(sharedPtAddr, i)
-        {
-            sharedToMeshPoint.insert(sharedPtAddr[i], sharedPtLabels[i]);
-        }
+        Map<label> sharedToMeshPoint(sharedPtAddr, sharedPtLabels);
 
         forAllConstIters(sharedToMeshPoint, iter)
         {
@@ -622,11 +618,7 @@ void Foam::syncTools::syncEdgeMap
     const labelList& sharedPtLabels = pd.sharedPointLabels();
 
     // 1. Create map from meshPoint to globalShared index.
-    Map<label> meshToShared(2*sharedPtLabels.size());
-    forAll(sharedPtLabels, i)
-    {
-        meshToShared.insert(sharedPtLabels[i], sharedPtAddr[i]);
-    }
+    Map<label> meshToShared(sharedPtLabels, sharedPtAddr);
 
     // Values on shared points. From two sharedPtAddr indices to a value.
     EdgeMap<T> sharedEdgeValues(meshToShared.size());

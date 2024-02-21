@@ -295,9 +295,7 @@ void addToInterface
     else
     {
         // Create new interface of size 1.
-        Map<label> zoneToSize;
-        zoneToSize.insert(zoneID, 1);
-        regionsToSize.insert(interface, zoneToSize);
+        regionsToSize(interface).insert(zoneID, 1);
     }
 }
 
@@ -484,18 +482,10 @@ void getInterfaceSizes
                     zoneName + "_" + name1 + "_to_" + name0
                 );
             }
-            interfaceSizes[nInterfaces] = infoIter();
 
-            if (regionsToInterface.found(e))
-            {
-                regionsToInterface[e].insert(zoneID, nInterfaces);
-            }
-            else
-            {
-                Map<label> zoneAndInterface;
-                zoneAndInterface.insert(zoneID, nInterfaces);
-                regionsToInterface.insert(e, zoneAndInterface);
-            }
+            interfaceSizes[nInterfaces] = infoIter();
+            regionsToInterface(e).insert(zoneID, nInterfaces);
+
             nInterfaces++;
         }
     }

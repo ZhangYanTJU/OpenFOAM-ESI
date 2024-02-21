@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,6 +32,7 @@ License
 #include "setToFaceZone.H"
 #include "setsToFaceZone.H"
 #include "syncTools.H"
+#include "ListOps.H"
 
 #include "addToRunTimeSelectionTable.H"
 
@@ -177,11 +178,7 @@ void Foam::faceZoneSet::subset(const topoSet& set)
     DynamicList<label> newAddressing(addressing_.size());
     DynamicList<bool> newFlipMap(flipMap_.size());
 
-    Map<label> faceToIndex(addressing_.size());
-    forAll(addressing_, i)
-    {
-        faceToIndex.insert(addressing_[i], i);
-    }
+    Map<label> faceToIndex(invertToMap(addressing_));
 
     const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
 
@@ -225,11 +222,7 @@ void Foam::faceZoneSet::addSet(const topoSet& set)
     DynamicList<label> newAddressing(addressing_);
     DynamicList<bool> newFlipMap(flipMap_);
 
-    Map<label> faceToIndex(addressing_.size());
-    forAll(addressing_, i)
-    {
-        faceToIndex.insert(addressing_[i], i);
-    }
+    Map<label> faceToIndex(invertToMap(addressing_));
 
     const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
 
@@ -277,11 +270,7 @@ void Foam::faceZoneSet::subtractSet(const topoSet& set)
 
     const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
 
-    Map<label> faceToIndex(zoneSet.addressing().size());
-    forAll(zoneSet.addressing(), i)
-    {
-        faceToIndex.insert(zoneSet.addressing()[i], i);
-    }
+    Map<label> faceToIndex(invertToMap(zoneSet.addressing()));
 
     forAll(addressing_, i)
     {

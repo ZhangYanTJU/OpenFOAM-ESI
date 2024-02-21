@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2020 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -493,11 +493,8 @@ Foam::fvMeshSubset::interpolate
             const labelList& meshPoints = basePatch.meshPoints();
 
             // Make addressing from mesh to patch point
-            Map<label> meshPointMap(2*meshPoints.size());
-            forAll(meshPoints, localI)
-            {
-                meshPointMap.insert(meshPoints[localI], localI);
-            }
+            Map<label> meshPointMap(invertToMap(meshPoints));
+
 
             // Find which subpatch points originate from which patch point
             const pointPatch& subPatch = sMesh.boundary()[patchi];
@@ -515,7 +512,7 @@ Foam::fvMeshSubset::interpolate
 
                 if (iter.good())
                 {
-                    directAddressing[localI] = *iter;
+                    directAddressing[localI] = iter.val();
                 }
             }
 

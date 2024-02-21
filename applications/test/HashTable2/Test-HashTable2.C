@@ -124,11 +124,11 @@ int main(int argc, char *argv[])
         << "toc: " << flatOutput(table0.toc()) << nl;
 
     HashTable<label, label, Hash<label>> table2
-    ({
-        {3, 10},
-        {5, 12},
-        {7, 16}
-    });
+    (
+        // From key/value pairs
+        labelList({3, 5, 7}),
+        labelList({10, 12, 16})
+    );
 
     Info<< "table2: " << table2 << nl
         << "toc: " << flatOutput(table2.toc()) << nl;

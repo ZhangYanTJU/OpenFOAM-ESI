@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2020 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -29,6 +29,7 @@ License
 #include "enrichedPatch.H"
 #include "OFstream.H"
 #include "meshTools.H"
+#include "ListOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -65,12 +66,8 @@ void Foam::enrichedPatch::calcLocalFaces() const
     // Invert mesh points and renumber faces using it
     const labelList& mp = meshPoints();
 
-    Map<label> mpLookup(2*mp.size());
+    Map<label> mpLookup(invertToMap(mp));
 
-    forAll(mp, mpi)
-    {
-        mpLookup.insert(mp[mpi], mpi);
-    }
 
     // Create local faces.
     // Copy original faces and overwrite vertices after
@@ -82,10 +79,7 @@ void Foam::enrichedPatch::calcLocalFaces() const
 
     for (face& f : locFaces)
     {
-        for (label& pointi : f)
-        {
-            pointi = *(mpLookup.cfind(pointi));
-        }
+        inplaceRenumber(mpLookup, f);
     }
 }
 

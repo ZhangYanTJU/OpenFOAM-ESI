@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2017 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,17 +27,18 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+inline char* Foam::CStringList::stringCopy(char* dest, const char* src)
+{
+    dest = std::copy_n(src, (src ? strlen(src) : 0), dest);
+    *(dest++) = '\0';
+    return dest;
+}
+
+
 inline char* Foam::CStringList::stringCopy(char *dest, const std::string& src)
 {
-    // Like string::copy() but without extra checks
-    const size_t len = src.length();
-    for (size_t i = 0; i < len; ++i)
-    {
-        *dest = src[i];
-        ++dest;
-    }
+    dest = std::copy_n(src.data(), src.size(), dest);
     *(dest++) = '\0';
-
     return dest;
 }
 
@@ -67,6 +68,17 @@ inline constexpr Foam::CStringList::CStringList() noexcept
     argv_(nullptr),
     data_(nullptr)
 {}
+
+
+inline Foam::CStringList::CStringList
+(
+    std::initializer_list<const char* const> input
+)
+:
+    CStringList()
+{
+    reset(input);
+}
 
 
 template<class StringType>

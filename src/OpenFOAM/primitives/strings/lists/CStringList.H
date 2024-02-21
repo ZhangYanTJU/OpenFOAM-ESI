@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,6 +55,9 @@ Description
 #include "stringList.H"
 #include "wordList.H"
 
+#include <algorithm>  // std::copy
+#include <utility>    // std::initializer_list
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -87,6 +90,11 @@ class CStringList
 
     // Private Member Functions
 
+        //- Copy characters into dest as NUL-terminated string.
+        //
+        //  \return location one-past end of dest (ie, the next destination)
+        static inline char* stringCopy(char* dest, const char* src);
+
         //- Copy string characters into dest as NUL-terminated string.
         //  Forces conversion of std::sub_match to string form
         //
@@ -99,6 +107,10 @@ class CStringList
         int resetContent(const ListType& input);
 
 
+public:
+
+    // Generated Methods
+
         //- No copy construct
         CStringList(const CStringList&) = delete;
 
@@ -106,12 +118,17 @@ class CStringList
         void operator=(const CStringList&) = delete;
 
 
-public:
-
     // Constructors
 
         //- Default construct, adding content later (via reset).
         inline constexpr CStringList() noexcept;
+
+        //- Copy construct from a list of C-strings
+        //  Copies the input characters.
+        inline explicit CStringList
+        (
+            std::initializer_list<const char* const> input
+        );
 
         //- Copy construct from a list of strings
         //  Copies the input characters.
@@ -173,6 +190,10 @@ public:
 
         //- Clear contents and free memory
         inline void clear();
+
+        //- Copy the input list of C-strings
+        //  \return number of arguments (argc)
+        int reset(std::initializer_list<const char* const> input);
 
         //- Copy the input list of strings.
         //  \return number of arguments (argc)

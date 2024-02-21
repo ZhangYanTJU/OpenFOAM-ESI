@@ -130,11 +130,14 @@ Foam::regionSplit2D::regionSplit2D
     }
 
     // In-place renumber the local regionI to global (compact) regionI
-    globalIndex giCompact(compactRegionI);
-    forAllIters(regionToCompactAddr, iter)
     {
-        *iter = giCompact.toGlobal(*iter);
+        const label myProcOffset = globalIndex::calcOffset(compactRegionI);
+        forAllIters(regionToCompactAddr, iter)
+        {
+            iter.val() += myProcOffset;
+        }
     }
+
 
     // Ensure regionToCompactAddr consistent across all processors
     // - not concerned about the op (keys are unique)

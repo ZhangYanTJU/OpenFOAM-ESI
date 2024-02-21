@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -107,11 +107,7 @@ bool Foam::fileFormats::STARCDsurfaceFormat<Face>::read
     );
 
     // Build inverse mapping (STARCD pointId -> index)
-    Map<label> mapPointId(2*pointId.size());
-    forAll(pointId, i)
-    {
-        mapPointId.insert(pointId[i], i);
-    }
+    Map<label> mapPointId(invertToMap(pointId));
     pointId.clear();
 
 

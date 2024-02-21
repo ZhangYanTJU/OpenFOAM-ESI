@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2021 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
     //
 
     pointField points(nNodes);
-    Map<label> nodeToPoint(nNodes);
+    Map<label> nodeToPoint(2*nNodes);
 
     {
         labelList pointIndex(nNodes);
@@ -439,23 +439,16 @@ int main(int argc, char *argv[])
 
 
                         // Get Foam patchID and update region->patch table.
-                        label patchi = 0;
+                        label patchi = regionToPatch.lookup(region, -1);
 
-                        const auto patchFind = regionToPatch.cfind(region);
-
-                        if (patchFind.good())
-                        {
-                            patchi = *patchFind;
-                        }
-                        else
+                        if (patchi < 0)
                         {
                             patchi = nPatches;
+                            regionToPatch.insert(region, nPatches++);
 
                             Info<< "Mapping tetgen region " << region
                                 << " to patch "
                                 << patchi << endl;
-
-                            regionToPatch.insert(region, nPatches++);
                         }
 
                         boundaryPatch[facei] = patchi;

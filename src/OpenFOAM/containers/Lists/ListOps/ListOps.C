@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -110,6 +110,24 @@ Foam::labelList Foam::invert(const bitSet& map)
 }
 
 
+Foam::Map<Foam::label> Foam::invertToMap(const labelUList& values)
+{
+    const label len = values.size();
+
+    Map<label> inverse(2*len);
+
+    for (label i = 0 ; i < len; ++i)
+    {
+        // For correct behaviour with duplicates, do NOT use
+        //    inverse.insert(values[i], inverse.size());
+
+        inverse.insert(values[i], i);
+    }
+
+    return inverse;
+}
+
+
 Foam::labelListList Foam::invertOneToMany
 (
     const label len,
@@ -122,16 +140,26 @@ Foam::labelListList Foam::invertOneToMany
     {
         if (newIdx >= 0)
         {
+            #ifdef FULLDEBUG
+            if (newIdx >= len)
+            {
+                FatalErrorInFunction
+                    << "Inverse location " << newIdx
+                    << " is out of range. List has size " << len
+                    << abort(FatalError);
+            }
+            #endif
+
             ++sizes[newIdx];
         }
     }
 
     labelListList inverse(len);
 
-    for (label i=0; i < len; ++i)
+    for (label i = 0; i < len; ++i)
     {
         inverse[i].resize(sizes[i]);
-        sizes[i] = 0; // reset size counter
+        sizes[i] = 0;  // reset size counter
     }
 
     label i = 0;
@@ -196,7 +224,7 @@ void Foam::inplaceReorder
     const bool prune
 )
 {
-    input = reorder(oldToNew, input, prune);
+    input = Foam::reorder(oldToNew, input, prune);
 }
 
 

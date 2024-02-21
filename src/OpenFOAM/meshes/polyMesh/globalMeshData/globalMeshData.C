@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,6 +35,7 @@ License
 #include "processorPolyPatch.H"
 #include "processorTopologyNew.H"
 #include "globalIndexAndTransform.H"
+#include "ListOps.H"
 #include "Pstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -314,11 +315,8 @@ void Foam::globalMeshData::calcSharedEdges() const
 
     // Since don't want to construct pointEdges for whole mesh create
     // Map for all shared points.
-    Map<label> meshToShared(2*sharedPtLabels.size());
-    forAll(sharedPtLabels, i)
-    {
-        meshToShared.insert(sharedPtLabels[i], i);
-    }
+    Map<label> meshToShared(invertToMap(sharedPtLabels));
+
 
     // Find edges using shared points. Store correspondence to local edge
     // numbering. Note that multiple local edges can have the same shared

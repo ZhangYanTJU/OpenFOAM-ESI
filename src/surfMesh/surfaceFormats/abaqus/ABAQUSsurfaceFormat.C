@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -177,18 +177,13 @@ bool Foam::fileFormats::ABAQUSsurfaceFormat<Face>::read
     // Extra safety
     if (newToOldZone.empty())
     {
-        newToOldZone.resize(1, Zero);
-    }
-
-    Map<label> oldToNewZone(2*newToOldZone.size());
-
-    forAll(newToOldZone, zonei)
-    {
-        oldToNewZone.set(newToOldZone[zonei], zonei);
+        newToOldZone.push_back(0);
     }
 
     wordList  zoneNames(newToOldZone.size());
-    labelList zoneSizes(newToOldZone.size(), Zero);
+    labelList zoneSizes(newToOldZone.size(), Foam::zero{});
+
+    Map<label> oldToNewZone(invertToMap(newToOldZone));
 
     forAllConstIters(reader.elsetMap_, iter)
     {

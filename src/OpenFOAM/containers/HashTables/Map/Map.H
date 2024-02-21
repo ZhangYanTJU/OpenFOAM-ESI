@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -106,10 +106,27 @@ public:
             parent_type(std::move(map))
         {}
 
-        //- Construct from pairs of values
-        Map(std::initializer_list<std::pair<label, T>> map)
+        //- Construct from key/value pairs in initializer list
+        //  By default, uses insert not overwrite semantics for duplicates.
+        Map
+        (
+            std::initializer_list<std::pair<label, T>> map,
+            const bool overwrite = false
+        )
         :
-            parent_type(map)
+            parent_type(map, overwrite)
+        {}
+
+        //- Construct from key/value pairs
+        //  By default, uses insert not overwrite semantics for duplicates.
+        Map
+        (
+            const UList<label>& keys,
+            const UList<T>& values,
+            const bool overwrite = false
+        )
+        :
+            parent_type(keys, values, overwrite)
         {}
 
 
