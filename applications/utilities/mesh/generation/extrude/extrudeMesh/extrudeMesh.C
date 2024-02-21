@@ -43,6 +43,7 @@ Description
 #include "argList.H"
 #include "Time.H"
 #include "polyTopoChange.H"
+#include "batchPolyTopoChange.H"
 #include "polyTopoChanger.H"
 #include "edgeCollapser.H"
 #include "perfectInterface.H"
@@ -1059,7 +1060,8 @@ int main(int argc, char *argv[])
         );
 
         // Topo change container
-        polyTopoChange meshMod(mesh);
+        //polyTopoChange meshMod(mesh);
+        batchPolyTopoChange meshMod(mesh);
 
         perfectStitcher.setRefinement
         (
@@ -1085,7 +1087,9 @@ int main(int argc, char *argv[])
         );
 
         // Construct new mesh from polyTopoChange.
-        autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
+        //autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
+        polyTopoChanger XXX (mesh, IOobject::NO_READ);
+        autoPtr<mapPolyMesh> map = XXX.changeMesh(mesh, meshMod);
 
         // Update fields
         mesh.updateMesh(map());
