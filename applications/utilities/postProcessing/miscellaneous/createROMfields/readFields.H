@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,7 +71,7 @@ class readFieldsHandler
                 Log << "    Reading " << io.name()
                     << " (" << FieldType::typeName << ')' << endl;
 
-                mesh_.objectRegistry::store(new FieldType(io, mesh_));
+                regIOobject::store(new FieldType(io, mesh_));
                 return true;
             }
 

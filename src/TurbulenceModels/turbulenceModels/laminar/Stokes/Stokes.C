@@ -89,17 +89,10 @@ template<class BasicTurbulenceModel>
 tmp<volScalarField>
 Stokes<BasicTurbulenceModel>::nut() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("nut", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("nut", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(dimViscosity, Zero)
     );
@@ -113,10 +106,7 @@ Stokes<BasicTurbulenceModel>::nut
     const label patchi
 ) const
 {
-    return tmp<scalarField>
-    (
-        new scalarField(this->mesh_.boundary()[patchi].size(), Zero)
-    );
+    return tmp<scalarField>::New(this->mesh_.boundary()[patchi].size(), Zero);
 }
 
 
@@ -124,12 +114,11 @@ template<class BasicTurbulenceModel>
 tmp<volScalarField>
 Stokes<BasicTurbulenceModel>::nuEff() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject::groupName("nuEff", this->alphaRhoPhi_.group()), this->nu()
-        )
+        IOobject::groupName("nuEff", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
+        this->nu()
     );
 }
 

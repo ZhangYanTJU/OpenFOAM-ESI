@@ -258,8 +258,8 @@ Foam::label Foam::cellShapeControlMesh::removePoints()
 
 Foam::tmp<Foam::pointField> Foam::cellShapeControlMesh::cellCentres() const
 {
-    tmp<pointField> tcellCentres(new pointField(number_of_finite_cells()));
-    pointField& cellCentres = tcellCentres.ref();
+    auto tcellCentres = tmp<pointField>::New(number_of_finite_cells());
+    auto& cellCentres = tcellCentres.ref();
 
     label count = 0;
     for

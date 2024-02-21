@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2023 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,14 +59,14 @@ Foam::volScalarField& Foam::functionObjects::electricPotential::getOrReadField
             (
                 fieldName,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
             ),
             mesh_
         );
-        mesh_.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;
@@ -78,12 +78,7 @@ Foam::functionObjects::electricPotential::sigma() const
 {
     const IOobject sigmaIO
     (
-        IOobject::scopedName(typeName, "sigma"),
-        mesh_.time().timeName(),
-        mesh_.time(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE,
-        IOobject::NO_REGISTER
+        mesh_.thisDb().newIOobject(IOobject::scopedName(typeName, "sigma"))
     );
 
     if (phases_.size())
@@ -125,12 +120,7 @@ Foam::functionObjects::electricPotential::epsilonm() const
 
     const IOobject epsilonrIO
     (
-        IOobject::scopedName(typeName, "epsilonr"),
-        mesh_.time().timeName(),
-        mesh_.time(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE,
-        IOobject::NO_REGISTER
+        mesh_.thisDb().newIOobject(IOobject::scopedName(typeName, "epsilonr"))
     );
 
     if (phases_.size())
@@ -241,13 +231,14 @@ Foam::functionObjects::electricPotential::electricPotential
                 (
                     Ename_,
                     mesh_.time().timeName(),
-                    mesh_,
+                    mesh_.thisDb(),
                     IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    IOobject::NO_WRITE,
+                    IOobject::REGISTER
                 ),
                 -fvc::grad(eV)
             );
-            mesh_.objectRegistry::store(ptr);
+            regIOobject::store(ptr);
         }
     }
 }
@@ -408,17 +399,10 @@ bool Foam::functionObjects::electricPotential::write()
         // Write the current density field
         tmp<volScalarField> tsigma = this->sigma();
 
-        auto eJ = tmp<volVectorField>::New
+        auto eJ = volVectorField::New
         (
-            IOobject
-            (
-                IOobject::scopedName(typeName, "J"),
-                mesh_.time().timeName(),
-                mesh_.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            IOobject::scopedName(typeName, "J"),
+            IOobject::NO_REGISTER,
             -tsigma*fvc::grad(eV),
             fvPatchFieldBase::calculatedType()
         );
@@ -431,17 +415,10 @@ bool Foam::functionObjects::electricPotential::write()
         // Write the free-charge density field
         tmp<volScalarField> tepsilonm = this->epsilonm();
 
-        auto erho = tmp<volScalarField>::New
+        auto erho = volScalarField::New
         (
-            IOobject
-            (
-                IOobject::scopedName(typeName, "rho"),
-                mesh_.time().timeName(),
-                mesh_.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            IOobject::scopedName(typeName, "rho"),
+            IOobject::NO_REGISTER,
             fvc::div(tepsilonm*(-fvc::grad(eV))),
             fvPatchFieldBase::calculatedType()
         );

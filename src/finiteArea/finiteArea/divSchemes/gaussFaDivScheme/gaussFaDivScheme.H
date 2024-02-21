@@ -76,7 +76,7 @@ public:
 
     // Constructors
 
-        //- Construct null
+        //- Construct from mesh
         gaussDivScheme(const faMesh& mesh)
         :
             divScheme<Type>(mesh)

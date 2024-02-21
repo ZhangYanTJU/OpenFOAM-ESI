@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 IH-Cantabria
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -56,16 +56,10 @@ namespace fv
 Foam::tmp<Foam::volScalarField>
 Foam::fv::multiphaseMangrovesSource::dragCoeff(const volVectorField& U) const
 {
-    auto tdragCoeff = tmp<volScalarField>::New
+    auto tdragCoeff = volScalarField::New
     (
-        IOobject
-        (
-            typeName + ":dragCoeff",
-            mesh_.time().timeName(),
-            mesh_.time(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(typeName, "dragCoeff"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimless/dimTime, Zero)
     );
@@ -101,16 +95,10 @@ Foam::fv::multiphaseMangrovesSource::dragCoeff(const volVectorField& U) const
 Foam::tmp<Foam::volScalarField>
 Foam::fv::multiphaseMangrovesSource::inertiaCoeff() const
 {
-    auto tinertiaCoeff = tmp<volScalarField>::New
+    auto tinertiaCoeff = volScalarField::New
     (
-        IOobject
-        (
-            typeName + ":inertiaCoeff",
-            mesh_.time().timeName(),
-            mesh_.time(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(typeName, "inertiaCoeff"),
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimless, Zero)
     );

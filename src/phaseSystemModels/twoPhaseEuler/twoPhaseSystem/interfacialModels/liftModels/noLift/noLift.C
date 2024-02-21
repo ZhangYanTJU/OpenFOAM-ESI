@@ -63,19 +63,12 @@ Foam::liftModels::noLift::~noLift()
 
 Foam::tmp<Foam::volScalarField> Foam::liftModels::noLift::Cl() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "Cl",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "Cl",
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedScalar(dimless, Zero)
     );
@@ -84,19 +77,12 @@ Foam::tmp<Foam::volScalarField> Foam::liftModels::noLift::Cl() const
 
 Foam::tmp<Foam::volVectorField> Foam::liftModels::noLift::F() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
-    return tmp<volVectorField>::New
+    return volVectorField::New
     (
-        IOobject
-        (
-            "noLift:F",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName("noLift", "F"),
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedVector(dimF, Zero)
     );
@@ -105,19 +91,12 @@ Foam::tmp<Foam::volVectorField> Foam::liftModels::noLift::F() const
 
 Foam::tmp<Foam::surfaceScalarField> Foam::liftModels::noLift::Ff() const
 {
-    const fvMesh& mesh(this->pair_.phase1().mesh());
+    const fvMesh& mesh = this->pair_.phase1().mesh();
 
-    return tmp<surfaceScalarField>::New
+    return surfaceScalarField::New
     (
-        IOobject
-        (
-            "noLift:Ff",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::scopedName("noLift", "Ff"),
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedScalar(dimF*dimArea, Zero)
     );

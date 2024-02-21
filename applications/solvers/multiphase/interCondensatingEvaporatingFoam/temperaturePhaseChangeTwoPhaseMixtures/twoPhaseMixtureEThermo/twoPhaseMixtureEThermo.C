@@ -382,7 +382,7 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseMixtureEThermo::kappaEff
     const volScalarField& kappat
 ) const
 {
-    tmp<Foam::volScalarField> kappaEff(kappa() + kappat);
+    tmp<volScalarField> kappaEff(kappa() + kappat);
     kappaEff.ref().rename("kappaEff");
     return kappaEff;
 }

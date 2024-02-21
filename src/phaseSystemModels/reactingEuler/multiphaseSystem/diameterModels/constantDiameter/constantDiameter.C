@@ -70,19 +70,12 @@ Foam::diameterModels::constant::~constant()
 
 Foam::tmp<Foam::volScalarField> Foam::diameterModels::constant::d() const
 {
-    return tmp<Foam::volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "d",
-                phase_.time().timeName(),
-                phase_.mesh()
-            ),
-            phase_.mesh(),
-            d_
-        )
+        "d",
+        IOobject::NO_REGISTER,
+        phase_.mesh(),
+        d_
     );
 }
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2016 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,16 +93,16 @@ void Foam::fv::interRegionExplicitPorositySource::initialise()
             << abort(FatalError);
     }
 
-    porosityPtr_.reset
-    (
+    porosityPtr_.reset(nullptr);
+
+    porosityPtr_ =
         porosityModel::New
         (
             name_,
             nbrMesh,
             coeffs_,
             zoneName
-        ).ptr()
-    ),
+        );
 
     firstIter_ = false;
 }
@@ -146,19 +146,14 @@ void Foam::fv::interRegionExplicitPorositySource::addSup
 
     const volVectorField& U = eqn.psi();
 
-    volVectorField UNbr
+    auto tUNbr = volVectorField::New
     (
-        IOobject
-        (
-            name_ + ":UNbr",
-            nbrMesh.time().timeName(),
-            nbrMesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(name_, "UNbr"),
+        IOobject::NO_REGISTER,
         nbrMesh,
         dimensionedVector(U.dimensions(), Zero)
     );
+    auto& UNbr = tUNbr.ref();
 
     // Map local velocity onto neighbour region
     meshInterp().mapSrcToTgt
@@ -177,7 +172,7 @@ void Foam::fv::interRegionExplicitPorositySource::addSup
     scalarField& Udiag = porosityEqn.diag();
     vectorField& Usource = porosityEqn.source();
 
-    Udiag.setSize(eqn.diag().size(), 0.0);
+    Udiag.setSize(eqn.diag().size(), Zero);
     Usource.setSize(eqn.source().size(), Zero);
 
     meshInterp().mapTgtToSrc(nbrEqn.diag(), plusEqOp<scalar>(), Udiag);
@@ -200,19 +195,14 @@ void Foam::fv::interRegionExplicitPorositySource::addSup
 
     const volVectorField& U = eqn.psi();
 
-    volVectorField UNbr
+    auto tUNbr = volVectorField::New
     (
-        IOobject
-        (
-            name_ + ":UNbr",
-            nbrMesh.time().timeName(),
-            nbrMesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(name_, "UNbr"),
+        IOobject::NO_REGISTER,
         nbrMesh,
         dimensionedVector(U.dimensions(), Zero)
     );
+    auto& UNbr = tUNbr.ref();
 
     // Map local velocity onto neighbour region
     meshInterp().mapSrcToTgt
@@ -224,33 +214,23 @@ void Foam::fv::interRegionExplicitPorositySource::addSup
 
     fvMatrix<vector> nbrEqn(UNbr, eqn.dimensions());
 
-    volScalarField rhoNbr
+    auto trhoNbr = volScalarField::New
     (
-        IOobject
-        (
-            "rho:UNbr",
-            nbrMesh.time().timeName(),
-            nbrMesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName("rho", "UNbr"),
+        IOobject::NO_REGISTER,
         nbrMesh,
         dimensionedScalar(dimDensity, Zero)
     );
+    auto& rhoNbr = trhoNbr.ref();
 
-    volScalarField muNbr
+    auto tmuNbr = volScalarField::New
     (
-        IOobject
-        (
-            "mu:UNbr",
-            nbrMesh.time().timeName(),
-            nbrMesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName("mu", "UNbr"),
+        IOobject::NO_REGISTER,
         nbrMesh,
         dimensionedScalar(dimViscosity, Zero)
     );
+    auto& muNbr = tmuNbr.ref();
 
     const auto& mu = mesh_.lookupObject<volScalarField>(muName_);
 
@@ -277,7 +257,7 @@ void Foam::fv::interRegionExplicitPorositySource::addSup
     scalarField& Udiag = porosityEqn.diag();
     vectorField& Usource = porosityEqn.source();
 
-    Udiag.setSize(eqn.diag().size(), 0.0);
+    Udiag.setSize(eqn.diag().size(), Zero);
     Usource.setSize(eqn.source().size(), Zero);
 
     meshInterp().mapTgtToSrc(nbrEqn.diag(), plusEqOp<scalar>(), Udiag);

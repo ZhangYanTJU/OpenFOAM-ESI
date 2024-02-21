@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -99,7 +99,7 @@ bool Foam::functionObjects::filmFlux::execute()
             (
                 resultName_,
                 time_.timeName(),
-                filmMesh,
+                filmMesh.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -108,7 +108,7 @@ bool Foam::functionObjects::filmFlux::execute()
             dimensionedScalar(dimMass/dimTime, Zero)
         );
 
-        filmMesh.objectRegistry::store(resultPtr);
+        regIOobject::store(resultPtr);
     }
 
     auto& result = *resultPtr;
@@ -123,7 +123,7 @@ bool Foam::functionObjects::filmFlux::execute()
         (
             "height",
             time_.timeName(),
-            filmMesh,
+            filmMesh.thisDb(),
             IOobject::NO_READ,
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
@@ -133,7 +133,7 @@ bool Foam::functionObjects::filmFlux::execute()
         fvPatchFieldBase::zeroGradientType()
     );
 
-    auto& heightc = height.ref();
+    auto& heightc = height.internalFieldRef();
 
     heightc = max(dimensionedScalar("eps", dimLength, ROOTVSMALL), vol/magSf());
     height.correctBoundaryConditions();

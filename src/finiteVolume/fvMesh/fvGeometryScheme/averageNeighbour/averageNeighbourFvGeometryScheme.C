@@ -272,8 +272,8 @@ Foam::averageNeighbourFvGeometryScheme::averageNeighbourCentres
     const labelList& nei = mesh_.faceNeighbour();
 
 
-    tmp<pointField> tcc(new pointField(mesh_.nCells(), Zero));
-    pointField& cc = tcc.ref();
+    auto tcc = tmp<pointField>::New(mesh_.nCells(), Zero);
+    auto& cc = tcc.ref();
 
     Field<solveScalar> cellWeights(mesh_.nCells(), Zero);
 
@@ -382,8 +382,8 @@ Foam::averageNeighbourFvGeometryScheme::averageCentres
     const labelList& nei = mesh_.faceNeighbour();
 
 
-    tmp<pointField> tnewFc(new pointField(faceCentres));
-    pointField& newFc = tnewFc.ref();
+    auto tnewFc = tmp<pointField>::New(faceCentres);
+    auto& newFc = tnewFc.ref();
 
     // Internal faces
     for (label facei = 0; facei < mesh_.nInternalFaces(); facei++)

@@ -42,7 +42,6 @@ namespace regionModels
 
 void Foam::regionModels::regionModel1D::constructMeshObjects()
 {
-
     nMagSfPtr_.reset
     (
         new surfaceScalarField
@@ -53,7 +52,8 @@ void Foam::regionModels::regionModel1D::constructMeshObjects()
                 time().timeName(),
                 regionMesh(),
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             ),
             regionMesh(),
             dimensionedScalar(dimArea, Zero)
@@ -197,8 +197,8 @@ Foam::tmp<Foam::labelField> Foam::regionModels::regionModel1D::moveMesh
     const scalar minDelta
 )
 {
-    tmp<labelField> tcellMoveMap(new labelField(regionMesh().nCells(), Zero));
-    labelField& cellMoveMap = tcellMoveMap.ref();
+    auto tcellMoveMap = tmp<labelField>::New(regionMesh().nCells(), Zero);
+    auto& cellMoveMap = tcellMoveMap.ref();
 
     if (!moveMesh_)
     {

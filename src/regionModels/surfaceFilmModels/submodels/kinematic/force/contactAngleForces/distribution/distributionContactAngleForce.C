@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -74,34 +75,26 @@ distributionContactAngleForce::~distributionContactAngleForce()
 
 tmp<volScalarField> distributionContactAngleForce::theta() const
 {
-    tmp<volScalarField> ttheta
+    auto ttheta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                typeName + ":theta",
-                filmModel_.time().timeName(),
-                filmModel_.regionMesh()
-            ),
-            filmModel_.regionMesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        IOobject::scopedName(typeName, "theta"),
+        IOobject::NO_REGISTER,
+        filmModel_.regionMesh(),
+        dimensionedScalar(dimless, Zero)
     );
+    auto& thetaIf = ttheta.ref().internalFieldRef();
+    auto& thetaBf = ttheta.ref().boundaryFieldRef();
 
-    volScalarField& theta = ttheta.ref();
-    volScalarField::Internal& thetai = theta.ref();
-
-    forAll(thetai, celli)
+    forAll(thetaIf, celli)
     {
-        thetai[celli] = distribution_->sample();
+        thetaIf[celli] = distribution_->sample();
     }
 
-    forAll(theta.boundaryField(), patchi)
+    forAll(thetaBf, patchi)
     {
         if (!filmModel_.isCoupledPatch(patchi))
         {
-            fvPatchField<scalar>& thetaf = theta.boundaryFieldRef()[patchi];
+            fvPatchField<scalar>& thetaf = thetaBf[patchi];
 
             forAll(thetaf, facei)
             {
@@ -112,6 +105,7 @@ tmp<volScalarField> distributionContactAngleForce::theta() const
 
     return ttheta;
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

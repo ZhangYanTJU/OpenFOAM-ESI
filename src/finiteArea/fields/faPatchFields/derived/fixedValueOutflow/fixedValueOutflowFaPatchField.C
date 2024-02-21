@@ -95,10 +95,7 @@ Foam::fixedValueOutflowFaPatchField<Type>::valueInternalCoeffs
     const tmp<scalarField>& weights
 ) const
 {
-    return tmp<Field<Type>>
-    (
-        new Field<Type>(Type(pTraits<Type>::one)*weights)
-    );
+    return pTraits<Type>::one*weights;
 }
 
 

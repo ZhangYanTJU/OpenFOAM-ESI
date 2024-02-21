@@ -80,20 +80,14 @@ calculateSpeciesRR
     const basicChemistryModel& basicChemistry
 )
 {
-    auto RRt = tmp<DimensionedField<scalar, volMesh>>::New
+    auto tRR = volScalarField::Internal::New
     (
-        IOobject
-        (
-            "RR",
-            time_.timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        "RR",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimMass/dimVolume/dimTime, Zero)
     );
-    auto& RR = RRt.ref();
+    auto& RR = tRR.ref();
 
     scalar dt = time_.deltaTValue();
 

@@ -257,8 +257,8 @@ Foam::tmp<Foam::pointField> Foam::snappySnapDriver::smoothInternalDisplacement
     // Add coupled contributions
     weightedPosition::syncPoints(mesh, sumLocation);
 
-    tmp<pointField> tdisplacement(new pointField(mesh.nPoints(), Zero));
-    pointField& displacement = tdisplacement.ref();
+    auto tdisplacement = tmp<pointField>::New(mesh.nPoints(), Zero);
+    auto& displacement = tdisplacement.ref();
 
     label nAdapted = 0;
 
@@ -490,8 +490,8 @@ Foam::tmp<Foam::pointField> Foam::snappySnapDriver::smoothPatchDisplacement
 
 
     // Displacement to calculate.
-    tmp<pointField> tpatchDisp(new pointField(meshPoints.size(), Zero));
-    pointField& patchDisp = tpatchDisp.ref();
+    auto tpatchDisp = tmp<pointField>::New(meshPoints.size(), Zero);
+    auto& patchDisp = tpatchDisp.ref();
 
     forAll(pointFaces, i)
     {
@@ -571,8 +571,8 @@ Foam::tmp<Foam::pointField> Foam::snappySnapDriver::smoothPatchDisplacement
 //    const labelListList& pointEdges = pp.pointEdges();
 //    const edgeList& edges = pp.edges();
 //
-//    tmp<pointField> tavg(new pointField(pointEdges.size(), Zero));
-//    pointField& avg = tavg();
+//    auto tavg = tmp<pointField>::New(pointEdges.size(), Zero);
+//    auto& avg = tavg.ref();
 //
 //    forAll(pointEdges, verti)
 //    {
@@ -658,8 +658,8 @@ Foam::tmp<Foam::scalarField> Foam::snappySnapDriver::edgePatchDist
     );
 
     // Copy edge values into scalarField
-    tmp<scalarField> tedgeDist(new scalarField(mesh.nEdges()));
-    scalarField& edgeDist = tedgeDist.ref();
+    auto tedgeDist = tmp<scalarField>::New(mesh.nEdges());
+    auto& edgeDist = tedgeDist.ref();
 
     forAll(allEdgeInfo, edgei)
     {
@@ -1057,7 +1057,7 @@ Foam::tmp<Foam::pointField> Foam::snappySnapDriver::avgCellCentres
     // Add coupled contributions
     weightedPosition::syncPoints(mesh, pp.meshPoints(), avgBoundary);
 
-    tmp<pointField> tavgBoundary(new pointField(avgBoundary.size()));
+    auto tavgBoundary = tmp<pointField>::New(avgBoundary.size());
     weightedPosition::getPoints(avgBoundary, tavgBoundary.ref());
 
     return tavgBoundary;
@@ -1073,8 +1073,8 @@ Foam::tmp<Foam::pointField> Foam::snappySnapDriver::avgCellCentres
 //    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //    // (Ripped from snappyLayerDriver)
 //
-//    tmp<scalarField> tedgeLen(new scalarField(pp.nPoints()));
-//    scalarField& edgeLen = tedgeLen();
+//    auto tedgeLen = tmp<scalarField>::New(pp.nPoints());
+//    auto& edgeLen = tedgeLen.ref();
 //    {
 //        const fvMesh& mesh = meshRefiner_.mesh();
 //        const scalar edge0Len = meshRefiner_.meshCutter().level0EdgeLength();

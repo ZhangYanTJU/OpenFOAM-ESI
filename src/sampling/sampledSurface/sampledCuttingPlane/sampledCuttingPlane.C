@@ -464,20 +464,12 @@ void Foam::sampledCuttingPlane::createGeometry()
     (
         new volScalarField
         (
-            IOobject
-            (
-                "cellDistance",
-                mesh.time().timeName(),
-                mesh.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            mesh.newIOobject("cellDistance"),
             mesh,
             dimensionedScalar(dimLength, Zero)
         )
     );
-    const volScalarField& cellDistance = cellDistancePtr_();
+    const auto& cellDistance = *cellDistancePtr_;
 
     setDistanceFields(plane_);
 
@@ -485,20 +477,15 @@ void Foam::sampledCuttingPlane::createGeometry()
     {
         Pout<< "Writing cell distance:" << cellDistance.objectPath() << endl;
         cellDistance.write();
-        pointScalarField pointDist
+        auto tpointDist = pointScalarField::New
         (
-            IOobject
-            (
-                "pointDistance",
-                mesh.time().timeName(),
-                mesh.time(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            "pointDistance",
+            IOobject::NO_REGISTER,
             pointMesh::New(mesh),
             dimensionedScalar(dimLength, Zero)
         );
+        auto& pointDist = tpointDist.ref();
+
         pointDist.primitiveFieldRef() = pointDistance_;
 
         Pout<< "Writing point distance:" << pointDist.objectPath() << endl;

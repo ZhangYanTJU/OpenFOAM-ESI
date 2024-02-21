@@ -61,9 +61,11 @@ tmp<areaScalarField> curvatureSeparation::calcInvR1
 {
     const dimensionedScalar smallU(dimVelocity, ROOTVSMALL);
     const areaVectorField UHat(U/(mag(U) + smallU));
-    tmp<areaScalarField> tinvR1
+    auto tinvR1 = areaScalarField::New
     (
-        new areaScalarField("invR1", UHat & (UHat & -gradNHat_))
+        "invR1",
+        IOobjectOption::NO_REGISTER,
+        (UHat & (UHat & -gradNHat_))
     );
 
     scalarField& invR1 = tinvR1.ref().primitiveFieldRef();

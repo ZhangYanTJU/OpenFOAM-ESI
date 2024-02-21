@@ -72,29 +72,19 @@ Foam::radiation::cloudAbsorptionEmission::~cloudAbsorptionEmission()
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::cloudAbsorptionEmission::aDisp(const label) const
 {
-    tmp<volScalarField> ta
+    auto ta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "a",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimless/dimLength, Zero)
-        )
+        "a",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless/dimLength, Zero)
     );
 
-    forAll(cloudNames_, i)
+    for (const word& cldName : cloudNames_)
     {
         const thermoCloud& tc
         (
-            mesh_.objectRegistry::lookupObject<thermoCloud>(cloudNames_[i])
+            mesh_.objectRegistry::lookupObject<thermoCloud>(cldName)
         );
 
         ta.ref() += tc.ap();
@@ -107,17 +97,10 @@ Foam::radiation::cloudAbsorptionEmission::aDisp(const label) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::cloudAbsorptionEmission::eDisp(const label bandI) const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "e",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "e",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedScalar(dimless/dimLength, Zero)
     );
@@ -127,29 +110,19 @@ Foam::radiation::cloudAbsorptionEmission::eDisp(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::cloudAbsorptionEmission::EDisp(const label bandI) const
 {
-    tmp<volScalarField> tE
+    auto tE = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "E",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "E",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 
-    forAll(cloudNames_, i)
+    for (const word& cldName : cloudNames_)
     {
         const thermoCloud& tc
         (
-            mesh_.objectRegistry::lookupObject<thermoCloud>(cloudNames_[i])
+            mesh_.objectRegistry::lookupObject<thermoCloud>(cldName)
         );
 
         tE.ref() += tc.Ep();

@@ -103,26 +103,15 @@ public:
             const GeometricField<Type, fvPatchField, volMesh>&
         ) const
         {
-            tmp<surfaceScalarField> taw
+            auto taw = surfaceScalarField::New
             (
-                new surfaceScalarField
-                (
-                    IOobject
-                    (
-                        "midPointWeights",
-                        this->mesh().time().timeName(),
-                        this->mesh().thisDb(),
-                        IOobject::NO_READ,
-                        IOobject::NO_WRITE,
-                        IOobject::NO_REGISTER
-                    ),
-                    this->mesh(),
-                    dimensionedScalar("0.5", dimless, 0.5)
-                )
+                "midPointWeights",
+                IOobject::NO_REGISTER,
+                this->mesh(),
+                dimensionedScalar("0.5", dimless, 0.5)
             );
 
-            surfaceScalarField::Boundary& awBf =
-                taw.ref().boundaryFieldRef();
+            auto& awBf = taw.ref().boundaryFieldRef();
 
             forAll(awBf, patchi)
             {

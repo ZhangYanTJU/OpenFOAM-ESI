@@ -262,7 +262,7 @@ void Foam::designVariables::addFvOptions
 
 Foam::tmp<Foam::scalarField> Foam::designVariables::constraintValues()
 {
-    return tmp<scalarField>(nullptr);
+    return nullptr;
 }
 
 

@@ -124,14 +124,10 @@ template<class BasePhaseModel>
 Foam::tmp<Foam::surfaceScalarField> Foam::MovingPhaseModel<BasePhaseModel>::
 diffNo() const
 {
-    return tmp<surfaceScalarField>::New
+    return surfaceScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("diffNo", multiphaseInter::phaseModel::name()),
-            U_.mesh().time().timeName(),
-            U_.mesh()
-        ),
+        IOobject::groupName("diffNo", multiphaseInter::phaseModel::name()),
+        IOobject::NO_REGISTER,
         U_.mesh(),
         dimensionedScalar(dimless, Zero)
     );

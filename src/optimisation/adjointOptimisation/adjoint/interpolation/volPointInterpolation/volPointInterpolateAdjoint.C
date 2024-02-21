@@ -81,7 +81,8 @@ void Foam::volPointInterpolationAdjoint::pushUntransformedData
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::volPointInterpolationAdjoint::flatBoundaryField
+Foam::tmp<Foam::Field<Type>>
+Foam::volPointInterpolationAdjoint::flatBoundaryField
 (
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
@@ -89,11 +90,8 @@ Foam::tmp<Foam::Field<Type>> Foam::volPointInterpolationAdjoint::flatBoundaryFie
     const fvMesh& mesh = vf.mesh();
     const fvBoundaryMesh& bm = mesh.boundary();
 
-    tmp<Field<Type>> tboundaryVals
-    (
-        new Field<Type>(mesh.nBoundaryFaces())
-    );
-    Field<Type>& boundaryVals = tboundaryVals.ref();
+    auto tboundaryVals = tmp<Field<Type>>::New(mesh.nBoundaryFaces());
+    auto& boundaryVals = tboundaryVals.ref();
 
     forAll(vf.boundaryField(), patchi)
     {
@@ -188,11 +186,8 @@ void Foam::volPointInterpolationAdjoint::interpolateSensitivitiesField
     const fvMesh& Mesh = mesh();
     const fvBoundaryMesh& bm = Mesh.boundary();
 
-    tmp<Field<Type>> tboundaryVals
-    (
-        new Field<Type>(Mesh.nBoundaryFaces(), Zero)
-    );
-    Field<Type>& boundaryVals = tboundaryVals.ref();
+    auto tboundaryVals = tmp<Field<Type>>::New(Mesh.nBoundaryFaces(), Zero);
+    auto& boundaryVals = tboundaryVals.ref();
 
     // Do points on 'normal' patches from the surrounding patch faces
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

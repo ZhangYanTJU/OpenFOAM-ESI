@@ -449,7 +449,8 @@ bool Foam::functionObjects::regionSizeDistribution::write()
                     mesh_.time().timeName(),
                     mesh_,
                     IOobjectOption::MUST_READ,
-                    IOobjectOption::NO_WRITE
+                    IOobjectOption::NO_WRITE,
+                    IOobjectOption::NO_REGISTER
                 ),
                 mesh_
             )
@@ -535,18 +536,11 @@ bool Foam::functionObjects::regionSizeDistribution::write()
     {
         volScalarField region
         (
-            IOobject
-            (
-                "region",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobjectOption::NO_READ,
-                IOobjectOption::NO_WRITE,
-                IOobjectOption::NO_REGISTER
-            ),
+            mesh_.newIOobject("region"),
             mesh_,
             dimensionedScalar(dimless, Zero)
         );
+
         Info<< "    Dumping region as volScalarField to "
             << region.name() << endl;
 

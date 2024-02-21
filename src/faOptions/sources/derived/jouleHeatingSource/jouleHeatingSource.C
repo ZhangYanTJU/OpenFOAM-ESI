@@ -58,11 +58,12 @@ Foam::fa::jouleHeatingSource::jouleHeatingSource
     (
         IOobject
         (
-            typeName + ":V_" + regionName_,
+            IOobject::scopedName(typeName, "V_" + regionName_),
             regionMesh().thisDb().time().timeName(),
             regionMesh().thisDb(),
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         regionMesh()
     ),
@@ -141,6 +142,11 @@ void Foam::fa::jouleHeatingSource::addSup
         }
 
         // Add the Joule heating contribution
+        const word sigmaName
+        (
+            IOobject::scopedName(typeName, "sigma_" + regionName_)
+        );
+
         areaVectorField gradV("gradV", fac::grad(V_));
 
         if (debug > 1 && mesh().time().writeTime())
@@ -156,20 +162,14 @@ void Foam::fa::jouleHeatingSource::addSup
         if (anisotropicElectricalConductivity_)
         {
             const auto& sigma =
-                obr.lookupObject<areaTensorField>
-                (
-                    typeName + ":sigma_" + regionName_
-                );
+                obr.lookupObject<areaTensorField>(sigmaName);
 
             tsource = (h*sigma & gradV) & gradV;
         }
         else
         {
             const auto& sigma =
-                obr.lookupObject<areaScalarField>
-                (
-                    typeName + ":sigma_" + regionName_
-                );
+                obr.lookupObject<areaScalarField>(sigmaName);
 
             tsource = (h*sigma*gradV) & gradV;
         }

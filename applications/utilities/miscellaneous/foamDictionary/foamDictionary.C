@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
 
     const auto dictFileName = args.get<fileName>(1);
 
-    autoPtr<IFstream> dictFile(new IFstream(dictFileName));
+    auto dictFile = autoPtr<IFstream>::New(dictFileName);
     if (!dictFile().good())
     {
         FatalErrorInFunction

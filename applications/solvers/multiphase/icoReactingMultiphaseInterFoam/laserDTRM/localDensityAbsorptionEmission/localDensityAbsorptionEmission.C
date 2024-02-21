@@ -88,25 +88,14 @@ Foam::radiation::localDensityAbsorptionEmission::localDensityAbsorptionEmission
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::localDensityAbsorptionEmission::aCont(const label bandI) const
 {
-    tmp<volScalarField> ta
+    auto ta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "a",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(inv(dimLength), Zero)
-        )
+        "a",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(inv(dimLength), Zero)
     );
-
-    volScalarField& a = ta.ref();
+    auto& a = ta.ref();
 
     forAll(alphaNames_, i)
     {
@@ -121,25 +110,14 @@ Foam::radiation::localDensityAbsorptionEmission::aCont(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::localDensityAbsorptionEmission::eCont(const label bandI) const
 {
-    tmp<volScalarField> te
+    auto te = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "e",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(inv(dimLength), Zero)
-        )
+        "e",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(inv(dimLength), Zero)
     );
-
-    volScalarField& e = te.ref();
+    auto& e = te.ref();
 
     forAll(alphaNames_, i)
     {
@@ -154,22 +132,12 @@ Foam::radiation::localDensityAbsorptionEmission::eCont(const label bandI) const
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::localDensityAbsorptionEmission::ECont(const label bandI) const
 {
-    tmp<volScalarField> tE
+    auto tE = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "E",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "E",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
 
     scalarField& E = tE.ref().primitiveFieldRef();

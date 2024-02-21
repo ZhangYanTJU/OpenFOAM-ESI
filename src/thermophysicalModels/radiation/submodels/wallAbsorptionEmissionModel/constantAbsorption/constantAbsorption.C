@@ -70,7 +70,7 @@ Foam::tmp<Foam::scalarField> Foam::radiation::constantAbsorption::a
     scalarField* T
 ) const
 {
-    return tmp<scalarField>(new scalarField(pp_.size(), a_));
+    return tmp<scalarField>::New(pp_.size(), a_);
 }
 
 
@@ -93,7 +93,7 @@ Foam::tmp<Foam::scalarField> Foam::radiation::constantAbsorption::e
     scalarField* T
 ) const
 {
-    return tmp<scalarField>(new scalarField(pp_.size(), e_));
+    return tmp<scalarField>::New(pp_.size(), e_);
 }
 
 

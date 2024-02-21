@@ -340,23 +340,21 @@ Foam::processorColour::processorColour(const lduMesh& mesh)
 
 const Foam::processorColour& Foam::processorColour::New(const lduMesh& mesh)
 {
-    const processorColour* ptr =
-        mesh.thisDb().objectRegistry::template cfindObject<processorColour>
+    auto* ptr =
+        mesh.thisDb().objectRegistry::template getObjectPtr<processorColour>
         (
             processorColour::typeName
         );
 
-    if (ptr)
+    if (!ptr)
     {
-        return *ptr;
+        ptr = new processorColour(mesh);
+
+        //regIOobject::store(static_cast<MoveableMeshObject<lduMesh>*>(ptr));
+        regIOobject::store(ptr);
     }
 
-    processorColour* objectPtr = new processorColour(mesh);
-
-    //regIOobject::store(static_cast<MoveableMeshObject<lduMesh>*>(objectPtr));
-    regIOobject::store(objectPtr);
-
-    return *objectPtr;
+    return *ptr;
 }
 
 

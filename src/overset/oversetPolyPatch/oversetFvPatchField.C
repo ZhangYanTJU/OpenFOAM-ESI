@@ -585,10 +585,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>> Foam::oversetFvPatchField<Type>::
 patchNeighbourField() const
 {
-    return tmp<Field<Type>>
-    (
-        new Field<Type>(this->size(), Zero)
-    );
+    return tmp<Field<Type>>::New(this->size(), Zero);
 }
 
 

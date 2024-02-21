@@ -1195,7 +1195,7 @@ void Foam::polyMesh::movePoints(const pointField& newPoints)
     {
         if (debug)
         {
-            Info<< "tmp<scalarField> polyMesh::movePoints(const pointField&) : "
+            Info<< "void polyMesh::movePoints(const pointField&) : "
                 << " Storing current points for time " << time().value()
                 << " index " << time().timeIndex() << endl;
         }

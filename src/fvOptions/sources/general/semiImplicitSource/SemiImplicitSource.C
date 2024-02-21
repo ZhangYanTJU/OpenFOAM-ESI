@@ -336,6 +336,7 @@ void Foam::fv::SemiImplicitSource<Type>::addSup
             tsu = DimensionedField<Type, volMesh>::New
             (
                 name_ + fieldName + "Su",
+                IOobject::NO_REGISTER,
                 mesh_,
                 dimensioned<Type>(SuDims, Zero)
             );
@@ -375,6 +376,7 @@ void Foam::fv::SemiImplicitSource<Type>::addSup
                 tsu = DimensionedField<Type, volMesh>::New
                 (
                     name_ + fieldName + "Su",
+                    IOobject::NO_REGISTER,
                     mesh_,
                     dimensioned<Type>(SuDims, Zero)
                 );
@@ -462,6 +464,7 @@ void Foam::fv::SemiImplicitSource<Type>::addSup
             tsp = DimensionedField<scalar, volMesh>::New
             (
                 name_ + fieldName + "Sp",
+                IOobject::NO_REGISTER,
                 mesh_,
                 dimensioned<scalar>(SpDims, Zero)
             );
@@ -501,6 +504,7 @@ void Foam::fv::SemiImplicitSource<Type>::addSup
                 tsp = DimensionedField<scalar, volMesh>::New
                 (
                     name_ + fieldName + "Sp",
+                    IOobject::NO_REGISTER,
                     mesh_,
                     dimensioned<scalar>(SpDims, Zero)
                 );

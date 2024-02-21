@@ -118,39 +118,27 @@ Foam::phaseModel::phaseModel
 {
     alphaPhi_.setOriented();
 
-    const word phiName = IOobject::groupName("phi", name_);
-
-    IOobject phiHeader
+    IOobject io
     (
-        phiName,
+        IOobject::groupName("phi", name_),
         mesh.time().timeName(),
         mesh,
-        IOobject::NO_READ
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE,
+        IOobject::REGISTER
     );
 
-    if (phiHeader.typeHeaderOk<surfaceScalarField>(true))
+    if (io.typeHeaderOk<surfaceScalarField>(true))
     {
-        Info<< "Reading face flux field " << phiName << endl;
+        Info<< "Reading face flux field " << io.name() << endl;
 
-        phiPtr_.reset
-        (
-            new surfaceScalarField
-            (
-                IOobject
-                (
-                    phiName,
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh
-            )
-        );
+        phiPtr_.reset(new surfaceScalarField(io, mesh));
     }
     else
     {
-        Info<< "Calculating face flux field " << phiName << endl;
+        Info<< "Calculating face flux field " << io.name() << endl;
+
+        io.readOpt(IOobject::NO_READ);
 
         wordList phiTypes
         (
@@ -175,14 +163,7 @@ Foam::phaseModel::phaseModel
         (
             new surfaceScalarField
             (
-                IOobject
-                (
-                    phiName,
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
+                io,
                 fvc::flux(U_),
                 phiTypes
             )

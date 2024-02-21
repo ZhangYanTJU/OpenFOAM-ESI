@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,14 +62,15 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField::getOrCreateField
             (
                 fieldName,
                 mesh.time().timeName(),
-                mesh,
+                mesh.thisDb(),
                 IOobject::NO_READ,
-                IOobject::AUTO_WRITE
+                IOobject::AUTO_WRITE,
+                IOobject::REGISTER
             ),
             mesh,
             dimensionedScalar(dimless, Zero)
         );
-        mesh.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;
@@ -803,7 +804,7 @@ tmp<Field<scalar>> turbulentTemperatureRadCoupledMixedFvPatchScalarField::coeffs
         << "the assemble coupled option for energy. "
         << abort(FatalError);
 
-    return tmp<Field<scalar>>(new Field<scalar>());
+    return nullptr;
 }
 
 

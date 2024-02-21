@@ -188,18 +188,13 @@ Foam::tmp<Foam::volVectorField> Foam::MRFZoneList::DDt
     const volVectorField& U
 ) const
 {
-    auto tacceleration =
-        tmp<volVectorField>::New
-        (
-            IOobject
-            (
-                "MRFZoneList:acceleration",
-                U.mesh().time().timeName(),
-                U.mesh().thisDb()
-            ),
-            U.mesh(),
-            dimensionedVector(U.dimensions()/dimTime, Zero)
-        );
+    auto tacceleration = volVectorField::New
+    (
+        IOobject::scopedName("MRFZoneList", "acceleration"),
+        IOobject::NO_REGISTER,
+        U.mesh(),
+        dimensionedVector(U.dimensions()/dimTime, Zero)
+    );
     auto& acceleration = tacceleration.ref();
 
     for (const auto& mrf: *this)
@@ -263,10 +258,8 @@ Foam::tmp<Foam::surfaceScalarField> Foam::MRFZoneList::relative
 
         return rphi;
     }
-    else
-    {
-        return tmp<surfaceScalarField>(tphi, true);
-    }
+
+    return tmp<surfaceScalarField>(tphi, true);
 }
 
 
@@ -289,10 +282,8 @@ Foam::MRFZoneList::relative
 
         return rphi;
     }
-    else
-    {
-        return tmp<FieldField<fvsPatchField, scalar>>(tphi, true);
-    }
+
+    return tmp<FieldField<fvsPatchField, scalar>>(tphi, true);
 }
 
 
@@ -316,10 +307,8 @@ Foam::MRFZoneList::relative
 
         return rphi;
     }
-    else
-    {
-        return tmp<Field<scalar>>(tphi, true);
-    }
+
+    return tmp<Field<scalar>>(tphi, true);
 }
 
 
@@ -378,10 +367,8 @@ Foam::tmp<Foam::surfaceScalarField> Foam::MRFZoneList::absolute
 
         return rphi;
     }
-    else
-    {
-        return tmp<surfaceScalarField>(tphi, true);
-    }
+
+    return tmp<surfaceScalarField>(tphi, true);
 }
 
 

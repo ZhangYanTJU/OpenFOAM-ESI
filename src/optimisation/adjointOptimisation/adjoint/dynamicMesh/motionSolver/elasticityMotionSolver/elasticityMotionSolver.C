@@ -171,9 +171,7 @@ Foam::elasticityMotionSolver::elasticityMotionSolver
 
 Foam::tmp<Foam::pointField> Foam::elasticityMotionSolver::curPoints() const
 {
-    tmp<pointField> tnewPoints(new pointField(mesh().points()));
-
-    return tnewPoints;
+    return tmp<pointField>::New(mesh().points());
 }
 
 

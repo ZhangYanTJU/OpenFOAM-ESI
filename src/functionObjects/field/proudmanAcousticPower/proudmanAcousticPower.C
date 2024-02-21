@@ -87,18 +87,13 @@ Foam::functionObjects::proudmanAcousticPower::a() const
         return sqrt(thermo.gamma()*thermo.p()/thermo.rho());
     }
 
-    return
-        tmp<volScalarField>::New
-        (
-            IOobject
-            (
-                scopedName("a"),
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            aRef_
-        );
+    return volScalarField::New
+    (
+        scopedName("a"),
+        IOobject::NO_REGISTER,
+        mesh_,
+        aRef_
+    );
 }
 
 

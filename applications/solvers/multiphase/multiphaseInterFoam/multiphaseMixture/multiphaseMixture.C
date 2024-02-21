@@ -68,8 +68,9 @@ Foam::multiphaseMixture::multiphaseMixture
             "transportProperties",
             U.time().constant(),
             U.db(),
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
+            IOobject::READ_MODIFIED,
+            IOobject::NO_WRITE,
+            IOobject::REGISTER
         )
     ),
 
@@ -85,9 +86,7 @@ Foam::multiphaseMixture::multiphaseMixture
         (
             "rhoPhi",
             mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            mesh_
         ),
         mesh_,
         dimensionedScalar(dimMass/dimTime, Zero)
@@ -101,7 +100,8 @@ Foam::multiphaseMixture::multiphaseMixture
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         mesh_,
         dimensionedScalar(dimless, Zero)
@@ -257,19 +257,12 @@ Foam::multiphaseMixture::nuf() const
 Foam::tmp<Foam::surfaceScalarField>
 Foam::multiphaseMixture::surfaceTensionForce() const
 {
-    tmp<surfaceScalarField> tstf
+    auto tstf = surfaceScalarField::New
     (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "surfaceTensionForce",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar(dimensionSet(1, -2, -2, 0, 0), Zero)
-        )
+        "surfaceTensionForce",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimensionSet(1, -2, -2, 0, 0), Zero)
     );
 
     surfaceScalarField& stf = tstf.ref();
@@ -324,12 +317,7 @@ void Foam::multiphaseMixture::solve()
     {
         surfaceScalarField rhoPhiSum
         (
-            IOobject
-            (
-                "rhoPhiSum",
-                runTime.timeName(),
-                mesh_
-            ),
+            mesh_.newIOobject("rhoPhiSum"),
             mesh_,
             dimensionedScalar(rhoPhi_.dimensions(), Zero)
         );
@@ -552,19 +540,12 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseMixture::K
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseMixture::nearInterface() const
 {
-    tmp<volScalarField> tnearInt
+    auto tnearInt = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "nearInterface",
-                mesh_.time().timeName(),
-                mesh_
-            ),
-            mesh_,
-            dimensionedScalar(dimless, Zero)
-        )
+        "nearInterface",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimless, Zero)
     );
 
     for (const phase& ph : phases_)
@@ -649,12 +630,7 @@ void Foam::multiphaseMixture::solveAlphas
 
     volScalarField sumAlpha
     (
-        IOobject
-        (
-            "sumAlpha",
-            mesh_.time().timeName(),
-            mesh_
-        ),
+        mesh_.newIOobject("sumAlpha"),
         mesh_,
         dimensionedScalar(dimless, Zero)
     );

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2019,2023 OpenCFD Ltd.
+    Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -45,11 +45,12 @@ Foam::combustionModels::PaSR<ReactionThermo>::PaSR
     (
         IOobject
         (
-            thermo.phasePropertyName(typeName + ":kappa"),
+            thermo.phaseScopedName(typeName, "kappa"),
             this->mesh().time().timeName(),
             this->mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         this->mesh(),
         dimensionedScalar(dimless, Zero)
@@ -74,16 +75,16 @@ void Foam::combustionModels::PaSR<ReactionThermo>::correct()
         laminar<ReactionThermo>::correct();
 
         tmp<volScalarField> tepsilon(this->turbulence().epsilon());
-        const scalarField& epsilon = tepsilon();
+        const auto& epsilon = tepsilon();
 
         tmp<volScalarField> tmuEff(this->turbulence().muEff());
-        const scalarField& muEff = tmuEff();
+        const auto& muEff = tmuEff();
 
         tmp<volScalarField> ttc(this->tc());
-        const scalarField& tc = ttc();
+        const auto& tc = ttc();
 
         tmp<volScalarField> trho(this->rho());
-        const scalarField& rho = trho();
+        const auto& rho = trho();
 
         forAll(epsilon, i)
         {
@@ -118,13 +119,11 @@ template<class ReactionThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::combustionModels::PaSR<ReactionThermo>::Qdot() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            this->thermo().phasePropertyName(typeName + ":Qdot"),
-            kappa_*laminar<ReactionThermo>::Qdot()
-        )
+        this->thermo().phaseScopedName(typeName, "Qdot"),
+        IOobject::NO_REGISTER,
+        kappa_*laminar<ReactionThermo>::Qdot()
     );
 }
 

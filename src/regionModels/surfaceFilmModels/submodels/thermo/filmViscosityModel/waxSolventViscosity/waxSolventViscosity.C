@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,37 +58,29 @@ void waxSolventViscosity::correctMu()
 {
     const kinematicSingleLayer& film = filmType<kinematicSingleLayer>();
 
-    const uniformDimensionedScalarField Wwax
-    (
+    const auto& Wwax =
         film.regionMesh().lookupObject<uniformDimensionedScalarField>
         (
-            waxSolventEvaporation::typeName + ":Wwax"
-        )
-    );
+            IOobject::scopedName(waxSolventEvaporation::typeName, "Wwax")
+        );
 
-    const uniformDimensionedScalarField Wsolvent
-    (
+    const auto& Wsolvent =
         film.regionMesh().lookupObject<uniformDimensionedScalarField>
         (
-            waxSolventEvaporation::typeName + ":Wsolvent"
-        )
-    );
+            IOobject::scopedName(waxSolventEvaporation::typeName, "Wsolvent")
+        );
 
-    const uniformDimensionedScalarField Ysolvent0
-    (
+    const auto& Ysolvent0 =
         film.regionMesh().lookupObject<uniformDimensionedScalarField>
         (
-            waxSolventEvaporation::typeName + ":Ysolvent0"
-        )
-    );
+            IOobject::scopedName(waxSolventEvaporation::typeName, "Ysolvent0")
+        );
 
-    const volScalarField& Ysolvent
-    (
+    const auto& Ysolvent =
         film.regionMesh().lookupObject<volScalarField>
         (
-            waxSolventEvaporation::typeName + ":Ysolvent"
-        )
-    );
+            IOobject::scopedName(waxSolventEvaporation::typeName, "Ysolvent")
+        );
 
     const volScalarField Xsolvent
     (
@@ -118,11 +111,12 @@ waxSolventViscosity::waxSolventViscosity
     (
         IOobject
         (
-            typeName + ":muWax",
+            IOobject::scopedName(typeName, "muWax"),
             film.regionMesh().time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh(),
         dimensionedScalar(dimDynamicViscosity, Zero),
@@ -141,11 +135,12 @@ waxSolventViscosity::waxSolventViscosity
     (
         IOobject
         (
-            typeName + ":muSolvent",
+            IOobject::scopedName(typeName, "muSolvent"),
             film.regionMesh().time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh(),
         dimensionedScalar(dimDynamicViscosity, Zero),

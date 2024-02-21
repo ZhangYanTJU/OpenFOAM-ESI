@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -191,7 +191,7 @@ Foam::lumpedPointDisplacementPointPatchVectorField::movement() const
         // Create and register with this patch as the owner
         ptr = lumpedPointIOMovement::New(obr, this->patch().index()).ptr();
 
-        objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;

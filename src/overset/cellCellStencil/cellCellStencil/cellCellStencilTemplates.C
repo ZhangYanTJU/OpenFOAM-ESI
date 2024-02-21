@@ -158,22 +158,15 @@ Foam::cellCellStencil::createField
     const UList<Type>& psi
 )
 {
-    auto tfld = tmp<volScalarField>::New
+    auto tfld = volScalarField::New
     (
-        IOobject
-        (
-            name,
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        name,
+        IOobject::NO_REGISTER,
         mesh,
         dimensionedScalar(dimless, Zero),
         fvPatchFieldBase::zeroGradientType()
     );
-    volScalarField& fld = tfld.ref();
+    auto& fld = tfld.ref();
 
     forAll(psi, cellI)
     {

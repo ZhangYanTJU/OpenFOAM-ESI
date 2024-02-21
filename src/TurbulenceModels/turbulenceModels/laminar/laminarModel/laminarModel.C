@@ -189,17 +189,10 @@ template<class BasicTurbulenceModel>
 Foam::tmp<Foam::volScalarField>
 Foam::laminarModel<BasicTurbulenceModel>::nut() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("nut", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("nut", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(dimViscosity, Zero)
     );
@@ -213,10 +206,7 @@ Foam::laminarModel<BasicTurbulenceModel>::nut
     const label patchi
 ) const
 {
-    return tmp<scalarField>
-    (
-        new scalarField(this->mesh_.boundary()[patchi].size(), Zero)
-    );
+    return tmp<scalarField>::New(this->mesh_.boundary()[patchi].size(), Zero);
 }
 
 
@@ -224,12 +214,11 @@ template<class BasicTurbulenceModel>
 Foam::tmp<Foam::volScalarField>
 Foam::laminarModel<BasicTurbulenceModel>::nuEff() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject::groupName("nuEff", this->alphaRhoPhi_.group()), this->nu()
-        )
+        IOobject::groupName("nuEff", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
+        this->nu()
     );
 }
 
@@ -249,17 +238,10 @@ template<class BasicTurbulenceModel>
 Foam::tmp<Foam::volScalarField>
 Foam::laminarModel<BasicTurbulenceModel>::k() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("k", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("k", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(sqr(this->U_.dimensions()), Zero)
     );
@@ -270,17 +252,10 @@ template<class BasicTurbulenceModel>
 Foam::tmp<Foam::volScalarField>
 Foam::laminarModel<BasicTurbulenceModel>::epsilon() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("epsilon", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("epsilon", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(sqr(this->U_.dimensions())/dimTime, Zero)
     );
@@ -291,17 +266,10 @@ template<class BasicTurbulenceModel>
 Foam::tmp<Foam::volScalarField>
 Foam::laminarModel<BasicTurbulenceModel>::omega() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            IOobject::groupName("omega", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("omega", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedScalar(dimless/dimTime, Zero)
     );
@@ -312,17 +280,10 @@ template<class BasicTurbulenceModel>
 Foam::tmp<Foam::volSymmTensorField>
 Foam::laminarModel<BasicTurbulenceModel>::R() const
 {
-    return tmp<volSymmTensorField>::New
+    return volSymmTensorField::New
     (
-        IOobject
-        (
-            IOobject::groupName("R", this->alphaRhoPhi_.group()),
-            this->runTime_.timeName(),
-            this->mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        IOobject::groupName("R", this->alphaRhoPhi_.group()),
+        IOobject::NO_REGISTER,
         this->mesh_,
         dimensionedSymmTensor(sqr(this->U_.dimensions()), Zero)
     );

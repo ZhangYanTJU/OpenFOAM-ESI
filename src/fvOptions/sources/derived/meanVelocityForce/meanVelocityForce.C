@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,7 +63,8 @@ void Foam::fv::meanVelocityForce::writeProps
                 "uniform",
                 mesh_,
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                IOobject::NO_REGISTER
             )
         );
         propsDict.add("gradient", gradP);
@@ -192,25 +193,20 @@ void Foam::fv::meanVelocityForce::addSup
     const label fieldi
 )
 {
-    volVectorField::Internal Su
+    auto tSu = volVectorField::Internal::New
     (
-        IOobject
-        (
-            name_ + fieldNames_[fieldi] + "Sup",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        name_ + fieldNames_[fieldi] + "Sup",
+        IOobject::NO_REGISTER,
         mesh_,
         dimensionedVector(eqn.dimensions()/dimVolume, Zero)
     );
+    auto& Su = tSu.ref();
 
     scalar gradP = gradP0_ + dGradP_;
 
     UIndirectList<vector>(Su, cells_) = flowDir_*gradP;
 
-    eqn += Su;
+    eqn += tSu;
 }
 
 
@@ -237,14 +233,7 @@ void Foam::fv::meanVelocityForce::constrain
         (
             new volScalarField
             (
-                IOobject
-                (
-                    name_ + ":rA",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
+                mesh_.newIOobject(IOobject::scopedName(name_, "rA")),
                 1.0/eqn.A()
             )
         );

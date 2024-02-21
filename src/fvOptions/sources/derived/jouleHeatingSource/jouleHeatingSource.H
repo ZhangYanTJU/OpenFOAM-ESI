@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -178,9 +178,6 @@ class jouleHeatingSource
     public fv::option
 {
     // Private Data
-
-        //- Name of electrical conductivity field
-        static const word sigmaName;
 
         //- Name of temperature field
         word TName_;

@@ -134,8 +134,8 @@ Foam::cyclicFvPatchField<Type>::patchNeighbourField() const
     const labelUList& nbrFaceCells =
         cyclicPatch().cyclicPatch().neighbPatch().faceCells();
 
-    tmp<Field<Type>> tpnf(new Field<Type>(this->size()));
-    Field<Type>& pnf = tpnf.ref();
+    auto tpnf = tmp<Field<Type>>::New(this->size());
+    auto& pnf = tpnf.ref();
 
 
     if (doTransform())

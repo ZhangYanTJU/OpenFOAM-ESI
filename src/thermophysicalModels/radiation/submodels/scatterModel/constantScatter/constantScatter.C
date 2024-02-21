@@ -66,22 +66,12 @@ Foam::radiation::constantScatter::constantScatter
 Foam::tmp<Foam::volScalarField>
 Foam::radiation::constantScatter::sigmaEff() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "sigma",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            mesh_,
-            sigma_*(3.0 - C_)
-        )
+        "sigma",
+        IOobject::NO_REGISTER,
+        mesh_,
+        sigma_*(3.0 - C_)
     );
 }
 

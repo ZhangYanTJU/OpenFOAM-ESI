@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,7 +42,7 @@ bool Foam::functionObjects::readFields::loadAndStore(const IOobject& io)
         Log << "    Reading " << io.name()
             << " (" << io.headerClassName() << ')' << endl;
 
-        mesh_.objectRegistry::store(new FieldType(io, mesh_));
+        regIOobject::store(new FieldType(io, mesh_));
         return true;
     }
 

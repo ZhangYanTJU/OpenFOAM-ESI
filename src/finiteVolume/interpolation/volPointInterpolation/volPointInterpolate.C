@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -232,11 +232,8 @@ Foam::tmp<Foam::Field<Type>> Foam::volPointInterpolation::flatBoundaryField
     const fvMesh& mesh = vf.mesh();
     const fvBoundaryMesh& bm = mesh.boundary();
 
-    tmp<Field<Type>> tboundaryVals
-    (
-        new Field<Type>(mesh.nBoundaryFaces())
-    );
-    Field<Type>& boundaryVals = tboundaryVals.ref();
+    auto tboundaryVals = tmp<Field<Type>>::New(mesh.nBoundaryFaces());
+    auto& boundaryVals = tboundaryVals.ref();
 
     forAll(vf.boundaryField(), patchi)
     {
@@ -570,8 +567,8 @@ Foam::volPointInterpolation::interpolate
     if (!pfPtr)
     {
         solution::cachePrintMessage("Calculating and caching", name, vf);
-        pfPtr = interpolate(vf, name, false).ptr();
 
+        pfPtr = interpolate(vf, name, false).ptr();
         regIOobject::store(pfPtr);
     }
     else

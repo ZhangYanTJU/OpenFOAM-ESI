@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015-2018 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -61,15 +61,14 @@ Foam::MomentumTransferPhaseSystem<BasePhaseSystem>::Kd
     {
         return dragModels_[key]->K();
     }
-    else
-    {
-        return volScalarField::New
-        (
-            dragModel::typeName + ":K",
-            this->mesh_,
-            dimensionedScalar(dragModel::dimK)
-        );
-    }
+
+    return volScalarField::New
+    (
+        IOobject::scopedName(dragModel::typeName, "K"),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar(dragModel::dimK)
+    );
 }
 
 
@@ -84,15 +83,14 @@ Foam::MomentumTransferPhaseSystem<BasePhaseSystem>::Kdf
     {
         return dragModels_[key]->Kf();
     }
-    else
-    {
-        return surfaceScalarField::New
-        (
-            dragModel::typeName + ":K",
-            this->mesh_,
-            dimensionedScalar(dragModel::dimK)
-        );
-    }
+
+    return surfaceScalarField::New
+    (
+        IOobject::scopedName(dragModel::typeName, "K"),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar(dragModel::dimK)
+    );
 }
 
 
@@ -107,15 +105,14 @@ Foam::MomentumTransferPhaseSystem<BasePhaseSystem>::Vm
     {
         return virtualMassModels_[key]->K();
     }
-    else
-    {
-        return volScalarField::New
-        (
-            virtualMassModel::typeName + ":K",
-            this->mesh_,
-            dimensionedScalar(virtualMassModel::dimK)
-        );
-    }
+
+    return volScalarField::New
+    (
+        IOobject::scopedName(virtualMassModel::typeName, "K"),
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar(virtualMassModel::dimK)
+    );
 }
 
 

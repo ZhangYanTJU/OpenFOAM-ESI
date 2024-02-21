@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -93,23 +94,14 @@ Foam::tmp<Foam::volScalarField> Foam::XiEqModels::SCOPEXiEq::XiEq() const
     volScalarField K(0.157*upBySu/sqrt(Rl));
     volScalarField Ma(MaModel.Ma());
 
-    tmp<volScalarField> tXiEq
+    auto tXiEq = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "XiEq",
-                epsilon.time().timeName(),
-                epsilon.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            epsilon.mesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        "XiEq",
+        IOobject::NO_REGISTER,
+        epsilon.mesh(),
+        dimensionedScalar(dimless, Zero)
     );
-    volScalarField& xieq = tXiEq.ref();
+    auto& xieq = tXiEq.ref();
 
     forAll(xieq, celli)
     {

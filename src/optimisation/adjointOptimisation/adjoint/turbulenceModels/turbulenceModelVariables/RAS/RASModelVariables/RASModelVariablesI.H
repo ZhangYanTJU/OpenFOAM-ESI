@@ -148,20 +148,13 @@ inline tmp<volScalarField> RASModelVariables::nut() const
         return tmp<volScalarField>(nutRef());
     }
 
-    return
-        tmp<volScalarField>::New
-        (
-            IOobject
-            (
-                "dummylaminarNut",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh_,
-            dimensionedScalar(dimViscosity, Zero)
-        );
+    return volScalarField::New
+    (
+        "dummylaminarNut",
+        IOobject::NO_REGISTER,
+        mesh_,
+        dimensionedScalar(dimViscosity, Zero)
+    );
 }
 
 

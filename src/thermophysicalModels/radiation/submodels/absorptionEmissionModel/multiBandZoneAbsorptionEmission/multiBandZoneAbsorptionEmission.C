@@ -108,23 +108,13 @@ Foam::radiation::multiBandZoneAbsorptionEmission::aCont
     const label bandI
 ) const
 {
-    tmp<volScalarField> ta
+    auto ta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "a",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("a", dimless/dimLength, absCoeffs_[bandI])
-        )
+        "a",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar("a", dimless/dimLength, absCoeffs_[bandI])
     );
-
     scalarField& a = ta.ref().primitiveFieldRef();
 
     for (const label zonei : zoneIds_)
@@ -150,23 +140,13 @@ Foam::radiation::multiBandZoneAbsorptionEmission::eCont
     const label bandI
 ) const
 {
-    tmp<volScalarField> te
+    auto te = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "e",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("e", dimless/dimLength, emiCoeffs_[bandI])
-        )
+        "e",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar("e", dimless/dimLength, emiCoeffs_[bandI])
     );
-
     scalarField& e = te.ref().primitiveFieldRef();
 
     for (const label zonei : zoneIds_)
@@ -192,24 +172,13 @@ Foam::radiation::multiBandZoneAbsorptionEmission::ECont
     const label bandI
 ) const
 {
-    tmp<volScalarField> E
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "E",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
-        )
+        "E",
+        IOobject::NO_REGISTER,
+        mesh(),
+        dimensionedScalar(dimMass/dimLength/pow3(dimTime), Zero)
     );
-
-    return E;
 }
 
 

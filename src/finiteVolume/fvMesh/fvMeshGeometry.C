@@ -376,25 +376,22 @@ Foam::tmp<Foam::surfaceVectorField> Foam::fvMesh::delta() const
 {
     DebugInFunction << "Calculating face deltas" << endl;
 
-    tmp<surfaceVectorField> tdelta
+    auto tdelta = tmp<surfaceVectorField>::New
     (
-        new surfaceVectorField
+        IOobject
         (
-            IOobject
-            (
-                "delta",
-                pointsInstance(),
-                meshSubDir,
-                *this,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
+            "delta",
+            pointsInstance(),
+            meshSubDir,
             *this,
-            dimLength
-        )
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimLength
     );
-    surfaceVectorField& delta = tdelta.ref();
+    auto& delta = tdelta.ref();
     delta.setOriented();
 
     const volVectorField& C = this->C();
@@ -406,7 +403,7 @@ Foam::tmp<Foam::surfaceVectorField> Foam::fvMesh::delta() const
         delta[facei] = C[neighbour[facei]] - C[owner[facei]];
     }
 
-    surfaceVectorField::Boundary& deltabf =  delta.boundaryFieldRef();
+    auto& deltabf = delta.boundaryFieldRef();
 
     forAll(deltabf, patchi)
     {

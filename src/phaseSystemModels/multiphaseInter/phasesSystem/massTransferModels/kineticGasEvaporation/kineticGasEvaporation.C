@@ -167,37 +167,23 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
 
     updateInterface(T);
 
-    tmp<volScalarField> tRhov
+    auto tRhov = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "tRhov",
-                mesh.time().timeName(),
-                mesh
-            ),
-            mesh,
-            dimensionedScalar(dimDensity, Zero)
-        )
+        "tRhov",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimensionedScalar(dimDensity, Zero)
     );
-    volScalarField& rhov = tRhov.ref();
+    auto& rhov = tRhov.ref();
 
-    tmp<volScalarField> tdeltaT
+    auto tdeltaT = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "tdeltaT",
-                mesh.time().timeName(),
-                mesh
-            ),
-            mesh,
-            dimensionedScalar(dimTemperature, Zero)
-        )
+        "tdeltaT",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimensionedScalar(dimTemperature, Zero)
     );
-    volScalarField& deltaT = tdeltaT.ref();
+    auto& deltaT = tdeltaT.ref();
 
     dimensionedScalar T0("T0", dimTemperature, Zero);
 
@@ -216,7 +202,7 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>
 
     mDotc_ = htc_*deltaT*interfaceArea_;
 
-    return tmp<volScalarField>(new volScalarField(mDotc_));
+    return tmp<volScalarField>::New(mDotc_);
 }
 
 
@@ -241,10 +227,8 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>::KSp
             return(coeff*pos(Tactivate_ - refValue));
         }
     }
-    else
-    {
-        return tmp<volScalarField> ();
-    }
+
+    return nullptr;
 }
 
 
@@ -269,10 +253,8 @@ Foam::meltingEvaporationModels::kineticGasEvaporation<Thermo, OtherThermo>::KSu
             return(coeff*pos(Tactivate_ - refValue));
         }
     }
-    else
-    {
-        return tmp<volScalarField> ();
-    }
+
+    return nullptr;
 }
 
 

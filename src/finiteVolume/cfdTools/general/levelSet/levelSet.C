@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,21 +42,14 @@ Foam::levelSetFraction
     const bool above
 )
 {
-    tmp<DimensionedField<scalar, volMesh>> tResult
+    auto tResult = DimensionedField<scalar, volMesh>::New
     (
-        new DimensionedField<scalar, volMesh>
-        (
-            IOobject
-            (
-                "levelSetFraction",
-                mesh.time().timeName(),
-                mesh
-            ),
-            mesh,
-            dimensionedScalar(dimless, Zero)
-        )
+        "levelSetFraction",
+        IOobject::NO_REGISTER,
+        mesh,
+        dimensionedScalar(dimless, Zero)
     );
-    DimensionedField<scalar, volMesh>& result = tResult.ref();
+    auto& result = tResult.ref();
 
     forAll(result, cI)
     {
@@ -113,8 +106,8 @@ Foam::tmp<Foam::scalarField> Foam::levelSetFraction
     const bool above
 )
 {
-    tmp<scalarField> tResult(new scalarField(patch.size(), Zero));
-    scalarField& result = tResult.ref();
+    auto tResult = tmp<scalarField>::New(patch.size(), Zero);
+    auto& result = tResult.ref();
 
     forAll(result, fI)
     {

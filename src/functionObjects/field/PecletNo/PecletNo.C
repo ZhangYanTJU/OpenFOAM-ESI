@@ -79,16 +79,10 @@ bool Foam::functionObjects::PecletNo::calc()
             const dictionary& model =
                 mesh_.lookupObject<dictionary>("transportProperties");
 
-            nuEff = tmp<volScalarField>::New
+            nuEff = volScalarField::New
             (
-                IOobject
-                (
-                    "nuEff",
-                    mesh_.time().timeName(),
-                    mesh_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
+                "nuEff",
+                IOobject::NO_REGISTER,
                 mesh_,
                 dimensionedScalar("nu", dimViscosity, model)
             );

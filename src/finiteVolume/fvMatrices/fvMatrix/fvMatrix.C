@@ -2078,7 +2078,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, su, "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += su.mesh().V()*su.field();
     return tC;
 }
@@ -2091,7 +2091,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, tsu(), "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2105,7 +2105,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, tsu(), "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2160,7 +2160,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator==
 )
 {
     checkMethod(A, su, "==");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += A.psi().mesh().V()*su.value();
     return tC;
 }
@@ -2206,7 +2206,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     return tC;
 }
@@ -2231,7 +2231,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, B, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() += B;
     return tC;
 }
@@ -2284,7 +2284,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.mesh().V()*su.field();
     return tC;
 }
@@ -2297,7 +2297,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2311,7 +2311,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2366,7 +2366,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.mesh().V()*su.field();
     return tC;
 }
@@ -2379,7 +2379,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2393,7 +2393,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, tsu(), "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2449,7 +2449,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, B, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() -= B;
     return tC;
 }
@@ -2503,7 +2503,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += su.mesh().V()*su.field();
     return tC;
 }
@@ -2516,7 +2516,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().field();
     tsu.clear();
     return tC;
@@ -2530,7 +2530,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
     return tC;
@@ -2585,7 +2585,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= su.mesh().V()*su.field();
     return tC;
@@ -2599,7 +2599,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= tsu().mesh().V()*tsu().field();
     tsu.clear();
@@ -2614,7 +2614,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, tsu(), "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= tsu().mesh().V()*tsu().primitiveField();
     tsu.clear();
@@ -2673,7 +2673,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.value()*A.psi().mesh().V();
     return tC;
 }
@@ -2699,7 +2699,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator+
 )
 {
     checkMethod(A, su, "+");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() -= su.value()*A.psi().mesh().V();
     return tC;
 }
@@ -2725,7 +2725,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().source() += su.value()*tC().psi().mesh().V();
     return tC;
 }
@@ -2751,7 +2751,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator-
 )
 {
     checkMethod(A, su, "-");
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref().negate();
     tC.ref().source() -= su.value()*A.psi().mesh().V();
     return tC;
@@ -2779,7 +2779,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= dsf;
     return tC;
 }
@@ -2791,7 +2791,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= tdsf;
     return tC;
 }
@@ -2803,7 +2803,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= tvsf;
     return tC;
 }
@@ -2851,7 +2851,7 @@ Foam::tmp<Foam::fvMatrix<Type>> Foam::operator*
     const fvMatrix<Type>& A
 )
 {
-    tmp<fvMatrix<Type>> tC(new fvMatrix<Type>(A));
+    auto tC = tmp<fvMatrix<Type>>::New(A);
     tC.ref() *= ds;
     return tC;
 }

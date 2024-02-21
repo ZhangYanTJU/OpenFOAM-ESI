@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -75,11 +75,12 @@ solidification::solidification
     (
         IOobject
         (
-            typeName + ":mass",
+            IOobject::scopedName(typeName, "mass"),
             film.regionMesh().time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh(),
         dimensionedScalar(dimMass, Zero),
@@ -89,11 +90,12 @@ solidification::solidification
     (
         IOobject
         (
-            typeName + ":thickness",
+            IOobject::scopedName(typeName, "thickness"),
             film.regionMesh().time().timeName(),
             film.regionMesh().thisDb(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         film.regionMesh(),
         dimensionedScalar(dimLength, Zero),

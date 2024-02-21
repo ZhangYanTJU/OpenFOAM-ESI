@@ -77,9 +77,10 @@ Foam::functionObjects::turbulenceFields::nuTilda
 {
     const dimensionedScalar omega0(dimless/dimTime, SMALL);
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
         "nuTilda.tmp",
+        IOobject::NO_REGISTER,
         model.k()/(model.omega() + omega0)
     );
 }
@@ -96,9 +97,10 @@ Foam::functionObjects::turbulenceFields::L
     const scalar Cmu = 0.09;
     const dimensionedScalar eps0(sqr(dimVelocity)/dimTime, SMALL);
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
         "L.tmp",
+        IOobject::NO_REGISTER,
         pow(Cmu, 0.75)*pow(model.k(), 1.5)/(model.epsilon() + eps0)
     );
 }
@@ -116,9 +118,10 @@ Foam::functionObjects::turbulenceFields::I
     const volScalarField uPrime(sqrt((2.0/3.0)*model.k()));
     const dimensionedScalar U0(dimVelocity, SMALL);
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
         "I.tmp",
+        IOobject::NO_REGISTER,
         uPrime/max(max(uPrime, mag(model.U())), U0)
     );
 }

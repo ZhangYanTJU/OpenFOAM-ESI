@@ -81,23 +81,16 @@ bool Foam::patchDistMethods::Poisson::correct
 {
     if (!tyPsi_)
     {
-        tyPsi_ = tmp<volScalarField>
+        tyPsi_ = volScalarField::New
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "yPsi",
-                    mesh_.time().timeName(),
-                    mesh_
-                ),
-                mesh_,
-                dimensionedScalar(sqr(dimLength), Zero),
-                y.boundaryFieldRef().types()
-            )
+            "yPsi",
+            IOobject::NO_REGISTER,
+            mesh_,
+            dimensionedScalar(sqr(dimLength), Zero),
+            y.boundaryFieldRef().types()
         );
     }
-    volScalarField& yPsi = tyPsi_.ref();
+    auto& yPsi = tyPsi_.ref();
 
     solve(fvm::laplacian(yPsi) == dimensionedScalar("1", dimless, -1.0));
 

@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,28 +117,17 @@ template<class CompType, class SolidThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::solidChemistryModel<CompType, SolidThermo>::Qdot() const
 {
-    tmp<volScalarField> tQdot
+    auto tQdot = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Qdot",
-                this->mesh_.time().timeName(),
-                this->mesh_,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            this->mesh_,
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
+        "Qdot",
+        IOobject::NO_REGISTER,
+        this->mesh_,
+        dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
     );
+    scalarField& Qdot = tQdot.ref();
 
     if (this->chemistry_)
     {
-        scalarField& Qdot = tQdot.ref();
-
         forAll(Ys_, i)
         {
             forAll(Qdot, celli)

@@ -72,17 +72,10 @@ Foam::surfaceTensionModels::temperatureDependent::~temperatureDependent()
 Foam::tmp<Foam::volScalarField>
 Foam::surfaceTensionModels::temperatureDependent::sigma() const
 {
-    auto tsigma = tmp<volScalarField>::New
+    auto tsigma = volScalarField::New
     (
-        IOobject
-        (
-            "sigma",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "sigma",
+        IOobject::NO_REGISTER,
         mesh_,
         dimSigma
     );

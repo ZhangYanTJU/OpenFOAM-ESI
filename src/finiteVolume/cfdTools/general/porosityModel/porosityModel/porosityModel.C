@@ -173,7 +173,7 @@ Foam::tmp<Foam::vectorField> Foam::porosityModel::porosityModel::force
 {
     transformModelData();
 
-    tmp<vectorField> tforce(new vectorField(U.size(), Zero));
+    auto tforce = tmp<vectorField>::New(U.size(), Zero);
 
     if (!cellZoneIDs_.empty())
     {

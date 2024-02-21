@@ -113,7 +113,8 @@ Foam::RASModels::kineticTheoryModel::kineticTheoryModel
             U.time().timeName(),
             U.mesh(),
             IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         U.mesh()
     ),
@@ -168,7 +169,8 @@ Foam::RASModels::kineticTheoryModel::kineticTheoryModel
             U.time().timeName(),
             U.mesh(),
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::AUTO_WRITE,
+            IOobject::REGISTER
         ),
         U.mesh(),
         dimensionedScalar(dimViscosity, Zero)
@@ -244,18 +246,11 @@ Foam::RASModels::kineticTheoryModel::omega() const
 Foam::tmp<Foam::volSymmTensorField>
 Foam::RASModels::kineticTheoryModel::R() const
 {
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
+        IOobject::groupName("R", U_.group()),
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                IOobject::groupName("R", U_.group()),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
           - (nut_)*devTwoSymm(fvc::grad(U_))
           - (lambda_*fvc::div(phi_))*symmTensor::I
         )
@@ -323,20 +318,13 @@ Foam::RASModels::kineticTheoryModel::devRhoReff
     const volVectorField& U
 ) const
 {
-    return tmp<volSymmTensorField>
+    return volSymmTensorField::New
     (
-        new volSymmTensorField
+        IOobject::groupName("devRhoReff", U.group()),
+        IOobject::NO_REGISTER,
         (
-            IOobject
-            (
-                IOobject::groupName("devRhoReff", U.group()),
-                runTime_.timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
           - (rho_*nut_)
-           *devTwoSymm(fvc::grad(U))
+          * devTwoSymm(fvc::grad(U))
           - ((rho_*lambda_)*fvc::div(phi_))*symmTensor::I
         )
     );

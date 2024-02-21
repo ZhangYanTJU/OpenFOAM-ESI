@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -72,22 +73,13 @@ laminar::~laminar()
 
 tmp<volVectorField> laminar::Us() const
 {
-    tmp<volVectorField> tUs
+    auto tUs = volVectorField::New
     (
-        new volVectorField
-        (
-            IOobject
-            (
-                typeName + ":Us",
-                filmModel_.regionMesh().time().timeName(),
-                filmModel_.regionMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            filmModel_.regionMesh(),
-            dimensionedVector(dimVelocity, Zero),
-            fvPatchFieldBase::extrapolatedCalculatedType()
-        )
+        IOobject::scopedName(typeName, "Us"),
+        IOobject::NO_REGISTER,
+        filmModel_.regionMesh(),
+        dimensionedVector(dimVelocity, Zero),
+        fvPatchFieldBase::extrapolatedCalculatedType()
     );
 
     // apply quadratic profile
@@ -100,16 +92,10 @@ tmp<volVectorField> laminar::Us() const
 
 tmp<volScalarField> laminar::mut() const
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            typeName + ":mut",
-            filmModel_.regionMesh().time().timeName(),
-            filmModel_.regionMesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
+        IOobject::scopedName(typeName, "mut"),
+        IOobject::NO_REGISTER,
         filmModel_.regionMesh(),
         dimensionedScalar(dimMass/dimLength/dimTime, Zero)
     );

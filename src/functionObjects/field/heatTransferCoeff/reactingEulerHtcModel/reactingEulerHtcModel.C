@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -145,7 +145,7 @@ Foam::functionObjects::reactingEulerHtcModel::reactingEulerHtcModel
             (
                 resultName_,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -154,7 +154,7 @@ Foam::functionObjects::reactingEulerHtcModel::reactingEulerHtcModel
             dimensionedScalar(dimPower/dimArea/dimTemperature, Zero)
         );
 
-    mesh_.objectRegistry::store(htcPtr);
+    regIOobject::store(htcPtr);
 }
 
 

@@ -103,8 +103,8 @@ Foam::triSurfaceTools::writeCloseness
 {
     Pair<tmp<scalarField>> tpair
     (
-        tmp<scalarField>(new scalarField(surf.size(), GREAT)),
-        tmp<scalarField>(new scalarField(surf.size(), GREAT))
+        tmp<scalarField>::New(surf.size(), GREAT),
+        tmp<scalarField>::New(surf.size(), GREAT)
     );
 
     Info<< "Extracting internal and external closeness of surface." << endl;

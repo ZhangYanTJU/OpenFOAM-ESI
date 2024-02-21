@@ -93,9 +93,10 @@ Foam::functionObjects::energyTransport::kappaEff() const
 
         if (turbPtr)
         {
-            return tmp<volScalarField>
+            return volScalarField::New
             (
-                new volScalarField
+                "kappaEff",
+                IOobject::NO_REGISTER,
                 (
                     kappa() + Cp()*turbPtr->nut()*rho()/Prt_
                 )
@@ -113,17 +114,10 @@ Foam::functionObjects::energyTransport::kappaEff() const
 Foam::tmp<Foam::volScalarField>
 Foam::functionObjects::energyTransport::rho() const
 {
-    auto trho = tmp<volScalarField>::New
+    auto trho = volScalarField::New
     (
-        IOobject
-        (
-            "trho",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "trho",
+        IOobject::NO_REGISTER,
         mesh_,
         rho_
     );
@@ -150,17 +144,10 @@ Foam::functionObjects::energyTransport::Cp() const
         return tCp;
     }
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "tCp",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "tCp",
+        IOobject::NO_REGISTER,
         mesh_,
         Cp_
     );
@@ -181,21 +168,15 @@ Foam::functionObjects::energyTransport::kappa() const
         return tkappa;
     }
 
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            "tkappa",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        "tkappa",
+        IOobject::NO_REGISTER,
         mesh_,
         kappa_
     );
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -404,16 +385,10 @@ bool Foam::functionObjects::energyTransport::execute()
 
         const surfaceScalarField CpPhi(rhoCp*phi);
 
-        auto trhoCp = tmp<volScalarField>::New
+        auto trhoCp = volScalarField::New
         (
-            IOobject
-            (
-                "trhoCp",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            "trhoCp",
+            IOobject::NO_REGISTER,
             mesh_,
             rhoCp
         );

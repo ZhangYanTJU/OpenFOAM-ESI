@@ -301,28 +301,18 @@ void Foam::surfaceAlignedSBRStressFvMotionSolver::solve()
     // Calculate rotations on surface intersection
     calculateCellRot();
 
-    tmp<volVectorField> tUd
+    auto tUd = volVectorField::New
     (
-        new volVectorField
+        "Ud",
+        IOobject::NO_REGISTER,
+        fvMesh_,
+        dimensionedVector(dimLength, Zero),
+        cellMotionBoundaryTypes<vector>
         (
-            IOobject
-            (
-                "Ud",
-                fvMesh_.time().timeName(),
-                fvMesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            fvMesh_,
-            dimensionedVector(dimLength, Zero),
-            cellMotionBoundaryTypes<vector>
-            (
-                pointDisplacement().boundaryField()
-            )
+            pointDisplacement().boundaryField()
         )
     );
-
-    volVectorField& Ud = tUd.ref();
+    auto& Ud = tUd.ref();
 
     const vectorList& C = fvMesh_.C();
     forAll(Ud, i)
@@ -346,23 +336,14 @@ void Foam::surfaceAlignedSBRStressFvMotionSolver::solve()
 
     const volTensorField gradD("gradD", fvc::grad(Ud));
 
-    tmp<volScalarField> tmu
+    auto tmu = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "mu",
-                fvMesh_.time().timeName(),
-                fvMesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            fvMesh_,
-            dimensionedScalar(dimless, Zero)
-        )
+        "mu",
+        IOobject::NO_REGISTER,
+        fvMesh_,
+        dimensionedScalar(dimless, Zero)
     );
-    volScalarField& mu =  tmu.ref();
+    auto& mu = tmu.ref();
 
     const scalarList& V = fvMesh_.V();
     mu.primitiveFieldRef() = (1.0/V);

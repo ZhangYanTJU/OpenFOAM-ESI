@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +49,7 @@ Foam::PackingModels::Implicit<CloudType>::Implicit
     (
         IOobject
         (
-            this->owner().name() + ":alpha",
+            IOobject::scopedName(this->owner().name(), "alpha"),
             this->owner().db().time().timeName(),
             this->owner().mesh(),
             IOobject::NO_READ,
@@ -112,20 +113,20 @@ void Foam::PackingModels::Implicit<CloudType>::cacheFields(const bool store)
         const dimensionedVector& g = this->owner().g();
         const volScalarField& rhoc = this->owner().rho();
 
-        const AveragingMethod<scalar>& rhoAverage =
+        const auto& rhoAverage =
             mesh.lookupObject<AveragingMethod<scalar>>
             (
-                cloudName + ":rhoAverage"
+                IOobject::scopedName(cloudName, "rhoAverage")
             );
-        const AveragingMethod<vector>& uAverage =
+        const auto& uAverage =
             mesh.lookupObject<AveragingMethod<vector>>
             (
-                cloudName + ":uAverage"
+                IOobject::scopedName(cloudName, "uAverage")
             );
-        const AveragingMethod<scalar>& uSqrAverage =
+        const auto& uSqrAverage =
             mesh.lookupObject<AveragingMethod<scalar>>
             (
-                cloudName + ":uSqrAverage"
+                IOobject::scopedName(cloudName, "uSqrAverage")
             );
 
         mesh.setFluxRequired(alpha_.name());
@@ -138,20 +139,15 @@ void Foam::PackingModels::Implicit<CloudType>::cacheFields(const bool store)
         alpha_.correctBoundaryConditions();
 
         // average density
-        volScalarField rho
+        auto trho = volScalarField::New
         (
-            IOobject
-            (
-                cloudName + ":rho",
-                this->owner().db().time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            IOobject::scopedName(cloudName, "rho"),
             mesh,
             dimensionedScalar(dimDensity, Zero),
             fvPatchFieldBase::zeroGradientType()
         );
+        auto& rho = trho.ref();
+
         rho.primitiveFieldRef() = max(rhoAverage.primitiveField(), rhoMin_);
         rho.correctBoundaryConditions();
 
@@ -159,20 +155,14 @@ void Foam::PackingModels::Implicit<CloudType>::cacheFields(const bool store)
         // ~~~~~~~~~~~~
 
         // stress derivative wrt volume fraction
-        volScalarField tauPrime
+        auto ttauPrime = volScalarField::New
         (
-            IOobject
-            (
-                cloudName + ":tauPrime",
-                this->owner().db().time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
+            IOobject::scopedName(cloudName, "tauPrime"),
             mesh,
             dimensionedScalar(dimPressure, Zero),
             fvPatchFieldBase::zeroGradientType()
         );
+        auto& tauPrime = ttauPrime.ref();
 
         tauPrime.primitiveFieldRef() =
             this->particleStressModel_->dTaudTheta
@@ -191,27 +181,24 @@ void Foam::PackingModels::Implicit<CloudType>::cacheFields(const bool store)
         tmp<surfaceScalarField> phiGByA;
 
         if (applyGravity_)
-        (
-            phiGByA = tmp<surfaceScalarField>
+        {
+            phiGByA = surfaceScalarField::New
             (
-                new surfaceScalarField
-                (
-                    "phiGByA",
-                    deltaT*(g & mesh.Sf())*fvc::interpolate(1.0 - rhoc/rho)
-                )
-            )
-        );
+                "phiGByA",
+                IOobject::NO_REGISTER,
+                deltaT*(g & mesh.Sf())*fvc::interpolate(1.0 - rhoc/rho)
+            );
+        }
 
 
         // Implicit solution for the volume fraction
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-        surfaceScalarField
-            tauPrimeByRhoAf
-            (
-                "tauPrimeByRhoAf",
-                fvc::interpolate(deltaT*tauPrime/rho)
-            );
+        surfaceScalarField tauPrimeByRhoAf
+        (
+            "tauPrimeByRhoAf",
+            fvc::interpolate(deltaT*tauPrime/rho)
+        );
 
         fvScalarMatrix alphaEqn
         (
@@ -232,38 +219,32 @@ void Foam::PackingModels::Implicit<CloudType>::cacheFields(const bool store)
         // ~~~~~~~~~~~~~~~~~
 
         // correction volumetric flux
-        phiCorrect_ = tmp<surfaceScalarField>
+        phiCorrect_ = surfaceScalarField::New
         (
-            new surfaceScalarField
-            (
-                cloudName + ":phiCorrect",
-                alphaEqn.flux()/fvc::interpolate(alpha_)
-            )
+            IOobject::scopedName(cloudName, "phiCorrect"),
+            IOobject::NO_REGISTER,
+            alphaEqn.flux()/fvc::interpolate(alpha_)
         );
 
         // limit the correction flux
         if (applyLimiting_)
         {
-            volVectorField U
+            auto tU = volVectorField::New
             (
-                IOobject
-                (
-                    cloudName + ":U",
-                    this->owner().db().time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
+                IOobject::scopedName(cloudName, "U"),
+                IOobject::NO_REGISTER,
                 mesh,
                 dimensionedVector(dimVelocity, Zero),
                 fvPatchFieldBase::zeroGradientType()
             );
+            auto& U = tU.ref();
+
             U.primitiveFieldRef() = uAverage.primitiveField();
             U.correctBoundaryConditions();
 
             surfaceScalarField phi
             (
-                cloudName + ":phi",
+                IOobject::scopedName(cloudName, "phi"),
                 linearInterpolate(U) & mesh.Sf()
             );
 
@@ -303,14 +284,11 @@ void Foam::PackingModels::Implicit<CloudType>::cacheFields(const bool store)
         }
 
         // correction velocity
-        uCorrect_ = tmp<volVectorField>
+        uCorrect_ = volVectorField::New
         (
-            new volVectorField
-            (
-                cloudName + ":uCorrect",
-                fvc::reconstruct(phiCorrect_())
-            )
-
+            IOobject::scopedName(cloudName, "uCorrect"),
+            IOobject::NO_REGISTER,
+            fvc::reconstruct(phiCorrect_())
         );
         uCorrect_->correctBoundaryConditions();
 

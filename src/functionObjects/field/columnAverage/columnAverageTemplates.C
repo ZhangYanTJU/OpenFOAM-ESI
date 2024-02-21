@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -57,14 +57,14 @@ bool Foam::functionObjects::columnAverage::columnAverageField
                 (
                     resultName,
                     fld.mesh().time().timeName(),
-                    fld.mesh(),
+                    fld.db(),
                     IOobject::NO_READ,
                     IOobject::NO_WRITE,
                     IOobject::REGISTER
                 ),
                 fld
             );
-            obr_.objectRegistry::store(resPtr);
+            regIOobject::store(resPtr);
         }
         fieldType& res = *resPtr;
 

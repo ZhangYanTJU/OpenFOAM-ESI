@@ -174,12 +174,12 @@ public:
             const autoPtr<incompressible::RASModelVariables>&
                 turbVars = primalVars_.RASModelVariables();
 
-            return
-                tmp<volScalarField>::New
-                (
-                    "nuEff",
-                    lamTrans.nu() + turbVars().nut()
-                );
+            return volScalarField::New
+            (
+                "nuEff",
+                IOobject::NO_REGISTER,
+                lamTrans.nu() + turbVars().nut()
+            );
         }
 
         //- Return the effective viscosity on a given patch

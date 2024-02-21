@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -89,17 +89,17 @@ void Foam::functionObjects::forces::setCoordinateSystem
 
 Foam::volVectorField& Foam::functionObjects::forces::force()
 {
-    auto* forcePtr = mesh_.getObjectPtr<volVectorField>(scopedName("force"));
+    auto* ptr = mesh_.getObjectPtr<volVectorField>(scopedName("force"));
 
-    if (!forcePtr)
+    if (!ptr)
     {
-        forcePtr = new volVectorField
+        ptr = new volVectorField
         (
             IOobject
             (
                 scopedName("force"),
                 time_.timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -108,26 +108,26 @@ Foam::volVectorField& Foam::functionObjects::forces::force()
             dimensionedVector(dimForce, Zero)
         );
 
-        mesh_.objectRegistry::store(forcePtr);
+        regIOobject::store(ptr);
     }
 
-    return *forcePtr;
+    return *ptr;
 }
 
 
 Foam::volVectorField& Foam::functionObjects::forces::moment()
 {
-    auto* momentPtr = mesh_.getObjectPtr<volVectorField>(scopedName("moment"));
+    auto* ptr = mesh_.getObjectPtr<volVectorField>(scopedName("moment"));
 
-    if (!momentPtr)
+    if (!ptr)
     {
-        momentPtr = new volVectorField
+        ptr = new volVectorField
         (
             IOobject
             (
                 scopedName("moment"),
                 time_.timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -136,10 +136,10 @@ Foam::volVectorField& Foam::functionObjects::forces::moment()
             dimensionedVector(dimForce*dimLength, Zero)
         );
 
-        mesh_.objectRegistry::store(momentPtr);
+        regIOobject::store(ptr);
     }
 
-    return *momentPtr;
+    return *ptr;
 }
 
 
@@ -311,14 +311,10 @@ Foam::tmp<Foam::volScalarField> Foam::functionObjects::forces::rho() const
 {
     if (rhoName_ == "rhoInf")
     {
-        return tmp<volScalarField>::New
+        return volScalarField::New
         (
-            IOobject
-            (
-                "rho",
-                mesh_.time().timeName(),
-                mesh_
-            ),
+            "rho",
+            IOobject::NO_REGISTER,
             mesh_,
             dimensionedScalar(dimDensity, rhoRef_)
         );

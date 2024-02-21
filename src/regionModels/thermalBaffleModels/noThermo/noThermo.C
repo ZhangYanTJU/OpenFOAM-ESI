@@ -92,24 +92,7 @@ const tmp<volScalarField> noThermo::Cp() const
     FatalErrorInFunction
         << "Cp field not available for " << type()
         << abort(FatalError);
-
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "noThermo::Cp",
-                time().timeName(),
-                primaryMesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            primaryMesh(),
-            dimensionedScalar(dimEnergy/dimVolume/dimTime, Zero)
-        )
-    );
+    return nullptr;
 }
 
 const volScalarField& noThermo::kappaRad() const

@@ -295,46 +295,31 @@ void Foam::interfaceTrackingFvMesh::makeControlPoints()
             << abort(FatalError);
     }
 
-    IOobject controlPointsHeader
+    IOobject pointsIO
     (
         "controlPoints",
         mesh().time().timeName(),
         mesh(),
-        IOobject::MUST_READ
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE,
+        IOobject::REGISTER
     );
 
-    if (controlPointsHeader.typeHeaderOk<vectorIOField>())
+    if (pointsIO.typeHeaderOk<vectorIOField>())
     {
         Info<< "Reading control points" << endl;
-        controlPointsPtr_ =
-            new vectorIOField
-            (
-                IOobject
-                (
-                    "controlPoints",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                )
-            );
+        controlPointsPtr_ = new vectorIOField(pointsIO);
     }
     else
     {
+        pointsIO.readOpt(IOobject::NO_READ);
+
         Info<< "Creating new control points" << endl;
-        controlPointsPtr_ =
-            new vectorIOField
-            (
-                IOobject
-                (
-                    "controlPoints",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                aMesh().areaCentres().internalField()
-            );
+        controlPointsPtr_ = new vectorIOField
+        (
+            pointsIO,
+            aMesh().areaCentres().internalField()
+        );
 
         initializeControlPointsPosition();
     }

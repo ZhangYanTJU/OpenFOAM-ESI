@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,6 +71,7 @@ Foam::functionObjects::heatTransferCoeff::heatTransferCoeff
 {
     read(dict);
 
+    // scopedName?
     setResultName(typeName, "htc:" + htcModelPtr_->type());
 
     auto* heatTransferCoeffPtr =
@@ -80,7 +81,7 @@ Foam::functionObjects::heatTransferCoeff::heatTransferCoeff
             (
                 resultName_,
                 mesh_.time().timeName(),
-                mesh_,
+                mesh_.thisDb(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
@@ -89,7 +90,7 @@ Foam::functionObjects::heatTransferCoeff::heatTransferCoeff
             dimensionedScalar(dimPower/dimArea/dimTemperature, Zero)
         );
 
-    mesh_.objectRegistry::store(heatTransferCoeffPtr);
+    regIOobject::store(heatTransferCoeffPtr);
 }
 
 

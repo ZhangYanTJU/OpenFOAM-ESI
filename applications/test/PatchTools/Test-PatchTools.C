@@ -67,8 +67,8 @@ using namespace Foam;
 //    //    (note:without calculating pointNormals
 //    //     to avoid them being stored)
 //
-//    tmp<pointField> textrudeN(new pointField(p.nPoints(), Zero));
-//    pointField& extrudeN = textrudeN();
+//    auto textrudeN = tmp<pointField>::New(p.nPoints(), Zero);
+//    auto& extrudeN = textrudeN.ref();
 //    {
 //        const faceList& localFaces = p.localFaces();
 //        const vectorField& faceAreas = mesh.faceAreas();

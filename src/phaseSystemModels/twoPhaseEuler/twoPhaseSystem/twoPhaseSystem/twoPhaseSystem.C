@@ -110,7 +110,7 @@ Foam::twoPhaseSystem::twoPhaseSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("dgdt", dimless/dimTime, Zero)
+        dimensionedScalar(dimless/dimTime, Zero)
     )
 {
     phase2_.volScalarField::operator=(scalar(1) - phase1_);
@@ -351,8 +351,6 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseSystem::D() const
 
 void Foam::twoPhaseSystem::solve()
 {
-    const Time& runTime = mesh_.time();
-
     volScalarField& alpha1 = phase1_;
     volScalarField& alpha2 = phase2_;
 
@@ -396,24 +394,14 @@ void Foam::twoPhaseSystem::solve()
     {
         volScalarField::Internal Sp
         (
-            IOobject
-            (
-                "Sp",
-                runTime.timeName(),
-                mesh_
-            ),
+            mesh_.newIOobject("Sp"),
             mesh_,
-            dimensionedScalar("Sp", dgdt_.dimensions(), 0.0)
+            dimensionedScalar(dgdt_.dimensions(), Zero)
         );
 
         volScalarField::Internal Su
         (
-            IOobject
-            (
-                "Su",
-                runTime.timeName(),
-                mesh_
-            ),
+            mesh_.newIOobject("Su"),
             // Divergence term is handled explicitly to be
             // consistent with the explicit transport solution
             fvc::div(phi_)*min(alpha1, scalar(1))

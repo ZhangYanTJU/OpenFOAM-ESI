@@ -377,10 +377,7 @@ public:
             const DimensionedField<Type, edgeMesh>& iF
         ) const
         {
-            return tmp<faePatchField<Type>>
-            (
-                new faePatchField<Type>(*this, iF)
-            );
+            return tmp<faePatchField<Type>>::New(*this, iF);
         }
 
 

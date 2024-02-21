@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,30 +34,23 @@ License
 
 namespace Foam
 {
-namespace fv
-{
+
 static inline tmp<volScalarField> createField
 (
     const fvMesh& mesh,
     const scalar val
 )
 {
-    return tmp<volScalarField>::New
+    return volScalarField::New
     (
-        IOobject
-        (
-            polyMesh::defaultRegion,
-            mesh.time().timeName(),
-            mesh,
-            IOobjectOption::NO_READ,
-            IOobject::NO_WRITE,
-            IOobject::NO_REGISTER
-        ),
+        polyMesh::defaultRegion,
+        IOobject::NO_REGISTER,
         mesh,
-        dimensionedScalar(dimless, val)
+        val,
+        dimless
     );
 }
-}  // End namespace fv
+
 }  // End namespace Foam
 
 
@@ -157,14 +150,14 @@ VolFieldType& Foam::fv::MapFieldConstraint<Type>::getOrReadField
             (
                 fieldName,
                 thisMesh.time().timeName(),
-                thisMesh,
+                thisMesh.thisDb(),
                 IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 IOobject::REGISTER
             ),
             thisMesh
         );
-        thisMesh.objectRegistry::store(ptr);
+        regIOobject::store(ptr);
     }
 
     return *ptr;

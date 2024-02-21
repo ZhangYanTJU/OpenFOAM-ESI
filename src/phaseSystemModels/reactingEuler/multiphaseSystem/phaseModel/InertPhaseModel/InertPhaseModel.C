@@ -58,10 +58,7 @@ Foam::InertPhaseModel<BasePhaseModel>::R
     volScalarField& Yi
 ) const
 {
-    return tmp<fvScalarMatrix>
-    (
-        new fvScalarMatrix(Yi, dimMass/dimTime)
-    );
+    return tmp<fvScalarMatrix>::New(Yi, dimMass/dimTime);
 }
 
 

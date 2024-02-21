@@ -112,25 +112,14 @@ Foam::laminarFlameSpeedModels::GuldersEGR::Su0pTphi
     scalar phi
 ) const
 {
-    tmp<volScalarField> tSu0
+    auto tSu0 = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Su0",
-                p.time().timeName(),
-                p.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            p.mesh(),
-            dimensionedScalar(dimVelocity, Zero)
-        )
+        "Su0",
+        IOobject::NO_REGISTER,
+        p.mesh(),
+        dimensionedScalar(dimVelocity, Zero)
     );
-
-    volScalarField& Su0 = tSu0.ref();
+    auto& Su0 = tSu0.ref();
 
     forAll(Su0, celli)
     {
@@ -167,25 +156,14 @@ Foam::laminarFlameSpeedModels::GuldersEGR::Su0pTphi
     const volScalarField& egr
 ) const
 {
-    tmp<volScalarField> tSu0
+    auto tSu0 = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Su0",
-                p.time().timeName(),
-                p.db(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            p.mesh(),
-            dimensionedScalar(dimVelocity, Zero)
-        )
+        "Su0",
+        IOobject::NO_REGISTER,
+        p.mesh(),
+        dimensionedScalar(dimVelocity, Zero)
     );
-
-    volScalarField& Su0 = tSu0.ref();
+    auto& Su0 = tSu0.ref();
 
     forAll(Su0, celli)
     {

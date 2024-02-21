@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -71,38 +72,31 @@ temperatureDependentContactAngleForce::~temperatureDependentContactAngleForce()
 
 tmp<volScalarField> temperatureDependentContactAngleForce::theta() const
 {
-    tmp<volScalarField> ttheta
+    auto ttheta = volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                typeName + ":theta",
-                filmModel_.time().timeName(),
-                filmModel_.regionMesh()
-            ),
-            filmModel_.regionMesh(),
-            dimensionedScalar(dimless, Zero)
-        )
+        IOobject::scopedName(typeName, "theta"),
+        IOobject::NO_REGISTER,
+        filmModel_.regionMesh(),
+        dimensionedScalar(dimless, Zero)
     );
-
-    volScalarField& theta = ttheta.ref();
+    auto& thetaIf = ttheta.ref().internalFieldRef();
+    auto& thetaBf = ttheta.ref().boundaryFieldRef();
 
     const volScalarField& T = filmModel_.T();
 
-    theta.ref().field() = thetaPtr_->value(T());
+    thetaIf.field() = thetaPtr_->value(T());
 
-    forAll(theta.boundaryField(), patchi)
+    forAll(thetaBf, patchi)
     {
         if (!filmModel_.isCoupledPatch(patchi))
         {
-            theta.boundaryFieldRef()[patchi] =
-                thetaPtr_->value(T.boundaryField()[patchi]);
+            thetaBf[patchi] = thetaPtr_->value(T.boundaryField()[patchi]);
         }
     }
 
     return ttheta;
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
