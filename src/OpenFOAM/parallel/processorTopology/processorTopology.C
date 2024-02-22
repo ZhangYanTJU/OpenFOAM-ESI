@@ -26,13 +26,12 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "processorTopology.H"
-#include "Pstream.H"
+#include "Pstream.H"   // For allGatherList()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::processorTopology::processorTopology()
+Foam::processorTopology::processorTopology() noexcept
 :
-    procPatchMap_(0),
     comm_(UPstream::worldComm)
 {}
 
