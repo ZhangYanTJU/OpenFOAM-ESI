@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,6 +77,14 @@ Foam::faceZoneSet::faceZoneSet
 {
     const faceZoneMesh& faceZones = mesh.faceZones();
     label zoneID = faceZones.findZoneID(name);
+
+    if (IOobjectOption::isReadRequired(rOpt) && zoneID == -1)
+    {
+        FatalErrorInFunction
+            << "Zone named " << name << " not found.  "
+            << "List of available zone names: " << faceZones.names()
+            << exit(FatalError);
+    }
 
     if
     (
@@ -227,8 +235,7 @@ void Foam::faceZoneSet::addSet(const topoSet& set)
 
     forAll(zoneSet.addressing(), i)
     {
-        label facei = zoneSet.addressing()[i];
-
+        const label facei = zoneSet.addressing()[i];
         const auto iter = faceToIndex.cfind(facei);
 
         if (iter.good())
@@ -315,57 +322,42 @@ void Foam::faceZoneSet::subtractSet(const topoSet& set)
 
 void Foam::faceZoneSet::sync(const polyMesh& mesh)
 {
-    // Make sure that the faceZone is consistent with the faceSet
-    {
-        const labelHashSet zoneSet(addressing_);
-
-        // Elements that are in zone but not faceSet, and
-        // elements that are in faceSet but not in zone
-        labelHashSet badSet(*this ^ zoneSet);
-
-        const label nBad = returnReduce(badSet.size(), sumOp<label>());
-
-        if (nBad)
-        {
-            WarningInFunction << "Detected " << nBad
-                << " faces that are in the faceZone but not"
-                << " in the faceSet or vice versa."
-                << " The faceZoneSet should only be manipulated"
-                << " using " << setsToFaceZone::typeName
-                << " or " << setToFaceZone::typeName << endl;
-        }
-    }
+    // This routine serves two purposes
+    // 1. make sure that any previous faceZoneSet manipulation is
+    //    consistent across coupled boundaries
+    // 2. push faceZone contents to faceSet (looses flip bit)
 
 
-    // Make sure that on coupled faces orientation is opposite. Pushes
-    // master orientation to slave in case of conflict.
-
+    // Collect all current zone info
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // 0 : not in faceZone
     // 1 : in faceZone and unflipped
     //-1 : in faceZone and flipped
     const label UNFLIPPED = 1;
     const label FLIPPED = -1;
-    labelList myZoneFace(mesh.nBoundaryFaces(), Zero);
+    labelList myZoneFace(mesh.nFaces(), Zero);
 
     forAll(addressing_, i)
     {
-        const label bFacei = addressing_[i]-mesh.nInternalFaces();
-
-        if (bFacei >= 0)
-        {
-            if (flipMap_[i])
-            {
-                myZoneFace[bFacei] = FLIPPED;
-            }
-            else
-            {
-                myZoneFace[bFacei] = UNFLIPPED;
-            }
-        }
+        const label facei = addressing_[i];
+        myZoneFace[facei] =
+        (
+            flipMap_[i]
+          ? FLIPPED
+          : UNFLIPPED
+        );
     }
 
-    labelList neiZoneFace(myZoneFace);
+    labelList neiZoneFace
+    (
+        SubList<label>
+        (
+            myZoneFace,
+            mesh.nBoundaryFaces(),
+            mesh.nInternalFaces()
+        )
+    );
     syncTools::swapBoundaryFaceList(mesh, neiZoneFace);
 
 
@@ -375,57 +367,66 @@ void Foam::faceZoneSet::sync(const polyMesh& mesh)
     // Rebuild faceZone addressing and flipMap
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    DynamicList<label> newAddressing(addressing_.size());
-    DynamicList<bool> newFlipMap(flipMap_.size());
+    const labelHashSet& set = *this;
 
-    forAll(addressing_, i)
+    DynamicList<label> newAddressing(set.size());
+    DynamicList<bool> newFlipMap(set.size());
+
+    for (const label facei : set)
     {
-        const label facei = addressing_[i];
+        // See if any info from original. If so maintain flipMap.
         if (facei < mesh.nInternalFaces())
         {
             newAddressing.append(facei);
-            newFlipMap.append(flipMap_[i]);
-        }
-    }
-
-    for (label facei = mesh.nInternalFaces(); facei < mesh.nFaces(); facei++)
-    {
-        label myStat = myZoneFace[facei-mesh.nInternalFaces()];
-        label neiStat = neiZoneFace[facei-mesh.nInternalFaces()];
-
-        if (myStat == 0)
-        {
-            if (neiStat == UNFLIPPED)
-            {
-                // Neighbour is unflipped so I am flipped
-                newAddressing.append(facei);
-                newFlipMap.append(true);
-            }
-            else if (neiStat == FLIPPED)
-            {
-                newAddressing.append(facei);
-                newFlipMap.append(false);
-            }
+            newFlipMap.append(myZoneFace[facei] == FLIPPED);
         }
         else
         {
-            if (myStat == neiStat)
+            const label myStat = myZoneFace[facei];
+            const label neiStat = neiZoneFace[facei-mesh.nInternalFaces()];
+
+            if (myStat == 0)
             {
-                // Conflict. masterFace wins
-                newAddressing.append(facei);
-                if (isMasterFace[facei])
+                // My face was not in zone. Check neighbour
+
+                if (neiStat == UNFLIPPED)
                 {
-                    newFlipMap.append(myStat == FLIPPED);
+                    // Neighbour is unflipped so I am flipped
+                    newAddressing.append(facei);
+                    newFlipMap.append(true);
                 }
-                else
+                else if (neiStat == FLIPPED)
                 {
-                    newFlipMap.append(neiStat == UNFLIPPED);
+                    newAddressing.append(facei);
+                    newFlipMap.append(false);
+                }
+                else //if (neiStat == 0)
+                {
+                    // neighbour face not in zone either. Masterface decides.
+                    newAddressing.append(facei);
+                    newFlipMap.append(!isMasterFace[facei]);
                 }
             }
             else
             {
-                newAddressing.append(facei);
-                newFlipMap.append(myStat == FLIPPED);
+                if (myStat == neiStat)
+                {
+                    // Conflict. masterFace wins
+                    newAddressing.append(facei);
+                    if (isMasterFace[facei])
+                    {
+                        newFlipMap.append(myStat == FLIPPED);
+                    }
+                    else
+                    {
+                        newFlipMap.append(neiStat == UNFLIPPED);
+                    }
+                }
+                else
+                {
+                    newAddressing.append(facei);
+                    newFlipMap.append(myStat == FLIPPED);
+                }
             }
         }
     }
