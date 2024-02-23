@@ -29,9 +29,29 @@ Class
 Description
     Thin film model.
 
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    {
+        // Mandatory entries
+        liquidFilmModel         kinematicThinFilm;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                        | Type  | Reqd | Deflt
+      liquidFilmModel  | Type name: kinematicThinFilm | dict  | yes  | -
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link liquidFilmModel.H \endlink
+
 SourceFiles
     kinematicThinFilm.C
-    kinematicThinFilmI.H
 
 \*---------------------------------------------------------------------------*/
 
@@ -40,8 +60,6 @@ SourceFiles
 
 #include "volFieldsFwd.H"
 #include "liquidFilmModel.H"
-#include "faMesh.H"
-#include "filmTurbulenceModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

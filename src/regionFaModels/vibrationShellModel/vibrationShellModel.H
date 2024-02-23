@@ -34,19 +34,16 @@ Usage
     \verbatim
     <patchName>
     {
-        // Mandatory/Optional entries
-        ...
-
         // Mandatory entries
-        vibrationShellModel     <thermalShellModelName>;
-        p                       <pName>;
+        vibrationShellModel     <word>;
+        p                       <word>;
 
         solid
         {
             // subdictionary entries
         }
 
-        // Mandatory/Optional (derived) entries
+        // Inherited entries
         ...
     }
     \endverbatim
@@ -71,8 +68,6 @@ SourceFiles
 #ifndef Foam_regionModels_vibrationShellModel_H
 #define Foam_regionModels_vibrationShellModel_H
 
-#include "runTimeSelectionTables.H"
-#include "autoPtr.H"
 #include "areaFieldsFwd.H"
 #include "volFieldsFwd.H"
 #include "regionFaModel.H"
@@ -98,23 +93,23 @@ protected:
 
     // Protected Data
 
-        //- Name of the coupled field in the primary region
-        word pName_;
-
-        //- Primary region acoustic pressure
-        const volScalarField& pa_;
-
         //- Shell displacement
         areaScalarField w_;
 
         //- Shell acceleration
         areaScalarField a_;
 
-        //- Pointer to faOptions
-        Foam::fa::options& faOptions_;
-
         //- Solid properties
         solidProperties solid_;
+
+        //- Name of the coupled field in the primary region
+        word pName_;
+
+        //- Primary region acoustic pressure
+        const volScalarField& pa_;
+
+        //- Reference to faOptions
+        Foam::fa::options& faOptions_;
 
 
 public:

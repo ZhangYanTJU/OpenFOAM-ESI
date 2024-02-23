@@ -27,12 +27,39 @@ Class
     Foam::regionFaModels::liquidFilmModel
 
 Description
-    Thin Model Film model.
+    Thin film model.
 
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        // Mandatory entries
+        thermo                  <dict>;
+
+        // Optional entries
+        T0                      <scalar>;
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                      | Type  | Reqd   | Deflt
+      thermo     | Liquid thermodynamics properties | dict  | yes    | -
+      T0         | Reference temperature [K]       | scalar | choice | -
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link liquidFilmBase.H \endlink
+      - \link filmTurbulenceModel.H \endlink
+      - \link injectionModelList.H \endlink
+      - \link forceList.H \endlink
 
 SourceFiles
     liquidFilmModel.C
-    kinematicThinFilmI.H
 
 \*---------------------------------------------------------------------------*/
 
@@ -41,7 +68,6 @@ SourceFiles
 
 #include "volFieldsFwd.H"
 #include "liquidFilmBase.H"
-#include "faMesh.H"
 #include "filmTurbulenceModel.H"
 #include "liquidMixtureProperties.H"
 #include "injectionModelList.H"
@@ -72,7 +98,7 @@ protected:
         //- Liquid thermo
         liquidMixtureProperties thermo_;
 
-        //- Reference tempararure
+        //- Reference temperature
         scalar Tref_;
 
 
@@ -84,16 +110,16 @@ protected:
         //- Dynamic viscosity [Pa.s]
         areaScalarField mu_;
 
-        //- Film temperature
+        //- Film temperature [K]
         areaScalarField Tf_;
 
-        //- Film Heat capacity
+        //- Film heat capacity [J/K]
         areaScalarField Cp_;
 
-        //- Surface tension [m/s2]
+        //- Surface tension [m/s^2]
         areaScalarField sigma_;
 
-        //- Film rho*height
+        //- Film rho*height [m.kg/m^3]
         areaScalarField hRho_;
 
 
@@ -111,7 +137,7 @@ protected:
 
     // Transfer fields
 
-        //- Film mass  for transfer to cloud
+        //- Film mass for transfer to cloud
         volScalarField cloudMassTrans_;
 
         //- Parcel diameters originating from film to cloud
@@ -131,9 +157,6 @@ protected:
 
             //- Cloud injection
             injectionModelList injection_;
-
-            //- Transfer with the continuous phase
-            //transferModelList transfer_;
 
             //- List of film forces
             forceList forces_;
@@ -177,25 +200,28 @@ public:
         // Access
 
             //- Access const reference mu
-            const areaScalarField& mu() const;
+            const areaScalarField& mu() const noexcept { return mu_; }
 
             //- Access const reference rho
-            const areaScalarField& rho() const;
+            const areaScalarField& rho() const noexcept { return rho_; }
 
             //- Access const reference sigma
-            const areaScalarField& sigma() const;
+            const areaScalarField& sigma() const noexcept { return sigma_; }
 
             //- Access const reference Tf
-            const areaScalarField& Tf() const;
+            const areaScalarField& Tf() const noexcept { return Tf_; }
 
             //- Access const reference Cp
-            const areaScalarField& Cp() const;
+            const areaScalarField& Cp() const noexcept { return Cp_; }
 
             //- Access to thermo
-            const liquidMixtureProperties& thermo() const;
+            const liquidMixtureProperties& thermo() const noexcept
+            {
+                return thermo_;
+            }
 
             //- Access to reference temperature
-            scalar Tref() const;
+            scalar Tref() const noexcept { return Tref_; }
 
 
         // Transfer fields - to the primary region (lagragian injection)

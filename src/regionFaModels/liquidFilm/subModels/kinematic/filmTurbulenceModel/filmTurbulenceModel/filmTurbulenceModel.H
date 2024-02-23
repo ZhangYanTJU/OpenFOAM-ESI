@@ -29,6 +29,69 @@ Class
 Description
     Base class for film turbulence models
 
+Usage
+    Example of the model specification:
+    \verbatim
+    {
+        // Mandatory entries
+        turbulence          <model>;
+
+        <model>Coeffs
+        {
+            // Mandatory entries
+            friction        <word>;
+            shearStress     <word>;
+
+            // Optional entries
+            rho             <word>;
+
+            // Conditional entries
+
+                // if rho=rhoInf
+                rhoInf          <scalar>;
+
+                // if friction=DarcyWeisbach
+                DarcyWeisbach   <scalar>;
+
+                // if friction=ManningStrickler
+                n               <scalar>;
+
+                // if shearStress=simple
+                Cf              <scalar>;
+        }
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property     | Description                   | Type  | Reqd | Deflt
+      turbulence   | Model name                    | word  | yes  | -
+      friction     | Friction model                | word  | yes  | -
+      shearStress  | Shear-stress model            | word  | yes  | -
+      rho          | Name of density field         | word  | no   | rho
+      rhoInf       | Reference density          | scalar | choice | -
+      DarcyWeisbach | Friction-model constant   | scalar | choice | -
+      n             | Friction-model constant   | scalar | choice | -
+      Cf          | Skin-friction coefficient   | scalar | choice | -
+    \endtable
+
+    Options for the \c friction entry:
+    \verbatim
+      quadraticProfile    | Quadratic-profile model
+      linearProfile       | Linear-profile model
+      DarcyWeisbach       | Darcy-Weisbach model
+      ManningStrickler    | Manning-Strickler model
+    \endverbatim
+
+    Options for the \c shearStress entry:
+    \verbatim
+      simple              | Skin-friction coefficient model
+      wallFunction        | Wall-function model
+    \endverbatim
+
 SourceFiles
     filmTurbulenceModel.C
     filmTurbulenceModelNew.C
@@ -39,11 +102,7 @@ SourceFiles
 #define regionFaModels_filmTurbulenceModel_H
 
 #include "areaFieldsFwd.H"
-#include "runTimeSelectionTables.H"
-#include "faMatrices.H"
 #include "liquidFilmBase.H"
-#include "fvMesh.H"
-#include "Enum.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -106,13 +165,13 @@ protected:
         //- Model dictionary
         const dictionary dict_;
 
-        //- Method used
+        //- Friction model
         const frictionMethodType method_;
 
-        //- Shear method used
+        //- Shear-stress model
         const shearMethodType shearMethod_;
 
-        //- Name of density field (optional)
+        //- Name of density field
         word rhoName_;
 
         //- Reference density needed for incompressible calculations

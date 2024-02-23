@@ -29,7 +29,6 @@ License
 #include "gravityMeshObject.H"
 #include "turbulentTransportModel.H"
 #include "turbulentFluidThermoModel.H"
-#include "PtrMap.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

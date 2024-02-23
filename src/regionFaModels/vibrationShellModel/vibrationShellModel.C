@@ -26,9 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "vibrationShellModel.H"
-#include "faMesh.H"
-#include "fvMesh.H"
-#include "fvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -40,7 +37,6 @@ namespace regionModels
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 defineTypeNameAndDebug(vibrationShellModel, 0);
-
 defineRunTimeSelectionTable(vibrationShellModel, dictionary);
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -53,8 +49,6 @@ vibrationShellModel::vibrationShellModel
 )
 :
     regionFaModel(mesh, "vibratingShell", modelType, dict, true),
-    pName_(dict.get<word>("p")),
-    pa_(mesh.lookupObject<volScalarField>(pName_)),
     w_
     (
         IOobject
@@ -80,8 +74,10 @@ vibrationShellModel::vibrationShellModel
         regionMesh(),
         dimensionedScalar(dimAcceleration, Zero)
     ),
-    faOptions_(Foam::fa::options::New(mesh)),
-    solid_(dict.subDict("solid"))
+    solid_(dict.subDict("solid")),
+    pName_(dict.get<word>("p")),
+    pa_(mesh.lookupObject<volScalarField>(pName_)),
+    faOptions_(Foam::fa::options::New(mesh))
 {
     if (faOptions_.optionList::empty())
     {

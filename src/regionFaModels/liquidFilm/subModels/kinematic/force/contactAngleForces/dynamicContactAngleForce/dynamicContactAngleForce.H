@@ -86,14 +86,17 @@ SourceFiles
 #define areaSurfaceFilmModels_dynamicContactAngleForce_H
 
 #include "contactAngleForce.H"
-#include "Function1.H"
-#include "distributionModel.H"
 #include "Random.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+// Forward Declarations
+template<class Type> class Function1;
+class distributionModel;
+
 namespace regionModels
 {
 namespace areaSurfaceFilmModels

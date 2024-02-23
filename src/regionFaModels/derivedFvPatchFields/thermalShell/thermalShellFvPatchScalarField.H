@@ -41,17 +41,17 @@ Usage
     \verbatim
     <masterPatchName>
     {
-        // Mandatory entries (unmodifiable)
+        // Mandatory entries
         type                compressible::thermalShell;
 
-        // Mandatory/Optional (inherited) entries
+        // Inherited entries
         ...
     }
     \endverbatim
 
     where the entries mean:
     \table
-      Property | Description                           | Type  | Reqd | Dflt
+      Property | Description                           | Type  | Reqd | Deflt
       type     | Type name: compressible::thermalShell | word  | yes  | -
     \endtable
 
@@ -71,7 +71,6 @@ SourceFiles
 #ifndef Foam_thermalShellFvPatchScalarField_H
 #define Foam_thermalShellFvPatchScalarField_H
 
-#include "autoPtr.H"
 #include "thermalShellModel.H"
 #include "fixedValueFvPatchFields.H"
 

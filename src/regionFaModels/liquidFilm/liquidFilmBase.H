@@ -27,7 +27,44 @@ Class
     Foam::regionModels::liquidFilmBase
 
 Description
-    Base class for thermal 2D shells
+    Base class for liquid-film models.
+
+Usage
+    Example of the boundary condition specification:
+    \verbatim
+    <patchName>
+    {
+        // Mandatory entries
+        U                       <word>;
+        pRef                    <scalar>;
+
+        // Optional entries
+        h0                      <scalar>;
+        deltaWet                <scalar>;
+        p                       <word>;
+
+        // Inherited entries
+        ...
+        momentumPredictor       <int>;
+        nOuterCorr              <label>;
+        nCorr                   <label>;
+        nFilmCorr               <label>;
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property   | Description                      | Type  | Reqd | Deflt
+      U          | Name of velocity field           | word  | yes  | -
+      pRef       | Reference absolute pressure     | scalar | yes  | -
+      h0         | Smallest film thickness         | scalar | no   | 1e-7
+      deltaWet   | Film thickness beyond which face is assumed to be wet <!--
+                 -->                               | scalar | no   | 1e-4
+      p          | Name of pressure field           | word  | no   | null
+    \endtable
+
+    The inherited entries are elaborated in:
+      - \link regionFaModel.H \endlink
 
 SourceFiles
     liquidFilmBase.C
@@ -37,8 +74,6 @@ SourceFiles
 #ifndef Foam_liquidFilmBase_H
 #define Foam_liquidFilmBase_H
 
-#include "runTimeSelectionTables.H"
-#include "autoPtr.H"
 #include "faCFD.H"
 #include "volFieldsFwd.H"
 #include "uniformDimensionedFields.H"
@@ -68,13 +103,13 @@ protected:
 
         // Solution parameters
 
-            //- Momentum predictor
+            //- Flag to enable momentum predictor
             Switch momentumPredictor_;
 
             //- Number of outer correctors
             label nOuterCorr_;
 
-            //- Number of PISO-like correctors
+            //- Number of PISO-like inner correctors
             label nCorr_;
 
             //- Number of film thickness correctors
@@ -83,10 +118,10 @@ protected:
             //- Cumulative continuity error
             scalar cumulativeContErr_;
 
-            //- Smallest numerical thickness
+            //- Smallest film thickness
             dimensionedScalar h0_;
 
-            //- Delta wet for sub-models
+            //- Film thickness beyond which face is assumed to be wet
             dimensionedScalar deltaWet_;
 
 
@@ -102,7 +137,7 @@ protected:
 
         // Fields
 
-            //- Film hight
+            //- Film height
             areaScalarField h_;
 
             //- Film velocity
@@ -138,9 +173,6 @@ protected:
             //- Normal pressure by particles
             volScalarField pnSource_;
 
-            //- Energy
-            volScalarField energySource_;
-
             //- Total mass added
             scalar addedMassTotal_;
 
@@ -172,7 +204,6 @@ public:
 
 
     // Constructors
-
 
         //- Construct from type name and mesh and dict
         liquidFilmBase
@@ -228,41 +259,40 @@ public:
             tmp<areaScalarField> alpha() const;
 
 
-        // Access functions
+        // Access
 
             //- Return faOptions
-            Foam::fa::options& faOptions();
+            Foam::fa::options& faOptions() noexcept { return faOptions_; }
 
             //- Access const reference Uf
-            const areaVectorField& Uf() const;
+            const areaVectorField& Uf() const noexcept { return Uf_; }
 
             //- Access const reference gn
-            const areaScalarField& gn() const;
+            const areaScalarField& gn() const noexcept { return gn_; }
 
             //- Gravity
-            const uniformDimensionedVectorField& g() const;
+            const uniformDimensionedVectorField& g() const noexcept { return g_; }
 
             //- Access const reference h
-            const areaScalarField& h() const;
+            const areaScalarField& h() const noexcept { return h_; }
 
             //- Access to momentum flux
-            const edgeScalarField& phif() const;
+            const edgeScalarField& phif() const noexcept { return phif_; }
 
             //- Access continuity flux
-            const edgeScalarField& phi2s() const;
-
+            const edgeScalarField& phi2s() const noexcept { return phi2s_; }
 
             //- Return h0
-            const dimensionedScalar& h0() const;
+            const dimensionedScalar& h0() const noexcept { return h0_; }
 
             //- Access to this region
-            const regionFaModel& region() const;
+            const regionFaModel& region() const noexcept { return *this; }
 
             //- Access to pRef
-            scalar pRef();
+            scalar pRef() const { return pRef_; }
 
             //- Name of the U field
-            word UName() const;
+            word UName() const { return UName_; }
 
 
             // Transfer fields - to the primary region (lagragian injection)

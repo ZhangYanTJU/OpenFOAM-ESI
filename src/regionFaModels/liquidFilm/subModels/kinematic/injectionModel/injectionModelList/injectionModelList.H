@@ -29,6 +29,34 @@ Class
 Description
     List container for film injection models
 
+Usage
+    Example of the model specification:
+    \verbatim
+    {
+        // Mandatory entries
+        injectionModels
+        (
+            <injectionModel1>
+            <injectionModel2>
+            ...
+        );
+
+        <injectionModel1>Coeffs
+        {
+            ...
+        }
+
+        // Inherited entries
+        ...
+    }
+    \endverbatim
+
+    where the entries mean:
+    \table
+      Property        | Description                   | Type  | Reqd | Deflt
+      injectionModels | List of injection models      | list  | yes  | -
+    \endtable
+
 SourceFiles
     injectionModelList.C
 
@@ -37,10 +65,8 @@ SourceFiles
 #ifndef injectionModelList_H
 #define injectionModelList_H
 
-#include "PtrList.H"
 #include "injectionModel.H"
 #include "filmSubModelBase.H"
-#include "scalarField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
