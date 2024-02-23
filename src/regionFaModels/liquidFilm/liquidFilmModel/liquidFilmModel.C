@@ -239,6 +239,8 @@ liquidFilmModel::liquidFilmModel
 {
     if (dict.readIfPresent("T0", Tref_))
     {
+        Info<< "Initialised film temperature to T0" << endl;
+
         Tf_ = dimensionedScalar("T0", dimTemperature, dict);
     }
     correctThermoFields();
