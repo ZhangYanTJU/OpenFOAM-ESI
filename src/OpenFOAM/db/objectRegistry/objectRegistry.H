@@ -241,6 +241,14 @@ public:
 
     // Helper Functions
 
+        //- Create an IOobject at the current time instance (timeName)
+        //- with the specified options
+        IOobject newIOobject
+        (
+            const word& name,       //!< The object name
+            IOobjectOption ioOpt    //!< The IOobject options
+        ) const;
+
         //- Create an IOobject at the current time instance (timeName).
         //  By default the object is NO_READ/NO_WRITE/NO_REGISTER
         IOobject newIOobject

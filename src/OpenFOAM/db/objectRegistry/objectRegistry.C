@@ -154,6 +154,22 @@ Foam::HashTable<Foam::wordHashSet> Foam::objectRegistry::classes() const
 Foam::IOobject Foam::objectRegistry::newIOobject
 (
     const word& name,
+    IOobjectOption ioOpt
+) const
+{
+    return IOobject
+    (
+        name,
+        time().timeName(),  // instance
+        *this,
+        ioOpt
+    );
+}
+
+
+Foam::IOobject Foam::objectRegistry::newIOobject
+(
+    const word& name,
     IOobjectOption::readOption rOpt,
     IOobjectOption::writeOption wOpt,
     IOobjectOption::registerOption regOpt
