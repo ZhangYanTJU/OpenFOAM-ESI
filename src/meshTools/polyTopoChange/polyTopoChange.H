@@ -225,13 +225,6 @@ class polyTopoChange
         );
 
         template<class Type>
-        static void reorder
-        (
-            const labelUList& oldToNew,
-            List<DynamicList<Type>>& lst
-        );
-
-        template<class Type>
         static void renumberKey
         (
             const labelUList& oldToNew,
