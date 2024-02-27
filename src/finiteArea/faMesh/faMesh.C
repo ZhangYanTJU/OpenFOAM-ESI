@@ -169,14 +169,12 @@ void Foam::faMesh::checkBoundaryEdgeLabelRange
 
 void Foam::faMesh::initPatch() const
 {
-    patchPtr_.reset
+    patchPtr_ = std::make_unique<uindirectPrimitivePatch>
     (
-        new uindirectPrimitivePatch
-        (
-            UIndirectList<face>(mesh().faces(), faceLabels_),
-            mesh().points()
-        )
+        UIndirectList<face>(mesh().faces(), faceLabels_),
+        mesh().points()
     );
+
     // Could set some basic primitive data here...
     // nEdges_ = patchPtr_->nEdges();
     // nInternalEdges_ = patchPtr_->nInternalEdges();
@@ -253,17 +251,17 @@ void Foam::faMesh::clearGeomNotAreas() const
     polyPatchFacesPtr_.reset(nullptr);
     polyPatchIdsPtr_.reset(nullptr);
     bndConnectPtr_.reset(nullptr);
-    deleteDemandDrivenData(SPtr_);
-    deleteDemandDrivenData(patchStartsPtr_);
-    deleteDemandDrivenData(LePtr_);
-    deleteDemandDrivenData(magLePtr_);
-    deleteDemandDrivenData(faceCentresPtr_);
-    deleteDemandDrivenData(edgeCentresPtr_);
-    deleteDemandDrivenData(faceAreaNormalsPtr_);
-    deleteDemandDrivenData(edgeAreaNormalsPtr_);
+    SPtr_.reset(nullptr);
+    patchStartsPtr_.reset(nullptr);
+    LePtr_.reset(nullptr);
+    magLePtr_.reset(nullptr);
+    faceCentresPtr_.reset(nullptr);
+    edgeCentresPtr_.reset(nullptr);
+    faceAreaNormalsPtr_.reset(nullptr);
+    edgeAreaNormalsPtr_.reset(nullptr);
     pointAreaNormalsPtr_.reset(nullptr);
-    deleteDemandDrivenData(faceCurvaturesPtr_);
-    deleteDemandDrivenData(edgeTransformTensorsPtr_);
+    faceCurvaturesPtr_.reset(nullptr);
+    edgeTransformTensorsPtr_.reset(nullptr);
 }
 
 
@@ -272,9 +270,9 @@ void Foam::faMesh::clearGeom() const
     DebugInFunction << "Clearing geometry" << endl;
 
     clearGeomNotAreas();
-    deleteDemandDrivenData(S0Ptr_);
-    deleteDemandDrivenData(S00Ptr_);
-    deleteDemandDrivenData(correctPatchPointNormalsPtr_);
+    S0Ptr_.reset(nullptr);
+    S00Ptr_.reset(nullptr);
+    correctPatchPointNormalsPtr_.reset(nullptr);
 }
 
 
@@ -282,7 +280,7 @@ void Foam::faMesh::clearAddressing() const
 {
     DebugInFunction << "Clearing addressing" << endl;
 
-    deleteDemandDrivenData(lduPtr_);
+    lduPtr_.reset(nullptr);
 }
 
 
@@ -402,33 +400,7 @@ Foam::faMesh::faMesh
         *this
     ),
     comm_(UPstream::worldComm),
-    curTimeIndex_(time().timeIndex()),
-
-    patchPtr_(nullptr),
-    polyPatchFacesPtr_(nullptr),
-    polyPatchIdsPtr_(nullptr),
-    bndConnectPtr_(nullptr),
-    lduPtr_(nullptr),
-
-    SPtr_(nullptr),
-    S0Ptr_(nullptr),
-    S00Ptr_(nullptr),
-    patchStartsPtr_(nullptr),
-    LePtr_(nullptr),
-    magLePtr_(nullptr),
-    faceCentresPtr_(nullptr),
-    edgeCentresPtr_(nullptr),
-    faceAreaNormalsPtr_(nullptr),
-    edgeAreaNormalsPtr_(nullptr),
-    pointAreaNormalsPtr_(nullptr),
-    faceCurvaturesPtr_(nullptr),
-    edgeTransformTensorsPtr_(nullptr),
-    correctPatchPointNormalsPtr_(nullptr),
-    globalMeshDataPtr_(nullptr),
-
-    haloMapPtr_(nullptr),
-    haloFaceCentresPtr_(nullptr),
-    haloFaceNormalsPtr_(nullptr)
+    curTimeIndex_(time().timeIndex())
 {
     DebugInFunction << "Creating from IOobject" << endl;
 
@@ -459,7 +431,7 @@ Foam::faMesh::faMesh
         rio.resetHeader("S0");
         if (returnReduceOr(rio.typeHeaderOk<regIOobject>(false)))
         {
-            S0Ptr_ = new DimensionedField<scalar, areaMesh>
+            S0Ptr_ = std::make_unique<DimensionedField<scalar, areaMesh>>
             (
                 rio,
                 *this,
@@ -524,33 +496,7 @@ Foam::faMesh::faMesh
         label(0)
     ),
     comm_(UPstream::worldComm),
-    curTimeIndex_(time().timeIndex()),
-
-    patchPtr_(nullptr),
-    polyPatchFacesPtr_(nullptr),
-    polyPatchIdsPtr_(nullptr),
-    bndConnectPtr_(nullptr),
-    lduPtr_(nullptr),
-
-    SPtr_(nullptr),
-    S0Ptr_(nullptr),
-    S00Ptr_(nullptr),
-    patchStartsPtr_(nullptr),
-    LePtr_(nullptr),
-    magLePtr_(nullptr),
-    faceCentresPtr_(nullptr),
-    edgeCentresPtr_(nullptr),
-    faceAreaNormalsPtr_(nullptr),
-    edgeAreaNormalsPtr_(nullptr),
-    pointAreaNormalsPtr_(nullptr),
-    faceCurvaturesPtr_(nullptr),
-    edgeTransformTensorsPtr_(nullptr),
-    correctPatchPointNormalsPtr_(nullptr),
-    globalMeshDataPtr_(nullptr),
-
-    haloMapPtr_(nullptr),
-    haloFaceCentresPtr_(nullptr),
-    haloFaceNormalsPtr_(nullptr)
+    curTimeIndex_(time().timeIndex())
 {
     // Not yet much for primitive mesh data possible...
     nPoints_ = 0;
@@ -609,33 +555,7 @@ Foam::faMesh::faMesh
         label(0)
     ),
     comm_(UPstream::worldComm),
-    curTimeIndex_(time().timeIndex()),
-
-    patchPtr_(nullptr),
-    polyPatchFacesPtr_(nullptr),
-    polyPatchIdsPtr_(nullptr),
-    bndConnectPtr_(nullptr),
-    lduPtr_(nullptr),
-
-    SPtr_(nullptr),
-    S0Ptr_(nullptr),
-    S00Ptr_(nullptr),
-    patchStartsPtr_(nullptr),
-    LePtr_(nullptr),
-    magLePtr_(nullptr),
-    faceCentresPtr_(nullptr),
-    edgeCentresPtr_(nullptr),
-    faceAreaNormalsPtr_(nullptr),
-    edgeAreaNormalsPtr_(nullptr),
-    pointAreaNormalsPtr_(nullptr),
-    faceCurvaturesPtr_(nullptr),
-    edgeTransformTensorsPtr_(nullptr),
-    correctPatchPointNormalsPtr_(nullptr),
-    globalMeshDataPtr_(nullptr),
-
-    haloMapPtr_(nullptr),
-    haloFaceCentresPtr_(nullptr),
-    haloFaceNormalsPtr_(nullptr)
+    curTimeIndex_(time().timeIndex())
 {
     // Not yet much for primitive mesh data possible...
     nPoints_ = 0;
@@ -732,7 +652,7 @@ Foam::faMesh::faMesh
         rio.resetHeader("S0");
         if (returnReduceOr(rio.typeHeaderOk<regIOobject>(false)))
         {
-            S0Ptr_ = new DimensionedField<scalar, areaMesh>
+            S0Ptr_ = std::make_unique<DimensionedField<scalar, areaMesh>>
             (
                 rio,
                 *this,
@@ -948,7 +868,7 @@ Foam::faMesh::S00() const
 {
     if (!S00Ptr_)
     {
-        S00Ptr_ = new DimensionedField<scalar, areaMesh>
+        S00Ptr_ = std::make_unique<DimensionedField<scalar, areaMesh>>
         (
             IOobject
             (
@@ -994,7 +914,7 @@ const Foam::vectorField& Foam::faMesh::pointAreaNormals() const
 {
     if (!pointAreaNormalsPtr_)
     {
-        pointAreaNormalsPtr_.reset(new vectorField(nPoints()));
+        pointAreaNormalsPtr_ = std::make_unique<vectorField>(nPoints());
 
         calcPointAreaNormals(*pointAreaNormalsPtr_);
 
@@ -1082,7 +1002,7 @@ bool Foam::faMesh::movePoints()
         {
             DebugInfo<< "Creating old cell volumes." << endl;
 
-            S0Ptr_ = new DimensionedField<scalar, areaMesh>
+            S0Ptr_ = std::make_unique<DimensionedField<scalar, areaMesh>>
             (
                 IOobject
                 (
@@ -1140,7 +1060,8 @@ Foam::boolList& Foam::faMesh::correctPatchPointNormals() const
 {
     if (!correctPatchPointNormalsPtr_)
     {
-        correctPatchPointNormalsPtr_ = new boolList(boundary().size(), false);
+        correctPatchPointNormalsPtr_ =
+            std::make_unique<boolList>(boundary().size(), false);
     }
 
     return *correctPatchPointNormalsPtr_;

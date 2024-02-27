@@ -84,10 +84,10 @@ void Foam::faMeshDistributor::createInternalEdgeMap() const
     const auto& faEdgeMap = distMap_.faceMap();
 
     // Copy full map
-    internalEdgeMap_.reset(new mapDistributeBase(faEdgeMap));
+    internalEdgeMapPtr_ = std::make_unique<mapDistributeBase>(faEdgeMap);
 
     // Retain internal edges
-    internalEdgeMap_->compactRemoteData
+    internalEdgeMapPtr_->compactRemoteData
     (
         bitSet(tgtMesh_.nInternalEdges(), true),
         UPstream::msgType(),
@@ -200,8 +200,6 @@ Foam::faMeshDistributor::faMeshDistributor
     srcMesh_(srcMesh),
     tgtMesh_(tgtMesh),
     distMap_(distMap),
-    internalEdgeMap_(),
-    patchEdgeMaps_(),
     dummyHandler_(fileOperation::null()),
     writeHandler_(dummyHandler_),
     isWriteProc_(isWriteProc)
@@ -221,8 +219,6 @@ Foam::faMeshDistributor::faMeshDistributor
     srcMesh_(srcMesh),
     tgtMesh_(tgtMesh),
     distMap_(distMap),
-    internalEdgeMap_(),
-    patchEdgeMaps_(),
     dummyHandler_(nullptr),
     writeHandler_(writeHandler),
     isWriteProc_(Switch::INVALID)

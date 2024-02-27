@@ -105,10 +105,7 @@ Foam::faPatch::faPatch
     patchIdentifier(name, index),
     labelList(edgeLabels),
     nbrPolyPatchId_(nbrPolyPatchi),
-    boundaryMesh_(bm),
-    edgeFacesPtr_(nullptr),
-    pointLabelsPtr_(nullptr),
-    pointEdgesPtr_(nullptr)
+    boundaryMesh_(bm)
 {
     if (constraintType(patchType))
     {
@@ -129,10 +126,7 @@ Foam::faPatch::faPatch
     patchIdentifier(name, dict, index),
     labelList(dict.get<labelList>("edgeLabels")),
     nbrPolyPatchId_(dict.get<label>("ngbPolyPatchIndex")),
-    boundaryMesh_(bm),
-    edgeFacesPtr_(nullptr),
-    pointLabelsPtr_(nullptr),
-    pointEdgesPtr_(nullptr)
+    boundaryMesh_(bm)
 {
     if (constraintType(patchType))
     {
@@ -153,10 +147,7 @@ Foam::faPatch::faPatch
     patchIdentifier(p, index),
     labelList(edgeLabels),
     nbrPolyPatchId_(p.nbrPolyPatchId_),
-    boundaryMesh_(bm),
-    edgeFacesPtr_(nullptr),
-    pointLabelsPtr_(nullptr),
-    pointEdgesPtr_(nullptr)
+    boundaryMesh_(bm)
 {}
 
 
@@ -331,7 +322,7 @@ void Foam::faPatch::calcPointLabels() const
     }
 
     // Transfer to plain list (reuse storage)
-    pointLabelsPtr_.reset(new labelList(std::move(dynEdgePoints)));
+    pointLabelsPtr_ = std::make_unique<labelList>(std::move(dynEdgePoints));
 
     /// const auto& edgePoints = *pointLabelsPtr_;
     ///
@@ -381,7 +372,7 @@ void Foam::faPatch::calcPointEdges() const
     }
 
     // Flatten to regular list
-    pointEdgesPtr_.reset(new labelListList(edgePoints.size()));
+    pointEdgesPtr_ = std::make_unique<labelListList>(edgePoints.size());
     auto& pEdges = *pointEdgesPtr_;
 
     forAll(pEdges, pointi)
@@ -441,12 +432,9 @@ const Foam::labelUList& Foam::faPatch::edgeFaces() const
 {
     if (!edgeFacesPtr_)
     {
-        edgeFacesPtr_.reset
+        edgeFacesPtr_ = std::make_unique<labelList::subList>
         (
-            new labelList::subList
-            (
-                patchSlice(boundaryMesh().mesh().edgeOwner())
-            )
+            patchSlice(boundaryMesh().mesh().edgeOwner())
         );
     }
 

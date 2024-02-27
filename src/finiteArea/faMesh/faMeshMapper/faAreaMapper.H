@@ -77,23 +77,23 @@ class faAreaMapper
         label sizeBeforeMapping_;
 
         //- New face labels after mapping
-        mutable labelList* newFaceLabelsPtr_;
+        mutable std::unique_ptr<labelList> newFaceLabelsPtr_;
 
         //- New face labels after mapping
-        mutable labelList* newFaceLabelsMapPtr_;
+        mutable std::unique_ptr<labelList> newFaceLabelsMapPtr_;
 
 
         //- Direct addressing (only one form of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one form of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpolationAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted faces
-        mutable labelList* insertedObjectLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectLabelsPtr_;
 
 
     // Private Member Functions
@@ -126,7 +126,6 @@ public:
 
     //- Destructor
     virtual ~faAreaMapper();
-
 
     // Member Functions
 

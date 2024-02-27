@@ -43,7 +43,7 @@ void Foam::faPatchMapper::calcAddressing() const
     // Compatibility change  HJ, 12/Aug/2017
     hasUnmapped_ = false;
 
-    directAddrPtr_ = new labelList(patch_.size(), Zero);
+    directAddrPtr_ = std::make_unique<labelList>(patch_.size(), Foam::zero{});
     labelList& addr = *directAddrPtr_;
 
     // Make a map of old edgeFaces, giving edge index in patch given the new
@@ -86,7 +86,7 @@ void Foam::faPatchMapper::calcAddressing() const
 
 void Foam::faPatchMapper::clearOut()
 {
-    deleteDemandDrivenData(directAddrPtr_);
+    directAddrPtr_.reset(nullptr);
     hasUnmapped_ = false;
 }
 
@@ -103,8 +103,7 @@ Foam::faPatchMapper::faPatchMapper
     mpm_(mpm),
     sizeBeforeMapping_(patch.size()),
     oldEdgeFaces_(patch.edgeFaces()),
-    hasUnmapped_(false),
-    directAddrPtr_(nullptr)
+    hasUnmapped_(false)
 {}
 
 

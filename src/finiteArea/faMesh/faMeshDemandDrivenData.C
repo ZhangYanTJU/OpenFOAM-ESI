@@ -222,7 +222,7 @@ void Foam::faMesh::calcLduAddressing() const
             << abort(FatalError);
     }
 
-    lduPtr_ = new faMeshLduAddressing(*this);
+    lduPtr_ = std::make_unique<faMeshLduAddressing>(*this);
 }
 
 
@@ -238,7 +238,7 @@ void Foam::faMesh::calcPatchStarts() const
             << abort(FatalError);
     }
 
-    patchStartsPtr_ = new labelList(boundary().patchStarts());
+    patchStartsPtr_ = std::make_unique<labelList>(boundary().patchStarts());
 }
 
 
@@ -254,9 +254,9 @@ void Foam::faMesh::calcWhichPatchFaces() const
 
     const polyBoundaryMesh& pbm = mesh().boundaryMesh();
 
-    polyPatchFacesPtr_.reset
+    polyPatchFacesPtr_ = std::make_unique<List<labelPair>>
     (
-        new List<labelPair>(pbm.whichPatchFace(faceLabels_))
+        pbm.whichPatchFace(faceLabels_)
     );
 
     labelHashSet ids;
@@ -278,7 +278,7 @@ void Foam::faMesh::calcWhichPatchFaces() const
         this->comm()
     );
 
-    polyPatchIdsPtr_.reset(new labelList(ids.sortedToc()));
+    polyPatchIdsPtr_ = std::make_unique<labelList>(ids.sortedToc());
 }
 
 
@@ -675,23 +675,22 @@ void Foam::faMesh::calcLe() const
             << abort(FatalError);
     }
 
-    LePtr_ =
-        new edgeVectorField
+    LePtr_ = std::make_unique<edgeVectorField>
+    (
+        IOobject
         (
-            IOobject
-            (
-                "Le",
-                mesh().pointsInstance(),
-                faMesh::meshSubDir,
-                faMesh::thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this,
-            dimLength
-            // -> calculatedType()
-        );
+            "Le",
+            mesh().pointsInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimLength
+        // -> calculatedType()
+    );
     edgeVectorField& Le = *LePtr_;
 
     // Need face centres
@@ -773,23 +772,21 @@ void Foam::faMesh::calcMagLe() const
             << abort(FatalError);
     }
 
-    magLePtr_ =
-        new edgeScalarField
+    magLePtr_ = std::make_unique<edgeScalarField>
+    (
+        IOobject
         (
-            IOobject
-            (
-                "magLe",
-                mesh().pointsInstance(),
-                faMesh::meshSubDir,
-                faMesh::thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this,
-            dimLength
-        );
-
+            "magLe",
+            mesh().pointsInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimLength
+    );
     edgeScalarField& magLe = *magLePtr_;
 
     const pointField& localPoints = points();
@@ -849,24 +846,22 @@ void Foam::faMesh::calcFaceCentres() const
             << abort(FatalError);
     }
 
-    faceCentresPtr_ =
-        new areaVectorField
+    faceCentresPtr_ = std::make_unique<areaVectorField>
+    (
+        IOobject
         (
-            IOobject
-            (
-                "centres",
-                mesh().pointsInstance(),
-                faMesh::meshSubDir,
-                faMesh::thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this,
-            dimLength
-            // -> calculatedType()
-        );
-
+            "centres",
+            mesh().pointsInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimLength
+        // -> calculatedType()
+    );
     areaVectorField& centres = *faceCentresPtr_;
 
     // Need local points
@@ -931,24 +926,22 @@ void Foam::faMesh::calcEdgeCentres() const
             << abort(FatalError);
     }
 
-    edgeCentresPtr_ =
-        new edgeVectorField
+    edgeCentresPtr_ = std::make_unique<edgeVectorField>
+    (
+        IOobject
         (
-            IOobject
-            (
-                "edgeCentres",
-                mesh().pointsInstance(),
-                faMesh::meshSubDir,
-                faMesh::thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this,
-            dimLength
-            // -> calculatedType()
-        );
-
+            "edgeCentres",
+            mesh().pointsInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimLength
+        // -> calculatedType()
+    );
     edgeVectorField& centres = *edgeCentresPtr_;
 
     // Need local points
@@ -996,7 +989,7 @@ void Foam::faMesh::calcS() const
             << abort(FatalError);
     }
 
-    SPtr_ = new DimensionedField<scalar, areaMesh>
+    SPtr_ = std::make_unique<DimensionedField<scalar, areaMesh>>
     (
         IOobject
         (
@@ -1068,23 +1061,21 @@ void Foam::faMesh::calcFaceAreaNormals() const
             << abort(FatalError);
     }
 
-    faceAreaNormalsPtr_ =
-        new areaVectorField
+    faceAreaNormalsPtr_ = std::make_unique<areaVectorField>
+    (
+        IOobject
         (
-            IOobject
-            (
-                "faceAreaNormals",
-                mesh().pointsInstance(),
-                faMesh::meshSubDir,
-                faMesh::thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this,
-            dimless
-        );
-
+            "faceAreaNormals",
+            mesh().pointsInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimless
+    );
     areaVectorField& faceNormals = *faceAreaNormalsPtr_;
 
     const pointField& localPoints = points();
@@ -1149,23 +1140,22 @@ void Foam::faMesh::calcEdgeAreaNormals() const
             << abort(FatalError);
     }
 
-    edgeAreaNormalsPtr_ =
-        new edgeVectorField
+    edgeAreaNormalsPtr_ = std::make_unique<edgeVectorField>
+    (
+        IOobject
         (
-            IOobject
-            (
-                "edgeAreaNormals",
-                mesh().pointsInstance(),
-                faMesh::meshSubDir,
-                faMesh::thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this,
-            dimless
-            // -> calculatedType()
-        );
+            "edgeAreaNormals",
+            mesh().pointsInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimless
+        // -> calculatedType()
+    );
     edgeVectorField& edgeAreaNormals = *edgeAreaNormalsPtr_;
 
 
@@ -1279,23 +1269,21 @@ void Foam::faMesh::calcFaceCurvatures() const
             << abort(FatalError);
     }
 
-    faceCurvaturesPtr_ =
-        new areaScalarField
+    faceCurvaturesPtr_ = std::make_unique<areaScalarField>
+    (
+        IOobject
         (
-            IOobject
-            (
-                "faceCurvatures",
-                mesh().pointsInstance(),
-                faMesh::meshSubDir,
-                faMesh::thisDb(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                IOobject::NO_REGISTER
-            ),
-            *this,
-            dimless/dimLength
-        );
-
+            "faceCurvatures",
+            mesh().pointsInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            IOobject::NO_REGISTER
+        ),
+        *this,
+        dimless/dimLength
+    );
     areaScalarField& faceCurvatures = *faceCurvaturesPtr_;
 
 
@@ -1321,7 +1309,8 @@ void Foam::faMesh::calcEdgeTransformTensors() const
             << abort(FatalError);
     }
 
-    edgeTransformTensorsPtr_ = new FieldField<Field, tensor>(nEdges_);
+    edgeTransformTensorsPtr_ =
+        std::make_unique<FieldField<Field, tensor>>(nEdges_);
     auto& edgeTransformTensors = *edgeTransformTensorsPtr_;
 
     // Initialize all transformation tensors

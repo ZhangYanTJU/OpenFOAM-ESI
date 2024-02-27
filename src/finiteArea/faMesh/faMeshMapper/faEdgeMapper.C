@@ -43,13 +43,13 @@ void Foam::faEdgeMapper::calcAddressing() const
     hasUnmapped_ = false;
 
     // Dummy mapping: take value from edge 0
-    directAddrPtr_ = new labelList(size(), Zero);
+    directAddrPtr_ = std::make_unique<labelList>(size(), Foam::zero{});
 }
 
 
 void Foam::faEdgeMapper::clearOut()
 {
-    deleteDemandDrivenData(directAddrPtr_);
+    directAddrPtr_.reset(nullptr);
     hasUnmapped_ = false;
 }
 
@@ -64,8 +64,7 @@ Foam::faEdgeMapper::faEdgeMapper
 :
     mesh_(mesh),
     sizeBeforeMapping_(mesh.nInternalEdges()),
-    hasUnmapped_(false),
-    directAddrPtr_(nullptr)
+    hasUnmapped_(false)
 {}
 
 
