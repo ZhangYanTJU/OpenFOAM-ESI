@@ -272,10 +272,7 @@ while (pimple.correct())
                     ).ptr()
                 );
 
-                deleteDemandDrivenData
-                (
-                    pEqnComps[phasei].faceFluxCorrectionPtr()
-                );
+                pEqnComps[phasei].faceFluxCorrectionPtr(nullptr);
 
                 pEqnComps[phasei].relax();
             }
