@@ -61,8 +61,10 @@ Foam::fv::gaussLaplacianScheme<Foam::Type, Foam::scalar>::fvmLaplacian         \
     {                                                                          \
         if (mesh.fluxRequired(vf.name()))                                      \
         {                                                                      \
-            fvm.faceFluxCorrectionPtr() = new                                  \
-            GeometricField<Type, fvsPatchField, surfaceMesh>                   \
+            fvm.faceFluxCorrectionPtr() = std::make_unique                     \
+            <                                                                  \
+                GeometricField<Type, fvsPatchField, surfaceMesh>               \
+            >                                                                  \
             (                                                                  \
                 gammaMagSf*this->tsnGradScheme_().correction(vf)               \
             );                                                                 \
