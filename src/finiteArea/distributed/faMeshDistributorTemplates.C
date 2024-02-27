@@ -154,7 +154,7 @@ Foam::faMeshDistributor::distributeField
     const GeometricField<Type, faePatchField, edgeMesh>& fld
 ) const
 {
-    if (!internalEdgeMap_)
+    if (!internalEdgeMapPtr_)
     {
         createInternalEdgeMap();
     }
@@ -165,7 +165,7 @@ Foam::faMeshDistributor::distributeField
     const distributedFieldMapper mapper
     (
         labelUList::null(),
-        *(internalEdgeMap_)
+        *(internalEdgeMapPtr_)
     );
 
     DimensionedField<Type, edgeMesh> internalField

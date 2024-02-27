@@ -37,79 +37,55 @@ namespace Foam
     defineTypeNameAndDebug(edgeInterpolation, 0);
 }
 
-// * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * //
-
-void Foam::edgeInterpolation::clearOut()
-{
-    deleteDemandDrivenData(lPN_);
-    deleteDemandDrivenData(weightingFactors_);
-    deleteDemandDrivenData(differenceFactors_);
-    deleteDemandDrivenData(correctionVectors_);
-    deleteDemandDrivenData(skewCorrectionVectors_);
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * //
 
 Foam::edgeInterpolation::edgeInterpolation(const faMesh& fam)
 :
     faMesh_(fam),
-    lPN_(nullptr),
-    weightingFactors_(nullptr),
-    differenceFactors_(nullptr),
-    correctionVectors_(nullptr),
-    skewCorrectionVectors_(nullptr),
     orthogonal_(false),
     skew_(true)
 {}
-
-
-// * * * * * * * * * * * * * * * * Destructor * * * * * * * * * * * * * * * //
-
-Foam::edgeInterpolation::~edgeInterpolation()
-{
-    clearOut();
-}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::edgeScalarField& Foam::edgeInterpolation::lPN() const
 {
-    if (!lPN_)
+    if (!lPNptr_)
     {
         makeLPN();
     }
 
-    return (*lPN_);
+    return (*lPNptr_);
 }
 
 
 const Foam::edgeScalarField& Foam::edgeInterpolation::weights() const
 {
-    if (!weightingFactors_)
+    if (!weightingFactorsPtr_)
     {
         makeWeights();
     }
 
-    return (*weightingFactors_);
+    return (*weightingFactorsPtr_);
 }
 
 
 const Foam::edgeScalarField& Foam::edgeInterpolation::deltaCoeffs() const
 {
-    if (!differenceFactors_)
+    if (!differenceFactorsPtr_)
     {
         makeDeltaCoeffs();
     }
 
-    return (*differenceFactors_);
+    return (*differenceFactorsPtr_);
 }
 
 
 bool Foam::edgeInterpolation::orthogonal() const
 {
-    if (orthogonal_ == false && !correctionVectors_)
+    if (orthogonal_ == false && !correctionVectorsPtr_)
     {
         makeCorrectionVectors();
     }
@@ -127,13 +103,13 @@ const Foam::edgeVectorField& Foam::edgeInterpolation::correctionVectors() const
             << abort(FatalError);
     }
 
-    return (*correctionVectors_);
+    return (*correctionVectorsPtr_);
 }
 
 
 bool Foam::edgeInterpolation::skew() const
 {
-    if (skew_ == true && !skewCorrectionVectors_)
+    if (skew_ == true && !skewCorrectionVectorsPtr_)
     {
         makeSkewCorrectionVectors();
     }
@@ -152,21 +128,21 @@ Foam::edgeInterpolation::skewCorrectionVectors() const
             << abort(FatalError);
     }
 
-    return (*skewCorrectionVectors_);
+    return (*skewCorrectionVectorsPtr_);
 }
 
 
 bool Foam::edgeInterpolation::movePoints() const
 {
-    deleteDemandDrivenData(lPN_);
-    deleteDemandDrivenData(weightingFactors_);
-    deleteDemandDrivenData(differenceFactors_);
+    lPNptr_.reset(nullptr);
+    weightingFactorsPtr_.reset(nullptr);
+    differenceFactorsPtr_.reset(nullptr);
 
     orthogonal_ = false;
-    deleteDemandDrivenData(correctionVectors_);
+    correctionVectorsPtr_.reset(nullptr);
 
     skew_ = true;
-    deleteDemandDrivenData(skewCorrectionVectors_);
+    skewCorrectionVectorsPtr_.reset(nullptr);
 
     return true;
 }
@@ -178,14 +154,14 @@ const Foam::vector& Foam::edgeInterpolation::skewCorr(const label edgeI) const
 
     return
         (
-            skewCorrectionVectors_
-          ? (*skewCorrectionVectors_)[edgeI]
+            skewCorrectionVectorsPtr_
+          ? (*skewCorrectionVectorsPtr_)[edgeI]
           : pTraits<vector>::zero
         );
 
     #else
 
-    return (*skewCorrectionVectors_)[edgeI];
+    return (*skewCorrectionVectorsPtr_)[edgeI];
 
     #endif
 }
@@ -198,7 +174,7 @@ void Foam::edgeInterpolation::makeLPN() const
         << endl;
 
 
-    lPN_ = new edgeScalarField
+    lPNptr_ = std::make_unique<edgeScalarField>
     (
         IOobject
         (
@@ -212,7 +188,7 @@ void Foam::edgeInterpolation::makeLPN() const
         mesh(),
         dimLength
     );
-    edgeScalarField& lPN = *lPN_;
+    edgeScalarField& lPN = *lPNptr_;
 
     // Set local references to mesh data
     const edgeVectorField& edgeCentres = mesh().edgeCentres();
@@ -279,7 +255,7 @@ void Foam::edgeInterpolation::makeWeights() const
         << endl;
 
 
-    weightingFactors_ = new edgeScalarField
+    weightingFactorsPtr_ = std::make_unique<edgeScalarField>
     (
         IOobject
         (
@@ -293,7 +269,7 @@ void Foam::edgeInterpolation::makeWeights() const
         mesh(),
         dimensionedScalar(dimless, 1)
     );
-    edgeScalarField& weightingFactors = *weightingFactors_;
+    edgeScalarField& weightingFactors = *weightingFactorsPtr_;
 
 
     // Set local references to mesh data
@@ -359,11 +335,11 @@ void Foam::edgeInterpolation::makeDeltaCoeffs() const
     // needed to make sure deltaCoeffs are calculated for parallel runs.
     weights();
 
-    differenceFactors_ = new edgeScalarField
+    differenceFactorsPtr_ = std::make_unique<edgeScalarField>
     (
         IOobject
         (
-            "differenceFactors_",
+            "differenceFactors",
             mesh().pointsInstance(),
             mesh().thisDb(),
             IOobject::NO_READ,
@@ -373,7 +349,7 @@ void Foam::edgeInterpolation::makeDeltaCoeffs() const
         mesh(),
         dimensionedScalar(dimless/dimLength, SMALL)
     );
-    edgeScalarField& DeltaCoeffs = *differenceFactors_;
+    edgeScalarField& DeltaCoeffs = *differenceFactorsPtr_;
     scalarField& dc = DeltaCoeffs.primitiveFieldRef();
 
     // Set local references to mesh data
@@ -453,7 +429,7 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
         << "Constructing non-orthogonal correction vectors"
         << endl;
 
-    correctionVectors_ = new edgeVectorField
+    correctionVectorsPtr_ = std::make_unique<edgeVectorField>
     (
         IOobject
         (
@@ -467,7 +443,7 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
         mesh(),
         dimless
     );
-    edgeVectorField& CorrVecs = *correctionVectors_;
+    edgeVectorField& CorrVecs = *correctionVectorsPtr_;
 
     // Set local references to mesh data
     const areaVectorField& faceCentres = mesh().areaCentres();
@@ -541,7 +517,7 @@ void Foam::edgeInterpolation::makeCorrectionVectors() const
     if (NonOrthogCoeff < 0.1)
     {
         orthogonal_ = true;
-        deleteDemandDrivenData(correctionVectors_);
+        correctionVectorsPtr_.reset(nullptr);
     }
     else
     {
@@ -560,7 +536,7 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
         << "Constructing skew correction vectors"
         << endl;
 
-    skewCorrectionVectors_ = new edgeVectorField
+    skewCorrectionVectorsPtr_ = std::make_unique<edgeVectorField>
     (
         IOobject
         (
@@ -574,7 +550,7 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
         mesh(),
         dimensionedVector(dimless, Zero)
     );
-    edgeVectorField& SkewCorrVecs = *skewCorrectionVectors_;
+    edgeVectorField& SkewCorrVecs = *skewCorrectionVectorsPtr_;
 
     // Set local references to mesh data
     const areaVectorField& C = mesh().areaCentres();
@@ -698,12 +674,12 @@ void Foam::edgeInterpolation::makeSkewCorrectionVectors() const
 
     if (skewCoeff < maxSkewRatio)
     {
-        deleteDemandDrivenData(skewCorrectionVectors_);
+        skewCorrectionVectorsPtr_.reset(nullptr);
     }
 
     #endif
 
-    skew_ = bool(skewCorrectionVectors_);
+    skew_ = bool(skewCorrectionVectorsPtr_);
 
 
     DebugInFunction

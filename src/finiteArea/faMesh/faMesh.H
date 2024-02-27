@@ -261,52 +261,53 @@ class faMesh
         mutable std::unique_ptr<List<labelPair>> bndConnectPtr_;
 
         //- Ldu addressing data
-        mutable faMeshLduAddressing* lduPtr_;
+        mutable std::unique_ptr<faMeshLduAddressing> lduPtr_;
 
 
     // Geometric Data
 
         //- Face areas
-        mutable DimensionedField<scalar, areaMesh>* SPtr_;
+        mutable std::unique_ptr<DimensionedField<scalar, areaMesh>> SPtr_;
 
         //- Face areas old time level
-        mutable DimensionedField<scalar, areaMesh>* S0Ptr_;
+        mutable std::unique_ptr<DimensionedField<scalar, areaMesh>> S0Ptr_;
 
         //- Face areas old-old time level
-        mutable DimensionedField<scalar, areaMesh>* S00Ptr_;
+        mutable std::unique_ptr<DimensionedField<scalar, areaMesh>> S00Ptr_;
 
         //- Patch starts in the edge list
-        mutable labelList* patchStartsPtr_;
+        mutable std::unique_ptr<labelList> patchStartsPtr_;
 
         //- Edge length vectors
-        mutable edgeVectorField* LePtr_;
+        mutable std::unique_ptr<edgeVectorField> LePtr_;
 
         //- Mag edge length vectors
-        mutable edgeScalarField* magLePtr_;
+        mutable std::unique_ptr<edgeScalarField> magLePtr_;
 
         //- Face centres
-        mutable areaVectorField* faceCentresPtr_;
+        mutable std::unique_ptr<areaVectorField> faceCentresPtr_;
 
         //- Edge centres
-        mutable edgeVectorField* edgeCentresPtr_;
+        mutable std::unique_ptr<edgeVectorField> edgeCentresPtr_;
 
         //- Face area normals
-        mutable areaVectorField* faceAreaNormalsPtr_;
+        mutable std::unique_ptr<areaVectorField> faceAreaNormalsPtr_;
 
         //- Edge area normals
-        mutable edgeVectorField* edgeAreaNormalsPtr_;
+        mutable std::unique_ptr<edgeVectorField> edgeAreaNormalsPtr_;
 
         //- Point area normals
         mutable std::unique_ptr<vectorField> pointAreaNormalsPtr_;
 
         //- Face curvatures
-        mutable areaScalarField* faceCurvaturesPtr_;
+        mutable std::unique_ptr<areaScalarField> faceCurvaturesPtr_;
 
         //- Edge transformation tensors
-        mutable FieldField<Field, tensor>* edgeTransformTensorsPtr_;
+        mutable std::unique_ptr<FieldField<Field, tensor>>
+            edgeTransformTensorsPtr_;
 
         //- Whether point normals must be corrected for a patch
-        mutable boolList* correctPatchPointNormalsPtr_;
+        mutable std::unique_ptr<boolList> correctPatchPointNormalsPtr_;
 
 
     // Other mesh-related data

@@ -74,7 +74,7 @@ class faEdgeMapper
         mutable bool hasUnmapped_;
 
         //- Direct addressing
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
 
     // Private Member Functions

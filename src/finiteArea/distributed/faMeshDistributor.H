@@ -73,7 +73,7 @@ class faMeshDistributor
         const mapDistributePolyMesh& distMap_;
 
         //- Internal edge mapper
-        mutable std::unique_ptr<mapDistributeBase> internalEdgeMap_;
+        mutable std::unique_ptr<mapDistributeBase> internalEdgeMapPtr_;
 
         //- Patch edge mappers
         mutable PtrList<mapDistributeBase> patchEdgeMaps_;
