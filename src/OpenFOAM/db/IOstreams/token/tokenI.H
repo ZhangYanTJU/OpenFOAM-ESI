@@ -605,16 +605,34 @@ inline Foam::token::punctuationToken Foam::token::pToken() const
 
 inline bool Foam::token::isLabel() const noexcept
 {
-    return (type_ == tokenType::LABEL);
-}
-
-
-inline bool Foam::token::isLabel(const label val) const noexcept
-{
     return
     (
         type_ == tokenType::LABEL
-     && data_.labelVal == val
+        // FUTURE?
+        // || type_ == tokenType::INT32
+        // || type_ == tokenType::INT64
+    );
+}
+
+
+inline bool Foam::token::isLabel(const label value) const noexcept
+{
+    // FUTURE?
+    // return
+    // (
+    //     type_ == tokenType::LABEL
+    //   ? value == data_.labelVal
+    //   : type_ == tokenType::INT32
+    //   ? value == data_.int32Val
+    //   : type_ == tokenType::INT64
+    //   ? value == data_.int64Val
+    //   : false
+    // );
+
+    return
+    (
+        type_ == tokenType::LABEL
+     && value == data_.labelVal
     );
 }
 
@@ -695,7 +713,7 @@ inline Foam::scalar Foam::token::scalarToken() const
 
 inline bool Foam::token::isNumber() const noexcept
 {
-    return (type_ == tokenType::LABEL || isScalar());
+    return (isLabel() || isScalar());
 }
 
 
@@ -894,6 +912,15 @@ Foam::token::tokenType Foam::token::Compound<T>::typeCode() const
     {
         // List<label>, List<labelVector> etc
         return token::tokenType::LABEL;
+
+        // FUTURE?
+        // return
+        // (
+        //     sizeof(int32_t) == sizeof(Foam::label)
+        //   ? token::tokenType::INT32
+        //   : token::tokenType::INT64
+        // );
+
     }
     else if (is_contiguous_scalar<valueType>::value)
     {

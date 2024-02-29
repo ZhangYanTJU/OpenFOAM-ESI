@@ -37,7 +37,6 @@ Description
     comment. Can be used to e.g. manipulate polyMesh/boundary files.
 
 SourceFiles
-    dictionaryListEntry.C
     dictionaryListEntryIO.C
 
 \*---------------------------------------------------------------------------*/

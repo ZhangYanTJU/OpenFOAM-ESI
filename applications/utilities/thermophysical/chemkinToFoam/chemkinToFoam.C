@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2021 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,8 +47,8 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    // Increase the precision of the output for JANAF coefficients
-    Ostream::defaultPrecision(10);
+    // More precision (for output of JANAF coefficients)
+    IOstream::minPrecision(10);
 
     argList::addNote
     (

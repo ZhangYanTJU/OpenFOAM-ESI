@@ -198,7 +198,7 @@ Foam::tokenList Foam::functionEntries::evalEntry::evaluate
         // - #eval INT "expr"
         // - #eval INT { expr }
         // - #eval INT #{ expr #}
-        fieldWidth = max(1, tok.labelToken());
+        fieldWidth = Foam::max(1, tok.labelToken());
         is >> tok;
     }
 

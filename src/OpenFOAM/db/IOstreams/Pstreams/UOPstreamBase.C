@@ -67,7 +67,7 @@ inline void Foam::UOPstreamBase::prepareBuffer
     const label pos = byteAlign(sendBuf_.size(), align);
 
     // Extend buffer (as required)
-    sendBuf_.reserve(max(1000, label(pos + count)));
+    sendBuf_.reserve(Foam::max(label(1024), label(pos + count)));
 
     // Move to the aligned output position. Fill any gap with nul char.
     sendBuf_.resize(pos, '\0');
@@ -115,7 +115,7 @@ inline void Foam::UOPstreamBase::putChar(const char c)
 {
     if (!sendBuf_.capacity())
     {
-        sendBuf_.setCapacity(1000);
+        sendBuf_.setCapacity(1024);
     }
     sendBuf_.push_back(c);
 }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -735,8 +735,8 @@ bool Foam::domainDecomposition::writeDecomposition(const bool decomposeSets)
             }
         }
 
-        // Set the precision of the points data to be min 10
-        IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+        // More precision (for points data)
+        IOstream::minPrecision(10);
 
         procMesh.write();
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -186,6 +186,9 @@ public:
         {
             return true;
         }
+
+        //- Return pointer to token stream for this primitive entry
+        virtual ITstream* streamPtr() const;
 
         //- Return token stream for this primitive entry
         virtual ITstream& stream() const;

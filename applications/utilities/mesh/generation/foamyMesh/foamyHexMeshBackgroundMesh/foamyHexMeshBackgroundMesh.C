@@ -67,8 +67,8 @@ scalar getMergeDistance
     const scalar mergeTol =
         args.getOrDefault<scalar>("mergeTol", defaultMergeTol);
 
-    scalar writeTol =
-        Foam::pow(scalar(10), -scalar(IOstream::defaultPrecision()));
+    const scalar writeTol =
+        std::pow(scalar(10), -scalar(IOstream::defaultPrecision()));
 
     Info<< "Merge tolerance : " << mergeTol << nl
         << "Write tolerance : " << writeTol << endl;

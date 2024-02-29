@@ -569,8 +569,8 @@ polyMesh pShapeMesh
     defaultFacesType
 );
 
-// Set the precision of the points data to 10
-IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+// More precision (for points data)
+IOstream::minPrecision(10);
 
 Info << "Writing polyMesh" << endl;
 pShapeMesh.removeFiles();

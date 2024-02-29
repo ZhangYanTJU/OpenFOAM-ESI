@@ -349,11 +349,23 @@ public:
         }
 
         //- Reset the default precision
-        //  \return the previous value
+        //  \return the previous default precision
         static unsigned int defaultPrecision(unsigned int prec) noexcept
         {
             unsigned int old(precision_);
             precision_ = prec;
+            return old;
+        }
+
+        //- Set the minimum default precision
+        //  \return the previous default precision
+        static unsigned int minPrecision(unsigned int prec) noexcept
+        {
+            unsigned int old(precision_);
+            if (precision_ < prec)
+            {
+                precision_ = prec;
+            }
             return old;
         }
 
@@ -370,7 +382,7 @@ public:
         }
 
         //- Set stream state to be 'bad'
-        void setBad()
+        void setBad() noexcept
         {
             ioState_ |= std::ios_base::badbit;
         }

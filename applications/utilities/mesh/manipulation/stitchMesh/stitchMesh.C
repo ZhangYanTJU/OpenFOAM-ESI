@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -440,8 +440,8 @@ int main(int argc, char *argv[])
     //PtrList<surfaceTensorField> surfaceTensorFields;
     //ReadFields(mesh, objects, surfaceTensorFields);
 
-    // Increase precision for output mesh points
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     polyTopoChanger stitcher(mesh, IOobject::NO_READ);
 

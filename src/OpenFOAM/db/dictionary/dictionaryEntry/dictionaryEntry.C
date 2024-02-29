@@ -70,7 +70,8 @@ Foam::label Foam::dictionaryEntry::endLineNumber() const
 Foam::ITstream& Foam::dictionaryEntry::stream() const
 {
     FatalIOErrorInFunction(*this)
-        << "Attempt to return dictionary entry as a primitive"
+        << "Attempt to return stream of primitives from a dictionary entry: "
+        << entry::keyword() << nl
         << abort(FatalIOError);
 
     // Need to return something - send back an empty stream

@@ -1456,8 +1456,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Set the precision of the points data to 10
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     // Write resulting mesh
     forAll(meshes, meshi)

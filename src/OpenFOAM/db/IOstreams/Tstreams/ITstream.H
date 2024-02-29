@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -91,12 +91,12 @@ class ITstream
 
         //- Failsafe read-access to token at specified location
         //- or undefinedToken
-        inline const token& peekNoFail(const label i) const
+        inline const token& peekNoFail(const label i) const noexcept
         {
             return
             (
                 (i >= 0 && i < tokenList::size())
-                ? tokenList::operator[](i)
+                ? tokenList::cdata()[i]
                 : token::undefinedToken
             );
         }
@@ -353,20 +353,29 @@ public:
 
         //- Failsafe peek at the token at the \b front of the tokenList
         //  \return \c undefinedToken if the list is empty.
-        const token& front() const { return peekNoFail(0); }
+        const token& front() const noexcept
+        {
+            return peekNoFail(0);
+        }
 
         //- Failsafe peek at the token at the \b back of the tokenList
         //  \return \c undefinedToken if the list is empty.
-        const token& back() const { return peekNoFail(tokenList::size()-1); }
+        const token& back() const noexcept
+        {
+            return peekNoFail(tokenList::size()-1);
+        }
 
         //- Failsafe peek at what the next read would return,
         //- including handling of any putback
         //  \return \c undefinedToken if list is exhausted
-        const token& peek() const;
+        const token& peek() const noexcept;
 
         //- Read access to the token at the current tokenIndex.
         //- \returns \c undefinedToken if list is exhausted
-        const token& currentToken() const { return peekNoFail(tokenIndex_); }
+        const token& currentToken() const noexcept
+        {
+            return peekNoFail(tokenIndex_);
+        }
 
         //- Write access to the token at the current tokenIndex.
         //- Fatal if not in range
@@ -397,9 +406,10 @@ public:
         }
 
         //- Move tokenIndex to the specified position
-        //  Using seek(0) is identical to rewind.
+        //- and adjust the stream status (open/good/eof ...)
+        //  Using seek(0) is identical to rewind().
         //  Using seek(-1) moves to the end.
-        void seek(label pos);
+        void seek(label pos) noexcept;
 
         //- Move tokenIndex relative to the current position.
         //  Will not overrun the beginning (0) or one-past end positions.
@@ -407,7 +417,7 @@ public:
         //  Use skip(2) to move forward two tokens.
         //  Use skip(-2) to move backward two tokens.
         //  \return True if the indexing completed without underflow/overflow
-        bool skip(label n = 1);
+        bool skip(label n = 1) noexcept;
 
 
     // Searching
@@ -525,7 +535,7 @@ public:
         virtual bool endRawRead() override { return false; }
 
         //- Rewind the stream so that it may be read again. Same as seek(0)
-        virtual void rewind() override;
+        virtual void rewind() override { ITstream::seek(0); }
 
 
     // Output

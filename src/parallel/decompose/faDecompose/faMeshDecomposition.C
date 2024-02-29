@@ -1239,8 +1239,8 @@ bool Foam::faMeshDecomposition::writeDecomposition()
         // Add boundary patches
         procMesh.addFaPatches(procPatches);
 
-        // Set the precision of the points data to 10
-        IOstream::defaultPrecision(10);
+        // More precision (for points data)
+        IOstream::minPrecision(10);
 
         procMesh.write();
 

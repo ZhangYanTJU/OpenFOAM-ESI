@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -153,8 +153,8 @@ int main(int argc, char *argv[])
 
         points = transform(rotT, points);
 
-        // Set the precision of the points data to 10
-        IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+        // More precision (for points data)
+        IOstream::minPrecision(10);
 
         Info<< "Writing points into directory "
             << runTime.relativePath(points.path()) << nl

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -55,7 +55,7 @@ static label parseStream(ISstream& is, tokenList& tokens)
         if (count >= tokens.size())
         {
             // Increase capacity (doubling) with min-size [64]
-            tokens.resize(max(label(64), 2*tokens.size()));
+            tokens.resize(Foam::max(label(64), label(2*tokens.size())));
         }
 
         tokens[count] = std::move(tok);
@@ -77,7 +77,7 @@ Foam::ITstream& Foam::ITstream::empty_stream()
     if (emptyStreamPtr_)
     {
         emptyStreamPtr_->ITstream::clear();  // Ensure it really is empty
-        emptyStreamPtr_->ITstream::seek(0);  // rewind(), but bypasss virtual
+        emptyStreamPtr_->ITstream::seek(0);  // rewind() bypassing virtual
     }
     else
     {
@@ -113,7 +113,7 @@ void Foam::ITstream::reset(const char* input, size_t nbytes)
     ISpanStream is(input, nbytes, static_cast<IOstreamOption>(*this));
 
     parseStream(is, static_cast<tokenList&>(*this));
-    ITstream::seek(0);  // rewind(), but bypasss virtual
+    ITstream::seek(0);  // rewind() bypassing virtual
 }
 
 
@@ -333,7 +333,7 @@ std::string Foam::ITstream::toString() const
 }
 
 
-const Foam::token& Foam::ITstream::peek() const
+const Foam::token& Foam::ITstream::peek() const noexcept
 {
     // Use putback token if it exists
     if (Istream::hasPutback())
@@ -359,45 +359,30 @@ Foam::token& Foam::ITstream::currentToken()
 }
 
 
-void Foam::ITstream::seek(label pos)
+void Foam::ITstream::seek(label pos) noexcept
 {
     lineNumber_ = 0;
-    const tokenList& toks = *this;
-    const label nToks = toks.size();
 
-    if (!pos)
-    {
-        // Seek begin (rewind)
-        tokenIndex_ = 0;
-
-        if (nToks)
-        {
-            lineNumber_ = toks.front().lineNumber();
-        }
-
-        setOpened();
-        setGood();
-    }
-    else if (pos < 0 || pos >= nToks)
+    if (pos < 0 || pos >= tokenList::size())
     {
         // Seek end (-1) or seek is out of range
-        tokenIndex_ = nToks;
+        tokenIndex_ = tokenList::size();
 
-        if (nToks)
+        if (!tokenList::empty())
         {
-            lineNumber_ = toks.back().lineNumber();
+            // The closest reference lineNumber
+            lineNumber_ = tokenList::cdata()[tokenIndex_-1].lineNumber();
         }
 
         setEof();
     }
     else
     {
-        // Seek middle (from the beginning)
         tokenIndex_ = pos;
 
-        if (nToks)
+        if (tokenIndex_ < tokenList::size())
         {
-            lineNumber_ = toks[tokenIndex_].lineNumber();
+            lineNumber_ = tokenList::cdata()[tokenIndex_].lineNumber();
         }
 
         setOpened();
@@ -406,7 +391,7 @@ void Foam::ITstream::seek(label pos)
 }
 
 
-bool Foam::ITstream::skip(label n)
+bool Foam::ITstream::skip(label n) noexcept
 {
     if (!n)
     {
@@ -433,14 +418,14 @@ bool Foam::ITstream::skip(label n)
         if (!tokenList::empty())
         {
             // The closest reference lineNumber
-            lineNumber_ = tokenList::back().lineNumber();
+            lineNumber_ = tokenList::cdata()[tokenIndex_-1].lineNumber();
         }
     }
 
     // Update stream information
     if (tokenIndex_ < tokenList::size())
     {
-        lineNumber_ = tokenList::operator[](tokenIndex_).lineNumber();
+        lineNumber_ = tokenList::cdata()[tokenIndex_].lineNumber();
         setOpened();
         setGood();
     }
@@ -585,7 +570,8 @@ Foam::ITstream Foam::ITstream::extract(const labelRange& range)
 
     // Move tokens into result list
     std::move(first, last, result.begin());
-    result.seek(0);  // rewind
+    result.seek(0);  // rewind() bypassing virtual
+
 
     (void) remove(slice);  // Adjust the original list
 
@@ -708,12 +694,6 @@ Foam::Istream& Foam::ITstream::read(char*, std::streamsize)
 }
 
 
-void Foam::ITstream::rewind()
-{
-    ITstream::seek(0);
-}
-
-
 void Foam::ITstream::add_tokens(const token& tok)
 {
     reserveCapacity(tokenIndex_ + 1);
@@ -763,7 +743,7 @@ void Foam::ITstream::operator=(const ITstream& is)
         Istream::operator=(is);
         tokenList::operator=(is);
         name_ = is.name_;
-        ITstream::seek(0);  // rewind(), but bypasss virtual
+        ITstream::seek(0);  // rewind() bypassing virtual
     }
 }
 
@@ -771,14 +751,14 @@ void Foam::ITstream::operator=(const ITstream& is)
 void Foam::ITstream::operator=(const UList<token>& toks)
 {
     tokenList::operator=(toks);
-    ITstream::seek(0);  // rewind(), but bypasss virtual
+    ITstream::seek(0);  // rewind() bypassing virtual
 }
 
 
 void Foam::ITstream::operator=(List<token>&& toks)
 {
     tokenList::operator=(std::move(toks));
-    ITstream::seek(0);  // rewind(), but bypasss virtual
+    ITstream::seek(0);  // rewind() bypassing virtual
 }
 
 

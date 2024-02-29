@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -249,19 +249,19 @@ public:
 
     // Other
 
+        //- Rewind the output stream to position 0 (non-virtual!)
+        //- and adjust the stream status (open/good/eof ...)
         //- Reset the output buffer and rewind the stream
-        void reset()
-        {
-            this->rewind();
-        }
-
-        //- Rewind the output stream
-        virtual void rewind()
+        void reset() noexcept
         {
             DynamicList<token>::clear();
             setOpened();
             setGood();
         }
+
+        //- Rewind the output stream to position 0
+        //- and adjust the stream status (open/good/eof ...)
+        virtual void rewind() { OTstream::reset(); }
 
         //- Print stream description to Ostream
         void print(Ostream& os) const override;

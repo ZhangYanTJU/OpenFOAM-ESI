@@ -1268,8 +1268,8 @@ int main(int argc, char *argv[])
         Info << endl;
     }
 
-    // Set the precision of the points data to 10
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     mesh.write();
 

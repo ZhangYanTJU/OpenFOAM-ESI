@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -279,6 +279,9 @@ public:
             //- of the underlying data content
             virtual direction nComponents() const = 0;
 
+            //- The vector-space rank associated with the data content
+            virtual direction rank() const = 0;
+
             //- Pointer to the underlying data as byte data
             virtual const char* cdata_bytes() const = 0;
 
@@ -419,6 +422,12 @@ public:
                 return pTraits_nComponents<value_type>();
             }
 
+            //- The vector-space rank associated with the data content
+            virtual direction rank() const
+            {
+                return pTraits_rank<value_type>();
+            }
+
             //- Pointer to the underlying data as byte data
             virtual const char* cdata_bytes() const
             {
@@ -474,7 +483,7 @@ private:
         //- The token type
         tokenType type_;
 
-        //- Line number in the file the token was read from
+        //- The file line number where the token was read from
         label line_;
 
 
@@ -516,6 +525,8 @@ public:
         inline explicit token(punctuationToken p, label lineNum=0) noexcept;
 
         //- Construct label token
+        //- \note Use boolean() static method for creating a \b bool token
+        //- since \c bool and \c int are otherwise indistinguishable
         inline explicit token(const label val, label lineNum=0) noexcept;
 
         //- Construct float token
@@ -635,7 +646,7 @@ public:
         inline bool isLabel() const noexcept;
 
         //- True if token is LABEL and equal to parameter
-        inline bool isLabel(const label val) const noexcept;
+        inline bool isLabel(const label value) const noexcept;
 
         //- Token is FLOAT
         inline bool isFloat() const noexcept;

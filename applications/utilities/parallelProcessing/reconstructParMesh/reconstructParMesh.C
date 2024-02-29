@@ -657,7 +657,7 @@ int main(int argc, char *argv[])
     if (fullMatch || procMatch)
     {
         const scalar writeTol =
-            Foam::pow(10.0, -scalar(IOstream::defaultPrecision()));
+            std::pow(scalar(10), -scalar(IOstream::defaultPrecision()));
 
         Info<< "Merge tolerance : " << mergeTol << nl
             << "Write tolerance : " << writeTol << endl;

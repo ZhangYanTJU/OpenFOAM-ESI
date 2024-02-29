@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
 
     twoDCorr.correctPoints(points);
 
-    // Set the precision of the points data to 10
-    IOstream::defaultPrecision(max(10u, IOstream::defaultPrecision()));
+    // More precision (for points data)
+    IOstream::minPrecision(10);
 
     Info<< "Writing points into directory " << points.path() << nl << endl;
     points.write();
