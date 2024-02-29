@@ -332,9 +332,11 @@ Foam::Reaction<ReactionThermo>::Reaction
     name_(dict.dictName()),
     species_(species)
 {
+    ICharStream reactionIs(dict.getString("reaction"));
+
     setLRhs
     (
-        IStringStream(dict.getString("reaction"))(),
+        reactionIs,
         species_,
         lhs_,
         rhs_,

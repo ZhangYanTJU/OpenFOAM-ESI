@@ -81,9 +81,11 @@ Foam::solidReaction<ReactionThermo>::solidReaction
     glhs_(),
     grhs_()
 {
+    ICharStream reactionIs(dict.getString("reaction"));
+
     this->setLRhs
     (
-        IStringStream(dict.getString("reaction"))(),
+        reactionIs,
         pyrolisisGases_,
         glhs_,
         grhs_,
@@ -99,9 +101,10 @@ Foam::solidReaction<ReactionThermo>::solidReaction
     List<specieCoeffs> dummyRhs;
 
     // Rescan (and fail) if a species is neither gas nor solid
+    reactionIs.rewind();
     this->setLRhs
     (
-        IStringStream(dict.getString("reaction"))(),
+        reactionIs,
         allSpecies,
         dummyLhs,
         dummyRhs

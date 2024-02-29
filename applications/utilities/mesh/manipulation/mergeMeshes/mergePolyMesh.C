@@ -73,9 +73,11 @@ Foam::label Foam::mergePolyMesh::patchIndex(const polyPatch& p)
 
     // Patch not found.  Append to the list
     {
-        OStringStream os;
+        OCharStream os;
         p.write(os);
-        patchDicts_.append(dictionary(IStringStream(os.str())()));
+        ISpanStream is(os.view());
+
+        patchDicts_.push_back(dictionary(is));
     }
 
     if (nameFound)
@@ -225,13 +227,15 @@ Foam::mergePolyMesh::mergePolyMesh(const IOobject& io)
     // Insert the original patches into the list
     wordList curPatchNames = boundaryMesh().names();
 
+    OCharStream os;
     forAll(boundaryMesh(), patchi)
     {
-        patchNames_.append(boundaryMesh()[patchi].name());
-
-        OStringStream os;
+        os.rewind();
         boundaryMesh()[patchi].write(os);
-        patchDicts_.append(dictionary(IStringStream(os.str())()));
+        ISpanStream is(os.view());
+
+        patchNames_.push_back(boundaryMesh()[patchi].name());
+        patchDicts_.push_back(dictionary(is));
     }
 
     // Insert point, face and cell zones into the list

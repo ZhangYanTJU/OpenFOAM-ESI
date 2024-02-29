@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -207,7 +207,7 @@ void Foam::Time::readDict()
         // Change in-memory
         dimensionedConstants().merge(*localDict);
 
-        IStringStream dummyIs("");
+        ISpanStream dummyIs;
 
         // Reporting verbosity corresponding to detail level
         const bool verbose = (::Foam::infoDetailLevel > 0);
@@ -255,11 +255,14 @@ void Foam::Time::readDict()
 
             const List<simpleRegIOobject*>& objects = *objPtr;
 
+            OCharStream os;
+
             for (simpleRegIOobject* obj : objects)
             {
-                OStringStream os;
+                os.rewind();
                 os  << dict;
-                IStringStream is(os.str());
+
+                ISpanStream is(os.view());
                 obj->readData(is);
             }
         }

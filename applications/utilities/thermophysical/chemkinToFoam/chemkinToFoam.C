@@ -99,9 +99,11 @@ int main(int argc, char *argv[])
     // Temporary hack to splice the specie composition data into the thermo file
     // pending complete integration into the thermodynamics structure
 
-    OStringStream os;
+    OCharStream os;
     cr.speciesThermo().write(os);
-    dictionary thermoDict(IStringStream(os.str())());
+
+    ISpanStream is(os.view());
+    dictionary thermoDict(is);
 
     // Add elements
     for (entry& dEntry : thermoDict)

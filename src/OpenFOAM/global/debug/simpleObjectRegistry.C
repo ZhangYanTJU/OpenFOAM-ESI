@@ -28,6 +28,7 @@ License
 #include "simpleObjectRegistry.H"
 #include "dictionary.H"
 #include "ITstream.H"
+#include "SpanStream.H"
 #include "StringStream.H"
 #include "int.H"
 #include "floatScalar.H"
@@ -57,11 +58,15 @@ void Foam::simpleObjectRegistry::setValues
 
             const List<simpleRegIOobject*>& objects = *objPtr;
 
+            OCharStream os;
+            ISpanStream is;
+
             if (dEntry.isDict())
             {
-                OStringStream os;
-                os  << dEntry.dict();
-                IStringStream is(os.str());
+                os.rewind();
+                os << dEntry.dict();
+
+                is.reset(os.view());
 
                 // Or alternatively?
                 // ITstream is(dEntry.dict().tokens());
@@ -72,7 +77,7 @@ void Foam::simpleObjectRegistry::setValues
                     obj->readData(is);
                 }
             }
-            else
+            else  // dEntry.isStream()
             {
                 for (simpleRegIOobject* obj : objects)
                 {

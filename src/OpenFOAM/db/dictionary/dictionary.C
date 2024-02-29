@@ -241,7 +241,7 @@ Foam::SHA1Digest Foam::dictionary::digest() const
 Foam::tokenList Foam::dictionary::tokens() const
 {
     // Serialize dictionary entries into a string
-    OStringStream os;
+    OCharStream os;
 
     // Process entries
     for (const entry& e : *this)
@@ -250,7 +250,7 @@ Foam::tokenList Foam::dictionary::tokens() const
     }
 
     // String re-parsed as a list of tokens
-    return ITstream::parse(os.str());
+    return ITstream::parse(os.view());
 }
 
 

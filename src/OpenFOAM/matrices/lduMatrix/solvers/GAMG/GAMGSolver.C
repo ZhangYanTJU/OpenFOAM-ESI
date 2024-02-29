@@ -121,16 +121,22 @@ Foam::GAMGSolver::GAMGSolver
                     (
                         dummyPrimMeshInterfaces.size()
                     );
+
+                    OCharStream os(IOstreamOption::BINARY);
+                    ISpanStream is(IOstreamOption::BINARY);
+
                     forAll(fineMeshInterfaces, intI)
                     {
                         if (fineMeshInterfaces.set(intI))
                         {
-                            OStringStream os(IOstreamOption::BINARY);
+                            os.rewind();
+
                             refCast<const GAMGInterface>
                             (
                                 fineMeshInterfaces[intI]
                             ).write(os);
-                            IStringStream is(os.str(), IOstreamOption::BINARY);
+
+                            is.reset(os.view());
 
                             dummyPrimMeshInterfaces.set
                             (
