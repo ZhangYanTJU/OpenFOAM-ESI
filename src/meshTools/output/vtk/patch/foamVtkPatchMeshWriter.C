@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -87,7 +87,7 @@ void Foam::vtk::patchMeshWriter::writePoints()
 
     this->beginPoints(numberOfPoints_);
 
-    if (parallel_ ? Pstream::master() : true)
+    if (parallel_ ? UPstream::master() : true)
     {
         for (const label patchId : patchIDs_)
         {
@@ -103,14 +103,14 @@ void Foam::vtk::patchMeshWriter::writePoints()
         // Patch Ids are identical across all processes
         const label nPatches = patchIDs_.size();
 
-        if (Pstream::master())
+        if (UPstream::master())
         {
             pointField recv;
 
             // Receive each point field and write
-            for (const int subproci : Pstream::subProcs())
+            for (const int subproci : UPstream::subProcs())
             {
-                IPstream fromProc(Pstream::commsTypes::blocking, subproci);
+                IPstream fromProc(UPstream::commsTypes::scheduled, subproci);
 
                 for (label i=0; i < nPatches; ++i)
                 {
@@ -125,8 +125,8 @@ void Foam::vtk::patchMeshWriter::writePoints()
             // Send each point field
             OPstream toProc
             (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo()
             );
 
             for (const label patchId : patchIDs_)
@@ -523,7 +523,7 @@ void Foam::vtk::patchMeshWriter::writePatchIDs()
 
     this->beginDataArray<label>("patchID", nPolys);
 
-    if (parallel_ ? Pstream::master() : true)
+    if (parallel_ ? UPstream::master() : true)
     {
         for (const label patchId : patchIDs_)
         {
@@ -533,14 +533,14 @@ void Foam::vtk::patchMeshWriter::writePatchIDs()
 
     if (parallel_)
     {
-        if (Pstream::master())
+        if (UPstream::master())
         {
             labelList recv;
 
             // Receive each pair
-            for (const int subproci : Pstream::subProcs())
+            for (const int subproci : UPstream::subProcs())
             {
-                IPstream fromProc(Pstream::commsTypes::blocking, subproci);
+                IPstream fromProc(UPstream::commsTypes::scheduled, subproci);
 
                 fromProc >> recv;
 
@@ -559,8 +559,8 @@ void Foam::vtk::patchMeshWriter::writePatchIDs()
             // Send
             OPstream toProc
             (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo()
             );
 
             // Encode as [size, id] pairs
@@ -595,7 +595,7 @@ bool Foam::vtk::patchMeshWriter::writeProcIDs()
 
 bool Foam::vtk::patchMeshWriter::writeNeighIDs()
 {
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
         // Skip in non-parallel
         return false;
@@ -626,7 +626,7 @@ bool Foam::vtk::patchMeshWriter::writeNeighIDs()
 
     bool good = false;
 
-    if (parallel_ ? Pstream::master() : true)
+    if (parallel_ ? UPstream::master() : true)
     {
         for (const label patchId : patchIDs_)
         {
@@ -642,14 +642,14 @@ bool Foam::vtk::patchMeshWriter::writeNeighIDs()
 
     if (parallel_)
     {
-        if (Pstream::master())
+        if (UPstream::master())
         {
             labelList recv;
 
             // Receive each pair
-            for (const int subproci : Pstream::subProcs())
+            for (const int subproci : UPstream::subProcs())
             {
-                IPstream fromProc(Pstream::commsTypes::blocking, subproci);
+                IPstream fromProc(UPstream::commsTypes::scheduled, subproci);
 
                 fromProc >> recv;
 
@@ -668,8 +668,8 @@ bool Foam::vtk::patchMeshWriter::writeNeighIDs()
             // Send
             OPstream toProc
             (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo()
             );
 
             // Encode as [size, id] pairs

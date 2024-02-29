@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2020 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -167,8 +167,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_externalCoupled_H
-#define functionObjects_externalCoupled_H
+#ifndef Foam_functionObjects_externalCoupled_H
+#define Foam_functionObjects_externalCoupled_H
 
 #include "timeFunctionObject.H"
 #include "externalFileCoupler.H"
@@ -198,7 +198,6 @@ class externalCoupled
     public functionObjects::timeFunctionObject,
     public externalFileCoupler
 {
-
     // Private Member Data
 
         //- Calculation frequency
@@ -259,8 +258,9 @@ class externalCoupled
 
         void initCoupling();
 
-        //- Read (and distribute) scalar columns from stream. Every processor
-        //  gets nRows (= patch size) of these. Note: could make its argument
+        //- Read (and distribute) scalar columns from stream.
+        //- Every processor gets nRows (= patch size) of these.
+        //  Note: could make its argument
         //  ISstream& but then would need additional logic to construct valid
         //  stream on all processors.
         void readColumns
@@ -271,20 +271,16 @@ class externalCoupled
             List<scalarField>& data
         ) const;
 
-        //- Read (and distribute) lines from stream. Every processor
-        //  gets nRows (= patch size) of these. Data kept as stream (instead
-        //  of strings) for ease of interfacing to readData routines that take
-        //  an Istream.
+        //- Read (and distribute) lines from stream.
+        //- Every processor gets nRows (= patch size) of these
+        //- (newline terminated).
         void readLines
         (
             const label nRows,
             autoPtr<IFstream>& masterFilePtr,
-            OStringStream& data
+            //! [out] the nRows lines read (for this rank) - newline terminated
+            std::string& lines
         ) const;
-
-        //- Helper: append data from all processors onto master
-        template<class Type>
-        static tmp<Field<Type>> gatherAndCombine(const Field<Type>& fld);
 
         static void checkOrder(const wordList& regionNames);
 

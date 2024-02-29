@@ -541,7 +541,7 @@ void syncPoints
     // Is there any coupled patch with transformation?
     bool hasTransformation = false;
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
         const labelList& procPatches = mesh.globalData().processorPatches();
 
@@ -569,7 +569,12 @@ void syncPoints
                 }
 
                 // buffered send
-                OPstream::bsend(patchInfo, procPatch.neighbProcNo());
+                OPstream toNbr
+                (
+                    UPstream::commsTypes::blocking,
+                    procPatch.neighbProcNo()
+                );
+                toNbr << patchInfo;
             }
         }
 
@@ -583,10 +588,10 @@ void syncPoints
 
             if (pp.nPoints() && !procPatch.owner())
             {
-                pointField nbrPatchInfo;
-
                 // We do not know the number of points on the other side
                 // so cannot use UIPstream::read
+
+                pointField nbrPatchInfo;
                 IPstream::recv(nbrPatchInfo, procPatch.neighbProcNo());
 
                 // Null any value which is not on neighbouring processor

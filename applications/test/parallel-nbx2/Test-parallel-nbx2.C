@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
             {
                 recvBufs(proci).resize_nocopy(count);
 
-                // Non-blocking read
+                // Non-blocking read - MPI_Irecv()
                 UIPstream::read
                 (
                     recvRequests.emplace_back(),
@@ -155,9 +155,9 @@ int main(int argc, char *argv[])
             {
                 IPstream is
                 (
-                    UPstream::commsTypes::scheduled,
-                    probed.first,
-                    probed.second,
+                    UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
+                    proci,
+                    count,  // bufSize
                     tag,
                     comm
                 );

@@ -94,7 +94,7 @@ void Foam::syncTools::syncPointMap
     const globalMeshData& pd = mesh.globalData();
 
     // Values on shared points. Keyed on global shared index.
-    Map<T> sharedPointValues(0);
+    Map<T> sharedPointValues;
 
     if (pd.nGlobalPoints() > 0)
     {
@@ -205,7 +205,7 @@ void Foam::syncTools::syncPointMap
                     continue;
                 }
 
-                Map<T> nbrPatchInfo(0);
+                Map<T> nbrPatchInfo;
                 {
                     UIPstream fromNbr(nbrProci, pBufs);
                     fromNbr >> nbrPatchInfo;
@@ -472,7 +472,7 @@ void Foam::syncTools::syncEdgeMap
                     continue;
                 }
 
-                EdgeMap<T> nbrPatchInfo(0);
+                EdgeMap<T> nbrPatchInfo;
                 {
                     UIPstream fromNbr(nbrProci, pBufs);
                     fromNbr >> nbrPatchInfo;

@@ -415,8 +415,8 @@ void Foam::globalMeshData::calcSharedEdges() const
     {
         if (UPstream::parRun())
         {
-            // buffered send local edges to master
-            OPstream::bsend(localShared, UPstream::masterNo());
+            // send local edges to master
+            OPstream::send(localShared, UPstream::masterNo());
         }
     }
 
@@ -442,7 +442,7 @@ void Foam::globalMeshData::calcSharedEdges() const
         {
             // My local edge is indeed a shared one. Go through all local edge
             // labels with this point combination.
-            const labelList& edgeLabels = iter();
+            const labelList& edgeLabels = iter.val();
 
             for (const label edgei : edgeLabels)
             {
@@ -470,11 +470,9 @@ void Foam::globalMeshData::calcSharedEdges() const
     {
         Pout<< "globalMeshData : nGlobalEdges_:" << nGlobalEdges_ << nl
             << "globalMeshData : sharedEdgeLabels:"
-            << sharedEdgeLabelsPtr_().size()
-            << nl
+            << sharedEdgeLabelsPtr_().size() << nl
             << "globalMeshData : sharedEdgeAddr:"
-            << sharedEdgeAddrPtr_().size()
-            << endl;
+            << sharedEdgeAddrPtr_().size() << endl;
     }
 }
 
@@ -1856,7 +1854,7 @@ Foam::pointField Foam::globalMeshData::sharedPoints() const
     const labelList& pointAddr = sharedPointAddr();
     const labelList& pointLabels = sharedPointLabels();
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
         // Master:
         // insert my own data first
@@ -1868,9 +1866,9 @@ Foam::pointField Foam::globalMeshData::sharedPoints() const
         }
 
         // Receive data and insert
-        for (const int proci : Pstream::subProcs())
+        for (const int proci : UPstream::subProcs())
         {
-            IPstream fromProc(Pstream::commsTypes::blocking, proci);
+            IPstream fromProc(UPstream::commsTypes::scheduled, proci);
 
             labelList nbrSharedPointAddr;
             pointField nbrSharedPoints;
@@ -1886,13 +1884,13 @@ Foam::pointField Foam::globalMeshData::sharedPoints() const
     }
     else
     {
-        if (Pstream::parRun())
+        if (UPstream::parRun())
         {
             // Send address and points
             OPstream toMaster
             (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo()
             );
             toMaster
                 << pointAddr
@@ -2689,19 +2687,8 @@ void Foam::globalMeshData::updateMesh()
         Pout<< "globalMeshData : merge dist:" << tolDim << endl;
     }
 
-    // NOTE
-    // - revisit the dupComm hack
-    // - verify if it should be mesh_.comm() instead of worldComm
 
-    // *** Temporary hack to avoid problems with overlapping communication
-    // *** between these reductions and the calculation of deltaCoeffs
-    UPstream::communicator dupComm
-    (
-        UPstream::worldComm,
-        labelRange(UPstream::nProcs(UPstream::worldComm))
-    );
-
-    const label comm = dupComm.comm();
+    const label comm = mesh_.comm();
     const label oldWarnComm = UPstream::commWarn(comm);
 
     if (UPstream::is_parallel(comm))
@@ -2751,18 +2738,6 @@ void Foam::globalMeshData::updateMesh()
 
     // Restore communicator settings
     UPstream::commWarn(oldWarnComm);
-
-    // OLD CODE:
-    // FixedList<label, 3> totals;
-    // totals[0] = mesh_.nPoints();
-    // totals[1] = mesh_.nFaces();
-    // totals[2] = mesh_.nCells();
-    //
-    // reduce(totals, sumOp<label>(), UPstream::msgType(), comm);
-    //
-    // nTotalPoints_ = totals[0];
-    // nTotalFaces_ = totals[1];
-    // nTotalCells_ = totals[2];
 
     if (debug)
     {

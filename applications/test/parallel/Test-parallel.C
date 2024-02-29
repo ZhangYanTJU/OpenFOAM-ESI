@@ -131,13 +131,17 @@ void testTransfer(const T& input)
         for (const int proci : UPstream::subProcs())
         {
             Perr<< "master sending to proc:" << proci << endl;
-            OPstream::bsend(data, proci);
+            OPstream os(UPstream::commsTypes::blocking, proci);
+            os  << data;
         }
     }
     else
     {
-        Perr<< "proc sending to master" << endl;
-        OPstream::bsend(data, UPstream::masterNo());
+        {
+            Perr<< "proc sending to master" << endl;
+            OPstream os(UPstream::commsTypes::blocking, UPstream::masterNo());
+            os  << data;
+        }
 
         Perr<< "proc receiving from master" << endl;
         IPstream::recv(data, UPstream::masterNo());
@@ -165,13 +169,17 @@ void testTokenized(const T& data)
         for (const int proci : UPstream::subProcs())
         {
             Perr<< "master sending to proc:" << proci << endl;
-            OPstream::bsend(tok, proci);
+            OPstream os(UPstream::commsTypes::blocking, proci);
+            os  << tok;
         }
     }
     else
     {
-        Perr<< "proc sending to master" << endl;
-        OPstream::bsend(tok, UPstream::masterNo());
+        {
+            Perr<< "proc sending to master" << endl;
+            OPstream os(UPstream::commsTypes::blocking, UPstream::masterNo());
+            os  << tok;
+        }
 
         Perr<< "proc receiving from master" << endl;
         IPstream::recv(tok, UPstream::masterNo());

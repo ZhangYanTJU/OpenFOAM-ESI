@@ -30,96 +30,71 @@ License
 #include "IPstream.H"
 #include "OPstream.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-// Construct from component
-template<class T0>
-Gather<T0>::Gather(const T0& localData, const bool redistribute)
+template<class Type>
+Foam::Gather<Type>::Gather(const Type& localData, const bool redistribute)
 :
-    List<T0>(0),
-    nProcs_(max(1, Pstream::nProcs()))
+    nProcs_(Foam::max(1, UPstream::nProcs()))
 {
-    this->setSize(nProcs_);
+    this->list().resize(nProcs_);
 
     //
     // Collect sizes on all processor
     //
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
-        if (Pstream::master())
+        if (UPstream::master())
         {
-            auto outIter = this->begin();
-            *outIter = localData;
+            auto iter = this->list().begin();
+            *iter = localData;
 
             // Receive data
-            for (const int proci : Pstream::subProcs())
+            for (const int proci : UPstream::subProcs())
             {
-                IPstream fromSlave(Pstream::commsTypes::scheduled, proci);
-                fromSlave >> *(++outIter);
+                ++iter;
+                IPstream::recv(*iter, proci);
             }
 
             // Send data
-            for (const int proci : Pstream::subProcs())
+            for (const int proci : UPstream::subProcs())
             {
-                OPstream toSlave(Pstream::commsTypes::scheduled, proci);
-
                 if (redistribute)
                 {
-                    toSlave << *this;
+                    OPstream::send(*this, proci);
                 }
                 else
                 {
-                    // Dummy send just to balance sends/receives
-                    toSlave << 0;
+                    // Dummy send (to balance sends/receives)
+                    OPstream::send(label(0), proci);
                 }
             }
         }
         else
         {
-            // Slave: send my local data to master
-            {
-                OPstream toMaster
-                (
-                    Pstream::commsTypes::scheduled,
-                    Pstream::masterNo()
-                );
-                toMaster << localData;
-            }
+            // Send my local data to master
+            OPstream::send(localData, UPstream::masterNo());
 
             // Receive data from master
+            if (redistribute)
             {
-                IPstream fromMaster
-                (
-                    Pstream::commsTypes::scheduled,
-                    Pstream::masterNo()
-                );
-                if (redistribute)
-                {
-                    fromMaster >> *this;
-                }
-                else
-                {
-                    label dummy;
-                    fromMaster >> dummy;
-                }
+                IPstream::recv(*this, UPstream::masterNo());
+            }
+            else
+            {
+                // Dummy receive
+                label dummy;
+                IPstream::recv(dummy, UPstream::masterNo());
             }
         }
     }
     else
     {
-        this->operator[](0) = localData;
+        this->list().resize(1);
+        this->list()[0] = localData;
     }
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
 
 // ************************************************************************* //

@@ -206,8 +206,8 @@ int main(int argc, char *argv[])
 
         for (const int proci : UPstream::subProcs())
         {
-            IPstream fromProc(UPstream::commsTypes::scheduled, proci);
-            labelList below(fromProc);
+            labelList below;
+            IPstream::recv(below, proci);
 
             printConnection(os, proci, below);
         }
@@ -222,13 +222,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        OPstream toMaster
-        (
-             Pstream::commsTypes::scheduled,
-             Pstream::masterNo()
-        );
-
-        toMaster << myComm.below();
+        OPstream::send(myComm.below(), UPstream::masterNo());
         // Pout<< flatOutput(myComm.allBelow()) << nl;
     }
 

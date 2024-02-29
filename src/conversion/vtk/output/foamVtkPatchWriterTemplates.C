@@ -90,7 +90,7 @@ void Foam::vtk::patchWriter::write
             // Receive each patch field and write
             for (const int subproci : Pstream::subProcs())
             {
-                IPstream fromProc(Pstream::commsTypes::blocking, subproci);
+                IPstream fromProc(UPstream::commsTypes::scheduled, subproci);
 
                 for (label i=0; i < nPatches; ++i)
                 {
@@ -105,8 +105,8 @@ void Foam::vtk::patchWriter::write
             // Send each patch field
             OPstream toProc
             (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo()
             );
 
             for (const label patchId : patchIDs_)
@@ -188,7 +188,7 @@ void Foam::vtk::patchWriter::write
             // Receive each patch field and write
             for (const int subproci : Pstream::subProcs())
             {
-                IPstream fromProc(Pstream::commsTypes::blocking, subproci);
+                IPstream fromProc(UPstream::commsTypes::scheduled, subproci);
 
                 for (label i=0; i < nPatches; ++i)
                 {
@@ -203,8 +203,8 @@ void Foam::vtk::patchWriter::write
             // Send each patch field
             OPstream toProc
             (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo()
             );
 
             for (const label patchId : patchIDs_)
@@ -287,14 +287,14 @@ void Foam::vtk::patchWriter::write
         // Patch Ids are identical across all processes
         const label nPatches = patchIDs_.size();
 
-        if (Pstream::master())
+        if (UPstream::master())
         {
             Field<Type> recv;
 
             // Receive each patch field and write
-            for (const int subproci : Pstream::subProcs())
+            for (const int subproci : UPstream::subProcs())
             {
-                IPstream fromProc(Pstream::commsTypes::blocking, subproci);
+                IPstream fromProc(UPstream::commsTypes::scheduled, subproci);
 
                 for (label i=0; i < nPatches; ++i)
                 {
@@ -309,8 +309,8 @@ void Foam::vtk::patchWriter::write
             // Send each patch field
             OPstream toProc
             (
-                Pstream::commsTypes::blocking,
-                Pstream::masterNo()
+                UPstream::commsTypes::scheduled,
+                UPstream::masterNo()
             );
 
             for (const label patchId : patchIDs_)

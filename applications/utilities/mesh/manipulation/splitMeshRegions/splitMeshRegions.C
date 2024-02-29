@@ -374,9 +374,9 @@ void getInterfaceSizes
     }
 
 
-    if (Pstream::parRun())
+    if (UPstream::parRun())
     {
-        if (Pstream::master())
+        if (UPstream::master())
         {
             // Receive and add to my sizes
             for (const int proci : UPstream::subProcs())
@@ -420,8 +420,8 @@ void getInterfaceSizes
         }
         else
         {
-            // buffered send to master
-            OPstream::bsend(regionsToSize, UPstream::masterNo());
+            // send to master
+            OPstream::send(regionsToSize, UPstream::masterNo());
         }
     }
 

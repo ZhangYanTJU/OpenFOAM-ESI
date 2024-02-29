@@ -24,17 +24,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::GatherBase
+    Foam::Gather
 
 Description
+    Gather data from all processors onto all processors.
 
 SourceFiles
-    GatherBase.C
+    Gather.txx
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef GatherBase_H
-#define GatherBase_H
+#ifndef Foam_TestGather_H
+#define Foam_TestGather_H
 
 #include "List.H"
 #include "labelList.H"
@@ -45,45 +46,37 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class GatherBase Declaration
+                           Class Gather Declaration
 \*---------------------------------------------------------------------------*/
 
-class GatherBase
+template<class Type>
+class Gather
+:
+    public List<Type>
 {
+    // Private Data
+
+        //- Number of processors (1 for sequential)
+        label nProcs_;
+
+        //- Storage
+        //List<Type> list_;
+
 
 public:
 
-        //- Flatten: appends all elements of list into one single list.
-        //  Used to collapse 'Gathered' data.
-        template<class T>
-        static T flatten(const List<T>);
+    // Constructors
 
-        //- Flatten and offset 'Gathered' indices (into value) so they
-        //  remain valid with respect to values (after they have been flattened)
-        template<class DataType, class IndexType, class AddOp>
-        static IndexType offset
-        (
-            const List<DataType>& values,
-            const List<IndexType>& indices,
-            AddOp aop
-        );
-};
+        //- Construct from containers across processors
+        Gather(const Type& localData, const bool redistribute=true);
 
 
-template<class T>
-class AddOp
-{
+    // Member Functions
 
-public:
-
-    T operator()
-    (
-        const T& x,
-        const label offset
-    ) const
-    {
-        return x + offset;
-    }
+        List<Type>& list() noexcept { return *this; }
+        const List<Type>& list() const noexcept { return *this; }
+    //  List<Type>& list() noexcept { return list_; }
+    //  const List<Type>& list() const noexcept { return list_; }
 };
 
 
@@ -93,7 +86,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "GatherBase.txx"
+#include "Gather.txx"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

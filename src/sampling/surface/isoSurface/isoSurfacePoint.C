@@ -165,7 +165,12 @@ void Foam::isoSurfacePoint::syncUnseparatedPoints
                 }
 
                 // buffered send
-                OPstream::bsend(patchInfo, procPatch.neighbProcNo());
+                OPstream toNbr
+                (
+                    UPstream::commsTypes::blocking,
+                    procPatch.neighbProcNo()
+                );
+                toNbr << patchInfo;
             }
         }
 
@@ -177,10 +182,10 @@ void Foam::isoSurfacePoint::syncUnseparatedPoints
 
             if (pp.nPoints() && collocatedPatch(pp))
             {
-                pointField nbrPatchInfo;
-
                 // We do not know the number of points on the other side
                 // so cannot use UIPstream::read
+
+                pointField nbrPatchInfo;
                 IPstream::recv(nbrPatchInfo, procPatch.neighbProcNo());
 
                 const labelList& meshPts = procPatch.meshPoints();

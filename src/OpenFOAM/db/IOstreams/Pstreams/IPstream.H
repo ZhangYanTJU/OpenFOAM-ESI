@@ -89,7 +89,7 @@ public:
         {
             IPstream is
             (
-                UPstream::commsTypes::scheduled,
+                UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
                 fromProcNo,
                 0,  // bufSize
                 tag,

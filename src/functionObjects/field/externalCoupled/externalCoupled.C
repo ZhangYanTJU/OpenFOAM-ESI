@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,6 +30,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "OSspecific.H"
 #include "Fstream.H"
+#include "SpanStream.H"
 #include "volFields.H"
 #include "globalIndex.H"
 #include "fvMesh.H"
@@ -110,15 +111,15 @@ void Foam::functionObjects::externalCoupled::readColumns
     // Get sizes for all processors
     const globalIndex globalFaces(globalIndex::gatherOnly{}, nRows);
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
+        // Read data from file and send to destination processor
+        auto& ifile = masterFilePtr();
         string line;
 
-        // Read data from file and send to destination processor
-
-        for (const int proci : Pstream::allProcs())
+        for (const int proci : UPstream::allProcs())
         {
             // Temporary storage
             List<scalarField> values(nColumns);
@@ -136,9 +137,9 @@ void Foam::functionObjects::externalCoupled::readColumns
                 // Get a line
                 do
                 {
-                    if (!masterFilePtr().good())
+                    if (!ifile.good())
                     {
-                        FatalIOErrorInFunction(masterFilePtr())
+                        FatalIOErrorInFunction(ifile)
                             << "Trying to read data for processor " << proci
                             << " row " << rowi
                             << ". Does your file have as many rows as there are"
@@ -146,15 +147,15 @@ void Foam::functionObjects::externalCoupled::readColumns
                             << ") ?" << exit(FatalIOError);
                     }
 
-                    masterFilePtr().getLine(line);
+                    ifile.getLine(line);
                 }
                 while (line.empty() || line[0] == '#');
 
-                IStringStream lineStr(line);
+                ISpanStream isstr(line);
 
                 for (label columni = 0; columni < nColumns; ++columni)
                 {
-                    lineStr >> values[columni][rowi];
+                    isstr >> values[columni][rowi];
                 }
             }
 
@@ -165,7 +166,7 @@ void Foam::functionObjects::externalCoupled::readColumns
     }
     pBufs.finishedScatters();
 
-    // Get scattered data from PstreamBuffers
+    // Get scattered data
     UIPstream fromMaster(UPstream::masterNo(), pBufs);
     fromMaster >> data;
 }
@@ -175,21 +176,21 @@ void Foam::functionObjects::externalCoupled::readLines
 (
     const label nRows,
     autoPtr<IFstream>& masterFilePtr,
-    OStringStream& lines
+    std::string& lines
 ) const
 {
     // Get sizes for all processors
     const globalIndex globalFaces(globalIndex::gatherOnly{}, nRows);
 
-    PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
+    PstreamBuffers pBufs(UPstream::commsTypes::nonBlocking);
 
-    if (Pstream::master())
+    if (UPstream::master())
     {
+        // Read line from file and send to destination processor
+        auto& ifile = masterFilePtr();
         string line;
 
-        // Read line from file and send to destination processor
-
-        for (const int proci : Pstream::allProcs())
+        for (const int proci : UPstream::allProcs())
         {
             // Number of rows to read for processor proci
             const label procNRows = globalFaces.localSize(proci);
@@ -201,9 +202,9 @@ void Foam::functionObjects::externalCoupled::readLines
                 // Get a line
                 do
                 {
-                    if (!masterFilePtr().good())
+                    if (!ifile.good())
                     {
-                        FatalIOErrorInFunction(masterFilePtr())
+                        FatalIOErrorInFunction(ifile)
                             << "Trying to read data for processor " << proci
                             << " row " << rowi
                             << ". Does your file have as many rows as there are"
@@ -211,11 +212,11 @@ void Foam::functionObjects::externalCoupled::readLines
                             << ") ?" << exit(FatalIOError);
                     }
 
-                    masterFilePtr().getLine(line);
+                    ifile.getLine(line);
                 }
                 while (line.empty() || line[0] == '#');
 
-                // Send line to the destination processor
+                // Send line (without newline) to the destination processor
                 toProc << line;
             }
         }
@@ -223,12 +224,16 @@ void Foam::functionObjects::externalCoupled::readLines
 
     pBufs.finishedScatters();
 
-    // Get scattered data from PstreamBuffers
+    // Sizing is approximate (slightly too large)
+    lines.reserve(pBufs.recvDataCount(UPstream::masterNo()));
+
+    // Get scattered data
     UIPstream fromMaster(UPstream::masterNo(), pBufs);
     for (label rowi = 0; rowi < nRows; ++rowi)
     {
         string line(fromMaster);
-        lines << line.c_str() << nl;
+        lines += line;
+        lines += '\n';
     }
 }
 
@@ -253,9 +258,9 @@ void Foam::functionObjects::externalCoupled::writeGeometry
 
     autoPtr<OFstream> osPointsPtr;
     autoPtr<OFstream> osFacesPtr;
-    if (Pstream::master())
+    if (UPstream::master())
     {
-        mkDir(dir);
+        Foam::mkDir(dir);
         osPointsPtr.reset(new OFstream(dir/"patchPoints"));
         osFacesPtr.reset(new OFstream(dir/"patchFaces"));
 
@@ -278,7 +283,7 @@ void Foam::functionObjects::externalCoupled::writeGeometry
         (
             mesh.boundaryMesh().patchSet
             (
-                wordRes(one{}, groupName)
+                wordRes(Foam::one{}, groupName)
             ).sortedToc()
         );
 
@@ -303,13 +308,13 @@ void Foam::functionObjects::externalCoupled::writeGeometry
             List<faceList> collectedFaces(Pstream::nProcs());
             faceList& patchFaces = collectedFaces[proci];
             patchFaces = p.localFaces();
-            forAll(patchFaces, facei)
+            for (auto& f : patchFaces)
             {
-                inplaceRenumber(pointToGlobal, patchFaces[facei]);
+                inplaceRenumber(pointToGlobal, f);
             }
             Pstream::gatherList(collectedFaces);
 
-            if (Pstream::master())
+            if (UPstream::master())
             {
                 allPoints.clear();
                 allFaces.clear();

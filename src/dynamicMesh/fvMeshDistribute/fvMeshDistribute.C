@@ -2171,7 +2171,6 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
             }
 
             // Pstream for sending mesh and fields
-            //OPstream str(Pstream::commsTypes::blocking, recvProc);
             UOPstream str(recvProc, pBufs);
 
             // Mesh subsetting engine - subset the cells of the current domain.

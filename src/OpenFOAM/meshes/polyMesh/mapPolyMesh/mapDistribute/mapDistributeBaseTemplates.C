@@ -509,7 +509,8 @@ void Foam::mapDistributeBase::distribute
                 );
 
                 // buffered send
-                OPstream::bsend(subField, proci, tag, comm);
+                OPstream os(commsType, proci, 0, tag, comm);
+                os  << subField;
             }
         }
 
@@ -953,7 +954,8 @@ void Foam::mapDistributeBase::distribute
                 );
 
                 // buffered send
-                OPstream::bsend(subField, proci, tag, comm);
+                OPstream os(commsType, proci, 0, tag, comm);
+                os  << subField;
             }
         }
 

@@ -93,29 +93,6 @@ public:
             os << value;
         }
 
-        //- Serialize a value and send (buffered/blocking mode).
-        //- Uses \c operator<< for serialization
-        template<class Type>
-        static void bsend
-        (
-            const Type& value,
-            const int toProcNo,
-            const int tag = UPstream::msgType(),
-            const label comm = UPstream::worldComm,
-            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
-        )
-        {
-            OPstream::send
-            (
-                value,
-                UPstream::commsTypes::blocking,
-                toProcNo,
-                tag,
-                comm,
-                fmt
-            );
-        }
-
         //- Serialize a value and send (standard mode).
         //- Uses \c operator<< for serialization
         template<class Type>
@@ -131,7 +108,7 @@ public:
             OPstream::send
             (
                 value,
-                UPstream::commsTypes::scheduled,
+                UPstream::commsTypes::scheduled,  // ie, MPI_Send()
                 toProcNo,
                 tag,
                 comm,

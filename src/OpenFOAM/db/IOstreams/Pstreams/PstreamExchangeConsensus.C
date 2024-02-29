@@ -202,7 +202,7 @@ void exchangeConsensus
 
             UIPstream::read
             (
-                UPstream::commsTypes::blocking,
+                UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
                 proci,
                 recvData.data_bytes(),
                 recvData.size_bytes(),
@@ -369,7 +369,7 @@ void exchangeConsensus
 
             UIPstream::read
             (
-                UPstream::commsTypes::blocking,
+                UPstream::commsTypes::scheduled,  // ie, MPI_Recv()
                 proci,
                 recvData.data_bytes(),
                 recvData.size_bytes(),
