@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -48,7 +48,7 @@ SourceFiles
 #include "autoPtr.H"
 #include "Enum.H"
 #include "HashTable.H"
-#include "runTimeSelectionTables.H"
+#include "solidBodyMotionFunction.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -167,6 +167,9 @@ protected:
 
         //- Output verbosity (default: true)
         bool verbose_;
+
+        //- Optional transformation for geometric data
+        autoPtr<solidBodyMotionFunction> transformPtr_;
 
 
     // Protected Member Functions
@@ -384,6 +387,10 @@ public:
             const topoSetSource::setAction action,
             topoSet& set
         )  const = 0;
+
+        //- Transform (optionally) coordinates. If no transform specified
+        //- returns reference to input data.
+        tmp<pointField> transform(const pointField& points) const;
 
 
     // Housekeeping

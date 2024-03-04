@@ -388,13 +388,10 @@ Foam::planeToFaceZone::planeToFaceZone
     const dictionary& dict
 )
 :
-    planeToFaceZone
-    (
-        mesh,
-        dict.get<vector>("point"),
-        dict.get<vector>("normal"),
-        faceActionNames_.getOrDefault("option", dict, faceAction::ALL)
-    )
+    topoSetFaceZoneSource(mesh, dict),
+    point_(dict.get<vector>("point")),
+    normal_(dict.get<vector>("normal")),
+    option_(faceActionNames_.getOrDefault("option", dict, faceAction::ALL))
 {}
 
 

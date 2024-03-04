@@ -31,6 +31,7 @@ License
 #include "polyMesh.H"
 #include "bitSet.H"
 #include "topoSet.H"
+#include "transformField.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -252,7 +253,8 @@ Foam::topoSetSource::topoSetSource
 )
 :
     mesh_(mesh),
-    verbose_(verbose)
+    verbose_(verbose),
+    transformPtr_(nullptr)
 {}
 
 
@@ -262,10 +264,15 @@ Foam::topoSetSource::topoSetSource
     const dictionary& dict
 )
 :
-    topoSetSource(mesh)
-{
-    verbose(dict);
-}
+    mesh_(mesh),
+    verbose_(dict.getOrDefault<bool>("verbose", true)),
+    transformPtr_
+    (
+        dict.found("solidBodyMotionFunction", keyType::LITERAL)
+      ? solidBodyMotionFunction::New(dict, mesh.time())
+      : nullptr
+    )
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -274,9 +281,26 @@ void Foam::topoSetSource::verbose(const dictionary& dict)
 {
     bool flag(verbose_);
 
-    if (dict.readIfPresent("verbose", flag))
+    if (dict.readIfPresent("verbose", flag, keyType::LITERAL))
     {
         verbose_ = flag;
+    }
+}
+
+
+Foam::tmp<Foam::pointField> Foam::topoSetSource::transform
+(
+    const pointField& points
+) const
+{
+    if (transformPtr_)
+    {
+        return transformPoints(transformPtr_().transformation(), points);
+    }
+    else
+    {
+        // Return reference to input points
+        return points;
     }
 }
 

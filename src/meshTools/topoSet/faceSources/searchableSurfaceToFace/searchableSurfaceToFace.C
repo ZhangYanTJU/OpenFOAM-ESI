@@ -130,7 +130,7 @@ Foam::searchableSurfaceToFace::searchableSurfaceToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     surf_
     (
         searchableSurface::New

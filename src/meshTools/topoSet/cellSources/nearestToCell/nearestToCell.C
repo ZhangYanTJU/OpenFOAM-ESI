@@ -127,11 +127,8 @@ Foam::nearestToCell::nearestToCell
     const dictionary& dict
 )
 :
-    nearestToCell
-    (
-        mesh,
-        dict.get<pointField>("points")
-    )
+    topoSetCellSource(mesh, dict),
+    points_(dict.get<pointField>("points"))
 {}
 
 

@@ -138,7 +138,7 @@ Foam::boxToPoint::boxToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
+    topoSetPointSource(mesh, dict),
     bbs_()
 {
     // Accept 'boxes', 'box' or 'min/max'

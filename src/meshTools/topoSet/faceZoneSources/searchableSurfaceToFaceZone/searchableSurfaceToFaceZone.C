@@ -109,7 +109,7 @@ Foam::searchableSurfaceToFaceZone::searchableSurfaceToFaceZone
     const dictionary& dict
 )
 :
-    topoSetFaceZoneSource(mesh),
+    topoSetFaceZoneSource(mesh, dict),
     surfacePtr_
     (
         searchableSurface::New

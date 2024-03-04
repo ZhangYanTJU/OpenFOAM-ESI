@@ -109,11 +109,11 @@ Foam::sphereToFace::sphereToFace
     const dictionary& dict
 )
 :
-    sphereToFace
+    topoSetFaceSource(mesh, dict),
+    origin_(dict.getCompat<vector>("origin", {{"centre", -1806}})),
+    radius_(dict.getCheck<scalar>("radius", scalarMinMax::ge(0))),
+    innerRadius_
     (
-        mesh,
-        dict.getCompat<vector>("origin", {{"centre", -1806}}),
-        dict.getCheck<scalar>("radius", scalarMinMax::ge(0)),
         dict.getCheckOrDefault<scalar>("innerRadius", 0, scalarMinMax::ge(0))
     )
 {}

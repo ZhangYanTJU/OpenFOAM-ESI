@@ -227,7 +227,7 @@ Foam::regionToFace::regionToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     setName_(dict.get<word>("set")),
     nearPoint_(dict.get<point>("nearPoint"))
 {}

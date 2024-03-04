@@ -434,7 +434,7 @@ Foam::surfaceToCell::surfaceToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     surfName_(dict.get<fileName>("file").expand()),
     outsidePoints_(dict.get<pointField>("outsidePoints")),
     includeCut_(dict.get<bool>("includeCut")),

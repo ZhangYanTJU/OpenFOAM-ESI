@@ -138,7 +138,7 @@ Foam::boxToFace::boxToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     bbs_()
 {
     // Accept 'boxes', 'box' or 'min/max'

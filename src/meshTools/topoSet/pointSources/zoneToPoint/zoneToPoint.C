@@ -183,7 +183,7 @@ Foam::zoneToPoint::zoneToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
+    topoSetPointSource(mesh, dict),
     zoneMatcher_()
 {
     // Look for 'zones' and 'zone', but accept 'name' as well

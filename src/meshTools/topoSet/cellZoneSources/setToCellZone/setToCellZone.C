@@ -71,7 +71,7 @@ Foam::setToCellZone::setToCellZone
     const dictionary& dict
 )
 :
-    topoSetCellZoneSource(mesh),
+    topoSetCellZoneSource(mesh, dict),
     setName_(dict.get<word>("set"))
 {}
 

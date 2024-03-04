@@ -119,12 +119,12 @@ Foam::cylinderToPoint::cylinderToPoint
     const dictionary& dict
 )
 :
-    cylinderToPoint
+    topoSetPointSource(mesh, dict),
+    point1_(dict.getCompat<point>("point1", {{"p1", -2112}})),
+    point2_(dict.getCompat<point>("point2", {{"p2", -2112}})),
+    radius_(dict.getCompat<scalar>("radius", {{"outerRadius", -2112}})),
+    innerRadius_
     (
-        mesh,
-        dict.getCompat<point>("point1", {{"p1", -2112}}),
-        dict.getCompat<point>("point2", {{"p2", -2112}}),
-        dict.getCompat<scalar>("radius", {{"outerRadius", -2112}}),
         dict.getCheckOrDefault<scalar>("innerRadius", 0, scalarMinMax::ge(0))
     )
 {}

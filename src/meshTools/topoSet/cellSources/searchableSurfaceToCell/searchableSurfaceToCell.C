@@ -130,7 +130,7 @@ Foam::searchableSurfaceToCell::searchableSurfaceToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     surf_
     (
         searchableSurface::New

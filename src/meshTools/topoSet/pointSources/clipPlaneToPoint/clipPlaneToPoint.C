@@ -102,12 +102,9 @@ Foam::clipPlaneToPoint::clipPlaneToPoint
     const dictionary& dict
 )
 :
-    clipPlaneToPoint
-    (
-        mesh,
-        dict.get<vector>("point"),
-        dict.get<vector>("normal")
-    )
+    topoSetPointSource(mesh, dict),
+    point_(dict.get<vector>("point")),
+    normal_(dict.get<vector>("normal"))
 {}
 
 

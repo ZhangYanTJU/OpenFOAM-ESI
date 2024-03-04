@@ -301,13 +301,10 @@ Foam::targetVolumeToCell::targetVolumeToCell
     const dictionary& dict
 )
 :
-    targetVolumeToCell
-    (
-        mesh,
-        dict.getCheck<scalar>("volume", scalarMinMax::ge(0)),
-        dict.get<vector>("normal"),
-        dict.getOrDefault<word>("set", "")
-    )
+    topoSetCellSource(mesh, dict),
+    vol_(dict.getCheck<scalar>("volume", scalarMinMax::ge(0))),
+    normal_(dict.get<vector>("normal")),
+    maskSetName_(dict.getOrDefault<word>("set", ""))
 {}
 
 

@@ -94,11 +94,8 @@ Foam::labelToFace::labelToFace
     const dictionary& dict
 )
 :
-    labelToFace
-    (
-        mesh,
-        dict.get<labelList>("value")
-    )
+    topoSetFaceSource(mesh, dict),
+    labels_(dict.get<labelList>("value"))
 {}
 
 
