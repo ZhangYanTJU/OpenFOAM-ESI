@@ -651,7 +651,7 @@ bool Foam::functionObjectList::execute(bool writeProperties)
                     addProfiling
                     (
                         fo,
-                        "functionObject::" + objName + "::execute"
+                        "functionObject::", objName, "::execute"
                     );
 
                     ok = funcObj.execute() && ok;
@@ -697,7 +697,7 @@ bool Foam::functionObjectList::execute(bool writeProperties)
                     addProfiling
                     (
                         fo,
-                        "functionObject::" + objName + ":write"
+                        "functionObject::", objName, ":write"
                     );
 
                     ok = funcObj.write() && ok;
@@ -753,7 +753,7 @@ bool Foam::functionObjectList::execute(bool writeProperties)
                     addProfiling
                     (
                         fo,
-                        "functionObject::" + objName + "::execute"
+                        "functionObject::", objName, "::execute"
                     );
 
                     ok = funcObj.execute() && ok;
@@ -764,7 +764,7 @@ bool Foam::functionObjectList::execute(bool writeProperties)
                     addProfiling
                     (
                         fo,
-                        "functionObject::" + objName + ":write"
+                        "functionObject::", objName, ":write"
                     );
 
                     ok = funcObj.write() && ok;
@@ -863,7 +863,7 @@ bool Foam::functionObjectList::end()
 
             try
             {
-                addProfiling(fo, "functionObject::" + objName + "::end");
+                addProfiling(fo, "functionObject::", objName, "::end");
                 ok = funcObj.end() && ok;
             }
             catch (const Foam::error& err)
@@ -925,7 +925,7 @@ bool Foam::functionObjectList::adjustTimeStep()
             addProfiling
             (
                 fo,
-                "functionObject::" + objName + "::adjustTimeStep"
+                "functionObject::", objName, "::adjustTimeStep"
             );
 
             ok = funcObj.adjustTimeStep() && ok;
@@ -1090,7 +1090,7 @@ bool Foam::functionObjectList::read()
                         addProfiling
                         (
                             fo,
-                            "functionObject::" + objPtr->name() + "::read"
+                            "functionObject::", objPtr->name(), "::read"
                         );
 
                         enabled = objPtr->read(dict);
@@ -1117,7 +1117,7 @@ bool Foam::functionObjectList::read()
                     addProfiling
                     (
                         fo,
-                        "functionObject::" + key + "::new"
+                        "functionObject::", key, "::new"
                     );
                     if (needsTimeControl)
                     {

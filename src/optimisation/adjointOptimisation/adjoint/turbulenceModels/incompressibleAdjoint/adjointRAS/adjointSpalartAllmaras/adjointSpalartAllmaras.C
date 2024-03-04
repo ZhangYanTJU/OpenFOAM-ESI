@@ -725,7 +725,10 @@ tmp<fvVectorMatrix> adjointSpalartAllmaras::divDevReff(volVectorField& Ua) const
 tmp<volVectorField> adjointSpalartAllmaras::adjointMeanFlowSource()
 {
     addProfiling
-        (adjointSpalartAllmaras, "adjointSpalartAllmaras::addMomentumSource");
+    (
+        adjointSpalartAllmaras,
+        "adjointSpalartAllmaras::addMomentumSource"
+    );
     // cm formulation
     //return (- nuTilda()*fvc::grad(nuaTilda() - conservativeMomentumSource());
 
@@ -1043,7 +1046,11 @@ void adjointSpalartAllmaras::nullify()
 void adjointSpalartAllmaras::correct()
 {
     addProfiling
-        (adjointSpalartAllmaras, "adjointSpalartAllmaras::correct");
+    (
+        adjointSpalartAllmaras,
+        "adjointSpalartAllmaras::correct"
+    );
+
     if (!adjointTurbulence_)
     {
         return;

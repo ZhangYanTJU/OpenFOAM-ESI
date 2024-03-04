@@ -68,7 +68,7 @@ Foam::SolverPerformance<Type> Foam::fvMatrix<Type>::solveSegregatedOrCoupled
     {
         regionName = psi_.mesh().name() + "::";
     }
-    addProfiling(solve, "fvMatrix::solve." + regionName + psi_.name());
+    addProfiling(solve, "fvMatrix::solve.", regionName, psi_.name());
 
     if (debug)
     {

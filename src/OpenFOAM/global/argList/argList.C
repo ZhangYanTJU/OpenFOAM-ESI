@@ -1016,6 +1016,7 @@ Foam::argList::argList
         runControl_.runPar(argc, argv);
     }
 
+    // addProfiling(argList, "argList");
 
     // ------------------------------------------------------------------------
 
