@@ -403,7 +403,7 @@ Foam::regionToCell::regionToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     setName_(dict.getOrDefault<word>("set", "none")),
     insidePoints_
     (

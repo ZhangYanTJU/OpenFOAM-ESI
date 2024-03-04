@@ -116,7 +116,8 @@ Foam::shapeToCell::shapeToCell
     const dictionary& dict
 )
 :
-    shapeToCell(mesh, dict.getCompat<word>("shape", {{"type", 1806}}))
+    topoSetCellSource(mesh, dict),
+    shape_(dict.getCompat<word>("shape", {{"type", 1806}}))
 {}
 
 

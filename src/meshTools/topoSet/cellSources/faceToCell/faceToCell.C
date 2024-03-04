@@ -155,7 +155,7 @@ Foam::faceToCell::faceToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     names_(),
     option_(faceActionNames_.get("option", dict))
 {

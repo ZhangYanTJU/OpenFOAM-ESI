@@ -72,7 +72,7 @@ Foam::setToFaceZone::setToFaceZone
     const dictionary& dict
 )
 :
-    topoSetFaceZoneSource(mesh),
+    topoSetFaceZoneSource(mesh, dict),
     setName_(dict.get<word>("faceSet"))
 {
     if (dict.found("cellSet"))

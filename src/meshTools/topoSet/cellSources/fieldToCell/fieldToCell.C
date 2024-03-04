@@ -148,13 +148,10 @@ Foam::fieldToCell::fieldToCell
     const dictionary& dict
 )
 :
-    fieldToCell
-    (
-        mesh,
-        dict.get<word>("field"),
-        dict.get<scalar>("min"),
-        dict.get<scalar>("max")
-    )
+    topoSetCellSource(mesh, dict),
+    fieldName_(dict.get<word>("field")),
+    min_(dict.get<scalar>("min")),
+    max_(dict.get<scalar>("max"))
 {}
 
 

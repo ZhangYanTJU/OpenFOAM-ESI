@@ -109,19 +109,6 @@ motionSolvers/displacement/solidBody/solidBodyMotionSolver.C
 motionSolvers/displacement/solidBody/multiSolidBodyMotionSolver.C
 motionSolvers/displacement/codedPoints0/codedPoints0MotionSolver.C
 
-solidBodyMotionFunctions = motionSolvers/displacement/solidBody/solidBodyMotionFunctions
-$(solidBodyMotionFunctions)/solidBodyMotionFunction/solidBodyMotionFunction.C
-$(solidBodyMotionFunctions)/solidBodyMotionFunction/solidBodyMotionFunctionNew.C
-$(solidBodyMotionFunctions)/SDA/SDA.C
-$(solidBodyMotionFunctions)/tabulated6DoFMotion/tabulated6DoFMotion.C
-$(solidBodyMotionFunctions)/linearMotion/linearMotion.C
-$(solidBodyMotionFunctions)/drivenLinearMotion/drivenLinearMotion.C
-$(solidBodyMotionFunctions)/rotatingMotion/rotatingMotion.C
-$(solidBodyMotionFunctions)/axisRotationMotion/axisRotationMotion.C
-$(solidBodyMotionFunctions)/multiMotion/multiMotion.C
-$(solidBodyMotionFunctions)/oscillatingLinearMotion/oscillatingLinearMotion.C
-$(solidBodyMotionFunctions)/oscillatingRotatingMotion/oscillatingRotatingMotion.C
-
 motionSolvers/displacement/solidBody/pointPatchFields/derived/solidBodyMotionDisplacement/solidBodyMotionDisplacementPointPatchVectorField.C
 
 createShellMesh/createShellMesh.C

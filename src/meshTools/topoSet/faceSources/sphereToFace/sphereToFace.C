@@ -67,7 +67,8 @@ Foam::topoSetSource::addToUsageTable Foam::sphereToFace::usage_
 
 void Foam::sphereToFace::combine(topoSet& set, const bool add) const
 {
-    const pointField& ctrs = mesh_.faceCentres();
+    const tmp<pointField> tctrs(this->transform(mesh_.faceCentres()));
+    const pointField& ctrs = tctrs();
 
     const scalar orad2 = sqr(radius_);
     const scalar irad2 = innerRadius_ > 0 ? sqr(innerRadius_) : -1;
@@ -109,11 +110,11 @@ Foam::sphereToFace::sphereToFace
     const dictionary& dict
 )
 :
-    sphereToFace
+    topoSetFaceSource(mesh, dict),
+    origin_(dict.getCompat<vector>("origin", {{"centre", -1806}})),
+    radius_(dict.getCheck<scalar>("radius", scalarMinMax::ge(0))),
+    innerRadius_
     (
-        mesh,
-        dict.getCompat<vector>("origin", {{"centre", -1806}}),
-        dict.getCheck<scalar>("radius", scalarMinMax::ge(0)),
         dict.getCheckOrDefault<scalar>("innerRadius", 0, scalarMinMax::ge(0))
     )
 {}

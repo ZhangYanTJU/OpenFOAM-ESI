@@ -69,7 +69,8 @@ void Foam::clipPlaneToFace::combine(topoSet& set, const bool add) const
 {
     // Face centres above the plane
 
-    const pointField& ctrs = mesh_.faceCentres();
+    const tmp<pointField> tctrs(this->transform(mesh_.faceCentres()));
+    const pointField& ctrs = tctrs();
 
     forAll(ctrs, elemi)
     {
@@ -102,12 +103,9 @@ Foam::clipPlaneToFace::clipPlaneToFace
     const dictionary& dict
 )
 :
-    clipPlaneToFace
-    (
-        mesh,
-        dict.get<vector>("point"),
-        dict.get<vector>("normal")
-    )
+    topoSetFaceSource(mesh, dict),
+    point_(dict.get<vector>("point")),
+    normal_(dict.get<vector>("normal"))
 {}
 
 

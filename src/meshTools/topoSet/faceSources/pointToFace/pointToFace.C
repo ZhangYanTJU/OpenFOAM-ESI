@@ -181,7 +181,7 @@ Foam::pointToFace::pointToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     names_(),
     option_(pointActionNames_.get("option", dict))
 {

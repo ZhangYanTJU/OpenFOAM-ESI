@@ -70,7 +70,7 @@ Foam::pointToPoint::pointToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
+    topoSetPointSource(mesh, dict),
     names_()
 {
     // Look for 'sets' or 'set'

@@ -100,12 +100,9 @@ Foam::normalToFace::normalToFace
 
 Foam::normalToFace::normalToFace(const polyMesh& mesh, const dictionary& dict)
 :
-    normalToFace
-    (
-        mesh,
-        dict.get<vector>("normal"),
-        dict.get<scalar>("cos")
-    )
+    topoSetFaceSource(mesh, dict),
+    normal_(dict.get<vector>("normal")),
+    tol_(dict.get<scalar>("cos"))
 {
     setNormal();
 }
