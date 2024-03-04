@@ -92,7 +92,8 @@ static void readBoxDim(const dictionary& dict, treeBoundBox& bb)
 
 void Foam::boxToFace::combine(topoSet& set, const bool add) const
 {
-    const pointField& ctrs = mesh_.faceCentres();
+    const tmp<pointField> tctrs(transform(mesh_.faceCentres()));
+    const pointField& ctrs = tctrs();
 
     forAll(ctrs, elemi)
     {

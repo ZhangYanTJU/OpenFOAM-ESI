@@ -297,11 +297,9 @@ Foam::tmp<Foam::pointField> Foam::topoSetSource::transform
     {
         return transformPoints(transformPtr_().transformation(), points);
     }
-    else
-    {
-        // Return reference to input points
-        return points;
-    }
+
+    // Return reference to input points
+    return points;
 }
 
 

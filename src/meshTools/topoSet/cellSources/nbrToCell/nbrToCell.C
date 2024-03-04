@@ -74,6 +74,7 @@ void Foam::nbrToCell::combine(topoSet& set, const bool add) const
     }
 
     const cellList& cells = mesh().cells();
+
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
     boolList isCoupled(mesh_.nBoundaryFaces(), false);

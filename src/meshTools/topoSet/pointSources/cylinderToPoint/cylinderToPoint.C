@@ -68,7 +68,8 @@ Foam::topoSetSource::addToUsageTable Foam::cylinderToPoint::usage_
 
 void Foam::cylinderToPoint::combine(topoSet& set, const bool add) const
 {
-    const pointField& ctrs = mesh_.points();
+    const tmp<pointField> tctrs(transform(mesh_.points()));
+    const pointField& ctrs = tctrs();
 
     const vector axis = (point2_ - point1_);
     const scalar magAxis2 = magSqr(axis);

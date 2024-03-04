@@ -102,8 +102,12 @@ void Foam::searchableSurfaceToCell::combine(topoSet& set, const bool add) const
     {
         return;
     }
-    const pointField& ctrs = mesh_.cellCentres();
+
+    const tmp<pointField> tctrs(transform(mesh_.cellCentres()));
+    const pointField& ctrs = tctrs();
+
     const searchableSurface& s = *surf_;
+
 
     // Cell centres within the enclosing volumes
 

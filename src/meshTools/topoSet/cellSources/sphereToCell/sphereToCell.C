@@ -68,7 +68,8 @@ Foam::topoSetSource::addToUsageTable Foam::sphereToCell::usage_
 
 void Foam::sphereToCell::combine(topoSet& set, const bool add) const
 {
-    const pointField& ctrs = mesh_.cellCentres();
+    const tmp<pointField> tctrs(transform(mesh_.cellCentres()));
+    const pointField& ctrs = tctrs();
 
     const scalar orad2 = sqr(radius_);
     const scalar irad2 = innerRadius_ > 0 ? sqr(innerRadius_) : -1;

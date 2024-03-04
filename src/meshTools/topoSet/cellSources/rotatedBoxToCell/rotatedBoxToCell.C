@@ -96,7 +96,8 @@ void Foam::rotatedBoxToCell::combine(topoSet& set, const bool add) const
 
     // Check whether cell centre is inside all faces of box.
 
-    const pointField& ctrs = mesh_.cellCentres();
+    const tmp<pointField> tctrs(transform(mesh_.cellCentres()));
+    const pointField& ctrs = tctrs();
 
     forAll(ctrs, celli)
     {

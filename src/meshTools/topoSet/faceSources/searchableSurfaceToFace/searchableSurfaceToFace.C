@@ -102,7 +102,9 @@ void Foam::searchableSurfaceToFace::combine(topoSet& set, const bool add) const
     {
         return;
     }
-    const pointField& ctrs = mesh_.faceCentres();
+    const tmp<pointField> tctrs(transform(mesh_.faceCentres()));
+    const pointField& ctrs = tctrs();
+
     const searchableSurface& s = *surf_;
 
     // Face centres within the enclosing volumes

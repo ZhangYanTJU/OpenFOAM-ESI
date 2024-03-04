@@ -69,7 +69,8 @@ void Foam::clipPlaneToPoint::combine(topoSet& set, const bool add) const
 {
     // Mesh points above plane
 
-    const pointField& ctrs = mesh_.points();
+    const tmp<pointField> tctrs(transform(mesh_.points()));
+    const pointField& ctrs = tctrs();
 
     forAll(ctrs, elemi)
     {
