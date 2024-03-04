@@ -27,17 +27,29 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "renumberMethod.H"
+#include "dlLibraryTable.H"
 #include "globalMeshData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(renumberMethod, 0);
+    defineTypeName(renumberMethod);
     defineRunTimeSelectionTable(renumberMethod, dictionary);
 }
 
+
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
+
+Foam::wordList Foam::renumberMethod::supportedMethods()
+{
+    if (dictionaryConstructorTablePtr_)
+    {
+        return dictionaryConstructorTablePtr_->sortedToc();
+    }
+    return wordList();
+}
+
 
 Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
 (
@@ -47,6 +59,9 @@ Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
     const word methodType(dict.get<word>("method"));
 
     //Info<< "Selecting renumberMethod " << methodType << endl;
+
+    // Load any additional libs (verbose = false)
+    dlLibraryTable::libs().open("libs", dict, false);
 
     auto* ctorPtr = dictionaryConstructorTable(methodType);
 
@@ -66,6 +81,16 @@ Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::labelList Foam::renumberMethod::renumber
+(
+    const pointField&
+) const
+{
+    NotImplemented;
+    return labelList();
+}
+
 
 Foam::labelList Foam::renumberMethod::renumber
 (

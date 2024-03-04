@@ -83,6 +83,7 @@ void Foam::domainDecompositionDryRun::writeVTK
     writer.writeGeometry();
     writer.beginCellData();
     writer.writeCellData("procID", cellToProc);
+    writer.writeCellIDs();
 
     Info<< "Wrote decomposition to "
         << this->mesh().time().relativePath(writer.output())

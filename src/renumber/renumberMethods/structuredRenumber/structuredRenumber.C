@@ -32,7 +32,7 @@ License
 #include "fvMeshSubset.H"
 #include "OppositeFaceCellWave.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
@@ -59,7 +59,7 @@ Foam::structuredRenumber::structuredRenumber
     patches_(coeffsDict_.get<wordRes>("patches")),
     nLayers_(coeffsDict_.getOrDefault<label>("nLayers", labelMax)),
     depthFirst_(coeffsDict_.get<bool>("depthFirst")),
-    reverse_(coeffsDict_.get<bool>("reverse")),
+    reverse_(coeffsDict_.getOrDefault("reverse", false)),
     method_(renumberMethod::New(coeffsDict_))
 {}
 
@@ -70,10 +70,10 @@ bool Foam::structuredRenumber::layerLess::operator()
 (
     const label a,
     const label b
-)
+) const
 {
-    const topoDistanceData<label>& ta = distance_[a];
-    const topoDistanceData<label>& tb = distance_[b];
+    const auto& ta = distance_[a];
+    const auto& tb = distance_[b];
 
     int dummy;
 
@@ -273,7 +273,7 @@ Foam::labelList Foam::structuredRenumber::renumber
     // Return furthest away cell first
     if (reverse_)
     {
-        reverse(orderedToOld);
+        Foam::reverse(orderedToOld);
     }
 
     return orderedToOld;

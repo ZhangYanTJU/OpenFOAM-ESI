@@ -5,8 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022-2024 OpenCFD Ltd.
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,18 +24,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::manualRenumber
+    Foam::noRenumber
 
 Description
-    Renumber given a ordered-to-original cell association in a file
+    A dummy renumber method, selected as \c none.
+
+    Method coefficients: \a none
 
 SourceFiles
-    manualRenumber.C
+    noRenumber.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Foam_manualRenumber_H
-#define Foam_manualRenumber_H
+#ifndef Foam_noRenumber_H
+#define Foam_noRenumber_H
 
 #include "renumberMethod.H"
 
@@ -44,82 +45,71 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class manualRenumber Declaration
+                         Class noRenumber Declaration
 \*---------------------------------------------------------------------------*/
 
-class manualRenumber
+class noRenumber
 :
     public renumberMethod
 {
-    // Private Data
-
-        fileName dataFile_;
-
 public:
 
     //- Runtime type information
-    TypeNameNoDebug("manual");
+    TypeNameNoDebug("none");
 
 
     // Constructors
 
-        //- Construct with given data file
-        explicit manualRenumber(const fileName& file);
+        //- Default construct
+        noRenumber();
 
-        //- Construct given the renumber dictionary
-        explicit manualRenumber(const dictionary& dict);
+        //- Construct given the renumber dictionary (unused)
+        explicit noRenumber(const dictionary& dict);
 
 
     //- Destructor
-    virtual ~manualRenumber() = default;
+    virtual ~noRenumber() = default;
 
 
     // Member Functions
 
-        //- The renumbering method needs a polyMesh (for its IOobject)
-        virtual bool needs_mesh() const { return true; }
+        //- The renumbering method does not require a polyMesh
+        virtual bool needs_mesh() const { return false; }
 
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        virtual labelList renumber(const pointField&) const;
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
-        //  Uses mesh for regIOobject
         virtual labelList renumber
         (
+            //! Mesh number of cells
             const polyMesh& mesh,
-            const pointField& cc
+            //! \em ignored
+            const pointField& cellCentres
         ) const;
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
         virtual labelList renumber
         (
+            //! Mesh connectivity for number of cells
             const CompactListList<label>& cellCells,
+            //! \em ignored
             const pointField& cellCentres
-        ) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        ) const;
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
         virtual labelList renumber
         (
+            //! Mesh connectivity for number of cells
             const labelListList& cellCells,
+            //! \em ignored
             const pointField& cellCentres
-        ) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        ) const;
 };
 
 

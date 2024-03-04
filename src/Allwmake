@@ -72,6 +72,7 @@ wmakeLnInclude -u fvOptions
 wmake $targetType lagrangian/basic
 wmake $targetType lagrangian/distributionModels
 
+renumber/Allwmake $targetType $*
 parallel/Allwmake $targetType $*
 
 wmake $targetType dynamicFvMesh
@@ -100,7 +101,6 @@ wmake $targetType fvMotionSolver
 
 # snappyHexMesh uses overset voxelMesh
 mesh/Allwmake $targetType $*
-renumber/Allwmake $targetType $*
 fvAgglomerationMethods/Allwmake $targetType $*
 wmake $targetType waveModels
 

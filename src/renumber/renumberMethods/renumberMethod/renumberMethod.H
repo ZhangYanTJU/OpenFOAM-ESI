@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -41,6 +41,7 @@ SourceFiles
 #include "polyMesh.H"
 #include "pointField.H"
 #include "CompactListList.H"
+#include "wordList.H"
 
 namespace Foam
 {
@@ -51,26 +52,10 @@ namespace Foam
 
 class renumberMethod
 {
-protected:
-
-    // Protected Data
-
-        const dictionary& renumberDict_;
-
-
-    // Protected Member Functions
-
-        //- No copy construct
-        renumberMethod(const renumberMethod&) = delete;
-
-        //- No copy assignment
-        void operator=(const renumberMethod&) = delete;
-
-
 public:
 
     //- Runtime type information
-    TypeName("renumberMethod");
+    TypeNameNoDebug("renumberMethod");
 
 
     // Declare run-time constructor selection tables
@@ -87,22 +72,24 @@ public:
         );
 
 
-    // Selectors
-
-        //- Return a reference to the selected renumbering method
-        static autoPtr<renumberMethod> New
-        (
-            const dictionary& renumberDict
-        );
-
-
     // Constructors
 
-        //- Construct given the renumber dictionary
-        explicit renumberMethod(const dictionary& dict)
-        :
-            renumberDict_(dict)
+        //- Default construct
+        renumberMethod()
         {}
+
+        //- Construct with renumber dictionary (which is currently unused)
+        explicit renumberMethod(const dictionary&)
+        {}
+
+
+    // Selectors
+
+        //- Construct/select a renumbering method
+        static autoPtr<renumberMethod> New(const dictionary& dict);
+
+        //- Return a list of the known methods
+        static wordList supportedMethods();
 
 
     //- Destructor
@@ -111,30 +98,24 @@ public:
 
     // Member Functions
 
+        //- Does renumbering method require a polyMesh?
+        virtual bool needs_mesh() const { return false; }
+
+
+    // No topology
+
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
-        //  This is only defined for geometric renumberMethods.
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        //  This is only defined for geometric renumber methods.
+        virtual labelList renumber(const pointField&) const;
+
+
+    // Topology provided by mesh
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
         //  Use the mesh connectivity (if needed)
         virtual labelList renumber(const polyMesh&, const pointField&) const;
-
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Addressing in losort addressing (= neighbour + offsets into
-        //  neighbour)
-        virtual labelList renumber
-        (
-            const labelList& cellCells,
-            const labelList& offsets,
-            const pointField&
-        ) const;
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
@@ -149,6 +130,20 @@ public:
             const polyMesh& mesh,
             const labelList& fineToCoarse,
             const pointField& coarsePoints
+        ) const;
+
+
+    // Topology provided explicitly
+
+        //- Return the order in which cells need to be visited
+        //- (ie. from ordered back to original cell label).
+        //  Addressing in losort addressing (= neighbour + offsets into
+        //  neighbour)
+        virtual labelList renumber
+        (
+            const labelList& cellCells,
+            const labelList& offsets,
+            const pointField&
         ) const;
 
         //- Return the order in which cells need to be visited

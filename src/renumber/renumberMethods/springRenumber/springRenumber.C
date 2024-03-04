@@ -50,10 +50,11 @@ namespace Foam
 Foam::springRenumber::springRenumber(const dictionary& dict)
 :
     renumberMethod(dict),
-    coeffsDict_(dict.optionalSubDict(typeName+"Coeffs")),
+    coeffsDict_(dict.optionalSubDict(typeName + "Coeffs")),
     maxIter_(coeffsDict_.get<label>("maxIter")),
     maxCo_(coeffsDict_.get<scalar>("maxCo")),
-    freezeFraction_(coeffsDict_.get<scalar>("freezeFraction"))
+    freezeFraction_(coeffsDict_.get<scalar>("freezeFraction")),
+    verbose_(coeffsDict_.getOrDefault("verbose", true))
 {}
 
 
@@ -71,10 +72,7 @@ Foam::labelList Foam::springRenumber::renumberImpl
     // Move cells to the average 'position' of their neighbour.
 
     scalarField position(nOldCells);
-    forAll(position, celli)
-    {
-        position[celli] = celli;
-    }
+    std::iota(position.begin(), position.end(), 0);
 
     // Sum force per cell. Also reused for the displacement
     scalarField sumForce(nOldCells);
@@ -90,9 +88,9 @@ Foam::labelList Foam::springRenumber::renumberImpl
         //    << endl;
 
         //Pout<< "Position :" << nl
-        //    << "    min : " << min(position) << nl
-        //    << "    max : " << max(position) << nl
-        //    << "    avg : " << average(position) << nl
+        //    << "    min : " << Foam::min(position) << nl
+        //    << "    max : " << Foam::max(position) << nl
+        //    << "    avg : " << Foam::average(position) << nl
         //    << endl;
 
         // Sum force per cell.
@@ -100,9 +98,8 @@ Foam::labelList Foam::springRenumber::renumberImpl
         for (label oldCelli = 0; oldCelli < nOldCells; ++oldCelli)
         {
             const label celli = oldToNew[oldCelli];
-            const auto& neighbours = cellCells[oldCelli];
 
-            for (const label nbr : neighbours)
+            for (const label nbr : cellCells[oldCelli])
             {
                 const label nbrCelli = oldToNew[nbr];
 
@@ -111,35 +108,38 @@ Foam::labelList Foam::springRenumber::renumberImpl
         }
 
         //Pout<< "Force :" << nl
-        //    << "    min    : " << min(sumForce) << nl
-        //    << "    max    : " << max(sumForce) << nl
-        //    << "    avgMag : " << average(mag(sumForce)) << nl
+        //    << "    min    : " << Foam::min(sumForce) << nl
+        //    << "    max    : " << Foam::max(sumForce) << nl
+        //    << "    avgMag : " << Foam::average(mag(sumForce)) << nl
         //    << "DeltaT : " << deltaT << nl
         //    << endl;
 
         // Limit displacement
         scalar deltaT = maxCo / max(mag(sumForce));
 
-        Info<< "Iter:" << iter
-            << "  maxCo:" << maxCo
-            << "  deltaT:" << deltaT
-            << "  average force:" << average(mag(sumForce)) << endl;
+        if (verbose_)
+        {
+            Info<< "Iter:" << iter
+                << "  maxCo:" << maxCo
+                << "  deltaT:" << deltaT
+                << "  average force:" << average(mag(sumForce)) << endl;
+        }
 
         // Determine displacement
         scalarField& displacement = sumForce;
         displacement *= deltaT;
 
         //Pout<< "Displacement :" << nl
-        //    << "    min    : " << min(displacement) << nl
-        //    << "    max    : " << max(displacement) << nl
-        //    << "    avgMag : " << average(mag(displacement)) << nl
+        //    << "    min    : " << Foam::min(displacement) << nl
+        //    << "    max    : " << Foam::max(displacement) << nl
+        //    << "    avgMag : " << Foam::average(mag(displacement)) << nl
         //    << endl;
 
         // Calculate new position and scale to be within original range
         // (0..nCells-1) for ease of postprocessing.
         position += displacement;
-        position -= min(position);
-        position *= (position.size()-1)/max(position);
+        position -= Foam::min(position);
+        position *= (position.size()-1)/Foam::max(position);
 
         // Slowly freeze.
         maxCo *= freezeFraction_;
@@ -148,7 +148,7 @@ Foam::labelList Foam::springRenumber::renumberImpl
     //writeOBJ("endPosition.obj", cellCells, position);
 
     // Move cells to new position
-    labelList shuffle(sortedOrder(position));
+    labelList shuffle(Foam::sortedOrder(position));
 
     // Reorder oldToNew
     inplaceReorder(shuffle, oldToNew);

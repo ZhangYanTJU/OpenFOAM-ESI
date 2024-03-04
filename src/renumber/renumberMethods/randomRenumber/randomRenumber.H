@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,24 +51,18 @@ class randomRenumber
 :
     public renumberMethod
 {
-    // Private Member Functions
-
-        //- No copy construct
-        randomRenumber(const randomRenumber&) = delete;
-
-        //- No copy assignment
-        void operator=(const randomRenumber&) = delete;
-
-
 public:
 
     //- Runtime type information
-    TypeName("random");
+    TypeNameNoDebug("random");
 
 
     // Constructors
 
-        //- Construct given the renumber dictionary
+        //- Default construct
+        randomRenumber();
+
+        //- Construct given the renumber dictionary (unused)
         explicit randomRenumber(const dictionary& dict);
 
 
@@ -78,19 +72,21 @@ public:
 
     // Member Functions
 
+        //- The renumbering method does not require a polyMesh
+        virtual bool needs_mesh() const { return false; }
+
+
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
         virtual labelList renumber(const pointField&) const;
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).
-        virtual labelList renumber(const polyMesh&, const pointField&) const;
-
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
         virtual labelList renumber
         (
-            const CompactListList<label>& cellCells,
+            //! Mesh number of cells
+            const polyMesh& mesh,
+            //! \em ignored
             const pointField& cellCentres
         ) const;
 
@@ -98,7 +94,19 @@ public:
         //- (ie. from ordered back to original cell label).
         virtual labelList renumber
         (
+            //! Mesh connectivity for number of cells
+            const CompactListList<label>& cellCells,
+            //! \em ignored
+            const pointField& cellCentres
+        ) const;
+
+        //- Return the order in which cells need to be visited
+        //- (ie. from ordered back to original cell label).
+        virtual labelList renumber
+        (
+            //! Mesh connectivity for number of cells
             const labelListList& cellCells,
+            //! \em ignored
             const pointField& cellCentres
         ) const;
 };
