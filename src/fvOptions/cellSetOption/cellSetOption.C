@@ -382,43 +382,22 @@ Foam::fv::cellSetOption::cellSetOption
 
 bool Foam::fv::cellSetOption::isActive()
 {
-    if (fv::option::isActive() && inTimeLimits(mesh_.time().value()))
+    // Early return if the base condition is not met
+    if (!fv::option::isActive() || !inTimeLimits(mesh_.time().value()))
     {
-        // Update the cell set if the mesh is changing
-        if (mesh_.changing())
-        {
-            if (mesh_.topoChanging())
-            {
-                setCellSelection();
-                // Force printing of new set volume
-                V_ = -GREAT;
-            }
-            else if
-            (
-                selectionMode_ == smGeometric
-             || selectionMode_ == smPoints
-             || selectionMode_ == smCellType
-             || selectionMode_ == smMovingPoints
-            )
-            {
-                // Geometric selection mode(s)
-                setCellSelection();
-            }
-
-            // Report new volume (if changed)
-            setVol();
-        }
-        else if (selectionMode_ == smMovingPoints)
-        {
-            // Update the cell selection if it moves
-            setCellSelection();
-            setVol();
-        }
-
-        return true;
+        return false;
     }
 
-    return false;
+    const bool updateSelection = (mesh_.changing() || updateSelection_);
+
+    if (updateSelection && (selectionMode_ != smAll))
+    {
+        setCellSelection();
+        V_ = -GREAT;  // Force printing of new set volume
+        setVol();
+    }
+
+    return true;
 }
 
 
