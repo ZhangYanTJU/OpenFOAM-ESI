@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
     // ~~~~~~~~~~~~
 
     {
-        labelList regionSize(surf.patches().size(), Zero);
+        labelList regionSize(surf.patches().size(), Foam::zero{});
 
         forAll(surf, facei)
         {
@@ -433,11 +433,12 @@ int main(int argc, char *argv[])
             }
         }
 
-        Info<< "Region\tSize" << nl
-            << "------\t----" << nl;
+        Info<< "Index\tRegion\tSize" << nl
+            << "-----\t------\t----" << nl;
         forAll(surf.patches(), patchi)
         {
-            Info<< surf.patches()[patchi].name() << '\t'
+            Info<< patchi << '\t'
+                << surf.patches()[patchi].name() << '\t'
                 << regionSize[patchi] << nl;
         }
         Info<< nl << endl;
