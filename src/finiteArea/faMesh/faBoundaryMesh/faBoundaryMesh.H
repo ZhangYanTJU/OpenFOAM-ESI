@@ -46,8 +46,6 @@ Author
 #include "faPatch.H"
 #include "labelPair.H"
 #include "lduInterfacePtrsList.H"
-#include "wordList.H"
-#include "pointField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

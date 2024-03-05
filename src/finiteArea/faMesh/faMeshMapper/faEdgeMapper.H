@@ -45,7 +45,6 @@ SourceFiles
 #include "morphFieldMapper.H"
 #include "faMesh.H"
 #include "faceMapper.H"
-#include "HashSet.H"
 #include "mapPolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -61,13 +60,10 @@ class faEdgeMapper
 :
     public morphFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const faMesh& mesh_;
-
-        //- Reference to mapPolyMesh
-        //const mapPolyMesh& mpm_;
 
         //- Old mesh size
         label sizeBeforeMapping_;
@@ -78,16 +74,10 @@ class faEdgeMapper
         mutable bool hasUnmapped_;
 
         //- Direct addressing
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
 
     // Private Member Functions
-
-        //- No copy construct
-        faEdgeMapper(const faEdgeMapper&) = delete;
-
-        //- No copy assignment
-        void operator=(const faEdgeMapper&) = delete;
 
         //- Calculate addressing
         void calcAddressing() const;
@@ -97,6 +87,15 @@ class faEdgeMapper
 
 
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        faEdgeMapper(const faEdgeMapper&) = delete;
+
+        //- No copy assignment
+        void operator=(const faEdgeMapper&) = delete;
+
 
     //- Construct from components
     faEdgeMapper

@@ -48,7 +48,7 @@ class faPatchFieldMapperPatchRef
 :
     public faPatchFieldMapper
 {
-    // Private data
+    // Private Data
 
         const faPatch& sourcePatch_;
         const faPatch& targetPatch_;

@@ -59,19 +59,19 @@ class gaussLaplacianScheme
 :
     public fa::laplacianScheme<Type>
 {
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    TypeName("Gauss");
+
+
+    // Generated Methods
 
         //- No copy construct
         gaussLaplacianScheme(const gaussLaplacianScheme&) = delete;
 
         //- No copy assignment
         void operator=(const gaussLaplacianScheme&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    TypeName("Gauss");
 
 
     // Constructors

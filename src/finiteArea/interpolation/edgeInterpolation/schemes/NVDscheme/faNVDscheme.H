@@ -72,14 +72,6 @@ protected:
 
         const edgeScalarField& edgeFlux_;
 
-    // Protected Member Functions
-
-        //- No copy construct
-        faNVDscheme(const faNVDscheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const faNVDscheme&) = delete;
-
 
 public:
 
@@ -89,6 +81,15 @@ public:
 
     //- Runtime type information
     TypeName("faNVDscheme");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        faNVDscheme(const faNVDscheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const faNVDscheme&) = delete;
 
 
     // Constructors

@@ -849,9 +849,10 @@ void Foam::faMesh::setBoundaryConnections
             << abort(FatalError);
     }
 
-    bndConnectPtr_.reset
+    bndConnectPtr_ = std::make_unique<List<labelPair>>
     (
-        new List<labelPair>(nBoundaryEdges, labelPair(-1,-1))
+        nBoundaryEdges,
+        labelPair(-1,-1)
     );
     auto& bndConnect = *bndConnectPtr_;
 
@@ -989,7 +990,7 @@ const Foam::faMeshBoundaryHalo& Foam::faMesh::boundaryHaloMap() const
 {
     if (!haloMapPtr_)
     {
-        haloMapPtr_.reset(new faMeshBoundaryHalo(*this));
+        haloMapPtr_ = std::make_unique<faMeshBoundaryHalo>(*this);
     }
 
     return *haloMapPtr_;
@@ -1022,8 +1023,8 @@ void Foam::faMesh::calcHaloFaceGeometry() const
 
     const labelList& inputFaceIds = halo.inputMeshFaces();
 
-    haloFaceCentresPtr_.reset(new pointField);
-    haloFaceNormalsPtr_.reset(new vectorField);
+    haloFaceCentresPtr_ = std::make_unique<pointField>();
+    haloFaceNormalsPtr_ = std::make_unique<vectorField>();
 
     auto& centres = *haloFaceCentresPtr_;
     auto& normals = *haloFaceNormalsPtr_;

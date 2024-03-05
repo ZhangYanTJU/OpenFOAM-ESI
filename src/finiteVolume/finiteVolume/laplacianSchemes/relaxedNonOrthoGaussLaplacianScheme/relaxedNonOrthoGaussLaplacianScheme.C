@@ -222,7 +222,7 @@ relaxedNonOrthoGaussLaplacianScheme<Type, GType>::fvmLaplacian
 
     if (mesh.fluxRequired(vf.name()))
     {
-        fvm.faceFluxCorrectionPtr() = trelaxedCorrection.ptr();
+        fvm.faceFluxCorrectionPtr(trelaxedCorrection.ptr());
     }
 
     return tfvm;

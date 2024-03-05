@@ -37,10 +37,8 @@ SourceFiles
 #ifndef faConvectionScheme_H
 #define faConvectionScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -48,6 +46,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 template<class Type>
 class faMatrix;
 
@@ -67,18 +66,10 @@ class convectionScheme
 :
     public refCount
 {
-    // Private data
+    // Private Data
 
+        //- Reference to mesh
         const faMesh& mesh_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        convectionScheme(const convectionScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const convectionScheme&) = delete;
 
 
 public:
@@ -97,6 +88,15 @@ public:
             ),
             (mesh, faceFlux, schemeData)
         );
+
+
+    // Generated Methods
+
+        //- No copy construct
+        convectionScheme(const convectionScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const convectionScheme&) = delete;
 
 
     // Constructors
@@ -130,10 +130,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         virtual tmp<GeometricField<Type, faePatchField, edgeMesh>> flux
         (

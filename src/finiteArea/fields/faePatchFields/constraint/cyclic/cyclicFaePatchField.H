@@ -59,7 +59,7 @@ class cyclicFaePatchField
 :
     public coupledFaePatchField<Type>
 {
-    // Private data
+    // Private Data
 
         //- Local reference cast into the cyclic patch
         const cyclicFaPatch& cyclicPatch_;

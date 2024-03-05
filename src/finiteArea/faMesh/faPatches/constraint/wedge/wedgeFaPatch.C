@@ -28,9 +28,6 @@ License
 
 #include "wedgeFaPatch.H"
 #include "addToRunTimeSelectionTable.H"
-#include "faBoundaryMesh.H"
-#include "wedgePolyPatch.H"
-#include "polyMesh.H"
 #include "faMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -55,21 +55,25 @@ class upwindEdgeInterpolation
 :
     virtual public edgeInterpolationScheme<Type>
 {
-    // Private data
+    // Private Data
 
+        //- Face flux
         const edgeScalarField& faceFlux_;
-
-
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const upwindEdgeInterpolation&) = delete;
 
 
 public:
 
     //- Runtime type information
     TypeName("upwind");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        upwindEdgeInterpolation(const upwindEdgeInterpolation&) = delete;
+
+        //- No copy assignment
+        void operator=(const upwindEdgeInterpolation&) = delete;
 
 
     // Constructors

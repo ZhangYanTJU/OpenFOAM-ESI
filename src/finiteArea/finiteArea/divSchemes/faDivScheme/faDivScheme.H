@@ -38,11 +38,9 @@ SourceFiles
 #ifndef Foam_faDivScheme_H
 #define Foam_faDivScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
 #include "linearEdgeInterpolation.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -72,18 +70,11 @@ protected:
 
     // Protected Data
 
+        //- Reference to mesh
         const faMesh& mesh_;
 
+        //- Edge interpolation scheme
         tmp<edgeInterpolationScheme<Type>> tinterpScheme_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        divScheme(const divScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const divScheme&) = delete;
 
 
 public:
@@ -98,6 +89,15 @@ public:
             (const faMesh& mesh, Istream& schemeData),
             (mesh, schemeData)
         );
+
+
+    // Generated Methods
+
+        //- No copy construct
+        divScheme(const divScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const divScheme&) = delete;
 
 
     // Constructors
@@ -148,10 +148,7 @@ public:
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const
-        {
-            return mesh_;
-        }
+        const faMesh& mesh() const noexcept { return mesh_; }
 
         virtual tmp
         <

@@ -82,8 +82,10 @@ gaussLaplacianScheme<Type>::famLaplacian
     {
         if (this->mesh().fluxRequired(vf.name()))
         {
-            fam.faceFluxCorrectionPtr() = new
-            GeometricField<Type, faePatchField, edgeMesh>
+            fam.faceFluxCorrectionPtr() = std::make_unique
+            <
+                GeometricField<Type, faePatchField, edgeMesh>
+            >
             (
                 gammaMagSf*this->tlnGradScheme_().correction(vf)
             );

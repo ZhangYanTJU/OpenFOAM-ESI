@@ -61,10 +61,18 @@ void Foam::faAreaMapper::calcAddressing() const
 
     // Prepare a list of new face labels and (preliminary) addressing
     // Note: dimensioned to number of boundary faces of polyMesh
-    newFaceLabelsPtr_ = new labelList(mesh_.mesh().nBoundaryFaces(), -1);
-    labelList& newFaceLabels = *newFaceLabelsPtr_;
+    newFaceLabelsPtr_ = std::make_unique<labelList>
+    (
+        mesh_.mesh().nBoundaryFaces(),
+        -1
+    );
+    auto& newFaceLabels = *newFaceLabelsPtr_;
 
-    newFaceLabelsMapPtr_ = new labelList(mesh_.mesh().nBoundaryFaces(), -1);
+    newFaceLabelsMapPtr_ = std::make_unique<labelList>
+    (
+        mesh_.mesh().nBoundaryFaces(),
+        -1
+    );
     labelList& newFaceLabelsMap = *newFaceLabelsMapPtr_;
     label nNewFaces = 0;
 
@@ -94,7 +102,7 @@ void Foam::faAreaMapper::calcAddressing() const
         // Direct mapping: no further faces to add.  Resize list
         newFaceLabels.setSize(nNewFaces);
 
-        directAddrPtr_ = new labelList(newFaceLabels.size());
+        directAddrPtr_ = std::make_unique<labelList>(newFaceLabels.size());
         labelList& addr = *directAddrPtr_;
 
         // Adjust for creation of a boundary face from an internal face
@@ -114,10 +122,13 @@ void Foam::faAreaMapper::calcAddressing() const
     {
         // There are further faces to add.  Prepare interpolation addressing
         // and weights to full size
-        interpolationAddrPtr_ = new labelListList(newFaceLabels.size());
+        interpolationAddrPtr_ = std::make_unique<labelListList>
+        (
+            newFaceLabels.size()
+        );
         labelListList& addr = *interpolationAddrPtr_;
 
-        weightsPtr_ = new scalarListList(newFaceLabels.size());
+        weightsPtr_ = std::make_unique<scalarListList>(newFaceLabels.size());
         scalarListList& w = *weightsPtr_;
 
         // Insert single addressing and weights
@@ -256,20 +267,20 @@ void Foam::faAreaMapper::calcAddressing() const
 
     // Inserted objects cannot appear in the new faMesh as they have no master
     // HJ, 10/Aug/2011
-    insertedObjectLabelsPtr_ = new labelList(0);
+    insertedObjectLabelsPtr_ = std::make_unique<labelList>();
 }
 
 
 void Foam::faAreaMapper::clearOut()
 {
-    deleteDemandDrivenData(newFaceLabelsPtr_);
-    deleteDemandDrivenData(newFaceLabelsMapPtr_);
+    newFaceLabelsPtr_.reset(nullptr);
+    newFaceLabelsMapPtr_.reset(nullptr);
 
-    deleteDemandDrivenData(directAddrPtr_);
-    deleteDemandDrivenData(interpolationAddrPtr_);
-    deleteDemandDrivenData(weightsPtr_);
+    directAddrPtr_.reset(nullptr);
+    interpolationAddrPtr_.reset(nullptr);
+    weightsPtr_.reset(nullptr);
 
-    deleteDemandDrivenData(insertedObjectLabelsPtr_);
+    insertedObjectLabelsPtr_.reset(nullptr);
     hasUnmapped_ = false;
 }
 
@@ -286,13 +297,7 @@ Foam::faAreaMapper::faAreaMapper
     mpm_(mpm),
     direct_(false),
     hasUnmapped_(false),
-    sizeBeforeMapping_(mesh.nFaces()),
-    newFaceLabelsPtr_(nullptr),
-    newFaceLabelsMapPtr_(nullptr),
-    directAddrPtr_(nullptr),
-    interpolationAddrPtr_(nullptr),
-    weightsPtr_(nullptr),
-    insertedObjectLabelsPtr_(nullptr)
+    sizeBeforeMapping_(mesh.nFaces())
 {
     // Check for possibility of direct mapping
     if

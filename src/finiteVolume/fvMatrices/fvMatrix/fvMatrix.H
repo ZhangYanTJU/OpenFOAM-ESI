@@ -172,7 +172,7 @@ private:
         FieldField<Field, Type> boundaryCoeffs_;
 
         //- Face flux field for non-orthogonal correction
-        mutable faceFluxFieldType* faceFluxCorrectionPtr_;
+        mutable std::unique_ptr<faceFluxFieldType> faceFluxCorrectionPtr_;
 
 
 protected:
@@ -494,13 +494,18 @@ public:
             }
 
             //- Declare return type of the faceFluxCorrectionPtr() function
-            typedef GeometricField<Type, fvsPatchField, surfaceMesh>
-                *faceFluxFieldPtrType;
+            typedef std::unique_ptr<faceFluxFieldType> faceFluxFieldPtrType;
 
             //- Return pointer to face-flux non-orthogonal correction field
             faceFluxFieldPtrType& faceFluxCorrectionPtr()
             {
                 return faceFluxCorrectionPtr_;
+            }
+
+            //- Set pointer to face-flux non-orthogonal correction field
+            void faceFluxCorrectionPtr(faceFluxFieldType* flux)
+            {
+                faceFluxCorrectionPtr_.reset(flux);
             }
 
             //- True if face-flux non-orthogonal correction field exists

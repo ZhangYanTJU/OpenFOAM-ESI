@@ -59,19 +59,19 @@ class EulerFaDdtScheme
 :
     public fa::faDdtScheme<Type>
 {
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    TypeName("Euler");
+
+
+    // Generated Methods
 
         //- No copy construct
         EulerFaDdtScheme(const EulerFaDdtScheme&) = delete;
 
         //- No copy assignment
         void operator=(const EulerFaDdtScheme&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    TypeName("Euler");
 
 
     // Constructors

@@ -26,7 +26,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "EulerFaD2dt2Scheme.H"
-#include "facDiv.H"
 #include "faMatrices.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -72,21 +71,21 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     scalar coefft   = (deltaT + deltaT0)/(2*deltaT);
     scalar coefft00 = (deltaT + deltaT0)/(2*deltaT0);
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+dt.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+dt.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     if (mesh().moving())
     {
-        scalar halfRdeltaT2 = rDeltaT2.value()/2.0;
+        scalar halfRdeltaT2 = 0.5*rDeltaT2.value();
 
-        scalarField SS0 = mesh().S() + mesh().S0();
-        scalarField S0S00 = mesh().S0() + mesh().S00();
+        scalarField SS0(mesh().S() + mesh().S0());
+        scalarField S0S00(mesh().S0() + mesh().S00());
 
         tmp<GeometricField<Type, faPatchField, areaMesh>> tdt2dt2
         (
@@ -131,13 +130,13 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     scalar deltaT = deltaT_();
@@ -149,10 +148,10 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
 
     if (mesh().moving())
     {
-        scalar halfRdeltaT2 = rDeltaT2.value()/2.0;
+        scalar halfRdeltaT2 = 0.5*rDeltaT2.value();
 
-        scalarField SS0 = mesh().S() + mesh().S0();
-        scalarField S0S00 = mesh().S0() + mesh().S00();
+        scalarField SS0(mesh().S() + mesh().S0());
+        scalarField S0S00(mesh().S0() + mesh().S00());
 
         return tmp<GeometricField<Type, faPatchField, areaMesh>>
         (
@@ -209,13 +208,13 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     scalar deltaT = deltaT_();
@@ -229,13 +228,15 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     {
         scalar halfRdeltaT2 = 0.5*rDeltaT2.value();
 
-        scalarField SS0rhoRho0 =
-            (mesh().S() + mesh().S0())
-           *rho.value();
+        scalarField SS0rhoRho0
+        (
+            (mesh().S() + mesh().S0())*rho.value()
+        );
 
-        scalarField S0S00rho0Rho00 =
-            (mesh().S0() + mesh().S00())
-           *rho.value();
+        scalarField S0S00rho0Rho00
+        (
+            (mesh().S0() + mesh().S00())*rho.value()
+        );
 
         return tmp<GeometricField<Type, faPatchField, areaMesh>>
         (
@@ -294,13 +295,13 @@ EulerFaD2dt2Scheme<Type>::facD2dt2
     dimensionedScalar rDeltaT2 =
         4.0/sqr(mesh().time().deltaT() + mesh().time().deltaT0());
 
-    IOobject d2dt2IOobject
+    const IOobject d2dt2IOobject
     (
-        "d2dt2("+rho.name()+','+vf.name()+')',
-        mesh().time().timeName(),
-        mesh().thisDb(),
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
+        mesh().thisDb().newIOobject
+        (
+            "d2dt2("+rho.name()+','+vf.name()+')',
+            { IOobject::REGISTER }
+        )
     );
 
     scalar deltaT = deltaT_();
@@ -490,7 +491,6 @@ EulerFaD2dt2Scheme<Type>::famD2dt2
         scalar halfRdeltaT2 = 0.5*rDeltaT2;
 
         scalarField SS0(mesh().S() + mesh().S0());
-
         scalarField S0S00(mesh().S0() + mesh().S00());
 
         fam.diag() = rho.value()*(coefft*halfRdeltaT2)*SS0;

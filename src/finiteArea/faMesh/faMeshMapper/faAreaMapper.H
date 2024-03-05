@@ -43,9 +43,6 @@ SourceFiles
 
 #include "morphFieldMapper.H"
 #include "faMesh.H"
-#include "faceMapper.H"
-#include "HashSet.H"
-#include "mapPolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -60,7 +57,7 @@ class faAreaMapper
 :
     public morphFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to mesh mapper
         const faMesh& mesh_;
@@ -80,32 +77,26 @@ class faAreaMapper
         label sizeBeforeMapping_;
 
         //- New face labels after mapping
-        mutable labelList* newFaceLabelsPtr_;
+        mutable std::unique_ptr<labelList> newFaceLabelsPtr_;
 
         //- New face labels after mapping
-        mutable labelList* newFaceLabelsMapPtr_;
+        mutable std::unique_ptr<labelList> newFaceLabelsMapPtr_;
 
 
         //- Direct addressing (only one form of addressing is used)
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
         //- Interpolated addressing (only one form of addressing is used)
-        mutable labelListList* interpolationAddrPtr_;
+        mutable std::unique_ptr<labelListList> interpolationAddrPtr_;
 
         //- Interpolation weights
-        mutable scalarListList* weightsPtr_;
+        mutable std::unique_ptr<scalarListList> weightsPtr_;
 
         //- Inserted faces
-        mutable labelList* insertedObjectLabelsPtr_;
+        mutable std::unique_ptr<labelList> insertedObjectLabelsPtr_;
 
 
     // Private Member Functions
-
-        //- No copy construct
-        faAreaMapper(const faAreaMapper&) = delete;
-
-        //- No copy assignment
-        void operator=(const faAreaMapper&) = delete;
 
         //- Calculate addressing
         void calcAddressing() const;
@@ -115,6 +106,15 @@ class faAreaMapper
 
 
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        faAreaMapper(const faAreaMapper&) = delete;
+
+        //- No copy assignment
+        void operator=(const faAreaMapper&) = delete;
+
 
     //- Construct from components
     faAreaMapper
@@ -126,7 +126,6 @@ public:
 
     //- Destructor
     virtual ~faAreaMapper();
-
 
     // Member Functions
 

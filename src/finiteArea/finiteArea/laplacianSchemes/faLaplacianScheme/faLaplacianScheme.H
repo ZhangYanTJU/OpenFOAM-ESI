@@ -38,12 +38,9 @@ SourceFiles
 #ifndef Foam_faLaplacianScheme_H
 #define Foam_faLaplacianScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "linearEdgeInterpolation.H"
 #include "correctedLnGrad.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -79,15 +76,6 @@ protected:
         tmp<lnGradScheme<Type>> tlnGradScheme_;
 
 
-    // Private Member Functions
-
-        //- No copy construct
-        laplacianScheme(const laplacianScheme&) = delete;
-
-        //- No copy assignment
-        void operator=(const laplacianScheme&) = delete;
-
-
 public:
 
     // Declare run-time constructor selection tables
@@ -100,6 +88,15 @@ public:
             (const faMesh& mesh, Istream& schemeData),
             (mesh, schemeData)
         );
+
+
+    // Generated Methods
+
+        //- No copy construct
+        laplacianScheme(const laplacianScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const laplacianScheme&) = delete;
 
 
     // Constructors

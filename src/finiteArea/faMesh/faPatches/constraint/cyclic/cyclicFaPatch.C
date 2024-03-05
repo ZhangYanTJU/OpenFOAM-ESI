@@ -27,10 +27,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "cyclicFaPatch.H"
-#include "coupledPolyPatch.H"
 #include "addToRunTimeSelectionTable.H"
 #include "transform.H"
-#include "faMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

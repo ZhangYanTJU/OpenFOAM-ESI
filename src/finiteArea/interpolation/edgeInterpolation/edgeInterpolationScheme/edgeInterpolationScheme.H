@@ -37,10 +37,8 @@ SourceFiles
 #ifndef edgeInterpolationScheme_H
 #define edgeInterpolationScheme_H
 
-#include "tmp.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -59,16 +57,10 @@ class edgeInterpolationScheme
 :
     public refCount
 {
-    // Private data
+    // Private Data
 
-        //- Hold reference to mesh
+        //- Reference to mesh
         const faMesh& mesh_;
-
-
-    // Private Member Functions
-
-        //- No copy assignment
-        void operator=(const edgeInterpolationScheme&) = delete;
 
 
 public:
@@ -99,6 +91,15 @@ public:
             ),
             (mesh, faceFlux, schemeData)
         );
+
+
+    // Private Member Functions
+
+        //- No copy construct
+        edgeInterpolationScheme(const edgeInterpolationScheme&) = delete;
+
+        //- No copy assignment
+        void operator=(const edgeInterpolationScheme&) = delete;
 
 
     // Constructors
@@ -179,10 +180,7 @@ public:
         ) const = 0;
 
         //- Return true if this scheme uses an explicit correction
-        virtual bool corrected() const
-        {
-            return false;
-        }
+        virtual bool corrected() const { return false; }
 
         //- Return the explicit correction to the face-interpolate
         //  for the given field

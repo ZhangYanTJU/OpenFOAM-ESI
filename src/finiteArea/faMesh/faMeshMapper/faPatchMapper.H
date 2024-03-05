@@ -45,7 +45,6 @@ SourceFiles
 #include "faPatchFieldMapper.H"
 #include "faceMapper.H"
 #include "faPatch.H"
-#include "primitiveFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,7 +63,7 @@ class faPatchMapper
 :
     public faPatchFieldMapper
 {
-    // Private data
+    // Private Data
 
         //- Reference to patch
         const faPatch& patch_;
@@ -84,17 +83,10 @@ class faPatchMapper
         mutable bool hasUnmapped_;
 
         //- Direct addressing
-        mutable labelList* directAddrPtr_;
+        mutable std::unique_ptr<labelList> directAddrPtr_;
 
 
     // Private Member Functions
-
-        //- No copy construct
-        faPatchMapper(const faPatchMapper&) = delete;
-
-        //- No copy assignment
-        void operator=(const faPatchMapper&) = delete;
-
 
         //- Calculate addressing for mapping with inserted cells
         void calcAddressing() const;
@@ -104,6 +96,15 @@ class faPatchMapper
 
 
 public:
+
+    // Generated Methods
+
+        //- No copy construct
+        faPatchMapper(const faPatchMapper&) = delete;
+
+        //- No copy assignment
+        void operator=(const faPatchMapper&) = delete;
+
 
     //- Construct from mappers
     faPatchMapper

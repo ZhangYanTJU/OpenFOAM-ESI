@@ -42,11 +42,8 @@ SourceFiles
 #ifndef Foam_edgeInterpolation_H
 #define Foam_edgeInterpolation_H
 
-#include "tmp.H"
-#include "scalar.H"
 #include "areaFieldsFwd.H"
 #include "edgeFieldsFwd.H"
-#include "className.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -71,19 +68,19 @@ class edgeInterpolation
         // Demand-driven data
 
             //- Geodesic distance between centroids of neighbour finite areas
-            mutable edgeScalarField* lPN_;
+            mutable std::unique_ptr<edgeScalarField> lPNptr_;
 
             //- Central-differencing weighting factors
-            mutable edgeScalarField* weightingFactors_;
+            mutable std::unique_ptr<edgeScalarField> weightingFactorsPtr_;
 
             //- Face-gradient difference factors
-            mutable edgeScalarField* differenceFactors_;
+            mutable std::unique_ptr<edgeScalarField> differenceFactorsPtr_;
 
             //- Non-orthogonality correction vectors
-            mutable edgeVectorField* correctionVectors_;
+            mutable std::unique_ptr<edgeVectorField> correctionVectorsPtr_;
 
             //- Skew correction vectors
-            mutable edgeVectorField* skewCorrectionVectors_;
+            mutable std::unique_ptr<edgeVectorField> skewCorrectionVectorsPtr_;
 
             //- Is mesh orthogonal
             mutable bool orthogonal_;
@@ -113,20 +110,19 @@ class edgeInterpolation
         void makeSkewCorrectionVectors() const;
 
 
-protected:
-
-    // Protected Member Functions
-
-        // Storage Management
-
-            //- Clear all geometry and addressing
-            void clearOut();
-
-
 public:
 
     // Declare name of the class and it's debug switch
     ClassName("edgeInterpolation");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        edgeInterpolation(const edgeInterpolation&) = delete;
+
+        //- No copy assignment
+        void operator=(const edgeInterpolation&) = delete;
 
 
     // Constructors
@@ -136,16 +132,13 @@ public:
 
 
     //- Destructor
-    ~edgeInterpolation();
+    ~edgeInterpolation() = default;
 
 
     // Member Functions
 
         //- Return mesh reference
-        const faMesh& mesh() const noexcept
-        {
-            return faMesh_;
-        }
+        const faMesh& mesh() const noexcept { return faMesh_; }
 
         //- Return reference to PN geodesic distance
         const edgeScalarField& lPN() const;
@@ -178,7 +171,7 @@ public:
     // Storage Management
 
         //- True if weights exist
-        bool hasWeights() const noexcept { return bool(weightingFactors_); }
+        bool hasWeights() const noexcept { return bool(weightingFactorsPtr_); }
 };
 
 

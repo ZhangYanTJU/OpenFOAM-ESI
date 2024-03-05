@@ -39,10 +39,8 @@ SourceFiles
 #define skewCorrectedEdgeInterpolation_H
 
 #include "edgeInterpolationScheme.H"
-#include "linearEdgeInterpolation.H"
 #include "gaussFaGrad.H"
 #include "areaFields.H"
-#include "zeroGradientFaPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -60,6 +58,7 @@ class skewCorrectedEdgeInterpolation
 {
     // Private Data
 
+        //- Edge-interpolation scheme
         tmp<edgeInterpolationScheme<Type>> tScheme_;
 
 
@@ -67,6 +66,16 @@ public:
 
     //- Runtime type information
     TypeName("skewCorrected");
+
+
+    // Generated Methods
+
+        //- No copy construct
+        skewCorrectedEdgeInterpolation(const skewCorrectedEdgeInterpolation&)
+            = delete;
+
+        //- No copy assignment
+        void operator=(const skewCorrectedEdgeInterpolation&) = delete;
 
 
     // Constructors
@@ -96,13 +105,6 @@ public:
             )
         {}
 
-        //- No copy construct
-        skewCorrectedEdgeInterpolation(const skewCorrectedEdgeInterpolation&) =
-            delete;
-
-        //- No copy assignment
-        void operator=(const skewCorrectedEdgeInterpolation&) = delete;
-
 
     // Member Functions
 
@@ -115,7 +117,7 @@ public:
             return tScheme_().weights(vf);
         }
 
-         //- Return true if this scheme uses an explicit correction
+        //- Return true if this scheme uses an explicit correction
         virtual bool corrected() const
         {
             return

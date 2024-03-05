@@ -69,22 +69,13 @@ public:
     // Member Functions
 
         //- Return size. Number of faces
-        static label size(const Mesh& mesh)
-        {
-            return mesh.nFaces();
-        }
+        static label size(const Mesh& mesh) { return mesh.nFaces(); }
 
         //- Return size. Number of faces
-        label size() const
-        {
-            return size(mesh_);
-        }
+        label size() const { return size(mesh_); }
 
         //- Field of face centres
-        const areaVectorField& C() const
-        {
-            return mesh_.areaCentres();
-        }
+        const areaVectorField& C() const { return mesh_.areaCentres(); }
 };
 
 

@@ -62,19 +62,19 @@ class leastSquaresFaGrad
 :
     public fa::gradScheme<Type>
 {
-    // Private Member Functions
+public:
+
+    //- Runtime type information
+    TypeName("leastSquares");
+
+
+    // Generated Methods
 
         //- No copy construct
         leastSquaresFaGrad(const leastSquaresFaGrad&) = delete;
 
         //- No copy assignment
         void operator=(const leastSquaresFaGrad&) = delete;
-
-
-public:
-
-    //- Runtime type information
-    TypeName("leastSquares");
 
 
     // Constructors

@@ -73,7 +73,7 @@ class faMeshDistributor
         const mapDistributePolyMesh& distMap_;
 
         //- Internal edge mapper
-        mutable std::unique_ptr<mapDistributeBase> internalEdgeMap_;
+        mutable std::unique_ptr<mapDistributeBase> internalEdgeMapPtr_;
 
         //- Patch edge mappers
         mutable PtrList<mapDistributeBase> patchEdgeMaps_;
@@ -99,6 +99,7 @@ class faMeshDistributor
         //- Debug: check addressing
         void checkAddressing() const;
 
+        //- Construct reconstruct mapping
         static mapDistributePolyMesh createReconstructMap
         (
             const faMesh& mesh,

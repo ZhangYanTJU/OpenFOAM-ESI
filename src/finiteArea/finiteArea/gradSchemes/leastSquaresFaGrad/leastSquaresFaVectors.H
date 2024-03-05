@@ -43,7 +43,6 @@ SourceFiles
 #include "MeshObject.H"
 #include "faMesh.H"
 #include "edgeFieldsFwd.H"
-#include "labelPair.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -58,14 +57,14 @@ class leastSquaresFaVectors
 :
     public MeshObject<faMesh, Foam::MoveableMeshObject, leastSquaresFaVectors>
 {
-    // Private data
+    // Private Data
 
         //- Least-squares gradient vectors
-        mutable edgeVectorField* pVectorsPtr_;
-        mutable edgeVectorField* nVectorsPtr_;
+        mutable std::unique_ptr<edgeVectorField> pVectorsPtr_;
+        mutable std::unique_ptr<edgeVectorField> nVectorsPtr_;
 
 
-    // Private member functions
+    // Private Member Functions
 
         //- Construct Least-squares gradient vectors
         void makeLeastSquaresVectors() const;
@@ -84,7 +83,7 @@ public:
 
 
     //- Destructor
-    virtual ~leastSquaresFaVectors();
+    virtual ~leastSquaresFaVectors() = default;
 
 
     // Member functions
