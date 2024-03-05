@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,6 +62,11 @@ template<class T> class CompactListList;
 
 template<class T> Istream& operator>>(Istream&, CompactListList<T>&);
 template<class T> Ostream& operator<<(Ostream&, const CompactListList<T>&);
+
+// Common list types
+
+//! A CompactListList of labels
+typedef CompactListList<label> labelCompactListList;
 
 
 /*---------------------------------------------------------------------------*\
@@ -422,17 +427,17 @@ public:
 
     // Row-based access
 
+        //- Return const access to sub-list (no subscript checking)
+        inline const SubList<T> localList(const label i) const;
+
         //- Return non-const access to sub-list (no subscript checking)
-        inline UList<T> localList(const label i);
+        inline SubList<T> localList(const label i);
 
         //- Return const access to sub-list (no subscript checking)
-        inline const UList<T> localList(const label i) const;
+        inline const SubList<T> operator[](const label i) const;
 
-        //- Return row as UList - same as localList method
-        inline UList<T> operator[](const label i);
-
-        //- Return row as const UList - same as localList method
-        inline const UList<T> operator[](const label i) const;
+        //- Return non-const access to sub-list (no subscript checking)
+        inline SubList<T> operator[](const label i);
 
 
     // Element access

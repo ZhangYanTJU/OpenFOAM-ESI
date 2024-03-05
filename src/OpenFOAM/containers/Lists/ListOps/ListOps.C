@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ListOps.H"
+#include "CompactListList.H"
 #include "HashSet.H"
 #include <numeric>
 
@@ -168,6 +169,54 @@ Foam::labelListList Foam::invertOneToMany
         if (newIdx >= 0)
         {
             inverse[newIdx][sizes[newIdx]++] = i;
+        }
+
+        ++i;
+    }
+
+    return inverse;
+}
+
+
+Foam::CompactListList<Foam::label>
+Foam::invertOneToManyCompact
+(
+    const label len,
+    const labelUList& map
+)
+{
+    labelList sizes(len, Foam::zero{});
+
+    for (const label newIdx : map)
+    {
+        if (newIdx >= 0)
+        {
+            #ifdef FULLDEBUG
+            if (newIdx >= len)
+            {
+                FatalErrorInFunction
+                    << "Inverse location " << newIdx
+                    << " is out of range. List has size " << len
+                    << abort(FatalError);
+            }
+            #endif
+
+            ++sizes[newIdx];
+        }
+    }
+
+    CompactListList<label> inverse(sizes);
+
+    // Reuse sizes as output offset into inverse.values()
+    sizes = labelList::subList(inverse.offsets(), inverse.size());
+    labelList& values = inverse.values();
+
+    label i = 0;
+    for (const label newIdx : map)
+    {
+        if (newIdx >= 0)
+        {
+            values[sizes[newIdx]++] = i;
         }
 
         ++i;

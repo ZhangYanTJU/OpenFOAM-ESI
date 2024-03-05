@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -79,7 +79,6 @@ inline Foam::CompactListList<T>::CompactListList
     offsets_(list.offsets_, reuse),
     values_(list.values_, reuse)
 {}
-
 
 
 template<class T>
@@ -259,16 +258,16 @@ inline Foam::label Foam::CompactListList<T>::localSize(const label i) const
 
 
 template<class T>
-inline Foam::UList<T>
-Foam::CompactListList<T>::localList(const label i)
+inline const Foam::SubList<T>
+Foam::CompactListList<T>::localList(const label i) const
 {
     return SubList<T>(values_, (offsets_[i+1] - offsets_[i]), offsets_[i]);
 }
 
 
 template<class T>
-inline const Foam::UList<T>
-Foam::CompactListList<T>::localList(const label i) const
+inline Foam::SubList<T>
+Foam::CompactListList<T>::localList(const label i)
 {
     return SubList<T>(values_, (offsets_[i+1] - offsets_[i]), offsets_[i]);
 }
@@ -476,17 +475,19 @@ inline void Foam::CompactListList<T>::operator=(const Foam::zero)
 
 
 template<class T>
-inline Foam::UList<T>
-Foam::CompactListList<T>::operator[](const label i)
+inline const Foam::SubList<T>
+Foam::CompactListList<T>::operator[](const label i) const
 {
+    // return SubList<T>(values_, (offsets_[i+1] - offsets_[i]), offsets_[i]);
     return this->localList(i);
 }
 
 
 template<class T>
-inline const Foam::UList<T>
-Foam::CompactListList<T>::operator[](const label i) const
+inline Foam::SubList<T>
+Foam::CompactListList<T>::operator[](const label i)
 {
+    // return SubList<T>(values_, (offsets_[i+1] - offsets_[i]), offsets_[i]);
     return this->localList(i);
 }
 

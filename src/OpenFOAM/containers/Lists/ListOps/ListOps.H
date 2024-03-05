@@ -59,6 +59,10 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
+template<class T> class CompactListList;
+
+
 //- Renumber the values within a list.
 //  Negative input values are left untouched.
 template<class IntListType>
@@ -377,6 +381,13 @@ Map<label> invertToMap(const labelUList& values);
 
 //- Invert one-to-many map. Unmapped elements will be size 0.
 labelListList invertOneToMany(const label len, const labelUList& map);
+
+//- Invert one-to-many compact map. Unmapped elements will be size 0.
+CompactListList<label> invertOneToManyCompact
+(
+    const label len,
+    const labelUList& map
+);
 
 //- Invert many-to-many.
 //  Input and output types must be inherited from List and also
