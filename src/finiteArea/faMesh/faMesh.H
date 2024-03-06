@@ -94,8 +94,8 @@ class faMesh
     public objectRegistry,
     public lduMesh,
     public faSchemes,
-    public edgeInterpolation,  // may need input from faSchemes
-    public faSolution
+    public faSolution,
+    public edgeInterpolation  // may need input from faSchemes
 {
     // Private (internal) classes/structures
 
