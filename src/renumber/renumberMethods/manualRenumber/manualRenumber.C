@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,14 +28,13 @@ License
 
 #include "manualRenumber.H"
 #include "addToRunTimeSelectionTable.H"
-#include "IFstream.H"
 #include "labelIOList.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(manualRenumber, 0);
+    defineTypeName(manualRenumber);
 
     addToRunTimeSelectionTable
     (
@@ -48,12 +47,19 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::manualRenumber::manualRenumber(const fileName& file)
+:
+    renumberMethod(),
+    dataFile_(file)
+{}
+
+
 Foam::manualRenumber::manualRenumber(const dictionary& dict)
 :
     renumberMethod(dict),
     dataFile_
     (
-        dict.optionalSubDict(typeName+"Coeffs").get<fileName>("dataFile")
+        dict.optionalSubDict(typeName + "Coeffs").get<fileName>("dataFile")
     )
 {}
 

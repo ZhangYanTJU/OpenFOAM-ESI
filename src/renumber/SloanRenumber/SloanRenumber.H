@@ -55,16 +55,8 @@ class SloanRenumber
 {
     // Private Data
 
-        const bool reverse_;
-
-
-    // Private Member Functions
-
-        //- No copy construct
-        SloanRenumber(const SloanRenumber&) = delete;
-
-        //- No copy assignment
-        void operator=(const SloanRenumber&) = delete;
+        //- Use reverse indexing
+        bool reverse_;
 
 
 public:
@@ -75,6 +67,9 @@ public:
 
     // Constructors
 
+        //- Default construct, optionally with reverse
+        explicit SloanRenumber(const bool reverse = false);
+
         //- Construct given the renumber dictionary
         explicit SloanRenumber(const dictionary& dict);
 
@@ -84,6 +79,13 @@ public:
 
 
     // Member Functions
+
+        //- Toggle reverse on/off
+        void reverse(bool on) noexcept { reverse_ = on; }
+
+        //- The renumbering method does not require a polyMesh
+        virtual bool needs_mesh() const { return false; }
+
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).

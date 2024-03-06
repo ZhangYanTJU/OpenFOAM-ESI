@@ -72,6 +72,9 @@ class springRenumber
 
         const scalar freezeFraction_;
 
+        //- Verbose reporting of progress
+        bool verbose_;
+
 
     // Private Member Functions
 

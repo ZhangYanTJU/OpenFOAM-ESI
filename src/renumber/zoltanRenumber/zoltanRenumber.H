@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,6 +82,10 @@ public:
 
 
     // Member Functions
+
+        //- Renumbering method requires a polyMesh
+        virtual bool needs_mesh() const { return true; }
+
 
         //- Return the order in which cells need to be visited
         //- (ie. from ordered back to original cell label).

@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2312                                 |
+|  \\    /   O peration     | Version:  v2406                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -15,8 +15,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Write maps from renumbered back to original mesh
-writeMaps false;
+// Additional libraries
+//libs        (SloanRenumber);
+//libs        (zoltanRenumber);
+
+// Optional entry: write maps from renumbered back to original mesh
+writeMaps   false;
 
 // Optional entry: sort cells on coupled boundaries to last for use with
 // e.g. nonBlockingGaussSeidel.
@@ -36,61 +40,66 @@ sortCoupledFaceCells false;
 
 
 method          CuthillMcKee;
-//method          Sloan;
+//method          RCM;  // == reverseCuthillMcKee;
+//method          Sloan;        //<-  libs (zoltanRenumber);
 //method          manual;
 //method          random;
 //method          structured;
 //method          spring;
-//method          zoltan;             // only if compiled with zoltan support
+//method          zoltan;       //<-  libs (zoltanRenumber);
 
 //CuthillMcKeeCoeffs
 //{
-//    // Reverse CuthillMcKee (RCM) or plain
-//    reverse true;
+//    // Plain or reverse CuthillMcKee (RCM)
+//    reverse     true;
 //}
 
 manualCoeffs
 {
     // In system directory: new-to-original (i.e. order) labelIOList
-    dataFile "cellMap";
+    dataFile    "cellMap";
 }
 
 
 // For extruded (i.e. structured in one direction) meshes
 structuredCoeffs
 {
-    // Patches that mesh was extruded from. These determine the starting
-    // layer of cells
-    patches (movingWall);
+    // Patches that mesh was extruded from.
+    // These determine the starting layer of cells
+    patches     (movingWall);
+
     // Method to renumber the starting layer of cells
-    method  random;
+    method      random;
 
     // Renumber in columns (depthFirst) or in layers
-    depthFirst true;
+    depthFirst  true;
 
     // Reverse ordering
-    reverse false;
+    reverse     false;
 }
 
 
 springCoeffs
 {
     // Maximum jump of cell indices. Is fraction of number of cells
-    maxCo 0.01;
+    maxCo       0.01;
 
     // Limit the amount of movement; the fraction maxCo gets decreased
     // with every iteration
     freezeFraction 0.999;
 
     // Maximum number of iterations
-    maxIter 1000;
+    maxIter    1000;
+
+    // Enable/disable verbosity
+    verbose    true;
 }
 
 
 blockCoeffs
 {
-    method          scotch;
-    //method hierarchical;
+    method      scotch;
+    //method      hierarchical;
     //hierarchicalCoeffs
     //{
     //    n           (1 2 1);
