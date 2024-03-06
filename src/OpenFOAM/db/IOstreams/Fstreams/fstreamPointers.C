@@ -60,9 +60,6 @@ bool Foam::ofstreamPointer::supports_gz() noexcept
 }
 
 
-// Future: List<char> slurpFile(....);
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::ifstreamPointer::ifstreamPointer
