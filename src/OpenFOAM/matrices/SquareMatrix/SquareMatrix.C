@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2013-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -124,7 +124,7 @@ scalar det(const SquareMatrix<Type>& matrix)
 {
     SquareMatrix<Type> matrixTmp = matrix;
 
-    labelList pivotIndices(matrix.m());
+    labelList pivotIndices;
     label sign;
     LUDecompose(matrixTmp, pivotIndices, sign);
 
@@ -136,7 +136,7 @@ scalar det(const SquareMatrix<Type>& matrix)
 template<class Type>
 scalar det(SquareMatrix<Type>& matrix)
 {
-    labelList pivotIndices(matrix.m());
+    labelList pivotIndices;
     label sign;
     LUDecompose(matrix, pivotIndices, sign);
 

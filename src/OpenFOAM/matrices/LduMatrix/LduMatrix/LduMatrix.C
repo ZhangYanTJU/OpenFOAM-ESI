@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -33,109 +34,86 @@ License
 template<class Type, class DType, class LUType>
 Foam::LduMatrix<Type, DType, LUType>::LduMatrix(const lduMesh& mesh)
 :
-    lduMesh_(mesh),
-    diagPtr_(nullptr),
-    upperPtr_(nullptr),
-    lowerPtr_(nullptr),
-    sourcePtr_(nullptr),
-    interfaces_(0),
-    interfacesUpper_(0),
-    interfacesLower_(0)
+    lduMesh_(mesh)
 {}
 
 
 template<class Type, class DType, class LUType>
 Foam::LduMatrix<Type, DType, LUType>::LduMatrix(const LduMatrix& A)
 :
-    lduMesh_(A.lduMesh_),
-    diagPtr_(nullptr),
-    upperPtr_(nullptr),
-    lowerPtr_(nullptr),
-    sourcePtr_(nullptr),
-    interfaces_(0),
-    interfacesUpper_(0),
-    interfacesLower_(0)
+    lduMesh_(A.lduMesh_)
 {
     if (A.diagPtr_)
     {
-        diagPtr_ = new Field<DType>(*(A.diagPtr_));
+        diagPtr_ = std::make_unique<Field<DType>>(*(A.diagPtr_));
     }
 
     if (A.upperPtr_)
     {
-        upperPtr_ = new Field<LUType>(*(A.upperPtr_));
+        upperPtr_ = std::make_unique<Field<LUType>>(*(A.upperPtr_));
     }
 
     if (A.lowerPtr_)
     {
-        lowerPtr_ = new Field<LUType>(*(A.lowerPtr_));
+        lowerPtr_ = std::make_unique<Field<LUType>>(*(A.lowerPtr_));
     }
 
     if (A.sourcePtr_)
     {
-        sourcePtr_ = new Field<Type>(*(A.sourcePtr_));
+        sourcePtr_ = std::make_unique<Field<Type>>(*(A.sourcePtr_));
     }
+}
+
+
+template<class Type, class DType, class LUType>
+Foam::LduMatrix<Type, DType, LUType>::LduMatrix(LduMatrix&& A)
+:
+    lduMesh_(A.lduMesh_),
+    diagPtr_(std::move(A.diagPtr_)),
+    lowerPtr_(std::move(A.lowerPtr_)),
+    upperPtr_(std::move(A.upperPtr_)),
+    sourcePtr_(std::move(A.sourcePtr_))
+{
+    // Clear the old interfaces?
 }
 
 
 template<class Type, class DType, class LUType>
 Foam::LduMatrix<Type, DType, LUType>::LduMatrix(LduMatrix& A, bool reuse)
 :
-    lduMesh_(A.lduMesh_),
-    diagPtr_(nullptr),
-    upperPtr_(nullptr),
-    lowerPtr_(nullptr),
-    sourcePtr_(nullptr),
-    interfaces_(0),
-    interfacesUpper_(0),
-    interfacesLower_(0)
+    lduMesh_(A.lduMesh_)
 {
     if (reuse)
     {
-        if (A.diagPtr_)
-        {
-            diagPtr_ = A.diagPtr_;
-            A.diagPtr_ = nullptr;
-        }
+        // Move assignment
+        diagPtr_ = std::move(A.diagPtr_);
+        upperPtr_ = std::move(A.upperPtr_);
+        lowerPtr_ = std::move(A.lowerPtr_);
+        sourcePtr_ = std::move(A.sourcePtr_);
 
-        if (A.upperPtr_)
-        {
-            upperPtr_ = A.upperPtr_;
-            A.upperPtr_ = nullptr;
-        }
-
-        if (A.lowerPtr_)
-        {
-            lowerPtr_ = A.lowerPtr_;
-            A.lowerPtr_ = nullptr;
-        }
-
-        if (A.sourcePtr_)
-        {
-            sourcePtr_ = A.sourcePtr_;
-            A.sourcePtr_ = nullptr;
-        }
+        // Clear the old interfaces?
     }
     else
     {
+        // Copy assignment
         if (A.diagPtr_)
         {
-            diagPtr_ = new Field<DType>(*(A.diagPtr_));
+            diagPtr_ = std::make_unique<Field<DType>>(*(A.diagPtr_));
         }
 
         if (A.upperPtr_)
         {
-            upperPtr_ = new Field<LUType>(*(A.upperPtr_));
+            upperPtr_ = std::make_unique<Field<LUType>>(*(A.upperPtr_));
         }
 
         if (A.lowerPtr_)
         {
-            lowerPtr_ = new Field<LUType>(*(A.lowerPtr_));
+            lowerPtr_ = std::make_unique<Field<LUType>>(*(A.lowerPtr_));
         }
 
         if (A.sourcePtr_)
         {
-            sourcePtr_ = new Field<Type>(*(A.sourcePtr_));
+            sourcePtr_ = std::make_unique<Field<Type>>(*(A.sourcePtr_));
         }
     }
 }
@@ -152,109 +130,27 @@ Foam::LduMatrix<Type, DType, LUType>::LduMatrix
     diagPtr_(new Field<DType>(is)),
     upperPtr_(new Field<LUType>(is)),
     lowerPtr_(new Field<LUType>(is)),
-    sourcePtr_(new Field<Type>(is)),
-    interfaces_(0),
-    interfacesUpper_(0),
-    interfacesLower_(0)
+    sourcePtr_(new Field<Type>(is))
 {}
-
-
-// * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
-
-template<class Type, class DType, class LUType>
-Foam::LduMatrix<Type, DType, LUType>::~LduMatrix()
-{
-    if (diagPtr_)
-    {
-        delete diagPtr_;
-    }
-
-    if (upperPtr_)
-    {
-        delete upperPtr_;
-    }
-
-    if (lowerPtr_)
-    {
-        delete lowerPtr_;
-    }
-
-    if (sourcePtr_)
-    {
-        delete sourcePtr_;
-    }
-}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type, class DType, class LUType>
-Foam::Field<DType>& Foam::LduMatrix<Type, DType, LUType>::diag()
+Foam::word Foam::LduMatrix<Type, DType, LUType>::matrixTypeName() const
 {
-    if (!diagPtr_)
+    if (diagPtr_)
     {
-        diagPtr_ = new Field<DType>(lduAddr().size(), Zero);
+        return
+        (
+            (!upperPtr_)
+          ? (!lowerPtr_ ? "diagonal" : "diagonal-lower")
+          : (!lowerPtr_ ? "symmetric" : "asymmetric")
+        );
     }
 
-    return *diagPtr_;
-}
-
-
-template<class Type, class DType, class LUType>
-Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::upper()
-{
-    if (!upperPtr_)
-    {
-        if (lowerPtr_)
-        {
-            upperPtr_ = new Field<LUType>(*lowerPtr_);
-        }
-        else
-        {
-            upperPtr_ = new Field<LUType>
-            (
-                lduAddr().lowerAddr().size(),
-                Zero
-            );
-        }
-    }
-
-    return *upperPtr_;
-}
-
-
-template<class Type, class DType, class LUType>
-Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::lower()
-{
-    if (!lowerPtr_)
-    {
-        if (upperPtr_)
-        {
-            lowerPtr_ = new Field<LUType>(*upperPtr_);
-        }
-        else
-        {
-            lowerPtr_ = new Field<LUType>
-            (
-                lduAddr().lowerAddr().size(),
-                Zero
-            );
-        }
-    }
-
-    return *lowerPtr_;
-}
-
-
-template<class Type, class DType, class LUType>
-Foam::Field<Type>& Foam::LduMatrix<Type, DType, LUType>::source()
-{
-    if (!sourcePtr_)
-    {
-        sourcePtr_ = new Field<Type>(lduAddr().size(), Zero);
-    }
-
-    return *sourcePtr_;
+    // is empty (or just wrong)
+    return (!upperPtr_ && !lowerPtr_ ? "empty" : "ill-defined");
 }
 
 
@@ -273,44 +169,104 @@ const Foam::Field<DType>& Foam::LduMatrix<Type, DType, LUType>::diag() const
 
 
 template<class Type, class DType, class LUType>
-const Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::upper() const
+Foam::Field<DType>& Foam::LduMatrix<Type, DType, LUType>::diag()
 {
-    if (!lowerPtr_ && !upperPtr_)
+    if (!diagPtr_)
     {
-        FatalErrorInFunction
-            << "lowerPtr_ or upperPtr_ unallocated"
-            << abort(FatalError);
+        diagPtr_ =
+            std::make_unique<Field<DType>>(lduAddr().size(), Foam::zero{});
     }
 
+    return *diagPtr_;
+}
+
+
+template<class Type, class DType, class LUType>
+const Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::upper() const
+{
     if (upperPtr_)
     {
         return *upperPtr_;
     }
     else
     {
+        if (!lowerPtr_)
+        {
+            FatalErrorInFunction
+                << "lowerPtr_ and upperPtr_ unallocated"
+                << abort(FatalError);
+        }
+
         return *lowerPtr_;
     }
 }
 
 
 template<class Type, class DType, class LUType>
-const Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::lower() const
+Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::upper()
 {
-    if (!lowerPtr_ && !upperPtr_)
+    if (!upperPtr_)
     {
-        FatalErrorInFunction
-            << "lowerPtr_ or upperPtr_ unallocated"
-            << abort(FatalError);
+        if (lowerPtr_)
+        {
+            upperPtr_ = std::make_unique<Field<LUType>>(*lowerPtr_);
+        }
+        else
+        {
+            upperPtr_ =
+                std::make_unique<Field<LUType>>
+                (
+                    lduAddr().lowerAddr().size(),
+                    Foam::zero{}
+                );
+        }
     }
 
+    return *upperPtr_;
+}
+
+
+template<class Type, class DType, class LUType>
+const Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::lower() const
+{
     if (lowerPtr_)
     {
         return *lowerPtr_;
     }
     else
     {
+        if (!upperPtr_)
+        {
+            FatalErrorInFunction
+                << "lowerPtr_ and upperPtr_ unallocated"
+                << abort(FatalError);
+        }
+
         return *upperPtr_;
     }
+}
+
+
+template<class Type, class DType, class LUType>
+Foam::Field<LUType>& Foam::LduMatrix<Type, DType, LUType>::lower()
+{
+    if (!lowerPtr_)
+    {
+        if (upperPtr_)
+        {
+            lowerPtr_ = std::make_unique<Field<LUType>>(*upperPtr_);
+        }
+        else
+        {
+            lowerPtr_ = std::make_unique<Field<LUType>>
+            (
+                lduAddr().lowerAddr().size(),
+                Foam::zero{}
+            );
+        }
+    }
+
+    return *lowerPtr_;
 }
 
 
@@ -328,45 +284,65 @@ const Foam::Field<Type>& Foam::LduMatrix<Type, DType, LUType>::source() const
 }
 
 
+template<class Type, class DType, class LUType>
+Foam::Field<Type>& Foam::LduMatrix<Type, DType, LUType>::source()
+{
+    if (!sourcePtr_)
+    {
+        sourcePtr_ =
+            std::make_unique<Field<Type>>(lduAddr().size(), Foam::zero{});
+    }
+
+    return *sourcePtr_;
+}
+
+
 // * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+// template<class Type, class DType, class LUType>
+// Foam::Ostream& Foam::operator<<
+// (
+//     Ostream& os,
+//     const InfoProxy<Type, DType, LUType>& iproxy
+// )
+// {
+//     const auto& mat = *iproxy;
+//
+//     ...
+//
+//     os.check(FUNCTION_NAME);
+//     return os;
+// }
+
 
 template<class Type, class DType, class LUType>
 Foam::Ostream& Foam::operator<<
 (
     Ostream& os,
-    const LduMatrix<Type, DType, LUType>& ldum
+    const LduMatrix<Type, DType, LUType>& mat
 )
 {
-    if (ldum.diagPtr_)
+    if (mat.hasDiag())
     {
-        os  << "Diagonal = "
-            << *ldum.diagPtr_
-            << endl << endl;
+        os  << "Diagonal = " << mat.diag() << nl << nl;
     }
 
-    if (ldum.upperPtr_)
+    if (mat.hasUpper())
     {
-        os  << "Upper triangle = "
-            << *ldum.upperPtr_
-            << endl << endl;
+        os  << "Upper triangle = " << mat.upper() << nl << nl;
     }
 
-    if (ldum.lowerPtr_)
+    if (mat.hasLower())
     {
-        os  << "Lower triangle = "
-            << *ldum.lowerPtr_
-            << endl << endl;
+        os  << "Lower triangle = " << mat.lower() << nl << nl;
     }
 
-    if (ldum.sourcePtr_)
+    if (mat.hasSource())
     {
-        os  << "Source = "
-            << *ldum.sourcePtr_
-            << endl << endl;
+        os  << "Source = " << mat.source() << nl << nl;
     }
 
     os.check(FUNCTION_NAME);
-
     return os;
 }
 

@@ -216,7 +216,7 @@ void Foam::LUsolve
     List<Type>& sourceSol
 )
 {
-    labelList pivotIndices(matrix.m());
+    labelList pivotIndices;
     LUDecompose(matrix, pivotIndices);
     LUBacksubstitute(matrix, pivotIndices, sourceSol);
 }
