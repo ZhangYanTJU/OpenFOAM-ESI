@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +28,8 @@ License
 
 #include "primitiveEntry.H"
 #include "dictionary.H"
-#include "StringStream.H"
+#include "SpanStream.H"
+#include "StringStream.H"  // Legacy include, perhaps expected elsewhere
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -37,9 +39,9 @@ Foam::primitiveEntry::primitiveEntry(const keyType& key, const T& val)
     entry(key),
     ITstream(IOstreamOption(), key)
 {
-    OStringStream os;
+    OCharStream os;
     os  << val << token::END_STATEMENT;
-    IStringStream is(os.str());
+    ISpanStream is(os.view());
     readEntry(dictionary::null, is);
 }
 

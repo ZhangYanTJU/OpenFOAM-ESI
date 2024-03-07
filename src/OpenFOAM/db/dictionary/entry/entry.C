@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2021 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -28,7 +28,7 @@ License
 
 #include "entry.H"
 #include "dictionary.H"
-#include "StringStream.H"
+#include "SpanStream.H"
 #include "JobInfo.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -206,14 +206,23 @@ bool Foam::entry::operator==(const entry& e) const
     }
 
     // Compare contents (as strings)
+    OCharStream content1;
+    content1 << *this;
 
-    OStringStream oss1;
-    oss1 << *this;
+    OCharStream content2;
+    content2 << e;
 
-    OStringStream oss2;
-    oss2 << e;
-
-    return oss1.str() == oss2.str();
+    return
+    (
+        content1.view().size() == content2.view().size()
+     &&
+        std::equal
+        (
+            content1.view().begin(),
+            content1.view().end(),
+            content2.view().begin()
+        )
+    );
 }
 
 
