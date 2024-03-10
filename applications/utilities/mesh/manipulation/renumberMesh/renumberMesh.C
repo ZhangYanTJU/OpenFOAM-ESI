@@ -123,6 +123,7 @@ Usage
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "clockTime.H"
 #include "timeSelector.H"
 #include "IOobjectList.H"
 #include "fvMesh.H"
@@ -146,6 +147,24 @@ Usage
 #include "polyMeshTools.H"
 
 using namespace Foam;
+
+// Slightly messy way of handling timing, but since the timing points
+// are scattered between 'main()' and other local functions...
+
+clockTime timer;
+
+// Timing categories
+enum TimingType
+{
+    READ_MESH,    // Reading mesh
+    READ_FIELDS,  // Reading fields
+    DECOMPOSE,    // Domain decomposition (if any)
+    CELL_CELLS,   // globalMeshData::calcCellCells
+    RENUMBER,     // The renumberMethod
+    REORDER,      // Mesh reordering (topoChange)
+    WRITING,      // Writing mesh/fields
+};
+FixedList<double, 8> timings;
 
 
 // Create named field from labelList for post-processing
@@ -205,8 +224,8 @@ void getBand
     scalar& sumSqrIntersect     // scalar to avoid overflow
 )
 {
-    labelList cellBandwidth(nCells, Zero);
-    scalarField nIntersect(nCells, Zero);
+    labelList cellBandwidth(nCells, Foam::zero{});
+    scalarField nIntersect(nCells, Foam::zero{});
 
     forAll(neighbour, facei)
     {
@@ -627,8 +646,33 @@ CompactListList<label> regionRenumber
         invertOneToManyCompact(nRegions, cellToRegion)
     );
 
-    if (method.needs_mesh())
+    if (method.no_topology())
     {
+        // Special case when renumberMesh is only used for decomposition.
+        // - can skip generating the connectivity
+        // - nonetheless calculate the order in case it is non-identity
+
+        timer.resetTimeIncrement();
+
+        forAll(regionCellOrder, regioni)
+        {
+            // Note: cellMap is identical to regionToCells[regioni]
+            // since it is already sorted
+
+            labelList subCellOrder =
+                method.renumber(regionCellOrder[regioni].size());
+
+            // Per region reordering (inplace but with SubList)
+            regionCellOrder[regioni] =
+                labelUIndList(regionCellOrder[regioni], subCellOrder)();
+        }
+
+        timings[TimingType::RENUMBER] += timer.timeIncrement();
+    }
+    else if (method.needs_mesh())
+    {
+        timer.resetTimeIncrement();
+
         forAll(regionCellOrder, regioni)
         {
             // Info<< "    region " << regioni
@@ -645,20 +689,20 @@ CompactListList<label> regionRenumber
             // (assuming they are properly sorted!)
             const labelList& cellMap = subsetter.cellMap();
 
-            labelList subCellOrder = method.renumber
-            (
-                subsetter.subMesh(),
-                subsetter.subMesh().cellCentres()
-            );
+            labelList subCellOrder = method.renumber(subsetter.subMesh());
 
             UPstream::parRun(oldParRun);  // Restore parallel state
 
             // Per region reordering
             regionCellOrder[regioni] = labelUIndList(cellMap, subCellOrder);
         }
+
+        timings[TimingType::RENUMBER] += timer.timeIncrement();
     }
     else
     {
+        timer.resetTimeIncrement();
+
         forAll(regionCellOrder, regioni)
         {
             // Info<< "    region " << regioni
@@ -677,17 +721,16 @@ CompactListList<label> regionRenumber
                 cellCells
             );
 
-            // Note: cellCentres not needed by every renumber method
-            labelList subCellOrder = method.renumber
-            (
-                cellCells,
-                pointField(mesh.cellCentres(), cellMap)
-            );
+            timings[TimingType::CELL_CELLS] += timer.timeIncrement();
+
+            labelList subCellOrder = method.renumber(cellCells);
 
             UPstream::parRun(oldParRun);  // Restore parallel state
 
             // Per region reordering
             regionCellOrder[regioni] = labelUIndList(cellMap, subCellOrder);
+
+            timings[TimingType::RENUMBER] += timer.timeIncrement();
         }
     }
     // Info<< endl;
@@ -832,7 +875,14 @@ int main(int argc, char *argv[])
 
     runTime.setTime(Times[startTime], startTime);
 
+
+    // Start/reset all timings
+    timer.resetTime();
+    timings = Foam::zero{};
+
     #include "createNamedMeshes.H"
+
+    timings[TimingType::READ_MESH] += timer.timeIncrement();
 
 
     for (fvMesh& mesh : meshes)
@@ -881,6 +931,7 @@ int main(int argc, char *argv[])
         bool sortCoupledFaceCells = false;
         bool writeMaps = args.found("write-maps");
         bool orderPoints = false;
+        bool useRegionFaceOrder = false;
         label blockSize = 0;
 
         // Construct renumberMethod
@@ -919,6 +970,12 @@ int main(int argc, char *argv[])
                         << " ordering faces into region-internal"
                         << " and region-external."
                         << nl << endl;
+                }
+
+                if (blockSize > 0)
+                {
+                    useRegionFaceOrder =
+                        renumberDict.getOrDefault("regionFaceOrder", false);
                 }
             }
 
@@ -969,12 +1026,12 @@ int main(int argc, char *argv[])
         {
             renumberPtr.reset(new CuthillMcKeeRenumber(renumberDict));
             Info<< "Using renumber-method: " << renumberPtr().type()
-                << " [default]" << nl << endl;
+                << " [default]" << endl;
         }
         else
         {
             Info<< "Using renumber-method: " << renumberPtr().type()
-                << nl << endl;
+                << endl;
         }
 
 
@@ -1042,6 +1099,10 @@ int main(int argc, char *argv[])
 
         if (!dryrun && doFields)
         {
+            Info<< nl << "Reading fields" << nl;
+
+            timer.resetTimeIncrement();
+
             objects = IOobjectList(mesh, runTime.timeName());
             storedObjects.reserve(objects.size());
 
@@ -1089,6 +1150,8 @@ int main(int argc, char *argv[])
 
             #undef ReadFields
             #undef ReadPointFields
+
+            timings[TimingType::READ_FIELDS] += timer.timeIncrement();
         }
 
 
@@ -1116,6 +1179,8 @@ int main(int argc, char *argv[])
 
         if (blockSize > 0 && !doDecompose)
         {
+            timer.resetTimeIncrement();
+
             // Renumbering in two phases. Should be done in one so mapping of
             // fields is done correctly!
 
@@ -1143,6 +1208,7 @@ int main(int argc, char *argv[])
 
             UPstream::parRun(oldParRun);  // Restore parallel state
 
+            timings[TimingType::DECOMPOSE] += timer.timeIncrement();
 
             // For debugging: write out region
             createScalarField
@@ -1163,12 +1229,14 @@ int main(int argc, char *argv[])
             cellOrder = regionCellOrder.values();
 
             // Determine new to old face order with new cell numbering
-            faceOrder = getRegionFaceOrder
-            (
-                mesh,
-                cellOrder,
-                cellToRegion
-            );
+            if (useRegionFaceOrder)
+            {
+                faceOrder = getRegionFaceOrder(mesh, cellOrder, cellToRegion);
+            }
+            else
+            {
+                faceOrder = getFaceOrder(mesh, cellOrder);
+            }
         }
         else
         {
@@ -1177,6 +1245,8 @@ int main(int argc, char *argv[])
                 // Two-step renumbering.
                 // 1. decompose into regions (like decomposePar)
                 // 2. renumber each sub-region
+
+                timer.resetTimeIncrement();
 
                 // Read decompositionMethod dictionary
                 IOdictionary decomposeDict
@@ -1212,6 +1282,8 @@ int main(int argc, char *argv[])
                     )
                 );
 
+                timings[TimingType::DECOMPOSE] += timer.timeIncrement();
+
                 UPstream::parRun(oldParRun);  // Restore parallel state
 
                 CompactListList<label> regionCellOrder =
@@ -1236,11 +1308,21 @@ int main(int argc, char *argv[])
             else
             {
                 // Determines sorted back to original cell ordering
-                cellOrder = renumberPtr().renumber
-                (
-                    mesh,
-                    mesh.cellCentres()
-                );
+
+                const auto& method = renumberPtr();
+
+                timer.resetTimeIncrement();
+
+                if (method.no_topology())
+                {
+                    cellOrder = method.renumber(mesh.nCells());
+                }
+                else
+                {
+                    cellOrder = method.renumber(mesh);
+                }
+
+                timings[TimingType::RENUMBER] += timer.timeIncrement();
             }
 
 
@@ -1321,11 +1403,7 @@ int main(int argc, char *argv[])
 
 
             // Determine new to old face order with new cell numbering
-            faceOrder = getFaceOrder
-            (
-                mesh,
-                cellOrder      // New to old cell
-            );
+            faceOrder = getFaceOrder(mesh, cellOrder);
         }
 
 
@@ -1681,6 +1759,8 @@ int main(int argc, char *argv[])
         }
         else
         {
+            timer.resetTimeIncrement();
+
             if (overwrite)
             {
                 mesh.setInstance(oldInstance);
@@ -1719,6 +1799,8 @@ int main(int argc, char *argv[])
             topoSet::updateMesh(mesh.facesInstance(), map(), pointSets);
 
             mesh.write();
+
+            timings[TimingType::WRITING] += timer.timeIncrement();
 
             if (writeMaps)
             {
@@ -1770,6 +1852,19 @@ int main(int argc, char *argv[])
             storedObjects.pop_back();
         }
     }
+
+    Info<< nl
+        << "Timings:" << nl
+        << "    read mesh   : " << timings[TimingType::READ_MESH] << nl
+        << "    read fields : " << timings[TimingType::READ_FIELDS] << nl
+        << "    decompose   : " << timings[TimingType::DECOMPOSE] << nl
+        << "    cell-cells  : " << timings[TimingType::CELL_CELLS] << nl
+        << "    renumber    : " << timings[TimingType::RENUMBER] << nl
+        << "    write       : " << timings[TimingType::WRITING] << nl
+        << "TotalTime = " << timer.elapsedTime() << " s" << nl
+        << nl;
+
+    runTime.printExecutionTime(Info);
 
     Info<< "End\n" << endl;
 

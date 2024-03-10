@@ -98,72 +98,99 @@ public:
 
     // Member Functions
 
-        //- Does renumbering method require a polyMesh?
+        //- Renumbering method without mesh or cell-cell topology
+        //- (very special case)
+        virtual bool no_topology() const { return false; }
+
+        //- Renumbering method requires a polyMesh for its topology
         virtual bool needs_mesh() const { return false; }
 
 
     // No topology
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  This is only defined for geometric renumber methods.
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- based solely on the number of cells.
+        //  Only applicable for no_topology() methods.
+        virtual labelList renumber(const label nCells) const;
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- based solely on the cell centres (or number of cell centres).
+        //  Only applicable for no_topology() methods.
         virtual labelList renumber(const pointField&) const;
 
 
-    // Topology provided by mesh
+    // With mesh topology
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Use the mesh connectivity (if needed)
-        virtual labelList renumber(const polyMesh&, const pointField&) const;
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the mesh to determine the connectivity.
+        virtual labelList renumber(const polyMesh& mesh) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Gets passed agglomeration map (from fine to coarse cells) and coarse
-        //  cell
-        //  location. Can be overridden by renumberMethods that provide this
-        //  functionality natively. Coarse cells are local to the processor
-        //  (if in parallel). If you want to have coarse cells spanning
-        //  processors use the globalCellCells instead.
+
+    // With explicit topology
+
+        //- Return the cell visit order (from ordered back to original cell id),
+        virtual labelList renumber
+        (
+            //! Mesh connectivity
+            const CompactListList<label>& cellCells
+        ) const = 0;
+
+        //- Return the cell visit order (from ordered back to original cell id),
+        virtual labelList renumber
+        (
+            //! Mesh connectivity
+            const labelListList& cellCells
+        ) const = 0;
+
+
+    // Housekeeping
+
+        //- Deprecated - the pointField is unused
+        //  \deprecated(2024-03) the pointField is unused
+        FOAM_DEPRECATED_FOR(2024-03, "renumber(const polyMesh&)")
         virtual labelList renumber
         (
             const polyMesh& mesh,
-            const labelList& fineToCoarse,
-            const pointField& coarsePoints
-        ) const;
-
-
-    // Topology provided explicitly
-
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Addressing in losort addressing (= neighbour + offsets into
-        //  neighbour)
-        virtual labelList renumber
-        (
-            const labelList& cellCells,
-            const labelList& offsets,
             const pointField&
-        ) const;
+        ) const
+        {
+            return renumber(mesh);
+        }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Uses 'unpack' internally, so should be overloaded when possible
+        //- Deprecated - the pointField is unused
+        //  \deprecated(2024-03) the pointField is unused
+        FOAM_DEPRECATED_FOR(2024-03, "renumber(const CompactListList<label>&)")
         virtual labelList renumber
         (
             const CompactListList<label>& cellCells,
-            const pointField& cellCentres
-        ) const;
+            const pointField&
+        ) const
+        {
+            return renumber(cellCells);
+        }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  The connectivity is equal to mesh.cellCells() except
-        //  - the connections are across coupled patches
+        //- Deprecated - the pointField is unused
+        //  \deprecated(2024-03) the pointField is unused
+        FOAM_DEPRECATED_FOR(2024-03, "renumber(const labelListList&)")
         virtual labelList renumber
         (
             const labelListList& cellCells,
-            const pointField& cellCentres
-        ) const = 0;
+            const pointField&
+        ) const
+        {
+            return renumber(cellCells);
+        }
+
+        //- Deprecated - renumbering with agglomeration map.
+        //- Calculate globalCellCells directly
+        //  \deprecated(2024-03) calculate globalCellCells directly
+        FOAM_DEPRECATED_FOR(2024-03, "calcCellCells and renumber separately")
+        virtual labelList renumber
+        (
+            const polyMesh& mesh,
+            const labelUList& fineToCoarse,
+            const pointField& coarsePoints
+        ) const;
 };
 
 

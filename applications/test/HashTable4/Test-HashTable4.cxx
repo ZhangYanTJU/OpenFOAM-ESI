@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
             #endif
 
             loopInsert(map, nElem);
-            (void)timer.cpuTimeIncrement();
+            timer.resetCpuTimeIncrement();
 
             unsigned long sum = 0;
             for (label loopi = 0; loopi < nFind*nLoops; ++loopi)
@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
             HashSet<label, Hash<label>> map(32);
 
             loopInsert(map, nElem);
-            (void)timer.cpuTimeIncrement();
+            timer.resetCpuTimeIncrement();
 
             unsigned long sum = 0;
             for (label loopi = 0; loopi < nFind*nLoops; ++loopi)

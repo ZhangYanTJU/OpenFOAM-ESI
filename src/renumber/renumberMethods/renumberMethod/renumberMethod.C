@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -82,10 +82,14 @@ Foam::autoPtr<Foam::renumberMethod> Foam::renumberMethod::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::labelList Foam::renumberMethod::renumber
-(
-    const pointField&
-) const
+Foam::labelList Foam::renumberMethod::renumber(const label nCells) const
+{
+    NotImplemented;
+    return labelList();
+}
+
+
+Foam::labelList Foam::renumberMethod::renumber(const pointField& cc) const
 {
     NotImplemented;
     return labelList();
@@ -94,44 +98,21 @@ Foam::labelList Foam::renumberMethod::renumber
 
 Foam::labelList Foam::renumberMethod::renumber
 (
-    const polyMesh& mesh,
-    const pointField& points
+    const polyMesh& mesh
 ) const
 {
     // Local mesh connectivity
     CompactListList<label> cellCells;
     globalMeshData::calcCellCells(mesh, cellCells);
 
-    return renumber(cellCells, points);
-}
-
-
-Foam::labelList Foam::renumberMethod::renumber
-(
-    const CompactListList<label>& cellCells,
-    const pointField& points
-) const
-{
-    return renumber(cellCells.unpack(), points);
-}
-
-
-Foam::labelList Foam::renumberMethod::renumber
-(
-    const labelList& cellCells,
-    const labelList& offsets,
-    const pointField& cc
-) const
-{
-    NotImplemented;
-    return labelList();
+    return renumber(cellCells);
 }
 
 
 Foam::labelList Foam::renumberMethod::renumber
 (
     const polyMesh& mesh,
-    const labelList& fineToCoarse,
+    const labelUList& fineToCoarse,
     const pointField& coarsePoints
 ) const
 {
@@ -140,16 +121,13 @@ Foam::labelList Foam::renumberMethod::renumber
     (
         mesh,
         fineToCoarse,
-        coarsePoints.size(),
+        coarsePoints.size(),   // nLocalCoarse
         false,  // local only (parallel = false)
         coarseCellCells
     );
 
     // Renumber based on agglomerated points
-    labelList coarseDistribution
-    (
-        renumber(coarseCellCells, coarsePoints)
-    );
+    labelList coarseDistribution = renumber(coarseCellCells);
 
     // From coarse back to fine for original mesh
     return labelList(coarseDistribution, fineToCoarse);

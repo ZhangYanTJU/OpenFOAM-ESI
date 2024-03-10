@@ -24,10 +24,7 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::zoltanRenumber
-
-Description
+Notes
     Renumber using Zoltan
 
     Zoltan install:
@@ -45,9 +42,6 @@ Description
     - ../configure \
         --prefix=$ZOLTAN_ARCH_DIR \
         --with-ccflags=-fPIC --with-cxxflags=-fPIC --with-ldflags=-shared
-
-SourceFiles
-    zoltanRenumber.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -365,8 +359,7 @@ Foam::zoltanRenumber::zoltanRenumber(const dictionary& dict)
 
 Foam::labelList Foam::zoltanRenumber::renumber
 (
-    const polyMesh& pMesh,
-    const pointField& points
+    const polyMesh& pMesh
 ) const
 {
     // Zoltan_Initialize will trigger MPI_Init() if not already done.

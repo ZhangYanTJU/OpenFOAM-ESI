@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -104,6 +104,12 @@ inline const char* extrapolatedCalculatedTypeName_() noexcept
 
 //- A combined \c zero-gradient and \c calculated patch field type
 extern const word extrapolatedCalculatedType;
+
+//- A \c processor patch field type
+inline const char* processorTypeName_() noexcept { return "processor"; }
+
+//- A \c processor patch field type
+extern const word processorType;
 
 //- A \c zeroGradient patch field type
 inline const char* zeroGradientTypeName_() noexcept { return "zeroGradient"; }

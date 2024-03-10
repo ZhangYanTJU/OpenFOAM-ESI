@@ -38,6 +38,11 @@ sortCoupledFaceCells false;
 // Optional entry: sort points into internal and boundary points
 //orderPoints false;
 
+// Optional entry (experimental) - for block-by-block (blockSize > 0) option:
+// - sort intra-region and iter-region faces separately.
+//   This will likely lead to non-upper triangular ordering between regions.
+//regionFaceOrder false;
+
 
 method          CuthillMcKee;
 //method          RCM;  // == reverseCuthillMcKee;

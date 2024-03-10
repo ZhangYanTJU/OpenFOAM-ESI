@@ -30,7 +30,6 @@ License
 
 #include "SloanRenumber.H"
 #include "addToRunTimeSelectionTable.H"
-#include "globalMeshData.H"
 #include "processorPolyPatch.H"
 #include "syncTools.H"
 
@@ -165,8 +164,7 @@ Foam::labelList renumberImpl(Graph& G, const bool useReverse)
 
 Foam::labelList Foam::SloanRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField& points
+    const polyMesh& mesh
 ) const
 {
     // Construct graph : faceOwner + connections across cyclics.
@@ -186,7 +184,7 @@ Foam::labelList Foam::SloanRenumber::renumber
     Graph G(mesh.nCells());
 
     // Add internal faces
-    forAll(mesh.faceNeighbour(), facei)
+    for (label facei = 0; facei < mesh.nInternalFaces(); ++facei)
     {
         add_edge(mesh.faceOwner()[facei], mesh.faceNeighbour()[facei], G);
     }
@@ -226,8 +224,7 @@ Foam::labelList Foam::SloanRenumber::renumber
 
 Foam::labelList Foam::SloanRenumber::renumber
 (
-    const CompactListList<label>& cellCells,
-    const pointField&
+    const CompactListList<label>& cellCells
 ) const
 {
     Graph G(cellCells.size());
@@ -251,8 +248,7 @@ Foam::labelList Foam::SloanRenumber::renumber
 
 Foam::labelList Foam::SloanRenumber::renumber
 (
-    const labelListList& cellCells,
-    const pointField&
+    const labelListList& cellCells
 ) const
 {
     Graph G(cellCells.size());

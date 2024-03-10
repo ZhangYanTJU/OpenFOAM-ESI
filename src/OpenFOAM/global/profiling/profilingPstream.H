@@ -158,7 +158,7 @@ public:
         {
             if (!suspend_ && timer_)
             {
-                (void) timer_->cpuTimeIncrement();
+                timer_->resetCpuTimeIncrement();
             }
         }
 

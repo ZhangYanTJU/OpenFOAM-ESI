@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -111,40 +111,31 @@ public:
 
     // Member Functions
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  This is only defined for geometric renumberMethods.
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+    // With mesh topology
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Use the mesh connectivity (if needed)
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the mesh to determine the connectivity.
         virtual labelList renumber
         (
-            const polyMesh& mesh,
-            const pointField&
+            //! Mesh connectivity (see globalMeshData::calcCellCells)
+            const polyMesh& mesh
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+
+    // With explicit topology
+
+        //- Return the cell visit order (from ordered back to original cell id)
         virtual labelList renumber
         (
-            const CompactListList<label>& cellCells,
-            const pointField& cellCentres
+            //! Mesh connectivity
+            const CompactListList<label>& cellCells
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  The connectivity is equal to mesh.cellCells() except
-        //  - the connections are across coupled patches
+        //- Return the cell visit order (from ordered back to original cell id)
         virtual labelList renumber
         (
-            const labelListList& cellCells,
-            const pointField& cellCentres
+            //! Mesh connectivity
+            const labelListList& cellCells
         ) const;
 };
 

@@ -88,6 +88,15 @@ Foam::randomRenumber::randomRenumber(const dictionary& dict)
 
 Foam::labelList Foam::randomRenumber::renumber
 (
+    const label nCells
+) const
+{
+    return randomMap(nCells);
+}
+
+
+Foam::labelList Foam::randomRenumber::renumber
+(
     const pointField& cellCentres
 ) const
 {
@@ -97,8 +106,7 @@ Foam::labelList Foam::randomRenumber::renumber
 
 Foam::labelList Foam::randomRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField&
+    const polyMesh& mesh
 ) const
 {
     return randomMap(mesh.nCells());
@@ -107,8 +115,7 @@ Foam::labelList Foam::randomRenumber::renumber
 
 Foam::labelList Foam::randomRenumber::renumber
 (
-    const CompactListList<label>& cellCells,
-    const pointField&
+    const CompactListList<label>& cellCells
 ) const
 {
     return randomMap(cellCells.size());
@@ -117,8 +124,7 @@ Foam::labelList Foam::randomRenumber::renumber
 
 Foam::labelList Foam::randomRenumber::renumber
 (
-    const labelListList& cellCells,
-    const pointField&
+    const labelListList& cellCells
 ) const
 {
     return randomMap(cellCells.size());

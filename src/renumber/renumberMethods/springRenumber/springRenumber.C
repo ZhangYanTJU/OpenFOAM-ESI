@@ -159,8 +159,7 @@ Foam::labelList Foam::springRenumber::renumberImpl
 
 Foam::labelList Foam::springRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField&
+    const polyMesh& mesh
 ) const
 {
     // Local mesh connectivity
@@ -173,8 +172,7 @@ Foam::labelList Foam::springRenumber::renumber
 
 Foam::labelList Foam::springRenumber::renumber
 (
-    const CompactListList<label>& cellCells,
-    const pointField&
+    const CompactListList<label>& cellCells
 ) const
 {
     return renumberImpl(cellCells);
@@ -183,8 +181,7 @@ Foam::labelList Foam::springRenumber::renumber
 
 Foam::labelList Foam::springRenumber::renumber
 (
-    const labelListList& cellCells,
-    const pointField&
+    const labelListList& cellCells
 ) const
 {
     return renumberImpl(cellCells);

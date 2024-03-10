@@ -103,15 +103,17 @@ labelList bandCompression
 namespace Foam
 {
 
-//- Forward to meshTools::bandCompression
+//- Deprecated - prefer meshTools::bandCompression()
 //  \deprecated(2022-03) prefer meshTools::bandCompression()
+FOAM_DEPRECATED_FOR(2022-03, "meshTools::bandCompression()")
 inline labelList bandCompression(const labelListList& cellCellAddressing)
 {
     return meshTools::bandCompression(cellCellAddressing);
 }
 
-//- Forward to meshTools::bandCompression
+//- Deprecated - prefer meshTools::bandCompression()
 //  \deprecated(2022-03) prefer meshTools::bandCompression()
+FOAM_DEPRECATED_FOR(2022-03, "meshTools::bandCompression()")
 inline labelList bandCompression
 (
     const labelUList& cellCells,

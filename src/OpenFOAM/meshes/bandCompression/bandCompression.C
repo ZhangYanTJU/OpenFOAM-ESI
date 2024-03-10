@@ -159,6 +159,13 @@ Foam::labelList cuthill_mckee_algorithm
         }
     }
 
+    // Debug:
+    // - the peak capacity of queuedCells approximates the
+    //   maximum intermediate bandwidth
+    #if 0
+    Pout<< "bandCompression: peak-capacity=" << queuedCells.capacity() << nl;
+    #endif
+
     // Now we have new-to-old in newOrder.
     return newOrder;
 }
@@ -306,8 +313,14 @@ Foam::labelList Foam::meshTools::bandCompression
         }
     }
 
-    // Now we have new-to-old in newOrder.
+    // Debug:
+    // - the peak capacity of queuedCells approximates the
+    //   maximum intermediate bandwidth
+    #if 0
+    Pout<< "bandCompression: peak-capacity=" << queuedCells.capacity() << nl;
+    #endif
 
+    // Now we have new-to-old in newOrder.
     return newOrder;
 }
 

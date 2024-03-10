@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -137,18 +137,9 @@ bool Foam::structuredRenumber::layerLess::operator()
 
 Foam::labelList Foam::structuredRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField& points
+    const polyMesh& mesh
 ) const
 {
-    if (points.size() != mesh.nCells())
-    {
-        FatalErrorInFunction
-            << "Number of points " << points.size()
-            << " should equal the number of cells " << mesh.nCells()
-            << exit(FatalError);
-    }
-
     const polyBoundaryMesh& pbm = mesh.boundaryMesh();
     const labelHashSet patchIDs(pbm.patchSet(patches_));
 
@@ -187,21 +178,20 @@ Foam::labelList Foam::structuredRenumber::renumber
             dynamic_cast<const fvMesh&>(mesh),
             patchCells
         );
-        const fvMesh& subMesh = subsetter.subMesh();
 
-        pointField subPoints(points, subsetter.cellMap());
+        const labelList& cellMap = subsetter.cellMap();
 
         // Locally renumber the layer of cells
-        labelList subOrder(method_().renumber(subMesh, subPoints));
+        labelList subOrder = method_().renumber(subsetter.subMesh());
 
         labelList subOrigToOrdered(invert(subOrder.size(), subOrder));
 
-        globalIndex globalSubCells(subOrder.size());
+        const globalIndex globalSubCells(subOrder.size());
 
         // Transfer to final decomposition and convert into global numbering
         forAll(subOrder, i)
         {
-            orderedToOld[subsetter.cellMap()[i]] =
+            orderedToOld[cellMap[i]] =
                 globalSubCells.toGlobal(subOrigToOrdered[i]);
         }
     }
@@ -253,11 +243,7 @@ Foam::labelList Foam::structuredRenumber::renumber
     // by any visited cell so are used only if the number of nLayers is limited.
     labelList oldToOrdered
     (
-        invert
-        (
-            mesh.nCells(),
-            method_().renumber(mesh, points)
-        )
+        invert(mesh.nCells(), method_().renumber(mesh))
     );
 
     // Use specialised sorting to sorted either layers or columns first

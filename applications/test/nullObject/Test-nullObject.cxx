@@ -37,6 +37,7 @@ Description
 #include "HashSet.H"
 #include "faceList.H"
 #include "pointField.H"
+#include "globalIndex.H"
 #include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -149,6 +150,18 @@ int main()
 
     NullObject::nullObject = "hello world";
     NullObject::nullObject = Foam::identity(5);
+
+
+    {
+        const auto& gi = globalIndex::null();
+        Info<< "globalIndex::null() => "
+            << " empty: " << gi.empty()
+            << " nProcs: " << gi.nProcs()
+            << " total-size: " << gi.totalSize() << nl;
+
+        // Even this works
+        Info<< "   offsets: " << gi.offsets() << nl;
+    }
 
     Info<< nl;
 

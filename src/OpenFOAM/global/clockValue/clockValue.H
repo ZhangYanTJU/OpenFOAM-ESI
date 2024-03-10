@@ -36,8 +36,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef clockValue_H
-#define clockValue_H
+#ifndef Foam_clockValue_H
+#define Foam_clockValue_H
 
 #include <chrono>
 #include <string>
@@ -93,10 +93,7 @@ public:
     // Member Functions
 
         //- The time duration
-        inline const value_type& value() const
-        {
-            return value_;
-        }
+        const value_type& value() const noexcept { return value_; }
 
         //- Reset to zero
         inline void clear();

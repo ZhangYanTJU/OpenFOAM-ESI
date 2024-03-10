@@ -30,6 +30,9 @@ Class
 Description
     Cuthill-McKee renumbering (CM or RCM)
 
+SeeAlso
+    Foam::meshTools::bandCompression
+
 SourceFiles
     CuthillMcKeeRenumber.C
 
@@ -85,62 +88,32 @@ public:
         //- Toggle reverse on/off
         void reverse(bool on) noexcept { reverse_ = on; }
 
-        //- The renumbering method does not require a polyMesh
-        virtual bool needs_mesh() const { return false; }
 
+    // With mesh topology
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  This is only defined for geometric renumberMethods.
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
-
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Use the mesh connectivity (if needed)
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the mesh to determine the connectivity.
         virtual labelList renumber
         (
             //! Mesh connectivity (see globalMeshData::calcCellCells)
-            const polyMesh& mesh,
-            //! \em ignored
-            const pointField& cellCentres
+            const polyMesh& mesh
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Connectivity in losort addressing (= neighbour + offsets into
-        //  neighbour)
-        virtual labelList renumber
-        (
-            const labelList& cellCells,
-            const labelList& offsets,
-            //! \em ignored
-            const pointField& cellCentres
-        ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+    // With explicit topology
+
+        //- Return the cell visit order (from ordered back to original cell id).
         virtual labelList renumber
         (
             //! Mesh connectivity
-            const CompactListList<label>& cellCells,
-            //! \em ignored
-            const pointField& cellCentres
+            const CompactListList<label>& cellCells
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  The connectivity is equal to mesh.cellCells() except
-        //  - the connections are across coupled patches
+        //- Return the cell visit order (from ordered back to original cell id).
         virtual labelList renumber
         (
             //! Mesh connectivity
-            const labelListList& cellCells,
-            //! \em ignored
-            const pointField& cellCentres
+            const labelListList& cellCells
         ) const;
 };
 

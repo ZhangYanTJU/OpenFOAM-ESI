@@ -112,8 +112,7 @@ Foam::reverseCuthillMcKeeRenumber::reverseCuthillMcKeeRenumber
 
 Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField&
+    const polyMesh& mesh
 ) const
 {
     labelList orderedToOld = meshTools::bandCompression(mesh);
@@ -129,26 +128,7 @@ Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 
 Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 (
-    const labelList& cellCells,
-    const labelList& offsets,
-    const pointField& cc
-) const
-{
-    labelList orderedToOld = meshTools::bandCompression(cellCells, offsets);
-
-    if (reverse_)
-    {
-        Foam::reverse(orderedToOld);
-    }
-
-    return orderedToOld;
-}
-
-
-Foam::labelList Foam::CuthillMcKeeRenumber::renumber
-(
-    const CompactListList<label>& cellCells,
-    const pointField&
+    const CompactListList<label>& cellCells
 ) const
 {
     labelList orderedToOld = meshTools::bandCompression(cellCells);
@@ -164,8 +144,7 @@ Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 
 Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 (
-    const labelListList& cellCells,
-    const pointField&
+    const labelListList& cellCells
 ) const
 {
     labelList orderedToOld = meshTools::bandCompression(cellCells);
@@ -177,6 +156,23 @@ Foam::labelList Foam::CuthillMcKeeRenumber::renumber
 
     return orderedToOld;
 }
+
+
+// Foam::labelList Foam::CuthillMcKeeRenumber::renumber
+// (
+//     const labelUList& cellCells,
+//     const labelUList& offsets
+// ) const
+// {
+//     labelList orderedToOld = meshTools::bandCompression(cellCells, offsets);
+//
+//     if (reverse_)
+//     {
+//         Foam::reverse(orderedToOld);
+//     }
+//
+//     return orderedToOld;
+// }
 
 
 // ************************************************************************* //

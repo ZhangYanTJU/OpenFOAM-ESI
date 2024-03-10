@@ -80,41 +80,31 @@ public:
         virtual bool needs_mesh() const { return true; }
 
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        virtual labelList renumber(const pointField&) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+    // With mesh topology
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        //  Uses mesh for regIOobject
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the mesh for its IOobject and instance.
+        virtual labelList renumber(const polyMesh& mesh) const;
+
+
+    // With explicit topology - Not implemented!
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- Not implemented!
         virtual labelList renumber
         (
-            const polyMesh& mesh,
-            const pointField& cc
-        ) const;
-
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
-        virtual labelList renumber
-        (
-            const CompactListList<label>& cellCells,
-            const pointField& cellCentres
+            const CompactListList<label>& cellCells
         ) const
         {
             NotImplemented;
             return labelList();
         }
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- Not implemented!
         virtual labelList renumber
         (
-            const labelListList& cellCells,
-            const pointField& cellCentres
+            const labelListList& cellCells
         ) const
         {
             NotImplemented;

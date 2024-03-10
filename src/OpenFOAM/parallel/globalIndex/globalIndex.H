@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -116,6 +116,16 @@ public:
         //- Construct 'one-sided' from the non-master local sizes
         //- using gather but no broadcast.
         struct gatherNonLocal{};
+
+
+    // Static Member Functions
+
+        //- Return a null globalIndex (reference to a nullObject).
+        //- Behaves like an empty globalIndex
+        static const globalIndex& null() noexcept
+        {
+            return NullObjectRef<globalIndex>();
+        }
 
 
     // Constructors

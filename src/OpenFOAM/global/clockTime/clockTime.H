@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -46,8 +46,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef clockTime_H
-#define clockTime_H
+#ifndef Foam_clockTime_H
+#define Foam_clockTime_H
 
 #include "clockValue.H"
 
@@ -67,7 +67,8 @@ class clockTime
         //- Time point at start, or after resetTime
         clockValue start_;
 
-        //- Time point when elapsedTime or timeIncrement was called
+        //- Time point when elapsedTime or timeIncrement was called.
+        //- Also updated by resetTime and resetTimeIncrement.
         mutable clockValue last_;
 
 
@@ -84,13 +85,18 @@ public:
 
     // Member Functions
 
-        //- Reset to use the current clock value for the start point
+        //- Reset to use the current clock value for the start
+        //- and increment points
         inline void resetTime();
+
+        //- Reset to use the current clock value for the increment point
+        inline void resetTimeIncrement() const;
 
         //- The time [seconds] since the start point
         inline double elapsedTime() const;
 
-        //- The time [seconds] since the last call to timeIncrement()
+        //- The time [seconds] since the last call to elapsedTime(),
+        //- timeIncrement() or resetTime(), resetTimeIncrement()
         inline double timeIncrement() const;
 };
 

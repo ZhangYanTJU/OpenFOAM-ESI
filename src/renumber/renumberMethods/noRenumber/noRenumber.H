@@ -73,42 +73,48 @@ public:
 
     // Member Functions
 
-        //- The renumbering method does not require a polyMesh
-        virtual bool needs_mesh() const { return false; }
+        //- Renumbering method without mesh or cell-cell topology!
+        virtual bool no_topology() const { return true; }
 
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+    // No topology
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- based solely on the number of cells.
+        virtual labelList renumber(const label nCells) const;
+
+        //- Return the cell visit order (from ordered back to original cell id).
+        //- based solely on pointField size
         virtual labelList renumber(const pointField&) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+
+    // With mesh topology
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the mesh only for the number of cells
         virtual labelList renumber
         (
-            //! Mesh number of cells
-            const polyMesh& mesh,
-            //! \em ignored
-            const pointField& cellCentres
+            //! Mesh provides the number of cells
+            const polyMesh& mesh
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+
+    // With explicit topology
+
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the topology only for the number of cells
         virtual labelList renumber
         (
-            //! Mesh connectivity for number of cells
-            const CompactListList<label>& cellCells,
-            //! \em ignored
-            const pointField& cellCentres
+            //! Connectivity provides the number of cells
+            const CompactListList<label>& cellCells
         ) const;
 
-        //- Return the order in which cells need to be visited
-        //- (ie. from ordered back to original cell label).
+        //- Return the cell visit order (from ordered back to original cell id)
+        //- using the topology only for the number of cells
         virtual labelList renumber
         (
-            //! Mesh connectivity for number of cells
-            const labelListList& cellCells,
-            //! \em ignored
-            const pointField& cellCentres
+            //! Connectivity provides the number of cells
+            const labelListList& cellCells
         ) const;
 };
 

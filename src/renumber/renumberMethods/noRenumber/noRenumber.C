@@ -62,6 +62,15 @@ Foam::noRenumber::noRenumber(const dictionary& dict)
 
 Foam::labelList Foam::noRenumber::renumber
 (
+    const label nCells
+) const
+{
+    return Foam::identity(nCells);
+}
+
+
+Foam::labelList Foam::noRenumber::renumber
+(
     const pointField& cellCentres
 ) const
 {
@@ -71,8 +80,7 @@ Foam::labelList Foam::noRenumber::renumber
 
 Foam::labelList Foam::noRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField&
+    const polyMesh& mesh
 ) const
 {
     return Foam::identity(mesh.nCells());
@@ -81,8 +89,7 @@ Foam::labelList Foam::noRenumber::renumber
 
 Foam::labelList Foam::noRenumber::renumber
 (
-    const CompactListList<label>& cellCells,
-    const pointField&
+    const CompactListList<label>& cellCells
 ) const
 {
     return Foam::identity(cellCells.size());
@@ -91,8 +98,7 @@ Foam::labelList Foam::noRenumber::renumber
 
 Foam::labelList Foam::noRenumber::renumber
 (
-    const labelListList& cellCells,
-    const pointField&
+    const labelListList& cellCells
 ) const
 {
     return Foam::identity(cellCells.size());

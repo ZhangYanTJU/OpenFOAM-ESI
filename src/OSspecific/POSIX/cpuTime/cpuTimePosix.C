@@ -77,6 +77,12 @@ void Foam::cpuTimePosix::resetCpuTime()
 }
 
 
+void Foam::cpuTimePosix::resetCpuTimeIncrement() const
+{
+    last_.update();
+}
+
+
 double Foam::cpuTimePosix::elapsedCpuTime() const
 {
     last_.update();

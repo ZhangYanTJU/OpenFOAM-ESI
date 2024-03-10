@@ -68,10 +68,11 @@ Foam::manualRenumber::manualRenumber(const dictionary& dict)
 
 Foam::labelList Foam::manualRenumber::renumber
 (
-    const polyMesh& mesh,
-    const pointField& points
+    const polyMesh& mesh
 ) const
 {
+    const label nCells = mesh.nCells();
+
     labelList newToOld
     (
         labelIOList::readContents
@@ -87,31 +88,27 @@ Foam::labelList Foam::manualRenumber::renumber
     );
 
     // Check if the final renumbering is OK
-    if (newToOld.size() != points.size())
+    if (newToOld.size() != nCells)
     {
         FatalErrorInFunction
-            << "Size of renumber list does not correspond "
-            << "to the number of points.  Size: "
-            << newToOld.size() << " Number of points: "
-            << points.size()
-            << ".\n" << "Manual renumbering data read from file "
-            << dataFile_ << "." << endl
+            << "Size of renumber list: "
+            << newToOld.size() << " != number of cells: " << nCells << nl
+            << "Renumbering data read from file " << dataFile_ << endl
             << exit(FatalError);
     }
 
     // Invert to see if one to one
-    labelList oldToNew(points.size(), -1);
+    labelList oldToNew(nCells, -1);
     forAll(newToOld, i)
     {
         const label origCelli = newToOld[i];
 
-        if (origCelli < 0 || origCelli >= points.size())
+        if (origCelli < 0 || origCelli >= nCells)
         {
             FatalErrorInFunction
-                << "Renumbering is not one-to-one. Index "
-                << i << " maps onto original cell " << origCelli
-                << ".\n" << "Manual renumbering data read from file "
-                << dataFile_ << nl
+                << "Renumbering range error. Index " << i
+                << " maps to cell " << origCelli << " from " << nCells << nl
+                << "Renumbering data read from file " << dataFile_ << endl
                 << exit(FatalError);
         }
 
@@ -124,8 +121,7 @@ Foam::labelList Foam::manualRenumber::renumber
             FatalErrorInFunction
                 << "Renumbering is not one-to-one. Index " << i << " and "
                 << oldToNew[origCelli] << " map onto " << origCelli << nl
-                << "Manual renumbering data read from file "
-                << dataFile_ << nl
+                << "Renumbering data read from file " << dataFile_ << endl
                 << exit(FatalError);
         }
     }
