@@ -29,7 +29,7 @@ Class
 
 Description
     fvMesh as subset of other mesh. Consists of one cell and all original
-    bounday faces. Useful when manipulating boundary data. Single internal
+    boundary faces. Useful when manipulating boundary data. Single internal
     cell only needed to be able to manipulate in a standard way.
 
 SourceFiles
@@ -60,6 +60,7 @@ class singleCellFvMesh
 {
     // Private Data
 
+        //- Fine patch face to agglomeration index addressing
         const labelListIOList patchFaceAgglomeration_;
 
         //- From patch faces back to agglomeration or fine mesh
@@ -182,6 +183,12 @@ public:
         bool agglomerate() const noexcept
         {
             return !patchFaceAgglomeration_.empty();
+        }
+
+        //- Fine patch face to agglomeration index addressing
+        const labelListList& patchFaceAgglomeration() const noexcept
+        {
+            return patchFaceAgglomeration_;
         }
 
         //- From patchFace on this back to original mesh or agglomeration
