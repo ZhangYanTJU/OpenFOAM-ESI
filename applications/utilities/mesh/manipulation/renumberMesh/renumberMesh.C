@@ -145,6 +145,10 @@ Usage
 #include "hexRef8Data.H"
 #include "regionProperties.H"
 #include "polyMeshTools.H"
+#include "subsetAdjacency.H"
+
+// Use subset of adjacency matrix
+#define WITH_SUBSET_ADJACENCY_MATRIX
 
 using namespace Foam;
 
@@ -703,11 +707,39 @@ CompactListList<label> regionRenumber
     {
         timer.resetTimeIncrement();
 
+        #ifdef WITH_SUBSET_ADJACENCY_MATRIX
+
+        // No parallel communication
+        const bool oldParRun = UPstream::parRun(false);
+
+        // The local connectivity of the full (non-subsetted) mesh
+        CompactListList<label> meshCellCells;
+        globalMeshData::calcCellCells(mesh, meshCellCells);
+        UPstream::parRun(oldParRun);  // Restore parallel state
+
+        timings[TimingType::CELL_CELLS] += timer.timeIncrement();
+
+        // For the respective subMesh selections
+        bitSet subsetCells(mesh.nCells());
+        #endif
+
         forAll(regionCellOrder, regioni)
         {
             // Info<< "    region " << regioni
             //     << " starts at " << regionCellOrder.localStart(regioni)
             //     << nl;
+
+            #ifdef WITH_SUBSET_ADJACENCY_MATRIX
+
+            subsetCells = false;
+            subsetCells.set(regionCellOrder[regioni]);
+
+            // Connectivity of local sub-mesh
+            labelList cellMap;
+            CompactListList<label> cellCells =
+                subsetAdjacency(subsetCells, meshCellCells, cellMap);
+
+            #else
 
             // No parallel communication
             const bool oldParRun = UPstream::parRun(false);
@@ -721,7 +753,14 @@ CompactListList<label> regionRenumber
                 cellCells
             );
 
+            UPstream::parRun(oldParRun);  // Restore parallel state
+
+            #endif
+
             timings[TimingType::CELL_CELLS] += timer.timeIncrement();
+
+            // No parallel communication
+            const bool oldParRun = UPstream::parRun(false);
 
             labelList subCellOrder = method.renumber(cellCells);
 
