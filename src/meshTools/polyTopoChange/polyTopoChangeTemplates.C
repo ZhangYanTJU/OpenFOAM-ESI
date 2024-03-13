@@ -43,35 +43,13 @@ void Foam::polyTopoChange::reorder
     // Create copy
     DynamicList<Type> oldLst(lst);
 
-    forAll(oldToNew, i)
+    forAll(oldLst, i)
     {
         const label newIdx = oldToNew[i];
 
         if (newIdx >= 0)
         {
-            lst[newIdx] = oldLst[i];
-        }
-    }
-}
-
-
-template<class Type>
-void Foam::polyTopoChange::reorder
-(
-    const labelUList& oldToNew,
-    List<DynamicList<Type>>& lst
-)
-{
-    // Create copy
-    List<DynamicList<Type>> oldLst(lst);
-
-    forAll(oldToNew, i)
-    {
-        const label newIdx = oldToNew[i];
-
-        if (newIdx >= 0)
-        {
-            lst[newIdx].transfer(oldLst[i]);
+            lst[newIdx] = std::move(oldLst[i]);
         }
     }
 }

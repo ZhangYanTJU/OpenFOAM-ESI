@@ -42,6 +42,29 @@ filter1
 }
 
 
+heater1
+{
+    // Add some additional water inside a cellZone that is nested inside
+    // the filter. This is just to demonstrate overlapping cellZones
+
+    type            scalarSemiImplicitSource;
+    active          yes;
+
+    timeStart       0.0;
+    duration        0.4;
+    volumeMode      specific;
+
+    selectionMode   cellZone;
+    cellZone        heater;
+
+    sources
+    {
+        rho         (1e-2 0); // kg/s/m^3
+        H2O         (1e-2 0); // kg/s/m^3
+    }
+}
+
+
 massSource1
 {
     type            scalarSemiImplicitSource;

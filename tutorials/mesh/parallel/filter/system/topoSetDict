@@ -32,7 +32,6 @@ actions
         set     filterCells;
     }
 
-
     {
         name    leftFluidCells;
         type    cellSet;
@@ -113,6 +112,41 @@ actions
         action  new;
         source  setToFaceZone;
         faceSet cycRightFaces;   // name of faceSet
+    }
+
+
+    // Additional zones inside filter
+
+    // heater inside filter
+    {
+        name    heaterCells;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+        box     (1.7 -10 -10) (1.8 10 10);
+    }
+    // Note: could be done directly using boxToCell
+    {
+        name    heater;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+        set     heaterCells;
+    }
+    {
+        name    heaterOutsideFaces;
+        type    faceSet;
+        action  new;
+        source  cellToFace;
+        set     heaterCells;
+        option  outside;
+    }
+    {
+        name    heaterOutside;
+        type    faceZoneSet;
+        action  new;
+        source  setToFaceZone;
+        faceSet heaterOutsideFaces;   // name of faceSet
     }
 );
 
