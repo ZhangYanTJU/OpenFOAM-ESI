@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,16 +83,76 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcZoneMap() const
         map.reserve(this->totalSize());
 
         const PtrList<ZoneType>& zones = *this;
+
         label zonei = 0;
 
         for (const ZoneType& zn : zones)
         {
             for (const label id : static_cast<const labelList&>(zn))
             {
-                map.insert(id, zonei);
+                //map.insert(id, zonei);
+                const auto fnd = map.cfind(id);
+                if (!fnd)
+                {
+                    map.insert(id, zonei);
+                }
+                else if (fnd() != zonei)
+                {
+                    // Multiple zones for same id
+
+                    if (!additionalMapPtr_)
+                    {
+                        // First occurrence
+                        label maxIndex = -1;
+                        for (const ZoneType& zn : zones)
+                        {
+                            for
+                            (
+                                const label id
+                              : static_cast<const labelList&>(zn)
+                            )
+                            {
+                                maxIndex = max(maxIndex, id);
+                            }
+                        }
+                        additionalMapPtr_.reset(new labelListList(maxIndex+1));
+                    }
+                    auto& additionalMap = *additionalMapPtr_;
+                    additionalMap[id].push_uniq(zonei);
+                }
             }
 
             ++zonei;
+        }
+
+        // Sort such that map contains lowest zoneID
+        if (additionalMapPtr_)
+        {
+            auto& additionalMap = *additionalMapPtr_;
+            forAll(additionalMap, id)
+            {
+                labelList& zones = additionalMap[id];
+
+                if (zones.size())
+                {
+                    stableSort(zones);
+                    const label zonei = map[id];
+                    const label index = findLower(zones, zonei);
+                    if (index == -1)
+                    {
+                        // Already first
+                    }
+                    else
+                    {
+                        map.set(id, zones[0]);
+                        for (label i = 0; i < zones.size() && i <= index; i++)
+                        {
+                            zones[i] = zones[i+1];
+                        }
+                        zones[index+1] = zonei;
+                    }
+                }
+            }
         }
     }
 }
@@ -355,6 +415,35 @@ Foam::label Foam::ZoneMesh<ZoneType, MeshType>::whichZone
 ) const
 {
     return zoneMap().lookup(objectIndex, -1);
+}
+
+
+template<class ZoneType, class MeshType>
+Foam::label Foam::ZoneMesh<ZoneType, MeshType>::whichZones
+(
+    const label objectIndex,
+    DynamicList<label>& zones
+) const
+{
+    zones.clear();
+    const auto fnd = zoneMap().find(objectIndex);
+    if (fnd)
+    {
+        // Add main element
+        zones.push_back(fnd());
+        if (additionalMapPtr_)
+        {
+            const auto& additionalMap = *additionalMapPtr_;
+            if (objectIndex < additionalMap.size())
+            {
+                for (const label zonei : additionalMap[objectIndex])
+                {
+                    zones.push_uniq(zonei);
+                }
+            }
+        }
+    }
+    return zones.size();
 }
 
 
@@ -814,6 +903,7 @@ template<class ZoneType, class MeshType>
 void Foam::ZoneMesh<ZoneType, MeshType>::clearLocalAddressing()
 {
     zoneMapPtr_.reset(nullptr);
+    additionalMapPtr_.reset(nullptr);
     groupIDsPtr_.reset(nullptr);
 }
 
