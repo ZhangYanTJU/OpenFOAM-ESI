@@ -553,6 +553,26 @@ void Foam::topoSet::subset(const topoSet& set)
 }
 
 
+void Foam::topoSet::subset(const labelUList& elems)
+{
+    // Only retain entries found in both sets
+    auto& currentSet = static_cast<labelHashSet&>(*this);
+
+    DynamicList<label> newElems(elems.size()+currentSet.size());
+    for (const label elem : elems)
+    {
+        if (currentSet.found(elem))
+        {
+            newElems.append(elem);
+        }
+    }
+    if (newElems.size() < currentSet.size())
+    {
+        currentSet = newElems;
+    }
+}
+
+
 void Foam::topoSet::addSet(const topoSet& set)
 {
     // Add entries to the set
@@ -560,10 +580,24 @@ void Foam::topoSet::addSet(const topoSet& set)
 }
 
 
+void Foam::topoSet::addSet(const labelUList& elems)
+{
+    // Add entries to the set
+    static_cast<labelHashSet&>(*this).set(elems);
+}
+
+
 void Foam::topoSet::subtractSet(const topoSet& set)
 {
     // Subtract entries from the set
     static_cast<labelHashSet&>(*this) -= set;
+}
+
+
+void Foam::topoSet::subtractSet(const labelUList& elems)
+{
+    // Subtract entries from the set
+    static_cast<labelHashSet&>(*this).unset(elems);
 }
 
 

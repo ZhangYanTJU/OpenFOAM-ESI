@@ -281,4 +281,39 @@ void Foam::topoSetSource::verbose(const dictionary& dict)
 }
 
 
+bool Foam::topoSetSource::readNames
+(
+    const dictionary& dict,
+    wordList& names
+)
+{
+    bool isZone;
+
+    // Look for 'sets' or 'set'
+    if (dict.readIfPresent("sets", names))
+    {
+        isZone = false;
+    }
+    else if (dict.readIfPresent("zones", names))
+    {
+        isZone = true;
+    }
+    else
+    {
+        names.resize(1);
+        if (dict.readIfPresent("set", names.front()))
+        {
+            isZone = false;
+        }
+        else
+        {
+            dict.readEntry("zone", names.front());
+            isZone = true;
+        }
+    }
+
+    return isZone;
+}
+
+
 // ************************************************************************* //

@@ -171,7 +171,12 @@ void Foam::faceZoneSet::invert(const label maxLen)
 }
 
 
-void Foam::faceZoneSet::subset(const topoSet& set)
+void Foam::faceZoneSet::subset
+(
+    const word& setName,
+    const labelUList& setAddressing,
+    const UList<bool>& setFlipMap
+)
 {
     label nConflict = 0;
 
@@ -180,11 +185,9 @@ void Foam::faceZoneSet::subset(const topoSet& set)
 
     Map<label> faceToIndex(invertToMap(addressing_));
 
-    const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
-
-    forAll(zoneSet.addressing(), i)
+    forAll(setAddressing, i)
     {
-        const label facei = zoneSet.addressing()[i];
+        const label facei = setAddressing[i];
 
         const auto iter = faceToIndex.cfind(facei);
 
@@ -192,7 +195,7 @@ void Foam::faceZoneSet::subset(const topoSet& set)
         {
             const label index = iter.val();
 
-            if (zoneSet.flipMap()[i] != flipMap_[index])
+            if (setFlipMap.size() && (setFlipMap[i] != flipMap_[index]))
             {
                 ++nConflict;
             }
@@ -205,8 +208,70 @@ void Foam::faceZoneSet::subset(const topoSet& set)
     {
         WarningInFunction
             << "subset : there are " << nConflict
+            << " faces with different orientation in faceZoneSets "
+            << name() << " and " << setName << endl;
+    }
+
+    addressing_.transfer(newAddressing);
+    flipMap_.transfer(newFlipMap);
+    updateSet();
+}
+
+
+void Foam::faceZoneSet::subset(const topoSet& set)
+{
+    const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
+    subset(zoneSet.name(), zoneSet.addressing(), zoneSet.flipMap());
+}
+
+
+void Foam::faceZoneSet::subset(const labelUList& set)
+{
+    subset(word::null, set, boolList::null());
+}
+
+
+void Foam::faceZoneSet::addSet
+(
+    const word& setName,
+    const labelUList& setAddressing,
+    const UList<bool>& setFlipMap
+)
+{
+    label nConflict = 0;
+
+    DynamicList<label> newAddressing(addressing_);
+    DynamicList<bool> newFlipMap(flipMap_);
+
+    Map<label> faceToIndex(invertToMap(addressing_));
+
+    forAll(setAddressing, i)
+    {
+        const label facei = setAddressing[i];
+        const auto iter = faceToIndex.cfind(facei);
+
+        if (iter.good())
+        {
+            const label index = iter.val();
+
+            if (setFlipMap.size() && (setFlipMap[i] != flipMap_[index]))
+            {
+                ++nConflict;
+            }
+        }
+        else
+        {
+            newAddressing.append(facei);
+            newFlipMap.append(setFlipMap.size() ? setFlipMap[i] : false);
+        }
+    }
+
+    if (nConflict > 0)
+    {
+        WarningInFunction
+            << "addSet : there are " << nConflict
             << " faces with different orientation in faceZonesSets "
-            << name() << " and " << set.name() << endl;
+            << name() << " and " << setName << endl;
     }
 
     addressing_.transfer(newAddressing);
@@ -217,60 +282,30 @@ void Foam::faceZoneSet::subset(const topoSet& set)
 
 void Foam::faceZoneSet::addSet(const topoSet& set)
 {
-    label nConflict = 0;
-
-    DynamicList<label> newAddressing(addressing_);
-    DynamicList<bool> newFlipMap(flipMap_);
-
-    Map<label> faceToIndex(invertToMap(addressing_));
-
     const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
-
-    forAll(zoneSet.addressing(), i)
-    {
-        const label facei = zoneSet.addressing()[i];
-        const auto iter = faceToIndex.cfind(facei);
-
-        if (iter.good())
-        {
-            const label index = iter.val();
-
-            if (zoneSet.flipMap()[i] != flipMap_[index])
-            {
-                ++nConflict;
-            }
-        }
-        else
-        {
-            newAddressing.append(facei);
-            newFlipMap.append(zoneSet.flipMap()[i]);
-        }
-    }
-
-    if (nConflict > 0)
-    {
-        WarningInFunction
-            << "addSet : there are " << nConflict
-            << " faces with different orientation in faceZonesSets "
-            << name() << " and " << set.name() << endl;
-    }
-
-    addressing_.transfer(newAddressing);
-    flipMap_.transfer(newFlipMap);
-    updateSet();
+    addSet(zoneSet.name(), zoneSet.addressing(), zoneSet.flipMap());
 }
 
 
-void Foam::faceZoneSet::subtractSet(const topoSet& set)
+void Foam::faceZoneSet::addSet(const labelUList& set)
+{
+    addSet(word::null, set, boolList::null());
+}
+
+
+void Foam::faceZoneSet::subtractSet
+(
+    const word& setName,
+    const labelUList& setAddressing,
+    const UList<bool>& setFlipMap
+)
 {
     label nConflict = 0;
 
     DynamicList<label> newAddressing(addressing_.size());
     DynamicList<bool> newFlipMap(flipMap_.size());
 
-    const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
-
-    Map<label> faceToIndex(invertToMap(zoneSet.addressing()));
+    Map<label> faceToIndex(invertToMap(setAddressing));
 
     forAll(addressing_, i)
     {
@@ -282,7 +317,7 @@ void Foam::faceZoneSet::subtractSet(const topoSet& set)
         {
             const label index = iter.val();
 
-            if (zoneSet.flipMap()[index] != flipMap_[i])
+            if (setFlipMap.size() && (setFlipMap[index] != flipMap_[i]))
             {
                 ++nConflict;
             }
@@ -291,7 +326,7 @@ void Foam::faceZoneSet::subtractSet(const topoSet& set)
         {
             // Not found in zoneSet so add
             newAddressing.append(facei);
-            newFlipMap.append(zoneSet.flipMap()[i]);
+            newFlipMap.append(setFlipMap.size() ? setFlipMap[i] : false);
         }
     }
 
@@ -300,12 +335,25 @@ void Foam::faceZoneSet::subtractSet(const topoSet& set)
         WarningInFunction
             << "subtractSet : there are " << nConflict
             << " faces with different orientation in faceZonesSets "
-            << name() << " and " << set.name() << endl;
+            << name() << " and " << setName << endl;
     }
 
     addressing_.transfer(newAddressing);
     flipMap_.transfer(newFlipMap);
     updateSet();
+}
+
+
+void Foam::faceZoneSet::subtractSet(const topoSet& set)
+{
+    const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
+    subtractSet(zoneSet.name(), zoneSet.addressing(), zoneSet.flipMap());
+}
+
+
+void Foam::faceZoneSet::subtractSet(const labelUList& set)
+{
+    subtractSet(word::null, set, boolList::null());
 }
 
 

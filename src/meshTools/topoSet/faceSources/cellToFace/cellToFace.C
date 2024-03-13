@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -68,23 +68,14 @@ Foam::cellToFace::cellActionNames_
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::cellToFace::combine
+template<class Selector>
+void Foam::cellToFace::combineImpl
 (
     topoSet& set,
     const bool add,
-    const word& setName
+    const Selector& cellLabels
 ) const
 {
-    // Load the set
-    if (!exists(mesh_.time().path()/topoSet::localPath(mesh_, setName)))
-    {
-        SeriousError<< "Cannot load set "
-            << setName << endl;
-    }
-
-    cellSet loadedSet(mesh_, setName);
-    const labelHashSet& cellLabels = loadedSet;
-
     if (option_ == ALL)
     {
         // Add all faces from cell
@@ -212,6 +203,36 @@ void Foam::cellToFace::combine
 }
 
 
+void Foam::cellToFace::combine
+(
+    topoSet& set,
+    const bool add,
+    const word& setName
+) const
+{
+    if (isZone_)
+    {
+        const labelList& cellLabels = mesh_.cellZones()[setName];
+
+        combineImpl(set, add, cellLabels);
+    }
+    else
+    {
+        // Load the set
+        if (!exists(mesh_.time().path()/topoSet::localPath(mesh_, setName)))
+        {
+            SeriousError<< "Cannot load set "
+                << setName << endl;
+        }
+
+        cellSet loadedSet(mesh_, setName);
+        const labelHashSet& cellLabels = loadedSet;
+
+        combineImpl(set, add, cellLabels);
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::cellToFace::cellToFace
@@ -223,6 +244,7 @@ Foam::cellToFace::cellToFace
 :
     topoSetFaceSource(mesh),
     names_(one{}, setName),
+    isZone_(false),
     option_(option)
 {}
 
@@ -234,16 +256,9 @@ Foam::cellToFace::cellToFace
 )
 :
     topoSetFaceSource(mesh),
-    names_(),
+    isZone_(topoSetSource::readNames(dict, names_)),
     option_(cellActionNames_.get("option", dict))
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+{}
 
 
 Foam::cellToFace::cellToFace
@@ -254,6 +269,7 @@ Foam::cellToFace::cellToFace
 :
     topoSetFaceSource(mesh),
     names_(one{}, word(checkIs(is))),
+    isZone_(false),
     option_(cellActionNames_.read(checkIs(is)))
 {}
 
@@ -270,7 +286,8 @@ void Foam::cellToFace::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding faces according to cell sets: "
+            Info<< "    Adding faces according to "
+                << (isZone_ ? "cell zones: " : "cell sets: ")
                 << flatOutput(names_) << nl;
         }
 
@@ -284,6 +301,7 @@ void Foam::cellToFace::applyToSet
         if (verbose_)
         {
             Info<< "    Removing faces according to cell sets: "
+                << (isZone_ ? "cell zones: " : "cell sets: ")
                 << flatOutput(names_) << nl;
         }
 

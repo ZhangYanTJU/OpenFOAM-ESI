@@ -68,16 +68,31 @@ void Foam::faceToPoint::combine
     const word& setName
 ) const
 {
-    // Load the set
-    faceSet loadedSet(mesh_, setName);
-    const labelHashSet& faceLabels = loadedSet;
-
-    // Add all points from faces in loadedSet
-    for (const label facei : faceLabels)
+    if (isZone_)
     {
-        const face& f = mesh_.faces()[facei];
+        const auto& faceLabels = mesh_.faceZones()[setName].addressing();
 
-        addOrDelete(set, f, add);
+        // Add all points from faces in loadedSet
+        for (const label facei : faceLabels)
+        {
+            const face& f = mesh_.faces()[facei];
+
+            addOrDelete(set, f, add);
+        }
+    }
+    else
+    {
+        // Load the set
+        faceSet loadedSet(mesh_, setName);
+        const labelHashSet& faceLabels = loadedSet;
+
+        // Add all points from faces in loadedSet
+        for (const label facei : faceLabels)
+        {
+            const face& f = mesh_.faces()[facei];
+
+            addOrDelete(set, f, add);
+        }
     }
 }
 
@@ -93,6 +108,7 @@ Foam::faceToPoint::faceToPoint
 :
     topoSetPointSource(mesh),
     names_(one{}, setName),
+    isZone_(false),
     option_(option)
 {}
 
@@ -104,16 +120,9 @@ Foam::faceToPoint::faceToPoint
 )
 :
     topoSetPointSource(mesh),
-    names_(),
+    isZone_(topoSetSource::readNames(dict, names_)),
     option_(faceActionNames_.get("option", dict))
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+{}
 
 
 Foam::faceToPoint::faceToPoint
@@ -124,6 +133,7 @@ Foam::faceToPoint::faceToPoint
 :
     topoSetPointSource(mesh),
     names_(one{}, word(checkIs(is))),
+    isZone_(false),
     option_(faceActionNames_.read(checkIs(is)))
 {}
 
@@ -140,7 +150,8 @@ void Foam::faceToPoint::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding points from face in face sets: "
+            Info<< "    Adding points from face in "
+                << (isZone_ ? "face zones: " : "face sets: ")
                 << flatOutput(names_) << nl;
         }
 
@@ -153,7 +164,8 @@ void Foam::faceToPoint::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Removing points from face in face sets: "
+            Info<< "    Removing points from face in "
+                << (isZone_ ? "face zones: " : "face sets: ")
                 << flatOutput(names_) << nl;
         }
 

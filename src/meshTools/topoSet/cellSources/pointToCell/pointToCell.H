@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -64,6 +64,17 @@ Usage
 
         // Option-2
         set   <pointSetName>;
+
+        // Option-3
+        zones
+        (
+            <pointZoneName0>
+            <pointZoneName1>
+            ...
+        );
+
+        // Option-4
+        zone    <pointZoneName>;
     }
     \endverbatim
 
@@ -90,16 +101,14 @@ Usage
       edge    | Cells using an edge with both points in pointSet
     \endverbatim
 
-    Options for the conditional mandatory entries:
+    Options for the conditional mandatory entries (in order of precedence):
     \verbatim
       Entry    | Description                | Type     | Req'd  | Dflt
       sets     | Names of input pointSets   | wordList | cond'l | -
+      zones    | Names of input pointZones  | wordList | cond'l | -
       set      | Name of input pointSet     | word     | cond'l | -
+      zone     | Name of input pointZone    | word     | cond'l | -
     \endverbatim
-
-Note
-    The order of precedence among the conditional mandatory entries from the
-    highest to the lowest is \c sets, and \c set.
 
 See also
     - Foam::topoSetSource
@@ -148,14 +157,26 @@ private:
 
         static const Enum<pointAction> pointActionNames_;
 
-        //- Names of sets to use
+        //- Names of sets or zones to use
         wordList names_;
+
+        //- Is name a set or a zone
+        const bool isZone_;
 
         //- Selection type
         pointAction option_;
 
 
     // Private Member Functions
+
+        //- Depending on point to cell option add to or delete from cellSet.
+        template<class Selector>
+        void combineImpl
+        (
+            topoSet& set,
+            const bool add,
+            const Selector& pointLabels
+        ) const;
 
         //- Depending on point-to-cell option add to or delete from cellSet.
         void combine(topoSet& set, const bool add, const word& setName) const;

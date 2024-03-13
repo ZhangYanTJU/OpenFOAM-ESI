@@ -60,7 +60,8 @@ Foam::faceToFace::faceToFace
 )
 :
     topoSetFaceSource(mesh),
-    names_(one{}, setName)
+    names_(one{}, setName),
+    isZone_(false)
 {}
 
 
@@ -71,15 +72,8 @@ Foam::faceToFace::faceToFace
 )
 :
     topoSetFaceSource(mesh),
-    names_()
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+    isZone_(topoSetSource::readNames(dict, names_))
+{}
 
 
 Foam::faceToFace::faceToFace
@@ -89,7 +83,8 @@ Foam::faceToFace::faceToFace
 )
 :
     topoSetFaceSource(mesh),
-    names_(one{}, word(checkIs(is)))
+    names_(one{}, word(checkIs(is))),
+    isZone_(false)
 {}
 
 
@@ -105,30 +100,46 @@ void Foam::faceToFace::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding all elements of face sets: "
+            Info<< "    Adding all elements of "
+                << (isZone_ ? "face zones: " : "face sets: ")
                 << flatOutput(names_) << nl;
         }
 
         for (const word& setName : names_)
         {
-            faceSet loadedSet(mesh_, setName);
+            if (isZone_)
+            {
+                set.addSet(mesh_.faceZones()[setName]);
+            }
+            else
+            {
+                faceSet loadedSet(mesh_, setName);
 
-            set.addSet(loadedSet);
+                set.addSet(loadedSet);
+            }
         }
     }
     else if (action == topoSetSource::SUBTRACT)
     {
         if (verbose_)
         {
-            Info<< "    Removing all elements of face sets: "
+            Info<< "    Removing all elements of "
+                << (isZone_ ? "face zones: " : "face sets: ")
                 << flatOutput(names_) << nl;
         }
 
         for (const word& setName : names_)
         {
-            faceSet loadedSet(mesh_, setName);
+            if (isZone_)
+            {
+                set.subtractSet(mesh_.faceZones()[setName]);
+            }
+            else
+            {
+                faceSet loadedSet(mesh_, setName);
 
-            set.subtractSet(loadedSet);
+                set.subtractSet(loadedSet);
+            }
         }
     }
 }

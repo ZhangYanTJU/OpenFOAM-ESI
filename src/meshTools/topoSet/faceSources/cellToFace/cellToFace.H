@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -63,6 +63,17 @@ Usage
 
         // Option-2
         set <cellSetName>;
+
+        // Option-3
+        zones
+        (
+            <cellZoneName0>
+            <cellZoneName1>
+            ...
+        );
+
+        // Option-4
+        zone    <cellZoneName>;
     }
     \endverbatim
 
@@ -90,16 +101,16 @@ Usage
       outside | Faces with only one neighbour in the cellSet
     \endverbatim
 
-    Options for the conditional mandatory entries:
+    Options for the conditional mandatory entries (in order of precedence):
     \verbatim
       Entry    | Description                    | Type     | Reqd   | Deflt
       sets     | Names of input cellSets        | wordList | choice | -
+      zones    | Names of input cellZones       | wordList | cond'l | -
       set      | Name of input cellSet          | word     | choice | -
+      zone     | Name of input cellZone         | word     | cond'l | -
     \endverbatim
 
 Note
-  - The order of precedence among the conditional mandatory entries from the
-    highest to the lowest is \c sets, and \c set.
   - The \c outside option applies to the cellSets individually.
 
 See also
@@ -149,8 +160,11 @@ private:
 
         static const Enum<cellAction> cellActionNames_;
 
-        //- Names of cellSets to use
+        //- Names of sets or zones to use
         wordList names_;
+
+        //- Is name a set or a zone
+        const bool isZone_;
 
         //- Selection type
         cellAction option_;
@@ -159,6 +173,15 @@ private:
     // Private Member Functions
 
         //- Depending on face to cell option add to or delete from cellSet.
+        template<class Selector>
+        void combineImpl
+        (
+            topoSet& set,
+            const bool add,
+            const Selector& cellLabels
+        ) const;
+
+        //- Depending on face to cell option add to or delete from set.
         void combine(topoSet& set, const bool add, const word& setName) const;
 
 

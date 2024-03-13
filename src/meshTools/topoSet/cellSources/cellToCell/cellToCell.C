@@ -60,7 +60,8 @@ Foam::cellToCell::cellToCell
 )
 :
     topoSetCellSource(mesh),
-    names_(one{}, setName)
+    names_(one{}, setName),
+    isZone_(false)
 {}
 
 
@@ -71,15 +72,8 @@ Foam::cellToCell::cellToCell
 )
 :
     topoSetCellSource(mesh),
-    names_()
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+    isZone_(topoSetSource::readNames(dict, names_))
+{}
 
 
 Foam::cellToCell::cellToCell
@@ -89,7 +83,8 @@ Foam::cellToCell::cellToCell
 )
 :
     topoSetCellSource(mesh),
-    names_(one{}, word(checkIs(is)))
+    names_(one{}, word(checkIs(is))),
+    isZone_(false)
 {}
 
 
@@ -105,30 +100,44 @@ void Foam::cellToCell::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding all elements of cell sets: "
+            Info<< "    Adding all elements of "
+                << (isZone_ ? "cell zones: " : "cell sets: ")
                 << flatOutput(names_) << nl;
         }
 
         for (const word& setName : names_)
         {
-            cellSet loadedSet(mesh_, setName);
-
-            set.addSet(loadedSet);
+            if (isZone_)
+            {
+                set.addSet(mesh_.cellZones()[setName]);
+            }
+            else
+            {
+                cellSet loadedSet(mesh_, setName);
+                set.addSet(loadedSet);
+            }
         }
     }
     else if (action == topoSetSource::SUBTRACT)
     {
         if (verbose_)
         {
-            Info<< "    Removing all elements of cell sets: "
+            Info<< "    Removing all elements of "
+                << (isZone_ ? "cell zones: " : "cell sets: ")
                 << flatOutput(names_) << nl;
         }
 
         for (const word& setName : names_)
         {
-            cellSet loadedSet(mesh_, setName);
-
-            set.subtractSet(loadedSet);
+            if (isZone_)
+            {
+                set.subtractSet(mesh_.cellZones()[setName]);
+            }
+            else
+            {
+                cellSet loadedSet(mesh_, setName);
+                set.subtractSet(loadedSet);
+            }
         }
     }
 }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2020,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,6 +62,17 @@ Usage
 
         // Option-2
         set   <pointSetName>;
+
+        // Option-3
+        zones
+        (
+            <pointZoneName0>
+            <pointZoneName1>
+            ...
+        );
+
+        // Option-4
+        zone    <pointZoneName>;
     }
     \endverbatim
 
@@ -81,16 +92,14 @@ Usage
       subtract | Remove selected points from this pointSet
     \endverbatim
 
-    Options for the conditional mandatory entries:
+    Options for the conditional mandatory entries (in order of precedence):
     \verbatim
       Entry    | Description                | Type     | Req'd  | Dflt
       sets     | Names of input pointSets   | wordList | cond'l | -
+      zones    | Names of input pointZones  | wordList | cond'l | -
       set      | Name of input pointSet     | word     | cond'l | -
+      zone     | Name of input pointZone    | word     | cond'l | -
     \endverbatim
-
-Note
-    The order of precedence among the conditional mandatory entries from the
-    highest to the lowest is \c sets, and \c set.
 
 See also
     - Foam::topoSetSource
@@ -124,8 +133,11 @@ class pointToPoint
         //- Add usage string
         static addToUsageTable usage_;
 
-        //- Names of sets to use
+        //- Names of sets or zones to use
         wordList names_;
+
+        //- Is name a set or a zone
+        const bool isZone_;
 
 
 public:

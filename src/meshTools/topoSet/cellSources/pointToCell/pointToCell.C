@@ -64,18 +64,14 @@ Foam::pointToCell::pointActionNames_
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::pointToCell::combine
+template<class Selector>
+void Foam::pointToCell::combineImpl
 (
     topoSet& set,
     const bool add,
-    const word& setName
+    const Selector& pointLabels
 ) const
 {
-    // Load the set
-    pointSet loadedSet(mesh_, setName);
-
-    const labelHashSet& pointLabels = loadedSet;
-
     // Handle any selection
     if (option_ == ANY)
     {
@@ -114,6 +110,31 @@ void Foam::pointToCell::combine
 }
 
 
+void Foam::pointToCell::combine
+(
+    topoSet& set,
+    const bool add,
+    const word& setName
+) const
+{
+    if (isZone_)
+    {
+        const labelList& pointLabels = mesh_.pointZones()[setName];
+
+        combineImpl(set, add, pointLabels);
+    }
+    else
+    {
+        // Load the set
+        pointSet loadedSet(mesh_, setName);
+
+        const labelHashSet& pointLabels = loadedSet;
+
+        combineImpl(set, add, pointLabels);
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::pointToCell::pointToCell
@@ -125,6 +146,7 @@ Foam::pointToCell::pointToCell
 :
     topoSetCellSource(mesh),
     names_(one{}, setName),
+    isZone_(false),
     option_(option)
 {}
 
@@ -136,16 +158,9 @@ Foam::pointToCell::pointToCell
 )
 :
     topoSetCellSource(mesh),
-    names_(),
+    isZone_(topoSetSource::readNames(dict, names_)),
     option_(pointActionNames_.get("option", dict))
-{
-    // Look for 'sets' or 'set'
-    if (!dict.readIfPresent("sets", names_))
-    {
-        names_.resize(1);
-        dict.readEntry("set", names_.front());
-    }
-}
+{}
 
 
 Foam::pointToCell::pointToCell
@@ -156,6 +171,7 @@ Foam::pointToCell::pointToCell
 :
     topoSetCellSource(mesh),
     names_(one{}, word(checkIs(is))),
+    isZone_(false),
     option_(pointActionNames_.read(checkIs(is)))
 {}
 
@@ -172,7 +188,8 @@ void Foam::pointToCell::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding cells according to point sets: "
+            Info<< "    Adding cells according to "
+                << (isZone_ ? "point zones: " : "point sets: ")
                 << flatOutput(names_) << nl;
         }
 
@@ -186,6 +203,7 @@ void Foam::pointToCell::applyToSet
         if (verbose_)
         {
             Info<< "    Removing cells according to point sets: "
+                << (isZone_ ? "point zones: " : "point sets: ")
                 << flatOutput(names_) << nl;
         }
 

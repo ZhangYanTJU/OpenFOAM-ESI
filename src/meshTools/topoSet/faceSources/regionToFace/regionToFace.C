@@ -136,7 +136,12 @@ void Foam::regionToFace::markZone
 }
 
 
-void Foam::regionToFace::combine(topoSet& set, const bool add) const
+void Foam::regionToFace::combine
+(
+    topoSet& set,
+    const bool add,
+    const labelUList& ids
+) const
 {
     if (verbose_)
     {
@@ -144,11 +149,9 @@ void Foam::regionToFace::combine(topoSet& set, const bool add) const
             << " to delimit search region." << endl;
     }
 
-    faceSet subSet(mesh_, setName_);
-
     indirectPrimitivePatch patch
     (
-        IndirectList<face>(mesh_.faces(), subSet.toc()),
+        IndirectList<face>(mesh_.faces(), ids),
         mesh_.points()
     );
 
@@ -217,6 +220,7 @@ Foam::regionToFace::regionToFace
 :
     topoSetFaceSource(mesh),
     setName_(setName),
+    isZone_(false),
     nearPoint_(nearPoint)
 {}
 
@@ -228,9 +232,19 @@ Foam::regionToFace::regionToFace
 )
 :
     topoSetFaceSource(mesh),
-    setName_(dict.get<word>("set")),
+    isZone_(false),
     nearPoint_(dict.get<point>("nearPoint"))
-{}
+{
+    if (dict.readIfPresent("set", setName_))
+    {
+        isZone_ = false;
+    }
+    else
+    {
+        setName_ = (dict.get<word>("zone"));
+        isZone_ = true;
+    }
+}
 
 
 Foam::regionToFace::regionToFace
@@ -241,6 +255,7 @@ Foam::regionToFace::regionToFace
 :
     topoSetFaceSource(mesh),
     setName_(checkIs(is)),
+    isZone_(false),
     nearPoint_(checkIs(is))
 {}
 
@@ -257,23 +272,41 @@ void Foam::regionToFace::applyToSet
     {
         if (verbose_)
         {
-            Info<< "    Adding all faces of connected region of set "
+            Info<< "    Adding all faces of connected region of "
+                << (isZone_ ? "zone " : "set ")
                 << setName_ << " starting from point " << nearPoint_
                 << " ..." << endl;
         }
 
-        combine(set, true);
+        if (isZone_)
+        {
+            combine(set, true, mesh_.faceZones()[setName_].addressing());
+        }
+        else
+        {
+            faceSet subSet(mesh_, setName_);
+            combine(set, true, subSet.sortedToc());
+        }
     }
     else if (action == topoSetSource::SUBTRACT)
     {
         if (verbose_)
         {
-            Info<< "    Removing all cells of connected region of set "
+            Info<< "    Removing all cells of connected region of "
+                << (isZone_ ? "zone " : "set ")
                 << setName_ << " starting from point " << nearPoint_
                 << " ..." << endl;
         }
 
-        combine(set, false);
+        if (isZone_)
+        {
+            combine(set, false, mesh_.faceZones()[setName_].addressing());
+        }
+        else
+        {
+            faceSet subSet(mesh_, setName_);
+            combine(set, false, subSet.sortedToc());
+        }
     }
 }
 

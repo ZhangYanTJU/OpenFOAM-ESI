@@ -337,6 +337,18 @@ public:
         //- Subtract elements present in set.
         virtual void subtractSet(const topoSet& set);
 
+        // Variants taking labelUList&
+
+            //- Subset contents. Only elements present in both sets remain.
+            virtual void subset(const labelUList& set);
+
+            //- Add elements present in set.
+            virtual void addSet(const labelUList& set);
+
+            //- Subtract elements present in set.
+            virtual void subtractSet(const labelUList& set);
+
+
         //- Sync set across coupled patches.
         virtual void sync(const polyMesh& mesh);
 
