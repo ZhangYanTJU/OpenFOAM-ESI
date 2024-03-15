@@ -499,11 +499,51 @@ Foam::faMesh::faMesh
 
 Foam::faMesh::faMesh
 (
+    const word& meshName,
     const faMesh& baseMesh,
     labelList&& faceLabels
 )
 :
-    faMesh(polyMesh::defaultRegion, baseMesh, std::move(faceLabels))
+    faMesh
+    (
+        meshName,
+        baseMesh,
+        std::move(faceLabels),
+        static_cast<IOobjectOption>(baseMesh.thisDb())
+    )
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const faMesh& baseMesh,
+    labelList&& faceLabels
+)
+:
+    faMesh
+    (
+        polyMesh::defaultRegion,
+        baseMesh,
+        std::move(faceLabels),
+        static_cast<IOobjectOption>(baseMesh.thisDb())
+    )
+{}
+
+
+Foam::faMesh::faMesh
+(
+    const polyMesh& pMesh,
+    labelList&& faceLabels,
+    IOobjectOption ioOpt
+)
+:
+    faMesh
+    (
+        polyMesh::defaultRegion,
+        pMesh,
+        std::move(faceLabels),
+        ioOpt
+    )
 {}
 
 
@@ -662,6 +702,68 @@ Foam::faMesh::faMesh
     ),
     faSchemes(faMesh::thisDb()),
     faSolution(faMesh::thisDb()),
+    edgeInterpolation(*this),
+    faceLabels_
+    (
+        IOobject
+        (
+            "faceLabels",
+            pMesh.facesInstance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        std::move(faceLabels)
+    ),
+    boundary_
+    (
+        IOobject
+        (
+            "faBoundary",
+            faceLabels_.instance(),
+            faMesh::meshSubDir,
+            faMesh::thisDb(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        *this,
+        Foam::zero{}
+    ),
+    comm_(UPstream::worldComm),
+    curTimeIndex_(time().timeIndex())
+{
+    // Not yet much for primitive mesh data possible...
+    nPoints_ = 0;
+    nEdges_ = 0;
+    nInternalEdges_ = 0;
+    nFaces_ = faceLabels_.size();
+
+    // TDB: can we make a NO_READ readOption persistent for
+    // faSchemes/faSolution? Or not needed anymore?
+}
+
+Foam::faMesh::faMesh
+(
+    const word& meshName,
+    const polyMesh& pMesh,
+    labelList&& faceLabels,
+    IOobjectOption ioOpt
+)
+:
+    objectRegistry
+    (
+        IOobject
+        (
+            meshName,
+            faMeshRegistry::New(pMesh).thisDb(),
+            IOobjectOption::NO_READ,
+            IOobjectOption::AUTO_WRITE,
+            IOobjectOption::REGISTER
+        )
+    ),
+    faSchemes(faMesh::thisDb(), ioOpt.readOpt()),
+    faSolution(faMesh::thisDb(), ioOpt.readOpt()),
     edgeInterpolation(*this),
     faceLabels_
     (

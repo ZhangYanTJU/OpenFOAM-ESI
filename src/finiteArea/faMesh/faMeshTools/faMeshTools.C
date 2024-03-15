@@ -355,7 +355,7 @@ Foam::faMeshTools::loadOrCreateMeshImpl
             new faMesh
             (
                 pMesh,
-                labelList(),
+                labelList(),  // Similar to Foam::zero{}
                 IOobject(io, IOobject::NO_READ, IOobject::AUTO_WRITE)
             )
         );

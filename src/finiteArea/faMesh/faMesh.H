@@ -555,9 +555,25 @@ public:
         explicit faMesh(const polyMesh&, const bool doInit = true);
 
         //- Construct from components (face labels) without boundary,
+        //- using specified read properties.
+        //  Boundary is added using addFaPatches() member function.
+        faMesh
+        (
+            const word& meshName,
+            const polyMesh& pMesh,
+            labelList&& faceLabels,
+            IOobjectOption ioOpt
+        );
+
+        //- Construct from components (face labels) without boundary,
         //- using IOobject properties from polyMesh.
         //  Boundary is added using addFaPatches() member function.
         faMesh(const word& meshName, const polyMesh&, labelList&& faceLabels);
+
+        //- Construct from components (face labels) without boundary,
+        //- using specified read properties.
+        //  Boundary is added using addFaPatches() member function.
+        faMesh(const polyMesh&, labelList&& faceLabels, IOobjectOption ioOpt);
 
         //- Construct from components (face labels) without boundary,
         //- using IOobject properties from polyMesh.
@@ -573,6 +589,27 @@ public:
         //- without boundary, using IOobject properties from polyMesh.
         //  Boundary is added using addFaPatches() member function
         faMesh(const faMesh& baseMesh, Foam::zero);
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using specified read properties.
+        //  Boundary is added using addFaPatches() member function
+        faMesh
+        (
+            const word& meshName,
+            const faMesh& baseMesh,
+            labelList&& faceLabels,
+            IOobjectOption ioOpt
+        );
+
+        //- Construct as copy (for dictionaries) and faceLabels
+        //- without boundary, using specified read properties.
+        //  Boundary is added using addFaPatches() member function
+        faMesh
+        (
+            const faMesh& baseMesh,
+            labelList&& faceLabels,
+            IOobjectOption ioOpt
+        );
 
         //- Construct as copy (for dictionaries) and faceLabels
         //- without boundary, using IOobject properties from polyMesh.
