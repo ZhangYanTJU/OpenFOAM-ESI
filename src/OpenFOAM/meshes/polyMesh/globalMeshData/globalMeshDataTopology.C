@@ -84,7 +84,10 @@ static void calcCellCellsImpl
             globalNeighbour[bfacei] = val;
         }
     }
-    syncTools::swapBoundaryFaceList(mesh, globalNeighbour);
+
+    // Swap boundary neighbour information:
+    // - cyclics and (optionally) processor
+    syncTools::swapBoundaryFaceList(mesh, globalNeighbour, parallel);
 
 
     // Count number of faces (internal + coupled)
