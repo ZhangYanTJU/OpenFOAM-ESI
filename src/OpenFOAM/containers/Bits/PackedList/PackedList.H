@@ -83,8 +83,9 @@ See also
     Foam::DynamicList
 
 SourceFiles
-    PackedListI.H
     PackedList.C
+    PackedListCore.C
+    PackedListI.H
     PackedListIO.C
 
 \*---------------------------------------------------------------------------*/
@@ -92,11 +93,11 @@ SourceFiles
 #ifndef Foam_PackedList_H
 #define Foam_PackedList_H
 
+#include "className.H"
 #include "BitOps.H"
 #include "labelList.H"
 #include "IndirectListBase.H"
 #include "InfoProxy.H"
-#include "PackedListCore.H"
 
 #include <type_traits>
 
@@ -117,6 +118,23 @@ Ostream& operator<<(Ostream& os, const PackedList<Width>& list);
 
 template<unsigned Width>
 Ostream& operator<<(Ostream& os, const InfoProxy<PackedList<Width>>& info);
+
+
+/*---------------------------------------------------------------------------*\
+                   Class Detail::PackedListCore Declaration
+\*---------------------------------------------------------------------------*/
+
+namespace Detail
+{
+
+//- Template-invariant parts for PackedList
+struct PackedListCore
+{
+    //- Define template name
+    ClassNameNoDebug("PackedList");
+};
+
+} // End namespace Detail
 
 
 /*---------------------------------------------------------------------------*\

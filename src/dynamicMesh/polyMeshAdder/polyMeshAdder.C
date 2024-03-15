@@ -2817,7 +2817,7 @@ void Foam::polyMeshAdder::add
                 if (newNei < newOwn)
                 {
                     std::swap(newOwn, newNei);
-                    newFace = newFace.reverseFace();
+                    newFace.flip();
                     flipFaceFlux = !flipFaceFlux;
                     for (bool& flip : flips)
                     {

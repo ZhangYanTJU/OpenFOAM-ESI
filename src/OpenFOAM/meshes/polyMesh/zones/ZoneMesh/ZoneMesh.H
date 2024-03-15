@@ -194,9 +194,8 @@ public:
         //  If object does not belong to any zones, return -1
         label whichZone(const label objectIndex) const;
 
-        //- Given a global object index, return (in argument) the zones it is
-        //  in. Returns number of zones (0 if object does not belong to any
-        //  zones)
+        //- Given a global object index, return (in argument) its zones.
+        //  Returns number of zones (0 if object does not belong to any zones)
         label whichZones
         (
             const label objectIndex,

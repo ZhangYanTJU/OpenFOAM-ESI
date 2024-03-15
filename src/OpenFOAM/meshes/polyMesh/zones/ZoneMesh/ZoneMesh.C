@@ -96,7 +96,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcZoneMap() const
                 {
                     map.insert(id, zonei);
                 }
-                else if (fnd() != zonei)
+                else if (fnd.val() != zonei)
                 {
                     // Multiple zones for same id
 
@@ -112,7 +112,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcZoneMap() const
                               : static_cast<const labelList&>(zn)
                             )
                             {
-                                maxIndex = max(maxIndex, id);
+                                maxIndex = Foam::max(maxIndex, id);
                             }
                         }
                         additionalMapPtr_.reset(new labelListList(maxIndex+1));
@@ -135,7 +135,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::calcZoneMap() const
 
                 if (zones.size())
                 {
-                    stableSort(zones);
+                    Foam::stableSort(zones);
                     const label zonei = map[id];
                     const label index = findLower(zones, zonei);
                     if (index == -1)
@@ -426,11 +426,11 @@ Foam::label Foam::ZoneMesh<ZoneType, MeshType>::whichZones
 ) const
 {
     zones.clear();
-    const auto fnd = zoneMap().find(objectIndex);
+    const auto fnd = zoneMap().cfind(objectIndex);
     if (fnd)
     {
         // Add main element
-        zones.push_back(fnd());
+        zones.push_back(fnd.val());
         if (additionalMapPtr_)
         {
             const auto& additionalMap = *additionalMapPtr_;
@@ -967,7 +967,7 @@ bool Foam::ZoneMesh<ZoneType, MeshType>::checkParallelSync
     const bool report
 ) const
 {
-    if (!Pstream::parRun())
+    if (!UPstream::parRun())
     {
         return false;
     }
@@ -1025,7 +1025,7 @@ bool Foam::ZoneMesh<ZoneType, MeshType>::checkParallelSync
             {
                 hasError = true;
 
-                if (debug || (report && Pstream::master()))
+                if (debug || (report && UPstream::master()))
                 {
                     Info<< " ***Zone " << zn.name()
                         << " of type " << zn.type()
