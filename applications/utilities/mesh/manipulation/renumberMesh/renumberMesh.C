@@ -145,6 +145,7 @@ Usage
 #include "hexRef8Data.H"
 #include "regionProperties.H"
 #include "polyMeshTools.H"
+#include "subsetAdjacency.H"
 
 using namespace Foam;
 
@@ -194,21 +195,56 @@ tmp<volScalarField> createScalarField
 }
 
 
-// Calculate band of matrix
-label getBand(const labelList& owner, const labelList& neighbour)
+// Calculate band of mesh
+// label getBand(const labelUList& owner, const labelUList& neighbour)
+// {
+//     label bandwidth = 0;
+//
+//     forAll(neighbour, facei)
+//     {
+//         const label width = neighbour[facei] - owner[facei];
+//
+//         if (bandwidth < width)
+//         {
+//             bandwidth = width;
+//         }
+//     }
+//     return bandwidth;
+// }
+
+
+// Calculate band and profile of matrix. Profile is scalar to avoid overflow
+Tuple2<label, scalar> getBand
+(
+    const CompactListList<label>& mat
+)
 {
-    label band = 0;
+    Tuple2<label, scalar> metrics(0, 0);
 
-    forAll(neighbour, facei)
+    auto& bandwidth = metrics.first();
+    auto& profile = metrics.second();
+
+    forAll(mat, celli)
     {
-        label diff = neighbour[facei] - owner[facei];
+        const auto& neighbours = mat[celli];
 
-        if (diff > band)
+        const label nNbr = neighbours.size();
+
+        if (nNbr)
         {
-            band = diff;
+            // Max distance
+            const label width = (neighbours[nNbr-1] - celli);
+
+            if (bandwidth < width)
+            {
+                bandwidth = width;
+            }
+
+            profile += scalar(width);
         }
     }
-    return band;
+
+    return metrics;
 }
 
 
@@ -217,27 +253,35 @@ void getBand
 (
     const bool calculateIntersect,
     const label nCells,
-    const labelList& owner,
-    const labelList& neighbour,
+    const labelUList& owner,
+    const labelUList& neighbour,
     label& bandwidth,
     scalar& profile,            // scalar to avoid overflow
     scalar& sumSqrIntersect     // scalar to avoid overflow
 )
 {
     labelList cellBandwidth(nCells, Foam::zero{});
-    scalarField nIntersect(nCells, Foam::zero{});
+
+    bandwidth = 0;
 
     forAll(neighbour, facei)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const label own = owner[facei];
+        const label nei = neighbour[facei];
 
         // Note: mag not necessary for correct (upper-triangular) ordering.
-        label diff = nei-own;
-        cellBandwidth[nei] = max(cellBandwidth[nei], diff);
-    }
+        const label width = nei - own;
 
-    bandwidth = max(cellBandwidth);
+        if (cellBandwidth[nei] < width)
+        {
+            cellBandwidth[nei] = width;
+
+            if (bandwidth < width)
+            {
+                bandwidth = width;
+            }
+        }
+    }
 
     // Do not use field algebra because of conversion label to scalar
     profile = 0;
@@ -246,14 +290,16 @@ void getBand
         profile += scalar(width);
     }
 
-    sumSqrIntersect = 0.0;
+    sumSqrIntersect = 0;
     if (calculateIntersect)
     {
+        scalarField nIntersect(nCells, Foam::zero{});
+
         forAll(nIntersect, celli)
         {
             for (label colI = celli-cellBandwidth[celli]; colI <= celli; colI++)
             {
-                nIntersect[colI] += 1.0;
+                nIntersect[colI] += scalar(1);
             }
         }
 
@@ -675,9 +721,8 @@ CompactListList<label> regionRenumber
 
         forAll(regionCellOrder, regioni)
         {
-            // Info<< "    region " << regioni
-            //     << " starts at " << regionCellOrder.localStart(regioni)
-            //     << nl;
+            // Info<< "    region " << regioni << " starts at "
+            //     << regionCellOrder.localStart(regioni) << nl;
 
             // No parallel communication
             const bool oldParRun = UPstream::parRun(false);
@@ -703,27 +748,42 @@ CompactListList<label> regionRenumber
     {
         timer.resetTimeIncrement();
 
+        // Create adjacency matrix of the full mesh and subset subsequently.
+        // This is more efficient than creating adjacency matrices of
+        // sub-meshes.
+
+        // No parallel communication
+        const bool oldParRun = UPstream::parRun(false);
+
+        // The local connectivity of the full (non-subsetted) mesh
+        CompactListList<label> meshCellCells;
+        globalMeshData::calcCellCells(mesh, meshCellCells);
+        UPstream::parRun(oldParRun);  // Restore parallel state
+
+        timings[TimingType::CELL_CELLS] += timer.timeIncrement();
+
+        // For the respective subMesh selections
+        bitSet subsetCells(mesh.nCells());
+
         forAll(regionCellOrder, regioni)
         {
-            // Info<< "    region " << regioni
-            //     << " starts at " << regionCellOrder.localStart(regioni)
-            //     << nl;
+            // Info<< "    region " << regioni << " starts at "
+            //     << regionCellOrder.localStart(regioni) << nl;
+
+            subsetCells = false;
+            subsetCells.set(regionCellOrder[regioni]);
+
+            // Connectivity of local sub-mesh
+            labelList cellMap;
+            CompactListList<label> subCellCells =
+                subsetAdjacency(subsetCells, meshCellCells, cellMap);
+
+            timings[TimingType::CELL_CELLS] += timer.timeIncrement();
 
             // No parallel communication
             const bool oldParRun = UPstream::parRun(false);
 
-            // Connectivity of local sub-mesh
-            CompactListList<label> cellCells;
-            labelList cellMap = globalMeshData::calcCellCells
-            (
-                mesh,
-                regionCellOrder[regioni],
-                cellCells
-            );
-
-            timings[TimingType::CELL_CELLS] += timer.timeIncrement();
-
-            labelList subCellOrder = method.renumber(cellCells);
+            labelList subCellOrder = method.renumber(subCellCells);
 
             UPstream::parRun(oldParRun);  // Restore parallel state
 
@@ -835,10 +895,10 @@ int main(int argc, char *argv[])
     const bool dryrun = args.dryRun();
 
     const bool readDict = args.found("dict");
-    const bool doFrontWidth = args.found("frontWidth");
+    const bool doDecompose = args.found("decompose");
     const bool overwrite = args.found("overwrite");
     const bool doFields = !args.found("no-fields");
-    const bool doDecompose = args.found("decompose");
+    const bool doFrontWidth = args.found("frontWidth") && !doDecompose;
 
     word renumberMethodName;
     args.readIfPresent("renumber-method", renumberMethodName);
@@ -846,8 +906,7 @@ int main(int argc, char *argv[])
     if (doDecompose && UPstream::parRun())
     {
         FatalErrorIn(args.executable())
-            << "Cannot use -decompose option in parallel"
-            << " ... giving up" << nl
+            << "Cannot use -decompose option in parallel ... giving up" << nl
             << exit(FatalError);
     }
 
@@ -908,21 +967,21 @@ int main(int argc, char *argv[])
 
         reduce(band, maxOp<label>());
         reduce(profile, sumOp<scalar>());
-        reduce(sumSqrIntersect, sumOp<scalar>());
-
-        scalar rmsFrontwidth = Foam::sqrt
-        (
-            sumSqrIntersect/mesh.globalData().nTotalCells()
-        );
 
         Info<< "Mesh " << mesh.name()
             << " size: " << mesh.globalData().nTotalCells() << nl
-            << "Before renumbering :" << nl
+            << "Before renumbering" << nl
             << "    band           : " << band << nl
             << "    profile        : " << profile << nl;
 
         if (doFrontWidth)
         {
+            reduce(sumSqrIntersect, sumOp<scalar>());
+            scalar rmsFrontwidth = Foam::sqrt
+            (
+                sumSqrIntersect/mesh.globalData().nTotalCells()
+            );
+
             Info<< "    rms frontwidth : " << rmsFrontwidth << nl;
         }
 
@@ -1091,10 +1150,7 @@ int main(int argc, char *argv[])
         );
 
 
-        // List of objects read from time directory
-        // List of stored objects to clear from mesh
-
-        IOobjectList objects;
+        // List of stored objects to clear from mesh (after reading)
         DynamicList<regIOobject*> storedObjects;
 
         if (!dryrun && doFields)
@@ -1103,55 +1159,60 @@ int main(int argc, char *argv[])
 
             timer.resetTimeIncrement();
 
-            objects = IOobjectList(mesh, runTime.timeName());
+            IOobjectList objects(mesh, runTime.timeName());
             storedObjects.reserve(objects.size());
 
             const predicates::always nameMatcher;
 
             // Read GeometricFields
 
-            #undef  ReadFields
-            #define ReadFields(FieldType)                                     \
+            #undef  doLocalCode
+            #define doLocalCode(FieldType)                                    \
             readFields<FieldType>(mesh, objects, nameMatcher, storedObjects);
 
             // Read volume fields
-            ReadFields(volScalarField);
-            ReadFields(volVectorField);
-            ReadFields(volSphericalTensorField);
-            ReadFields(volSymmTensorField);
-            ReadFields(volTensorField);
+            doLocalCode(volScalarField);
+            doLocalCode(volVectorField);
+            doLocalCode(volSphericalTensorField);
+            doLocalCode(volSymmTensorField);
+            doLocalCode(volTensorField);
 
             // Read internal fields
-            ReadFields(volScalarField::Internal);
-            ReadFields(volVectorField::Internal);
-            ReadFields(volSphericalTensorField::Internal);
-            ReadFields(volSymmTensorField::Internal);
-            ReadFields(volTensorField::Internal);
+            doLocalCode(volScalarField::Internal);
+            doLocalCode(volVectorField::Internal);
+            doLocalCode(volSphericalTensorField::Internal);
+            doLocalCode(volSymmTensorField::Internal);
+            doLocalCode(volTensorField::Internal);
 
             // Read surface fields
-            ReadFields(surfaceScalarField);
-            ReadFields(surfaceVectorField);
-            ReadFields(surfaceSphericalTensorField);
-            ReadFields(surfaceSymmTensorField);
-            ReadFields(surfaceTensorField);
+            doLocalCode(surfaceScalarField);
+            doLocalCode(surfaceVectorField);
+            doLocalCode(surfaceSphericalTensorField);
+            doLocalCode(surfaceSymmTensorField);
+            doLocalCode(surfaceTensorField);
 
 
             // Read point fields
             const pointMesh& pMesh = pointMesh::New(mesh);
-            #undef  ReadPointFields
-            #define ReadPointFields(FieldType)                                \
+            #undef  doLocalCode
+            #define doLocalCode(FieldType)                                    \
             readFields<FieldType>(pMesh, objects, nameMatcher, storedObjects);
 
-            ReadPointFields(pointScalarField);
-            ReadPointFields(pointVectorField);
-            ReadPointFields(pointSphericalTensorField);
-            ReadPointFields(pointSymmTensorField);
-            ReadPointFields(pointTensorField);
+            doLocalCode(pointScalarField);
+            doLocalCode(pointVectorField);
+            doLocalCode(pointSphericalTensorField);
+            doLocalCode(pointSymmTensorField);
+            doLocalCode(pointTensorField);
 
-            #undef ReadFields
-            #undef ReadPointFields
+            #undef doLocalCode
 
             timings[TimingType::READ_FIELDS] += timer.timeIncrement();
+
+            // Write loaded fields when mesh.write() is called
+            for (auto* fldptr : storedObjects)
+            {
+                fldptr->writeOpt(IOobject::AUTO_WRITE);
+            }
         }
 
 
@@ -1224,7 +1285,13 @@ int main(int argc, char *argv[])
 
 
             CompactListList<label> regionCellOrder =
-                regionRenumber(renumberPtr(), mesh, cellToRegion);
+                regionRenumber
+                (
+                    renumberPtr(),
+                    mesh,
+                    cellToRegion,
+                    decomposePtr().nDomains()
+                );
 
             cellOrder = regionCellOrder.values();
 
@@ -1586,19 +1653,25 @@ int main(int argc, char *argv[])
             );
             reduce(band, maxOp<label>());
             reduce(profile, sumOp<scalar>());
-            reduce(sumSqrIntersect, sumOp<scalar>());
 
-            scalar rmsFrontwidth = Foam::sqrt
-            (
-                sumSqrIntersect/mesh.globalData().nTotalCells()
-            );
+            Info<< "After renumbering";
+            if (doDecompose)
+            {
+                Info<< " [values are misleading with -decompose option]";
+            }
 
-            Info<< "After renumbering :" << nl
+            Info<< nl
                 << "    band           : " << band << nl
                 << "    profile        : " << profile << nl;
 
             if (doFrontWidth)
             {
+                reduce(sumSqrIntersect, sumOp<scalar>());
+                scalar rmsFrontwidth = Foam::sqrt
+                (
+                    sumSqrIntersect/mesh.globalData().nTotalCells()
+                );
+
                 Info<< "    rms frontwidth : " << rmsFrontwidth << nl;
             }
 
