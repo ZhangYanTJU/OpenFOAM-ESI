@@ -102,12 +102,15 @@ void Foam::searchableSurfaceToPoint::combine(topoSet& set, const bool add) const
     {
         return;
     }
+    const tmp<pointField> tctrs(this->transform(mesh_.points()));
+    const pointField& ctrs = tctrs();
+
     const searchableSurface& s = *surf_;
 
     // Mesh points within the enclosing volumes
 
     List<volumeType> volTypes;
-    s.getVolumeType(mesh_.points(), volTypes);
+    s.getVolumeType(ctrs, volTypes);
 
     const label len = volTypes.size();
     for (label id=0; id < len; ++id)
@@ -129,7 +132,7 @@ Foam::searchableSurfaceToPoint::searchableSurfaceToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
+    topoSetPointSource(mesh, dict),
     surf_
     (
         searchableSurface::New

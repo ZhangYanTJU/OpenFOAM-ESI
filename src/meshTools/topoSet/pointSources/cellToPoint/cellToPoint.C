@@ -109,7 +109,7 @@ Foam::cellToPoint::cellToPoint
     const dictionary& dict
 )
 :
-    topoSetPointSource(mesh),
+    topoSetPointSource(mesh, dict),
     names_(),
     option_(cellActionNames_.get("option", dict))
 {

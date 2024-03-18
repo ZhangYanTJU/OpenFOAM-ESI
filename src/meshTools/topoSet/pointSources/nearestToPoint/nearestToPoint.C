@@ -146,7 +146,8 @@ Foam::nearestToPoint::nearestToPoint
     const dictionary& dict
 )
 :
-    nearestToPoint(mesh, dict.get<pointField>("points"))
+    topoSetPointSource(mesh, dict),
+    points_(dict.get<pointField>("points"))
 {}
 
 

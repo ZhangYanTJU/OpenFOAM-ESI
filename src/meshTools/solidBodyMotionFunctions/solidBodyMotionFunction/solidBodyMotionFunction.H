@@ -39,12 +39,12 @@ Description
 
 SourceFiles
     solidBodyMotionFunction.C
-    dynamicFvMeshNew.C
+    solidBodyMotionFunctionNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef solidBodyMotionFunction_H
-#define solidBodyMotionFunction_H
+#ifndef Foam_solidBodyMotionFunction_H
+#define Foam_solidBodyMotionFunction_H
 
 #include "Time.H"
 #include "dictionary.H"
@@ -101,7 +101,7 @@ public:
 
     // Constructors
 
-        //- Construct from the SBMFCoeffs dictionary and Time
+        //- Construct from the coefficients dictionary and Time
         solidBodyMotionFunction
         (
             const dictionary& SBMFCoeffs,
@@ -114,10 +114,28 @@ public:
 
     // Selectors
 
-        //- Select constructed from the SBMFCoeffs dictionary and Time
+        //- Construct and dispatch motionType with dictionary and Time.
+        //  Returns nullptr if motionType is empty
         static autoPtr<solidBodyMotionFunction> New
         (
-            const dictionary& SBMFCoeffs,
+            const word& motionType,
+            const dictionary& dict,
+            const Time& runTime
+        );
+
+        //- Select "solidBodyMotionFunction" type from dictionary
+        //- and create with Time.
+        static autoPtr<solidBodyMotionFunction> New
+        (
+            const dictionary& dict,
+            const Time& runTime
+        );
+
+        //- Select "solidBodyMotionFunction" type (if present) from dictionary
+        //- and create with Time.
+        static autoPtr<solidBodyMotionFunction> NewIfPresent
+        (
+            const dictionary& dict,
             const Time& runTime
         );
 

@@ -71,7 +71,7 @@ Foam::setToPointZone::setToPointZone
     const dictionary& dict
 )
 :
-    topoSetPointZoneSource(mesh),
+    topoSetPointZoneSource(mesh, dict),
     setName_(dict.get<word>("set"))
 {}
 

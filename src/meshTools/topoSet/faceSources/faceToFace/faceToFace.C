@@ -70,7 +70,7 @@ Foam::faceToFace::faceToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     names_()
 {
     // Look for 'sets' or 'set'

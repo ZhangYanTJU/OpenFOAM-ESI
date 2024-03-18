@@ -160,7 +160,7 @@ Foam::cellToFaceZone::cellToFaceZone
     const dictionary& dict
 )
 :
-    topoSetFaceZoneSource(mesh),
+    topoSetFaceZoneSource(mesh, dict),
     names_(),
     flip_(dict.getOrDefault("flip", false))
 {

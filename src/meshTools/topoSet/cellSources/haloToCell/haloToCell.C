@@ -198,7 +198,8 @@ Foam::haloToCell::haloToCell
     const dictionary& dict
 )
 :
-    haloToCell(mesh, dict.getOrDefault<label>("steps", 1))
+    topoSetCellSource(mesh, dict),
+    steps_(dict.getOrDefault<label>("steps", 1))
 {}
 
 

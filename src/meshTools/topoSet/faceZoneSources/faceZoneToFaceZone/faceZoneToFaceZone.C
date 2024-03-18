@@ -81,7 +81,7 @@ Foam::faceZoneToFaceZone::faceZoneToFaceZone
     const dictionary& dict
 )
 :
-    topoSetFaceZoneSource(mesh),
+    topoSetFaceZoneSource(mesh, dict),
     setName_(dict.get<word>("zone"))
 {}
 

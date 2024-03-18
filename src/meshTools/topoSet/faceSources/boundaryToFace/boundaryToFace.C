@@ -91,10 +91,10 @@ Foam::boundaryToFace::boundaryToFace(const polyMesh& mesh)
 Foam::boundaryToFace::boundaryToFace
 (
     const polyMesh& mesh,
-    const dictionary&
+    const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh)
+    topoSetFaceSource(mesh, dict)
 {}
 
 

@@ -94,7 +94,8 @@ Foam::labelToCell::labelToCell
     const dictionary& dict
 )
 :
-    labelToCell(mesh, dict.get<labelList>("value"))
+    topoSetCellSource(mesh, dict),
+    labels_(dict.get<labelList>("value"))
 {}
 
 

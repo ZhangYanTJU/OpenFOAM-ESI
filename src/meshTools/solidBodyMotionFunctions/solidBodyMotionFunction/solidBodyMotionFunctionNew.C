@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2019-2021 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -30,15 +30,18 @@ License
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::solidBodyMotionFunction> Foam::solidBodyMotionFunction::New
+Foam::autoPtr<Foam::solidBodyMotionFunction>
+Foam::solidBodyMotionFunction::New
 (
+    const word& motionType,
     const dictionary& dict,
     const Time& runTime
 )
 {
-    const word motionType(dict.get<word>("solidBodyMotionFunction"));
-
-    Info<< "Selecting solid-body motion function " << motionType << endl;
+    if (motionType.empty())
+    {
+        return nullptr;
+    }
 
     auto* ctorPtr = dictionaryConstructorTable(motionType);
 
@@ -53,7 +56,44 @@ Foam::autoPtr<Foam::solidBodyMotionFunction> Foam::solidBodyMotionFunction::New
         ) << exit(FatalIOError);
     }
 
+    Info<< "Selecting solid-body motion function " << motionType << endl;
+
     return autoPtr<solidBodyMotionFunction>(ctorPtr(dict, runTime));
+}
+
+
+Foam::autoPtr<Foam::solidBodyMotionFunction>
+Foam::solidBodyMotionFunction::New
+(
+    const dictionary& dict,
+    const Time& runTime
+)
+{
+    return New
+    (
+        dict.get<word>("solidBodyMotionFunction", keyType::LITERAL),
+        dict,
+        runTime
+    );
+}
+
+
+Foam::autoPtr<Foam::solidBodyMotionFunction>
+Foam::solidBodyMotionFunction::NewIfPresent
+(
+    const dictionary& dict,
+    const Time& runTime
+)
+{
+    word motionType;
+    dict.readIfPresent("solidBodyMotionFunction", motionType, keyType::LITERAL);
+
+    if (motionType.empty())
+    {
+        return nullptr;
+    }
+
+    return New(motionType, dict, runTime);
 }
 
 

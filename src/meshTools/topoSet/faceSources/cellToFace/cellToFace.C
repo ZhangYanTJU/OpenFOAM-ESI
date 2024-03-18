@@ -233,7 +233,7 @@ Foam::cellToFace::cellToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     names_(),
     option_(cellActionNames_.get("option", dict))
 {

@@ -121,7 +121,7 @@ Foam::patchToFace::patchToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     selectedPatches_()
 {
     // Look for 'patches' and 'patch', but accept 'name' as well

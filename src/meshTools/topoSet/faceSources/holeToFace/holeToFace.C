@@ -1095,7 +1095,7 @@ Foam::holeToFace::holeToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     zonePoints_(dict.get<List<pointField>>("points")),
     blockedFaceNames_(),
     blockedCellNames_(),

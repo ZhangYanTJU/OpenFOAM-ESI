@@ -83,7 +83,7 @@ Foam::setAndNormalToFaceZone::setAndNormalToFaceZone
     const dictionary& dict
 )
 :
-    topoSetFaceZoneSource(mesh),
+    topoSetFaceZoneSource(mesh, dict),
     setName_(dict.get<word>("faceSet")),
     normal_(dict.get<vector>("normal"))
 {}

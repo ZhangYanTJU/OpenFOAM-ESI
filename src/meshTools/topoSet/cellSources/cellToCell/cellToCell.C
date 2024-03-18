@@ -70,7 +70,7 @@ Foam::cellToCell::cellToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     names_()
 {
     // Look for 'sets' or 'set'

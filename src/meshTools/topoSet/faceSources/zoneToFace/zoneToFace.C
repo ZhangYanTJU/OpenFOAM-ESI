@@ -183,7 +183,7 @@ Foam::zoneToFace::zoneToFace
     const dictionary& dict
 )
 :
-    topoSetFaceSource(mesh),
+    topoSetFaceSource(mesh, dict),
     zoneMatcher_()
 {
     // Look for 'zones' and 'zone', but accept 'name' as well

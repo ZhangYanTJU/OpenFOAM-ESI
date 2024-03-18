@@ -125,7 +125,7 @@ Foam::patchToCell::patchToCell
     const dictionary& dict
 )
 :
-    topoSetCellSource(mesh),
+    topoSetCellSource(mesh, dict),
     selectedPatches_()
 {
     // Look for 'patches' and 'patch', but accept 'name' as well
