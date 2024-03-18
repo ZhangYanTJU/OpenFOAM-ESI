@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -331,11 +331,21 @@ public:
         //- Subset contents. Only elements present in both sets remain.
         virtual void subset(const topoSet& set);
 
-        //- Add elements present in set.
+        //- Subset contents. Only elements present in both sets remain.
+        virtual void subset(const labelUList& set);
+
+        //- Add elements
         virtual void addSet(const topoSet& set);
 
-        //- Subtract elements present in set.
+        //- Add elements
+        virtual void addSet(const labelUList& set);
+
+        //- Subtract elements
         virtual void subtractSet(const topoSet& set);
+
+        //- Subtract elements
+        virtual void subtractSet(const labelUList& set);
+
 
         //- Sync set across coupled patches.
         virtual void sync(const polyMesh& mesh);
@@ -392,7 +402,8 @@ public:
 
         //- Deprecated(2018-10) subtract elements present in set.
         //  \deprecated(2018-10) - use subtractSet instead
-        virtual void deleteSet(const topoSet& set);
+        FOAM_DEPRECATED_FOR(2018-10, "subtractSet()")
+        virtual void deleteSet(const topoSet& set) { this->subtractSet(set); }
 };
 
 

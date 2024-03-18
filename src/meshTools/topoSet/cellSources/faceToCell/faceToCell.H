@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -53,7 +53,7 @@ Usage
         option      <option>;
 
         // Conditional mandatory entries
-        // Select either of the below
+        // Select one of the below
 
         // Option-1
         sets
@@ -64,7 +64,18 @@ Usage
         );
 
         // Option-2
+        zones
+        (
+            <faceZoneName0>
+            <faceZoneName1>
+            ...
+        );
+
+        // Option-3
         set     <faceSetName>;
+
+        // Option-4
+        zone    <faceZoneName>;
     }
     \endverbatim
 
@@ -93,16 +104,14 @@ Usage
       neighbour | Cells that are neighbour of given faces
     \endverbatim
 
-    Options for the conditional mandatory entries:
+    Options for the conditional mandatory entries (in order of precedence):
     \verbatim
       Entry    | Description                | Type     | Req'd  | Dflt
       sets     | Names of input faceSets    | wordList | cond'l | -
+      zones    | Names of input faceZones   | wordList | cond'l | -
       set      | Name of input faceSet      | word     | cond'l | -
+      zone     | Name of input faceZone     | word     | cond'l | -
     \endverbatim
-
-Note
-    The order of precedence among the conditional mandatory entries from the
-    highest to the lowest is \c sets, and \c set.
 
 See also
     - Foam::topoSetSource
@@ -114,8 +123,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef faceToCell_H
-#define faceToCell_H
+#ifndef Foam_faceToCell_H
+#define Foam_faceToCell_H
 
 #include "topoSetCellSource.H"
 #include "Enum.H"
@@ -153,14 +162,26 @@ private:
         //- Add usage string
         static addToUsageTable usage_;
 
-        //- Names of sets to use
+        //- Names of sets or zones to use
         wordList names_;
+
+        //- Is name a set or a zone
+        const bool isZone_;
 
         //- Option
         faceAction option_;
 
 
     // Private Member Functions
+
+        //- Depending on face to cell option add to or delete from cellSet.
+        template<class Selector>
+        void combineImpl
+        (
+            topoSet& set,
+            const bool add,
+            const Selector& faceLabels
+        ) const;
 
         //- Depending on face to cell option add to or delete from cellSet.
         void combine(topoSet& set, const bool add, const word& setName) const;

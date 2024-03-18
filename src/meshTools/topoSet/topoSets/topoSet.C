@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -553,10 +553,37 @@ void Foam::topoSet::subset(const topoSet& set)
 }
 
 
+void Foam::topoSet::subset(const labelUList& elems)
+{
+    // Only retain entries found in both sets
+    auto& currentSet = static_cast<labelHashSet&>(*this);
+
+    DynamicList<label> newElems(elems.size()+currentSet.size());
+    for (const label elem : elems)
+    {
+        if (currentSet.found(elem))
+        {
+            newElems.push_back(elem);
+        }
+    }
+    if (newElems.size() < currentSet.size())
+    {
+        currentSet = newElems;
+    }
+}
+
+
 void Foam::topoSet::addSet(const topoSet& set)
 {
     // Add entries to the set
     static_cast<labelHashSet&>(*this) |= set;
+}
+
+
+void Foam::topoSet::addSet(const labelUList& elems)
+{
+    // Add entries to the set
+    static_cast<labelHashSet&>(*this).set(elems);
 }
 
 
@@ -567,9 +594,10 @@ void Foam::topoSet::subtractSet(const topoSet& set)
 }
 
 
-void Foam::topoSet::deleteSet(const topoSet& set)
+void Foam::topoSet::subtractSet(const labelUList& elems)
 {
-    this->subtractSet(set);
+    // Subtract entries from the set
+    static_cast<labelHashSet&>(*this).unset(elems);
 }
 
 

@@ -52,7 +52,7 @@ Usage
         option      <option>;
 
         // Conditional mandatory entries
-        // Select either of the below
+        // Select one of the below
 
         // Option-1
         zones
@@ -63,7 +63,7 @@ Usage
         );
 
         // Option-2
-        set <faceZoneName>;
+        zone <faceZoneName>;
     }
     \endverbatim
 

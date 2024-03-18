@@ -239,6 +239,22 @@ void Foam::topoBitSet::subset(const topoSet& set)
 }
 
 
+void Foam::topoBitSet::subset(const labelUList& elems)
+{
+    // Only retain entries found in both sets
+    bitSet newSelected(selected_.size());
+
+    for (const label id : elems)
+    {
+        if (selected_[id])
+        {
+            newSelected.set(id);
+        }
+    }
+    selected_ = newSelected;
+}
+
+
 void Foam::topoBitSet::addSet(const topoSet& set)
 {
     // Add entries to the set
@@ -256,6 +272,12 @@ void Foam::topoBitSet::addSet(const topoSet& set)
 }
 
 
+void Foam::topoBitSet::addSet(const labelUList& elems)
+{
+    selected_.set(elems);
+}
+
+
 void Foam::topoBitSet::subtractSet(const topoSet& set)
 {
     // Subtract entries from the set
@@ -270,6 +292,12 @@ void Foam::topoBitSet::subtractSet(const topoSet& set)
             selected_.unset(id);
         }
     }
+}
+
+
+void Foam::topoBitSet::subtractSet(const labelUList& elems)
+{
+    selected_.unset(elems);
 }
 
 

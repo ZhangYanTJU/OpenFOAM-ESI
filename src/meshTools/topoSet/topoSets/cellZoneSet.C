@@ -171,6 +171,23 @@ void Foam::cellZoneSet::subset(const topoSet& set)
 }
 
 
+void Foam::cellZoneSet::subset(const labelUList& set)
+{
+    DynamicList<label> newAddressing(addressing_.size());
+
+    for (const label celli : set)
+    {
+        if (found(celli))
+        {
+            newAddressing.append(celli);
+        }
+    }
+
+    addressing_.transfer(newAddressing);
+    updateSet();
+}
+
+
 void Foam::cellZoneSet::addSet(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_);
@@ -190,11 +207,48 @@ void Foam::cellZoneSet::addSet(const topoSet& set)
 }
 
 
+void Foam::cellZoneSet::addSet(const labelUList& set)
+{
+    DynamicList<label> newAddressing(addressing_);
+
+    for (const label celli : set)
+    {
+        if (!found(celli))
+        {
+            newAddressing.append(celli);
+        }
+    }
+
+    addressing_.transfer(newAddressing);
+    updateSet();
+}
+
+
 void Foam::cellZoneSet::subtractSet(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_.size());
 
     const cellZoneSet& zoneSet = refCast<const cellZoneSet>(set);
+
+    for (const label celli : addressing_)
+    {
+        if (!zoneSet.found(celli))
+        {
+            // Not found in zoneSet so add
+            newAddressing.append(celli);
+        }
+    }
+
+    addressing_.transfer(newAddressing);
+    updateSet();
+}
+
+
+void Foam::cellZoneSet::subtractSet(const labelUList& elems)
+{
+    DynamicList<label> newAddressing(addressing_.size());
+
+    const labelHashSet zoneSet(elems);
 
     for (const label celli : addressing_)
     {
