@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -52,7 +52,7 @@ Usage
         action      <action>;
         source      cellToFaceZone;
 
-        // Select either of the below
+        // Select one of the below
 
         // Option-1
         sets
@@ -63,7 +63,18 @@ Usage
         );
 
         // Option-2
-        set         <word>;
+        zones
+        (
+            <cellZoneName0>
+            <cellZoneName1>
+            ...
+        );
+
+        // Option-3
+        set         <cellSetName>;
+
+        // Option-4
+        zone        <cellZoneName>;
 
         // Optional entries
         flip        <bool>;
@@ -87,6 +98,15 @@ Usage
       new      | Create a new faceZone from selected faces
       add      | Add selected faces of a faceZoneSet into this faceZone
       subtract | Remove selected faces of a faceZoneSet from this faceZone
+    \endverbatim
+
+    Options for the conditional mandatory entries (in order of precedence):
+    \verbatim
+      Entry    | Description                    | Type     | Reqd   | Deflt
+      sets     | Names of input cellSets        | wordList | choice | -
+      zones    | Names of input cellZones       | wordList | cond'l | -
+      set      | Name of input cellSet          | word     | choice | -
+      zone     | Name of input cellZone         | word     | cond'l | -
     \endverbatim
 
 Notes
@@ -124,8 +144,11 @@ class cellToFaceZone
         //- Add usage string
         static addToUsageTable usage_;
 
-        //- Names of cellSets to use
+        //- Names of sets or zones to use
         wordList names_;
+
+        //- Is name a set or a zone
+        const bool isZone_;
 
         //- Whether cellSet is slave cells or master cells
         const bool flip_;
@@ -136,7 +159,7 @@ class cellToFaceZone
         //- Select outside faces of cellSet
         void selectFaces
         (
-            const cellSet& cSet,
+            const bitSet& cSet,
             bitSet& selectedFace,
             bitSet& doFlip
         ) const;

@@ -405,6 +405,11 @@ public:
         {
             return actionNames[actionName];
         }
+
+        //- Helper: extract wordList of patches/zones from dictionary. Returns
+        //          true if zone(s). Order of parsing is
+        //          sets, zones, set, zone
+        static bool readNames(const dictionary& dict, wordList& names);
 };
 
 

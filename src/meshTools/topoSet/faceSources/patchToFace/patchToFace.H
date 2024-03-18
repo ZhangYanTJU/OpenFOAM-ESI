@@ -49,7 +49,7 @@ Usage
         source      patchToFace;
 
         // Conditional mandatory entries
-        // Select either of the below
+        // Select one of the below
 
         // Option-1
         patches

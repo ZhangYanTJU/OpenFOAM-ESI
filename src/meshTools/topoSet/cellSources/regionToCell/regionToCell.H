@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -59,6 +59,7 @@ Usage
 
         // Optional entries
         set       <cellSetName>;
+        zone      <cellZoneName>;
         nErode    <label>;
     }
     \endverbatim
@@ -93,8 +94,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef regionToCell_H
-#define regionToCell_H
+#ifndef Foam_regionToCell_H
+#define Foam_regionToCell_H
 
 #include "topoSetCellSource.H"
 #include "boolList.H"
@@ -119,8 +120,11 @@ class regionToCell
         //- Add usage string
         static addToUsageTable usage_;
 
-        //- Name of cellSet to keep to
-        const word setName_;
+        //- Name of cellSet or cellZone to keep to
+        word setName_;
+
+        //- Is name a set or a zone
+        bool isZone_;
 
         //- Coordinate(s) that is inside connected region
         const pointField insidePoints_;

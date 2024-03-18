@@ -62,6 +62,30 @@ class faceZoneSet
         boolList flipMap_;
 
 
+    // Private Member Functions
+
+        void subset
+        (
+            const word& setName,
+            const labelUList& setAddressing,
+            const UList<bool>& setFlipMap
+        );
+
+        void addSet
+        (
+            const word& setName,
+            const labelUList& setAddressing,
+            const UList<bool>& setFlipMap
+        );
+
+        void subtractSet
+        (
+            const word& setName,
+            const labelUList& setAddressing,
+            const UList<bool>& setFlipMap
+        );
+
+
 public:
 
     //- Runtime type information
@@ -141,6 +165,18 @@ public:
 
         //- Subtract elements present in set.
         virtual void subtractSet(const topoSet& set);
+
+        // Variants taking labelUList&
+
+            //- Subset contents. Only elements present in both sets remain.
+            virtual void subset(const labelUList& set);
+
+            //- Add elements present in set.
+            virtual void addSet(const labelUList& set);
+
+            //- Subtract elements present in set.
+            virtual void subtractSet(const labelUList& set);
+
 
         //- Sync faceZoneSet across coupled patches.
         virtual void sync(const polyMesh& mesh);

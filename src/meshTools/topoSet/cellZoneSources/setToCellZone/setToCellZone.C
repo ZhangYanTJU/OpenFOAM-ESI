@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -123,7 +123,7 @@ void Foam::setToCellZone::applyToSet
             {
                 if (!zoneSet.found(celli))
                 {
-                    newAddressing.append(celli);
+                    newAddressing.push_back(celli);
                 }
             }
 
@@ -144,11 +144,11 @@ void Foam::setToCellZone::applyToSet
             // Start off empty
             DynamicList<label> newAddressing(zoneSet.addressing().size());
 
-            forAll(zoneSet.addressing(), i)
+            for (const label celli : zoneSet.addressing())
             {
-                if (!loadedSet.found(zoneSet.addressing()[i]))
+                if (!loadedSet.found(celli))
                 {
-                    newAddressing.append(zoneSet.addressing()[i]);
+                    newAddressing.push_back(celli);
                 }
             }
             zoneSet.addressing().transfer(newAddressing);

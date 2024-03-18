@@ -304,4 +304,52 @@ Foam::tmp<Foam::pointField> Foam::topoSetSource::transform
 }
 
 
+bool Foam::topoSetSource::readNames
+(
+    const dictionary& dict,
+    wordList& names
+)
+{
+    bool isZone = false;
+
+    // priority
+    // 1. 'sets'
+    // 2. 'zones'
+    // 3. 'set'
+    // 4. 'zone'
+
+    if (dict.readIfPresent("sets", names, keyType::LITERAL))
+    {
+        // -> isZone = false;
+    }
+    else if (dict.readIfPresent("zones", names, keyType::LITERAL))
+    {
+        isZone = true;
+    }
+    else
+    {
+        // Ensure error messsages make sense if nothing was provided
+        names.resize(1);
+
+        if (dict.readIfPresent("zone", names.front(), keyType::LITERAL))
+        {
+            // Had 'zone', so 'set' is optional...
+            isZone = true;
+            if (dict.readIfPresent("set", names.front(), keyType::LITERAL))
+            {
+                isZone = false;
+            }
+        }
+        else
+        {
+            // No 'zone', so 'set' is mandatory...
+            dict.readEntry("set", names.front(), keyType::LITERAL);
+            // -> isZone = false;
+        }
+    }
+
+    return isZone;
+}
+
+
 // ************************************************************************* //
