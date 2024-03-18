@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017 OpenFOAM Foundation
-    Copyright (C) 2020-2023 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -716,6 +716,14 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         const bool oldMasterOnly = regIOobject::masterOnlyReading;
         regIOobject::masterOnlyReading = masterOnly;
 
+        const bool oldParRun = UPstream::parRun();
+        if (masterOnly)
+        {
+            // Reading on master only.
+            // Avoid side effects from io.readStream below.
+            UPstream::parRun(false);
+        }
+
         // Read file
         ok = io.readData(io.readStream(typeName));
         io.close();
@@ -723,6 +731,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         // Restore flags
         io.globalObject(oldGlobal);
         regIOobject::masterOnlyReading = oldMasterOnly;
+        UPstream::parRun(oldParRun);
 
         if (debug)
         {
