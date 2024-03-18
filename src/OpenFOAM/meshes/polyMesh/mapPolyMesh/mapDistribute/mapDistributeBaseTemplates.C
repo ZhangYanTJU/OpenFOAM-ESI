@@ -349,7 +349,10 @@ void Foam::mapDistributeBase::receive
             {
                 FatalErrorInFunction
                     << "From processor " << proci
-                    << " : unallocated receive field" << nl
+                    << " : unallocated receive field."
+                    << " Expected size " << map.size()
+                    << " on comm " << comm
+                    << " with procs " << UPstream::nProcs(comm) << nl
                     << exit(FatalError);
             }
         }
