@@ -26,8 +26,15 @@ printHelp() {
 Usage: ${0##*/} [OPTION]
        ${0##*/} [OPTION] directory
 options:
-  -case=DIR     Specify starting directory, default is cwd
-  -help         Print the usage
+  -case=DIR         Specify starting directory, default is cwd
+  -dry-run | -n     Test without performing actions
+  -verbose | -v     Additional verbosity
+  -force            (currently ignored)
+  -link-back        Link back from new finite-area/ to old locations
+  -git              Use git mv/git add when making changes
+  -help             Print help and exit
+
+Relocate finite-area files to new sub-directory locations
 
 Equivalent options:
   | -case=DIR  | -case DIR |
@@ -207,7 +214,10 @@ performLinkBack()
             if [ -f "$regionDir/$file" ] && [ ! -f "$file" ]
             then
                 echo "${optDryRun}  ln -s $regionDir/$file $file" 1>&2
-                # ln -s "$regionDir/$file" "$file"
+                if [ -z "$optDryRun" ]
+                then
+                    ln -s "$regionDir/$file" "$file"
+                fi
             fi
         done
     fi
