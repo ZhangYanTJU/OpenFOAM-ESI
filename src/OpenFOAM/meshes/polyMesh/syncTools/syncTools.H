@@ -555,13 +555,13 @@ public:
             //- Return neighbour cell values for all boundary faces
             //- by swapping via boundary faces
             template<class T>
-            static List<T> swapBoundaryCellList
+            FOAM_NODISCARD static List<T> swapBoundaryCellList
             (
                 const polyMesh& mesh,
                 const UList<T>& cellData,
                 //! Allow parallel communication
                 const bool parRun = UPstream::parRun()
-            ) FOAM_NODISCARD
+            )
             {
                 List<T> nbrCellData;
                 swapBoundaryCellList(mesh, cellData, nbrCellData, parRun);
@@ -570,13 +570,13 @@ public:
 
             //- Return neighbour cell positions for all boundary faces
             //- by swapping via boundary faces
-            static List<point> swapBoundaryCellPositions
+            FOAM_NODISCARD static List<point> swapBoundaryCellPositions
             (
                 const polyMesh& mesh,
                 const UList<point>& cellData,
                 //! Allow parallel communication
                 const bool parRun = UPstream::parRun()
-            ) FOAM_NODISCARD
+            )
             {
                 List<point> nbrCellData;
                 swapBoundaryCellPositions(mesh, cellData, nbrCellData, parRun);
