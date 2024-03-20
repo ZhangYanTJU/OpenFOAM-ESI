@@ -43,6 +43,10 @@ cellSet_doc
         sets    (c1 c2);
         // or
         set     c1;
+        // or
+        zones   (c1Zone c2Zone);
+        // or
+        zone    c1Zone;
     }
 
 
@@ -62,6 +66,10 @@ cellSet_doc
         sets    (f0 f1);
         // or
         set     f0;             // Name of faceSet
+        // or
+        zones   (f0Zone f1Zone);
+        // or
+        zone    f0Zone;
 
         //- selection option (mandatory)
         option any;             // cell with any face in faceSet
@@ -127,6 +135,10 @@ cellSet_doc
         sets    (p0 p1);
         // or
         sets    p0;
+        // or
+        zones   (p0Zone p1Zone);
+        // or
+        zone    p0Zone;
 
         option any;         // cell with any point in pointSet
         //option edge;      // cell with an edge with both points in pointSet
@@ -254,6 +266,10 @@ faceSet_doc
         sets    (c0 c1);
         // or
         set     c0;             // Name of cellSet
+        // or
+        zones   (c0Zone c1Zone);
+        // or
+        zone    c0Zone;
 
         option  all;            // All faces of cells
         //option  both;         // Only faces with owner+neighbour in cellSet
@@ -310,6 +326,10 @@ faceSet_doc
         sets    (p0 p1);
         // or
         set     p0;             // Name of pointSet
+        // or
+        zones   (p0Zone p1Zone);
+        // or
+        zone    p0Zone;
 
         option  any;           // Faces using any point in pointSet
         //option  all          // Faces with all points in pointSet
@@ -399,6 +419,10 @@ pointSet_doc
         sets    (c1 c2);
         // or
         set     c1;
+        // or
+        zones   (c1Zone c2Zone);
+        // or
+        zone    c1Zone;
 
         option  all;         // all points of cell
     }
@@ -421,6 +445,10 @@ pointSet_doc
         sets    (f1 f2);
         // or
         set     f1;
+        // or
+        zones   (f1Zone f2Zone);
+        // or
+        zone    f1Zone;
 
         option  all;         // all points of face
     }
@@ -446,6 +474,10 @@ pointSet_doc
         sets    (p1 p2);
         // or
         set     p1;
+        // or
+        zones   (p1Zone p2Zone);
+        // or
+        zone    p1Zone;
     }
 
 
