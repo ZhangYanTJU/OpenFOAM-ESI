@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2013-2016 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,54 +25,28 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "radial.H"
-#include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-namespace extrudeModels
-{
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-defineTypeNameAndDebug(radial, 0);
-
-addToRunTimeSelectionTable(extrudeModel, radial, dictionary);
-
+#include "lookupBase.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-radial::radial(const dictionary& dict)
+Foam::lookupBase::lookupBase(const dictionary& dict)
 :
-    extrudeModel(typeName, dict),
-    R_(Function1<scalar>::New("R", coeffDict_))
+    name_(dict.get<word>("name"))
 {}
 
 
-// * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * * //
+Foam::lookupBase::lookupBase(const lookupBase& rhs)
+:
+    name_(rhs.name_)
+{}
 
-point radial::operator()
-(
-    const point& surfacePoint,
-    const vector& surfaceNormal,
-    const label layer
-) const
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::lookupBase::writeEntries(Ostream& os) const
 {
-    // radius of the surface
-    scalar rs = mag(surfacePoint);
-    vector rsHat = surfacePoint/rs;
-
-    scalar r = R_->value(layer);
-
-    return r*rsHat;
+    os.writeEntry<word>("name", name_);
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace extrudeModels
-} // End namespace Foam
 
 // ************************************************************************* //

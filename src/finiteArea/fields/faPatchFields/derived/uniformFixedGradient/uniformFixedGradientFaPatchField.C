@@ -69,7 +69,8 @@ Foam::uniformFixedGradientFaPatchField<Type>::uniformFixedGradientFaPatchField
         (
             /* p.patch(), */
             "uniformGradient",
-            dict
+            dict,
+            &iF.db()
         )
     )
 {

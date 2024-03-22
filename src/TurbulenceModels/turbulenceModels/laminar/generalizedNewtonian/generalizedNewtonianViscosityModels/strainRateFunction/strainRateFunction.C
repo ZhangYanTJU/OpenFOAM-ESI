@@ -110,6 +110,12 @@ nu
         dimensionedScalar(dimViscosity, Zero)
     );
 
+    // Set the database - could not be done in constructor
+    const_cast<Function1<scalar>&>(strainRateFunction_()).resetDb
+    (
+        nu0.mesh().thisDb()
+    );
+
     tnu.ref().primitiveFieldRef() = strainRateFunction_->value(strainRate);
 
     volScalarField::Boundary& nuBf = tnu.ref().boundaryFieldRef();

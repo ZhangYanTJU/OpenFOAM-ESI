@@ -60,7 +60,15 @@ Foam::PatchFunction1Types::MappedFile<Type>::MappedFile
     sampleIndex_(-1, -1),
     sampleAverage_(Zero, Zero),
     sampleValues_(),
-    offset_(Function1<Type>::NewIfPresent("offset", dict))
+    offset_
+    (
+        Function1<Type>::NewIfPresent
+        (
+            "offset",
+            dict,
+            patchFunction1Base::whichDb()
+        )
+    )
 {
     if (fieldTableName_.empty())
     {

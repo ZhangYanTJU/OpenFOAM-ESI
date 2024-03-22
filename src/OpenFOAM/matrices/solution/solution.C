@@ -113,7 +113,7 @@ void Foam::solution::read(const dictionary& dict)
         {
             fieldRelaxDefault_.reset
             (
-                new Function1Types::Constant<scalar>("default", 0)
+                new Function1Types::Constant<scalar>("default", 0, &db())
             );
         }
 
@@ -127,7 +127,7 @@ void Foam::solution::read(const dictionary& dict)
         {
             eqnRelaxDefault_.reset
             (
-                new Function1Types::Constant<scalar>("default", 0)
+                new Function1Types::Constant<scalar>("default", 0, &db())
             );
         }
 
