@@ -33,6 +33,7 @@ fvOptions/atmPlantCanopyTurbSource/atmPlantCanopyTurbSource.C
 fvOptions/atmPlantCanopyUSource/atmPlantCanopyUSource.C
 fvOptions/atmPlantCanopyTSource/atmPlantCanopyTSource.C
 fvOptions/atmNutSource/atmNutSource.C
+fvOptions/treeTurbulence/treeTurbulence.C
 
 
 /* functionObjects */
