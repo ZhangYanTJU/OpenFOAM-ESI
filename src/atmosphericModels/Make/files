@@ -35,6 +35,13 @@ fvOptions/atmPlantCanopyTSource/atmPlantCanopyTSource.C
 fvOptions/atmNutSource/atmNutSource.C
 fvOptions/treeTurbulence/treeTurbulence.C
 
+etht = fvOptions/evapotranspirationHeatTransfer
+ethtModels = $(etht)/evapotranspirationHeatTransferModels
+$(etht)/evapotranspirationHeatTransfer.C
+$(ethtModels)/evapotranspirationHeatTransferModel/evapotranspirationHeatTransferModel.C
+$(ethtModels)/evapotranspirationHeatTransferModel/evapotranspirationHeatTransferModelNew.C
+$(ethtModels)/tree/tree.C
+$(ethtModels)/grass/grass.C
 
 /* functionObjects */
 functionObjects/ObukhovLength/ObukhovLength.C
