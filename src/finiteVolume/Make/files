@@ -295,6 +295,7 @@ $(patchExpr)/patchExprLemonParser.lyy-m4
 $(patchExpr)/patchExprScanner.cc
 
 $(expr)/PatchFunction1/makePatchFunction1Expression.C
+$(expr)/PatchFunction1/lookup/lookupBase.C
 $(expr)/PatchFunction1/lookup/makeLookups.C
 $(expr)/PatchFunction1/lookup/makeLookupFields.C
 
