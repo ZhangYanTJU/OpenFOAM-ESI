@@ -31,6 +31,7 @@ License
 #include "surfaceMesh.H"
 #include "pointFields.H"
 #include "pointMesh.H"
+#include "UniformDimensionedField.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -77,6 +78,8 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::PatchFunction1Types::LookupField<Type>::value(const scalar x) const
 {
+    typedef UniformDimensionedField<Type> UType;
+
     const objectRegistry& db = patchFunction1Base::obr();
     const label patchi = patchFunction1Base::patch().index();
 
@@ -85,40 +88,83 @@ Foam::PatchFunction1Types::LookupField<Type>::value(const scalar x) const
         typedef GeometricField<Type, fvPatchField, volMesh> VType;
         typedef GeometricField<Type, fvsPatchField, surfaceMesh> SType;
 
-        const auto* fldPtr = db.getObjectPtr<VType>(name_);
+        // Try:
+        // - as volField in local scope
+        // - as surfaceField in local scope
+        // - as UniformDimensionedField recursively
 
-        if (fldPtr)
-        {
-            return fldPtr->boundaryField()[patchi];
-        }
-        else
-        {
-            const auto* fldPtr = db.getObjectPtr<SType>(name_);
+        const regIOobject* ptr = db.cfindIOobject(name_, false);
 
-            if (!fldPtr)
+        if (ptr)
+        {
+            const auto* vPtr = dynamic_cast<const VType*>(ptr);
+            if (vPtr)
             {
-                FatalErrorInFunction
-                    << nl
-                    << "    failed lookup of " << name_
-                    << " (objectRegistry "
-                    << db.name()
-                    << ")\n    available objects of type " << VType::typeName
-                    << ':' << nl
-                    << db.names<VType>() << nl
-                    << "    available objects of type " << SType::typeName
-                    << ':' << nl
-                    << db.names<SType>() << nl
-                    << exit(FatalError);
+                return vPtr->boundaryField()[patchi];
             }
-            return fldPtr->boundaryField()[patchi];
+
+            const auto* sPtr = dynamic_cast<const SType*>(ptr);
+            if (sPtr)
+            {
+                return sPtr->boundaryField()[patchi];
+            }
+
+            const auto* uPtr = dynamic_cast<const UType*>(ptr);
+            if (uPtr)
+            {
+                return Field<Type>(this->size(), uPtr->value());
+            }
         }
+
+        // Done db level. Try recursion
+        ptr = db.parent().cfindIOobject(name_, true);
+
+        if (ptr)
+        {
+            const auto* uPtr = dynamic_cast<const UType*>(ptr);
+            if (uPtr)
+            {
+                return Field<Type>(this->size(), uPtr->value());
+            }
+        }
+
+        FatalErrorInFunction
+            << nl
+            << "    failed lookup of " << name_
+            << " (objectRegistry "
+            << db.name()
+            << ")\n    available objects of type " << VType::typeName
+            << ':' << nl
+            << db.names<VType>() << nl
+            << "    available objects of type " << SType::typeName
+            << ':' << nl
+            << db.names<SType>() << nl
+            << "    available objects of type " << UType::typeName
+            << ':' << nl
+            << db.names<UType>() << nl
+            << exit(FatalError);
+        return Field<Type>::null();
     }
     else
     {
         // Assume pointField
         typedef GeometricField<Type, pointPatchField, pointMesh> PType;
-        const auto& fld = db.lookupObject<PType>(name_);
-        return fld.boundaryField()[patchi].patchInternalField();
+
+        const regIOobject* ptr = db.cfindIOobject(name_, false);
+
+        if (ptr)
+        {
+            const auto* pPtr = dynamic_cast<const PType*>(ptr);
+            if (pPtr)
+            {
+                return pPtr->boundaryField()[patchi].patchInternalField();
+            }
+        }
+
+        // Re-do as uniform field. Note: could repeat logic above
+        const auto& obj = db.lookupObject<UType>(name_, true);
+
+        return Field<Type>(this->size(), obj.value());
     }
 }
 

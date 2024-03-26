@@ -56,7 +56,7 @@ template<class Type>
 inline Type Foam::Function1Types::Lookup<Type>::value(const scalar t) const
 {
     const objectRegistry& db = function1Base::obr();
-    const UniformDimensionedField<Type>& obj =
+    const auto& obj =
         db.lookupObject<UniformDimensionedField<Type>>(name_, true);
 
     return obj.value();
