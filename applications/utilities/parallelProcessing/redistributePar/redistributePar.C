@@ -727,11 +727,13 @@ autoPtr<mapDistributePolyMesh> redistributeAndWrite
         {
             // A zero-sized mesh with boundaries.
             // This is used to create zero-sized fields.
+            const bool oldParRun = UPstream::parRun(false);
             subsetterPtr.reset(new fvMeshSubset(mesh, zero{}));
             subsetterPtr().subMesh().init(true);
             subsetterPtr().subMesh().globalData();
             subsetterPtr().subMesh().tetBasePtIs();
             subsetterPtr().subMesh().geometricD();
+            UPstream::parRun(oldParRun);
         }
 
 
