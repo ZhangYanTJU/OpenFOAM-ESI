@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -115,7 +115,12 @@ Foam::pointZoneSet::pointZoneSet
 :
     pointSet(mesh, name, set.size(), wOpt),
     mesh_(mesh),
-    addressing_(refCast<const pointZoneSet>(set).addressing())
+    addressing_
+    (
+        isA<const pointZoneSet>(set)
+      ? refCast<const pointZoneSet>(set).addressing()
+      : set.sortedToc()
+    )
 {
     updateSet();
 }
@@ -156,13 +161,27 @@ void Foam::pointZoneSet::subset(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_.size());
 
-    const pointZoneSet& zoneSet = refCast<const pointZoneSet>(set);
+    const auto* setPtr = dynamic_cast<const pointZoneSet*>(&set);
 
-    for (const label pointi : zoneSet.addressing())
+    if (setPtr)
     {
-        if (found(pointi))
+        for (const label pointi : setPtr->addressing())
         {
-            newAddressing.append(pointi);
+            if (found(pointi))
+            {
+                newAddressing.append(pointi);
+            }
+        }
+    }
+    else
+    {
+        // Assume a pointSet
+        for (const label pointi : refCast<const pointSet>(set).sortedToc())
+        {
+            if (found(pointi))
+            {
+                newAddressing.append(pointi);
+            }
         }
     }
 
@@ -192,13 +211,27 @@ void Foam::pointZoneSet::addSet(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_);
 
-    const pointZoneSet& zoneSet = refCast<const pointZoneSet>(set);
+    const auto* setPtr = dynamic_cast<const pointZoneSet*>(&set);
 
-    for (const label pointi : zoneSet.addressing())
+    if (setPtr)
     {
-        if (!found(pointi))
+        for (const label pointi : setPtr->addressing())
         {
-            newAddressing.append(pointi);
+            if (!found(pointi))
+            {
+                newAddressing.append(pointi);
+            }
+        }
+    }
+    else
+    {
+        // Assume a pointSet
+        for (const label pointi : refCast<const pointSet>(set).sortedToc())
+        {
+            if (!found(pointi))
+            {
+                newAddressing.append(pointi);
+            }
         }
     }
 
@@ -228,11 +261,9 @@ void Foam::pointZoneSet::subtractSet(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_.size());
 
-    const pointZoneSet& zoneSet = refCast<const pointZoneSet>(set);
-
     for (label pointi : addressing_)
     {
-        if (!zoneSet.found(pointi))
+        if (!set.found(pointi))
         {
             // Not found in zoneSet so add
             newAddressing.append(pointi);

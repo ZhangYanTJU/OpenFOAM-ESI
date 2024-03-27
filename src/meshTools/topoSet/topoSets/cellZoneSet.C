@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -114,7 +114,12 @@ Foam::cellZoneSet::cellZoneSet
 :
     cellSet(mesh, name, set.size(), wOpt),
     mesh_(mesh),
-    addressing_(refCast<const cellZoneSet>(set).addressing())
+    addressing_
+    (
+        isA<const cellZoneSet>(set)
+      ? refCast<const cellZoneSet>(set).addressing()
+      : set.sortedToc()
+    )
 {
     updateSet();
 }
@@ -156,13 +161,27 @@ void Foam::cellZoneSet::subset(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_.size());
 
-    const cellZoneSet& zoneSet = refCast<const cellZoneSet>(set);
+    const auto* setPtr = dynamic_cast<const cellZoneSet*>(&set);
 
-    for (const label celli : zoneSet.addressing())
+    if (setPtr)
     {
-        if (found(celli))
+        for (const label celli : setPtr->addressing())
         {
-            newAddressing.append(celli);
+            if (found(celli))
+            {
+                newAddressing.append(celli);
+            }
+        }
+    }
+    else
+    {
+        // Assume a cellSet
+        for (const label celli : refCast<const cellSet>(set).sortedToc())
+        {
+            if (found(celli))
+            {
+                newAddressing.append(celli);
+            }
         }
     }
 
@@ -192,13 +211,27 @@ void Foam::cellZoneSet::addSet(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_);
 
-    const cellZoneSet& zoneSet = refCast<const cellZoneSet>(set);
+    const auto* setPtr = dynamic_cast<const cellZoneSet*>(&set);
 
-    for (const label celli : zoneSet.addressing())
+    if (setPtr)
     {
-        if (!found(celli))
+        for (const label celli : setPtr->addressing())
         {
-            newAddressing.append(celli);
+            if (!found(celli))
+            {
+                newAddressing.append(celli);
+            }
+        }
+    }
+    else
+    {
+        // Assume a cellSet
+        for (const label celli : refCast<const cellSet>(set).sortedToc())
+        {
+            if (!found(celli))
+            {
+                newAddressing.append(celli);
+            }
         }
     }
 
@@ -228,11 +261,9 @@ void Foam::cellZoneSet::subtractSet(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_.size());
 
-    const cellZoneSet& zoneSet = refCast<const cellZoneSet>(set);
-
     for (const label celli : addressing_)
     {
-        if (!zoneSet.found(celli))
+        if (!set.found(celli))
         {
             // Not found in zoneSet so add
             newAddressing.append(celli);

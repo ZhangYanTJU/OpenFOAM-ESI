@@ -220,8 +220,18 @@ void Foam::faceZoneSet::subset
 
 void Foam::faceZoneSet::subset(const topoSet& set)
 {
-    const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
-    subset(zoneSet.name(), zoneSet.addressing(), zoneSet.flipMap());
+    const auto* setPtr = dynamic_cast<const faceZoneSet*>(&set);
+
+    if (setPtr)
+    {
+        subset(setPtr->name(), setPtr->addressing(), setPtr->flipMap());
+    }
+    else
+    {
+        // Assume a faceSet. Ignore flipMap
+        const auto& fSet = refCast<const faceSet>(set);
+        subset(fSet.name(), fSet.sortedToc(), boolList::null());
+    }
 }
 
 
@@ -282,8 +292,18 @@ void Foam::faceZoneSet::addSet
 
 void Foam::faceZoneSet::addSet(const topoSet& set)
 {
-    const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
-    addSet(zoneSet.name(), zoneSet.addressing(), zoneSet.flipMap());
+    const auto* setPtr = dynamic_cast<const faceZoneSet*>(&set);
+
+    if (setPtr)
+    {
+        addSet(setPtr->name(), setPtr->addressing(), setPtr->flipMap());
+    }
+    else
+    {
+        // Assume a faceSet. Ignore flipMap
+        const auto& fSet = refCast<const faceSet>(set);
+        addSet(fSet.name(), fSet.sortedToc(), boolList::null());
+    }
 }
 
 
@@ -346,8 +366,18 @@ void Foam::faceZoneSet::subtractSet
 
 void Foam::faceZoneSet::subtractSet(const topoSet& set)
 {
-    const faceZoneSet& zoneSet = refCast<const faceZoneSet>(set);
-    subtractSet(zoneSet.name(), zoneSet.addressing(), zoneSet.flipMap());
+    const auto* setPtr = dynamic_cast<const faceZoneSet*>(&set);
+
+    if (setPtr)
+    {
+        subtractSet(setPtr->name(), setPtr->addressing(), setPtr->flipMap());
+    }
+    else
+    {
+        // Assume a faceSet. Ignore flipMap
+        const auto& fSet = refCast<const faceSet>(set);
+        subtractSet(fSet.name(), fSet.sortedToc(), boolList::null());
+    }
 }
 
 
