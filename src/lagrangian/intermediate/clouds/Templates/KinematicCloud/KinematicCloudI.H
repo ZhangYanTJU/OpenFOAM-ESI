@@ -501,14 +501,11 @@ template<class CloudType>
 inline Foam::tmp<Foam::volScalarField::Internal>
 Foam::KinematicCloud<CloudType>::Srhok() const
 {
-    label debug0 = debug;
-    debug = 1;
     if (debug)
     {
         Pout<< "rhokTrans min/max = " << min(rhokTrans()).value() << ", "
             << max(rhokTrans()).value() << endl;
     }
-    debug = debug0;
 
     if (this->solution().coupled())
     {
