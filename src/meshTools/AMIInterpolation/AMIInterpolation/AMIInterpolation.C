@@ -837,6 +837,8 @@ bool Foam::AMIInterpolation::calculate
             << "AMI: no source faces present - no addressing constructed"
             << endl;
 
+        singlePatchProc_ = UPstream::myProcNo(comm_);
+
         return false;
     }
 
