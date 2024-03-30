@@ -202,11 +202,33 @@ void Foam::polyTopoChange::writeMeshStats(const polyMesh& mesh, Ostream& os)
         patchStarts[patchi] = patches[patchi].start();
     }
 
+    const auto& czs = mesh.cellZones();
+    labelList cellZoneSizes(czs.size(), 0);
+    for (const auto& cz : czs)
+    {
+        cellZoneSizes[cz.index()] = cz.size();
+    }
+    const auto& fzs = mesh.faceZones();
+    labelList faceZoneSizes(fzs.size(), 0);
+    for (const auto& fz : fzs)
+    {
+        faceZoneSizes[fz.index()] = fz.size();
+    }
+    const auto& pzs = mesh.pointZones();
+    labelList pointZoneSizes(pzs.size(), 0);
+    for (const auto& pz : pzs)
+    {
+        pointZoneSizes[pz.index()] = pz.size();
+    }
+
     os  << "    Points      : " << mesh.nPoints() << nl
         << "    Faces       : " << mesh.nFaces() << nl
         << "    Cells       : " << mesh.nCells() << nl
-        << "    PatchSizes  : " << patchSizes << nl
-        << "    PatchStarts : " << patchStarts << nl
+        << "    PatchSizes  : " << flatOutput(patchSizes) << nl
+        << "    PatchStarts : " << flatOutput(patchStarts) << nl
+        << "    cZoneSizes  : " << flatOutput(cellZoneSizes) << nl
+        << "    fZoneSizes  : " << flatOutput(faceZoneSizes) << nl
+        << "    pZoneSizes  : " << flatOutput(pointZoneSizes) << nl
         << endl;
 }
 
@@ -907,6 +929,8 @@ void Foam::polyTopoChange::reorderCompactFaces
     faceZoneFlip_.setCapacity(newSize);
     if (faceAdditionalZones_.size())
     {
+        // Extend to number of faces so oldToNew can be used
+        faceAdditionalZones_.setSize(faceZone_.size());
         inplaceReorder(oldToNew, faceAdditionalZones_);
         faceAdditionalZones_.setCapacity(newSize);
     }
@@ -3913,13 +3937,6 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::polyTopoChange::changeMesh
             << endl;
     }
 
-    if (debug)
-    {
-        Pout<< "New mesh:" << nl;
-        writeMeshStats(mesh, Pout);
-    }
-
-
     // Zones
     // ~~~~~
 
@@ -3931,6 +3948,12 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::polyTopoChange::changeMesh
     labelListList cellZoneMap(mesh.cellZones().size());
 
     resetZones(mesh, mesh, pointZoneMap, faceZoneFaceMap, cellZoneMap);
+
+    if (debug)
+    {
+        Pout<< "New mesh:" << nl;
+        writeMeshStats(mesh, Pout);
+    }
 
     // Clear zone info
     {
