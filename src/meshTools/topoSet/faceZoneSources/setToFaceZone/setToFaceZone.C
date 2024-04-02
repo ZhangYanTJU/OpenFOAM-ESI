@@ -122,7 +122,7 @@ void Foam::setToFaceZone::applyToSet
             }
 
             // Load the sets
-            faceSet loadedSet(mesh_, setName_);
+            faceSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
             const labelHashSet& faceLabels = loadedSet;
 
             // Start off from copy
@@ -151,7 +151,7 @@ void Foam::setToFaceZone::applyToSet
             }
 
             // Load the set
-            faceSet loadedSet(mesh_, setName_);
+            faceSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off empty
             DynamicList<label> newAddressing(zoneSet.addressing().size());

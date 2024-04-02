@@ -114,7 +114,7 @@ void Foam::faceToFace::applyToSet
             }
             else
             {
-                faceSet loadedSet(mesh_, setName);
+                faceSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
 
                 set.addSet(loadedSet);
             }
@@ -137,7 +137,7 @@ void Foam::faceToFace::applyToSet
             }
             else
             {
-                faceSet loadedSet(mesh_, setName);
+                faceSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
 
                 set.subtractSet(loadedSet);
             }

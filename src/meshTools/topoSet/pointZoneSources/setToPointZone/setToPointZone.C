@@ -114,7 +114,7 @@ void Foam::setToPointZone::applyToSet
             }
 
             // Load the set
-            pointSet loadedSet(mesh_, setName_);
+            pointSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
             const labelHashSet& pointLabels = loadedSet;
 
             // Start off from copy
@@ -140,7 +140,7 @@ void Foam::setToPointZone::applyToSet
             }
 
             // Load the set
-            pointSet loadedSet(mesh_, setName_);
+            pointSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off empty
             DynamicList<label> newAddressing(zoneSet.addressing().size());

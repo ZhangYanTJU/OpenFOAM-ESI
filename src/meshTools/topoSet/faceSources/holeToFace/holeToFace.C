@@ -1148,7 +1148,7 @@ void Foam::holeToFace::applyToSet
     bitSet isBlockedFace(mesh_.nFaces());
     for (const word& setName : blockedFaceNames_)
     {
-        const faceSet loadedSet(mesh_, setName);
+        faceSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
         isBlockedFace.setMany(loadedSet.begin(), loadedSet.end());
     }
 
@@ -1158,7 +1158,7 @@ void Foam::holeToFace::applyToSet
     {
         for (const word& setName : blockedCellNames_)
         {
-            const cellSet loadedSet(mesh_, setName);
+            cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
             isCandidateCell.setMany(loadedSet.begin(), loadedSet.end());
         }
     }

@@ -70,10 +70,10 @@ protected:
         virtual void check(const label maxSize);
 
 
-        //- Construct with empty selection
+        //- Construct (no-read) with empty selection
         topoBoolSet(const polyMesh& mesh, const word& setName);
 
-        //- Construct with size elements
+        //- Construct (no-read) with \c size elements of initial value
         topoBoolSet
         (
             const polyMesh& mesh,
@@ -99,7 +99,6 @@ protected:
             const label size,
             boolList&& bools
         );
-
 
 public:
 
@@ -128,6 +127,9 @@ public:
         }
 
         //- Has the given index?
+        virtual bool contains(const label id) const;
+
+        //- Has the given index?
         virtual bool found(const label id) const;
 
         //- Set an index
@@ -147,24 +149,22 @@ public:
         virtual void invert(const label maxLen);
 
         //- Subset contents. Only elements present in both sets remain.
+        virtual void subset(const labelUList& elems);
+
+        //- Subset contents. Only elements present in both sets remain.
         virtual void subset(const topoSet& set);
 
-        //- Add elements present in set.
+        //- Add given elements to the set
+        virtual void addSet(const labelUList& elems);
+
+        //- Add given elements to the set
         virtual void addSet(const topoSet& set);
 
-        //- Subtract elements present in set.
+        //- Subtract given elements from the set.
+        virtual void subtractSet(const labelUList& elems);
+
+        //- Subtract given elements from the set.
         virtual void subtractSet(const topoSet& set);
-
-        // Variants taking labelUList&
-
-            //- Subset contents. Only elements present in both sets remain.
-            virtual void subset(const labelUList& set);
-
-            //- Add elements present in set.
-            virtual void addSet(const labelUList& set);
-
-            //- Subtract elements present in set.
-            virtual void subtractSet(const labelUList& set);
 };
 
 

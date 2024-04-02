@@ -40,7 +40,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(faceZoneSet, 0);
+    defineTypeName(faceZoneSet);
     addToRunTimeSelectionTable(topoSet, faceZoneSet, word);
     addToRunTimeSelectionTable(topoSet, faceZoneSet, size);
     addToRunTimeSelectionTable(topoSet, faceZoneSet, set);
@@ -51,9 +51,18 @@ namespace Foam
 
 void Foam::faceZoneSet::updateSet()
 {
-    labelList order(sortedOrder(addressing_));
-    addressing_ = labelUIndList(addressing_, order)();
-    flipMap_ = boolUIndList(flipMap_, order)();
+    if (flipMap_.size() == addressing_.size())
+    {
+        labelList order(Foam::sortedOrder(addressing_));
+        addressing_ = labelUIndList(addressing_, order)();
+        flipMap_ = boolUIndList(flipMap_, order)();
+    }
+    else
+    {
+        Foam::sort(addressing_);
+        flipMap_.resize_nocopy(addressing_.size());
+        flipMap_ = false;
+    }
 
     faceSet::clearStorage();
     faceSet::reserve(addressing_.size());
@@ -67,57 +76,47 @@ Foam::faceZoneSet::faceZoneSet
 (
     const polyMesh& mesh,
     const word& name,
-    IOobjectOption::readOption rOpt,
+    const label initialCapacity,
     IOobjectOption::writeOption wOpt
 )
 :
-    faceSet(mesh, name, 1024),  // do not read faceSet
-    mesh_(mesh),
-    addressing_(),
-    flipMap_()
-{
-    const faceZoneMesh& faceZones = mesh.faceZones();
-    label zoneID = faceZones.findZoneID(name);
-
-    if (IOobjectOption::isReadRequired(rOpt) && zoneID == -1)
-    {
-        FatalErrorInFunction
-            << "Zone named " << name << " not found.  "
-            << "List of available zone names: " << faceZones.names()
-            << exit(FatalError);
-    }
-
-    if
-    (
-         IOobjectOption::isReadRequired(rOpt)
-     || (IOobjectOption::isReadOptional(rOpt) && zoneID != -1)
-    )
-    {
-        const faceZone& fz = faceZones[zoneID];
-        addressing_ = fz.addressing();
-        flipMap_ = fz.flipMap();
-    }
-
-    updateSet();
-
-    check(mesh.nFaces());
-}
+    faceSet(mesh, name, initialCapacity, wOpt),  // Construct no-read
+    mesh_(mesh)
+{}
 
 
 Foam::faceZoneSet::faceZoneSet
 (
     const polyMesh& mesh,
     const word& name,
-    const label size,
+    IOobjectOption::readOption rOpt,
     IOobjectOption::writeOption wOpt
 )
 :
-    faceSet(mesh, name, size, wOpt),
-    mesh_(mesh),
-    addressing_(),
-    flipMap_()
+    faceZoneSet(mesh, name, label(0), wOpt)  // Construct no-read
 {
+    const auto& zones = mesh.faceZones();
+    const auto* zonePtr = zones.cfindZone(name);
+
+    if (!zonePtr)
+    {
+        if (IOobjectOption::isReadRequired(rOpt))
+        {
+            FatalErrorInFunction
+                << "Zone named " << name << " not found.  "
+                << "List of available zone names: " << zones.names() << nl
+                << exit(FatalError);
+        }
+    }
+    else if (IOobjectOption::isAnyRead(rOpt))
+    {
+        const auto& zn = *zonePtr;
+        addressing_ = zn.addressing();
+        flipMap_ = zn.flipMap();
+    }
+
     updateSet();
+    check(mesh.nFaces());
 }
 
 
@@ -129,11 +128,21 @@ Foam::faceZoneSet::faceZoneSet
     IOobjectOption::writeOption wOpt
 )
 :
-    faceSet(mesh, name, set.size(), wOpt),
-    mesh_(mesh),
-    addressing_(refCast<const faceZoneSet>(set).addressing()),
-    flipMap_(refCast<const faceZoneSet>(set).flipMap())
+    faceZoneSet(mesh, name, label(0), wOpt)  // Construct no-read
 {
+    const auto* zonePtr = isA<faceZoneSet>(set);
+
+    if (zonePtr)
+    {
+        addressing_ = zonePtr->addressing();
+        flipMap_ = zonePtr->flipMap();
+    }
+    else
+    {
+        // No flipMap for faceSet - handled in updateSet()
+        addressing_ = set.sortedToc();
+    }
+
     updateSet();
 }
 
@@ -145,24 +154,24 @@ void Foam::faceZoneSet::invert(const label maxLen)
     // Count
     label n = 0;
 
-    for (label facei = 0; facei < maxLen; ++facei)
+    for (label id = 0; id < maxLen; ++id)
     {
-        if (!found(facei))
+        if (!topoSet::contains(id))
         {
             ++n;
         }
     }
 
     // Fill
-    addressing_.setSize(n);
-    flipMap_.setSize(n);
+    addressing_.resize_nocopy(n);
+    flipMap_.resize_nocopy(n);
     n = 0;
 
-    for (label facei = 0; facei < maxLen; ++facei)
+    for (label id = 0; id < maxLen; ++id)
     {
-        if (!found(facei))
+        if (!topoSet::contains(id))
         {
-            addressing_[n] = facei;
+            addressing_[n] = id;
             flipMap_[n] = false;         //? or true?
             ++n;
         }
@@ -204,7 +213,7 @@ void Foam::faceZoneSet::subset
         }
     }
 
-    if (nConflict > 0)
+    if (nConflict)
     {
         WarningInFunction
             << "subset : there are " << nConflict
@@ -220,24 +229,28 @@ void Foam::faceZoneSet::subset
 
 void Foam::faceZoneSet::subset(const topoSet& set)
 {
-    const auto* setPtr = dynamic_cast<const faceZoneSet*>(&set);
+    const auto* zonePtr = isA<faceZoneSet>(set);
 
-    if (setPtr)
+    if (zonePtr)
     {
-        subset(setPtr->name(), setPtr->addressing(), setPtr->flipMap());
+        subset(zonePtr->name(), zonePtr->addressing(), zonePtr->flipMap());
     }
     else
     {
         // Assume a faceSet. Ignore flipMap
-        const auto& fSet = refCast<const faceSet>(set);
-        subset(fSet.name(), fSet.sortedToc(), boolList::null());
+        subset
+        (
+            set.name(),
+            refCast<const faceSet>(set).sortedToc(),
+            boolList::null()
+        );
     }
 }
 
 
-void Foam::faceZoneSet::subset(const labelUList& set)
+void Foam::faceZoneSet::subset(const labelUList& elems)
 {
-    subset(word::null, set, boolList::null());
+    subset(word::null, elems, boolList::null());
 }
 
 
@@ -292,24 +305,28 @@ void Foam::faceZoneSet::addSet
 
 void Foam::faceZoneSet::addSet(const topoSet& set)
 {
-    const auto* setPtr = dynamic_cast<const faceZoneSet*>(&set);
+    const auto* zonePtr = isA<faceZoneSet>(set);
 
-    if (setPtr)
+    if (zonePtr)
     {
-        addSet(setPtr->name(), setPtr->addressing(), setPtr->flipMap());
+        addSet(zonePtr->name(), zonePtr->addressing(), zonePtr->flipMap());
     }
     else
     {
         // Assume a faceSet. Ignore flipMap
-        const auto& fSet = refCast<const faceSet>(set);
-        addSet(fSet.name(), fSet.sortedToc(), boolList::null());
+        addSet
+        (
+            set.name(),
+            refCast<const faceSet>(set).sortedToc(),
+            boolList::null()
+        );
     }
 }
 
 
-void Foam::faceZoneSet::addSet(const labelUList& set)
+void Foam::faceZoneSet::addSet(const labelUList& elems)
 {
-    addSet(word::null, set, boolList::null());
+    addSet(word::null, elems, boolList::null());
 }
 
 
@@ -366,24 +383,28 @@ void Foam::faceZoneSet::subtractSet
 
 void Foam::faceZoneSet::subtractSet(const topoSet& set)
 {
-    const auto* setPtr = dynamic_cast<const faceZoneSet*>(&set);
+    const auto* zonePtr = isA<faceZoneSet>(set);
 
-    if (setPtr)
+    if (zonePtr)
     {
-        subtractSet(setPtr->name(), setPtr->addressing(), setPtr->flipMap());
+        subtractSet(zonePtr->name(), zonePtr->addressing(), zonePtr->flipMap());
     }
     else
     {
         // Assume a faceSet. Ignore flipMap
-        const auto& fSet = refCast<const faceSet>(set);
-        subtractSet(fSet.name(), fSet.sortedToc(), boolList::null());
+        subtractSet
+        (
+            set.name(),
+            refCast<const faceSet>(set).sortedToc(),
+            boolList::null()
+        );
     }
 }
 
 
-void Foam::faceZoneSet::subtractSet(const labelUList& set)
+void Foam::faceZoneSet::subtractSet(const labelUList& elems)
 {
-    subtractSet(word::null, set, boolList::null());
+    subtractSet(word::null, elems, boolList::null());
 }
 
 
@@ -517,58 +538,51 @@ bool Foam::faceZoneSet::writeObject
 ) const
 {
     // Write shadow faceSet
-    word oldTypeName = typeName;
+    const word oldTypeName = typeName;
     const_cast<word&>(type()) = faceSet::typeName;
     bool ok = faceSet::writeObject(streamOpt, writeOnProc);
     const_cast<word&>(type()) = oldTypeName;
 
     // Modify faceZone
-    faceZoneMesh& faceZones = const_cast<polyMesh&>(mesh_).faceZones();
-    label zoneID = faceZones.findZoneID(name());
+    auto& zones = const_cast<polyMesh&>(mesh_).faceZones();
+    auto* zonePtr = zones.findZone(name());
 
-    if (zoneID == -1)
+    if (zonePtr)
     {
-        zoneID = faceZones.size();
-
-        faceZones.emplace_back
+        zonePtr->resetAddressing(addressing_, flipMap_);
+    }
+    else
+    {
+        zones.emplace_back
         (
             name(),
             addressing_,
             flipMap_,
-            zoneID,
-            faceZones
+            zones.size(),  // zoneID
+            zones
         );
     }
-    else
-    {
-        faceZones[zoneID].resetAddressing(addressing_, flipMap_);
-    }
-    faceZones.clearAddressing();
+    zones.clearAddressing();
 
-    return ok && faceZones.write(writeOnProc);
+    return ok && zones.write(writeOnProc);
 }
 
 
 void Foam::faceZoneSet::updateMesh(const mapPolyMesh& morphMap)
 {
-    // faceZone
-    labelList newAddressing(addressing_.size());
-    boolList newFlipMap(flipMap_.size(), false);
+    DynamicList<label> newAddressing(addressing_.size());
+    DynamicList<bool> newFlipMap(flipMap_.size());
 
-    label n = 0;
     forAll(addressing_, i)
     {
         label facei = addressing_[i];
         label newFacei = morphMap.reverseFaceMap()[facei];
         if (newFacei >= 0)
         {
-            newAddressing[n] = newFacei;
-            newFlipMap[n] = flipMap_[i];
-            n++;
+            newAddressing.push_back(newFacei);
+            newFlipMap.push_back(flipMap_[i]);
         }
     }
-    newAddressing.setSize(n);
-    newFlipMap.setSize(n);
 
     addressing_.transfer(newAddressing);
     flipMap_.transfer(newFlipMap);

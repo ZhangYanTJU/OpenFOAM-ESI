@@ -25,19 +25,18 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Container>
 void Foam::topoSet::setInstance
 (
     const fileName& instance,
-    Container& lst
+    Container& items
 )
 {
-    forAll(lst, i)
+    for (auto& item : items)
     {
-        lst[i].instance() = instance;
+        item.instance() = instance;
     }
 }
 
@@ -47,13 +46,13 @@ void Foam::topoSet::updateMesh
 (
     const fileName& instance,
     const mapPolyMesh& map,
-    Container& lst
+    Container& items
 )
 {
-    forAll(lst, i)
+    for (auto& item : items)
     {
-        lst[i].instance() = instance;
-        lst[i].updateMesh(map);
+        item.instance() = instance;
+        item.updateMesh(map);
     }
 }
 

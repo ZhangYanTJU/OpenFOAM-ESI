@@ -72,7 +72,7 @@ void Foam::faceToPoint::combine
     {
         const auto& faceLabels = mesh_.faceZones()[setName].addressing();
 
-        // Add all points from faces in loadedSet
+        // Add all points from given faces
         for (const label facei : faceLabels)
         {
             const face& f = mesh_.faces()[facei];
@@ -83,10 +83,10 @@ void Foam::faceToPoint::combine
     else
     {
         // Load the set
-        faceSet loadedSet(mesh_, setName);
+        faceSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
         const labelHashSet& faceLabels = loadedSet;
 
-        // Add all points from faces in loadedSet
+        // Add all points from given faces
         for (const label facei : faceLabels)
         {
             const face& f = mesh_.faces()[facei];

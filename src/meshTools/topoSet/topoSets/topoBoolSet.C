@@ -135,9 +135,8 @@ Foam::topoBoolSet::topoBoolSet
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER
         ),
-        label(0)  // zero-sized (unallocated) labelHashSet
-    ),
-    selected_()
+        Foam::zero{}  // Empty labelHashSet (initialCapacity = 0)
+    )
 {}
 
 
@@ -186,6 +185,12 @@ Foam::topoBoolSet::topoBoolSet
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::topoBoolSet::contains(const label id) const
+{
+    return selected_.test(id);
+}
+
 
 bool Foam::topoBoolSet::found(const label id) const
 {

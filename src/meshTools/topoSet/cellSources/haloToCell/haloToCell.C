@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2022 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,9 +83,11 @@ void Foam::haloToCell::combine(topoSet& set, const bool add) const
     // The starting set of cells
     bitSet current(cells.size());
 
-    if (isA<topoBitSet>(set))
+    const auto* topoBitsPtr = isA<topoBitSet>(set);
+
+    if (topoBitsPtr)
     {
-        current |= refCast<const topoBitSet>(set).addressing();
+        current |= topoBitsPtr->addressing();
     }
     else
     {

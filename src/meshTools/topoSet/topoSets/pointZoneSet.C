@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022,2024 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,18 +37,18 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(pointZoneSet, 0);
+    defineTypeName(pointZoneSet);
     addToRunTimeSelectionTable(topoSet, pointZoneSet, word);
     addToRunTimeSelectionTable(topoSet, pointZoneSet, size);
     addToRunTimeSelectionTable(topoSet, pointZoneSet, set);
 }
 
+
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::pointZoneSet::updateSet()
 {
-    labelList order(sortedOrder(addressing_));
-    inplaceReorder(order, addressing_);
+    Foam::sort(addressing_);
 
     pointSet::clearStorage();
     pointSet::reserve(addressing_.size());
@@ -62,46 +62,46 @@ Foam::pointZoneSet::pointZoneSet
 (
     const polyMesh& mesh,
     const word& name,
-    IOobjectOption::readOption rOpt,
+    const label initialCapacity,
     IOobjectOption::writeOption wOpt
 )
 :
-    pointSet(mesh, name, 1024),  // do not read pointSet
-    mesh_(mesh),
-    addressing_()
-{
-    const pointZoneMesh& pointZones = mesh.pointZones();
-    label zoneID = pointZones.findZoneID(name);
-
-    if
-    (
-         IOobjectOption::isReadRequired(rOpt)
-     || (IOobjectOption::isReadOptional(rOpt) && zoneID != -1)
-    )
-    {
-        const pointZone& fz = pointZones[zoneID];
-        addressing_ = fz;
-    }
-
-    updateSet();
-
-    check(mesh.nPoints());
-}
+    pointSet(mesh, name, initialCapacity, wOpt),  // Construct no-read
+    mesh_(mesh)
+{}
 
 
 Foam::pointZoneSet::pointZoneSet
 (
     const polyMesh& mesh,
     const word& name,
-    const label size,
+    IOobjectOption::readOption rOpt,
     IOobjectOption::writeOption wOpt
 )
 :
-    pointSet(mesh, name, size, wOpt),
-    mesh_(mesh),
-    addressing_()
+    pointZoneSet(mesh, name, label(0), wOpt)  // Construct no-read
 {
+    const auto& zones = mesh.pointZones();
+    const auto* zonePtr = zones.cfindZone(name);
+
+    if (!zonePtr)
+    {
+        if (IOobjectOption::isReadRequired(rOpt))
+        {
+            FatalErrorInFunction
+                << "Zone named " << name << " not found.  "
+                << "List of available zone names: " << zones.names() << nl
+                << exit(FatalError);
+        }
+    }
+    else if (IOobjectOption::isAnyRead(rOpt))
+    {
+        const auto& zn = *zonePtr;
+        addressing_ = zn;
+    }
+
     updateSet();
+    check(mesh.nPoints());
 }
 
 
@@ -113,15 +113,19 @@ Foam::pointZoneSet::pointZoneSet
     IOobjectOption::writeOption wOpt
 )
 :
-    pointSet(mesh, name, set.size(), wOpt),
-    mesh_(mesh),
-    addressing_
-    (
-        isA<const pointZoneSet>(set)
-      ? refCast<const pointZoneSet>(set).addressing()
-      : set.sortedToc()
-    )
+    pointZoneSet(mesh, name, label(0), wOpt)  // Construct no-read
 {
+    const auto* zonePtr = isA<pointZoneSet>(set);
+
+    if (zonePtr)
+    {
+        addressing_ = zonePtr->addressing();
+    }
+    else
+    {
+        addressing_ = set.sortedToc();
+    }
+
     updateSet();
 }
 
@@ -133,23 +137,23 @@ void Foam::pointZoneSet::invert(const label maxLen)
     // Count
     label n = 0;
 
-    for (label pointi = 0; pointi < maxLen; ++pointi)
+    for (label id = 0; id < maxLen; ++id)
     {
-        if (!found(pointi))
+        if (!found(id))
         {
             ++n;
         }
     }
 
     // Fill
-    addressing_.setSize(n);
+    addressing_.resize_nocopy(n);
     n = 0;
 
-    for (label pointi = 0; pointi < maxLen; ++pointi)
+    for (label id = 0; id < maxLen; ++id)
     {
-        if (!found(pointi))
+        if (!found(id))
         {
-            addressing_[n] = pointi;
+            addressing_[n] = id;
             ++n;
         }
     }
@@ -157,31 +161,15 @@ void Foam::pointZoneSet::invert(const label maxLen)
 }
 
 
-void Foam::pointZoneSet::subset(const topoSet& set)
+void Foam::pointZoneSet::subset(const labelUList& elems)
 {
     DynamicList<label> newAddressing(addressing_.size());
 
-    const auto* setPtr = dynamic_cast<const pointZoneSet*>(&set);
-
-    if (setPtr)
+    for (const label id : elems)
     {
-        for (const label pointi : setPtr->addressing())
+        if (found(id))
         {
-            if (found(pointi))
-            {
-                newAddressing.append(pointi);
-            }
-        }
-    }
-    else
-    {
-        // Assume a pointSet
-        for (const label pointi : refCast<const pointSet>(set).sortedToc())
-        {
-            if (found(pointi))
-            {
-                newAddressing.append(pointi);
-            }
+            newAddressing.push_back(id);
         }
     }
 
@@ -190,15 +178,32 @@ void Foam::pointZoneSet::subset(const topoSet& set)
 }
 
 
-void Foam::pointZoneSet::subset(const labelUList& set)
+void Foam::pointZoneSet::subset(const topoSet& set)
 {
-    DynamicList<label> newAddressing(addressing_.size());
+    const auto* zonePtr = isA<pointZoneSet>(set);
 
-    for (const label pointi : set)
+    if (zonePtr)
     {
-        if (found(pointi))
+        // Is a pointZoneSet
+        this->subset(zonePtr->addressing());
+    }
+    else
+    {
+        // Assume a pointSet
+        this->subset(refCast<const pointSet>(set).sortedToc());
+    }
+}
+
+
+void Foam::pointZoneSet::addSet(const labelUList& elems)
+{
+    DynamicList<label> newAddressing(addressing_);
+
+    for (const label id : elems)
+    {
+        if (!found(id))
         {
-            newAddressing.append(pointi);
+            newAddressing.push_back(id);
         }
     }
 
@@ -209,46 +214,33 @@ void Foam::pointZoneSet::subset(const labelUList& set)
 
 void Foam::pointZoneSet::addSet(const topoSet& set)
 {
-    DynamicList<label> newAddressing(addressing_);
+    const auto* zonePtr = isA<pointZoneSet>(set);
 
-    const auto* setPtr = dynamic_cast<const pointZoneSet*>(&set);
-
-    if (setPtr)
+    if (zonePtr)
     {
-        for (const label pointi : setPtr->addressing())
-        {
-            if (!found(pointi))
-            {
-                newAddressing.append(pointi);
-            }
-        }
+        // Is a pointZoneSet
+        this->addSet(zonePtr->addressing());
     }
     else
     {
         // Assume a pointSet
-        for (const label pointi : refCast<const pointSet>(set).sortedToc())
-        {
-            if (!found(pointi))
-            {
-                newAddressing.append(pointi);
-            }
-        }
+        this->addSet(refCast<const pointSet>(set).sortedToc());
     }
-
-    addressing_.transfer(newAddressing);
-    updateSet();
 }
 
 
-void Foam::pointZoneSet::addSet(const labelUList& set)
+void Foam::pointZoneSet::subtractSet(const labelUList& elems)
 {
-    DynamicList<label> newAddressing(addressing_);
+    DynamicList<label> newAddressing(addressing_.size());
 
-    for (const label pointi : set)
+    const labelHashSet set(elems);
+
+    for (const label id : addressing_)
     {
-        if (!found(pointi))
+        if (!set.found(id))
         {
-            newAddressing.append(pointi);
+            // Retain if not in the topoSet (parameter)
+            newAddressing.push_back(id);
         }
     }
 
@@ -261,32 +253,12 @@ void Foam::pointZoneSet::subtractSet(const topoSet& set)
 {
     DynamicList<label> newAddressing(addressing_.size());
 
-    for (label pointi : addressing_)
+    for (const label id : addressing_)
     {
-        if (!set.found(pointi))
+        if (!set.found(id))
         {
-            // Not found in zoneSet so add
-            newAddressing.append(pointi);
-        }
-    }
-
-    addressing_.transfer(newAddressing);
-    updateSet();
-}
-
-
-void Foam::pointZoneSet::subtractSet(const labelUList& elems)
-{
-    DynamicList<label> newAddressing(addressing_.size());
-
-    const labelHashSet zoneSet(elems);
-
-    for (const label pointi : addressing_)
-    {
-        if (!zoneSet.found(pointi))
-        {
-            // Not found in zoneSet so add
-            newAddressing.append(pointi);
+            // Retain if not in the topoSet (parameter)
+            newAddressing.push_back(id);
         }
     }
 
@@ -318,56 +290,49 @@ bool Foam::pointZoneSet::writeObject
 ) const
 {
     // Write shadow pointSet
-    word oldTypeName = typeName;
+    const word oldTypeName = typeName;
     const_cast<word&>(type()) = pointSet::typeName;
     bool ok = pointSet::writeObject(streamOpt, writeOnProc);
     const_cast<word&>(type()) = oldTypeName;
 
     // Modify pointZone
-    pointZoneMesh& pointZones = const_cast<polyMesh&>(mesh_).pointZones();
-    label zoneID = pointZones.findZoneID(name());
+    auto& zones = const_cast<polyMesh&>(mesh_).pointZones();
+    auto* zonePtr = zones.findZone(name());
 
-    if (zoneID == -1)
+    if (zonePtr)
     {
-        zoneID = pointZones.size();
-
-        pointZones.emplace_back
-        (
-            name(),
-            addressing_,
-            zoneID,
-            pointZones
-        );
+        zonePtr->resetAddressing(addressing_);
     }
     else
     {
-        pointZones[zoneID] = addressing_;
+        zones.emplace_back
+        (
+            name(),
+            addressing_,
+            zones.size(),  // zoneID
+            zones
+        );
     }
-    pointZones.clearAddressing();
+    zones.clearAddressing();
 
-    return ok && pointZones.write(writeOnProc);
+    return ok && zones.write(writeOnProc);
 }
 
 
 void Foam::pointZoneSet::updateMesh(const mapPolyMesh& morphMap)
 {
-    // pointZone
-    labelList newAddressing(addressing_.size());
+    DynamicList<label> newAddressing(addressing_.size());
 
-    label n = 0;
     for (const label pointi : addressing_)
     {
         const label newPointi = morphMap.reversePointMap()[pointi];
         if (newPointi >= 0)
         {
-            newAddressing[n] = newPointi;
-            ++n;
+            newAddressing.push_back(newPointi);
         }
     }
-    newAddressing.resize(n);
 
     addressing_.transfer(newAddressing);
-
     updateSet();
 }
 

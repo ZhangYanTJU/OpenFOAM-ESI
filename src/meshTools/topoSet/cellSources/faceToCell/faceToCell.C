@@ -146,8 +146,7 @@ void Foam::faceToCell::combine
     else
     {
         // Load the set
-        faceSet loadedSet(mesh_, setName);
-
+        faceSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
         const labelHashSet& faceLabels = loadedSet;
 
         combineImpl(set, add, faceLabels);

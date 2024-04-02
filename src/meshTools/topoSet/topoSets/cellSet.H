@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -62,7 +62,7 @@ class cellSet
 public:
 
     //- Runtime type information
-    TypeName("cellSet");
+    TypeNameNoDebug("cellSet");
 
 
     // Constructors
@@ -70,25 +70,43 @@ public:
         //- Construct from IOobject. No checking.
         explicit cellSet(const IOobject& io);
 
-        //- Construct from polyMesh and name. Checks for valid cell ids.
+        //- Construct empty (no-read) with IOobject information
+        cellSet(const IOobject& io, const Foam::zero);
+
+        //- Construct from polyMesh (registry) and name.
+        //- Checks for valid cell ids.
         cellSet
         (
             const polyMesh& mesh,
             const word& name,
             IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE,
+            IOobjectOption::registerOption reg = IOobjectOption::LEGACY_REGISTER
         );
 
-        //- Construct empty with initial size for labelHashSet
+        //- Construct from polyMesh (registry), name and registration option
         cellSet
         (
             const polyMesh& mesh,
             const word& name,
-            const label size,
+            IOobjectOption::registerOption reg,
+            IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+        )
+        :
+            cellSet(mesh, name, rOpt, wOpt, reg)
+        {}
+
+        //- Construct empty (no-read) with initial labelHashSet capacity
+        cellSet
+        (
+            const polyMesh& mesh,
+            const word& name,
+            const label initialCapacity,
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct from existing set
+        //- Copy construct (no-read) from existing set
         cellSet
         (
             const polyMesh& mesh,
@@ -97,7 +115,8 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct (no-read) with copy of labelHashSet
+        //- Copy construct (no-read) from labelHashSet,
+        //- with search for IOobject instance.
         cellSet
         (
             const polyMesh& mesh,
@@ -106,7 +125,8 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct (no-read) with moving labelHashSet
+        //- Move construct (no-read) from labelHashSet,
+        //- with search for IOobject instance.
         cellSet
         (
             const polyMesh& mesh,
@@ -115,7 +135,8 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct (no-read) with copy labels
+        //- Copy construct (no-read) from labels,
+        //- with search for IOobject instance.
         cellSet
         (
             const polyMesh& mesh,
@@ -125,34 +146,46 @@ public:
         );
 
 
-        // Used for tetMesh cellSet only.
+        //- Construct from objectRegistry and name.
+        //- Used for tetMesh cellSet only.
+        cellSet
+        (
+            const Time&,
+            const word& name,
+            IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+        );
 
-            //- Construct from objectRegistry and name.
-            cellSet
-            (
-                const Time&,
-                const word& name,
-                IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-                IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
-            );
+        //- Construct empty (no-read) with initial labelHashSet capacity
+        //- from objectRegistry.
+        //- Used for tetMesh cellSet only.
+        cellSet
+        (
+            const Time&,
+            const word& name,
+            const label initialCapacity,
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+        );
 
-            //- Construct empty from objectRegistry.
-            cellSet
-            (
-                const Time&,
-                const word& name,
-                const label size,
-                IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
-            );
+        //- Copy construct (no-read) from labelHashSet.
+        //- Used for tetMesh cellSet only.
+        cellSet
+        (
+            const Time&,
+            const word& name,
+            const labelHashSet& labels,
+            IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
+        );
 
-            //- Construct from labelHashSet
-            cellSet
-            (
-                const Time&,
-                const word& name,
-                const labelHashSet& labels,
-                IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
-            );
+
+    // Factory Methods
+
+        //- Read and return contents. Intermediate IOobject is not registered
+        static labelHashSet readContents
+        (
+            const polyMesh& mesh,
+            const word& name
+        );
 
 
     //- Destructor

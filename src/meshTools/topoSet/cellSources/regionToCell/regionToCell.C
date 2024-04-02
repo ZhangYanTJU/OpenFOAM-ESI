@@ -351,8 +351,7 @@ void Foam::regionToCell::combine(topoSet& set, const bool add) const
         if (isZone_)
         {
             Info<< "    Using cellZone " << setName_
-                << " to delimit search region."
-                << endl;
+                << " to delimit search region." << nl;
 
             selectedCell = false;
             for (const label celli : mesh_.cellZones()[setName_])
@@ -363,10 +362,9 @@ void Foam::regionToCell::combine(topoSet& set, const bool add) const
         else
         {
             Info<< "    Loading cellSet " << setName_
-                << " to delimit search region."
-                << endl;
+                << " to delimit search region." << nl;
 
-            cellSet subSet(mesh_, setName_);
+            cellSet subSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             selectedCell = false;
             for (const label celli : subSet)
@@ -428,14 +426,14 @@ Foam::regionToCell::regionToCell
     ),
     nErode_(dict.getCheckOrDefault<label>("nErode", 0, labelMinMax::ge(0)))
 {
-    // A single set or zone only!
-    if (dict.readIfPresent("set", setName_))
+    // A single "set" or "zone" only
+    if (!dict.readIfPresent("set", setName_))
     {
-        isZone_ = false;
-    }
-    else if (dict.readIfPresent("zone", setName_))
-    {
-        isZone_ = true;
+        // Optional entry
+        if (dict.readIfPresent("zone", setName_))
+        {
+            isZone_ = true;
+        }
     }
 }
 

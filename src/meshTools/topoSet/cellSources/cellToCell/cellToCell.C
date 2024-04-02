@@ -114,7 +114,7 @@ void Foam::cellToCell::applyToSet
             }
             else
             {
-                cellSet loadedSet(mesh_, setName);
+                cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
                 set.addSet(loadedSet);
             }
         }
@@ -136,7 +136,7 @@ void Foam::cellToCell::applyToSet
             }
             else
             {
-                cellSet loadedSet(mesh_, setName);
+                cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
                 set.subtractSet(loadedSet);
             }
         }

@@ -135,8 +135,8 @@ void Foam::setsToFaceZone::applyToSet
             }
 
             // Load the sets
-            faceSet fSet(mesh_, faceSetName_);
-            cellSet cSet(mesh_, cellSetName_);
+            faceSet fSet(mesh_, faceSetName_, IOobject::NO_REGISTER);
+            cellSet cSet(mesh_, cellSetName_, IOobject::NO_REGISTER);
 
             // Start off from copy
             DynamicList<label> newAddressing(zoneSet.addressing());

@@ -73,7 +73,7 @@ Usage
       source     | Source name: regionToCell           | word |  yes  | -
       insidePoints  | Coordinate(s) that is inside connected region <!--
                                              --> | vectorList |  yes  | -
-      set        | Name of cellSet giving mesh subset  | word |  no   | none
+      set / zone | Name of cellSet / zone giving mesh subset  | word |  no | -
       nErode     | Number of cell layers to erode mesh to detect holes <!--
            --> in the mesh - set to 0 if not used      | label | no   | 0
     \endtable

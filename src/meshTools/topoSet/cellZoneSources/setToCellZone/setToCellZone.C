@@ -114,12 +114,12 @@ void Foam::setToCellZone::applyToSet
             }
 
             // Load the sets
-            cellSet fSet(mesh_, setName_);
+            cellSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off from copy
             DynamicList<label> newAddressing(zoneSet.addressing());
 
-            for (const label celli : fSet)
+            for (const label celli : loadedSet)
             {
                 if (!zoneSet.found(celli))
                 {
@@ -139,7 +139,7 @@ void Foam::setToCellZone::applyToSet
             }
 
             // Load the set
-            cellSet loadedSet(mesh_, setName_);
+            cellSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off empty
             DynamicList<label> newAddressing(zoneSet.addressing().size());

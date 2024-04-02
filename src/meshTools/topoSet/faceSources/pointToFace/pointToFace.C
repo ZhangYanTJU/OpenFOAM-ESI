@@ -172,8 +172,7 @@ void Foam::pointToFace::combine
     else
     {
         // Load the set
-        pointSet loadedSet(mesh_, setName);
-
+        pointSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
         const labelHashSet& pointLabels = loadedSet;
 
         combineImpl(set, add, pointLabels);

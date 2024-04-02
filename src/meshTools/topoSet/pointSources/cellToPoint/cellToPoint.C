@@ -70,7 +70,7 @@ void Foam::cellToPoint::combineImpl
     const Selector& cellLabels
 ) const
 {
-    // Add all point from cells in loadedSet
+    // Add all points from given cells
     for (const label celli : cellLabels)
     {
         const labelList& cFaces = mesh_.cells()[celli];
@@ -101,8 +101,7 @@ void Foam::cellToPoint::combine
     else
     {
         // Load the set
-        cellSet loadedSet(mesh_, setName);
-
+        cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
         const labelHashSet& cellLabels = loadedSet;
 
         combineImpl(set, add, cellLabels);

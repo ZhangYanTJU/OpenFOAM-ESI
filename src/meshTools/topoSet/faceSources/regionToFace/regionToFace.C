@@ -146,7 +146,7 @@ void Foam::regionToFace::combine
     if (verbose_)
     {
         Info<< "    Loading subset " << setName_
-            << " to delimit search region." << endl;
+            << " to delimit search region." << nl;
     }
 
     indirectPrimitivePatch patch
@@ -236,12 +236,10 @@ Foam::regionToFace::regionToFace
     isZone_(false),
     nearPoint_(dict.get<point>("nearPoint"))
 {
-    if (dict.readIfPresent("set", setName_))
+    // A single "set" or "zone" only
+    if (!dict.readIfPresent("set", setName_))
     {
-        isZone_ = false;
-    }
-    else
-    {
+        // Mandatory entry
         dict.readEntry("zone", setName_);
         isZone_ = true;
     }
@@ -285,7 +283,7 @@ void Foam::regionToFace::applyToSet
         }
         else
         {
-            faceSet subSet(mesh_, setName_);
+            faceSet subSet(mesh_, setName_, IOobject::NO_REGISTER);
             combine(set, true, subSet.sortedToc());
         }
     }
@@ -305,7 +303,7 @@ void Foam::regionToFace::applyToSet
         }
         else
         {
-            faceSet subSet(mesh_, setName_);
+            faceSet subSet(mesh_, setName_, IOobject::NO_REGISTER);
             combine(set, false, subSet.sortedToc());
         }
     }

@@ -133,13 +133,13 @@ void Foam::targetVolumeToCell::combine(topoSet& set, const bool add) const
                 << maskSetName_ << endl;
         }
 
-        maskSet = false;
-        cellSet subset(mesh_, maskSetName_);
-
+        cellSet subset(mesh_, maskSetName_, IOobject::NO_REGISTER);
         const labelHashSet& cellLabels = subset;
+
+        maskSet = false;
         maskSet.setMany(cellLabels.begin(), cellLabels.end());
 
-        nTotCells = returnReduce(subset.size(), sumOp<label>());
+        nTotCells = returnReduce(cellLabels.size(), sumOp<label>());
     }
 
 

@@ -114,7 +114,7 @@ void Foam::pointToPoint::applyToSet
             }
             else
             {
-                pointSet loadedSet(mesh_, setName);
+                pointSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
 
                 set.addSet(loadedSet);
             }
@@ -137,7 +137,7 @@ void Foam::pointToPoint::applyToSet
             }
             else
             {
-                pointSet loadedSet(mesh_, setName);
+                pointSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
 
                 set.subtractSet(loadedSet);
             }

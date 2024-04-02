@@ -221,11 +221,11 @@ void Foam::cellToFace::combine
         // Load the set
         if (!exists(mesh_.time().path()/topoSet::localPath(mesh_, setName)))
         {
-            SeriousError<< "Cannot load set "
-                << setName << endl;
+            SeriousError
+                << "Cannot load set " << setName << endl;
         }
 
-        cellSet loadedSet(mesh_, setName);
+        cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
         const labelHashSet& cellLabels = loadedSet;
 
         combineImpl(set, add, cellLabels);

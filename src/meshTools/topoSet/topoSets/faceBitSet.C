@@ -35,17 +35,11 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(faceBitSet, 0);
+    defineTypeName(faceBitSet);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::faceBitSet::faceBitSet(const polyMesh& mesh)
-:
-    faceBitSet(mesh, false)
-{}
-
 
 Foam::faceBitSet::faceBitSet(const polyMesh& mesh, const bool val)
 :

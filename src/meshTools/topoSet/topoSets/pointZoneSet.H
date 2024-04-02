@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,11 +60,10 @@ class pointZoneSet
 
         labelList addressing_;
 
-
 public:
 
     //- Runtime type information
-    TypeName("pointZoneSet");
+    TypeNameNoDebug("pointZoneSet");
 
 
     // Constructors
@@ -78,16 +77,16 @@ public:
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Construct empty with initial size for labelHashSet
+        //- Construct empty (no-read) with initial labelHashSet capacity.
         pointZoneSet
         (
             const polyMesh& mesh,
             const word& name,
-            const label size,
+            const label initialCapacity,
             IOobjectOption::writeOption wOpt = IOobjectOption::NO_WRITE
         );
 
-        //- Copy construct from existing set
+        //- Copy construct (no-read) from existing set
         pointZoneSet
         (
             const polyMesh& mesh,
@@ -101,17 +100,18 @@ public:
     virtual ~pointZoneSet() = default;
 
 
-    // Member functions
+    // Member Functions
 
-        const labelList& addressing() const
+        const labelList& addressing() const noexcept
         {
             return addressing_;
         }
 
-        labelList& addressing()
+        labelList& addressing() noexcept
         {
             return addressing_;
         }
+
 
         //- Sort addressing and make pointSet part consistent with addressing
         void updateSet();
@@ -121,24 +121,22 @@ public:
         virtual void invert(const label maxLen);
 
         //- Subset contents. Only elements present in both sets remain.
+        virtual void subset(const labelUList& elems);
+
+        //- Subset contents. Only elements present in both sets remain.
         virtual void subset(const topoSet& set);
 
-        //- Add elements present in set.
+        //- Add given elements to the set
+        virtual void addSet(const labelUList& elems);
+
+        //- Add given elements to the set
         virtual void addSet(const topoSet& set);
 
-        //- Subtract elements present in set.
+        //- Subtract given elements from the set
+        virtual void subtractSet(const labelUList& elems);
+
+        //- Subtract given elements from the set
         virtual void subtractSet(const topoSet& set);
-
-        // Variants taking labelUList&
-
-            //- Subset contents. Only elements present in both sets remain.
-            virtual void subset(const labelUList& set);
-
-            //- Add elements present in set.
-            virtual void addSet(const labelUList& set);
-
-            //- Subtract elements present in set.
-            virtual void subtractSet(const labelUList& set);
 
 
         //- Sync pointZoneSet across coupled patches.

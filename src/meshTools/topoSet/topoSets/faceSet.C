@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,7 +37,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(faceSet, 0);
+    defineTypeName(faceSet);
     addToRunTimeSelectionTable(topoSet, faceSet, word);
     addToRunTimeSelectionTable(topoSet, faceSet, size);
     addToRunTimeSelectionTable(topoSet, faceSet, set);
@@ -51,17 +51,24 @@ Foam::faceSet::faceSet(const IOobject& io)
 {}
 
 
+Foam::faceSet::faceSet(const IOobject& io, const Foam::zero)
+:
+    topoSet(io, Foam::zero{})
+{}
+
+
 Foam::faceSet::faceSet
 (
     const polyMesh& mesh,
     const word& name,
     IOobjectOption::readOption rOpt,
-    IOobjectOption::writeOption wOpt
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
 )
 :
-    topoSet(mesh, typeName, name, rOpt, wOpt)
+    topoSet(mesh, typeName, name, rOpt, wOpt, reg)
 {
-    check(mesh.nFaces());
+    check(mesh.nFaces());  // Valid range?
 }
 
 
@@ -69,11 +76,11 @@ Foam::faceSet::faceSet
 (
     const polyMesh& mesh,
     const word& name,
-    const label size,
+    const label initialCapacity,
     IOobjectOption::writeOption wOpt
 )
 :
-    topoSet(mesh, name, size, wOpt)
+    topoSet(mesh, name, initialCapacity, wOpt)
 {}
 
 
@@ -123,6 +130,28 @@ Foam::faceSet::faceSet
 :
     topoSet(mesh, name, labels, wOpt)
 {}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::labelHashSet Foam::faceSet::readContents
+(
+    const polyMesh& mesh,
+    const word& name
+)
+{
+    faceSet reader
+    (
+        topoSet::findIOobject(mesh, name, IOobjectOption::NO_REGISTER),
+        Foam::zero{}
+    );
+
+    labelHashSet labels;
+    reader.readIOcontents(typeName, labels);
+    reader.checkLabels(labels, mesh.nFaces());  // Valid range?
+
+    return labels;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

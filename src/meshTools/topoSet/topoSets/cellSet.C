@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -37,11 +37,10 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(cellSet, 0);
-
-addToRunTimeSelectionTable(topoSet, cellSet, word);
-addToRunTimeSelectionTable(topoSet, cellSet, size);
-addToRunTimeSelectionTable(topoSet, cellSet, set);
+    defineTypeName(cellSet);
+    addToRunTimeSelectionTable(topoSet, cellSet, word);
+    addToRunTimeSelectionTable(topoSet, cellSet, size);
+    addToRunTimeSelectionTable(topoSet, cellSet, set);
 }
 
 
@@ -53,18 +52,24 @@ Foam::cellSet::cellSet(const IOobject& io)
 {}
 
 
+Foam::cellSet::cellSet(const IOobject& io, const Foam::zero)
+:
+    topoSet(io, Foam::zero{})
+{}
+
+
 Foam::cellSet::cellSet
 (
     const polyMesh& mesh,
     const word& name,
     IOobjectOption::readOption rOpt,
-    IOobjectOption::writeOption wOpt
+    IOobjectOption::writeOption wOpt,
+    IOobjectOption::registerOption reg
 )
 :
-    topoSet(mesh, typeName, name, rOpt, wOpt)
+    topoSet(mesh, typeName, name, rOpt, wOpt, reg)
 {
-    // Make sure set within valid range
-    check(mesh.nCells());
+    check(mesh.nCells());  // Valid range?
 }
 
 
@@ -72,11 +77,11 @@ Foam::cellSet::cellSet
 (
     const polyMesh& mesh,
     const word& name,
-    const label size,
+    const label initialCapacity,
     IOobjectOption::writeOption wOpt
 )
 :
-    topoSet(mesh, name, size, wOpt)
+    topoSet(mesh, name, initialCapacity, wOpt)
 {}
 
 
@@ -149,14 +154,14 @@ Foam::cellSet::cellSet
 (
     const Time& runTime,
     const word& name,
-    const label size,
+    const label initialCapacity,
     IOobjectOption::writeOption wOpt
 )
 :
     topoSet
     (
         findIOobject(runTime, name, IOobject::NO_READ, wOpt),
-        size
+        initialCapacity
     )
 {}
 
@@ -175,6 +180,28 @@ Foam::cellSet::cellSet
         labels
     )
 {}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+Foam::labelHashSet Foam::cellSet::readContents
+(
+    const polyMesh& mesh,
+    const word& name
+)
+{
+    cellSet reader
+    (
+        topoSet::findIOobject(mesh, name, IOobjectOption::NO_REGISTER),
+        Foam::zero{}
+    );
+
+    labelHashSet labels;
+    reader.readIOcontents(typeName, labels);
+    reader.checkLabels(labels, mesh.nCells());  // Valid range?
+
+    return labels;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

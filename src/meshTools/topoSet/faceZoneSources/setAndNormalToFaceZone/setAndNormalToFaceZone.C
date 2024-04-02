@@ -128,8 +128,8 @@ void Foam::setAndNormalToFaceZone::applyToSet
             }
 
             // Load the sets
-            faceSet loadedSet(mesh_, setName_);
-            labelHashSet& faceIds = loadedSet;
+            faceSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
+            const labelHashSet& faceLabels = loadedSet;
 
             // Start off from copy
             DynamicList<label> newAddressing(zoneSet.addressing());
@@ -138,7 +138,7 @@ void Foam::setAndNormalToFaceZone::applyToSet
             const faceList& faces = mesh_.faces();
             const pointField& points = mesh_.points();
 
-            for (const label facei : faceIds)
+            for (const label facei : faceLabels)
             {
                 if (!zoneSet.found(facei))
                 {
@@ -169,7 +169,7 @@ void Foam::setAndNormalToFaceZone::applyToSet
             }
 
             // Load the set
-            faceSet loadedSet(mesh_, setName_);
+            faceSet loadedSet(mesh_, setName_, IOobject::NO_REGISTER);
 
             // Start off empty
             DynamicList<label> newAddressing(zoneSet.addressing().size());

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -35,17 +35,11 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(pointBitSet, 0);
+    defineTypeName(pointBitSet);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::pointBitSet::pointBitSet(const polyMesh& mesh)
-:
-    pointBitSet(mesh, false)
-{}
-
 
 Foam::pointBitSet::pointBitSet(const polyMesh& mesh, const bool val)
 :

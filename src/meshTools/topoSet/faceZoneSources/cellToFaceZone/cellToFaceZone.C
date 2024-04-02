@@ -230,7 +230,7 @@ void Foam::cellToFaceZone::applyToSet
                 else
                 {
                     // Load the sets
-                    const cellSet loadedSet(mesh_, setName);
+                    cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
                     whichCells.setMany(loadedSet.begin(), loadedSet.end());
                 }
 
@@ -276,7 +276,7 @@ void Foam::cellToFaceZone::applyToSet
                 else
                 {
                     // Load the sets
-                    const cellSet loadedSet(mesh_, setName);
+                    cellSet loadedSet(mesh_, setName, IOobject::NO_REGISTER);
                     whichCells.setMany(loadedSet.begin(), loadedSet.end());
                 }
                 // Select outside faces
