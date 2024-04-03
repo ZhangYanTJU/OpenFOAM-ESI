@@ -34,6 +34,7 @@ options:
   -force        Force overwrite of existing tutorialsTest directory
   -debug        Adjust DebugSwitches (fvSchemes, solution)
   -default      Sets up a default scheme on all schemes
+  -init         Initialise/copy only without running
   -git          Use git to retrieve the tutorials
   -no-git       Do not use git to retrieve the tutorials
   -print-context Print git context for tutorials
@@ -44,7 +45,7 @@ Quickly tests the tutorials and writes out the scheme/solver information.
 Detects and uses 'git' to obtain a fresh set of files when possible.
 
 USAGE
-    exit 0 # A clean exit
+    exit 0  # A clean exit
 }
 
 # Report error and exit
@@ -66,7 +67,7 @@ rootDir="./"
 adjustDebugSwitches=false
 useDefaultSchemes=false
 useGit=auto
-unset opt_backup opt_printContext
+unset opt_backup opt_initOnly opt_printContext
 
 # Parse options
 while [ "$#" -gt 0 ]
@@ -75,6 +76,7 @@ do
     -h* | -help*)   printHelp ;;
     -f | -force)    opt_backup='force' ;;
     -backup)        opt_backup='backup' ;;
+    -init)          opt_initOnly=true ;;
     -print-cont*)   opt_printContext=true ;;
 
     -root=*)
@@ -201,7 +203,7 @@ __FOOTER_TEXT__
 if [ "$opt_printContext" = true ]
 then
     printContext_git
-    exit 0 # A clean exit
+    exit 0  # A clean exit
 fi
 
 
@@ -393,6 +395,19 @@ then
 fi
 
 [ -f Allrun ] || cp -f "${FOAM_TUTORIALS:?}/Allrun" .
+
+
+#------------------------------------------------------------------------------
+
+# Dispatch
+
+if [ "$opt_initOnly" = true ]
+then
+    echo "Initialised only - call 'Allrun -test' separately" 1>&2
+    echo "    $PWD" 1>&2
+    echo 1>&2
+    exit 0  # A clean exit
+fi
 
 echo "Starting Allrun -test" 1>&2
 echo "    $PWD" 1>&2
