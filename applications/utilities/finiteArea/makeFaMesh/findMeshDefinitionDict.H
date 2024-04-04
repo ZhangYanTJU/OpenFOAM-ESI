@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2021-2022 OpenCFD Ltd.
+    Copyright (C) 2021-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM, distributed under GPL-3.0-or-later.
@@ -18,7 +18,8 @@ Required Classes
     - Foam::IOdictionary
 
 Required Variables
-    - regionName [word]
+    - regionName [word]  (the polyMesh region)
+    - areaRegionName [word] (the areaMesh region)
     - args [argList]
     - runTime [Time]
 
@@ -35,6 +36,7 @@ autoPtr<IOdictionary> meshDictPtr;
 {
     fileName dictPath;
     const word& regionDir = Foam::polyMesh::regionName(regionName);
+    const word& areaRegionDir = Foam::polyMesh::regionName(areaRegionName);
 
     if (args.readIfPresent("dict", dictPath))
     {
@@ -47,15 +49,18 @@ autoPtr<IOdictionary> meshDictPtr;
     }
     else if
     (
-        // Check global location
-        exists
+        // Dictionary under constant/faMesh/faMeshDefinition ?
+        // (ancient, very deprecated)
+
+        areaRegionDir.empty()
+     && exists
         (
             runTime.path()/runTime.caseConstant()
           / regionDir/faMesh::meshSubDir/dictName
         )
     )
     {
-        // Dictionary present in constant faMesh directory (old-style)
+        // Dictionary present in constant/faMesh directory (ancient style)
 
         dictPath =
         (
@@ -64,21 +69,44 @@ autoPtr<IOdictionary> meshDictPtr;
         );
 
         // Warn that constant/faMesh/faMeshDefinition was used
-        // instead of system/faMeshDefinition
-        #if 0
+        // instead of system/finite-area/faMeshDefinition or
+        // or system/faMeshDefinition
         WarningIn(args.executable())
-            << "Using the old faMeshDefinition location: "
+            << "Using ancient location: "
             << dictPath << nl
-            << "    instead of default location: "
+            << "    instead of default location(s):" << nl
+            << "    "
+            << runTime.system()/regionDir/faMesh::prefix()/dictName << nl
+            << "    "
             << runTime.system()/regionDir/dictName << nl
             << endl;
-        #endif
+    }
+    else if
+    (
+        // Dictionary under system/faMeshDefinition ?
+        // (v2312 and earlier)
+
+        areaRegionDir.empty()
+     && exists
+        (
+            runTime.path()/runTime.caseSystem()
+          / regionDir/faMesh::meshSubDir/dictName
+        )
+    )
+    {
+        // Dictionary present directly in system/ (v2312 and earlier)
+
+        dictPath = runTime.system()/regionDir/dictName;
     }
     else
     {
-        // Assume dictionary is in the system directory
+        // Use system/finite-area/ directory, with region qualifications
 
-        dictPath = runTime.system()/regionDir/dictName;
+        dictPath =
+        (
+            runTime.system()/regionDir
+          / faMesh::prefix()/areaRegionDir/dictName
+        );
     }
 
     IOobject meshDictIO

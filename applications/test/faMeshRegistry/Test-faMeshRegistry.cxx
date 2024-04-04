@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -23,61 +23,45 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Application
+    Test-faMeshRegistry
+
+Description
+    Basic tests for faMeshRegistry
+
 \*---------------------------------------------------------------------------*/
 
-#include "readFields.H"
-#include "volFields.H"
+#include "argList.H"
+#include "faMesh.H"
+#include "faMeshRegistry.H"
+#include "polyMesh.H"
 
-// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+using namespace Foam;
 
-Foam::label Foam::checkData
-(
-    const objectRegistry& obr,
-    const instantList& timeDirs,
-    wordList& objectNames,
-    const fileName& local
-)
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+int main(int argc, char *argv[])
 {
-    // Assume prune_0() was used prior to calling this
+    #include "setRootCase.H"
 
-    wordHashSet goodFields;
+    #include "createTime.H"
+    #include "createPolyMesh.H"
 
-    for (const word& fieldName : objectNames)
-    {
-        // // If prune_0() not previously used...
-        // if (objectNames.ends_with("_0")) continue;
+    Info<< "mesh 0: " << mesh.sortedNames() << nl;
 
-        bool good = false;
+    faMeshRegistry& reg =
+        const_cast<faMeshRegistry&>(faMeshRegistry::New(mesh));
 
-        for (const instant& inst : timeDirs)
-        {
-            good =
-                IOobject
-                (
-                    fieldName,
-                    inst.name(),
-                    local,
-                    obr,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    IOobject::NO_REGISTER
-                ).typeHeaderOk<volScalarField>(false, false);
+    // faMeshRegistry faReg = faMeshRegistry(mesh);
 
-            if (!good)
-            {
-                break;
-            }
-        }
+    faMesh mesh1(mesh, Foam::zero{});
+    faMesh mesh2("mesh2", mesh, Foam::zero{});
 
-        if (returnReduceAnd(good))
-        {
-            goodFields.insert(fieldName);
-        }
-    }
+    reg.write();
 
-    objectNames = goodFields.sortedToc();
+    Info<< "\nEnd\n" << nl;
 
-    return objectNames.size();
+    return 0;
 }
 
 

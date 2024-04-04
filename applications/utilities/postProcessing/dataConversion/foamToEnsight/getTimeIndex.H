@@ -55,7 +55,7 @@ label timeIndex = 0;
         else
         {
             goodTimeIndex = false;
-            Info<< "skip ... missing entry " << io.objectPath() << endl;
+            Info<< "skip ... missing file: " << io.objectRelPath() << endl;
         }
     }
 

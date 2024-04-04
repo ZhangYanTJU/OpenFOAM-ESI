@@ -382,8 +382,24 @@ int main(int argc, char *argv[])
             IOobjectList objects
             (
                 procMeshes.meshes()[0],
-                databases[0].timeName()
+                databases[0].timeName(),
+                IOobjectOption::NO_REGISTER
             );
+
+            IOobjectList faObjects;
+
+            if (doFiniteArea && doFields)
+            {
+                // List of area mesh objects (assuming single region)
+                // - scan on processor0
+                faObjects = IOobjectList
+                (
+                    procMeshes.meshes()[0],
+                    databases[0].timeName(),
+                    faMesh::dbDir(word::null),  // local relative to mesh
+                    IOobjectOption::NO_REGISTER
+                );
+            }
 
             if (doFields)
             {
@@ -545,12 +561,12 @@ int main(int argc, char *argv[])
             }
             else if
             (
-                objects.count<areaScalarField>()
-             || objects.count<areaVectorField>()
-             || objects.count<areaSphericalTensorField>()
-             || objects.count<areaSymmTensorField>()
-             || objects.count<areaTensorField>()
-             || objects.count<edgeScalarField>()
+                faObjects.count<areaScalarField>()
+             || faObjects.count<areaVectorField>()
+             || faObjects.count<areaSphericalTensorField>()
+             || faObjects.count<areaSymmTensorField>()
+             || faObjects.count<areaTensorField>()
+             || faObjects.count<edgeScalarField>()
             )
             {
                 Info << "Reconstructing FA fields" << nl << endl;
@@ -568,7 +584,7 @@ int main(int argc, char *argv[])
                     procFaMeshes.boundaryProcAddressing()
                 );
 
-                reconstructor.reconstructAllFields(objects);
+                reconstructor.reconstructAllFields(faObjects);
             }
             else
             {

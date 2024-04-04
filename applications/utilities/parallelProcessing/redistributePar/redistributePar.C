@@ -102,6 +102,7 @@ Usage
 #include "faMeshSubset.H"
 #include "faMeshTools.H"
 #include "faMeshDistributor.H"
+#include "faMeshRegistry.H"
 #include "parFaFieldDistributorCache.H"
 
 #include "redistributeLagrangian.H"
@@ -906,11 +907,25 @@ autoPtr<mapDistributePolyMesh> redistributeAndWrite
     }
 
 
+    // If faMeshRegistry exists, it is also owned by the polyMesh and will
+    // be destroyed by clearGeom() in fvMeshDistribute::distribute()
+    //
+    // Rescue faMeshRegistry from destruction by temporarily moving
+    // it to be locally owned.
+    std::unique_ptr<faMeshRegistry> faMeshRegistry_saved
+    (
+        faMeshRegistry::Release(mesh)
+    );
+
     // Mesh distribution engine
     fvMeshDistribute distributor(mesh);
 
     // Do all the distribution of mesh and fields
     autoPtr<mapDistributePolyMesh> distMap = distributor.distribute(decomp);
+
+    // Restore ownership onto the polyMesh
+    faMeshRegistry::Store(std::move(faMeshRegistry_saved));
+
 
     // Print some statistics
     InfoOrPout<< "After distribution:" << endl;
@@ -1598,7 +1613,8 @@ int main(int argc, char *argv[])
             );
             const fileName areaMeshSubDir
             (
-                polyMesh::regionName(regionName) / faMesh::meshSubDir
+                // Assume single-region area mesh
+                faMesh::meshDir(regionName, word::null)
             );
 
             InfoOrPout
@@ -2501,7 +2517,8 @@ int main(int argc, char *argv[])
             );
             const fileName areaMeshSubDir
             (
-                polyMesh::regionName(regionName) / faMesh::meshSubDir
+                // Assume single-region area mesh
+                faMesh::meshDir(regionName, word::null)
             );
 
             InfoOrPout

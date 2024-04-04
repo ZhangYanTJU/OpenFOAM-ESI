@@ -99,6 +99,7 @@ public:
     //         if not present
     static autoPtr<faMesh> newMesh
     (
+        //! The IOobject describes the base polyMesh
         const IOobject& io,
         const polyMesh& pMesh,
         const bool masterOnlyReading,
@@ -111,6 +112,7 @@ public:
     //  - io.instance() set to facesInstance
     static autoPtr<faMesh> loadOrCreateMesh
     (
+        //! The IOobject describes the base polyMesh
         const IOobject& io,
         const polyMesh& pMesh,
         const bool decompose,
@@ -123,6 +125,7 @@ public:
     //  - io.instance() set to facesInstance
     static autoPtr<faMesh> loadOrCreateMesh
     (
+        //! The IOobject describes the base polyMesh
         const IOobject& io,
         const polyMesh& pMesh,
         //! Non-null reference if a mesh exists on given processor
