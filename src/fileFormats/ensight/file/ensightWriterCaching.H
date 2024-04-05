@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -139,6 +139,10 @@ public:
 
         //- Update time/geometry information and file cache.
         //- This routine should only be called from the master process
+        //
+        //  Note that the ensight field type may contain spaces
+        //  (eg, "tensor symm")
+        //
         //  \return True if there is a state change, which is either a
         //      geometry change or a new time interval
         bool update
@@ -147,7 +151,7 @@ public:
             const scalar timeValue,     //!< The current time value
             const bool geomChanged,     //!< Monitored geometry changed
             const word& fieldName,      //!< Name of field
-            const word& fieldType,      //!< Type of field
+            const string& fieldType,    //!< Ensight type of field
             const word& varName = word::null //!< Alternative field name
         );
 };

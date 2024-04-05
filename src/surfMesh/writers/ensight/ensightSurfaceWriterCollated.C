@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2014 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -236,7 +236,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
             {
                 const dictionary& subDict = dEntry.dict();
 
-                const word varType(subDict.get<word>("type"));
+                const string varType(subDict.get<string>("type"));
                 const word varName
                 (
                     subDict.getOrDefault<word>
@@ -247,7 +247,7 @@ Foam::fileName Foam::surfaceWriters::ensightWriter::writeCollated
                 );
 
                 osCase
-                    << varType
+                    << varType.c_str()
                     <<
                     (
                         this->isPointData()
