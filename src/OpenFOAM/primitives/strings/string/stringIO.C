@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2021 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -47,6 +47,11 @@ Foam::Istream& Foam::operator>>(Istream& is, string& val)
     if (tok.isString())
     {
         val = tok.stringToken();
+    }
+    else if (tok.isWord())
+    {
+        // Also accept a plain word as a string
+        val = tok.wordToken();
     }
     else
     {
