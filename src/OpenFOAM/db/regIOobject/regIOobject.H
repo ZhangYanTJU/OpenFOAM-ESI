@@ -33,8 +33,10 @@ Description
 
 SourceFiles
     regIOobject.C
+    regIOobjectI.H
     regIOobjectRead.C
     regIOobjectWrite.C
+    regIOobjectMetaData.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -170,7 +172,7 @@ public:
             //      or was newly registered
             bool checkIn();
 
-            //- Remove all file watches and remove object from registry
+            //- Remove object from registry, and remove all file watches
             //  \return true if object was registered and was removed
             bool checkOut();
 

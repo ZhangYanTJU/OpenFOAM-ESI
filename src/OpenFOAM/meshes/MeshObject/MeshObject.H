@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,8 +34,9 @@ Description
     MeshObject is templated on the type of mesh it is allocated to, the type of
     the mesh object (TopologicalMeshObject, GeometricMeshObject,
     MoveableMeshObject, UpdateableMeshObject) and the type of the actual object
-    it is created for example:
+    it is created for.
 
+    Example usage,
     \verbatim
     class leastSquaresVectors
     :
@@ -49,13 +50,15 @@ Description
     };
     \endverbatim
 
-    MeshObject types:
-
-    - TopologicalMeshObject: mesh object to be deleted on topology change
-    - GeometricMeshObject: mesh object to be deleted on geometry change
-    - MoveableMeshObject: mesh object to be updated in movePoints
-    - UpdateableMeshObject: mesh object to be updated in updateMesh or
-        movePoints
+    The MeshObject types:
+    - TopologicalMeshObject:
+      mesh object to be deleted on topology change
+    - GeometricMeshObject:
+      mesh object to be deleted on geometry change
+    - MoveableMeshObject:
+      mesh object to be updated in movePoints
+    - UpdateableMeshObject:
+      mesh object to be updated in movePoints or updateMesh
 
 Note
     movePoints must be provided for MeshObjects of type MoveableMeshObject
@@ -83,6 +86,55 @@ namespace Foam
 class mapPolyMesh;
 
 /*---------------------------------------------------------------------------*\
+                           Class meshObject Declaration
+\*---------------------------------------------------------------------------*/
+
+//- The meshObject is a concrete regIOobject to register MeshObject items
+class meshObject
+:
+    public regIOobject
+{
+public:
+
+    //- Runtime declaration and debug switch
+    ClassName("meshObject");
+
+
+    // Constructors
+
+        //- Construct with given object name on a registry
+        meshObject(const word& objName, const objectRegistry& obr);
+
+
+    // Static Member Functions
+
+        //- Update for mesh motion
+        template<class Mesh>
+        static void movePoints(objectRegistry& obr);
+
+        //- Update topology using the given map
+        template<class Mesh>
+        static void updateMesh(objectRegistry& obr, const mapPolyMesh& mpm);
+
+        //- Clear/remove all meshObject of MeshObjectType
+        //- via objectRegistry::checkOut()
+        template<class Mesh, template<class> class MeshObjectType>
+        static void clear(objectRegistry& obr);
+
+        //- Clear all meshObject derived from FromType up to
+        //- (but not including) ToType.
+        //  Used to clear e.g. all non-updateable meshObjects
+        template
+        <
+            class Mesh,
+            template<class> class FromType,
+            template<class> class ToType
+        >
+        static void clearUpto(objectRegistry& obr);
+};
+
+
+/*---------------------------------------------------------------------------*\
                          Class MeshObject Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -108,14 +160,17 @@ public:
         MeshObject(const word& objName, const Mesh& mesh);
 
 
+    //- Destructor
+    virtual ~MeshObject() = default;
+
+
     // Factory Methods
 
-        //- Get existing or create a new MeshObject. Registered with typeName
+        //- Get existing or create MeshObject registered with typeName
         template<class... Args>
         static const Type& New(const Mesh& mesh, Args&&... args);
 
-        //- Get existing or create a new MeshObject using supplied
-        //- registration name
+        //- Get existing or create MeshObject with given registration name
         template<class... Args>
         static const Type& New
         (
@@ -124,17 +179,39 @@ public:
             Args&&... args
         );
 
+        //- Transfer ownership of meshObject to registry.
+        static bool Store(std::unique_ptr<Type>&& ptr);
 
-    //- Destructor
-    virtual ~MeshObject() = default;
-
-        //- Static destructor using supplied registration name
+        //- Static destructor using given registration name
         static bool Delete(const word& objName, const Mesh& mesh);
 
         //- Static destructor using Type::typeName
         static bool Delete(const Mesh& mesh)
         {
             return Delete(Type::typeName, mesh);
+        }
+
+        //- Release ownership of meshObject (with given registration name)
+        //- from registry. Returns nullptr if not found or not owned.
+        static std::unique_ptr<Type> Release
+        (
+            const word& objName,
+            const Mesh& mesh,
+            //! optionally perform checkOut() from the registry
+            const bool checkout = false
+        );
+
+
+        //- Release ownership of meshObject (with Type::typeName name)
+        //- from registry.
+        static std::unique_ptr<Type> Release
+        (
+            const Mesh& mesh,
+            //! optionally perform checkOut() from the registry
+            const bool checkout = false
+        )
+        {
+            return Release(Type::typeName, mesh, checkout);
         }
 
 
@@ -151,51 +228,6 @@ public:
         {
             return true;
         }
-};
-
-
-/*---------------------------------------------------------------------------*\
-                           Class meshObject Declaration
-\*---------------------------------------------------------------------------*/
-
-//- The meshObject is a concrete regIOobject
-class meshObject
-:
-    public regIOobject
-{
-public:
-
-    //- Runtime declaration and debug switch
-    ClassName("meshObject");
-
-
-    // Constructors
-
-        //- Construct with given object name on a registry
-        meshObject(const word& objName, const objectRegistry& obr);
-
-
-    // Static Member Functions
-
-        template<class Mesh>
-        static void movePoints(objectRegistry& obr);
-
-        template<class Mesh>
-        static void updateMesh(objectRegistry& obr, const mapPolyMesh& mpm);
-
-        template<class Mesh, template<class> class MeshObjectType>
-        static void clear(objectRegistry& obr);
-
-        //- Clear all meshObject derived from FromType up to
-        //- (but not including) ToType.
-        //  Used to clear e.g. all non-updateable meshObjects
-        template
-        <
-            class Mesh,
-            template<class> class FromType,
-            template<class> class ToType
-        >
-        static void clearUpto(objectRegistry& obr);
 };
 
 
@@ -254,6 +286,7 @@ public:
         GeometricMeshObject<Mesh>(objName, obr)
     {}
 
+    //- Update for mesh motion
     virtual bool movePoints() = 0;
 };
 
@@ -275,6 +308,7 @@ public:
         MoveableMeshObject<Mesh>(objName, obr)
     {}
 
+    //- Update topology using the given map
     virtual void updateMesh(const mapPolyMesh& mpm) = 0;
 };
 
