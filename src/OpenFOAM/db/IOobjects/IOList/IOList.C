@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +31,7 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class T>
-bool Foam::IOList<T>::readContents()
+bool Foam::IOList<T>::readIOcontents()
 {
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
@@ -54,7 +54,7 @@ Foam::IOList<T>::IOList(const IOobject& io)
     // Check for MUST_READ_IF_MODIFIED
     warnNoRereading<IOList<T>>();
 
-    readContents();
+    readIOcontents();
 }
 
 
@@ -66,7 +66,7 @@ Foam::IOList<T>::IOList(const IOobject& io, Foam::zero)
     // Check for MUST_READ_IF_MODIFIED
     warnNoRereading<IOList<T>>();
 
-    readContents();
+    readIOcontents();
 }
 
 
@@ -78,7 +78,7 @@ Foam::IOList<T>::IOList(const IOobject& io, const label len)
     // Check for MUST_READ_IF_MODIFIED
     warnNoRereading<IOList<T>>();
 
-    if (!readContents())
+    if (!readIOcontents())
     {
         List<T>::resize(len);
     }
@@ -93,7 +93,7 @@ Foam::IOList<T>::IOList(const IOobject& io, const UList<T>& content)
     // Check for MUST_READ_IF_MODIFIED
     warnNoRereading<IOList<T>>();
 
-    if (!readContents())
+    if (!readIOcontents())
     {
         List<T>::operator=(content);
     }
@@ -110,7 +110,7 @@ Foam::IOList<T>::IOList(const IOobject& io, List<T>&& content)
 
     List<T>::transfer(content);
 
-    readContents();
+    readIOcontents();
 }
 
 
@@ -132,7 +132,7 @@ template<class T>
 Foam::List<T> Foam::IOList<T>::readContents(const IOobject& io)
 {
     IOobject rio(io, IOobjectOption::NO_REGISTER);
-    if (rio.readOpt() == IOobjectOption::MUST_READ_IF_MODIFIED)
+    if (rio.readOpt() == IOobjectOption::READ_MODIFIED)
     {
         rio.readOpt(IOobjectOption::MUST_READ);
     }

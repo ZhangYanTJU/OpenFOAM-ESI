@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -129,14 +129,14 @@ void Foam::faBoundaryMesh::populate(PtrList<entry>&& entries)
 }
 
 
-bool Foam::faBoundaryMesh::readContents(const bool allowOptionalRead)
+bool Foam::faBoundaryMesh::readIOcontents(const bool allowOptionalRead)
 {
     bool updated = false;
     PtrList<entry> entries;
 
     if
     (
-        isReadRequired()
+        this->isReadRequired()
      || (allowOptionalRead && this->isReadOptional() && this->headerOk())
     )
     {
@@ -175,7 +175,7 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    readContents(false);  // allowOptionalRead = false
+    readIOcontents(false);  // allowOptionalRead = false
 }
 
 
@@ -216,7 +216,7 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(fam)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         // Nothing read. Use supplied patches
         faPatchList& patches = *this;
@@ -241,7 +241,7 @@ Foam::faBoundaryMesh::faBoundaryMesh
     regIOobject(io),
     mesh_(fam)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         populate(std::move(entries));
     }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -43,7 +43,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-bool Foam::refinementHistory::readContents()
+bool Foam::refinementHistory::readIOcontents()
 {
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
@@ -566,7 +566,7 @@ Foam::refinementHistory::refinementHistory(const IOobject& io)
     // Warn for MUST_READ_IF_MODIFIED
     warnNoRereading<refinementHistory>();
 
-    readContents();
+    readIOcontents();
 
     // When running in redistributePar + READ_IF_PRESENT it can happen
     // that some processors do have refinementHistory and some don't so
@@ -602,7 +602,7 @@ Foam::refinementHistory::refinementHistory
     // Warn for MUST_READ_IF_MODIFIED
     warnNoRereading<refinementHistory>();
 
-    readContents();
+    readIOcontents();
 
     // Check indices.
     checkIndices();
@@ -632,7 +632,7 @@ Foam::refinementHistory::refinementHistory
     // Warn for MUST_READ_IF_MODIFIED
     warnNoRereading<refinementHistory>();
 
-    if (!readContents())
+    if (!readIOcontents())
     {
         visibleCells_.setSize(nCells);
         splitCells_.setCapacity(nCells);
@@ -677,7 +677,7 @@ Foam::refinementHistory::refinementHistory
     // Warn for MUST_READ_IF_MODIFIED
     warnNoRereading<refinementHistory>();
 
-    if (!readContents())
+    if (!readIOcontents())
     {
         visibleCells_.setSize(nCells);
         splitCells_.setCapacity(nCells);
@@ -737,8 +737,7 @@ Foam::refinementHistory::refinementHistory
     if (io.isAnyRead())
     {
         WarningInFunction
-            << "read option IOobject::MUST_READ or READ_IF_PRESENT "
-            << "or MUST_READ_IF_MODIFIED"
+            << "Read option MUST_READ, READ_IF_PRESENT or READ_MODIFIED"
             << " suggests that a read constructor would be more appropriate."
             << endl;
     }

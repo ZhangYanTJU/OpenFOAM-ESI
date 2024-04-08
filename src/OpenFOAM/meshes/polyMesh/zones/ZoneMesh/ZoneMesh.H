@@ -106,7 +106,7 @@ class ZoneMesh
 
         //- Return true if contents were read
         //- (controlled by IOobject readOption flags).
-        bool readContents(const bool allowOptionalRead);
+        bool readIOcontents(const bool allowOptionalRead);
 
 
 public:

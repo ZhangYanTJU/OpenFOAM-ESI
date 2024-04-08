@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +31,7 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-void Foam::rawIOField<Type>::readContents
+void Foam::rawIOField<Type>::readIOcontents
 (
     Istream& is,
     IOobjectOption::readOption readAverage
@@ -65,7 +65,7 @@ void Foam::rawIOField<Type>::readContents
 
 
 template<class Type>
-bool Foam::rawIOField<Type>::readContents
+bool Foam::rawIOField<Type>::readIOcontents
 (
     IOobjectOption::readOption readAverage
 )
@@ -111,7 +111,7 @@ bool Foam::rawIOField<Type>::readContents
 
             if (is.good())
             {
-                readContents(is, readAverage);
+                readIOcontents(is, readAverage);
                 close();
             }
         }
@@ -122,7 +122,7 @@ bool Foam::rawIOField<Type>::readContents
 
             if (isPtr && isPtr->good())
             {
-                readContents(*isPtr, readAverage);
+                readIOcontents(*isPtr, readAverage);
             }
             else
             {
@@ -165,7 +165,7 @@ Foam::rawIOField<Type>::rawIOField
     // Check for MUST_READ_IF_MODIFIED
     warnNoRereading<rawIOField<Type>>();
 
-    readContents(readAverage);
+    readIOcontents(readAverage);
 }
 
 
@@ -194,7 +194,7 @@ template<class Type>
 Foam::Field<Type> Foam::rawIOField<Type>::readContents(const IOobject& io)
 {
     IOobject rio(io, IOobjectOption::NO_REGISTER);
-    if (rio.readOpt() == IOobjectOption::MUST_READ_IF_MODIFIED)
+    if (rio.readOpt() == IOobjectOption::READ_MODIFIED)
     {
         rio.readOpt(IOobjectOption::MUST_READ);
     }

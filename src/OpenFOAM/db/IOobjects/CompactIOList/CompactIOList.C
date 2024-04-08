@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,34 +32,7 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class T, class BaseType>
-void Foam::CompactIOList<T, BaseType>::readFromStream()
-{
-    Istream& is = readStream(word::null);
-
-    if (headerClassName() == IOList<T>::typeName)
-    {
-        is >> static_cast<List<T>&>(*this);
-        close();
-    }
-    else if (headerClassName() == typeName)
-    {
-        is >> *this;
-        close();
-    }
-    else
-    {
-        FatalIOErrorInFunction(is)
-            << "unexpected class name " << headerClassName()
-            << " expected " << typeName
-            << " or " << IOList<T>::typeName << endl
-            << "    while reading object " << name()
-            << exit(FatalIOError);
-    }
-}
-
-
-template<class T, class BaseType>
-bool Foam::CompactIOList<T, BaseType>::readContents()
+bool Foam::CompactIOList<T, BaseType>::readIOcontents()
 {
     if
     (
@@ -67,7 +40,28 @@ bool Foam::CompactIOList<T, BaseType>::readContents()
      || (isReadOptional() && headerOk())
     )
     {
-        readFromStream();
+        Istream& is = readStream(word::null);
+
+        if (headerClassName() == IOList<T>::typeName)
+        {
+            is >> static_cast<List<T>&>(*this);
+            close();
+        }
+        else if (headerClassName() == typeName)
+        {
+            is >> *this;
+            close();
+        }
+        else
+        {
+            FatalIOErrorInFunction(is)
+                << "Unexpected class name " << headerClassName()
+                << " expected " << typeName
+                << " or " << IOList<T>::typeName << endl
+                << "    while reading object " << name()
+                << exit(FatalIOError);
+        }
+
         return true;
     }
 
@@ -78,12 +72,14 @@ bool Foam::CompactIOList<T, BaseType>::readContents()
 template<class T, class BaseType>
 bool Foam::CompactIOList<T, BaseType>::overflows() const
 {
-    label size = 0;
-    forAll(*this, i)
+    const List<T>& lists = *this;
+
+    label total = 0;
+    for (const auto& sublist : lists)
     {
-        const label oldSize = size;
-        size += this->operator[](i).size();
-        if (size < oldSize)
+        const label prev = total;
+        total += sublist.size();
+        if (total < prev)
         {
             return true;
         }
@@ -99,7 +95,7 @@ Foam::CompactIOList<T, BaseType>::CompactIOList(const IOobject& io)
 :
     regIOobject(io)
 {
-    readContents();
+    readIOcontents();
 }
 
 
@@ -112,7 +108,7 @@ Foam::CompactIOList<T, BaseType>::CompactIOList
 :
     regIOobject(io)
 {
-    readContents();
+    readIOcontents();
 }
 
 
@@ -125,7 +121,7 @@ Foam::CompactIOList<T, BaseType>::CompactIOList
 :
     regIOobject(io)
 {
-    if (!readContents())
+    if (!readIOcontents())
     {
         List<T>::resize(len);
     }
@@ -141,7 +137,7 @@ Foam::CompactIOList<T, BaseType>::CompactIOList
 :
     regIOobject(io)
 {
-    if (!readContents())
+    if (!readIOcontents())
     {
         List<T>::operator=(content);
     }
@@ -159,7 +155,7 @@ Foam::CompactIOList<T, BaseType>::CompactIOList
 {
     List<T>::transfer(content);
 
-    readContents();
+    readIOcontents();
 }
 
 

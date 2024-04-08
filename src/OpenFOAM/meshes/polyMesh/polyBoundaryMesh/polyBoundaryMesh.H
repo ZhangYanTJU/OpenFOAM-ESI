@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -101,7 +101,7 @@ class polyBoundaryMesh
 
         //- Return true if contents were read
         //- (controlled by IOobject readOption flags).
-        bool readContents(const bool allowOptionalRead);
+        bool readIOcontents(const bool allowOptionalRead);
 
 public:
 

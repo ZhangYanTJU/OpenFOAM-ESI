@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -58,11 +58,9 @@ class IOField
 {
     // Private Member Functions
 
-        //- Read with optional 'on-proc' value
-        void readFromStream(const bool readOnProc = true);
-
-        //- Read if IOobject flags set. Return true if read.
-        bool readContents();
+        //- Read if IOobject flags set and 'on-proc' is true.
+        //  Return true if read (only accurate when readOnProc == true).
+        bool readIOcontents(bool readOnProc = true);
 
 public:
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -42,7 +42,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-bool Foam::polyTopoChanger::readContents()
+bool Foam::polyTopoChanger::readIOcontents()
 {
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
@@ -93,7 +93,7 @@ Foam::polyTopoChanger::polyTopoChanger
     // Warn for MUST_READ_IF_MODIFIED
     warnNoRereading<polyTopoChanger>();
 
-    readContents();
+    readIOcontents();
 }
 
 

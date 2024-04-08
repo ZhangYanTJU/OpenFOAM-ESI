@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2020-2022 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -76,13 +76,10 @@ class CompactIOField
 {
     // Private Member Functions
 
-        //- Read according to header type, with optional 'on-proc' value
-        void readFromStream(const bool readOnProc = true);
-
-        //- Read if IOobject flags set. Return true if read.
-        //  Reads according to the header type
-        bool readContents();
-
+        //- Read if IOobject flags set and 'on-proc' is true.
+        //- Reads according to the header type.
+        //  Return true if read (only accurate when readOnProc == true).
+        bool readIOcontents(bool readOnProc = true);
 
 public:
 

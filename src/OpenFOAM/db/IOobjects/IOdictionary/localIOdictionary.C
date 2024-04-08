@@ -93,7 +93,7 @@ Foam::localIOdictionary::localIOdictionary
 Foam::dictionary Foam::localIOdictionary::readContents(const IOobject& io)
 {
     IOobject rio(io, IOobjectOption::NO_REGISTER);
-    if (rio.readOpt() == IOobjectOption::MUST_READ_IF_MODIFIED)
+    if (rio.readOpt() == IOobjectOption::READ_MODIFIED)
     {
         rio.readOpt(IOobjectOption::MUST_READ);
     }

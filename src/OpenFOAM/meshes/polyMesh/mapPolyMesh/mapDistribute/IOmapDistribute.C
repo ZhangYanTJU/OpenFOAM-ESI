@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014-2015 OpenFOAM Foundation
-    Copyright (C) 2015-2022 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -38,7 +38,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-bool Foam::IOmapDistribute::readContents()
+bool Foam::IOmapDistribute::readIOcontents()
 {
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
@@ -60,7 +60,7 @@ Foam::IOmapDistribute::IOmapDistribute(const IOobject& io)
     // Warn for MUST_READ_IF_MODIFIED
     warnNoRereading<IOmapDistribute>();
 
-    readContents();
+    readIOcontents();
 }
 
 
@@ -75,7 +75,7 @@ Foam::IOmapDistribute::IOmapDistribute
     // Warn for MUST_READ_IF_MODIFIED
     warnNoRereading<IOmapDistribute>();
 
-    if (!readContents())
+    if (!readIOcontents())
     {
         mapDistribute::operator=(map);
     }
@@ -95,7 +95,7 @@ Foam::IOmapDistribute::IOmapDistribute
 
     mapDistribute::transfer(map);
 
-    readContents();
+    readIOcontents();
 }
 
 

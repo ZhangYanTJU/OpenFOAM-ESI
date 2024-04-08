@@ -258,7 +258,7 @@ void Foam::ZoneMesh<ZoneType, MeshType>::populate
 
 
 template<class ZoneType, class MeshType>
-bool Foam::ZoneMesh<ZoneType, MeshType>::readContents
+bool Foam::ZoneMesh<ZoneType, MeshType>::readIOcontents
 (
     const bool allowOptionalRead
 )
@@ -311,7 +311,7 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
 {
     // Note: this is inconsistent with polyBoundaryMesh
     // which does not permit optional reading
-    readContents(true);  // allowOptionalRead = true
+    readIOcontents(true);  // allowOptionalRead = true
 }
 
 
@@ -343,7 +343,7 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
 {
     // Note: this is inconsistent with polyBoundaryMesh
     // which does not read all
-    readContents(true);  // allowOptionalRead = true
+    readIOcontents(true);  // allowOptionalRead = true
 }
 
 
@@ -359,7 +359,7 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         // Nothing read. Use supplied zones
         PtrList<ZoneType>& zones = *this;
@@ -385,7 +385,7 @@ Foam::ZoneMesh<ZoneType, MeshType>::ZoneMesh
     regIOobject(io),
     mesh_(mesh)
 {
-    if (!readContents(true))  // allowOptionalRead = true
+    if (!readIOcontents(true))  // allowOptionalRead = true
     {
         populate(std::move(entries));
     }

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,7 +31,7 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class T>
-bool Foam::IOMap<T>::readContents()
+bool Foam::IOMap<T>::readIOcontents()
 {
     if (isReadRequired() || (isReadOptional() && headerOk()))
     {
@@ -55,7 +55,7 @@ Foam::IOMap<T>::IOMap(const IOobject& io)
 :
     regIOobject(io)
 {
-    readContents();
+    readIOcontents();
 }
 
 
@@ -64,7 +64,7 @@ Foam::IOMap<T>::IOMap(const IOobject& io, const label size)
 :
     regIOobject(io)
 {
-    if (!readContents())
+    if (!readIOcontents())
     {
         Map<T>::resize(size);
     }
@@ -76,7 +76,7 @@ Foam::IOMap<T>::IOMap(const IOobject& io, const Map<T>& content)
 :
     regIOobject(io)
 {
-    if (!readContents())
+    if (!readIOcontents())
     {
         Map<T>::operator=(content);
     }
@@ -90,7 +90,7 @@ Foam::IOMap<T>::IOMap(const IOobject& io, Map<T>&& content)
 {
     Map<T>::transfer(content);
 
-    readContents();
+    readIOcontents();
 }
 
 
@@ -100,7 +100,7 @@ template<class T>
 Foam::Map<T> Foam::IOMap<T>::readContents(const IOobject& io)
 {
     IOobject rio(io, IOobjectOption::NO_REGISTER);
-    if (rio.readOpt() == IOobjectOption::MUST_READ_IF_MODIFIED)
+    if (rio.readOpt() == IOobjectOption::READ_MODIFIED)
     {
         rio.readOpt(IOobjectOption::MUST_READ);
     }

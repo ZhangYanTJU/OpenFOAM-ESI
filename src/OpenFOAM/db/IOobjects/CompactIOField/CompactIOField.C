@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -32,8 +32,26 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class T, class BaseType>
-void Foam::CompactIOField<T, BaseType>::readFromStream(const bool readOnProc)
+bool Foam::CompactIOField<T, BaseType>::readIOcontents(bool readOnProc)
 {
+    if (readOpt() == IOobject::MUST_READ)
+    {
+        // Reading
+    }
+    else if (isReadOptional())
+    {
+        if (!headerOk())
+        {
+            readOnProc = false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+
+    // Do reading
     Istream& is = readStream(word::null, readOnProc);
 
     if (readOnProc)
@@ -58,23 +76,8 @@ void Foam::CompactIOField<T, BaseType>::readFromStream(const bool readOnProc)
                 << exit(FatalIOError);
         }
     }
-}
 
-
-template<class T, class BaseType>
-bool Foam::CompactIOField<T, BaseType>::readContents()
-{
-    if
-    (
-        readOpt() == IOobject::MUST_READ
-     || (isReadOptional() && headerOk())
-    )
-    {
-        readFromStream();
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 
@@ -85,7 +88,7 @@ Foam::CompactIOField<T, BaseType>::CompactIOField(const IOobject& io)
 :
     regIOobject(io)
 {
-    readContents();
+    readIOcontents();
 }
 
 
@@ -98,15 +101,7 @@ Foam::CompactIOField<T, BaseType>::CompactIOField
 :
     regIOobject(io)
 {
-    if (readOpt() == IOobject::MUST_READ)
-    {
-        readFromStream(readOnProc);
-    }
-    else if (isReadOptional())
-    {
-        const bool haveFile = headerOk();
-        readFromStream(readOnProc && haveFile);
-    }
+    readIOcontents(readOnProc);
 }
 
 
@@ -119,7 +114,7 @@ Foam::CompactIOField<T, BaseType>::CompactIOField
 :
     regIOobject(io)
 {
-    readContents();
+    readIOcontents();
 }
 
 
@@ -132,7 +127,7 @@ Foam::CompactIOField<T, BaseType>::CompactIOField
 :
     regIOobject(io)
 {
-    if (!readContents())
+    if (!readIOcontents())
     {
         Field<T>::resize(len);
     }
@@ -148,7 +143,7 @@ Foam::CompactIOField<T, BaseType>::CompactIOField
 :
     regIOobject(io)
 {
-    if (!readContents())
+    if (!readIOcontents())
     {
         Field<T>::operator=(content);
     }
@@ -166,7 +161,7 @@ Foam::CompactIOField<T, BaseType>::CompactIOField
 {
     Field<T>::transfer(content);
 
-    readContents();
+    readIOcontents();
 }
 
 

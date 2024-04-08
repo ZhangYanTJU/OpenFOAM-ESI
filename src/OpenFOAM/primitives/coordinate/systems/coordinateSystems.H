@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -83,23 +83,24 @@ class coordinateSystems
 {
     // Private Member Functions
 
-        //- Read "coordinateSystems" or older "IOPtrList<coordinateSystem>"
-        void readFromStream(const bool readOnProc = true);
+        //- Read if IOobject flags set.
+        //- Reads "coordinateSystems" or older "IOPtrList<coordinateSystem>"
+        //  Return true if read.
+        bool readIOcontents();
 
-        //- Read if IOobject flags set. Return true if read.
-        bool readContents();
+public:
+
+    //- Declare type-name, virtual type (without debug switch)
+    TypeNameNoDebug("coordinateSystems");
+
+
+    // Generated Methods
 
         //- No copy construct
         coordinateSystems(const coordinateSystems&) = delete;
 
         //- No copy assignment
         void operator=(const coordinateSystems&) = delete;
-
-
-public:
-
-    //- Declare type-name, virtual type (without debug switch)
-    TypeNameNoDebug("coordinateSystems");
 
 
     // Constructors

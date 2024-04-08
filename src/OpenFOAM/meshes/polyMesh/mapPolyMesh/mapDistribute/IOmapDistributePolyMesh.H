@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2015 OpenFOAM Foundation
-    Copyright (C) 2022 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -60,7 +60,7 @@ class IOmapDistributePolyMesh
     // Private Member Functions
 
         //- Read if IOobject flags set. Return true if read.
-        bool readContents();
+        bool readIOcontents();
 
 public:
 

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2016-2017 Wikki Ltd
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -94,7 +94,7 @@ class faBoundaryMesh
 
         //- Return true if contents were read
         //- (controlled by IOobject readOption flags).
-        bool readContents(const bool allowOptionalRead);
+        bool readIOcontents(const bool allowOptionalRead);
 
 public:
 

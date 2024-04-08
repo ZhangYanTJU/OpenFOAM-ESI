@@ -67,10 +67,10 @@ class rawIOField
     // Private Member Functions
 
         //- Read contents and average
-        void readContents(Istream&, IOobjectOption::readOption readAverage);
+        void readIOcontents(Istream&, IOobjectOption::readOption readAverage);
 
         //- Read if IOobject flags set. Return true if read.
-        bool readContents(IOobjectOption::readOption readAverage);
+        bool readIOcontents(IOobjectOption::readOption readAverage);
 
 
 public:
