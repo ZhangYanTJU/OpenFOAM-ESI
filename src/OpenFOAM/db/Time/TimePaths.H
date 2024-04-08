@@ -53,7 +53,6 @@ class argList;
                            Class TimePaths Declaration
 \*---------------------------------------------------------------------------*/
 
-
 class TimePaths
 {
     // Private Data
@@ -187,9 +186,17 @@ public:
         //- Search instantList for the time index closest to the specified time
         static label findClosestTimeIndex
         (
-            const instantList& timeDirs,
+            const UList<instant>& timeDirs,
             const scalar t,
             const word& constantDirName = "constant"
+        );
+
+        //- Search instantList for matching time value,
+        //- return the instance name or word::null if nothing is equal.
+        static word findInstancePath
+        (
+            const UList<instant>& timeDirs,
+            const instant& t
         );
 
         //- Search the case for valid time directories
@@ -197,6 +204,10 @@ public:
 
         //- Search the case for the time closest to the given time
         instant findClosestTime(const scalar t) const;
+
+        //- Search the case for the time directory path
+        //- corresponding to the given instance
+        word findInstancePath(const instant& t) const;
 };
 
 

@@ -236,7 +236,9 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         (
             io.local(),
             word::null,
-            IOobject::READ_IF_PRESENT
+            IOobject::READ_IF_PRESENT,
+            word::null,  // No stop instance
+            false        // No "constant" fallback (word::null instead)
         )
     );
 

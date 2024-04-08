@@ -85,31 +85,6 @@ namespace fileOperations
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-Foam::word
-Foam::fileOperations::masterUncollatedFileOperation::findInstancePath
-(
-    const instantList& timeDirs,
-    const instant& t
-)
-{
-    // Note:
-    // - times will include constant (with value 0) as first element.
-    //   For backwards compatibility make sure to find 0 in preference
-    //   to constant.
-    // - list is sorted so could use binary search
-
-    forAllReverse(timeDirs, i)
-    {
-        if (t.equal(timeDirs[i].value()))
-        {
-            return timeDirs[i].name();
-        }
-    }
-
-    return word();
-}
-
-
 Foam::fileName
 Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
 (
@@ -216,11 +191,12 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
 
         if (search && pathFnd.good())
         {
-            newInstancePath = findInstancePath
-            (
-                *pathFnd(),
-                instant(io.instance())
-            );
+            newInstancePath =
+                Time::findInstancePath
+                (
+                    *pathFnd(),
+                    instant(io.instance())
+                );
 
             if (newInstancePath.size() && newInstancePath != io.instance())
             {
@@ -1423,7 +1399,8 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
 (
     const IOobject& startIO,
     const scalar startValue,
-    const word& stopInstance
+    const word& stopInstance,
+    const bool constant_fallback
 ) const
 {
     if (debug)
@@ -1549,6 +1526,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
                 }
                 else
                 {
+                    // At the stopInstance
                     foundInstance = io.instance();
                 }
                 break;
@@ -1600,9 +1578,13 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
             {
                 failed = failureCodes::FAILED_CONSTINST;
             }
-            else
+            else if (constant_fallback)
             {
                 foundInstance = time.constant();
+            }
+            else
+            {
+                foundInstance.clear();
             }
         }
 
@@ -1637,7 +1619,7 @@ Foam::fileOperations::masterUncollatedFileOperation::findInstance
         {
             FatalError << stopInstance;
         }
-        else
+        else  // FAILED_CONSTINST
         {
             FatalError << "constant";
         }
@@ -1698,8 +1680,7 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
             // Find similar time
 
             // Copy of Time::findInstancePath. We want to avoid the
-            // parallel call to findTimes. Alternative is to have
-            // version of findInstancePath that takes instantList ...
+            // parallel call to findTimes.
             const instantList timeDirs
             (
                 fileOperation::findTimes
@@ -1709,20 +1690,20 @@ Foam::fileOperations::masterUncollatedFileOperation::readObjects
                 )
             );
 
-            const instant t(instance);
-            forAllReverse(timeDirs, i)
+            fileName foundInst
+            (
+                Time::findInstancePath(timeDirs, instant(instance))
+            );
+
+            if (!foundInst.empty())
             {
-                if (t.equal(timeDirs[i].value()))
-                {
-                    objectNames = fileOperation::readObjects
-                    (
-                        db,
-                        timeDirs[i].name(),     // newly found time
-                        local,
-                        newInstance
-                    );
-                    break;
-                }
+                objectNames = fileOperation::readObjects
+                (
+                    db,
+                    foundInst,     // newly found time
+                    local,
+                    newInstance
+                );
             }
         }
 

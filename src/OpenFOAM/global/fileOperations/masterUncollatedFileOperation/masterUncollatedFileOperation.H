@@ -409,13 +409,6 @@ protected:
             const label comm
         ) const;
 
-        //- Equivalent of Time::findInstance
-        static word findInstancePath
-        (
-            const instantList& timeDirs,
-            const instant& t
-        );
-
         //- Search (locally!) for object; return info on how it was found.
         //  Does not do any parallel communication.
         //    checkGlobal : also check undecomposed case
@@ -754,15 +747,24 @@ public:
             //- Get sorted list of times
             virtual instantList findTimes(const fileName&, const word&) const;
 
-            //- Find instance where IOobject is.
-            //  FatalError if it cannot be found and readOpt is
-            //  (MUST_READ or MUST_READ_IF_MODIFIED).
-            //  Otherwise it returns the stopInstance.
+            //- Find time instance where IOobject is located.
+            //- The name of the IOobject can be empty, in which case only the
+            //- IOobject::local() is checked.
+            //- Does not search beyond \c stopInstance (if set) or \c constant.
+            //  If the instance cannot be found:
+            //  - FatalError when readOpt is (MUST_READ or READ_MODIFIED)
+            //  - returns the \c stopInstance (if set and reached)
+            //  - return \c constant if constant_fallback is true.
+            //  - return an empty word if constant_fallback is false.
+            //  .
             virtual IOobject findInstance
             (
                 const IOobject& io,
                 const scalar startValue,
-                const word& stopInstance
+                //! The search stop instance
+                const word& stopInstance,
+                //! Return \c "constant" instead of \c "" if the search failed
+                const bool constant_fallback = true
             ) const;
 
             //- Callback for time change

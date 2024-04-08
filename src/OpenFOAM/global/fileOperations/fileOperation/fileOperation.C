@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2017-2018 OpenFOAM Foundation
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1078,7 +1078,8 @@ Foam::IOobject Foam::fileOperation::findInstance
 (
     const IOobject& startIO,
     const scalar startValue,
-    const word& stopInstance
+    const word& stopInstance,
+    const bool constant_fallback
 ) const
 {
     const Time& time = startIO.time();
@@ -1158,6 +1159,7 @@ Foam::IOobject Foam::fileOperation::findInstance
                 }
                 else
                 {
+                    // At the stopInstance
                     return io;
                 }
                 break;
@@ -1198,10 +1200,22 @@ Foam::IOobject Foam::fileOperation::findInstance
     }
 
 
-    if (!failed && exitIfMissing)
+    if (!failed)
     {
-        failed = failureCodes::FAILED_CONSTINST;
+        if (exitIfMissing)
+        {
+            failed = failureCodes::FAILED_CONSTINST;
+        }
+        else if (constant_fallback)
+        {
+            io.instance() = time.constant();
+        }
+        else
+        {
+            io.instance().clear();
+        }
     }
+
 
     // Handle failures
     // ~~~~~~~~~~~~~~~
@@ -1225,7 +1239,7 @@ Foam::IOobject Foam::fileOperation::findInstance
         {
             FatalError << stopInstance;
         }
-        else
+        else  // FAILED_CONSTINST
         {
             FatalError << "constant";
         }

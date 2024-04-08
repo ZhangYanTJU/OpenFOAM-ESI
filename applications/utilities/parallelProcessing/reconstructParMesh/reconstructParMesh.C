@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -314,11 +314,7 @@ boundBox procBounds
     {
         fileName pointsInstance
         (
-            procDb.findInstance
-            (
-                polyMesh::meshDir(regionName),
-                "points"
-            )
+            procDb.findInstance(polyMesh::meshDir(regionName), "points")
         );
 
         if (pointsInstance != procDb.timeName())
@@ -343,11 +339,7 @@ boundBox procBounds
             IOobject
             (
                 "points",
-                procDb.findInstance
-                (
-                    polyMesh::meshDir(regionName),
-                    "points"
-                ),
+                pointsInstance,
                 polyMesh::meshDir(regionName),
                 procDb,
                 IOobject::MUST_READ,

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2019 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,7 @@ Description
 SourceFiles
     Time.C
     TimeIO.C
-    findInstance.C
+    TimeNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -482,34 +482,30 @@ public:
 
     // Searching
 
-        //- Return time instance (location) of \em dir that contains
-        //- the file \em name (eg, used in reading mesh data).
-        //  When \em is empty, searches for directory \em dir only.
-        //  Does not search beyond stopInstance (if set) or \em constant.
+        //- Return time instance (location) of \c directory containing
+        //- the file \c name (eg, used in reading mesh data).
+        //- When \c name is empty, searches for \c directory only.
+        //- Does not search beyond \c stopInstance (if set) or \c constant.
         //
-        //  \note If the instance cannot be found, returns the
-        //  stopInstance (if set and reached) or \em constant.
-        //  FatalError if it cannot be found and readOpt is
-        //  (MUST_READ or READ_MODIFIED).
+        //  If the instance cannot be found:
+        //  - FatalError when readOpt is MUST_READ or READ_MODIFIED
+        //  - return \c stopInstance (if set and reached)
+        //  - return \c constant if constant_fallback is true
+        //  - return an empty word if constant_fallback is false
+        //  .
         word findInstance
         (
-            const fileName& dir,
-            const word& name = word::null,
-            IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
-            const word& stopInstance = word::null
-        ) const;
-
-        //- Search the case for the time directory path
-        //- corresponding to the given instance
-        word findInstancePath
-        (
+            //! The subdirectory (local) for the search
             const fileName& directory,
-            const instant& t
+            //! The filename for the search. If empty, only search for directory
+            const word& name = word::null,
+            //! The search type : generally MUST_READ or READ_IF_PRESENT
+            IOobjectOption::readOption rOpt = IOobjectOption::MUST_READ,
+            //! The search stop instance
+            const word& stopInstance = word::null,
+            //! Return \c "constant" instead of \c "" if the search failed
+            const bool constant_fallback = true
         ) const;
-
-        //- Search the case for the time directory path
-        //- corresponding to the given instance
-        word findInstancePath(const instant& t) const;
 
 
     // Member Functions

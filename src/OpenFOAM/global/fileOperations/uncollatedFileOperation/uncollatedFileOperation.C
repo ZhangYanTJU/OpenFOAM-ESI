@@ -537,7 +537,8 @@ Foam::fileNameList Foam::fileOperations::uncollatedFileOperation::readObjects
     if (newInstance.empty())
     {
         // Find similar time
-        fileName newInst = db.time().findInstancePath(instant(instance));
+        word newInst = db.time().findInstancePath(instant(instance));
+
         if (!newInst.empty() && newInst != instance)
         {
             // Try with new time
