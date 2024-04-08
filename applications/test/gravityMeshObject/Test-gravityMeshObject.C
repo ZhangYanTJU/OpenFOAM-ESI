@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -50,6 +50,9 @@ void printInfo(const meshObjects::gravity& g)
 
 int main(int argc, char *argv[])
 {
+    argList::addBoolOption("checkout", "Test checkout with release");
+    argList::addBoolOption("release", "Test release instead of delete");
+
     #include "setRootCase.H"
     #include "createTime.H"
 
@@ -70,14 +73,81 @@ int main(int argc, char *argv[])
             printInfo(g);
         }
 
-        Pout<< "registered:" << flatOutput(runTime.sortedToc()) << nl << endl;
+        Pout<< "registered:"
+            << flatOutput(runTime.sortedToc()) << nl << endl;
     }
 
-    meshObjects::gravity::Delete("g", runTime);
-    meshObjects::gravity::Delete("something-not-in-registry", runTime);
+    std::unique_ptr<meshObjects::gravity> release1;
+    std::unique_ptr<meshObjects::gravity> release2;
 
-    Info<< "after Delete" << nl;
-    Pout<< "registered:" << flatOutput(runTime.sortedToc()) << endl;
+    if (args.found("release"))
+    {
+        // Ugly!
+        typedef
+            MeshObject<Time, TopologicalMeshObject, meshObjects::gravity>
+            parent_type;
+
+        release1 = meshObjects::gravity::Release("g", runTime);
+        release2 = meshObjects::gravity::Release("#none#", runTime);
+
+        Info<< "release: " << Switch::name(bool(release1))
+            << ", " << Switch::name(bool(release2)) << nl;
+
+        Info<< "after Release: "
+            << flatOutput(runTime.sortedToc()) << endl;
+
+        // Do checkout by hand (ugly)
+        if (args.found("checkout"))
+        {
+            if (release1)
+            {
+                release1->parent_type::checkOut();
+            }
+
+            if (release2)
+            {
+                release2->parent_type::checkOut();
+            }
+
+            Info<< "after checkout: "
+                << flatOutput(runTime.sortedToc()) << endl;
+        }
+    }
+    else if (args.found("checkout"))
+    {
+        // Do checkout as part of release
+        release1 = meshObjects::gravity::Release("g", runTime, true);
+        release2 = meshObjects::gravity::Release("#none#", runTime, true);
+
+        Info<< "release: " << Switch::name(bool(release1))
+            << ", " << Switch::name(bool(release2)) << nl;
+
+        Info<< "after Release/Checkout(true) : "
+            << flatOutput(runTime.sortedToc()) << endl;
+    }
+    else
+    {
+        meshObjects::gravity::Delete("g", runTime);
+        meshObjects::gravity::Delete("#none#", runTime);
+
+        Info<< "after Delete: "
+            << flatOutput(runTime.sortedToc()) << endl;
+    }
+
+
+    if (meshObjects::gravity::Store(std::move(release1)))
+    {
+        Info<< "Store pointer" << endl;
+    }
+
+    if (release2)
+    {
+        release2.reset();
+        Info<< "Clear pointer" << endl;
+    }
+
+    Info<< "Before exit: "
+        << flatOutput(runTime.sortedToc()) << endl;
 
     Info<< "\nEnd\n" << endl;
 
