@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -34,7 +34,7 @@ License
 Foam::UIPBstream::UIPBstream
 (
     const UPstream::commsTypes commsType,
-    const int fromProcNo,
+    const int rootProcNo,
     DynamicList<char>& receiveBuf,
     label& receiveBufPosition,
     const int tag,
@@ -45,11 +45,11 @@ Foam::UIPBstream::UIPBstream
 :
     UIPstreamBase
     (
-        commsType,
-        fromProcNo,
+        commsType,              // irrelevant
+        rootProcNo,             // normally UPstream::masterNo()
         receiveBuf,
         receiveBufPosition,
-        tag,
+        tag,                    // irrelevant
         comm,
         clearAtEnd,
         fmt
@@ -62,7 +62,7 @@ Foam::UIPBstream::UIPBstream
 Foam::IPBstream::IPBstream
 (
     const UPstream::commsTypes commsType,
-    const int fromProcNo,
+    const int rootProcNo,
     const label bufSize,
     const int tag,
     const label comm,
@@ -72,11 +72,11 @@ Foam::IPBstream::IPBstream
     Pstream(commsType, bufSize),
     UIPBstream
     (
-        commsType,
-        fromProcNo,
+        commsType,              // irrelevant
+        rootProcNo,             // normally UPstream::masterNo()
         Pstream::transferBuf_,
         UIPstreamBase::storedRecvBufPos_,   // Internal only
-        tag,
+        tag,                    // irrelevant
         comm,
         false,  // Do not clear Pstream::transferBuf_ if at end
         fmt
@@ -86,7 +86,7 @@ Foam::IPBstream::IPBstream
 
 Foam::IPBstream::IPBstream
 (
-    const int fromProcNo,
+    const int rootProcNo,
     const label comm,
     IOstreamOption::streamFormat fmt
 )
@@ -94,7 +94,25 @@ Foam::IPBstream::IPBstream
     IPBstream
     (
         UPstream::commsTypes::scheduled,    // irrelevant
-        fromProcNo,
+        rootProcNo,
+        label(0),  // bufSize
+        UPstream::msgType(),                // irrelevant
+        comm,
+        fmt
+    )
+{}
+
+
+Foam::IPBstream::IPBstream
+(
+    const label comm,
+    IOstreamOption::streamFormat fmt
+)
+:
+    IPBstream
+    (
+        UPstream::commsTypes::scheduled,    // irrelevant
+        UPstream::masterNo(),  // rootProcNo
         label(0),  // bufSize
         UPstream::msgType(),                // irrelevant
         comm,

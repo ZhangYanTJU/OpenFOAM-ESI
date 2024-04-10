@@ -144,11 +144,19 @@ public:
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );
 
-        //- Construct for broadcast root with optional communicator,
-        //- write format
-        explicit OPBstream
+        //- Construct for broadcast root and communicator,
+        //- with optional write format
+        OPBstream
         (
             const int rootProcNo,           //!< normally UPstream::masterNo()
+            const label comm,
+            IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
+        );
+
+        //- Construct with optional communicator and write format.
+        //- Uses UPstream::masterNo() root
+        explicit OPBstream
+        (
             const label comm = UPstream::worldComm,
             IOstreamOption::streamFormat fmt = IOstreamOption::BINARY
         );

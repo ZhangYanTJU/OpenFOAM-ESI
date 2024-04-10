@@ -41,20 +41,19 @@ void Foam::Pstream::broadcast(Type& value, const label comm)
         (
             reinterpret_cast<char*>(&value),
             sizeof(Type),
-            comm,
-            UPstream::masterNo()
+            comm
         );
     }
     else if (UPstream::is_parallel(comm))
     {
         if (UPstream::master(comm))
         {
-            OPBstream os(UPstream::masterNo(), comm);
+            OPBstream os(comm);
             os << value;
         }
         else  // UPstream::is_subrank(comm)
         {
-            IPBstream is(UPstream::masterNo(), comm);
+            IPBstream is(comm);
             is >> value;
         }
     }
@@ -68,12 +67,12 @@ void Foam::Pstream::broadcasts(const label comm, Type& arg1, Args&&... args)
     {
         if (UPstream::master(comm))
         {
-            OPBstream os(UPstream::masterNo(), comm);
+            OPBstream os(comm);
             Detail::outputLoop(os, arg1, std::forward<Args>(args)...);
         }
         else  // UPstream::is_subrank(comm)
         {
-            IPBstream is(UPstream::masterNo(), comm);
+            IPBstream is(comm);
             Detail::inputLoop(is, arg1, std::forward<Args>(args)...);
         }
     }
@@ -98,8 +97,7 @@ void Foam::Pstream::broadcastList(ListType& list, const label comm)
             (
                 reinterpret_cast<char*>(&len),
                 sizeof(label),
-                comm,
-                UPstream::masterNo()
+                comm
             );
 
             if (UPstream::is_subrank(comm))
@@ -113,8 +111,7 @@ void Foam::Pstream::broadcastList(ListType& list, const label comm)
                 (
                     list.data_bytes(),
                     list.size_bytes(),
-                    comm,
-                    UPstream::masterNo()
+                    comm
                 );
             }
         }
@@ -125,12 +122,12 @@ void Foam::Pstream::broadcastList(ListType& list, const label comm)
 
         if (UPstream::master(comm))
         {
-            OPBstream os(UPstream::masterNo(), comm);
+            OPBstream os(comm);
             os << list;
         }
         else  // UPstream::is_subrank(comm)
         {
-            IPBstream is(UPstream::masterNo(), comm);
+            IPBstream is(comm);
             is >> list;
         }
     }

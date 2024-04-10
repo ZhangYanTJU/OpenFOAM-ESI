@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -270,7 +270,7 @@ void Foam::fieldsDistributor::readFieldsImpl
         // Broadcast zero sized fields everywhere (if needed)
         // Send like a list of dictionaries
 
-        OPBstream toProcs(UPstream::masterNo());  // worldComm
+        OPBstream toProcs(UPstream::worldComm);
 
         const label nDicts = (subsetter ? fields.size() : label(0));
 
@@ -299,7 +299,7 @@ void Foam::fieldsDistributor::readFieldsImpl
     else
     {
         // Receive the broadcast...
-        IPBstream fromMaster(UPstream::masterNo());  // worldComm
+        IPBstream fromMaster(UPstream::worldComm);
 
         // But only consume where needed...
         if (!haveMeshOnProc.test(UPstream::myProcNo()))

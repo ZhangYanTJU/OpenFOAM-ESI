@@ -752,24 +752,16 @@ bool Foam::fileOperations::uncollatedFileOperation::read
 
         if (UPstream::master(UPstream::worldComm))
         {
-            OPBstream toAll
-            (
-                UPstream::masterNo(),
-                UPstream::worldComm,
-                format
-            );
-            bool okWrite = io.writeData(toAll);
+            OPBstream os(UPstream::worldComm, format);
+
+            bool okWrite = io.writeData(os);
             ok = ok && okWrite;
         }
         else
         {
-            IPBstream fromMaster
-            (
-                UPstream::masterNo(),
-                UPstream::worldComm,
-                format
-            );
-            ok = io.readData(fromMaster);
+            IPBstream is(UPstream::worldComm, format);
+
+            ok = io.readData(is);
         }
     }
 
