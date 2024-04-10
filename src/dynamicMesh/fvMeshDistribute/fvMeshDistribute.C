@@ -2017,7 +2017,14 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
     // Remove meshPhi. Since this would otherwise disappear anyway
     // during topo changes and we have to guarantee that all the fields
     // can be sent.
+
+    // NOTE: could/should use (isMeshUpdate = true) for mesh_.clearOut()
+    // but the bottom level will do a clearGeom() and that doesn't seem
+    // to work particularly well with isMeshUpdate at all.
+    // re-visit if needed...
+
     mesh_.clearOut();
+
     mesh_.resetMotion();
 
     // Get data to send. Make sure is synchronised
