@@ -2167,8 +2167,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
                 << endl;
         }
 
-        bool ok = false;
-        if (Pstream::master(UPstream::worldComm))
+        if (UPstream::master(UPstream::worldComm))
         {
             // Do master-only reading always.
             const bool oldParRun = UPstream::parRun(false);
@@ -2184,21 +2183,14 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
             UPstream::parRun(oldParRun);  // Restore parallel state
         }
 
-        // Broadcast regIOobjects content
-        if (Pstream::parRun())
+        // Broadcast regIOobject content, with writeData/readData handling
+        if (UPstream::parRun())
         {
-            Pstream::broadcasts
-            (
-                UPstream::worldComm,
-                ok,
-                io.headerClassName(),
-                io.note()
-            );
-
             if (UPstream::master(UPstream::worldComm))
             {
                 OPBstream os(UPstream::worldComm, format);
 
+                os << io.headerClassName() << io.note();
                 bool okWrite = io.writeData(os);
                 ok = ok && okWrite;
             }
@@ -2206,6 +2198,7 @@ bool Foam::fileOperations::masterUncollatedFileOperation::read
             {
                 IPBstream is(UPstream::worldComm, format);
 
+                is >> io.headerClassName() >> io.note();
                 ok = io.readData(is);
             }
         }

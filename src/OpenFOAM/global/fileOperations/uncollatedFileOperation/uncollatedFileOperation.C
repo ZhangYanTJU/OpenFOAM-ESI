@@ -699,7 +699,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
 {
     bool ok = false;
 
-    if (!masterOnly || Pstream::master(UPstream::worldComm))
+    if (!masterOnly || UPstream::master(UPstream::worldComm))
     {
         if (debug)
         {
@@ -741,19 +741,14 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         }
     }
 
-    if (masterOnly && Pstream::parRun())
+    if (masterOnly && UPstream::parRun())
     {
-        Pstream::broadcasts
-        (
-            UPstream::worldComm,
-            io.headerClassName(),
-            io.note()
-        );
-
+        // Broadcast regIOobject content, with writeData/readData handling
         if (UPstream::master(UPstream::worldComm))
         {
             OPBstream os(UPstream::worldComm, format);
 
+            os << io.headerClassName() << io.note();
             bool okWrite = io.writeData(os);
             ok = ok && okWrite;
         }
@@ -761,6 +756,7 @@ bool Foam::fileOperations::uncollatedFileOperation::read
         {
             IPBstream is(UPstream::worldComm, format);
 
+            is >> io.headerClassName() >> io.note();
             ok = io.readData(is);
         }
     }
