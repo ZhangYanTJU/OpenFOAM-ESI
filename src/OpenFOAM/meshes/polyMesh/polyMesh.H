@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017, 2020 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -696,8 +696,8 @@ public:
             //- Clear addressing
             void clearAddressing(const bool isMeshUpdate = false);
 
-            //- Clear all geometry and addressing unnecessary for CFD
-            void clearOut();
+            //- Clear all geometry and addressing
+            void clearOut(const bool isMeshUpdate = false);
 
             //- Clear primitive data (points, faces and cells)
             void clearPrimitives();

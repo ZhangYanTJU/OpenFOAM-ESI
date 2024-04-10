@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -219,22 +219,30 @@ void Foam::fvMesh::storeOldVol(const scalarField& V)
 }
 
 
-void Foam::fvMesh::clearOutLocal()
+void Foam::fvMesh::clearOutLocal(const bool isMeshUpdate)
 {
     clearGeom();
     surfaceInterpolation::clearOut();
 
-    clearAddressing();
+    clearAddressing(isMeshUpdate);
 
     // Clear mesh motion flux
-    deleteDemandDrivenData(phiPtr_);
+    phiPtr_.reset(nullptr);
 }
 
 
-void Foam::fvMesh::clearOut()
+void Foam::fvMesh::clearOut(const bool isMeshUpdate)
 {
-    clearOutLocal();
-    polyMesh::clearOut();
+    clearOutLocal(isMeshUpdate);
+
+    polyMesh::clearOut(isMeshUpdate);
+}
+
+
+void Foam::fvMesh::clearMeshPhi()
+{
+    // Clear mesh motion flux
+    phiPtr_.reset(nullptr);
 }
 
 
@@ -306,7 +314,7 @@ bool Foam::fvMesh::init(const bool doInit)
         (
             rio,
             *this,
-            dimensionedScalar(dimVol, Zero)
+            dimensionedScalar(dimVol, Foam::zero{})
         );
 
         // Set the moving flag early in case demand-driven geometry
@@ -324,11 +332,14 @@ bool Foam::fvMesh::init(const bool doInit)
         DebugInFunction
             << "Detected meshPhi: " << rio.objectRelPath() << nl;
 
-        phiPtr_ = new surfaceScalarField
+        // Clear mesh motion flux
+        phiPtr_.reset(nullptr);
+
+        phiPtr_ = std::make_unique<surfaceScalarField>
         (
             rio,
             *this,
-            dimensionedScalar(dimVol/dimTime, Zero)
+            dimensionedScalar(dimVol/dimTime, Foam::zero{})
         );
 
         // Set the moving flag early in case demand-driven geometry
@@ -942,7 +953,7 @@ void Foam::fvMesh::movePoints(const pointField& p)
         DebugInFunction<< "Creating initial meshPhi field" << endl;
 
         // Create mesh motion flux
-        phiPtr_ = new surfaceScalarField
+        phiPtr_ = std::make_unique<surfaceScalarField>
         (
             IOobject
             (
@@ -954,7 +965,7 @@ void Foam::fvMesh::movePoints(const pointField& p)
                 IOobject::NO_REGISTER
             ),
             *this,
-            dimensionedScalar(dimVolume/dimTime, Zero)
+            dimensionedScalar(dimVolume/dimTime, Foam::zero{})
         );
     }
     else
@@ -1046,10 +1057,10 @@ void Foam::fvMesh::updateMesh(const mapPolyMesh& mpm)
     if (phiPtr_)
     {
         // Mesh moving and topology change. Recreate meshPhi
-        deleteDemandDrivenData(phiPtr_);
+        phiPtr_.reset(nullptr);
 
         // Create mesh motion flux
-        phiPtr_ = new surfaceScalarField
+        phiPtr_ = std::make_unique<surfaceScalarField>
         (
             IOobject
             (
@@ -1061,7 +1072,7 @@ void Foam::fvMesh::updateMesh(const mapPolyMesh& mpm)
                 IOobject::NO_REGISTER
             ),
             *this,
-            dimensionedScalar(dimVolume/dimTime, Zero)
+            dimensionedScalar(dimVolume/dimTime, Foam::zero{})
         );
     }
 

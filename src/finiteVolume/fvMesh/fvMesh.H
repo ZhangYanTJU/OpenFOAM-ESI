@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017,2022 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -90,13 +90,13 @@ class fvMesh
 {
 protected:
 
-    // Private data
+    // Private Data
 
         //- Boundary mesh
         fvBoundaryMesh boundary_;
 
 
-    // Demand-driven data
+    // Demand-Driven Data
 
         mutable fvMeshLduAddressing* lduPtr_;
 
@@ -128,7 +128,7 @@ protected:
         mutable slicedSurfaceVectorField* CfPtr_;
 
         //- Face motion fluxes
-        mutable surfaceScalarField* phiPtr_;
+        mutable std::unique_ptr<surfaceScalarField> phiPtr_;
 
 
     // Private Member Functions
@@ -149,7 +149,7 @@ protected:
             void clearAddressing(const bool isMeshUpdate = false);
 
             //- Clear local-only storage (geometry, addressing etc)
-            void clearOutLocal();
+            void clearOutLocal(const bool isMeshUpdate = false);
 
             //- Preserve old volume(s)
             void storeOldVol(const scalarField&);
@@ -495,7 +495,7 @@ public:
         // Edit
 
             //- Clear all geometry and addressing
-            void clearOut();
+            void clearOut(const bool isMeshUpdate = false);
 
             //- Update mesh corresponding to the given map
             virtual void updateMesh(const mapPolyMesh& mpm);
@@ -517,7 +517,10 @@ public:
             //- these fvPatches.
             void removeFvBoundary();
 
-            //- Return cell face motion fluxes (or null)
+            //- Clear cell face motion fluxes
+            void clearMeshPhi();
+
+            //- Return cell face motion fluxes, if any (can be nullptr)
             refPtr<surfaceScalarField> setPhi();
 
             //- Return old-time cell volumes
