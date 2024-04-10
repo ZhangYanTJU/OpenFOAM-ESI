@@ -108,13 +108,15 @@ Foam::fileName Foam::fileOperations::uncollatedFileOperation::filePathInfo
             {
                 // Constant & system can come from global case
 
-                fileName parentObjectPath =
-                    io.rootPath()/io.time().globalCaseName()
-                   /io.instance()/io.db().dbDir()/io.local()/io.name();
+                fileName parentPath =
+                (
+                    io.rootPath()/io.globalCaseName()
+                   /io.instance()/io.db().dbDir()/io.local()/io.name()
+                );
 
-                if (isFileOrDir(isFile, parentObjectPath))
+                if (isFileOrDir(isFile, parentPath))
                 {
-                    return parentObjectPath;
+                    return parentPath;
                 }
             }
 

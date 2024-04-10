@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -227,6 +227,9 @@ public:
     // Member Functions
 
     // Basic methods
+
+        //- Move insert IOobject into the list
+        inline bool add(std::unique_ptr<IOobject>&& objectPtr);
 
         //- Move insert IOobject into the list
         inline bool add(autoPtr<IOobject>& objectPtr);

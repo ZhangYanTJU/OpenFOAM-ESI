@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -194,6 +194,12 @@ public:
             //  \return reference to the stored object
             template<class Type>
             inline static Type& store(Type* p);
+
+            //- Transfer pointer ownership to its registry.
+            //  Resets (clears) the parameter.
+            //  \return reference to the stored object
+            template<class Type>
+            inline static Type& store(std::unique_ptr<Type>&& ptr);
 
             //- Transfer pointer ownership to its registry.
             //  Resets (clears) the parameter.

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2018-2023 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -77,6 +77,14 @@ inline Type& Foam::regIOobject::store(Type* p)
     }
 
     return *p;
+}
+
+
+template<class Type>
+inline Type& Foam::regIOobject::store(std::unique_ptr<Type>&& ptr)
+{
+    // Pass management to objectRegistry
+    return store(ptr.release());
 }
 
 
@@ -182,6 +190,7 @@ inline Type& Foam::regIOobject::store(tmp<Type>&& ptr)
 
 inline void Foam::regIOobject::release(const bool unregister) noexcept
 {
+    // Note: could also return the old ownedByRegistry_ value
     ownedByRegistry_ = false;
     if (unregister)
     {

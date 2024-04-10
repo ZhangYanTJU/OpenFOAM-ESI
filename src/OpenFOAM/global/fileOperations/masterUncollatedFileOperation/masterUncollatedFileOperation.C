@@ -198,8 +198,10 @@ Foam::fileOperations::masterUncollatedFileOperation::filePathInfo
         )
         {
             fileName parentPath =
-                io.rootPath()/io.time().globalCaseName()
-               /io.instance()/io.db().dbDir()/io.local()/io.name();
+            (
+                io.rootPath()/io.globalCaseName()
+               /io.instance()/io.db().dbDir()/io.local()/io.name()
+            );
 
             if (isFileOrDir(isFile, parentPath))
             {
@@ -356,7 +358,7 @@ Foam::fileOperations::masterUncollatedFileOperation::localObjectPath
         case fileOperation::PARENTOBJECT:
         {
             return
-                io.rootPath()/io.time().globalCaseName()
+                io.rootPath()/io.globalCaseName()
                /io.instance()/io.db().dbDir()/io.local()/io.name();
         }
         break;

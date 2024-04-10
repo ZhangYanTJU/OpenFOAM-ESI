@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2022-2023 OpenCFD Ltd.
+    Copyright (C) 2022-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -108,6 +108,17 @@ inline Foam::IOobjectList::IOobjectList
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+inline bool Foam::IOobjectList::add(std::unique_ptr<IOobject>&& objectPtr)
+{
+    if (objectPtr)
+    {
+        return insert(objectPtr->name(), std::move(objectPtr));
+    }
+
+    return false;
+}
+
 
 inline bool Foam::IOobjectList::add(autoPtr<IOobject>& objectPtr)
 {

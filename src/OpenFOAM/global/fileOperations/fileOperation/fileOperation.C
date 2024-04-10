@@ -1413,7 +1413,7 @@ Foam::fileName Foam::fileOperation::processorsCasePath
     const word& procsDir
 ) const
 {
-    return io.rootPath()/io.time().globalCaseName()/procsDir;
+    return io.rootPath()/io.globalCaseName()/procsDir;
 }
 
 

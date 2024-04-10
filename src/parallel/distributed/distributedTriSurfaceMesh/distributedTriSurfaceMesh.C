@@ -250,8 +250,10 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
 
     // Search in parent directory
     fileName parentDir =
-        io.rootPath()/io.time().globalCaseName()
-       /io.instance()/io.db().dbDir()/io.local()/io.name();
+    (
+        io.rootPath()/io.globalCaseName()
+       /io.instance()/io.db().dbDir()/io.local()/io.name()
+    );
 
     if (fileHandler().isDir(parentDir))
     {
@@ -280,9 +282,11 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
             continue;
         }
 
-        fileName parentDir =
-            io.rootPath()/io.time().globalCaseName()
-           /ts[instanceI].name()/io.db().dbDir()/io.local()/io.name();
+        parentDir =
+        (
+            io.rootPath()/io.globalCaseName()
+           /ts[instanceI].name()/io.db().dbDir()/io.local()/io.name()
+        );
 
         if (fileHandler().isDir(parentDir))
         {
@@ -301,9 +305,11 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         // constant function of the time, because the latter points to
         // the case constant directory in parallel cases
 
-        fileName parentDir =
-            io.rootPath()/io.time().globalCaseName()
-           /io.time().constant()/io.db().dbDir()/io.local()/io.name();
+        parentDir =
+        (
+            io.rootPath()/io.globalCaseName()
+           /io.time().constant()/io.db().dbDir()/io.local()/io.name()
+        );
 
         if (fileHandler().isDir(parentDir))
         {
