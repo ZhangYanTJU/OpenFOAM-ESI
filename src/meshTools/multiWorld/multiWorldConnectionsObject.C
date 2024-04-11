@@ -181,7 +181,7 @@ Foam::label Foam::multiWorldConnections::createCommunicator(const edge& worlds)
 
 Foam::multiWorldConnections::multiWorldConnections(const Time& runTime)
 :
-    MeshObjectType(runTime)
+    MeshObject_type(runTime)
 {}
 
 
@@ -190,14 +190,8 @@ Foam::multiWorldConnections::multiWorldConnections(const Time& runTime)
 const Foam::multiWorldConnections&
 Foam::multiWorldConnections::New(const Time& runTime)
 {
-    return MeshObjectType::New(runTime);
+    return MeshObject_type::New(runTime);
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::multiWorldConnections::~multiWorldConnections()
-{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

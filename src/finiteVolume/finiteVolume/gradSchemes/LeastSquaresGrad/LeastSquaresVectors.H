@@ -63,6 +63,16 @@ class LeastSquaresVectors
 :
     public MeshObject<fvMesh, MoveableMeshObject, LeastSquaresVectors<Stencil>>
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            MoveableMeshObject,
+            LeastSquaresVectors<Stencil>
+        > MeshObject_type;
+
+
     // Private Data
 
         //- Least-squares gradient vectors
@@ -84,17 +94,14 @@ public:
     // Constructors
 
         //- Construct given an fvMesh and the minimum determinant criterion
-        LeastSquaresVectors
-        (
-            const fvMesh&
-        );
+        explicit LeastSquaresVectors(const fvMesh& mesh);
 
 
     //- Destructor
     virtual ~LeastSquaresVectors();
 
 
-    // Member functions
+    // Member Functions
 
         //- Return const reference to the stencil
         const extendedCentredCellToCellStencil& stencil() const

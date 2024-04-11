@@ -42,7 +42,7 @@ namespace meshObjects
 
 Foam::meshObjects::gravity::gravity(const word& name, const Time& runTime)
 :
-    MeshObject<Time, TopologicalMeshObject, gravity>(name, runTime),
+    MeshObject_type(name, runTime),
     uniformDimensionedVectorField
     (
         IOobject
@@ -50,7 +50,7 @@ Foam::meshObjects::gravity::gravity(const word& name, const Time& runTime)
             name,
             runTime.constant(),
             runTime,
-            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::READ_MODIFIED,
             IOobject::NO_WRITE,
             IOobject::NO_REGISTER  // Already registered by MeshObject
         )

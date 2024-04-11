@@ -419,7 +419,7 @@ Foam::wallDistAddressing::wallDistAddressing
 )
 :
     // Register as "wallDistAddressing"
-    MeshObject<fvMesh, Foam::UpdateableMeshObject, wallDistAddressing>(mesh),
+    MeshObject_type(mesh),
     cellDistFuncs(mesh),
     patchIDs_(mesh.boundaryMesh().findPatchIDs<wallPolyPatch>().sortedToc()),
     patchTypeName_("wall"),
@@ -452,11 +452,7 @@ Foam::wallDistAddressing::wallDistAddressing
     const label updateInterval
 )
 :
-    MeshObject<fvMesh, Foam::UpdateableMeshObject, wallDistAddressing>
-    (
-        patchTypeName,
-        mesh
-    ),
+    MeshObject_type(patchTypeName, mesh),
     cellDistFuncs(mesh),
     patchIDs_(patchIDs),
     patchTypeName_(patchTypeName),

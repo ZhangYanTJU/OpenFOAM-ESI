@@ -59,10 +59,19 @@ class pureUpwindCFCCellToFaceStencilObject
     >,
     public extendedUpwindCellToFaceStencil
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            TopologicalMeshObject,
+            pureUpwindCFCCellToFaceStencilObject
+        > MeshObject_type;
 
 public:
 
     TypeName("pureUpwindCFCCellToFaceStencil");
+
 
     // Constructors
 
@@ -72,12 +81,7 @@ public:
             const fvMesh& mesh
         )
         :
-            MeshObject
-            <
-                fvMesh,
-                Foam::TopologicalMeshObject,
-                pureUpwindCFCCellToFaceStencilObject
-            >(mesh),
+            MeshObject_type(mesh),
             extendedUpwindCellToFaceStencil(CFCCellToFaceStencil(mesh))
         {
             if (extendedCellToFaceStencil::debug)

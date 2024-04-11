@@ -36,7 +36,7 @@ Foam::fv::LeastSquaresVectors<Stencil>::LeastSquaresVectors
     const fvMesh& mesh
 )
 :
-    MeshObject<fvMesh, Foam::MoveableMeshObject, LeastSquaresVectors>(mesh),
+    MeshObject_type(mesh),
     vectors_(mesh.nCells())
 {
     calcLeastSquaresVectors();

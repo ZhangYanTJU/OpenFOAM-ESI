@@ -29,7 +29,6 @@ License
 #include "leastSquaresFaVectors.H"
 #include "edgeFields.H"
 #include "areaFields.H"
-#include "demandDrivenData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -43,7 +42,7 @@ namespace Foam
 
 Foam::leastSquaresFaVectors::leastSquaresFaVectors(const faMesh& mesh)
 :
-    MeshObject<faMesh, Foam::MoveableMeshObject, leastSquaresFaVectors>(mesh)
+    MeshObject_type(mesh)
 {}
 
 

@@ -90,7 +90,7 @@ Foam::wallDist::wallDist
     const word& patchTypeName
 )
 :
-    MeshObject<fvMesh, Foam::UpdateableMeshObject, wallDist>(mesh),
+    MeshObject_type(mesh),
     patchIDs_(patchIDs),
     patchTypeName_(patchTypeName),
     dict_
@@ -152,6 +152,22 @@ Foam::wallDist::wallDist(const fvMesh& mesh, const word& patchTypeName)
 
 Foam::wallDist::~wallDist()
 {}
+
+
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+bool Foam::wallDist::try_movePoints(const fvMesh& mesh)
+{
+    auto* ptr =
+        mesh.getObjectPtr<UpdateableMeshObject<fvMesh>>("wallDist");
+
+    if (ptr)
+    {
+        return ptr->movePoints();
+    }
+
+    return false;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

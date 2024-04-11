@@ -37,8 +37,9 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(pointMesh, 0);
+    defineTypeNameAndDebug(pointMesh, 0);
 }
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -72,7 +73,7 @@ void Foam::pointMesh::mapFields(const mapPolyMesh& mpm)
 
 Foam::pointMesh::pointMesh(const polyMesh& pMesh)
 :
-    MeshObject<polyMesh, Foam::UpdateableMeshObject, pointMesh>(pMesh),
+    MeshObject_type(pMesh),
     GeoMesh<polyMesh>(pMesh),
     boundary_(*this, pMesh.boundaryMesh())
 {

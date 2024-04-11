@@ -114,8 +114,19 @@ class wallDistAddressing
     public MeshObject<fvMesh, UpdateableMeshObject, wallDistAddressing>,
     public cellDistFuncs
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            UpdateableMeshObject,
+            wallDistAddressing
+        > MeshObject_type;
+
+
     //- Use fvMesh& instead of cellDistFuncs polyMesh&
-    using MeshObject<fvMesh, UpdateableMeshObject, wallDistAddressing>::mesh_;
+    using MeshObject_type::mesh_;
+
 
 protected:
 

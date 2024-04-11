@@ -55,6 +55,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class pointMesh;
 class polyMesh;
 
@@ -66,7 +67,17 @@ class pointConstraints
 :
     public MeshObject<pointMesh, UpdateableMeshObject, pointConstraints>
 {
-    // Private data
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            pointMesh,
+            UpdateableMeshObject,
+            pointConstraints
+        > MeshObject_type;
+
+
+    // Private Data
 
         // Patch-patch constraints
 

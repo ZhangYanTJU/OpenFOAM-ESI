@@ -69,7 +69,7 @@ class multiWorldConnections
             Time,
             TopologicalMeshObject,
             multiWorldConnections
-        > MeshObjectType;
+        > MeshObject_type;
 
 
     // Private Data
@@ -111,7 +111,7 @@ public:
 
 
     //- Destructor
-    ~multiWorldConnections();
+    ~multiWorldConnections() = default;
 
 
     // Member Functions

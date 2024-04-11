@@ -59,10 +59,19 @@ class centredCPCCellToFaceStencilObject
     >,
     public extendedCentredCellToFaceStencil
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            TopologicalMeshObject,
+            centredCPCCellToFaceStencilObject
+        > MeshObject_type;
 
 public:
 
     TypeName("centredCPCCellToFaceStencil");
+
 
     // Constructors
 
@@ -72,12 +81,7 @@ public:
             const fvMesh& mesh
         )
         :
-            MeshObject
-            <
-                fvMesh,
-                Foam::TopologicalMeshObject,
-                centredCPCCellToFaceStencilObject
-            >(mesh),
+            MeshObject_type(mesh),
             extendedCentredCellToFaceStencil(CPCCellToFaceStencil(mesh))
         {
             if (extendedCellToFaceStencil::debug)

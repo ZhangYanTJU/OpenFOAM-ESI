@@ -45,7 +45,7 @@ volBSplinesBase::volBSplinesBase
     const fvMesh& mesh
 )
 :
-    MeshObject<fvMesh, UpdateableMeshObject, volBSplinesBase>(mesh),
+    MeshObject_type(mesh),
     volume_(0),
     activeDesignVariables_(0)
 {
@@ -58,7 +58,7 @@ volBSplinesBase::volBSplinesBase
                 "dynamicMeshDict",
                 mesh.time().constant(),
                 mesh,
-                IOobject::MUST_READ_IF_MODIFIED,
+                IOobject::MUST_READ,
                 IOobject::NO_WRITE,
                 IOobject::NO_REGISTER
             )

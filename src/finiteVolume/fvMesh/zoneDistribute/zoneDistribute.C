@@ -40,7 +40,7 @@ namespace Foam
 
 Foam::zoneDistribute::zoneDistribute(const fvMesh& mesh)
 :
-    MeshObject<fvMesh, Foam::TopologicalMeshObject, zoneDistribute>(mesh),
+    MeshObject_type(mesh),
     stencil_(zoneCPCStencil::New(mesh)),
     globalNumbering_(stencil_.globalNumbering()),
     send_(UPstream::nProcs()),

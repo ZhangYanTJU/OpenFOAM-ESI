@@ -50,6 +50,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class fvMesh;
 class pointMesh;
 
@@ -61,7 +62,17 @@ class volPointInterpolation
 :
     public MeshObject<fvMesh, UpdateableMeshObject, volPointInterpolation>
 {
-    // Private data
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            UpdateableMeshObject,
+            volPointInterpolation
+        > MeshObject_type;
+
+
+    // Private Data
 
         //- Interpolation scheme weighting factor array.
         scalarListList pointWeights_;
@@ -150,7 +161,7 @@ public:
 
     // Constructors
 
-        //- Constructor given fvMesh and pointMesh.
+        //- Construct given fvMesh
         explicit volPointInterpolation(const fvMesh&);
 
 

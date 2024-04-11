@@ -54,7 +54,7 @@ SourceFiles
 namespace Foam
 {
 
-// Forward class declarations
+// Forward Declarations
 class polyMesh;
 
 /*---------------------------------------------------------------------------*\
@@ -65,7 +65,17 @@ class twoDPointCorrector
 :
     public MeshObject<polyMesh, UpdateableMeshObject, twoDPointCorrector>
 {
-    // Private data
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            UpdateableMeshObject,
+            twoDPointCorrector
+        > MeshObject_type;
+
+
+    // Private Data
 
         //- Is 2D correction required, i.e. is the mesh
         bool required_;

@@ -50,6 +50,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class fvMesh;
 class pointMesh;
 
@@ -59,8 +60,23 @@ class pointMesh;
 
 class volPointInterpolationAdjoint
 :
-    public MeshObject<fvMesh, UpdateableMeshObject, volPointInterpolationAdjoint>
+    public MeshObject
+    <
+        fvMesh,
+        UpdateableMeshObject,
+        volPointInterpolationAdjoint
+    >
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            UpdateableMeshObject,
+            volPointInterpolationAdjoint
+        > MeshObject_type;
+
+
 protected:
 
     // Protected data
@@ -128,7 +144,7 @@ public:
 
     // Constructors
 
-        //- Constructor given fvMesh and pointMesh.
+        //- Construct given fvMesh
         explicit volPointInterpolationAdjoint(const fvMesh&);
 
 

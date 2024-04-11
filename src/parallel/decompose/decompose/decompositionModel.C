@@ -49,12 +49,8 @@ Foam::decompositionModel::decompositionModel
     const dictionary* fallback
 )
 :
-    MeshObject
-    <
-        polyMesh,
-        Foam::UpdateableMeshObject,
-        decompositionModel
-    >(mesh),
+    MeshObject_type(mesh),
+
     IOdictionary
     (
         IOobject::selectIO
@@ -86,13 +82,7 @@ const Foam::decompositionModel& Foam::decompositionModel::New
     const dictionary* content
 )
 {
-    return
-        MeshObject
-        <
-            polyMesh,
-            Foam::UpdateableMeshObject,
-            decompositionModel
-        >::New(mesh, decompDictFile, content);
+    return MeshObject_type::New(mesh, decompDictFile, content);
 }
 
 

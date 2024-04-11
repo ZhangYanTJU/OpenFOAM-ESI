@@ -66,6 +66,16 @@ class zoneCPCStencil
     >,
     public zoneCellStencils
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            TopologicalMeshObject,
+            zoneCPCStencil
+        > MeshObject_type;
+
+
     // Private Data
 
         labelList nonEmptyBoundaryPoints_;
@@ -119,6 +129,7 @@ public:
 
         //- Construct from all cells and boundary faces
         explicit zoneCPCStencil(const fvMesh&);
+
 
     // Selectors
 

@@ -199,7 +199,7 @@ void Foam::twoDPointCorrector::snapToWedge
 
 Foam::twoDPointCorrector::twoDPointCorrector(const polyMesh& mesh)
 :
-    MeshObject<polyMesh, Foam::UpdateableMeshObject, twoDPointCorrector>(mesh),
+    MeshObject_type(mesh),
     required_(mesh_.nGeometricD() == 2),
     planeNormalPtr_(nullptr),
     normalEdgeIndicesPtr_(nullptr),
@@ -207,7 +207,6 @@ Foam::twoDPointCorrector::twoDPointCorrector(const polyMesh& mesh)
     wedgeAxis_(Zero),
     wedgeAngle_(0.0)
 {}
-
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

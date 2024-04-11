@@ -166,7 +166,7 @@ Foam::refPtr<Foam::cellList> Foam::manifoldCellsMeshObject::filter
 
 Foam::manifoldCellsMeshObject::manifoldCellsMeshObject(const polyMesh& mesh)
 :
-    MeshObject<polyMesh, UpdateableMeshObject, manifoldCellsMeshObject>(mesh),
+    MeshObject_type(mesh),
     cellsPtr_(nullptr),
     nCorrected_(-1)
 {}

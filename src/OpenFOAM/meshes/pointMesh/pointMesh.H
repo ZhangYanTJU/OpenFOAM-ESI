@@ -54,6 +54,16 @@ class pointMesh
     public MeshObject<polyMesh, UpdateableMeshObject, pointMesh>,
     public GeoMesh<polyMesh>
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            UpdateableMeshObject,
+            pointMesh
+        > MeshObject_type;
+
+
     // Permanent Data
 
         //- Boundary mesh

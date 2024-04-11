@@ -58,6 +58,25 @@ class processorColour
     public MeshObject<lduMesh, MoveableMeshObject, processorColour>,
     public labelList
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            lduMesh,
+            MoveableMeshObject,
+            processorColour
+        > MeshObject_type;
+
+
+    // Private Member Functions
+
+        //- No copy construct
+        processorColour(const processorColour&) = delete;
+
+        //- No copy assignment
+        void operator=(const processorColour&) = delete;
+
+
 protected:
 
     // Protected data
@@ -75,16 +94,6 @@ protected:
             labelList& cellColour
         );
 
-
-private:
-
-        //- No copy construct
-        processorColour(const processorColour&) = delete;
-
-        //- No copy assignment
-        void operator=(const processorColour&) = delete;
-
-
 public:
 
     //- Runtime type information
@@ -94,7 +103,7 @@ public:
     // Constructors
 
         //- Construct given mesh
-        processorColour(const lduMesh& mesh);
+        explicit processorColour(const lduMesh& mesh);
 
 
     // Selectors

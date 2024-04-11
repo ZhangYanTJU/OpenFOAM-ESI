@@ -354,7 +354,7 @@ void Foam::pointConstraints::makePatchPatchAddressing()
 
 Foam::pointConstraints::pointConstraints(const pointMesh& pm)
 :
-    MeshObject<pointMesh, Foam::UpdateableMeshObject, pointConstraints>(pm)
+    MeshObject_type(pm)
 {
     if (debug)
     {
