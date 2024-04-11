@@ -41,7 +41,7 @@ namespace Foam
 
 Foam::skewCorrectionVectors::skewCorrectionVectors(const fvMesh& mesh)
 :
-    MeshObject<fvMesh, Foam::MoveableMeshObject, skewCorrectionVectors>(mesh),
+    MeshObject_type(mesh),
     skew_(false),
     skewCorrectionVectors_
     (

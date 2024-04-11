@@ -77,7 +77,17 @@ class wallDist
 :
     public MeshObject<fvMesh, UpdateableMeshObject, wallDist>
 {
-    // Private data
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            fvMesh,
+            UpdateableMeshObject,
+            wallDist
+        > MeshObject_type;
+
+
+    // Private Data
 
         //- Set of patch IDs
         const labelHashSet patchIDs_;
@@ -155,6 +165,13 @@ public:
 
     //- Destructor
     virtual ~wallDist();
+
+
+    // Static Member Functions
+
+        //- Trigger update of y-field for the "wallDist" MeshObject on the
+        //- given mesh. A no-op if the wallDist is not found.
+        static bool try_movePoints(const fvMesh& mesh);
 
 
     // Member Functions

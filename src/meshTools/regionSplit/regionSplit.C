@@ -385,7 +385,7 @@ Foam::regionSplit::regionSplit
     const bool doGlobalRegions
 )
 :
-    MeshObject<polyMesh, Foam::TopologicalMeshObject, regionSplit>(mesh),
+    MeshObject_type(mesh),
     labelList(mesh.nCells(), UNASSIGNED),
     globalNumbering_()
 {
@@ -432,7 +432,7 @@ Foam::regionSplit::regionSplit
     const bool doGlobalRegions
 )
 :
-    MeshObject<polyMesh, Foam::TopologicalMeshObject, regionSplit>(mesh),
+    MeshObject_type(mesh),
     labelList(mesh.nCells(), UNASSIGNED),
     globalNumbering_()
 {

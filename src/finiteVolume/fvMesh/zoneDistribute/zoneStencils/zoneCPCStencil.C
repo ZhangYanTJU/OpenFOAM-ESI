@@ -123,7 +123,7 @@ void Foam::zoneCPCStencil::calcPointBoundaryData
 
 Foam::zoneCPCStencil::zoneCPCStencil(const fvMesh& mesh)
 :
-    MeshObject<fvMesh, Foam::TopologicalMeshObject, zoneCPCStencil>(mesh),
+    MeshObject_type(mesh),
     zoneCellStencils(mesh),
     nonEmptyBoundaryPoints_(nonEmptyFacesPatch()().meshPoints()),
     uptodate_(mesh.nCells(), false)

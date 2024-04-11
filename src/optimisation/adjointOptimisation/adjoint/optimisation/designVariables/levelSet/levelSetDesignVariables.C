@@ -417,11 +417,8 @@ void levelSetDesignVariables::update(scalarField& correction)
 
     // Though the mesh is kept constant, the distance from wall may change
     // due to fvOptions depending on beta. Trick wallDist into updating it
-    if (mesh_.foundObject<UpdateableMeshObject<fvMesh>>("wallDist"))
-    {
-        mesh_.lookupObjectRef<UpdateableMeshObject<fvMesh>>("wallDist").
-            movePoints();
-    }
+
+    wallDist::try_movePoints(mesh_);
 }
 
 

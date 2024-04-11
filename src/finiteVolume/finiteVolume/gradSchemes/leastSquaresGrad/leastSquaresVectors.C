@@ -41,7 +41,7 @@ namespace Foam
 
 Foam::leastSquaresVectors::leastSquaresVectors(const fvMesh& mesh)
 :
-    MeshObject<fvMesh, Foam::MoveableMeshObject, leastSquaresVectors>(mesh),
+    MeshObject_type(mesh),
     pVectors_
     (
         IOobject

@@ -35,13 +35,4 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::meshSearchMeshObject::meshSearchMeshObject(const polyMesh& mesh)
-:
-    MeshObject<polyMesh, Foam::GeometricMeshObject, meshSearchMeshObject>(mesh),
-    meshSearch(mesh)
-{}
-
-
 // ************************************************************************* //

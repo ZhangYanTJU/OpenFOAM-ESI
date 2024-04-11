@@ -473,7 +473,7 @@ void Foam::volPointInterpolation::makeWeights()
 
 Foam::volPointInterpolation::volPointInterpolation(const fvMesh& vm)
 :
-    MeshObject<fvMesh, Foam::UpdateableMeshObject, volPointInterpolation>(vm),
+    MeshObject_type(vm),
     hasSeparated_(hasSeparated(pointMesh::New(vm)))
 {
     makeWeights();

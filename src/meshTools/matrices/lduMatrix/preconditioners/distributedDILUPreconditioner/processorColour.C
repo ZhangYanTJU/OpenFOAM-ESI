@@ -330,7 +330,7 @@ Foam::label Foam::processorColour::cellColour
 
 Foam::processorColour::processorColour(const lduMesh& mesh)
 :
-    MeshObject<lduMesh, Foam::MoveableMeshObject, processorColour>(mesh)
+    MeshObject_type(mesh)
 {
     nColours_ = colour(mesh, *this);
 }

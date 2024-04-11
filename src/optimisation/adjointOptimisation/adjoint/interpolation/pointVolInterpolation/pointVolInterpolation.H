@@ -53,6 +53,7 @@ SourceFiles
 namespace Foam
 {
 
+// Forward Declarations
 class fvMesh;
 class pointMesh;
 
@@ -62,7 +63,7 @@ class pointMesh;
 
 class pointVolInterpolation
 {
-    // Private data
+    // Private Data
 
         const pointMesh& pointMesh_;
         const fvMesh& fvMesh_;
@@ -110,13 +111,12 @@ public:
 
     // Constructors
 
-        //- Constructor given pointMesh and fvMesh.
+        //- Construct given pointMesh and fvMesh.
         pointVolInterpolation(const pointMesh&, const fvMesh&);
 
 
-    // Destructor
-
-        ~pointVolInterpolation();
+    //- Destructor
+    ~pointVolInterpolation();
 
 
     // Member functions

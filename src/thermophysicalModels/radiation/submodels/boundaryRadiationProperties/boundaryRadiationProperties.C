@@ -46,12 +46,8 @@ Foam::radiation::boundaryRadiationProperties::boundaryRadiationProperties
     const fvMesh& mesh
 )
 :
-    MeshObject
-    <
-        fvMesh,
-        Foam::GeometricMeshObject,
-        boundaryRadiationProperties
-    >(mesh),
+    MeshObject_type(mesh),
+
     radBoundaryPropertiesPtrList_(mesh.boundary().size()),
     radZonePropertiesPtrList_(mesh.faceZones().size())
 {

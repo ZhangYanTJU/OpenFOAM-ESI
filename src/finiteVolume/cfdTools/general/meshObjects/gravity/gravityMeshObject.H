@@ -60,10 +60,19 @@ class gravity
     <
         Time,
         TopologicalMeshObject,
-        gravity
+        meshObjects::gravity
     >,
     public uniformDimensionedVectorField
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            Time,
+            TopologicalMeshObject,
+            meshObjects::gravity
+        > MeshObject_type;
+
 public:
 
     //- Run-time type information
@@ -72,12 +81,10 @@ public:
 
     // Constructors
 
-        //- Construct with given name on Time from \c constant
-        //- (MUST_READ_IF_MODIFIED)
+        //- Construct with given name on Time from \c constant (READ_MODIFIED)
         gravity(const word& name, const Time& runTime);
 
-        //- Construct "g" field on Time from \c constant
-        //- (MUST_READ_IF_MODIFIED)
+        //- Construct "g" field on Time from \c constant (READ_MODIFIED)
         explicit gravity(const Time& runTime)
         :
             gravity("g", runTime)
@@ -86,20 +93,13 @@ public:
         //- Return named gravity field cached or construct on Time
         static const gravity& New(const word& name, const Time& runTime)
         {
-            return MeshObject<Time, TopologicalMeshObject, gravity>::New
-            (
-                name,
-                runTime
-            );
+            return MeshObject_type::New(name, runTime);
         }
 
         //- Return gravity "g" field cached or construct on Time
         static const gravity& New(const Time& runTime)
         {
-            return MeshObject<Time, TopologicalMeshObject, gravity>::New
-            (
-                runTime
-            );
+            return MeshObject_type::New(runTime);
         }
 
 

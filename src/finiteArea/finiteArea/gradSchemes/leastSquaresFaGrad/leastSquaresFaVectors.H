@@ -55,8 +55,18 @@ namespace Foam
 
 class leastSquaresFaVectors
 :
-    public MeshObject<faMesh, Foam::MoveableMeshObject, leastSquaresFaVectors>
+    public MeshObject<faMesh, MoveableMeshObject, leastSquaresFaVectors>
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            faMesh,
+            MoveableMeshObject,
+            leastSquaresFaVectors
+        > MeshObject_type;
+
+
     // Private Data
 
         //- Least-squares gradient vectors

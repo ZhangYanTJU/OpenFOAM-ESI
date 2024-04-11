@@ -42,7 +42,7 @@ Foam::FitData<Form, ExtendedStencil, Polynomial>::FitData
     const scalar centralWeight
 )
 :
-    MeshObject<fvMesh, Foam::MoveableMeshObject, Form>(mesh),
+    MeshObject_type(mesh),
     stencil_(stencil),
     linearCorrection_(linearCorrection),
     linearLimitFactor_(linearLimitFactor),

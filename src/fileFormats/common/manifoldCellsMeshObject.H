@@ -55,6 +55,16 @@ class manifoldCellsMeshObject
 :
     public MeshObject<polyMesh, UpdateableMeshObject, manifoldCellsMeshObject>
 {
+    // Private Typedefs
+
+        typedef MeshObject
+        <
+            polyMesh,
+            UpdateableMeshObject,
+            manifoldCellsMeshObject
+        > MeshObject_type;
+
+
     // Private Data
 
         //- The adjusted cells list
@@ -90,7 +100,7 @@ public:
     // Constructors
 
         //- Construct from mesh
-        manifoldCellsMeshObject(const polyMesh& mesh);
+        explicit manifoldCellsMeshObject(const polyMesh& mesh);
 
 
     //- Destructor

@@ -61,19 +61,15 @@ class volBSplinesBase
 :
     public MeshObject<fvMesh, UpdateableMeshObject, volBSplinesBase>
 {
-protected:
+    // Private Typedefs
 
-    // Protected data
+        typedef MeshObject
+        <
+            fvMesh,
+            UpdateableMeshObject,
+            volBSplinesBase
+        > MeshObject_type;
 
-        //- List with volumetric B-splines boxes.
-        //  No overlapping is supported
-        PtrList<NURBS3DVolume> volume_;
-
-        //- Active design variables numbering for all boxes
-        labelList activeDesignVariables_;
-
-
-private:
 
     // Private Member Functions
 
@@ -82,6 +78,18 @@ private:
 
         //- No copy assignment
         void operator=(const volBSplinesBase&) = delete;
+
+
+protected:
+
+    // Protected Data
+
+        //- List with volumetric B-splines boxes.
+        //  No overlapping is supported
+        PtrList<NURBS3DVolume> volume_;
+
+        //- Active design variables numbering for all boxes
+        labelList activeDesignVariables_;
 
 
 public:
@@ -93,7 +101,7 @@ public:
     // Constructors
 
         //- Construct from components
-        volBSplinesBase(const fvMesh& mesh);
+        explicit volBSplinesBase(const fvMesh& mesh);
 
 
     //- Destructor
