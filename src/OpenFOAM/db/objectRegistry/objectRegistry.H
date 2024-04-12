@@ -46,11 +46,6 @@ SourceFiles
 #include "wordRes.H"
 #include "Pair.H"
 
-// Historically included by objectRegistryTemplates (until NOV-2018),
-// but not used by objectRegistry directly.
-// Leave here for now to avoid a missing include in other bits of code.
-#include "stringListOps.H"
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam

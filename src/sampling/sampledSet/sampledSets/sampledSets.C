@@ -174,7 +174,7 @@ Foam::IOobjectList Foam::sampledSets::preCheckFields(unsigned request)
     wordList allFields;    // Just needed for warnings
     HashTable<wordHashSet> selected;
 
-    IOobjectList objects(0);
+    IOobjectList objects;
 
     if (loadFromFiles_)
     {

@@ -55,7 +55,7 @@ do
 
         bitSet haveMeshOnProc;
         std::unique_ptr<faMeshSubset> subsetter;
-        IOobjectList objects(0);
+        IOobjectList objects;
 
         refPtr<fileOperation> newHandler(fileOperation::NewUncollated());
 

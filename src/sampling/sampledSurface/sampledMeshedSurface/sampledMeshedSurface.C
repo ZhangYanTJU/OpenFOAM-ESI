@@ -34,6 +34,7 @@ License
 #include "treeDataFace.H"
 #include "meshTools.H"
 #include "addToRunTimeSelectionTable.H"
+#include "stringListOps.H"   // For stringListOps::findMatching()
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

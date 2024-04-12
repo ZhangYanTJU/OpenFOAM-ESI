@@ -75,7 +75,7 @@ Foam::IOobjectList Foam::sampledSurfaces::preCheckFields()
     wordList allFields;    // Just needed for warnings
     HashTable<wordHashSet> selected;
 
-    IOobjectList objects(0);
+    IOobjectList objects;
 
     if (loadFromFiles_)
     {

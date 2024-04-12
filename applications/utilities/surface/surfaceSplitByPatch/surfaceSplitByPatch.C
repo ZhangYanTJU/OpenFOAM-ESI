@@ -56,7 +56,7 @@ Usage
 
 #include "argList.H"
 #include "MeshedSurfaces.H"
-#include "stringListOps.H"
+#include "stringListOps.H"  // For stringListOps::findMatching()
 #include "geometricSurfacePatch.H"
 
 using namespace Foam;

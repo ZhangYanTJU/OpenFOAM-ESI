@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2012 OpenFOAM Foundation
-    Copyright (C) 2016-2021 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -70,10 +70,10 @@ namespace stringOps
     //- Count the number of occurrences of the specified character
     std::string::size_type count(const std::string& s, const char c);
 
-    //- Return true if text matches one of the regular expressions.
-    inline bool match(const UList<wordRe>& patterns, const std::string& text)
+    //- True if text matches one of the selector expressions
+    inline bool match(const UList<wordRe>& selectors, const std::string& text)
     {
-        return wordRes::matcher(patterns)(text);
+        return wordRes::match(selectors, text);
     }
 
     //- Quote any meta-characters in given string

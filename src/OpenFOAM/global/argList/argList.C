@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -1476,7 +1476,7 @@ void Foam::argList::parse
                 {
                     labelList matched
                     (
-                        findMatchingStrings(hostRoot.first(), hostMachine)
+                        wordRes::matching(hostRoot.first(), hostMachine)
                     );
                     for (const label matchi : matched)
                     {

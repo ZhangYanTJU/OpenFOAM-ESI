@@ -244,7 +244,7 @@ bool Foam::functionObjects::ensightWrite::write()
     // Output fields MUST be specified to avoid accidentally
     // writing everything. Can still use ".*" for everything
 
-    wordHashSet candidateNames(0);
+    wordHashSet candidateNames;
 
     if (!selectFields_.empty())
     {

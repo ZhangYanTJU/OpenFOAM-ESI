@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2022 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -27,7 +27,6 @@ License
 
 #include "ddt2.H"
 #include "stringOps.H"
-#include "stringListOps.H"
 #include "volFields.H"
 #include "dictionary.H"
 #include "wordRes.H"
@@ -173,7 +172,11 @@ bool Foam::functionObjects::ddt2::execute()
 {
     results_.clear();
 
-    wordHashSet candidates(subsetStrings(selectFields_, mesh_.names()));
+    wordHashSet candidates
+    (
+        mesh_.names(selectFields_)
+    );
+
     DynamicList<word> missing(selectFields_.size());
     DynamicList<word> ignored(selectFields_.size());
 

@@ -581,7 +581,10 @@ bool Foam::functionObjects::externalCoupled::read(const dictionary& dict)
         const wordRe regionGroupName(dEntry.keyword());
         const dictionary& regionDict = dEntry.dict();
 
-        labelList regionIDs = findStrings(regionGroupName, allRegionNames);
+        labelList regionIDs
+        (
+            wordRes::matching(regionGroupName, allRegionNames)
+        );
 
         const wordList regionNames(allRegionNames, regionIDs);
 

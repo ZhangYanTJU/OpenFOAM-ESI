@@ -146,7 +146,7 @@ bool Foam::functionObjects::wallHeatFlux::read(const dictionary& dict)
     dict.readIfPresent("qr", qrName_);
 
     wordRes patchNames;
-    labelHashSet patchSet(0);
+    labelHashSet patchSet;
     if (dict.readIfPresent("patches", patchNames) && !patchNames.empty())
     {
         patchSet = pbm.patchSet(patchNames);

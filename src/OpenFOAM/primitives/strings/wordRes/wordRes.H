@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -67,24 +67,13 @@ class wordRes
         (
             const UList<wordRe>& selectors,
             const std::string& text,
-            const bool literal=false
-        );
-
-        //- Smart match across entire list, returning the best match type.
-        //  Stops on the first literal match, or continues to examine
-        //  if a regex match occurs.
-        //  \return wordRe::LITERAL, wordRe::REGEX on match and
-        //      wordRe::UNKNOWN otherwise.
-        inline static wordRe::compOption found_matched
-        (
-            const UList<wordRe>& selectors,
-            const std::string& text
+            const bool literal = false
         );
 
 
 public:
 
-    // Static Data / Methods
+    // Static Methods
 
         //- Return a null wordRes (reference to a nullObject).
         //- Behaves like a empty wordRes.
@@ -92,10 +81,6 @@ public:
         {
             return NullObjectRef<wordRes>();
         }
-
-        //- Return a wordRes with duplicate entries filtered out.
-        //  No distinction made between literals and regular expressions.
-        static wordRes uniq(const UList<wordRe>& input);
 
 
     // Constructors
@@ -106,6 +91,60 @@ public:
 
     //- Destructor
     ~wordRes() = default;
+
+
+    // Static Functions
+
+        //- Return a wordRes with duplicate entries filtered out.
+        //  No distinction made between literals and regular expressions.
+        static wordRes uniq(const UList<wordRe>& input);
+
+        //- Test for a match
+        inline static bool match
+        (
+            const UList<wordRe>& selectors,
+            const std::string& text,
+            bool literal = false
+        );
+
+        //- Smart match across entire list, returning the best match type.
+        //  Stops on the first literal match, or continues to examine
+        //  if a regex match occurs.
+        //  \return wordRe::LITERAL, wordRe::REGEX on match and
+        //      wordRe::UNKNOWN otherwise.
+        inline static wordRe::compOption matched
+        (
+            const UList<wordRe>& selectors,
+            const std::string& text
+        );
+
+        //- Determine the list indices for all matches.
+        //
+        //  \return indices of the matches in the input list
+        template<class StringType>
+        inline static labelList matching
+        (
+            //! A single literal or pattern matcher
+            const wordRe& select,
+            //! List of string inputs to match against
+            const UList<StringType>& input,
+            //! Invert the matching logic
+            const bool invert = false
+        );
+
+        //- Determine the list indices for all matches.
+        //
+        //  \return indices of the matches in the input list
+        template<class StringType>
+        inline static labelList matching
+        (
+            //! The list of matchers
+            const UList<wordRe>& selectors,
+            //! List of string inputs to match against
+            const UList<StringType>& input,
+            //! Invert the matching logic
+            const bool invert = false
+        );
 
 
     // Member Functions
@@ -128,16 +167,16 @@ public:
         //      UNKNOWN otherwise.
         inline wordRe::compOption matched(const std::string& text) const;
 
-        //- Return list indices for all matches.
+        //- Determine the list indices for all matches.
         //
-        //  \param input  A list of string inputs to match against
-        //  \param invert invert the matching logic
         //  \return indices of the matches in the input list
         template<class StringType>
         inline labelList matching
         (
+            //! List of string inputs to match against
             const UList<StringType>& input,
-            const bool invert=false
+            //! Invert the matching logic
+            const bool invert = false
         ) const;
 
 
@@ -152,18 +191,19 @@ public:
         //- Functor wrapper of a list of wordRe for matching
         struct matcher
         {
-            //- Construct with 'allow' matcher
-            inline matcher(const UList<wordRe>& allow);
+            //- Construct with \em select matcher(s)
+            inline explicit matcher(const UList<wordRe>& selectors) noexcept;
 
-            //- Nothing defined
+            //- No selectors defined
             inline bool empty() const noexcept;
 
-            //- True if text matches ANY of the entries.
+            //- True if text matches ANY of the selectors.
+            //- Always false if entries are empty.
             //  Allows use as a predicate.
             inline bool operator()(const std::string& text) const;
 
         private:
-            const UList<wordRe>& allow_;
+            const UList<wordRe>& select_;
         };
 
 
@@ -188,7 +228,7 @@ public:
             (
                 const UList<wordRe>& allow,
                 const UList<wordRe>& deny
-            );
+            ) noexcept;
 
             //- Nothing defined
             inline bool empty() const noexcept;
