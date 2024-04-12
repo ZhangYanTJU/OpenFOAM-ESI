@@ -139,21 +139,21 @@ void Foam::freeSurfacePressureFvPatchScalarField::updateCoeffs()
 
     // refCast<interfaceTrackingFvMesh>
     auto* itm =
-        const_cast<interfaceTrackingFvMesh*>
+        isA_constCast<interfaceTrackingFvMesh>
         (
-            isA<interfaceTrackingFvMesh>(patch().boundaryMesh().mesh())
+            patch().boundaryMesh().mesh()
         );
 
-    if (!itm)
-    {
-        // FatalError
-    }
-    else
+    if (itm)
     {
         operator==
         (
             pa_ + itm->freeSurfacePressureJump()
         );
+    }
+    else
+    {
+        // FatalError
     }
 
     fixedValueFvPatchScalarField::updateCoeffs();

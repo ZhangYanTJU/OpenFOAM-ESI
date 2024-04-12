@@ -189,7 +189,7 @@ void Foam::distributedDILUPreconditioner::receive
     for (const label inti : selectedInterfaces)
     {
         const auto& intf = interfaces[inti].interface();
-        const auto* ppp = isA<const processorLduInterface>(intf);
+        const auto* ppp = isA<processorLduInterface>(intf);
 
         auto& recvBuf = recvBufs_[inti];
         recvBuf.resize_nocopy(interfaceBouCoeffs[inti].size());
@@ -221,7 +221,7 @@ void Foam::distributedDILUPreconditioner::send
     for (const label inti : selectedInterfaces)
     {
         const auto& intf = interfaces[inti].interface();
-        const auto* ppp = isA<const processorLduInterface>(intf);
+        const auto* ppp = isA<processorLduInterface>(intf);
         const auto& faceCells = intf.faceCells();
 
         auto& sendBuf = sendBufs_[inti];
@@ -581,7 +581,7 @@ Foam::distributedDILUPreconditioner::distributedDILUPreconditioner
         if (interfaces.set(inti))
         {
             const auto& intf = interfaces[inti].interface();
-            const auto* ppp = isA<const processorLduInterface>(intf);
+            const auto* ppp = isA<processorLduInterface>(intf);
             if (ppp)
             {
                 const label nbrColour = procColours[ppp->neighbProcNo()];
@@ -603,11 +603,11 @@ Foam::distributedDILUPreconditioner::distributedDILUPreconditioner
                         << endl;
                 }
             }
-            else //if (isA<const cyclicAMILduInterface>(intf))
+            else //if (isA<cyclicAMILduInterface>(intf))
             {
                 haveGlobalCoupled = true;
 
-                const auto* AMIpp = isA<const cyclicAMILduInterface>(intf);
+                const auto* AMIpp = isA<cyclicAMILduInterface>(intf);
                 if (AMIpp)
                 {
                     //const auto& AMI =
@@ -681,12 +681,12 @@ Foam::distributedDILUPreconditioner::distributedDILUPreconditioner
                 const auto& intf = interfaces[inti].interface();
 
                 label nbrInti = -1;
-                const auto* AMIpp = isA<const cyclicAMILduInterface>(intf);
+                const auto* AMIpp = isA<cyclicAMILduInterface>(intf);
                 if (AMIpp)
                 {
                     nbrInti = AMIpp->neighbPatchID();
                 }
-                const auto* cycpp = isA<const cyclicLduInterface>(intf);
+                const auto* cycpp = isA<cyclicLduInterface>(intf);
                 if (cycpp)
                 {
                     nbrInti = cycpp->neighbPatchID();

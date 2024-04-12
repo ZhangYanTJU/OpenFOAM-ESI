@@ -51,19 +51,15 @@ namespace functionObjects
 void Foam::functionObjects::writeFreeSurface::writeData()
 {
     // refCast<interfaceTrackingFvMesh>
-    auto* itm =
-        const_cast<interfaceTrackingFvMesh*>
-        (
-            isA<interfaceTrackingFvMesh>(mesh_)
-        );
+    auto* itm = isA_constCast<interfaceTrackingFvMesh>(mesh_);
 
-    if (!itm)
+    if (itm)
     {
-        // FatalError
+        itm->writeVTKControlPoints();
     }
     else
     {
-        itm->writeVTKControlPoints();
+        // FatalError
     }
 }
 

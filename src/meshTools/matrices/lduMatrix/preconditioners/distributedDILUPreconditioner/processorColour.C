@@ -279,7 +279,7 @@ Foam::label Foam::processorColour::cellColour
         if
         (
             patches.set(inti)
-        && !isA<const processorLduInterface>(patches[inti])
+        && !isA<processorLduInterface>(patches[inti])
         )
         {
             // 'global' interface. Seed faceCells with patch index
