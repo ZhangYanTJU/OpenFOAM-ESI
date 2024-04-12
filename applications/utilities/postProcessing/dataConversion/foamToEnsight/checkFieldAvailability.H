@@ -26,7 +26,7 @@ forAll(meshes, regioni)
 {
     const auto& mesh = meshes[regioni];
 
-    IOobjectList objects(0);
+    IOobjectList objects;
 
     if (doConvertFields && !timeDirs.empty())
     {

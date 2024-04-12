@@ -29,7 +29,7 @@ License
 #include "dictionary.H"
 #include "Time.H"
 #include "areaFields.H"
-#include "stringListOps.H"
+#include "stringListOps.H"   // For stringListOps::foundOp()
 #include "foamVtkInternalWriter.H"
 #include "foamVtkPatchWriter.H"
 #include "foamVtkSeriesWriter.H"
@@ -304,7 +304,7 @@ bool Foam::functionObjects::vtkWrite::write()
         // Output fields MUST be specified to avoid accidentally
         // writing everything. Can still use ".*" for everything
 
-        wordHashSet candidateNames(0);
+        wordHashSet candidateNames;
 
         if (!selectFields_.empty())
         {

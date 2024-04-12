@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2014 OpenFOAM Foundation
-    Copyright (C) 2020 OpenCFD Ltd.
+    Copyright (C) 2020-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -294,7 +294,7 @@ bool Foam::searchableSurfaceModifiers::cut::modify
     // Find the surfaces to cut with
     for (const wordRe& cutterName : cutterNames_)
     {
-        labelList geomIDs = findStrings(cutterName, geometry_.names());
+        labelList geomIDs = wordRes::matching(cutterName, geometry_.names());
 
         for (const label geomI : geomIDs)
         {

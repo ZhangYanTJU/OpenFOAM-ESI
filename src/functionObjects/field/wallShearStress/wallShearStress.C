@@ -131,7 +131,7 @@ bool Foam::functionObjects::wallShearStress::read(const dictionary& dict)
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
 
     wordRes patchNames;
-    labelHashSet patchSet(0);
+    labelHashSet patchSet;
     if (dict.readIfPresent("patches", patchNames) && !patchNames.empty())
     {
         patchSet = pbm.patchSet(patchNames);

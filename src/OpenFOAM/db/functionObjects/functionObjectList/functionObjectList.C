@@ -822,7 +822,7 @@ bool Foam::functionObjectList::execute
     {
         for (functionObject& funcObj : functions())
         {
-            if (stringOps::match(functionNames, funcObj.name()))
+            if (wordRes::match(functionNames, funcObj.name()))
             {
                 // Probably do not need try/catch...
 

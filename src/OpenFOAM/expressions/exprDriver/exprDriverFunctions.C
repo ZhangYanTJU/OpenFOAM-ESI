@@ -42,8 +42,8 @@ static wordHashSet getAcceptableFunctionKeys
     const bool report = false
 )
 {
-    wordHashSet acceptKeys(0);
-    wordHashSet rejectKeys(0);
+    wordHashSet acceptKeys;
+    wordHashSet rejectKeys;
 
     if (!dictPtr)
     {

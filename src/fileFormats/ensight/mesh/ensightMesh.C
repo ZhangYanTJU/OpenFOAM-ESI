@@ -31,6 +31,7 @@ License
 #include "polyMesh.H"
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
+#include "stringListOps.H"   // For stringListOps::findMatching()
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

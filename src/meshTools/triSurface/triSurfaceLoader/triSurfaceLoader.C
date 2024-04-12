@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2017-2022 OpenCFD Ltd.
+    Copyright (C) 2017-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -106,7 +106,7 @@ Foam::label Foam::triSurfaceLoader::select(const word& name)
     if (available_.found(name))
     {
         selected_.resize(1);
-        selected_.first() = name;
+        selected_.front() = name;
     }
     else
     {
@@ -121,14 +121,14 @@ Foam::label Foam::triSurfaceLoader::select(const wordRe& mat)
 {
     if (mat.isPattern())
     {
-        labelList foundIds = findStrings(mat, available_);
+        labelList foundIds = wordRes::matching(mat, available_);
         Foam::sort(foundIds);
         selected_ = wordList(available_, foundIds);
     }
     else if (available_.found(static_cast<const word&>(mat)))
     {
         selected_.resize(1);
-        selected_.first() = mat;
+        selected_.front() = mat;
     }
     else
     {
@@ -162,7 +162,7 @@ Foam::label Foam::triSurfaceLoader::select(const UList<wordRe>& matcher)
     {
         if (mat.isPattern())
         {
-            labelList indices = findStrings(mat, available_);
+            labelList indices = wordRes::matching(mat, available_);
             Foam::sort(indices);
 
             for (const label idx : indices)

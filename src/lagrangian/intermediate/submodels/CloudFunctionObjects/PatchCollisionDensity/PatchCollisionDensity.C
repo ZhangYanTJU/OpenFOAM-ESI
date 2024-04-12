@@ -28,7 +28,6 @@ License
 
 #include "PatchCollisionDensity.H"
 #include "Pstream.H"
-#include "stringListOps.H"
 #include "ListOps.H"
 #include "ListListOps.H"
 

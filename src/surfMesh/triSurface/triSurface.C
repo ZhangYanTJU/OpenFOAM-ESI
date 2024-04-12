@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2016-2020 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,6 +31,7 @@ License
 #include "surfZoneList.H"
 #include "MeshedSurface.H"
 #include "ListOps.H"
+#include "stringListOps.H"   // For stringListOps::findMatching()
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

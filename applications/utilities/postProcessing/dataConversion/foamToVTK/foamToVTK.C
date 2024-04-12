@@ -141,7 +141,7 @@ Note
 #include "pointSet.H"
 #include "HashOps.H"
 #include "regionProperties.H"
-#include "stringListOps.H"
+#include "stringListOps.H"  // For stringListOps::findMatching()
 
 #include "Cloud.H"
 #include "readFields.H"
@@ -780,7 +780,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            IOobjectList objects(0);
+            IOobjectList objects;
 
             if (doConvertFields)
             {
