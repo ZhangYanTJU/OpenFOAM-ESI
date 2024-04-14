@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2014 OpenFOAM Foundation
+    Copyright (C) 2011-2014,2024 OpenFOAM Foundation
     Copyright (C) 2020-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -134,6 +134,20 @@ Foam::Ostream& Foam::prefixOSstream::write(const int32_t val)
 
 
 Foam::Ostream& Foam::prefixOSstream::write(const int64_t val)
+{
+    checkWritePrefix();
+    return OSstream::write(val);
+}
+
+
+Foam::Ostream& Foam::prefixOSstream::write(const uint32_t val)
+{
+    checkWritePrefix();
+    return OSstream::write(val);
+}
+
+
+Foam::Ostream& Foam::prefixOSstream::write(const uint64_t val)
 {
     checkWritePrefix();
     return OSstream::write(val);

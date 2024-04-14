@@ -128,8 +128,29 @@ public:
             return *this;
         }
 
-        //- Read a label
-        virtual Istream& read(label&) override
+        //- Read int32_t
+        virtual Istream& read(int32_t&) override
+        {
+            NotImplemented;
+            return *this;
+        }
+
+        //- Read int64_t
+        virtual Istream& read(int64_t&) override
+        {
+            NotImplemented;
+            return *this;
+        }
+
+        //- Read uint32_t
+        virtual Istream& read(uint32_t&) override
+        {
+            NotImplemented;
+            return *this;
+        }
+
+        //- Read uint64_t
+        virtual Istream& read(uint64_t&) override
         {
             NotImplemented;
             return *this;

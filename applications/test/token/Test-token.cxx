@@ -43,6 +43,29 @@ Description
 
 using namespace Foam;
 
+const char yesno[2] = { 'n', 'y' };
+
+void printIntegralTest(const token& tok)
+{
+    Info<< "Test: " << tok.info() << nl
+        << "  is  int32 = " << yesno[tok.is_int32()]
+        << ", int64 = " << yesno[tok.is_int64()]
+        << ", uint32 = " << yesno[tok.is_uint32()]
+        << ", uint64 = " << yesno[tok.is_uint64()]
+        << nl;
+}
+
+
+void printFloatTest(const token& tok)
+{
+    Info<< "Test: " << tok.info() << nl
+        << "  is  float = " << yesno[tok.isFloat()]
+        << ", double = " << yesno[tok.isDouble()]
+        << ", number = " << yesno[tok.isNumber()]
+        << nl;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 //  Main program:
 
@@ -55,6 +78,23 @@ int main(int argc, char *argv[])
 
     token tok1;
     Info<< "default construct: " << tok1.info() << endl;
+
+    tok1 = label(100);
+    Info<< "assign label: " << tok1.info() << endl;
+
+    tok1 = int64_t(100);
+    Info<< "assign int64: " << tok1.info() << endl;
+
+    tok1 = int32_t(100);
+    Info<< "assign int32: " << tok1.info() << endl;
+
+    {
+        tok1.int64Token(int64_t(INT32_MIN)-1);
+        Info<< "set int64Token: " << tok1.info() << endl;
+
+        printIntegralTest(tok1);
+        printFloatTest(tok1);
+    }
 
     tok1 = double(3.14159);
     Info<< "assign double: " << tok1.info() << endl;

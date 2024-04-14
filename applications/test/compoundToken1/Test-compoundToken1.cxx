@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2023 OpenCFD Ltd.
+    Copyright (C) 2023-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -158,7 +158,8 @@ void populateCompound(token::compound& ct, const dictionary& dict)
         }
         break;
 
-        case token::tokenType::LABEL :
+        case token::tokenType::INTEGER_32 :
+        case token::tokenType::INTEGER_64 :
         {
             fillComponents(label, cmpts, 123);
         }

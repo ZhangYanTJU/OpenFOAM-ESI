@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2018 OpenFOAM Foundation
+    Copyright (C) 2018,2024 OpenFOAM Foundation
     Copyright (C) 2019-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -151,6 +151,7 @@ bool Foam::functionEntries::ifeqEntry::equalToken
 
         case token::WORD:
         case token::DIRECTIVE:
+        {
             if (t2.isWord())
             {
                 return t1.wordToken() == t2.wordToken();
@@ -161,8 +162,10 @@ bool Foam::functionEntries::ifeqEntry::equalToken
                 return w2.match(t1.wordToken());
             }
             return false;
+        }
 
         case token::STRING:
+        {
             if (eqType)
             {
                 const wordRe w1(t1.stringToken(), wordRe::DETECT);
@@ -175,18 +178,26 @@ bool Foam::functionEntries::ifeqEntry::equalToken
                 return w1.match(t2.wordToken());
             }
             return false;
+        }
 
         case token::VARIABLE:
         case token::VERBATIM:
         case token::CHAR_DATA:
+        {
             if (t2.isStringType())
             {
                 return t1.stringToken() == t2.stringToken();
             }
             return false;
+        }
 
-        case token::LABEL:
+        case token::INTEGER_32 :
+        {
             if (eqType)
+            {
+                return t1.int32Token() == t2.int32Token();
+            }
+            else if (t2.isLabel())
             {
                 return t1.labelToken() == t2.labelToken();
             }
@@ -195,8 +206,61 @@ bool Foam::functionEntries::ifeqEntry::equalToken
                 return t1.labelToken() == t2.scalarToken();
             }
             return false;
+        }
+
+        case token::INTEGER_64 :
+        {
+            if (eqType)
+            {
+                return t1.int64Token() == t2.int64Token();
+            }
+            else if (t2.isLabel())
+            {
+                return t1.labelToken() == t2.labelToken();
+            }
+            else if (t2.isScalar())
+            {
+                return t1.labelToken() == t2.scalarToken();
+            }
+            return false;
+        }
+
+        case token::UNSIGNED_INTEGER_32 :
+        {
+            if (eqType)
+            {
+                return t1.uint32Token() == t2.uint32Token();
+            }
+            else if (t2.isLabel())
+            {
+                return t1.labelToken() == t2.labelToken();
+            }
+            else if (t2.isScalar())
+            {
+                return t1.labelToken() == t2.scalarToken();
+            }
+            return false;
+        }
+
+        case token::UNSIGNED_INTEGER_64 :
+        {
+            if (eqType)
+            {
+                return t1.uint64Token() == t2.uint64Token();
+            }
+            else if (t2.isLabel())
+            {
+                return t1.labelToken() == t2.labelToken();
+            }
+            else if (t2.isScalar())
+            {
+                return t1.labelToken() == t2.scalarToken();
+            }
+            return false;
+        }
 
         case token::FLOAT:
+        {
             if (eqType)
             {
                 return equal(t1.floatToken(), t2.floatToken());
@@ -210,8 +274,10 @@ bool Foam::functionEntries::ifeqEntry::equalToken
                 return t1.scalarToken() == t2.scalarToken();
             }
             return false;
+        }
 
         case token::DOUBLE:
+        {
             if (eqType)
             {
                 return equal(t1.doubleToken(), t2.doubleToken());
@@ -225,6 +291,7 @@ bool Foam::functionEntries::ifeqEntry::equalToken
                 return t1.scalarToken() == t2.scalarToken();
             }
             return false;
+        }
 
         case token::EXPRESSION:
             return false;

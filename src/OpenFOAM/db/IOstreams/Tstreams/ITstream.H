@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011-2016,2024 OpenFOAM Foundation
     Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -509,8 +509,17 @@ public:
         //- triggers not implemented error
         virtual Istream& read(string&) override;
 
-        //- Read a label : triggers not implemented error
-        virtual Istream& read(label&) override;
+        //- Read int32_t : triggers not implemented error
+        virtual Istream& read(int32_t&) override;
+
+        //- Read int64_t : triggers not implemented error
+        virtual Istream& read(int64_t&) override;
+
+        //- Read uint32_t : triggers not implemented error
+        virtual Istream& read(uint32_t&) override;
+
+        //- Read uint64_t : triggers not implemented error
+        virtual Istream& read(uint64_t&) override;
 
         //- Read a float : triggers not implemented error
         virtual Istream& read(float&) override;

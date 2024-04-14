@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -381,9 +381,30 @@ Foam::Istream& Foam::ensightReadFile::read(string& value)
 }
 
 
-Foam::Istream& Foam::ensightReadFile::read(label& value)
+Foam::Istream& Foam::ensightReadFile::read(int32_t& value)
 {
     value = getPrimitive<int>(*this);
+    return *this;
+}
+
+
+Foam::Istream& Foam::ensightReadFile::read(int64_t& value)
+{
+    value = getPrimitive<int>(*this);
+    return *this;
+}
+
+
+Foam::Istream& Foam::ensightReadFile::read(uint32_t& value)
+{
+    NotImplemented;
+    return *this;
+}
+
+
+Foam::Istream& Foam::ensightReadFile::read(uint64_t& value)
+{
+    NotImplemented;
     return *this;
 }
 

@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011-2016,2024 OpenFOAM Foundation
     Copyright (C) 2016-2023 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -153,6 +153,12 @@ public:
 
             //- Write int64_t
             virtual Ostream& write(const int64_t val) = 0;
+
+            //- Write uint32_t
+            virtual Ostream& write(const uint32_t val) = 0;
+
+            //- Write uint64_t
+            virtual Ostream& write(const uint64_t val) = 0;
 
             //- Write float
             virtual Ostream& write(const float val) = 0;

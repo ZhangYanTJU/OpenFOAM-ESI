@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
+    Copyright (C) 2011-2015,2024 OpenFOAM Foundation
     Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -643,7 +643,28 @@ Foam::Istream& Foam::ITstream::read(string&)
 }
 
 
-Foam::Istream& Foam::ITstream::read(label&)
+Foam::Istream& Foam::ITstream::read(int32_t&)
+{
+    NotImplemented;
+    return *this;
+}
+
+
+Foam::Istream& Foam::ITstream::read(int64_t&)
+{
+    NotImplemented;
+    return *this;
+}
+
+
+Foam::Istream& Foam::ITstream::read(uint32_t&)
+{
+    NotImplemented;
+    return *this;
+}
+
+
+Foam::Istream& Foam::ITstream::read(uint64_t&)
 {
     NotImplemented;
     return *this;

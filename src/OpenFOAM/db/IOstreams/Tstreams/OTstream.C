@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2019-2023 OpenCFD Ltd.
+    Copyright (C) 2019-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -65,7 +65,7 @@ Foam::Ostream& Foam::OTstream::writeQuoted
     if (quoted)
     {
         // tokenType::STRING
-        tokens().emplace_back() = string(str, len);
+        tokens().emplace_back() = Foam::string(str, len);
     }
     else if (len > 0)
     {
@@ -120,7 +120,7 @@ Foam::Ostream& Foam::OTstream::write(const std::string& str)
 
 Foam::Ostream& Foam::OTstream::write(const int32_t val)
 {
-    tokens().push_back(token(label(val))); // tokenType::LABEL
+    tokens().emplace_back().int32Token(val);
 
     return *this;
 }
@@ -128,24 +128,36 @@ Foam::Ostream& Foam::OTstream::write(const int32_t val)
 
 Foam::Ostream& Foam::OTstream::write(const int64_t val)
 {
-    tokens().push_back(token(label(val))); // tokenType::LABEL
+    tokens().emplace_back().int64Token(val);
+    return *this;
+}
 
+
+Foam::Ostream& Foam::OTstream::write(const uint32_t val)
+{
+    tokens().emplace_back().uint32Token(val);
+
+    return *this;
+}
+
+
+Foam::Ostream& Foam::OTstream::write(const uint64_t val)
+{
+    tokens().emplace_back().uint64Token(val);
     return *this;
 }
 
 
 Foam::Ostream& Foam::OTstream::write(const float val)
 {
-    tokens().push_back(token(val)); // tokenType::FLOAT
-
+    tokens().emplace_back().floatToken(val);
     return *this;
 }
 
 
 Foam::Ostream& Foam::OTstream::write(const double val)
 {
-    tokens().push_back(token(val)); // tokenType::DOUBLE
-
+    tokens().emplace_back().doubleToken(val);
     return *this;
 }
 

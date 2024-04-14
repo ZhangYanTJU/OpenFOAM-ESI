@@ -5,8 +5,8 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2015 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2011-2015,2024 OpenFOAM Foundation
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -306,9 +306,7 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
 
         if (c == token::FLAG)
         {
-            char flagVal;
-
-            if (read(flagVal))
+            if (char flagVal; read(flagVal))
             {
                 processFlags(*this, flagVal);
             }
@@ -349,8 +347,7 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
         case token::tokenType::WORD :
         case token::tokenType::DIRECTIVE :
         {
-            word val;
-            if (readString(val))
+            if (word val; readString(val))
             {
                 if
                 (
@@ -376,8 +373,7 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
         case token::tokenType::VERBATIM :
         case token::tokenType::CHAR_DATA :
         {
-            string val;
-            if (readString(val))
+            if (string val; readString(val))
             {
                 t = std::move(val);
                 t.setType(token::tokenType(c));
@@ -389,13 +385,54 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
             return *this;
         }
 
-        // Label
-        case token::tokenType::LABEL :
+        // (signed) int32
+        case token::tokenType::INTEGER_32 :
         {
-            label val;
-            if (read(val))
+            if (int32_t val; read(val))
             {
-                t = val;
+                t.int32Token(val);
+            }
+            else
+            {
+                t.setBad();
+            }
+            return *this;
+        }
+
+        //  (signed) int64
+        case token::tokenType::INTEGER_64 :
+        {
+            if (int64_t val; read(val))
+            {
+                t.int64Token(val);
+            }
+            else
+            {
+                t.setBad();
+            }
+            return *this;
+        }
+
+        // (unsigned) int32
+        case token::tokenType::UNSIGNED_INTEGER_32 :
+        {
+            if (uint32_t val; read(val))
+            {
+                t.uint32Token(val);
+            }
+            else
+            {
+                t.setBad();
+            }
+            return *this;
+        }
+
+        // (unsigned) int64
+        case token::tokenType::UNSIGNED_INTEGER_64 :
+        {
+            if (uint64_t val; read(val))
+            {
+                t.uint64Token(val);
             }
             else
             {
@@ -407,8 +444,7 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
         // Float
         case token::tokenType::FLOAT :
         {
-            float val;
-            if (read(val))
+            if (float val; read(val))
             {
                 t = val;
             }
@@ -422,8 +458,7 @@ Foam::Istream& Foam::UIPstreamBase::read(token& t)
         // Double
         case token::tokenType::DOUBLE :
         {
-            double val;
-            if (read(val))
+            if (double val; read(val))
             {
                 t = val;
             }
@@ -473,7 +508,28 @@ Foam::Istream& Foam::UIPstreamBase::read(string& str)
 }
 
 
-Foam::Istream& Foam::UIPstreamBase::read(label& val)
+Foam::Istream& Foam::UIPstreamBase::read(int32_t& val)
+{
+    readFromBuffer(val);
+    return *this;
+}
+
+
+Foam::Istream& Foam::UIPstreamBase::read(int64_t& val)
+{
+    readFromBuffer(val);
+    return *this;
+}
+
+
+Foam::Istream& Foam::UIPstreamBase::read(uint32_t& val)
+{
+    readFromBuffer(val);
+    return *this;
+}
+
+
+Foam::Istream& Foam::UIPstreamBase::read(uint64_t& val)
 {
     readFromBuffer(val);
     return *this;

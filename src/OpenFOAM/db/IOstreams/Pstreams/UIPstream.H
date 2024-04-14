@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2013 OpenFOAM Foundation
+    Copyright (C) 2011-2013,2024 OpenFOAM Foundation
     Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -184,8 +184,17 @@ public:
         // Read a string
         virtual Istream& read(string& str) override;
 
-        //- Read a label
-        virtual Istream& read(label& val) override;
+        //- Read int32_t
+        virtual Istream& read(int32_t& val) override;
+
+        //- Read int64_t
+        virtual Istream& read(int64_t& val) override;
+
+        //- Read uint32_t
+        virtual Istream& read(uint32_t& val) override;
+
+        //- Read uint64_t
+        virtual Istream& read(uint64_t& val) override;
 
         //- Read a float
         virtual Istream& read(float& val) override;

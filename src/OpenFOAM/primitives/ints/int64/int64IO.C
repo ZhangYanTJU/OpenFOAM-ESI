@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2016 OpenFOAM Foundation
+    Copyright (C) 2014-2016,2024 OpenFOAM Foundation
     Copyright (C) 2017-2021 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -113,13 +113,13 @@ Foam::Istream& Foam::operator>>(Istream& is, int64_t& val)
         }
     }
 
-    if (t.isLabel())
+    if (t.is_int64())
     {
         val = int64_t
         (
             (prefix == token::MINUS)
-          ? (0 - t.labelToken())
-          : t.labelToken()
+          ? (0 - t.int64Token())
+          : t.int64Token()
         );
     }
     else if (t.isScalar())
@@ -176,16 +176,19 @@ Foam::Istream& Foam::operator>>(Istream& is, int64_t& val)
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const int64_t val)
 {
-    os.write(label(val));
+    os.write(val);
     os.check(FUNCTION_NAME);
     return os;
 }
 
 
-#ifdef __APPLE__
+#ifdef __APPLE__  // (__SIZEOF_LONG__ == 8)
 Foam::Istream& Foam::operator>>(Istream& is, long& val)
 {
-    return operator>>(is, reinterpret_cast<int64_t&>(val));
+    int64_t ival;
+    is >> ival;
+    val = static_cast<long>(ival);
+    return is;
 }
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const long val)

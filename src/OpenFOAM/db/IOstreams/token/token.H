@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011-2016,2024 OpenFOAM Foundation
     Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -29,6 +29,10 @@ Class
 
 Description
     A token holds an item read from Istream.
+
+Note
+    Use boolean() static method for creating a \b bool token
+    since \c bool and \c int are otherwise indistinguishable
 
 SourceFiles
     tokenI.H
@@ -84,7 +88,10 @@ public:
         FLAG,             //!< stream flag (1-byte bitmask)
         PUNCTUATION,      //!< single character punctuation
         BOOL,             //!< boolean type
-        LABEL,            //!< label (integer) type
+        INTEGER_32,       //!< int32 type
+        INTEGER_64,       //!< int64 type
+        UNSIGNED_INTEGER_32, //!< uint32 type
+        UNSIGNED_INTEGER_64, //!< uint64 type
         FLOAT,            //!< float (single-precision) type
         DOUBLE,           //!< double (double-precision) type
 
@@ -107,7 +114,13 @@ public:
         // Aliases
         FLOAT_SCALAR = FLOAT,       //!< compatibility name for FLOAT
         DOUBLE_SCALAR = DOUBLE,     //!< compatibility name for DOUBLE
-        VERBATIMSTRING = VERBATIM   //!< compatibility name for VERBATIM
+        VERBATIMSTRING = VERBATIM,  //!< compatibility name for VERBATIM
+
+        #if (WM_LABEL_SIZE == 64)
+        LABEL = INTEGER_64,         //!< compatibility name
+        #else
+        LABEL = INTEGER_32,         //!< compatibility name
+        #endif
     };
 
 
@@ -463,10 +476,11 @@ private:
         // Fundamental values. Largest first for any {} initialization.
         int64_t int64Val;
         int32_t int32Val;
+        uint64_t uint64Val;
+        uint32_t uint32Val;
 
         int flagVal;   // bitmask - stored as int, not enum
         punctuationToken punctuationVal;
-        label labelVal;
         float floatVal;
         double doubleVal;
 
@@ -495,11 +509,22 @@ private:
         //- Set as UNDEFINED and zero the union content without any checking
         inline void setUndefined() noexcept;
 
-        //- True if token type corresponds to WORD or WORD-variant.
+        //- Token type corresponds to (int32, uint32, ...)
+        inline static bool is_integerToken(tokenType tokType) noexcept;
+
+        //- Token type corresponds to WORD or WORD-variant.
         inline static bool is_wordToken(tokenType tokType) noexcept;
 
-        //- True if token type corresponds to STRING or STRING-variant
+        //- Token type corresponds to STRING or STRING-variant
         inline static bool is_stringToken(tokenType tokType) noexcept;
+
+        //- Return integral type or emit parseError
+        template<class Type>
+        inline Type getIntegral(const char* expected) const;
+
+        //- Return integral/floating-point type or emit parseError
+        template<class Type>
+        inline Type getArithmetic(const char* expected) const;
 
         // Parse error, expected 'expected', found ...
         void parseError(const char* expected) const;
@@ -527,16 +552,23 @@ public:
         //- Construct punctuation character token
         inline explicit token(punctuationToken p, label lineNum=0) noexcept;
 
-        //- Construct label token
-        //- \note Use boolean() static method for creating a \b bool token
-        //- since \c bool and \c int are otherwise indistinguishable
-        inline explicit token(const label val, label lineNum=0) noexcept;
+        //- Construct 32-bit integer token
+        inline explicit token(int32_t val, label lineNum=0) noexcept;
+
+        //- Construct 64-bit integer token
+        inline explicit token(int64_t val, label lineNum=0) noexcept;
+
+        //- Construct unsigned 32-bit integer token
+        inline explicit token(uint32_t val, label lineNum=0) noexcept;
+
+        //- Construct unsigned 64-bit integer token
+        inline explicit token(uint64_t val, label lineNum=0) noexcept;
 
         //- Construct float token
-        inline explicit token(const float val, label lineNum=0) noexcept;
+        inline explicit token(float val, label lineNum=0) noexcept;
 
         //- Construct double token
-        inline explicit token(const double val, label lineNum=0) noexcept;
+        inline explicit token(double val, label lineNum=0) noexcept;
 
         //- Copy construct word token
         inline explicit token(const word& w, label lineNum=0);
@@ -640,15 +672,33 @@ public:
         inline bool isPunctuation() const noexcept;
 
         //- True if token is PUNCTUATION and equal to parameter
-        inline bool isPunctuation(const punctuationToken p) const noexcept;
+        inline bool isPunctuation(punctuationToken p) const noexcept;
 
         //- Token is PUNCTUATION and isseparator
         inline bool isSeparator() const noexcept;
 
-        //- Token is LABEL
+        //- Token is (int32 | int64 | uint32 | uint64)
+        inline bool isIntType() const noexcept;
+
+        //- Token is INTEGER_32 or is convertible to one
+        inline bool is_int32() const noexcept;
+
+        //- Token is INTEGER_64 or is convertible to one
+        inline bool is_int64() const noexcept;
+
+        //- Token is UNSIGNED_INTEGER_32 or is convertible to one
+        inline bool is_uint32() const noexcept;
+
+        //- Token is UNSIGNED_INTEGER_64 or is convertible to one
+        inline bool is_uint64() const noexcept;
+
+        //- Integral token is convertible to Foam::label
         inline bool isLabel() const noexcept;
 
-        //- True if token is LABEL and equal to parameter
+        //- Integral token is convertible to Foam::uLabel
+        inline bool isULabel() const noexcept;
+
+        //- True if token is integer type and equal to parameter
         inline bool isLabel(const label value) const noexcept;
 
         //- Token is FLOAT
@@ -660,7 +710,7 @@ public:
         //- Token is FLOAT or DOUBLE
         inline bool isScalar() const noexcept;
 
-        //- Token is LABEL, FLOAT or DOUBLE
+        //- Token is (signed/unsigned) integer type, FLOAT or DOUBLE
         inline bool isNumber() const noexcept;
 
         //- Token is word-variant (WORD, DIRECTIVE)
@@ -729,22 +779,54 @@ public:
         inline punctuationToken pToken() const;
 
         //- Assign to a punctuation token
-        inline void pToken(const punctuationToken p);
+        inline void pToken(punctuationToken p);
 
-        //- Return label value.
-        //  Report FatalIOError and return \b 0 if token is not LABEL
+        //- Return int32 value, convert from other integer type or Error
+        inline int32_t int32Token() const;
+
+        //- Assign a int32 value token
+        inline void int32Token(int32_t val);
+
+        //- Return int64 value, convert from other integer type or Error
+        inline int64_t int64Token() const;
+
+        //- Assign a int64 value token
+        inline void int64Token(int64_t val);
+
+        //- Return int32 value, convert from other integer type or Error
+        inline uint32_t uint32Token() const;
+
+        //- Assign a uint32 value token
+        inline void uint32Token(uint32_t val);
+
+        //- Return int64 value, convert from other integer type or Error
+        inline uint64_t uint64Token() const;
+
+        //- Assign a uint64 value token
+        inline void uint64Token(uint64_t val);
+
+        //- Return integer type as label value or Error
         inline label labelToken() const;
 
-        //- Assign to a label token
+        //- Return integer type as uLabel value or Error
+        inline uLabel uLabelToken() const;
+
+        //- Assign to a label (int32 or int64) token
         inline void labelToken(const label val);
 
         //- Return float value.
         //  Report FatalIOError and return \b 0 if token is not FLOAT
         inline float floatToken() const;
 
+        //- Assign to a float token
+        inline void floatToken(const float val);
+
         //- Return double value.
         //  Report FatalIOError and return \b 0 if token is not DOUBLE
         inline double doubleToken() const;
+
+        //- Assign to a double token
+        inline void doubleToken(const double val);
 
         //- Return float or double value.
         //  Report FatalIOError and return \b 0 if token is not a
@@ -753,7 +835,7 @@ public:
 
         //- Return label, float or double value.
         //  Report FatalIOError and return \b 0 if token is not a
-        //  LABEL, FLOAT or DOUBLE
+        //  an integer type, FLOAT or DOUBLE
         inline scalar number() const;
 
         //- Return const reference to the word contents.
@@ -841,14 +923,23 @@ public:
         //- Copy assign from punctuation
         inline void operator=(const punctuationToken p);
 
-        //- Copy assign from label
-        inline void operator=(const label val);
+        //- Copy assign from int32_t
+        inline void operator=(int32_t val);
+
+        //- Copy assign from int64_t
+        inline void operator=(int64_t val);
+
+        //- Copy assign from uint32_t
+        inline void operator=(uint32_t val);
+
+        //- Copy assign from uint64_t
+        inline void operator=(uint64_t val);
 
         //- Copy assign from float
-        inline void operator=(const float val);
+        inline void operator=(float val);
 
         //- Copy assign from double
-        inline void operator=(const double val);
+        inline void operator=(double val);
 
         //- Copy assign from word content
         inline void operator=(const word& w);
@@ -873,20 +964,29 @@ public:
 
         inline bool operator==(const token& tok) const;
         inline bool operator==(const punctuationToken p) const noexcept;
-        inline bool operator==(const label val) const noexcept;
+        inline bool operator==(const int32_t val) const noexcept;
+        inline bool operator==(const int64_t val) const noexcept;
+        inline bool operator==(const uint32_t val) const noexcept;
+        inline bool operator==(const uint64_t val) const noexcept;
         inline bool operator==(const float val) const noexcept;
         inline bool operator==(const double val) const noexcept;
-        inline bool operator==(const std::string& s) const;
+        inline bool operator==(const std::string&) const;
 
 
     // Inequality
 
-        inline bool operator!=(const token& tok) const;
-        inline bool operator!=(const punctuationToken p) const noexcept;
-        inline bool operator!=(const label val) const noexcept;
-        inline bool operator!=(const float val) const noexcept;
-        inline bool operator!=(const double val) const noexcept;
-        inline bool operator!=(const std::string& s) const;
+        bool operator!=(const token& t) const { return !operator==(t); }
+        bool operator!=(punctuationToken p) const noexcept
+        {
+            return !operator==(p);
+        }
+        bool operator!=(int32_t b) const noexcept { return !operator==(b); }
+        bool operator!=(int64_t b) const noexcept { return !operator==(b); }
+        bool operator!=(uint32_t b) const  noexcept { return !operator==(b); }
+        bool operator!=(uint64_t b) const noexcept { return !operator==(b); }
+        bool operator!=(float b) const noexcept { return !operator==(b); }
+        bool operator!=(double b) const noexcept { return !operator==(b); }
+        bool operator!=(const std::string& s) const { return !operator==(s); }
 
 
     // IOstream Operators
@@ -907,11 +1007,11 @@ public:
 
         //- Token is FLOAT
         //  \deprecated(2020-01) - isFloat()
-        bool isFloatScalar() const { return isFloat(); };
+        bool isFloatScalar() const noexcept { return isFloat(); };
 
         //- Token is DOUBLE
         //  \deprecated(2020-01) - isDouble()
-        bool isDoubleScalar() const { return isDouble(); }
+        bool isDoubleScalar() const noexcept { return isDouble(); }
 
         //- Return float value.
         //  \deprecated(2020-01) - floatToken()

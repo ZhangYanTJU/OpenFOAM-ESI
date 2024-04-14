@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2016 OpenFOAM Foundation
+    Copyright (C) 2011-2016,2024 OpenFOAM Foundation
     Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -150,8 +150,17 @@ public:
             //- Read a string (including enclosing double-quotes)
             virtual Istream& read(string&) = 0;
 
-            //- Read a label
-            virtual Istream& read(label&) = 0;
+            //- Read int32_t
+            virtual Istream& read(int32_t&) = 0;
+
+            //- Read int64_t
+            virtual Istream& read(int64_t&) = 0;
+
+            //- Read uint32_t
+            virtual Istream& read(uint32_t&) = 0;
+
+            //- Read uint64_t
+            virtual Istream& read(uint64_t&) = 0;
 
             //- Read a float
             virtual Istream& read(float&) = 0;

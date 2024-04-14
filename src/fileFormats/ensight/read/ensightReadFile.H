@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2016-2024 OpenCFD Ltd.
+    Copyright (C) 2016-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -133,7 +133,16 @@ public:
         virtual Istream& read(string& value) override;
 
         //- Read integer as "%10d" or as binary (narrowed) int
-        virtual Istream& read(label& value) override;
+        virtual Istream& read(int32_t& value) override;
+
+        //- Read integer as "%10d" or as binary (narrowed) int
+        virtual Istream& read(int64_t& value) override;
+
+        //- Not implemented
+        virtual Istream& read(uint32_t& value) override;
+
+        //- Not implemented
+        virtual Istream& read(uint64_t& value) override;
 
         //- Read floating-point as "%12.5e" or as binary
         virtual Istream& read(float& value) override;

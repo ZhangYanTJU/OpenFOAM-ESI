@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2017-2023 OpenCFD Ltd.
+    Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -714,7 +714,7 @@ Foam::Istream& Foam::ISstream::read(token& t)
         case '0' : case '1' : case '2' : case '3' : case '4' :
         case '5' : case '6' : case '7' : case '8' : case '9' :
         {
-            label labelVal = (c != '.'); // used as bool here
+            bool isIntegral = (c != '.');  // possible integral value?
 
             unsigned nChar = 0;
             buf[nChar++] = c;
@@ -725,7 +725,7 @@ Foam::Istream& Foam::ISstream::read(token& t)
             (
                 is_.get(c)
              && (
-                    isdigit(c)
+                    std::isdigit(c)
                  || c == '+'
                  || c == '-'
                  || c == '.'
@@ -734,10 +734,10 @@ Foam::Istream& Foam::ISstream::read(token& t)
                 )
             )
             {
-                if (labelVal)
-                {
-                    labelVal = isdigit(c);
-                }
+                // Silently skip "'" digit separators in numeric literals?
+
+                // Still possible as integral?
+                isIntegral = isIntegral && std::isdigit(c);
 
                 buf[nChar++] = c;
                 if (nChar == bufLen)
@@ -766,23 +766,91 @@ Foam::Istream& Foam::ISstream::read(token& t)
             {
                 is_.putback(c);
 
-                if (nChar == 1 && buf[0] == '-')
+                if (nChar == 1)
                 {
-                    // A single '-' is punctuation
-                    t = token::punctuationToken(token::MINUS);
-                }
-                else if (labelVal && Foam::read(buf, labelVal))
-                {
-                    t = labelVal;
-                }
-                else
-                {
-                    scalar scalarVal;
-
-                    if (readScalar(buf, scalarVal))
+                    // Special single char handling
+                    switch (buf[0])
                     {
-                        // A scalar or too big to fit as a label
-                        t = scalarVal;
+                        case '-' :  // A single '-' is punctuation
+                        {
+                            t.pToken(token::MINUS);
+                            break;
+                        }
+                        case '.' :  // A single '.' is currently bad
+                        {
+                            t.setBad();
+                            break;
+                        }
+                        default :
+                        {
+                            if (isIntegral)
+                            {
+                                // Single digit : conversion is trivial
+                                t.int32Token(buf[0] - '0');
+                            }
+                            else
+                            {
+                                // At the moment nothing to handle here
+                                t.setBad();
+                            }
+                            break;
+                        }
+                    }
+                    return *this;
+                }
+
+                if (isIntegral)
+                {
+                    // Parse as an integral?
+                    // - read with largest resolution and narrow when possible.
+                    // - retain (signed|unsigned) int32/int64 ...
+
+                    if (int64_t val; Foam::readInt64(buf, val))
+                    {
+                        // Use smaller representations when possible
+                        if (val >= INT32_MIN && val <= INT32_MAX)
+                        {
+                            t.int32Token(static_cast<int32_t>(val));
+                        }
+                        else if (val >= 0 && val <= int64_t(UINT32_MAX))
+                        {
+                            t.uint32Token(static_cast<uint32_t>(val));
+                        }
+                        else
+                        {
+                            t.int64Token(val);
+                        }
+                    }
+                    else if (uint64_t val; Foam::readUint64(buf, val))
+                    {
+                        // Use smaller representations when possible
+                        if (val <= UINT32_MAX)
+                        {
+                            t.uint32Token(static_cast<uint32_t>(val));
+                        }
+                        else
+                        {
+                            t.uint64Token(val);
+                        }
+                    }
+                    else
+                    {
+                        // Fallthrough to scalar parsing
+                        isIntegral = false;
+                    }
+                }
+
+                // Floating point format or a series of digits that are too
+                // big to fit an integral representation
+                //
+                // - read as 'scalar' (float|double) since this is what the
+                //   rest of the code expects to handle anyhow
+
+                if (!isIntegral)
+                {
+                    if (scalar val; Foam::readScalar(buf, val))
+                    {
+                        t = val;
                     }
                     else
                     {
@@ -1007,7 +1075,31 @@ Foam::Istream& Foam::ISstream::read(string& str)
 }
 
 
-Foam::Istream& Foam::ISstream::read(label& val)
+Foam::Istream& Foam::ISstream::read(int32_t& val)
+{
+    is_ >> val;
+    syncState();
+    return *this;
+}
+
+
+Foam::Istream& Foam::ISstream::read(int64_t& val)
+{
+    is_ >> val;
+    syncState();
+    return *this;
+}
+
+
+Foam::Istream& Foam::ISstream::read(uint32_t& val)
+{
+    is_ >> val;
+    syncState();
+    return *this;
+}
+
+
+Foam::Istream& Foam::ISstream::read(uint64_t& val)
 {
     is_ >> val;
     syncState();

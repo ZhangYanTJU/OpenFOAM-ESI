@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2011-2014 OpenFOAM Foundation
+    Copyright (C) 2011-2014,2024 OpenFOAM Foundation
     Copyright (C) 2017-2025 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -192,11 +192,17 @@ public:
         //- Write string
         virtual Ostream& write(const std::string& str) override;
 
-        //- Write int32_t as a label
+        //- Write int32_t
         virtual Ostream& write(const int32_t val) override;
 
-        //- Write int64_t as a label
+        //- Write int64_t
         virtual Ostream& write(const int64_t val) override;
+
+        //- Write uint32_t
+        virtual Ostream& write(const uint32_t val) override;
+
+        //- Write uint64_t
+        virtual Ostream& write(const uint64_t val) override;
 
         //- Write float
         virtual Ostream& write(const float val) override;

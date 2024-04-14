@@ -5,7 +5,7 @@
     \\  /    A nd           | www.openfoam.com
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-    Copyright (C) 2014-2016 OpenFOAM Foundation
+    Copyright (C) 2014-2016,2025 OpenFOAM Foundation
     Copyright (C) 2017-2020 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
@@ -99,9 +99,9 @@ Foam::Istream& Foam::operator>>(Istream& is, uint32_t& val)
         return is;
     }
 
-    if (t.isLabel())
+    if (t.is_uint32())
     {
-        val = uint32_t(t.labelToken());
+        val = t.uint32Token();
     }
     else if (t.isScalar())
     {
@@ -148,7 +148,7 @@ Foam::Istream& Foam::operator>>(Istream& is, uint32_t& val)
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const uint32_t val)
 {
-    os.write(label(val));
+    os.write(val);
     os.check(FUNCTION_NAME);
     return os;
 }
