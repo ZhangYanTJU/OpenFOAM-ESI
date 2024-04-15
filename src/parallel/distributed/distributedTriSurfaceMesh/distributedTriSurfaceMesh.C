@@ -230,6 +230,7 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
 )
 {
     // Modified findInstance which also looks in parent directory
+
     word instance
     (
         io.time().findInstance
@@ -237,8 +238,8 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
             io.local(),
             word::null,
             IOobject::READ_IF_PRESENT,
-            word::null,  // No stop instance
-            false        // No "constant" fallback (word::null instead)
+            word::null,             // No stop instance
+            !UPstream::parRun()     // Fallback to "constant" for non-parallel
         )
     );
 
@@ -247,6 +248,8 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         return instance;
     }
 
+
+    // The rest of this code is only when parRun == true ...
 
     // Replicate findInstance operation but now on parent directory
 
@@ -262,24 +265,27 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         return io.instance();
     }
 
-    instantList ts = io.time().times();
-    label instanceI;
 
     const scalar startValue = io.time().timeOutputValue();
 
-    for (instanceI = ts.size()-1; instanceI >= 0; --instanceI)
+    instantList ts = io.time().times();
+
+    label instIndex = ts.size()-1;
+
+    // Backward search for first time that is <= startValue
+    for (; instIndex >= 0; --instIndex)
     {
-        if (ts[instanceI].value() <= startValue)
+        if (ts[instIndex].value() <= startValue)
         {
             break;
         }
     }
 
-    // continue searching from here
-    for (; instanceI >= 0; --instanceI)
+    // Continue searching from here
+    for (; instIndex >= 0; --instIndex)
     {
         // Shortcut: if actual directory is the timeName we've already tested it
-        if (ts[instanceI].name() == io.instance())
+        if (ts[instIndex].name() == io.instance())
         {
             continue;
         }
@@ -287,12 +293,12 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         parentDir =
         (
             io.rootPath()/io.globalCaseName()
-           /ts[instanceI].name()/io.db().dbDir()/io.local()/io.name()
+           /ts[instIndex].name()/io.db().dbDir()/io.local()/io.name()
         );
 
         if (fileHandler().isDir(parentDir))
         {
-            return ts[instanceI].name();
+            return ts[instIndex].name();
         }
     }
 
@@ -319,11 +325,15 @@ Foam::word Foam::distributedTriSurfaceMesh::findLocalInstance
         }
     }
 
-    FatalErrorInFunction
-        << "Cannot find directory " << io.local() << " in times " << ts
-        << exit(FatalError);
+    // FatalErrorInFunction
+    //     << "Cannot find directory " << io.local() << " in times " << ts
+    //     << exit(FatalError);
+    //
+    // return word::null;
 
-    return word::null;
+    // Nothing found in parent?
+    // - treat like regular findInstance with "constant" fallback
+    return io.time().constant();
 }
 
 
