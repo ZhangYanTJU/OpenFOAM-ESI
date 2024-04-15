@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2012-2017 OpenFOAM Foundation
-    Copyright (C) 2015-2023 OpenCFD Ltd.
+    Copyright (C) 2015-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -31,6 +31,7 @@ License
 #include "Pstream.H"
 #include "OSspecific.H"
 #include "decomposedBlockData.H"
+#include "IFstream.H"
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 
@@ -161,19 +162,54 @@ Foam::boolList Foam::haveMeshFile
     (
         handler.filePath(runTime.path()/meshPath/meshFile)
     );
-
     bool found = handler.isFile(fName);
     if (returnReduceAnd(found)) // worldComm
     {
-        autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fName));
-        if (isPtr && isPtr->good())
+        // Bit tricky: avoid having all slaves open file since this involves
+        // reading it on master and broadcasting it. This fails if file > 2G.
+        // So instead only read on master
+
+        bool isCollated = false;
+
+        // Note: can test only world-master. Since even host-collated will have
+        // same file format type for all processors
+        if (UPstream::master(UPstream::worldComm))
         {
-            auto& is = *isPtr;
+            const bool oldParRun = UPstream::parRun(false);
 
-            IOobject io(meshFile, meshPath, runTime);
-            io.readHeader(is);
+            IFstream is(fName);
+            if (is.good())
+            {
+                IOobject io(meshFile, meshPath, runTime);
+                io.readHeader(is);
 
-            if (decomposedBlockData::isCollatedType(io))
+                isCollated = decomposedBlockData::isCollatedType(io);
+            }
+            UPstream::parRun(oldParRun);
+        }
+        Pstream::broadcast(isCollated); //UPstream::worldComm
+
+
+        // Collect block-number in individual filenames (might differ
+        // on different processors)
+        if (isCollated)
+        {
+            const label nProcs = UPstream::nProcs(fileHandler().comm());
+            const label myProcNo = UPstream::myProcNo(fileHandler().comm());
+
+            // Collect file names on master of local communicator
+            const fileNameList fNames
+            (
+                Pstream::listGatherValues
+                (
+                    fName,
+                    fileHandler().comm(),
+                    UPstream::msgType()
+                )
+            );
+
+            // Collect local block number
+            label myBlockNumber = -1;
             {
                 fileName path, pDir, local;
                 procRangeType group;
@@ -188,7 +224,6 @@ Foam::boolList Foam::haveMeshFile
                     numProcs
                 );
 
-                label myBlockNumber = 0;
                 if (proci == -1 && group.empty())
                 {
                     // 'processorsXXX' format so contains all ranks
@@ -199,12 +234,53 @@ Foam::boolList Foam::haveMeshFile
                 {
                     // 'processorsXXX_n-m' format so check for the
                     // relative rank
-                    myBlockNumber = UPstream::myProcNo(fileHandler().comm());
+                    myBlockNumber = myProcNo;
                 }
-
-                // Check if block for the local rank is inside file
-                found = decomposedBlockData::hasBlock(is, myBlockNumber);
             }
+            const labelList myBlockNumbers
+            (
+                Pstream::listGatherValues
+                (
+                    myBlockNumber,
+                    fileHandler().comm(),
+                    UPstream::msgType()
+                )
+            );
+
+
+
+            // Determine for all whether the filename exists in the collated
+            // file.
+            boolList allFound(nProcs, false);
+
+            if (UPstream::master(fileHandler().comm()))
+            {
+                // Store nBlocks and index of file that was used for nBlocks
+                label nBlocks = -1;
+                label blockRanki = -1;
+                forAll(fNames, ranki)
+                {
+                    if
+                    (
+                        blockRanki == -1
+                     || (fNames[ranki] != fNames[blockRanki])
+                    )
+                    {
+                        blockRanki = ranki;
+                        IFstream is(fNames[ranki]);
+                        nBlocks = decomposedBlockData::getNumBlocks(is);
+                    }
+
+                    allFound[ranki] = (myBlockNumbers[ranki] < nBlocks);
+                }
+            }
+
+            found = Pstream::listScatterValues
+            (
+                allFound,
+                fileHandler().comm(),
+                UPstream::msgType()
+            );
         }
     }
     #endif
