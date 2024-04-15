@@ -167,16 +167,15 @@ void Foam::fieldsDistributor::readFieldsImpl
         if (deregister)
         {
             // Extra safety - remove all such types
-            const UPtrList<const GeoField> other
+            for
             (
-                mesh.thisDb().objectRegistry::template cobjects<GeoField>()
-            );
-
-            for (const GeoField& field : other)
+                const GeoField& fld
+              : mesh.thisDb().objectRegistry::template csorted<GeoField>()
+            )
             {
-                if (!field.ownedByRegistry())
+                if (!fld.ownedByRegistry())
                 {
-                    const_cast<GeoField&>(field).checkOut();
+                    const_cast<GeoField&>(fld).checkOut();
                 }
             }
         }
@@ -348,18 +347,15 @@ void Foam::fieldsDistributor::readFieldsImpl
         /// Info<< nl;
 
         // Extra safety - remove all such types
-        HashTable<const GeoField*> other
+        for
         (
-            mesh.thisDb().objectRegistry::template lookupClass<GeoField>()
-        );
-
-        forAllConstIters(other, iter)
+            const GeoField& fld
+          : mesh.thisDb().objectRegistry::template csorted<GeoField>()
+        )
         {
-            GeoField& fld = const_cast<GeoField&>(*iter.val());
-
             if (!fld.ownedByRegistry())
             {
-                fld.checkOut();
+                const_cast<GeoField&>(fld).checkOut();
             }
         }
     }
