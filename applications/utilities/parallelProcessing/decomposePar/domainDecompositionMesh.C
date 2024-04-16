@@ -39,14 +39,6 @@ Description
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::domainDecomposition::append(labelList& lst, const label elem)
-{
-    label sz = lst.size();
-    lst.setSize(sz+1);
-    lst[sz] = elem;
-}
-
-
 void Foam::domainDecomposition::addInterProcFace
 (
     const label facei,
@@ -354,9 +346,8 @@ void Foam::domainDecomposition::decomposeMesh()
                 procFaceAddressing_[proci].size();
 
             // Add size as last element to substarts and transfer
-            append
+            subPatchStarts[proci][interPatch].append
             (
-                subPatchStarts[proci][interPatch],
                 curInterPatchFaces[interPatch].size()
             );
             procProcessorPatchSubPatchIDs_[proci][i].transfer

@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2018-2022 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -376,9 +376,9 @@ void Foam::dlLibraryTable::close(bool verbose)
 }
 
 
-bool Foam::dlLibraryTable::append(const fileName& libName)
+bool Foam::dlLibraryTable::push_back(const fileName& libName)
 {
-    if (libName.empty() || libNames_.found(libName))
+    if (libName.empty() || libNames_.contains(libName))
     {
         return false;
     }
@@ -390,13 +390,13 @@ bool Foam::dlLibraryTable::append(const fileName& libName)
 }
 
 
-Foam::label Foam::dlLibraryTable::append(const UList<fileName>& libNames)
+Foam::label Foam::dlLibraryTable::push_back(const UList<fileName>& libNames)
 {
     label nAdded = 0;
 
     for (const fileName& libName : libNames)
     {
-        if (append(libName))
+        if (push_back(libName))
         {
             ++nAdded;
         }

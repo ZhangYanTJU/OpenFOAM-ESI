@@ -6,6 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011 OpenFOAM Foundation
+    Copyright (C) 2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -51,20 +52,21 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef boundaryRegion_H
-#define boundaryRegion_H
+#ifndef Foam_boundaryRegion_H
+#define Foam_boundaryRegion_H
 
-#include "polyMesh.H"
 #include "Map.H"
 #include "dictionary.H"
 #include "labelList.H"
-#include "wordList.H"
 #include "wordRes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+// Forward Declarations
+class objectRegistry;
 
 /*---------------------------------------------------------------------------*\
                       Class boundaryRegion Declaration
@@ -74,23 +76,21 @@ class boundaryRegion
 :
     public Map<dictionary>
 {
-    // Private Member Functions
-
-        //- No copy construct
-        boundaryRegion(const boundaryRegion&) = delete;
-
-
 public:
+
+    //- No copy construct
+    boundaryRegion(const boundaryRegion&) = delete;
+
 
     // Constructors
 
-        //- Construct null
-        boundaryRegion();
+        //- Default construct
+        boundaryRegion() noexcept = default;
 
-        //- Construct read from registry, name. instance
-        boundaryRegion
+        //- Read construct from registry, name, instance
+        explicit boundaryRegion
         (
-            const objectRegistry&,
+            const objectRegistry& obr,
             const word& name = "boundaryRegion",
             const fileName& instance = "constant"
         );
@@ -102,29 +102,38 @@ public:
 
     // Member Functions
 
-        //- Append to the end, return index
-        label append(const dictionary&);
+        //- Add to the end, return index
+        label push_back(const dictionary& dict);
 
-        //- Return index corresponding to patch 'name'
-        //  returns -1 if not found
+        //- The max table index, -1 if empty
+        label maxIndex() const;
+
+        //- The index corresponding to entry with 'Label' of given name,
+        //- or -1 if not found
         label findIndex(const word& name) const;
 
-        //- Return a Map of (id => name)
+        //- The 'Label' name corresponding to id,
+        //- or boundaryRegion_ID if not otherwise defined
+        word name(const label id) const;
+
+        //- Return the extracted Map of (id => name)
         Map<word> names() const;
 
-        //- Return a Map of (id => names) selected by patterns
+        //- Return the extracted Map of (id => names) selected by patterns
         Map<word> names(const wordRes& patterns) const;
 
-        //- Return a Map of (id => type)
+        //- Return the extracted Map of (id => type)
         Map<word> boundaryTypes() const;
 
-        //- Return BoundaryType corresponding to patch 'name'
+        //- Return BoundaryType corresponding to patch 'name',
+        //- "patch" if not found
         word boundaryType(const word& name) const;
+
 
         //- Read constant/boundaryRegion
         void readDict
         (
-            const objectRegistry&,
+            const objectRegistry& obr,
             const word& name = "boundaryRegion",
             const fileName& instance = "constant"
         );
@@ -132,7 +141,7 @@ public:
         //- Write constant/boundaryRegion for later reuse
         void writeDict
         (
-            const objectRegistry&,
+            const objectRegistry& obr,
             const word& name = "boundaryRegion",
             const fileName& instance = "constant"
         ) const;
@@ -140,7 +149,7 @@ public:
 
     // Member Operators
 
-        //- Assignment
+        //- Copy assignment
         void operator=(const boundaryRegion&);
 
         //- Assign from Map<dictionary>
@@ -155,7 +164,14 @@ public:
         //      newPatchName    originalName;
         //  \endverbatim
         void rename(const dictionary&);
+
+
+    // Housekeeping
+
+        //- Add to the end, return index
+        label append(const dictionary& dict) { return push_back(dict); }
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

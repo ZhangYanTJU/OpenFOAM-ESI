@@ -132,9 +132,6 @@ class domainDecomposition
             labelList& elementToZone
         );
 
-        //- Append single element to list
-        static void append(labelList&, const label);
-
         //- Add face to inter-processor patch
         void addInterProcFace
         (

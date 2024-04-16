@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2016 OpenFOAM Foundation
-    Copyright (C) 2018-2020 OpenCFD Ltd.
+    Copyright (C) 2018-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -227,13 +227,13 @@ public:
         List<fileName> loaded() const;
 
         //- Names of the libraries in use, or requested
-        const UList<fileName>& names() const
+        const UList<fileName>& names() const noexcept
         {
             return libNames_;
         }
 
         //- Pointers to the libraries in use. Access with caution.
-        const UList<void*>& pointers() const
+        const UList<void*>& pointers() const noexcept
         {
             return libPtrs_;
         }
@@ -241,16 +241,18 @@ public:
         //- Clears the table, without attempting to close the libraries
         void clear();
 
-        //- Add to the list of names, but do not yet open.
-        //  Ignores duplicate names.
-        bool append(const fileName& libName);
 
         //- Add to the list of names, but do not yet open.
-        //  Ignores duplicate names.
-        label append(const UList<fileName>& libNames);
+        //  Ignores empty and duplicate names.
+        bool push_back(const fileName& libName);
+
+        //- Add to the list of names, but do not yet open.
+        //  Ignores empty and duplicate names.
+        label push_back(const UList<fileName>& libNames);
+
 
         //- Open named, but unopened libraries.
-        //- These names will normally have been added with the append() method.
+        //- These names will normally have been added with push_back().
         bool open(bool verbose = true);
 
         //- Open the named library, warn by default if problems occur.
@@ -312,6 +314,23 @@ public:
         //- Return info proxy,
         //- used to print library table information to a stream
         InfoProxy<dlLibraryTable> info() const noexcept { return *this; }
+
+
+    // Housekeeping
+
+        //- Add to the list of names, but do not yet open.
+        //FOAM_DEPRECATED_FOR(2024-04, "push_back()")
+        bool append(const fileName& libName)
+        {
+            return push_back(libName);
+        }
+
+        //- Add to the list of names, but do not yet open.
+        //FOAM_DEPRECATED_FOR(2024-04, "push_back()")
+        label append(const UList<fileName>& libNames)
+        {
+            return push_back(libNames);
+        }
 };
 
 
