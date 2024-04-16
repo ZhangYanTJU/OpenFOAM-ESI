@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
     Copyright (C) 2011-2017 OpenFOAM Foundation
-    Copyright (C) 2016-2023 OpenCFD Ltd.
+    Copyright (C) 2016-2024 OpenCFD Ltd.
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -548,7 +548,7 @@ void Foam::UPstream::allocateCommunicatorComponents
         if (index != UPstream::commGlobal())
         {
             FatalErrorInFunction
-                << "world communicator should always be index "
+                << "base world communicator should always be index "
                 << UPstream::commGlobal()
                 << Foam::exit(FatalError);
         }
@@ -687,36 +687,30 @@ void Foam::UPstream::allocateCommunicatorComponents
 
 void Foam::UPstream::freeCommunicatorComponents(const label index)
 {
-    // Skip placeholders and pre-defined (not allocated) communicators
     if (UPstream::debug)
     {
         Pout<< "freeCommunicatorComponents: " << index
             << " from " << PstreamGlobals::MPICommunicators_.size() << endl;
     }
 
-    // Not touching the first two communicators (SELF, WORLD)
-    // or anything out-of bounds.
+    // Only free communicators that we have specifically allocated ourselves
     //
-    // No UPstream communicator indices when MPI is initialized outside
-    // of OpenFOAM - thus needs a bounds check too!
+    // Bounds checking needed since there are no UPstream communicator indices
+    // when MPI is initialized outside of OpenFOAM
 
     if
     (
-        index > 1
-     && index < PstreamGlobals::MPICommunicators_.size()
+        (index >= 0 && index < PstreamGlobals::MPICommunicators_.size())
+     && PstreamGlobals::pendingMPIFree_[index]
     )
     {
-        if
-        (
-            PstreamGlobals::pendingMPIFree_[index]
-         && (MPI_COMM_NULL != PstreamGlobals::MPICommunicators_[index])
-        )
+        PstreamGlobals::pendingMPIFree_[index] = false;
+
+        // Free communicator. Sets communicator to MPI_COMM_NULL
+        if (MPI_COMM_NULL != PstreamGlobals::MPICommunicators_[index])
         {
-            // Free communicator. Sets communicator to MPI_COMM_NULL
             MPI_Comm_free(&PstreamGlobals::MPICommunicators_[index]);
         }
-
-        PstreamGlobals::pendingMPIFree_[index] = false;
     }
 }
 
